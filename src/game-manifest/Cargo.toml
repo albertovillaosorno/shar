@@ -1,0 +1,34 @@
+[package]
+name = "game-manifest"
+version.workspace = true
+edition = "2024"
+license = "MIT"
+description = "Generates and validates the game/ content manifest for the pipeline."
+publish = false
+
+[dependencies]
+# schoenwald-cli centralizes process arguments, ordered streams, newline handling, and exit-code mapping for manifest driving adapters.
+schoenwald-cli = { path = "../cli" }
+# schoenwald-filesystem centralizes deterministic traversal, path inspection, and complete UTF-8 artifact reads and writes.
+schoenwald-filesystem = { path = "../filesystem" }
+
+
+[lib]
+name = "game_manifest"
+path = "src/lib.rs"
+
+[[bin]]
+name = "validate-game"
+path = "src/bin/validate.rs"
+
+[[bin]]
+name = "generate-manifest"
+path = "src/bin/generate.rs"
+
+[[bin]]
+name = "generate-expanded-manifest"
+path = "src/bin/generate_expanded.rs"
+
+[[bin]]
+name = "ephemeral_structural_audit"
+path = "src/bin/ephemeral_structural_audit.rs"
