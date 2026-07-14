@@ -73,9 +73,10 @@ engine, game, platform, plugin, editor, and project configuration.
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-Two calls returned the same sorted six-category array: `Editor`, `Engine`,
-`Game`, `Platforms`, `Plugins`, and `Project`. A deliberately missing container
-failed with `Container not found` instead of returning an empty array.
+Two consecutive calls for `Project` returned the same sorted categories:
+`Editor`, `Engine`, `Game`, `Platforms`, `Plugins`, and `Project`.
+`ListContainers` independently returned `Project`, while a missing container
+raised `Container not found` rather than returning an empty array.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
@@ -90,11 +91,11 @@ failed with `Container not found` instead of returning an empty array.
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

@@ -75,9 +75,11 @@ contains the map, packaging, gameplay-tag, and general project sections.
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-Two calls returned the same sorted nine-section array, including `Maps`,
-`General`, `Packaging`, and `SupportedPlatforms`. A deliberately missing
-category failed with `Category not found: Project/...`.
+Two consecutive `Project/Project` calls returned the same sorted nine-section
+array, including `Maps`, `General`, `Packaging`, and `SupportedPlatforms`.
+A missing category raised `Category not found`, and a later schema request
+confirmed that `SupportedPlatforms` uses a custom widget without a settings
+object.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
@@ -92,11 +94,11 @@ category failed with `Category not found: Project/...`.
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

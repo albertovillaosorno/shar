@@ -79,10 +79,11 @@ map-to-game-mode mappings.
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-Two calls returned byte-identical JSON strings with 17 top-level property
-entries. The schema identified soft references through nested `refPath` fields
-and described `bUseSplitscreen` as a Boolean. ObjectTools independently exposed
-the same property model on `Default__GameMapsSettings`.
+Two consecutive calls returned equivalent decoded property maps with 17
+entries. The schema described `bUseSplitscreen` as Boolean and represented soft
+references with nested `refPath` fields. `GetSectionPropertyValues` then read
+five schema-declared names successfully, while `SupportedPlatforms` raised the
+documented no-settings-object error.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
@@ -99,11 +100,11 @@ the same property model on `Default__GameMapsSettings`.
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

@@ -71,9 +71,10 @@ belongs to project settings, editor preferences, or input bindings.
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-Two calls returned the same sorted array: `Editor`, `InputBinding`, and
-`Project`. `ListCategories` then accepted each discovered name, including the
-single `Shortcuts` category under `InputBinding`.
+Two consecutive calls returned the same sorted array: `Editor`,
+`InputBinding`, and `Project`. `ListCategories` independently accepted every
+returned identity, including the single `Shortcuts` category under
+`InputBinding`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
@@ -88,11 +89,11 @@ single `Shortcuts` category under `InputBinding`.
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

@@ -85,12 +85,12 @@ values inherited from Unreal defaults without modifying the section.
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-Two calls returned byte-identical values: both map references resolved to
-`/Engine/Maps/Templates/OpenWorld.OpenWorld`, the game mode to
-`/Script/Engine.GameModeBase`, the game instance to
-`/Script/Engine.GameInstance`, and split screen to `true`. ObjectTools returned
-the same five values, while `DefaultEngine.ini` independently confirmed the
-explicit game-map package.
+Two consecutive calls returned identical values. Both map references resolved
+to `/Engine/Maps/Templates/OpenWorld.OpenWorld`; the game mode and game
+instance resolved to their Engine base classes; split screen was `true`.
+The section schema independently declared all five names. Public project config
+authored only `GameDefaultMap`, confirming that the other returned values were
+effective defaults.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
@@ -108,11 +108,11 @@ explicit game-map package.
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
