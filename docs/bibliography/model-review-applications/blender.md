@@ -1,37 +1,41 @@
 # Blender
 
-This non-governing record documents model-review provenance and does not make
-Blender the canonical serializer, a bundled dependency, or an endorser of SHAR.
+This non-governing record documents Blender as a possible experimental model
+inspection application. It does not make Blender the canonical serializer, a
+bundled dependency, a validation authority, or an endorser of SHAR.
 
 ## Review Status And Scope
 
 - Review status: Evidence recorded.
-- Evidence status: Partially verified — Repository evidence and the operator
-  statement confirm Blender 5.1 review; the official source mirror and current
-  license boundary were verified; exact local build, add-ons, bundled
-  components, and settings remain installation-specific.
+- Evidence status: Partially verified — The official source mirror, license
+  boundary, and repository experimental-script boundary were verified. No
+  current installed Blender build, add-on set, settings profile, or importer
+  acceptance result is established.
 - Counsel review: Not performed.
-- As-of date: 2026-07-13.
-- Subject class: Open-source 3D authoring and review application.
+- As-of date: 2026-07-14.
+- Subject class: Open-source 3D authoring and experimental inspection
+  application.
 
 ## Covered Material
 
-The Blender application and official documentation relevant to local FBX model,
-material, skeleton, and animation review.
+The Blender application and official documentation relevant to possible local
+FBX model, material, skeleton, and animation inspection.
 
 ## Repository Use And Scope
 
-The operator states that Blender was used to review models. Repository evidence
-records Blender 5.1 import review. Blender remains an optional review adapter;
-SHAR's independently authored binary FBX writer is the canonical serializer.
-Blender executables, bundled libraries, add-ons, and generated review artifacts
-containing proprietary game material are not distributed by SHAR.
+The repository contains an optional experimental Blender inspection-script
+generator. That script is not a production conversion, validation, repair, or
+acceptance path. SHAR's independently authored binary FBX writer and
+repository-owned tests remain authoritative. Blender executables, bundled
+libraries, add-ons, and generated inspection artifacts containing proprietary
+game material are not distributed by SHAR.
 
 ## Provenance And Version History
 
-The repository records Blender 5.1 review evidence. Any other historical
-version, add-on, Python API, package, or bundled component must be identified
-separately before its terms are relied upon.
+No exact installed Blender version, build, add-on set, settings profile, or
+current importer result is established by this record. Any version, add-on,
+Python API, package, or bundled component must be identified separately before
+its behavior or terms are relied upon.
 
 ## Authorship, Ownership, And Attribution
 
@@ -52,16 +56,17 @@ linked libraries, and copied manual material require separate analysis.
 
 ## Distribution, Modification, And Compatibility
 
-SHAR does not redistribute Blender. Independently authored review helpers remain
-repository material only to the extent they do not copy Blender source or other
-protected upstream expression. Local outputs remain governed by the rights in
-their underlying content.
+SHAR does not redistribute Blender. Independently authored experimental
+inspection helpers remain repository material only to the extent they do not
+copy Blender source or other protected upstream expression. Local outputs remain
+governed by the rights in their underlying content.
 
 ## Compliance Posture
 
-Local review use is documented. Distribution of Blender, an add-on, linked
-library, or copied documentation requires a component-level GPL, notice, and
-source-availability review.
+Do not treat the presence of an inspection script as proof of a Blender
+installation, successful import, compatibility, validation, or acceptance.
+Distribution of Blender, an add-on, linked library, or copied documentation
+requires a component-level GPL, notice, and source-availability review.
 
 ## Source References
 
@@ -74,7 +79,5 @@ source-availability review.
 - Blender Foundation (n.d.) *COPYING*. Available at:
   <https://github.com/blender/blender/blob/main/COPYING> (Accessed: 13 July
   2026).
-- SHAR repository (2026) `README.md` and `src/fbx/README.md`, local review
-  evidence.
-- Repository owner (2026) Operator provenance statement, 12 July. Unpublished
-  project record.
+- SHAR repository (2026) canonical FBX boundary, binary writer tests, and
+  experimental Blender inspection-helper source.

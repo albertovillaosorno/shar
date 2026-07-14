@@ -26,16 +26,18 @@ skinning, animation, and metadata.
 ## Repository Use And Scope
 
 The `src/fbx/` crate independently serializes canonical binary FBX 7.7 without
-using the Autodesk FBX SDK. Blender and Maya are optional review adapters. The
-repository rejects ASCII FBX as canonical output.
+using the Autodesk FBX SDK. Optional Blender and Maya scripts are experimental
+inspection aids, not production validators. The repository rejects ASCII FBX as
+canonical output.
 
 ## Provenance And Version History
 
 FBX originated with Kaydara and is now Autodesk technology. Autodesk publishes
 SDK and product documentation, but this record has not verified a complete
 normative public byte-level specification for binary FBX 7.7. Repository
-conformance is therefore defined by independently authored contracts and
-cross-tool validation, not claimed Autodesk certification.
+conformance is therefore defined by independently authored contracts,
+repository-owned serializer tests, and canonical validation, not claimed
+Autodesk certification.
 
 ## Authorship, Ownership, And Attribution
 
@@ -52,19 +54,24 @@ that the FBX name or format is open source.
 
 ## Distribution, Modification, And Compatibility
 
-Writing a compatible container does not create rights in embedded content.
-Validation in Autodesk or third-party applications demonstrates observed
-interoperability only and must not be represented as endorsement, certification,
-or authorization.
+Writing a compatible container does not create rights in embedded content. A
+separately recorded import observation in an Autodesk or third-party application
+can demonstrate only consumer-specific interoperability. It is not repository
+validation, acceptance, endorsement, certification, or authorization.
 
 ## Compliance Posture
 
 - Keep serializer implementation independent from proprietary SDK source.
-- Record the generated FBX version, hashes, embedded media, and review tools.
+- Record the generated FBX version, hashes, embedded media, and any inspection
+  tool only when that tool was actually executed and its exact version and result
+  were preserved.
+- Do not infer an installed application or successful import from the presence of
+  a helper script.
 - Do not redistribute Autodesk SDK binaries or documentation without terms
   review.
 - Review rights in every embedded texture, mesh, skeleton, and animation.
-- Do not describe application acceptance as formal FBX certification.
+- Do not describe application observations as formal FBX certification or
+  repository acceptance.
 
 ## Technical Baseline And SHAR Profile
 
@@ -96,9 +103,10 @@ or universal FBX compatibility.
 ### Use-specific evidence limits
 
 Before declaring support for a specific consumer and version, record the exact
-node and property subset, embedded-media rule, animation-profile matrix, and
-importer acceptance evidence. This bibliography record establishes the public
-and repository evidence reviewed; it does not establish universal FBX
+node and property subset, embedded-media rule, animation-profile matrix, and a
+reproducible consumer-specific import observation. That observation supplements
+but does not replace repository validation. This bibliography record establishes
+the public and repository evidence reviewed; it does not establish universal FBX
 compatibility.
 
 ### Verified sources

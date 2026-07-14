@@ -1,41 +1,45 @@
 # Autodesk Maya 2027
 
-This non-governing record documents model-review provenance and does not make
-Autodesk or Maya an author, sponsor, bundled dependency, or licensor of SHAR.
+This non-governing record documents Autodesk Maya 2027 as a possible
+experimental model inspection application. It does not make Autodesk or Maya an
+author, sponsor, bundled dependency, validation authority, or licensor of SHAR.
 
 ## Review Status And Scope
 
 - Review status: Evidence recorded.
-- Evidence status: Partially verified — Official Maya 2027 help and current
-  Autodesk General Terms verified; repository review artifacts and the operator
-  statement confirm local use, while the exact build and subscription remain
-  unrecorded.
+- Evidence status: Partially verified — Official Maya 2027 help, the current
+  Autodesk General Terms, and the repository experimental-script boundary were
+  verified. No installed Maya build, subscription identity, settings profile,
+  or importer acceptance result is established.
 - Counsel review: Not performed.
-- As-of date: 2026-07-13.
-- Subject class: Proprietary 3D authoring and review application.
+- As-of date: 2026-07-14.
+- Subject class: Proprietary 3D authoring and experimental inspection
+  application.
 
 ## Covered Material
 
-Autodesk Maya 2027 and the official documentation relevant to local FBX model,
-material, skeleton, and animation review.
+Autodesk Maya 2027 and the official documentation relevant to possible local
+FBX model, material, skeleton, and animation inspection.
 
 ## Repository Use And Scope
 
-The operator states that Maya 2027 was used to review models. Repository
-documentation and environment examples identify Maya 2027 and record successful
-FBX import review. Maya remains an optional review adapter; SHAR's independently
-authored binary FBX writer is the canonical serializer.
+The repository contains an optional experimental Maya import-script generator.
+That script is not a production conversion, validation, repair, or acceptance
+path. SHAR's independently authored binary FBX writer and repository-owned tests
+remain authoritative.
 
 No Maya executable, SDK, proprietary plug-in, sample, documentation corpus, or
-generated review artifact containing proprietary game material is distributed.
+generated inspection artifact containing proprietary game material is
+distributed.
 
 ## Provenance And Version History
 
 Autodesk's current product help identifies Maya 2027, its release notes, and its
 technical documentation. Autodesk subscription terms, special terms, offering
 identification, API terms, plug-in conditions, and documentation notices may
-differ by date, territory, account, and component. The exact local build and
-subscription used by the operator are not recorded here.
+differ by date, territory, account, and component. No exact installed build,
+subscription identity, settings profile, or current importer result is
+established by this record.
 
 ## Authorship, Ownership, And Attribution
 
@@ -59,14 +63,15 @@ material, or excluded documentation.
 ## Distribution, Modification, And Compatibility
 
 SHAR does not redistribute Maya. Use or distribution of an Autodesk API, SDK,
-plug-in, sample, or documentation requires a source-specific review. Local FBX
-review does not make an underlying proprietary asset redistributable.
+plug-in, sample, or documentation requires a source-specific review. A possible
+local inspection does not make an underlying proprietary asset redistributable.
 
 ## Compliance Posture
 
-Local interoperability review is documented. Before distributing any Autodesk
-component or excerpt, verify the exact offering, terms, notice, attribution,
-redistribution permission, and third-party component inventory.
+Do not treat the presence of an import script as proof of a Maya installation,
+successful import, compatibility, validation, or acceptance. Before distributing
+any Autodesk component or excerpt, verify the exact offering, terms, notice,
+attribution, redistribution permission, and third-party component inventory.
 
 ## Source References
 
@@ -75,7 +80,5 @@ redistribution permission, and third-party component inventory.
 - Autodesk (2026) *Terms of Use: General Terms*, updated 30 March 2026.
   Available at: <https://www.autodesk.com/company/terms-of-use/en/general-terms>
   (Accessed: 13 July 2026).
-- SHAR repository (2026) `README.md`, `.env.example`, and `src/fbx/README.md`,
-  local review evidence.
-- Repository owner (2026) Operator provenance statement, 12 July. Unpublished
-  project record.
+- SHAR repository (2026) canonical FBX boundary, binary writer tests, and
+  experimental Maya import-helper source.
