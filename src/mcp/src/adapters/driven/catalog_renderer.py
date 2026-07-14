@@ -54,6 +54,8 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING
 
+from mcp.src.adapters.driven.skill_technical_text import validated_live_prose
+
 if TYPE_CHECKING:
     from mcp.src.domain.catalog import ToolsetDefinition
     from mcp.src.domain.json_types import JsonObject, JsonValue
@@ -107,7 +109,7 @@ def render_catalog_markdown(
     for toolset in toolsets:
         lines.extend([f"## `{toolset.name}`", ""])
         if toolset.description:
-            lines.extend([toolset.description, ""])
+            lines.extend([validated_live_prose(toolset.description), ""])
         lines.extend(
             [
                 f"Discovered tools: **{len(toolset.tools)}**",
@@ -117,7 +119,7 @@ def render_catalog_markdown(
         for tool in toolset.tools:
             lines.extend([f"### `{tool.name}`", ""])
             if tool.description:
-                lines.extend([tool.description, ""])
+                lines.extend([validated_live_prose(tool.description), ""])
             lines.extend(
                 [
                     "Input schema:",

@@ -53,6 +53,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from mcp.src.adapters.driven.catalog_renderer import render_catalog_markdown
 from mcp.src.adapters.driven.skill_document_layout import tool_skill_path
 from mcp.src.adapters.driven.skill_manual_field_schema import MANUAL_FIELDS
 from mcp.src.adapters.driven.skill_manual_review import (
@@ -272,6 +273,20 @@ def test_renderer_rejects_control_characters_in_native_prose() -> None:
 
     with pytest.raises(ProtocolError, match="control characters"):
         _ = MarkdownSkillRenderer(TEST_UNREAL_MCP_VERSION).render(catalog)
+
+
+def test_catalog_markdown_rejects_control_characters_in_native_prose() -> None:
+    """Catalog Markdown cannot contain corrupted native descriptions."""
+    first = complete_catalog()[0]
+    tool = first.tools[0]._replace(description="Tool details.\x00Injected.")
+    malformed = (
+        first._replace(description="Toolset details.\x00Injected."),
+        first._replace(tools=(tool,)),
+    )
+
+    for toolset_definition in malformed:
+        with pytest.raises(ProtocolError, match="control characters"):
+            _ = render_catalog_markdown((toolset_definition,))
 
 
 def test_shared_tool_prefixes_become_taxonomy_directories() -> None:

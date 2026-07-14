@@ -115,14 +115,24 @@ _GENERAL_POLICY_PATTERNS = (
 _SENTENCE = re.compile(r"(?<=[.!?])\s+")
 
 
-def technical_only_text(description: str) -> str:
-    """Return live documentation with general policy sentences removed."""
+def validated_live_prose(description: str) -> str:
+    """Normalize line endings and reject hidden controls in live prose.
+
+    Returns:
+        The validated prose with canonical newline characters.
+    """
     normalized = description.replace("\r\n", "\n").replace("\r", "\n")
     if any(
         character != "\n" and not character.isprintable()
         for character in normalized
     ):
         fail_protocol("native description contains control characters")
+    return normalized
+
+
+def technical_only_text(description: str) -> str:
+    """Return live documentation with general policy sentences removed."""
+    normalized = validated_live_prose(description)
     rendered: list[str] = []
     for raw_line in normalized.splitlines():
         stripped = raw_line.strip()
