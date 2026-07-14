@@ -295,6 +295,23 @@ def test_sse_overflow_and_notification_stream_fail_closed() -> None:
         )
 
 
+def test_notification_response_rejects_non_empty_body() -> None:
+    """An accepted MCP notification response must have no body."""
+    body = b'{"jsonrpc":"2.0","result":{}}'
+    with pytest.raises(
+        ProtocolError,
+        match="notification response must be empty",
+    ):
+        _ = read_http_payload(
+            MemoryResponse(
+                body,
+                headers={"Content-Type": "application/json"},
+            ),
+            None,
+            max_response_bytes=len(body),
+        )
+
+
 def test_response_limit_must_be_positive() -> None:
     """Invalid byte ceilings fail before any response is read."""
     with pytest.raises(ConfigurationError, match="must be positive"):

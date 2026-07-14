@@ -130,6 +130,8 @@ def read_http_payload(
     body = read_bounded_body(response, max_response_bytes=limit)
     if not body:
         return None
+    if request_id is None:
+        fail_protocol("notification response must be empty")
     if media_type != _CONTENT_TYPE_JSON:
         displayed_type = content_type or "<missing>"
         fail_protocol(
