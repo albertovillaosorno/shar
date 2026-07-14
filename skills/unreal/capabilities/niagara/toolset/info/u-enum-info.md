@@ -47,41 +47,67 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to enumerate the live values of a reflected Niagara enum before
+SHAR constructs Niagara tool arguments, validates imported effects, or maps an
+engine enum to a stable project-side contract. Query the exact enum identity
+rather than relying on remembered names or numeric values.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project and native MCP server must be ready.
+- The Niagara module containing the enum must be loaded.
+- Supply the full reflected `UEnum` path, including the `/Script/...` module
+  prefix.
+- Preserve the returned names and values with the engine revision that produced
+  them because enum members can change between versions.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "enum": {
+    "refPath": "/Script/Niagara.ENiagaraExecutionState"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two calls returned byte-identical JSON strings naming
+`ENiagaraExecutionState` and seven entries with values `0` through `6`.
+Independent reflected engine metadata confirmed the declared sequence from
+`Active` through `Num`; the tool additionally exposed the generated
+`ENiagaraExecutionState_MAX` entry.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- `returnValue` is a JSON string and requires a second JSON parse.
+- The returned array includes hidden and generated sentinel entries such as
+  `Disabled`, `Num`, and `ENiagaraExecutionState_MAX`; enumeration does not mean
+  every member is an appropriate user-facing or runtime input.
+- Display names and descriptions are diagnostic metadata and must not replace
+  canonical enum names in tool arguments.
+- A class path, missing enum, or empty reference raises a native parameter error.
+- Numeric enum values and membership can change with the engine or plugin
+  version; query the live editor before constructing dependent arguments.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
