@@ -1,0 +1,22 @@
+[package]
+name = "fbx"
+version.workspace = true
+edition = "2024"
+license = "MIT"
+description = "Exports decoded assets to native FBX."
+publish = false
+
+[lib]
+name = "fbx"
+path = "src/lib.rs"
+
+[dependencies]
+# schoenwald-filesystem centralizes complete UTF-8 reads and directory creation while FBX create-new writes and texture copies remain adapter-specific.
+schoenwald-filesystem = { path = "../filesystem" }
+# serde is retained because the exporter needs typed JSON decoding for
+# generated manifests, and a hand-rolled replacement would raise parser risk
+# without improving ownership or auditability.
+serde = { version = "1", features = ["derive"] }
+# serde_json is retained with serde because the input contracts are JSON and the
+# crate is a widely reviewed implementation for strict structured decoding.
+serde_json = "1"
