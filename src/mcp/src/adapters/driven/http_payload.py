@@ -217,6 +217,9 @@ def _finish_sse_event(
 ) -> JsonObject | None:
     if not data_lines:
         return None
+    if not any(data_lines):
+        data_lines.clear()
+        return None
     payload = _decode_json(
         "\n".join(data_lines).encode(),
         context="SSE data",

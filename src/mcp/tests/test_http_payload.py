@@ -244,6 +244,21 @@ def test_sse_progress_is_skipped_until_matching_final_response() -> None:
     ) == {"jsonrpc": "2.0", "id": 7, "result": {}}
 
 
+def test_sse_empty_priming_event_is_skipped() -> None:
+    """An MCP reconnection priming event is not decoded as JSON."""
+    body = b'id: prime\ndata:\n\ndata: {"jsonrpc":"2.0","id":1,"result":{}}\n\n'
+    response = MemoryResponse(
+        body,
+        headers={"Content-Type": "text/event-stream"},
+    )
+
+    assert read_http_payload(
+        response,
+        1,
+        max_response_bytes=len(body),
+    ) == {"jsonrpc": "2.0", "id": 1, "result": {}}
+
+
 def test_sse_boolean_id_cannot_alias_integer_response() -> None:
     """A boolean event id is skipped before the exact integer response."""
     body = (
