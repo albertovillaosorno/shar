@@ -7,26 +7,26 @@ an authority, dependency, or distributed component.
 
 - Review status: Evidence recorded.
 - Evidence status: Partially verified — Official product identity, platform
-  availability, and assistant-oriented capabilities verified; repository use
-  remains operator-attested, and the current legal text was not independently
-  retrieved during this review.
+  availability, and assistant-oriented capabilities were verified. No tracked
+  repository integration or public session-level provenance is established, and
+  the current legal text was not independently retrieved during this review.
 - Counsel review: Not performed.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-14.
 - Subject class: Proprietary browser and AI-assisted research environment.
 
 ## Covered Material
 
-The Comet browser used for public-source research and information management
-during SHAR construction. Perplexity's current product page identifies Comet as
-its browser, describes assistant-driven browsing and delegated tasks, and lists
-Mac, Windows, iOS, and Android availability.
+The Comet browser as a possible public-source research and information-management
+environment. Perplexity's current product page identifies Comet as its browser,
+describes assistant-driven browsing and delegated tasks, and lists Mac, Windows,
+iOS, and Android availability.
 
 ## Repository Use And Scope
 
-The operator states that Comet supported browsing, research, and management.
-Comet is not a build prerequisite, runtime dependency, or scholarly authority. A
-browser result or AI summary is accepted only after the underlying source is
-retrieved, classified, and cited.
+No tracked build prerequisite, runtime dependency, or repository integration is
+established. Comet is not a scholarly authority. A browser result or AI summary
+is accepted only after the underlying source is retrieved, classified, and
+cited.
 
 ## Provenance And Version History
 
@@ -61,8 +61,9 @@ browser that helped locate them.
 
 ## Compliance Posture
 
-Accepted as operator-attested research provenance. Do not characterize Comet as
-a scholarly source merely because it located or summarized one.
+Do not infer project use, session configuration, or evidentiary authority from
+this subject record. Do not characterize Comet as a scholarly source merely
+because it located or summarized one.
 
 ## Source References
 
@@ -72,5 +73,3 @@ a scholarly source merely because it located or summarized one.
   current body was not retrievable during this review. Available at:
   <https://www.perplexity.ai/hub/legal/terms-of-service> (Access attempted: 13
   July 2026).
-- Repository owner (2026) Operator provenance statement, 12 July. Unpublished
-  project record.

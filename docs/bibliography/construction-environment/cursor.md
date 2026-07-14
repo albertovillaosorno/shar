@@ -6,24 +6,24 @@ Cursor a repository requirement or distributed dependency.
 ## Review Status And Scope
 
 - Review status: Evidence recorded.
-- Evidence status: Partially verified — Repository use remains operator-
-  attested; official product identity, current terms, and current privacy policy
-  verified.
+- Evidence status: Partially verified — Official product identity, current terms,
+  and current privacy policy were verified. No tracked repository dependency or
+  public session-level provenance is established.
 - Counsel review: Not performed.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-14.
 - Subject class: Proprietary integrated development environment and AI service.
 
 ## Covered Material
 
-The Cursor application and associated service used as an editor during SHAR
-construction.
+The Cursor application and associated service as a possible construction editor
+and AI-assisted development environment.
 
 ## Repository Use And Scope
 
-The operator states that Cursor was used as an integrated development
-environment. SHAR must remain buildable and reviewable without Cursor. No Cursor
-binary, extension, proprietary configuration payload, or hosted service is
-bundled with the repository.
+No tracked Cursor dependency or repository integration is established. SHAR must
+remain buildable and reviewable without Cursor. No Cursor binary, extension,
+proprietary configuration payload, or hosted service is bundled with the
+repository.
 
 ## Provenance And Version History
 
@@ -61,8 +61,9 @@ become an undocumented build contract.
 
 ## Compliance Posture
 
-Accepted as operator-attested editor provenance. Record version and privacy
-settings when legal, security, or acquisition review requires greater
+Do not infer project use, enabled models, privacy settings, or session behavior
+from this subject record. Record version and privacy settings only when a future
+legal, security, or acquisition review has public-safe evidence requiring that
 precision.
 
 ## Source References
@@ -73,5 +74,3 @@ precision.
   <https://cursor.com/terms-of-service> (Accessed: 13 July 2026).
 - Anysphere (2025) *Privacy Policy*, updated 6 October. Available at:
   <https://cursor.com/privacy> (Accessed: 13 July 2026).
-- Repository owner (2026) Operator provenance statement, 12 July. Unpublished
-  project record.

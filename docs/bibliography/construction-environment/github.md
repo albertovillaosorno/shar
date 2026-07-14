@@ -7,10 +7,11 @@ the owner, licensor, sponsor, or approver of SHAR.
 
 - Review status: Evidence recorded.
 - Evidence status: Partially verified — Current public terms, service identity,
-  and hosting boundaries verified; the exact account and historical hosting use
-  remain operator-attested.
+  public repository hosting, and repository publication boundaries were
+  verified. Exact account configuration and historical feature use remain
+  unestablished.
 - Counsel review: Not performed.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-14.
 - Subject class: Source-code hosting and collaboration service.
 
 ## Covered Material
@@ -20,10 +21,10 @@ repository.
 
 ## Repository Use And Scope
 
-The operator states that GitHub hosts the repository. Hosting does not replace
-an explicit repository license and does not grant rights in third-party content.
-The SHAR MIT License applies only to material the repository owner has authority
-to license.
+GitHub hosts the public repository. Hosting does not replace an explicit
+repository license and does not grant rights in third-party content. The SHAR
+MIT License applies only to material the repository owner has authority to
+license.
 
 ## Provenance And Version History
 
@@ -73,5 +74,4 @@ third-party notice.
   (Accessed: 13 July 2026).
 - GitHub (n.d.) *About GitHub*. Available at: <https://github.com/about>
   (Accessed: 13 July 2026).
-- Repository owner (2026) Operator provenance statement, 12 July. Unpublished
-  project record.
+- SHAR repository (2026) public hosting and publication boundary.

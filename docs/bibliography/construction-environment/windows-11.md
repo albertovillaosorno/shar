@@ -7,24 +7,26 @@ license, distribute, endorse, or certify Windows.
 
 - Review status: Evidence recorded.
 - Evidence status: Partially verified — Official product, system-requirement,
-  lifecycle, and licensing sources verified; repository use remains
-  operator-attested.
+  lifecycle, and licensing sources and the repository Windows target boundary
+  were verified. No exact construction-host edition, feature update, or build is
+  established by public evidence.
 - Counsel review: Not performed.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-14.
 - Subject class: Proprietary operating system and development environment.
 
 ## Covered Material
 
-Windows 11 as the proprietary host operating-system family used by the
-repository owner while constructing, reviewing, and validating SHAR. This record
-does not identify one exact local edition, feature-update version, or build.
+Windows 11 as a proprietary host operating-system family relevant to building,
+reviewing, and validating Windows-targeted SHAR artifacts. This record does not
+identify one exact construction host, local edition, feature-update version, or
+build.
 
 ## Repository Use And Scope
 
-The operator states that SHAR was developed on Windows 11. Windows is a host
-environment, not a repository dependency and not a component distributed under
-the SHAR MIT License. Platform-specific builds may require a lawful,
-user-provided Windows installation and separately licensed Microsoft tooling.
+Windows is a supported target and possible host environment, not a repository
+dependency or a component distributed under the SHAR MIT License.
+Platform-specific builds may require a lawful, user-provided Windows installation
+and separately licensed Microsoft tooling.
 
 ## Provenance And Version History
 
@@ -56,9 +58,9 @@ prerequisites, and installer notices actually shipped.
 
 ## Compliance Posture
 
-Construction provenance is documented. Before distributing Windows-targeted
-binaries, verify every Microsoft component and preserve all applicable terms,
-notices, and redistribution conditions.
+Do not infer an exact construction host from Windows-target support. Before
+distributing Windows-targeted binaries, verify every Microsoft component and
+preserve all applicable terms, notices, and redistribution conditions.
 
 ## Source References
 
@@ -73,5 +75,4 @@ notices, and redistribution conditions.
   (Accessed: 13 July 2026).
 - Microsoft (n.d.) *Microsoft Software License Terms*. Available at:
   <https://www.microsoft.com/useterms> (Accessed: 13 July 2026).
-- Repository owner (2026) Operator provenance statement, 12 July. Unpublished
-  project record.
+- SHAR repository (2026) Windows target and platform-tooling boundary.
