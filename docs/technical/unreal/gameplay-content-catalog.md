@@ -291,6 +291,7 @@ may move or gain additional entry points without changing its save key.
 | `MissionId` | Owning mission identity. |
 | `SequenceOrdinal` | Dense zero-based order within the mission. |
 | `ObjectiveKind` | One value from the controlled objective taxonomy. |
+| `ObjectivePolicyId` | Required objective-specific runtime policy identity. |
 | `TargetIds` | Canonical entities, actors, zones, or items. |
 | `RequiredCount` | Non-negative completion count. |
 | `TimeLimitSeconds` | Optional positive timer. |
@@ -310,6 +311,7 @@ The controlled objective taxonomy includes:
 - `destroy`;
 - `hit_and_collect`;
 - `follow`;
+- `follow_and_collect`;
 - `race`;
 - `time_trial`;
 - `avoid`;
@@ -321,7 +323,11 @@ The controlled objective taxonomy includes:
 
 A compound mission is an ordered composition of these objective contracts. It
 is not represented as one opaque script. Every step exposes preconditions,
-observable progress, success, failure, and deterministic recovery.
+observable progress, success, failure, and deterministic recovery. The source
+concept commonly described as go-to maps to `travel`; it does not create a
+second objective kind. Objective execution, target-contact policy, interaction,
+interior, notoriety, and recovery behavior follow the
+[mission, interaction, interior, and notoriety runtime](mission-interaction-and-notoriety-runtime.md).
 
 ## Avoid objective contract
 
@@ -747,10 +753,113 @@ Additional parity tests from this slice verify:
 - the Level 5 final mission unlocks Level 6 only after its key collection and
   completion transition.
 
+## Verified third character slice
+
+| Canonical identity | Aliases | Required contract |
+| :--- | :--- | :--- |
+| `professor_frink` | `frink` | Non-playable scientist and mission giver with level-scoped story, bonus-mission, ambient, and cinematic placements from Levels 2 through 7. |
+| `gil_gunderson` | `gil` | Non-playable vehicle vendor whose level inventories are separate offer rows owned by one character identity. |
+| `abraham_simpson` | `abe_simpson`, `grampa_simpson`, `grampa`, `grandpa_simpson`, `grandpa` | Non-playable mission giver and ambient character; every spelling resolves to one dialogue, placement, and save identity. |
+| `groundskeeper_willie` | `willie` | Non-playable school-area character with level-scoped ambient placements and an explicit tractor association. |
+| `hans_moleman` | `ralph_melish` | Non-playable mission giver and ambient gag participant; mission placement and gag presentation remain separate rows. |
+| `homer_simpson` | `homer` | Playable character in Levels 1 and 7 with additional level-scoped presentation roles; all quote rows bind to this identity. |
+| `horatio_mccallister` | `sea_captain` | Non-playable Level 3 mission giver and ambient Squidport placement. |
+| `comic_book_guy` | `jeffrey_albertson` | The existing canonical identity is reaffirmed; cutscene, mission-giver, store, vehicle-owner, and ambient placements do not create another character. |
+| `jimbo_jones` | `jimbo` | Non-playable Level 2 mission character with declared ambient placements in later entertainment-district variants. |
+| `kang` | none | Individual cinematic antagonist identity with no ordinary world placement. |
+| `kodos` | none | Individual cinematic antagonist identity with no ordinary world placement. |
+
+Kang and Kodos may share a cinematic cast group, dialogue scene, spacecraft, and
+plot-state presentation. The pair is not a third character identity and cannot
+own a duplicate dialogue, progression, or save record.
+
+A character quote collection always references its canonical character. The
+Homer quote collection therefore extends `homer_simpson`; it does not create a
+quote-only character. No separate gag quote owner is defined by this slice.
+
+## Verified third vehicle slice
+
+| Canonical identity | Verified context | Required rule |
+| :--- | :--- | :--- |
+| `garbage_truck` | Level 4 road vehicle | Drivable from native traffic only; no normal retrieval ownership before the completion override. |
+| `ghost_ship` | Level 7 road vehicle and race opponent | Drivable from native traffic only; race placement and completion-override retrieval do not create a second vehicle. |
+| `glass_truck` | Level 1 road vehicle | Drivable from native traffic only; no normal retrieval ownership before the completion override. |
+| `globex_super_villain_car` | Level 6 purchase for 600 coins | The accepted purchase grants persistent retrieval for this canonical identity. |
+| `hallo_hearse` | Level 7 road vehicle | Distinct from `hearse`; native traffic access does not grant persistent retrieval. |
+| `hearse` | Level 7 purchase for 750 coins and race opponent | Purchase ownership and race placement share one vehicle definition. |
+| `honor_roller` | Level 2 starting vehicle | Persistent retrieval is available from level start without a purchase transaction. |
+| `hover_bike` | Level 7 purchase for 1,000 coins | Persistent retrieval begins only after the accepted purchase. |
+| `hover_car` | Level 5 bonus-mission reward | The reward transaction grants persistent retrieval exactly once. |
+| `ice_cream_truck` | Unused and inaccessible | Cataloged for completeness; no ordinary traffic, mission, purchase, reward, or retrieval activation. |
+| `itchy_and_scratchy_movie_truck` | Level 6 road vehicle | Drivable from native traffic only; presentation audio belongs to its vehicle profile and does not imply ownership. |
+
+`hallo_hearse` and `hearse` are separate canonical definitions despite their
+similar display names. Validation rejects an alias, redirect, purchase, traffic
+placement, or race row that collapses them.
+
+## Verified third mission slice
+
+| Canonical identity | Level and class | Ordered contract |
+| :--- | :--- | :--- |
+| `flowers_by_irene` | Level 1 main mission 5 | Enter the house, activate the television interaction, leave the interior, enter a vehicle, and follow the surveillance vehicle to the declared destination without violating the separation policy. |
+| `for_a_few_donuts_more` | Level 4 main mission 1 | Complete the opening follow segment, hit the donut truck, collect ten emitted donuts exactly once, return, and deliver the accepted set. |
+| `from_outer_space` | Level 4 final main mission | Destroy three declared trucks, return toward home, satisfy the final avoid policy, complete the transition, and unlock Level 5. |
+| `full_metal_jackass` | Level 6 main mission 5 | Pursue and destroy the declared sedan, accept the dropped laser item once, and complete only after collection. |
+| `getting_down_with_the_clown` | Level 6 main mission 2 | Trigger the opponent vehicle and win the declared race to the Squidport finish against the limousine. |
+| `going_to_the_lu` | Level 6 main mission 1 | Force the school bus, collect the declared child targets, deliver them to the studio destination, and retain no ownership change from the forced vehicle. |
+| `incriminating_caffeine` | Level 5 main mission 1 | Follow the target truck, collect eleven ordered drops without violating the follow policy, and finish at the declared club destination. |
+| `kang_and_kodos_strike_back` | Level 6 final main mission | Force the 1970s sports car, race the chase sedan to the brewery, complete the transition, and unlock Level 7. |
+
+The three target-following forms use different objective policies:
+
+- `follow` enforces separation and normal target-contact notoriety;
+- `follow_and_collect` enforces separation plus ordered dropped-item acceptance
+  and retains normal target-contact notoriety; and
+- `hit_and_collect` emits declared items from accepted impacts and exempts only
+  contact with the declared objective target.
+
+A retry may select a declared retry start profile, including a target that begins
+moving immediately rather than waiting for proximity. Catch-up, lead failure,
+separation failure, drop acceptance, and target-contact policy remain explicit
+runtime data.
+
+## Verified third street-race slice
+
+| Canonical identity | Level and policy | Route contract |
+| :--- | :--- | :--- |
+| `hillside_area_circuit_level_03` | Level 3 circuit race | Complete five laps of the declared figure-eight hillside loop against the Canyonero, one sports car, and one compact car. |
+| `haunted_suburbia_circuit_level_07` | Level 7 circuit race | Complete three school-to-residential-and-return laps against the Hearse, Ghost Ship, and Coffin Cart. |
+
+Both routes require dense ordered checkpoints, declared direction at every
+ambiguous crossing, deterministic reset transforms, exact opponent identities,
+and a finish transition that cannot be reached by approaching the finish from an
+undeclared route segment.
+
+## Verified third location and interaction slice
+
+The Level 1 location set adds `simpson_house`, `flanders_house`, `wiggum_house`,
+and `gold_house`. The Gold House location record and the Level 1 location index
+resolve to the same `gold_house` identity; they do not create duplicate world
+anchors, collectibles, or secret-vehicle placements.
+
+The Level 3 set adds `androids_dungeon`, `wall_e_weasels`, and `planet_hype`.
+`planet_springfield` is a display alias for `planet_hype`, not a second location.
+The Level 2 location census in this slice declares only the role of notable
+locations and contributes no new canonical location identity.
+
+The canonical indoor set, portal transactions, world-layer composition, movement
+restrictions, vehicle-state preservation, gag interactions, and notoriety
+behavior follow the
+[mission, interaction, interior, and notoriety runtime](mission-interaction-and-notoriety-runtime.md).
+
+Gag placements, rewards, level-scoped completion, and the verified level totals
+follow
+[Progression, collectibles, cheats, and credits](progression-collectibles-and-cheats.md).
+
 ## Known limits
 
-This specification fixes the catalog architecture and the two verified coverage
+This specification fixes the catalog architecture and the three verified coverage
 slices. It does not claim that every remaining character, vehicle, mission,
-location, reward, costume, quote, or bonus-mode record has already been entered.
-New coverage extends these schemas and invariants; it does not introduce a
-parallel catalog pattern.
+location, reward, costume, quote, interaction, or bonus-mode record has already
+been entered. New coverage extends these schemas and invariants; it does not
+introduce a parallel catalog pattern.

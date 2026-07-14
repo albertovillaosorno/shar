@@ -26,6 +26,13 @@ adapters may change native presentation or integration only. They do not change
 simulation, timing, mission meaning, progression, save identity, package
 identity, or mod semantics.
 
+Accidental defects are outside the parity boundary. Crashes, infinite falls,
+out-of-bounds access, collision holes, duplicate or malformed actors, stale
+prototype content, driver-state corruption, and undefined streaming states are
+repaired through native validation and deterministic recovery. A historical
+quirk becomes a parity requirement only when an accepted decision identifies a
+stable player-visible behavior and an automated test fixes its intended limits.
+
 ## Consequences
 
 - Parity acceptance is based on observable mission, world, vehicle, character,

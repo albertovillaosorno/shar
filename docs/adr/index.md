@@ -135,6 +135,8 @@ repository reference must point to the current owning decision.
   — Accepted
 - [Data-driven Unreal gameplay content catalog](unreal/runtime/data-driven-gameplay-content-catalog.md)
   — Accepted
+- [State-driven missions, interactions, interiors, and notoriety](unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
+  — Accepted
 - [Portable save storage and lifecycle](unreal/runtime/portable-save-storage-and-lifecycle.md)
   — Accepted
 - [Runtime parity boundary](unreal/runtime/remake-parity-boundary.md) — Accepted
@@ -152,9 +154,9 @@ repository reference must point to the current owning decision.
 
 ## Current coverage
 
-- Accepted decision records: 59.
+- Accepted decision records: 60.
 - Template records: 1.
-- Review date: 2026-07-13.
+- Review date: 2026-07-14.
 - Status boundary: this catalog contains only accepted repository decisions;
   proposed work is not represented as current authority.
 

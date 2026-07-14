@@ -1,12 +1,13 @@
 # Progression, collectibles, cheats, and credits
 
 - Status: Active
-- Last reviewed: 2026-07-13
+- Last reviewed: 2026-07-14
 
 ## Governing decisions
 
 - [Collector cards, coins, rewards, gags, and wasps](../../adr/gameplay/collectibles/collectibles-rewards-gags-and-wasps.md)
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 - [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
 - [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
@@ -132,6 +133,68 @@ streaming cannot reset damage merely to duplicate an already accepted payout.
 Preset world trails and gag-generated one-time sources remain consumed in the
 save after collection. Transient pickups emitted by damage may despawn, but
 their source transaction cannot be accepted twice.
+
+## Gag completion
+
+A gag is a level-scoped interaction and progression record. Its presentation may
+reuse a prop, animation, sound, or gag concept across world variants, but its
+completion key is the ordered pair of `LevelId` and `GagPlacementId`.
+
+`FSharGagProgressRow` contains:
+
+| Field | Contract |
+| :--- | :--- |
+| `LevelId` | Exact level variant that owns the completion. |
+| `GagPlacementId` | Stable interaction placement identity. |
+| `GagDefinitionId` | Reusable gag concept and presentation identity. |
+| `LocationId` | Canonical exterior or interior location. |
+| `RewardPolicyId` | Optional exactly-once reward transaction. |
+| `CompletionKey` | Durable level-scoped save identity. |
+| `CountsForLevelCompletion` | Whether the placement contributes to the level gag total. |
+| `ReplayPolicy` | Whether presentation may replay after completion. |
+
+The verified level totals are:
+
+| Level | Required gag completions |
+| :--- | ---: |
+| Level 1 | 15 |
+| Level 2 | 11 |
+| Level 3 | 11 |
+| Level 4 | 15 |
+| Level 5 | 6 |
+| Level 6 | 11 |
+| Level 7 | 15 |
+| **Total** | **84** |
+
+Activation is accepted through the interaction runtime. A Smart Object slot,
+world actor, animation, sound, visible cue, or user-interface prompt never owns
+the completion or reward. The progression service validates the level,
+placement, current completion state, and reward policy before committing one
+transaction.
+
+A repeated gag concept in reused world geometry receives a distinct placement
+and completion key only when it is declared for that level variant. Reusing the
+same actor identity across variants is invalid. An interior gag follows the same
+ledger and remains level-scoped even when the interior geometry is shared.
+
+Most gag definitions may grant currency, but the reward is explicit rather than
+implied. A gag with no declared reward still records completion when it counts
+toward level progress. A special reward amount is represented by its own reward
+policy and does not change the gag identity.
+
+After completion, a replayable gag may repeat presentation without replaying the
+currency transaction, completion key, statistics event, or level-progress
+increment. Streaming, mission restart, level reload, save reload, or entering a
+second portal to the same interior cannot duplicate the accepted result.
+
+Unused, unreachable, malformed, or unverified gag concepts remain inactive and
+do not count toward the total. No separate gag quote collection is created for
+this verified slice.
+
+Validation rejects duplicate completion keys, duplicate level placement
+identities, totals that do not match the declared level rows, a reward without a
+registered policy, a counted placement with no reachable interaction, and a gag
+that grants progression directly from presentation code.
 
 ## Currency loss and recovery
 

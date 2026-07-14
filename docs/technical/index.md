@@ -56,6 +56,7 @@ proprietary external formats.
 
 - [Unreal configuration and asset validation](unreal/config-and-asset-validation.md)
 - [Unreal gameplay content catalog](unreal/gameplay-content-catalog.md)
+- [Mission, interaction, interior, and notoriety runtime](unreal/mission-interaction-and-notoriety-runtime.md)
 - [Unreal MCP terminal translator](unreal/mcp-terminal-translator.md)
 - [Native asset planning](unreal/native-asset-planning.md)
 - [Platform audio cooking and streaming](unreal/platform-audio-cooking-and-streaming.md)

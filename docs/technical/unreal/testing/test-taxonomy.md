@@ -1,11 +1,12 @@
 # Unreal test taxonomy
 
 - Status: Active
-- Last reviewed: 2026-07-13
+- Last reviewed: 2026-07-14
 
 ## Governing decisions
 
 - [Runtime parity test boundary](../../../adr/unreal/runtime/runtime-parity-test-boundary.md)
+- [State-driven missions, interactions, interiors, and notoriety](../../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
 - [Graphics quality presets and platform support](../../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
 - [Portable save storage and lifecycle](../../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
 
@@ -36,6 +37,12 @@ target. Preset tests prove resolved quality settings and visual invariants.
   package.
 - Integration tests use synthetic or repository-owned evidence.
 - Runtime parity claims map to observable behavior.
+- Mission-runtime tests name the objective kind, policy, transition, and recovery
+  contract they prove.
+- Interaction tests distinguish reservation, presentation, progression, and save
+  acceptance.
+- Defect-recovery tests prove restoration to a valid state without treating the
+  accidental defect as parity.
 - A passing Windows package does not prove Linux, macOS, Android, x64, or ARM64.
 - A passing Epic preset does not prove Low, Medium, High, or Ultra.
 - Keyboard and mouse, gamepad, and touch tests assert the same semantic actions.
@@ -64,6 +71,17 @@ target. Preset tests prove resolved quality settings and visual invariants.
 - Repository policy tests inspect taxonomy, matrix coverage, and fixture
   boundaries.
 - Native automation verifies editor-owned behavior.
+- Mission-runtime suites cover travel, follow, follow-and-collect,
+  hit-and-collect, destroy, avoid, race, retry, recovery, and exactly-once
+  completion with malformed and stale observations.
+- Interaction suites cover Smart Object reservation, cancellation, gag replay,
+  interior transition rollback, vehicle-state preservation, and level-scoped
+  progression.
+- Notoriety suites cover fixed-point deltas, warning, pursuit waves, objective
+  exemptions, decay, resolution, arrest, clamped fines, and interior policy.
+- World-safety suites cover out-of-bounds, invalid floor, collision penetration,
+  missing streamed actors, duplicate identities, and deterministic safe-transform
+  recovery.
 - Every claimed platform and architecture passes native package launch,
   rendering, input, storage, save/load, cinematic playback, restart, and clean-
   shutdown tests.
