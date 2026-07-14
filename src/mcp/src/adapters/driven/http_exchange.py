@@ -162,7 +162,11 @@ class HttpExchangeClient:
                 request_id,
                 max_response_bytes=self._max_response_bytes,
             )
-            require_http_success(response.status, response_payload)
+            require_http_success(
+                response.status,
+                response_payload,
+                request_id=request_id,
+            )
         except TimeoutError as error:
             if request_id is None:
                 request_label = "notification"

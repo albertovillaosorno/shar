@@ -63,13 +63,14 @@ def test_missing_payload_reports_status() -> None:
         ProtocolError,
         match=r"^MCP server returned HTTP 500$",
     ):
-        raise_http_status_error(500, None)
+        raise_http_status_error(500, None, request_id=1)
 
 
 def test_rpc_error_reports_server_message() -> None:
     """A valid JSON-RPC error exposes its bounded text message."""
     payload: JsonObject = {
         "jsonrpc": "2.0",
+        "id": 1,
         "error": {
             "code": -32600,
             "message": "invalid request",
@@ -80,18 +81,50 @@ def test_rpc_error_reports_server_message() -> None:
         ProtocolError,
         match=r"^HTTP 400: invalid request$",
     ):
-        raise_http_status_error(400, payload)
+        raise_http_status_error(400, payload, request_id=1)
 
 
 def test_malformed_rpc_error_uses_status_fallback() -> None:
     """Only a complete JSON-RPC error may replace the HTTP status message."""
     payloads: tuple[JsonObject, ...] = (
         {"error": {"code": -32603, "message": "unversioned"}},
-        {"jsonrpc": "2.0", "error": {"code": True, "message": "failed"}},
-        {"jsonrpc": "2.0", "error": {"code": 1.0, "message": "failed"}},
-        {"jsonrpc": "2.0", "error": {"code": -32603, "message": 17}},
         {
             "jsonrpc": "2.0",
+            "error": {"code": -32603, "message": "missing id"},
+        },
+        {
+            "jsonrpc": "2.0",
+            "id": 2,
+            "error": {"code": -32603, "message": "wrong id"},
+        },
+        {
+            "jsonrpc": "2.0",
+            "id": True,
+            "error": {"code": -32603, "message": "boolean id"},
+        },
+        {
+            "jsonrpc": "2.0",
+            "id": 1.0,
+            "error": {"code": -32603, "message": "floating id"},
+        },
+        {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "error": {"code": True, "message": "failed"},
+        },
+        {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "error": {"code": 1.0, "message": "failed"},
+        },
+        {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "error": {"code": -32603, "message": 17},
+        },
+        {
+            "jsonrpc": "2.0",
+            "id": 1,
             "result": {},
             "error": {"code": -32603, "message": "failed"},
         },
@@ -102,4 +135,4 @@ def test_malformed_rpc_error_uses_status_fallback() -> None:
             ProtocolError,
             match=r"^MCP server returned HTTP 500$",
         ):
-            raise_http_status_error(500, payload)
+            raise_http_status_error(500, payload, request_id=1)

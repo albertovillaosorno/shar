@@ -47,6 +47,9 @@ from __future__ import annotations
 
 from typing import Never
 
+from mcp.src.adapters.driven.response_validation import (
+    matches_integer_request_id,
+)
 from mcp.src.domain.errors import fail_protocol
 from mcp.src.domain.json_types import JsonObject, require_json_object
 
@@ -63,34 +66,44 @@ def is_http_success(status: int) -> bool:
 def require_http_success(
     status: int,
     payload: JsonObject | None,
+    *,
+    request_id: int | None,
 ) -> None:
     """Require one successful HTTP status or raise its protocol failure."""
     if is_http_success(status):
         return
-    raise_http_status_error(status, payload)
+    raise_http_status_error(status, payload, request_id=request_id)
 
 
 def raise_http_status_error(
     status: int,
     payload: JsonObject | None,
+    *,
+    request_id: int | None,
 ) -> Never:
     """Raise one protocol failure for an unsuccessful HTTP response.
 
     Args:
         status: Unsuccessful HTTP status code.
         payload: Optional decoded JSON-RPC response body.
+        request_id: Originating integer request identity, or `None`.
     """
-    message = _validated_error_message(payload)
+    message = _validated_error_message(payload, request_id)
     if message is None:
         fail_protocol(f"MCP server returned HTTP {status}")
     fail_protocol(f"HTTP {status}: {message}")
 
 
-def _validated_error_message(payload: JsonObject | None) -> str | None:
+def _validated_error_message(
+    payload: JsonObject | None,
+    request_id: int | None,
+) -> str | None:
     if (
         payload is None
+        or request_id is None
         or payload.get("jsonrpc") != _JSON_RPC_VERSION
         or "result" in payload
+        or not matches_integer_request_id(payload.get("id"), request_id)
     ):
         return None
     error_value = payload.get("error")
