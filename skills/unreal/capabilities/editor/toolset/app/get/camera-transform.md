@@ -46,41 +46,56 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to capture the active SHAR level-viewport camera before framing,
+coordinate conversion, viewport capture, or a controlled camera mutation. Keep
+the returned transform as the pre-state when a later operation must restore the
+operator's view.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project and an active Level Editor viewport must be ready.
+- No actor or asset selection is required.
+- Keep operator camera input and viewport focus unchanged while comparing
+  repeated reads.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two consecutive calls returned the same location, rotation, and unit scale.
+`GetVisibleActors` independently returned 59 actors for the same viewport,
+confirming that the camera belonged to an active loaded Level Editor world.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The transform is transient and can change immediately through operator input
+  or another camera tool.
+- This is the editor level-viewport camera, not a gameplay or cinematic camera.
+- Values are world-space floating-point data; preserve the returned precision
+  when using them as restoration state.
+- With multiple viewports, the active viewport determines the result.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

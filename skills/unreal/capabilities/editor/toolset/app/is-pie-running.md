@@ -46,41 +46,53 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool as a safety gate before SHAR starts PIE, mutates editor-only state,
+changes selections, or captures evidence that requires an idle editor world. It
+prevents an agent from assuming that edit mode is active.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project and native MCP server must be ready.
+- No actor, asset, or viewport selection is required.
+- Query immediately before the operation whose behavior differs during PIE.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two consecutive calls returned `false`. `GetCameraTransform` and
+`GetVisibleActors` independently confirmed that the loaded editor viewport
+remained available while no PIE session was active.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The result is point-in-time state and can change immediately through operator
+  input or another tool; keep this check adjacent to the dependent operation.
+- `false` means PIE is inactive. It does not prove that no standalone game,
+  commandlet, simulation mode, or external process is running.
+- This read does not start, stop, pause, or otherwise alter PIE.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

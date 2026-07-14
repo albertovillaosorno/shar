@@ -46,41 +46,55 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to capture the active Content Browser location before SHAR changes
+browser context, performs selection-dependent asset work, or needs to restore an
+operator's browsing state after a bounded operation.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project and native MCP server must be ready.
+- A Content Browser instance must exist, but no asset selection is required.
+- Read the path immediately before any dependent operation because browser focus
+  and navigation are transient editor state.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two consecutive calls returned the same empty string. `GetSelectedAssets` also
+returned an empty array, confirming that the active browser had no selected
+asset while preserving the empty path as a valid observed state.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- An empty string is a valid result and must not be silently interpreted as
+  `/Game`, the project root, or a filesystem directory.
+- The result belongs to the active Content Browser and can change when focus
+  moves between browser instances.
+- The value is an Unreal browser path, not a local source or asset filesystem
+  path.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

@@ -71,9 +71,9 @@ selection as an intentional actor target.
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-Two consecutive calls returned an empty actor array. A separate `find_actors`
-query located the loaded level's `PlayerStart`, proving that the empty result
-represented no current selection rather than an absent editor world.
+Two consecutive calls returned an empty actor array. `GetVisibleActors`
+independently returned the same 59 references from the loaded level, proving
+that the empty result represented no current selection rather than no world.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
@@ -89,11 +89,11 @@ represented no current selection rather than an absent editor world.
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
