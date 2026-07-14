@@ -1,0 +1,51 @@
+{
+  "schema": "shar-schoenwald.minor-unit-taxonomy.v1",
+  "case_policy": {
+    "field_names": "snake_case",
+    "controlled_values": "kebab-case",
+    "error_sentinel": "error"
+  },
+  "fields": [
+    "path",
+    "id",
+    "obfuscated_route",
+    "file_extension",
+    "type",
+    "subtype",
+    "kind",
+    "function",
+    "schema",
+    "origin",
+    "source_path",
+    "source_extension",
+    "source_container",
+    "source_chunk_kind",
+    "source_chunk_ordinal",
+    "recovery_status",
+    "derived_from",
+    "size_bytes",
+    "unreal_import_relation",
+    "future_normalization",
+    "component_links",
+    "classification_notes"
+  ],
+  "id_scheme": {
+    "format": "<type>-<uuid-shaped-128-bit-hex>",
+    "hash": "fnv-1a-128 over obfuscated_route + type + recovery_status",
+    "deterministic": true,
+    "reveals_names": false,
+    "selects_file": false
+  },
+  "obfuscated_route": {
+    "folders": "first-and-last-character",
+    "files": "per-folder count token, never the file name"
+  },
+  "controlled_values": {
+    "type": ["audio", "image", "model", "material", "animation", "script", "text", "metadata", "table", "movie-video", "movie-audio", "package-component", "config", "ui", "localization", "world", "physics", "camera", "light", "particle", "controller", "scene", "locator", "error"],
+    "kind": ["runtime-asset", "derived-component", "package-manifest", "decode-report", "timing-table", "localization-override", "audio-override", "movie-audio", "gameplay-rule", "ui-asset", "vehicle-asset", "world-asset", "editor-only-metadata", "mission-script", "vehicle-tuning", "ui-layout", "localization-table", "sound-metadata", "junk-artifact", "choreography-bank", "p3d-shader", "p3d-attribute", "p3d-mesh", "p3d-skin", "p3d-composite-drawable", "p3d-sprite", "p3d-animation", "p3d-skeleton", "p3d-controller", "p3d-camera", "p3d-light", "p3d-particle", "p3d-scenegraph", "p3d-locator", "p3d-road-network", "p3d-ped-path", "p3d-collision", "p3d-physics", "p3d-world-dsg", "p3d-texture", "p3d-texture-font", "p3d-text-bible", "p3d-export-info", "p3d-scrooby-project", "p3d-vertex-animation", "p3d-animated-prop", "p3d-light-group", "error"],
+    "origin": ["game-root", "rcf-expansion", "p3d-package", "rmv-decode", "rsd-decode", "lmlm-override", "spt-decode", "rms-decode", "readme-rtf-decode", "metadata-fill", "game-straggler-normalize", "error"],
+    "recovery_status": ["fully-decoded", "error"],
+    "unreal_import_relation": ["import-direct", "import-after-conversion", "import-as-data-asset", "import-as-media-source", "compose-into-asset", "editor-only-metadata", "do-not-import", "error"],
+    "future_normalization": ["none", "keep", "wav-to-soundwave", "hap-movie-to-media-source", "png-to-texture2d", "bmp-to-texture2d", "dds-to-texture2d", "tga-to-texture2d", "json-to-data-asset", "tsv-to-data-table", "p3d-component-to-mesh-material-texture", "script-to-unreal-logic", "mission-json-to-statetree", "vehicle-json-to-data-asset", "ui-json-to-umg", "localization-json-to-string-table", "sound-metadata-json-to-data-asset", "choreography-json-to-animation-data", "junk-to-ignore", "p3d-shader-to-material", "p3d-attribute-to-physical-material", "p3d-mesh-to-static-mesh", "p3d-skin-to-skeletal-mesh", "p3d-composite-drawable-to-blueprint", "p3d-sprite-to-texture2d", "p3d-animation-to-animation-asset", "p3d-skeleton-to-skeleton-asset", "p3d-controller-to-animation", "p3d-camera-to-camera-actor", "p3d-light-to-light-component", "p3d-particle-to-niagara", "p3d-scenegraph-to-level-hierarchy", "p3d-locator-to-scene-component", "p3d-road-to-spline-network", "p3d-ped-path-to-spline", "p3d-physics-to-collision", "p3d-world-dsg-to-actor-data", "p3d-texture-to-texture2d", "p3d-texture-font-to-font-asset", "p3d-text-bible-to-string-table", "p3d-export-info-to-editor-metadata", "p3d-scrooby-project-to-ui-project", "p3d-vertex-animation-to-morph-targets", "p3d-animated-prop-to-actor-blueprint", "p3d-light-group-to-light-rig", "error"]
+  }
+}

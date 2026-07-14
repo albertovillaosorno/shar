@@ -1,0 +1,610 @@
+// File:
+//   - cli.rs
+// Path:
+//   - src/pipeline/src/adapters/driving/cli.rs
+//
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE
+// Path-Rule:
+//   - All paths in this header are repository-root relative.
+//
+// Boundary-Contract:
+// - Owns:
+//   - Pipeline command names, argument meaning, defaults, and presentation.
+// - Must-Not:
+//   - Implement process streams, recursive storage traversal, or phase
+//   - behavior.
+// - Allows:
+//   - Compose pipeline use cases with shared CLI and driven provider
+//   - adapters.
+// - Split-When:
+//   - Split when one command family needs an independent inbound adapter.
+// - Merge-When:
+//   - Another adapter owns the same pipeline command contract.
+// - Summary:
+//   - Pipeline command-line driving adapter.
+// - Description:
+//   - Converts process-neutral arguments into pipeline application
+//   - invocations.
+// - Usage:
+//   - Called by the thin binary through shared process composition.
+// - Defaults:
+//   - Game and extracted roots default to `game` and `extracted`.
+//
+// ADRs:
+// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
+//
+// Large file:
+//   - true
+//   - Reason: Pipeline command-line driving adapter keeps tightly coupled
+//   - validation, ordering, and deterministic transformation invariants
+//   - together; split when a stable independently testable sub-boundary is
+//   - identified.
+//
+
+//! Driving CLI adapter for pipeline application use cases.
+//!
+//! Shared process mechanisms come from `schoenwald-cli`.
+use std::path::{Path, PathBuf};
+use std::process::ExitCode;
+
+use schoenwald_cli::{CliProgram, CommandOutcome, run_process};
+
+use self::options::parse_common_arguments;
+use crate::adapters::driven::{
+    FilesystemOutputInventory, LocalPipeline, install_progress,
+};
+use crate::application::{PipelineService, SummarizeOutput};
+use crate::domain::{
+    PhaseThreePackageSelector, PipelineConfig, PipelineError, PipelineReport,
+    StageReport,
+};
+use crate::ports::FbxExportOptions;
+
+mod options;
+
+/// Warning emitted whenever the experimental Blender helper is requested.
+const BLENDER_HELPER_WARNING: &str = concat!(
+    "warning: --blender-helper is experimental and unsupported; ",
+    "it may not work across Blender versions",
+);
+
+/// Complete pipeline command usage text.
+const USAGE: &str = concat!(
+    "usage: pipeline ",
+    "extract-game|extract-game-resume|export-movies|",
+    "export-lmlm|manifest-minor-units|",
+    "metadata-fill-minor-units|edit-minor-unit-metadata|",
+    "index-minor-units|audit-minor-units [game-root] [extracted-root] | ",
+    "plan-fbx-package [index-jsonl] [selector] [output-dir] | ",
+    "fbx-export [index-jsonl] [selector] [output-dir] [base-root] ",
+    "[--blender-helper (experimental/unsupported; may not work)] ",
+    "[--maya (optional Maya import script)] ",
+    "[--verbosity detailed|minimal] ",
+    "[--log <path>|--no-log]",
+);
+
+/// Pipeline command-line program.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct PipelineCli;
+
+impl CliProgram for PipelineCli {
+    fn execute(
+        &self,
+        arguments: &[String],
+    ) -> CommandOutcome {
+        let Some(command) = arguments.first() else {
+            return CommandOutcome::failure().stderr_line(USAGE);
+        };
+        if !is_known_command(command) {
+            return CommandOutcome::failure()
+                .stderr_line(format!("unknown command: {command}"))
+                .stderr_line(USAGE);
+        }
+        let parsed = match parse_common_arguments(
+            arguments
+                .get(1..)
+                .unwrap_or_default(),
+        ) {
+            Ok(parsed) => parsed,
+            Err(error) => {
+                return CommandOutcome::failure()
+                    .stderr_line(format!("invalid arguments: {error}"))
+                    .stderr_line(USAGE);
+            }
+        };
+        if parsed.blender_helper && command != "fbx-export" {
+            return CommandOutcome::failure().stderr_line(
+                "invalid arguments: --blender-helper requires fbx-export",
+            );
+        }
+        if parsed.maya && command != "fbx-export" {
+            return CommandOutcome::failure()
+                .stderr_line("invalid arguments: --maya requires fbx-export");
+        }
+        if let Err(error) = install_progress(
+            parsed.verbosity,
+            parsed
+                .log_file
+                .as_deref(),
+        ) {
+            return CommandOutcome::failure()
+                .stderr_line(format!("failed to configure progress: {error}"));
+        }
+        if command == "plan-fbx-package" {
+            return run_fbx_manifest(&parsed.positionals);
+        }
+        if command == "fbx-export" {
+            let outcome = run_fbx_export(
+                &parsed.positionals,
+                FbxExportOptions {
+                    blender_helper: parsed.blender_helper,
+                    maya: parsed.maya,
+                },
+            );
+            if parsed.blender_helper {
+                return outcome.stderr_line(BLENDER_HELPER_WARNING);
+            }
+            return outcome;
+        }
+        run_pipeline_command(
+            command,
+            &parsed.positionals,
+        )
+    }
+}
+
+/// Runs the pipeline CLI in the current process.
+#[must_use]
+pub fn run_env() -> ExitCode {
+    run_process(&PipelineCli)
+}
+
+/// Returns whether one exact command name is supported.
+fn is_known_command(command: &str) -> bool {
+    matches!(
+        command,
+        "extract-game"
+            | "extract-game-resume"
+            | "export-movies"
+            | "export-lmlm"
+            | "manifest-minor-units"
+            | "metadata-fill-minor-units"
+            | "edit-minor-unit-metadata"
+            | "index-minor-units"
+            | "audit-minor-units"
+            | "plan-fbx-package"
+            | "fbx-export"
+    )
+}
+
+/// Rejects the first positional argument beyond one command's contract.
+fn reject_extra_positionals(
+    arguments: &[String],
+    maximum: usize,
+) -> Option<CommandOutcome> {
+    let argument = arguments.get(maximum)?;
+    Some(
+        CommandOutcome::failure()
+            .stderr_line(format!("unexpected positional argument: {argument}")),
+    )
+}
+
+/// Runs one command that uses the standard game and extracted roots.
+fn run_pipeline_command(
+    command: &str,
+    arguments: &[String],
+) -> CommandOutcome {
+    if let Some(outcome) = reject_extra_positionals(
+        arguments, 2,
+    ) {
+        return outcome;
+    }
+    let game_root = arguments
+        .first()
+        .map_or_else(
+            || PathBuf::from("game"),
+            PathBuf::from,
+        );
+    let extracted_root = arguments
+        .get(1)
+        .map_or_else(
+            || PathBuf::from("extracted"),
+            PathBuf::from,
+        );
+    let summary_root = extracted_root.clone();
+    let config = PipelineConfig {
+        game_root,
+        extracted_root,
+        clean_extracted: command == "extract-game",
+    };
+    let provider = LocalPipeline;
+    let application = PipelineService::new(&provider);
+    let result = match command {
+        "export-movies" => application.export_movies(&config),
+        "export-lmlm" => application.export_lmlm(&config),
+        "manifest-minor-units" => one_stage(
+            application.manifest_minor_units(
+                &config.game_root,
+                &config.extracted_root,
+            ),
+        ),
+        "metadata-fill-minor-units" => one_stage(
+            application.fill_minor_unit_metadata(&config.extracted_root),
+        ),
+        "edit-minor-unit-metadata" => one_stage(
+            application.edit_minor_unit_metadata(&config.extracted_root),
+        ),
+        "index-minor-units" => {
+            one_stage(application.index_minor_units(&config.extracted_root))
+        }
+        "audit-minor-units" => {
+            one_stage(application.audit_minor_units(&config.extracted_root))
+        }
+        _ => application.run(&config),
+    };
+    render_result(
+        result,
+        &summary_root,
+    )
+}
+
+/// Runs the phase-three FBX manifest planning command.
+fn run_fbx_manifest(arguments: &[String]) -> CommandOutcome {
+    if let Some(outcome) = reject_extra_positionals(
+        arguments, 3,
+    ) {
+        return outcome;
+    }
+    let Some(index_path) = arguments.first() else {
+        return missing_argument("package index path");
+    };
+    let Some(raw_selector) = arguments.get(1) else {
+        return missing_argument("package selector");
+    };
+    let Some(output_dir) = arguments.get(2) else {
+        return missing_argument("output directory");
+    };
+    let selector = match PhaseThreePackageSelector::parse(raw_selector) {
+        Ok(selector) => selector,
+        Err(error) => {
+            return CommandOutcome::failure()
+                .stderr_line(format!("invalid selector: {error}"));
+        }
+    };
+    let provider = LocalPipeline;
+    let application = PipelineService::new(&provider);
+    let result = one_stage(
+        application.write_fbx_manifest(
+            Path::new(index_path),
+            &selector,
+            Path::new(output_dir),
+        ),
+    );
+    render_result(
+        result,
+        Path::new(output_dir),
+    )
+}
+
+/// Runs the phase-three package-driven FBX export command.
+fn run_fbx_export(
+    arguments: &[String],
+    options: FbxExportOptions,
+) -> CommandOutcome {
+    if let Some(outcome) = reject_extra_positionals(
+        arguments, 4,
+    ) {
+        return outcome;
+    }
+    let Some(index_path) = arguments.first() else {
+        return missing_argument("package index path");
+    };
+    let Some(raw_selector) = arguments.get(1) else {
+        return missing_argument("package selector");
+    };
+    let Some(output_dir) = arguments.get(2) else {
+        return missing_argument("output directory");
+    };
+    let base_root = arguments
+        .get(3)
+        .map_or(
+            ".",
+            String::as_str,
+        );
+    let selector = match PhaseThreePackageSelector::parse(raw_selector) {
+        Ok(selector) => selector,
+        Err(error) => {
+            return CommandOutcome::failure()
+                .stderr_line(format!("invalid selector: {error}"));
+        }
+    };
+    let provider = LocalPipeline;
+    let application = PipelineService::new(&provider);
+    let result = one_stage(
+        application.export_fbx_package(
+            Path::new(index_path),
+            &selector,
+            Path::new(output_dir),
+            Path::new(base_root),
+            options,
+        ),
+    );
+    render_result(
+        result,
+        Path::new(output_dir),
+    )
+}
+
+/// Returns a failed missing-argument outcome with usage.
+fn missing_argument(name: &str) -> CommandOutcome {
+    CommandOutcome::failure()
+        .stderr_line(format!("missing {name}"))
+        .stderr_line(USAGE)
+}
+
+/// Wraps one stage result as a complete pipeline report.
+fn one_stage(
+    result: Result<StageReport, PipelineError>
+) -> Result<PipelineReport, PipelineError> {
+    result.map(
+        |stage| PipelineReport {
+            stages: vec![stage],
+        },
+    )
+}
+
+/// Renders one pipeline result and optional output inventory.
+fn render_result(
+    result: Result<PipelineReport, PipelineError>,
+    output_root: &Path,
+) -> CommandOutcome {
+    match result {
+        Ok(report) => render_success(
+            report,
+            output_root,
+        ),
+        Err(error) => CommandOutcome::failure()
+            .stderr_line(format!("pipeline failed: {error}")),
+    }
+}
+
+/// Renders one successful pipeline report and output summary.
+fn render_success(
+    report: PipelineReport,
+    output_root: &Path,
+) -> CommandOutcome {
+    let mut outcome = CommandOutcome::success().stderr_line(
+        format!(
+            "pipeline completed: {} stages",
+            report
+                .stages
+                .len()
+        ),
+    );
+    for stage in report.stages {
+        outcome = outcome.stderr_line(
+            format!(
+                "{}: files={} bytes={} note={}",
+                stage.name, stage.files, stage.bytes, stage.note
+            ),
+        );
+    }
+    if let Ok(summary) = SummarizeOutput::execute(
+        &FilesystemOutputInventory,
+        output_root,
+    ) {
+        outcome = outcome.stderr_line(
+            format!(
+                "output: {} files={} bytes={}",
+                summary
+                    .root
+                    .display(),
+                summary.files,
+                summary.bytes
+            ),
+        );
+        for directory in summary.directories {
+            outcome = outcome.stderr_line(
+                format!(
+                    "output/{}: files={}",
+                    directory.name, directory.files
+                ),
+            );
+        }
+    }
+    outcome
+}
+
+#[cfg(test)]
+mod tests {
+    use schoenwald_cli::{CliProgram, ExitStatus, OutputStream};
+
+    use super::{BLENDER_HELPER_WARNING, PipelineCli, USAGE};
+
+    #[test]
+    fn manifest_rejects_extra_positionals() -> Result<(), String> {
+        let outcome = super::run_fbx_manifest(
+            &[
+                "missing-index.jsonl".to_owned(),
+                "type:model".to_owned(),
+                "output".to_owned(),
+                "extra".to_owned(),
+            ],
+        );
+        if outcome.status() != ExitStatus::Failure {
+            return Err("extra manifest positional must fail".to_owned());
+        }
+        let [diagnostic] = outcome.output() else {
+            return Err("extra positional must emit one diagnostic".to_owned());
+        };
+        let expected = "unexpected positional argument: extra
+";
+        if diagnostic.text() != expected {
+            return Err(
+                format!(
+                    "unexpected extra-position diagnostic: {:?}",
+                    diagnostic.text()
+                ),
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn missing_command_returns_usage_on_stderr() -> Result<(), String> {
+        let outcome = PipelineCli.execute(&[]);
+        if outcome.status() != ExitStatus::Failure {
+            return Err("missing command must fail".to_owned());
+        }
+        let [chunk] = outcome.output() else {
+            return Err("missing command must emit one usage chunk".to_owned());
+        };
+        if chunk.stream() != OutputStream::Stderr {
+            return Err("usage must be written to stderr".to_owned());
+        }
+        let expected = format!(
+            "{USAGE}
+"
+        );
+        if chunk.text() != expected {
+            return Err(
+                format!(
+                    "unexpected usage output: {:?}",
+                    chunk.text()
+                ),
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn blender_helper_is_marked_experimental_and_unsupported()
+    -> Result<(), String> {
+        for required in [
+            "experimental/unsupported",
+            "may not work",
+        ] {
+            if !USAGE.contains(required) {
+                return Err(
+                    format!("usage omitted Blender warning: {required}"),
+                );
+            }
+        }
+        for required in [
+            "experimental",
+            "unsupported",
+            "may not work",
+        ] {
+            if !BLENDER_HELPER_WARNING.contains(required) {
+                return Err(format!("warning omitted status: {required}"));
+            }
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn blender_helper_is_rejected_for_other_commands() -> Result<(), String> {
+        let outcome = PipelineCli.execute(
+            &[
+                "index-minor-units".to_owned(),
+                "--blender-helper".to_owned(),
+            ],
+        );
+        if outcome.status() != ExitStatus::Failure {
+            return Err("misplaced Blender helper option must fail".to_owned());
+        }
+        let [diagnostic] = outcome.output() else {
+            return Err("misplaced option must emit one diagnostic".to_owned());
+        };
+        if diagnostic.text()
+            != "invalid arguments: --blender-helper requires fbx-export
+"
+        {
+            return Err(
+                format!(
+                    "unexpected diagnostic: {:?}",
+                    diagnostic.text()
+                ),
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn maya_is_rejected_for_other_commands() -> Result<(), String> {
+        let outcome = PipelineCli.execute(
+            &[
+                "index-minor-units".to_owned(),
+                "--maya".to_owned(),
+            ],
+        );
+        if outcome.status() != ExitStatus::Failure {
+            return Err("misplaced Maya option must fail".to_owned());
+        }
+        let [diagnostic] = outcome.output() else {
+            return Err(
+                "misplaced Maya option must emit one diagnostic".to_owned(),
+            );
+        };
+        if diagnostic.text()
+            != "invalid arguments: --maya requires fbx-export
+"
+        {
+            return Err(
+                format!(
+                    "unexpected diagnostic: {:?}",
+                    diagnostic.text()
+                ),
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn unknown_command_returns_name_and_usage() -> Result<(), String> {
+        let outcome = PipelineCli.execute(&["unknown".to_owned()]);
+        if outcome.status() != ExitStatus::Failure {
+            return Err("unknown command must fail".to_owned());
+        }
+        let [
+            unknown,
+            usage,
+        ] = outcome.output()
+        else {
+            return Err(
+                "unknown command must emit diagnostic and usage".to_owned(),
+            );
+        };
+        if unknown.text()
+            != "unknown command: unknown
+"
+        {
+            return Err(
+                format!(
+                    "unexpected command diagnostic: {:?}",
+                    unknown.text()
+                ),
+            );
+        }
+        let expected = format!(
+            "{USAGE}
+"
+        );
+        if usage.text() != expected {
+            return Err(
+                format!(
+                    "unexpected usage output: {:?}",
+                    usage.text()
+                ),
+            );
+        }
+        Ok(())
+    }
+}

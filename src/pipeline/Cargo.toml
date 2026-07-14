@@ -1,0 +1,42 @@
+[package]
+name = "pipeline"
+version.workspace = true
+edition = "2024"
+license = "MIT"
+description = "Official ordered extraction pipeline for local SHAR game assets."
+publish = false
+
+[dependencies]
+# schoenwald-cli centralizes process arguments, ordered streams, newline handling, and exit-code mapping for the pipeline driving adapter.
+schoenwald-cli = { path = "../cli" }
+# schoenwald-filesystem centralizes complete local reads, writes, traversal, metadata inspection, and rooted path validation for pipeline adapters.
+schoenwald-filesystem = { path = "../filesystem" }
+# game-manifest owns canonical asset identity and manifest records consumed by pipeline stages.
+game-manifest = { path = "../game-manifest" }
+# rtf decodes text resources before pipeline packaging preserves their language metadata and source provenance.
+rtf = { path = "../rtf" }
+# rcf validates archive indexes and extracts bounded entries before pipeline classification and manifest rebuilding begin.
+rcf = { path = "../rcf" }
+# rsd decodes source audio into validated PCM artifacts used by pipeline output.
+rsd = { path = "../rsd" }
+# rmv validates movie provenance and conversion plans required by pipeline media stages.
+rmv = { path = "../rmv" }
+# p3d decodes validated Pure3D components required by pipeline package planning and streamed world reconstruction.
+p3d = { path = "../p3d" }
+# lmlm extracts embedded package content required by pipeline manifest reconstruction and duplicate comparison stages.
+lmlm = { path = "../lmlm" }
+# fbx translates decoded package components into deterministic FBX interchange artifacts for phase-three model export.
+fbx = { path = "../fbx" }
+# shar-json-text owns lossless JSON string-content escaping shared across format boundaries.
+shar-json-text = { path = "../json-text" }
+
+# serde_json enforces final extracted JSON and JSONL syntax before the pipeline publishes completion.
+serde_json = "1"
+
+[lib]
+name = "pipeline"
+path = "src/lib.rs"
+
+[[bin]]
+name = "pipeline"
+path = "src/main.rs"
