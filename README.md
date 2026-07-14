@@ -263,7 +263,7 @@ inside the crate that owns the behavior.
 | :--- | :--- | :--- |
 | 1 | Decode source formats and create the game manifest | Complete |
 | 2 | Generate the minor-unit manifest | Complete |
-| 3 | Classify minor units into deterministic packages | Complete |
+| 3 | Classify minor units into deterministic packages | In progress |
 | 4 | Convert model packages to binary FBX 7.7 | In progress |
 | 5 | Establish native Unreal MCP terminal control | In progress |
 | 6 | Convert normalized data into native Unreal assets | Planned |
@@ -376,30 +376,40 @@ Completion criteria:
 
 ### Phase 3 — Organize minor units into packages
 
-**Status:** Complete for the current evidence set.
+**Status:** In progress.
 
-**Executive result:** Isolated records are composed into deterministic entity
-packages that downstream tools can consume without path guessing or manual
-curation.
+**Executive result:** The implemented package-index path composes isolated
+records into deterministic entity packages for downstream planning. Final
+coverage acceptance remains open until the generated evidence satisfies the
+complete classification and repeatability contract.
 
-Completed work:
+Implemented boundary work:
 
 - [x] Build the generated package index from minor-unit records.
-- [x] Assign one controlled category and subcategory to every accepted package.
 - [x] Preserve members, member roles, source kinds, chunk kinds, and stable
   package identifiers.
 - [x] Resolve packages by exact identifier, category, or subcategory prefix.
 - [x] Define typed plans for FBX models, Unreal-native data, media, UI, audio,
   worlds, and do-not-import metadata.
-- [x] Eliminate successful placeholder labels and error package identifiers.
-- [x] Verify the current generated evidence set at 2,964 packages with no error
-  package rows.
+- [x] Reject successful placeholder labels and error package identifiers.
+
+Remaining acceptance work:
+
+- [ ] Regenerate the complete package index from the current manifest.
+- [ ] Prove that every successful row has a concrete category and subcategory,
+  complete source linkage, and no successful `unknown` or error classification.
+- [ ] Repeat generation and compare package identities, ordering, membership,
+  member roles, category counts, subcategory counts, and rendered rows.
+- [ ] Record current totals only from the validated generated evidence instead of
+  retaining a historical package count in this roadmap.
 
 Completion criteria:
 
 - every accepted minor unit belongs to the correct package or an explicit
   do-not-import package;
-- package identity and member ordering are deterministic;
+- every successful package has a concrete category and subcategory;
+- package identity, membership, roles, and ordering are deterministic;
+- repeated generation produces the same logical package set and rendered rows;
 - package readers do not depend on original paths; and
 - planners consume typed package records rather than ad hoc JSON.
 

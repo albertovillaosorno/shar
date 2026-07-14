@@ -216,7 +216,7 @@ assessment.
 
 ## Current Coverage
 
-- Active subject records: 75.
+- Active subject records: 77.
 - Template records: 1.
-- Review date: 2026-07-13.
+- Review date: 2026-07-14.
 - Legal conclusions: not provided by this index.
