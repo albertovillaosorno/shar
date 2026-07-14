@@ -1,10 +1,11 @@
 # Unreal gameplay content catalog
 
 - Status: Active
-- Last reviewed: 2026-07-13
+- Last reviewed: 2026-07-14
 
 ## Governing decisions
 
+- [Canonical seven-level campaign and world variants](../../adr/unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 - [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
@@ -51,6 +52,8 @@ scan another root or infer ownership from an arbitrary folder.
 /Game/SHAR
 ├── Data
 │   ├── Catalog
+│   ├── Campaigns
+│   ├── Levels
 │   ├── Characters
 │   ├── Vehicles
 │   ├── Missions
@@ -104,6 +107,8 @@ or local routes.
 | Asset family | Primary asset type | Object name |
 | :--- | :--- | :--- |
 | Root catalog | `SharCatalog` | `DA_SHAR_GameplayCatalog` |
+| Campaign | `SharCampaign` | `DA_Campaign_<canonical_id>` |
+| Level | `SharLevel` | `DA_Level_<canonical_id>` |
 | Character | `SharCharacter` | `DA_Character_<canonical_id>` |
 | Vehicle | `SharVehicle` | `DA_Vehicle_<canonical_id>` |
 | Mission | `SharMission` | `DA_Mission_<canonical_id>` |
@@ -856,9 +861,101 @@ Gag placements, rewards, level-scoped completion, and the verified level totals
 follow
 [Progression, collectibles, cheats, and credits](progression-collectibles-and-cheats.md).
 
+## Verified fourth character slice
+
+| Canonical identity | Aliases | Required contract |
+| :--- | :--- | :--- |
+| `kearney_zzyzwicz` | `kearney` | Non-playable character with Level 2, Level 4, and Level 6 placements; the Level 6 vendor role references the existing vehicle offers. |
+| `kent_brockman` | none | Cutscene and broadcast character; television-gag audio is a presentation placement, not an ambient world character. |
+| `krusty_the_clown` | `krusty` | Non-playable mission giver and story character with level-scoped ambient, cinematic, and mission placements. |
+| `lenny_leonard` | `lenny` | Non-playable Level 1 mission giver with declared ambient placements in Levels 2 and 5. |
+| `lisa_simpson` | `lisa` | Playable Level 3 protagonist; quote rows and every other level placement retain one character identity. |
+| `marge_simpson` | `marge` | Playable Level 4 protagonist; quote rows and every other level placement retain one character identity. |
+| `louie` | none | Non-playable wager-race host in all seven levels and a separate Level 5 story placement. |
+
+A quote page extends the canonical character's quote-event table. It never
+creates a quote-only character, voice owner, progression key, or placement.
+
+A vendor, race host, mission giver, ambient pedestrian, cinematic role, and
+broadcast role are placement capabilities. They do not create parallel
+character definitions.
+
+## Verified fourth vehicle slice
+
+| Canonical identity | Aliases | Verified context | Required rule |
+| :--- | :--- | :--- | :--- |
+| `knight_boat` | `knightboat` | Level 3 secret vehicle | One world placement grants temporary access; it does not count toward the five progression vehicles. |
+| `kremlin` | none | Level 4 bonus-mission reward | The accepted reward grants persistent retrieval exactly once. |
+| `krustys_limo` | none | Level 4 purchase for 350 coins and mission presentation | Purchase ownership and opponent or ambient placements share one definition. |
+| `limo` | none | Level 2 purchase for 150 coins | Distinct from `krustys_limo`; purchase grants persistent retrieval. |
+| `longhorn` | none | Level 5 starting vehicle | Available from level start and excluded from counted progression vehicles. |
+| `malibu_stacy_car` | none | Level 3 starting vehicle | Available from level start and bound to Lisa's default driver presentation. |
+
+`knight_boat` and `knightboat` are aliases. `limo` and `krustys_limo` are
+separate canonical vehicle definitions. Validation rejects an alias or redirect
+that collapses the two limousine definitions.
+
+## Verified fourth mission slice
+
+| Canonical identity | Level and class | Ordered contract |
+| :--- | :--- | :--- |
+| `ketchup_logic` | Level 4 main mission 3 | Force the pickup truck and required costume, collect eighteen ordered packets within 120 seconds, reach the pursuit trigger within 45 seconds, evade the sedan within 60 seconds, and return to the declared destination. |
+| `kinky_frinky` | Level 5 bonus mission | Destroy the Hover Car within 180 seconds, return within 30 seconds, complete the conversation, and grant the Hover Car reward once. |
+| `kwik_cash` | Level 5 main mission 6 | Force the Bandit, reach and evade the first police pursuit, locate and destroy the Armored Truck without a destroy timer, return, evade the second pursuit within 45 seconds, and complete the final return and conversation. |
+| `lab_coat_caper` | Level 6 main mission 3 | Follow Frink's Hover Car through the declared repeated route to the observatory while satisfying the separation policy. |
+| `long_black_probes` | Level 7 main mission 2 | Require the owned Zombie Car, enter it, travel to the playground, and follow the alien probe to the power plant without violating separation or vehicle-health policy. |
+
+The required costume in `ketchup_logic` is a precondition, not a second player
+character. The forced pickup and Bandit are mission placements and do not grant
+ownership. The required Zombie Car checks persistent ownership before mission
+activation and cannot be replaced by the current arbitrary vehicle.
+
+Inactive or commented source-stage rows are not imported as mission steps. Only
+active objective, condition, timer, target, and transition evidence becomes the
+public ordered contract.
+
+## Verified fourth street-race slice
+
+| Canonical identity | Level and policy | Route contract |
+| :--- | :--- | :--- |
+| `mansion_power_plant_time_trial_level_04` | Level 4 time trial | Complete three laps through the mansion grounds, power-plant passage, and Stonecutters route within 131 seconds. |
+| `kwik_e_mart_time_trial_level_07` | Level 7 time trial | Complete five counter-clockwise laps of the store, gas-station, and donut-shop block within the seventy-second stage timer. |
+
+The Level 7 race uses five laps. A stale descriptive summary that lists three
+laps cannot override executable route evidence. Both races require dense
+checkpoint order, declared direction, exact timer, reset transforms, vehicle
+failure policy, and deterministic finish transition.
+
+## Verified fourth location slice
+
+`kwik_e_mart` is one canonical indoor location available in Levels 1, 4, and 7.
+`spook_e_mart` is the Level 7 presentation alias and variant. Interior portals,
+gags, mission entry, costume interaction, and progression remain level-scoped.
+
+`krusty_burger` is one canonical exterior location family used across all seven
+levels. Multiple physical restaurants are placement identities referencing the
+same location definition and level-specific site rows. `zombie_burger` is a
+Level 7 presentation alias, not a new location identity.
+
+A location family and a physical site are distinct. Validation rejects a mission
+that references an ambiguous family when an exact site placement is required.
+
+## Verified fourth campaign and index slice
+
+The seven level pages, the aggregate level page, the Level 6 vehicle page, and
+the source main page are census or navigation evidence. Runtime campaign,
+level, vehicle, mission, race, collectible, and location identities are owned by
+the catalog and the
+[campaign level composition and progress](campaign-level-composition-and-progress.md)
+specification. Index pages never become duplicate primary assets.
+
+The Level 7 sound page in this slice contains no independently identified sound
+rows. It therefore creates no audio definition. Level audio remains owned by the
+level audio profile and exact role records.
+
 ## Known limits
 
-This specification fixes the catalog architecture and the three verified coverage
+This specification fixes the catalog architecture and the four verified coverage
 slices. It does not claim that every remaining character, vehicle, mission,
 location, reward, costume, quote, interaction, or bonus-mode record has already
 been entered. New coverage extends these schemas and invariants; it does not

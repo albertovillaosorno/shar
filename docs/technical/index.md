@@ -54,6 +54,8 @@ proprietary external formats.
 
 ## Unreal
 
+- [Campaign level composition and progress](unreal/campaign-level-composition-and-progress.md)
+- [Frontend shell and menu runtime](unreal/frontend-shell-and-menu-runtime.md)
 - [Unreal configuration and asset validation](unreal/config-and-asset-validation.md)
 - [Unreal gameplay content catalog](unreal/gameplay-content-catalog.md)
 - [Mission, interaction, interior, and notoriety runtime](unreal/mission-interaction-and-notoriety-runtime.md)

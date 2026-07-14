@@ -5,6 +5,8 @@
 
 ## Governing decisions
 
+- [Canonical seven-level campaign and world variants](../../../adr/unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
+- [Common UI front end and progress projection](../../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
 - [Runtime parity test boundary](../../../adr/unreal/runtime/runtime-parity-test-boundary.md)
 - [State-driven missions, interactions, interiors, and notoriety](../../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
 - [Graphics quality presets and platform support](../../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
@@ -82,6 +84,12 @@ target. Preset tests prove resolved quality settings and visual invariants.
 - World-safety suites cover out-of-bounds, invalid floor, collision penetration,
   missing streamed actors, duplicate identities, and deterministic safe-transform
   recovery.
+- Campaign suites cover the seven-level order, three base worlds, Runtime Data
+  Layer membership, story transitions, progress denominators, and rational
+  percentage projections.
+- Frontend suites cover Common UI stacks, focus, semantic input, logical slots,
+  resume selection, new-game replacement, scrapbook parity, options rollback,
+  calendar fallback, and idle-event cancellation.
 - Every claimed platform and architecture passes native package launch,
   rendering, input, storage, save/load, cinematic playback, restart, and clean-
   shutdown tests.

@@ -5,6 +5,8 @@
 
 ## Governing decisions
 
+- [Canonical seven-level campaign and world variants](../../adr/unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
+- [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
 - [Collector cards, coins, rewards, gags, and wasps](../../adr/gameplay/collectibles/collectibles-rewards-gags-and-wasps.md)
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 - [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
@@ -252,6 +254,82 @@ Collector cards are not generic currency pickups. `FSharCollectibleRow` records:
 There are seven collector-card definitions in each of seven level sets, for 49
 cards total. Set ordinals are unique and dense from one through seven.
 
+## Verified collector-card deck membership
+
+Each ordered display name below binds to the stable ordinal identity
+`collector_card_level_<level>_<ordinal>`. Localized display text and quote events
+may change without changing that identity.
+
+### Level 1
+
+1. `collector_card_level_01_01` — Home Made Football;
+1. `collector_card_level_01_02` — Crab Juice;
+1. `collector_card_level_01_03` — Insanity Pepper;
+1. `collector_card_level_01_04` — Spinemelter 2000;
+1. `collector_card_level_01_05` — Parchment;
+1. `collector_card_level_01_06` — Carbon Rod; and
+1. `collector_card_level_01_07` — Mr. Sparkle Box.
+
+### Level 2
+
+1. `collector_card_level_02_01` — Head of Jebediah;
+1. `collector_card_level_02_02` — AM Radio Toy;
+1. `collector_card_level_02_03` — Bonestorm Game;
+1. `collector_card_level_02_04` — Big Butt Skinner;
+1. `collector_card_level_02_05` — Mr. Honeybunny;
+1. `collector_card_level_02_06` — Drivers License; and
+1. `collector_card_level_02_07` — Pregnancy Test.
+
+### Level 3
+
+1. `collector_card_level_03_01` — Angel Skeleton;
+1. `collector_card_level_03_02` — Bart's Soul;
+1. `collector_card_level_03_03` — Lisa Lionheart;
+1. `collector_card_level_03_04` — Lisa's Valentine;
+1. `collector_card_level_03_05` — Lisa's Machine;
+1. `collector_card_level_03_06` — Evil Braces; and
+1. `collector_card_level_03_07` — Soy Pop.
+
+### Level 4
+
+1. `collector_card_level_04_01` — Mr. Plow Jacket;
+1. `collector_card_level_04_02` — Burns Portrait;
+1. `collector_card_level_04_03` — Love Letter;
+1. `collector_card_level_04_04` — "Homer" Bowling Ball;
+1. `collector_card_level_04_05` — Red Blazer;
+1. `collector_card_level_04_06` — Boudoir Album; and
+1. `collector_card_level_04_07` — Pepper Spray.
+
+### Level 5
+
+1. `collector_card_level_05_01` — Apu's T-Shirt;
+1. `collector_card_level_05_02` — Pin Pals Shirt;
+1. `collector_card_level_05_03` — Prop 24 Sign;
+1. `collector_card_level_05_04` — Baby Feeder;
+1. `collector_card_level_05_05` — Ganesh Costume;
+1. `collector_card_level_05_06` — Chutney Squishee; and
+1. `collector_card_level_05_07` — Hot Dog.
+
+### Level 6
+
+1. `collector_card_level_06_01` — Radioactive Man #1;
+1. `collector_card_level_06_02` — "BORT" License Plate;
+1. `collector_card_level_06_03` — Bart T-Shirt;
+1. `collector_card_level_06_04` — Australia Boot;
+1. `collector_card_level_06_05` — Itchy and Scratchy Cel;
+1. `collector_card_level_06_06` — Gabbo Doll; and
+1. `collector_card_level_06_07` — Bart's Flying Hamster Science Project.
+
+### Level 7
+
+1. `collector_card_level_07_01` — Soul Donut;
+1. `collector_card_level_07_02` — Evil Krusty Doll;
+1. `collector_card_level_07_03` — Human Cookbook;
+1. `collector_card_level_07_04` — Time Travel Toaster;
+1. `collector_card_level_07_05` — Hell Toupee;
+1. `collector_card_level_07_06` — Monkey's Paw; and
+1. `collector_card_level_07_07` — "Smarch" Calendar.
+
 A card placement references one card identity, one world-layer composition, and
 one deterministic placement identity. Collecting the placement is idempotent:
 re-entering, streaming, save reload, or overlapping collision events cannot add
@@ -277,6 +355,17 @@ Collecting all 49 cards enables the movie-ticket reward transaction. Granting
 the ticket contributes to complete progression. Entering the associated movie
 presentation is a separate state transition; viewing the movie is not inferred
 merely from ticket ownership.
+
+## Level and game progress projection
+
+The exact eight-category level formula, seven-level aggregation, counted vehicle
+roles, level denominators, and one-percent movie contribution are owned by
+[campaign level composition and progress](campaign-level-composition-and-progress.md).
+
+Progression state provides accepted identity sets and transaction results. The
+campaign service calculates exact rational progress. Scrapbook, save-slot, and
+pause-menu widgets consume the same immutable projection and never recalculate
+it from visible entries.
 
 ## Objective integration
 

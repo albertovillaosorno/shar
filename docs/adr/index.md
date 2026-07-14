@@ -133,6 +133,8 @@ repository reference must point to the current owning decision.
   — Accepted
 - [C++-primary and Blueprint-compatible Unreal project](unreal/project/cpp-primary-blueprint-compatible-project.md)
   — Accepted
+- [Canonical seven-level campaign and world variants](unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
+  — Accepted
 - [Data-driven Unreal gameplay content catalog](unreal/runtime/data-driven-gameplay-content-catalog.md)
   — Accepted
 - [State-driven missions, interactions, interiors, and notoriety](unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
@@ -148,13 +150,15 @@ repository reference must point to the current owning decision.
   — Accepted
 - [Unreal support and bridge boundaries](unreal/support-and-bridge-boundaries.md)
   — Accepted
+- [Common UI front end and progress projection](unreal/ui/common-ui-frontend-and-progress-projection.md)
+  — Accepted
 - [HUD, radar, camera, and navigation parity](unreal/ui/hud-radar-camera-and-navigation.md)
   — Accepted
 - [UI parity boundary](unreal/ui/ui-parity-boundary.md) — Accepted
 
 ## Current coverage
 
-- Accepted decision records: 60.
+- Accepted decision records: 62.
 - Template records: 1.
 - Review date: 2026-07-14.
 - Status boundary: this catalog contains only accepted repository decisions;
