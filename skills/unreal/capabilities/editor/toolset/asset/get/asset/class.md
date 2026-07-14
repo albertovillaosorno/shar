@@ -73,15 +73,18 @@ class-specific toolset. The verified BaseMaterial fixture resolved as a
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-Two calls returned `MaterialFunction`. A separate `find_assets` call using
-`/Script/Engine.MaterialFunction` as the class reference returned the same
-fixture asset exactly once.
+Two calls returned `MaterialFunction`. An exact `find_assets` query using
+`/Script/Engine.MaterialFunction`, the fixture folder, its name, and a registry
+tag returned the same asset once. A missing asset path raised
+`Asset does not exist`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
 - The result is the class name, not the full class reference path.
+- A missing asset raises a native error; use `exists` first when absence is an
+  expected branch.
 - Class names for generated Blueprint assets can include generated-class
   conventions that differ from the package name.
 - The verified fixture is engine-plugin content, not an authored SHAR asset.
@@ -90,11 +93,11 @@ fixture asset exactly once.
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

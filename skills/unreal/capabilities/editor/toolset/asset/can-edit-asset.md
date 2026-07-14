@@ -73,8 +73,9 @@ clean and not checked out.
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-Two calls returned `true`. Independent `is_checked_out` and `is_dirty` calls
-returned `false`, and `exists` confirmed the asset remained registered.
+Two calls returned `true`. Independent checkout and dirty-state reads returned
+`false`, and `exists` confirmed the asset remained registered. A missing asset
+raised `Asset does not exist`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
@@ -82,6 +83,7 @@ returned `false`, and `exists` confirmed the asset remained registered.
 <!-- BEGIN MANUAL FIELD: known-caveats -->
 - The live description states that this returns `true` when source control is
   disabled; it is not a filesystem write-permission check.
+- Missing assets raise a native error rather than returning `false`.
 - `true` does not mean an engine-plugin fixture is an appropriate mutation
   target.
 - Editability does not prove the package is saved or free of referencers.
@@ -90,11 +92,11 @@ returned `false`, and `exists` confirmed the asset remained registered.
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

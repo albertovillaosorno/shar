@@ -72,16 +72,19 @@ valid empty-metadata baseline.
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-Two calls returned `{}`. Independent `exists` and `get_asset_class` calls
-proved the asset was present and valid, while `get_asset_tags` returned seven
-registry tags, distinguishing empty custom metadata from a missing asset.
+Two calls returned `{}`. Independent existence and class reads proved the
+asset was valid, while `get_asset_tags` returned seven registry fields,
+distinguishing empty custom metadata from a missing asset. A missing path raised
+`Unable to load`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
 - An empty object is a valid result and means no custom metadata was returned.
-- This tool does not return the Asset Registry tag dictionary.
+- A missing or unloadable asset raises an error rather than returning `{}`.
+- This tool loads the asset and does not return the Asset Registry tag
+  dictionary.
 - Metadata expectations must be defined by the producing SHAR workflow; absence
   is not automatically an error.
 <!-- END MANUAL FIELD: known-caveats -->
@@ -89,11 +92,11 @@ registry tags, distinguishing empty custom metadata from a missing asset.
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

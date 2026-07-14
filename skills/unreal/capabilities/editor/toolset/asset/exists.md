@@ -73,9 +73,10 @@ path without loading or mutating a package.
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-The fixture asset returned `true`, its containing folder also returned
-`true`, and `/Game/__SHAR_MCP_MissingAsset__` returned `false`. An independent
-`find_assets` call returned the fixture asset exactly once.
+Two calls returned `true` for the fixture, and its containing folder also
+returned `true`. `/Game/__SHAR_MCP_MissingAsset__` returned `false`. An exact
+`find_assets` query using the fixture name, class, folder, and one registry tag
+returned the fixture once.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
@@ -83,7 +84,8 @@ The fixture asset returned `true`, its containing folder also returned
 <!-- BEGIN MANUAL FIELD: known-caveats -->
 - The tool accepts both asset and folder paths, so `true` does not identify the
   object kind.
-- A missing path returns `false` rather than an error.
+- A missing path returns `false` rather than an error, unlike the other verified
+  asset-state reads.
 - Existence does not prove class, editability, loaded state, saved state, or
   dependency validity.
 <!-- END MANUAL FIELD: known-caveats -->
@@ -91,11 +93,11 @@ The fixture asset returned `true`, its containing folder also returned
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

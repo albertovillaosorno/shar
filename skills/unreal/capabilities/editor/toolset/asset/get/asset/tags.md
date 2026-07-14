@@ -74,7 +74,8 @@ fields describing inputs, outputs, library exposure, usage, and preview state.
 <!-- BEGIN MANUAL FIELD: project-verification -->
 Two calls returned the same seven-key dictionary. Using the returned
 `CombinedInputTypes` value of `15` as an exact `find_assets` tag filter returned
-the same fixture asset and no additional result.
+the same fixture asset and no additional result. A missing asset raised
+`Asset does not exist`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
@@ -83,6 +84,7 @@ the same fixture asset and no additional result.
 - Asset Registry tags are distinct from custom package metadata returned by
   `get_metadata_tags`.
 - Numeric and Boolean concepts are serialized as strings.
+- Missing assets raise a native error rather than returning an empty dictionary.
 - Tag keys and values are class- and version-specific; inspect them before
   constructing exact-match filters.
 <!-- END MANUAL FIELD: known-caveats -->
@@ -90,11 +92,11 @@ the same fixture asset and no additional result.
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

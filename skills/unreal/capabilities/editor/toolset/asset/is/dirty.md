@@ -72,9 +72,9 @@ fixture was clean.
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-Two calls returned `false`. `exists` confirmed the asset, while repeated class,
-tag, and metadata reads remained stable and `is_checked_out` also returned
-`false`.
+Two calls returned `false`. Existence, class, registry-tag, and metadata reads
+remained stable, and checkout state also returned `false`. A missing asset raised
+`Asset does not exist`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
@@ -82,6 +82,7 @@ tag, and metadata reads remained stable and `is_checked_out` also returned
 <!-- BEGIN MANUAL FIELD: known-caveats -->
 - `false` means no unsaved changes were reported for that asset; it does not
   prove a requested save operation occurred.
+- Missing assets raise a native error rather than returning `false`.
 - Dirty state can change immediately after any editor mutation.
 - This result is separate from checkout, editability, and dependency state.
 <!-- END MANUAL FIELD: known-caveats -->
@@ -89,11 +90,11 @@ tag, and metadata reads remained stable and `is_checked_out` also returned
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

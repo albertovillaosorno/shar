@@ -73,7 +73,8 @@ current editor user.
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
 Two calls returned `false`. `can_edit_asset` returned `true`, `is_dirty`
-returned `false`, and `exists` confirmed the same asset path.
+returned `false`, and `exists` confirmed the same fixture path. A missing asset
+raised `Asset does not exist`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
@@ -81,6 +82,7 @@ returned `false`, and `exists` confirmed the same asset path.
 <!-- BEGIN MANUAL FIELD: known-caveats -->
 - `false` can mean source control is disabled or that the asset is simply not
   checked out; it does not prove another write boundary is satisfied.
+- Missing assets raise a native error rather than returning `false`.
 - Checkout state can change between this read and a later mutation.
 - The result does not describe unsaved in-memory changes; use `is_dirty` for
   that separate state.
@@ -89,11 +91,11 @@ returned `false`, and `exists` confirmed the same asset path.
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
