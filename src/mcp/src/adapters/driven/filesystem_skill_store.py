@@ -50,6 +50,7 @@
 
 from __future__ import annotations
 
+import ntpath
 from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING
 
@@ -230,25 +231,37 @@ class FilesystemSkillStore:
                 directory.rmdir()
 
 
+def _validated_generated_path(relative_path: str) -> PurePosixPath:
+    if "\\" in relative_path:
+        message = (
+            "generated skill path contains an unsafe path separator: "
+            + relative_path
+        )
+        fail_protocol(message)
+    path = PurePosixPath(relative_path)
+    if any(
+        ":" in segment or ntpath.isreserved(segment) for segment in path.parts
+    ):
+        message = f"generated skill path is not portable: {relative_path}"
+        fail_protocol(message)
+    if path.is_absolute() or ".." in path.parts:
+        fail_protocol(f"unsafe generated skill path: {relative_path}")
+    if path != _INDEX_PATH:
+        if not path.parts or path.parts[0] != _CAPABILITIES_ROOT.name:
+            fail_protocol(
+                f"generated skill path is outside owned surface: {path}"
+            )
+        if path.suffix != ".md":
+            fail_protocol(f"generated capability path must be Markdown: {path}")
+        if path.name == _INDEX_PATH.name:
+            fail_protocol(f"reserved central index filename: {path}")
+    return path
+
+
 def _checked_targets(documents: tuple[SkillDocument, ...]) -> dict[str, str]:
     targets: dict[str, str] = {}
     for document in documents:
-        path = PurePosixPath(document.relative_path)
-        if path.is_absolute() or ".." in path.parts:
-            fail_protocol(
-                f"unsafe generated skill path: {document.relative_path}"
-            )
-        if path != _INDEX_PATH:
-            if not path.parts or path.parts[0] != _CAPABILITIES_ROOT.name:
-                fail_protocol(
-                    f"generated skill path is outside owned surface: {path}"
-                )
-            if path.suffix != ".md":
-                fail_protocol(
-                    f"generated capability path must be Markdown: {path}"
-                )
-            if path.name == _INDEX_PATH.name:
-                fail_protocol(f"reserved central index filename: {path}")
+        path = _validated_generated_path(document.relative_path)
         normalized = path.as_posix()
         if normalized in targets:
             fail_protocol(f"duplicate generated skill path: {normalized}")

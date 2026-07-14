@@ -240,6 +240,65 @@ def test_filesystem_store_rejects_non_markdown_capability_path(
     assert not output_root.exists()
 
 
+def test_filesystem_store_rejects_windows_separator_traversal(
+    tmp_path: Path,
+) -> None:
+    """Backslash traversal cannot escape the generated capabilities root."""
+    output_root = tmp_path / "skills" / "unreal"
+    documents = MarkdownSkillRenderer(TEST_UNREAL_MCP_VERSION).render(
+        complete_catalog()
+    )
+    capability = next(
+        document
+        for document in documents
+        if document.relative_path.startswith("capabilities/")
+    )
+    invalid_documents = tuple(
+        document._replace(relative_path=r"capabilities/..\outside.md")
+        if document == capability
+        else document
+        for document in documents
+    )
+
+    with pytest.raises(ProtocolError, match="unsafe path separator"):
+        FilesystemSkillStore(output_root).replace(invalid_documents)
+
+    assert not output_root.exists()
+
+
+def test_filesystem_store_rejects_nonportable_windows_segments(
+    tmp_path: Path,
+) -> None:
+    """Windows aliases and device names fail before generated writes."""
+    documents = MarkdownSkillRenderer(TEST_UNREAL_MCP_VERSION).render(
+        complete_catalog()
+    )
+    capability = next(
+        document
+        for document in documents
+        if document.relative_path.startswith("capabilities/")
+    )
+    invalid_paths = (
+        "capabilities/C:outside.md",
+        "capabilities/con.md",
+        "capabilities/name:.md",
+    )
+
+    for index, invalid_path in enumerate(invalid_paths):
+        output_root = tmp_path / f"unreal-{index}"
+        invalid_documents = tuple(
+            document._replace(relative_path=invalid_path)
+            if document == capability
+            else document
+            for document in documents
+        )
+
+        with pytest.raises(ProtocolError, match="not portable"):
+            FilesystemSkillStore(output_root).replace(invalid_documents)
+
+        assert not output_root.exists()
+
+
 def test_filesystem_store_rejects_nested_index_before_mutation(
     tmp_path: Path,
 ) -> None:
