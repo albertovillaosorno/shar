@@ -98,30 +98,34 @@ purpose, independent implementation, interoperability intent, or an accepted ADR
 does not determine a legal outcome by itself.
 
 - Active legal records: 50.
-- Review date: 2026-07-13.
+- Review date: 2026-07-14.
 - Statutory currentness: the Office of the Law Revision Counsel classification
-  tables for the 119th Congress (both sessions, through Pub. L. 119-100) were
-  checked on 2026-07-13. The only Title 17 change is to 17 U.S.C. § 105 (Pub. L.
-  119-60, § 1702), which no record cites; no cited section of Title 15, Title
-  17, or Title 18 was amended. The 37 C.F.R. § 201.40 source credit still ends
-  at 89 FR 85446 (Oct. 28, 2024).
-- Platform currentness: the GitHub Terms of Service and GitHub Additional
-  Product Terms identify 2026-04-27 as their effective date. The live YouTube
-  terms endpoint identifies 2023-12-15 as the effective date for the reviewed
-  United States-facing general terms; that date was reverified on 2026-07-13.
+  tables were checked on 2026-07-14. The published 119th Congress tables cover
+  Public Laws 119-1 through 119-69 and 119-71 through 119-73 for the first
+  session, plus Public Law 119-70 and Public Laws 119-74 through 119-99 for the
+  second session. The only classified Title 17 change is to 17 U.S.C. § 105
+  (Pub. L. 119-60, § 1702), which no record cites; this review identified no
+  amendment to a cited section of Title 15, Title 17, or Title 18. The eCFR
+  identifies Title 37 as current through 2026-07-10, and the 37 C.F.R. § 201.40
+  amendment history still ends at 89 FR 85446 (Oct. 28, 2024).
+- Platform currentness: the live GitHub Terms of Service identify 2026-04-27 as
+  their effective date. The live YouTube terms endpoint identifies 2023-12-15
+  as the date of the reviewed United States-facing general terms. Both dates
+  were reverified on 2026-07-14.
 - Rulemaking currentness: the Copyright Office identifies the tenth triennial
   Section 1201 proceeding as the 2027 cycle and states that renewed exemptions
   will govern October 2027 through October 2030. The current 2024 exemptions
-  remain the operative classes until that cycle takes effect.
+  remain the operative classes until that cycle takes effect. This status was
+  reverified on 2026-07-14.
 
 Primary currentness endpoints:
 
-- Office of the Law Revision Counsel, *Title 17, Chapter 12*:
-  <https://uscode.house.gov/view.xhtml?path=/prelim@title17/chapter12&edition=prelim>
-  (Accessed: 13 July 2026).
+- Office of the Law Revision Counsel, *United States Code Classification
+  Tables*: <https://uscode.house.gov/classification/tables.shtml> (Accessed: 14
+  July 2026).
 - <https://www.ecfr.gov/current/title-37/part-201/section-201.40>
-  (Accessed: 13 July 2026).
-- <https://www.copyright.gov/1201/> (Accessed: 13 July 2026).
+  (Accessed: 14 July 2026).
+- <https://www.copyright.gov/1201/> (Accessed: 14 July 2026).
 - <https://docs.github.com/en/site-policy/github-terms/github-terms-of-service>
-  (Accessed: 13 July 2026).
-- <https://www.youtube.com/t/terms> (Accessed: 13 July 2026).
+  (Accessed: 14 July 2026).
+- <https://www.youtube.com/t/terms> (Accessed: 14 July 2026).
