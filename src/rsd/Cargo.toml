@@ -1,0 +1,21 @@
+[package]
+name = "rsd"
+version.workspace = true
+edition = "2024"
+license = "MIT"
+description = "Exports Radical RSD audio files to WAV for local SHAR migration evidence."
+publish = false
+
+[dependencies]
+# schoenwald-cli centralizes process arguments, ordered diagnostics, newline handling, and exit-code mapping for the RSD driving adapter.
+schoenwald-cli = { path = "../cli" }
+# schoenwald-filesystem centralizes deterministic discovery, path inspection, canonical identities, and complete source reads before transactional publication.
+schoenwald-filesystem = { path = "../filesystem" }
+
+[lib]
+name = "rsd"
+path = "src/lib.rs"
+
+[[bin]]
+name = "rsd-export"
+path = "src/main.rs"
