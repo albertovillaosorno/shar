@@ -47,41 +47,59 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to distinguish an ordinary Unreal plugin from a Game Feature
+Plugin before SHAR calls GFP state or transition tools. This prevents a valid
+plugin name from being misrouted into the Game Features subsystem.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project and native MCP server must be ready.
+- Confirm the exact plugin name through `PluginToolset.ListDiscoveredPlugins` or
+  another Plugin Manager read.
+- Treat a `false` result as a routing decision, not as a missing-plugin result.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "pluginName": "Niagara"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two consecutive calls returned `false`. Independent PluginToolset reads
+confirmed that `Niagara` was discovered, enabled, and owned the verified
+`/Niagara/...` asset mount. A deliberately missing plugin name raised a native
+could-not-find-plugin error.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- `false` means the named discovered plugin is not a Game Feature Plugin; it
+  does not mean the plugin is disabled or unavailable.
+- A missing plugin name raises an error instead of returning `false`.
+- `GetGameFeatureState` and `IsGameFeatureActive` rejected the ordinary
+  `Niagara` plugin as `GFP not found`.
+- Plugin classification can change only with plugin descriptor or installation
+  changes; rediscover after such changes or an editor restart.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

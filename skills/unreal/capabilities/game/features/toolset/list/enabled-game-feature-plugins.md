@@ -49,41 +49,57 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to enumerate enabled Game Feature Plugins before SHAR checks
+runtime state or plans a feature transition. Compare it with the discovered GFP
+inventory to distinguish an empty project from a disabled feature set.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project and native MCP server must be ready.
+- The Plugin Manager and Game Features subsystem must have completed startup.
+- Run `ListDiscoveredGameFeaturePlugins` in the same editor session for the
+  complete GFP comparison set.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two consecutive calls returned the same empty array. The discovered GFP
+inventory was also empty. Independent general plugin reads reported 276 enabled
+plugins, including `Niagara`, confirming that this result is specific to Game
+Feature Plugins rather than all enabled plugins.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- An empty array is valid and means no enabled Game Feature Plugin is known to
+  the Game Features subsystem.
+- This is not the general enabled-plugin inventory; use `PluginToolset` for that
+  separate question.
+- Enabled does not necessarily mean `Active`; state inspection requires a real
+  GFP identity from the discovered inventory.
+- Results can change after plugin configuration or editor restart.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

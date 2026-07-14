@@ -49,41 +49,58 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool as the first Game Features preflight before SHAR inspects feature
+state or considers activation. The complete discovered inventory determines
+whether later feature-specific work has a real plugin identity or must stop.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project and native MCP server must be ready.
+- The Plugin Manager and Game Features subsystem must have completed startup
+  discovery.
+- Use the returned names exactly in later Game Features calls.
+- Do not substitute the general plugin inventory for this GFP-specific list.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two consecutive calls returned the same empty array. Independent general plugin
+reads reported 893 discovered plugins, including `Niagara`, proving that the
+empty GFP inventory was not a Plugin Manager failure.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- An empty array is valid and means no Game Feature Plugin is currently
+  discovered in this editor session.
+- General Unreal plugins are intentionally excluded even when they are enabled
+  and own content mounts.
+- Discovery can change after project configuration, plugin installation, or an
+  editor restart; repeat this preflight in the same session as dependent reads.
+- Without a returned identity, state, activation, and deactivation tools cannot
+  be validated truthfully.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
