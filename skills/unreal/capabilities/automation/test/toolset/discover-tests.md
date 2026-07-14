@@ -50,41 +50,63 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to initialize Unreal's local automation controller before SHAR
+lists, selects, runs, or inspects editor automation tests. Treat successful
+discovery as a session prerequisite, not as evidence that any test executed.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project and native MCP server must be ready.
+- The editor must be idle enough to discover the local automation worker.
+- Use the default cached discovery first; force rediscovery only after test
+  modules, plugins, or registrations changed in the same editor session.
+- Allow a longer timeout than ordinary metadata reads.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "bForceRediscover": false
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two consecutive default calls returned `{ "status": "ready" }`. A separate
+call with `bForceRediscover: true` also returned `ready`. A following bounded
+`ListTests` query returned 20 of 21 MCP-related tests, proving that the report
+tree was available without starting a test run.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- `returnValue` is a JSON string and requires a second JSON parse.
+- Discovery initializes and refreshes controller state but does not execute any
+  test.
+- The operation is asynchronous and can take longer than ordinary read tools;
+  use an appropriate timeout and do not assume a client timeout cancelled native
+  discovery.
+- Forced rediscovery bypasses the cached report tree and should be reserved for
+  a known registration change.
+- A `ready` result does not prove that a particular test exists; verify it with
+  `ListTests`.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

@@ -48,41 +48,58 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool after discovery to confirm that the Unreal automation controller
+is idle or to monitor aggregate progress during a bounded SHAR test run. It is
+the lightweight state check before requesting detailed per-test results.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- `DiscoverTests` must have completed successfully in the same editor session.
+- When monitoring a run, retain the exact selected test identities and invocation
+  evidence separately.
+- Poll at a bounded cadence; do not treat repeated transport success as progress.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two consecutive calls returned `state: "Ready"`, `numEnabled: 8772`, and zero
+complete, passed, or failed tests. `GetTestResults` independently returned an
+empty zero-count result, confirming that no test run had been started.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- `returnValue` is a JSON string and requires a second JSON parse.
+- Status is point-in-time controller state and can change immediately after a
+  run or stop request.
+- `numEnabled` is a controller metric and did not equal the unfiltered
+  `ListTests.total` in the verified session; do not use those fields as an
+  equality invariant.
+- `Ready` proves controller readiness, not that selected tests passed or even
+  executed.
+- Aggregate counts do not replace `GetTestResults` for per-test evidence.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

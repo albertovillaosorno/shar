@@ -48,41 +48,57 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to retrieve detailed current or most-recent Unreal automation
+results after a bounded SHAR test invocation, or to prove that no result set is
+currently available before starting a new controlled run.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- `DiscoverTests` must have completed successfully in the same editor session.
+- For executed tests, retain the exact run invocation and wait for controller
+  completion before treating results as final.
+- Correlate returned test paths with the previously selected identities.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two consecutive calls before any run returned an empty result with zero total,
+passed, failed, skipped, and duration values. `GetTestStatus` independently
+reported `Ready` with zero completed tests, confirming that the empty result was
+valid idle state rather than a transport failure.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- `returnValue` is a JSON string and requires a second JSON parse.
+- An empty zero-count result is valid when no current or previous run is
+  available.
+- The tool reports the current or most recent run; preserve run-selection
+  evidence so stale results cannot be attributed to a later invocation.
+- Detailed results are not final while the controller is still running.
+- This read does not start, stop, retry, or clear automation tests.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

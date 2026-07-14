@@ -47,41 +47,65 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool after discovery to locate exact Unreal automation test identities
+for SHAR editor, native MCP, import, or validation workflows. Keep both filters
+and the result limit explicit so later execution cannot target an unintended
+large test set.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- `DiscoverTests` must have completed successfully in the same editor session.
+- Choose a narrow name or tag substring from the intended test domain.
+- Use a positive bounded `limit` for routine inspection.
+- Treat returned full paths as the only valid identities for `RunTests`.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "nameFilter": "MCP",
+  "tagFilter": "",
+  "limit": 20
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two consecutive calls returned the same ordered 20 test paths with
+`total: 21` and `returned: 20`. Setting `limit` to `0` returned all 21 matches.
+An unmatched name and tag-filtered MCP queries returned empty lists without an
+error.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- `returnValue` is a JSON string and requires a second JSON parse.
+- `nameFilter` and `tagFilter` narrow the same result set; a nonmatching tag can
+  reduce a valid name search to zero.
+- `total` is the number matching the filters, while `returned` is bounded by
+  `limit`.
+- `limit: 0` is documented as unlimited and should be avoided for broad routine
+  queries. A negative limit also behaved as unlimited in the verified session,
+  but that behavior is undocumented and must not be relied upon.
+- Test inventory and ordering can change after plugin, module, or engine changes;
+  rediscover before using stale identities.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
