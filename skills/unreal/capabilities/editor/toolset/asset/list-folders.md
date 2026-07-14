@@ -73,9 +73,9 @@ developer, and Python support folders and no authored project assets.
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-Two recursive calls returned the same seven folder paths. A non-recursive
-call returned only the three direct `/Game` children, and two independent
-`find_assets` calls under `/Game` returned empty arrays.
+Two recursive calls returned the same seven folder paths. Two non-recursive
+calls returned only the three direct `/Game` children. Independent recursive
+and direct `find_assets` calls under `/Game` both returned empty arrays.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
@@ -91,11 +91,11 @@ call returned only the three direct `/Game` children, and two independent
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

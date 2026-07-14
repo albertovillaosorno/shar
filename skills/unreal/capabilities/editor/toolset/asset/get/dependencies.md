@@ -75,7 +75,9 @@ replacing, or validating a generated SHAR asset. The verified fixture
 <!-- BEGIN MANUAL FIELD: project-verification -->
 Two calls returned exactly one dependency:
 `/BaseMaterial/Materials/Functions/MF_Rotate2D`. `exists` returned `true` for
-that path, and `get_referencers` on the dependency included the source asset.
+that path, and `get_referencers` included the source asset. The target itself
+returned an empty dependency array. A missing asset raised `Asset does not
+exist`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
@@ -83,6 +85,7 @@ that path, and `get_referencers` on the dependency included the source asset.
 <!-- BEGIN MANUAL FIELD: known-caveats -->
 - An empty array is valid; the `MF_Rotate2D` fixture had no reported outbound
   dependencies.
+- Missing assets raise a native error rather than returning an empty array.
 - Results are registry asset paths and can cross plugin roots.
 - The relationship does not prove that the referenced object is loaded or used
   during the current editor frame.
@@ -91,11 +94,11 @@ that path, and `get_referencers` on the dependency included the source asset.
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

@@ -73,14 +73,16 @@ fixture had 14 referencers across BaseMaterial and Interchange plugin content.
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
 Two calls returned the same 14 referencer paths. For every returned asset, an
-independent `get_dependencies` call included the original `MF_Rotate2D` target,
-confirming the incoming relationship in both directions.
+independent `get_dependencies` call contained the original `MF_Rotate2D`
+target, confirming all incoming relationships in both directions. A missing
+asset raised `Asset does not exist`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
 - Referencers can belong to other enabled plugin roots, not only `/Game`.
+- Missing assets raise a native error rather than returning an empty array.
 - The result describes Asset Registry relationships, not current runtime use.
 - Counts can change after plugin enablement, registry refresh, import, or asset
   edits; capture the set immediately before a mutation decision.
@@ -89,11 +91,11 @@ confirming the incoming relationship in both directions.
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

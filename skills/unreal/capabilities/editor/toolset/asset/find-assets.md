@@ -76,10 +76,10 @@ that the current project has no authored assets yet.
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-The validated call returned only
-`/BaseMaterial/Materials/Functions/MF_Rotate2D` and repeated identically. A
-lowercase name returned the same asset, a missing name returned an empty array,
-and `exists` plus `get_asset_class` confirmed the result.
+Two calls returned only `/BaseMaterial/Materials/Functions/MF_Rotate2D`.
+A lowercase name produced the same result, while a missing name returned an
+empty array. Independent existence, class, and exact registry-tag checks
+confirmed the returned asset.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
@@ -96,11 +96,11 @@ and `exists` plus `get_asset_class` confirmed the result.
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

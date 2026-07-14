@@ -75,9 +75,9 @@ no project-plugin content roots, while engine-plugin inclusion exposed the
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
 Two calls returned the same 84 unique virtual roots and included
-`/BaseMaterial/`. Two calls with `include_engine` set to `false` returned an
-empty array, independently confirming that the current SHAR project has no
-content-bearing project plugins.
+`/BaseMaterial/`. Two calls with `include_engine: false` returned an empty
+array, confirming that the current SHAR project has no content-bearing project
+plugins.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
@@ -94,11 +94,11 @@ content-bearing project plugins.
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
