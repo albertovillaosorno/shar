@@ -7,7 +7,7 @@
 - Jurisdiction: United States federal law plus every distribution territory.
 - Authority level: Statutes, controlling cases, trademark registrations, and
   product-specific branding rules.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-14.
 - Counsel review: Not performed.
 
 ## Question Presented
@@ -26,10 +26,14 @@ dress, or territorial rights.
 The title *The Simpsons: Hit & Run* and the THE SIMPSONS designation are
 material compatibility references for this repository. Historical USPTO Official
 Gazette material records a THE SIMPSONS application by Twentieth Century Fox
-Film Corporation, and Disney currently uses The Simpsons branding in first-party
-consumer material. Those sources establish that the designation is active and
-relevant; they do not establish a complete current registration and assignment
-chain for every territory or product class.
+Film Corporation. Current Disney+ and FOX consumer pages use the designation for
+the television series.
+
+Those sources establish historical application evidence and current first-party
+commercial use. They do not establish that one federal registration is active,
+identify the current owner of every relevant registration, prove an assignment
+chain, or resolve rights in every territory, product class, game title, logo, or
+other presentation.
 
 The accepted repository decision is narrower than a legal conclusion: use
 plain-text factual compatibility wording, keep SHAR's own identity prominent,
@@ -59,13 +63,16 @@ repository name may reproduce third-party branding without review.
 
 ## Current Sources
 
-- USPTO, *Official Gazette for Trademarks*, 2003-12-16, application serial
+- USPTO, *Official Gazette for Trademarks*, 16 December 2003, application serial
   number 78/167,041:
   <https://www.uspto.gov/web/trademarks/tmog/20031216_OG.pdf>
-  (Accessed: 13 July 2026).
-- Disney, current The Simpsons consumer page:
+  (Accessed: 14 July 2026).
+- Disney+, *The Simpsons* consumer page:
   <https://www.disneyplus.com/browse/entity-cac75c8f-a9e2-4d95-ac73-1cf1cc7b9568>
-  (Accessed: 13 July 2026).
+  (Accessed: 14 July 2026).
+- FOX, *The Simpsons* consumer page:
+  <https://www.fox.com/detail/series/SER000852IRHK/the-simpsons> (Accessed: 14
+  July 2026).
 - [Lawful local input and publication boundary](../../adr/legal/lawful-local-input-and-publication-boundary.md).
 
 ## Verification Checklist
