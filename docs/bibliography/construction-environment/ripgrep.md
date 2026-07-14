@@ -7,12 +7,13 @@ for repository-specific file inventories and legal review.
 ## Review Status And Scope
 
 - Review status: Evidence recorded.
-- Evidence status: Verified — Official identity, installed version, local role,
-  and upstream license statement verified.
+- Evidence status: Verified — Installed ripgrep 15.1.0 revision
+  `af60c2de9d`, PCRE2 capability, local role, latest signed upstream release,
+  release date, and upstream license statement were verified.
 - Counsel review: Not performed.
 - Legal scope: Upstream licensing and the current non-distributed local-tool
   posture; no legal opinion is asserted.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-14.
 - Distribution posture: Local construction and investigation utility.
 - Subject class: Open-source recursive regular-expression search tool.
 
@@ -40,11 +41,16 @@ filters, encoding, permissions, or command options exclude content.
 
 ## Provenance And Version History
 
-The observed local identity and version come from `rg --version` output in the
-operator environment. The official upstream repository establishes the project
-identity, documented search behavior, and dual-license statement. The observed
-15.1.0 version is dated environment evidence, not a permanent latest-version
-claim or a repository requirement.
+The observed executable reports ripgrep 15.1.0, revision `af60c2de9d`, PCRE2
+10.45 with JIT support, and runtime SIMD support through AVX2. GitHub identifies
+15.1.0, published 22 October 2025, as the latest non-draft, non-prerelease
+release and marks the release and source commit as signed and verified.
+
+The installed version therefore matches the reviewed upstream release as of
+14 July 2026. These values are dated environment and currentness evidence, not a
+permanent latest-version claim or repository requirement. The official upstream
+repository separately establishes the project identity, documented search
+behavior, and dual-license statement.
 
 ## Authorship, Ownership, And Attribution
 
@@ -88,7 +94,13 @@ and the exact distributed artifact.
 
 ## Source References
 
-- Gallant, A. and contributors (n.d.) *ripgrep official GitHub repository*.
-  Available at: <https://github.com/BurntSushi/ripgrep> (Accessed: 13 July
+- Gallant, A. and contributors (2025) *ripgrep 15.1.0*. Identified as the
+  latest release, published 22 October 2025, with signed and verified release
+  and source-commit evidence. Available at:
+  <https://github.com/BurntSushi/ripgrep/releases/tag/15.1.0> (Accessed: 14 July
   2026).
-- SHAR operator environment (2026) `rg --version` output for ripgrep 15.1.0.
+- Gallant, A. and contributors (n.d.) *ripgrep official GitHub repository*.
+  Available at: <https://github.com/BurntSushi/ripgrep> (Accessed: 14 July
+  2026).
+- SHAR operator environment (2026), `rg --version` output identifying ripgrep
+  15.1.0 revision `af60c2de9d`, PCRE2 10.45 with JIT, and runtime AVX2 support.
