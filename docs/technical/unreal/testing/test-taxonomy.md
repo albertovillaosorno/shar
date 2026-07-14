@@ -1,0 +1,82 @@
+# Unreal test taxonomy
+
+- Status: Active
+- Last reviewed: 2026-07-13
+
+## Governing decisions
+
+- [Runtime parity test boundary](../../../adr/unreal/runtime/runtime-parity-test-boundary.md)
+- [Graphics quality presets and platform support](../../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
+- [Portable save storage and lifecycle](../../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+
+## Purpose
+
+This specification explains how repository-owned Unreal tests are classified by
+the contract, native target, graphics preset, input adapter, and environment they
+prove.
+
+## Repository model
+
+Tests are grouped as deterministic repository logic, native automation, editor
+integration, asset ingestion, runtime parity, graphics-preset conformance,
+input-adapter conformance, platform-package conformance, or full-playthrough
+verification. Each test uses the narrowest environment capable of proving its
+contract.
+
+Platform-independent domain tests prove shared simulation and identity rules.
+Native package tests then prove platform lifecycle, rendering, input, storage,
+save, and shutdown behavior for each claimed operating-system and architecture
+target. Preset tests prove resolved quality settings and visual invariants.
+
+## Invariants
+
+- A test names the boundary, platform, architecture, preset, and input adapter it
+  proves when those dimensions are material.
+- Pure repository logic does not require a live editor or native platform
+  package.
+- Integration tests use synthetic or repository-owned evidence.
+- Runtime parity claims map to observable behavior.
+- A passing Windows package does not prove Linux, macOS, Android, x64, or ARM64.
+- A passing Epic preset does not prove Low, Medium, High, or Ultra.
+- Keyboard and mouse, gamepad, and touch tests assert the same semantic actions.
+- Android conformance includes forced Low quality, touch completion, safe areas,
+  display cutouts, lifecycle transitions, storage, and the 144-frames-per-second
+  ceiling.
+- Save conformance uses one logical schema and equivalent accepted revisions
+  across x64, ARM64, Windows, Linux, macOS, and Android.
+
+## Failure behavior
+
+- Tests that depend on hidden editor state, proprietary fixtures, network
+  services, undefined ordering, emulation-only behavior, or unrecorded device
+  defaults are invalid.
+- A passing lower-level test never substitutes for required integration, native
+  package, preset, input-adapter, or runtime evidence.
+- A target remains unsupported when its native package cannot be produced or its
+  required evidence is incomplete.
+- A preset fails conformance when resolved settings are non-monotonic, required
+  visuals disappear, or gameplay behavior changes.
+- A performance result fails review when it was obtained by changing gameplay,
+  hiding a defect, or reducing quality outside the selected preset.
+
+## Verification
+
+- Repository policy tests inspect taxonomy, matrix coverage, and fixture
+  boundaries.
+- Native automation verifies editor-owned behavior.
+- Every claimed platform and architecture passes native package launch,
+  rendering, input, storage, save/load, cinematic playback, restart, and clean-
+  shutdown tests.
+- Cross-architecture golden saves, migration fixtures, interrupted-write fault
+  injection, and Android lifecycle termination prove transactional recovery.
+- Every required audio role verifies canonical duration, locale, loop boundaries,
+  event timing, loading policy, stream-cache behavior, concurrency, focus, and
+  no-network playback through the native target audio route.
+- Every required cinematic verifies first and final frame, canonical duration,
+  audio synchronization, subtitles, event timing, skip, pause, resume, and
+  exactly-once completion through the native target media route.
+- Every desktop preset passes resolved-setting, visual-comparison, performance,
+  and deterministic-replay tests.
+- Android Low passes touch, safe-area, lifecycle, frame-cap, and complete-
+  playthrough tests on representative hardware.
+- Full-playthrough evidence verifies closure for each claimed platform family.

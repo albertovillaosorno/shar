@@ -1,0 +1,756 @@
+# Unreal gameplay content catalog
+
+- Status: Active
+- Last reviewed: 2026-07-13
+
+## Governing decisions
+
+- [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+- [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
+- [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
+- [Driving, traffic, and vehicle behavior parity](../../adr/gameplay/vehicles/driving-traffic-and-vehicle-ai.md)
+- [Unreal manifest and package taxonomy](../../adr/pipeline/unreal/unreal-manifest-and-package-taxonomy.md)
+- [Three-base-world consolidation](../../adr/pipeline/unreal/three-base-world-consolidation.md)
+- [Native world partition and data layers](../../adr/pipeline/unreal/world-partition-and-data-layer-import.md)
+
+## Purpose
+
+This specification defines the canonical Unreal representation for gameplay
+content. It fixes identity, asset placement, schemas, loading, progression,
+validation, and verification for characters, vehicles, missions, locations,
+rewards, costumes, dialogue events, races, and bonus modes.
+
+The catalog is the runtime-facing composition layer above deterministic package
+plans. It does not decode source formats, rediscover package membership, or let
+mutable editor state redefine game identity.
+
+## Catalog boundary
+
+The catalog consumes approved native asset plans. A plan supplies stable package
+identities, capabilities, dependencies, normalized artifacts, and provenance.
+The catalog converts those inputs into game-domain definitions without changing
+the plan's identity or classification.
+
+A source census index and its manifest are coverage evidence, not runtime
+assets. Their public contract is:
+
+- every listed record has exactly one manifest entry;
+- requested and exported record totals agree;
+- export errors are zero before a catalog slice is accepted;
+- duplicate pages and alternate names are normalized as aliases rather than
+  duplicated gameplay entities; and
+- descriptive prose, screenshots, external links, and historical trivia never
+  become runtime authority.
+
+## Canonical content layout
+
+All authored runtime content lives below `/Game/SHAR`. No gameplay system may
+scan another root or infer ownership from an arbitrary folder.
+
+```text
+/Game/SHAR
+├── Data
+│   ├── Catalog
+│   ├── Characters
+│   ├── Vehicles
+│   ├── Missions
+│   │   ├── Level_01
+│   │   ├── Level_02
+│   │   ├── Level_03
+│   │   ├── Level_04
+│   │   ├── Level_05
+│   │   ├── Level_06
+│   │   └── Level_07
+│   ├── Locations
+│   ├── Rewards
+│   ├── Costumes
+│   ├── BonusModes
+│   └── Tables
+│       ├── Aliases
+│       ├── Dialog
+│       ├── MissionSteps
+│       ├── RaceCheckpoints
+│       ├── VehicleTuning
+│       └── CostumeOffers
+├── Art
+│   ├── Characters
+│   ├── Vehicles
+│   ├── World
+│   ├── Props
+│   ├── UI
+│   └── VFX
+├── Audio
+│   ├── Dialog
+│   ├── Music
+│   └── SFX
+├── Media
+└── Maps
+    ├── BaseWorlds
+    ├── Levels
+    └── Tests
+```
+
+`Data` owns definitions and generated rows. `Art`, `Audio`, and `Media` own
+secondary assets. `Maps` owns World Partition worlds and test maps. A secondary
+asset has one canonical location even when several definitions reference it.
+
+## Naming and identity
+
+Canonical domain identifiers are lowercase `snake_case` names that remain
+stable after publication. Primary asset names use those identifiers and never
+include display punctuation, localization, level placement, source filenames,
+or local routes.
+
+| Asset family | Primary asset type | Object name |
+| :--- | :--- | :--- |
+| Root catalog | `SharCatalog` | `DA_SHAR_GameplayCatalog` |
+| Character | `SharCharacter` | `DA_Character_<canonical_id>` |
+| Vehicle | `SharVehicle` | `DA_Vehicle_<canonical_id>` |
+| Mission | `SharMission` | `DA_Mission_<canonical_id>` |
+| Location | `SharLocation` | `DA_Location_<canonical_id>` |
+| Reward | `SharReward` | `DA_Reward_<canonical_id>` |
+| Costume set | `SharCostumeSet` | `DA_CostumeSet_<canonical_id>` |
+| Bonus mode | `SharBonusMode` | `DA_BonusMode_<canonical_id>` |
+
+Secondary asset prefixes are fixed:
+
+- `SK_` for skeletal meshes;
+- `SM_` for static meshes;
+- `M_` for master materials;
+- `MI_` for material instances;
+- `T_` for textures;
+- `ABP_` for animation Blueprints;
+- `A_` for animation sequences and montages;
+- `S_` for sounds;
+- `W_` for worlds; and
+- `DT_` for generated data tables.
+
+A primary asset identifier is the pair of primary asset type and canonical
+identifier. The Unreal object name is a reviewable presentation of that
+identity, not its source. Renaming an object does not create a new domain entity.
+
+## Shared definition contract
+
+Every top-level definition contains the following fields.
+
+| Field | Type | Contract |
+| :--- | :--- | :--- |
+| `CanonicalId` | `FName` | Stable domain identity; never localized. |
+| `DisplayName` | `FText` | Localizable player-facing name. |
+| `Aliases` | `TArray<FName>` | Alternate lookup names resolving to this identity. |
+| `SourcePackageIds` | `TArray<FName>` | Approved deterministic package references. |
+| `ContentTags` | `FGameplayTagContainer` | Capabilities and classifications, never identity. |
+| `RequiredDefinitions` | soft primary-asset references | Definitions that must resolve before activation. |
+| `RevisionToken` | `FString` | Deterministic generated-data revision. |
+| `ValidationProfile` | `FName` | Exact validator contract for the asset family. |
+
+Aliases are normalized case-insensitively for lookup but stored in canonical
+lowercase form. An alias may target only one canonical identifier. Alias chains,
+cycles, and aliases that collide with a canonical identifier are invalid.
+
+## Root catalog service
+
+`USharGameplayCatalog` is the sole runtime registry. It is a non-Blueprint
+primary data asset loaded through the Asset Manager. It contains soft primary
+asset references grouped by family and a soft reference to the alias table.
+
+`USharGameplayCatalogSubsystem` owns runtime resolution. It provides:
+
+- canonical and alias lookup;
+- bounded asynchronous definition loading;
+- bundle selection;
+- dependency closure validation;
+- read-only enumeration by family or gameplay tag; and
+- deterministic unload when a scope is no longer active.
+
+The subsystem never discovers assets by directory scan. Asset Manager settings
+register each fixed primary asset type and the exact `/Game/SHAR/Data` roots.
+Cook rules include every catalog-reachable definition and reject orphaned
+runtime definitions.
+
+## Load bundles
+
+Every definition uses the same bundle vocabulary.
+
+| Bundle | Includes | Allowed load point |
+| :--- | :--- | :--- |
+| `Definition` | Definition object and generated rows | Catalog validation and save migration |
+| `Gameplay` | Collision, physics, objective, AI, and interaction assets | Active level or mission |
+| `Presentation` | Meshes, materials, animation, UI, and icons | Visible or previewed content |
+| `Audio` | Dialogue, music, vehicle, and interaction sounds | Audible content scope |
+| `Cinematic` | Sequences, media, cameras, and cinematic-only assets | Active cinematic |
+| `EditorReview` | Review-only references and conformance evidence | Editor and automated review only |
+
+`Definition` is always the first bundle loaded. Runtime code requests only the
+additional bundles required by the current role. A mission must not preload all
+presentation or audio assets for unrelated entities.
+
+## Character definition
+
+`USharCharacterDefinition` extends the shared definition with:
+
+| Field | Contract |
+| :--- | :--- |
+| `CharacterRole` | Playable, non-playable, mission giver, ambient, or passenger. |
+| `PlayableLevelIds` | Levels in which player control is permitted. |
+| `PresenceLevelIds` | Levels in which the character may be placed. |
+| `DefaultVehicleId` | Optional canonical vehicle identity. |
+| `CostumeSetId` | Optional canonical costume-set identity. |
+| `QuoteTable` | Soft reference to ordered quote-event rows. |
+| `SkeletalMesh` | Soft presentation reference. |
+| `AnimationClass` | Soft animation Blueprint reference. |
+| `VoiceProfileId` | Canonical audio routing identity. |
+
+Character placement in a world is separate from character identity. The same
+definition supports mission-giver, ambient, passenger, and playable placements
+through role-specific components and data-layer composition.
+
+## Quote-event rows
+
+`FSharQuoteEventRow` contains:
+
+- canonical character identity;
+- gameplay event tag;
+- deterministic variant ordinal;
+- soft sound reference;
+- localization key;
+- priority;
+- cooldown duration;
+- interruption policy; and
+- optional context tags for vehicle, mission, location, or damage state.
+
+Rows are ordered by character, event tag, and variant ordinal. Runtime selection
+uses deterministic seeded choice when multiple variants are eligible. Missing
+audio may suppress playback, but it must not remove the event or alter gameplay.
+
+## Vehicle definition
+
+`USharVehicleDefinition` extends the shared definition with:
+
+| Field | Contract |
+| :--- | :--- |
+| `LifecycleState` | Active, inaccessible, or unused. |
+| `NativeLevelIds` | Levels where the vehicle naturally exists. |
+| `AcquisitionTable` | Soft reference to ordered acquisition rows. |
+| `DriverCharacterId` | Optional canonical driver identity. |
+| `TuningRowId` | Required vehicle-tuning row. |
+| `Mesh` | Soft skeletal or static mesh reference. |
+| `AnimationProfileId` | Doors, wheels, suspension, damage, and special effects. |
+| `AudioProfileId` | Engine, horn, collision, and special audio. |
+| `DamageProfileId` | Health, visual damage, destruction, and repair behavior. |
+| `TrafficProfileId` | Optional traffic and pursuit behavior. |
+
+A vehicle definition has one identity and any number of acquisition contexts.
+`FSharVehicleAcquisitionRow` contains vehicle identity, level identity,
+acquisition kind, seller or mission identity, coin price, progression predicate,
+phone-booth policy, and deterministic priority. Acquisition kinds are starting,
+purchase, mission reward, street-race reward, native road access, secret world
+access, mission-only, and completion override.
+
+A road vehicle can be drivable in its native level without becoming a persistent
+phone-booth reward. A vehicle may be both a reward in one level and a purchase in
+another without duplicating its definition. Inaccessible and unused lifecycle
+states remain cataloged for completeness but cannot be activated by normal
+progression.
+
+## Vehicle-tuning rows
+
+`FSharVehicleTuningRow` contains normalized speed, acceleration, toughness, and
+handling ratings plus soft references to the native physics, tire, suspension,
+damage, camera, and AI profiles. The four ratings are presentation metadata;
+physics assets own simulation values. Validation rejects a visible rating that
+has no corresponding native profile evidence.
+
+## Mission definition
+
+`USharMissionDefinition` extends the shared definition with:
+
+| Field | Contract |
+| :--- | :--- |
+| `LevelId` | One canonical level identity. |
+| `SequenceOrdinal` | Stable main or bonus sequence position. |
+| `MissionClass` | Main, bonus, or street race. |
+| `GiverCharacterId` | Optional mission-giver identity. |
+| `PlayableCharacterId` | Required controlled-character identity. |
+| `PreviousMissionId` | Optional progression predecessor. |
+| `NextMissionId` | Optional progression successor. |
+| `StepTable` | Required ordered mission-step table. |
+| `RewardId` | Optional completion reward. |
+| `CompletionTransition` | Unlock, level transition, ending, or none. |
+| `WorldLayerSetId` | Required world and data-layer composition. |
+
+Mission identity is independent of the world actor that starts it. A mission
+may move or gain additional entry points without changing its save key.
+
+## Mission-step rows
+
+`FSharMissionStepRow` contains:
+
+| Field | Contract |
+| :--- | :--- |
+| `MissionId` | Owning mission identity. |
+| `SequenceOrdinal` | Dense zero-based order within the mission. |
+| `ObjectiveKind` | One value from the controlled objective taxonomy. |
+| `TargetIds` | Canonical entities, actors, zones, or items. |
+| `RequiredCount` | Non-negative completion count. |
+| `TimeLimitSeconds` | Optional positive timer. |
+| `ForcedVehicleId` | Optional vehicle required for this step. |
+| `OpponentIds` | Ordered race, chase, or avoid participants. |
+| `LocationId` | Canonical location or route identity. |
+| `SuccessTransition` | Next step or mission completion. |
+| `FailurePolicy` | Restart step, restart mission, or return to free roam. |
+
+The controlled objective taxonomy includes:
+
+- `talk`;
+- `enter_vehicle` and `exit_vehicle`;
+- `travel`;
+- `collect`;
+- `deliver`;
+- `destroy`;
+- `hit_and_collect`;
+- `follow`;
+- `race`;
+- `time_trial`;
+- `avoid`;
+- `load_vehicle`;
+- `buy_vehicle`;
+- `buy_costume`;
+- `play_cinematic`; and
+- `complete`.
+
+A compound mission is an ordered composition of these objective contracts. It
+is not represented as one opaque script. Every step exposes preconditions,
+observable progress, success, failure, and deterministic recovery.
+
+## Avoid objective contract
+
+An `avoid` step declares one or more pursuer identities, an escape condition,
+and a reset policy. Completion requires all pursuers to remain outside the
+configured detection or pursuit threshold for the configured duration. Merely
+reaching a destination does not complete an avoid step unless the step declares
+that destination as its escape condition.
+
+Pursuer destruction, despawn, world streaming, or mission restart must not
+silently complete the objective. Each case follows the row's explicit failure or
+recovery policy.
+
+## Race checkpoint rows
+
+`FSharRaceCheckpointRow` contains race identity, lap ordinal, checkpoint
+ordinal, world-space route anchor identity, allowed travel direction, optional
+time split, and respawn transform identity. Checkpoint order is dense and
+stable. Circuit, checkpoint, and time-trial races use the same row type with
+different completion policies.
+
+## Location definition
+
+`USharLocationDefinition` contains canonical level availability, base-world
+family, World Partition data layers, interior policy, mission entry points,
+interactive-object references, collectible placements, and streaming bounds.
+
+Three base-world families own reusable geometry. Seven level identities compose
+those families through deterministic data layers. Location definitions never
+collapse level-specific progression, collectibles, missions, or save identity.
+
+## Reward definition
+
+`USharRewardDefinition` contains reward kind, granted canonical identities,
+progression predicate, repeatability, presentation references, and save-state
+key. Vehicle rewards grant access to an existing vehicle definition; they never
+create a second vehicle asset.
+
+## Costume-set definition
+
+`USharCostumeSetDefinition` contains the owning character, level availability,
+and a soft costume-offer table. `FSharCostumeOfferRow` contains costume identity,
+display name, coin price, level, preview mesh or material references, and the
+purchase location identity.
+
+Buying a costume changes presentation for the owning playable character. It
+must not change collision, movement, mission eligibility, save identity, voice
+identity, or gameplay tags unless a separate explicit gameplay definition owns
+that behavior.
+
+## Bonus-mode definition
+
+`USharBonusModeDefinition` contains mode rules, eligible characters, eligible
+vehicles, map unlock predicates, route definitions, scoring policy, and result
+persistence. Bonus modes use separate maps and progression keys but reference
+the same canonical character and vehicle definitions as the main game.
+
+## Verified initial character slice
+
+| Canonical identity | Aliases | Required contract |
+| :--- | :--- | :--- |
+| `abraham_simpson` | `abe_simpson`, `grampa` | Non-playable mission giver; present across several levels; mission roles remain level-scoped. |
+| `agnes_skinner` | none | Ambient and passenger-capable non-playable character. |
+| `apu_nahasapeemapetilon` | `apu` | Playable in Level 5; present in all seven levels; owns the Longhorn; has event-tagged dialogue. |
+| `barney_gumble` | `barney` | Non-playable character; car-dealer and mission roles are placement-specific. |
+| `bart_simpson` | `bart` | Playable protagonist with level-scoped missions, costumes, owned vehicles, and event-tagged dialogue. |
+| `carl_carlson` | `carl` | Non-playable mission giver with a Level 1 mission role. |
+
+Alias records for these names resolve to the listed canonical identity. They do
+not create duplicate character definitions, quote tables, progression keys, or
+world actors.
+
+## Verified initial vehicle slice
+
+| Canonical identity | Verified context | Required rule |
+| :--- | :--- | :--- |
+| `stutz_bearcat_1936` | Reward | Level 6 street-race prize; phone-booth access after unlock. |
+| `sports_car_1970s` | Starting | Level 7 starting vehicle; character-driver presentation is level-scoped. |
+| `atv` | Secret | Native to Level 4; normal progression does not grant global access. |
+| `ambulance` | Road | Native to Level 5; completion override may expose it outside normal progression. |
+| `armored_truck` | Purchasable | Persistent unlockable vehicle with a separate reward and phone-booth rule. |
+| `audi_tt` | Unused | Cataloged for completeness; normal runtime activation is prohibited because required support is incomplete. |
+| `bandit` | Reward | Level 6 bonus-mission reward and a forced vehicle in a later mission. |
+| `bonestorm_truck` | Inaccessible | Alias `cbone`; mission target in Level 1; completion override does not change its canonical identity. |
+| `book_burning_van` | Reward | Level 3 street-race prize; phone-booth access after unlock. |
+| `brick_car` | Unused | Cataloged but excluded from normal progression and ordinary vehicle selection. |
+| `burns_armored_truck` | Road | Distinct Level 6 road variant; never aliases the purchasable armored truck. |
+| `cpolice` | Inaccessible | Police vehicle present in Levels 1 through 6; excluded from normal progression. |
+| `canyonero` | Purchasable | Player vehicle and forced transport for the Level 1 hit-and-collect mission. |
+| `car_built_for_homer` | Reward and purchase | Bonus-mission reward in one context and a 500-coin Level 5 purchase in another; alias `custom_built_car`; one canonical vehicle and phone-booth identity. |
+| `cell_phone_car` | Inaccessible | Level 2 mission target; excluded from normal progression. |
+
+The vehicle-family census additionally establishes these invariants:
+
+- every drivable vehicle has speed, acceleration, toughness, and handling
+  presentation ratings;
+- every active vehicle can be damaged and destroyed according to a typed damage
+  profile;
+- horn, engine, collision, camera, wheel, and special effects are explicit
+  profile references;
+- road, reward, secret, inaccessible, and unused are distinct availability
+  states; and
+- a completion override never changes a vehicle's canonical identity or native
+  level placement.
+
+## Verified initial mission and race slice
+
+| Canonical identity | Level and class | Ordered contract |
+| :--- | :--- | :--- |
+| `alien_autotopsy_part_1` | Level 7 main mission 5 | Collect map, enter vehicle, collect waste, travel to playground, deliver vehicle into the target zone, then exit. |
+| `alien_autotopsy_part_2` | Level 7 main mission 6 | Force `bandit`, deliver the payload, and satisfy an avoid objective before completion. |
+| `alien_autotopsy_part_3` | Level 7 main mission 7 | Force the rocket-equipped wartime vehicle, race an opponent, collect and deliver the payload, satisfy avoidance, then trigger the ending transition. |
+| `bart_and_frink` | Level 2 main mission 4 | Follow the delivery vehicle, talk to the police contact, locate the criminal, talk to the opponent, race to the stadium, and collect the radio. |
+| `beached_love` | Level 4 bonus mission | Timed collect mission with a one-time vehicle reward. |
+| `better_than_beef` | Level 2 main mission 5 | Force the pickup, collect all road items, return, avoid the pursuer, then return again. |
+| `blind_big_brother` | Level 1 main mission 4 | On-foot travel, enter the office, exit, destroy nine control boxes, and return. |
+| `bonestorm_storm` | Level 1 main mission 6 | Force `canyonero`, travel, talk, hit the target truck, collect ten dropped boxes, and return home. |
+| `bonfire_of_the_manatees` | Level 3 main mission 3 | Force `longhorn`, travel and talk, hit the target vehicle and collect dropped items, travel to the observatory, then talk. |
+| `caravan_park_time_trial` | Level 1 street race | Five clockwise laps through the trailer-park route within ninety seconds. |
+| `casino_circuit_race` | Level 6 street race | Five counter-clockwise laps with one ordered opponent and a fixed circuit. |
+| `cell_outs` | Level 2 final main mission | Destroy four cell-phone cars, complete the mission, and unlock Level 3. |
+
+Mission rows preserve predecessors, successors, giver identities, controlled
+character, forced vehicle, timers, counts, opponents, routes, and completion
+transitions independently. Narrative text and dialogue do not substitute for
+those structured fields.
+
+## Verified initial location, reward, costume, and bonus-mode slice
+
+### Android's Dungeon
+
+`androids_dungeon` is an interior-capable location available in Levels 3 and 6.
+It can host mission starts, interactive gags, and a collector-card placement. A
+special completion-gated ticket interaction is active only in its declared
+level context. The Level 3 and Level 6 placements reference one location
+definition but retain separate data-layer and interaction rows.
+
+### Buzz Cola
+
+`buzz_cola` is a collectible and world-prop identity. Collection state,
+presentation, collision, placement, reward contribution, and respawn policy are
+separate fields. A decorative prop instance cannot accidentally grant
+collection progress.
+
+### Bonus missions
+
+Each of the seven levels has one bonus-mission slot. A bonus mission:
+
+- has a specific mission giver distinct from the main-story continuation;
+- can complete only once per save;
+- grants one declared vehicle reward; and
+- remains optional for main-story progression unless another explicit predicate
+  requires its reward.
+
+### Bonus game
+
+`bonus_game` is a top-down racing mode. It references the five playable
+character definitions and the catalog's eligible vehicle set. Each bonus map has
+an explicit collector-card completion predicate. Map unlocks are independent,
+and completing cards in one level does not unlock another level's map.
+
+### Character costumes
+
+Each level provides three ordinary costume offers for its playable character.
+Offers are purchased with coins at a declared clothing interaction. A purchased
+costume persists in save state and can be applied only to its owning character.
+
+## Progression and save-state contract
+
+Save data stores canonical identities and explicit state, never object paths or
+display names. The minimum state is:
+
+- current level identity;
+- completed mission identities;
+- active mission and step ordinal when resumable;
+- unlocked vehicle identities;
+- completed bonus-mission identities;
+- purchased and equipped costume identities;
+- collector-card completion by level;
+- unlocked bonus-map identities; and
+- migration revision.
+
+Alias resolution occurs before save lookup. Save migration may redirect a
+retired canonical identity only through an explicit versioned migration map.
+Missing definitions fail the load with a recoverable diagnostic; they are never
+silently dropped from progression.
+
+## Import and generation flow
+
+1. Validate the native asset plan and package dependency graph.
+1. Resolve each package to one catalog family and canonical identity.
+1. Normalize aliases before creating any object.
+1. Generate or update primary data assets and typed tables in deterministic
+   identity order.
+1. Attach soft secondary-asset references and bundle metadata.
+1. Validate every definition and dependency closure without loading unrelated
+   presentation bundles.
+1. Apply bounded editor mutations.
+1. Read back primary asset identifiers, rows, tags, bundles, and references.
+1. Compare read-back state with the approved plan.
+1. Reject and roll back incomplete catalog slices.
+
+Generation is idempotent. Repeating it with equivalent validated input preserves
+primary asset identifiers, row names, row order, aliases, tags, and references.
+
+## World integration
+
+Level maps are World Partition worlds. Reusable geometry belongs to one of three
+base-world families. Level identity is composed through data layers for mission
+actors, traffic, collectibles, interiors, progression state, presentation
+variants, and level-specific interactions.
+
+Catalog definitions reference location and layer-set identities. They never
+store mutable actor pointers as authority. Runtime placement resolves actors
+from stable placement records after the required World Partition cells and data
+layers are active.
+
+Streaming out a cell suspends eligible ambient presentation but does not reset
+mission progress, vehicle damage, collected rewards, or save state. Mission
+actors required by an active step remain pinned through an explicit gameplay
+streaming source or the step fails before activation.
+
+## Invariants
+
+- One canonical gameplay entity has one primary asset identifier.
+- Every alias resolves directly to one canonical identity.
+- Every catalog-reachable primary asset is included in cook rules.
+- Canonical identities, aliases, progression keys, table rows, and gameplay
+  bundles remain logically identical across platforms, architectures, and
+  graphics presets.
+- Platform cooking may select native presentation implementations, but it cannot
+  remove or redefine a gameplay definition required by the shared catalog.
+- Every mission has a dense ordered step sequence.
+- Every step references existing canonical entities and locations.
+- Every forced vehicle is available to the mission even when normal progression
+  would not unlock it.
+- Every reward grants an existing definition.
+- Every costume belongs to one character and one purchase rule.
+- Every quote row has a unique character, event, and variant key.
+- Every race has a dense checkpoint order and explicit direction.
+- Gameplay tags classify content but never determine identity.
+- Soft references and bundles prevent unrelated content from being loaded
+  eagerly.
+- Equivalent validated input generates equivalent catalog state.
+
+## Failure behavior
+
+Catalog generation fails closed on:
+
+- duplicate canonical identities;
+- alias collisions, chains, or cycles;
+- unsupported asset families;
+- missing package provenance;
+- unresolved required definitions;
+- invalid soft references;
+- missing Asset Manager registration or cook rules;
+- invalid gameplay tags;
+- nondeterministic table order;
+- gaps or duplicates in mission-step or checkpoint ordinals;
+- negative counts or non-positive configured timers;
+- forced vehicles without required gameplay assets;
+- rewards that reference inaccessible or missing definitions;
+- a level placement without a valid base-world and data-layer composition;
+- platform or preset cooking that removes, duplicates, or rekeys a required
+  gameplay definition; or
+- read-back state that differs from the approved plan.
+
+A failed batch leaves no success marker. Newly created incomplete assets are
+removed, and previously valid assets retain their last accepted revision.
+Runtime lookup returns a typed missing, invalid, or unavailable result rather
+than a null dereference or guessed fallback.
+
+## Verification
+
+Engine-independent tests verify:
+
+- canonical identifier normalization;
+- alias uniqueness and cycle rejection;
+- deterministic generation order;
+- schema validation;
+- mission-step and race-checkpoint topology;
+- progression predicates;
+- save migration; and
+- package-to-definition membership.
+
+Editor integration tests verify:
+
+- every primary asset type is registered;
+- primary asset identifiers survive save, reload, and cook discovery;
+- bundle metadata loads only declared secondary assets;
+- generated tables use the expected C++ row structure;
+- soft references resolve after import;
+- aliases resolve to the same loaded object as canonical identities;
+- Windows, Linux, macOS, and Android cooks preserve the same canonical
+  identities, aliases, progression keys, and required gameplay bundles;
+- Low through Ultra desktop cooks preserve the same gameplay definitions, while
+  Android Low preserves the same definitions through its mobile presentation
+  implementations;
+- World Partition and data-layer activation produces the expected placements;
+- read-back state matches the approved native asset plan; and
+- a second generation produces no semantic diff.
+
+Runtime parity tests execute representative contracts from this slice:
+
+- a character alias and canonical name load the same character definition;
+- a street-race reward becomes available through the phone booth only after
+  completion;
+- a road vehicle remains native-level-only before its completion override;
+- a forced mission vehicle loads even when it is not normally unlocked;
+- an avoid objective cannot complete through streaming or despawn;
+- the Level 1 on-foot destroy mission completes exactly after nine targets;
+- the Level 2 final mission unlocks Level 3 only after four targets;
+- a bonus mission cannot grant its vehicle twice;
+- collector-card completion unlocks only the matching bonus map; and
+- a costume changes presentation without changing gameplay identity.
+
+## Verified second character slice
+
+| Canonical identity | Aliases | Required contract |
+| :--- | :--- | :--- |
+| `charles_montgomery_burns` | `mr_burns`, `burns` | Non-playable mission character with distinct Level 1 and Level 7 placements. |
+| `clancy_wiggum` | `chief_wiggum`, `wiggum` | Non-playable police character, passenger, and mission participant; present across all seven levels; owns event-tagged dialogue. |
+| `cletus_spuckler` | `cletus` | Non-playable mission giver with level-scoped main and bonus mission roles. |
+| `comic_book_guy` | `jeffrey_albertson` | Non-playable mission giver; owns the Kremlin vehicle reference; cutscene-only and interactive placements remain distinct. |
+| `julius_hibbert` | `dr_hibbert` | Non-playable Level 5 mission giver. |
+| `nick_riviera` | `dr_nick` | Non-playable mission character with Level 2, Level 3, and Level 6 placements. |
+
+The Chief Wiggum quote page contributes rows to `clancy_wiggum`'s quote table.
+It does not create a second character, dialogue owner, or voice identity.
+Likewise, alternate pages for Cletus resolve to `cletus_spuckler`.
+
+## Verified second vehicle slice
+
+| Canonical identity | Verified contexts | Required rule |
+| :--- | :--- | :--- |
+| `chase_sedan` | Level 6 purchase for 500 coins; mission and opponent placements in Levels 3, 4, and 6 | Purchase ownership, police presentation, and alien-controlled mission behavior are separate acquisition and placement rows. |
+| `clown_car` | Level 4 street-race reward | Phone-booth access begins after the reward transaction. |
+| `coffin_cart` | Level 7 road vehicle | Native road access does not grant persistent retrieval before the completion override. |
+| `cola_truck` | Level 5 purchase for 350 coins; mission target | The player-owned offer and alien-controlled mission placement share one vehicle definition. |
+| `compact_car` | Road vehicle in Levels 3, 4, and 6 | Native traffic access remains distinct from completion-override retrieval. |
+| `cube_van` | Unused and inaccessible | Cataloged for completeness; no normal world placement or progression activation. |
+| `curator` | Level 4 purchase for 300 coins; Level 5 mission target | Player ownership and target behavior use separate acquisition and placement rows. |
+| `car_built_for_homer` | Alias `custom_built_car`; Level 5 purchase for 500 coins; reward context | Every acquisition grants the same canonical vehicle and save identity. |
+| `donut_truck` | Level 3 purchase for 250 coins | Persistent retrieval begins only after purchase. |
+| `duff_truck` | Level 1 purchase for 125 coins; Level 6 mission target | Ordinary tuning and mission-specific target tuning remain explicit profiles. |
+| `el_carro_loco` | Level 5 street-race reward | Phone-booth access begins after all three level races complete. |
+| `electaurus` | Level 1 street-race reward | Driver presentation in later levels does not change ownership identity. |
+| `family_sedan` | Level 1 starting vehicle | Available from the retrieval interface from the start; Homer is the canonical driver presentation. |
+| `ferrini_black` | Inaccessible Level 7 hostile vehicle | Alias `alien_car`; mission pursuit and race roles do not grant ownership. |
+| `ferrini_red` | Level 6 starting vehicle; Level 5 forced mission vehicle | Bart driver presentation and cross-level mission use retain one identity. |
+| `fire_truck` | Level 2 purchase for 250 coins | Persistent retrieval begins only after purchase. |
+| `fish_delivery_truck` | Level 3 road vehicle | Alias `fish_van`; completion override does not change its native traffic role. |
+
+Mission-specific tuning never mutates the shared vehicle definition. A placement
+row may select a mission tuning profile, driver, artificial-intelligence role,
+damage policy, or objective marker while preserving the canonical vehicle,
+acquisition, and save identity.
+
+## Verified second mission slice
+
+| Canonical identity | Level and class | Ordered contract |
+| :--- | :--- | :--- |
+| `clueless` | Level 3 main mission 2 | Alternate timed travel and talk steps across Wall E. Weasel's, Planet Hype, and the Springfield Sign. |
+| `curious_curator` | Level 5 final main mission | Force `ferrini_red`, pursue and destroy `curator`, collect the museum key, complete the transition, and unlock Level 6. |
+| `detention_deficit_disorder` | Level 2 main mission 1 | Travel toward the store, satisfy the Skinner avoid objective, then complete the destination step. |
+| `dial_b_for_blood` | Level 2 bonus mission | Collect the plasma-center blood, travel and talk at Moe's, collect the second blood, travel and talk at the construction-site restaurant, collect the third blood, return, talk, and grant the wartime vehicle reward once. |
+| `duff_for_me_duff_for_you` | Level 6 main mission 4 | Travel to the brewery, hit the target Duff Truck, collect six dropped laser crates, return to the brewery, and collect the final proof item. |
+| `eight_is_too_much` | Level 5 main mission 3 | Talk to Hibbert, require `car_built_for_homer` or an explicitly permitted substitute, enter the vehicle, hit the van, collect ten diapers, return to the hospital, and talk. |
+| `fishy_deals` | Level 3 main mission 6 | Talk to the sea-captain contact, collect the ordered moving fish targets with the declared miss allowance, and complete the save objective. |
+| `flaming_tires` | Level 7 bonus mission | Talk to Smithers, collect the three ordered personal-item targets under their timers, return after each required segment, and grant the Burns limousine once. |
+
+A required vehicle and a forced vehicle are distinct. A forced vehicle is
+selected by the mission. A required-vehicle step validates that the player has
+entered an allowed definition and may permit declared substitutes. The mission
+cannot silently replace an invalid vehicle with an arbitrary current car.
+
+## Verified second street-race slice
+
+| Canonical identity | Level and policy | Route contract |
+| :--- | :--- | :--- |
+| `checkpoint_race_level_01` | Level 1 checkpoint race | Start at the church, traverse the ordered residential and poor-district checkpoints, and finish at the power-plant parking area against three ordered opponents. |
+| `circuit_race_level_01` | Level 1 circuit race | Complete three laps around the rich-district loop before three ordered opponents. |
+| `commercial_district_time_trial_level_02` | Level 2 time trial | Complete three laps of the commercial and monorail loop within 81 seconds. |
+| `docks_time_trial_level_03` | Level 3 time trial | Complete four laps of the docks, studio road, alley, ramp, and ship-jump loop within 111 seconds. |
+| `commercial_district_circuit_level_05` | Level 5 circuit race | Complete three ordered commercial-to-town-square laps against `ferrini_red`, a campaign truck, and an ambulance. |
+| `entertainment_district_time_trial_level_05` | Level 5 time trial | Complete five clockwise laps of the two-block entertainment loop within 81 seconds. |
+| `entertainment_commercial_checkpoint_level_05` | Level 5 checkpoint race | Traverse the courthouse, train-yard, expressway, and commercial-district checkpoint chain against `ferrini_red`. |
+
+Race definitions preserve route direction, lap count, time limit, opponents,
+closed shortcuts, checkpoint order, respawn transforms, and finish transition.
+Artificial-intelligence catch-up policy is an explicit race profile and cannot
+silently vary by frame rate or graphics preset.
+
+## Verified second location slice
+
+`duff_brewery` is an open location available in Levels 3 and 6. One location
+definition owns shared geometry and interaction identity. Level-specific world
+layers own mission targets, traffic, collectibles, dialogue, and progression
+state. The Level 6 mission route references the brewery, the target truck, six
+dropped mission items, and the final proof-item placement through canonical
+identities.
+
+## Progression and meta-game integration
+
+The currency, collector-card, destructible-source, cheat, credits, and calendar
+entries in this coverage slice are governed by
+[Progression, collectibles, cheats, and credits](progression-collectibles-and-cheats.md).
+The gameplay catalog references their primary assets and tables but does not
+collapse their persistence or mutation semantics into generic pickups.
+
+Additional parity tests from this slice verify:
+
+- alternate character names resolve to one canonical character and quote table;
+- one vehicle can expose multiple acquisition rows without duplicate ownership;
+- a purchase and a mission target can reference the same vehicle with different
+  placement profiles;
+- a required-vehicle mission accepts only declared vehicle definitions;
+- a forced-vehicle mission loads the exact declared definition;
+- a destroy step completes on validated destruction rather than despawn;
+- a hit-and-collect step accepts each dropped target once;
+- card, coin, and cheat state follow their distinct save policies;
+- every street-race route has dense checkpoints and deterministic opponents; and
+- the Level 5 final mission unlocks Level 6 only after its key collection and
+  completion transition.
+
+## Known limits
+
+This specification fixes the catalog architecture and the two verified coverage
+slices. It does not claim that every remaining character, vehicle, mission,
+location, reward, costume, quote, or bonus-mode record has already been entered.
+New coverage extends these schemas and invariants; it does not introduce a
+parallel catalog pattern.
