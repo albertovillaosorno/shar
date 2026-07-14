@@ -7,11 +7,14 @@ definitions, configuration files, or authored prose.
 ## Review Status And Scope
 
 - Review status: Evidence recorded.
-- Evidence status: Verified — Repository use, installed package metadata, and
-  authoritative upstream sources verified.
+- Evidence status: Partially verified — Repository use, installed
+  markdownlint-cli2 0.22.1 and markdownlint 0.40.0 package metadata, official tag
+  histories, and upstream licenses were verified. The rule engine matched its
+  reviewed latest tag, while the CLI remained one minor release behind 0.23.0;
+  no documented compatibility hold was identified.
 - Counsel review: Not performed.
 - Jurisdictional scope: Not determined.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-14.
 - Distribution posture: Development and validation dependencies.
 - Subject class: Open-source Markdown command-line interface and lint library.
 
@@ -49,15 +52,18 @@ syntax.
 
 ## Provenance And Version History
 
-Markdown validation uses the repository-managed CLI, rule engine, Node.js
-runtime, and parser dependency graph resolved for the run. Exact versions are
-established by installed package metadata, package-lock evidence, runtime
-output, canonical configuration, and validation logs.
+The reviewed managed package tree contained markdownlint-cli2 0.22.1 and
+markdownlint 0.40.0. The official tag histories identify markdownlint-cli2
+0.23.0, dated 1 July 2026, and markdownlint 0.40.0, dated 4 December 2025, as
+their newest tags on 14 July 2026. The rule engine therefore matched the reviewed
+upstream tag, while the CLI lagged by one minor release.
 
-Rule behavior, aliases, parser behavior, automatic fixes, configuration schemas,
-and exit-code handling may change across releases. Installed components may lag
-upstream because of runtime compatibility, a deliberate stability hold, delayed
-review, unavailable packaging, or human oversight.
+Exact run identities remain established by installed package metadata, lock or
+package-tree evidence, runtime output, canonical configuration, and validation
+logs. Rule behavior, aliases, parser behavior, automatic fixes, configuration
+schemas, and exit-code handling may change across releases. An older component
+may be justified by runtime compatibility or a deliberate stability hold, but
+no such reason was located for the observed CLI lag.
 
 ## Authorship, Ownership, And Attribution
 
@@ -94,6 +100,8 @@ collapse those outcomes into one success state.
 - Keep the canonical external configuration authoritative.
 - Record exact CLI, rule-engine, Node.js, and dependency identities for each
   run.
+- Upgrade markdownlint-cli2 or document the exact compatibility hold before
+  treating the managed CLI as current.
 - Keep all rules enabled globally and use only justified file- or line-local
   exceptions.
 - Preserve the `MD052` template exception only while unresolved reference labels
@@ -106,19 +114,27 @@ collapse those outcomes into one success state.
 
 ## Source References
 
+- Anson, D. and contributors (2026) *markdownlint-cli2 tags*. The newest tag is
+  `v0.23.0`, dated 1 July 2026. Available at:
+  <https://github.com/DavidAnson/markdownlint-cli2/tags> (Accessed: 14 July
+  2026).
 - Anson, D. and contributors (n.d.) *markdownlint-cli2 official GitHub
   repository*. Available at: <https://github.com/DavidAnson/markdownlint-cli2>
-  (Accessed: 12 July 2026).
+  (Accessed: 14 July 2026).
+- Anson, D. and contributors (2025) *markdownlint tags*. The newest tag is
+  `v0.40.0`, dated 4 December 2025. Available at:
+  <https://github.com/DavidAnson/markdownlint/tags> (Accessed: 14 July 2026).
 - Anson, D. and contributors (n.d.) *markdownlint official GitHub repository*.
-  Available at: <https://github.com/DavidAnson/markdownlint> (Accessed: 12 July
+  Available at: <https://github.com/DavidAnson/markdownlint> (Accessed: 14 July
   2026).
 - Anson, D. and contributors (n.d.) *MD052: Reference links and images should
   use a label that is defined*. Available at:
   <https://github.com/DavidAnson/markdownlint/blob/main/doc/md052.md> (Accessed:
-  12 July 2026).
+  14 July 2026).
 - Anson, D. and contributors (n.d.) *MD053: Link and image reference definitions
   should be needed*. Available at:
   <https://raw.githubusercontent.com/DavidAnson/markdownlint/main/doc/md053.md>
-  (Accessed: 12 July 2026).
-- SHAR repository (2026) `validate.sh`, canonical Markdown configuration, and
-  `docs/bibliography/template.md`.
+  (Accessed: 14 July 2026).
+- SHAR repository (2026) `validate.sh`, canonical Markdown configuration,
+  installed markdownlint-cli2 0.22.1 and markdownlint 0.40.0 package metadata,
+  and `docs/bibliography/template.md`.
