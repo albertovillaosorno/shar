@@ -46,41 +46,54 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to verify the parent bone of one skeletal-mesh socket before SHAR
+attachment or transform reasoning.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use an exact loaded `USkeletalMesh` object path.
+- Select a socket from `get_socket_names`.
+- Verify the returned bone exists in `get_bone_names`.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "mesh": {"refPath": "/ControlRigModules/Modules/Meshes/SKM_Biped_Template.SKM_Biped_Template"},
+  "socket_name": "weapon_r_muzzle"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Repeated calls mapped `weapon_r_muzzle` to `weapon_r`, `foot_r_Socket` to
+`foot_r`, and `foot_l_Socket` to `foot_l`. A missing socket raised a socket-not-
+found error.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The result is the socket's parent bone, not a world-space attachment target.
+- Bone and socket names are case-sensitive.
+- Socket edits or skeletal reimport can change the parent.
+- Missing sockets raise a native error instead of returning an empty string.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

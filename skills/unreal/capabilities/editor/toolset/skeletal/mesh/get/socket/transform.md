@@ -46,41 +46,54 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to inspect one socket's local transform relative to its parent
+bone before SHAR attachment placement.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use an exact loaded `USkeletalMesh` object path.
+- Select a socket from `get_socket_names`.
+- Resolve the parent bone separately with `get_socket_bone`.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "mesh": {"refPath": "/ControlRigModules/Modules/Meshes/SKM_Biped_Template.SKM_Biped_Template"},
+  "socket_name": "weapon_r_muzzle"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two muzzle reads returned location `(45, 0, 25)`, zero rotation, and unit scale.
+Both foot sockets returned zero location, unit scale, and approximately
+90-degree local rotations with tiny floating-point pitch residue.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The transform is local to the parent bone, not component or world space.
+- Tiny floating-point residuals near zero are normal.
+- Animated bone transforms must be composed separately.
+- Missing sockets raise a socket-not-found error.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

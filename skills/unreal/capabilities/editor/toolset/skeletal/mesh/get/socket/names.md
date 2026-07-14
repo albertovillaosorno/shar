@@ -49,41 +49,53 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to inventory mesh sockets before SHAR attachment, weapon, foot-
+placement, or effects integration.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use an exact loaded `USkeletalMesh` object path.
+- Treat an empty array as a valid no-socket baseline.
+- Preserve returned spelling for socket-specific queries.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "mesh": {"refPath": "/ControlRigModules/Modules/Meshes/SKM_Biped_Template.SKM_Biped_Template"}
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two calls returned `weapon_r_muzzle`, `foot_r_Socket`, and `foot_l_Socket`.
+Independent socket-bone and transform reads succeeded for all three. The physics
+cube returned an empty socket array twice.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The inventory is mesh-socket specific and does not imply runtime attachments.
+- Empty is valid for meshes without sockets.
+- Socket names are case-sensitive.
+- Reimport or socket edits can invalidate cached names.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
