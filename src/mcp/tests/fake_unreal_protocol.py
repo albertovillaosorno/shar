@@ -91,7 +91,12 @@ class FakeUnrealRequestHandler(BaseHTTPRequestHandler):
         elif not self._session_headers_are_valid():
             self._write_rpc_error(payload.get("id"), "invalid session")
         elif method == "notifications/initialized":
-            self._write_empty(_HTTP_ACCEPTED)
+            status = (
+                _HTTP_OK
+                if self._test_server().behavior.reject_initialized_notification
+                else _HTTP_ACCEPTED
+            )
+            self._write_empty(status)
         elif method == "notifications/cancelled":
             self._write_cancelled(payload)
         elif method == "ping":
@@ -111,7 +116,11 @@ class FakeUnrealRequestHandler(BaseHTTPRequestHandler):
         if self.headers.get("Mcp-Session-Id") != _SESSION_ID:
             self._write_empty(_HTTP_BAD_REQUEST)
             return
-        self._test_server().session_closed = True
+        server = self._test_server()
+        if server.behavior.reject_session_delete:
+            self._write_empty(_HTTP_BAD_REQUEST)
+            return
+        server.session_closed = True
         self._write_empty(_HTTP_ACCEPTED)
 
     def log_message(

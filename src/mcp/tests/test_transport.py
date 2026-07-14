@@ -90,6 +90,46 @@ def test_transport_completes_native_lifecycle_and_final_sse_event() -> None:
         assert server.session_closed
 
 
+def test_transport_deletes_session_when_initialized_rejected() -> None:
+    """A negotiated session is not leaked when initialization cannot finish."""
+    with FakeUnrealServer.with_initialization_failure() as server:
+        transport = StreamableHttpTransport(
+            McpEndpoint.parse(server.endpoint),
+            timeout_seconds=2.0,
+        )
+
+        with pytest.raises(
+            ProtocolError,
+            match="initialized notification did not return HTTP 202",
+        ):
+            _ = transport.initialize()
+
+        assert server.session_closed
+
+
+def test_transport_preserves_initialization_error_when_cleanup_fails() -> None:
+    """Cleanup failure annotates rather than replaces the negotiation error."""
+    with FakeUnrealServer.with_initialization_failure(
+        reject_session_delete=True,
+    ) as server:
+        transport = StreamableHttpTransport(
+            McpEndpoint.parse(server.endpoint),
+            timeout_seconds=2.0,
+        )
+
+        with pytest.raises(
+            ProtocolError,
+            match="initialized notification did not return HTTP 202",
+        ) as captured:
+            _ = transport.initialize()
+
+        notes = getattr(captured.value, "__notes__", [])
+        assert notes == [
+            "MCP session cleanup failed: session delete did not return HTTP 202"
+        ]
+        assert not server.session_closed
+
+
 def test_transport_rejects_oversized_request_before_network_send() -> None:
     """Request-size failure occurs before the server receives a payload."""
     with FakeUnrealServer() as server:

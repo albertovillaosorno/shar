@@ -70,6 +70,8 @@ class FakeUnrealBehavior(NamedTuple):
     delay_tool_calls: bool = False
     cancellation_delay_seconds: float = 0.0
     empty_toolsets: bool = False
+    reject_initialized_notification: bool = False
+    reject_session_delete: bool = False
 
 
 class FakeUnrealServer:
@@ -100,6 +102,24 @@ class FakeUnrealServer:
             name="fake-unreal-mcp",
             daemon=True,
         )
+
+    @classmethod
+    def with_initialization_failure(
+        cls,
+        *,
+        reject_session_delete: bool = False,
+    ) -> Self:
+        """Create a server that rejects post-initialize negotiation.
+
+        Returns:
+            A stopped server configured for initialization failure.
+        """
+        server = cls()
+        server._server.behavior = FakeUnrealBehavior(
+            reject_initialized_notification=True,
+            reject_session_delete=reject_session_delete,
+        )
+        return server
 
     def __enter__(self) -> Self:
         """Start the loopback server.

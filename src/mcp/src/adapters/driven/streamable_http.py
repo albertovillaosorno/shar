@@ -69,7 +69,11 @@ from mcp.src.adapters.driven.response_validation import (
     parse_tool_names,
     require_json_rpc_result,
 )
-from mcp.src.domain.errors import RequestTimeoutError, fail_protocol
+from mcp.src.domain.errors import (
+    RequestTimeoutError,
+    UnrealMcpError,
+    fail_protocol,
+)
 from mcp.src.domain.tool_outcome import parse_tool_outcome
 
 if TYPE_CHECKING:
@@ -141,19 +145,28 @@ class StreamableHttpTransport:
                 request_id,
                 expected_protocol_version=_PROTOCOL_VERSION,
             )
-            notification = self._exchange.post(
-                payload=build_json_rpc_request(
-                    method="notifications/initialized",
-                    params={},
+            try:
+                notification = self._exchange.post(
+                    payload=build_json_rpc_request(
+                        method="notifications/initialized",
+                        params={},
+                        request_id=None,
+                    ),
                     request_id=None,
-                ),
-                request_id=None,
-                session=session,
-            )
-            if notification.status != _HTTP_ACCEPTED:
-                fail_protocol(
-                    "initialized notification did not return HTTP 202"
+                    session=session,
                 )
+                if notification.status != _HTTP_ACCEPTED:
+                    fail_protocol(
+                        "initialized notification did not return HTTP 202"
+                    )
+            except UnrealMcpError as initialization_error:
+                try:
+                    self._delete_session(session)
+                except UnrealMcpError as cleanup_error:
+                    initialization_error.add_note(
+                        f"MCP session cleanup failed: {cleanup_error}"
+                    )
+                raise
             return session
 
     def ping(self, session: McpSession) -> None:
@@ -268,9 +281,13 @@ class StreamableHttpTransport:
             session: Active initialized native MCP session.
         """
         with self._lock:
-            status = self._exchange.delete(session)
-            if status != _HTTP_ACCEPTED:
-                fail_protocol("session delete did not return HTTP 202")
+            self._delete_session(session)
+
+    def _delete_session(self, session: McpSession) -> None:
+        """Delete one session while the caller owns the transport lock."""
+        status = self._exchange.delete(session)
+        if status != _HTTP_ACCEPTED:
+            fail_protocol("session delete did not return HTTP 202")
 
     def _take_request_id(self) -> int:
         request_id = self._next_request_id
