@@ -6,12 +6,13 @@ ecosystem from SHAR source code and from third-party crates.
 ## Review Status And Scope
 
 - Review status: Evidence recorded.
-- Evidence status: Partially verified — Repository Rust use, official project
-  identity, compiler source, and licensing posture verified; the exact compiler,
-  standard library, Cargo, rustup channel, target, and dependency graph remain
-  build-specific.
+- Evidence status: Partially verified — Repository Rust use, the dated
+  `nightly-2026-07-10` toolchain pin, official project identity, compiler source,
+  and licensing posture were verified. The resolved compiler and Cargo builds,
+  standard-library payload, target, installed components, and dependency graph
+  remain build-specific.
 - Counsel review: Not performed.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-14.
 - Subject class: Programming language and official toolchain ecosystem.
 
 ## Covered Material
@@ -30,13 +31,15 @@ retain their respective upstream terms.
 
 ## Provenance And Version History
 
-A SHAR Rust build uses the toolchain and official components selected by the
-repository configuration and available build environment. The exact compiler,
-standard library, Cargo, rustup channel, target, and dependency graph observed
-in a build remain time-bounded evidence and may lag upstream because of
-compatibility work, a deliberate hold, unavailable packaging, delayed review, or
-human oversight. Toolchain configuration, lockfiles, command output, and build
-or distribution evidence establish the identity for the particular build.
+The repository pins the rustup channel `nightly-2026-07-10`. That dated channel
+is the source-level toolchain contract; it is not a permanent claim about the
+newest nightly or stable Rust release.
+
+The pin does not identify the resolved compiler commit, Cargo build, standard
+library payload, installed components, host, or compilation target. Those
+identities remain time-bounded build evidence. Toolchain configuration,
+lockfiles, command output, and build or distribution records establish the
+complete identity for a particular build.
 
 ## Authorship, Ownership, And Attribution
 
@@ -67,10 +70,10 @@ artifact, and do not infer license compatibility from the language name alone.
 ## Source References
 
 - Rust Project (n.d.) *Licenses*. Available at:
-  <https://www.rust-lang.org/policies/licenses> (Accessed: 12 July 2026).
+  <https://www.rust-lang.org/policies/licenses> (Accessed: 14 July 2026).
 - Rust Project (n.d.) *The Rust Programming Language*. Available at:
-  <https://www.rust-lang.org/> (Accessed: 12 July 2026).
+  <https://www.rust-lang.org/> (Accessed: 14 July 2026).
 - Rust Project (n.d.) *Rust compiler official GitHub repository*. Available at:
-  <https://github.com/rust-lang/rust> (Accessed: 12 July 2026).
-- SHAR repository (2026) Cargo manifests, lockfile, toolchain configuration, and
-  Rust source.
+  <https://github.com/rust-lang/rust> (Accessed: 14 July 2026).
+- SHAR repository (2026) Cargo manifests, lockfile, Rust source, and toolchain
+  configuration pinning `nightly-2026-07-10`.

@@ -6,13 +6,13 @@ and from independently licensed third-party packages.
 ## Review Status And Scope
 
 - Review status: Evidence recorded.
-- Evidence status: Partially verified — Required Python 3.14.6 runtime, official
-  license history, project identity, and CPython source verified; the exact
-  local interpreter build, standard-library payload, and third-party package
-  graph
-  remain environment-specific.
+- Evidence status: Partially verified — The repository Python 3.14.6 pin,
+  official 3.14.6 maintenance release, license history, project identity, and
+  CPython source were verified. The exact interpreter build, standard-library
+  payload, platform architecture, and third-party package graph remain
+  environment-specific.
 - Counsel review: Not performed.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-14.
 - Subject class: Programming language, runtime, and documentation ecosystem.
 
 ## Covered Material
@@ -30,12 +30,17 @@ rights and obligations.
 
 ## Provenance And Version History
 
-The MCP package pins `requires-python = "==3.14.6"`, and canonical validation
-uses the same current stable Python patch. Other exact runtime and package
-versions for publication, distribution, or validation must be taken from the
-repository-managed environment and lock evidence. Python's historical license
-lineage includes multiple institutional licensors and cannot be reduced to one
-copyright line for all versions.
+The MCP package pins `requires-python = "==3.14.6"`; that exact patch is the
+repository contract for the package, not a permanent claim about the newest
+upstream Python release. Python 3.14.6 was published on 10 June 2026 as the sixth
+maintenance release of Python 3.14.
+
+The pin does not identify an interpreter build, architecture, standard-library
+payload, or installed package graph. Publication, distribution, and validation
+evidence must take those identities from the repository-managed environment and
+lock evidence. Python's historical license lineage includes multiple
+institutional licensors and cannot be reduced to one copyright line for all
+versions.
 
 ## Authorship, Ownership, And Attribution
 
@@ -65,11 +70,15 @@ redistributed environment.
 
 ## Source References
 
-- Python Software Foundation (2026) *History and License*. Available at:
-  <https://docs.python.org/3/license.html> (Accessed: 13 July 2026).
+- Python Software Foundation (2026) *Python 3.14.6*. Released 10 June 2026.
+  Available at: <https://www.python.org/downloads/release/python-3146/>
+  (Accessed: 14 July 2026).
+- Python Software Foundation (2026) *History and License for Python 3.14.6*.
+  Available at: <https://docs.python.org/release/3.14.6/license.html> (Accessed:
+  14 July 2026).
 - Python Software Foundation (n.d.) *Python*. Available at:
-  <https://www.python.org/> (Accessed: 13 July 2026).
+  <https://www.python.org/> (Accessed: 14 July 2026).
 - Python Software Foundation (n.d.) *CPython official GitHub repository*.
-  Available at: <https://github.com/python/cpython> (Accessed: 13 July 2026).
-- SHAR repository (2026) `src/mcp/pyproject.toml` (pins
-  `requires-python = "==3.14.6"`).
+  Available at: <https://github.com/python/cpython> (Accessed: 14 July 2026).
+- SHAR repository (2026) MCP package metadata pinning
+  `requires-python = "==3.14.6"`.
