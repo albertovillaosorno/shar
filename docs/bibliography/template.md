@@ -79,6 +79,13 @@ Apply these drafting rules throughout the record:
    verification date. When a governing decision requires latest-compatible
    selection or an explicit compatibility hold, cite that authority; this
    bibliography record does not create version-selection policy.
+1. Do not replace dated evidence with a floating `> X`, `>= X`, `latest`, or
+   `current` requirement unless an authoritative compatibility contract owns the
+   range and validation tests it. `> X` excludes the observed release, while
+   `>= X` can admit untested future breaking versions. Prefer an exact observed
+   version and date plus a reference to the governing update policy. When a real
+   compatibility floor exists, state its upper boundary or release channel and
+   cite the authority and tests that establish the supported range.
 
 Every instantiated record retains these nine common second-level sections:
 `Review Status And Scope`, `Covered Material`, `Repository Use And Scope`,
