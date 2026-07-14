@@ -6,11 +6,12 @@ repository and does not apply Git's license to tracked SHAR content.
 ## Review Status And Scope
 
 - Review status: Evidence recorded.
-- Evidence status: Partially verified — Repository role, official project
-  identity, source mirror, and GPLv2 license text verified; the exact local Git
-  distribution and version remain environment-specific.
+- Evidence status: Partially verified — Repository role, observed Git for
+  Windows 2.54.0.windows.1 identity, official Git 2.55.0 current release, Git for
+  Windows 2.55.0.windows.2 release, source mirrors, and GPLv2 license text were
+  verified. Configuration, hooks, filters, and signing state remain local.
 - Counsel review: Not performed.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-14.
 - Subject class: Distributed version-control system.
 
 ## Covered Material
@@ -27,9 +28,16 @@ remain independent.
 
 ## Provenance And Version History
 
-The exact Git version, distribution, configuration, hooks, filters, and signing
-settings used for a publication must be recorded where they affect reproducible
-history or evidence.
+The observed operator environment reports Git for Windows
+2.54.0.windows.1. Git's official installation page identifies Git 2.55.0 as the
+current upstream release, while the Git for Windows project identifies
+2.55.0.windows.2 as its latest Windows distribution. The observed executable is
+therefore older than both reviewed current identities as of 14 July 2026.
+
+The exact Git executable, distribution, configuration, hooks, filters, and
+signing settings used for a publication must be recorded where they affect
+reproducible history or evidence. This dated comparison does not make a
+bibliography record the runtime or upgrade authority.
 
 ## Authorship, Ownership, And Attribution
 
@@ -53,15 +61,23 @@ on GitHub is governed separately by the GitHub-user agreement.
 
 ## Compliance Posture
 
-Preserve version and signing provenance for distributed artifacts. Keep Git
+Preserve executable, version, configuration, and signing provenance for
+published artifacts. Upgrade the observed Git for Windows installation or record
+a narrow compatibility reason before representing it as current. Keep Git
 licensing, GitHub hosting terms, and SHAR content rights separate.
 
 ## Source References
 
-- Git Project (n.d.) *Git*. Available at: <https://git-scm.com/> (Accessed: 13
-  July 2026).
+- Git Project (2026) *Install*. Identifies Git 2.55.0 as the latest version.
+  Available at: <https://git-scm.com/install/> (Accessed: 14 July 2026).
+- Git for Windows contributors (2026) *Git for Windows
+  v2.55.0.windows.2*. Identified as the latest signed release, with published
+  SHA-256 values for distribution artifacts. Available at:
+  <https://github.com/git-for-windows/git/releases/tag/v2.55.0.windows.2>
+  (Accessed: 14 July 2026).
 - Git Project (n.d.) *Official GitHub source mirror*. Available at:
-  <https://github.com/git/git> (Accessed: 13 July 2026).
+  <https://github.com/git/git> (Accessed: 14 July 2026).
 - Git Project (n.d.) *COPYING*. Available at:
-  <https://github.com/git/git/blob/master/COPYING> (Accessed: 13 July 2026).
-- SHAR repository (2026) Git history and repository workflow documentation.
+  <https://github.com/git/git/blob/master/COPYING> (Accessed: 14 July 2026).
+- SHAR repository and operator environment (2026), Git history, repository
+  workflow documentation, and observed `git version 2.54.0.windows.1`.
