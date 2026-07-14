@@ -191,11 +191,17 @@ class HttpExchangeClient:
         finally:
             connection.close()
 
-    def delete(self, session: McpSession) -> int:
-        """Delete one initialized native MCP session.
+    def delete(
+        self,
+        *,
+        session_id: str,
+        protocol_version: str,
+    ) -> int:
+        """Delete one native MCP session identity.
 
         Args:
-            session: Session identity to close.
+            session_id: Validated session header identity.
+            protocol_version: Protocol version sent during initialization.
 
         Returns:
             Native server HTTP status.
@@ -207,7 +213,8 @@ class HttpExchangeClient:
                 self._endpoint.path,
                 headers={
                     "Origin": self._endpoint.origin,
-                    **_session_headers(session),
+                    "Mcp-Protocol-Version": protocol_version,
+                    "Mcp-Session-Id": session_id,
                 },
             )
             response = connection.getresponse()

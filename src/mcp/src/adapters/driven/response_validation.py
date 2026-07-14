@@ -82,7 +82,7 @@ def parse_initialized_session(
     Returns:
         A fully validated native Unreal MCP session.
     """
-    session_id = _require_visible_ascii_session_id(exchange.session_id)
+    session_id = require_visible_ascii_session_id(exchange.session_id)
     outcome = require_json_rpc_result(exchange, request_id)
     protocol_version = outcome.get("protocolVersion")
     if protocol_version != expected_protocol_version:
@@ -181,7 +181,15 @@ def parse_tool_names(result: JsonObject) -> tuple[str, ...]:
     return tuple(names)
 
 
-def _require_visible_ascii_session_id(value: str | None) -> str:
+def require_visible_ascii_session_id(value: str | None) -> str:
+    """Return one safe session header identity.
+
+    Args:
+        value: Candidate MCP session header value.
+
+    Returns:
+        A non-empty visible-ASCII session identifier.
+    """
     if (
         value is None
         or not value

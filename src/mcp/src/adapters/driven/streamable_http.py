@@ -68,6 +68,7 @@ from mcp.src.adapters.driven.response_validation import (
     parse_initialized_session,
     parse_tool_names,
     require_json_rpc_result,
+    require_visible_ascii_session_id,
 )
 from mcp.src.domain.errors import (
     RequestTimeoutError,
@@ -140,12 +141,13 @@ class StreamableHttpTransport:
                 request_id=request_id,
                 session=None,
             )
-            session = parse_initialized_session(
-                exchange,
-                request_id,
-                expected_protocol_version=_PROTOCOL_VERSION,
-            )
+            session_id = require_visible_ascii_session_id(exchange.session_id)
             try:
+                session = parse_initialized_session(
+                    exchange,
+                    request_id,
+                    expected_protocol_version=_PROTOCOL_VERSION,
+                )
                 notification = self._exchange.post(
                     payload=build_json_rpc_request(
                         method="notifications/initialized",
@@ -161,7 +163,10 @@ class StreamableHttpTransport:
                     )
             except UnrealMcpError as initialization_error:
                 try:
-                    self._delete_session(session)
+                    self._delete_session_identity(
+                        session_id,
+                        _PROTOCOL_VERSION,
+                    )
                 except UnrealMcpError as cleanup_error:
                     initialization_error.add_note(
                         f"MCP session cleanup failed: {cleanup_error}"
@@ -284,8 +289,22 @@ class StreamableHttpTransport:
             self._delete_session(session)
 
     def _delete_session(self, session: McpSession) -> None:
-        """Delete one session while the caller owns the transport lock."""
-        status = self._exchange.delete(session)
+        """Delete one full session while the caller owns the transport lock."""
+        self._delete_session_identity(
+            session.session_id,
+            session.protocol_version,
+        )
+
+    def _delete_session_identity(
+        self,
+        session_id: str,
+        protocol_version: str,
+    ) -> None:
+        """Delete one validated session header identity."""
+        status = self._exchange.delete(
+            session_id=session_id,
+            protocol_version=protocol_version,
+        )
         if status != _HTTP_ACCEPTED:
             fail_protocol("session delete did not return HTTP 202")
 

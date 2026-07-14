@@ -90,6 +90,23 @@ def test_transport_completes_native_lifecycle_and_final_sse_event() -> None:
         assert server.session_closed
 
 
+def test_transport_deletes_session_when_initialize_result_is_invalid() -> None:
+    """A valid session header is cleaned up when its body is malformed."""
+    with FakeUnrealServer.with_malformed_initialize_result() as server:
+        transport = StreamableHttpTransport(
+            McpEndpoint.parse(server.endpoint),
+            timeout_seconds=2.0,
+        )
+
+        with pytest.raises(
+            ProtocolError,
+            match=r"initialize result\.capabilities\.tools",
+        ):
+            _ = transport.initialize()
+
+        assert server.session_closed
+
+
 def test_transport_deletes_session_when_initialized_rejected() -> None:
     """A negotiated session is not leaked when initialization cannot finish."""
     with FakeUnrealServer.with_initialization_failure() as server:

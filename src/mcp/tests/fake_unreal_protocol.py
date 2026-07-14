@@ -180,6 +180,8 @@ class FakeUnrealRequestHandler(BaseHTTPRequestHandler):
                 "version": "",
             },
         }
+        if self._test_server().behavior.malformed_initialize_result:
+            result["capabilities"] = {}
         self._write_json(
             _HTTP_OK,
             {"jsonrpc": "2.0", "id": payload.get("id"), "result": result},

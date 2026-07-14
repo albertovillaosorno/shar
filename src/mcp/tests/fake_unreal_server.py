@@ -72,6 +72,7 @@ class FakeUnrealBehavior(NamedTuple):
     empty_toolsets: bool = False
     reject_initialized_notification: bool = False
     reject_session_delete: bool = False
+    malformed_initialize_result: bool = False
 
 
 class FakeUnrealServer:
@@ -118,6 +119,19 @@ class FakeUnrealServer:
         server._server.behavior = FakeUnrealBehavior(
             reject_initialized_notification=True,
             reject_session_delete=reject_session_delete,
+        )
+        return server
+
+    @classmethod
+    def with_malformed_initialize_result(cls) -> Self:
+        """Create a server that returns malformed initialize metadata.
+
+        Returns:
+            A stopped server configured with an invalid initialize result.
+        """
+        server = cls()
+        server._server.behavior = FakeUnrealBehavior(
+            malformed_initialize_result=True,
         )
         return server
 
