@@ -1,0 +1,22 @@
+[workspace]
+resolver = "3"
+members = [
+  "src/cli",
+  "src/filesystem",
+  "src/pipeline",
+  "src/game-manifest",
+  "src/json-text",
+  "src/fbx",
+  "src/lmlm",
+  "src/p3d",
+  "src/rcf",
+  "src/rsd",
+  "src/rmv",
+  "src/rtf",
+  "src/unreal",
+]
+
+[workspace.package]
+version = "26.7.0"
+edition = "2024"
+license = "MIT"

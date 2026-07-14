@@ -1,0 +1,81 @@
+{
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+  "version": "0.2",
+  "language": "en-US,en-GB",
+  "readonly": false,
+  "useGitignore": true,
+  "enableGlobDot": true,
+  "validateDirectives": true,
+  "caseSensitive": true,
+  "allowCompoundWords": false,
+  "minWordLength": 3,
+  "usePnP": false,
+  "files": [
+    "AGENTS.md",
+    "Cargo.toml",
+    "LICENSE",
+    "README.md",
+    "cspell.json",
+    ".github/**/*.{json,md,yaml,yml}",
+    "docs/**/*.{json,md,mdc,yaml,yml}",
+    "docs/cspell/*.txt",
+    "skills/**/*.{json,md,mdc,yaml,yml}",
+    "src/**/*.{c,cc,cpp,cs,cxx,h,hh,hpp,hxx,ini,inl,json,md,py,rs,sh,toml,txt,yaml,yml}"
+  ],
+  "ignoreRegExpList": [],
+  "ignoreWords": [],
+  "dictionaryDefinitions": [
+    {
+      "name": "custom-english",
+      "path": "./docs/cspell/english.txt"
+    },
+    {
+      "name": "custom-technical",
+      "path": "./docs/cspell/technical.txt"
+    },
+    {
+      "name": "custom-named-entities",
+      "path": "./docs/cspell/named-entities.txt"
+    }
+  ],
+  "dictionaries": [
+    "aws",
+    "bash",
+    "companies",
+    "computing-acronyms",
+    "cpp",
+    "csharp",
+    "css",
+    "custom-english",
+    "custom-named-entities",
+    "custom-technical",
+    "data-science",
+    "data-science-tools",
+    "dotnet",
+    "en-gb",
+    "filetypes",
+    "fullstack",
+    "game-development",
+    "gaming-terms",
+    "git",
+    "html",
+    "networking-terms",
+    "node",
+    "npm",
+    "public-licenses",
+    "python",
+    "rust",
+    "rust-crates",
+    "shellscript",
+    "software-tools",
+    "softwareTerms",
+    "sql",
+    "typescript",
+    "web-services"
+  ],
+  "ignorePaths": [
+    "Cargo.lock",
+    "temp/**",
+    "cache/**"
+  ]
+}

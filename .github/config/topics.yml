@@ -1,0 +1,28 @@
+settings:
+  max_topics: 20
+topics:
+  languages:
+    - rust
+    - csharp
+    - cpp
+    - python
+  engine_and_game:
+    - unreal-engine-5
+    - the-simpsons-hit-and-run
+  architecture_and_pipeline:
+    - asset-pipeline
+    - reverse-engineering
+    - hexagonal-architecture
+    - deterministic-builds
+    - asset-conversion
+  formats_and_tooling:
+    - p3d
+    - fbx
+    - binary-parsing
+    - game-engineering
+  tags:
+    - ai
+    - ai-agents
+    - skills
+    - mcp
+    - modding

@@ -1,0 +1,5 @@
+description: >
+  AI-first Unreal Engine 5 reimplementation of The Simpsons: Hit & Run
+  with a deterministic Rust asset pipeline, first-principles binary FBX,
+  native Unreal MCP control for AI agents, and lawful local mod support.
+  No game content is distributed; a lawful local copy is required.
