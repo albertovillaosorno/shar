@@ -54,6 +54,7 @@
 #[path = "common/binary_artifact.rs"]
 pub mod binary_artifact;
 
+use std::mem::size_of;
 use std::path::PathBuf;
 
 use binary_artifact::read_binary_pair;
@@ -65,6 +66,7 @@ use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 use fbx::domain::skeleton::Bone;
 use fbx::domain::skin::SkinInfluence;
 use fbx::domain::texture::MaterialBinding;
+use fbx::domain::transform::matrix::{TrsParts, compose};
 use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
@@ -210,6 +212,62 @@ fn integer_property_token(
     token.push(b'I');
     token.extend_from_slice(&value.to_le_bytes());
     Some(token)
+}
+
+/// Read one exact signed integer leaf-node value by its unique node name.
+fn i32_leaf_value(
+    document: &[u8],
+    name: &str,
+) -> Option<i32> {
+    let name_start = document
+        .windows(name.len())
+        .position(|window| window == name.as_bytes())?;
+    let property_start = name_start.checked_add(name.len())?;
+    if document.get(property_start) != Some(&b'I') {
+        return None;
+    }
+    let value_start = property_start.checked_add(1)?;
+    let value_end = value_start.checked_add(size_of::<i32>())?;
+    let bytes = document.get(value_start..value_end)?;
+    Some(
+        i32::from_le_bytes(
+            bytes
+                .try_into()
+                .ok()?,
+        ),
+    )
+}
+
+/// Encode one exact uncompressed FBX double-array property payload.
+fn f64_array_token(values: &[f64]) -> Option<Vec<u8>> {
+    let count = u32::try_from(values.len()).ok()?;
+    let payload_byte_count = values
+        .len()
+        .checked_mul(size_of::<f64>())?;
+    let encoded_byte_count = u32::try_from(payload_byte_count).ok()?;
+    let mut token = Vec::new();
+    token.push(b'd');
+    token.extend_from_slice(&count.to_le_bytes());
+    token.extend_from_slice(&0_u32.to_le_bytes());
+    token.extend_from_slice(&encoded_byte_count.to_le_bytes());
+    for value in values {
+        token.extend_from_slice(&value.to_le_bytes());
+    }
+    Some(token)
+}
+
+/// Count exact byte-window matches.
+fn byte_window_count(
+    haystack: &[u8],
+    needle: &[u8],
+) -> usize {
+    if needle.is_empty() {
+        return 0;
+    }
+    haystack
+        .windows(needle.len())
+        .filter(|window| *window == needle)
+        .count()
 }
 
 // One ordered byte-level regression verifies header, graph tokens, footer, and
@@ -415,6 +473,45 @@ fn writes_deterministic_binary_fbx_7700_with_standard_footer() {
         concat!(
             "binary FBX must rotate the completed character through one ",
             "export root"
+        )
+    );
+    assert_eq!(
+        i32_leaf_value(
+            &first,
+            "NbPoseNodes",
+        ),
+        Some(3_i32),
+        "bind pose must include the export root, mesh model, and root bone"
+    );
+    let export_space_bind = compose(
+        &TrsParts {
+            translation: [
+                0.0_f64, 0.0_f64, 0.0_f64,
+            ],
+            rotation_degrees: [
+                0.0_f64, 180.0_f64, 0.0_f64,
+            ],
+            scale: [
+                1.0_f64, 1.0_f64, 1.0_f64,
+            ],
+        },
+    );
+    let export_space_bind_token_result = f64_array_token(&export_space_bind);
+    assert!(
+        export_space_bind_token_result.is_some(),
+        "export-space bind matrix should fit the FBX array contract"
+    );
+    let Some(export_space_bind_token) = export_space_bind_token_result else {
+        return;
+    };
+    assert!(
+        byte_window_count(
+            &first,
+            &export_space_bind_token,
+        ) >= 3_usize,
+        concat!(
+            "bind pose must keep the 180-degree export orientation for the ",
+            "export root, mesh model, and root bone"
         )
     );
     let Some(texture) = textures.first() else {
