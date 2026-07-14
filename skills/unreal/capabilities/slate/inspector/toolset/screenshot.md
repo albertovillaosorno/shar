@@ -47,41 +47,67 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to capture bounded visual evidence from a known Slate window or
+widget before and after SHAR editor-UI work. Discover the exact ref through
+`Windows` and `Snapshot`, then capture that ref rather than relying on active-
+window inference.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project and native MCP server must be ready.
+- Obtain a current Slate widget ref from `Snapshot` in the same editor session.
+- Prefer the smallest ref that contains the evidence required for review.
+- Decode the returned base64 image in memory or route temporary output outside
+  tracked repository content.
+- Pause window resizing and focus changes when comparing repeated captures.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "ref": "w1"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two captures of window ref `w1` returned byte-identical valid `image/png`
+payloads at 1358 by 718 pixels. Refs `i1` and `i2` produced the same image,
+while inset ref `i3` returned a deterministic 1354 by 714 PNG with different
+bytes. The dimensions matched the corresponding `Snapshot` geometry.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- An empty ref and a deliberately missing ref returned an empty MIME type and
+  zero image bytes without a native error; verify payload length and MIME type
+  explicitly.
+- Refs are session-local and can change when Slate windows or widget trees are
+  rebuilt.
+- A parent window and image child can resolve to identical pixels when they
+  cover the same geometry.
+- Screenshot success proves raster capture only; it does not prove widgets are
+  interactive, accessible, or semantically correct.
+- Do not commit large base64 payloads or temporary PNG review artifacts.
+- Repeated bytes were stable for the verified static UI state, but live
+  animations, focus, tooltips, and notifications can change output.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
