@@ -69,10 +69,11 @@ def test_missing_payload_reports_status() -> None:
 def test_rpc_error_reports_server_message() -> None:
     """A valid JSON-RPC error exposes its bounded text message."""
     payload: JsonObject = {
+        "jsonrpc": "2.0",
         "error": {
             "code": -32600,
             "message": "invalid request",
-        }
+        },
     }
 
     with pytest.raises(
@@ -82,17 +83,23 @@ def test_rpc_error_reports_server_message() -> None:
         raise_http_status_error(400, payload)
 
 
-def test_non_text_message_uses_stable_fallback() -> None:
-    """A non-text JSON-RPC message never leaks an arbitrary value."""
-    payload: JsonObject = {
-        "error": {
-            "code": -32603,
-            "message": 17,
-        }
-    }
+def test_malformed_rpc_error_uses_status_fallback() -> None:
+    """Only a complete JSON-RPC error may replace the HTTP status message."""
+    payloads: tuple[JsonObject, ...] = (
+        {"error": {"code": -32603, "message": "unversioned"}},
+        {"jsonrpc": "2.0", "error": {"code": True, "message": "failed"}},
+        {"jsonrpc": "2.0", "error": {"code": 1.0, "message": "failed"}},
+        {"jsonrpc": "2.0", "error": {"code": -32603, "message": 17}},
+        {
+            "jsonrpc": "2.0",
+            "result": {},
+            "error": {"code": -32603, "message": "failed"},
+        },
+    )
 
-    with pytest.raises(
-        ProtocolError,
-        match=r"^HTTP 500: unknown MCP error$",
-    ):
-        raise_http_status_error(500, payload)
+    for payload in payloads:
+        with pytest.raises(
+            ProtocolError,
+            match=r"^MCP server returned HTTP 500$",
+        ):
+            raise_http_status_error(500, payload)

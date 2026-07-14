@@ -50,6 +50,8 @@ from typing import Never
 from mcp.src.domain.errors import fail_protocol
 from mcp.src.domain.json_types import JsonObject, require_json_object
 
+_JSON_RPC_VERSION = "2.0"
+
 
 def raise_http_status_error(
     status: int,
@@ -61,13 +63,25 @@ def raise_http_status_error(
         status: Unsuccessful HTTP status code.
         payload: Optional decoded JSON-RPC response body.
     """
-    if payload is None:
+    message = _validated_error_message(payload)
+    if message is None:
         fail_protocol(f"MCP server returned HTTP {status}")
-    error_value = payload.get("error")
-    if error_value is None:
-        fail_protocol(f"MCP server returned HTTP {status}")
-    error = require_json_object(error_value, context="HTTP error")
-    message = error.get("message", "unknown MCP error")
-    if not isinstance(message, str):
-        message = "unknown MCP error"
     fail_protocol(f"HTTP {status}: {message}")
+
+
+def _validated_error_message(payload: JsonObject | None) -> str | None:
+    if (
+        payload is None
+        or payload.get("jsonrpc") != _JSON_RPC_VERSION
+        or "result" in payload
+    ):
+        return None
+    error_value = payload.get("error")
+    if not isinstance(error_value, dict):
+        return None
+    error = require_json_object(error_value, context="HTTP error")
+    code = error.get("code")
+    if not isinstance(code, int) or isinstance(code, bool):
+        return None
+    message = error.get("message")
+    return message if isinstance(message, str) else None
