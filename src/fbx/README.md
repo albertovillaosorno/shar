@@ -56,8 +56,9 @@ src/fbx/src/adapters/driving/
 
 src/fbx/src/adapters/driven/
   Outbound adapters such as generated package-index readers, decoded component
-  sources, the canonical binary FBX 7.7 writer, and optional Blender or Maya
-  import/review-script generators.
+  sources, the canonical binary FBX 7.7 writer, and optional experimental
+  Blender or Maya inspection-script generators. Those scripts are not
+  production validation or acceptance adapters.
 ```
 
 ## Conversion flow
@@ -74,23 +75,25 @@ Phase 3 package id
   -> driven writer adapter
 ```
 
-## Character package status
+## Character writer status
 
-The character package lane is complete. Canonical binary FBX 7.7 output has
-been imported into Blender 5.1 and Maya 2027 with geometry, materials, embedded
-textures, authored mesh partitions, skeleton hierarchy, skinning, native
-animation curves, source-rate key timing, and animated poses preserved. The
-writer does not forcibly fuse separate source meshes; Homer therefore remains a
-valid three-mesh character artifact.
+The character writer implements geometry, materials, embedded textures, authored
+mesh partitions, skeleton hierarchy, skinning, native animation curves,
+source-rate key timing, and deterministic binary output. Repository-owned
+synthetic fixtures and binary-contract tests verify those implemented semantics.
+The writer does not forcibly fuse separate source meshes, so a character may
+legitimately retain multiple authored mesh partitions.
 
-The review applications do not own scene semantics and do not emit alternate
-production artifacts. Package evidence, domain translation, capability reports,
-and the binary FBX writer remain authoritative.
+Optional Blender or Maya scripts remain experimental inspection aids. Results
+observed in those applications do not replace repository-owned validation and do
+not establish package acceptance. Package evidence, domain translation,
+capability reports, the binary writer, and canonical validation remain
+authoritative.
 
-The next delivery step is the full local character catalog under
-`fbx-assets/characters/`, with one self-contained FBX per package and one
-deterministic manifest. Phase 4 then proceeds through props, vehicles, and world
-pieces in that order.
+The character package lane remains incomplete until the full local catalog under
+`fbx-assets/characters/` contains one self-contained FBX per package, one
+deterministic manifest, and passing conformance evidence. Phase 4 then proceeds
+through props, vehicles, and world pieces in that order.
 
 ## Non-goals
 

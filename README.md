@@ -437,18 +437,20 @@ Completed boundary work:
 - [x] Define package profiles for characters, vehicles, props, and terrain.
 - [x] Preserve authored mesh partitions instead of forcibly merging
   unrelated geometry islands.
-- [x] Provide optional Blender review and Maya import helpers without making
-  either application the source of truth.
-- [x] Complete the character FBX package lane for geometry, materials, texture
-  references, skeletons, skin clusters, and native animation curves.
-- [x] Verify the same canonical character FBX 7.7 artifact in Blender 5.1 and
-  Maya 2027 without alternate scene serialization or manual rig repair.
+- [x] Keep optional Blender review and Maya import scripts explicitly
+  experimental, non-authoritative, and outside production validation.
+- [x] Implement the character FBX writer for geometry, materials, embedded
+  textures, authored mesh partitions, skeletons, skin clusters, native animation
+  curves, and source-rate timing.
+- [x] Protect the binary writer and character scene contract with
+  repository-owned structural, semantic, determinism, and malformed-input tests.
 
-The character writer lane is complete. Representative acceptance testing
-confirms geometry, materials, embedded textures, authored mesh partitions,
-skeleton hierarchy, skinning, native animation curves, source-rate timing, and
-animated posing in both applications. Blender and Maya remain review adapters;
-the canonical artifact is still binary FBX 7.7.
+The implemented character writer boundary is verified through repository-owned
+synthetic fixtures and deterministic binary-contract tests. Optional Blender or
+Maya scripts are exploratory inspection aids only; importing an artifact into
+those applications is not generation, repair, validation, or acceptance
+evidence. The complete character package lane remains open until catalog
+production and the conformance criteria below are satisfied.
 
 The next character milestone is deterministic catalog generation under
 `fbx-assets/characters/`: one self-contained FBX file per character package,
@@ -844,7 +846,9 @@ built from nothing. The user must provide:
 
 - The official NVIDIA Unreal or Streamline plugin may be required for the DLSS
   compatibility target when it is available and selected.
-- Blender is an optional review adapter, not the canonical FBX generator.
+- Blender and Maya are optional experimental inspection aids only. They are not
+  generation, conversion, staging, repair, validation, or acceptance
+  dependencies.
 - No third-party game assets or replacement-content packs are bundled.
 
 The pipeline should manage repository-pinned Rust, Python, FFmpeg, and other
