@@ -49,41 +49,58 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to verify the expression sources wired into each input pin during
+SHAR material graph review.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use a current expression ref and its actual owning Material or
+  MaterialFunction.
+- Compare results with `get_expression_input_names`.
+- Independently verify owner membership through `get_expressions`.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "material_or_function": {"refPath": "/Engine/EngineMaterials/WorldGridMaterial.WorldGridMaterial"},
+  "expression": {"refPath": "/Engine/EngineMaterials/WorldGridMaterial.WorldGridMaterial:MaterialExpressionMultiply_30"}
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two calls returned `A` from `MaterialExpressionLinearInterpolate_66` and `B`
+from `MaterialExpressionMultiply_32`, both using unnamed outputs. The ordered
+names matched `get_expression_input_names`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The tool accepted the World Grid expression even when a different
+  MaterialFunction was passed as owner; the owner argument is not a reliable
+  membership guard.
+- Independently verify that the expression appears in the owner's
+  `get_expressions` result.
+- Unwired pins can serialize their expression as `"None"`.
+- Missing expression refs fail during parameter translation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

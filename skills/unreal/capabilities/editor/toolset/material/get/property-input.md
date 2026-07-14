@@ -48,41 +48,54 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to identify the expression driving one material output before SHAR
+traces graph wiring or compares material parity.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use an exact loaded Material object path.
+- Pass one live `EMaterialProperty` enum value from the schema.
+- Verify the returned expression against the material expression inventory.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "material": {"refPath": "/Engine/EngineMaterials/WorldGridMaterial.WorldGridMaterial"},
+  "material_property": "MP_BaseColor"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Repeated reads mapped Base Color to `MaterialExpressionMultiply_30`, Roughness
+to `MaterialExpressionClamp_6`, and Normal to `MaterialExpressionMultiply_31`.
+Emissive Color and Opacity returned `expression: "None"`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Disconnected outputs are serialized as the string `"None"`, not JSON `null`.
+- `input_name` and `output_name` were empty for the verified material outputs.
+- Invalid enum text fails JSON-to-struct conversion before invocation.
+- The result reports graph wiring, not the final compiled value.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
