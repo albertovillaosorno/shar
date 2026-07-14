@@ -206,7 +206,9 @@ mutation.
 - A police capture applies a 50-coin fine, clamped so the balance cannot become
   negative.
 - Repairing a destroyed selected vehicle through the retrieval interface costs
-  10 coins when the repair condition applies.
+  10 coins when the repair condition applies. Eligibility, insufficient-currency
+  rejection, health persistence, delivery, and rollback follow
+  [Vehicle retrieval and phone-booth runtime](vehicle-retrieval-and-phone-booth-runtime.md).
 - A wasp hit or destruction of the currently driven vehicle may emit a
   recoverable transient drop according to its definition.
 - Recoverable dropped coins retain a source batch identity and expiration. A

@@ -54,11 +54,14 @@ proprietary external formats.
 
 ## Unreal
 
+- [Ambient population and named-character runtime](unreal/ambient-population-and-named-character-runtime.md)
 - [Campaign level composition and progress](unreal/campaign-level-composition-and-progress.md)
 - [Frontend shell and menu runtime](unreal/frontend-shell-and-menu-runtime.md)
 - [Unreal configuration and asset validation](unreal/config-and-asset-validation.md)
 - [Unreal gameplay content catalog](unreal/gameplay-content-catalog.md)
 - [Mission, interaction, interior, and notoriety runtime](unreal/mission-interaction-and-notoriety-runtime.md)
+- [Mod package overlay runtime](unreal/mod-package-overlay-runtime.md)
+- [Music state and transition runtime](unreal/music-state-and-transition-runtime.md)
 - [Unreal MCP terminal translator](unreal/mcp-terminal-translator.md)
 - [Native asset planning](unreal/native-asset-planning.md)
 - [Platform audio cooking and streaming](unreal/platform-audio-cooking-and-streaming.md)
@@ -66,6 +69,7 @@ proprietary external formats.
 - [Platform, quality, and optimization contract](unreal/platform-quality-and-optimization.md)
 - [Platform save storage and lifecycle](unreal/platform-save-storage-and-lifecycle.md)
 - [Progression, collectibles, cheats, and credits](unreal/progression-collectibles-and-cheats.md)
+- [Vehicle retrieval and phone-booth runtime](unreal/vehicle-retrieval-and-phone-booth-runtime.md)
 - [Editor guardrails](unreal/testing/editor-guardrails.md)
 - [Unreal test taxonomy](unreal/testing/test-taxonomy.md)
 
@@ -79,7 +83,7 @@ proprietary external formats.
 
 ## Current coverage
 
-- Active technical specifications: 40.
+- Active technical specifications: 44.
 - Template records: 1.
 - Review date: 2026-07-14.
 - Status boundary: this catalog describes current repository behavior and does

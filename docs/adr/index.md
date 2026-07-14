@@ -137,6 +137,10 @@ repository reference must point to the current owning decision.
   — Accepted
 - [Data-driven Unreal gameplay content catalog](unreal/runtime/data-driven-gameplay-content-catalog.md)
   — Accepted
+- [Event-driven music and ambience](unreal/runtime/event-driven-music-and-ambience.md)
+  — Accepted
+- [Mass Entity ambient population](unreal/runtime/mass-entity-ambient-population.md)
+  — Accepted
 - [State-driven missions, interactions, interiors, and notoriety](unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
   — Accepted
 - [Portable save storage and lifecycle](unreal/runtime/portable-save-storage-and-lifecycle.md)
@@ -145,6 +149,10 @@ repository reference must point to the current owning decision.
 - [Graphics quality presets and platform support](unreal/runtime/graphics-quality-presets-and-platform-support.md)
   — Accepted
 - [Shared runtime tagging, modding, and platform compatibility](unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
+  — Accepted
+- [Transactional phone-booth vehicle retrieval](unreal/runtime/transactional-phone-booth-vehicle-retrieval.md)
+  — Accepted
+- [Validated game-feature mod overlays](unreal/runtime/validated-game-feature-mod-overlays.md)
   — Accepted
 - [Runtime parity test boundary](unreal/runtime/runtime-parity-test-boundary.md)
   — Accepted
@@ -158,7 +166,7 @@ repository reference must point to the current owning decision.
 
 ## Current coverage
 
-- Accepted decision records: 62.
+- Accepted decision records: 66.
 - Template records: 1.
 - Review date: 2026-07-14.
 - Status boundary: this catalog contains only accepted repository decisions;

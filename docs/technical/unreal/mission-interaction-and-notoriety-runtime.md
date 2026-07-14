@@ -199,6 +199,36 @@ mission can fail between them. A forced vehicle may constrain collection without
 changing the item identity. Pedestrian, prop, and traffic contacts remain normal
 notoriety events while collecting or delivering.
 
+## Vehicle-attached payload objective
+
+A `vehicle_payload` objective transports one declared mission item on a separate
+canonical vehicle. The payload definition records:
+
+- stable payload and attachment identities;
+- eligible carrier vehicles and attachment sockets;
+- attach, detach, and reattach policies;
+- collision impulse and stability thresholds;
+- intact, unstable, detached, destroyed, and delivered states;
+- damage, effect, and audio presentation;
+- accepted delivery volume and orientation policy;
+- retry and checkpoint restoration; and
+- whether incidental disturbance emits a separately declared economy event.
+
+Attachment does not merge payload and vehicle identity. Vehicle replacement,
+retrieval, destruction, World Partition streaming, or actor reconstruction cannot
+silently deliver, duplicate, or delete the payload.
+
+Delivery is accepted only when the declared payload identity remains in an
+eligible state and enters the accepted delivery volume through the objective
+transaction. Carrier entry without the payload, a detached payload outside the
+volume, destruction effects, despawn, and presentation completion are not
+success.
+
+A fragile payload uses deterministic collision observations and validated
+thresholds rather than frame-rate-dependent contact callbacks. Retry restores the
+exact declared carrier, payload state, attachment, route context, and accepted
+prior steps. It never preserves a partially destroyed candidate as success.
+
 ## Destroy and avoid objectives
 
 A `destroy` objective completes only from validated destruction of every required

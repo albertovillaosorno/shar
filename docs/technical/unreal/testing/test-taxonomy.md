@@ -7,10 +7,14 @@
 
 - [Canonical seven-level campaign and world variants](../../../adr/unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
 - [Common UI front end and progress projection](../../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
+- [Event-driven music and ambience](../../../adr/unreal/runtime/event-driven-music-and-ambience.md)
+- [Mass Entity ambient population](../../../adr/unreal/runtime/mass-entity-ambient-population.md)
 - [Runtime parity test boundary](../../../adr/unreal/runtime/runtime-parity-test-boundary.md)
 - [State-driven missions, interactions, interiors, and notoriety](../../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
 - [Graphics quality presets and platform support](../../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
 - [Portable save storage and lifecycle](../../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+- [Transactional phone-booth vehicle retrieval](../../../adr/unreal/runtime/transactional-phone-booth-vehicle-retrieval.md)
+- [Validated game-feature mod overlays](../../../adr/unreal/runtime/validated-game-feature-mod-overlays.md)
 
 ## Purpose
 
@@ -90,6 +94,18 @@ target. Preset tests prove resolved quality settings and visual invariants.
 - Frontend suites cover Common UI stacks, focus, semantic input, logical slots,
   resume selection, new-game replacement, scrapbook parity, options rollback,
   calendar fallback, and idle-event cancellation.
+- Vehicle-retrieval suites cover locked projections, traffic and forced-use
+  boundaries, health persistence, insufficient currency, exactly-once repair,
+  safe delivery, driver presentation, mission policy, and transaction rollback.
+- Ambient-population suites cover deterministic Mass plans, representation LOD,
+  streaming hysteresis, avoidance, look-at, horn and violence reactions, fall and
+  recovery, conversations, named-character promotion, and mission pinning.
+- Music suites cover level profiles, cue bindings, state priority, Quartz
+  quantization, graph parameters, mission and race events, interior commit,
+  pause, lifecycle, fallback, and target-cook read-back.
+- Mod-overlay suites cover portable rows, cooked Game Feature compatibility,
+  dependency order, registries, world content, stale revisions, missing content,
+  atomic activation, deactivation, and native-extension rejection.
 - Every claimed platform and architecture passes native package launch,
   rendering, input, storage, save/load, cinematic playback, restart, and clean-
   shutdown tests.

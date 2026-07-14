@@ -305,6 +305,10 @@ second level inventory or omits a canonical vehicle from the level definition.
 
 Each level references one audio profile containing music states, ambience zones,
 mission cues, character dialogue scopes, vehicle roles, and event transitions.
+Music identity, cue bindings, semantic events, Quartz timing, graph parameters,
+and transitions follow
+[Music state and transition runtime](music-state-and-transition-runtime.md).
+
 A page or index with no independently identified sound rows does not create a
 second Level 7 sound catalog. Verified audio assets remain owned by their exact
 audio roles and level profile.

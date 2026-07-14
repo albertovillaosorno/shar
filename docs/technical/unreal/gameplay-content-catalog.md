@@ -7,8 +7,12 @@
 
 - [Canonical seven-level campaign and world variants](../../adr/unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+- [Event-driven music and ambience](../../adr/unreal/runtime/event-driven-music-and-ambience.md)
+- [Mass Entity ambient population](../../adr/unreal/runtime/mass-entity-ambient-population.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 - [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
+- [Transactional phone-booth vehicle retrieval](../../adr/unreal/runtime/transactional-phone-booth-vehicle-retrieval.md)
+- [Validated game-feature mod overlays](../../adr/unreal/runtime/validated-game-feature-mod-overlays.md)
 - [Driving, traffic, and vehicle behavior parity](../../adr/gameplay/vehicles/driving-traffic-and-vehicle-ai.md)
 - [Unreal manifest and package taxonomy](../../adr/pipeline/unreal/unreal-manifest-and-package-taxonomy.md)
 - [Three-base-world consolidation](../../adr/pipeline/unreal/three-base-world-consolidation.md)
@@ -65,6 +69,8 @@ scan another root or infer ownership from an arbitrary folder.
 │   │   ├── Level_06
 │   │   └── Level_07
 │   ├── Locations
+│   ├── Populations
+│   ├── Music
 │   ├── Rewards
 │   ├── Costumes
 │   ├── BonusModes
@@ -113,6 +119,9 @@ or local routes.
 | Vehicle | `SharVehicle` | `DA_Vehicle_<canonical_id>` |
 | Mission | `SharMission` | `DA_Mission_<canonical_id>` |
 | Location | `SharLocation` | `DA_Location_<canonical_id>` |
+| Population | `SharPopulation` | `DA_Population_<canonical_id>` |
+| Music profile | `SharMusicProfile` | `DA_MusicProfile_<canonical_id>` |
+| Music composition | `SharMusicComposition` | `DA_Music_<canonical_id>` |
 | Reward | `SharReward` | `DA_Reward_<canonical_id>` |
 | Costume set | `SharCostumeSet` | `DA_CostumeSet_<canonical_id>` |
 | Bonus mode | `SharBonusMode` | `DA_BonusMode_<canonical_id>` |
@@ -953,9 +962,107 @@ The Level 7 sound page in this slice contains no independently identified sound
 rows. It therefore creates no audio definition. Level audio remains owned by the
 level audio profile and exact role records.
 
+## Verified fifth character slice
+
+| Canonical identity | Aliases | Required contract |
+| :--- | :--- | :--- |
+| `mayor_quimby` | `quimby` | Non-playable civic character with cinematic, billboard, vehicle-presentation, and level-scoped ambient roles. |
+| `milhouse_van_houten` | `milhouse` | Non-playable mission character and Levels 1 through 6 time-trial host; race-host and story placements share one character identity. |
+| `moe_szyslak` | `moe` | Non-playable talkable and mission character with house, tavern, ambient, and story placements. |
+| `charles_montgomery_burns` | `mr_burns`, `monty_burns`, `burns` | The existing canonical identity is reaffirmed for intercom, mission, cinematic, and Level 7 interaction roles. |
+| `waylon_smithers` | `mr_smithers`, `smithers` | Non-playable mission, ambient, driver, cinematic, and Level 7 bonus-mission character. |
+| `ned_flanders` | `ned` | Non-playable mission, talkable, house-interaction, gag, and ambient character. |
+| `nerd` | none | Non-playable mission and race-driver archetype with exact Level 2 and Level 3 story placements. |
+| `otto_mann` | `otto` | Non-playable mission character, bus driver, and level-scoped ambient placement. |
+
+The minor-character and non-story-character indexes are query projections over
+canonical definitions and placement capabilities. They do not create aggregate
+characters or duplicate dialogue owners. The full placement rules follow
+[Ambient population and named-character runtime](ambient-population-and-named-character-runtime.md).
+
+## Verified fifth vehicle slice
+
+| Canonical identity | Aliases | Verified context | Required rule |
+| :--- | :--- | :--- | :--- |
+| `milk_truck` | none | Level 6 mission target and completion override | Mission destruction does not grant ownership; completion-only retrieval uses its explicit override. |
+| `mini_school_bus` | none | Level 1 traffic and completion override | Traffic access is temporary and does not grant ordinary retrieval ownership. |
+| `minivan` | none | Level 1 traffic and completion override | Native traffic and completion-override retrieval reference one definition. |
+| `monorail_car` | none | Level 2 secret vehicle | World access is temporary and excluded from the five counted progression vehicles. |
+| `obliteratatron_big_wheel_truck` | `obliteration_big_wheel_truck`, `monster_truck` | Level 5 secret vehicle | All three names resolve to one secret-vehicle definition and placement family. |
+| `mr_burns_limo` | `burns_limo` | Level 7 bonus-mission reward | The accepted reward grants persistent retrieval exactly once. |
+| `mr_plow` | none | Level 2 purchase for 200 coins | Purchase ownership gates the declared required-vehicle mission and normal retrieval. |
+| `nerd_car` | none | Level 3 purchase for 250 coins and race opponent | Purchase and opponent placements share one definition. |
+| `nonuplets_minivan` | `shelbyville_nonuplets_van` | Completion-override vehicle | No ordinary traffic, purchase, reward, or secret placement grants ownership. |
+| `nuclear_waste_truck` | none | Level 4 traffic and completion override | The traffic vehicle is distinct from the nuclear-waste mission payload. |
+| `open_wheel_race_car` | none | Level 7 street-race reward | Completing the declared race set grants persistent retrieval. |
+| `pickup_road_vehicle` | `pickup` | Traffic in Levels 1, 3, and 6 plus completion override | Traffic access and static prop placements do not grant ownership. |
+| `cletus_pickup_truck` | `pickup_truck` | Level 1 bonus reward and mission vehicle | Distinct from `pickup_road_vehicle`; reward ownership and forced mission use share one definition. |
+| `pizza_van` | none | Level 2 traffic and mission target plus completion override | Distinct from the purchasable surveillance vehicle despite related presentation. |
+
+The vehicle browser, locked rows, health, repair, completion override, delivery,
+and mission restrictions follow
+[Vehicle retrieval and phone-booth runtime](vehicle-retrieval-and-phone-booth-runtime.md).
+
+## Verified fifth mission slice
+
+| Canonical identity | Level and class | Ordered contract |
+| :--- | :--- | :--- |
+| `milking_the_pigs` | Level 6 bonus mission | Hit Chief Wiggum's vehicle and accept the evidence folder within 120 seconds, complete the Snake conversation, locate and destroy the Milk Truck within 180 seconds, return, and grant the Bandit once. |
+| `monkey_see_monkey_doh` | Level 2 main mission 6 | Require the owned Mr. Plow, travel to the research center, collect thirty declared monkeys within 240 seconds, return, complete the Dr. Nick interaction, and reach the final blender target. |
+| `nerd_race_queen` | Level 3 main mission 1 | Force Comic Book Guy's vehicle, win the declared race against the Nerd Car, reach the comic target, return within 90 seconds, and complete the final interaction. |
+| `never_trust_a_snake` | Level 5 main mission 5 | Hit the garbage truck and accept five emitted targets within 255 seconds, collect twenty-five declared garbage targets without a timer, reach the DMV, complete the Snake interaction and interior transition, and accept the folder target. |
+| `office_spaced` | Level 1 main mission 3 | Require the Plow King, reach Lenny, reach the Smithers pursuit start within 90 seconds, and destroy Smithers' vehicle before its race-condition destination. |
+| `operation_hellfish` | Level 3 main mission 4 | Require the School Bus, reach the observatory and first target, then destroy three declared sedans in successive 120-second, 90-second, and 75-second stages. |
+| `petty_theft_homer` | Level 1 main mission 2 | Collect the ordered personal-item targets under their declared 40-second or untimed policies, complete the Barney interaction, return to Ned, and complete the final conversation. |
+
+A zero timer declaration in this verified slice means untimed. It is not a
+zero-second timeout. Required and forced vehicles remain separate activation
+policies and never grant ownership.
+
+## Verified fifth street-race slice
+
+`motorway_checkpoint_level_02` is the Level 2 checkpoint race. It has twelve
+dense ordered checkpoints, starts near the town-hall district, ends at the east
+motorway exit, requires first place against Lisa's vehicle, a sports car, and a
+taxi, and fails on declared player-vehicle destruction or out-of-vehicle timeout.
+The finish conversation is presentation after race acceptance.
+
+## Verified fifth location and payload slice
+
+`moes_tavern` is one canonical Level 2 and Level 5 indoor location. Exterior
+portal placements, interior interactions, mission targets, gags, ambience, and
+music state reference the same location identity.
+
+`nuclear_waste` is a mission payload item, not a vehicle or generic collectible.
+Its definition owns attachment, collision sensitivity, detachment, destruction,
+delivery-zone acceptance, retry, and presentation policy. A vehicle carrying the
+payload remains a separate canonical vehicle instance.
+
+The detailed payload lifecycle follows the
+[mission, interaction, interior, and notoriety runtime](mission-interaction-and-notoriety-runtime.md).
+
+## Verified fifth system and index slice
+
+The mission index, minor-character index, non-story-character index, mod index,
+and modification index are coverage or navigation evidence. They do not create
+aggregate runtime assets. Accepted mod packages project through
+[Mod package overlay runtime](mod-package-overlay-runtime.md).
+
+The music census resolves through
+[Music state and transition runtime](music-state-and-transition-runtime.md).
+The pedestrian census resolves through
+[Ambient population and named-character runtime](ambient-population-and-named-character-runtime.md).
+The phone-booth census resolves through
+[Vehicle retrieval and phone-booth runtime](vehicle-retrieval-and-phone-booth-runtime.md).
+
+The newspaper page contributes no independently identified gameplay definition in
+this slice. Historical oddity and unused-behavior lists are negative compatibility
+or review evidence; they do not become successful gameplay features unless an
+intentional behavior has its own verified contract.
+
 ## Known limits
 
-This specification fixes the catalog architecture and the four verified coverage
+This specification fixes the catalog architecture and the five verified coverage
 slices. It does not claim that every remaining character, vehicle, mission,
 location, reward, costume, quote, interaction, or bonus-mode record has already
 been entered. New coverage extends these schemas and invariants; it does not

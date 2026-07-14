@@ -1,11 +1,12 @@
 # Platform audio cooking and streaming
 
 - Status: Active
-- Last reviewed: 2026-07-13
+- Last reviewed: 2026-07-14
 
 ## Governing decisions
 
 - [Platform-native audio cooking and streaming](../../adr/audio/platform-native-audio-cooking-and-streaming.md)
+- [Event-driven music and ambience](../../adr/unreal/runtime/event-driven-music-and-ambience.md)
 - [Latin American Spanish audio fallback](../../adr/audio/lmlm-spanish-latam-audio-fallback.md)
 - [Native cinematic package strategy](../../adr/rmv/unreal-native-cinematic-package.md)
 - [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
@@ -41,6 +42,12 @@ canonical audio record, not the WAV filename, storage route, Unreal object path,
 or cooked extension.
 
 ## Role policies
+
+Music composition, semantic state, event binding, Quartz timing, graph
+parameters, and transition behavior follow
+[Music state and transition runtime](music-state-and-transition-runtime.md).
+This specification remains authority over the normalized audio evidence and
+platform-native cook used by those states.
 
 Every audio role resolves to an explicit target policy. A policy declares:
 
