@@ -10,7 +10,7 @@ approval, sponsorship, or a repository dependency.
 - Evidence status: Verified — Official consumer terms and service pages
   reviewed.
 - Counsel review: Not performed.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-14.
 - Subject class: External software-development and general-purpose services.
 - Runtime or build dependency: No.
 
@@ -29,8 +29,8 @@ the source that controls that proposition.
 ## Provenance And Version History
 
 The official Terms of Use, Codex page, ChatGPT overview, and Codex repository
-were reviewed on 13 July 2026. The reviewed consumer terms identify 1 January
-2026 as their published effective date. Product names, service surfaces,
+were reviewed on 14 July 2026. The reviewed consumer terms identify 1 January
+2026 as their publication and effective date. Product names, service surfaces,
 regional availability, repositories, and governing terms may change; this
 record makes no permanent latest-version claim and does not establish which
 agreement applied to any unrecorded historical use.
@@ -46,6 +46,12 @@ permission concerning third-party material.
 SHAR claims only its independently authored repository material and does not
 claim authorship of the services, model artifacts, product documentation, or
 service outputs.
+
+A review of current tracked files and commit messages found no OpenAI,
+ChatGPT, or Codex provider identity used as repository author, co-author, or
+`generated with` attribution. That negative inventory does not establish whether
+an external service assisted any historical work; it establishes only the
+public attribution state reviewed on 14 July 2026.
 
 ## License Or Terms Basis
 
@@ -80,9 +86,12 @@ repository acceptance.
 
 ## Source References
 
-- OpenAI (2026), *Terms of Use*, effective 2026-01-01.
-  <https://openai.com/policies/terms-of-use/> (Accessed: 13 July 2026).
-- OpenAI (2026), *Codex*. <https://openai.com/codex/> (Accessed: 13 July 2026).
-- OpenAI, *ChatGPT*. <https://chatgpt.com/overview/> (Accessed: 13 July 2026).
+- OpenAI (2026), *Terms of Use*, published and effective 1 January 2026.
+  <https://openai.com/policies/terms-of-use/> (Accessed: 14 July 2026).
+- OpenAI (2026), *Codex*. <https://openai.com/codex/> (Accessed: 14 July 2026).
+- OpenAI, *ChatGPT*. <https://chatgpt.com/overview/> (Accessed: 14 July 2026).
 - OpenAI, *Codex official repository*. <https://github.com/openai/codex>
-  (Accessed: 13 July 2026).
+  (Accessed: 14 July 2026).
+- SHAR repository attribution inventory performed 14 July 2026: no OpenAI,
+  ChatGPT, or Codex provider identity was found as an author, co-author, or
+  `generated with` attribution in tracked files or commit messages.
