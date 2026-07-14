@@ -22,6 +22,7 @@ may cite ADRs for technical facts, but ADRs are not legal authority.
 ## Statutes
 
 - [15 U.S.C. §§ 1114 And 1125 — Trademark Claims](statutes/15-usc-1114-and-1125.md)
+- [17 U.S.C. § 101 — Definitions](statutes/17-usc-101.md)
 - [17 U.S.C. § 102(b) — Ideas, Processes, Systems, And Methods](statutes/17-usc-102b.md)
 - [17 U.S.C. § 103 — Compilations And Derivative Works](statutes/17-usc-103.md)
 - [17 U.S.C. § 106 — Exclusive Rights](statutes/17-usc-106.md)
@@ -97,7 +98,7 @@ fact-specific result is not determined. Hosting, public access, noncommercial
 purpose, independent implementation, interoperability intent, or an accepted ADR
 does not determine a legal outcome by itself.
 
-- Active legal records: 50.
+- Active legal records: 51.
 - Review date: 2026-07-14.
 - Statutory currentness: the Office of the Law Revision Counsel classification
   tables were checked on 2026-07-14. The published 119th Congress tables cover

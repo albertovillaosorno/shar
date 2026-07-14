@@ -124,6 +124,8 @@ conditions, and required notices are verified.
 
 ## Primary And Official Sources
 
+- Office of the Law Revision Counsel, [17 U.S.C. § 101][section-101]
+  (Accessed: 14 July 2026).
 - Office of the Law Revision Counsel, [17 U.S.C. § 106][section-106]
   (Accessed: 13 July 2026).
 - Office of the Law Revision Counsel, [17 U.S.C. § 107][section-107]
@@ -141,6 +143,8 @@ conditions, and required notices are verified.
   (Accessed: 14 July 2026).
 - Xbox, [Game Content Usage Rules][xbox-rules] (Accessed: 14 July 2026).
 
+[section-101]:
+  https://uscode.house.gov/view.xhtml?req=(title:17%20section:101%20edition:prelim)
 [section-106]:
   https://uscode.house.gov/view.xhtml?req=(title:17%20section:106%20edition:prelim)
 [section-107]:
