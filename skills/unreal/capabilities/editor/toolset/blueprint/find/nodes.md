@@ -50,41 +50,61 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to discover bounded node refs by graph, title, class, or entry-
+point posture before requesting detailed node or pin information.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Supply a current graph ref.
+- Use the narrowest title or class filter that satisfies the inspection.
+- Keep returned node refs within the current loaded graph revision.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "graph": {
+    "refPath": "/Game/B_SHAR_MCP_Blueprint_GraphFixture.B_SHAR_MCP_Blueprint_GraphFixture:EventGraph"
+  },
+  "title": "BeginPlay",
+  "node_class": null,
+  "entry_points_only": false
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Repeated `BeginPlay` and `Tick` filters each returned one exact event node. A
+missing title returned an empty array. An empty title returned all three event
+nodes; `entry_points_only: true` returned the same set because every node in the
+fixture was an event entry point.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- An empty result is valid and does not mean the graph is missing.
+- Title and class filters depend on editor-visible node metadata.
+- Node refs become stale after structural edits, recompilation, or deletion.
+- Entry-point filtering can equal the full result when every node is an entry
+  point.
+- Use `get_node_infos` for pin and type details.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

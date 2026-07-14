@@ -50,41 +50,58 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to obtain an editable textual representation of a SHAR Blueprint
+graph before review, comparison, or a separately authorized DSL write.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Supply a current graph ref from `list_graphs` or `get_graph`.
+- Read the live DSL documentation before interpreting or editing the result.
+- Keep the Blueprint loaded while consuming the graph ref.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "graph": {
+    "refPath": "/Game/B_SHAR_MCP_Blueprint_GraphFixture.B_SHAR_MCP_Blueprint_GraphFixture:EventGraph"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two EventGraph reads returned the same 112-character script containing
+BeginPlay, actor-begin-overlap, and Tick events. Two construction-script reads
+returned the same single-line `(fn ConstructionScript ())` form. The disposable
+Blueprint was deleted after inspection.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The returned text reflects the current graph revision and becomes stale after
+  edits.
+- Graph refs are session-sensitive nested object identities.
+- Stable text for the verified empty event bodies is not a general byte-
+  stability contract.
+- Reading DSL does not compile, save, or prove runtime behavior.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
