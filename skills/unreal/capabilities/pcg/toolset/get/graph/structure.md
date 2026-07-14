@@ -47,41 +47,58 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to inspect PCG node inventory, positions, comments, parameter
+overrides, and explicit pin-to-pin edges during SHAR procedural-content review.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use an exact indexed `PCGGraph` object path.
+- Treat returned node object paths as graph-local identities.
+- Use `GetGraphSchema` separately for public parameters and graph interface
+  pins.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "graph": {"refPath": "/PCG/SampleContent/SpawnPointsFromPoints/SpawnPointsFromPointsGraph.SpawnPointsFromPointsGraph"}
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two sample-graph calls returned 14 enabled nodes and 11 edges. The inventory
+included Surface Sampler, Execute Blueprint, Density Filter, Projection, Copy
+Points, Landscape Data, and Debug nodes with stable positions, comments, titles,
+and parameter overrides. `_Default_EmptyGraph` independently returned its Input
+and Output nodes with zero edges.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The result describes authored graph structure, not runtime execution order or
+  generated data.
+- `paramOverrides` shape varies by node type and may contain nested object refs.
+- Node paths and generated names can change after graph edits or duplication.
+- Edge entries identify source and destination node names plus pin labels.
+- Missing graph refs raise a native parameter error.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

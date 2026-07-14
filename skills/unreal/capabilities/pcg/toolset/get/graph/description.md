@@ -46,41 +46,56 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to read a PCG graph's authored description before SHAR relies on
+graph intent or prepares a separately authorized description change.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use an exact indexed `PCGGraph` object path.
+- Treat an empty string as a valid no-description result.
+- Verify behavior through graph structure and schema rather than inferring it
+  from prose alone.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "graph": {"refPath": "/PCG/GraphTemplates/_Default_EmptyGraph._Default_EmptyGraph"}
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two calls returned an empty string for `_Default_EmptyGraph`. Repeated reads of
+`SpawnPointsFromPointsGraph`, loop templates, sampler templates, and
+`SimpleForest` also returned empty strings while their schemas and structures
+loaded successfully.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Empty means no graph description is authored; it is not an error.
+- Description text is optional documentation and does not determine execution
+  behavior.
+- Node comments and titles are available separately through `GetGraphStructure`.
+- Missing graph refs fail during parameter translation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

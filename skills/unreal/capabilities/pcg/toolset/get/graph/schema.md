@@ -46,41 +46,57 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to inspect PCG graph parameters and public input/output pins
+before SHAR configures an instance or composes subgraphs.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use an exact indexed `PCGGraph` object path.
+- Parse `graphParamsSchema` as JSON when it is nonempty.
+- Preserve pin names and data-type strings exactly.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "graph": {"refPath": "/PCG/GraphTemplates/TPL_Sampler_Volume.TPL_Sampler_Volume"}
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Repeated `TPL_Sampler_Volume` reads returned one Spatial `In` pin, one Any `Out`
+pin, and a 257-character JSON parameter schema containing required StaticMesh
+object field `staticMesh`. `TPL_AttributeOps_MovePointsAlongAxis` exposed
+numeric parameter `distance`. The empty template returned an empty parameter-
+schema string with Any `In` and `Out` pins.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- `graphParamsSchema` is JSON text rather than an already parsed object.
+- An empty schema string is valid for a graph without public parameters.
+- Pin descriptions can be empty, and broad `Any` types require downstream
+  validation.
+- Schema and pins can change after graph edits or engine upgrades.
+- Missing graph refs fail during parameter translation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
