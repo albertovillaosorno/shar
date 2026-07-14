@@ -951,16 +951,15 @@ cargo run -p game-manifest --bin generate-manifest
 cargo run -p game-manifest --bin validate-game
 ```
 
-### Optional Latino Spanish input
+### Optional Latin American Spanish input
 
-A user may provide the supported Latino Spanish mod locally as:
+A user may explicitly configure an optional, lawfully obtained local `.lmlm`
+archive as a Latin American Spanish override. No community-specific filename,
+local route, version, or acquisition source is a public repository contract.
 
-```text
-game/jebano_latino_mod.lmlm
-```
-
-The file is optional. It is not distributed by this repository. Absence must not
-prevent the base installation from validating or building.
+The archive is optional, is not distributed by this repository, and must pass
+the bounded LMLM validation contract before use. Its absence must not prevent the
+base installation from validating or building.
 
 ## Validation
 
