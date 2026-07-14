@@ -51,6 +51,18 @@ from mcp.src.domain.errors import fail_protocol
 from mcp.src.domain.json_types import JsonObject, require_json_object
 
 _JSON_RPC_VERSION = "2.0"
+_HTTP_SUCCESS_MINIMUM = 200
+_HTTP_SUCCESS_LIMIT = 300
+
+
+def require_http_success(
+    status: int,
+    payload: JsonObject | None,
+) -> None:
+    """Require one successful HTTP status or raise its protocol failure."""
+    if _HTTP_SUCCESS_MINIMUM <= status < _HTTP_SUCCESS_LIMIT:
+        return
+    raise_http_status_error(status, payload)
 
 
 def raise_http_status_error(

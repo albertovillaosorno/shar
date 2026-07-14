@@ -65,9 +65,7 @@ from mcp.src.adapters.driven.http_request import (
     encode_json_request,
     validate_max_request_bytes,
 )
-from mcp.src.adapters.driven.http_status import (
-    raise_http_status_error,
-)
+from mcp.src.adapters.driven.http_status import require_http_success
 from mcp.src.adapters.driven.http_timeout import resolve_timeout_seconds
 from mcp.src.domain.errors import fail_timeout, fail_transport
 
@@ -76,7 +74,6 @@ if TYPE_CHECKING:
     from mcp.src.domain.json_types import JsonObject
     from mcp.src.domain.session import McpSession
 
-_HTTP_ERROR_MINIMUM = 400
 _CONTENT_TYPE_EVENT_STREAM = "text/event-stream"
 
 
@@ -110,9 +107,8 @@ class HttpExchangeClient:
         self._endpoint = endpoint
         self._timeout_seconds = resolve_timeout_seconds(timeout_seconds, None)
         self._max_request_bytes = validate_max_request_bytes(max_request_bytes)
-        self._max_response_bytes = validate_max_response_bytes(
-            max_response_bytes
-        )
+        response_limit = validate_max_response_bytes(max_response_bytes)
+        self._max_response_bytes = response_limit
 
     def post(
         self,
@@ -162,14 +158,12 @@ class HttpExchangeClient:
                 request_id,
                 max_response_bytes=self._max_response_bytes,
             )
-            if response.status >= _HTTP_ERROR_MINIMUM:
-                raise_http_status_error(response.status, response_payload)
+            require_http_success(response.status, response_payload)
         except TimeoutError as error:
-            request_label = (
-                "notification"
-                if request_id is None
-                else f"request {request_id}"
-            )
+            if request_id is None:
+                request_label = "notification"
+            else:
+                request_label = f"request {request_id}"
             message = " ".join(
                 (
                     f"MCP {request_label} to {self._endpoint.url} timed out",

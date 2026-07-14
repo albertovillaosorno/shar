@@ -71,6 +71,21 @@ def test_transport_rejects_non_finite_timeout_before_connection() -> None:
             )
 
 
+def test_transport_rejects_redirected_rpc_response() -> None:
+    """Redirects cannot masquerade as successful protocol responses."""
+    with FakeUnrealServer.with_redirected_ping() as server:
+        transport = StreamableHttpTransport(
+            McpEndpoint.parse(server.endpoint),
+            timeout_seconds=2.0,
+        )
+        session = transport.initialize()
+
+        with pytest.raises(ProtocolError, match=r"HTTP 302"):
+            transport.ping(session)
+
+        transport.close(session)
+
+
 def test_transport_completes_native_lifecycle_and_final_sse_event() -> None:
     with FakeUnrealServer() as server:
         transport = StreamableHttpTransport(

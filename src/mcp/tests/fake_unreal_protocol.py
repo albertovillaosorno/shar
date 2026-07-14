@@ -71,6 +71,7 @@ _SESSION_ID = "0123456789abcdef0123456789abcdef"
 _PROTOCOL_VERSION = "2025-11-25"
 _HTTP_OK = 200
 _HTTP_ACCEPTED = 202
+_HTTP_FOUND = 302
 _HTTP_BAD_REQUEST = 400
 _HTTP_FORBIDDEN = 403
 
@@ -100,7 +101,12 @@ class FakeUnrealRequestHandler(BaseHTTPRequestHandler):
         elif method == "notifications/cancelled":
             self._write_cancelled(payload)
         elif method == "ping":
-            self._write_rpc_result(payload.get("id"), {})
+            status = (
+                _HTTP_FOUND
+                if self._test_server().behavior.redirect_ping
+                else _HTTP_OK
+            )
+            self._write_rpc_result(payload.get("id"), {}, status=status)
         elif method == "tools/list":
             self._write_tools_list(payload)
         elif method == "tools/call":
@@ -259,9 +265,11 @@ class FakeUnrealRequestHandler(BaseHTTPRequestHandler):
         self,
         request_id: JsonValue,
         result: JsonObject,
+        *,
+        status: int = _HTTP_OK,
     ) -> None:
         self._write_json(
-            _HTTP_OK,
+            status,
             {"jsonrpc": "2.0", "id": request_id, "result": result},
         )
 

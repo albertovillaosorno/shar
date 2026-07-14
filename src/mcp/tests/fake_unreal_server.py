@@ -73,6 +73,7 @@ class FakeUnrealBehavior(NamedTuple):
     reject_initialized_notification: bool = False
     reject_session_delete: bool = False
     malformed_initialize_result: bool = False
+    redirect_ping: bool = False
 
 
 class FakeUnrealServer:
@@ -133,6 +134,17 @@ class FakeUnrealServer:
         server._server.behavior = FakeUnrealBehavior(
             malformed_initialize_result=True,
         )
+        return server
+
+    @classmethod
+    def with_redirected_ping(cls) -> Self:
+        """Create a server whose ping returns one redirect status.
+
+        Returns:
+            A stopped server configured with a redirected ping response.
+        """
+        server = cls()
+        server._server.behavior = FakeUnrealBehavior(redirect_ping=True)
         return server
 
     def __enter__(self) -> Self:
