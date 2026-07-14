@@ -652,6 +652,9 @@ Relevant decisions:
 - [Runtime parity tests](docs/adr/unreal/runtime/runtime-parity-test-boundary.md)
 - [Portable save storage and lifecycle](docs/adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
 - [Platform save storage and lifecycle](docs/technical/unreal/platform-save-storage-and-lifecycle.md)
+- [Contextual interaction query and transaction boundary](docs/adr/unreal/runtime/contextual-interaction-query-and-transaction.md)
+- [Contextual interaction runtime](docs/technical/unreal/contextual-interaction-runtime.md)
+- [Gameplay census, presentation, and development-content boundary](docs/technical/unreal/gameplay-census-presentation-and-development-boundary.md)
 - [Hexagonal runtime](docs/adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md)
 
 ### Phase 8 — Verify platform support and Low through Ultra graphics presets

@@ -6,6 +6,7 @@
 ## Governing decisions
 
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+- [Gameplay census, presentation, and development-content boundary](gameplay-census-presentation-and-development-boundary.md)
 - [Transactional phone-booth vehicle retrieval](../../adr/unreal/runtime/transactional-phone-booth-vehicle-retrieval.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 - [Driving, traffic, and vehicle behavior parity](../../adr/gameplay/vehicles/driving-traffic-and-vehicle-ai.md)

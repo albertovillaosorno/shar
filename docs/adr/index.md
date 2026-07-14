@@ -137,6 +137,8 @@ repository reference must point to the current owning decision.
   — Accepted
 - [Data-driven Unreal gameplay content catalog](unreal/runtime/data-driven-gameplay-content-catalog.md)
   — Accepted
+- [Contextual interaction query and transaction boundary](unreal/runtime/contextual-interaction-query-and-transaction.md)
+  — Accepted
 - [Event-driven music and ambience](unreal/runtime/event-driven-music-and-ambience.md)
   — Accepted
 - [Mass Entity ambient population](unreal/runtime/mass-entity-ambient-population.md)
