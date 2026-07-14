@@ -118,7 +118,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     except UsageError as error:
         _write_stderr(f"error: {error}\n\n{usage_text()}")
         return _EXIT_USAGE
-    except (UnrealMcpError, OSError) as error:
+    except (UnrealMcpError, OSError, UnicodeError) as error:
         _write_stderr(f"error: {error}\n")
         return _EXIT_FAILURE
 

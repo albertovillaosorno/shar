@@ -62,6 +62,36 @@ if TYPE_CHECKING:
     import pytest
 
 
+def test_cli_maps_stdout_unicode_error_to_failure(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Console encoding failures return one stable runtime exit code."""
+
+    def reject_output(value: str) -> None:
+        codec = "ascii"
+        reason = "ordinal not in range"
+        raise UnicodeEncodeError(
+            codec,
+            value,
+            0,
+            1,
+            reason,
+        )
+
+    monkeypatch.setattr(
+        "mcp.src.adapters.driving.cli._write_stdout",
+        reject_output,
+    )
+
+    exit_code = main(("help",))
+    captured = capsys.readouterr()
+
+    assert exit_code == 1
+    assert "error:" in captured.err
+    assert not captured.out
+
+
 def test_unknown_command_fails_before_opening_a_session(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
