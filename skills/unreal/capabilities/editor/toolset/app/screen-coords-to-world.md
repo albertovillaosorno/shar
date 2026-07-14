@@ -47,41 +47,67 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to resolve a normalized viewport point to the nearest solid world
+surface before SHAR places a preview marker, validates viewport targeting, or
+links visual evidence to a world-space inspection. Use it only for a bounded
+trace in the active Level Editor viewport.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project, loaded editor world, and active Level Editor
+  viewport must be ready.
+- Capture or stabilize the viewport camera before comparing repeated results.
+- Supply normalized coordinates in the inclusive `[0, 1]` range.
+- Choose an explicit positive trace distance that is sufficient for the scene.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "coords": {
+    "x": 0.5,
+    "y": 0.5
+  },
+  "traceDistance": 100000.0
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two consecutive calls returned the same world intersection near the level's
+solid ground surface. Passing that returned position to `WorldPosToScreenCoords`
+produced exactly `{ "x": 0.5, "y": 0.5 }`, independently confirming the
+center-screen trace.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Normalized coordinates outside `[0, 1]` raise a native invalid-coordinate
+  error.
+- Valid coordinates can still raise a no-surface error when the ray misses all
+  solid objects or `traceDistance` is too short.
+- `(0, 0)` is the viewport corner, not the center; the center is `(0.5, 0.5)`.
+- Results depend on camera, viewport, world geometry, collision, and streaming
+  state and can change immediately after any of them changes.
+- The result identifies the nearest solid intersection, not a selected actor or
+  semantic gameplay target.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

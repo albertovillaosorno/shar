@@ -47,41 +47,65 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to confirm that a known SHAR world position is inside the active
+Level Editor viewport and to obtain its normalized screen location before
+annotation, framing, or viewport evidence capture.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project, loaded editor world, and active Level Editor
+  viewport must be ready.
+- Obtain the world point from a verified actor, trace, component, or other
+  bounded editor read.
+- Keep the viewport camera unchanged between world discovery and projection.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "position": {
+    "x": -467.66068,
+    "y": 353.249879,
+    "z": 0.0
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two consecutive calls with the validated position returned exactly
+`{ "x": 0.5, "y": 0.5 }`. `ScreenCoordsToWorld` independently produced that
+world point from the same center-screen coordinates, establishing an exact
+round trip in the unchanged viewport.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The tool raises a native conversion error when the point is at the camera,
+  behind it, or otherwise outside the projectable viewport.
+- Returned values are normalized viewport coordinates in `[0, 1]`, not pixels.
+- Projection depends on the active viewport camera and can change immediately
+  after camera, viewport size, or world state changes.
+- A successful projection proves the point is projectable, not that it is
+  unoccluded, visible in the final rendered image, or associated with a specific
+  actor.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
