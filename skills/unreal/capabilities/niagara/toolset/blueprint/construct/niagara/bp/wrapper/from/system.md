@@ -50,41 +50,77 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to generate a reusable Blueprint actor wrapper for a verified
+Niagara System when SHAR needs a placeable effect actor with the system's user
+parameters exposed through Blueprint variables. Use a disposable target first
+when validating a new system or engine revision.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project and native MCP server must be ready.
+- Confirm the source Niagara System exists and pass its full soft object path,
+  including the object name after the package path.
+- The target `/Game/...` package must not already exist.
+- `parentClass` must resolve to `AActor` or a subclass.
+- Capture a cleanup or save plan before invoking this persistent mutation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "newAssetPath": "/Game/B_SHAR_MCP_Fountain_FromSystem",
+  "system": {
+    "refPath": "/Niagara/DefaultAssets/Templates/Systems/FountainLightweight.FountainLightweight"
+  },
+  "parentClass": {
+    "refPath": "/Script/Engine.Actor"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two complete create-and-delete cycles returned the same Blueprint identity.
+Each created asset existed, was compiled as a generated Blueprint class, and was
+reported dirty. Its compiled class default object contained exactly one
+component whose class was `/Script/Niagara.NiagaraComponent`. Each cleanup
+returned `true`, and both final existence checks returned `false`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This tool creates and registers a persistent Blueprint package and marks it
+  dirty, but the verified operation did not save it automatically.
+- `find_assets` returned the source as a package-style virtual path; the
+  `system` argument required the full soft object path with the repeated object
+  name.
+- An invalid parent class raised `Parent class is not a child of AActor` and
+  created no target.
+- Asset Registry dependency inspection failed on the unsaved generated package
+  in the verified session; inspect the compiled CDO and components directly or
+  save before relying on registry graph reads.
+- The wrapper mirrors supported Niagara user parameters into Blueprint
+  variables and construction-script assignments; review compilation output for
+  unsupported parameter types.
+- Delete disposable output and verify final absence when the wrapper is only a
+  test fixture.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

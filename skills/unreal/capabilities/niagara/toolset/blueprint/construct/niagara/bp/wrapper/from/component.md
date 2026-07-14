@@ -50,41 +50,78 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to generate a Blueprint actor wrapper from an already configured
+Niagara Component when SHAR must preserve the component's system and user
+variable overrides rather than starting from the Niagara System defaults.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project and native MCP server must be ready.
+- Obtain a live `UNiagaraComponent` reference from a compiled actor or Blueprint
+  class default object.
+- The source component must have a Niagara System assigned.
+- The target `/Game/...` package must not already exist.
+- `parentClass` must resolve to `AActor` or a subclass.
+- Capture a cleanup or save plan before invoking this persistent mutation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "newAssetPath": "/Game/B_SHAR_MCP_Fountain_FromComponent",
+  "component": {
+    "refPath": "/Game/B_SHAR_MCP_Fountain_FromSystem.B_SHAR_MCP_Fountain_FromSystem_C:Niagara_GEN_VARIABLE"
+  },
+  "parentClass": {
+    "refPath": "/Script/Engine.Actor"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+In two complete cycles, the source component was independently discovered from
+the compiled system-wrapper CDO and confirmed as
+`/Script/Niagara.NiagaraComponent`. Each call created the same component-wrapper
+Blueprint identity, reported the package dirty, and produced a compiled CDO with
+exactly one Niagara Component. Cleanup returned `true`, and final existence was
+`false` for both source and copied wrappers.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This tool creates and registers a persistent Blueprint package and marks it
+  dirty, but the verified operation did not save it automatically.
+- The component reference can be an in-memory generated-component path whose
+  lifetime is tied to the loaded Blueprint and editor session.
+- The source component must have a Niagara System assigned; otherwise native
+  construction fails.
+- The copied wrapper preserves component property values and user overrides,
+  while still generating Blueprint variables only for supported Niagara user
+  parameter types.
+- ObjectTools returned no enumerable properties for the generated component
+  template in the verified session; component class, successful wrapper
+  construction, compiled CDO structure, and cleanup were used as independent
+  evidence.
+- Delete disposable output and verify final absence when the wrapper is only a
+  test fixture.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
