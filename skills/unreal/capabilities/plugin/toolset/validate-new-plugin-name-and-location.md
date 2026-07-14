@@ -47,41 +47,72 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to preflight a proposed SHAR project-plugin name, optional plugin
+subdirectory, placement choice, and exact live template before invoking
+`CreatePlugin`. The validation call is non-mutating and is suitable for safely
+rejecting bad candidates before any files are written.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project and native MCP server must be ready.
+- `IsPluginCreationAllowed` must return `true` in the same editor session.
+- Obtain `templateInfo` from `GetPluginTemplateDescriptions` and preserve every
+  returned field exactly.
+- Keep `bPlaceInEngine` false unless engine placement is explicitly required and
+  the selected template permits it.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "pluginName": "SharMcpValidationProbe",
+  "relativePluginLocation": "Validation",
+  "bPlaceInEngine": false,
+  "templateInfo": {
+    "name": "Content Only",
+    "description": "Create a blank plugin that can only contain content.",
+    "onDiskPath": "../../../Engine/Plugins/Editor/PluginBrowser/Templates/ContentOnly",
+    "defaultTemplateName": "",
+    "bCanBePlacedInEngine": true
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two consecutive calls with the validated arguments returned `true`. No plugin or
+folder was created. Separate probes rejected an existing plugin name, an empty
+name, a name containing spaces, and engine placement with a template that does
+not permit engine placement.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Invalid candidates raise a native tool error instead of returning `false` in
+  the verified editor session.
+- The template descriptor must exactly match one returned by live discovery; a
+  reconstructed descriptor with an invented path is rejected.
+- `true` proves only the current preflight result. It does not create the plugin,
+  prove later filesystem writes, compile modules, save packages, or prevent the
+  name from becoming occupied before creation.
+- Engine placement is rejected when `bCanBePlacedInEngine` is false.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

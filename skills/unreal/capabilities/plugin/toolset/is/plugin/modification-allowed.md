@@ -47,41 +47,55 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool before SHAR plans a controlled plugin descriptor, dependency, or
+plugin-browser state change. It establishes whether the current editor settings
+permit plugin modification before any target-specific pre-state is captured.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project and native MCP server must be ready.
+- No world, asset, or editor selection is required.
+- Run the check in the same editor session as the proposed mutation.
+- Inspect the selected plugin independently before assuming it is writable or
+  safe to modify.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two consecutive calls returned `true`, providing a stable read of the current
+plugin-browser modification setting. No descriptor, dependency, enablement, or
+filesystem state was changed by either call.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The result reflects current editor settings and can change between sessions.
+- `true` does not prove that a specific engine, marketplace, or project plugin
+  is writable, enabled, unloadable, or safe to modify.
+- Target-specific pre-state, mutation scope, restart requirements, and recovery
+  still require separate verification.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
