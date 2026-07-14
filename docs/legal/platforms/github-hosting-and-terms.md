@@ -6,7 +6,7 @@
   exact evidence.
 - Jurisdiction: GitHub-user contract plus all otherwise applicable law.
 - Authority level: Platform contract and publication-context research record.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-14.
 - Counsel review: Not performed.
 
 ## Question Presented
@@ -38,34 +38,55 @@ third-party material uploaded by a user.
 
 The agreement incorporates other operating rules and policies and points to
 additional product terms for features such as Actions, Packages, and Pages. It
-also contains separate rules for AI-feature inputs and outputs, including an
-individual-account opt-out that does not limit the broader repository-content
-licenses. Repository visibility, selected features, account type, accepted terms
-version, account settings, and any enterprise or volume agreement therefore
-determine the relevant platform contract set.
+also contains separate rules for AI-feature inputs and outputs. For individual
+licenses, the input-and-output development license has an account opt-out, but
+the terms state that the opt-out does not limit the broader repository-content
+licenses or public-repository content.
+
+The current agreement separately states that a user who automatically accesses
+publicly available GitHub content to develop or train a commercially available
+AI system waives restrictions that would otherwise prohibit or condition
+GitHub's reciprocal access to that user's publicly available content for the
+same purpose. The clause contains stated exceptions for access solely for
+academic research and for users below the defined monthly-active-user threshold.
+It does not itself decide copyright permission, database rights, privacy,
+confidentiality, or another party's license.
+
+Repository visibility, selected features, account type, accepted terms version,
+account settings, and any enterprise or volume agreement therefore determine the
+relevant platform contract set.
 
 ## Not Established
 
 - That GitHub hosting makes United States law control every dispute.
 - That a public repository grants every off-platform reuse right.
+- That an individual AI-feature opt-out limits the broader repository-content
+  license.
+- That the access-reciprocity clause supplies rights in third-party content or
+  resolves copyright, privacy, confidentiality, or database-law questions.
 - That GitHub's terms invalidate third-party licenses or restrictions.
 - That a platform DMCA process decides ultimate liability.
 
 ## Required Facts
 
-- The account type and exact terms accepted.
+- The account type, exact terms accepted, AI-feature opt-out state, and any
+  customer, enterprise, or volume agreement.
 - Repository visibility, license notice, contributor authority, and content.
+- Whether private-repository content was provided as AI-feature input.
+- For automated public-content access, the purpose, commercial availability of
+  the resulting AI system, academic-research status, and monthly-active-user
+  threshold facts.
 - Additional product, API, automation, marketplace, or organization terms.
 - The parties and claims in the actual dispute.
 
 ## Required Authorities
 
-- [GitHub Terms of Service][github-tos], effective 27 April 2026 (Accessed: 13
+- [GitHub Terms of Service][github-tos], effective 27 April 2026 (Accessed: 14
   July 2026).
-- [GitHub DMCA Takedown Policy][github-dmca] (Accessed: 13 July 2026).
+- [GitHub DMCA Takedown Policy][github-dmca] (Accessed: 14 July 2026).
 - The repository's `LICENSE` and contribution history.
 - [GitHub Terms for Additional Products and Features][github-additional],
-  effective 27 April 2026 (Accessed: 13 July 2026).
+  version effective 27 April 2026 (Accessed: 14 July 2026).
 
 ## Verification Checklist
 
