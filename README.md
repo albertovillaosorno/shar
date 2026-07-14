@@ -654,6 +654,10 @@ Relevant decisions:
 - [Platform save storage and lifecycle](docs/technical/unreal/platform-save-storage-and-lifecycle.md)
 - [Contextual interaction query and transaction boundary](docs/adr/unreal/runtime/contextual-interaction-query-and-transaction.md)
 - [Contextual interaction runtime](docs/technical/unreal/contextual-interaction-runtime.md)
+- [Native flying-hazard actors and StateTree execution](docs/adr/unreal/runtime/native-flying-hazard-actors-and-state-trees.md)
+- [Flying-hazard and projectile runtime](docs/technical/unreal/flying-hazard-and-projectile-runtime.md)
+- [Typed StateTree action sequences](docs/adr/unreal/runtime/typed-state-tree-action-sequences.md)
+- [Typed action-sequence runtime](docs/technical/unreal/typed-action-sequence-runtime.md)
 - [Gameplay census, presentation, and development-content boundary](docs/technical/unreal/gameplay-census-presentation-and-development-boundary.md)
 - [Hexagonal runtime](docs/adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md)
 

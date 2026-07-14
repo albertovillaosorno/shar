@@ -3,6 +3,8 @@
 ## Governing decisions
 
 - [Contextual interaction query and transaction boundary](../../adr/unreal/runtime/contextual-interaction-query-and-transaction.md)
+- [Typed StateTree action sequences](../../adr/unreal/runtime/typed-state-tree-action-sequences.md)
+- [Typed action-sequence runtime](typed-action-sequence-runtime.md)
 - [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
 - [Transactional phone-booth vehicle retrieval](../../adr/unreal/runtime/transactional-phone-booth-vehicle-retrieval.md)
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)

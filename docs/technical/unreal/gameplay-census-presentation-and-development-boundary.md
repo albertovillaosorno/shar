@@ -6,6 +6,7 @@
 - [Canonical seven-level campaign and world variants](../../adr/unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 - [Contextual interaction query and transaction boundary](../../adr/unreal/runtime/contextual-interaction-query-and-transaction.md)
+- [Native flying-hazard actors and StateTree execution](../../adr/unreal/runtime/native-flying-hazard-actors-and-state-trees.md)
 
 ## Purpose
 
@@ -23,6 +24,7 @@ Detailed execution remains in the owning specifications:
 - [Race route and opponent runtime](race-route-and-opponent-runtime.md)
 - [Vehicle access and roster runtime](vehicle-access-and-roster-runtime.md)
 - [Contextual interaction runtime](contextual-interaction-runtime.md)
+- [Flying-hazard and projectile runtime](flying-hazard-and-projectile-runtime.md)
 
 ## Canonicalization
 

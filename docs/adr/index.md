@@ -139,6 +139,10 @@ repository reference must point to the current owning decision.
   — Accepted
 - [Contextual interaction query and transaction boundary](unreal/runtime/contextual-interaction-query-and-transaction.md)
   — Accepted
+- [Native flying-hazard actors and StateTree execution](unreal/runtime/native-flying-hazard-actors-and-state-trees.md)
+  — Accepted
+- [Typed StateTree action sequences](unreal/runtime/typed-state-tree-action-sequences.md)
+  — Accepted
 - [Event-driven music and ambience](unreal/runtime/event-driven-music-and-ambience.md)
   — Accepted
 - [Mass Entity ambient population](unreal/runtime/mass-entity-ambient-population.md)

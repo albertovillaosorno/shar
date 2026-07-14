@@ -6,6 +6,8 @@
 ## Governing decisions
 
 - [Mass Entity ambient population](../../adr/unreal/runtime/mass-entity-ambient-population.md)
+- [Native flying-hazard actors and StateTree execution](../../adr/unreal/runtime/native-flying-hazard-actors-and-state-trees.md)
+- [Flying-hazard and projectile runtime](flying-hazard-and-projectile-runtime.md)
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 - [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
 - [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
@@ -16,6 +18,11 @@ This specification defines ambient pedestrian identity, zones, archetypes,
 weighted groups, deterministic spawning, representation LOD, movement, awareness,
 threat response, impacts, conversations, named-character promotion, streaming,
 mission ownership, platform budgets, failure, and verification.
+
+Bespoke flying hazards, counted wasp cameras, UFO encounters, and their
+projectiles require full Actor, collision, animation, and StateTree lifecycles.
+They are excluded from Mass population ownership and follow the
+[flying-hazard and projectile runtime](flying-hazard-and-projectile-runtime.md).
 
 ## Ownership
 
