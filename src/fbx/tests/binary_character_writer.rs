@@ -66,7 +66,6 @@ use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 use fbx::domain::skeleton::Bone;
 use fbx::domain::skin::SkinInfluence;
 use fbx::domain::texture::MaterialBinding;
-use fbx::domain::transform::matrix::{TrsParts, compose};
 use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
@@ -75,6 +74,10 @@ const BINARY_MAGIC: &[u8; 23] = b"Kaydara FBX Binary  \x00\x1a\x00";
 const FBX_VERSION: u32 = 7_700;
 const NODE_RECORD_WIDTH: usize = 25;
 const ROOT_NODE_OFFSET: usize = 27;
+const IDENTITY_MATRIX: [f64; 16] = [
+    1.0_f64, 0.0_f64, 0.0_f64, 0.0_f64, 0.0_f64, 1.0_f64, 0.0_f64, 0.0_f64,
+    0.0_f64, 0.0_f64, 1.0_f64, 0.0_f64, 0.0_f64, 0.0_f64, 0.0_f64, 1.0_f64,
+];
 const FOOTER_ID: [u8; 16] = [
     0xfa, 0xbc, 0xab, 0x09, 0xd0, 0xc8, 0xd4, 0x66, 0xb1, 0x76, 0xfb, 0x83,
     0x1c, 0xf7, 0x26, 0x7e,
@@ -480,39 +483,32 @@ fn writes_deterministic_binary_fbx_7700_with_standard_footer() {
             &first,
             "NbPoseNodes",
         ),
-        Some(3_i32),
-        "bind pose must include the export root, mesh model, and root bone"
+        Some(2_i32),
+        concat!(
+            "bind pose must remain in source bind space and exclude the ",
+            "export-only parent"
+        )
     );
-    let export_space_bind = compose(
-        &TrsParts {
-            translation: [
-                0.0_f64, 0.0_f64, 0.0_f64,
-            ],
-            rotation_degrees: [
-                0.0_f64, 180.0_f64, 0.0_f64,
-            ],
-            scale: [
-                1.0_f64, 1.0_f64, 1.0_f64,
-            ],
-        },
-    );
-    let export_space_bind_token_result = f64_array_token(&export_space_bind);
+    let identity_token_result = f64_array_token(&IDENTITY_MATRIX);
     assert!(
-        export_space_bind_token_result.is_some(),
-        "export-space bind matrix should fit the FBX array contract"
+        identity_token_result.is_some(),
+        "identity bind matrix should fit the FBX array contract"
     );
-    let Some(export_space_bind_token) = export_space_bind_token_result else {
+    let Some(identity_token) = identity_token_result else {
         return;
     };
+    let identity_count = byte_window_count(
+        &first,
+        &identity_token,
+    );
     assert!(
-        byte_window_count(
-            &first,
-            &export_space_bind_token,
-        ) >= 3_usize,
+        identity_count >= 4_usize,
         concat!(
-            "bind pose must keep the 180-degree export orientation for the ",
-            "export root, mesh model, and root bone"
-        )
+            "mesh, bone, and cluster bind records must retain their source ",
+            "space matrices instead of duplicating the export rotation; ",
+            "found {}"
+        ),
+        identity_count
     );
     let Some(texture) = textures.first() else {
         return;
