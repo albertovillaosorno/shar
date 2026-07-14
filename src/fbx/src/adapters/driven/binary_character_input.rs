@@ -56,11 +56,6 @@ use crate::domain::transform::matrix::{
 
 /// Object id of the single bind pose.
 pub(super) const POSE_ID: u64 = 6_000_000_000;
-/// Identity matrix used for the scene bind pose.
-pub(super) const IDENTITY_MATRIX: [f64; 16] = [
-    1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0,
-    1.0,
-];
 
 /// One deduplicated material slot with deterministic ids.
 pub(super) struct MaterialSlot<'materials> {

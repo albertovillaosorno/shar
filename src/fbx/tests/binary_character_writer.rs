@@ -66,6 +66,8 @@ use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 use fbx::domain::skeleton::Bone;
 use fbx::domain::skin::SkinInfluence;
 use fbx::domain::texture::MaterialBinding;
+use fbx::domain::transform::affine_inverse::invert_affine;
+use fbx::domain::transform::matrix::{TrsParts, compose, multiply};
 use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
@@ -74,10 +76,6 @@ const BINARY_MAGIC: &[u8; 23] = b"Kaydara FBX Binary  \x00\x1a\x00";
 const FBX_VERSION: u32 = 7_700;
 const NODE_RECORD_WIDTH: usize = 25;
 const ROOT_NODE_OFFSET: usize = 27;
-const IDENTITY_MATRIX: [f64; 16] = [
-    1.0_f64, 0.0_f64, 0.0_f64, 0.0_f64, 0.0_f64, 1.0_f64, 0.0_f64, 0.0_f64,
-    0.0_f64, 0.0_f64, 1.0_f64, 0.0_f64, 0.0_f64, 0.0_f64, 0.0_f64, 1.0_f64,
-];
 const FOOTER_ID: [u8; 16] = [
     0xfa, 0xbc, 0xab, 0x09, 0xd0, 0xc8, 0xd4, 0x66, 0xb1, 0x76, 0xfb, 0x83,
     0x1c, 0xf7, 0x26, 0x7e,
@@ -157,7 +155,7 @@ fn synthetic_character() -> Result<CharacterAsset, String> {
                 parent_id: None,
                 rest_matrix: [
                     1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
-                    0.0, 0.0, 0.0, 1.0,
+                    2.0, 3.0, 4.0, 1.0,
                 ],
             },
         ],
@@ -483,32 +481,94 @@ fn writes_deterministic_binary_fbx_7700_with_standard_footer() {
             &first,
             "NbPoseNodes",
         ),
-        Some(2_i32),
+        Some(3_i32),
         concat!(
-            "bind pose must remain in source bind space and exclude the ",
-            "export-only parent"
+            "bind pose must include the export root, mesh model, and root ",
+            "bone"
         )
     );
-    let identity_token_result = f64_array_token(&IDENTITY_MATRIX);
-    assert!(
-        identity_token_result.is_some(),
-        "identity bind matrix should fit the FBX array contract"
+    let export_space_bind = compose(
+        &TrsParts {
+            translation: [
+                0.0_f64, 0.0_f64, 0.0_f64,
+            ],
+            rotation_degrees: [
+                0.0_f64, 180.0_f64, 0.0_f64,
+            ],
+            scale: [
+                1.0_f64, 1.0_f64, 1.0_f64,
+            ],
+        },
     );
-    let Some(identity_token) = identity_token_result else {
+    let export_space_bind_token_result = f64_array_token(&export_space_bind);
+    assert!(
+        export_space_bind_token_result.is_some(),
+        "export-space bind matrix should fit the FBX array contract"
+    );
+    let Some(export_space_bind_token) = export_space_bind_token_result else {
         return;
     };
-    let identity_count = byte_window_count(
-        &first,
-        &identity_token,
-    );
     assert!(
-        identity_count >= 4_usize,
+        byte_window_count(
+            &first,
+            &export_space_bind_token,
+        ) >= 3_usize,
         concat!(
-            "mesh, bone, and cluster bind records must retain their source ",
-            "space matrices instead of duplicating the export rotation; ",
-            "found {}"
-        ),
-        identity_count
+            "export root, mesh bind pose, and associate-model records must ",
+            "share the export-root world transform"
+        )
+    );
+    let source_global_bind = [
+        1.0_f64, 0.0_f64, 0.0_f64, 0.0_f64, 0.0_f64, 1.0_f64, 0.0_f64, 0.0_f64,
+        0.0_f64, 0.0_f64, 1.0_f64, 0.0_f64, 2.0_f64, 3.0_f64, 4.0_f64, 1.0_f64,
+    ];
+    let export_space_bone_bind = multiply(
+        &source_global_bind,
+        &export_space_bind,
+    );
+    let export_space_bone_token_result =
+        f64_array_token(&export_space_bone_bind);
+    assert!(
+        export_space_bone_token_result.is_some(),
+        "export-space bone matrix should fit the FBX array contract"
+    );
+    let Some(export_space_bone_token) = export_space_bone_token_result else {
+        return;
+    };
+    assert!(
+        byte_window_count(
+            &first,
+            &export_space_bone_token,
+        ) >= 2_usize,
+        concat!(
+            "bone pose and TransformLink must use the same export-space ",
+            "global bind"
+        )
+    );
+    let inverse_source_bind_result = invert_affine(&source_global_bind);
+    assert!(
+        inverse_source_bind_result.is_ok(),
+        "source bind should be invertible: {inverse_source_bind_result:?}"
+    );
+    let Ok(inverse_source_bind) = inverse_source_bind_result else {
+        return;
+    };
+    let inverse_source_bind_token_result =
+        f64_array_token(&inverse_source_bind);
+    assert!(
+        inverse_source_bind_token_result.is_some(),
+        "inverse source bind should fit the FBX array contract"
+    );
+    let Some(inverse_source_bind_token) = inverse_source_bind_token_result
+    else {
+        return;
+    };
+    assert!(
+        byte_window_count(
+            &first,
+            &inverse_source_bind_token,
+        ) >= 1_usize,
+        "cluster Transform must preserve the source-space inverse bind"
     );
     let Some(texture) = textures.first() else {
         return;

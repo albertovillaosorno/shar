@@ -65,8 +65,8 @@ use super::binary_animation::{
     BinaryAnimationCounts, BinaryAnimationPlan, build_animation_plan,
 };
 use super::binary_character_input::{
-    BoneTransform, CharacterInputError, IDENTITY_MATRIX, MaterialSlot, POSE_ID,
-    bone_transforms, material_slots,
+    BoneTransform, CharacterInputError, MaterialSlot, POSE_ID, bone_transforms,
+    material_slots,
 };
 use super::binary_fbx::{
     BinaryNode, BinaryProperty, CREATION_TIME, DETERMINISTIC_FILE_ID,
@@ -80,11 +80,24 @@ use crate::domain::character::CharacterAsset;
 use crate::domain::mesh::PrimitiveGroup;
 use crate::domain::texture::MaterialBinding;
 use crate::domain::transform::affine_inverse::{InverseError, invert_affine};
-use crate::domain::transform::matrix::TrsParts;
+use crate::domain::transform::matrix::{TrsParts, compose, multiply};
 
 /// Deterministic parent rotating the completed character around the FBX up
 /// axis.
 const EXPORT_ROOT_ID: u64 = 1_000_001;
+/// Export-root transform shared by the scene hierarchy and every global bind
+/// record.
+const EXPORT_ROOT_TRANSFORM: TrsParts = TrsParts {
+    translation: [
+        0.0_f64, 0.0_f64, 0.0_f64,
+    ],
+    rotation_degrees: [
+        0.0_f64, 180.0_f64, 0.0_f64,
+    ],
+    scale: [
+        1.0_f64, 1.0_f64, 1.0_f64,
+    ],
+};
 /// PNG signature required by the current decoded texture pipeline.
 const PNG_SIGNATURE: &[u8; 8] = b"\x89PNG\r\n\x1a\n";
 
@@ -1515,17 +1528,7 @@ fn export_root_node() -> Result<BinaryNode, CharacterBinaryFbxError> {
         EXPORT_ROOT_ID,
         "SHAR_Export_Root",
         "Null",
-        &TrsParts {
-            translation: [
-                0.0, 0.0, 0.0,
-            ],
-            rotation_degrees: [
-                0.0, 180.0, 0.0,
-            ],
-            scale: [
-                1.0, 1.0, 1.0,
-            ],
-        },
+        &EXPORT_ROOT_TRANSFORM,
     )
 }
 
@@ -1906,6 +1909,11 @@ fn cluster_node(
             error,
         },
     )?;
+    let export_root_bind = compose(&EXPORT_ROOT_TRANSFORM);
+    let export_space_global_bind = multiply(
+        global_bind,
+        &export_root_bind,
+    );
     Ok(
         BinaryNode::new(
             "Deformer",
@@ -1942,30 +1950,42 @@ fn cluster_node(
                 ),
                 BinaryNode::leaf(
                     "TransformLink",
-                    vec![BinaryProperty::F64Array(global_bind.to_vec())],
+                    vec![
+                        BinaryProperty::F64Array(
+                            export_space_global_bind.to_vec(),
+                        ),
+                    ],
                 ),
                 BinaryNode::leaf(
                     "TransformAssociateModel",
-                    vec![BinaryProperty::F64Array(IDENTITY_MATRIX.to_vec())],
+                    vec![BinaryProperty::F64Array(export_root_bind.to_vec())],
                 ),
             ],
         ),
     )
 }
 
-/// Build the single bind pose covering every mesh model and limb model.
+/// Build one world-space bind pose for the export root, meshes, and skeleton.
 fn bind_pose_node(
     groups: &[BinaryGroup<'_>],
     bone_transforms: &[BoneTransform],
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
-    let node_count = groups
+    let model_node_count = groups
         .len()
         .checked_add(bone_transforms.len())
+        .ok_or(
+            CharacterBinaryFbxError::CountOverflow {
+                context: "bind pose model nodes",
+            },
+        )?;
+    let node_count = model_node_count
+        .checked_add(1)
         .ok_or(
             CharacterBinaryFbxError::CountOverflow {
                 context: "bind pose nodes",
             },
         )?;
+    let export_root_bind = compose(&EXPORT_ROOT_TRANSFORM);
     let mut children = vec![
         string_node(
             "Type", "BindPose",
@@ -1980,6 +2000,10 @@ fn bind_pose_node(
                 "bind pose nodes",
             )?,
         ),
+        pose_node(
+            EXPORT_ROOT_ID,
+            &export_root_bind,
+        )?,
     ];
     for group in groups {
         children.push(
@@ -1987,7 +2011,7 @@ fn bind_pose_node(
                 group
                     .ids
                     .model,
-                &IDENTITY_MATRIX,
+                &export_root_bind,
             )?,
         );
     }
@@ -1996,12 +2020,15 @@ fn bind_pose_node(
         .enumerate()
     {
         let ids = bone_ids(ordinal).map_err(CharacterBinaryFbxError::from)?;
-        children.push(
-            pose_node(
-                ids.model,
-                &transform.global_bind,
-            )?,
+        let export_space_global_bind = multiply(
+            &transform.global_bind,
+            &export_root_bind,
         );
+        let bone_pose = pose_node(
+            ids.model,
+            &export_space_global_bind,
+        )?;
+        children.push(bone_pose);
     }
     Ok(
         BinaryNode::new(
