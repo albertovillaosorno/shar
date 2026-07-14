@@ -57,7 +57,7 @@ from pathlib import Path
 from typing import NamedTuple, Never, cast
 
 from mcp.src.domain.endpoint import McpEndpoint
-from mcp.src.domain.errors import UnrealMcpError
+from mcp.src.domain.errors import ProtocolError, UnrealMcpError
 from mcp.src.domain.json_types import (
     DuplicateJsonKeyError,
     JsonObject,
@@ -263,7 +263,10 @@ def _parse_arguments_option(operands: tuple[str, ...]) -> JsonObject:
     if not isinstance(parsed, dict):
         _fail_usage("--arguments must contain one JSON object")
     raw_object = cast("dict[object, object]", parsed)
-    return require_json_object(raw_object, context="--arguments")
+    try:
+        return require_json_object(raw_object, context="--arguments")
+    except ProtocolError as error:
+        _fail_usage(str(error), cause=error)
 
 
 def _take_option_value(

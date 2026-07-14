@@ -122,6 +122,25 @@ def test_cli_rejects_duplicate_argument_keys_before_session(
     assert not captured.out
 
 
+def test_cli_rejects_non_finite_json_arguments_as_usage(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    for literal in ("NaN", "Infinity", "-Infinity"):
+        exit_code = main(
+            (
+                "raw-call",
+                "call_tool",
+                "--arguments",
+                f'{{"value":{literal}}}',
+            )
+        )
+        captured = capsys.readouterr()
+
+        assert exit_code == 2
+        assert "JSON number must be finite" in captured.err
+        assert not captured.out
+
+
 def test_cli_doctor_and_toolset_discovery(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
