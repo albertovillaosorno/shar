@@ -19,6 +19,11 @@ letterbox presentation, skipping, and recovery. It replaces direct mode switchin
 mode-owned global input, and restoration of raw prior-camera pointers with typed
 camera requests and deterministic policy.
 
+Detailed rig identities, imported presets, target snapshots, per-player
+isolation, rail and static cameras, specialized modes, modifiers, and diagnostic
+visualization follow the
+[camera rig, preset, and arbitration runtime](camera-rig-preset-and-arbitration-runtime.md).
+
 ## Ownership
 
 | Authority | Responsibility |

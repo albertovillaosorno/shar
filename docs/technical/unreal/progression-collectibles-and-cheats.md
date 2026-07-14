@@ -255,6 +255,30 @@ Collector cards are not generic currency pickups. `FSharCollectibleRow` records:
 | `QuoteEvents` | Optional ordered collection-response references. |
 | `CompletionWeight` | Explicit scrapbook contribution. |
 
+### Card subtype and quote metadata
+
+The shared card catalog uses a closed subtype:
+
+| Subtype | Contract |
+| :--- | :--- |
+| `collector` | Counted world collectible that belongs to one seven-card level set. |
+| `bonus` | Non-collector card metadata used only by an explicitly owning presentation or reward definition. |
+
+A bonus-card row does not become a world collectible, add scrapbook completion,
+or unlock a set reward merely because it shares the card schema. Its owner must
+reference it through a typed catalog identity.
+
+Every card row also records a stable level identity, level-local ordinal,
+localizable display-name key, image identity, and an ordered bounded list of
+quote-event identities. Imported evidence may contain up to three quote slots;
+empty slots are discarded during normalization rather than preserved as runtime
+sentinels.
+
+Quote identities resolve through the dialogue or sound catalog. Array position,
+character enum ordinal, display text, and hashed source names are provenance only
+and cannot become native runtime authority. An unresolved quote fails catalog
+validation without invalidating the card's already accepted progression state.
+
 There are seven collector-card definitions in each of seven level sets, for 49
 cards total. Set ordinals are unique and dense from one through seven.
 

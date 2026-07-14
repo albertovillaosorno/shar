@@ -55,6 +55,7 @@ proprietary external formats.
 ## Unreal
 
 - [Ambient population and named-character runtime](unreal/ambient-population-and-named-character-runtime.md)
+- [Camera rig, preset, and arbitration runtime](unreal/camera-rig-preset-and-arbitration-runtime.md)
 - [Camera system runtime](unreal/camera-system-runtime.md)
 - [Campaign level composition and progress](unreal/campaign-level-composition-and-progress.md)
 - [Frontend shell and menu runtime](unreal/frontend-shell-and-menu-runtime.md)
@@ -89,7 +90,7 @@ proprietary external formats.
 
 ## Current coverage
 
-- Technical specifications: 50.
+- Technical specifications: 51.
 - Template records: 1.
 - Review date: 2026-07-14.
 - Status boundary: this catalog describes current repository behavior and does
