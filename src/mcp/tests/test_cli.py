@@ -71,6 +71,27 @@ def test_unknown_command_fails_before_opening_a_session(
     assert not captured.out
 
 
+def test_cli_rejects_invalid_operands_before_session(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = main(
+        (
+            "--endpoint",
+            "http://127.0.0.1:65534/mcp",
+            "raw-call",
+            "call_tool",
+            "--arguments",
+            "{",
+        )
+    )
+    captured = capsys.readouterr()
+
+    assert exit_code == 2
+    assert "--arguments is not valid JSON" in captured.err
+    assert "failed" not in captured.err
+    assert not captured.out
+
+
 def test_cli_rejects_duplicate_argument_keys_before_session(
     capsys: pytest.CaptureFixture[str],
 ) -> None:

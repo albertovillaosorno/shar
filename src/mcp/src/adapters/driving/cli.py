@@ -113,6 +113,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         if is_help_action(invocation.action):
             _write_stdout(usage_text())
             return _EXIT_SUCCESS
+        _validate_action_operands(invocation)
         return _run(invocation)
     except UsageError as error:
         _write_stderr(f"error: {error}\n\n{usage_text()}")
@@ -120,6 +121,28 @@ def main(argv: Sequence[str] | None = None) -> int:
     except (UnrealMcpError, OSError) as error:
         _write_stderr(f"error: {error}\n")
         return _EXIT_FAILURE
+
+
+def _validate_action_operands(invocation: CliInvocation) -> None:
+    """Validate one command completely before opening an MCP session."""
+    action = invocation.action
+    operands = invocation.operands
+    if action in {"doctor", "toolsets"}:
+        require_operand_count(action, operands, expected=0)
+        return
+    if action == "describe":
+        require_operand_count(action, operands, expected=1)
+        return
+    if action == "call":
+        _ = parse_tool_call(operands)
+        return
+    if action == "raw-call":
+        _ = parse_raw_call(operands)
+        return
+    if action == "skills":
+        _ = parse_skill_output_path(operands)
+        return
+    _ = parse_catalog_format(operands)
 
 
 def _run(invocation: CliInvocation) -> int:
