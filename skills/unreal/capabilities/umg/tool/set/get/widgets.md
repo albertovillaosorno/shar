@@ -50,41 +50,55 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to obtain WidgetBlueprint-level metadata and a depth-first widget
+inventory before SHAR reviews hierarchy, variables, slots, or classes.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use an exact WidgetBlueprint object ref from `ListWidgetBlueprints`.
+- Keep the WidgetBlueprint loaded and unchanged while consuming nested widget
+  refs.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "widgetBlueprint": {"refPath": "/AudioWidgets/AudioFader/AudioFader.AudioFader"}
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two calls returned five widgets in depth-first order: `VerticalBox_0`,
+`AudioTextBox`, `CanvasPanel_3`, `SliderShadow`, and `Slider`. The root class
+was `VerticalBox`, parent class was `UserWidget`, inherited and named-slot
+counts were zero, and three widgets were variables.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Parent, slot, and named-slot host absence serializes as the string `"None"`.
+- Nested widget and slot refs are session-sensitive and can become stale after
+  compilation or edits.
+- Depth-first order describes hierarchy traversal, not rendering or event order.
+- A missing WidgetBlueprint ref fails during parameter translation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

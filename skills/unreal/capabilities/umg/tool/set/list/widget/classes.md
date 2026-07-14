@@ -46,41 +46,56 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to discover widget classes and editor descriptions before SHAR
+inspects class metadata or prepares a separately authorized widget addition.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Supply an explicit class-name substring filter.
+- Treat results as dependent on loaded modules, WidgetBlueprints, and editor
+  state.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "filter": "VerticalBox"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two `VerticalBox` calls returned one Panel-category class with `bIsPanel: true`.
+`Audio` returned 35 classes, including native AudioWidgets classes, generated
+WidgetBlueprint classes, and transient `REINST` and `SKEL` classes. An unmatched
+filter returned an empty array.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Filtering is substring-based rather than an exact class lookup.
+- Results can include transient reinstanced and skeleton classes unsuitable for
+  durable references.
+- Prefer stable `/Script/...` or generated `_C` classes after verifying their
+  asset owner.
+- Class descriptions are editor guidance and can change by engine revision.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

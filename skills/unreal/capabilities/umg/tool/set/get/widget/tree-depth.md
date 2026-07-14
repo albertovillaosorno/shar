@@ -47,41 +47,55 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to measure maximum descendant depth for a complete WidgetBlueprint
+tree or one current start widget.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use an exact loaded WidgetBlueprint object ref.
+- Pass `startWidget: null` for the complete tree.
+- Obtain a non-null start widget from `GetWidgets` on the same blueprint.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "widgetBlueprint": {"refPath": "/AudioWidgets/AudioFader/AudioFader.AudioFader"},
+  "startWidget": null
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two full-tree calls returned depth `2`. Starting at root `VerticalBox_0` also
+returned `2`; leaf `AudioTextBox` returned `0`; `CanvasPanel_3` returned `1`. A
+start widget from another WidgetBlueprint raised an ownership error.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Depth counts edges: a leaf is zero and a root with grandchildren is two.
+- Named-slot content is a separate relationship and may not follow ordinary tree
+  depth.
+- Nested widget refs become stale after compilation or structural edits.
+- A foreign start widget raises an error rather than returning `-1`.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
