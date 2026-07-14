@@ -178,6 +178,7 @@ def parse_tool_names(result: JsonObject) -> tuple[str, ...]:
     if not isinstance(raw_tools, list):
         fail_protocol("tools/list result omitted tools array")
     names: list[str] = []
+    seen: set[str] = set()
     for index, raw_tool in enumerate(raw_tools):
         tool = require_json_object(
             raw_tool,
@@ -186,6 +187,9 @@ def parse_tool_names(result: JsonObject) -> tuple[str, ...]:
         name = tool.get("name")
         if not isinstance(name, str) or not name:
             fail_protocol(f"tools/list.tools[{index}].name is invalid")
+        if name in seen:
+            fail_protocol(f"duplicate tool identity: {name}")
+        seen.add(name)
         names.append(name)
     return tuple(names)
 

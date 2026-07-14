@@ -57,6 +57,7 @@ import pytest
 from mcp.src.adapters.driven.http_exchange import HttpExchange
 from mcp.src.adapters.driven.response_validation import (
     parse_initialized_session,
+    parse_tool_names,
     require_json_rpc_result,
 )
 from mcp.src.domain.errors import ProtocolError
@@ -123,6 +124,19 @@ def test_initialize_requires_tools_capability() -> None:
             _exchange(result),
             _REQUEST_ID,
             expected_protocol_version=_PROTOCOL_VERSION,
+        )
+
+
+def test_tool_names_reject_duplicate_identities() -> None:
+    """Top-level capability discovery cannot contain duplicate names."""
+    with pytest.raises(ProtocolError, match="duplicate tool identity"):
+        _ = parse_tool_names(
+            {
+                "tools": [
+                    {"name": "list_toolsets"},
+                    {"name": "list_toolsets"},
+                ]
+            }
         )
 
 
