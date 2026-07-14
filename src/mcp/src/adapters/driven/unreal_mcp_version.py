@@ -49,7 +49,7 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
-from mcp.src.domain.errors import fail_configuration
+from mcp.src.domain.errors import ProtocolError, fail_configuration
 from mcp.src.domain.json_types import (
     DuplicateJsonKeyError,
     reject_duplicate_json_object,
@@ -135,4 +135,7 @@ def _read_json_object(path: Path, *, context: str) -> JsonObject:
         fail_configuration(str(error), cause=error)
     except (OSError, json.JSONDecodeError) as error:
         fail_configuration(f"cannot read {context}: {path}", cause=error)
-    return require_json_object(parsed, context=context)
+    try:
+        return require_json_object(parsed, context=context)
+    except ProtocolError as error:
+        fail_configuration(str(error), cause=error)

@@ -139,6 +139,31 @@ def test_provider_rejects_duplicate_descriptor_keys(tmp_path: Path) -> None:
         ).read_version()
 
 
+def test_provider_classifies_non_finite_descriptor_json(
+    tmp_path: Path,
+) -> None:
+    """Invalid strict JSON remains a configuration failure."""
+    project = tmp_path / "project" / "shar.uproject"
+    engine = tmp_path / "UE_5.8"
+    _write_json(project, {"EngineAssociation": "5.8"})
+    descriptor = engine / _PLUGIN_RELATIVE_PATH
+    descriptor.parent.mkdir(parents=True, exist_ok=True)
+    _ = descriptor.write_text(
+        '{"VersionName":NaN}\n',
+        encoding="utf-8",
+        newline="\n",
+    )
+
+    with pytest.raises(
+        ConfigurationError,
+        match="JSON number must be finite",
+    ):
+        _ = FilesystemUnrealMcpVersionProvider(
+            project,
+            environment={"UNREAL_ENGINE_ROOT": str(engine)},
+        ).read_version()
+
+
 def test_provider_rejects_missing_plugin_descriptor(tmp_path: Path) -> None:
     """Missing installed metadata cannot silently invent a version."""
     project = tmp_path / "project" / "shar.uproject"
