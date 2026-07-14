@@ -114,6 +114,12 @@ def test_endpoint_rejects_dns_alias_for_loopback_boundary() -> None:
     assert endpoint.url == "http://[::1]:8123/mcp"
 
 
+def test_endpoint_wraps_malformed_ipv6_url_error() -> None:
+    """Malformed IPv6 syntax must remain a typed endpoint failure."""
+    with pytest.raises(EndpointValidationError, match="URL is malformed"):
+        _ = McpEndpoint.parse("http://[::1:8123/mcp")
+
+
 def test_json_normalizer_rejects_non_finite_numbers() -> None:
     """Recursive JSON validation rejects non-standard numeric constants."""
     for value in (float("nan"), float("inf"), float("-inf")):

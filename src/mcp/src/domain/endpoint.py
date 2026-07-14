@@ -90,7 +90,10 @@ class McpEndpoint(NamedTuple):
             fail_endpoint("MCP endpoint must not contain control characters")
         if any(character.isspace() for character in value):
             fail_endpoint("MCP endpoint must not contain whitespace")
-        parsed = urlsplit(value)
+        try:
+            parsed = urlsplit(value)
+        except ValueError as error:
+            fail_endpoint("MCP endpoint URL is malformed", cause=error)
         cls._validate_split(parsed)
         if parsed.netloc.endswith(":"):
             fail_endpoint("MCP endpoint contains an empty port")
