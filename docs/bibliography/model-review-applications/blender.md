@@ -8,9 +8,10 @@ bundled dependency, a validation authority, or an endorser of SHAR.
 
 - Review status: Evidence recorded.
 - Evidence status: Partially verified — The installed Blender 5.1.2 build,
-  Windows release identity, build date, source commit, official source mirror,
-  license boundary, and repository experimental-script boundary were verified.
-  Add-on set, settings profile, and importer acceptance remain unverified.
+  Windows release identity, build date, source commit, official Blender 5.2.0
+  LTS release artifacts and checksum publication, source mirror, license boundary,
+  and repository experimental-script boundary were verified. Add-on set,
+  settings profile, and importer acceptance remain unverified.
 - Counsel review: Not performed.
 - As-of date: 2026-07-14.
 - Subject class: Open-source 3D authoring and experimental inspection
@@ -36,13 +37,16 @@ artifacts containing proprietary game material are not distributed by SHAR.
 ## Provenance And Version History
 
 The installed executable reports Blender 5.1.2 for Windows, built 19 May 2026
-from source commit `ec6e62d40fa9` on the `blender-v5.1-release` branch. Those
-values are dated environment evidence, not a minimum requirement or permanent
-compatibility range.
+from source commit `ec6e62d40fa9` on the `blender-v5.1-release` branch. Blender's
+official download server published Blender 5.2.0 Windows x64 artifacts and a
+checksum manifest on 14 July 2026, and the official developer documentation
+labels the release Blender 5.2 LTS. The installed application is therefore one
+minor release behind the reviewed upstream release.
 
-Any later Blender version, add-on, Python API, settings profile, package, bundled
-component, or importer result must be identified separately before its behavior
-or terms are relied upon.
+These values are dated environment and currentness evidence, not a minimum
+requirement or permanent compatibility range. Any later Blender version, add-on,
+Python API, settings profile, package, bundled component, or importer result must
+be identified separately before its behavior or terms are relied upon.
 
 ## Authorship, Ownership, And Attribution
 
@@ -70,21 +74,33 @@ governed by the rights in their underlying content.
 
 ## Compliance Posture
 
-Treat Blender 5.1.2 as observed installation evidence only. Do not treat the
-installation or inspection script as proof of successful import, compatibility,
-validation, or acceptance, and do not convert the observed version into an
-unbounded `>=` requirement. Distribution of Blender, an add-on, linked library,
-or copied documentation requires a component-level GPL, notice, and source-
-availability review.
+Treat Blender 5.1.2 as observed installation evidence only. Upgrade it to the
+reviewed 5.2 LTS line or document a narrow compatibility reason before describing
+the installation as current. Do not treat the installation or inspection script
+as proof of successful import, compatibility, validation, or acceptance, and do
+not convert either observed version into an unbounded `>=` requirement.
+Distribution of Blender, an add-on, linked library, or copied documentation
+requires a component-level GPL, notice, and source-availability review.
 
 ## Source References
 
+- Blender Foundation (2026) *Blender 5.2 LTS Release Notes*. Identifies the
+  5.2 line as an LTS release. Available at:
+  <https://developer.blender.org/docs/release_notes/5.2/> (Accessed: 14 July
+  2026).
+- Blender Foundation (2026) *Blender 5.2 release artifacts*. Publishes Blender
+  5.2.0 Windows x64 installers and archives dated 14 July 2026. Available at:
+  <https://download.blender.org/release/Blender5.2/> (Accessed: 14 July 2026).
+- Blender Foundation (2026) *Blender 5.2.0 checksum manifest*. Publishes SHA-256
+  identities for the official release artifacts. Available at:
+  <https://download.blender.org/release/Blender5.2/blender-5.2.0.sha256>
+  (Accessed: 14 July 2026).
 - Blender Foundation (n.d.) *License*. Available at:
-  <https://www.blender.org/about/license/> (Access attempted: 13 July 2026).
+  <https://www.blender.org/about/license/> (Access attempted: 14 July 2026).
 - Blender Foundation (n.d.) *Blender Manual*. Available at:
-  <https://docs.blender.org/manual/en/latest/> (Accessed: 12 July 2026).
+  <https://docs.blender.org/manual/en/latest/> (Accessed: 14 July 2026).
 - Blender Foundation (n.d.) *Official Blender GitHub mirror*. Available at:
-  <https://github.com/blender/blender> (Accessed: 13 July 2026).
+  <https://github.com/blender/blender> (Accessed: 14 July 2026).
 - Blender Foundation (n.d.) *COPYING*. Available at:
   <https://github.com/blender/blender/blob/main/COPYING> (Accessed: 14 July
   2026).
