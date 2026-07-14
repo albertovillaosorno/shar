@@ -50,41 +50,63 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to keep refs in one bounded Slate window or panel current while
+SHAR performs a short UI inspection sequence. Always pair the registration with
+`Unobserve` in guaranteed cleanup.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project and native MCP server must be ready.
+- Discover a current widget ref through `Windows` or `Snapshot`.
+- Choose the smallest useful `maxDepth` for the target subtree.
+- Establish `Unobserve` cleanup before registering the observer.
+- Avoid overlapping observers for the same subtree unless explicitly required.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "ref": "w1",
+  "maxDepth": 6
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two registrations returned `observer_2` and `observer_3`. `ListObservers` showed
+each temporary observer beside the built-in root observer with root ref `w1` and
+depth `6`. After a short refresh interval, `Snapshot` used the observed ref
+successfully. Each identifier was then removed with `Unobserve`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This is a transient editor-state mutation and must be paired with cleanup.
+- Observer identifiers are session-local and not reusable stable names.
+- The observer refreshes on a short tick, so an immediate snapshot can precede
+  cache refresh.
+- Increasing depth does not create accessibility information that the widget
+  tree does not expose.
+- Duplicate or overlapping observers consume extra refresh work and complicate
+  ref ownership.
+- The built-in root observer already covers top-level windows at depth `0`.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

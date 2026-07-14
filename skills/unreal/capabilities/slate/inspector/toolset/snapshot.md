@@ -52,41 +52,66 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to read a bounded Slate accessibility subtree before SHAR verifies
+editor UI state or selects a widget ref for a later controlled action. Keep
+source locations disabled for portable review output.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project and native MCP server must be ready.
+- Obtain the target ref from `Windows`, a prior snapshot, or an active observer.
+- Register a bounded observer first when the target subtree needs continuously
+  refreshed refs.
+- Choose the smallest useful `maxDepth` and keep source locations disabled.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "ref": "w1",
+  "maxDepth": 6,
+  "bIncludeSourceLocations": false
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two observed-window snapshots returned the same four-node structure: one editor
+window and three image widgets with refs `w1`, `i1`, `i2`, and `i3`. Position
+and size remained stable, while the focused marker and serialized bytes changed
+between calls. `WaitFor` independently found the window title.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The result is a plain-text accessibility tree, not JSON.
+- Widget refs are editor-session identities and can become stale after UI
+  reconstruction.
+- Snapshot bytes are not deterministic because focus and live UI metadata can
+  change even when structure and geometry remain stable.
+- A larger `maxDepth` cannot expose semantics that the current accessibility
+  tree represents only as image widgets.
+- Enabling source locations can introduce engine or workstation-specific paths
+  into review output and was not used.
+- Snapshot does not interact with the UI or prove that a widget action will
+  succeed.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

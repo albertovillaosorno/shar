@@ -48,41 +48,58 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to audit Slate observer state before and after a bounded SHAR UI
+inspection. It proves whether temporary observers were removed and exposes the
+persistent shallow root observer separately.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project and native MCP server must be ready.
+- Slate inspection must be initialized.
+- Correlate temporary identifiers with the exact `Observe` calls that created
+  them.
+- Do not remove the built-in root observer during routine cleanup.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The baseline contained only root `observer_1` at depth `0`. During each bounded
+window observation, the list contained the root plus one temporary observer at
+depth `6`. After `Unobserve`, it returned to the root-only set. Cached snapshot
+sizes changed between reads while identifiers and roles remained coherent.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- `returnValue` is a JSON string and requires a second JSON parse.
+- The shallow root observer is normal baseline state and should not be treated
+  as leaked temporary work.
+- Cached snapshot sizes are live metrics and can change without observer
+  membership changing.
+- Observer identifiers are session-local and increment across registrations.
+- Inventory alone does not prove a subtree snapshot is semantically complete.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
