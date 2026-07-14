@@ -176,6 +176,45 @@ def test_result_requires_exclusive_result_or_error_member() -> None:
             _ = require_json_rpc_result(exchange, _REQUEST_ID)
 
 
+def test_result_requires_well_formed_json_rpc_error() -> None:
+    """Error responses require one integer code and text message."""
+    malformed_errors: tuple[JsonValue, ...] = (
+        {"code": True, "message": "failed"},
+        {"code": 1.0, "message": "failed"},
+        {"code": -1, "message": 17},
+        {"message": "failed"},
+    )
+    for error_value in malformed_errors:
+        payload: JsonObject = {
+            "jsonrpc": "2.0",
+            "id": _REQUEST_ID,
+            "error": error_value,
+        }
+        exchange = HttpExchange(
+            status=200,
+            session_id=None,
+            payload=payload,
+        )
+
+        with pytest.raises(
+            ProtocolError,
+            match=r"JSON-RPC error\.(code|message)",
+        ):
+            _ = require_json_rpc_result(exchange, _REQUEST_ID)
+
+    valid_error = HttpExchange(
+        status=200,
+        session_id=None,
+        payload={
+            "jsonrpc": "2.0",
+            "id": _REQUEST_ID,
+            "error": {"code": -32000, "message": "native failure"},
+        },
+    )
+    with pytest.raises(ProtocolError, match="native failure"):
+        _ = require_json_rpc_result(valid_error, _REQUEST_ID)
+
+
 def test_result_requires_exact_integer_request_id() -> None:
     """Boolean and floating identifiers cannot alias an integer request."""
     for response_id in (True, 1.0):

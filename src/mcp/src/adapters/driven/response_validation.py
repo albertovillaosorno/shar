@@ -158,9 +158,12 @@ def require_json_rpc_result(
             payload["error"],
             context="JSON-RPC error",
         )
-        message = error.get("message", "unknown JSON-RPC error")
+        code = error.get("code")
+        if not isinstance(code, int) or isinstance(code, bool):
+            fail_protocol("JSON-RPC error.code must be an integer")
+        message = error.get("message")
         if not isinstance(message, str):
-            message = "unknown JSON-RPC error"
+            fail_protocol("JSON-RPC error.message must be text")
         fail_protocol(message)
     return require_json_object(
         payload["result"],
