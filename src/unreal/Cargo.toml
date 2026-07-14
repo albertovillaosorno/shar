@@ -1,0 +1,9 @@
+[package]
+name = "shar-unreal-conversion"
+version.workspace = true
+edition = "2024"
+license = "MIT"
+publish = false
+
+[lib]
+path = "src/lib.rs"
