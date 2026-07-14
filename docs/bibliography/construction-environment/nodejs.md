@@ -7,9 +7,11 @@ Node.js licensing to scripts, Markdown, or packages executed by it.
 
 - Review status: Evidence recorded.
 - Evidence status: Partially verified — The managed Node.js v25.9.0 and npm
-  11.12.1 identities, repository role, official release schedule, source
-  repository, and license inventory were verified. Node.js v25 is end-of-life;
-  the package graph and exact binary provenance remain environment-specific.
+  11.12.1 identities, Node.js support schedule, npm 12.0.1 current-major engine
+  constraint, npm 11.18.0 compatible-major release, repository role, source
+  repositories, and license inventories were verified. Node.js v25 is
+  end-of-life; the package graph and exact binary provenance remain environment-
+  specific.
 - Counsel review: Not performed.
 - As-of date: 2026-07-14.
 - Subject class: Open-source JavaScript runtime and bundled dependency set.
@@ -33,6 +35,13 @@ v24 and v22 as LTS lines. It also recommends Active LTS or Maintenance LTS for
 production applications. The managed v25.9.0 runtime is therefore outside the
 supported lines as of 14 July 2026.
 
+The npm registry identifies 12.0.1 as the current npm release and requires
+Node.js `^22.22.2`, `^24.15.0`, or `>=26.0.0`; Node.js 25 is intentionally
+excluded. The registry identifies 11.18.0 as the newest npm 11 release and allows
+Node.js `^20.17.0` or `>=22.9.0`, which includes the observed Node.js 25 runtime.
+The managed npm 11.12.1 therefore trails a newer compatible npm 11 release even
+though the current npm 12 major cannot be used with Node.js 25.
+
 Validation evidence must preserve the exact Node.js binary, major line, support
 status, architecture, npm identity, and package graph. Node.js also bundles
 externally maintained libraries whose license texts are included in the project
@@ -48,9 +57,10 @@ rights.
 
 The Node.js project license applies the MIT terms to Node.js-authored portions
 and then lists externally maintained libraries with their own notices and
-licenses. The exact source revision or binary distribution and its complete
-license inventory control; `MIT` alone is not a sufficient description of every
-bundled component.
+licenses. The npm package metadata reports the Artistic License 2.0 for npm;
+Node.js licensing must not be substituted for npm or its package graph. The exact
+source revisions or binary distributions and their complete license inventories
+control; `MIT` alone is not a sufficient description of every bundled component.
 
 ## Distribution, Modification, And Compatibility
 
@@ -61,9 +71,12 @@ all included libraries and packages.
 ## Compliance Posture
 
 Replace the end-of-life v25 runtime with a supported line or record a narrow,
-time-bounded compatibility blocker. Record the exact runtime, support status,
-npm, and package versions for reproducible validation. Do not distribute an
-unidentified Node.js or package cache as SHAR-authored material.
+time-bounded compatibility blocker. Upgrade npm 11.12.1 to the newest compatible
+npm 11 release during that transition, or move to npm 12 only with a supported
+Node.js line that satisfies its authoritative engine range. Record the exact
+runtime, support status, npm identity, engine constraint, and package versions
+for reproducible validation. Do not distribute an unidentified Node.js or npm
+package cache as SHAR-authored material.
 
 ## Source References
 
@@ -73,6 +86,10 @@ unidentified Node.js or package cache as SHAR-authored material.
   Identifies v25 as end-of-life, v26 as Current, and v24 and v22 as LTS lines.
   Available at: <https://nodejs.org/en/about/previous-releases> (Accessed: 14
   July 2026).
+- npm contributors (2026) *npm registry package metadata*. Identifies npm 12.0.1
+  as `latest`, npm 11.18.0 as the newest npm 11 release, their respective Node.js
+  engine ranges, and the Artistic License 2.0. Available at:
+  <https://www.npmjs.com/package/npm> (Accessed: 14 July 2026).
 - OpenJS Foundation and Node.js contributors (n.d.) *Official GitHub
   repository*. Available at: <https://github.com/nodejs/node> (Accessed: 14 July
   2026).
@@ -80,4 +97,5 @@ unidentified Node.js or package cache as SHAR-authored material.
   Third-Party Notices*. Available at:
   <https://github.com/nodejs/node/blob/main/LICENSE> (Accessed: 14 July 2026).
 - SHAR managed runtime and command authority (2026), Node.js v25.9.0, npm
-  11.12.1, runtime mapping, Markdown validation, and spelling validation.
+  11.12.1, runtime mapping, Markdown validation, spelling validation, and npm
+  registry queries for current and compatible release evidence.
