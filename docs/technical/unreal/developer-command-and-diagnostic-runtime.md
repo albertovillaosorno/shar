@@ -1,0 +1,368 @@
+# Developer command and diagnostic runtime
+
+- Status: Active
+- Last reviewed: 2026-07-14
+
+## Governing decisions
+
+- [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
+- [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
+- [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+- [Validated game-feature mod overlays](../../adr/unreal/runtime/validated-game-feature-mod-overlays.md)
+
+## Purpose
+
+This specification defines the native development-command registry, diagnostic
+console, structured logging, aliases, completion, asynchronous execution, and
+input presentation. It replaces fixed function tables, raw callback pointers,
+runtime text-script evaluation, process-wide mutable console state, and custom
+case-insensitive string helpers with validated command definitions and typed
+execution.
+
+The surface exists for editor, automation, development, and explicitly
+authorized diagnostic builds. It is not a second gameplay scripting language and
+is not an ordinary player feature.
+
+## Ownership
+
+| Authority | Responsibility |
+| :--- | :--- |
+| Command catalog | Stable command identities, schemas, permissions, availability, help, and aliases. |
+| Command registry subsystem | Definition activation, lookup, completion, dispatch, and lifecycle. |
+| Command handlers | Typed application-port calls and structured results. |
+| Logging subsystem | Categories, severity, sinks, filtering, and redaction. |
+| Development UI | Entry, history, completion, output projection, and accessibility. |
+| Gameplay and domain services | Authoritative state transitions requested by permitted handlers. |
+
+The command runtime never owns progression, mission, vehicle, world, save,
+economy, or content state. A command handler may request a typed domain operation
+only when its definition authorizes that operation.
+
+## Runtime topology
+
+The development module owns these C++ types:
+
+| Type | Responsibility |
+| :--- | :--- |
+| `USharDeveloperCommandDefinition` | Immutable identity, argument schema, availability, permission, execution, and help contract. |
+| `USharDeveloperCommandAliasDefinition` | Validated alias and typed argument-template mapping. |
+| `USharDeveloperCommandRegistrySubsystem` | Catalog activation, normalized lookup, completion, dispatch, and revocation. |
+| `ISharDeveloperCommandHandler` | Native typed handler interface registered by canonical command identity. |
+| `FSharDeveloperCommandRequest` | Caller, command identity, typed arguments, world, local player, and request revision. |
+| `FSharDeveloperCommandResult` | Closed status, observations, diagnostics, and optional asynchronous handle. |
+| `FSharDeveloperCommandHandle` | Cancellation-safe handle for long-running work. |
+| `USharDeveloperConsoleViewModel` | Development-only entry, history, completion, and output projection. |
+
+The registry is world-aware. Definitions may be shared immutable assets, while
+active handles and caller permissions belong to a specific editor, world, or
+local-player scope.
+
+## Command definition
+
+Every command definition contains:
+
+| Field | Contract |
+| :--- | :--- |
+| `CommandId` | Globally unique canonical identity. |
+| `DisplayName` | Human-readable development label, never runtime identity. |
+| `ArgumentSchema` | Ordered typed arguments with names, types, bounds, and defaults. |
+| `Availability` | Editor, automation, development build, authorized diagnostic build, or excluded. |
+| `Permission` | Read-only, presentation mutation, world mutation, domain transaction, or process control. |
+| `ExecutionKind` | Registered native handler identity. |
+| `WorldPolicy` | No world, editor world, preview world, game world, or explicit target world. |
+| `ConcurrencyPolicy` | Reject, replace, queue, or parallel under declared resource rules. |
+| `TimeoutPolicy` | Positive bound or explicit long-running permission. |
+| `ResultSchema` | Closed success and failure observation types. |
+| `Help` | Summary, argument descriptions, examples, and safety notes. |
+| `DefinitionRevision` | Immutable revision used to reject stale invocations. |
+
+Definitions cannot contain source-language callbacks, memory addresses, raw
+function pointers, arbitrary executable text, machine-specific paths, or
+unbounded variadic argument rules.
+
+## Stable lookup
+
+Command identity is normalized during catalog generation. Lookup uses the
+canonical identity or one validated alias. Display casing is presentation only.
+
+Normalization must:
+
+- reject empty or whitespace-only names;
+- reject duplicate canonical identities;
+- reject two aliases that normalize to the same key;
+- preserve an exact canonical spelling for diagnostics;
+- avoid locale-dependent comparisons; and
+- reject control characters, path separators, shell metacharacters, and hidden
+  Unicode distinctions not permitted by repository policy.
+
+Native `FName` or generated identity wrappers may implement lookup. Ad hoc
+uppercase buffers and custom string-comparison functions are not runtime
+authority.
+
+## Arguments
+
+The parser accepts only the types declared by the command schema, including:
+
+- Boolean;
+- bounded signed or unsigned integer;
+- bounded finite scalar;
+- string with length and character policy;
+- gameplay tag;
+- stable catalog identity;
+- soft object path validated against an allowed class and root;
+- world, local-player, actor, vehicle, or mission identity resolved through a
+  typed selector; and
+- closed enum generated from repository-owned data.
+
+Quoted text and escaping follow one documented grammar. Comments, nested command
+substitution, environment expansion, shell operators, pointer literals, and
+implicit file reads are forbidden.
+
+Parsing returns a typed result with token span and reason. It never truncates an
+overlong token into a different valid command or argument.
+
+## Registration
+
+Handlers register by canonical command identity through module startup or an
+explicit feature activation transaction. Catalog activation fails when:
+
+- a definition has no handler;
+- a handler declares a different argument or result schema;
+- a command exceeds the availability or permission of its module;
+- an alias references a missing command;
+- an alias template supplies an invalid argument;
+- a command depends on an unavailable world or feature; or
+- two modules claim the same identity.
+
+Registration order cannot change lookup, completion, permissions, or execution.
+There is no fixed command, alias, argument, buffer, or callback capacity.
+
+## Aliases
+
+An alias maps one stable alias identity to one command identity plus a typed
+argument template. Placeholders bind by declared argument name, not positional
+text replacement.
+
+Alias validation rejects:
+
+- recursive or cyclic aliases;
+- expansion into another unresolved alias;
+- missing required arguments;
+- type-invalid literals;
+- privilege escalation;
+- hidden world or caller changes; and
+- expansion that exceeds the target command's argument bounds.
+
+The result records both the invoked alias and canonical command identity.
+
+## Execution
+
+Execution follows this order:
+
+1. resolve the caller, world, and command revision;
+1. verify build availability and caller permission;
+1. parse and validate all arguments without side effects;
+1. resolve stable target identities;
+1. acquire declared resources;
+1. invoke the registered typed handler;
+1. verify the declared postcondition;
+1. release resources; and
+1. publish one structured result.
+
+A handler cannot call another command through formatted text. Shared behavior is
+an application service or typed helper invoked directly.
+
+## Result model
+
+Every invocation returns one status:
+
+| Status | Meaning |
+| :--- | :--- |
+| `success` | The declared postcondition was observed. |
+| `rejected` | Availability, permission, schema, target, or precondition failed before mutation. |
+| `failed` | Execution began but did not reach the postcondition. |
+| `timed_out` | The authored bound elapsed and cleanup completed. |
+| `cancelled` | The caller or lifecycle cancelled the operation and cleanup completed. |
+| `queued` | The concurrency policy accepted the request for later execution. |
+
+Free-form text may accompany a result for developers, but text cannot drive
+subsequent gameplay or command transitions.
+
+## Asynchronous commands
+
+Long-running commands return a move-only handle with stable request identity,
+progress observations, timeout, cancellation, and terminal result. Completion of
+file loading, editor mutation, asset compilation, world travel, or automation is
+verified through the owning native subsystem.
+
+World teardown, module shutdown, caller revocation, or editor PIE termination
+cancels all affected handles. A callback arriving after cancellation cannot
+publish success or mutate a replacement world.
+
+## Runtime text scripts
+
+Shipping and diagnostic runtime builds do not evaluate arbitrary command-script
+files. Repository-authored command batches used by tests or editor automation
+are converted before execution into validated typed plans containing command
+identities and typed arguments.
+
+A batch plan records:
+
+- plan identity and revision;
+- ordered or explicitly parallel steps;
+- caller and permission profile;
+- allowed worlds;
+- timeout and cancellation policy;
+- expected results; and
+- provenance for the repository-authored source.
+
+Unknown commands, parse errors, invalid aliases, or stale revisions fail the plan
+before the first side effect unless the plan explicitly declares an isolated
+best-effort diagnostic step.
+
+## Logging
+
+Runtime and editor diagnostics use native log categories and structured fields.
+Each event declares category, severity, message identity, request identity,
+world, local player when applicable, and redacted typed fields.
+
+Supported sinks are selected by build policy:
+
+- editor output log;
+- automation result stream;
+- development console projection;
+- platform diagnostic output; and
+- explicitly configured repository-safe log file.
+
+The command surface cannot choose an arbitrary output path. Logs must not include
+credentials, private workstation paths, proprietary source paths, save payloads,
+or unrestricted object serialization.
+
+Category filtering changes presentation and storage only. It cannot suppress a
+required command result, assertion, validation failure, or domain transaction
+outcome.
+
+## Interactive development console
+
+The interactive console is available only when the build and caller policy allow
+it. Its input layer uses semantic actions for:
+
+- open and close;
+- submit;
+- cancel;
+- history previous and next;
+- cursor movement;
+- completion;
+- selection; and
+- output scrolling.
+
+Text input uses the platform's native text-entry path. Gamepad or touch
+presentation may expose a virtual keyboard, but both produce the same typed
+request.
+
+Opening the console acquires an input-mode lease and optional pause request.
+Closing, world travel, focus loss, controller removal, or UI destruction releases
+all leases. The console cannot leave gameplay input disabled.
+
+## History and completion
+
+History stores bounded command identities and redacted typed arguments. Sensitive
+or non-repeatable arguments are omitted. History is device-local development
+state and never enters player saves.
+
+Completion is generated from the caller's currently available definitions and
+aliases. It does not reveal excluded, higher-privilege, or unavailable commands.
+Completion ordering is deterministic by canonical identity.
+
+## Diagnostic channels
+
+Named diagnostic channels are stable category identities, not integer positions.
+A caller may adjust a permitted channel's presentation threshold for the current
+development session. Blocking a channel cannot disable safety, validation,
+transaction, or crash diagnostics.
+
+## Assertions and failures
+
+Assertions remain native engine or repository validation mechanisms. A command
+cannot convert a failed invariant into success. Recoverable handler failures
+return structured results; unrecoverable development invariants use the
+repository's native assertion policy.
+
+Formatting uses bounded native strings. Invalid format data, overlong output,
+non-finite values, or encoding failure produces a safe diagnostic rather than a
+buffer overrun or truncated executable request.
+
+## Mods and extensions
+
+A validated development feature or mod overlay may add commands only when its
+manifest declares:
+
+- a namespaced identity;
+- availability and permission no broader than the host profile;
+- typed schema and native handler;
+- dependencies and conflicts;
+- teardown behavior; and
+- tests.
+
+An extension cannot replace a first-party command unless an accepted override
+policy explicitly permits that identity and revision.
+
+## Determinism
+
+Given the same catalog revision, caller profile, world snapshot, typed request,
+and application-service observations, lookup and dispatch select the same handler
+and result semantics.
+
+Wall-clock time, registration order, pointer address, hash-table iteration,
+localized display text, platform key label, and log-listener order cannot select
+behavior.
+
+## Validation
+
+Catalog validation rejects:
+
+- duplicate or ambiguous command and alias identities;
+- missing handlers;
+- schema mismatch;
+- unbounded strings or numeric values;
+- forbidden availability or permission combinations;
+- runtime text evaluation;
+- arbitrary file or process access;
+- alias cycles or privilege escalation;
+- unresolved target selectors;
+- missing timeout or cleanup policy; and
+- development commands included in an unauthorized shipping package.
+
+Cook validation proves excluded modules, UI, command assets, and symbols are not
+reachable from ordinary player packages except where an explicitly accepted
+diagnostic profile requires them.
+
+## Tests
+
+Required tests include:
+
+- deterministic normalized lookup and completion;
+- duplicate identity and alias rejection;
+- typed argument parsing and bounds;
+- alias placeholder binding and cycle rejection;
+- permission and availability enforcement;
+- local-player and world isolation;
+- synchronous success and failure;
+- asynchronous completion, timeout, cancellation, and late callback rejection;
+- world teardown and PIE restart cleanup;
+- structured log redaction and category filtering;
+- input lease restoration;
+- history redaction;
+- unauthorized shipping exclusion; and
+- extension registration and teardown.
+
+## Invariants
+
+- Command text is never gameplay identity.
+- Arbitrary runtime script evaluation is forbidden.
+- Every mutation crosses a typed application port.
+- Every long-running command has timeout, cancellation, and terminal evidence.
+- Development availability never follows from a platform macro alone.
+- Registration and listener order never select behavior.
+- Diagnostic output cannot expose private or secret material.
+- Player saves never contain development console state.

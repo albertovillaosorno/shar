@@ -8,6 +8,7 @@
 - [Canonical seven-level campaign and world variants](../../adr/unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 - [Gameplay census, presentation, and development-content boundary](gameplay-census-presentation-and-development-boundary.md)
+- [Legacy runtime identity normalization](legacy-runtime-identity-normalization.md)
 - [Event-driven music and ambience](../../adr/unreal/runtime/event-driven-music-and-ambience.md)
 - [Mass Entity ambient population](../../adr/unreal/runtime/mass-entity-ambient-population.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)

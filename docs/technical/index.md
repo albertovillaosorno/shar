@@ -55,12 +55,15 @@ proprietary external formats.
 ## Unreal
 
 - [Ambient population and named-character runtime](unreal/ambient-population-and-named-character-runtime.md)
+- [Application lifecycle and mode runtime](unreal/application-lifecycle-and-mode-runtime.md)
 - [Camera rig, preset, and arbitration runtime](unreal/camera-rig-preset-and-arbitration-runtime.md)
 - [Camera system runtime](unreal/camera-system-runtime.md)
 - [Campaign level composition and progress](unreal/campaign-level-composition-and-progress.md)
+- [Developer command and diagnostic runtime](unreal/developer-command-and-diagnostic-runtime.md)
 - [Frontend shell and menu runtime](unreal/frontend-shell-and-menu-runtime.md)
 - [Unreal configuration and asset validation](unreal/config-and-asset-validation.md)
 - [Unreal gameplay content catalog](unreal/gameplay-content-catalog.md)
+- [Legacy runtime identity normalization](unreal/legacy-runtime-identity-normalization.md)
 - [Mission, interaction, interior, and notoriety runtime](unreal/mission-interaction-and-notoriety-runtime.md)
 - [Mod package overlay runtime](unreal/mod-package-overlay-runtime.md)
 - [Music state and transition runtime](unreal/music-state-and-transition-runtime.md)
@@ -90,7 +93,7 @@ proprietary external formats.
 
 ## Current coverage
 
-- Technical specifications: 51.
+- Technical specifications: 54.
 - Template records: 1.
 - Review date: 2026-07-14.
 - Status boundary: this catalog describes current repository behavior and does

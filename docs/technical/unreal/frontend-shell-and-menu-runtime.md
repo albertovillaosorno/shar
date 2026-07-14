@@ -9,6 +9,7 @@
 - [Canonical seven-level campaign and world variants](../../adr/unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
 - [UI parity boundary](../../adr/unreal/ui/ui-parity-boundary.md)
 - [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+- [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
 
 ## Purpose
 

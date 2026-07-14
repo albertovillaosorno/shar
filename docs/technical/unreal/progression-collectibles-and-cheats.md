@@ -384,6 +384,39 @@ the ticket contributes to complete progression. Entering the associated movie
 presentation is a separate state transition; viewing the movie is not inferred
 merely from ticket ownership.
 
+### Gallery repository and save projection
+
+`USharCardCatalogSubsystem` owns immutable card definitions and resolves by
+canonical card identity or one validated source alias. Runtime lookup does not
+allocate card subclasses, index a fixed pointer array by image number, or search
+hashed display names linearly.
+
+Portable progression stores the set of collected canonical card identities and
+accepted set-completion transactions. A compact device representation may use a
+versioned generated bitset, but bit position belongs to that exact save-schema
+revision and is converted back to identities before domain use. Catalog reorder,
+new cards, removed presentation, or mod overlays cannot reinterpret an existing
+bit.
+
+The gallery view is derived from:
+
+- active catalog revision;
+- collected card identity set;
+- completed card-set transaction set;
+- localizable card metadata;
+- presentation availability; and
+- current cheat overlay when one is enabled.
+
+Adding a collected card validates subtype, level set, set ordinal, placement
+transaction, and existing progression state before one idempotent commit. Deck
+completion is calculated from the required identity set, not a mutable count.
+Removing cards is a development-only test operation and cannot occur through an
+ordinary player or cheat overlay.
+
+The card-unlock cheat changes gallery visibility and eligibility projection only.
+It does not insert all card identities into portable progression, complete level
+sets, grant bonus maps, or grant the movie ticket.
+
 ## Level and game progress projection
 
 The exact eight-category level formula, seven-level aggregation, counted vehicle
@@ -447,6 +480,36 @@ The cheat definition never stores a platform-specific key code as its identity.
 Input recognition is controller-scoped. A controller must explicitly activate
 cheat entry before its four-token sequence is accepted. Duplicate sequences and
 prefix ambiguity are invalid catalog data.
+
+### Recognition and activation
+
+Each local player owns one transient recognizer with `inactive`, `armed`,
+`collecting`, `accepted`, and `rejected` states. The active input profile maps
+physical controls to four semantic cheat tokens plus one explicit activation
+chord or action. Platform button labels are presentation only.
+
+Arming clears the previous sequence and records the local-player, controller,
+input-profile, and catalog revisions. Releasing the activation chord, changing
+controller ownership, changing application mode, opening an incompatible modal
+UI, suspending the application, or reaching a timeout clears the transient
+sequence.
+
+Exactly four accepted token-down transitions are evaluated. Key repeat, analog
+noise, button-up events, duplicate device delivery, and another local player's
+input cannot advance the recognizer. Recognition returns one of `matched`,
+`unknown_sequence`, `unavailable`, `prerequisite_failed`, or `input_cancelled`.
+
+Sequence lookup is a generated map from the four-token tuple to one canonical
+cheat identity. It does not convert the tuple into an array index, depend on cheat
+enum order, or broadcast through a fixed callback list.
+
+A matched definition is sent to `USharCheatEffectSubsystem`, which validates the
+prerequisite and delegates the typed effect request to its owning application
+port. Subscribers receive immutable result observations after the effect reaches
+its declared postcondition. Listener order cannot change activation.
+
+The success or failure presentation is local-player scoped and cannot reveal
+unavailable developer-only cheats in an ordinary player build.
 
 ## Cheat state and effects
 
