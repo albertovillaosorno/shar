@@ -7,11 +7,13 @@ measured source, tests, Coverage.py, or generated reports.
 ## Review Status And Scope
 
 - Review status: Evidence recorded.
-- Evidence status: Verified — Repository use and authoritative upstream sources
-  verified.
+- Evidence status: Partially verified — The canonical pytest-cov 7.1.0 pin,
+  PyPI's 7.1.0 latest-release designation, release date, Python compatibility,
+  repository use, and upstream license were verified. The exact installed wheel,
+  Coverage.py release, and transitive graph remain environment-specific.
 - Counsel review: Not performed.
 - Jurisdictional scope: Not determined.
-- As-of date: 2026-07-12.
+- As-of date: 2026-07-14.
 - Distribution posture: Development and validation dependency.
 - Subject class: Open-source pytest plugin for Coverage.py integration.
 
@@ -25,7 +27,7 @@ licenses, release histories, and notice requirements.
 
 ## Repository Use And Scope
 
-The canonical Python configuration declares pytest-cov as a development
+The canonical Python configuration pins pytest-cov 7.1.0 as a development
 dependency and uses coverage options for source selection, branch measurement,
 terminal reporting, XML reporting, HTML reporting, and a minimum coverage gate.
 
@@ -35,15 +37,17 @@ inputs, or generated HTML and XML artifacts.
 
 ## Provenance And Version History
 
-pytest-cov runs use the release resolved as compatible with the selected pytest,
-Coverage.py, and Python versions. The canonical dependency manifest and
-installed package evidence establish the component identity for a particular
-run.
+PyPI identifies pytest-cov 7.1.0 as the latest release, published 21 March
+2026, and declares support for Python 3.9 or newer, including Python 3.14. The
+canonical dependency pin therefore matched the reviewed latest release on 14
+July 2026.
 
-Plugin behavior can change across releases, including subprocess measurement,
-coverage-data handling, option forwarding, and compatibility requirements.
-Versions may lag upstream for compatibility, stability, delayed review, or human
-oversight and must not be inferred from this record.
+The 7.x line removed the legacy `.pth`-based subprocess measurement mechanism;
+subprocess coverage now depends on Coverage.py's patch configuration. The exact
+Coverage.py version, plugin registration, configuration, and installed package
+evidence remain part of each validation run. Future versions may lag upstream
+for compatibility, stability, delayed review, or human oversight and must not be
+inferred from this dated record.
 
 ## Authorship, Ownership, And Attribution
 
@@ -81,12 +85,15 @@ information, third-party source excerpts, and generated-artifact licensing.
 
 ## Source References
 
+- Python Package Index (2026) *pytest-cov 7.1.0*. Identified as the latest
+  release, published 21 March 2026, requiring Python 3.9 or newer. Available at:
+  <https://pypi.org/project/pytest-cov/> (Accessed: 14 July 2026).
 - pytest-cov contributors (n.d.) *pytest-cov documentation*. Available at:
-  <https://pytest-cov.readthedocs.io/en/latest/> (Accessed: 12 July 2026).
+  <https://pytest-cov.readthedocs.io/en/latest/> (Accessed: 14 July 2026).
 - pytest-cov contributors (n.d.) *Official GitHub repository*. Available at:
-  <https://github.com/pytest-dev/pytest-cov> (Accessed: 12 July 2026).
+  <https://github.com/pytest-dev/pytest-cov> (Accessed: 14 July 2026).
 - pytest-cov contributors (n.d.) *MIT License*. Available at:
-  <https://github.com/pytest-dev/pytest-cov/blob/master/LICENSE> (Accessed: 12
+  <https://github.com/pytest-dev/pytest-cov/blob/master/LICENSE> (Accessed: 14
   July 2026).
-- SHAR canonical Python authority (2026), pytest-cov dependency and coverage
-  command-line configuration.
+- SHAR canonical Python authority (2026), pinning `pytest-cov==7.1.0` and
+  defining the coverage command-line configuration.

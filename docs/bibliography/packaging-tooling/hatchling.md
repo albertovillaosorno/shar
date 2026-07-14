@@ -7,11 +7,13 @@ independently authored Python source.
 ## Review Status And Scope
 
 - Review status: Evidence recorded.
-- Evidence status: Verified — Repository manifest and authoritative upstream
-  sources verified.
+- Evidence status: Partially verified — The repository Hatchling 1.31.0 pin,
+  PyPI's 1.31.0 latest-release designation, release date, package metadata, and
+  trusted-publishing provenance were verified. The exact isolated build
+  environment and transitive dependency graph remain artifact-specific.
 - Counsel review: Not performed.
 - Jurisdictional scope: Not determined.
-- As-of date: 2026-07-12.
+- As-of date: 2026-07-14.
 - Distribution posture: Build-time dependency for the Python MCP client package.
 - Subject class: Python packaging build backend.
 
@@ -24,22 +26,27 @@ is separately invoked.
 
 ## Repository Use And Scope
 
-The MCP package manifest declares `hatchling.build` as its build backend and
-uses Hatch's wheel-target configuration to select the package directory.
-Hatchling is a build dependency resolved by a Python packaging frontend; it is
-not a runtime dependency declared for the installed MCP client.
+The MCP package manifest declares `hatchling.build` as its build backend, pins
+Hatchling 1.31.0 exactly, and uses Hatch's wheel-target configuration to select
+the package directory. Hatchling is a build dependency resolved by a Python
+packaging frontend; it is not a runtime dependency declared for the installed
+MCP client.
 
-The exact build requirement is controlled by the manifest. This bibliography
-record intentionally does not restate its number as a permanent project policy.
+The manifest remains the project authority. The version recorded here is dated
+evidence of the reviewed state, not a second dependency declaration or a
+permanent latest-version policy.
 
 ## Provenance And Version History
 
-For a Python package build that uses Hatchling, the compatible release resolved
-by the canonical manifest and build environment is the relevant evidence. The
-manifest may intentionally constrain a release, and it may lag upstream because
-of compatibility, delayed review, or human oversight. The manifest,
-build-isolation environment, package index metadata, hashes, and build logs
-establish the component identity for a particular artifact.
+PyPI identifies Hatchling 1.31.0 as the latest release and dates it 8 July
+2026. The repository's exact pin therefore matched the reviewed upstream
+release on 14 July 2026. PyPI also records trusted publication, source and wheel
+hashes, and provenance attestations for that release.
+
+The manifest may later constrain another release or lag upstream because of
+compatibility, delayed review, or human oversight. The manifest,
+build-isolation environment, package index metadata, hashes, attestations, and
+build logs establish the component identity for a particular artifact.
 
 ## Authorship, Ownership, And Attribution
 
@@ -78,8 +85,13 @@ for Hatchling and every included dependency.
   (Accessed: 12 July 2026).
 - Hatch contributors (n.d.) *Hatch documentation*. Available at:
   <https://hatch.pypa.io/latest/> (Accessed: 12 July 2026).
+- Python Package Index (2026) *Hatchling 1.31.0*. Identified as the latest
+  release, published 8 July 2026, with package hashes and trusted-publishing
+  provenance. Available at: <https://pypi.org/project/hatchling/> (Accessed: 14
+  July 2026).
 - Hatch contributors (n.d.) *Hatchling history*. Available at:
-  <https://hatch.pypa.io/latest/history/hatchling/> (Accessed: 12 July 2026).
+  <https://hatch.pypa.io/latest/history/hatchling/> (Accessed: 14 July 2026).
 - Hatch contributors (n.d.) *Official GitHub repository*. Available at:
-  <https://github.com/pypa/hatch> (Accessed: 12 July 2026).
-- SHAR repository (2026) `src/mcp/pyproject.toml`.
+  <https://github.com/pypa/hatch> (Accessed: 14 July 2026).
+- SHAR repository (2026) `src/mcp/pyproject.toml`, pinning
+  `hatchling==1.31.0`.

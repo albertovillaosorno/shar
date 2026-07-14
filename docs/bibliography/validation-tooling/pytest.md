@@ -7,11 +7,13 @@ code, generated reports, or test inputs.
 ## Review Status And Scope
 
 - Review status: Evidence recorded.
-- Evidence status: Verified — Repository use and authoritative upstream sources
-  verified.
+- Evidence status: Partially verified — The canonical pytest 9.1.1 pin, PyPI's
+  9.1.1 latest-release designation, release date, Python compatibility metadata,
+  repository use, and upstream license were verified. The exact installed wheel,
+  transitive graph, and loaded plugin set remain environment-specific.
 - Counsel review: Not performed.
 - Jurisdictional scope: Not determined.
-- As-of date: 2026-07-12.
+- As-of date: 2026-07-14.
 - Distribution posture: Development and validation dependency.
 - Subject class: Open-source Python test framework and plugin host.
 
@@ -27,10 +29,10 @@ pytest process.
 
 ## Repository Use And Scope
 
-The canonical Python configuration declares pytest as a development dependency
-and defines strict collection, warning, marker, cache, coverage, and failure
-behavior. SHAR test modules use pytest fixtures, plain assertions, exception
-matching, output capture, and deterministic loopback fixtures.
+The canonical Python configuration pins pytest 9.1.1 as a development
+dependency and defines strict collection, warning, marker, cache, coverage, and
+failure behavior. SHAR test modules use pytest fixtures, plain assertions,
+exception matching, output capture, and deterministic loopback fixtures.
 
 pytest is not a runtime dependency of the Rust tools, Unreal product, or the
 installed MCP client unless a package expressly includes test tooling. Running
@@ -39,16 +41,17 @@ project.
 
 ## Provenance And Version History
 
-pytest runs use the release resolved as compatible with the selected Python
-interpreter, plugin set, repository policies, and reproducibility requirements.
+PyPI identifies pytest 9.1.1 as the latest release, published 19 June 2026,
+and declares support for Python 3.10 or newer, including Python 3.14. The
+canonical dependency pin therefore matched the reviewed latest release on 14
+July 2026.
+
 The exact version for each run is established by the canonical dependency
 manifest, installed package metadata, lock or environment evidence, and captured
-command output.
-
-An installed version may lag upstream because of interpreter compatibility,
-plugin compatibility, a deliberate stability hold, unavailable packaging,
-delayed review, or human oversight. This record therefore does not represent a
-version number as permanently current.
+command output. A later installed version may lag upstream because of
+interpreter or plugin compatibility, a deliberate stability hold, unavailable
+packaging, delayed review, or human oversight. This record does not make 9.1.1
+a permanent latest-version label.
 
 ## Authorship, Ownership, And Attribution
 
@@ -92,11 +95,14 @@ compatibility must be verified against the actual pytest and Python releases.
 
 ## Source References
 
+- Python Package Index (2026) *pytest 9.1.1*. Identified as the latest release,
+  published 19 June 2026, requiring Python 3.10 or newer. Available at:
+  <https://pypi.org/project/pytest/> (Accessed: 14 July 2026).
 - pytest-dev contributors (n.d.) *pytest documentation*. Available at:
-  <https://docs.pytest.org/en/stable/> (Accessed: 12 July 2026).
+  <https://docs.pytest.org/en/stable/> (Accessed: 14 July 2026).
 - pytest-dev contributors (n.d.) *License*. Available at:
-  <https://docs.pytest.org/en/stable/license.html> (Accessed: 12 July 2026).
+  <https://docs.pytest.org/en/stable/license.html> (Accessed: 14 July 2026).
 - pytest-dev contributors (n.d.) *Official GitHub repository*. Available at:
-  <https://github.com/pytest-dev/pytest> (Accessed: 12 July 2026).
-- SHAR repository and canonical Python authority (2026), pytest dependency,
-  configuration, and tests under `src/mcp/tests/`.
+  <https://github.com/pytest-dev/pytest> (Accessed: 14 July 2026).
+- SHAR canonical Python authority (2026), pinning `pytest==9.1.1`, plus
+  repository configuration and tests under `src/mcp/tests/`.

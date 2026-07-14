@@ -7,11 +7,14 @@ or generated report content.
 ## Review Status And Scope
 
 - Review status: Evidence recorded.
-- Evidence status: Verified — Repository configuration and authoritative
-  upstream sources verified.
+- Evidence status: Partially verified — Repository coverage configuration,
+  PyPI's Coverage.py 7.15.1 latest-release designation, release date, Python
+  compatibility metadata, license, and NOTICE were verified. The canonical
+  dependency declaration does not directly pin Coverage.py, so the exact
+  installed transitive release remains environment-specific.
 - Counsel review: Not performed.
 - Jurisdictional scope: Not determined.
-- As-of date: 2026-07-12.
+- As-of date: 2026-07-14.
 - Distribution posture: Development and validation dependency.
 - Subject class: Open-source Python coverage-measurement and reporting tool.
 
@@ -29,7 +32,8 @@ reports are outputs, not upstream Coverage.py source code.
 The canonical Python configuration enables branch coverage, identifies measured
 source roots, excludes test and generated boundaries where specified, stores
 coverage state under ignored cache directories, and generates terminal, XML, and
-HTML reports through pytest-cov.
+HTML reports through pytest-cov. It pins pytest-cov but does not directly pin
+Coverage.py, so environment evidence must identify the resolved engine version.
 
 Coverage.py observes executed Python code. It does not establish semantic
 correctness, absence of untested states, security, legal compliance, or adequacy
@@ -37,14 +41,16 @@ of assertions.
 
 ## Provenance And Version History
 
-Coverage runs use the release resolved as compatible with the selected Python
-interpreter and pytest-cov plugin. The actual version, configuration, data-file
-schema, and report behavior must be preserved with the validation evidence for
-each run.
+PyPI identifies Coverage.py 7.15.1 as the latest release, published 12 July
+2026, and declares support for Python 3.10 or newer, including Python 3.14. That
+is upstream currentness evidence, not proof that a validation run loaded 7.15.1.
 
-An installed version may lag because of Python or plugin compatibility, a
-stability hold, delayed review, packaging availability, or human oversight.
-Bibliography prose does not override the actual environment evidence.
+Because the canonical dependency declaration does not directly pin Coverage.py,
+the actual resolved version, package hashes, configuration, data-file schema,
+and report behavior must be preserved with each run. An installed version may
+lag because of Python or plugin compatibility, a stability hold, delayed review,
+packaging availability, or human oversight. Bibliography prose does not override
+the actual environment evidence.
 
 ## Authorship, Ownership, And Attribution
 
@@ -86,15 +92,18 @@ views must be reviewed before redistribution.
 
 ## Source References
 
+- Python Package Index (2026) *Coverage.py 7.15.1*. Identified as the latest
+  release, published 12 July 2026, requiring Python 3.10 or newer. Available at:
+  <https://pypi.org/project/coverage/> (Accessed: 14 July 2026).
 - Coverage.py contributors (n.d.) *Coverage.py documentation*. Available at:
-  <https://coverage.readthedocs.io/en/latest/> (Accessed: 12 July 2026).
+  <https://coverage.readthedocs.io/en/latest/> (Accessed: 14 July 2026).
 - Coverage.py contributors (n.d.) *Official GitHub repository*. Available at:
-  <https://github.com/coveragepy/coveragepy> (Accessed: 12 July 2026).
+  <https://github.com/coveragepy/coveragepy> (Accessed: 14 July 2026).
 - Coverage.py contributors (n.d.) *Apache License 2.0*. Available at:
   <https://raw.githubusercontent.com/coveragepy/coveragepy/main/LICENSE.txt>
-  (Accessed: 12 July 2026).
+  (Accessed: 14 July 2026).
 - Coverage.py contributors (n.d.) *NOTICE*. Available at:
   <https://raw.githubusercontent.com/coveragepy/coveragepy/main/NOTICE.txt>
-  (Accessed: 12 July 2026).
+  (Accessed: 14 July 2026).
 - SHAR canonical Python authority (2026), coverage run, report, XML, and HTML
-  configuration.
+  configuration; Coverage.py is not directly pinned there.
