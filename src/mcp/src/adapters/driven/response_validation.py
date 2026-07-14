@@ -195,6 +195,7 @@ def parse_tool_names(result: JsonObject) -> tuple[str, ...]:
             not isinstance(name, str)
             or not name
             or name != name.strip()
+            or not name.isprintable()
             or any(character.isspace() for character in name)
         ):
             fail_protocol(f"tools/list.tools[{index}].name is invalid")

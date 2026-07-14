@@ -96,6 +96,8 @@ def _validated_identity(value: str, *, context: str) -> str:
     normalized = value.strip()
     if not normalized:
         fail_protocol(f"{context} must not be empty")
+    if not normalized.isprintable():
+        fail_protocol(f"{context} must contain printable characters only")
     if any(character.isspace() for character in normalized):
         fail_protocol(f"{context} must not contain whitespace")
     if normalized.startswith(".") or normalized.endswith("."):

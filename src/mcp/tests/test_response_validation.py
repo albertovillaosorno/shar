@@ -137,6 +137,16 @@ def test_tool_names_reject_whitespace_identities() -> None:
             _ = parse_tool_names({"tools": [{"name": name}]})
 
 
+def test_tool_names_reject_control_characters() -> None:
+    """Discovery names cannot contain hidden terminal or routing controls."""
+    for name in ("list\x00toolsets", "list\x07toolsets"):
+        with pytest.raises(
+            ProtocolError,
+            match=r"tools/list\.tools\[0\]\.name",
+        ):
+            _ = parse_tool_names({"tools": [{"name": name}]})
+
+
 def test_tool_names_reject_duplicate_identities() -> None:
     """Top-level capability discovery cannot contain duplicate names."""
     with pytest.raises(ProtocolError, match="duplicate tool identity"):

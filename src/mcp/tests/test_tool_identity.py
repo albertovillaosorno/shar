@@ -73,6 +73,13 @@ def test_tool_identity_trims_boundary_whitespace() -> None:
     )
 
 
+def test_tool_identity_rejects_control_characters() -> None:
+    """Native identity keys cannot contain hidden non-printable characters."""
+    for name in ("Get\x00OpenAssets", "Get\x07OpenAssets"):
+        with pytest.raises(ProtocolError, match="printable"):
+            _ = canonical_tool_identity(_TOOLSET, name)
+
+
 def test_tool_identity_rejects_mismatched_or_malformed_names() -> None:
     with pytest.raises(ProtocolError, match="does not belong"):
         _ = native_tool_leaf(
