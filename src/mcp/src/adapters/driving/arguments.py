@@ -52,6 +52,7 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 from typing import NamedTuple, Never, cast
 
@@ -281,8 +282,8 @@ def _parse_timeout(value: str) -> float:
         timeout = float(value)
     except ValueError as error:
         _fail_usage("--timeout must be a number", cause=error)
-    if timeout <= 0:
-        _fail_usage("--timeout must be positive")
+    if not math.isfinite(timeout) or timeout <= 0:
+        _fail_usage("--timeout must be finite and positive")
     return timeout
 
 

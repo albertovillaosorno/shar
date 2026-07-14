@@ -44,6 +44,8 @@
 
 from __future__ import annotations
 
+import math
+
 from mcp.src.domain.errors import fail_configuration
 
 
@@ -57,6 +59,6 @@ def resolve_timeout_seconds(
         The override when present, otherwise the configured default.
     """
     resolved = default_seconds if override_seconds is None else override_seconds
-    if resolved <= 0:
-        fail_configuration("exchange timeout must be positive")
+    if not math.isfinite(resolved) or resolved <= 0:
+        fail_configuration("exchange timeout must be finite and positive")
     return resolved

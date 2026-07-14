@@ -71,6 +71,18 @@ def test_unknown_command_fails_before_opening_a_session(
     assert not captured.out
 
 
+def test_cli_rejects_non_finite_timeout_before_session(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    for value in ("nan", "inf", "-inf"):
+        exit_code = main(("--timeout", value, "doctor"))
+        captured = capsys.readouterr()
+
+        assert exit_code == 2
+        assert "--timeout must be finite and positive" in captured.err
+        assert not captured.out
+
+
 def test_cli_rejects_invalid_operands_before_session(
     capsys: pytest.CaptureFixture[str],
 ) -> None:

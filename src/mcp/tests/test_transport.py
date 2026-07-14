@@ -49,12 +49,26 @@ from mcp.src.adapters.driven.streamable_http import (
 )
 from mcp.src.domain.endpoint import McpEndpoint
 from mcp.src.domain.errors import (
+    ConfigurationError,
     ProtocolError,
     RequestTimeoutError,
     TransportError,
 )
 
 from tests.fake_unreal_server import FakeUnrealServer
+
+
+def test_transport_rejects_non_finite_timeout_before_connection() -> None:
+    """Socket timeouts must be finite positive deadlines."""
+    for value in (float("nan"), float("inf"), float("-inf")):
+        with pytest.raises(
+            ConfigurationError,
+            match="exchange timeout must be finite and positive",
+        ):
+            _ = StreamableHttpTransport(
+                McpEndpoint.default(),
+                timeout_seconds=value,
+            )
 
 
 def test_transport_completes_native_lifecycle_and_final_sse_event() -> None:
