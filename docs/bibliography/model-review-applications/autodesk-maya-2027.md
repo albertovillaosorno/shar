@@ -7,10 +7,11 @@ author, sponsor, bundled dependency, validation authority, or licensor of SHAR.
 ## Review Status And Scope
 
 - Review status: Evidence recorded.
-- Evidence status: Partially verified — Official Maya 2027 help, the current
+- Evidence status: Partially verified — Installed Maya and Mayapy
+  27.1.0.4279 executable identities, official Maya 2027 help, the current
   Autodesk General Terms, and the repository experimental-script boundary were
-  verified. No installed Maya build, subscription identity, settings profile,
-  or importer acceptance result is established.
+  verified. Subscription identity, settings profile, plug-in state, and importer
+  acceptance remain unverified.
 - Counsel review: Not performed.
 - As-of date: 2026-07-14.
 - Subject class: Proprietary 3D authoring and experimental inspection
@@ -24,9 +25,11 @@ FBX model, material, skeleton, and animation inspection.
 ## Repository Use And Scope
 
 The repository contains an optional experimental Maya import-script generator.
-That script is not a production conversion, validation, repair, or acceptance
-path. SHAR's independently authored binary FBX writer and repository-owned tests
-remain authoritative.
+The reviewed host has Maya 2027 executables with product version 27.1.0.4279
+available, but installation alone does not prove that the helper was run or that
+an FBX import is correct. The script is not a production conversion, validation,
+repair, or acceptance path. SHAR's independently authored binary FBX writer and
+repository-owned tests remain authoritative.
 
 No Maya executable, SDK, proprietary plug-in, sample, documentation corpus, or
 generated inspection artifact containing proprietary game material is
@@ -34,12 +37,15 @@ distributed.
 
 ## Provenance And Version History
 
+The installed `maya.exe` and `mayapy.exe` file metadata identify Autodesk Maya
+product version 27.1.0.4279. That exact value is dated installation evidence, not
+a minimum requirement or permanent compatibility range.
+
 Autodesk's current product help identifies Maya 2027, its release notes, and its
-technical documentation. Autodesk subscription terms, special terms, offering
-identification, API terms, plug-in conditions, and documentation notices may
-differ by date, territory, account, and component. No exact installed build,
-subscription identity, settings profile, or current importer result is
-established by this record.
+technical documentation. Subscription terms, special terms, offering identity,
+API terms, plug-in conditions, and documentation notices may differ by date,
+territory, account, and component. Settings, plug-ins, subscription identity,
+and current importer behavior require separate evidence.
 
 ## Authorship, Ownership, And Attribution
 
@@ -68,10 +74,12 @@ local inspection does not make an underlying proprietary asset redistributable.
 
 ## Compliance Posture
 
-Do not treat the presence of an import script as proof of a Maya installation,
-successful import, compatibility, validation, or acceptance. Before distributing
-any Autodesk component or excerpt, verify the exact offering, terms, notice,
-attribution, redistribution permission, and third-party component inventory.
+Treat Maya 27.1.0.4279 as observed installation evidence only. Do not treat the
+installation or import script as proof of successful import, compatibility,
+validation, or acceptance, and do not convert the observed version into an
+unbounded `>=` requirement. Before distributing any Autodesk component or
+excerpt, verify the exact offering, terms, notice, attribution, redistribution
+permission, and third-party component inventory.
 
 ## Source References
 
@@ -79,6 +87,8 @@ attribution, redistribution permission, and third-party component inventory.
   <https://help.autodesk.com/view/MAYAUL/2027/ENU/> (Accessed: 13 July 2026).
 - Autodesk (2026) *Terms of Use: General Terms*, updated 30 March 2026.
   Available at: <https://www.autodesk.com/company/terms-of-use/en/general-terms>
-  (Accessed: 13 July 2026).
-- SHAR repository (2026) canonical FBX boundary, binary writer tests, and
-  experimental Maya import-helper source.
+  (Accessed: 14 July 2026).
+- SHAR repository and operator environment (2026), canonical FBX boundary,
+  binary writer tests, experimental Maya import-helper source, and installed
+  `maya.exe` and `mayapy.exe` file metadata identifying Autodesk Maya product
+  version 27.1.0.4279.

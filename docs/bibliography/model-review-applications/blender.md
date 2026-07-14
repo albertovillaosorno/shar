@@ -7,10 +7,10 @@ bundled dependency, a validation authority, or an endorser of SHAR.
 ## Review Status And Scope
 
 - Review status: Evidence recorded.
-- Evidence status: Partially verified — The official source mirror, license
-  boundary, and repository experimental-script boundary were verified. No
-  current installed Blender build, add-on set, settings profile, or importer
-  acceptance result is established.
+- Evidence status: Partially verified — The installed Blender 5.1.2 build,
+  Windows release identity, build date, source commit, official source mirror,
+  license boundary, and repository experimental-script boundary were verified.
+  Add-on set, settings profile, and importer acceptance remain unverified.
 - Counsel review: Not performed.
 - As-of date: 2026-07-14.
 - Subject class: Open-source 3D authoring and experimental inspection
@@ -24,18 +24,25 @@ FBX model, material, skeleton, and animation inspection.
 ## Repository Use And Scope
 
 The repository contains an optional experimental Blender inspection-script
-generator. That script is not a production conversion, validation, repair, or
-acceptance path. SHAR's independently authored binary FBX writer and
-repository-owned tests remain authoritative. Blender executables, bundled
-libraries, add-ons, and generated inspection artifacts containing proprietary
-game material are not distributed by SHAR.
+generator. The reviewed host has Blender 5.1.2 available, but installation alone
+does not prove that the helper was run or that an FBX import is correct. The
+script is not a production conversion, validation, repair, or acceptance path.
+SHAR's independently authored binary FBX writer and repository-owned tests remain
+authoritative.
+
+Blender executables, bundled libraries, add-ons, and generated inspection
+artifacts containing proprietary game material are not distributed by SHAR.
 
 ## Provenance And Version History
 
-No exact installed Blender version, build, add-on set, settings profile, or
-current importer result is established by this record. Any version, add-on,
-Python API, package, or bundled component must be identified separately before
-its behavior or terms are relied upon.
+The installed executable reports Blender 5.1.2 for Windows, built 19 May 2026
+from source commit `ec6e62d40fa9` on the `blender-v5.1-release` branch. Those
+values are dated environment evidence, not a minimum requirement or permanent
+compatibility range.
+
+Any later Blender version, add-on, Python API, settings profile, package, bundled
+component, or importer result must be identified separately before its behavior
+or terms are relied upon.
 
 ## Authorship, Ownership, And Attribution
 
@@ -63,10 +70,12 @@ governed by the rights in their underlying content.
 
 ## Compliance Posture
 
-Do not treat the presence of an inspection script as proof of a Blender
-installation, successful import, compatibility, validation, or acceptance.
-Distribution of Blender, an add-on, linked library, or copied documentation
-requires a component-level GPL, notice, and source-availability review.
+Treat Blender 5.1.2 as observed installation evidence only. Do not treat the
+installation or inspection script as proof of successful import, compatibility,
+validation, or acceptance, and do not convert the observed version into an
+unbounded `>=` requirement. Distribution of Blender, an add-on, linked library,
+or copied documentation requires a component-level GPL, notice, and source-
+availability review.
 
 ## Source References
 
@@ -77,7 +86,9 @@ requires a component-level GPL, notice, and source-availability review.
 - Blender Foundation (n.d.) *Official Blender GitHub mirror*. Available at:
   <https://github.com/blender/blender> (Accessed: 13 July 2026).
 - Blender Foundation (n.d.) *COPYING*. Available at:
-  <https://github.com/blender/blender/blob/main/COPYING> (Accessed: 13 July
+  <https://github.com/blender/blender/blob/main/COPYING> (Accessed: 14 July
   2026).
-- SHAR repository (2026) canonical FBX boundary, binary writer tests, and
-  experimental Blender inspection-helper source.
+- SHAR repository and operator environment (2026), canonical FBX boundary,
+  binary writer tests, experimental Blender inspection-helper source, and
+  Blender 5.1.2 Windows build output identifying build date 19 May 2026 and
+  source commit `ec6e62d40fa9`.
