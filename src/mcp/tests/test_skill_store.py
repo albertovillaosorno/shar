@@ -214,6 +214,58 @@ def test_filesystem_store_migrates_manual_fields_by_native_identity(
     )
 
 
+def test_filesystem_store_rejects_non_markdown_capability_path(
+    tmp_path: Path,
+) -> None:
+    """Generated capability documents must remain Markdown files."""
+    output_root = tmp_path / "skills" / "unreal"
+    documents = MarkdownSkillRenderer(TEST_UNREAL_MCP_VERSION).render(
+        complete_catalog()
+    )
+    capability = next(
+        document
+        for document in documents
+        if document.relative_path.startswith("capabilities/")
+    )
+    invalid_documents = tuple(
+        document._replace(relative_path="capabilities/generated/tool.txt")
+        if document == capability
+        else document
+        for document in documents
+    )
+
+    with pytest.raises(ProtocolError, match="must be Markdown"):
+        FilesystemSkillStore(output_root).replace(invalid_documents)
+
+    assert not output_root.exists()
+
+
+def test_filesystem_store_rejects_nested_index_before_mutation(
+    tmp_path: Path,
+) -> None:
+    """Only the central generated index may use the reserved filename."""
+    output_root = tmp_path / "skills" / "unreal"
+    documents = MarkdownSkillRenderer(TEST_UNREAL_MCP_VERSION).render(
+        complete_catalog()
+    )
+    capability = next(
+        document
+        for document in documents
+        if document.relative_path.startswith("capabilities/")
+    )
+    invalid_documents = tuple(
+        document._replace(relative_path="capabilities/generated/index.md")
+        if document == capability
+        else document
+        for document in documents
+    )
+
+    with pytest.raises(ProtocolError, match="reserved central index"):
+        FilesystemSkillStore(output_root).replace(invalid_documents)
+
+    assert not output_root.exists()
+
+
 def test_filesystem_store_rejects_malformed_manual_fields_before_mutation(
     tmp_path: Path,
 ) -> None:

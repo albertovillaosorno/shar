@@ -232,12 +232,17 @@ def _checked_targets(documents: tuple[SkillDocument, ...]) -> dict[str, str]:
             fail_protocol(
                 f"unsafe generated skill path: {document.relative_path}"
             )
-        if path != _INDEX_PATH and (
-            not path.parts or path.parts[0] != _CAPABILITIES_ROOT.name
-        ):
-            fail_protocol(
-                f"generated skill path is outside owned surface: {path}"
-            )
+        if path != _INDEX_PATH:
+            if not path.parts or path.parts[0] != _CAPABILITIES_ROOT.name:
+                fail_protocol(
+                    f"generated skill path is outside owned surface: {path}"
+                )
+            if path.suffix != ".md":
+                fail_protocol(
+                    f"generated capability path must be Markdown: {path}"
+                )
+            if path.name == _INDEX_PATH.name:
+                fail_protocol(f"reserved central index filename: {path}")
         normalized = path.as_posix()
         if normalized in targets:
             fail_protocol(f"duplicate generated skill path: {normalized}")
