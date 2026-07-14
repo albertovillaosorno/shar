@@ -1,0 +1,13 @@
+[package]
+name = "schoenwald-filesystem"
+version.workspace = true
+edition = "2024"
+license = "MIT"
+description = "Hexagonal local filesystem mechanisms shared by Schoenwald crates."
+publish = false
+
+[dependencies]
+
+[lib]
+name = "schoenwald_filesystem"
+path = "src/lib.rs"
