@@ -7,11 +7,12 @@ license text, notices, provenance, or legal review.
 ## Review Status And Scope
 
 - Review status: Evidence recorded.
-- Evidence status: Verified — Repository header use and official SPDX materials
+- Evidence status: Verified — Repository header use, official SPDX materials,
+  and SPDX License List 3.28.0 latest-release identity and publication date were
   verified.
 - Counsel review: Not performed.
 - Jurisdictional scope: Not determined.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-14.
 - Distribution posture: Source-header and dependency-license identification.
 - Subject class: Open license and exception identifier standard.
 
@@ -69,12 +70,13 @@ controlling texts and distribution facts.
 
 SPDX license identifiers and expressions are governed by the SPDX specification
 and the official SPDX License List. The list is independently versioned and may
-add, deprecate, or correct identifiers over time. The research snapshot checked
-on 13 July 2026 reported SPDX License List version 3.28.0, dated 20
-February 2026.
+add, deprecate, or correct identifiers over time. The official release channel
+identifies SPDX License List 3.28.0, published 20 February 2026, as the latest
+release on 14 July 2026.
 
-That observed list version is evidence for the research date, not a permanent
-repository pin or a substitute for distribution-time verification.
+That observed list version is dated currentness evidence, not a permanent
+repository pin, a minimum requirement, or a substitute for distribution-time
+verification.
 
 ### SHAR profile
 
@@ -105,10 +107,14 @@ report deprecated or unknown identifiers rather than guessing replacements.
 
 ## Source References
 
+- SPDX Project (2026) *Version 3.28.0 of the SPDX License List*. Identified as
+  the latest release, published 20 February 2026. Available at:
+  <https://github.com/spdx/license-list-data/releases/tag/v3.28.0> (Accessed: 14
+  July 2026).
 - SPDX Project (n.d.) *SPDX specifications*. Available at:
-  <https://spdx.dev/specifications/> (Accessed: 12 July 2026).
+  <https://spdx.dev/specifications/> (Accessed: 14 July 2026).
 - SPDX Project (n.d.) *SPDX License List*. Available at:
-  <https://spdx.org/licenses/> (Accessed: 12 July 2026).
+  <https://spdx.org/licenses/> (Accessed: 14 July 2026).
 - SPDX Project (n.d.) *Official GitHub organization*. Available at:
-  <https://github.com/spdx> (Accessed: 12 July 2026).
+  <https://github.com/spdx> (Accessed: 14 July 2026).
 - SHAR repository (2026), source headers and dependency-license records.
