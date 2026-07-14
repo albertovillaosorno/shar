@@ -185,7 +185,12 @@ def parse_tool_names(result: JsonObject) -> tuple[str, ...]:
             context=f"tools/list.tools[{index}]",
         )
         name = tool.get("name")
-        if not isinstance(name, str) or not name:
+        if (
+            not isinstance(name, str)
+            or not name
+            or name != name.strip()
+            or any(character.isspace() for character in name)
+        ):
             fail_protocol(f"tools/list.tools[{index}].name is invalid")
         if name in seen:
             fail_protocol(f"duplicate tool identity: {name}")

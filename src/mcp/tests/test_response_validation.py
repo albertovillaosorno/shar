@@ -127,6 +127,16 @@ def test_initialize_requires_tools_capability() -> None:
         )
 
 
+def test_tool_names_reject_whitespace_identities() -> None:
+    """Discovery names cannot hide padding or embedded whitespace."""
+    for name in (" list_toolsets", "list_toolsets ", "list toolsets"):
+        with pytest.raises(
+            ProtocolError,
+            match=r"tools/list\.tools\[0\]\.name",
+        ):
+            _ = parse_tool_names({"tools": [{"name": name}]})
+
+
 def test_tool_names_reject_duplicate_identities() -> None:
     """Top-level capability discovery cannot contain duplicate names."""
     with pytest.raises(ProtocolError, match="duplicate tool identity"):
