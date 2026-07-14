@@ -8,10 +8,11 @@ or generated report content.
 
 - Review status: Evidence recorded.
 - Evidence status: Partially verified — Repository coverage configuration,
+  installed Coverage.py 7.14.0 metadata, pytest-cov's `>=7.10.6` requirement,
   PyPI's Coverage.py 7.15.1 latest-release designation, release date, Python
-  compatibility metadata, license, and NOTICE were verified. The canonical
-  dependency declaration does not directly pin Coverage.py, so the exact
-  installed transitive release remains environment-specific.
+  compatibility metadata, license, and NOTICE were verified. Coverage.py is not
+  directly pinned, and no declared compatibility hold explains the observed
+  transitive lag.
 - Counsel review: Not performed.
 - Jurisdictional scope: Not determined.
 - As-of date: 2026-07-14.
@@ -33,7 +34,9 @@ The canonical Python configuration enables branch coverage, identifies measured
 source roots, excludes test and generated boundaries where specified, stores
 coverage state under ignored cache directories, and generates terminal, XML, and
 HTML reports through pytest-cov. It pins pytest-cov but does not directly pin
-Coverage.py, so environment evidence must identify the resolved engine version.
+Coverage.py. The reviewed shared runtime resolves Coverage.py 7.14.0, so run
+evidence must retain that actual transitive identity rather than infer it from
+the pytest-cov pin.
 
 Coverage.py observes executed Python code. It does not establish semantic
 correctness, absence of untested states, security, legal compliance, or adequacy
@@ -42,15 +45,18 @@ of assertions.
 ## Provenance And Version History
 
 PyPI identifies Coverage.py 7.15.1 as the latest release, published 12 July
-2026, and declares support for Python 3.10 or newer, including Python 3.14. That
-is upstream currentness evidence, not proof that a validation run loaded 7.15.1.
+2026, and declares support for Python 3.10 or newer, including Python 3.14. The
+reviewed shared runtime instead resolves Coverage.py 7.14.0. pytest-cov 7.1.0
+requires `coverage[toml]>=7.10.6`, so both releases satisfy its declared lower
+bound and no package-metadata constraint explains the observed one-patch lag.
 
-Because the canonical dependency declaration does not directly pin Coverage.py,
-the actual resolved version, package hashes, configuration, data-file schema,
-and report behavior must be preserved with each run. An installed version may
-lag because of Python or plugin compatibility, a stability hold, delayed review,
-packaging availability, or human oversight. Bibliography prose does not override
-the actual environment evidence.
+These are dated environment and upstream-currentness observations, not a
+permanent version requirement. Because the canonical dependency declaration does
+not directly pin Coverage.py, the actual resolved version, package hashes,
+configuration, data-file schema, and report behavior must be preserved with each
+run. A transitive release may lag because of a resolver snapshot, stability hold,
+delayed refresh, packaging availability, or human oversight. Bibliography prose
+does not override the actual environment evidence.
 
 ## Authorship, Ownership, And Attribution
 
@@ -82,6 +88,8 @@ views must be reviewed before redistribution.
 
 - Keep coverage data and reports in ignored cache directories by default.
 - Record exact tool, Python, plugin, and configuration identities per run.
+- Refresh the transitive Coverage.py resolution or document a narrow stability
+  hold before representing the shared runtime as current.
 - Preserve Apache-2.0 and NOTICE obligations when redistributing Coverage.py.
 - Review generated reports for confidential or third-party material before
   publication.
@@ -105,5 +113,7 @@ views must be reviewed before redistribution.
 - Coverage.py contributors (n.d.) *NOTICE*. Available at:
   <https://raw.githubusercontent.com/coveragepy/coveragepy/main/NOTICE.txt>
   (Accessed: 14 July 2026).
-- SHAR canonical Python authority (2026), coverage run, report, XML, and HTML
-  configuration; Coverage.py is not directly pinned there.
+- SHAR canonical Python authority and shared runtime (2026), coverage run,
+  report, XML, and HTML configuration; installed Coverage.py 7.14.0;
+  pytest-cov 7.1.0 metadata requiring `coverage[toml]>=7.10.6`; Coverage.py is
+  not directly pinned.
