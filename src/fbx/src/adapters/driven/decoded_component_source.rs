@@ -337,7 +337,7 @@ fn resolve_material_from_source(
         if !external_source.is_file() {
             return Err(
                 DecodedComponentError::MissingTexture {
-                    shader: material_name.clone(),
+                    shader: material_name,
                     texture: texture_reference,
                     searched: external_source
                         .display()
@@ -349,7 +349,7 @@ fn resolve_material_from_source(
     } else {
         return Err(
             DecodedComponentError::MissingTexture {
-                shader: material_name.clone(),
+                shader: material_name,
                 texture: texture_reference,
                 searched: local_source
                     .display()
@@ -452,7 +452,9 @@ fn texture_stem(reference: &str) -> Result<&str, DecodedComponentError> {
 /// Reconstruct the portable member-file identity for a fixed-width shader.
 fn shader_member_identity(value: &str) -> String {
     let unpadded = value.trim_end_matches('\u{0}');
-    let padding_length = value.len() - unpadded.len();
+    let padding_length = value
+        .len()
+        .saturating_sub(unpadded.len());
     let mut identity = String::with_capacity(value.len());
     identity.push_str(unpadded);
     identity.push_str(&"_".repeat(padding_length));
