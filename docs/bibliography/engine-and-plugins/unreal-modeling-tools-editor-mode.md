@@ -6,12 +6,13 @@ does not make its source or tools part of the SHAR MIT-licensed code.
 ## Review Status And Scope
 
 - Review status: Evidence recorded.
-- Evidence status: Partially verified — Project enablement and official Unreal
-  Engine 5.8 Modeling Mode documentation verified; exact installed module
-  revision, experimental status, dependencies, and notices remain
-  installation-specific.
+- Evidence status: Partially verified — Project enablement, installed plugin
+  descriptor version 0.1, beta status, editor module identity, dependent modeling
+  toolsets, selected Unreal Engine 5.8.0 build, and official Modeling Mode
+  documentation were verified. Module source revision, bundled notices, and
+  runtime behavior remain installation-specific.
 - Counsel review: Not performed.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-14.
 - Subject class: Proprietary Unreal Engine editor plugin.
 
 ## Covered Material
@@ -29,9 +30,16 @@ setting that enables it.
 
 ## Provenance And Version History
 
-The plugin version follows the selected Unreal Engine installation. Exact module
-contents, experimental status, third-party dependencies, and notices must be
-read from the installed Engine 5.8 distribution used for a build.
+The installed descriptor identifies `ModelingToolsEditorMode` version 0.1 as a
+beta editor plugin. It depends on `MeshModelingToolset`,
+`MeshModelingToolsetExp`, `MeshLODToolset`, `ToolPresets`, and `StylusInput` for
+Editor targets. The selected engine build is Unreal Engine 5.8.0 changelist
+55116800.
+
+Those values are dated installation evidence, not minimum requirements or a
+permanent compatibility range. Exact module source revision, dependent plugin
+versions, third-party components, and notices must be read from the engine
+installation used for a build.
 
 ## Authorship, Ownership, And Attribution
 
@@ -52,8 +60,10 @@ to editor and engine components.
 
 ## Compliance Posture
 
-Treat the plugin as an external engine-owned editor capability. Do not copy its
-source or documentation into SHAR, and verify the installed version and notices
+Treat the plugin as an external engine-owned editor capability. Preserve version
+0.1 and engine 5.8.0 only as dated installation evidence; do not convert either
+into an unbounded `>=` requirement. Do not copy plugin source or documentation
+into SHAR, and verify the installed module revisions, dependencies, and notices
 before publication or distribution.
 
 ## Source References
@@ -69,7 +79,10 @@ before publication or distribution.
   an unauthenticated request may return `404 Not Found` until the GitHub account
   is linked and authorized as Epic documents. Available at:
   <https://github.com/EpicGames/UnrealEngine> (Accessed: 12 July 2026).
-- SHAR repository (2026) `src/uproject/shar.uproject`.
+- SHAR repository and selected engine installation (2026),
+  `src/uproject/shar.uproject`, Unreal Engine 5.8.0 build evidence, and installed
+  `ModelingToolsEditorMode.uplugin` version 0.1 with beta status, editor module,
+  and dependent toolsets.
 
 [epic-modeling]:
   https://dev.epicgames.com/documentation/en-us/unreal-engine/modeling-mode-in-unreal-engine

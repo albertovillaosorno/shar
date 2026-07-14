@@ -8,11 +8,12 @@ examples, or documentation.
 
 - Review status: Evidence recorded.
 - Evidence status: Partially verified — Project descriptor, selected engine
-  association, current Epic EULA, its generative-AI input restriction, public
-  source-access rules, and Unreal Engine 5.8 Media Framework and Electra platform
-  boundaries verified; the exact installed build, accepted regional agreement,
-  bundled notices, target decoder availability, and any external service's
-  input-retention behavior remain installation- and service-specific.
+  association, installed Unreal Engine 5.8.0 promoted build changelist 55116800,
+  release branch identity, current Epic EULA, its generative-AI input restriction,
+  public source-access rules, and Unreal Engine 5.8 Media Framework and Electra
+  boundaries were verified. Accepted regional agreement, bundled notices,
+  decoder availability, and external-service retention remain environment- or
+  service-specific.
 - Counsel review: Not performed.
 - As-of date: 2026-07-14.
 - Subject class: Proprietary real-time engine, editor, toolchain, and SDK.
@@ -34,12 +35,16 @@ content, or installed engine files.
 
 ## Provenance And Version History
 
-The current project descriptor records `EngineAssociation` 5.8. The live EULA
-was re-reviewed on 14 July 2026, but the retrieved page does not expose a
-revision date or version identifier. Exact engine build, installation channel,
-accepted agreement, acceptance date, plugin revisions, third-party components,
-and platform toolchain must therefore be captured for a reproducible build or
-distribution.
+The project descriptor records `EngineAssociation` 5.8. The selected local
+installation reports Unreal Engine 5.8.0, changelist 55116800, promoted-build
+status, and branch `++UE5+Release-5.8`. Those values are dated build evidence,
+not a minimum requirement or permanent compatibility range.
+
+The live EULA was re-reviewed on 14 July 2026, but the retrieved page does not
+expose a revision date or version identifier. A reproducible build or
+distribution must still capture the exact engine build, installation channel,
+accepted agreement and date, plugin revisions, third-party components, platform
+toolchain, and packaging command.
 
 ## Authorship, Ownership, And Attribution
 
@@ -73,12 +78,14 @@ and to the licensees permitted by Epic's agreement.
 
 ## Compliance Posture
 
-Keep engine and plugin source outside the public repository. Do not submit
-Licensed Technology to an external generative-AI service unless the exact account
-and service evidence proves that the input will not be used for training within
-the EULA's restricted scope. Before packaging, record the accepted agreement,
-exact engine build, third-party notices, required credits, compiler and SDK
-versions, distribution type, and any royalty or seat analysis.
+Keep engine and plugin source outside the public repository. Treat Unreal Engine
+5.8.0 changelist 55116800 as observed build evidence only; do not convert it into
+an unbounded `>=` requirement. Do not submit Licensed Technology to an external
+generative-AI service unless exact account and service evidence proves that the
+input will not be used for training within the EULA's restricted scope. Before
+packaging, record the accepted agreement, exact engine build, third-party
+notices, required credits, compiler and SDK versions, distribution type, and any
+royalty or seat analysis.
 
 ## Source References
 
@@ -103,4 +110,7 @@ versions, distribution type, and any royalty or seat analysis.
   an unauthenticated request may return `404 Not Found` until the GitHub account
   is linked and authorized as Epic documents. Available at:
   <https://github.com/EpicGames/UnrealEngine> (Accessed: 14 July 2026).
-- SHAR repository (2026) `src/uproject/shar.uproject` and `README.md`.
+- SHAR repository and selected engine installation (2026),
+  `src/uproject/shar.uproject`, `README.md`, and Unreal Engine `Build.version`
+  identifying version 5.8.0, changelist 55116800, promoted-build status, and
+  branch `++UE5+Release-5.8`.

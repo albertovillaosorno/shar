@@ -6,36 +6,59 @@ without copying plugin source or treating them as MIT-licensed SHAR components.
 ## Review Status And Scope
 
 - Review status: Evidence recorded.
-- Evidence status: Partially verified — Enabled plugin identities, repository
-  client architecture, and Epic licensing boundary verified; exact installed
-  plugin revisions, protocol surface, dependencies, and notices remain
-  installation-specific and partly access-controlled.
+- Evidence status: Partially verified — Project plugin references, installed
+  descriptor versions and roles, experimental and beta flags, editor-only and
+  no-redistribution boundaries, selected Unreal Engine 5.8.0 build, repository
+  client architecture, and Epic licensing boundary were verified. The resolved
+  runtime load state, live tool catalog, module revisions, and notices remain
+  installation- and execution-specific.
 - Counsel review: Not performed.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-14.
 - Subject class: Proprietary Unreal Engine editor and protocol-integration
   plugins.
 
 ## Covered Material
 
-The current project descriptor enables this related engine-plugin family:
+The current project descriptor and selected engine installation identify this
+related family:
 
-| Plugin identity        | Repository role                                             |
-| :--------------------- | :---------------------------------------------------------- |
-| `ModelContextProtocol` | Native Unreal MCP server and protocol integration           |
-| `MCPClientToolset`     | Epic-provided MCP toolset exposed through the native server |
+| Plugin identity | Project reference | Installed role and status |
+| :-------------- | :---------------- | :------------------------ |
+| `ModelContextProtocol` | Enabled | Version 1.0 experimental native Unreal MCP server; `NoRedist` |
+| `AllToolsets` | Enabled | Version 1.0 experimental editor-only aggregator for all toolset plugins; `NoRedist` |
+| `MCPClientToolset` | Explicitly disabled | Version 1.0 beta and experimental editor-only adapter for connecting toolset-registry customers to local or private MCP servers |
+
+`AllToolsets` also declares `MCPClientToolset` as an enabled dependency. The
+project-level disable and aggregate dependency therefore create a resolution
+question that must be answered from the actual plugin manager or live runtime,
+not from either descriptor in isolation.
 
 ## Repository Use And Scope
 
-SHAR communicates with the unchanged native Unreal MCP server through an
-independently authored terminal client. The public repository does not contain
-or patch the Epic plugin source. Project configuration records only that the
-installed plugins are enabled.
+SHAR communicates with the native Unreal MCP server supplied by
+`ModelContextProtocol` through an independently authored terminal client. The
+project also enables `AllToolsets` to aggregate the installed native toolset
+family. The public repository does not contain or patch Epic plugin source.
+
+`MCPClientToolset` is not the native server or a server-exposed toolset. Its
+installed descriptor describes an editor adapter for connecting toolset-registry
+customers to local or private MCP servers. The project explicitly disables that
+plugin, although the enabled aggregate declares it as a dependency. This record
+does not claim the final load state without runtime evidence.
 
 ## Provenance And Version History
 
-The plugin versions follow the selected Unreal Engine 5.8 installation. Their
-exact modules, protocol support, experimental status, notices, and third-party
-dependencies must be verified from that installation before publication or
+The selected installation is Unreal Engine 5.8.0 changelist 55116800. Installed
+plugin descriptors identify `ModelContextProtocol`, `AllToolsets`, and
+`MCPClientToolset` as version 1.0. The server and aggregator are experimental and
+marked `NoRedist`; the aggregator is editor-only. The client adapter is
+editor-only, beta, experimental, and loads after engine initialization when
+resolved.
+
+Those values are dated installation evidence, not minimum requirements or a
+permanent compatibility range. Exact module revisions, resolved plugin state,
+protocol support, tool catalog, notices, and third-party dependencies must be
+verified from the selected installation and live runtime before publication or
 distribution.
 
 ## Authorship, Ownership, And Attribution
@@ -61,8 +84,13 @@ engine-editor tooling outside the intended local boundary.
 ## Compliance Posture
 
 Keep the native plugins unchanged, tied to the selected compatible engine
-installation, and outside Git. Record the observed engine and plugin identities
-for each run. Validate tool schemas, authentication, local binding, permissions,
+installation, and outside Git. Treat engine 5.8.0 and plugin version 1.0 values
+as dated evidence only, not unbounded `>=` requirements. Preserve the explicit
+project disable for `MCPClientToolset` unless a reviewed architecture decision
+changes it, and verify whether `AllToolsets` changes the resolved load state.
+
+Record observed engine, plugin, and live catalog identities for each run. Validate
+`NoRedist` boundaries, tool schemas, authentication, local binding, permissions,
 and installed notices before enabling automated control.
 
 ## Source References
@@ -79,5 +107,7 @@ and installed notices before enabling automated control.
 - Model Context Protocol contributors (n.d.) *Official GitHub repository*.
   Available at: <https://github.com/modelcontextprotocol/modelcontextprotocol>
   (Accessed: 12 July 2026).
-- SHAR repository (2026) `src/uproject/shar.uproject`, `README.md`, and
-  `docs/adr/unreal/mcp/`.
+- SHAR repository and selected engine installation (2026),
+  `src/uproject/shar.uproject`, `README.md`, `docs/adr/unreal/mcp/`, Unreal Engine
+  5.8.0 build evidence, and installed `ModelContextProtocol.uplugin`,
+  `AllToolsets.uplugin`, and `MCPClientToolset.uplugin` descriptors.
