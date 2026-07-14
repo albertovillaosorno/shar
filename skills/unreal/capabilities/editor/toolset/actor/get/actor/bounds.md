@@ -1,0 +1,164 @@
+# Get actor bounds
+
+[Return to the central Unreal MCP index](../../../../../../index.md).
+
+Generated from live MCP metadata; no engine source is copied.
+
+- Domain: World and UI
+- Operational posture: **Expected read-only**
+- Interface digest: `c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
+
+## Native identities
+
+Tool:
+
+```text
+editor_toolset.toolsets.actor.ActorTools.get_actor_bounds
+```
+
+Toolset:
+
+```text
+editor_toolset.toolsets.actor.ActorTools
+```
+
+## What this tool does
+
+Returns the bounding box of an actor.
+
+## When to use it
+
+Use this skill when the requested outcome matches its purpose.
+Choose it only when it is the most specific available action.
+Do not substitute it for a narrower read or mutation capability.
+
+## Technical execution posture
+
+Use the returned structured evidence directly, but still confirm the live
+schema because names do not prove side effects.
+
+## Human-authored guidance
+
+Edit only between matching manual-field markers.
+Regeneration preserves those contents and refreshes everything else.
+A revision mismatch marks preserved guidance for human review.
+
+### SHAR-specific use cases
+
+<!-- BEGIN MANUAL FIELD: project-use-cases -->
+Use this tool to verify the world-space extent of a SHAR level actor before
+spatial searches, placement checks, or imported-world validation. It can also
+supply the exact AABB for a bounded `SceneTools.find_actors` overlap query.
+<!-- END MANUAL FIELD: project-use-cases -->
+
+### Project prerequisites
+
+<!-- BEGIN MANUAL FIELD: project-prerequisites -->
+- Discover a valid actor reference from the current editor world.
+- The actor must still belong to the loaded level when the call executes.
+- Treat `/Temp/...` references as session state and rediscover them after a map
+  reload or editor restart.
+<!-- END MANUAL FIELD: project-prerequisites -->
+
+### Validated argument example
+
+<!-- BEGIN MANUAL FIELD: validated-arguments -->
+```json
+{
+  "actor": {
+    "refPath": "/Temp/Untitled_1.Untitled_1:PersistentLevel.Brush_0"
+  }
+}
+```
+<!-- END MANUAL FIELD: validated-arguments -->
+
+### Project verification notes
+
+<!-- BEGIN MANUAL FIELD: project-verification -->
+Repeated calls returned a valid box from `-128` to `128` on all axes.
+`SceneTools.find_actors` using that box and the Brush class returned the same
+actor, and ObjectTools confirmed its class as `/Script/Engine.Brush`.
+<!-- END MANUAL FIELD: project-verification -->
+
+### Known project caveats
+
+<!-- BEGIN MANUAL FIELD: known-caveats -->
+- Bounds are world-space component bounds, not an asset-local source box.
+- A valid zero-sized box does not prove visible geometry; `WorldSettings`, which
+  had no components, returned a valid zero box.
+- Bounds can change after transform, component, construction-script, or level
+  state changes.
+<!-- END MANUAL FIELD: known-caveats -->
+
+### Manual guidance reviewed revision
+
+<!-- BEGIN MANUAL FIELD: manual-review-revision -->
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
+<!-- END MANUAL FIELD: manual-review-revision -->
+
+- Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
+- Manual guidance status: **Current**
+
+## Before invocation
+
+1. Run `shar-unreal-mcp doctor` and require `ready: true`.
+1. Select this skill from the central index, not from memory.
+1. Refresh the live schema:
+
+```text
+shar-unreal-mcp describe editor_toolset.toolsets.actor.ActorTools
+```
+
+1. Confirm every required input against the current schema.
+
+## Inputs
+
+### `actor`
+
+- Required: **yes**
+- Type: `object`
+- Purpose:
+
+Represents a reference to a UObject or UClass.
+
+## Invocation example
+
+Replace placeholders with validated project values.
+
+```text
+shar-unreal-mcp call \
+  editor_toolset.toolsets.actor.ActorTools \
+  editor_toolset.toolsets.actor.ActorTools.get_actor_bounds \
+  --arguments '
+{
+  "actor": {}
+}
+'
+```
+
+## Expected output
+
+The world space bounding box for the actor.
+
+### `returnValue`
+
+- Required: **yes**
+- Type: `object`
+- Purpose:
+
+Box
+
+## Verification
+
+- Check the returned `isError` state and structured output.
+- Compare returned identities and counts with the requested scope.
+- Treat transport success as insufficient evidence by itself.
+- Confirm the response belongs to the open editor project.
+- Reject evidence derived from stale discovery state.
+
+## Common failure modes
+
+- The skill may be stale; run `describe` and regenerate the catalog.
+- A required editor object or asset may not be loaded.
+- Placeholder values are not valid project identities.
+- Native validation may reject semantically invalid JSON values.
