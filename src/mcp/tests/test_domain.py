@@ -88,6 +88,18 @@ def test_endpoint_rejects_explicit_zero_port() -> None:
     assert endpoint.port == 8000
 
 
+def test_endpoint_rejects_noncanonical_text_and_empty_port() -> None:
+    """Endpoint parsing must not normalize malformed operator input."""
+    for value in (
+        " http://127.0.0.1:8000/mcp",
+        "http://127.0.0.1:8000/mcp\n",
+        "http://127.0.0.1:/mcp",
+        "http://[::1]:/mcp",
+    ):
+        with pytest.raises(EndpointValidationError):
+            _ = McpEndpoint.parse(value)
+
+
 def test_endpoint_rejects_dns_alias_for_loopback_boundary() -> None:
     """A mutable hostname must not stand in for a literal loopback address."""
     with pytest.raises(EndpointValidationError):

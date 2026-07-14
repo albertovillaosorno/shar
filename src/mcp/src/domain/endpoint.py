@@ -80,8 +80,12 @@ class McpEndpoint(NamedTuple):
             A validated canonical endpoint.
 
         """
+        if any(character.isspace() for character in value):
+            fail_endpoint("MCP endpoint must not contain whitespace")
         parsed = urlsplit(value)
         cls._validate_split(parsed)
+        if parsed.netloc.endswith(":"):
+            fail_endpoint("MCP endpoint contains an empty port")
         try:
             parsed_port = parsed.port
             port = _DEFAULT_PORT if parsed_port is None else parsed_port
