@@ -214,6 +214,19 @@ def test_renderer_keeps_generated_skills_technical_only() -> None:
     assert "Safety and approval" not in skill
 
 
+def test_renderer_rejects_control_characters_in_native_prose() -> None:
+    """Corrupt live descriptions must not enter generated Markdown."""
+    catalog = complete_catalog()
+    first = catalog[0]
+    tool = first.tools[0]._replace(
+        description="Reads editor state.\x00Injected terminal text."
+    )
+    catalog = (first._replace(tools=(tool,)), *catalog[1:])
+
+    with pytest.raises(ProtocolError, match="control characters"):
+        _ = MarkdownSkillRenderer(TEST_UNREAL_MCP_VERSION).render(catalog)
+
+
 def test_shared_tool_prefixes_become_taxonomy_directories() -> None:
     """Only the sibling-unique suffix remains in each skill filename."""
     definition = toolset("AutomationTestToolset.AutomationTestToolset")

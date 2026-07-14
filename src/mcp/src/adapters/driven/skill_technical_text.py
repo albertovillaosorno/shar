@@ -46,6 +46,8 @@ from __future__ import annotations
 
 import re
 
+from mcp.src.domain.errors import fail_protocol
+
 
 def _pattern(*parts: str) -> str:
     """Join reviewed regular-expression fragments.
@@ -115,8 +117,14 @@ _SENTENCE = re.compile(r"(?<=[.!?])\s+")
 
 def technical_only_text(description: str) -> str:
     """Return live documentation with general policy sentences removed."""
+    normalized = description.replace("\r\n", "\n").replace("\r", "\n")
+    if any(
+        character != "\n" and not character.isprintable()
+        for character in normalized
+    ):
+        fail_protocol("native description contains control characters")
     rendered: list[str] = []
-    for raw_line in description.splitlines():
+    for raw_line in normalized.splitlines():
         stripped = raw_line.strip()
         if not stripped or stripped.endswith(":"):
             rendered.append(raw_line)
