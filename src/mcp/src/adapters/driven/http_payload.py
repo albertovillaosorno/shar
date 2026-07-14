@@ -56,7 +56,11 @@ from typing import NoReturn, Protocol, TypeVar, cast, overload
 from mcp.src.adapters.driven.response_validation import (
     matches_integer_request_id,
 )
-from mcp.src.domain.errors import fail_configuration, fail_protocol
+from mcp.src.domain.errors import (
+    ProtocolError,
+    fail_configuration,
+    fail_protocol,
+)
 from mcp.src.domain.json_types import (
     DuplicateJsonKeyError,
     JsonObject,
@@ -121,8 +125,7 @@ def read_http_payload(
         A strict JSON object, or `None` for an empty body.
     """
     limit = validate_max_response_bytes(max_response_bytes)
-    content_type = response.getheader("Content-Type", "") or ""
-    media_type = content_type.partition(";")[0].strip().casefold()
+    content_type, media_type = _response_content_type(response)
     if media_type == _CONTENT_TYPE_EVENT_STREAM:
         if request_id is None:
             fail_protocol("notification unexpectedly returned an SSE stream")
@@ -138,6 +141,39 @@ def read_http_payload(
             f"unsupported Content-Type for HTTP response: {displayed_type}"
         )
     return _decode_json(body, context="HTTP response")
+
+
+def read_http_error_payload(
+    response: HttpPayloadResponse,
+    *,
+    max_response_bytes: int,
+) -> JsonObject | None:
+    """Decode one optional JSON object from an HTTP error response.
+
+    Unsupported media types and malformed JSON return `None` so the caller can
+    preserve the stable HTTP status fallback. Framing and byte-limit violations
+    remain protocol errors.
+
+    Returns:
+        A strict JSON error object, or `None` when no valid object is available.
+    """
+    limit = validate_max_response_bytes(max_response_bytes)
+    _, media_type = _response_content_type(response)
+    body = read_bounded_body(response, max_response_bytes=limit)
+    if not body or media_type != _CONTENT_TYPE_JSON:
+        return None
+    try:
+        return _decode_json(body, context="HTTP error response")
+    except ProtocolError:
+        return None
+
+
+def _response_content_type(
+    response: HttpPayloadResponse,
+) -> tuple[str, str]:
+    content_type = response.getheader("Content-Type", "") or ""
+    media_type = content_type.partition(";")[0].strip().casefold()
+    return content_type, media_type
 
 
 def read_bounded_body(

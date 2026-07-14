@@ -74,6 +74,7 @@ class FakeUnrealBehavior(NamedTuple):
     reject_session_delete: bool = False
     malformed_initialize_result: bool = False
     redirect_ping: bool = False
+    plain_error_ping: bool = False
 
 
 class FakeUnrealServer:
@@ -145,6 +146,17 @@ class FakeUnrealServer:
         """
         server = cls()
         server._server.behavior = FakeUnrealBehavior(redirect_ping=True)
+        return server
+
+    @classmethod
+    def with_plain_error_ping(cls) -> Self:
+        """Create a server whose ping returns a plain-text HTTP error.
+
+        Returns:
+            A stopped server configured with a non-JSON error response.
+        """
+        server = cls()
+        server._server.behavior = FakeUnrealBehavior(plain_error_ping=True)
         return server
 
     def __enter__(self) -> Self:

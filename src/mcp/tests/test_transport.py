@@ -86,6 +86,24 @@ def test_transport_rejects_redirected_rpc_response() -> None:
         transport.close(session)
 
 
+def test_transport_uses_status_fallback_for_plain_error_body() -> None:
+    """A non-JSON error body cannot mask its HTTP status."""
+    with FakeUnrealServer.with_plain_error_ping() as server:
+        transport = StreamableHttpTransport(
+            McpEndpoint.parse(server.endpoint),
+            timeout_seconds=2.0,
+        )
+        session = transport.initialize()
+
+        with pytest.raises(
+            ProtocolError,
+            match=r"^MCP server returned HTTP 500$",
+        ):
+            transport.ping(session)
+
+        transport.close(session)
+
+
 def test_transport_completes_native_lifecycle_and_final_sse_event() -> None:
     with FakeUnrealServer() as server:
         transport = StreamableHttpTransport(

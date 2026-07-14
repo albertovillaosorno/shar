@@ -51,12 +51,13 @@
 
 from __future__ import annotations
 
-from http.client import HTTPConnection, HTTPException
+from http.client import HTTPConnection, HTTPException, HTTPResponse
 from typing import TYPE_CHECKING, NamedTuple
 
 from mcp.src.adapters.driven.http_payload import (
     DEFAULT_MAX_RESPONSE_BYTES,
     read_bounded_body,
+    read_http_error_payload,
     read_http_payload,
     validate_max_response_bytes,
 )
@@ -65,7 +66,10 @@ from mcp.src.adapters.driven.http_request import (
     encode_json_request,
     validate_max_request_bytes,
 )
-from mcp.src.adapters.driven.http_status import require_http_success
+from mcp.src.adapters.driven.http_status import (
+    is_http_success,
+    require_http_success,
+)
 from mcp.src.adapters.driven.http_timeout import resolve_timeout_seconds
 from mcp.src.domain.errors import fail_timeout, fail_transport
 
@@ -153,7 +157,7 @@ class HttpExchangeClient:
                 headers=headers,
             )
             response = connection.getresponse()
-            response_payload = read_http_payload(
+            response_payload = _read_exchange_payload(
                 response,
                 request_id,
                 max_response_bytes=self._max_response_bytes,
@@ -244,6 +248,24 @@ class HttpExchangeClient:
             self._endpoint.port,
             timeout=timeout,
         )
+
+
+def _read_exchange_payload(
+    response: HTTPResponse,
+    request_id: int | None,
+    *,
+    max_response_bytes: int,
+) -> JsonObject | None:
+    if is_http_success(response.status):
+        return read_http_payload(
+            response,
+            request_id,
+            max_response_bytes=max_response_bytes,
+        )
+    return read_http_error_payload(
+        response,
+        max_response_bytes=max_response_bytes,
+    )
 
 
 def _session_headers(session: McpSession) -> dict[str, str]:

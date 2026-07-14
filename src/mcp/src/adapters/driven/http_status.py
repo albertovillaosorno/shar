@@ -55,12 +55,17 @@ _HTTP_SUCCESS_MINIMUM = 200
 _HTTP_SUCCESS_LIMIT = 300
 
 
+def is_http_success(status: int) -> bool:
+    """Return whether one HTTP status is in the successful 2xx range."""
+    return _HTTP_SUCCESS_MINIMUM <= status < _HTTP_SUCCESS_LIMIT
+
+
 def require_http_success(
     status: int,
     payload: JsonObject | None,
 ) -> None:
     """Require one successful HTTP status or raise its protocol failure."""
-    if _HTTP_SUCCESS_MINIMUM <= status < _HTTP_SUCCESS_LIMIT:
+    if is_http_success(status):
         return
     raise_http_status_error(status, payload)
 

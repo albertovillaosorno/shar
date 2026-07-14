@@ -74,6 +74,7 @@ _HTTP_ACCEPTED = 202
 _HTTP_FOUND = 302
 _HTTP_BAD_REQUEST = 400
 _HTTP_FORBIDDEN = 403
+_HTTP_INTERNAL_SERVER_ERROR = 500
 
 
 class FakeUnrealRequestHandler(BaseHTTPRequestHandler):
@@ -101,12 +102,7 @@ class FakeUnrealRequestHandler(BaseHTTPRequestHandler):
         elif method == "notifications/cancelled":
             self._write_cancelled(payload)
         elif method == "ping":
-            status = (
-                _HTTP_FOUND
-                if self._test_server().behavior.redirect_ping
-                else _HTTP_OK
-            )
-            self._write_rpc_result(payload.get("id"), {}, status=status)
+            self._write_ping(payload)
         elif method == "tools/list":
             self._write_tools_list(payload)
         elif method == "tools/call":
@@ -160,6 +156,14 @@ class FakeUnrealRequestHandler(BaseHTTPRequestHandler):
             self.headers.get("Mcp-Session-Id") == _SESSION_ID
             and self.headers.get("Mcp-Protocol-Version") == _PROTOCOL_VERSION
         )
+
+    def _write_ping(self, payload: JsonObject) -> None:
+        behavior = self._test_server().behavior
+        if behavior.plain_error_ping:
+            self._write_text(_HTTP_INTERNAL_SERVER_ERROR, "native failure")
+            return
+        status = _HTTP_FOUND if behavior.redirect_ping else _HTTP_OK
+        self._write_rpc_result(payload.get("id"), {}, status=status)
 
     def _write_cancelled(self, payload: JsonObject) -> None:
         params = require_json_object(
@@ -300,6 +304,14 @@ class FakeUnrealRequestHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         if session_id is not None:
             self.send_header("Mcp-Session-Id", session_id)
+        self.end_headers()
+        _ = self.wfile.write(body)
+
+    def _write_text(self, status: int, text: str) -> None:
+        body = text.encode()
+        self.send_response(status)
+        self.send_header("Content-Type", "text/plain")
+        self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         _ = self.wfile.write(body)
 
