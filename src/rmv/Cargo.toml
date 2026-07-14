@@ -1,0 +1,22 @@
+[package]
+name = "rmv"
+version.workspace = true
+edition = "2024"
+license = "MIT"
+description = "Audits Radical RMV/Bink movie inputs and gates HAP conversion."
+publish = false
+
+[dependencies]
+# schoenwald-cli centralizes process arguments, ordered diagnostics, newline handling, and exit-code mapping for the RMV driving adapter.
+schoenwald-cli = { path = "../cli" }
+# schoenwald-filesystem centralizes canonical identities, complete movie snapshots, output inspection, and complete TSV publication.
+schoenwald-filesystem = { path = "../filesystem" }
+
+[lib]
+name = "rmv"
+path = "src/lib.rs"
+
+[[bin]]
+name = "rmv-audit"
+path = "src/main.rs"
+
