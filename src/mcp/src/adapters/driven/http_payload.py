@@ -172,6 +172,11 @@ def _response_content_type(
     response: HttpPayloadResponse,
 ) -> tuple[str, str]:
     content_type = response.getheader("Content-Type", "") or ""
+    if content_type and not all(
+        character.isascii() and character.isprintable()
+        for character in content_type
+    ):
+        fail_protocol("HTTP response has invalid Content-Type header")
     media_type = content_type.partition(";")[0].strip().casefold()
     return content_type, media_type
 

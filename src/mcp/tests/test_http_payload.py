@@ -302,6 +302,28 @@ def test_json_payload_requires_application_json_media_type() -> None:
             )
 
 
+def test_content_type_header_rejects_non_ascii_or_controls() -> None:
+    """Malformed response headers cannot inject unsafe diagnostic text."""
+    body = b'{"jsonrpc":"2.0","id":1,"result":{}}'
+    content_types = (
+        "text/plain\ninjected",
+        "text/plain\x07",
+        "text/pläin",
+    )
+    for content_type in content_types:
+        response = MemoryResponse(
+            body,
+            headers={"Content-Type": content_type},
+        )
+
+        with pytest.raises(ProtocolError, match="invalid Content-Type header"):
+            _ = read_http_payload(
+                response,
+                1,
+                max_response_bytes=len(body),
+            )
+
+
 def test_sse_progress_is_skipped_until_matching_final_response() -> None:
     """Accept a final SSE event at EOF after progress events."""
     body = (
