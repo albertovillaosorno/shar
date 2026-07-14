@@ -150,6 +150,17 @@ def test_json_payload_rejects_non_finite_numbers() -> None:
             )
 
 
+def test_json_payload_rejects_duplicate_object_keys() -> None:
+    """Ambiguous JSON objects cannot overwrite an earlier member."""
+    body = b'{"jsonrpc":"2.0","id":1,"result":{"value":1,"value":2}}'
+    with pytest.raises(ProtocolError, match="duplicate JSON key: value"):
+        _ = read_http_payload(
+            MemoryResponse(body, headers={"Content-Type": "application/json"}),
+            1,
+            max_response_bytes=len(body),
+        )
+
+
 def test_declared_content_length_fails_before_body_read() -> None:
     """An oversized or malformed Content-Length fails immediately."""
     with pytest.raises(ProtocolError, match="exceeded 4 bytes"):

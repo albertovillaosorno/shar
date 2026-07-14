@@ -120,6 +120,15 @@ def test_json_normalizer_rejects_non_finite_numbers() -> None:
             _ = normalize_json({"value": value}, context="payload")
 
 
+def test_toolset_definition_rejects_duplicate_json_keys() -> None:
+    """Live schemas cannot silently replace an earlier object member."""
+    with pytest.raises(ProtocolError, match="duplicate JSON key: tools"):
+        _ = parse_toolset_definition(
+            "EditorToolset",
+            '{"tools":[],"tools":[]}',
+        )
+
+
 def test_toolset_catalog_preserves_multiline_descriptions() -> None:
     """Qualified headers delimit toolsets and preserve nested bullets."""
     catalog_text = """- EditorToolset.EditorToolset: Editor operations

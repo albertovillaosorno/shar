@@ -57,8 +57,10 @@ from typing import NamedTuple, cast
 
 from mcp.src.domain.errors import fail_protocol
 from mcp.src.domain.json_types import (
+    DuplicateJsonKeyError,
     JsonObject,
     JsonValue,
+    reject_duplicate_json_object,
     require_json_object,
 )
 from mcp.src.domain.tool_identity import canonical_tool_identity
@@ -171,7 +173,15 @@ def parse_toolset_definition(
 
     """
     try:
-        parsed = cast("object", json.loads(schema_text))
+        parsed = cast(
+            "object",
+            json.loads(
+                schema_text,
+                object_pairs_hook=reject_duplicate_json_object,
+            ),
+        )
+    except DuplicateJsonKeyError as error:
+        fail_protocol(str(error), cause=error)
     except json.JSONDecodeError as error:
         fail_protocol(
             f"toolset {toolset_name}: schema is not valid JSON",

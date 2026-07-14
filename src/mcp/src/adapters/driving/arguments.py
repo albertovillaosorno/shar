@@ -57,7 +57,12 @@ from typing import NamedTuple, Never, cast
 
 from mcp.src.domain.endpoint import McpEndpoint
 from mcp.src.domain.errors import UnrealMcpError
-from mcp.src.domain.json_types import JsonObject, require_json_object
+from mcp.src.domain.json_types import (
+    DuplicateJsonKeyError,
+    JsonObject,
+    reject_duplicate_json_object,
+    require_json_object,
+)
 
 _DEFAULT_TIMEOUT_SECONDS = 30.0
 _TWO_OPTION_PARTS = 2
@@ -243,7 +248,15 @@ def _parse_arguments_option(operands: tuple[str, ...]) -> JsonObject:
     if len(operands) != _TWO_OPTION_PARTS or operands[0] != "--arguments":
         _fail_usage("expected --arguments followed by one JSON object")
     try:
-        parsed = cast("object", json.loads(operands[1]))
+        parsed = cast(
+            "object",
+            json.loads(
+                operands[1],
+                object_pairs_hook=reject_duplicate_json_object,
+            ),
+        )
+    except DuplicateJsonKeyError as error:
+        _fail_usage(str(error), cause=error)
     except json.JSONDecodeError as error:
         _fail_usage("--arguments is not valid JSON", cause=error)
     if not isinstance(parsed, dict):

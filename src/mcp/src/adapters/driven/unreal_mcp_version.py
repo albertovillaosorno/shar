@@ -50,7 +50,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
 from mcp.src.domain.errors import fail_configuration
-from mcp.src.domain.json_types import require_json_object
+from mcp.src.domain.json_types import (
+    DuplicateJsonKeyError,
+    reject_duplicate_json_object,
+    require_json_object,
+)
 from mcp.src.domain.skill_revision import normalize_unreal_mcp_version
 
 if TYPE_CHECKING:
@@ -120,7 +124,15 @@ class FilesystemUnrealMcpVersionProvider:
 
 def _read_json_object(path: Path, *, context: str) -> JsonObject:
     try:
-        parsed = cast("object", json.loads(path.read_text(encoding="utf-8")))
+        parsed = cast(
+            "object",
+            json.loads(
+                path.read_text(encoding="utf-8"),
+                object_pairs_hook=reject_duplicate_json_object,
+            ),
+        )
+    except DuplicateJsonKeyError as error:
+        fail_configuration(str(error), cause=error)
     except (OSError, json.JSONDecodeError) as error:
         fail_configuration(f"cannot read {context}: {path}", cause=error)
     return require_json_object(parsed, context=context)

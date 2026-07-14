@@ -54,7 +54,12 @@ import json
 from typing import NoReturn, Protocol, TypeVar, cast, overload
 
 from mcp.src.domain.errors import fail_configuration, fail_protocol
-from mcp.src.domain.json_types import JsonObject, require_json_object
+from mcp.src.domain.json_types import (
+    DuplicateJsonKeyError,
+    JsonObject,
+    reject_duplicate_json_object,
+    require_json_object,
+)
 
 _HeaderDefault = TypeVar("_HeaderDefault")
 
@@ -209,8 +214,14 @@ def _decode_json(body: bytes, *, context: str) -> JsonObject:
     try:
         parsed = cast(
             "object",
-            json.loads(body, parse_constant=_reject_non_finite_constant),
+            json.loads(
+                body,
+                object_pairs_hook=reject_duplicate_json_object,
+                parse_constant=_reject_non_finite_constant,
+            ),
         )
+    except DuplicateJsonKeyError as error:
+        fail_protocol(str(error), cause=error)
     except json.JSONDecodeError as error:
         fail_protocol(f"{context} is not valid JSON", cause=error)
     return require_json_object(parsed, context=context)

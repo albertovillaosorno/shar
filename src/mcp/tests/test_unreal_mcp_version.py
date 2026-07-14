@@ -116,6 +116,29 @@ def test_provider_uses_program_files_association_fallback(
     assert version == "1.0.0"
 
 
+def test_provider_rejects_duplicate_descriptor_keys(tmp_path: Path) -> None:
+    """Ambiguous plugin metadata cannot replace an earlier version value."""
+    project = tmp_path / "project" / "shar.uproject"
+    engine = tmp_path / "UE_5.8"
+    _write_json(project, {"EngineAssociation": "5.8"})
+    descriptor = engine / _PLUGIN_RELATIVE_PATH
+    descriptor.parent.mkdir(parents=True, exist_ok=True)
+    _ = descriptor.write_text(
+        '{"VersionName":"1.0","VersionName":"2.0"}\n',
+        encoding="utf-8",
+        newline="\n",
+    )
+
+    with pytest.raises(
+        ConfigurationError,
+        match="duplicate JSON key: VersionName",
+    ):
+        _ = FilesystemUnrealMcpVersionProvider(
+            project,
+            environment={"UNREAL_ENGINE_ROOT": str(engine)},
+        ).read_version()
+
+
 def test_provider_rejects_missing_plugin_descriptor(tmp_path: Path) -> None:
     """Missing installed metadata cannot silently invent a version."""
     project = tmp_path / "project" / "shar.uproject"

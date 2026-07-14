@@ -61,6 +61,36 @@ type JsonValue = JsonScalar | list[JsonValue] | dict[str, JsonValue]
 type JsonObject = dict[str, JsonValue]
 
 
+class DuplicateJsonKeyError(ValueError):
+    """Raised when one JSON object repeats a member name."""
+
+    def __init__(self, key: str) -> None:
+        """Create one duplicate-member failure."""
+        super().__init__(f"duplicate JSON key: {key}")
+
+
+def reject_duplicate_json_object(
+    pairs: list[tuple[str, object]],
+) -> dict[str, object]:
+    """Build one object while rejecting repeated member names.
+
+    Args:
+        pairs: Object members in source order.
+
+    Returns:
+        One mapping containing every unique source member.
+
+    Raises:
+        DuplicateJsonKeyError: When one member name appears more than once.
+    """
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise DuplicateJsonKeyError(key)
+        result[key] = value
+    return result
+
+
 def normalize_json(value: object, *, context: str) -> JsonValue:
     """Return one deeply validated JSON value.
 
