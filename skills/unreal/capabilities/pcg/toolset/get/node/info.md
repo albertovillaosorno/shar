@@ -46,41 +46,55 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to inspect one exact PCG node's title, type, position, comment,
+enabled state, and current parameter overrides.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Obtain an exact graph-local node path from `GetGraphStructure`.
+- Keep the graph unchanged while consuming the returned node identity.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "node": {"refPath": "/PCG/SampleContent/SpawnPointsFromPoints/SpawnPointsFromPointsGraph.SpawnPointsFromPointsGraph:SurfaceSamplerNode_0"}
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two calls returned enabled node `SurfaceSamplerNode_0`, title and type `Surface
+Sampler`, position `(64, -112)`, comment value `"Sample Landscape "`, and
+overrides for point extents `(100, 100, 100)`, steepness `0.5`, and points-per-square-meter
+approximately `0.05`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Node paths are graph-local identities and can change after duplication or
+  graph edits.
+- Parameter override shape depends on node type.
+- Floating-point values may include binary representation residue.
+- A graph asset path is not a node path.
+- Missing or wrong-type refs fail during parameter translation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

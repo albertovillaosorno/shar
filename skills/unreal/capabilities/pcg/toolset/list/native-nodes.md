@@ -46,41 +46,57 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to discover native PCG node display names before SHAR requests a
+node schema or prepares a separately authorized graph edit.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use the common-only inventory by default.
+- Request the complete inventory only when uncommon or editor-specific nodes are
+  required.
+- Pass returned names directly to `GetNativeNodeSchema`.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "bCommonOnly": true
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two common-only calls returned 102 stable names, including Copy Attributes,
+Surface Sampler, Subgraph, Spawn Actor, and Loop. Two complete calls returned
+206 names and additionally included uncommon or editor-oriented nodes such as
+Custom HLSL, Wait, Get Editor Cameras, and Platform Switch.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Names are display identifiers rather than class paths.
+- Inventory depends on loaded PCG modules, plugins, and engine revision.
+- The complete list can include destructive or editor-only nodes; discovery is
+  not authorization to use them.
+- Preserve returned spelling for diagnostics even though schema lookup is case-
+  insensitive.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
