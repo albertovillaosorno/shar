@@ -57,6 +57,8 @@ from urllib.parse import SplitResult, urlsplit
 from mcp.src.domain.errors import fail_endpoint
 
 _ALLOWED_HOSTS = frozenset({"127.0.0.1", "::1"})
+_ASCII_CONTROL_LIMIT = 0x20
+_ASCII_DELETE = 0x7F
 _DEFAULT_PORT = 8000
 _DEFAULT_PATH = "/mcp"
 _MAX_PORT = 65_535
@@ -80,6 +82,12 @@ class McpEndpoint(NamedTuple):
             A validated canonical endpoint.
 
         """
+        if any(
+            ord(character) < _ASCII_CONTROL_LIMIT
+            or ord(character) == _ASCII_DELETE
+            for character in value
+        ):
+            fail_endpoint("MCP endpoint must not contain control characters")
         if any(character.isspace() for character in value):
             fail_endpoint("MCP endpoint must not contain whitespace")
         parsed = urlsplit(value)
