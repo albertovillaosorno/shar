@@ -57,9 +57,10 @@ currently available before starting a new controlled run.
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
 - `DiscoverTests` must have completed successfully in the same editor session.
-- For executed tests, retain the exact run invocation and wait for controller
-  completion before treating results as final.
-- Correlate returned test paths with the previously selected identities.
+- Retain the exact run invocation and wait for controller completion before
+  treating results as final.
+- Correlate returned test paths and count with the previously selected
+  identities.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
@@ -73,21 +74,25 @@ currently available before starting a new controlled run.
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-Two consecutive calls before any run returned an empty result with zero total,
-passed, failed, skipped, and duration values. `GetTestStatus` independently
-reported `Ready` with zero completed tests, confirming that the empty result was
-valid idle state rather than a transport failure.
+After both exact-name and exact-filter runs, the tool returned one successful
+result with the invoked test path, no errors or warnings, and matching duration
+and counts from the run summary. A later unknown-name `RunTests` request
+replaced the result with an empty zero-count object even though status retained
+prior pass counts; the final exact-filter run restored the verified result.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
 - `returnValue` is a JSON string and requires a second JSON parse.
-- An empty zero-count result is valid when no current or previous run is
-  available.
-- The tool reports the current or most recent run; preserve run-selection
-  evidence so stale results cannot be attributed to a later invocation.
+- An empty zero-count result is valid when no run exists, but can also follow an
+  unknown-name `RunTests` request that matched nothing.
+- The tool reports the current or most recent detailed result and can be
+  overwritten by a later zero-match request; capture and correlate results
+  immediately after each invocation.
 - Detailed results are not final while the controller is still running.
+- Status and detailed results can temporarily describe different selection
+  snapshots; require exact test-path membership in the result.
 - This read does not start, stop, retry, or clear automation tests.
 <!-- END MANUAL FIELD: known-caveats -->
 

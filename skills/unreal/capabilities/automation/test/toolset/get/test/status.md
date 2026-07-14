@@ -73,9 +73,10 @@ the lightweight state check before requesting detailed per-test results.
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-Two consecutive calls returned `state: "Ready"`, `numEnabled: 8772`, and zero
-complete, passed, or failed tests. `GetTestResults` independently returned an
-empty zero-count result, confirming that no test run had been started.
+Before execution, two calls returned `Ready` with zero completed tests. After
+`RunTests`, status reported one enabled, complete, and passed test. After an
+exact `RunTestsByFilter`, it again reported one complete and passed test but
+`numEnabled: 8772`; detailed results identified the same single successful test.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
@@ -84,11 +85,12 @@ empty zero-count result, confirming that no test run had been started.
 - `returnValue` is a JSON string and requires a second JSON parse.
 - Status is point-in-time controller state and can change immediately after a
   run or stop request.
-- `numEnabled` is a controller metric and did not equal the unfiltered
-  `ListTests.total` in the verified session; do not use those fields as an
-  equality invariant.
-- `Ready` proves controller readiness, not that selected tests passed or even
-  executed.
+- `numEnabled` is selection-strategy-dependent and did not remain comparable
+  across exact-name and filter runs or equal the unfiltered `ListTests.total`.
+- A zero-match exact-name request left prior pass counts in status while
+  `GetTestResults` became empty; correlate status with the exact invocation and
+  detailed results instead of assuming both snapshots describe the same set.
+- `Ready` proves controller readiness, not that a selected test passed.
 - Aggregate counts do not replace `GetTestResults` for per-test evidence.
 <!-- END MANUAL FIELD: known-caveats -->
 

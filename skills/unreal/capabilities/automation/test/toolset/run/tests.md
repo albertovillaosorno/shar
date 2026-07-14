@@ -48,41 +48,68 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to execute a small, explicitly reviewed set of Unreal automation
+tests by their exact full paths after SHAR has discovered and listed them. Prefer
+this capability when the intended identities are already known and the target
+set is easier to audit as a list than as a filter.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- `DiscoverTests` must have completed successfully in the same editor session.
+- `ListTests` must confirm every exact full path immediately before execution.
+- `GetTestStatus` must report an idle `Ready` controller.
+- Bound the list to reviewed tests whose editor and filesystem side effects are
+  understood, and choose a timeout suitable for the slowest selected test.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "testNames": [
+    "AI.ModelContextProtocol.Analytics.HashToolIdentifier.should be deterministic for the same input"
+  ]
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The validated call executed exactly one test and returned `total: 1`,
+`passed: 1`, and `failed: 0`. The requested analytics hash test entered
+`Success` state with no errors or warnings. `GetTestStatus` and
+`GetTestResults` independently confirmed the same single completion.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- `returnValue` is a JSON string and requires a second JSON parse.
+- The operation is asynchronous and completes only when the selected tests
+  finish; a client timeout does not by itself prove native execution stopped.
+- An empty `testNames` array raises an error.
+- In the verified session, an unknown nonempty test name returned an empty
+  zero-count success instead of an error and replaced the detailed result set.
+  Prevalidate every identity with `ListTests` and require returned membership to
+  match the requested set.
+- Tests can mutate editor, asset, filesystem, or process state according to
+  their own contracts; exact selection does not make an unsafe test safe.
+- Controller aggregate fields can differ by selection method, so the returned
+  per-test summary is the primary completion evidence.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

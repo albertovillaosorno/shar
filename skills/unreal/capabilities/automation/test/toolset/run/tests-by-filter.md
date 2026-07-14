@@ -58,41 +58,65 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to execute a bounded Unreal automation test set when one reviewed
+filter expresses the target more safely and efficiently than enumerating many
+full paths. For a single test, anchor both ends of the exact path.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- `DiscoverTests` must have completed successfully in the same editor session.
+- Preflight the proposed expression with `ListTests` or equivalent bounded
+  discovery and record the expected identities and count.
+- `GetTestStatus` must report an idle `Ready` controller.
+- Review the side effects and timeout needs of every matched test before
+  execution.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "filterExpression": "^AI.ModelContextProtocol.Analytics.HashToolIdentifier.should be deterministic for the same input$"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The exact anchored filter executed one test and returned `total: 1`,
+`passed: 1`, and `failed: 0`. The only matched analytics hash test entered
+`Success` state with no errors or warnings. `GetTestStatus` and
+`GetTestResults` independently confirmed that single run.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- `returnValue` is a JSON string and requires a second JSON parse.
+- An unmatched filter raises a native no-tests-matched error.
+- Prefix, suffix, bare-substring, combined, and named-group expressions can
+  select more tests than expected; preflight exact membership and count before
+  running.
+- The operation is asynchronous; a client timeout does not prove the native run
+  was cancelled.
+- Tests can mutate editor, asset, filesystem, or process state according to
+  their own contracts.
+- The returned per-test summary, not transport completion or aggregate status
+  alone, is the execution evidence.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
