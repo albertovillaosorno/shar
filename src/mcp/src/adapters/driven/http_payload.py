@@ -270,17 +270,18 @@ def _finish_sse_event(
 
 def _decode_json(body: bytes, *, context: str) -> JsonObject:
     try:
+        text = body.decode("utf-8")
         parsed = cast(
             "object",
             json.loads(
-                body,
+                text,
                 object_pairs_hook=reject_duplicate_json_object,
                 parse_constant=_reject_non_finite_constant,
             ),
         )
     except DuplicateJsonKeyError as error:
         fail_protocol(str(error), cause=error)
-    except json.JSONDecodeError as error:
+    except (UnicodeError, json.JSONDecodeError) as error:
         fail_protocol(f"{context} is not valid JSON", cause=error)
     return require_json_object(parsed, context=context)
 

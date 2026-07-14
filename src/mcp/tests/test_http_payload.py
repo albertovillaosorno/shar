@@ -202,6 +202,30 @@ def test_json_payload_rejects_excessive_nesting() -> None:
         )
 
 
+def test_json_payload_wraps_invalid_utf8() -> None:
+    """Unreadable JSON bytes remain a typed protocol failure."""
+    body = b'{"jsonrpc":"2.0","id":1,"result":"\xff"}'
+
+    with pytest.raises(ProtocolError, match="not valid JSON"):
+        _ = read_http_payload(
+            MemoryResponse(body, headers={"Content-Type": "application/json"}),
+            1,
+            max_response_bytes=len(body),
+        )
+
+
+def test_json_payload_rejects_utf16_encoding() -> None:
+    """The MCP JSON boundary accepts UTF-8 only, not auto-detected UTF-16."""
+    body = '{"jsonrpc":"2.0","id":1,"result":{}}'.encode("utf-16")
+
+    with pytest.raises(ProtocolError, match="not valid JSON"):
+        _ = read_http_payload(
+            MemoryResponse(body, headers={"Content-Type": "application/json"}),
+            1,
+            max_response_bytes=len(body),
+        )
+
+
 def test_json_payload_rejects_duplicate_object_keys() -> None:
     """Ambiguous JSON objects cannot overwrite an earlier member."""
     body = b'{"jsonrpc":"2.0","id":1,"result":{"value":1,"value":2}}'
