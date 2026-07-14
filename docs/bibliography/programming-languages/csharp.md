@@ -8,11 +8,12 @@ authored SHAR build-rule source.
 
 - Review status: Evidence recorded.
 - Evidence status: Partially verified — Repository C# use, official language-
-  specification work, Roslyn source, and Microsoft documentation verified; the
-  exact compiler, language version, reference assemblies, SDK, and Unreal Build
-  Tool environment remain build-specific.
+  specification work, Roslyn source, Microsoft documentation, and the current
+  compiler-validation omission were verified. The exact compiler, language
+  version, reference assemblies, SDK, and Unreal Build Tool environment remain
+  build-specific.
 - Counsel review: Not performed.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-14.
 - Subject class: Standardized programming language.
 
 ## Covered Material
@@ -23,8 +24,13 @@ public language-standard and compiler references needed to interpret that code.
 ## Repository Use And Scope
 
 SHAR contains authored `.Target.cs` and `.Build.cs` files consumed by Unreal
-Build Tool. C# is a language, not a license grant for Roslyn, .NET, Unreal
-Engine, Microsoft documentation, or the resulting SHAR source.
+Build Tool. The current canonical validation plans for those files do not compile
+or analyze them with Roslyn, `dotnet`, or Unreal Build Tool, so syntax and
+compiler acceptance remain unproven until an engine build or future compiler gate
+supplies that evidence.
+
+C# is a language, not a license grant for Roslyn, .NET, Unreal Engine, Microsoft
+documentation, or the resulting SHAR source.
 
 ## Provenance And Version History
 
@@ -55,9 +61,11 @@ assembly, or Microsoft redistributable actually delivered.
 
 ## Compliance Posture
 
-Preserve exact compiler and SDK provenance. Keep standards references,
-implementation licenses, Unreal Engine terms, and SHAR-authored source rights
-separate.
+Do not describe the authored build rules as compiler-validated while the current
+canonical plan omits a C# gate. Preserve exact compiler, SDK, Unreal Build Tool,
+and engine provenance when an engine build or future compiler gate verifies them.
+Keep standards references, implementation licenses, Unreal Engine terms, and
+SHAR-authored source rights separate.
 
 ## Source References
 
@@ -68,4 +76,6 @@ separate.
   Available at: <https://github.com/dotnet/roslyn> (Accessed: 12 July 2026).
 - Microsoft (n.d.) *C# documentation*. Available at:
   <https://learn.microsoft.com/dotnet/csharp/> (Accessed: 12 July 2026).
-- SHAR repository (2026) authored Unreal `.Target.cs` and `.Build.cs` files.
+- SHAR repository (2026) authored Unreal `.Target.cs` and `.Build.cs` files and
+  canonical validation plans reviewed 14 July 2026; no current C# compiler gate
+  was scheduled for those files.

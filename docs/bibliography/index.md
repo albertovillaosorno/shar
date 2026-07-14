@@ -36,7 +36,7 @@ Host, editor, build, hosting, and operator-facing tools.
 
 - [Comet Browser](construction-environment/comet-browser.md)
 - [Cursor](construction-environment/cursor.md)
-- [Cygwin, GNU Bash, And cygpath](construction-environment/cygwin-bash-and-cygpath.md)
+- [GNU Bash And Windows PowerShell](construction-environment/bash-and-windows-powershell.md)
 - [.NET SDK And Runtime](construction-environment/dotnet-sdk.md)
 - [Git](construction-environment/git.md)
 - [GitHub](construction-environment/github.md)
