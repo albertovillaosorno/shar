@@ -1,0 +1,112 @@
+# File:
+#   - json_types.py
+# Path:
+#   - src/mcp/src/domain/json_types.py
+#
+# Copyright:
+#   - Copyright (c) 2026 Alberto Villa Osorno.
+# SPDX-License-Identifier:
+#   - MIT
+# Confidential:
+#   - false
+# License-File:
+#   - LICENSE
+# Path-Rule:
+#   - All paths in this header are repository-root relative.
+#
+# Boundary-Contract:
+# - Owns:
+#   - Recursive JSON value validation and normalization.
+# - Must-Not:
+#   - Interpret MCP, Unreal, HTTP, or command semantics.
+# - Allows:
+#   - Pure JSON aliases and fail-closed validation.
+# - Split-When:
+#   - The module gains two independently testable contracts.
+# - Merge-When:
+#   - Another module owns the same contract without a distinct invariant.
+# - Summary:
+#   - Normalizes untrusted values into strict JSON types.
+# - Description:
+#   - Prevents untyped or non-JSON values crossing boundaries.
+# - Usage:
+#   - Called after parsing and before transport serialization.
+# - Defaults:
+#   - Unsupported values fail with a precise context path.
+#
+# ADRs:
+# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
+# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
+#
+# Large file:
+#   - true
+# LARGE-FILE:
+#   - owner: strict JSON boundary
+#   - reason: aliases and recursive normalization form one JSON-only contract
+#   - split: extract traversal if serialization behavior is introduced
+#   - validation: bash validate.sh --refresh-cache src/mcp/
+#   - review: reassess on responsibility or line-count growth
+#
+"""Strict JSON values used across translator boundaries."""
+
+from __future__ import annotations
+
+from typing import cast
+
+from mcp.src.domain.errors import fail_protocol
+
+type JsonScalar = str | int | float | bool | None
+type JsonValue = JsonScalar | list[JsonValue] | dict[str, JsonValue]
+type JsonObject = dict[str, JsonValue]
+
+
+def normalize_json(value: object, *, context: str) -> JsonValue:
+    """Return one deeply validated JSON value.
+
+    Args:
+        value: Untrusted value returned by a JSON parser or caller.
+        context: Human-readable source used in failure messages.
+
+    Returns:
+        A JSON-only value without untyped objects.
+
+    """
+    if value is None or isinstance(value, str | bool | int | float):
+        return value
+    if isinstance(value, dict):
+        raw_mapping = cast("dict[object, object]", value)
+        result: JsonObject = {}
+        for raw_key, raw_value in raw_mapping.items():
+            if not isinstance(raw_key, str):
+                fail_protocol(f"{context}: JSON key is not text")
+            result[raw_key] = normalize_json(
+                raw_value,
+                context=f"{context}.{raw_key}",
+            )
+        return result
+    if isinstance(value, list):
+        raw_items = cast("list[object]", value)
+        return [
+            normalize_json(item, context=f"{context}[{index}]")
+            for index, item in enumerate(raw_items)
+        ]
+    return fail_protocol(
+        f"{context}: unsupported JSON type {type(value).__name__}"
+    )
+
+
+def require_json_object(value: object, *, context: str) -> JsonObject:
+    """Return one validated JSON object.
+
+    Args:
+        value: Untrusted value to validate.
+        context: Human-readable source used in failure messages.
+
+    Returns:
+        A strict JSON object.
+
+    """
+    normalized = normalize_json(value, context=context)
+    if not isinstance(normalized, dict):
+        fail_protocol(f"{context}: expected a JSON object")
+    return normalized

@@ -1,0 +1,25 @@
+# Package metadata only. Repository-wide Python validation is owned by
+# commands/config/data/pyproject.toml and no local lint configuration is allowed.
+# ADR: docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
+
+[build-system]
+requires = ["hatchling==1.31.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "shar-unreal-mcp-cli"
+version = "26.7.0"
+description = "Terminal translator for Unreal Engine native MCP tools."
+readme = "README.md"
+requires-python = "==3.14.6"
+license = { text = "MIT" }
+dependencies = []
+
+[project.scripts]
+shar-unreal-mcp = "mcp.src.adapters.driving.cli:main"
+
+[tool.hatch.build.targets.wheel]
+bypass-selection = true
+
+[tool.hatch.build.targets.wheel.force-include]
+"src" = "mcp/src"
