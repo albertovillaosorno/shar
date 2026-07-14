@@ -12,13 +12,14 @@ builds.
 
 ## Objective
 
-A user supplies a lawful local installation. The pipeline validates and decodes
-that installation, classifies deterministic packages, generates normalized
-artifacts, creates native Unreal assets, compiles an independently authored C++
-runtime, and produces validated native packages for supported Windows, Linux,
-macOS, and Android targets.
+In the target workflow, a user supplies a lawful local installation. The
+completed pipeline is intended to validate and decode that installation,
+classify deterministic packages, generate normalized artifacts, create native
+Unreal assets, compile an independently authored C++ runtime, and produce
+validated native packages for the planned Windows, Linux, macOS, and Android
+target matrix.
 
-The supported product includes:
+The target product is defined to include:
 
 - five graphics presets: **Low**, **Medium**, **High**, **Epic**, and
   **Ultra**, all using the same gameplay contract;
@@ -27,6 +28,10 @@ The supported product includes:
 - local deterministic drop-in mods;
 - user-facing AI skills for lawful mod creation; and
 - native Unreal control for AI agents through the official MCP server.
+
+These are acceptance targets, not current availability claims. The roadmap below
+identifies completed, in-progress, and planned phases; native platform packaging
+remains planned.
 
 The project excludes multiplayer, a connected sandbox, a server browser, a
 hosted mod service, a marketplace, a social layer, and a general-purpose
@@ -106,7 +111,7 @@ The primary delivery sequence is fixed by decision record. Current status is:
 | :--- | :--- | :--- |
 | 1 | Decode required source evidence | Complete |
 | 2 | Generate the minor-unit manifest | Complete |
-| 3 | Classify deterministic packages | Complete |
+| 3 | Classify deterministic packages | In progress |
 | 4 | Generate first-principles binary FBX | In progress |
 | 5 | Establish native Unreal MCP terminal control | In progress |
 | 6 | Create native Unreal assets | Planned |
@@ -115,6 +120,11 @@ The primary delivery sequence is fixed by decision record. Current status is:
 | 9 | Add local mods and user-facing AI skills | Planned |
 | 10 | Package validated native platform builds | Planned |
 | 11 | Optimize, verify, document, and close | Planned |
+
+Phase 3 remains in progress until every successful manifest row has concrete
+classification, complete source linkage, no successful `unknown` result, and
+repeatable generation with stable identities, ordering, membership, and rendered
+rows.
 
 The status table is informational, not a delivery warranty.
 
