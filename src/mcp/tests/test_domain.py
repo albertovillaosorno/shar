@@ -76,6 +76,18 @@ def test_endpoint_accepts_only_explicit_loopback_http() -> None:
         _ = McpEndpoint.parse("http://127.0.0.1/")
 
 
+def test_endpoint_rejects_explicit_zero_port() -> None:
+    """An invalid explicit port must not be replaced by the default port."""
+    with pytest.raises(
+        EndpointValidationError,
+        match="port must be between 1 and 65535",
+    ):
+        _ = McpEndpoint.parse("http://127.0.0.1:0/mcp")
+
+    endpoint = McpEndpoint.parse("http://127.0.0.1/mcp")
+    assert endpoint.port == 8000
+
+
 def test_endpoint_rejects_dns_alias_for_loopback_boundary() -> None:
     """A mutable hostname must not stand in for a literal loopback address."""
     with pytest.raises(EndpointValidationError):

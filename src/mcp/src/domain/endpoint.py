@@ -83,7 +83,8 @@ class McpEndpoint(NamedTuple):
         parsed = urlsplit(value)
         cls._validate_split(parsed)
         try:
-            port = parsed.port or _DEFAULT_PORT
+            parsed_port = parsed.port
+            port = _DEFAULT_PORT if parsed_port is None else parsed_port
         except ValueError as error:
             fail_endpoint(
                 "MCP endpoint contains an invalid port",
