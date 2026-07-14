@@ -187,19 +187,36 @@ the reviewed new-game transaction.
 ## Scrapbook and progress
 
 The scrapbook view model joins accepted progression identities to catalog
-presentation. It includes:
+presentation. It has two canonical modes.
+
+`game_stats` presents the aggregate campaign projection:
 
 - seven level summaries in campaign order;
 - the eight progress-category counts for each level;
 - one-decimal level percentages;
 - the overall percentage and movie-reward contribution;
-- collector-card gallery membership and set completion;
-- mission, bonus mission, race, vehicle, costume, wasp, and gag status;
+- combined mission, bonus mission, race, vehicle, costume, wasp, gag, and card
+  totals;
 - unlocked rewards and bonus maps; and
-- credits and movie availability.
+- movie availability, including ordinary cinematics and the all-card reward
+  movie.
+
+`open_book` presents level-separated catalog galleries for:
+
+- missions;
+- character clothing;
+- the six persistent vehicles assigned to each level; and
+- the seven collector cards assigned to each level.
+
+Locked vehicle and clothing rows remain visible through the declared transparent
+or placeholder presentation. Visibility never grants ownership or changes
+progress. Mission and card rows use canonical level and ordinal identities rather
+than screenshot order.
 
 The pause-menu level-progress screen consumes the same level progress view model.
-It cannot use a second formula or count visible widgets.
+It cannot use a second formula or count visible widgets. The scrapbook is a
+main-menu extra and may be opened whenever one accepted progression snapshot is
+available; it is not gated by bonus-game availability.
 
 Missing presentation for an accepted identity produces a placeholder and typed
 diagnostic. It does not remove accepted progression or change the percentage.

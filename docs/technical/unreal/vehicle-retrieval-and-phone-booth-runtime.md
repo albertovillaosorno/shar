@@ -15,7 +15,9 @@
 This specification defines booth interaction, vehicle browsing, ownership,
 locked presentation, health persistence, repair, driver presentation, safe world
 delivery, forced-mission restrictions, completion overrides, rollback, and
-verification.
+verification. The complete persistent, traffic, secret, mission, completion, and
+development-only membership rules follow
+[Vehicle access and roster runtime](vehicle-access-and-roster-runtime.md).
 
 ## Ownership
 

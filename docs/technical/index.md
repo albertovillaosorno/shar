@@ -69,6 +69,8 @@ proprietary external formats.
 - [Platform, quality, and optimization contract](unreal/platform-quality-and-optimization.md)
 - [Platform save storage and lifecycle](unreal/platform-save-storage-and-lifecycle.md)
 - [Progression, collectibles, cheats, and credits](unreal/progression-collectibles-and-cheats.md)
+- [Race route and opponent runtime](unreal/race-route-and-opponent-runtime.md)
+- [Vehicle access and roster runtime](unreal/vehicle-access-and-roster-runtime.md)
 - [Vehicle retrieval and phone-booth runtime](unreal/vehicle-retrieval-and-phone-booth-runtime.md)
 - [Editor guardrails](unreal/testing/editor-guardrails.md)
 - [Unreal test taxonomy](unreal/testing/test-taxonomy.md)
@@ -83,7 +85,7 @@ proprietary external formats.
 
 ## Current coverage
 
-- Active technical specifications: 44.
+- Active technical specifications: 46.
 - Template records: 1.
 - Review date: 2026-07-14.
 - Status boundary: this catalog describes current repository behavior and does

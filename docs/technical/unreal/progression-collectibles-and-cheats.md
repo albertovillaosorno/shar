@@ -363,11 +363,15 @@ merely from ticket ownership.
 The exact eight-category level formula, seven-level aggregation, counted vehicle
 roles, level denominators, and one-percent movie contribution are owned by
 [campaign level composition and progress](campaign-level-composition-and-progress.md).
+The complete 42-vehicle ownership census and the distinction between persistent,
+traffic, secret, mission, completion, and development access follow
+[Vehicle access and roster runtime](vehicle-access-and-roster-runtime.md).
 
 Progression state provides accepted identity sets and transaction results. The
 campaign service calculates exact rational progress. Scrapbook, save-slot, and
 pause-menu widgets consume the same immutable projection and never recalculate
-it from visible entries.
+it from visible entries. Exact scrapbook modes and gallery membership follow
+[Frontend shell and menu runtime](frontend-shell-and-menu-runtime.md).
 
 ## Objective integration
 

@@ -94,9 +94,15 @@ target. Preset tests prove resolved quality settings and visual invariants.
 - Frontend suites cover Common UI stacks, focus, semantic input, logical slots,
   resume selection, new-game replacement, scrapbook parity, options rollback,
   calendar fallback, and idle-event cancellation.
+- Vehicle-roster suites cover exactly 42 persistent vehicles, six acquisitions
+  per level, seven secret placements, four traffic models per level, aliases,
+  completion overrides, driver bindings, and development-only exclusions.
 - Vehicle-retrieval suites cover locked projections, traffic and forced-use
   boundaries, health persistence, insufficient currency, exactly-once repair,
   safe delivery, driver presentation, mission policy, and transaction rollback.
+- Race suites cover route closure, checkpoint order and direction, laps, timers,
+  opponents, position, catch-up, reset, World Partition, finish transactions,
+  street-race-set rewards, replay, and mission-race exclusion.
 - Ambient-population suites cover deterministic Mass plans, representation LOD,
   streaming hysteresis, avoidance, look-at, horn and violence reactions, fall and
   recovery, conversations, named-character promotion, and mission pinning.

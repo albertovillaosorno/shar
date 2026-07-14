@@ -29,9 +29,12 @@ identity, or mod semantics.
 Accidental defects are outside the parity boundary. Crashes, infinite falls,
 out-of-bounds access, collision holes, duplicate or malformed actors, stale
 prototype content, driver-state corruption, and undefined streaming states are
-repaired through native validation and deterministic recovery. A historical
-quirk becomes a parity requirement only when an accepted decision identifies a
-stable player-visible behavior and an automated test fixes its intended limits.
+repaired through native validation and deterministic recovery. Prerelease
+screenshots, unused or cut prototypes, abandoned placements, and inaccessible
+development vehicles are negative compatibility evidence, not successful runtime
+behavior. A historical quirk becomes a parity requirement only when an accepted
+decision identifies a stable player-visible behavior and an automated test fixes
+its intended limits.
 
 ## Consequences
 

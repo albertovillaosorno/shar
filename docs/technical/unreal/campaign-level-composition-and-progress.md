@@ -195,6 +195,9 @@ completion but do not block the next story level.
 
 Payout values are easy, medium, and hard in that order. A wager-race attempt
 stages its entry debit and result transaction independently from level progress.
+Route topology, checkpoint order, opponents, position, timers, reset, finish, and
+exactly-once race-set rewards follow
+[Race route and opponent runtime](race-route-and-opponent-runtime.md).
 
 The Level 7 store time trial has five laps and a seventy-second stage timer. A
 stale summary claiming three laps is not authoritative.

@@ -1060,9 +1060,117 @@ this slice. Historical oddity and unused-behavior lists are negative compatibili
 or review evidence; they do not become successful gameplay features unless an
 intentional behavior has its own verified contract.
 
+## Verified sixth character and archetype slice
+
+| Canonical identity | Aliases | Required contract |
+| :--- | :--- | :--- |
+| `principal_seymour_skinner` | `principal_skinner`, `seymour_skinner`, `skinner` | One non-playable character owns mission-opponent, bonus-mission-giver, school, ambient, driver, and cinematic placements. |
+| `professor_frink` | `frink` | The existing scientist identity is reaffirmed for mission-giver, driver, observatory, bonus-reward, ambient, and cinematic placements. |
+| `reverend_lovejoy` | `lovejoy` | Non-playable named character with level-scoped ambient and presentation placements. |
+| `horatio_mccallister` | `sea_captain` | The existing canonical identity is reaffirmed for Squidport ambience and the `princi_pal` interaction. |
+| `snake_jailbird` | `snake` | One non-playable character owns mission-giver, target, driver, ambient, and dialogue placements across Levels 2, 3, 5, 6, and 7. |
+| `mayor_quimby` | `quimby` | The existing civic character identity owns cutscene, billboard, vehicle-presentation, and ambient references. |
+| `waylon_smithers` | `mr_smithers`, `smithers` | The existing character identity owns mission, driver, bonus-mission, ambient, and cinematic placements. |
+
+`Skeleton` identifies a generic Level 7 ambient archetype. It uses a population
+archetype and placement rows, not a named character, dialogue owner, or save
+identity. Named-character and ambient-archetype behavior follows
+[Ambient population and named-character runtime](ambient-population-and-named-character-runtime.md).
+
+## Verified sixth vehicle slice
+
+| Canonical identity | Aliases | Verified context | Required rule |
+| :--- | :--- | :--- | :--- |
+| `planet_hype_50s_car` | none | Level 6 secret vehicle | Temporary world access only; completion override does not create ordinary ownership. |
+| `plow_king` | none | Level 1 purchase for 150 coins | Purchase ownership is required by the declared mission gate. |
+| `police_car` | none | Level 5 purchase for 425 coins and mission-forced placement | Ownership, forced use, driver presentation, and pursuit placement remain separate rows. |
+| `hover_car` | `professor_frinks_hover_car`, `frinks_hover_car` | Level 5 bonus reward and later forced or target placements | The bonus reward grants ownership once; other placements do not replay it. |
+| `quad_bike` | `atv` | Level 4 secret vehicle | One trailer-park placement grants temporary access. |
+| `rc_buggy` | `r_c_buggy` | Level 7 secret vehicle | One roof placement grants temporary access. |
+| `red_brick_car` | `brick_car` | Development-only vehicle | Excluded from shipping ownership, traffic, secret, mission, race, and completion-override queries. |
+| `suv` | none | Traffic in Levels 4 and 5 | Native traffic access does not grant persistent ownership. |
+| `school_bus` | none | Level 3 purchase for 300 coins and mission vehicle | Purchase, forced use, required use, and Otto driver presentation share one definition. |
+| `sedan_level_02` | none | Level 2 street-race reward | Distinct persistent reward identity. |
+| `sedan_level_03` | `skinners_sedan` | Level 3 bonus-mission reward and Skinner driver placement | Distinct from every other sedan definition. |
+| `sedan_a` | none | Unused development traffic definition | Excluded from normal shipping access. |
+| `sedan_b` | none | Level 2 traffic | Traffic and completion override remain separate from ownership. |
+| `speed_rocket` | none | Level 1 secret vehicle | Temporary world access only. |
+| `sports_car_a` | none | Traffic in Levels 2 and 3 plus race placements | Traffic, opponent, prop, and completion-override rows share one definition. |
+| `sports_car_b` | none | Level 5 traffic | Traffic access does not grant persistent ownership. |
+
+The complete 42-vehicle persistent roster, seven secret placements, seven traffic
+rosters, completion override, sedan identity boundary, drivers, and development
+exclusions follow
+[Vehicle access and roster runtime](vehicle-access-and-roster-runtime.md).
+
+## Verified sixth mission slice
+
+| Canonical identity | Level and class | Ordered contract |
+| :--- | :--- | :--- |
+| `s_m_r_t` | Level 1 main mission 1 | Accept the science-project target, reach Skinner's start, win the untimed route race, enter Springfield Elementary, talk to Lisa, and complete the final dialogue. |
+| `princi_pal` | Level 3 bonus mission | Force Skinner's Sedan; complete the 40-second opening errand, untimed laundry target, 30-second restaurant travel, meal interaction, 45-second casino travel, cream interaction, and 35-second arcade return; then grant Skinner's Sedan once. |
+| `slithery_sleuthing` | Level 3 main mission 5 | Force the Police Car, follow Snake over four route waypoints and accept three emitted targets, satisfy separation and vehicle conditions, reach the casino within 60 seconds, and complete Wiggum's final sequence. |
+| `redneck_roundup` | Level 4 main mission 2 | Follow Cletus over eight route waypoints and accept seven emitted objects without violating the separation policy; no timer applies. |
+| `return_of_the_nearly_dead` | Level 4 main mission 5 | Reach the school within 30 seconds, complete Nelson's interaction, follow the sedan and accept ten pills, reach the false destination within 90 seconds, lose the tail within 90 seconds, reach Grampa within 150 seconds, collect the interior caffeine target, return, and complete the cinematic transition. |
+| `set_to_kill` | Level 6 main mission 6 | Require purchase of the Globex Super Villain Car, reach Krustylu, destroy and accept twenty-five laser-stand targets within 100 seconds, return within 50 seconds, and complete the Krusty interaction. |
+| `rigor_motors` | Level 7 main mission 1 | Talk to Ned within 30 seconds, collect the first-aid kit, reach and collect the boards within the declared 15-second travel stage, reach Moe within 15 seconds, collect the chainsaw, and return home within 40 seconds. |
+| `pocket_protector` | Level 7 main mission 3 | Force the Hover Car, acquire the nuclear-waste payload within 120 seconds, reach the playground within 100 seconds while retaining vehicle and payload, and destroy the boss target within 10 seconds while preserving the payload policy. |
+
+A pre-mission purchase or ownership gate is activation policy, not a duplicate
+mission objective. A zero timer declaration means untimed. Forced, required, and
+owned vehicles never collapse into one acquisition state.
+
+## Verified sixth race slice
+
+| Canonical identity | Verified route contract |
+| :--- | :--- |
+| `rich_district_2_circuit_level_04` | Three laps; six AI route waypoints and five dense player checkpoints; opponents are Apu in the Longhorn, the Nuclear Waste Truck, and the Garbage Truck; first place required; no timer. |
+| `squidport_checkpoint_level_03` | Five ordered checkpoints against Marge in the Canyonero, Sports Car A, and the road Pickup; first place required. |
+| `squidport_tourist_resort_time_trial_level_06` | Two laps through eight ordered checkpoints within 115 seconds. |
+| `squidport_2_checkpoint_level_06` | Six ordered checkpoints against Homer in the canonical Level 7 sports-car placement; first place required. |
+
+The race-objective index contributes the race-class vocabulary but creates no
+race asset. Exact route, crossing, opponent, position, failure, reset, finish,
+and race-set reward semantics follow
+[Race route and opponent runtime](race-route-and-opponent-runtime.md).
+
+## Verified sixth location slice
+
+`simpson_house` is one canonical location family with Levels 1, 4, and 7 world
+variants. `simpsons_house` and punctuation variants are aliases. Interiors,
+mission starts, gags, family placements, and exterior sites remain level-scoped.
+
+`springfield_elementary` is one canonical school location family. Exact exterior,
+interior, mission-door, character, gag, and race-finish placements are separate
+rows owned by their level and Runtime Data Layers.
+
+`frink_observatory` is one canonical interior location available in Levels 3 and
+6. Costume interaction, alarm gag, mission starts, story interactions, and level
+presentation reference the same definition with level-scoped placements.
+
+## Verified sixth frontend, index, and compatibility slice
+
+The player-vehicle, road-vehicle, and secret-vehicle pages are census evidence
+owned by
+[Vehicle access and roster runtime](vehicle-access-and-roster-runtime.md).
+They do not create aggregate vehicle definitions or grant ownership.
+
+The Scrap Book page resolves through
+[Frontend shell and menu runtime](frontend-shell-and-menu-runtime.md). Its
+`game_stats` mode aggregates accepted campaign progress and movies. Its
+`open_book` mode presents level-separated missions, clothing, persistent
+vehicles, and collector cards. Locked presentation never changes progression.
+
+The sedan disambiguation page contributes aliases and collision tests only. It
+creates no generic `sedan` primary asset. Prerelease material, the Red Brick Car,
+Sedan A, unused variants, prototype screenshots, and abandoned placements are
+negative compatibility evidence under the
+[runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md).
+They are not successful shipping behavior.
+
 ## Known limits
 
-This specification fixes the catalog architecture and the five verified coverage
+This specification fixes the catalog architecture and the six verified coverage
 slices. It does not claim that every remaining character, vehicle, mission,
 location, reward, costume, quote, interaction, or bonus-mode record has already
 been entered. New coverage extends these schemas and invariants; it does not

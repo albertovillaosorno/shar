@@ -247,11 +247,15 @@ steps so the level transition occurs only after both have been accepted.
 
 A `race` objective consumes the canonical race definition, route rows, lap or
 checkpoint policy, ordered opponents, time limit, finish transition, and catch-up
-profile.
+profile. Route topology, checkpoint crossing, position, opponent state, timer,
+reset, finish, and street-race-set behavior follow
+[Race route and opponent runtime](race-route-and-opponent-runtime.md).
 
 A mission race may use a forced vehicle without granting ownership. Opponent
 identity, route order, shortcuts, reset transforms, and finish direction remain
-stable across retries, platforms, frame rates, and graphics presets.
+stable across retries, platforms, frame rates, and graphics presets. A vehicle
+following a route for a follow, dump, avoid, or lose-tail objective does not
+silently become a race.
 
 ## Objective observations
 
