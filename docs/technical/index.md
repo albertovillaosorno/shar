@@ -79,7 +79,7 @@ proprietary external formats.
 
 ## Current coverage
 
-- Active technical specifications: 38.
+- Active technical specifications: 40.
 - Template records: 1.
 - Review date: 2026-07-14.
 - Status boundary: this catalog describes current repository behavior and does
