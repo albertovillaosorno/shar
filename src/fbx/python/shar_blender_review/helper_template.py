@@ -1,6 +1,48 @@
+# File:
+#   - helper_template.py
+# Path:
+#   - src/fbx/python/shar_blender_review/helper_template.py
+#
+# Copyright:
+#   - Copyright (c) 2026 Alberto Villa Osorno.
+# SPDX-License-Identifier:
+#   - MIT
+# Confidential:
+#   - false
+# License-File:
+#   - LICENSE
+# Path-Rule:
+#   - All paths in this header are repository-root relative.
+#
+# Boundary-Contract:
+# - Owns:
+#   - The typed standalone Blender review-helper template.
+# - Must-Not:
+#   - Contain machine-local paths, invoke itself, or alter FBX source data.
+# - Allows:
+#   - Retain this source-template provenance header in generated copies.
+# - Split-When:
+#   - Runtime protocols and helper orchestration gain independent contracts.
+# - Merge-When:
+#   - Another tracked template owns the same generated helper behavior.
+# - Summary:
+#   - Provides deterministic Blender-side FBX inspection behavior.
+# - Description:
+#   - Imports one sibling FBX, selects its armature and animation, and preserves
+#   - native frame timing without rewriting source animation data.
+# - Usage:
+#   - Materialized only by the explicit experimental review-helper option.
+# - Defaults:
+#   - No Python package marker is emitted beside generated helpers.
+#
+# ADRs:
+# - docs/adr/fbx/export/fbx-output-contract-boundary.md
+#
+# Large file:
+#   - false
+#
 # Standalone generated helper; no Python package marker is emitted.
 # ruff: noqa: INP001
-# Copyright (c) 2026 Alberto Villa Osorno. All rights reserved.
 """Experimental unsupported Blender FBX review helper; may not work."""
 
 from __future__ import annotations

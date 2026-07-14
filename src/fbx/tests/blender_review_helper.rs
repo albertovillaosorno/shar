@@ -111,6 +111,15 @@ fn temp_root(label: &str) -> PathBuf {
 
 fn assert_script_contract(script: &str) -> Result<(), String> {
     for required in [
+        "# File:\n#   - helper_template.py",
+        "# Path:\n#   - src/fbx/python/shar_blender_review/helper_template.py",
+        "# SPDX-License-Identifier:\n#   - MIT",
+        "# Confidential:\n#   - false",
+        "# License-File:\n#   - LICENSE",
+        concat!(
+            "# Path-Rule:\n",
+            "#   - All paths in this header are repository-root relative.",
+        ),
         "# ruff: noqa: INP001",
         "Experimental unsupported Blender FBX review helper",
         "FBX_FILE_NAME: str = \"characters-apu-base-model.fbx\"",
@@ -131,6 +140,7 @@ fn assert_script_contract(script: &str) -> Result<(), String> {
         }
     }
     for forbidden in [
+        "All rights reserved",
         "script_path = Path(__file__).resolve()",
         "PREVIEW_FPS",
         "def _retime_action",
