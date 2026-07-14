@@ -46,41 +46,64 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool as the first Data Registry preflight before SHAR attempts to
+inspect registry schemas, sources, item identities, or cached values. An empty
+inventory proves that registry-dependent work must stop instead of guessing a
+registry name.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project and native MCP server must be ready.
+- The Data Registry subsystem and any plugins that register project registries
+  must be loaded.
+- Omit `structFilter` for the complete inventory.
+- When filtering, supply a reflected `UScriptStruct` path, not a class or object
+  path.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two consecutive unfiltered calls returned an empty array. Explicit `null` and an
+empty struct reference produced the same empty inventory. Supplying
+`/Script/CoreUObject.Object` failed because that identity is a class rather than
+the required script struct.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- An empty array is a valid result and means no Data Registry is currently
+  registered in the editor session.
+- Registry-dependent tools cannot be validated truthfully until this inventory
+  returns a real name.
+- Availability can change when plugins, project settings, or registry assets are
+  loaded or reconfigured; repeat this preflight in the same session as later
+  reads.
+- `structFilter` checks item-struct inheritance and accepts a `UScriptStruct`
+  identity only.
+- Registry names are runtime subsystem identities, not asset paths or config
+  filenames.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
