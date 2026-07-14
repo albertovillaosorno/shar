@@ -171,7 +171,13 @@ class FilesystemSkillStore:
         existing: dict[str, tuple[str, str]] = {}
         for path in sorted(capabilities_root.rglob("*.md")):
             relative_path = path.relative_to(self._output_root).as_posix()
-            content = path.read_text(encoding="utf-8")
+            try:
+                content = path.read_text(encoding="utf-8")
+            except UnicodeError as error:
+                fail_protocol(
+                    f"generated skill is not valid UTF-8: {relative_path}",
+                    cause=error,
+                )
             if (
                 "## Native identities" not in content
                 and "MANUAL FIELD:" not in content

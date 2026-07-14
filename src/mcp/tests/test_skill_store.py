@@ -266,6 +266,39 @@ def test_filesystem_store_rejects_nested_index_before_mutation(
     assert not output_root.exists()
 
 
+def test_filesystem_store_rejects_invalid_utf8_before_mutation(
+    tmp_path: Path,
+) -> None:
+    """Unreadable generated skills must not trigger cleanup or replacement."""
+    output_root = tmp_path / "skills" / "unreal"
+    documents = MarkdownSkillRenderer(TEST_UNREAL_MCP_VERSION).render(
+        complete_catalog()
+    )
+    store = FilesystemSkillStore(output_root)
+    store.replace(documents)
+    capability = next(
+        document
+        for document in documents
+        if document.relative_path.startswith("capabilities/")
+    )
+    target = output_root.joinpath(*capability.relative_path.split("/"))
+    invalid_content = b"\xff"
+    _ = target.write_bytes(invalid_content)
+    stale = output_root / "capabilities" / "removed" / "stale.md"
+    stale.parent.mkdir(parents=True)
+    _ = stale.write_text("stale generated file\n", encoding="utf-8")
+    original_index = (output_root / "index.md").read_text(encoding="utf-8")
+
+    with pytest.raises(ProtocolError, match="not valid UTF-8"):
+        store.replace(documents)
+
+    assert stale.is_file()
+    assert (output_root / "index.md").read_text(
+        encoding="utf-8"
+    ) == original_index
+    assert target.read_bytes() == invalid_content
+
+
 def test_filesystem_store_rejects_malformed_manual_fields_before_mutation(
     tmp_path: Path,
 ) -> None:

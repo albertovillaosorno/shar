@@ -139,6 +139,24 @@ def test_provider_rejects_duplicate_descriptor_keys(tmp_path: Path) -> None:
         ).read_version()
 
 
+def test_provider_wraps_invalid_utf8_descriptor(
+    tmp_path: Path,
+) -> None:
+    """Unreadable descriptor text remains a typed configuration failure."""
+    project = tmp_path / "project" / "shar.uproject"
+    engine = tmp_path / "UE_5.8"
+    _write_json(project, {"EngineAssociation": "5.8"})
+    descriptor = engine / _PLUGIN_RELATIVE_PATH
+    descriptor.parent.mkdir(parents=True, exist_ok=True)
+    _ = descriptor.write_bytes(b'{"VersionName":"1.0"}\xff')
+
+    with pytest.raises(ConfigurationError, match="cannot read Unreal MCP"):
+        _ = FilesystemUnrealMcpVersionProvider(
+            project,
+            environment={"UNREAL_ENGINE_ROOT": str(engine)},
+        ).read_version()
+
+
 def test_provider_classifies_non_finite_descriptor_json(
     tmp_path: Path,
 ) -> None:

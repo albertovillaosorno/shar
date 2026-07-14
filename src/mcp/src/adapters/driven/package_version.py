@@ -77,7 +77,7 @@ def package_version() -> str:
 def _source_project_version() -> str:
     try:
         parsed = tomllib.loads(_SOURCE_PYPROJECT.read_text(encoding="utf-8"))
-    except (OSError, tomllib.TOMLDecodeError) as error:
+    except (OSError, UnicodeError, tomllib.TOMLDecodeError) as error:
         fail_configuration(
             f"cannot read translator package metadata: {_SOURCE_PYPROJECT}",
             cause=error,

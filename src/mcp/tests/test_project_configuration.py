@@ -51,10 +51,14 @@ from __future__ import annotations
 
 import json
 import tomllib
+from importlib.metadata import PackageNotFoundError
 from pathlib import Path
 from typing import cast
+from unittest.mock import patch
 
+import pytest
 from mcp.src.adapters.driven.package_version import package_version
+from mcp.src.domain.errors import ConfigurationError
 from mcp.src.domain.json_types import require_json_object
 
 _REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
@@ -145,6 +149,28 @@ def test_translator_version_matches_package_metadata() -> None:
     )
 
     assert project["version"] == package_version()
+
+
+def test_translator_source_version_wraps_invalid_utf8(tmp_path: Path) -> None:
+    """Unreadable source metadata remains a typed configuration failure."""
+    metadata = tmp_path / "pyproject.toml"
+    _ = metadata.write_bytes(b"\xff")
+    package_version.cache_clear()
+    try:
+        with (
+            patch(
+                "mcp.src.adapters.driven.package_version._SOURCE_PYPROJECT",
+                metadata,
+            ),
+            patch(
+                "mcp.src.adapters.driven.package_version.distribution_version",
+                side_effect=PackageNotFoundError,
+            ),
+            pytest.raises(ConfigurationError, match="cannot read translator"),
+        ):
+            _ = package_version()
+    finally:
+        package_version.cache_clear()
 
 
 def test_native_mcp_server_autostarts_with_tool_search() -> None:

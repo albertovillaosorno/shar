@@ -133,7 +133,7 @@ def _read_json_object(path: Path, *, context: str) -> JsonObject:
         )
     except DuplicateJsonKeyError as error:
         fail_configuration(str(error), cause=error)
-    except (OSError, json.JSONDecodeError) as error:
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
         fail_configuration(f"cannot read {context}: {path}", cause=error)
     try:
         return require_json_object(parsed, context=context)
