@@ -118,7 +118,8 @@ def read_http_payload(
     """
     limit = validate_max_response_bytes(max_response_bytes)
     content_type = response.getheader("Content-Type", "") or ""
-    if _CONTENT_TYPE_EVENT_STREAM in content_type.casefold():
+    media_type = content_type.partition(";")[0].strip().casefold()
+    if media_type == _CONTENT_TYPE_EVENT_STREAM:
         if request_id is None:
             fail_protocol("notification unexpectedly returned an SSE stream")
         return _read_sse_payload(response, request_id, limit)

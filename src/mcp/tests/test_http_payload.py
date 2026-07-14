@@ -180,6 +180,23 @@ def test_declared_content_length_fails_before_body_read() -> None:
         )
 
 
+def test_json_content_type_parameter_cannot_trigger_sse_mode() -> None:
+    """Only the actual media type selects event-stream framing."""
+    body = b'{"jsonrpc":"2.0","id":1,"result":{}}'
+    response = MemoryResponse(
+        body,
+        headers={
+            "Content-Type": 'application/json; profile="text/event-stream"',
+        },
+    )
+
+    assert read_http_payload(
+        response,
+        1,
+        max_response_bytes=len(body),
+    ) == {"jsonrpc": "2.0", "id": 1, "result": {}}
+
+
 def test_sse_progress_is_skipped_until_matching_final_response() -> None:
     """Accept a final SSE event at EOF after progress events."""
     body = (
