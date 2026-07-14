@@ -126,6 +126,19 @@ def test_initialize_requires_tools_capability() -> None:
         )
 
 
+def test_result_requires_exact_integer_request_id() -> None:
+    """Boolean and floating identifiers cannot alias an integer request."""
+    for response_id in (True, 1.0):
+        exchange = HttpExchange(
+            status=200,
+            session_id=None,
+            payload={"jsonrpc": "2.0", "id": response_id, "result": {}},
+        )
+
+        with pytest.raises(ProtocolError, match="response id mismatch"):
+            _ = require_json_rpc_result(exchange, _REQUEST_ID)
+
+
 def test_result_requires_json_rpc_version_two() -> None:
     """A lookalike response without JSON-RPC 2.0 is rejected."""
     exchange = HttpExchange(

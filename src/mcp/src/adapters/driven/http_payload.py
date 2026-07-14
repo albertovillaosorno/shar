@@ -53,6 +53,9 @@ from __future__ import annotations
 import json
 from typing import NoReturn, Protocol, TypeVar, cast, overload
 
+from mcp.src.adapters.driven.response_validation import (
+    matches_integer_request_id,
+)
 from mcp.src.domain.errors import fail_configuration, fail_protocol
 from mcp.src.domain.json_types import (
     DuplicateJsonKeyError,
@@ -213,7 +216,7 @@ def _finish_sse_event(
         context="SSE data",
     )
     data_lines.clear()
-    if payload.get("id") == request_id:
+    if matches_integer_request_id(payload.get("id"), request_id):
         return payload
     return None
 

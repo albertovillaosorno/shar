@@ -117,6 +117,15 @@ def parse_initialized_session(
     )
 
 
+def matches_integer_request_id(value: object, request_id: int) -> bool:
+    """Return whether a response id exactly matches one integer request."""
+    return (
+        isinstance(value, int)
+        and not isinstance(value, bool)
+        and value == request_id
+    )
+
+
 def require_json_rpc_result(
     exchange: HttpExchange,
     request_id: int,
@@ -136,7 +145,7 @@ def require_json_rpc_result(
     if payload.get("jsonrpc") != _JSON_RPC_VERSION:
         fail_protocol("response omitted JSON-RPC version 2.0")
     response_id = payload.get("id")
-    if response_id != request_id:
+    if not matches_integer_request_id(response_id, request_id):
         fail_protocol(
             f"response id mismatch: expected {request_id}, got {response_id}"
         )

@@ -231,6 +231,24 @@ def test_sse_progress_is_skipped_until_matching_final_response() -> None:
     ) == {"jsonrpc": "2.0", "id": 7, "result": {}}
 
 
+def test_sse_boolean_id_cannot_alias_integer_response() -> None:
+    """A boolean event id is skipped before the exact integer response."""
+    body = (
+        b'data: {"jsonrpc":"2.0","id":true,"result":{"value":"wrong"}}\n\n'
+        b'data: {"jsonrpc":"2.0","id":1,"result":{"value":"right"}}\n\n'
+    )
+    response = MemoryResponse(
+        body,
+        headers={"Content-Type": "text/event-stream"},
+    )
+
+    assert read_http_payload(
+        response,
+        1,
+        max_response_bytes=len(body),
+    ) == {"jsonrpc": "2.0", "id": 1, "result": {"value": "right"}}
+
+
 def test_sse_overflow_and_notification_stream_fail_closed() -> None:
     """SSE cannot cross the byte ceiling or answer a notification."""
     body = b'data: {"jsonrpc":"2.0","id":2,"result":{}}\n\n'
