@@ -102,6 +102,43 @@ class _CleanupTransport(McpTransport):
         raise self._close_error
 
 
+class _RetryCleanupTransport(_CleanupTransport):
+    """Synthetic transport whose first close attempt fails."""
+
+    def __init__(self) -> None:
+        super().__init__(ProtocolError("close failed"))
+        self.initialize_calls = 0
+        self.close_attempts = 0
+
+    @override
+    def initialize(self) -> McpSession:
+        self.initialize_calls += 1
+        return _SESSION
+
+    @override
+    def close(self, session: McpSession) -> None:
+        assert session == _SESSION
+        self.close_attempts += 1
+        if self.close_attempts == 1:
+            raise self._close_error
+        self.closed = True
+
+
+def test_failed_close_retains_session_for_retry() -> None:
+    transport = _RetryCleanupTransport()
+    translator = UnrealMcpTranslator(transport)
+    assert translator.connect() == _SESSION
+
+    with pytest.raises(ProtocolError, match="close failed"):
+        translator.close()
+
+    assert translator.connect() == _SESSION
+    assert transport.initialize_calls == 1
+    translator.close()
+    assert transport.close_attempts == 2
+    assert transport.closed
+
+
 def test_close_failure_propagates_without_primary_failure() -> None:
     transport = _CleanupTransport(ProtocolError("close failed"))
 

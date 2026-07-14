@@ -158,8 +158,8 @@ class UnrealMcpTranslator:
         if self._session is None:
             return
         session = self._session
-        self._session = None
         self._transport.close(session)
+        self._session = None
 
     def doctor(self) -> DoctorReport:
         """Verify protocol health and required meta-tool availability.
