@@ -192,6 +192,9 @@ def test_result_requires_well_formed_json_rpc_error() -> None:
         {"code": True, "message": "failed"},
         {"code": 1.0, "message": "failed"},
         {"code": -1, "message": 17},
+        {"code": -1, "message": ""},
+        {"code": -1, "message": "failed\ninjected"},
+        {"code": -1, "message": "failed\x07"},
         {"message": "failed"},
     )
     for error_value in malformed_errors:

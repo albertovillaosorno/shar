@@ -114,4 +114,8 @@ def _validated_error_message(
     if not isinstance(code, int) or isinstance(code, bool):
         return None
     message = error.get("message")
-    return message if isinstance(message, str) else None
+    return (
+        message
+        if isinstance(message, str) and message and message.isprintable()
+        else None
+    )

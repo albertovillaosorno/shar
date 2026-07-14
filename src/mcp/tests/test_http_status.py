@@ -125,6 +125,21 @@ def test_malformed_rpc_error_uses_status_fallback() -> None:
         {
             "jsonrpc": "2.0",
             "id": 1,
+            "error": {"code": -32603, "message": ""},
+        },
+        {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "error": {"code": -32603, "message": "failed\ninjected"},
+        },
+        {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "error": {"code": -32603, "message": "failed\x07"},
+        },
+        {
+            "jsonrpc": "2.0",
+            "id": 1,
             "result": {},
             "error": {"code": -32603, "message": "failed"},
         },
