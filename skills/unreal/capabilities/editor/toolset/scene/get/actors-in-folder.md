@@ -46,17 +46,16 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-Use this tool to inspect one SHAR World Outliner group after discovering its
-exact path. The verified example enumerated the environment actors grouped under
-`Lighting` before scene and viewport checks.
+Use this tool to obtain actors directly or recursively contained in one existing
+World Outliner folder.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-- The canonical SHAR project and an active Level Editor world must be ready.
-- Obtain the exact folder path from `get_folders` in the same loaded world.
-- Set `recursive` explicitly so child-folder inclusion is deliberate.
+- Discover the exact folder through `get_folders`.
+- Choose recursive behavior explicitly.
+- Treat returned actor refs as current-session identities.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
@@ -65,7 +64,7 @@ exact path. The verified example enumerated the environment actors grouped under
 ```json
 {
   "folder_path": "Lighting",
-  "recursive": true
+  "recursive": false
 }
 ```
 <!-- END MANUAL FIELD: validated-arguments -->
@@ -73,31 +72,28 @@ exact path. The verified example enumerated the environment actors grouped under
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-Two consecutive calls returned the same six actors: a directional light, a
-static-mesh actor, sky atmosphere, sky light, exponential-height fog, and
-volumetric cloud. Every returned reference belonged to the current level, and
-`get_folders` independently reported the `Lighting` path.
+Repeated `Lighting` reads returned six direct actors. `HLOD` returned zero
+direct actors and 64 recursive actors, while its child folder returned the same
+64 directly. Missing and empty paths raised folder-does-not-exist errors.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-- Actor references belong to the currently loaded world and can include
-  transient level paths and instance identifiers.
-- `recursive` changes the target set when child folders exist; do not rely on
-  its default when result cardinality matters.
-- A folder result proves membership, not visibility in the active viewport.
-  Use `GetVisibleActors` for that separate question.
+- A parent folder can exist while containing no direct actors.
+- Recursive results include descendants from nested folders.
+- Missing folders raise errors instead of returning an empty array.
+- Actor refs become stale after deletion, level changes, or world reloads.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

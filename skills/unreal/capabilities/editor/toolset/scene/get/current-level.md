@@ -46,20 +46,15 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-Use this read before SHAR scene, actor, viewport, or import verification to
-identify the level that currently owns editor world state. It also distinguishes
-a saved `/Game/...` level from an unsaved transient `/Temp/...` world before an
-agent records actor identities.
+Use this tool to identify the editor's active level before SHAR performs scene
+discovery, validation, or a separately authorized load or save.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-- The canonical SHAR project must be open, and `doctor` must report a ready,
-  non-empty Toolset Registry.
-- A Level Editor world must exist. No actor or asset selection is required.
-- Run this immediately before dependent scene reads so the level identity is
-  current.
+- The canonical SHAR project and editor world must be ready.
+- Treat `/Temp` results as unsaved transient levels.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
@@ -73,29 +68,28 @@ agent records actor identities.
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-Two fresh calls returned `/Temp/Untitled_1`. A narrow `find_actors` call found
-one `PlayerStart` whose `refPath` began with `/Temp/Untitled_1.`, and a bounded
-current-session log query independently confirmed that the editor was launched
-with the canonical `src/uproject/shar.uproject` project.
+Two calls returned `/Temp/Untitled_1`. Independent actor searches returned refs
+rooted in `/Temp/Untitled_1.Untitled_1:PersistentLevel`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-- The verified SHAR session used an unsaved level, so the returned `/Temp/...`
-  path was transient and must not be retained as a durable asset identity.
-- This tool identifies the current level, not the project file. Confirm project
-  identity separately when readiness evidence requires it.
+- A `/Temp` path identifies an unsaved editor level and is not a durable content
+  asset.
+- The active level can change after loading, PIE transitions, or editor actions.
+- Refresh this value before constructing level-relative actor expectations.
+- This read does not save or load the level.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

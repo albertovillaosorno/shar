@@ -46,19 +46,17 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-Use this tool to resolve a narrowly named actor before SHAR scene validation or
-actor-property inspection. The verified example located the template
-`PlayerStart` before reading its editor label and world transform.
+Use this tool to perform bounded actor discovery by label, class, tag, hierarchy
+root, world bounds, and collision channels.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-- The canonical SHAR project and an active Level Editor world must be ready.
-- Bound the search with a meaningful name, tag, type, root, or bounds criterion.
-- The live schema requires `name`, `tag`, and `collision_channels`, even when an
-  unused criterion is represented by an empty string or array.
-- Consume returned actor references immediately through a compatible actor read.
+- Pass explicit empty strings for unused `name` and `tag` fields.
+- Pass an explicit collision-channel array.
+- Use `bounds: null` when no spatial filter is intended.
+- Rediscover session-local actor refs after level changes.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
@@ -66,9 +64,12 @@ actor-property inspection. The verified example located the template
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
 ```json
 {
-  "collision_channels": [],
-  "name": "PlayerStart",
-  "tag": ""
+  "name": "Brush",
+  "tag": "",
+  "actor_type": null,
+  "root": null,
+  "bounds": null,
+  "collision_channels": []
 }
 ```
 <!-- END MANUAL FIELD: validated-arguments -->
@@ -76,33 +77,32 @@ actor-property inspection. The verified example located the template
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-The validated call returned exactly one actor reference under the current
-`/Temp/Untitled_1` level. Independent `get_label` and `get_actor_transform`
-reads returned the `PlayerStart` label, location near `(-200, 0, 92)`, yaw
-`180`, and unit scale.
+Two unfiltered calls returned the same 145 actors. `Brush` and lowercase `brush`
+each returned only `Brush_0`; missing name and tag filters returned empty
+arrays. Rooting the query at `Brush_0` returned that actor. A huge bounds box
+returned all 145 actors without channels and 64 with `ObjectTypeQuery1`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-- Supplying empty `name`, `tag`, and `collision_channels` values with no other
-  filter produced a very large world-wide actor result in the verified level.
-  Do not use that shape for routine discovery.
-- Returned references can contain transient `/Temp/...` level paths and Unreal
-  actor instance identifiers. Re-discover them after a level reload instead of
-  persisting them as project constants.
-- An empty collision-channel array is still required by the current live schema
-  when collision filtering is not used.
+- Name matching is case-insensitive substring matching.
+- Collision channels affect the native overlap query only with bounds.
+- `bounds: null` is not equivalent to a box with `isValid: false`; the latter
+  returned a reduced 23-actor result.
+- A non-Actor class can fail inside `GameplayStatics.GetAllActorsOfClass`.
+- Results are current-session actor refs and can change after streaming or level
+  edits.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

@@ -49,19 +49,15 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-Use this tool to inspect SHAR World Outliner organization before folder-scoped
-validation or automation. The verified level exposed the `HLOD`,
-`HLOD/HLOD0_Instancing`, and `Lighting` paths used by its generated world and
-environment actors.
+Use this tool to enumerate current World Outliner folder paths before SHAR
+performs folder-scoped actor inspection.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-- The canonical SHAR project and native MCP server must be ready.
-- A Level Editor world with initialized World Outliner state must be loaded.
-- Read the current level first when folder evidence will drive another scene
-  operation.
+- The editor world must be ready.
+- Use returned paths exactly with `get_actors_in_folder`.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
@@ -75,30 +71,29 @@ environment actors.
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-Two consecutive calls returned the same three folder paths. An independent
-`get_actors_in_folder` query for `Lighting` with recursion enabled returned six
-actors, confirming that the reported folder was active in the loaded world.
+Two calls returned the same sorted paths: `HLOD`, `HLOD/HLOD0_Instancing`, and
+`Lighting`. The parent `HLOD` path was included because its child folder
+existed.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-- Intermediate parent paths are included. The `HLOD` parent and
-  `HLOD/HLOD0_Instancing` child therefore count as separate returned strings.
-- Results describe only the currently loaded world and can change when actors
-  move between folders or another level is loaded.
-- Folder paths do not identify their actors; use `get_actors_in_folder` for that
-  follow-up.
+- The list includes intermediate parent folders.
+- Empty folders without actors may not remain represented.
+- Folder paths are current editor state and can change without asset-path
+  changes.
+- Folder names are distinct from actor labels and object paths.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
