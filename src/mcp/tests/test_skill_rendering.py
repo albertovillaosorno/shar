@@ -176,6 +176,53 @@ def test_schema_prose_cannot_create_accidental_markdown_lists() -> None:
     assert "; float: 1.0; name: MyValue" in " ".join(lines)
 
 
+def test_schema_prose_rejects_control_characters() -> None:
+    """Schema descriptions cannot carry hidden controls into Markdown."""
+    definition = toolset("AutomationTestToolset.AutomationTestToolset")
+    tool = definition.tools[0]
+    input_schema: JsonObject = {
+        "properties": {
+            "value": {
+                "description": "Reads one value.\x00Injected text.",
+                "type": "string",
+            }
+        },
+        "type": "object",
+    }
+
+    with pytest.raises(ProtocolError, match="schema prose contains controls"):
+        _ = render_inputs(tool._replace(input_schema=input_schema), {})
+
+
+def test_schema_inline_text_rejects_control_characters() -> None:
+    """Inline schema labels cannot carry hidden controls into Markdown."""
+    definition = toolset("AutomationTestToolset.AutomationTestToolset")
+    tool = definition.tools[0]
+    schemas: tuple[JsonObject, ...] = (
+        {
+            "properties": {"value\x00": {"type": "string"}},
+            "type": "object",
+        },
+        {
+            "properties": {"value": {"type": "string\x00"}},
+            "type": "object",
+        },
+        {
+            "properties": {
+                "value": {
+                    "pattern": "value\x00",
+                    "type": "string",
+                }
+            },
+            "type": "object",
+        },
+    )
+
+    for input_schema in schemas:
+        with pytest.raises(ProtocolError, match=r"schema .* contains controls"):
+            _ = render_inputs(tool._replace(input_schema=input_schema), {})
+
+
 def test_renderer_keeps_generated_skills_technical_only() -> None:
     """General policy prose exposed by a native description is not rendered."""
     catalog = complete_catalog()

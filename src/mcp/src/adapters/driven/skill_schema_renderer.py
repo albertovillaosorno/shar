@@ -79,6 +79,7 @@ def render_inputs(
         return ["This tool accepts no input fields."]
     lines: list[str] = []
     for name in sorted(properties):
+        _ = _inline_schema_text(name, "field name")
         schema = require_json_object(
             properties[name],
             context=f"{tool.name}.inputSchema.properties.{name}",
@@ -117,6 +118,7 @@ def render_output(tool: ToolDefinition, returns_text: str) -> list[str]:
         lines.extend(_wrapped_note(returns_text))
         lines.append("")
     for name in sorted(properties):
+        _ = _inline_schema_text(name, "field name")
         field_schema = require_json_object(
             properties[name],
             context=f"{tool.name}.outputSchema.properties.{name}",
@@ -177,11 +179,18 @@ def _field_lines(
         lines.extend(f"  - `{_compact_json(value)}`" for value in enum)
     pattern = schema.get("pattern")
     if isinstance(pattern, str) and pattern:
+        pattern = _inline_schema_text(pattern, "pattern")
         lines.append(f"- Pattern: `{pattern}`")
     lines.extend(["- Purpose:", ""])
     lines.extend(_wrapped_note(description or _missing_description(name)))
     lines.append("")
     return lines
+
+
+def _inline_schema_text(value: str, label: str) -> str:
+    if any(not character.isprintable() for character in value):
+        fail_protocol(f"schema {label} contains controls")
+    return value
 
 
 def _properties(schema: JsonObject, context: str) -> JsonObject:
@@ -205,6 +214,11 @@ def _description(schema: JsonObject) -> str:
     for key in ("description", "title"):
         value = schema.get(key)
         if isinstance(value, str) and value.strip():
+            if any(
+                not character.isprintable() and not character.isspace()
+                for character in value
+            ):
+                fail_protocol("schema prose contains controls")
             return " ".join(value.split())
     return ""
 
@@ -213,6 +227,7 @@ def _schema_type(schema: JsonObject) -> str:
     raw_type = schema.get("type")
     result = "unspecified"
     if isinstance(raw_type, str):
+        raw_type = _inline_schema_text(raw_type, "type")
         result = raw_type
         if raw_type == "array":
             result = "array"
@@ -221,7 +236,11 @@ def _schema_type(schema: JsonObject) -> str:
                 item_schema = cast("JsonObject", items)
                 result = f"array<{_schema_type(item_schema)}>"
     elif isinstance(raw_type, list):
-        names = [item for item in raw_type if isinstance(item, str)]
+        names = [
+            _inline_schema_text(item, "type")
+            for item in raw_type
+            if isinstance(item, str)
+        ]
         if names:
             result = " | ".join(names)
     elif "properties" in schema:
