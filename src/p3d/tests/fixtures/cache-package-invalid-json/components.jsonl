@@ -1,0 +1,2 @@
+{"schema":"p3d.package.v1","byte_len":24,"chunk_count":2,"component_count":1}
+{"ordinal":1,"name":"value","path":"mesh/invalid.json","kind":"mesh","payload_format":"schema_json","schema_ref":"mesh","recovery_status":"decoded_schema_payload"}

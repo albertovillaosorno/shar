@@ -1,0 +1,30 @@
+[package]
+name = "p3d"
+version.workspace = true
+edition = "2024"
+license = "MIT"
+description = "Lossless Pure3D inspection and extraction for normalization."
+publish = false
+
+[dependencies]
+# schoenwald-cli centralizes process arguments, ordered streams, newline handling, and exit-code mapping for both P3D driving adapters.
+schoenwald-cli = { path = "../cli" }
+# schoenwald-filesystem centralizes complete package reads, deterministic traversal, path inspection, and complete report publication.
+schoenwald-filesystem = { path = "../filesystem" }
+# shar-json-text owns lossless JSON string-content escaping shared across format boundaries.
+shar-json-text = { path = "../json-text" }
+
+# serde_json validates every generated component and manifest document before any P3D package publication.
+serde_json = "1"
+
+[lib]
+name = "p3d"
+path = "src/lib.rs"
+
+[[bin]]
+name = "p3d-extract"
+path = "src/main.rs"
+
+[[bin]]
+name = "p3d-batch-extract"
+path = "src/bin/batch_extract.rs"
