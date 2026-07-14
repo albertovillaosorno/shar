@@ -140,20 +140,22 @@ def read_bounded_body(
         The complete body when it fits within the configured limit.
     """
     limit = validate_max_response_bytes(max_response_bytes)
-    _validate_content_length(response, limit)
+    declared_length = _validate_content_length(response, limit)
     body = response.read(limit + 1)
     if len(body) > limit:
         fail_protocol(f"HTTP response exceeded {limit} bytes")
+    if declared_length is not None and len(body) != declared_length:
+        fail_protocol("HTTP response Content-Length does not match body size")
     return body
 
 
 def _validate_content_length(
     response: HttpPayloadResponse,
     limit: int,
-) -> None:
+) -> int | None:
     raw_length = response.getheader("Content-Length")
     if raw_length is None:
-        return
+        return None
     if raw_length.startswith("-"):
         magnitude = raw_length[1:]
         if magnitude.isascii() and magnitude.isdigit():
@@ -166,6 +168,7 @@ def _validate_content_length(
         fail_protocol("HTTP response Content-Length is invalid", cause=error)
     if length > limit:
         fail_protocol(f"HTTP response exceeded {limit} bytes")
+    return length
 
 
 def _read_sse_payload(

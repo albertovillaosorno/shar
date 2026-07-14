@@ -186,6 +186,16 @@ def test_declared_content_length_fails_before_body_read() -> None:
             )
 
 
+def test_declared_content_length_must_match_body_size() -> None:
+    """A bounded body must contain exactly the declared number of bytes."""
+    for body, declared in ((b"1234", "5"), (b"12345", "4")):
+        with pytest.raises(ProtocolError, match="does not match body size"):
+            _ = read_bounded_body(
+                MemoryResponse(body, headers={"Content-Length": declared}),
+                max_response_bytes=8,
+            )
+
+
 def test_json_content_type_parameter_cannot_trigger_sse_mode() -> None:
     """Only the actual media type selects event-stream framing."""
     body = b'{"jsonrpc":"2.0","id":1,"result":{}}'
