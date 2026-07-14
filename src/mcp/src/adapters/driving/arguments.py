@@ -53,7 +53,7 @@ from __future__ import annotations
 
 import json
 import math
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import NamedTuple, Never, cast
 
 from mcp.src.domain.endpoint import McpEndpoint
@@ -222,8 +222,16 @@ def parse_skill_output_path(operands: tuple[str, ...]) -> Path:
         return Path("skills/unreal")
     if len(operands) != _TWO_OPTION_PARTS or operands[0] != "--output":
         _fail_usage("skills accepts only --output RELATIVE_PATH")
-    output_path = Path(operands[1])
-    if output_path.is_absolute() or ".." in output_path.parts:
+    raw_path = operands[1]
+    output_path = Path(raw_path)
+    posix_path = PurePosixPath(raw_path)
+    windows_path = PureWindowsPath(raw_path)
+    if (
+        posix_path.anchor
+        or windows_path.anchor
+        or ".." in posix_path.parts
+        or ".." in windows_path.parts
+    ):
         _fail_usage("skills output must be a repository-relative child path")
     if output_path == Path() or not output_path.parts:
         _fail_usage("skills output must not be the repository root")
