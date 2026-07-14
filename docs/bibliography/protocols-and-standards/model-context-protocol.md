@@ -6,12 +6,13 @@ without treating every MCP implementation as one licensed product.
 ## Review Status And Scope
 
 - Review status: Evidence recorded.
-- Evidence status: Partially verified — SHAR client use, official protocol
-  specification, schema, documentation, and reference repository verified;
-  implementation-specific capabilities, authentication, and transport behavior
+- Evidence status: Partially verified — Operational SHAR client use, live protocol
+  version `2025-11-25`, official dated specification, current-edition label,
+  schema, documentation, and reference repository were verified.
+  Implementation-specific capabilities, authentication, and transport behavior
   remain server- and version-specific.
 - Counsel review: Not performed.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-14.
 - Subject class: Open protocol, schema, documentation, and reference tooling.
 
 ## Covered Material
@@ -21,21 +22,26 @@ documentation, and MCP Inspector reference client.
 
 ## Repository Use And Scope
 
-SHAR plans a repository-owned terminal MCP client that communicates with the
-unchanged native Unreal MCP server. The repository architecture also identifies
-MCP Inspector as an independent reference client for testing and debugging. The
+SHAR uses a repository-owned terminal MCP client that communicates with the
+unchanged native Unreal MCP server. The live doctor command creates a bounded
+session, verifies the meta-tool surface, reports protocol version `2025-11-25`,
+and closes the session. The repository architecture also identifies MCP
+Inspector as an independent reference client for testing and debugging. The
 protocol does not make any particular server, client, toolset, model, or host
 implementation part of the same license family.
 
 ## Provenance And Version History
 
-The repository uses the protocol behavior supported by the selected Unreal
-Engine integration. The compatible MCP edition is established by the installed
-engine, native plugin, and recorded interface evidence. The stable official
-`latest` endpoint currently resolves to a dated edition; that resolution is
-evidence for the access date, not a permanent assertion. Protocol editions,
-extensions, transports, and Inspector versions must be recorded separately in
-implementation and build or distribution evidence.
+The live Unreal server reports protocol version `2025-11-25`. The official
+versioned specification page labels that edition `latest` on 14 July 2026, and
+the mutable `/latest` endpoint redirects to the same dated page. The versioned
+endpoint is the reproducible authority for this observation; the redirect is
+currentness evidence only.
+
+Protocol editions, extensions, transports, schemas, and Inspector versions must
+be recorded separately in implementation, build, or distribution evidence. A
+future `/latest` redirect does not retroactively change the protocol edition used
+by the reviewed live session.
 
 ## Authorship, Ownership, And Attribution
 
@@ -60,20 +66,30 @@ boundaries.
 
 ## Compliance Posture
 
-Use protocol-version pinning, schema validation, least privilege, local-only
-binding where intended, explicit authentication, and implementation-specific
-license review. Do not describe MCP conformance as certification or endorsement.
+Pin and record the negotiated protocol edition, validate schemas, use least
+privilege and local-only binding where intended, require explicit
+authentication, and review each implementation's license. Use the dated
+`2025-11-25` specification for the reviewed session rather than relying on the
+mutable `/latest` redirect. Do not describe MCP conformance as certification or
+endorsement.
 
 ## Source References
 
+- Model Context Protocol contributors (2025) *Specification 2025-11-25*.
+  Identified as the latest edition on 14 July 2026 and as the authoritative
+  requirements based on the TypeScript schema. Available at:
+  <https://modelcontextprotocol.io/specification/2025-11-25> (Accessed: 14 July
+  2026).
 - Model Context Protocol contributors (n.d.) *Latest specification endpoint*.
-  Available at: <https://modelcontextprotocol.io/specification/latest>
-  (Accessed: 12 July 2026; resolved to the 25 November 2025 edition on that
-  date).
+  Redirected to the 25 November 2025 edition during review. Available at:
+  <https://modelcontextprotocol.io/specification/latest> (Accessed: 14 July
+  2026).
 - Model Context Protocol contributors (n.d.) *Official GitHub repository*.
   Available at: <https://github.com/modelcontextprotocol/modelcontextprotocol>
-  (Accessed: 12 July 2026).
+  (Accessed: 14 July 2026).
 - Model Context Protocol contributors (n.d.) *MCP Inspector official GitHub
   repository*. Available at: <https://github.com/modelcontextprotocol/inspector>
-  (Accessed: 12 July 2026).
-- SHAR repository (2026) `README.md` and `docs/adr/unreal/mcp/`.
+  (Accessed: 14 July 2026).
+- SHAR repository and live Unreal MCP session (2026), `README.md`,
+  `docs/adr/unreal/mcp/`, and doctor output reporting protocol version
+  `2025-11-25`, ready state, 52 toolsets, and no missing meta-tools.
