@@ -76,6 +76,15 @@ def test_endpoint_accepts_only_explicit_loopback_http() -> None:
         _ = McpEndpoint.parse("http://127.0.0.1/")
 
 
+def test_endpoint_rejects_dns_alias_for_loopback_boundary() -> None:
+    """A mutable hostname must not stand in for a literal loopback address."""
+    with pytest.raises(EndpointValidationError):
+        _ = McpEndpoint.parse("http://localhost:8123/mcp")
+
+    endpoint = McpEndpoint.parse("http://[::1]:8123/mcp")
+    assert endpoint.url == "http://[::1]:8123/mcp"
+
+
 def test_toolset_catalog_preserves_multiline_descriptions() -> None:
     """Qualified headers delimit toolsets and preserve nested bullets."""
     catalog_text = """- EditorToolset.EditorToolset: Editor operations

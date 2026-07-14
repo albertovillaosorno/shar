@@ -56,7 +56,7 @@ from urllib.parse import SplitResult, urlsplit
 
 from mcp.src.domain.errors import fail_endpoint
 
-_ALLOWED_HOSTS = frozenset({"127.0.0.1", "::1", "localhost"})
+_ALLOWED_HOSTS = frozenset({"127.0.0.1", "::1"})
 _DEFAULT_PORT = 8000
 _DEFAULT_PATH = "/mcp"
 _MAX_PORT = 65_535
