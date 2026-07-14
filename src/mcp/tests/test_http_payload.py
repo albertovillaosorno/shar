@@ -135,6 +135,21 @@ def test_json_payload_respects_content_length_and_stream_limit() -> None:
         )
 
 
+def test_json_payload_rejects_non_finite_numbers() -> None:
+    """JSON-RPC responses cannot contain NaN or infinity literals."""
+    for literal in (b"NaN", b"Infinity", b"-Infinity"):
+        body = b'{"jsonrpc":"2.0","id":1,"result":{"value":' + literal + b"}}"
+        with pytest.raises(ProtocolError, match="non-finite"):
+            _ = read_http_payload(
+                MemoryResponse(
+                    body,
+                    headers={"Content-Type": "application/json"},
+                ),
+                1,
+                max_response_bytes=len(body),
+            )
+
+
 def test_declared_content_length_fails_before_body_read() -> None:
     """An oversized or malformed Content-Length fails immediately."""
     with pytest.raises(ProtocolError, match="exceeded 4 bytes"):

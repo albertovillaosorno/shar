@@ -59,6 +59,7 @@ from mcp.src.domain.catalog import (
 )
 from mcp.src.domain.endpoint import McpEndpoint
 from mcp.src.domain.errors import EndpointValidationError, ProtocolError
+from mcp.src.domain.json_types import normalize_json
 
 if TYPE_CHECKING:
     from mcp.src.domain.json_types import JsonObject
@@ -107,6 +108,16 @@ def test_endpoint_rejects_dns_alias_for_loopback_boundary() -> None:
 
     endpoint = McpEndpoint.parse("http://[::1]:8123/mcp")
     assert endpoint.url == "http://[::1]:8123/mcp"
+
+
+def test_json_normalizer_rejects_non_finite_numbers() -> None:
+    """Recursive JSON validation rejects non-standard numeric constants."""
+    for value in (float("nan"), float("inf"), float("-inf")):
+        with pytest.raises(
+            ProtocolError,
+            match=r"payload\.value: JSON number must be finite",
+        ):
+            _ = normalize_json({"value": value}, context="payload")
 
 
 def test_toolset_catalog_preserves_multiline_descriptions() -> None:

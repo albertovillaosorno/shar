@@ -51,6 +51,7 @@
 
 from __future__ import annotations
 
+import math
 from typing import cast
 
 from mcp.src.domain.errors import fail_protocol
@@ -71,7 +72,11 @@ def normalize_json(value: object, *, context: str) -> JsonValue:
         A JSON-only value without untyped objects.
 
     """
-    if value is None or isinstance(value, str | bool | int | float):
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            fail_protocol(f"{context}: JSON number must be finite")
+        return value
+    if value is None or isinstance(value, str | bool | int):
         return value
     if isinstance(value, dict):
         raw_mapping = cast("dict[object, object]", value)

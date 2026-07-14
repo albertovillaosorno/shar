@@ -94,6 +94,17 @@ def test_request_limit_counts_utf8_bytes_not_characters() -> None:
         )
 
 
+def test_request_encoding_rejects_non_finite_numbers() -> None:
+    """JSON-RPC requests cannot contain NaN or infinity literals."""
+    for value in (float("nan"), float("inf"), float("-inf")):
+        payload: JsonObject = {"value": value}
+        with pytest.raises(TransportError, match="non-finite"):
+            _ = encode_json_request(
+                payload,
+                max_request_bytes=128,
+            )
+
+
 def test_request_limit_must_be_positive() -> None:
     """Invalid request ceilings fail before serialization."""
     with pytest.raises(ConfigurationError, match="must be positive"):

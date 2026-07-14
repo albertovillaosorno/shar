@@ -81,11 +81,19 @@ def encode_json_request(
         Deterministic compact UTF-8 JSON bytes.
     """
     limit = validate_max_request_bytes(max_request_bytes)
-    body = json.dumps(
-        payload,
-        ensure_ascii=False,
-        separators=(",", ":"),
-    ).encode("utf-8")
+    try:
+        serialized = json.dumps(
+            payload,
+            ensure_ascii=False,
+            allow_nan=False,
+            separators=(",", ":"),
+        )
+    except (TypeError, ValueError) as error:
+        fail_transport(
+            "MCP request contains a non-finite number or cycle",
+            cause=error,
+        )
+    body = serialized.encode("utf-8")
     if len(body) > limit:
         fail_transport(f"MCP request exceeded {limit} bytes")
     return body

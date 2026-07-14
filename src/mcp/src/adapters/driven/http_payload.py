@@ -51,7 +51,7 @@
 from __future__ import annotations
 
 import json
-from typing import Protocol, TypeVar, cast, overload
+from typing import NoReturn, Protocol, TypeVar, cast, overload
 
 from mcp.src.domain.errors import fail_configuration, fail_protocol
 from mcp.src.domain.json_types import JsonObject, require_json_object
@@ -207,7 +207,14 @@ def _finish_sse_event(
 
 def _decode_json(body: bytes, *, context: str) -> JsonObject:
     try:
-        parsed = cast("object", json.loads(body))
+        parsed = cast(
+            "object",
+            json.loads(body, parse_constant=_reject_non_finite_constant),
+        )
     except json.JSONDecodeError as error:
         fail_protocol(f"{context} is not valid JSON", cause=error)
     return require_json_object(parsed, context=context)
+
+
+def _reject_non_finite_constant(value: str) -> NoReturn:
+    fail_protocol(f"JSON contains non-finite number {value}")
