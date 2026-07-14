@@ -7,11 +7,12 @@
 - Jurisdiction: United States federal anti-circumvention law.
 - Authority level: Current eCFR text, Librarian of Congress final rule, and U.S.
   Copyright Office proceeding materials.
-- Regulatory currentness: re-verified against the current eCFR text on
-  2026-07-13; the section's source credit ends at 89 FR 85446 (Oct. 28, 2024)
-  and the exemption classes extend through paragraph (b)(20), so the 2024 final
-  rule remains the operative codification.
-- As-of date: 2026-07-13.
+- Regulatory currentness: reverified against the current eCFR text on
+  2026-07-14. The eCFR identifies Title 37 as current through 2026-07-10; the
+  section's amendment history ends at 89 FR 85446 (Oct. 28, 2024), and the
+  exemption classes extend through paragraph (b)(20), so the 2024 final rule
+  remains the operative codification.
+- As-of date: 2026-07-14.
 - Counsel review: Not performed.
 
 ## Question Presented
@@ -75,15 +76,15 @@ any reliance.
 
 - Electronic Code of Federal Regulations, 37 C.F.R. § 201.40:
   <https://www.ecfr.gov/current/title-37/part-201/section-201.40>
-  (Accessed: 13 July 2026).
+  (Accessed: 14 July 2026; Title 37 identified as current through 10 July 2026).
 - Electronic Code of Federal Regulations, *Title 37 Version History API*:
   <https://www.ecfr.gov/api/versioner/v1/versions/title-37.json>
-  (Accessed: 13 July 2026; latest substantive § 201.40 amendment identified as
+  (Accessed: 14 July 2026; latest substantive § 201.40 amendment identified as
   28 October 2024).
 - U.S. Copyright Office, ninth triennial proceeding, 2024 cycle:
-  <https://www.copyright.gov/1201/2024/> (Accessed: 13 July 2026).
+  <https://www.copyright.gov/1201/2024/> (Accessed: 14 July 2026).
 - Final rule, 89 Fed. Reg. 85437, effective October 28, 2024:
   <https://www.federalregister.gov/documents/2024/10/28/2024-24563/exemption-to-prohibition-on-circumvention-of-copyright-protection-systems-for-access-control>
-  (Accessed: 13 July 2026).
+  (Accessed: 14 July 2026).
 - U.S. Copyright Office, tenth triennial proceeding, 2027 cycle:
-  <https://www.copyright.gov/1201/2027/> (Accessed: 13 July 2026).
+  <https://www.copyright.gov/1201/2027/> (Accessed: 14 July 2026).

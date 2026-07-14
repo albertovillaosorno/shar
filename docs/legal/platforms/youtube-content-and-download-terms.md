@@ -8,7 +8,7 @@
   every relevant copyright territory.
 - Authority level: Current platform terms, uploader permissions, copyright law,
   and acquisition evidence.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-14.
 - Counsel review: Not performed.
 
 ## Question Presented
@@ -24,14 +24,16 @@ itself prove ownership of every linked file or grant redistribution rights.
 Platform terms, uploader permission, copyright, and rights in embedded
 third-party content must be analyzed separately.
 
-The live United States-facing YouTube Terms of Service identify 2023-12-15 as
-their effective date. That date was reverified at the current terms endpoint on
-2026-07-13. The terms permit use of content through service features and
-otherwise require authorization from the service, permission from the relevant
-rights holders, or another applicable legal basis before downloading,
-reproducing, distributing, modifying, or using content outside the ordinary
-service experience. They also require uploaders to have permission or another
-legal entitlement for included third-party intellectual property.
+The live United States-facing YouTube Terms of Service are dated 2023-12-15.
+That date was reverified at the current terms endpoint on 2026-07-14. The page
+does not label that date as a separately defined effective date, so this record
+does not convert `Dated` into `Effective`. The terms permit use of content
+through service features and otherwise require authorization from the service,
+permission from the relevant rights holders, or another applicable legal basis
+before downloading, reproducing, distributing, modifying, or using content
+outside the ordinary service experience. They also require uploaders to have
+permission or another legal entitlement for included third-party intellectual
+property.
 
 A video description may identify an external download, but that statement is
 evidence only of what the uploader represented. The external host's terms, the
@@ -56,8 +58,8 @@ owns all linked material, or that local research permits republication.
 
 ## Required Authorities
 
-- [YouTube Terms of Service][youtube-terms], effective 15 December 2023, and
-  applicable product policies (Accessed: 13 July 2026).
+- [YouTube Terms of Service][youtube-terms], dated 15 December 2023, and
+  applicable product policies (Accessed: 14 July 2026).
 - Video-specific description, license indicator, and uploader statements.
 - Terms and license notices at the actual download host.
 - Written permission from the relevant rights holder when relied upon.
