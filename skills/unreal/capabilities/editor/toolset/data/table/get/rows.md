@@ -46,41 +46,56 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to read a bounded set of DataTable rows as structured JSON during
+SHAR content or import review.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use an exact loaded `UDataTable` object path.
+- Discover row names with `list_rows`.
+- Parse the returned JSON string once more before using values.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "data_table": {"refPath": "/DatasmithContent/Datasmith/AreaLightsTable.AreaLightsTable"},
+  "row_names": ["EDatasmithAreaLightActorShape::Rectangle"]
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two single-row reads returned the rectangle mesh reference to
+`/DatasmithContent/Meshes/square.square`. A two-row read also returned the None
+row with `mesh: "None"`. An empty row list returned the JSON string `{}`, while
+an unknown row raised a rows-do-not-exist error.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The return value is JSON text and requires a second parse.
+- Object references are exported as Unreal text paths, not `refPath` objects.
+- Null-like object values can serialize as the string `"None"`.
+- Unknown rows raise an error instead of being omitted.
+- Missing table refs fail during parameter translation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
