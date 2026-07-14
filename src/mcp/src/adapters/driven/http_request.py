@@ -47,7 +47,12 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING
 
-from mcp.src.domain.errors import fail_configuration, fail_transport
+from mcp.src.domain.errors import (
+    ProtocolError,
+    fail_configuration,
+    fail_transport,
+)
+from mcp.src.domain.json_types import require_json_object
 
 if TYPE_CHECKING:
     from mcp.src.domain.json_types import JsonObject
@@ -82,18 +87,24 @@ def encode_json_request(
     """
     limit = validate_max_request_bytes(max_request_bytes)
     try:
+        normalized = require_json_object(payload, context="MCP request")
         serialized = json.dumps(
-            payload,
+            normalized,
             ensure_ascii=False,
             allow_nan=False,
             separators=(",", ":"),
         )
-    except (TypeError, ValueError) as error:
+        body = serialized.encode("utf-8")
+    except ProtocolError as error:
         fail_transport(
-            "MCP request contains a non-finite number or cycle",
+            f"MCP request contains non-finite or invalid JSON: {error}",
             cause=error,
         )
-    body = serialized.encode("utf-8")
+    except (RecursionError, TypeError, UnicodeEncodeError, ValueError) as error:
+        fail_transport(
+            "MCP request contains a non-finite value or cycle",
+            cause=error,
+        )
     if len(body) > limit:
         fail_transport(f"MCP request exceeded {limit} bytes")
     return body

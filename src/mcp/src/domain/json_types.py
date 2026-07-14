@@ -91,6 +91,14 @@ def reject_duplicate_json_object(
     return result
 
 
+def _normalize_json_text(value: str, *, context: str) -> str:
+    try:
+        encoded = value.encode("utf-16-le", errors="surrogatepass")
+        return encoded.decode("utf-16-le")
+    except UnicodeDecodeError as error:
+        fail_protocol(f"{context}: unpaired Unicode surrogate", cause=error)
+
+
 def normalize_json(value: object, *, context: str) -> JsonValue:
     """Return one deeply validated JSON value.
 
@@ -102,11 +110,13 @@ def normalize_json(value: object, *, context: str) -> JsonValue:
         A JSON-only value without untyped objects.
 
     """
+    if isinstance(value, str):
+        return _normalize_json_text(value, context=context)
     if isinstance(value, float):
         if not math.isfinite(value):
             fail_protocol(f"{context}: JSON number must be finite")
         return value
-    if value is None or isinstance(value, str | bool | int):
+    if value is None or isinstance(value, bool | int):
         return value
     if isinstance(value, dict):
         raw_mapping = cast("dict[object, object]", value)
@@ -114,9 +124,15 @@ def normalize_json(value: object, *, context: str) -> JsonValue:
         for raw_key, raw_value in raw_mapping.items():
             if not isinstance(raw_key, str):
                 fail_protocol(f"{context}: JSON key is not text")
-            result[raw_key] = normalize_json(
+            key = _normalize_json_text(
+                raw_key,
+                context=f"{context}: JSON key",
+            )
+            if key in result:
+                fail_protocol(f"{context}: duplicate normalized JSON key")
+            result[key] = normalize_json(
                 raw_value,
-                context=f"{context}.{raw_key}",
+                context=f"{context}.{key}",
             )
         return result
     if isinstance(value, list):

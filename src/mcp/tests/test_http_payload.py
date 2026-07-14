@@ -150,6 +150,39 @@ def test_json_payload_rejects_non_finite_numbers() -> None:
             )
 
 
+def test_json_payload_normalizes_or_rejects_surrogates() -> None:
+    """Response strings require valid Unicode scalar values."""
+    prefix = b'{"jsonrpc":"2.0","id":1,"result":{"value":"'
+    suffix = b'"}}'
+    pair_body = prefix + b"\\ud83d\\ude00" + suffix
+    payload = read_http_payload(
+        MemoryResponse(
+            pair_body,
+            headers={"Content-Type": "application/json"},
+        ),
+        1,
+        max_response_bytes=len(pair_body),
+    )
+    assert payload is not None
+    result = payload["result"]
+    assert isinstance(result, dict)
+    value = result["value"]
+    assert isinstance(value, str)
+    assert value.encode() == bytes.fromhex("f09f9880")
+
+    for escaped in (b"\\ud800", b"\\udc00"):
+        body = prefix + escaped + suffix
+        with pytest.raises(ProtocolError, match="unpaired Unicode surrogate"):
+            _ = read_http_payload(
+                MemoryResponse(
+                    body,
+                    headers={"Content-Type": "application/json"},
+                ),
+                1,
+                max_response_bytes=len(body),
+            )
+
+
 def test_json_payload_rejects_duplicate_object_keys() -> None:
     """Ambiguous JSON objects cannot overwrite an earlier member."""
     body = b'{"jsonrpc":"2.0","id":1,"result":{"value":1,"value":2}}'

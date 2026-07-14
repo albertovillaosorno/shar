@@ -50,7 +50,7 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import pytest
 from mcp.src.domain.catalog import (
@@ -121,6 +121,24 @@ def test_json_normalizer_rejects_non_finite_numbers() -> None:
             match=r"payload\.value: JSON number must be finite",
         ):
             _ = normalize_json({"value": value}, context="payload")
+
+
+def test_json_normalizer_handles_surrogate_pairs() -> None:
+    """Valid pairs become scalars while lone surrogates fail closed."""
+    pair = cast("str", json.loads('"\\ud83d\\ude00"'))
+    normalized = normalize_json({"value": pair}, context="payload")
+    assert isinstance(normalized, dict)
+    normalized_value = normalized["value"]
+    assert isinstance(normalized_value, str)
+    assert normalized_value.encode() == bytes.fromhex("f09f9880")
+
+    for escaped in ('"\\ud800"', '"\\udc00"'):
+        decoded = cast("str", json.loads(escaped))
+        with pytest.raises(ProtocolError, match="unpaired Unicode surrogate"):
+            _ = normalize_json(
+                {"value": decoded},
+                context="payload",
+            )
 
 
 def test_toolset_definition_rejects_duplicate_json_keys() -> None:

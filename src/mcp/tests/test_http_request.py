@@ -44,7 +44,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import json
+from typing import TYPE_CHECKING, cast
 
 import pytest
 from mcp.src.adapters.driven.http_request import (
@@ -103,6 +104,23 @@ def test_request_encoding_rejects_non_finite_numbers() -> None:
                 payload,
                 max_request_bytes=128,
             )
+
+
+def test_request_encoding_normalizes_or_rejects_surrogates() -> None:
+    """Valid pairs encode as scalars and lone surrogates fail as transport."""
+    pair = cast("str", json.loads('"\\ud83d\\ude00"'))
+    encoded = encode_json_request(
+        {"value": pair},
+        max_request_bytes=128,
+    )
+    assert encoded == bytes.fromhex("7b2276616c7565223a22f09f9880227d")
+
+    lone = cast("str", json.loads('"\\ud800"'))
+    with pytest.raises(TransportError, match="unpaired Unicode surrogate"):
+        _ = encode_json_request(
+            {"value": lone},
+            max_request_bytes=128,
+        )
 
 
 def test_request_limit_must_be_positive() -> None:
