@@ -7,12 +7,14 @@ technical, factual, or legal correctness.
 ## Review Status And Scope
 
 - Review status: Evidence recorded.
-- Evidence status: Verified — Official identity, installed package metadata,
-  repository use, and current distribution boundary verified.
+- Evidence status: Partially verified — Official identity, installed 10.0.0
+  package metadata, repository use, upstream 10.0.1 release, and the current
+  distribution boundary were verified. No documented compatibility hold or
+  other repository reason for retaining the older patch was identified.
 - Counsel review: Not performed.
 - Legal scope: Upstream licensing and the current non-distributed development
   dependency posture; no legal opinion is asserted.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-14.
 - Distribution posture: Development and validation dependency.
 - Subject class: Open-source spelling validator for source and documentation.
 
@@ -39,21 +41,25 @@ repository validator separately enforces dictionary classification, sorted and
 unique entries, and exact line-scoped suppressions for intentional invalid
 sequences.
 
-The installed package observed for this record is `cspell` 10.0.0. The official
-upstream repository identifies CSpell as a spell checker for code, lists its CLI
-and supporting packages, and identifies the project as MIT-licensed. The
-upstream release page showed 10.0.1 as the latest release on the review date;
-the local installation therefore was one patch release behind that observed
-upstream state.
+The repository-managed package observed for this record is `cspell` 10.0.0. The
+official upstream repository identifies CSpell as a spell checker for code,
+lists its CLI and supporting packages, and identifies the project as
+MIT-licensed. The official release page identifies 10.0.1 as the latest release
+and dates it 31 May 2026. The managed installation is therefore one patch release
+behind the verified upstream state.
 
 ## Provenance And Version History
 
-Repository configuration, installed package metadata, and the observed local
-validation environment establish the CSpell 10.0.0 identity and current SHAR
-role. The official website, repository, and release evidence establish upstream
-identity and the 10.0.1 currentness comparison as of 13 July 2026. Those values
-are dated observations, not permanent latest-version labels or an undocumented
-compatibility range.
+Repository configuration and installed package metadata establish the CSpell
+10.0.0 identity and current SHAR role. The official website, repository, and
+release evidence establish the 10.0.1 currentness comparison as of 14 July 2026.
+Those values are dated observations, not permanent latest-version labels or an
+undocumented compatibility range.
+
+A successful spelling run proves observed execution with 10.0.0; it does not
+make that patch current or establish a reason for retaining it. Version currency
+remains unresolved until the package is upgraded or a separately documented
+compatibility hold supplies evidence for the older patch.
 
 ## Authorship, Ownership, And Attribution
 
@@ -84,9 +90,9 @@ artifacts distributed.
 - A CSpell package, transitive dependency, and bundled-dictionary notice
   inventory is outside the current SHAR distribution boundary and is required
   when executable or package contents are redistributed.
-- The observed local CSpell 10.0.0 installation is accepted for the current
-  validation contract; compatibility remains enforced by validation results,
-  not by an undocumented version range.
+- The repository-managed CSpell 10.0.0 installation executes the current
+  spelling contract, but it is not represented as current while upstream 10.0.1
+  remains the verified latest release and no compatibility hold is documented.
 
 ## Compliance Posture
 
@@ -100,9 +106,13 @@ artifacts distributed.
 ## Source References
 
 - Street Side Software and contributors (n.d.) *CSpell official website*.
-  Available at: <https://cspell.org/> (Accessed: 13 July 2026).
+  Available at: <https://cspell.org/> (Accessed: 14 July 2026).
+- Street Side Software and contributors (2026) *CSpell releases*. Version
+  10.0.1 is identified as the latest release and dated 31 May 2026. Available
+  at: <https://github.com/streetsidesoftware/cspell/releases> (Accessed: 14
+  July 2026).
 - Street Side Software and contributors (n.d.) *CSpell official GitHub
   repository*. Available at: <https://github.com/streetsidesoftware/cspell>
-  (Accessed: 13 July 2026).
+  (Accessed: 14 July 2026).
 - SHAR repository (2026) `cspell.json`, `docs/cspell`, `validate.sh`, and
-  installed `cspell` package metadata.
+  repository-managed `cspell` 10.0.0 package metadata.
