@@ -297,9 +297,10 @@ fn resolve_material_from_source(
         &shader,
         shader_name,
     )?;
+    let material_name = decoded_material_identity(&shader.name);
     let Some(texture_reference) = texture_name(&shader)? else {
         return MaterialBinding::new(
-            shader.name,
+            material_name,
             None,
         )
         .map_err(DecodedComponentError::Material);
@@ -336,7 +337,7 @@ fn resolve_material_from_source(
         if !external_source.is_file() {
             return Err(
                 DecodedComponentError::MissingTexture {
-                    shader: shader.name,
+                    shader: material_name.clone(),
                     texture: texture_reference,
                     searched: external_source
                         .display()
@@ -348,7 +349,7 @@ fn resolve_material_from_source(
     } else {
         return Err(
             DecodedComponentError::MissingTexture {
-                shader: shader.name,
+                shader: material_name.clone(),
                 texture: texture_reference,
                 searched: local_source
                     .display()
@@ -358,7 +359,7 @@ fn resolve_material_from_source(
     };
     stage_texture_binding(
         output_texture_dir,
-        &shader.name,
+        &material_name,
         &source,
     )
 }
@@ -416,14 +417,17 @@ fn stage_texture_binding(
 
 /// Normalize one decoded texture reference into its staged PNG stem.
 fn texture_stem(reference: &str) -> Result<&str, DecodedComponentError> {
-    if !is_single_path_segment(reference) {
+    let normalized_reference = reference
+        .trim_end_matches('\u{0}')
+        .trim();
+    if !is_single_path_segment(normalized_reference) {
         return Err(
             DecodedComponentError::InvalidTextureReference(
                 reference.to_owned(),
             ),
         );
     }
-    let stem = reference
+    let stem = normalized_reference
         .rsplit_once('.')
         .filter(
             |(_, extension)| {
@@ -432,7 +436,7 @@ fn texture_stem(reference: &str) -> Result<&str, DecodedComponentError> {
             },
         )
         .map_or(
-            reference,
+            normalized_reference,
             |(stem, _)| stem,
         );
     if stem.is_empty() {
@@ -445,12 +449,30 @@ fn texture_stem(reference: &str) -> Result<&str, DecodedComponentError> {
     Ok(stem)
 }
 
+/// Reconstruct the portable member-file identity for a fixed-width shader.
+fn shader_member_identity(value: &str) -> String {
+    let unpadded = value.trim_end_matches('\u{0}');
+    let padding_length = value.len() - unpadded.len();
+    let mut identity = String::with_capacity(value.len());
+    identity.push_str(unpadded);
+    identity.push_str(&"_".repeat(padding_length));
+    identity
+}
+
+/// Normalize one fixed-width shader identity for FBX domain use.
+fn decoded_material_identity(value: &str) -> String {
+    value
+        .trim_end_matches('\u{0}')
+        .trim()
+        .to_owned()
+}
+
 /// Ensure one decoded shader carries internally consistent source evidence.
 fn ensure_shader_evidence(
     shader: &DecodedShader,
     shader_name: &str,
 ) -> Result<(), DecodedComponentError> {
-    if shader.name != shader_name {
+    if shader_member_identity(&shader.name) != shader_name {
         return Err(
             DecodedComponentError::ShaderIdentityMismatch {
                 requested: shader_name.to_owned(),

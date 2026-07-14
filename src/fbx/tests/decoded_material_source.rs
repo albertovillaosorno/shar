@@ -138,6 +138,94 @@ fn rejects_shader_identity_mismatches() {
 }
 
 #[test]
+fn accepts_trailing_nul_padding_sanitized_in_shader_member_path() {
+    let root = temp_root("nul-padded-identity");
+    let shader_dir = root
+        .join("components")
+        .join("shader");
+    let setup_result = fs::create_dir_all(&shader_dir).and_then(
+        |()| {
+            fs::write(
+                shader_dir.join("char_swatches_lit_m_.json"),
+                r#"{"name":"char_swatches_lit_m\u0000","params":[]}"#,
+            )
+        },
+    );
+    assert!(setup_result.is_ok());
+    let source = DecodedComponentSource::new(
+        &root,
+        root.join("textures"),
+    );
+    let result = source.resolve_material("char_swatches_lit_m_");
+    let cleanup_result = fs::remove_dir_all(&root);
+
+    assert_eq!(
+        result,
+        Ok(
+            fbx::domain::texture::MaterialBinding {
+                material_name: "char_swatches_lit_m".to_owned(),
+                texture_file_name: None,
+            }
+        )
+    );
+    assert!(cleanup_result.is_ok());
+}
+
+#[test]
+fn accepts_trailing_nul_padding_in_numbered_texture_reference() {
+    let root = temp_root("nul-padded-numbered-texture");
+    let shader_dir = root
+        .join("package")
+        .join("components")
+        .join("shader");
+    let shared_dir = root.join("shared");
+    let output_dir = root.join("output");
+    let external_texture = shared_dir.join("shared.bmp.0.png");
+    let setup_result = fs::create_dir_all(&shader_dir)
+        .and_then(|()| fs::create_dir_all(&shared_dir))
+        .and_then(
+            |()| {
+                fs::write(
+                    shader_dir.join("skin.json"),
+                    concat!(
+                        r#"{"name":"skin","params":[{"kind":"texture","#,
+                        r#""param":"TEX","value":"shared.bmp.0\u0000\u0000"}]}"#
+                    ),
+                )
+            },
+        )
+        .and_then(
+            |()| {
+                fs::write(
+                    &external_texture,
+                    b"synthetic-png",
+                )
+            },
+        );
+    assert!(setup_result.is_ok());
+    let source = DecodedComponentSource::new(
+        root.join("package"),
+        &output_dir,
+    );
+    let result = source.resolve_material_with_external_texture(
+        "skin",
+        &external_texture,
+    );
+    let cleanup_result = fs::remove_dir_all(&root);
+
+    assert_eq!(
+        result,
+        Ok(
+            fbx::domain::texture::MaterialBinding {
+                material_name: "skin".to_owned(),
+                texture_file_name: Some("shared.bmp.0.png".to_owned()),
+            }
+        )
+    );
+    assert!(cleanup_result.is_ok());
+}
+
+#[test]
 fn stages_exact_index_published_external_texture() {
     let root = temp_root("external-texture");
     let shader_dir = root

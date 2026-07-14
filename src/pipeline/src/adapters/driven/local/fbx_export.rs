@@ -783,6 +783,7 @@ fn resolve_shared_texture_member<'index>(
 fn normalized_texture_png_file_name(
     texture_reference: &str
 ) -> Result<String, PipelineError> {
+    let texture_reference = texture_reference.trim_end_matches('\u{0}');
     let mut components = Path::new(texture_reference).components();
     if texture_reference.is_empty()
         || texture_reference != texture_reference.trim()
@@ -927,6 +928,14 @@ fn remove_texture_staging_dir(path: &Path) -> Result<(), PipelineError> {
     )
 }
 
+/// Select the material identity when texture staging is deferred.
+fn deferred_material_identity(
+    _shader_member_identity: &str,
+    decoded_material_identity: &str,
+) -> String {
+    decoded_material_identity.to_owned()
+}
+
 /// Resolve one shader and preserve any cross-package texture evidence.
 fn resolve_material_binding(
     source: &DecodedComponentSource,
@@ -956,7 +965,10 @@ fn resolve_material_binding(
             )?
             else {
                 let binding = MaterialBinding::new(
-                    shader.to_owned(),
+                    deferred_material_identity(
+                        shader,
+                        &shader_name,
+                    ),
                     None,
                 )
                 .map_err(
@@ -1331,4 +1343,38 @@ fn file_len(path: &Path) -> Result<u64, PipelineError> {
             )
         },
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{deferred_material_identity, normalized_texture_png_file_name};
+
+    #[test]
+    fn deferred_material_preserves_decoded_shader_identity() {
+        assert_eq!(
+            deferred_material_identity(
+                "char_swatches_lit_m_",
+                "char_swatches_lit_m",
+            ),
+            "char_swatches_lit_m"
+        );
+    }
+
+    #[test]
+    fn normalizes_trailing_nul_padded_texture_reference() {
+        let result = normalized_texture_png_file_name(
+            "char_swatches_lit.bmp\u{0}\u{0}\u{0}",
+        );
+
+        assert!(
+            result.is_ok(),
+            "fixed-width texture padding should normalize: {result:?}"
+        );
+        assert_eq!(
+            result
+                .ok()
+                .as_deref(),
+            Some("char_swatches_lit.png")
+        );
+    }
 }
