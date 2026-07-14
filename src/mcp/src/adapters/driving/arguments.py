@@ -53,6 +53,7 @@ from __future__ import annotations
 
 import json
 import math
+import ntpath
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import NamedTuple, Never, cast
 
@@ -233,6 +234,8 @@ def parse_skill_output_path(operands: tuple[str, ...]) -> Path:
         or ".." in windows_path.parts
     ):
         _fail_usage("skills output must be a repository-relative child path")
+    if any(ntpath.isreserved(segment) for segment in windows_path.parts):
+        _fail_usage("skills output must use a portable path")
     if output_path == Path() or not output_path.parts:
         _fail_usage("skills output must not be the repository root")
     return output_path

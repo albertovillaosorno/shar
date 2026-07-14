@@ -274,6 +274,27 @@ def test_cli_rejects_windows_rooted_skill_output_before_network(
         assert not captured.out
 
 
+def test_cli_rejects_nonportable_skill_output_before_network(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Windows-invalid output segments fail before opening an MCP session."""
+    for output_path in ("con", "skills/name:", "skills/trailing."):
+        code = main(
+            (
+                "--endpoint",
+                "http://127.0.0.1:65534/mcp",
+                "skills",
+                "--output",
+                output_path,
+            )
+        )
+        captured = capsys.readouterr()
+
+        assert code == 2
+        assert "portable path" in captured.err
+        assert not captured.out
+
+
 def test_cli_doctor_rejects_empty_toolset_registry(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
