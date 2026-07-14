@@ -1,0 +1,77 @@
+# Windows 11
+
+This non-governing record documents construction provenance and does not
+license, distribute, endorse, or certify Windows.
+
+## Review Status And Scope
+
+- Review status: Evidence recorded.
+- Evidence status: Partially verified — Official product, system-requirement,
+  lifecycle, and licensing sources verified; repository use remains
+  operator-attested.
+- Counsel review: Not performed.
+- As-of date: 2026-07-13.
+- Subject class: Proprietary operating system and development environment.
+
+## Covered Material
+
+Windows 11 as the proprietary host operating-system family used by the
+repository owner while constructing, reviewing, and validating SHAR. This record
+does not identify one exact local edition, feature-update version, or build.
+
+## Repository Use And Scope
+
+The operator states that SHAR was developed on Windows 11. Windows is a host
+environment, not a repository dependency and not a component distributed under
+the SHAR MIT License. Platform-specific builds may require a lawful,
+user-provided Windows installation and separately licensed Microsoft tooling.
+
+## Provenance And Version History
+
+Microsoft publishes Windows 11 requirements and lifecycle information at the
+product-family level, but support and terms remain edition-, channel-, and
+feature-update-specific. The exact local edition, build, acquisition channel,
+and accepted license terms are not established by this record. Capture those
+facts when a build or distribution analysis depends on a specific SDK, runtime,
+redistributable, or system component.
+
+## Authorship, Ownership, And Attribution
+
+Microsoft and its licensors retain rights in Windows, its documentation,
+branding, and bundled components. SHAR claims rights only in independently
+authored repository material.
+
+## License Or Terms Basis
+
+Windows 11 is proprietary software governed by edition- and channel-specific
+Microsoft Software License Terms. The installed terms, not this summary, control
+use. No Windows binary, system file, SDK payload, or documentation body is
+relicensed by SHAR.
+
+## Distribution, Modification, And Compatibility
+
+No Windows component is intended for repository distribution. A packaged build
+must separately inventory Microsoft redistributables, SDK components, runtime
+prerequisites, and installer notices actually shipped.
+
+## Compliance Posture
+
+Construction provenance is documented. Before distributing Windows-targeted
+binaries, verify every Microsoft component and preserve all applicable terms,
+notices, and redistribution conditions.
+
+## Source References
+
+- Microsoft (n.d.) *Windows 11*. Available at:
+  <https://www.microsoft.com/windows/windows-11> (Accessed: 13 July 2026).
+- Microsoft (n.d.) *Windows 11 Specs And System Requirements*. Available at:
+  <https://www.microsoft.com/en-us/windows/windows-11-specifications>
+  (Accessed: 13 July 2026).
+- Microsoft (n.d.) *Windows 11 Home And Pro — Microsoft Lifecycle*.
+  Available at:
+  <https://learn.microsoft.com/en-us/lifecycle/products/windows-11-home-and-pro>
+  (Accessed: 13 July 2026).
+- Microsoft (n.d.) *Microsoft Software License Terms*. Available at:
+  <https://www.microsoft.com/useterms> (Accessed: 13 July 2026).
+- Repository owner (2026) Operator provenance statement, 12 July. Unpublished
+  project record.

@@ -1,0 +1,90 @@
+# Purpose: genuine English words that are valid in repository prose but absent
+# from the enabled standard dictionaries.
+# Add: established English words, inflections, and compounds that are used with
+# their ordinary English meaning.
+# Do not add: proper names, acronyms, APIs, file formats, identifiers, asset
+# IDs, malformed text, fixtures, or one-off invalid sequences.
+# Use an exact line-scoped CSpell suppression for intentional invalid sequences
+# instead of adding them here.
+
+Cinematics
+Keyframing
+Outliner
+Overreporting
+Scenegraph
+Toolsets
+american
+anonymization
+autolinks
+autostarts
+browsewrap
+cinematics
+clickwrap
+copyrightability
+datablock
+datastream
+decompressors
+diffable
+editability
+eulers
+factfinder
+florida
+halloween
+italian
+keyframing
+lockfiles
+minigame
+moddable
+noncanonical
+noncharacter
+nondirectory
+nonfilesystem
+nonfinite
+noninfringing
+nonliteral
+nonoverlapping
+nonportable
+nonpositive
+nonprecedential
+nonvehicle
+nonwaivable
+occluder
+occluders
+outliner
+overbroad
+overreporting
+peekable
+playhead
+playthrough
+possessables
+preflighted
+preflights
+protectability
+protectable
+ragdoll
+recordation
+recordations
+redistributables
+reimplementation
+reparents
+requiredness
+retime
+sandboxed
+scenegraph
+scenegraphs
+spanish
+spawnable
+strikethrough
+toolsets
+unconscionability
+uncopyrightable
+undecompiled
+unenumerated
+ungrouping
+unindexed
+unprotectable
+unrepresentable
+unreviewable
+unsolo
+unvalidated
+worldspace
