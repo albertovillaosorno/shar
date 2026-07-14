@@ -178,6 +178,12 @@ def test_declared_content_length_fails_before_body_read() -> None:
             MemoryResponse(b"", headers={"Content-Length": "-1"}),
             max_response_bytes=4,
         )
+    for value in ("+1", " 1", "1 ", "\u0661"):
+        with pytest.raises(ProtocolError, match="Content-Length is invalid"):
+            _ = read_bounded_body(
+                MemoryResponse(b"x", headers={"Content-Length": value}),
+                max_response_bytes=4,
+            )
 
 
 def test_json_content_type_parameter_cannot_trigger_sse_mode() -> None:

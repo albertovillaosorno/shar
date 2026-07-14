@@ -154,12 +154,16 @@ def _validate_content_length(
     raw_length = response.getheader("Content-Length")
     if raw_length is None:
         return
+    if raw_length.startswith("-"):
+        magnitude = raw_length[1:]
+        if magnitude.isascii() and magnitude.isdigit():
+            fail_protocol("HTTP response Content-Length is negative")
+    if not raw_length.isascii() or not raw_length.isdigit():
+        fail_protocol("HTTP response Content-Length is invalid")
     try:
         length = int(raw_length)
     except ValueError as error:
         fail_protocol("HTTP response Content-Length is invalid", cause=error)
-    if length < 0:
-        fail_protocol("HTTP response Content-Length is negative")
     if length > limit:
         fail_protocol(f"HTTP response exceeded {limit} bytes")
 
