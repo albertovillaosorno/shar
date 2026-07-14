@@ -6,12 +6,12 @@ applying .NET licensing to independently authored SHAR source.
 ## Review Status And Scope
 
 - Review status: Evidence recorded.
-- Evidence status: Partially verified — Authored Unreal C# build-rule use,
-  official source repositories, runtime license, current support policy, and the
+- Evidence status: Partially verified — Authored Unreal C# build-rule use, the
+  managed .NET SDK 11.0.100-preview.5 identity, included runtimes, official
+  preview status, source repositories, runtime license, support policy, and the
   current validation omission were verified. No canonical Roslyn or `dotnet`
   compiler gate is scheduled for the authored `.Target.cs` and `.Build.cs` files;
-  the exact SDK, runtime, compiler, and Unreal Build Tool environment remain
-  build-specific.
+  Unreal Build Tool acceptance remains build-specific.
 - Counsel review: Not performed.
 - As-of date: 2026-07-14.
 - Subject class: Open-source SDK, compiler host, runtime, libraries, and build
@@ -35,13 +35,17 @@ and does not publish an installed SDK.
 
 ## Provenance And Version History
 
-An Unreal build or future C# compiler gate must resolve and record the exact SDK
-and compiler identity at execution time. Microsoft's current support policy
-treats the SDK, runtime, ASP.NET Core, and Entity Framework Core as related .NET
-technologies and requires supported installations to remain current on patch
-updates. A publication, distribution, or engine-build record must preserve the
-exact SDK, runtime, reference packs, Roslyn compiler, platform architecture, and
-patch level actually used.
+The managed runtime reports SDK 11.0.100-preview.5.26302.115, MSBuild
+18.8.0-preview, and matching .NET, ASP.NET Core, and Windows Desktop runtimes on
+Windows x64. Microsoft's official .NET 11 page identifies Preview 5, released
+9 June 2026, as the current .NET 11 preview and states that preview releases are
+generally not supported for production use. The managed SDK therefore matches
+the reviewed preview release but is not a production-support claim.
+
+An Unreal build or future C# compiler gate must still record the exact SDK,
+Roslyn compiler, Unreal Build Tool, reference packs, workload state, target,
+architecture, and patch identity used. The current managed environment reports no
+installed workloads.
 
 ## Authorship, Ownership, And Attribution
 
@@ -66,27 +70,34 @@ native components, notices, and redistribution conditions actually shipped.
 
 ## Compliance Posture
 
-Do not claim C# compiler validation from the current canonical plan. Record exact
-SDK, runtime, Roslyn, Unreal Build Tool, and engine identities when an engine
-build or future compiler gate supplies that evidence. Preserve MIT license
-material and all applicable third-party notices for any distributed .NET
-components.
+Do not claim C# compiler validation from the current canonical plan or production
+support from the preview SDK. Keep the temporary .NET 11 preview allowance
+bounded to the period before stable .NET 11 exists. Record exact SDK, runtime,
+Roslyn, Unreal Build Tool, workload, and engine identities when an engine build
+or future compiler gate supplies that evidence. Preserve MIT license material
+and all applicable third-party notices for distributed .NET components.
 
 ## Source References
 
+- Microsoft (2026) *.NET 11 Preview*. Identifies Preview 5 as the current .NET
+  11 preview, released 9 June 2026, with SDK full version
+  11.0.100-preview.5.26302.115 and matching runtimes. Available at:
+  <https://dotnet.microsoft.com/en-us/download/dotnet/11.0> (Accessed: 14 July
+  2026).
 - .NET Foundation and contributors (n.d.) *.NET SDK official GitHub repository*.
-  Available at: <https://github.com/dotnet/sdk> (Accessed: 13 July 2026).
+  Available at: <https://github.com/dotnet/sdk> (Accessed: 14 July 2026).
 - .NET Foundation and contributors (n.d.) *.NET Runtime official GitHub
-  repository*. Available at: <https://github.com/dotnet/runtime> (Accessed: 13
+  repository*. Available at: <https://github.com/dotnet/runtime> (Accessed: 14
   July 2026).
 - .NET Foundation and contributors (n.d.) *.NET Runtime License*. Available at:
-  <https://github.com/dotnet/runtime/blob/main/LICENSE.TXT> (Accessed: 13 July
+  <https://github.com/dotnet/runtime/blob/main/LICENSE.TXT> (Accessed: 14 July
   2026).
 - Microsoft (2026) *.NET Support Policy*, updated 9 June. Available at:
-  <https://dotnet.microsoft.com/en-us/platform/support/policy> (Accessed: 13
+  <https://dotnet.microsoft.com/en-us/platform/support/policy> (Accessed: 14
   July 2026).
 - Microsoft (n.d.) *.NET documentation*. Available at:
-  <https://learn.microsoft.com/dotnet/> (Accessed: 13 July 2026).
-- SHAR repository (2026) authored Unreal C# build rules and canonical validation
-  plans reviewed 14 July 2026; no current Roslyn or `dotnet` compiler gate was
-  scheduled for the `.Target.cs` or `.Build.cs` files.
+  <https://learn.microsoft.com/dotnet/> (Accessed: 14 July 2026).
+- SHAR repository and managed runtime (2026), authored Unreal C# build rules,
+  SDK 11.0.100-preview.5.26302.115, matching runtimes, no installed workloads,
+  and canonical validation plans reviewed 14 July 2026; no Roslyn or `dotnet`
+  compiler gate was scheduled for `.Target.cs` or `.Build.cs` files.
