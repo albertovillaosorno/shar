@@ -52,41 +52,55 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to obtain a compiled Blueprint class default object before SHAR
+component or object-property inspection.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use an exact existing Blueprint asset ref.
+- Compile the Blueprint before relying on its generated layout.
+- Keep the Blueprint loaded while consuming returned nested refs.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "blueprint": {
+    "refPath": "/Game/B_SHAR_MCP_Blueprint_ReadFixture.B_SHAR_MCP_Blueprint_ReadFixture"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two calls returned the same `Default__B_SHAR_MCP_Blueprint_ReadFixture_C` ref.
+Filtered ActorTools inspection then found exactly one Niagara Component on that
+CDO. Cleanup deleted the disposable Blueprint.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The CDO is not a placed runtime actor.
+- Recompilation or deletion can invalidate the CDO and component refs.
+- Missing Blueprint refs fail during parameter translation.
+- An uncompiled Blueprint can expose stale generated state.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
