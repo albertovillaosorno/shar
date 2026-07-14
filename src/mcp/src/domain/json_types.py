@@ -108,7 +108,18 @@ def normalize_json(value: object, *, context: str) -> JsonValue:
 
     Returns:
         A JSON-only value without untyped objects.
+    """
+    try:
+        return _normalize_json_value(value, context=context)
+    except RecursionError as error:
+        fail_protocol(f"{context}: JSON nesting is too deep", cause=error)
 
+
+def _normalize_json_value(value: object, *, context: str) -> JsonValue:
+    """Normalize one JSON value during a guarded recursive traversal.
+
+    Returns:
+        A JSON-only value without untyped objects.
     """
     if isinstance(value, str):
         return _normalize_json_text(value, context=context)
@@ -130,7 +141,7 @@ def normalize_json(value: object, *, context: str) -> JsonValue:
             )
             if key in result:
                 fail_protocol(f"{context}: duplicate normalized JSON key")
-            result[key] = normalize_json(
+            result[key] = _normalize_json_value(
                 raw_value,
                 context=f"{context}.{key}",
             )
@@ -138,7 +149,7 @@ def normalize_json(value: object, *, context: str) -> JsonValue:
     if isinstance(value, list):
         raw_items = cast("list[object]", value)
         return [
-            normalize_json(item, context=f"{context}[{index}]")
+            _normalize_json_value(item, context=f"{context}[{index}]")
             for index, item in enumerate(raw_items)
         ]
     return fail_protocol(

@@ -50,6 +50,7 @@
 from __future__ import annotations
 
 import json
+import sys
 from typing import TYPE_CHECKING, cast
 
 import pytest
@@ -139,6 +140,16 @@ def test_json_normalizer_handles_surrogate_pairs() -> None:
                 {"value": decoded},
                 context="payload",
             )
+
+
+def test_json_normalizer_rejects_excessive_nesting() -> None:
+    """Deep recursive values fail as protocol data rather than Python errors."""
+    value: object = 0
+    for _ in range(sys.getrecursionlimit() + 100):
+        value = [value]
+
+    with pytest.raises(ProtocolError, match="JSON nesting is too deep"):
+        _ = normalize_json(value, context="payload")
 
 
 def test_toolset_definition_rejects_duplicate_json_keys() -> None:

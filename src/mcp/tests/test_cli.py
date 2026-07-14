@@ -50,6 +50,7 @@
 from __future__ import annotations
 
 import json
+import sys
 from typing import TYPE_CHECKING, cast
 
 from mcp.src.adapters.driving.cli import main
@@ -139,6 +140,26 @@ def test_cli_rejects_non_finite_json_arguments_as_usage(
         assert exit_code == 2
         assert "JSON number must be finite" in captured.err
         assert not captured.out
+
+
+def test_cli_rejects_excessive_json_nesting_as_usage(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    depth = sys.getrecursionlimit() + 100
+    nested = "[" * depth + "0" + "]" * depth
+    exit_code = main(
+        (
+            "raw-call",
+            "call_tool",
+            "--arguments",
+            f'{{"value":{nested}}}',
+        )
+    )
+    captured = capsys.readouterr()
+
+    assert exit_code == 2
+    assert "JSON nesting is too deep" in captured.err
+    assert not captured.out
 
 
 def test_cli_doctor_and_toolset_discovery(

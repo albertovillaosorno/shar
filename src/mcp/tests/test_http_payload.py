@@ -50,6 +50,7 @@
 
 from __future__ import annotations
 
+import sys
 from io import BytesIO
 from typing import TypeVar, overload
 
@@ -181,6 +182,24 @@ def test_json_payload_normalizes_or_rejects_surrogates() -> None:
                 1,
                 max_response_bytes=len(body),
             )
+
+
+def test_json_payload_rejects_excessive_nesting() -> None:
+    """Deep response values fail as protocol data rather than Python errors."""
+    depth = sys.getrecursionlimit() + 100
+    nested = b"[" * depth + b"0" + b"]" * depth
+    prefix = b'{"jsonrpc":"2.0","id":1,"result":{"value":'
+    body = prefix + nested + b"}}"
+
+    with pytest.raises(ProtocolError, match="JSON nesting is too deep"):
+        _ = read_http_payload(
+            MemoryResponse(
+                body,
+                headers={"Content-Type": "application/json"},
+            ),
+            1,
+            max_response_bytes=len(body),
+        )
 
 
 def test_json_payload_rejects_duplicate_object_keys() -> None:
