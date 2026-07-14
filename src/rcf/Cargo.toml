@@ -1,0 +1,21 @@
+[package]
+name = "rcf"
+version.workspace = true
+edition = "2024"
+license = "MIT"
+description = "From-scratch RCF archive extractor for the pipeline."
+publish = false
+
+[dependencies]
+# schoenwald-cli centralizes process arguments, ordered streams, newline handling, and exit-code mapping for the RCF driving adapter.
+schoenwald-cli = { path = "../cli" }
+# schoenwald-filesystem centralizes complete contained writes after RCF-specific path validation; streaming range reads remain local.
+schoenwald-filesystem = { path = "../filesystem" }
+
+[lib]
+name = "rcf"
+path = "src/lib.rs"
+
+[[bin]]
+name = "rcf"
+path = "src/main.rs"
