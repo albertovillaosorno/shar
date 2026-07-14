@@ -54,41 +54,72 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to capture bounded visual evidence from the active SHAR level
+viewport before or after actor placement, imported-world inspection, camera
+framing, or another spatial editor operation. Add annotations only when the
+next action requires explicit grid or actor-label evidence.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project, loaded editor world, and active Level Editor
+  viewport must be ready.
+- Capture `GetCameraTransform` first when camera preservation matters.
+- Pass explicit `null` values for unused `captureTransform` and `annotations` in
+  the current interface.
+- Keep operator camera input and viewport resizing paused during comparison.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "captureTransform": null,
+  "annotations": null,
+  "bShowUI": false
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two calls returned valid `image/png` payloads at 1076 by 548 pixels with the
+same FOV, camera location, camera rotation, disabled-grid metadata, and zero
+labels. The PNG bytes differed between live renders. `GetCameraTransform`
+returned identical pre-state and post-state, proving the capture did not move
+the active camera.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The image is nested under `returnValue.image` as base64 PNG data; callers must
+  decode it without committing temporary review output.
+- Omitting all arguments raised a missing-default error for `captureTransform`
+  in the verified translator, despite generated optional metadata. Pass the
+  explicit validated payload.
+- Live viewport bytes are not deterministic even when dimensions and camera
+  metadata are stable; compare visual content and structured metadata rather
+  than hashes.
+- `bShowUI: false` hides editor overlays and may differ from the operator's exact
+  on-screen view.
+- Null annotations produce no grid or actor labels. Annotation settings must be
+  bounded to avoid an incoherent image.
+- A successful capture is evidence of rendering, not proof that every asset,
+  collision surface, material, or gameplay behavior is correct.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

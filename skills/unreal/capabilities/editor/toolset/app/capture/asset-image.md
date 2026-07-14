@@ -47,41 +47,62 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to obtain a bounded visual preview of a known Unreal asset before
+SHAR accepts an import, compares generated output, or selects an asset for a
+more specific metadata or editor inspection workflow.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project and native MCP server must be ready.
+- Confirm the exact virtual asset path with `AssetTools.exists` or bounded asset
+  discovery before capture.
+- Use an asset type whose thumbnail or preview renderer is available.
+- Treat the image as review evidence only; preserve structured asset validation
+  separately.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "assetPath": "/Engine/EngineMaterials/DefaultMaterial.DefaultMaterial"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+`AssetTools.exists` first returned `true` for the fixture. Two capture calls
+then returned byte-identical valid `image/png` payloads at 256 by 256 pixels.
+A missing engine asset path raised `Asset not found` and produced no image.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- `returnValue` contains base64 PNG data and a MIME type; decode it in memory or
+  route temporary review output outside tracked repository content.
+- Preview appearance and dimensions depend on the asset class, thumbnail
+  renderer, preview scene, cache, and engine version.
+- A valid preview does not prove source provenance, package validity, material
+  correctness, animation behavior, collision, or runtime integration.
+- Missing assets raise a native error rather than returning an empty image.
+- Repeated previews can be stable for a static cached asset, but byte identity is
+  not a general contract for every asset type.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
