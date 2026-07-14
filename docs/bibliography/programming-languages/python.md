@@ -7,10 +7,11 @@ and from independently licensed third-party packages.
 
 - Review status: Evidence recorded.
 - Evidence status: Partially verified — The repository Python 3.14.6 pin,
-  official 3.14.6 maintenance release, license history, project identity, and
-  CPython source were verified. The exact interpreter build, standard-library
-  payload, platform architecture, and third-party package graph remain
-  environment-specific.
+  managed CPython 3.14.6 Windows AMD64 build, compiler identity, executable
+  digest, OpenSSL identity, official current maintenance release, license
+  history, project identity, and CPython source were verified. The complete
+  standard-library payload and third-party package graph remain environment-
+  specific.
 - Counsel review: Not performed.
 - As-of date: 2026-07-14.
 - Subject class: Programming language, runtime, and documentation ecosystem.
@@ -35,12 +36,20 @@ repository contract for the package, not a permanent claim about the newest
 upstream Python release. Python 3.14.6 was published on 10 June 2026 as the sixth
 maintenance release of Python 3.14.
 
-The pin does not identify an interpreter build, architecture, standard-library
-payload, or installed package graph. Publication, distribution, and validation
-evidence must take those identities from the repository-managed environment and
-lock evidence. Python's historical license lineage includes multiple
-institutional licensors and cannot be reduced to one copyright line for all
-versions.
+The managed interpreter reports CPython 3.14.6 final for `win-amd64`, compiled
+with MSC 19.44 as a 64-bit AMD64 build dated 23 June 2026. It reports OpenSSL
+3.5.7 and executable SHA-256
+`0e88c01f0bef4c1216d0f3e990662128163e5e932c2fdac75777084cd4b769e3`.
+The Python downloads page identifies 3.14.6 as the current source and platform
+release on 14 July 2026.
+
+These values are dated runtime evidence, not a permanent latest-version label or
+an unbounded compatibility range. They still do not inventory every standard-
+library file or installed third-party package. Publication, distribution, and
+validation evidence must preserve those identities from the managed environment
+and package-resolution evidence. Python's historical license lineage includes
+multiple institutional licensors and cannot be reduced to one copyright line for
+all versions.
 
 ## Authorship, Ownership, And Attribution
 
@@ -70,9 +79,14 @@ redistributed environment.
 
 ## Source References
 
-- Python Software Foundation (2026) *Python 3.14.6*. Released 10 June 2026.
-  Available at: <https://www.python.org/downloads/release/python-3146/>
-  (Accessed: 14 July 2026).
+- Python Software Foundation (2026) *Python 3.14.6*. Released 10 June 2026 as
+  the sixth Python 3.14 maintenance release, with Sigstore and SBOM evidence for
+  supported artifacts. Available at:
+  <https://www.python.org/downloads/release/python-3146/> (Accessed: 14 July
+  2026).
+- Python Software Foundation (2026) *Download Python*. Identifies Python 3.14.6
+  as the latest source and platform release on 14 July 2026. Available at:
+  <https://www.python.org/downloads/> (Accessed: 14 July 2026).
 - Python Software Foundation (2026) *History and License for Python 3.14.6*.
   Available at: <https://docs.python.org/release/3.14.6/license.html> (Accessed:
   14 July 2026).
@@ -80,5 +94,7 @@ redistributed environment.
   <https://www.python.org/> (Accessed: 14 July 2026).
 - Python Software Foundation (n.d.) *CPython official GitHub repository*.
   Available at: <https://github.com/python/cpython> (Accessed: 14 July 2026).
-- SHAR repository (2026) MCP package metadata pinning
-  `requires-python = "==3.14.6"`.
+- SHAR repository and managed runtime (2026), MCP package metadata pinning
+  `requires-python = "==3.14.6"`; CPython 3.14.6 final for Windows AMD64;
+  MSC 19.44 compiler identity; 23 June 2026 build date; OpenSSL 3.5.7; and
+  reviewed executable SHA-256.
