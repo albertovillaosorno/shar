@@ -68,6 +68,7 @@ _HeaderDefault = TypeVar("_HeaderDefault")
 
 DEFAULT_MAX_RESPONSE_BYTES = 64 * 1024 * 1024
 _CONTENT_TYPE_EVENT_STREAM = "text/event-stream"
+_CONTENT_TYPE_JSON = "application/json"
 
 
 class HttpPayloadResponse(Protocol):
@@ -129,6 +130,11 @@ def read_http_payload(
     body = read_bounded_body(response, max_response_bytes=limit)
     if not body:
         return None
+    if media_type != _CONTENT_TYPE_JSON:
+        displayed_type = content_type or "<missing>"
+        fail_protocol(
+            f"unsupported Content-Type for HTTP response: {displayed_type}"
+        )
     return _decode_json(body, context="HTTP response")
 
 

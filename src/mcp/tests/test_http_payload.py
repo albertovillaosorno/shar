@@ -213,6 +213,19 @@ def test_json_content_type_parameter_cannot_trigger_sse_mode() -> None:
     ) == {"jsonrpc": "2.0", "id": 1, "result": {}}
 
 
+def test_json_payload_requires_application_json_media_type() -> None:
+    """A non-empty JSON response must use the MCP JSON media type."""
+    body = b'{"jsonrpc":"2.0","id":1,"result":{}}'
+    for content_type in ("", "text/plain", "application/problem+json"):
+        headers = {} if not content_type else {"Content-Type": content_type}
+        with pytest.raises(ProtocolError, match="unsupported Content-Type"):
+            _ = read_http_payload(
+                MemoryResponse(body, headers=headers),
+                1,
+                max_response_bytes=len(body),
+            )
+
+
 def test_sse_progress_is_skipped_until_matching_final_response() -> None:
     """Accept a final SSE event at EOF after progress events."""
     body = (
