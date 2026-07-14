@@ -67,14 +67,22 @@ minimal unless commentary is strictly tied to the action shown and supplies
 instructional or educational value.
 
 YouTube's channel-level monetization rules are an additional and independent
-screen. The July 15, 2025 policy notice renamed the former repetitious-content
-rule to `inauthentic content` but expressly stated that the reused-content rule
-did not change. Reused-content review asks whether a channel adds significant
-original commentary, substantive modification, or other visible value. YouTube
-also states that this review is separate from copyright, permission, and fair
-use. A video can therefore avoid copyright infringement yet fail monetization,
-or remain subject to a Content ID claim while the creator asserts fair use.
-Neither platform result determines the legal question.
+screen. The live page first requires original and authentic channel content; if
+material is borrowed, it says the creator must change it significantly. Its
+July 15, 2025 notice renamed the former repetitious-content rule to
+`inauthentic content` and stated that the reused-content rule did not change.
+The current page separately describes generic or repetitive content and reused
+content, so the dated rename notice must not be mistaken for a complete version
+label for the live policy.
+
+Reused-content review applies to the channel as a whole and asks whether borrowed
+material has significant original commentary, substantive modification, or
+educational or entertainment value. YouTube states that this review is separate
+from copyright, permission, and fair use, and that a channel can fail the rule
+even when the original creator granted permission. A video can therefore avoid
+copyright infringement yet fail monetization, or remain subject to a Content ID
+claim while the creator asserts fair use. Neither platform result determines the
+legal question.
 
 Creators should preserve the game-copy acquisition record, the exact publisher
 policy or permission relied upon, a project file showing their original editing

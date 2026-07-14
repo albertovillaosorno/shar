@@ -33,9 +33,13 @@ instructional or educational value. It also states that extended videos simply
 showing a user playing may not be accepted for monetization.
 
 The official *YouTube channel monetization policies* page applies a separate
-channel-level review for original and authentic content. Its July 15, 2025
-notice renamed the former repetitious-content policy to `inauthentic content`
-and stated that the reused-content policy did not change.
+channel-level review for original and authentic content. It says borrowed
+material must be changed significantly, describes generic or repetitive content
+separately from reused content, and applies reused-content review to the channel
+as a whole. Its July 15, 2025 notice renamed the former repetitious-content
+policy to `inauthentic content` and stated that the reused-content policy did not
+change; that dated notice is part of the live page's update history, not a
+complete version label for the current policy text.
 
 ## Repository Use And Scope
 
@@ -114,8 +118,8 @@ music or other separately controlled content.
 - YouTube (n.d.) *Video game and software content*. Available at:
   <https://support.google.com/youtube/answer/138161?hl=en> (Accessed: 14 July
   2026).
-- YouTube (2025) *YouTube channel monetization policies*. Includes policy notice
-  dated 15 July 2025. Available at:
+- YouTube (n.d.) *YouTube channel monetization policies*. Live page with an
+  update history that includes a notice dated 15 July 2025. Available at:
   <https://support.google.com/youtube/answer/1311392?hl=en> (Accessed: 14 July
   2026).
 - SHAR repository (2026) Legal analysis of gameplay video, streaming, and
