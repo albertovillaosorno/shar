@@ -149,10 +149,13 @@ def require_json_rpc_result(
         fail_protocol(
             f"response id mismatch: expected {request_id}, got {response_id}"
         )
-    error_value = payload.get("error")
-    if error_value is not None:
+    has_result = "result" in payload
+    has_error = "error" in payload
+    if has_result == has_error:
+        fail_protocol("response must contain exactly one of result or error")
+    if has_error:
         error = require_json_object(
-            error_value,
+            payload["error"],
             context="JSON-RPC error",
         )
         message = error.get("message", "unknown JSON-RPC error")
@@ -160,7 +163,7 @@ def require_json_rpc_result(
             message = "unknown JSON-RPC error"
         fail_protocol(message)
     return require_json_object(
-        payload.get("result"),
+        payload["result"],
         context="JSON-RPC result",
     )
 

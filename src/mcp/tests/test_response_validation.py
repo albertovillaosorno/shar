@@ -63,7 +63,7 @@ from mcp.src.adapters.driven.response_validation import (
 from mcp.src.domain.errors import ProtocolError
 
 if TYPE_CHECKING:
-    from mcp.src.domain.json_types import JsonObject
+    from mcp.src.domain.json_types import JsonObject, JsonValue
 
 _PROTOCOL_VERSION = "2025-11-25"
 _SERVER_NAME = ""
@@ -148,6 +148,32 @@ def test_tool_names_reject_duplicate_identities() -> None:
                 ]
             }
         )
+
+
+def test_result_requires_exclusive_result_or_error_member() -> None:
+    """Null or populated error members cannot coexist with result."""
+    error_values: tuple[JsonValue, ...] = (
+        None,
+        {"code": -1, "message": "failed"},
+    )
+    for error_value in error_values:
+        payload: JsonObject = {
+            "jsonrpc": "2.0",
+            "id": _REQUEST_ID,
+            "result": {},
+            "error": error_value,
+        }
+        exchange = HttpExchange(
+            status=200,
+            session_id=None,
+            payload=payload,
+        )
+
+        with pytest.raises(
+            ProtocolError,
+            match="exactly one of result or error",
+        ):
+            _ = require_json_rpc_result(exchange, _REQUEST_ID)
 
 
 def test_result_requires_exact_integer_request_id() -> None:
