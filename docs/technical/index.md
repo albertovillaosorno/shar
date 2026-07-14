@@ -55,6 +55,7 @@ proprietary external formats.
 ## Unreal
 
 - [Ambient population and named-character runtime](unreal/ambient-population-and-named-character-runtime.md)
+- [Camera system runtime](unreal/camera-system-runtime.md)
 - [Campaign level composition and progress](unreal/campaign-level-composition-and-progress.md)
 - [Frontend shell and menu runtime](unreal/frontend-shell-and-menu-runtime.md)
 - [Unreal configuration and asset validation](unreal/config-and-asset-validation.md)
@@ -64,6 +65,8 @@ proprietary external formats.
 - [Music state and transition runtime](unreal/music-state-and-transition-runtime.md)
 - [Unreal MCP terminal translator](unreal/mcp-terminal-translator.md)
 - [Native asset planning](unreal/native-asset-planning.md)
+- [Native import, material rebuild, and world assembly](unreal/native-import-material-and-world-assembly.md)
+- [Physical material and impact-response runtime](unreal/physical-material-and-impact-response-runtime.md)
 - [Platform audio cooking and streaming](unreal/platform-audio-cooking-and-streaming.md)
 - [Platform cinematic media packaging](unreal/platform-cinematic-media-packaging.md)
 - [Platform, quality, and optimization contract](unreal/platform-quality-and-optimization.md)
@@ -71,6 +74,7 @@ proprietary external formats.
 - [Progression, collectibles, cheats, and credits](unreal/progression-collectibles-and-cheats.md)
 - [Race route and opponent runtime](unreal/race-route-and-opponent-runtime.md)
 - [Vehicle access and roster runtime](unreal/vehicle-access-and-roster-runtime.md)
+- [Vehicle AI and route runtime](unreal/vehicle-ai-and-route-runtime.md)
 - [Vehicle retrieval and phone-booth runtime](unreal/vehicle-retrieval-and-phone-booth-runtime.md)
 - [Editor guardrails](unreal/testing/editor-guardrails.md)
 - [Unreal test taxonomy](unreal/testing/test-taxonomy.md)
@@ -85,7 +89,7 @@ proprietary external formats.
 
 ## Current coverage
 
-- Active technical specifications: 46.
+- Technical specifications: 50.
 - Template records: 1.
 - Review date: 2026-07-14.
 - Status boundary: this catalog describes current repository behavior and does

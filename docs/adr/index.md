@@ -125,6 +125,8 @@ repository reference must point to the current owning decision.
   — Accepted
 - [Import review boundary](unreal/import-adapters/import-review-boundary.md) —
   Accepted
+- [Staged mesh import and world assembly](unreal/import-adapters/staged-mesh-import-and-world-assembly.md)
+  — Accepted
 - [Native MCP tool projection and protected skill guidance](unreal/mcp/native-tool-cli-projection-and-skills.md)
   — Accepted
 - [Native Unreal MCP terminal bridge](unreal/mcp/native-unreal-mcp-terminal-bridge.md)
@@ -172,7 +174,7 @@ repository reference must point to the current owning decision.
 
 ## Current coverage
 
-- Accepted decision records: 66.
+- Accepted decision records: 67.
 - Template records: 1.
 - Review date: 2026-07-14.
 - Status boundary: this catalog contains only accepted repository decisions;

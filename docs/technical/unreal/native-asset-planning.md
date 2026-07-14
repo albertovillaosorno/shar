@@ -3,9 +3,10 @@
 - Status: Active
 - Last reviewed: 2026-07-13
 
-## Governing decision
+## Governing decisions
 
 - [Native asset translation without copy-paste](../../adr/pipeline/unreal/native-asset-translation-and-no-copy-paste.md)
+- [Staged mesh import and world assembly](../../adr/unreal/import-adapters/staged-mesh-import-and-world-assembly.md)
 
 ## Purpose
 

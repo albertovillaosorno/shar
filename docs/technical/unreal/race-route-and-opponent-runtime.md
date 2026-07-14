@@ -10,6 +10,7 @@
 - [Gameplay census, presentation, and development-content boundary](gameplay-census-presentation-and-development-boundary.md)
 - [Canonical seven-level campaign and world variants](../../adr/unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
 - [Driving, traffic, and vehicle behavior parity](../../adr/gameplay/vehicles/driving-traffic-and-vehicle-ai.md)
+- [Vehicle AI and route runtime](vehicle-ai-and-route-runtime.md)
 - [HUD, radar, camera, and navigation parity](../../adr/unreal/ui/hud-radar-camera-and-navigation.md)
 - [Event-driven music and ambience](../../adr/unreal/runtime/event-driven-music-and-ambience.md)
 

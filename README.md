@@ -556,15 +556,23 @@ Relevant decisions:
 
 **Status:** Planned.
 
-**Executive result:** JSON, FBX, WAV, and normalized HAP cinematic evidence
+**Executive result:** JSON, FBX, WAV, MOV, and normalized HAP cinematic evidence
 become native Unreal assets and target-verified media variants through
 deterministic conversion plans and the Phase 5 terminal MCP surface rather than
 manual editor work.
 
 `src/unreal` is the pipeline-owned planning library for this phase. It validates
-normalized JSON, PCM WAV, HAP, and binary FBX 7.7 evidence and produces stable
-native target identities, dependencies, import plans, and provenance. It never
-opens an MCP connection or controls an Unreal process.
+normalized JSON, PCM WAV, MOV or HAP cinematic evidence, and binary FBX 7.7
+artifacts and produces stable native target identities, dependencies, import
+plans, and provenance. It never opens an MCP connection or controls an Unreal
+process.
+
+Mesh import is staged. Canonical FBX remains engine-independent source evidence,
+while Phase 6 may generate destination UVs, rebake real textures, bind validated
+optional normal or specular maps, create deterministic derived maps, refine
+geometry through an approved recipe, decompose world geometry, and generate LOD
+or HLOD assets before publishing final UAsset identities. These rules do not
+change Phase 4 FBX generation.
 
 Planned work:
 
@@ -573,6 +581,17 @@ Planned work:
 - [ ] Apply conversion plans through tested native MCP commands from Phase 5.
 - [ ] Import FBX files as Static Meshes, Skeletal Meshes, Skeletons, Physics
   Assets, Animation Sequences, materials, textures, and cameras.
+- [ ] Require real canonical texture evidence for every textured material slot
+  and bind optional normal, specular, and related maps only when detection and
+  native read-back validate their semantic role.
+- [ ] Use an explicit neutral material value or no texture input when an optional
+  map is absent; generate derived maps only through a deterministic recorded
+  recipe.
+- [ ] Stage mesh UAssets until destination UV generation, texture rebaking,
+  material reconstruction, collision, and declared LOD validation pass.
+- [ ] Keep geometry refinement and additional-vertex generation pending until a
+  deterministic recipe proves silhouette, topology, skinning, collision, and
+  animation preservation.
 - [ ] Preserve PCM WAV as normalized audio evidence, construct canonical sound
   metadata and routing, and cook the verified loading, compression, streaming,
   cache, concurrency, and playback policy required by each native target.
@@ -584,8 +603,14 @@ Planned work:
   into Data Tables, Data Assets, State Trees, or purpose-built native assets.
 - [ ] Convert Scrooby-derived UI records into UMG assets or validated native UI
   descriptions.
-- [ ] Convert world packages into World Partition cells, Data Layers, streaming
-  assets, collision data, and authored assembly records.
+- [ ] Import each natural assembled world FBX as placement evidence, then split
+  houses and every other shipping world component into stable native mesh
+  identities and reconstruct them in one canonical map composition.
+- [ ] Convert the approved world assembly into World Partition cells, Runtime Data
+  Layers, streaming assets, collision data, and authored placement records.
+- [ ] Generate component LOD and HLOD representations so required distant world
+  geometry degrades through approved detail levels instead of arbitrary authored
+  disappearance; native frustum, occlusion, and streaming culling remain valid.
 - [ ] Preserve import provenance and deterministic Unreal object identity.
 - [ ] Make the entire import repeatable from a clean project state.
 
@@ -606,6 +631,8 @@ Completion criteria:
 
 Relevant decisions and specifications:
 
+- [Staged mesh import and world assembly](docs/adr/unreal/import-adapters/staged-mesh-import-and-world-assembly.md)
+- [Native import, material rebuild, and world assembly](docs/technical/unreal/native-import-material-and-world-assembly.md)
 - [Platform-native audio cooking and streaming](docs/adr/audio/platform-native-audio-cooking-and-streaming.md)
 - [Platform audio cooking and streaming](docs/technical/unreal/platform-audio-cooking-and-streaming.md)
 - [Native cinematic package strategy](docs/adr/rmv/unreal-native-cinematic-package.md)

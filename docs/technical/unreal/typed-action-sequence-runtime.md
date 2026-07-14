@@ -120,6 +120,49 @@ resource acquisition, cancellation, compensation, and cleanup.
 A sequence completes only after the final verification condition succeeds. Task
 transport completion or montage start is not sequence completion.
 
+## Sequence handoff and task state
+
+An actor may have one active sequence and one validated pending sequence. A new
+request never mutates the active StateTree instance in place. The sequence
+coordinator validates and prepares the pending definition, then performs one
+atomic handoff after the active sequence reaches a permitted cancellation or
+completion point.
+
+The coordinator exposes `idle`, `preparing`, `running`, `cancelling`, and
+`completed` states. It cannot swap two hidden sequencers based on update order.
+Pending work is rejected or superseded through typed policy when another request
+arrives before handoff.
+
+Every task uses the closed lifecycle `sleeping`, `running`, `succeeded`, `failed`,
+`timed_out`, or `cancelled`. StateTree task status and `FSharActionResult` must
+agree. A task cannot report completion solely because its object was cleared or
+its owner changed state.
+
+## Character state projection
+
+Character gameplay state is a typed projection over authoritative movement,
+vehicle, collision, and action-sequence observations. The canonical high-level
+states are:
+
+| State | Contract |
+| :--- | :--- |
+| `locomotion` | Character Movement owns walking, running, jumping, and grounded recovery. |
+| `in_vehicle` | A verified seat and vehicle relationship owns locomotion presentation. |
+| `entering_vehicle` | A typed vehicle-entry sequence owns approach, door, seat, and control handoff. |
+| `exiting_vehicle` | A typed exit sequence owns door, placement, collision, and control restoration. |
+| `simulation_reaction` | Ragdoll or other physics-owned reaction temporarily supersedes normal movement. |
+| `disabled` | No ordinary locomotion or vehicle sequence may start. |
+
+State changes are requested through one character-state port. Enter and exit
+hooks acquire or release resources, but they cannot contain hidden mission or
+vehicle-ownership mutations. Vehicle entry and exit publish typed start and end
+observations only after their corresponding sequence postconditions are verified.
+
+An invalid door side, blocked exit, missing floor, destroyed vehicle, streaming
+change, or interrupted transition follows the sequence failure and compensation
+policy. The character cannot be left simultaneously in vehicle and locomotion
+ownership.
+
 ## Result model
 
 `FSharActionResult` has one status:
