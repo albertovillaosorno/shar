@@ -2,13 +2,13 @@
 
 > [Legal Research Disclaimer](../disclaimer.md) applies to this record.
 
-- Status: United States statutory and current YouTube and Xbox policy frameworks
-  verified; game-specific publisher permission is not established.
+- Status: United States statutory and live official YouTube and Xbox policy
+  frameworks verified; game-specific publisher permission is not established.
 - Jurisdiction: United States baseline, uploader location, viewer territories,
   platform-selected law, and any publisher-selected law.
 - Authority level: Federal statute and current official YouTube and Xbox
   materials.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-14.
 - Counsel review: Not performed.
 
 ## Question Presented
@@ -82,10 +82,12 @@ and commentary, and dated copies or captures of the applicable platform rules.
 
 ## Microsoft And Xbox Policy Boundary
 
-Microsoft's current Xbox Game Content Usage Rules grant a conditional, revocable
-license for covered game content and expressly allow qualifying videos on
-YouTube or Twitch to participate in those platforms' advertising-revenue
-programs. That permission is narrower than ownership of the corporate group.
+Microsoft's live Xbox Game Content Usage Rules page states that it was last
+updated in January 2015. It grants a conditional, revocable license for covered
+game content and allows qualifying videos on YouTube or Twitch to participate
+in those platforms' advertising-revenue programs. A live policy page with an old
+stated update date is current publication evidence, not proof that every later
+product or acquisition falls within its scope.
 
 The rules apply only where Microsoft publishes and owns the game content and has
 the relevant copyright, trademark, or other intellectual-property rights. They
@@ -93,12 +95,24 @@ expressly state that Microsoft cannot authorize games from other publishers or
 content that Microsoft does not own. They also warn that separately licensed
 music and other third-party material may require additional permission.
 
-Microsoft's acquisition of Activision Blizzard therefore does not, by itself,
-establish that these rules authorize every right embodied in *The Simpsons: Hit
-& Run*. The game-specific publisher position, licensed character and franchise
-rights, music, performances, and other third-party components remain separate.
-The Xbox rules are relevant evidence only after the exact covered game and
-content ownership are verified.
+For a qualifying shared item, the rules require a discoverable notice and a link
+to the policy. They also prohibit reverse engineering a covered Microsoft game
+to access assets or do things the game does not normally permit in order to
+create the item. The policy therefore cannot be treated as authorization for the
+SHAR pipeline, extraction, conversion, interoperability research, or local game
+modification.
+
+Microsoft's acquisition of Activision Blizzard does not, by itself, establish
+that these rules authorize every right embodied in *The Simpsons: Hit & Run*.
+The game-specific publisher position, licensed character and franchise rights,
+music, performances, and other third-party components remain separate. The Xbox
+rules are relevant only after the exact covered game, content ownership, policy
+conditions, and required notices are verified.
+
+## Supporting Bibliography
+
+- [YouTube Game Content And Monetization Policies](../../bibliography/platform-policies/youtube-game-content-and-monetization.md).
+- [Xbox Game Content Usage Rules](../../bibliography/platform-policies/xbox-game-content-usage-rules.md).
 
 ## Primary And Official Sources
 
@@ -111,13 +125,13 @@ content ownership are verified.
 - YouTube, [Terms of Service][youtube-terms] (Accessed: 13 July 2026).
 - YouTube Help, [Fair use on YouTube][youtube-fair-use] (Accessed: 13 July
   2026).
-- YouTube Help, [Video game and software content][youtube-games] (Accessed: 13
+- YouTube Help, [Video game and software content][youtube-games] (Accessed: 14
   July 2026).
 - YouTube Help, [What kind of content can I monetize?][youtube-monetize]
   (Accessed: 13 July 2026).
 - YouTube Help, [YouTube channel monetization policies][youtube-channel]
-  (Accessed: 13 July 2026).
-- Xbox, [Game Content Usage Rules][xbox-rules] (Accessed: 13 July 2026).
+  (Accessed: 14 July 2026).
+- Xbox, [Game Content Usage Rules][xbox-rules] (Accessed: 14 July 2026).
 
 [section-106]:
   https://uscode.house.gov/view.xhtml?req=(title:17%20section:106%20edition:prelim)

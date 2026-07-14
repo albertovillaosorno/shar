@@ -60,6 +60,14 @@ subject record and controlling instrument.
 
 - [Epic Games](organizations/epic-games.md)
 
+## Platform And Creator Policies
+
+Official platform rules and creator-content policies used as non-governing
+source evidence for publication and monetization analysis.
+
+- [Xbox Game Content Usage Rules](platform-policies/xbox-game-content-usage-rules.md)
+- [YouTube Game Content And Monetization Policies](platform-policies/youtube-game-content-and-monetization.md)
+
 ## Model Review Applications
 
 Applications used to inspect generated interchange artifacts.
