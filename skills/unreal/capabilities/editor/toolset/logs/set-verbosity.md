@@ -46,41 +46,67 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool for a bounded diagnostic change when a specific SHAR editor log
+category is too noisy or not detailed enough for the current investigation.
+The verified workflow temporarily changed `LogToolsetRegistry` from `Log` to
+`Display`, confirmed the new runtime state, and restored the original level.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project and native MCP server must be ready.
+- Resolve the exact category with `GetLogCategories` and capture its current
+  level with `GetVerbosity` before changing it.
+- Use one verbosity value declared by the live schema and define the restoration
+  value before invocation.
+- Avoid overlapping diagnostics that depend on the category while its level is
+  temporarily changed.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "category": "LogToolsetRegistry",
+  "verbosity": "Display"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+`GetVerbosity` established the pre-state as `Log`. The validated mutation
+returned `null`, and an independent `GetVerbosity` call returned `Display`.
+A second mutation restored `Log`, which another independent read confirmed.
+An invalid verbosity value failed and left the restored `Log` state unchanged.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The tool declares no structured output schema; the observed `null` return does
+  not prove the change, so verify with `GetVerbosity`.
+- The verified effect was current editor runtime state. Persistence across an
+  editor restart was not tested.
+- Changing verbosity can suppress evidence or greatly increase log volume;
+  capture pre-state and restore it after the bounded investigation.
+- Unsupported verbosity names fail with a native validation error and do not
+  change the category's current level.
+- Omitting `category` targets the schema default `LogsToolset`; use an explicit
+  discovered category for SHAR diagnostics.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
