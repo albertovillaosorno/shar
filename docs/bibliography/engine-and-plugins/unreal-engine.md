@@ -8,12 +8,13 @@ examples, or documentation.
 
 - Review status: Evidence recorded.
 - Evidence status: Partially verified — Project descriptor, selected engine
-  association, current Epic EULA, public source-access rules, and Unreal Engine
-  5.8 Media Framework and Electra platform boundaries verified; the exact
-  installed build, accepted regional agreement, bundled notices, and target
-  decoder availability remain installation-specific.
+  association, current Epic EULA, its generative-AI input restriction, public
+  source-access rules, and Unreal Engine 5.8 Media Framework and Electra platform
+  boundaries verified; the exact installed build, accepted regional agreement,
+  bundled notices, target decoder availability, and any external service's
+  input-retention behavior remain installation- and service-specific.
 - Counsel review: Not performed.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-14.
 - Subject class: Proprietary real-time engine, editor, toolchain, and SDK.
 
 ## Covered Material
@@ -33,10 +34,12 @@ content, or installed engine files.
 
 ## Provenance And Version History
 
-The current project descriptor records `EngineAssociation` 5.8. Exact engine
-build, installation channel, accepted agreement, plugin revisions, third-party
-components, and platform toolchain must be captured for a reproducible build
-or distribution.
+The current project descriptor records `EngineAssociation` 5.8. The live EULA
+was re-reviewed on 14 July 2026, but the retrieved page does not expose a
+revision date or version identifier. Exact engine build, installation channel,
+accepted agreement, acceptance date, plugin revisions, third-party components,
+and platform toolchain must therefore be captured for a reproducible build or
+distribution.
 
 ## Authorship, Ownership, And Attribution
 
@@ -54,6 +57,13 @@ Engine distributions also include separately licensed third-party software whose
 notices are supplied in the installed engine license directories. The accepted
 agreement and installed notices control.
 
+The current EULA prohibits using Licensed Technology as training input to a
+Generative AI Program and prohibits prompt-based input where that program trains
+on the input. This is a bounded input-use restriction, not a factual basis for a
+blanket claim that all AI-assisted project work is prohibited. A workflow that
+transmits Engine Code or other Licensed Technology must verify the exact service,
+account, retention, and training behavior before transmission.
+
 ## Distribution, Modification, And Compatibility
 
 A SHAR product incorporating Engine Code must satisfy the applicable
@@ -63,30 +73,34 @@ and to the licensees permitted by Epic's agreement.
 
 ## Compliance Posture
 
-Keep engine and plugin source outside the public repository. Before packaging,
-record the accepted agreement, exact engine build, third-party notices, required
-credits, compiler and SDK versions, distribution type, and any royalty or seat
-analysis.
+Keep engine and plugin source outside the public repository. Do not submit
+Licensed Technology to an external generative-AI service unless the exact account
+and service evidence proves that the input will not be used for training within
+the EULA's restricted scope. Before packaging, record the accepted agreement,
+exact engine build, third-party notices, required credits, compiler and SDK
+versions, distribution type, and any royalty or seat analysis.
 
 ## Source References
 
-- Epic Games (2026) *Unreal Engine End User License Agreement*. Available at:
-  <https://www.unrealengine.com/eula/unreal> (Accessed: 13 July 2026).
+- Epic Games (n.d.) *Unreal Engine End User License Agreement*. The live page
+  did not expose a revision date or version identifier in the reviewed text.
+  Available at: <https://www.unrealengine.com/eula/unreal> (Accessed: 14 July
+  2026).
 - Epic Games (n.d.) *Unreal Engine documentation*. Available at:
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/> (Accessed: 12
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/> (Accessed: 14
   July 2026).
 - Epic Games (2026) *Media Framework Technical Reference for Unreal Engine 5.8*.
   Available at:
   <https://dev.epicgames.com/documentation/en-us/unreal-engine/media-framework-technical-reference-for-unreal-engine>
-  (Accessed: 13 July 2026).
+  (Accessed: 14 July 2026).
 - Epic Games (2026) *Electra Media Player in Unreal Engine 5.8*. Available at:
   <https://dev.epicgames.com/documentation/en-us/unreal-engine/electra-media-player-in-unreal-engine>
-  (Accessed: 13 July 2026).
+  (Accessed: 14 July 2026).
 - Epic Games (n.d.) *Accessing Unreal Engine source code on GitHub*. Available
-  at: <https://www.unrealengine.com/en-US/ue-on-github> (Accessed: 12 July
+  at: <https://www.unrealengine.com/en-US/ue-on-github> (Accessed: 14 July
   2026).
 - Epic Games (n.d.) *UnrealEngine GitHub network*. Access-controlled repository;
   an unauthenticated request may return `404 Not Found` until the GitHub account
   is linked and authorized as Epic documents. Available at:
-  <https://github.com/EpicGames/UnrealEngine> (Accessed: 12 July 2026).
+  <https://github.com/EpicGames/UnrealEngine> (Accessed: 14 July 2026).
 - SHAR repository (2026) `src/uproject/shar.uproject` and `README.md`.

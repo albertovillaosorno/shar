@@ -13,7 +13,7 @@ accounts, marks, or other intellectual property.
   contracting entities and product-specific obligations remain
   instrument-specific.
 - Counsel review: Not performed.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-14.
 - Subject class: Organization, technology provider, publisher, licensor, and
   platform operator.
 - Jurisdictional scope: Not determined; Epic identifies regional entities in
@@ -53,10 +53,10 @@ establish a separate Epic service integration.
 
 ## Provenance And Version History
 
-Epic's official company page supplies the current public identity and company
-relationship used by this record. Exact regional provider, agreement version,
-accepted terms, engine build, account status, and service availability remain
-facts of the relevant product and use event.
+Epic's official company page and current general Terms of Service were
+re-reviewed on 14 July 2026. Exact regional provider, product-specific agreement
+version, accepted terms, engine build, account status, and service availability
+remain facts of the relevant product and use event.
 
 Company pages and legal instruments may change. Each consequential build,
 account use, service integration, publication, or distribution review must
@@ -116,14 +116,16 @@ endorsement or broader trademark permission.
 ## Source References
 
 - Epic Games, Inc. (n.d.) *About Epic Games*. Available at:
-  <https://www.epicgames.com/site/about?lang=en-US> (Accessed: 13 July 2026).
+  <https://www.epicgames.com/site/about?lang=en-US> (Accessed: 14 July 2026).
 - Epic Games, Inc. (2026) *Epic Games Terms of Service*. Last updated 27 May
   2026; effective 28 November 2025. Available at:
-  <https://legal.epicgames.com/epicgames/tos> (Accessed: 13 July 2026).
-- Epic Games, Inc. (n.d.) *Unreal Engine End User License Agreement*. Available
-  at: <https://www.unrealengine.com/eula/unreal> (Accessed: 13 July 2026).
+  <https://legal.epicgames.com/epicgames/tos> (Accessed: 14 July 2026).
+- Epic Games, Inc. (n.d.) *Unreal Engine End User License Agreement*. The live
+  page did not expose a revision date or version identifier in the reviewed
+  text. Available at: <https://www.unrealengine.com/eula/unreal> (Accessed: 14
+  July 2026).
 - Epic Games, Inc. (n.d.) *Fan Content Policy*. Available at:
-  <https://legal.epicgames.com/epicgames/fan-art-policy> (Accessed: 13 July
+  <https://legal.epicgames.com/epicgames/fan-art-policy> (Accessed: 14 July
   2026).
 - SHAR repository (2026) Unreal Engine project descriptor, generated project
   evidence, and current Epic-related bibliography records.

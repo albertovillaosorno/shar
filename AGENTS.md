@@ -40,6 +40,14 @@ approval before destructive or project-wide changes.
 The outbound MCP client toolset solves the opposite connection direction and is
 not part of normal terminal-to-Unreal control.
 
+Keep external AI inputs within repository-owned project material, public
+documentation, and bounded editor-state results. Do not transmit Epic Engine
+Code, Examples, Starter Content, installed proprietary plugin source, or other
+Unreal Licensed Technology to a generative-AI service when the applicable
+service or account may use that input for training. The presence of a native MCP
+tool does not authorize exporting proprietary source bodies or installed engine
+content.
+
 ## Repository knowledge
 
 Architecture decision records contain repository-impacting decisions only.
