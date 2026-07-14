@@ -7,10 +7,12 @@ wiki text, page histories, images, audio, video, or other media.
 ## Review Status And Scope
 
 - Review status: Evidence recorded.
-- Evidence status: Partially verified — Public page and platform licensing page
-  reviewed.
+- Evidence status: Partially verified — The public wiki, Fandom licensing page,
+  and current Terms of Use were reviewed. Page-level factual accuracy,
+  contributor history, imported-text provenance, and media-file licensing remain
+  proposition- and revision-specific.
 - Counsel review: Not performed.
-- As-of date: 2026-07-12.
+- As-of date: 2026-07-14.
 - Subject class: Community-authored secondary research source.
 
 ## Covered Material
@@ -29,8 +31,10 @@ No Fandom page text or non-text media is incorporated into the repository.
 ## Provenance And Version History
 
 Wiki pages and histories change over time. Any material proposition derived from
-a page requires the exact page title, revision identifier, access date, author
-history, and independent corroboration.
+a page requires the exact page title, revision identifier, access date, relevant
+contributor history, imported-text provenance where applicable, and independent
+corroboration. A current page view is not evidence of what an earlier revision
+said.
 
 ## Authorship, Ownership, And Attribution
 
@@ -41,11 +45,12 @@ the license of each media file or imported passage.
 
 ## License Or Terms Basis
 
-The wiki footer states that community content is available under CC BY-SA unless
-otherwise noted. Fandom's licensing page states that wiki text is generally
-licensed under CC BY-SA 3.0 Unported, subject to wiki-specific exceptions, and
-that non-text media must not be assumed to use the same license. Reuse requires
-page-specific license, attribution, history, and media review.
+Fandom's licensing page states that wiki text is generally licensed under CC
+BY-SA 3.0 Unported unless an individual wiki uses another permitted license. It
+also states that imported text must have compatible licensing and required
+attribution, and that non-text media must not be assumed to use the same license.
+Reuse therefore requires page-specific license, revision, attribution,
+imported-text provenance, and media-file review.
 
 ## Distribution, Modification, And Compatibility
 
@@ -65,8 +70,8 @@ Git. When reuse is proposed, preserve revision and attribution evidence.
 - Fandom community contributors (n.d.) *The Simpsons Hit And Run Wiki*.
   Available at:
   <https://simpsons-hit-and-run.fandom.com/wiki/The_Simpsons_Hit_and_Run_Wiki>
-  (Accessed: 12 July 2026).
+  (Accessed: 14 July 2026).
 - Fandom, Inc. (n.d.) *Licensing*. Available at:
-  <https://www.fandom.com/licensing> (Accessed: 12 July 2026).
-- Fandom, Inc. (n.d.) *Terms of Use*. Available at:
-  <https://www.fandom.com/terms-of-use> (Accessed: 12 July 2026).
+  <https://www.fandom.com/licensing> (Accessed: 14 July 2026).
+- Fandom, Inc. (2025) *Terms of Use*. Date of last revision: 19 December 2025.
+  Available at: <https://www.fandom.com/terms-of-use> (Accessed: 14 July 2026).
