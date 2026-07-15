@@ -44,9 +44,11 @@ remain independent security requirements.
 ## Provenance And Version History
 
 The cached extractor identifies itself as 7-Zip 26.02, dated 25 June 2026. The
-official 7-Zip site and release repository identify 26.02 as the current release.
+official 7-Zip site and release repository identify 26.02 as the current
+release.
 The versionless download alias returned a 602,112-byte artifact last modified on
-25 June 2026 during this review, which is consistent with the cached identity but
+25 June 2026 during this review, which is consistent with the cached identity
+but
 is not a cryptographic verification.
 
 For an acquisition that uses 7-Zip, the exact standalone extractor actually
@@ -78,7 +80,8 @@ the exact artifact conveyed.
 
 ## Compliance Posture
 
-- Replace the mutable alias with a pinned release artifact or record the resolved
+- Replace the mutable alias with a pinned release artifact or record the
+  resolved
   release identity before execution.
 - Download only from the configured official upstream location.
 - Add publisher-backed checksum or signature verification before execution; the

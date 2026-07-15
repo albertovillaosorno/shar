@@ -98,6 +98,7 @@ verified subset until equivalent evidence exists.
 ### Verified sources
 
 - Microsoft (2020), *Programming Guide for DDS*.
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://learn.microsoft.com/en-us/windows/win32/direct3ddds/dx-graphics-dds-pguide>
 - Microsoft, *BMP Format Overview*.
   <https://learn.microsoft.com/en-us/windows/win32/wic/bmp-format-overview>
@@ -105,6 +106,7 @@ verified subset until equivalent evidence exists.
 ## Source References
 
 - Microsoft (n.d.) *Programming Guide for DDS*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://learn.microsoft.com/en-us/windows/win32/direct3ddds/dx-graphics-dds-pguide>
   (Accessed: 12 July 2026).
 - Microsoft (n.d.) *Bitmap Storage*. Available at:

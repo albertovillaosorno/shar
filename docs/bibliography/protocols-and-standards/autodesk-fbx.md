@@ -63,9 +63,11 @@ validation, acceptance, endorsement, certification, or authorization.
 
 - Keep serializer implementation independent from proprietary SDK source.
 - Record the generated FBX version, hashes, embedded media, and any inspection
-  tool only when that tool was actually executed and its exact version and result
+  tool only when that tool was actually executed and its exact version and
+  result
   were preserved.
-- Do not infer an installed application or successful import from the presence of
+- Do not infer an installed application or successful import from the presence
+  of
   a helper script.
 - Do not redistribute Autodesk SDK binaries or documentation without terms
   review.

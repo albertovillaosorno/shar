@@ -40,7 +40,8 @@ repository-owned source.
 
 ## Provenance And Version History
 
-FFmpeg identifies 8.1.2, released 17 June 2026, as the latest stable release from
+FFmpeg identifies 8.1.2, released 17 June 2026, as the latest stable release
+from
 the 8.1 branch. Gyan identifies its 8.1.2 release build, dated 27 June 2026, as
 the current Windows release package and links it to FFmpeg source commit
 `38b88335f9`. The mutable release alias resolved to that version during this

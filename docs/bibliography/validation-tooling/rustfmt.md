@@ -29,13 +29,15 @@ formatter commands. rustfmt is not a runtime dependency of the generated game.
 
 ## Provenance And Version History
 
-The repository pins `nightly-2026-07-10` and requires the managed runtime to move
+The repository pins `nightly-2026-07-10` and requires the managed runtime to
+move
 with that file. The reviewed runtime reported rustc 1.99.0-nightly and rustfmt
 1.9.0-nightly from compiler commit `af3d95584`, dated 9 July 2026.
 
 The dated nightly pin is the reproducibility authority. Rustup documents that
 nightly releases are ordinarily produced every night, may omit optional
-components, and can be installed by exact date. A validation record must preserve
+components, and can be installed by exact date. A validation record must
+preserve
 the actual compiler commit, component version, target, and configuration rather
 than treating the floating `nightly` label as sufficient evidence.
 
@@ -59,7 +61,8 @@ notices, and third-party component records.
 ## Compliance Posture
 
 Canonical validation and the dated Rust toolchain configuration confirm rustfmt
-use. Keep the toolchain file and managed runtime synchronized, preserve the exact
+use. Keep the toolchain file and managed runtime synchronized, preserve the
+exact
 compiler commit and formatter component identity, and continue using the
 repository's canonical validation flow rather than direct ad hoc formatting.
 

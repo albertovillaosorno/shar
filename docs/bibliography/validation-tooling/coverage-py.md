@@ -54,7 +54,8 @@ These are dated environment and upstream-currentness observations, not a
 permanent version requirement. Because the canonical dependency declaration does
 not directly pin Coverage.py, the actual resolved version, package hashes,
 configuration, data-file schema, and report behavior must be preserved with each
-run. A transitive release may lag because of a resolver snapshot, stability hold,
+run. A transitive release may lag because of a resolver snapshot, stability
+hold,
 delayed refresh, packaging availability, or human oversight. Bibliography prose
 does not override the actual environment evidence.
 

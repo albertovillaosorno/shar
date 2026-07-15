@@ -36,12 +36,13 @@ Host, editor, build, hosting, and operator-facing tools.
 
 - [Comet Browser](construction-environment/comet-browser.md)
 - [Cursor](construction-environment/cursor.md)
-- [GNU Bash And Windows PowerShell](construction-environment/bash-and-windows-powershell.md)
+- [GNU Bash And Windows PowerShell][bash-powershell]
 - [.NET SDK And Runtime](construction-environment/dotnet-sdk.md)
 - [Git](construction-environment/git.md)
 - [GitHub](construction-environment/github.md)
-- [Microsoft C++ Build Toolchain](construction-environment/microsoft-cpp-build-toolchain.md)
+- [Microsoft C++ Build Toolchain][cpp-build-toolchain]
 - [Node.js](construction-environment/nodejs.md)
+- [pnpm](construction-environment/pnpm.md)
 - [ripgrep](construction-environment/ripgrep.md)
 - [Windows 11](construction-environment/windows-11.md)
 
@@ -65,8 +66,8 @@ subject record and controlling instrument.
 Official platform rules and creator-content policies used as non-governing
 source evidence for publication and monetization analysis.
 
-- [Xbox Game Content Usage Rules](platform-policies/xbox-game-content-usage-rules.md)
-- [YouTube Game Content And Monetization Policies](platform-policies/youtube-game-content-and-monetization.md)
+- [Xbox Game Content Usage Rules][xbox-content-rules]
+- [YouTube Game Content And Monetization Policies][youtube-content-policy]
 
 ## Model Review Applications
 
@@ -102,7 +103,7 @@ Package build backends and package-construction tools.
 Published specifications, encodings, interchange conventions, ADRs, and
 change-history practices.
 
-- [Architecture Decision Records](protocols-and-standards/architecture-decision-records.md)
+- [Architecture Decision Records][adr-records]
 - [Autodesk FBX](protocols-and-standards/autodesk-fbx.md)
 - [Bink Video](protocols-and-standards/bink-video.md)
 - [Calendar Versioning](protocols-and-standards/calendar-versioning.md)
@@ -110,16 +111,16 @@ change-history practices.
 - [Conventional Commits](protocols-and-standards/conventional-commits.md)
 - [EditorConfig](protocols-and-standards/editorconfig.md)
 - [HAP Video Codec](protocols-and-standards/hap-video-codec.md)
-- [INI Configuration Family](protocols-and-standards/ini-configuration-family.md)
+- [INI Configuration Family][ini-family]
 - [JSON And JSON Lines](protocols-and-standards/json-and-json-lines.md)
 - [Markdown And CommonMark](protocols-and-standards/markdown-and-commonmark.md)
 - [Model Context Protocol](protocols-and-standards/model-context-protocol.md)
-- [Portable Network Graphics](protocols-and-standards/portable-network-graphics.md)
-- [DDS, TGA, And BMP Raster Texture Inputs](protocols-and-standards/raster-texture-inputs-dds-tga-bmp.md)
+- [Portable Network Graphics][png]
+- [DDS, TGA, And BMP Raster Texture Inputs][raster-texture-inputs]
 - [Microsoft Rich Text Format](protocols-and-standards/rich-text-format.md)
 - [RIFF, WAVE, And PCM](protocols-and-standards/riff-wave-pcm.md)
 - [SHA-256](protocols-and-standards/sha-256.md)
-- [SPDX License Identifiers](protocols-and-standards/spdx-license-identifiers.md)
+- [SPDX License Identifiers][spdx]
 - [TOML](protocols-and-standards/toml.md)
 - [Unicode And UTF-8](protocols-and-standards/unicode-utf-8.md)
 
@@ -128,7 +129,7 @@ change-history practices.
 Unreal Engine and enabled external engine capabilities.
 
 - [Unreal Engine](engine-and-plugins/unreal-engine.md)
-- [Unreal Modeling Tools Editor Mode](engine-and-plugins/unreal-modeling-tools-editor-mode.md)
+- [Unreal Modeling Tools Editor Mode][unreal-modeling-tools]
 - [Unreal Native MCP Plugins](engine-and-plugins/unreal-native-mcp-plugins.md)
 
 ## Media Tooling
@@ -152,7 +153,7 @@ Linters, formatters, type checkers, tests, and coverage tools.
 - [Clippy](validation-tooling/clippy.md)
 - [CSpell](validation-tooling/cspell.md)
 - [Coverage.py](validation-tooling/coverage-py.md)
-- [LLVM Clang, Clang-Tidy, And Clang-Format](validation-tooling/llvm-clang-and-clang-tidy.md)
+- [LLVM Clang, Clang-Tidy, And Clang-Format][llvm-validation]
 - [markdownlint-cli2 And markdownlint](validation-tooling/markdownlint-cli2.md)
 - [pytest-cov](validation-tooling/pytest-cov.md)
 - [pytest](validation-tooling/pytest.md)
@@ -169,8 +170,8 @@ Proprietary products studied only as compatibility and historical subjects.
 
 Secondary navigation and acquisition-provenance references.
 
-- [Jebano Latin Spanish Mod Tutorial](research-sources/jebano-youtube-latin-spanish-mod-tutorial.md)
-- [The Simpsons Hit And Run Wiki](research-sources/simpsons-hit-and-run-fandom-wiki.md)
+- [Jebano Latin Spanish Mod Tutorial][jebano-tutorial]
+- [The Simpsons Hit And Run Wiki][shar-wiki]
 
 ## Interoperability Formats
 
@@ -178,18 +179,57 @@ Independently studied proprietary and unresolved format families.
 
 - [CHO Choreography](interoperability-formats/choreography-cho.md)
 - [ERR Diagnostic Log](interoperability-formats/error-log-err.md)
-- [LMLM And LSPA Interoperability](interoperability-formats/lmlm-lspa-interoperability.md)
-- [LZR And LZRF Compression](interoperability-formats/lzr-and-lzrf-compression.md)
-- [MFK And CON Command Scripts](interoperability-formats/mission-and-console-scripts-mfk-con.md)
+- [LMLM And LSPA Interoperability][lmlm-lspa]
+- [LZR And LZRF Compression][lzr-lzrf]
+- [MFK And CON Command Scripts][mfk-con]
 - [Pure3D P3D](interoperability-formats/pure3d-p3d.md)
 - [RadCore Cement RCF](interoperability-formats/radcore-cement-rcf.md)
-- [Radical Entertainment Historical Toolchain](interoperability-formats/radical-entertainment-toolchain-and-formats.md)
+- [Radical Entertainment Historical Toolchain][radical-toolchain]
 - [RadMovie RMV](interoperability-formats/radmovie-rmv.md)
 - [RadSound RSD](interoperability-formats/radsound-rsd.md)
 - [Scrooby PAG, SCR, And PRJ](interoperability-formats/scrooby-pag-scr-prj.md)
-- [TYP Sound Resource Metadata](interoperability-formats/sound-resource-type-typ.md)
+- [TYP Sound Resource Metadata][typ-metadata]
 - [SPA Format Identity](interoperability-formats/spa-format-identity.md)
-- [TextBible Language Files](interoperability-formats/textbible-language-files.md)
+- [TextBible Language Files][textbible]
+
+[bash-powershell]:
+  construction-environment/bash-and-windows-powershell.md
+[cpp-build-toolchain]:
+  construction-environment/microsoft-cpp-build-toolchain.md
+[xbox-content-rules]:
+  platform-policies/xbox-game-content-usage-rules.md
+[youtube-content-policy]:
+  platform-policies/youtube-game-content-and-monetization.md
+[adr-records]:
+  protocols-and-standards/architecture-decision-records.md
+[ini-family]:
+  protocols-and-standards/ini-configuration-family.md
+[png]:
+  protocols-and-standards/portable-network-graphics.md
+[raster-texture-inputs]:
+  protocols-and-standards/raster-texture-inputs-dds-tga-bmp.md
+[spdx]:
+  protocols-and-standards/spdx-license-identifiers.md
+[unreal-modeling-tools]:
+  engine-and-plugins/unreal-modeling-tools-editor-mode.md
+[llvm-validation]:
+  validation-tooling/llvm-clang-and-clang-tidy.md
+[jebano-tutorial]:
+  research-sources/jebano-youtube-latin-spanish-mod-tutorial.md
+[shar-wiki]:
+  research-sources/simpsons-hit-and-run-fandom-wiki.md
+[lmlm-lspa]:
+  interoperability-formats/lmlm-lspa-interoperability.md
+[lzr-lzrf]:
+  interoperability-formats/lzr-and-lzrf-compression.md
+[mfk-con]:
+  interoperability-formats/mission-and-console-scripts-mfk-con.md
+[radical-toolchain]:
+  interoperability-formats/radical-entertainment-toolchain-and-formats.md
+[typ-metadata]:
+  interoperability-formats/sound-resource-type-typ.md
+[textbible]:
+  interoperability-formats/textbible-language-files.md
 
 ## Catalog Admission Criteria
 
@@ -216,7 +256,7 @@ assessment.
 
 ## Current Coverage
 
-- Active subject records: 77.
+- Active subject records: 78.
 - Template records: 1.
 - Review date: 2026-07-14.
 - Legal conclusions: not provided by this index.

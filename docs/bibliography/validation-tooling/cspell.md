@@ -7,10 +7,10 @@ technical, factual, or legal correctness.
 ## Review Status And Scope
 
 - Review status: Evidence recorded.
-- Evidence status: Partially verified — Official identity, installed 10.0.0
-  package metadata, repository use, upstream 10.0.1 release, and the current
-  distribution boundary were verified. No documented compatibility hold or
-  other repository reason for retaining the older patch was identified.
+- Evidence status: Partially verified — Official identity, installed 10.0.1
+  package metadata, repository use, current upstream release, and the current
+  distribution boundary were verified. The complete transitive package and
+  bundled-dictionary notice inventory remains distribution-specific.
 - Counsel review: Not performed.
 - Legal scope: Upstream licensing and the current non-distributed development
   dependency posture; no legal opinion is asserted.
@@ -20,13 +20,13 @@ technical, factual, or legal correctness.
 
 ## Covered Material
 
-| Component | Function | Repository relationship |
-| :-------- | :------- | :---------------------- |
-| `cspell` | Command-line spelling validation | Invoked by `validate.sh` |
-| CSpell libraries | Parsing, dictionaries, and configuration | Loaded by the CLI |
-| Bundled dictionaries | General and technical vocabulary | Enabled selectively |
-| Repository wordlists | Project-reviewed vocabulary | Authored under `docs/cspell` |
-| Node.js | JavaScript runtime | Executes the CLI |
+| Component | Function | Relationship |
+| :-------- | :------- | :----------- |
+| `cspell` | Spelling validation | Invoked by `validate.sh` |
+| CSpell libraries | Parsing and configuration | CLI dependencies |
+| Bundled dictionaries | Vocabulary | Enabled selectively |
+| Repository wordlists | Project-reviewed vocabulary | `docs/cspell` authority |
+| Node.js | Runtime | Executes the CLI |
 
 The repository wordlists are SHAR-authored configuration data. Their inclusion
 in a CSpell run does not transfer ownership to CSpell or apply CSpell's license
@@ -34,32 +34,29 @@ to independently authored repository material.
 
 ## Repository Use And Scope
 
-`validate.sh` invokes the repository-managed Node.js runtime and CSpell module
-with the repository-local `cspell.json`, disabled configuration search, an
-explicit file list, directive validation, and no CSpell-owned cache. The
-repository validator separately enforces dictionary classification, sorted and
-unique entries, and exact line-scoped suppressions for intentional invalid
-sequences.
+`validate.sh` invokes the managed Node.js runtime and CSpell module with the
+repository-local `cspell.json`, disabled configuration search, an explicit file
+list, directive validation, and no CSpell-owned cache. The repository validator
+separately enforces dictionary classification, sorted and unique entries, and
+exact line-scoped suppressions for intentional invalid sequences.
 
-The repository-managed package observed for this record is `cspell` 10.0.0. The
-official upstream repository identifies CSpell as a spell checker for code,
-lists its CLI and supporting packages, and identifies the project as
-MIT-licensed. The official release page identifies 10.0.1 as the latest release
-and dates it 31 May 2026. The managed installation is therefore one patch release
-behind the verified upstream state.
+The managed package observed for this record is `cspell` 10.0.1. Its package
+metadata requires Node.js `>=22.18.0`, reports the MIT license, and identifies
+the canonical CSpell repository. The managed Node.js v26.5.0 runtime satisfies
+that engine floor. The npm registry and official upstream release evidence also
+identify 10.0.1 as the current release as of 14 July 2026.
 
 ## Provenance And Version History
 
-Repository configuration and installed package metadata establish the CSpell
-10.0.0 identity and current SHAR role. The official website, repository, and
-release evidence establish the 10.0.1 currentness comparison as of 14 July 2026.
-Those values are dated observations, not permanent latest-version labels or an
-undocumented compatibility range.
+Root package authority, the lockfile, installed package metadata, and
+executable output establish the CSpell 10.0.1 identity used by SHAR validation.
+The official
+website, repository, release page, and npm registry establish the dated
+currentness comparison.
 
-A successful spelling run proves observed execution with 10.0.0; it does not
-make that patch current or establish a reason for retaining it. Version currency
-remains unresolved until the package is upgraded or a separately documented
-compatibility hold supplies evidence for the older patch.
+A successful spelling run proves observed execution with 10.0.1 and the reviewed
+configuration. It does not prove factual correctness, establish the completeness
+of every bundled dictionary notice, or make a dated version permanently current.
 
 ## Authorship, Ownership, And Attribution
 
@@ -90,9 +87,8 @@ artifacts distributed.
 - A CSpell package, transitive dependency, and bundled-dictionary notice
   inventory is outside the current SHAR distribution boundary and is required
   when executable or package contents are redistributed.
-- The repository-managed CSpell 10.0.0 installation executes the current
-  spelling contract, but it is not represented as current while upstream 10.0.1
-  remains the verified latest release and no compatibility hold is documented.
+- The managed CSpell 10.0.1 package matches the current reviewed release and its
+  Node.js engine requirement is satisfied by the managed runtime.
 
 ## Compliance Posture
 
@@ -100,7 +96,8 @@ artifacts distributed.
 - Keep genuine English, technical, and named-entity vocabulary separated.
 - Do not use broad ignore lists to hide spelling errors.
 - Use exact line-scoped suppressions for intentional invalid sequences.
-- Reverify package, dictionary, and dependency notices before redistribution.
+- Reverify package, dictionary, dependency notices, and release currentness
+  before redistribution or a managed upgrade.
 - Treat spelling acceptance as editorial evidence, not factual or legal proof.
 
 ## Source References
@@ -111,8 +108,13 @@ artifacts distributed.
   10.0.1 is identified as the latest release and dated 31 May 2026. Available
   at: <https://github.com/streetsidesoftware/cspell/releases> (Accessed: 14
   July 2026).
+- Street Side Software and contributors (2026) *CSpell npm package metadata*.
+  Identifies `cspell` 10.0.1, its Node.js engine floor, package integrity,
+  repository, and MIT license. Available at:
+  <https://www.npmjs.com/package/cspell> (Accessed: 14 July 2026).
 - Street Side Software and contributors (n.d.) *CSpell official GitHub
   repository*. Available at: <https://github.com/streetsidesoftware/cspell>
   (Accessed: 14 July 2026).
-- SHAR repository (2026) `cspell.json`, `docs/cspell`, `validate.sh`, and
-  repository-managed `cspell` 10.0.0 package metadata.
+- SHAR managed command authority (2026), `cspell.json`, `docs/cspell`,
+  `validate.sh`, root package authority, lockfile, and managed `cspell` 10.0.1
+  package metadata and executable output.

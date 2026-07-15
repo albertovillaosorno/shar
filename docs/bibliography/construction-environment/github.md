@@ -55,7 +55,8 @@ GitHub's fork functionality.
 
 For individual licenses, the AI-feature input and output license has an account
 opt-out, but the terms state that this opt-out does not limit the broader
-repository-content licenses. The terms also contain a separate access-reciprocity
+repository-content licenses. The terms also contain a separate
+access-reciprocity
 clause for automated access to public content used to develop or train a
 commercially available AI system, subject to stated academic-research and
 monthly-active-user exceptions. None of these platform provisions replaces the
@@ -75,7 +76,8 @@ release, or API features require feature-specific review.
 Before publication, verify the repository license, contributor authority,
 secret absence, asset exclusions, and every third-party notice. Treat the
 individual AI-input opt-out as narrower than the public-repository content
-license, and review the access-reciprocity clause before automated public-content
+license, and review the access-reciprocity clause before automated
+public-content
 collection for commercial AI training.
 
 ## Source References
@@ -86,6 +88,7 @@ collection for commercial AI training.
   (Accessed: 14 July 2026).
 - GitHub (2026) *GitHub Terms for Additional Products and Features*, version
   effective 27 April 2026. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://docs.github.com/en/site-policy/github-terms/github-terms-for-additional-products-and-features>
   (Accessed: 14 July 2026).
 - GitHub (n.d.) *About GitHub*. Available at: <https://github.com/about>

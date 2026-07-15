@@ -16,7 +16,8 @@ an authority, dependency, or distributed component.
 
 ## Covered Material
 
-The Comet browser as a possible public-source research and information-management
+The Comet browser as a possible public-source research and
+information-management
 environment. Perplexity's current product page identifies Comet as its browser,
 describes assistant-driven browsing and delegated tasks, and lists Mac, Windows,
 iOS, and Android availability.

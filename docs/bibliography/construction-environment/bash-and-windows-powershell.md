@@ -38,7 +38,8 @@ repository command runner and forwards the requested validation arguments.
 
 The wrapper contains no Cygwin-specific or `cygpath` invocation, even though the
 reviewed run used a Cygwin-hosted Bash executable. It also does not compile or
-analyze C# itself. A shell environment is compatible only when it can execute the
+analyze C# itself. A shell environment is compatible only when it can execute
+the
 wrapper and launch the required Windows PowerShell process with equivalent
 arguments and exit behavior. The observed host proves one working environment,
 not an exclusive distribution requirement.
@@ -57,14 +58,16 @@ requirements or a permanent compatibility range.
 The executable name `powershell.exe` identifies the Windows PowerShell command
 surface, not the cross-platform PowerShell 7 command `pwsh`. PowerShell's
 official repository distinguishes Windows PowerShell 5.1 from PowerShell 7 and
-later. The repository's MIT license applies to the open-source PowerShell project
+later. The repository's MIT license applies to the open-source PowerShell
+project
 and must not be assumed to license Windows PowerShell as an installed Windows
 component.
 
 Cygwin's official licensing page describes a mixed tool distribution and a
 separate LGPLv3-or-later posture with a linking exception for its API library.
 That distribution evidence matters only when Cygwin components are conveyed; it
-does not relicense SHAR or make Cygwin mandatory. Reproducible validation evidence
+does not relicense SHAR or make Cygwin mandatory. Reproducible validation
+evidence
 must preserve the actual executable identities, host distribution, and versions
 used.
 
@@ -126,5 +129,6 @@ version is supported.
   14 July 2026).
 - SHAR repository and operator environment (2026), public Bash validation
   wrapper, Windows PowerShell command bridge, GNU Bash 5.3.9
-  `x86_64-pc-cygwin`, Windows PowerShell 5.1.26100.8655 Desktop, and Windows host
+  `x86_64-pc-cygwin`, Windows PowerShell 5.1.26100.8655 Desktop, and Windows
+  host
   version 10.0.26200.0.

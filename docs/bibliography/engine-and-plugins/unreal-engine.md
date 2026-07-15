@@ -9,7 +9,8 @@ examples, or documentation.
 - Review status: Evidence recorded.
 - Evidence status: Partially verified — Project descriptor, selected engine
   association, installed Unreal Engine 5.8.0 promoted build changelist 55116800,
-  release branch identity, current Epic EULA, its generative-AI input restriction,
+  release branch identity, current Epic EULA, its generative-AI input
+  restriction,
   public source-access rules, and Unreal Engine 5.8 Media Framework and Electra
   boundaries were verified. Accepted regional agreement, bundled notices,
   decoder availability, and external-service retention remain environment- or
@@ -66,7 +67,8 @@ The current EULA prohibits using Licensed Technology as training input to a
 Generative AI Program and prohibits prompt-based input where that program trains
 on the input. This is a bounded input-use restriction, not a factual basis for a
 blanket claim that all AI-assisted project work is prohibited. A workflow that
-transmits Engine Code or other Licensed Technology must verify the exact service,
+transmits Engine Code or other Licensed Technology must verify the exact
+service,
 account, retention, and training behavior before transmission.
 
 ## Distribution, Modification, And Compatibility
@@ -79,7 +81,8 @@ and to the licensees permitted by Epic's agreement.
 ## Compliance Posture
 
 Keep engine and plugin source outside the public repository. Treat Unreal Engine
-5.8.0 changelist 55116800 as observed build evidence only; do not convert it into
+5.8.0 changelist 55116800 as observed build evidence only; do not convert it
+into
 an unbounded `>=` requirement. Do not submit Licensed Technology to an external
 generative-AI service unless exact account and service evidence proves that the
 input will not be used for training within the EULA's restricted scope. Before
@@ -98,9 +101,11 @@ royalty or seat analysis.
   July 2026).
 - Epic Games (2026) *Media Framework Technical Reference for Unreal Engine 5.8*.
   Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://dev.epicgames.com/documentation/en-us/unreal-engine/media-framework-technical-reference-for-unreal-engine>
   (Accessed: 14 July 2026).
 - Epic Games (2026) *Electra Media Player in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://dev.epicgames.com/documentation/en-us/unreal-engine/electra-media-player-in-unreal-engine>
   (Accessed: 14 July 2026).
 - Epic Games (n.d.) *Accessing Unreal Engine source code on GitHub*. Available

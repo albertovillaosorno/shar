@@ -28,12 +28,14 @@ decisions and do not modify upstream terms.
 
 ## Provenance And Version History
 
-The repository pins `nightly-2026-07-10` and requires the managed runtime to move
+The repository pins `nightly-2026-07-10` and requires the managed runtime to
+move
 with that file. The reviewed runtime reported rustc 1.99.0-nightly and Clippy
 0.1.98 from compiler commit `af3d95584`, dated 9 July 2026.
 
 Rustup documents that nightly toolchains may omit optional components such as
-Clippy and can be pinned by exact date. Validation evidence must therefore retain
+Clippy and can be pinned by exact date. Validation evidence must therefore
+retain
 the compiler commit, Clippy component version, target, enabled lint policy,
 compile graph, and diagnostics rather than relying on a floating channel label.
 

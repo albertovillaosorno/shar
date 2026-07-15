@@ -102,6 +102,7 @@ JSON document in the repository.
 - IETF (2017), *RFC 8259: The JavaScript Object Notation Data Interchange
   Format*. <https://www.rfc-editor.org/rfc/rfc8259.html>
 - Ecma International (2017), *ECMA-404: The JSON Data Interchange Syntax*.
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://ecma-international.org/publications-and-standards/standards/ecma-404/>
 - JSON Lines, *JSON Lines*. <https://jsonlines.org/>
 - SHAR repository evidence: `src/game-manifest/src/domain/json.rs`,
@@ -115,6 +116,7 @@ JSON document in the repository.
   <https://www.rfc-editor.org/rfc/rfc8259.html> (Accessed: 12 July 2026).
 - Ecma International (2017) *ECMA-404: The JSON Data Interchange Syntax*.
   Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://ecma-international.org/publications-and-standards/standards/ecma-404/>
   (Accessed: 12 July 2026).
 - JSON Lines (n.d.) *JSON Lines documentation*. Available at:

@@ -9,7 +9,8 @@ documentation, platform material, or any extracted payload.
 
 - Review status: Evidence recorded.
 - Evidence status: Partially verified — Repository boundary, historical product
-  identity, 2003 platform family, publisher-issued documentation, and an archived
+  identity, 2003 platform family, publisher-issued documentation, and an
+  archived
   former official site verified; present ownership, regional edition details,
   and component-level rights remain unresolved.
 - Counsel review: Not performed.

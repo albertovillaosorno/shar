@@ -25,7 +25,8 @@ Build Tool compiles authored C# target and module rules.
 
 ## Repository Use And Scope
 
-SHAR contains authored Unreal `.Target.cs` and `.Build.cs` files, but the current
+SHAR contains authored Unreal `.Target.cs` and `.Build.cs` files, but the
+current
 canonical validation plans for those files do not invoke `dotnet`, Roslyn, or an
 Unreal Build Tool compilation. Their compiler acceptance therefore remains an
 engine-build verification requirement rather than current canonical validator
@@ -97,9 +98,11 @@ distributed .NET components.
   11.0.100-preview.6.26359.118 and matching runtimes. Available at:
   <https://dotnet.microsoft.com/en-us/download/dotnet/11.0> (Accessed: 14 July
   2026).
-- Microsoft (2026) *.NET 11 release metadata*. Identifies Preview 6 as the latest
+- Microsoft (2026) *.NET 11 release metadata*. Identifies Preview 6 as the
+  latest
   release and SDK, and publishes the Windows x64 SDK archive URL and SHA-512.
   Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://builds.dotnet.microsoft.com/dotnet/release-metadata/11.0/releases.json>
   (Accessed: 14 July 2026).
 - .NET Foundation and contributors (n.d.) *.NET SDK official GitHub repository*.

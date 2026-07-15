@@ -26,7 +26,8 @@ The YouTube channel identified publicly as **Jebano** and the video titled
 *¡Mod en ESPAÑOL LATINO para Los Simpson Hit & Run! | Tutorial de Instalación*,
 YouTube video identifier `ZzXvcmzyoF4`.
 
-Only the public source identity and metadata are covered. No transcript, package,
+Only the public source identity and metadata are covered. No transcript,
+package,
 version announcement, delivery route, or downloaded sample is established by
 this record.
 
@@ -45,7 +46,8 @@ audio, translation, or other YouTube-hosted material is copied into SHAR.
 ## Provenance And Version History
 
 YouTube's public oEmbed response identified the video title, author name, and
-author channel on 12 July 2026. Public video metadata, descriptions, availability,
+author channel on 12 July 2026. Public video metadata, descriptions,
+availability,
 and linked locations may change without a stable version identifier.
 
 A later review must record its own access date and must not infer the historical
@@ -98,6 +100,7 @@ platform.
   Tutorial de Instalación\*. YouTube video `ZzXvcmzyoF4`. Available at:
   <https://www.youtube.com/watch?v=ZzXvcmzyoF4> (Accessed: 12 July 2026).
 - YouTube (n.d.) *oEmbed response for video `ZzXvcmzyoF4`*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://www.youtube.com/oembed?url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DZzXvcmzyoF4&format=json>
   (Accessed: 12 July 2026).
 - YouTube (2023) *Terms of Service*, dated 15 December 2023. Available at:

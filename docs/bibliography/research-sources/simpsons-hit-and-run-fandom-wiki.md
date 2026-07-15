@@ -48,7 +48,8 @@ the license of each media file or imported passage.
 Fandom's licensing page states that wiki text is generally licensed under CC
 BY-SA 3.0 Unported unless an individual wiki uses another permitted license. It
 also states that imported text must have compatible licensing and required
-attribution, and that non-text media must not be assumed to use the same license.
+attribution, and that non-text media must not be assumed to use the same
+license.
 Reuse therefore requires page-specific license, revision, attribution,
 imported-text provenance, and media-file review.
 

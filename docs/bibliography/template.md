@@ -127,26 +127,38 @@ headings, or `Not applicable` boilerplate.
 List every component covered by this single-subject record. Separate components
 when their rights, owners, licenses, or distribution terms differ.
 
+<!-- markdownlint-disable MD013 -->
+
 | Component   | Version or date | Material type    | Included basis | Evidence  |
 | :---------- | :-------------- | :--------------- | :------------- | :-------- |
 | {Component} | {Value}         | {Code/docs/etc.} | {Why covered}  | {SRC-###} |
+
+<!-- markdownlint-enable MD013 -->
 
 ### Expressly Excluded Components
 
 Record exclusions to prevent accidental license or ownership spillover.
 
+<!-- markdownlint-disable MD013 -->
+
 | Excluded component | Reason excluded                      | Governing record or source |
 | :----------------- | :----------------------------------- | :------------------------- |
 | {Component}        | {Different subject, owner, or terms} | {Record or SRC-###}        |
+
+<!-- markdownlint-enable MD013 -->
 
 ### Identity Resolution
 
 Document aliases, former names, forks, successor projects, acquired entities,
 and confusingly similar names.
 
+<!-- markdownlint-disable MD013 -->
+
 | Name or identifier | Relationship to subject       | Applicable dates | Evidence status      |
 | :----------------- | :---------------------------- | :--------------- | :------------------- |
 | {Name}             | {Alias/former name/fork/etc.} | {Dates}          | {Status and SRC-###} |
+
+<!-- markdownlint-enable MD013 -->
 
 ## Repository Use And Scope
 
@@ -201,15 +213,23 @@ one or more source identifiers. Distinguish confirmed history from inference.}
 
 ### Chronology
 
+<!-- markdownlint-disable MD013 -->
+
 | Date   | Event   | Version or branch | Responsible entity | Legal relevance | Evidence  |
 | :----- | :------ | :---------------- | :----------------- | :-------------- | :-------- |
 | {Date} | {Event} | {Version}         | {Entity}           | {Why material}  | {SRC-###} |
 
+<!-- markdownlint-enable MD013 -->
+
 ### Version And Rights Lineage
+
+<!-- markdownlint-disable MD013 -->
 
 | Reviewed version | Derived from  | Release date | Rights holder | Governing terms | Status          |
 | :--------------- | :------------ | :----------- | :------------ | :-------------- | :-------------- |
 | {Version}        | {Predecessor} | {Date}       | {Entity}      | {Instrument}    | {Verified/etc.} |
+
+<!-- markdownlint-enable MD013 -->
 
 Record every known change in ownership, license, exception, contribution model,
 or distribution channel that could affect the reviewed version. Do not assume
@@ -223,6 +243,8 @@ Record each independently and cite the evidence for each statement.
 
 ### Persons And Entities
 
+<!-- markdownlint-disable MD013 -->
+
 | Role                       | Person or entity | Applicable material | Applicable dates | Evidence  | Status   |
 | :------------------------- | :--------------- | :------------------ | :--------------- | :-------- | :------- |
 | Creator or original author | {Name}           | {Material}          | {Dates}          | {SRC-###} | {Status} |
@@ -232,6 +254,8 @@ Record each independently and cite the evidence for each statement.
 | Licensor                   | {Name}           | {Material}          | {Dates}          | {SRC-###} | {Status} |
 | Publisher or distributor   | {Name}           | {Material}          | {Dates}          | {SRC-###} | {Status} |
 | Trademark owner            | {Name}           | {Mark}              | {Dates}          | {SRC-###} | {Status} |
+
+<!-- markdownlint-enable MD013 -->
 
 ### Contribution And Assignment Model
 
@@ -249,9 +273,13 @@ Record exact names, notices, acknowledgements, URLs, and placement requirements.
 Do not normalize spelling, punctuation, capitalization, dates, or entity names
 inside an exact notice.
 
+<!-- markdownlint-disable MD013 -->
+
 | Attribution item | Exact text or reference            | Trigger   | Required location | Source    |
 | :--------------- | :--------------------------------- | :-------- | :---------------- | :-------- |
 | {Item}           | {Exact text or authoritative file} | {Trigger} | {Location}        | {SRC-###} |
+
+<!-- markdownlint-enable MD013 -->
 
 ## Scholarly Evidence And Source Quality
 
@@ -274,9 +302,13 @@ not treat secondary commentary as controlling authority.
 
 Assign a stable identifier to every source used by this record.
 
+<!-- markdownlint-disable MD013 -->
+
 | Id      | Source class   | Author or issuer | Title   | Version/date | Locator    | Accessed | Integrity   | Status   |
 | :------ | :------------- | :--------------- | :------ | :----------- | :--------- | :------- | :---------- | :------- |
 | SRC-001 | {Primary/etc.} | {Name}           | {Title} | {Value}      | {URL/path} | {Date}   | {Hash/etc.} | {Status} |
+
+<!-- markdownlint-enable MD013 -->
 
 For web sources, record the canonical URL, publication or effective date when
 available, retrieval date, language, and archived locator. For repository
@@ -286,9 +318,13 @@ official identifier, effective date, amendment status, and official publication.
 
 ### Claim-To-Evidence Ledger
 
+<!-- markdownlint-disable MD013 -->
+
 | Claim id | Factual proposition        | Source ids | Pinpoint location   | Evidence label | Reviewer note |
 | :------- | :------------------------- | :--------- | :------------------ | :------------- | :------------ |
 | CLM-001  | {One testable proposition} | {SRC-###}  | {Page/section/line} | {Label}        | {Note}        |
+
+<!-- markdownlint-enable MD013 -->
 
 Do not combine multiple materially different propositions in one claim row.
 Record negative findings, unavailable sources, withdrawn materials, and failed
@@ -296,9 +332,13 @@ verification attempts when they affect confidence.
 
 ### Conflicting Or Superseded Sources
 
+<!-- markdownlint-disable MD013 -->
+
 | Source ids | Conflict or supersession | Resolution status     | Controlling basis      | Reviewer |
 | :--------- | :----------------------- | :-------------------- | :--------------------- | :------- |
 | {SRC-###}  | {Description}            | {Resolved/unresolved} | {Authority and reason} | {Name}   |
+
+<!-- markdownlint-enable MD013 -->
 
 ## Copyright And Related Rights
 
@@ -307,9 +347,13 @@ licensed broadly, or publicly accessible yet not licensed for copying.
 
 ### Component-Level Rights Assessment
 
+<!-- markdownlint-disable MD013 -->
+
 | Component   | Work type            | Claimed author | Claimed owner | Notice                | Status   | Evidence  |
 | :---------- | :------------------- | :------------- | :------------ | :-------------------- | :------- | :-------- |
 | {Component} | {Code/docs/art/etc.} | {Name}         | {Name}        | {Exact or none found} | {Status} | {SRC-###} |
+
+<!-- markdownlint-enable MD013 -->
 
 ### Copyright Notices
 
@@ -337,9 +381,13 @@ List each instrument separately. Do not assume one license governs code,
 documentation, examples, artwork, trademarks, hosted services, or historical
 versions.
 
+<!-- markdownlint-disable MD013 -->
+
 | Material   | Instrument           | Version/date | Identifier            | Issuer   | Authoritative source | Status   |
 | :--------- | :------------------- | :----------- | :-------------------- | :------- | :------------------- | :------- |
 | {Material} | {License/terms/etc.} | {Value}      | {SPDX or official id} | {Entity} | {SRC-###}            | {Status} |
+
+<!-- markdownlint-enable MD013 -->
 
 - Controlling instrument for the reviewed use: {Required or unresolved}
 - Instrument hierarchy or precedence clause: {Exact source}
@@ -356,6 +404,8 @@ versions.
 
 ### Grant And Reservation Of Rights
 
+<!-- markdownlint-disable MD013 -->
+
 | Right or activity  | Expressly granted | Conditions   | Expressly reserved | Evidence  | Status   |
 | :----------------- | :---------------- | :----------- | :----------------- | :-------- | :------- |
 | Access or use      | {Yes/no/unclear}  | {Conditions} | {Reservations}     | {SRC-###} | {Status} |
@@ -370,7 +420,11 @@ versions.
 | Patent rights      | {Value}           | {Conditions} | {Reservations}     | {SRC-###} | {Status} |
 | Trademark rights   | {Value}           | {Conditions} | {Reservations}     | {SRC-###} | {Status} |
 
+<!-- markdownlint-enable MD013 -->
+
 ### Conditions And Obligations
+
+<!-- markdownlint-disable MD013 -->
 
 | Obligation                | Trigger   | Required act | Deadline | Delivery location | Evidence  | Status   |
 | :------------------------ | :-------- | :----------- | :------- | :---------------- | :-------- | :------- |
@@ -382,6 +436,8 @@ versions.
 | State changes             | {Trigger} | {Act}        | {When}   | {Location}        | {SRC-###} | {Status} |
 | Provide installation data | {Trigger} | {Act}        | {When}   | {Location}        | {SRC-###} | {Status} |
 | Preserve notices          | {Trigger} | {Act}        | {When}   | {Location}        | {SRC-###} | {Status} |
+
+<!-- markdownlint-enable MD013 -->
 
 Add rows for every applicable condition. Do not reduce a complex obligation to a
 single label such as `permissive`, `copyleft`, `free`, `open`, or `proprietary`.
@@ -440,9 +496,13 @@ text.
 
 ### Trademarks And Branding
 
+<!-- markdownlint-disable MD013 -->
+
 | Mark or branding element | Claimed owner | Registration or source | Repository use    | Permission status |
 | :----------------------- | :------------ | :--------------------- | :---------------- | :---------------- |
 | {Mark}                   | {Entity}      | {Record/SRC-###}       | {Nominative/etc.} | {Status}          |
+
+<!-- markdownlint-enable MD013 -->
 
 - Logo or brand-asset use: {Describe or none}
 - Naming-guideline source: {Required when applicable}
@@ -485,6 +545,8 @@ Analyze each actual or reasonably planned repository scenario separately. A
 license conclusion for internal use does not automatically apply to source,
 binary, hosted, embedded, commercial, or modified distribution.
 
+<!-- markdownlint-disable MD013 -->
+
 | Scenario                   | Material involved | Triggering act | Status   | Required actions | Evidence  | Reviewer |
 | :------------------------- | :---------------- | :------------- | :------- | :--------------- | :-------- | :------- |
 | Internal development use   | {Material}        | {Act}          | {Status} | {Actions}        | {SRC-###} | {Name}   |
@@ -494,6 +556,8 @@ binary, hosted, embedded, commercial, or modified distribution.
 | Hosted or network service  | {Material}        | {Act}          | {Status} | {Actions}        | {SRC-###} | {Name}   |
 | Modified redistribution    | {Material}        | {Act}          | {Status} | {Actions}        | {SRC-###} | {Name}   |
 | User-supplied integration  | {Material}        | {Act}          | {Status} | {Actions}        | {SRC-###} | {Name}   |
+
+<!-- markdownlint-enable MD013 -->
 
 Use only these status values unless a governing ADR defines stricter values:
 
@@ -521,6 +585,8 @@ Use only these status values unless a governing ADR defines stricter values:
 
 ### Notice Package
 
+<!-- markdownlint-disable MD013 -->
+
 | Notice artifact             | Required content | Trigger   | Destination               | Owner  | Verification |
 | :-------------------------- | :--------------- | :-------- | :------------------------ | :----- | :----------- |
 | License copy                | {Content/file}   | {Trigger} | {Source/binary/docs/etc.} | {Role} | {Status}     |
@@ -531,6 +597,8 @@ Use only these status values unless a governing ADR defines stricter values:
 | Warranty disclaimer         | {Requirement}    | {Trigger} | {Location}                | {Role} | {Status}     |
 | Patent notice               | {Requirement}    | {Trigger} | {Location}                | {Role} | {Status}     |
 | Trademark notice            | {Requirement}    | {Trigger} | {Location}                | {Role} | {Status}     |
+
+<!-- markdownlint-enable MD013 -->
 
 ### Delivery Verification
 
@@ -700,9 +768,13 @@ date.
 
 ### Open Questions And Distribution Conditions
 
+<!-- markdownlint-disable MD013 -->
+
 | Id    | Question or deficiency | Risk if unresolved | Owner  | Due date | Distribution effect     |
 | :---- | :--------------------- | :----------------- | :----- | :------- | :---------------------- |
 | Q-001 | {Question}             | {Risk}             | {Role} | {Date}   | {Block/condition/none}  |
+
+<!-- markdownlint-enable MD013 -->
 
 ### Review Triggers
 
@@ -738,6 +810,8 @@ Re-review this record when any of the following occurs:
 
 ### Reviewer Sign-Off
 
+<!-- markdownlint-disable MD013 -->
+
 | Review role            | Reviewer       | Date   | Scope   | Result   | Conditions   |
 | :--------------------- | :------------- | :----- | :------ | :------- | :----------- |
 | Technical provenance   | {Name}         | {Date} | {Scope} | {Result} | {Conditions} |
@@ -745,14 +819,20 @@ Re-review this record when any of the following occurs:
 | Academic-source review | {Name}         | {Date} | {Scope} | {Result} | {Conditions} |
 | Legal review           | {Name/counsel} | {Date} | {Scope} | {Result} | {Conditions} |
 
+<!-- markdownlint-enable MD013 -->
+
 A signature or reviewer name records review activity; it does not create rights,
 waive obligations, establish privilege, or guarantee legal compliance.
 
 ## Record Revision History
 
+<!-- markdownlint-disable MD013 -->
+
 | Record version | Date         | Author | Change summary | Verification impact        |
 | :------------- | :----------- | :----- | :------------- | :------------------------- |
 | 0.1            | {YYYY-MM-DD} | {Name} | Initial draft  | Full verification required |
+
+<!-- markdownlint-enable MD013 -->
 
 Do not erase prior material conclusions. When a conclusion changes, identify the
 previous conclusion, the new evidence, the reason for change, and any affected

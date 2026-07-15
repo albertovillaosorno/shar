@@ -7,7 +7,8 @@ repository and does not apply Git's license to tracked SHAR content.
 
 - Review status: Evidence recorded.
 - Evidence status: Partially verified — Repository role, observed Git for
-  Windows 2.54.0.windows.1 identity, official Git 2.55.0 current release, Git for
+  Windows 2.54.0.windows.1 identity, official Git 2.55.0 current release, Git
+  for
   Windows 2.55.0.windows.2 release, source mirrors, and GPLv2 license text were
   verified. Configuration, hooks, filters, and signing state remain local.
 - Counsel review: Not performed.

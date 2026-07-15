@@ -24,9 +24,11 @@ public language-standard and compiler references needed to interpret that code.
 ## Repository Use And Scope
 
 SHAR contains authored `.Target.cs` and `.Build.cs` files consumed by Unreal
-Build Tool. The current canonical validation plans for those files do not compile
+Build Tool. The current canonical validation plans for those files do not
+compile
 or analyze them with Roslyn, `dotnet`, or Unreal Build Tool, so syntax and
-compiler acceptance remain unproven until an engine build or future compiler gate
+compiler acceptance remain unproven until an engine build or future compiler
+gate
 supplies that evidence.
 
 C# is a language, not a license grant for Roslyn, .NET, Unreal Engine, Microsoft
@@ -63,7 +65,8 @@ assembly, or Microsoft redistributable actually delivered.
 
 Do not describe the authored build rules as compiler-validated while the current
 canonical plan omits a C# gate. Preserve exact compiler, SDK, Unreal Build Tool,
-and engine provenance when an engine build or future compiler gate verifies them.
+and engine provenance when an engine build or future compiler gate verifies
+them.
 Keep standards references, implementation licenses, Unreal Engine terms, and
 SHAR-authored source rights separate.
 

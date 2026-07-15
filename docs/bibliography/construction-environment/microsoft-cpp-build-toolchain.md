@@ -12,7 +12,8 @@ does not claim that the Visual Studio IDE was used to author SHAR.
   Unreal setup guidance, and Microsoft's toolchain composition were verified.
   Accepted installation terms and Unreal build acceptance remain environment-
   and build-specific.
-- Operator-use status: Installation is observed; Visual Studio IDE authorship use
+- Operator-use status: Installation is observed; Visual Studio IDE authorship
+  use
   is not attested.
 - Counsel review: Not performed.
 - As-of date: 2026-07-14.
@@ -31,9 +32,11 @@ Only the installed subset used by SHAR belongs in a reproducible build record.
 
 SHAR source may be edited in Cursor or another editor. The selected Unreal
 Engine version requires a compatible C++ compiler and Windows SDK before a
-Windows C++ target can be compiled or packaged. The reviewed environment contains
+Windows C++ target can be compiled or packaged. The reviewed environment
+contains
 an x64 MSVC compiler, MSBuild, multiple MSVC toolsets, and Windows SDK
-10.0.26100.0. Their presence establishes tool availability, not successful Unreal
+10.0.26100.0. Their presence establishes tool availability, not successful
+Unreal
 compilation or packaging.
 
 This record does not establish use of the Visual Studio IDE for authorship. The

@@ -33,7 +33,8 @@ rights and obligations.
 
 The MCP package pins `requires-python = "==3.14.6"`; that exact patch is the
 repository contract for the package, not a permanent claim about the newest
-upstream Python release. Python 3.14.6 was published on 10 June 2026 as the sixth
+upstream Python release. Python 3.14.6 was published on 10 June 2026 as the
+sixth
 maintenance release of Python 3.14.
 
 The managed interpreter reports CPython 3.14.6 final for `win-amd64`, compiled

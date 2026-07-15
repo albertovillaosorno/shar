@@ -102,8 +102,10 @@ matrix, and decide whether multichannel output requires
 ### Verified sources
 
 - Microsoft (2021), *Resource Interchange File Format (RIFF)*.
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://learn.microsoft.com/en-us/windows/win32/xaudio2/resource-interchange-file-format--riff->
 - Microsoft, *WAVEFORMATEXTENSIBLE structure*.
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://learn.microsoft.com/en-us/windows/win32/api/mmreg/ns-mmreg-waveformatextensible>
 - SHAR repository evidence: `src/rsd/src/domain/wav.rs` and
   `src/rsd/tests/wav_validation.rs`.
@@ -111,6 +113,7 @@ matrix, and decide whether multichannel output requires
 ## Source References
 
 - Microsoft (n.d.) *WAVEFORMATEX structure*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://learn.microsoft.com/en-us/windows/win32/api/mmreg/ns-mmreg-waveformatex>
   (Accessed: 12 July 2026).
 - Library of Congress (n.d.) *WAVE Audio File Format with LPCM Audio*. Available

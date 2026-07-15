@@ -11,7 +11,8 @@ without copying plugin source or treating them as MIT-licensed SHAR components.
   no-redistribution boundaries, selected Unreal Engine 5.8.0 build, live doctor
   readiness, 52-toolset catalog, resolved enabled state for all three plugins,
   repository client architecture, and Epic licensing boundary were verified.
-  Exact module revisions, notices, and future restart-dependent resolution remain
+  Exact module revisions, notices, and future restart-dependent resolution
+  remain
   installation- and execution-specific.
 - Counsel review: Not performed.
 - As-of date: 2026-07-14.
@@ -23,11 +24,15 @@ without copying plugin source or treating them as MIT-licensed SHAR components.
 The current project descriptor and selected engine installation identify this
 related family:
 
-| Plugin identity | Project reference | Live state | Installed role and status |
-| :-------------- | :---------------- | :--------- | :------------------------ |
-| `ModelContextProtocol` | Enabled | Enabled | Version 1.0 experimental native Unreal MCP server; `NoRedist` |
-| `AllToolsets` | Enabled | Enabled | Version 1.0 experimental editor-only aggregator for all toolset plugins; `NoRedist` |
-| `MCPClientToolset` | Explicitly disabled | Enabled | Version 1.0 beta and experimental editor-only adapter for connecting toolset-registry customers to local or private MCP servers |
+| Plugin | Project | Live | Status |
+| :----- | :------ | :--- | :----- |
+| `ModelContextProtocol` | Enabled | Enabled | 1.0 experimental; `NoRedist` |
+| `AllToolsets` | Enabled | Enabled | 1.0 experimental; `NoRedist` |
+| `MCPClientToolset` | Disabled | Enabled | 1.0 beta adapter |
+
+`ModelContextProtocol` is the native Unreal MCP server. `AllToolsets` is the
+editor-only aggregator for toolset plugins. `MCPClientToolset` connects toolset
+registry customers to local or private MCP servers.
 
 `AllToolsets` declares `MCPClientToolset` as a non-optional enabled dependency.
 The live PluginToolset reports all three plugins enabled in the reviewed editor
@@ -57,7 +62,8 @@ therefore control claims about whether the adapter is loaded.
 
 The selected installation is Unreal Engine 5.8.0 changelist 55116800. Installed
 plugin descriptors identify `ModelContextProtocol`, `AllToolsets`, and
-`MCPClientToolset` as version 1.0. The server and aggregator are experimental and
+`MCPClientToolset` as version 1.0. The server and aggregator are experimental
+and
 marked `NoRedist`; the aggregator is editor-only. The client adapter is
 editor-only, beta, experimental, and loads after engine initialization when
 resolved.
@@ -107,7 +113,8 @@ If the adapter must be unloaded, resolve the aggregate dependency through a
 reviewed engine-supported configuration, restart the editor, and require a live
 `IsEnabled` result of `false`. Record observed engine, plugin, doctor, and live
 catalog identities for each run. Validate `NoRedist` boundaries, tool schemas,
-authentication, local binding, permissions, and installed notices before enabling
+authentication, local binding, permissions, and installed notices before
+enabling
 automated control.
 
 ## Source References
@@ -125,7 +132,8 @@ automated control.
   Available at: <https://github.com/modelcontextprotocol/modelcontextprotocol>
   (Accessed: 12 July 2026).
 - SHAR repository, selected engine installation, and live editor (2026),
-  `src/uproject/shar.uproject`, `README.md`, `docs/adr/unreal/mcp/`, Unreal Engine
+  `src/uproject/shar.uproject`, `README.md`, `docs/adr/unreal/mcp/`, Unreal
+  Engine
   5.8.0 build evidence, installed `ModelContextProtocol.uplugin`,
   `AllToolsets.uplugin`, and `MCPClientToolset.uplugin` descriptors, doctor
   readiness with 52 toolsets, live toolset inventory, and PluginToolset

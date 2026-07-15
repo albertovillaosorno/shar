@@ -6,7 +6,8 @@ Cursor a repository requirement or distributed dependency.
 ## Review Status And Scope
 
 - Review status: Evidence recorded.
-- Evidence status: Partially verified — Official product identity, current terms,
+- Evidence status: Partially verified — Official product identity, current
+  terms,
   current privacy policy, installed Cursor 3.9.8 executable metadata, and the
   official 3.11 release-family changelog were verified. No tracked repository
   dependency, model configuration, privacy setting, or public session-level
@@ -24,8 +25,10 @@ and AI-assisted development environment.
 
 No tracked Cursor dependency or repository integration is established. The
 reviewed construction host has Cursor 3.9.8 installed, but installation does not
-prove that a particular file, commit, model, or session used it. SHAR must remain
-buildable and reviewable without Cursor. No Cursor binary, extension, proprietary
+prove that a particular file, commit, model, or session used it. SHAR must
+remain
+buildable and reviewable without Cursor. No Cursor binary, extension,
+proprietary
 configuration payload, or hosted service is bundled with the repository.
 
 ## Provenance And Version History

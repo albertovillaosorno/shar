@@ -39,7 +39,8 @@ does not own.
 
 ## Repository Use And Scope
 
-SHAR uses this record only as supporting evidence for the separate legal analysis
+SHAR uses this record only as supporting evidence for the separate legal
+analysis
 of gameplay videos, streaming, and monetization. The record does not establish
 that the rules cover *The Simpsons: Hit & Run*, any licensed franchise element,
 music, performance, artwork, or other third-party content in that game.
@@ -89,7 +90,8 @@ is not enough to prove that Microsoft owns every right embodied in a game.
 
 This record does not authorize distribution of game files, extracted assets,
 modified executables, replacement builds, access-control material, or any other
-proprietary payload. It also does not establish publisher permission for gameplay
+proprietary payload. It also does not establish publisher permission for
+gameplay
 footage from a game outside the policy's covered-content definition.
 
 Any compatibility or creator-policy statement must identify the exact game,

@@ -92,9 +92,11 @@ input behavior.
 
 - Microsoft Corporation (2008), *Rich Text Format Specification, version 1.9.1*,
   archived copy of the Microsoft-distributed PDF:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://web.archive.org/web/20190708132914/http://www.kleinlercher.at/tools/Windows_Protocols/Word2007RTFSpec9.pdf>
 - Microsoft protocol documentation identifying RTF 1.9.1 as the referenced
   specification:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://officeprotocoldoc.z19.web.core.windows.net/files/MS-OXCMAIL/%5BMS-OXCMAIL%5D-240820.pdf>
 
 ## Source References
@@ -102,6 +104,7 @@ input behavior.
 - Microsoft Corporation (2008) *Rich Text Format specification, version 1.9.1*.
   Archived copy of the Microsoft-distributed PDF available via the Internet
   Archive at:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://web.archive.org/web/20190708132914/http://www.kleinlercher.at/tools/Windows_Protocols/Word2007RTFSpec9.pdf>
   (Accessed: 13 July 2026). The former Microsoft archive endpoint was
   unavailable during this review.

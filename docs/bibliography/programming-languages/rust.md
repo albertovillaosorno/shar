@@ -7,7 +7,8 @@ ecosystem from SHAR source code and from third-party crates.
 
 - Review status: Evidence recorded.
 - Evidence status: Partially verified — Repository Rust use, the dated
-  `nightly-2026-07-10` toolchain pin, official project identity, compiler source,
+  `nightly-2026-07-10` toolchain pin, official project identity, compiler
+  source,
   and licensing posture were verified. The resolved compiler and Cargo builds,
   standard-library payload, target, installed components, and dependency graph
   remain build-specific.

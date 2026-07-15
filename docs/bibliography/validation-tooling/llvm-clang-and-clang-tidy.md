@@ -26,7 +26,8 @@ subjects but are not current managed validation executables.
 ## Repository Use And Scope
 
 Clang-Tidy enforces semantic and static-analysis policy for authored C and C++
-translation units through the command-owned LLVM 22.1.8 binary and configuration.
+translation units through the command-owned LLVM 22.1.8 binary and
+configuration.
 The current validation planner does not invoke Clang-Format or a standalone
 Clang compiler, so this record does not claim formatter or compiler acceptance.
 Formatting remains a repository contract that requires separate enforcement.

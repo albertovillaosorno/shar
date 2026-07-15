@@ -27,14 +27,17 @@ permanent compatibility range.
 
 Windows is a supported target and possible host environment, not a repository
 dependency or a component distributed under the SHAR MIT License.
-Platform-specific builds may require a lawful, user-provided Windows installation
+Platform-specific builds may require a lawful, user-provided Windows
+installation
 and separately licensed Microsoft tooling.
 
 ## Provenance And Version History
 
-The reviewed host reports `Microsoft Windows 11 Pro` through the operating-system
+The reviewed host reports `Microsoft Windows 11 Pro` through the
+operating-system
 management interface, `Professional` edition and `25H2` through current-version
-registry metadata, and build 26200 with update revision 8655. Some legacy Windows
+registry metadata, and build 26200 with update revision 8655. Some legacy
+Windows
 metadata still reports `Windows 10 Pro` or version `2009`; those strings are not
 used alone to identify the host because the operating-system interfaces and
 build evidence identify Windows 11.
@@ -66,9 +69,11 @@ prerequisites, and installer notices actually shipped.
 
 ## Compliance Posture
 
-Preserve the exact observed host identity with build evidence, but do not turn it
+Preserve the exact observed host identity with build evidence, but do not turn
+it
 into an unbounded minimum-version requirement or infer that every Windows 11
-edition and channel is compatible. Before distributing Windows-targeted binaries,
+edition and channel is compatible. Before distributing Windows-targeted
+binaries,
 verify every Microsoft component and preserve all applicable terms, notices, and
 redistribution conditions.
 

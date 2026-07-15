@@ -126,6 +126,7 @@ signature recognition, structural validation, decoding, and encoding.
 ### Verified sources
 
 - Epic Games, *Bink Video for Unreal Engine*.
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://dev.epicgames.com/documentation/unreal-engine/bink-video-for-unreal-engine>
 - SHAR repository evidence: `src/rmv/src/domain/format.rs`,
   `src/rmv/src/domain/target.rs`, and `src/rmv/src/application/package_plan.rs`.
@@ -135,6 +136,7 @@ signature recognition, structural validation, decoding, and encoding.
 - Epic Games Tools (2026) *Bink Video: The Video Codec for Games*. Available at:
   <https://www.radgametools.com/bnkmain.htm> (Accessed: 12 July 2026).
 - Epic Games (n.d.) *Bink Video for Unreal Engine*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://dev.epicgames.com/documentation/en-us/unreal-engine/bink-video-for-unreal-engine>
   (Accessed: 12 July 2026).
 - SHAR repository (2026), RMV Bink recognition, cinematic target selection, and

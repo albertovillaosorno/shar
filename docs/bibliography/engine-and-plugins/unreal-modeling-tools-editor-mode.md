@@ -7,7 +7,8 @@ does not make its source or tools part of the SHAR MIT-licensed code.
 
 - Review status: Evidence recorded.
 - Evidence status: Partially verified — Project enablement, installed plugin
-  descriptor version 0.1, beta status, editor module identity, dependent modeling
+  descriptor version 0.1, beta status, editor module identity, dependent
+  modeling
   toolsets, selected Unreal Engine 5.8.0 build, and official Modeling Mode
   documentation were verified. Module source revision, bundled notices, and
   runtime behavior remain installation-specific.
@@ -80,7 +81,8 @@ before publication or distribution.
   is linked and authorized as Epic documents. Available at:
   <https://github.com/EpicGames/UnrealEngine> (Accessed: 12 July 2026).
 - SHAR repository and selected engine installation (2026),
-  `src/uproject/shar.uproject`, Unreal Engine 5.8.0 build evidence, and installed
+  `src/uproject/shar.uproject`, Unreal Engine 5.8.0 build evidence, and
+  installed
   `ModelingToolsEditorMode.uplugin` version 0.1 with beta status, editor module,
   and dependent toolsets.
 

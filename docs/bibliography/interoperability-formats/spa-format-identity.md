@@ -1,6 +1,7 @@
 # SPA Format Identity
 
-This non-governing record documents one unresolved interoperability label without
+This non-governing record documents one unresolved interoperability label
+without
 granting rights in proprietary code, tools, documentation, game data, assets,
 names, marks, or user-supplied content.
 
@@ -27,10 +28,12 @@ historical toolchain, or has any relationship to another documented format.
 
 A repository-wide search performed on 14 July 2026 found no `.spa` file, parser,
 manifest route, source module, test fixture, or non-documentation SPA reference.
-After excluding this subject record, the only remaining public occurrence was its
+After excluding this subject record, the only remaining public occurrence was
+its
 bibliography-index link.
 
-This record exists only to make that negative result explicit. It is not a parser
+This record exists only to make that negative result explicit. It is not a
+parser
 requirement, roadmap commitment, placeholder implementation, or authority to
 invent a format contract.
 
@@ -77,5 +80,6 @@ and reproducible repository contract.
 ## Source References
 
 - SHAR repository search performed 14 July 2026: no `.spa` file, parser,
-  manifest route, source module, test fixture, or non-documentation SPA reference
+  manifest route, source module, test fixture, or non-documentation SPA
+  reference
   was located outside this record and its bibliography-index link.

@@ -87,6 +87,7 @@ tests before any INI compatibility claim is made.
 ### Verified sources
 
 - Microsoft, *GetPrivateProfileString function*.
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getprivateprofilestring>
 - Repository source inspection on 2026-07-13 found no `CustomText.ini` parser or
   serializer.
@@ -95,6 +96,7 @@ tests before any INI compatibility claim is made.
 
 - Microsoft (n.d.) *GetPrivateProfileString function*. Historical Windows
   profile-file behavior. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getprivateprofilestring>
   (Accessed: 12 July 2026).
 - SHAR repository (2026), LMLM language JSON export and `CustomText.ini`

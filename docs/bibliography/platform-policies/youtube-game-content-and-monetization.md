@@ -37,7 +37,8 @@ channel-level review for original and authentic content. It says borrowed
 material must be changed significantly, describes generic or repetitive content
 separately from reused content, and applies reused-content review to the channel
 as a whole. Its July 15, 2025 notice renamed the former repetitious-content
-policy to `inauthentic content` and stated that the reused-content policy did not
+policy to `inauthentic content` and stated that the reused-content policy did
+not
 change; that dated notice is part of the live page's update history, not a
 complete version label for the current policy text.
 

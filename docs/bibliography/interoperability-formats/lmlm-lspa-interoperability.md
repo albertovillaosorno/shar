@@ -26,7 +26,8 @@ supported entries from an optional user-supplied local `.lmlm` archive.
 
 The repository contract covers only the header fields, directory structure,
 entry kinds, ranges, names, payload sizes, reserved-byte requirements, collision
-rules, and publication behavior enforced by the current parser and tests. It does
+rules, and publication behavior enforced by the current parser and tests. It
+does
 not claim every historical or third-party LMLM or LSPA variant.
 
 ## Repository Use And Scope
@@ -70,7 +71,8 @@ law.
 No verified public format license, complete specification, ownership chain, or
 package-specific terms set has been identified. Public availability, a filename
 extension, successful parsing, or local possession does not by itself create a
-right to publish, sublicense, modify, or redistribute an archive or its contents.
+right to publish, sublicense, modify, or redistribute an archive or its
+contents.
 
 Any contract, copyright, anti-circumvention, trademark, patent, trade-secret,
 privacy, platform, or local-law issue requires separate analysis of the actual

@@ -40,7 +40,8 @@ distributed.
 
 The installed `maya.exe` and `mayapy.exe` file metadata identify Autodesk Maya
 product version 27.1.0.4279. An initialized standalone session reports product
-`Maya 2027`, version `2027`, API version `20270100`, application identity `maya`,
+`Maya 2027`, version `2027`, API version `20270100`, application identity
+`maya`,
 Windows 64-bit, and Qt 6.8.3. Those values are dated installation and runtime
 evidence, not a minimum requirement or permanent compatibility range.
 

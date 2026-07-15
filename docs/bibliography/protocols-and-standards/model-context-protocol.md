@@ -6,7 +6,8 @@ without treating every MCP implementation as one licensed product.
 ## Review Status And Scope
 
 - Review status: Evidence recorded.
-- Evidence status: Partially verified — Operational SHAR client use, live protocol
+- Evidence status: Partially verified — Operational SHAR client use, live
+  protocol
   version `2025-11-25`, official dated specification, current-edition label,
   schema, documentation, and reference repository were verified.
   Implementation-specific capabilities, authentication, and transport behavior
@@ -40,7 +41,8 @@ currentness evidence only.
 
 Protocol editions, extensions, transports, schemas, and Inspector versions must
 be recorded separately in implementation, build, or distribution evidence. A
-future `/latest` redirect does not retroactively change the protocol edition used
+future `/latest` redirect does not retroactively change the protocol edition
+used
 by the reviewed live session.
 
 ## Authorship, Ownership, And Attribution
