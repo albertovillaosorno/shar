@@ -47,7 +47,7 @@
 use std::path::Path;
 use std::{fmt, io};
 
-use crate::domain::DiagnosticPath;
+use crate::domain::{DiagnosticPath, DiagnosticText};
 
 /// Context retained around one native filesystem failure.
 #[derive(Debug)]
@@ -80,9 +80,11 @@ pub(super) fn with_path(
     source: io::Error,
 ) -> io::Error {
     let kind = source.kind();
+    let source_text = source.to_string();
     let message = format!(
-        "{operation} `{}` failed: {source}",
-        DiagnosticPath::new(path)
+        "{operation} `{}` failed: {}",
+        DiagnosticPath::new(path),
+        DiagnosticText::new(&source_text)
     );
     io::Error::new(
         kind,
@@ -106,4 +108,33 @@ pub(super) fn invalid_input(
             DiagnosticPath::new(path)
         ),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use std::error::Error as _;
+    use std::io;
+    use std::path::Path;
+
+    use super::with_path;
+
+    #[test]
+    fn native_source_message_escapes_control_characters() {
+        let error = with_path(
+            "read file",
+            Path::new("file.bin"),
+            io::Error::other("source\nfailure"),
+        );
+
+        let rendered = error.to_string();
+
+        assert!(
+            !rendered
+                .chars()
+                .any(char::is_control),
+            "diagnostic contains a control character: {rendered:?}"
+        );
+        assert!(rendered.contains(r"source\nfailure"));
+        assert!(error.source().is_some());
+    }
 }

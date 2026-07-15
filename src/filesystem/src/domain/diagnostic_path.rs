@@ -16,11 +16,12 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Exact, control-safe rendering of untrusted filesystem paths.
+//   - Exact, control-safe rendering of untrusted filesystem paths and text.
 // - Must-Not:
 //   - Read filesystem state, normalize path identity, or choose error policy.
 // - Allows:
-//   - Platform-aware encoding traversal and reversible invalid-unit escaping.
+//   - Platform-aware path traversal and reversible scalar or invalid-unit
+//   - escaping.
 // - Split-When:
 //   - Another diagnostic transport requires a distinct escaping grammar.
 // - Merge-When:
@@ -31,9 +32,11 @@
 //   - Preserves path identity without allowing controls or native invalid units
 //   - to alter terminal diagnostics.
 // - Usage:
-//   - Used by filesystem and caller-domain errors before text reaches terminals.
+//   - Used by filesystem and caller-domain errors before text reaches
+//   - terminals.
 // - Defaults:
-//   - Scalars use Rust default escapes; invalid native units use uppercase escapes.
+//   - Scalars use Rust default escapes; invalid native units use uppercase
+//   - escapes.
 //
 // ADRs:
 // - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
@@ -53,6 +56,32 @@ impl<'a> DiagnosticPath<'a> {
     #[must_use]
     pub const fn new(path: &'a Path) -> Self {
         Self(path)
+    }
+}
+
+/// Wraps one untrusted source message without changing its evidence.
+pub(crate) struct DiagnosticText<'a>(&'a str);
+
+impl<'a> DiagnosticText<'a> {
+    /// Creates one borrowed diagnostic text renderer.
+    #[must_use]
+    pub(crate) const fn new(value: &'a str) -> Self {
+        Self(value)
+    }
+}
+
+impl core::fmt::Display for DiagnosticText<'_> {
+    fn fmt(
+        &self,
+        formatter: &mut core::fmt::Formatter<'_>,
+    ) -> core::fmt::Result {
+        for character in self.0.chars() {
+            write_character(
+                formatter,
+                character,
+            )?;
+        }
+        Ok(())
     }
 }
 
