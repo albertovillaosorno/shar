@@ -130,6 +130,20 @@ def test_json_normalizer_rejects_non_finite_numbers() -> None:
             _ = normalize_json({"value": value}, context="payload")
 
 
+def test_json_key_context_escapes_control_text() -> None:
+    """Nested validation contexts remain reversible and single-line."""
+    with pytest.raises(ProtocolError) as caught:
+        _ = normalize_json(
+            {"bad\ninjected": float("nan")},
+            context="payload",
+        )
+
+    assert str(caught.value) == (
+        r"payload.bad\ninjected: JSON number must be finite"
+    )
+    assert "\n" not in str(caught.value)
+
+
 def test_json_normalizer_handles_surrogate_pairs() -> None:
     """Valid pairs become scalars while lone surrogates fail closed."""
     pair = cast("str", json.loads('"\\ud83d\\ude00"'))

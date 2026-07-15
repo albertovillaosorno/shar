@@ -61,12 +61,17 @@ type JsonValue = JsonScalar | list[JsonValue] | dict[str, JsonValue]
 type JsonObject = dict[str, JsonValue]
 
 
+def _escape_diagnostic_text(value: str) -> str:
+    """Return reversible ASCII text for one diagnostic fragment."""
+    return value.encode("unicode_escape").decode("ascii")
+
+
 class DuplicateJsonKeyError(ValueError):
     """Raised when one JSON object repeats a member name."""
 
     def __init__(self, key: str) -> None:
         """Create one duplicate-member failure."""
-        escaped_key = key.encode("unicode_escape").decode("ascii")
+        escaped_key = _escape_diagnostic_text(key)
         super().__init__(f"duplicate JSON key: {escaped_key}")
 
 
@@ -142,9 +147,10 @@ def _normalize_json_value(value: object, *, context: str) -> JsonValue:
             )
             if key in result:
                 fail_protocol(f"{context}: duplicate normalized JSON key")
+            diagnostic_key = _escape_diagnostic_text(key)
             result[key] = _normalize_json_value(
                 raw_value,
-                context=f"{context}.{key}",
+                context=f"{context}.{diagnostic_key}",
             )
         return result
     if isinstance(value, list):
