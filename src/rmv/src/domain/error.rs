@@ -47,6 +47,8 @@
 //! Error variants for RMV/Bink audit and conversion gates.
 use std::path::PathBuf;
 
+use schoenwald_filesystem::DiagnosticPath;
+
 #[derive(Debug)]
 /// Rmverror.
 pub enum RmvError {
@@ -85,27 +87,27 @@ impl core::fmt::Display for RmvError {
             } => write!(
                 formatter,
                 "{}: {source}",
-                path.display()
+                DiagnosticPath::new(path)
             ),
             Self::InputRootInsideOutput(path) => {
                 write!(
                     formatter,
                     "input root is inside the output tree: {}",
-                    path.display()
+                    DiagnosticPath::new(path)
                 )
             }
             Self::InvalidRootName(path) => {
                 write!(
                     formatter,
                     "input root has no safe folder name: {}",
-                    path.display()
+                    DiagnosticPath::new(path)
                 )
             }
             Self::InvalidPath(path) => {
                 write!(
                     formatter,
                     "path is not safe for export: {}",
-                    path.display()
+                    DiagnosticPath::new(path)
                 )
             }
             Self::InvalidMovieStem(stem) => {
@@ -118,7 +120,7 @@ impl core::fmt::Display for RmvError {
                 write!(
                     formatter,
                     "multiple RMV inputs map to the same output path: {}",
-                    path.display()
+                    DiagnosticPath::new(path)
                 )
             }
             Self::NoInputRoots => write!(
@@ -141,6 +143,48 @@ impl std::error::Error for RmvError {
                 ..
             } => Some(source),
             _ => None,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[cfg(windows)]
+    use std::ffi::OsString;
+    use std::io;
+    #[cfg(windows)]
+    use std::os::windows::ffi::OsStringExt as _;
+    #[cfg(windows)]
+    use std::path::PathBuf;
+
+    use super::RmvError;
+
+    #[cfg(windows)]
+    #[test]
+    fn path_errors_preserve_unpaired_utf16_unit() {
+        let path = PathBuf::from(OsString::from_wide(&[
+            u16::from(b'a'),
+            0xd800,
+            u16::from(b'b'),
+        ]));
+        let errors = [
+            RmvError::Io {
+                path: path.clone(),
+                source: io::Error::other("read failure"),
+            },
+            RmvError::InputRootInsideOutput(path.clone()),
+            RmvError::InvalidRootName(path.clone()),
+            RmvError::InvalidPath(path.clone()),
+            RmvError::OutputPathCollision(path),
+        ];
+
+        for error in errors {
+            let rendered = error.to_string();
+            assert!(
+                rendered.contains(r"a\u{D800}b"),
+                "diagnostic lost the native path unit: {rendered:?}"
+            );
+            assert!(!rendered.contains('\u{fffd}'));
         }
     }
 }
