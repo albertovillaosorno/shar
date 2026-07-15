@@ -48,6 +48,8 @@
 use std::io;
 use std::path::{Path, PathBuf};
 
+use schoenwald_filesystem::DiagnosticPath;
+
 use crate::diagnostic::EscapedText;
 use crate::domain::{LmlmError, parse};
 use crate::ports::{ArchiveSource, EntrySink};
@@ -88,12 +90,11 @@ impl core::fmt::Display for ExtractArchiveError {
                 path,
                 source,
             } => {
-                let path_text = path.to_string_lossy();
                 let source_text = source.to_string();
                 write!(
                     formatter,
                     "read {}: {}",
-                    EscapedText::new(path_text.as_ref()),
+                    DiagnosticPath::new(path),
                     EscapedText::new(&source_text)
                 )
             }
@@ -101,23 +102,21 @@ impl core::fmt::Display for ExtractArchiveError {
                 path,
                 source,
             } => {
-                let path_text = path.to_string_lossy();
                 write!(
                     formatter,
                     "parse {}: {source}",
-                    EscapedText::new(path_text.as_ref())
+                    DiagnosticPath::new(path)
                 )
             }
             Self::Materialize {
                 path,
                 source,
             } => {
-                let path_text = path.to_string_lossy();
                 let source_text = source.to_string();
                 write!(
                     formatter,
                     "materialize {}: {}",
-                    EscapedText::new(path_text.as_ref()),
+                    DiagnosticPath::new(path),
                     EscapedText::new(&source_text)
                 )
             }

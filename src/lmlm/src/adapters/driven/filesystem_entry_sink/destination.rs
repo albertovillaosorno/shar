@@ -49,7 +49,7 @@ use std::collections::BTreeSet;
 use std::io;
 use std::path::{Component, Path, PathBuf};
 
-use schoenwald_filesystem::PathKind;
+use schoenwald_filesystem::{DiagnosticPath, PathKind};
 
 use super::inspection::inspect_path_kind;
 use crate::diagnostic::EscapedText;
@@ -121,13 +121,12 @@ fn preflight_parent_paths(
         match inspect_path_kind(&current)? {
             PathKind::Missing | PathKind::Directory => {}
             PathKind::File | PathKind::Other => {
-                let current_text = current.to_string_lossy();
                 return Err(
                     io::Error::new(
                         io::ErrorKind::AlreadyExists,
                         format!(
                             "destination parent is not a directory: {}",
-                            EscapedText::new(current_text.as_ref())
+                            DiagnosticPath::new(&current)
                         ),
                     ),
                 );
@@ -146,13 +145,12 @@ fn register_portable_destination(
 ) -> io::Result<()> {
     let identity = portable_identity(entry_path);
     if files.contains(&identity) || directories.contains(&identity) {
-        let destination_text = destination.to_string_lossy();
         return Err(
             io::Error::new(
                 io::ErrorKind::AlreadyExists,
                 format!(
                     "portable destination collision: {}",
-                    EscapedText::new(destination_text.as_ref())
+                    DiagnosticPath::new(destination)
                 ),
             ),
         );
@@ -173,13 +171,12 @@ fn register_portable_destination(
         }
         parent_identity.push_str(component);
         if files.contains(&parent_identity) {
-            let destination_text = destination.to_string_lossy();
             return Err(
                 io::Error::new(
                     io::ErrorKind::AlreadyExists,
                     format!(
                         "portable destination collision: {}",
-                        EscapedText::new(destination_text.as_ref())
+                        DiagnosticPath::new(destination)
                     ),
                 ),
             );
@@ -209,13 +206,12 @@ pub(super) fn preflight_destinations(
     match inspect_path_kind(output_root)? {
         PathKind::Missing | PathKind::Directory => {}
         PathKind::File | PathKind::Other => {
-            let output_root_text = output_root.to_string_lossy();
             return Err(
                 io::Error::new(
                     io::ErrorKind::AlreadyExists,
                     format!(
                         "output root is not a directory: {}",
-                        EscapedText::new(output_root_text.as_ref())
+                        DiagnosticPath::new(output_root)
                     ),
                 ),
             );
@@ -242,13 +238,12 @@ pub(super) fn preflight_destinations(
         match inspect_path_kind(&destination)? {
             PathKind::Missing => {}
             PathKind::File | PathKind::Directory | PathKind::Other => {
-                let destination_text = destination.to_string_lossy();
                 return Err(
                     io::Error::new(
                         io::ErrorKind::AlreadyExists,
                         format!(
                             "destination already exists: {}",
-                            EscapedText::new(destination_text.as_ref())
+                            DiagnosticPath::new(&destination)
                         ),
                     ),
                 );
@@ -257,4 +252,60 @@ pub(super) fn preflight_destinations(
         destinations.push(destination);
     }
     Ok(destinations)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::BTreeSet;
+
+    #[cfg(windows)]
+    use std::ffi::OsString;
+    #[cfg(windows)]
+    use std::os::windows::ffi::OsStringExt as _;
+    #[cfg(windows)]
+    use std::path::PathBuf;
+
+    use super::register_portable_destination;
+
+    #[cfg(windows)]
+    #[test]
+    fn collision_error_preserves_unpaired_utf16_destination_unit()
+    -> Result<(), String> {
+        let destination = PathBuf::from(OsString::from_wide(&[
+            u16::from(b'a'),
+            0xd800,
+            u16::from(b'b'),
+        ]));
+        let mut files = BTreeSet::new();
+        let mut directories = BTreeSet::new();
+        register_portable_destination(
+            "same.bin",
+            &destination,
+            &mut files,
+            &mut directories,
+        )
+        .map_err(|error| error.to_string())?;
+
+        let result = register_portable_destination(
+            "same.bin",
+            &destination,
+            &mut files,
+            &mut directories,
+        );
+        let Err(error) = result else {
+            return Err("duplicate destination unexpectedly passed".to_owned());
+        };
+        let rendered = error.to_string();
+        if !rendered.contains(r"a\u{D800}b") {
+            return Err(
+                format!("diagnostic lost the native path unit: {rendered:?}"),
+            );
+        }
+        if rendered.contains(r"\u{fffd}") {
+            return Err(
+                format!("diagnostic used lossy replacement: {rendered:?}"),
+            );
+        }
+        Ok(())
+    }
 }

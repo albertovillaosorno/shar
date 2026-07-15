@@ -48,6 +48,11 @@
 use std::io;
 use std::path::PathBuf;
 
+#[cfg(windows)]
+use std::ffi::OsString;
+#[cfg(windows)]
+use std::os::windows::ffi::OsStringExt as _;
+
 use lmlm::{ExtractArchiveError, LmlmError};
 use schoenwald_cli as _;
 use schoenwald_filesystem as _;
@@ -77,4 +82,26 @@ fn extraction_errors_escape_control_characters() {
             "diagnostic contains a control character: {rendered:?}"
         );
     }
+}
+
+#[cfg(windows)]
+#[test]
+fn extraction_error_preserves_unpaired_utf16_path_unit() {
+    let path = PathBuf::from(OsString::from_wide(&[
+        u16::from(b'a'),
+        0xd800,
+        u16::from(b'b'),
+    ]));
+    let error = ExtractArchiveError::Read {
+        path,
+        source: io::Error::other("read failure"),
+    };
+
+    let rendered = error.to_string();
+
+    assert!(
+        rendered.contains(r"a\u{D800}b"),
+        "diagnostic lost the native path unit: {rendered:?}"
+    );
+    assert!(!rendered.contains(r"\u{fffd}"));
 }
