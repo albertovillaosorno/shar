@@ -756,7 +756,11 @@ Relevant decisions:
 - [Runtime parity boundary](docs/adr/unreal/runtime/remake-parity-boundary.md)
 - [Runtime parity tests](docs/adr/unreal/runtime/runtime-parity-test-boundary.md)
 - [Application lifecycle and mode runtime](docs/technical/unreal/application-lifecycle-and-mode-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Native platform bootstrap and error-recovery runtime](docs/technical/unreal/native-platform-bootstrap-and-error-recovery-runtime.md)
 - [Native asset load request and streaming runtime](docs/technical/unreal/native-asset-load-request-and-streaming-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Memory ownership, budget, and diagnostics runtime](docs/technical/unreal/memory-ownership-budget-and-diagnostics-runtime.md)
 - [Developer command and diagnostic runtime](docs/technical/unreal/developer-command-and-diagnostic-runtime.md)
 - [Device configuration and save-slot runtime](docs/technical/unreal/device-configuration-and-save-slot-runtime.md)
 - [Legacy runtime identity normalization](docs/technical/unreal/legacy-runtime-identity-normalization.md)
