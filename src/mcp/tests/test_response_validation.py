@@ -94,6 +94,24 @@ def test_initialize_rejects_non_visible_ascii_session_id() -> None:
         )
 
 
+def test_initialize_rejects_excessive_session_id_length(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A server cannot force oversized session headers onto every request."""
+    monkeypatch.setattr(
+        "mcp.src.adapters.driven.response_validation._MAX_SESSION_ID_LENGTH",
+        4,
+        raising=False,
+    )
+
+    with pytest.raises(ProtocolError, match="valid MCP-Session-Id"):
+        _ = parse_initialized_session(
+            _initialize_exchange(session_id="abcde"),
+            _REQUEST_ID,
+            expected_protocol_version=_PROTOCOL_VERSION,
+        )
+
+
 def test_initialize_rejects_wrong_protocol_and_malformed_metadata() -> None:
     """Protocol negotiation and server metadata remain strictly typed."""
     wrong_protocol = _initialize_result(protocol_version="2025-06-18")

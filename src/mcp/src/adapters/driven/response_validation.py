@@ -63,6 +63,7 @@ if TYPE_CHECKING:
 _JSON_RPC_VERSION = "2.0"
 _VISIBLE_ASCII_MINIMUM = 0x21
 _VISIBLE_ASCII_MAXIMUM = 0x7E
+_MAX_SESSION_ID_LENGTH = 4_096
 
 
 def parse_initialized_session(
@@ -222,6 +223,7 @@ def require_visible_ascii_session_id(value: str | None) -> str:
     if (
         value is None
         or not value
+        or len(value) > _MAX_SESSION_ID_LENGTH
         or not all(
             _VISIBLE_ASCII_MINIMUM <= ord(character) <= _VISIBLE_ASCII_MAXIMUM
             for character in value
