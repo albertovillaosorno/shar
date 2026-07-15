@@ -47,41 +47,66 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to read all configured properties for one Niagara renderer
+instance after emitter topology has supplied its renderer index.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Obtain the emitter name and renderer index from `GetEmitterTopology`.
+- Populate all StackItemReference fields; use empty script/module/input values
+  for a renderer-level reference.
+- Parse `returnValue.propertyValues` as JSON.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "rendererRef": {
+    "system": {"refPath": "/Niagara/VectorFields/VectorFieldVisualizationSystem.VectorFieldVisualizationSystem"},
+    "emitterName": "VectorFieldParticleEmitter",
+    "scriptName": "",
+    "moduleName": "",
+    "rendererIndex": 0,
+    "inputNameStack": []
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two sprite-renderer reads returned a stable 56-property document with
+DefaultSpriteMaterial, FaceCamera facing, Unaligned alignment, ViewDistance
+sorting, centered UV pivot, and 1 × 1 sub-image size. The mesh renderer
+independently returned 51 properties and one BoundingBoxEdge mesh with Default
+facing and LOD level `0`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- `propertyValues` is nested JSON text and requires a second parse.
+- Reflected values use PascalCase, while renderer schemas use lower-camel names.
+- Renderer indexes are emitter-local and can change after renderer edits.
+- A valid index does not identify the renderer class by itself; verify topology
+  first.
+- Empty or missing emitter names fail explicitly.
+- Out-of-range indexes report the current renderer count.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

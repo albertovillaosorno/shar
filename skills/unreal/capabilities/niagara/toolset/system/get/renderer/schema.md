@@ -47,41 +47,62 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to discover the current editable property schema for a Niagara
+renderer class before SHAR interprets renderer data or prepares a separately
+authorized change.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Obtain the exact renderer class from `GetEmitterSummary` or topology.
+- Parse `returnValue.propertySchema` as JSON.
+- Use the schema for the exact renderer subclass, not only the base class.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "rendererClass": {
+    "refPath": "/Script/Niagara.NiagaraSpriteRendererProperties"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two sprite-schema calls returned 56 stable fields covering material, source,
+alignment, facing, sorting, pivot, sub-images, culling, pixel coverage,
+bindings, visibility, and motion vectors. The mesh schema independently returned
+51 fields covering mesh slots, LOD, material overrides, facing, culling,
+bindings, and shared renderer settings.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- `propertySchema` is nested JSON text and requires a second parse.
+- Mesh and sprite schemas differ substantially; never reuse one for the other.
+- The abstract base renderer class returns only shared renderer properties and
+  is a valid input.
+- Enum spelling is authoritative, including the reflected `CustomDecending`
+  value.
+- Non-renderer classes and missing classes fail during parameter translation.
+- Schema availability does not authorize renderer mutation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
