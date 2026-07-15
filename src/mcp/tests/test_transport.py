@@ -273,6 +273,32 @@ def test_transport_rejects_excessive_paginated_tool_count(
         assert len(tool_list_requests) == 2
 
 
+def test_transport_rejects_excessive_pagination_cursor_bytes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Unique cursors cannot exceed one bounded aggregate state budget."""
+    monkeypatch.setattr(
+        "mcp.src.adapters.driven.streamable_http._MAX_PAGINATION_CURSOR_BYTES",
+        len("page-2"),
+    )
+    with FakeUnrealServer(advance_cursor=True) as server:
+        transport = StreamableHttpTransport(
+            McpEndpoint.parse(server.endpoint),
+            timeout_seconds=2.0,
+        )
+        session = transport.initialize()
+        with pytest.raises(ProtocolError, match="cursor byte limit"):
+            _ = transport.list_tools(session)
+        transport.close(session)
+
+        tool_list_requests = tuple(
+            request
+            for request in server.requests
+            if request.get("method") == "tools/list"
+        )
+        assert len(tool_list_requests) == 2
+
+
 def test_transport_cancels_timed_out_tool_request() -> None:
     """A timed-out native tool call is cancelled by its original request ID."""
     with FakeUnrealServer(

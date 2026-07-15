@@ -89,6 +89,7 @@ _CLIENT_VERSION = package_version()
 _HTTP_ACCEPTED = 202
 _MAX_TOOL_LIST_PAGES = 256
 _MAX_TOOL_NAMES = 100_000
+_MAX_PAGINATION_CURSOR_BYTES = DEFAULT_MAX_RESPONSE_BYTES
 
 
 class StreamableHttpTransport:
@@ -208,6 +209,7 @@ class StreamableHttpTransport:
             tools: list[str] = []
             cursor: str | None = None
             seen_cursors: set[str] = set()
+            cursor_bytes = 0
             page_count = 0
             while True:
                 if page_count >= _MAX_TOOL_LIST_PAGES:
@@ -240,6 +242,13 @@ class StreamableHttpTransport:
                     )
                 if next_cursor in seen_cursors:
                     fail_protocol("tools/list returned a repeated cursor")
+                next_cursor_bytes = len(next_cursor.encode())
+                if (
+                    cursor_bytes + next_cursor_bytes
+                    > _MAX_PAGINATION_CURSOR_BYTES
+                ):
+                    fail_protocol("tools/list exceeded its cursor byte limit")
+                cursor_bytes += next_cursor_bytes
                 seen_cursors.add(next_cursor)
                 cursor = next_cursor
             if len(set(tools)) != len(tools):
