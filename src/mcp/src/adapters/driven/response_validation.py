@@ -86,11 +86,7 @@ def parse_initialized_session(
     outcome = require_json_rpc_result(exchange, request_id)
     protocol_version = outcome.get("protocolVersion")
     if protocol_version != expected_protocol_version:
-        message = (
-            "initialize negotiated an unsupported protocol version: "
-            f"{protocol_version}"
-        )
-        fail_protocol(message)
+        fail_protocol("initialize negotiated an unsupported protocol version")
     capabilities = require_json_object(
         outcome.get("capabilities"),
         context="initialize result.capabilities",
@@ -146,9 +142,7 @@ def require_json_rpc_result(
         fail_protocol("response omitted JSON-RPC version 2.0")
     response_id = payload.get("id")
     if not matches_integer_request_id(response_id, request_id):
-        fail_protocol(
-            f"response id mismatch: expected {request_id}, got {response_id}"
-        )
+        fail_protocol(f"response id mismatch: expected {request_id}")
     has_result = "result" in payload
     has_error = "error" in payload
     if has_result == has_error:

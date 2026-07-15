@@ -114,6 +114,22 @@ def test_initialize_rejects_wrong_protocol_and_malformed_metadata() -> None:
         )
 
 
+def test_initialize_protocol_error_does_not_reflect_control_text() -> None:
+    """Malformed negotiation text cannot add lines to diagnostics."""
+    result = _initialize_result(protocol_version="bad\ninjected")
+
+    with pytest.raises(ProtocolError) as caught:
+        _ = parse_initialized_session(
+            _exchange(result),
+            _REQUEST_ID,
+            expected_protocol_version=_PROTOCOL_VERSION,
+        )
+
+    assert str(caught.value) == (
+        "initialize negotiated an unsupported protocol version"
+    )
+
+
 def test_initialize_requires_tools_capability() -> None:
     """A server without tools cannot satisfy the translator contract."""
     result = _initialize_result()
@@ -239,6 +255,26 @@ def test_result_requires_exact_integer_request_id() -> None:
 
         with pytest.raises(ProtocolError, match="response id mismatch"):
             _ = require_json_rpc_result(exchange, _REQUEST_ID)
+
+
+def test_response_id_error_does_not_reflect_control_text() -> None:
+    """Malformed response identities cannot add lines to diagnostics."""
+    exchange = HttpExchange(
+        status=200,
+        session_id=None,
+        payload={
+            "jsonrpc": "2.0",
+            "id": "bad\ninjected",
+            "result": {},
+        },
+    )
+
+    with pytest.raises(ProtocolError) as caught:
+        _ = require_json_rpc_result(exchange, _REQUEST_ID)
+
+    assert str(caught.value) == (
+        f"response id mismatch: expected {_REQUEST_ID}"
+    )
 
 
 def test_result_requires_json_rpc_version_two() -> None:
