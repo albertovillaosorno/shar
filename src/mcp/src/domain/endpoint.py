@@ -64,6 +64,21 @@ _DEFAULT_PATH = "/mcp"
 _MAX_PORT = 65_535
 
 
+def _validate_raw_endpoint_text(value: str) -> None:
+    """Reject endpoint text that cannot be preserved canonically."""
+    if any(
+        ord(character) < _ASCII_CONTROL_LIMIT or ord(character) == _ASCII_DELETE
+        for character in value
+    ):
+        fail_endpoint("MCP endpoint must not contain control characters")
+    if any(character.isspace() for character in value):
+        fail_endpoint("MCP endpoint must not contain whitespace")
+    if not value.isascii():
+        fail_endpoint("MCP endpoint must use ASCII URL text")
+    if "?" in value or "#" in value:
+        fail_endpoint("MCP endpoint must not contain a query or fragment")
+
+
 class McpEndpoint(NamedTuple):
     """Validated local HTTP endpoint."""
 
@@ -82,16 +97,7 @@ class McpEndpoint(NamedTuple):
             A validated canonical endpoint.
 
         """
-        if any(
-            ord(character) < _ASCII_CONTROL_LIMIT
-            or ord(character) == _ASCII_DELETE
-            for character in value
-        ):
-            fail_endpoint("MCP endpoint must not contain control characters")
-        if any(character.isspace() for character in value):
-            fail_endpoint("MCP endpoint must not contain whitespace")
-        if "?" in value or "#" in value:
-            fail_endpoint("MCP endpoint must not contain a query or fragment")
+        _validate_raw_endpoint_text(value)
         try:
             parsed = urlsplit(value)
         except ValueError as error:

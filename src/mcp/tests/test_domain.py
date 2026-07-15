@@ -98,6 +98,7 @@ def test_endpoint_rejects_noncanonical_text_and_empty_port() -> None:
         "\x00http://127.0.0.1:8000/mcp",
         "\x01http://127.0.0.1:8000/mcp",
         "http://127.0.0.1:8000/\x00mcp",
+        "http://127.0.0.1:8000/☃",
         "http://127.0.0.1:8000/mcp?",
         "http://127.0.0.1:8000/mcp#",
         "http://127.0.0.1:/mcp",
