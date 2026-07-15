@@ -100,7 +100,11 @@ impl core::fmt::Display for ManifestError {
                     "{operation} {rendered_path}: {rendered_source}"
                 )
             }
-            Self::Invalid(message) => formatter.write_str(message),
+            Self::Invalid(message) => {
+                let rendered_message =
+                    super::diagnostic_path::escaped_text(message);
+                formatter.write_str(&rendered_message)
+            }
         }
     }
 }
@@ -114,5 +118,20 @@ impl std::error::Error for ManifestError {
             } => Some(source),
             Self::Invalid(_) => None,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ManifestError;
+
+    #[test]
+    fn invalid_error_escapes_control_characters() {
+        let error = ManifestError::Invalid("invalid\nmanifest".to_owned());
+
+        assert_eq!(
+            error.to_string(),
+            r"invalid\nmanifest"
+        );
     }
 }

@@ -58,8 +58,13 @@ pub(super) fn escaped_path(path: &Path) -> String {
 /// Renders untrusted source text without raw control characters.
 #[must_use]
 pub(super) fn escaped_text(value: &str) -> String {
-    value
-        .chars()
-        .flat_map(char::escape_default)
-        .collect()
+    let mut output = String::new();
+    for character in value.chars() {
+        if character.is_control() {
+            output.extend(character.escape_default());
+        } else {
+            output.push(character);
+        }
+    }
+    output
 }
