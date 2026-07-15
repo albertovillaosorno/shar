@@ -46,41 +46,61 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to enumerate functions whose signatures can satisfy a connected
+Create Event node before SHAR selects a callback.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use a real `K2Node_CreateDelegate` ref, not a Bind Event or dispatcher event
+  node.
+- Connect its OutputDelegate pin to a concrete delegate input so the signature
+  can be inferred.
+- Compile the owning Blueprint after creating the connection.
+- Treat graph-node refs as session-local and rediscover them after
+  reconstruction.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "node": {"refPath": "/Game/B_SHAR_MCP_Blueprint_CreateEventFixture.B_SHAR_MCP_Blueprint_CreateEventFixture:EventGraph.K2Node_CreateDelegate_0"}
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+After compilation, two calls in each of two disposable cycles returned the same
+seven functions: `SHARCallback`, three network or replication helpers,
+`K2_DestroyActor`, `ForceNetUpdate`, and `FlushNetDormancy`. Before compilation
+the same connected node returned `[]`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The result is signature compatibility, not a recommendation or safety ranking.
+- Inherited Actor functions can appear beside locally authored functions.
+- A newly connected node can return `[]` until the Blueprint compiles.
+- Function ordering reflects the live Blueprint class and should not be treated
+  as semantic priority.
+- Invalid function names are rejected by the setter with the current valid list.
+- Passing a non-Create-Event node fails during parameter translation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

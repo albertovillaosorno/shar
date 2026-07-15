@@ -46,41 +46,61 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to verify which Blueprint function a Create Event node currently
+targets after SHAR constructs or reviews delegate binding logic.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use a real `K2Node_CreateDelegate` ref, not a Bind Event or dispatcher event
+  node.
+- Connect its OutputDelegate pin to a concrete delegate input so the signature
+  can be inferred.
+- Compile the owning Blueprint after creating the connection.
+- Treat graph-node refs as session-local and rediscover them after
+  reconstruction.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "node": {"refPath": "/Game/B_SHAR_MCP_Blueprint_CreateEventFixture.B_SHAR_MCP_Blueprint_CreateEventFixture:EventGraph.K2Node_CreateDelegate_0"}
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two complete disposable Blueprint cycles returned an empty string before
+binding. After compiling, binding `SHARCallback`, and compiling again, two
+repeated reads returned `SHARCallback`. Both cycles produced byte-identical
+structural evidence and deleted the fixture afterward.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- An unbound Create Event node returns `""`; that is a valid state.
+- Connecting the delegate pin does not bind a function by itself.
+- Compatible functions can be unavailable until the owning Blueprint compiles.
+- The returned name is not a function graph ref and may become stale after
+  rename.
+- Passing another node class fails during parameter translation.
+- Use `list_compatible_event_functions` before any binding mutation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
