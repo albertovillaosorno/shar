@@ -7,71 +7,85 @@
 
 ## Context
 
-Canonical FBX generation and native Unreal import are separate phases. FBX must
-remain a general-purpose deterministic interchange artifact, while the Unreal
-import phase may create destination UVs, rebake textures, construct native
-materials, refine geometry, split world geometry, and generate LOD or HLOD
-assets.
+Canonical FBX generation and native Unreal import are separate phases. FBX is a
+general-purpose deterministic interchange artifact and now owns all
+engine-independent semantic preparation. Character UV and texture modernization,
+eye and outfit regions, detachable props, vehicle moving parts, world component
+boundaries, pivots, transforms, and geographic placement must therefore be
+complete before native import begins.
 
-Publishing an Unreal mesh immediately after transport would preserve source UV
-and material limitations as native production state. Conversely, changing the
-canonical FBX writer to depend on Unreal-specific UV, material, or world
-partition behavior would collapse the phase boundary and make the interchange
-artifact engine-specific.
+Native Unreal import still needs a transaction that validates evidence, creates
+destination assets, applies engine-specific material and streaming policy, and
+reads the result back without letting mutable editor state become authority.
 
 ## Decision
 
-Phase 6 uses a staged native-import transaction. The importer first validates
-canonical FBX geometry and real texture evidence in a quarantined staging area.
-It then applies a versioned destination-UV policy, rebakes or regenerates the
-required native texture set, creates material instances, generates declared LODs,
-and verifies the resulting mesh before publishing the final UAsset identity.
+Phase 6 uses a staged native-import transaction. The importer first validates the
+canonical FBX, texture, semantic-region, component, placement, and provenance
+manifests in a quarantined staging area. It then maps those approved identities
+to native meshes, textures, materials, physics assets, animation assets,
+World Partition actors, data layers, and primary assets. Final UAssets are not
+published until planned identities and read-back evidence agree.
 
-Base-color texture evidence is used when a material is textured. Normal,
-specular, roughness, metallic, emissive, and ambient-occlusion maps are optional
-unless the approved recipe marks them required. A detected map is bound only
-after semantic and color-space validation. A missing optional map uses an
-explicit neutral material value or no texture input. Deterministic derived-map
-generation is permitted only when its recipe and verification are recorded.
+The importer consumes canonical destination UVs and modern texture evidence; it
+does not create their first semantic organization. It may transcode textures,
+create mip chains, select platform compression, construct material instances,
+and bind approved maps. Base color is required for textured materials. Normal,
+specular, roughness, metallic, glossiness, emissive, and ambient-occlusion maps
+remain optional unless the approved FBX preparation recipe marks them required.
+A detected map is bound only after semantic and color-space validation.
 
-Geometry refinement may add vertices only through a declared deterministic
-recipe that preserves silhouette, topology boundaries, skinning, collision,
-material assignment, and animation compatibility. No unconditional subdivision
-or arbitrary vertex inflation is allowed. The initial implementation remains
-pending until a validated refinement recipe exists.
+Character import preserves the FBX topology, skeleton hierarchy, bind state,
+skin weights, animation timing, semantic regions, integrated outfit identity,
+eye-animation mechanism, and detachable-prop attachments. It may generate
+engine-specific physics, sockets, retargeting metadata, LODs, or derived runtime
+assets only through declared deterministic recipes that do not redefine the
+canonical character identity.
 
-World import begins from a natural assembled FBX representation used as source
-and placement evidence. Phase 6 then separates houses and other world components
-into stable native mesh identities, reconstructs their transforms in one native
-map, and generates LOD and HLOD representations. Required distant geometry must
-transition to lower-detail representations rather than disappear through
-arbitrary authored visibility toggles. Native frustum, occlusion, streaming, and
-platform culling remain valid runtime optimizations.
+Vehicle import consumes already separated body, wheels, trunk, and other
+supported moving components with their pivots and transforms. World import
+consumes already separated terrain, structures, windows, doors, linked interiors,
+landmarks, props, bounds, and geographic placements. It creates the one native
+World Partition geography and its level-state data layers without rediscovering
+component boundaries from raw geometry.
+
+Geometry refinement may add vertices only through a later declared deterministic
+native recipe that preserves silhouette, topology boundaries, skinning,
+collision, semantic component identity, material assignment, and animation
+compatibility. No unconditional subdivision or arbitrary vertex inflation is
+allowed. The initial character path performs no polygon increase.
+
+LOD and HLOD generation is destination-specific and remains owned by Phase 6.
+Required distant geometry must transition to approved lower-detail
+representations rather than disappear through arbitrary authored visibility
+toggles. Native frustum, occlusion, streaming, and platform culling remain valid
+runtime optimizations.
 
 This decision applies only to Phase 6 native import. It does not redefine binary
-FBX generation, normalized audio or media evidence, package taxonomy, or runtime
-gameplay behavior.
+FBX generation, semantic component preparation, normalized audio or media
+evidence, package taxonomy, or runtime gameplay behavior.
 
 ## Consequences
 
-- Canonical FBX remains engine-independent and deterministic.
-- Final mesh UAssets are not published until destination UVs, native textures,
-  materials, LOD policy, and read-back validation agree with the import plan.
-- Missing optional normal or specular maps do not block import and do not create
-  guessed texture dependencies.
-- Generated maps and geometry refinement remain reproducible and provenance
-  linked.
-- Whole-world source evidence may be decomposed into independently streamable
-  native components without losing one-map assembly identity.
-- LOD and HLOD policy owns distance simplification; required geometry cannot be
-  replaced by unexplained disappearance.
+- Canonical FBX remains engine-independent, semantically complete, and
+  deterministic.
+- Native import cannot hide missing semantic regions, component boundaries,
+  pivots, coordinates, or attachments behind editor repair.
+- Final UAssets are not published until imported state matches the approved FBX
+  and native asset plans.
+- Missing optional shading maps use explicit neutral inputs rather than guessed
+  dependencies.
+- Generated native maps, physics assets, LODs, HLODs, and platform texture
+  variants remain reproducible and provenance linked.
+- The one geographic world can be regenerated from canonical components and
+  placement evidence without manual actor placement.
 
 ## Rejected alternatives
 
-- Treating the first successful FBX transport as the final production UAsset.
-- Mutating canonical FBX generation to depend on Unreal-only UV or map assembly.
-- Guessing normal, specular, or other material maps from file names alone.
+- Treating the first successful FBX transport as a final production UAsset.
+- Performing the first UV, texture, eye, outfit, vehicle, or world separation
+  during UAsset import.
+- Guessing shading maps or semantic components from file names alone.
 - Generating derived maps or extra vertices without a versioned recipe.
-- Shipping the complete world as one indivisible static mesh.
-- Hiding required world components at distance instead of supplying an approved
-  lower-detail representation.
+- Importing the complete world as one indivisible static mesh.
+- Using manual editor repair or placement as native asset authority.

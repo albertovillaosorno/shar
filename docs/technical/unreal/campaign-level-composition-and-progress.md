@@ -8,21 +8,23 @@
 - [Canonical seven-level campaign and world variants](../../adr/unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 - [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
+- [Unified geographic world and level-state projection](../../adr/pipeline/unreal/unified-geographic-world-and-level-state-projection.md)
 - [Native world partition and data layers](../../adr/pipeline/unreal/world-partition-and-data-layer-import.md)
 - [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
 
 ## Purpose
 
-This specification fixes the campaign, level, world-family, mission-sequence,
-progress, transition, and load contracts for the seven-level game.
+This specification fixes the campaign, level-state, persistent geography,
+mission-sequence, progress, transition, and load contracts for the seven-level
+game and the non-campaign development test state.
 
 ## Native Unreal composition
 
 The campaign uses native Unreal facilities behind repository-owned contracts:
 
 - Asset Manager primary assets identify and load campaign and level definitions;
-- World Partition streams spatial cells inside each base world;
-- Runtime Data Layers compose each level variant;
+- World Partition streams spatial cells inside the one geographic world;
+- Runtime Data Layers compose each campaign or test-state projection;
 - streaming sources pin destinations and active mission actors; and
 - a `UGameInstanceSubsystem` coordinates campaign-level lifetime and travel.
 
@@ -60,9 +62,10 @@ base sequence or reuse its save keys.
 | `PlayableCharacterId` | Canonical protagonist identity. |
 | `PreviousLevelId` | Optional predecessor. |
 | `NextLevelId` | Optional successor. |
-| `BaseWorldFamilyId` | One of the three canonical world families. |
-| `WorldAsset` | Soft reference to the owning World Partition world. |
-| `RuntimeLayerSetId` | Exact level-variant Data Layer composition. |
+| `GeographicWorldId` | Stable identity of the one persistent geographic world. |
+| `WorldAsset` | Soft reference to that World Partition world. |
+| `RuntimeLayerSetId` | Exact campaign-state Data Layer composition. |
+| `TimeOfDayProfileId` | Fixed campaign lighting and time profile. |
 | `StartingVehicleId` | Canonical starting vehicle. |
 | `StoryMissionIds` | Exactly seven ordered story missions. |
 | `BonusMissionId` | Exactly one level bonus mission identity. |
@@ -249,23 +252,25 @@ formula and formats the result for presentation.
 The all-card reward remains a separate transaction. Merely opening the movie
 screen does not grant the one-percent contribution.
 
-## Base-world composition
+## Geographic-world composition
 
-The three base-world families are:
+One persistent World Partition world owns the complete canonical geography. Its
+geographic catalog contains districts, roads, terrain, buildings, linked
+interiors, landmarks, bounds, coordinates, aliases, and placement identities.
+The familiar suburban, downtown, and harbor areas remain geographic districts,
+not separate world authorities.
 
-| Family | Levels | World responsibility |
-| :--- | :--- | :--- |
-| `suburban` | 1, 4, 7 | Evergreen Terrace, rich district, power plant, and countryside geography. |
-| `downtown` | 2, 5 | Town square, entertainment, commercial, expressway, and stadium geography. |
-| `harbor` | 3, 6 | Squidport, hillside, observatory, studio, brewery, and docks geography. |
-
-Each base world is one persistent World Partition world. A level definition
-selects one generated Runtime Data Layer set containing only that level's
-variants and gameplay placements. Durable state for individual destructible,
-removable, consumable, or variant placements follows the
+Each campaign level definition selects one generated Runtime Data Layer set
+containing only that level's variants and gameplay placements, plus one fixed
+time-of-day profile. Durable state for individual destructible, removable,
+consumable, or variant placements follows the
 [persistent world-object state runtime](persistent-world-object-state-runtime.md).
 
-Level 7 is a substantial suburban variant, not a fourth geographic family.
+The non-campaign `level_11_test` state selects development layers and may exercise
+the dynamic day-night cycle. It does not enter campaign ordering, completion, or
+save identity.
+
+Level 7 is a substantial campaign-state variant over the shared geography.
 Renamed locations such as `spook_e_mart` and `zombie_burger` are aliases or
 presentation variants of canonical locations unless geometry or gameplay
 identity proves a distinct location.
@@ -276,11 +281,13 @@ A level transition follows this sequence:
 
 1. verify the destination level and predecessor transition;
 1. validate the accepted save revision and campaign state;
-1. resolve the destination world, layer set, protagonist, and starting state;
+1. resolve the persistent geographic world, destination layer set, protagonist,
+   time-of-day profile, and starting state;
 1. load the destination definition and required Asset Manager bundles;
 1. start a destination streaming source and wait for required cells;
-1. open the destination base world when it differs from the active world;
-1. activate only the destination Runtime Data Layer set;
+1. keep or open the one persistent geographic world;
+1. deactivate the prior state and activate only the destination Runtime Data
+   Layer set;
 1. bind level placements and world subsystems by stable identities;
 1. verify the protagonist, spawn, mission, traffic, and progress projections;
 1. commit the resume state; and
@@ -323,7 +330,10 @@ audio roles and level profile.
 Generation rejects:
 
 - a campaign with anything other than seven dense base levels;
-- a level with the wrong predecessor, successor, date, protagonist, or world;
+- a campaign level with the wrong predecessor, successor, date, protagonist,
+  geographic world, layer set, or fixed time-of-day profile;
+- a test state that contributes to campaign order, progression, completion, or
+  saves;
 - a level without seven story missions, one bonus mission, or three street
   races;
 - a level without three counted costumes, five counted vehicles, seven cards,
@@ -341,7 +351,9 @@ Generation rejects:
 Automated evidence includes:
 
 - exact campaign and level primary asset identifiers;
-- the seven-level order, dates, protagonists, and world families;
+- the seven-level order, dates, protagonists, fixed time-of-day profiles, and
+  shared geographic-world identity;
+- the non-campaign test-state exclusion from progression and completion;
 - all story and bonus mission memberships;
 - all street-race sets, rewards, wager policies, and payouts;
 - exact per-category denominators and gag counts;

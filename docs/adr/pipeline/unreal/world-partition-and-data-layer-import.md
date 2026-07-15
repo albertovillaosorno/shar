@@ -12,16 +12,22 @@ read-back evidence for those relationships.
 
 ## Decision
 
-Large world packages are translated into native partition and data-layer plans
-with stable identities, dependencies, streaming boundaries, and verification
+The one persistent geographic world is translated into native partition and
+data-layer plans with stable component identities, geographic placements,
+dependencies, streaming boundaries, level-state projections, and verification
 instead of manual level placement.
+
+The partition plan consumes canonical FBX component and placement evidence. Data
+layers select the active campaign or test state; they do not create alternate
+geographic identities for the same physical location.
 
 ## Consequences
 
-- Partition cells, data layers, dependencies, streaming boundaries, and native
-  identities are generated from one deterministic world plan.
+- Partition cells, data layers, dependencies, streaming boundaries, coordinates,
+  and native identities are generated from one deterministic world plan.
 - Repeated import can compare planned state with native read-back evidence.
-- Missing dependency or partition evidence fails before partial world placement.
+- Missing component, placement, dependency, or partition evidence fails before
+  partial world placement.
 
 ## Rejected alternatives
 

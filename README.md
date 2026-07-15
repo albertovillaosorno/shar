@@ -112,7 +112,7 @@ The primary delivery sequence is fixed by decision record. Current status is:
 | 1 | Decode required source evidence | Complete |
 | 2 | Generate the minor-unit manifest | Complete |
 | 3 | Classify deterministic packages | In progress |
-| 4 | Generate first-principles binary FBX | In progress |
+| 4 | Generate semantically prepared first-principles binary FBX | In progress |
 | 5 | Establish native Unreal MCP terminal control | In progress |
 | 6 | Create native Unreal assets | Planned |
 | 7 | Implement the complete native runtime | Planned |
@@ -452,30 +452,105 @@ those applications is not generation, repair, validation, or acceptance
 evidence. The complete character package lane remains open until catalog
 production and the conformance criteria below are satisfied.
 
-The next character milestone is deterministic catalog generation under
-`fbx-assets/characters/`: one self-contained FBX file per character package,
-stored directly in that directory, plus one manifest describing every result.
-The directory is local generated evidence and remains ignored by Git.
+Bulk character catalog generation is paused until character semantic texture,
+eye, rig-display, outfit, and detachable-prop preparation passes representative
+conformance tests. Transport success alone is not sufficient. The final local
+catalog remains `fbx-assets/characters/`: one self-contained FBX per canonical
+character or supported playable outfit variant, stored directly in that
+directory, plus one deterministic manifest. The directory remains ignored by
+Git.
+
+Phase 4 proceeds sequentially:
+
+1. compare bounded local reference FBX evidence without adopting external
+   topology, names, paths, materials, or textures as authority;
+1. discover stable character semantic regions and generate a modern deterministic
+   UV atlas from source UV, triangle, material, and texture evidence;
+1. preserve source polygon and vertex counts while normalizing neutral base color
+   and moving authored patterns into the atlas region owned by their clothing or
+   body surface;
+1. expose upper lid, lower lid, eye surface, and pupil or iris regions for both
+   eyes, while preserving the source-supported blink and eye-animation mechanism;
+1. correct skeleton display orientation and continuity without changing bone
+   hierarchy, bind state, skin weights, animation transforms, or deformation,
+   and hide support bones only from the default visual review;
+1. validate a character-generic outfit recipe with integrated complete FBX
+   variants for playable characters and evidence-backed detachable animation
+   props such as handheld objects;
+1. generate the complete character catalog twice and compare paths, structure,
+   sizes, hashes, topology, texture manifests, rigs, skinning, and animation;
+1. export standalone props, animated hazards, wasps, cameras, and supported
+   effects;
+1. decompose vehicle FBX into body, wheels, trunk, and any other
+   evidence-supported moving components with stable pivots and transforms;
+1. decompose world FBX into terrain, houses, buildings, windows, doors, linked
+   interiors, landmarks, props, and geographic placement records; and
+1. reconstruct and verify the one complete geographic map from those components
+   before native Unreal import.
+
+The runtime uses that one map for all seven campaign levels. Each campaign level
+selects a fixed time-of-day profile and its own gameplay state over the shared
+geography. A non-campaign `level_11_test` state is reserved for dynamic day-night,
+lighting, streaming, mission, and placement experiments without changing
+campaign order or parity completion.
+
+Character modernization in this phase does **not** increase polygon or vertex
+counts. It changes only deterministic UV placement, texture resolution, semantic
+material organization, evidence-supported mesh partitions, rig display metadata,
+and attachment organization. Clothing remains integrated in every published
+character FBX. Multiple outfits share one topology, skeleton, skin, and recipe
+source of truth; they are not detachable runtime garment layers.
+
+The minimum non-eye semantic texture regions are skin, hair, shoes, legs, and
+torso. Evidence may add teeth, mouth, headwear, accessories, garment details, or
+props. Each eye has four independently addressable semantic regions: upper lid,
+lower lid, eye surface, and pupil or iris. These regions do not require eight
+separate mesh objects, and the pipeline must not guess how blinking works.
+
+Base-color atlases use neutral, linear-light color normalization and declared
+sRGB PNG encoding so runtime lighting and time of day can change appearance
+without baking a separate color identity into every level. Unused texels use
+stable neutral fill and edge dilation; transparency is reserved for materials
+that require alpha. Normal, specular, roughness, metallic, glossiness, emissive,
+and ambient-occlusion maps require authored evidence or a versioned deterministic
+recipe.
+
+All semantic separation described here belongs to the canonical scene and FBX
+phase, not to UAsset import. Native Unreal import consumes already prepared
+character regions, vehicle parts, world components, pivots, coordinates, and
+assembly manifests. Blender and Maya remain outside generation, repair,
+validation, and acceptance; optional inspection in either application cannot
+replace repository-owned mathematical tests.
 
 Remaining work:
 
-- [ ] Generate the complete character catalog and its deterministic manifest
-  under `fbx-assets/characters/`.
-- [ ] Complete prop FBX coverage.
-- [ ] Complete vehicle FBX coverage.
-- [ ] Complete terrain and world-piece FBX coverage.
-- [ ] Complete remaining animated-object, camera, and effect FBX coverage.
-- [ ] Prove material-slot, texture, coordinate-system, scale, pivot, skeleton,
-  skin-weight, and animation-time consistency across the package index.
-- [ ] Reject packages that claim model support while omitting a required
-  capability.
+- [ ] Implement deterministic character semantic-region and atlas generation.
+- [ ] Prove unchanged character topology and deformation after UV and rig-display
+  preparation.
+- [ ] Validate separately addressable eye regions and source-supported eye
+  animation.
+- [ ] Validate playable outfit recipes and detachable animation props.
+- [ ] Generate the complete deterministic character catalog only after those
+  gates pass.
+- [ ] Complete prop, wasp, and animated-object FBX coverage.
+- [ ] Complete semantic vehicle FBX coverage.
+- [ ] Complete terrain, world-component, coordinate, and geographic-catalog FBX
+  coverage.
+- [ ] Reject packages that claim support while omitting a required capability.
 - [ ] Produce deterministic conformance reports for every generated FBX file.
-- [ ] Verify clean Unreal import without undocumented scene repair.
+- [ ] Verify clean Unreal import without undocumented scene repair or semantic
+  rediscovery.
 
 Completion criteria:
 
-- every model-like package has a valid binary FBX 7.7 artifact or an explicit,
-  justified non-FBX route;
+- every model-like package has a semantically prepared binary FBX 7.7 artifact
+  or an explicit justified non-FBX route;
+- every character preserves topology, skinning, deformation, and animation while
+  publishing deterministic semantic textures and supported outfit identities;
+- every moving vehicle part and independently addressable world component has a
+  stable identity, pivot, transform, and placement contract;
+- the complete map can be reconstructed from terrain, component FBX, and
+  geographic placement evidence without manual assembly;
 - no package depends on hardcoded local paths;
 - no ASCII FBX, DAE, MA, or MB output becomes canonical; and
 - repeated conversion remains deterministic within the format boundary.
@@ -484,6 +559,8 @@ Relevant decisions:
 
 - [Package evidence discovery boundary](docs/adr/fbx/extraction/source-discovery-boundary.md)
 - [Unsupported model evidence preservation](docs/adr/fbx/chunks/chunk-preservation-policy.md)
+- [Character semantic texture, rig, outfit, and prop contract](docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md)
+- [Semantic component and geographic placement contract](docs/adr/fbx/export/semantic-component-and-geographic-placement-contract.md)
 - [Hexagonal scene export](docs/adr/pipeline/fbx/hexagonal-scene-export.md)
 - [First-principles FBX output contract](docs/adr/fbx/export/fbx-output-contract-boundary.md)
 

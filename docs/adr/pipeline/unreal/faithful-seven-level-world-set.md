@@ -13,15 +13,23 @@ the faithful seven-level runtime.
 ## Decision
 
 The faithful runtime preserves the original seven-level progression as the
-canonical world set. Additional worlds are not part of parity completion.
+canonical campaign set. All seven levels project state over the one persistent
+geographic world. Additional campaign levels are not part of parity completion.
+
+A non-campaign `level_11_test` development state may use the same geography for
+asset, mission, streaming, lighting, and dynamic day-night validation. It is not
+a campaign level, does not contribute to progression or completion, and cannot
+substitute for an incomplete canonical level.
 
 ## Consequences
 
 - Faithful progression, identity, save behavior, and completion evidence cover
-  exactly the canonical seven-level world set.
-- Additional worlds remain optional scope and cannot substitute for an
+  exactly the canonical seven-level campaign set.
+- The test state remains development-only campaign-external scope.
+- Additional campaign levels remain optional scope and cannot substitute for an
   incomplete canonical level.
-- World tests and manifests can use one fixed parity boundary.
+- World tests and manifests can use one fixed parity boundary while testing
+  dynamic environment behavior separately.
 
 ## Rejected alternatives
 

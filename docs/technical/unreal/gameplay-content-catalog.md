@@ -17,7 +17,7 @@
 - [Validated game-feature mod overlays](../../adr/unreal/runtime/validated-game-feature-mod-overlays.md)
 - [Driving, traffic, and vehicle behavior parity](../../adr/gameplay/vehicles/driving-traffic-and-vehicle-ai.md)
 - [Unreal manifest and package taxonomy](../../adr/pipeline/unreal/unreal-manifest-and-package-taxonomy.md)
-- [Three-base-world consolidation](../../adr/pipeline/unreal/three-base-world-consolidation.md)
+- [Unified geographic world and level-state projection](../../adr/pipeline/unreal/unified-geographic-world-and-level-state-projection.md)
 - [Native world partition and data layers](../../adr/pipeline/unreal/world-partition-and-data-layer-import.md)
 
 ## Purpose
@@ -96,14 +96,15 @@ scan another root or infer ownership from an arbitrary folder.
 │   └── SFX
 ├── Media
 └── Maps
-    ├── BaseWorlds
-    ├── Levels
+    ├── Geography
+    ├── LevelStates
     └── Tests
 ```
 
 `Data` owns definitions and generated rows. `Art`, `Audio`, and `Media` own
-secondary assets. `Maps` owns World Partition worlds and test maps. A secondary
-asset has one canonical location even when several definitions reference it.
+secondary assets. `Maps` owns the persistent World Partition geography and
+campaign or test-state projections. A secondary asset has one canonical location
+even when several definitions reference it.
 
 ## Naming and identity
 
@@ -367,12 +368,14 @@ different completion policies.
 
 ## Location definition
 
-`USharLocationDefinition` contains canonical level availability, base-world
-family, World Partition data layers, interior policy, mission entry points,
+`USharLocationDefinition` contains canonical geographic identity, world
+coordinates, bounds, parent district or route, level-state availability, World
+Partition data layers, interior-to-exterior ownership, mission entry points,
 interactive-object references, collectible placements, and streaming bounds.
 
-Three base-world families own reusable geometry. Seven level identities compose
-those families through deterministic data layers. Location definitions never
+One persistent geographic world owns reusable terrain and component placement.
+Seven campaign level identities and the non-campaign test state project behavior
+through deterministic data layers and definitions. Location definitions never
 collapse level-specific progression, collectibles, missions, or save identity.
 
 ## Reward definition
@@ -551,15 +554,16 @@ primary asset identifiers, row names, row order, aliases, tags, and references.
 
 ## World integration
 
-Level maps are World Partition worlds. Reusable geometry belongs to one of three
-base-world families. Level identity is composed through data layers for mission
-actors, traffic, collectibles, interiors, progression state, presentation
-variants, and level-specific interactions.
+One persistent geographic map is the World Partition world. Seven campaign level
+states and the non-campaign `level_11_test` state are composed through data
+layers and definitions for mission actors, traffic, collectibles, interior
+availability, progression state, presentation variants, lighting, and
+level-specific interactions.
 
-Catalog definitions reference location and layer-set identities. They never
-store mutable actor pointers as authority. Runtime placement resolves actors
-from stable placement records after the required World Partition cells and data
-layers are active.
+Catalog definitions reference geographic location, component, placement, and
+layer-set identities. They never store mutable actor pointers as authority.
+Runtime placement resolves actors from stable coordinate and transform records
+after the required World Partition cells and data layers are active.
 
 Streaming out a cell suspends eligible ambient presentation but does not reset
 mission progress, vehicle damage, collected rewards, or save state. Mission
@@ -606,7 +610,8 @@ Catalog generation fails closed on:
 - negative counts or non-positive configured timers;
 - forced vehicles without required gameplay assets;
 - rewards that reference inaccessible or missing definitions;
-- a level placement without a valid base-world and data-layer composition;
+- a level placement without a valid geographic-world, coordinate, placement,
+  and data-layer composition;
 - platform or preset cooking that removes, duplicates, or rekeys a required
   gameplay definition; or
 - read-back state that differs from the approved plan.

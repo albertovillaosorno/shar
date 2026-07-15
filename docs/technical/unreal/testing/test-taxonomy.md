@@ -88,9 +88,10 @@ target. Preset tests prove resolved quality settings and visual invariants.
 - World-safety suites cover out-of-bounds, invalid floor, collision penetration,
   missing streamed actors, duplicate identities, and deterministic safe-transform
   recovery.
-- Campaign suites cover the seven-level order, three base worlds, Runtime Data
-  Layer membership, story transitions, progress denominators, and rational
-  percentage projections.
+- Campaign suites cover the seven-level order, one persistent geographic world,
+  Runtime Data Layer membership, fixed campaign time-of-day profiles, test-state
+  exclusion, story transitions, progress denominators, and rational percentage
+  projections.
 - Frontend suites cover Common UI stacks, focus, semantic input, logical slots,
   resume selection, new-game replacement, scrapbook parity, options rollback,
   calendar fallback, and idle-event cancellation.

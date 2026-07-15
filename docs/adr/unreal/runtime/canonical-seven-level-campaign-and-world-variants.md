@@ -6,11 +6,12 @@
 
 ## Context
 
-The game has seven ordered campaign levels but only three reusable geographic
-families. Each level selects a protagonist, calendar day, mission sequence,
-collectibles, rewards, traffic, interactions, audio, and presentation variant.
-Treating every level as an unrelated map would duplicate geometry and make
-cross-level identity, progression, streaming, imports, and tests disagree.
+The game has seven ordered campaign levels that reuse one persistent geographic
+world. Each level selects a protagonist, calendar day, mission sequence,
+collectibles, rewards, traffic, interactions, audio, presentation variant, and
+fixed time-of-day profile. Treating every level as an unrelated map or geographic
+authority would duplicate geometry and make cross-level identity, coordinates,
+progression, streaming, imports, mods, and tests disagree.
 
 Unreal provides World Partition for automatic cell streaming, Runtime Data
 Layers for world variants and gameplay transitions, and primary assets for
@@ -30,21 +31,24 @@ gameplay catalog.
 
 The seven levels are ordered and immutable within the base campaign. Each level
 definition owns its protagonist, calendar day, predecessor and successor,
-base-world family, Runtime Data Layer set, mission sequence, bonus mission,
-street-race set, wager-race policy, collectible sets, progression requirements,
-audio profile, starting state, and completion transition.
+Runtime Data Layer set, mission sequence, bonus mission, street-race set,
+wager-race policy, collectible sets, progression requirements, audio profile,
+starting state, fixed time-of-day profile, and completion transition.
 
-There are exactly three persistent World Partition base worlds:
-
-- suburban Springfield for Levels 1, 4, and 7;
-- downtown Springfield for Levels 2 and 5; and
-- harbor Springfield for Levels 3 and 6.
+There is exactly one persistent World Partition geographic world. It owns the
+canonical terrain, roads, districts, buildings, linked interiors, landmarks,
+coordinates, and placement identities for the complete map.
 
 A level variant is composed by activating its generated Runtime Data Layer set
-inside the owning base world. Shared geometry remains canonical to the base
+and definitions inside that world. Shared geography remains canonical to the
 world. Level-specific missions, traffic, collectibles, gags, characters,
-interiors, damage state, props, lighting, audio, and presentation remain in
-level-owned layers or definitions.
+interior availability, damage state, props, lighting, audio, and presentation
+remain in level-owned layers or definitions.
+
+A non-campaign `level_11_test` state uses the same world for development and
+validation. It may exercise dynamic day-night cycling and experimental mission
+composition, but it has no predecessor, successor, campaign completion weight,
+progression rewards, or save identity.
 
 The campaign service is a `UGameInstanceSubsystem`. It resolves campaign and
 level definitions, validates dependency closure, coordinates world travel,
@@ -62,10 +66,12 @@ weighted to ninety-nine percent, plus one percent for the all-card movie reward.
 - One campaign identity owns sequence and completion semantics.
 - One level identity owns every level-specific gameplay and presentation
   requirement.
-- Three base worlds eliminate duplicated geography while preserving seven
-  distinct campaign states.
+- One geographic world eliminates duplicated location and coordinate authority
+  while preserving seven distinct campaign states.
 - World Partition streams spatial cells; Runtime Data Layers select the active
-  level variant; neither mechanism owns progression.
+  campaign or test state; neither mechanism owns progression.
+- Campaign levels retain fixed time-of-day profiles while the test state may
+  exercise the native dynamic day-night cycle.
 - Level transitions fail before travel when the destination definition, world,
   layer set, protagonist, or required bundle is incomplete.
 - Re-entering a level restores accepted progression without replaying rewards or
@@ -81,8 +87,10 @@ weighted to ninety-nine percent, plus one percent for the all-card movie reward.
 
 ## Rejected alternatives
 
+- Three persistent base worlds with separate geographic identities.
 - Seven unrelated monolithic maps with duplicated shared geometry.
 - One world containing every level variant active simultaneously.
+- Treating `level_11_test` as an eighth campaign level.
 - A level identity inferred from a map filename or loaded Data Layers.
 - Level progress calculated from widget state or actor enumeration.
 - Equal weighting per individual collectible instead of per progress category.

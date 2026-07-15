@@ -38,7 +38,11 @@ repository reference must point to the current owning decision.
 
 - [Unsupported model evidence preservation](fbx/chunks/chunk-preservation-policy.md)
   — Accepted
+- [Character semantic texture, rig, outfit, and prop contract](fbx/export/character-semantic-texture-rig-and-outfit-contract.md)
+  — Accepted
 - [First-principles FBX output contract](fbx/export/fbx-output-contract-boundary.md)
+  — Accepted
+- [Semantic component and geographic placement contract](fbx/export/semantic-component-and-geographic-placement-contract.md)
   — Accepted
 - [Package evidence discovery boundary](fbx/extraction/source-discovery-boundary.md)
   — Accepted
@@ -103,7 +107,7 @@ repository reference must point to the current owning decision.
   — Accepted
 - [Faithful material normalization](pipeline/unreal/texture-superposition-shader.md)
   — Accepted
-- [Three-base-world consolidation](pipeline/unreal/three-base-world-consolidation.md)
+- [Unified geographic world and level-state projection](pipeline/unreal/unified-geographic-world-and-level-state-projection.md)
   — Accepted
 - [Unreal manifest and package taxonomy](pipeline/unreal/unreal-manifest-and-package-taxonomy.md)
   — Accepted
