@@ -274,7 +274,18 @@ def _write_stdout(value: str) -> None:
 
 
 def _write_stderr(value: str) -> None:
-    _ = sys.stderr.write(value)
+    try:
+        _ = sys.stderr.write(value)
+    except UnicodeError:
+        escaped = value.encode("ascii", errors="backslashreplace").decode(
+            "ascii"
+        )
+        try:
+            _ = sys.stderr.write(escaped)
+        except OSError, UnicodeError:
+            return
+    except OSError:
+        return
 
 
 if __name__ == "__main__":

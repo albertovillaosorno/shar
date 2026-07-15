@@ -53,6 +53,7 @@ import json
 import sys
 from typing import TYPE_CHECKING, cast
 
+from mcp.src.adapters.driving.arguments import UsageError
 from mcp.src.adapters.driving.cli import main
 from mcp.src.domain.json_types import require_json_object
 
@@ -90,6 +91,74 @@ def test_cli_maps_stdout_unicode_error_to_failure(
     assert exit_code == 1
     assert "error:" in captured.err
     assert not captured.out
+
+
+def test_cli_escapes_stderr_when_console_rejects_unicode(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Runtime diagnostics remain deliverable on ASCII-only consoles."""
+
+    class AsciiWriter:
+        def __init__(self) -> None:
+            self.values: list[str] = []
+
+        def write(self, value: str) -> int:
+            _ = value.encode("ascii")
+            self.values.append(value)
+            return len(value)
+
+    def reject_arguments(_arguments: tuple[str, ...]) -> None:
+        message = "invalid snowman ☃"
+        raise UsageError(message)
+
+    writer = AsciiWriter()
+    monkeypatch.setattr(
+        "mcp.src.adapters.driving.cli.parse_invocation",
+        reject_arguments,
+    )
+    monkeypatch.setattr(
+        "mcp.src.adapters.driving.cli.sys.stderr",
+        writer,
+    )
+
+    exit_code = main(("doctor",))
+
+    assert exit_code == 2
+    rendered = "".join(writer.values)
+    assert "error: invalid snowman \\u2603" in rendered
+    assert "☃" not in rendered
+
+
+def test_cli_returns_exit_code_when_stderr_is_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A broken diagnostic stream must not replace the stable exit code."""
+
+    class BrokenWriter:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def write(self, _value: str) -> int:
+            self.calls += 1
+            message = "stderr is unavailable"
+            raise OSError(message)
+
+    def reject_arguments(_arguments: tuple[str, ...]) -> None:
+        message = "invalid arguments"
+        raise UsageError(message)
+
+    writer = BrokenWriter()
+    monkeypatch.setattr(
+        "mcp.src.adapters.driving.cli.parse_invocation",
+        reject_arguments,
+    )
+    monkeypatch.setattr(
+        "mcp.src.adapters.driving.cli.sys.stderr",
+        writer,
+    )
+
+    assert main(("doctor",)) == 2
+    assert writer.calls == 1
 
 
 def test_unknown_command_fails_before_opening_a_session(
