@@ -47,41 +47,67 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to read every resolved value for one Niagara module instance after
+topology and schema have established its exact input identities and types.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Obtain the exact script and module names from `GetEmitterTopology`.
+- Populate every StackItemReference field; use renderer index `-1` and an empty
+  input-name stack for a top-level module.
+- Keep system, emitter, script, and module identities paired.
+- Interpret each instanced value through its `struct` ref before reading the
+  value payload.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "moduleRef": {
+  "system": {"refPath": "/Niagara/VectorFields/VectorFieldVisualizationSystem.VectorFieldVisualizationSystem"},
+  "emitterName": "VectorFieldParticleEmitter",
+  "scriptName": "ParticleUpdateScript",
+  "moduleName": "SampleVectorField",
+  "rendererIndex": -1,
+  "inputNameStack": []
+}
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two reads returned ten stable values. VectorField and seven transform/falloff
+inputs linked to User parameters; SamplePoint linked to Particles.Position;
+Sampled Vector Scale was a literal NiagaraFloat value `1`. Linked values
+retained their variable names and reflected Niagara types.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Returned items contain `name` and an instanced `value`; the type is encoded by
+  `value.struct` rather than a sibling type field.
+- Linked inputs use `NiagaraExt_StackInputData_Linked` and require reading the
+  nested linked variable.
+- Literal and linked values have different payload shapes.
+- This read does not include schema metadata or visibility.
+- Missing module refs fail explicitly.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

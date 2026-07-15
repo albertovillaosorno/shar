@@ -47,41 +47,66 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to inspect one Niagara module's asset identity, enabled state, Set
+Parameters classification, and visible/editable input topology without reading
+values.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Obtain the exact script and module names from `GetEmitterTopology`.
+- Populate every StackItemReference field; use renderer index `-1` and an empty
+  input-name stack for a top-level module.
+- Keep system, emitter, script, and module identities paired.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "moduleRef": {
+  "system": {"refPath": "/Niagara/VectorFields/VectorFieldVisualizationSystem.VectorFieldVisualizationSystem"},
+  "emitterName": "VectorFieldParticleEmitter",
+  "scriptName": "ParticleUpdateScript",
+  "moduleName": "SampleVectorField",
+  "rendererIndex": -1,
+  "inputNameStack": []
+}
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two reads returned enabled module `SampleVectorField`, standalone asset
+`/Niagara/VectorFields/SampleVectorField.SampleVectorField`, non-Set-Parameters
+classification, and ten visible editable inputs. Types covered vector-field data
+interface, Vector3f, Quat4f, NiagaraFloat, NiagaraBool, and coordinate-space
+enum.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Topology reports input names, types, visibility, editability, dynamic state,
+  and static-switch state but not configured values.
+- Module names are stack-instance identities and can differ from asset names.
+- Generated assignment-module names can contain GUID suffixes.
+- Missing modules raise an explicit error containing the full stack reference.
+- Use input-value reads separately before interpreting behavior.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

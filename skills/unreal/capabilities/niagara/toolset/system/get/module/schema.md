@@ -47,41 +47,65 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to inspect the contextual schema and metadata for a module
+instance already present in a Niagara emitter stack.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Obtain the exact script and module names from `GetEmitterTopology`.
+- Populate every StackItemReference field; use renderer index `-1` and an empty
+  input-name stack for a top-level module.
+- Keep system, emitter, script, and module identities paired.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "moduleReference": {
+  "system": {"refPath": "/Niagara/VectorFields/VectorFieldVisualizationSystem.VectorFieldVisualizationSystem"},
+  "emitterName": "VectorFieldParticleEmitter",
+  "scriptName": "ParticleUpdateScript",
+  "moduleName": "SampleVectorField",
+  "rendererIndex": -1,
+  "inputNameStack": []
+}
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two reads returned the SampleVectorField asset, ten authored inputs, and 17
+outputs. Input metadata included expression support, advanced-display flags,
+descriptions, edit and visibility conditions, widget customization, units,
+aliases, and stable variable GUIDs.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Contextual schema describes the module asset and metadata, not current stack
+  values.
+- Input order follows the contextual stack schema and can differ from asset-
+  browsing order.
+- Metadata can be large and contains string sentinel values such as `None`.
+- Variable GUIDs are asset-authored identifiers and should not be guessed.
+- Missing module stack references fail explicitly.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
