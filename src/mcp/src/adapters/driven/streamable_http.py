@@ -88,6 +88,7 @@ _CLIENT_NAME = "shar-unreal-mcp-cli"
 _CLIENT_VERSION = package_version()
 _HTTP_ACCEPTED = 202
 _MAX_TOOL_LIST_PAGES = 256
+_MAX_TOOL_NAMES = 100_000
 
 
 class StreamableHttpTransport:
@@ -226,7 +227,10 @@ class StreamableHttpTransport:
                     session=session,
                 )
                 outcome = require_json_rpc_result(exchange, request_id)
-                tools.extend(parse_tool_names(outcome))
+                page_tools = parse_tool_names(outcome)
+                if len(tools) + len(page_tools) > _MAX_TOOL_NAMES:
+                    fail_protocol("tools/list exceeded its tool limit")
+                tools.extend(page_tools)
                 next_cursor = outcome.get("nextCursor")
                 if next_cursor is None:
                     break

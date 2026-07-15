@@ -247,6 +247,32 @@ def test_transport_rejects_unbounded_unique_pagination(
         assert len(tool_list_requests) == 2
 
 
+def test_transport_rejects_excessive_paginated_tool_count(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Bounded pages cannot accumulate an unbounded tool-name collection."""
+    monkeypatch.setattr(
+        "mcp.src.adapters.driven.streamable_http._MAX_TOOL_NAMES",
+        2,
+    )
+    with FakeUnrealServer() as server:
+        transport = StreamableHttpTransport(
+            McpEndpoint.parse(server.endpoint),
+            timeout_seconds=2.0,
+        )
+        session = transport.initialize()
+        with pytest.raises(ProtocolError, match="tool limit"):
+            _ = transport.list_tools(session)
+        transport.close(session)
+
+        tool_list_requests = tuple(
+            request
+            for request in server.requests
+            if request.get("method") == "tools/list"
+        )
+        assert len(tool_list_requests) == 2
+
+
 def test_transport_cancels_timed_out_tool_request() -> None:
     """A timed-out native tool call is cancelled by its original request ID."""
     with FakeUnrealServer(
