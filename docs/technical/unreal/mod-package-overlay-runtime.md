@@ -121,6 +121,34 @@ constructs one immutable merged view from base rows followed by package priority
 and dependency order. A tie or ambiguous provider has already failed package
 validation and cannot reach this stage.
 
+## Unused Content replacement overlays
+
+Every base-game Unused Content definition exposes stable semantic replacement
+slots for its declared extensible fields. A validated package may replace:
+
+- generic mesh, material, texture, animation, audio, effect, icon, and media
+  fallbacks;
+- tuning, physics, interaction, camera, dialogue, and presentation definitions;
+- dedicated gallery, sandbox, selection, and world-placement projections; and
+- a complete fallback presentation bundle when every required dependency is
+  supplied for the target.
+
+Replacement is identity-based, never filename-based. The overlay names the
+canonical Unused Content identity, field identity, expected base revision,
+replacement asset or row identity, compatibility predicates, and fallback
+policy.
+
+A replacement cannot change immutable canonical identity, reinterpret existing
+save meaning, grant campaign progression, or remove the base definition. When an
+overlay is unavailable, rejected, disabled, or removed, the original generic
+fallback becomes active again through the same semantic slots.
+
+Activation verifies that the resulting definition remains reachable, has a
+complete gameplay and presentation dependency closure, and passes the same cook,
+platform, accessibility, memory, and teardown checks as base content. Partial
+replacement is allowed only when every unreplaced field still resolves to a
+valid base fallback.
+
 ## Target-cooked asset overlays
 
 A cooked asset overlay contains assets built for one exact supported target and

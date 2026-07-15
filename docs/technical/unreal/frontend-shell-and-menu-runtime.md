@@ -20,8 +20,9 @@
 ## Purpose
 
 This specification defines boot, main-menu, save-slot, resume, new-game,
-load-game, scrapbook, options, credits, calendar-theme, idle-presentation,
-input-routing, failure, and verification behavior for the native front end.
+load-game, scrapbook, Unused Content, options, credits, calendar-theme,
+idle-presentation, input-routing, failure, and verification behavior for the
+native front end.
 
 ## Module and service ownership
 
@@ -72,6 +73,7 @@ The frontend state is one of:
 - `main_menu`;
 - `slot_browser`;
 - `scrapbook`;
+- `unused_content`;
 - `options`;
 - `credits`;
 - `transitioning_to_gameplay`;
@@ -145,6 +147,7 @@ The primary menu exposes these semantic commands:
 | `resume_game` | One accepted slot has a valid resume or campaign destination. |
 | `load_game` | At least one logical slot summary is inspectable. |
 | `scrapbook` | One accepted progression snapshot is selectable. |
+| `unused_content` | The accepted Unused Content catalog and required generic fallback bundles resolve. |
 | `options` | Device-local configuration service is available. |
 | `credits` | Credits definition and presentation bundle resolve. |
 | `quit` | Platform policy exposes an application-exit command. |
@@ -157,6 +160,31 @@ never used to conceal a failed dependency that should be diagnosed.
 
 The main menu does not expose network login, cloud synchronization, multiplayer,
 a marketplace, a hosted mod browser, or a general-purpose launcher.
+
+## Unused Content command
+
+The `unused_content` command opens a shipping Common UI surface backed by the
+canonical Unused Content catalog. It groups accepted characters, vehicles,
+missions, world objects, costumes, animation, audio, effects, and presentation
+records by stable semantic identity and content class.
+
+Each entry exposes:
+
+- verified identity and content class;
+- available gallery, sandbox, selection, preview, or world-placement actions;
+- campaign-integration and progression-isolation state;
+- whether presentation uses an original generic fallback;
+- active replacement-mod package and revision when one is applied; and
+- a localized unavailable reason for any unsupported action.
+
+Generic fallbacks are ordinary cooked base-game assets. The screen never prompts
+for proprietary downloads or implies that a fallback reproduces unavailable
+protected material. A validated replacement overlay updates the same view model
+without changing menu routing, content identity, or save meaning.
+
+Launching an Unused Content sandbox or preview creates a transient,
+non-progressing session. Closing it returns to the prior frontend state and
+releases all content, input, camera, audio, and mod-overlay leases.
 
 ## New-game command
 

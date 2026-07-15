@@ -286,11 +286,51 @@ provenance only. Native packages use reviewed Unreal font, composite-font,
 atlas, and material assets; runtime code never compiles an opaque source font
 package into a C++ string literal.
 
+## Unused Content
+
+Verified unused content is required shipping content. Every accepted unused
+identity appears in the canonical catalog and is reachable through a dedicated
+`unused_content` frontend and gameplay surface unless a reviewed integration
+places it directly in the campaign.
+
+An unused-content definition declares:
+
+- canonical content identity and source-evidence revision;
+- gameplay class and required native definition;
+- presentation, audio, animation, physics, and interaction dependencies;
+- dedicated gallery, sandbox, selection, or world-placement availability;
+- campaign integration state;
+- save and progression isolation;
+- fallback policy for every missing dependency; and
+- fields and extension points available to validated mod overlays.
+
+Missing source presentation never removes the accepted identity. The base game
+uses clearly generic, repository-owned or appropriately licensed meshes,
+materials, textures, audio, animation, icons, text, and tuning where required.
+Generic fallbacks must be visibly classified as replacements and cannot claim to
+reconstruct or reproduce unavailable protected material.
+
+Every fallback is addressed by the same stable semantic identity used by the
+final content. A validated mod may replace presentation, audio, animation,
+tuning, placement, user-interface, or other declared extensible fields without
+changing the canonical identity or save meaning. Removing a fallback therefore
+does not require executable patching or loose-file path collisions.
+
+Unused content does not silently grant campaign rewards, completion, purchases,
+or achievements. Its dedicated surface may record only typed discovery,
+selection, and local presentation state unless a separate reviewed campaign
+integration explicitly declares progression behavior.
+
+Cook and automation validation prove that every accepted unused identity is
+reachable, has complete native gameplay dependencies, resolves every required
+fallback, and survives activation and removal of a replacement mod overlay.
+
 ## Development evidence
 
-Prerelease changes, prototype differences, unused content, discarded vehicle
-variants, obsolete text, and research indexes do not override final shipping
-behavior. They normalize into `FSharDevelopmentContentRecord` with:
+Prerelease changes, prototype differences, discarded variants without an
+accepted content identity, obsolete text, and research indexes do not override
+final shipping behavior. They normalize into `FSharDevelopmentContentRecord`
+with:
 
 <!-- markdownlint-disable MD013 -->
 

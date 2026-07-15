@@ -467,11 +467,11 @@ world actors.
 | `atv` | Secret | Native to Level 4; normal progression does not grant global access. |
 | `ambulance` | Road | Native to Level 5; completion override may expose it outside normal progression. |
 | `armored_truck` | Purchasable | Persistent unlockable vehicle with a separate reward and phone-booth rule. |
-| `audi_tt` | Unused | Cataloged for completeness; normal runtime activation is prohibited because required support is incomplete. |
+| `audi_tt` | Unused Content | Ships as a reachable unused-content vehicle; incomplete presentation or support uses declared generic fallbacks and remains replaceable by validated mod overlays. |
 | `bandit` | Reward | Level 6 bonus-mission reward and a forced vehicle in a later mission. |
 | `bonestorm_truck` | Inaccessible | Alias `cbone`; mission target in Level 1; completion override does not change its canonical identity. |
 | `book_burning_van` | Reward | Level 3 street-race prize; phone-booth access after unlock. |
-| `brick_car` | Unused | Cataloged but excluded from normal progression and ordinary vehicle selection. |
+| `brick_car` | Unused Content | Ships through the unused-content selection surface with isolated progression and mod-replaceable presentation, tuning, and placement fields. |
 | `burns_armored_truck` | Road | Distinct Level 6 road variant; never aliases the purchasable armored truck. |
 | `cpolice` | Inaccessible | Police vehicle present in Levels 1 through 6; excluded from normal progression. |
 | `canyonero` | Purchasable | Player vehicle and forced transport for the Level 1 hit-and-collect mission. |
@@ -488,10 +488,44 @@ The vehicle-family census additionally establishes these invariants:
   profile;
 - horn, engine, collision, camera, wheel, and special effects are explicit
   profile references;
-- road, reward, secret, inaccessible, and unused are distinct availability
-  states; and
+- road, reward, secret, inaccessible, and Unused Content are distinct
+  availability states;
+- every verified Unused Content identity is reachable in the shipping product
+  through its dedicated surface even when campaign progression remains isolated;
+- missing presentation or support resolves through clearly generic,
+  repository-owned or appropriately licensed fallback definitions;
+- every generic fallback exposes schema-declared replacement fields to validated
+  mod overlays; and
 - a completion override never changes a vehicle's canonical identity or native
   level placement.
+
+## Unused Content catalog projection
+
+`USharUnusedContentDefinition` projects any accepted unused character, vehicle,
+mission, world object, audio event, animation, costume, effect, or presentation
+identity into the shipping product. It contains:
+
+- canonical identity and content class;
+- source-evidence and catalog revisions;
+- native gameplay definition and dependency closure;
+- dedicated frontend, sandbox, gallery, selection, or placement route;
+- campaign integration and progression-isolation policy;
+- generic fallback identities for every unavailable dependency;
+- mod-extensible field declarations; and
+- validation and replacement-overlay test identities.
+
+A missing original asset does not delete the content definition. The catalog
+resolves an original generic fallback that is clearly identified as replacement
+material and does not imitate unavailable protected expression. The fallback
+uses stable semantic slots so a validated mod can replace individual meshes,
+materials, textures, audio, animation, user-interface, tuning, dialogue,
+placement, or complete presentation bundles without changing the canonical
+content identity.
+
+The dedicated Unused Content surface is part of the base package. It cannot be
+implemented only as a development command, editor browser, or optional external
+mod. Campaign use remains opt-in per definition so inclusion cannot accidentally
+grant rewards, unlocks, purchases, completion, or achievements.
 
 ## Verified initial mission and race slice
 
