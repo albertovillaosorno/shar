@@ -45,7 +45,7 @@
 //
 
 //! Error variants for RMV/Bink audit and conversion gates.
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use schoenwald_filesystem::DiagnosticPath;
 
@@ -113,7 +113,8 @@ impl core::fmt::Display for RmvError {
             Self::InvalidMovieStem(stem) => {
                 write!(
                     formatter,
-                    "movie stem is not a single safe path component: {stem}"
+                    "movie stem is not a single safe path component: {}",
+                    DiagnosticPath::new(Path::new(stem))
                 )
             }
             Self::OutputPathCollision(path) => {
@@ -158,6 +159,21 @@ mod tests {
     use std::path::PathBuf;
 
     use super::RmvError;
+
+    #[test]
+    fn invalid_movie_stem_error_escapes_control_characters() {
+        let error = RmvError::InvalidMovieStem("bad\nstem".to_owned());
+
+        let rendered = error.to_string();
+
+        assert!(
+            !rendered
+                .chars()
+                .any(char::is_control),
+            "diagnostic contains a control character: {rendered:?}"
+        );
+        assert!(rendered.contains(r"bad\nstem"));
+    }
 
     #[cfg(windows)]
     #[test]
