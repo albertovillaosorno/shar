@@ -299,6 +299,33 @@ def test_filesystem_store_rejects_nonportable_windows_segments(
         assert not output_root.exists()
 
 
+def test_filesystem_store_path_error_does_not_reflect_controls(
+    tmp_path: Path,
+) -> None:
+    """Unsafe generated paths cannot add lines to diagnostics."""
+    output_root = tmp_path / "skills" / "unreal"
+    documents = MarkdownSkillRenderer(TEST_UNREAL_MCP_VERSION).render(
+        complete_catalog()
+    )
+    capability = next(
+        document
+        for document in documents
+        if document.relative_path.startswith("capabilities/")
+    )
+    invalid_documents = tuple(
+        document._replace(relative_path="capabilities/bad\ninjected.md")
+        if document == capability
+        else document
+        for document in documents
+    )
+
+    with pytest.raises(ProtocolError) as caught:
+        FilesystemSkillStore(output_root).replace(invalid_documents)
+
+    assert str(caught.value) == "generated skill path is not portable"
+    assert not output_root.exists()
+
+
 def test_filesystem_store_rejects_nested_index_before_mutation(
     tmp_path: Path,
 ) -> None:

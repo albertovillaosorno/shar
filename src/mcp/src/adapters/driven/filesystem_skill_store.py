@@ -233,19 +233,14 @@ class FilesystemSkillStore:
 
 def _validated_generated_path(relative_path: str) -> PurePosixPath:
     if "\\" in relative_path:
-        message = (
-            "generated skill path contains an unsafe path separator: "
-            + relative_path
-        )
-        fail_protocol(message)
+        fail_protocol("generated skill path contains an unsafe path separator")
     path = PurePosixPath(relative_path)
     if any(
         ":" in segment or ntpath.isreserved(segment) for segment in path.parts
     ):
-        message = f"generated skill path is not portable: {relative_path}"
-        fail_protocol(message)
+        fail_protocol("generated skill path is not portable")
     if path.is_absolute() or ".." in path.parts:
-        fail_protocol(f"unsafe generated skill path: {relative_path}")
+        fail_protocol("unsafe generated skill path")
     if path != _INDEX_PATH:
         if not path.parts or path.parts[0] != _CAPABILITIES_ROOT.name:
             fail_protocol(
