@@ -45,7 +45,7 @@
 //
 
 //! Error values for RCF archive parsing and extraction.
-use std::fmt::{Display, Formatter};
+use std::fmt::{Display, Formatter, Write as _};
 use std::io;
 use std::path::PathBuf;
 
@@ -93,6 +93,19 @@ impl ArchiveError {
     }
 }
 
+/// Writes untrusted archive text without emitting raw controls.
+fn write_escaped_text(
+    formatter: &mut Formatter<'_>,
+    value: &str,
+) -> std::fmt::Result {
+    for character in value.chars() {
+        for escaped in character.escape_default() {
+            formatter.write_char(escaped)?;
+        }
+    }
+    Ok(())
+}
+
 impl Display for ArchiveError {
     fn fmt(
         &self,
@@ -103,10 +116,12 @@ impl Display for ArchiveError {
                 formatter,
                 "invalid RCF archive: {message}"
             ),
-            Self::UnsafeEntryPath(path) => write!(
-                formatter,
-                "unsafe RCF entry path: {path}"
-            ),
+            Self::UnsafeEntryPath(path) => {
+                formatter.write_str("unsafe RCF entry path: ")?;
+                write_escaped_text(
+                    formatter, path,
+                )
+            }
             Self::Io {
                 path,
                 source,
@@ -144,6 +159,21 @@ mod tests {
     use std::path::PathBuf;
 
     use super::ArchiveError;
+
+    #[test]
+    fn unsafe_entry_path_error_escapes_control_characters() {
+        let error = ArchiveError::unsafe_entry_path("bad\npath");
+
+        let rendered = error.to_string();
+
+        assert!(
+            !rendered
+                .chars()
+                .any(char::is_control),
+            "diagnostic contains a control character: {rendered:?}"
+        );
+        assert!(rendered.contains(r"bad\npath"));
+    }
 
     #[cfg(windows)]
     #[test]
