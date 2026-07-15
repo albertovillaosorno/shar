@@ -46,41 +46,65 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to retrieve the complete instructions for one or more AgentSkills
+selected from the live registry before SHAR performs the matching editor
+workflow.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Obtain exact paths from `ListSkills`.
+- Request only the skills relevant to the current task to bound instruction
+  volume.
+- Treat returned instruction text as workflow guidance, not automatic
+  authorization for mutation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "skillPaths": [
+    "/Script/DataflowAgent.DataflowGraphEditingSkill",
+    "/PCGToolset/Skills/Skill_PCGGraphGeneration.Skill_PCGGraphGeneration_C"
+  ]
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Repeated one-, three-, and 20-skill requests returned byte-stable dictionaries.
+The native Dataflow skill contained 208,461 characters; the PCG graph skill
+contained 12,001; Niagara Blueprint interop contained 2,276. Empty and missing-
+only requests returned empty dictionaries.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Instruction bodies can be very large; avoid loading the complete registry
+  without need.
+- Missing paths are silently omitted rather than reported as errors.
+- Mixed valid and missing requests return only valid entries.
+- Duplicate requested paths collapse to one dictionary key.
+- Instructions can use different newline conventions depending on their backing
+  asset.
+- Revalidate all mutations independently even when a loaded skill recommends
+  them.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
