@@ -155,6 +155,27 @@ def test_tool_outcome_rejects_malformed_content_blocks(
         _ = parse_tool_outcome(outcome)
 
 
+def test_tool_outcome_rejects_excessive_content_blocks(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """One response cannot force unbounded content-block traversal."""
+    monkeypatch.setattr(
+        "mcp.src.domain.tool_outcome._MAX_CONTENT_BLOCKS",
+        2,
+        raising=False,
+    )
+    outcome: JsonObject = {
+        "content": [
+            {"type": "text", "text": "first"},
+            {"type": "image", "data": "AA=="},
+            {"type": "text", "text": "third"},
+        ]
+    }
+
+    with pytest.raises(ProtocolError, match="content block limit"):
+        _ = parse_tool_outcome(outcome)
+
+
 def test_tool_outcome_preserves_valid_non_text_content() -> None:
     """Non-text blocks remain raw without inventing a text projection."""
     outcome = parse_tool_outcome(

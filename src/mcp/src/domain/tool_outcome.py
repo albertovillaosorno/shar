@@ -49,6 +49,8 @@ from typing import NamedTuple
 from mcp.src.domain.errors import fail_protocol, fail_tool_call
 from mcp.src.domain.json_types import JsonObject, JsonValue, require_json_object
 
+_MAX_CONTENT_BLOCKS = 100_000
+
 
 class ToolCallOutcome(NamedTuple):
     """Normalized native tool outcome."""
@@ -113,6 +115,8 @@ def _extract_text(outcome: JsonObject) -> str:
     raw_content = outcome.get("content")
     if not isinstance(raw_content, list):
         fail_protocol("tools/call outcome: content must be an array")
+    if len(raw_content) > _MAX_CONTENT_BLOCKS:
+        fail_protocol("tools/call outcome exceeded its content block limit")
     parts: list[str] = []
     for index, raw_item in enumerate(raw_content):
         item = require_json_object(
