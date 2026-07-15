@@ -71,6 +71,8 @@ proprietary external formats.
 <!-- markdownlint-disable-next-line MD013 -->
 - [Application lifecycle and mode runtime](unreal/application-lifecycle-and-mode-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Authored spatial placement and trigger runtime](unreal/authored-spatial-placement-and-trigger-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Camera rig, preset, and arbitration runtime](unreal/camera-rig-preset-and-arbitration-runtime.md)
 - [Camera system runtime](unreal/camera-system-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -137,7 +139,7 @@ proprietary external formats.
 
 ## Current coverage
 
-- Technical specifications: 64.
+- Technical specifications: 65.
 - Template records: 1.
 - Review date: 2026-07-15.
 - Status boundary: this catalog describes current repository behavior and does

@@ -114,9 +114,11 @@ No generic-event definition may substitute for a kind that has domain effects.
 ## Candidate discovery
 
 Each interactor maintains a bounded overlap set from interaction-source
-collision
-channels. Streaming registration and overlap notifications update the set;
-there is no world-wide per-frame actor scan.
+collision channels. Registration, participant identity, occupancy, enter/exit,
+and streaming teardown follow the
+<!-- markdownlint-disable-next-line MD013 -->
+[authored spatial placement and trigger runtime](authored-spatial-placement-and-trigger-runtime.md).
+There is no world-wide per-frame actor scan.
 
 For each query, the interactor supplies:
 

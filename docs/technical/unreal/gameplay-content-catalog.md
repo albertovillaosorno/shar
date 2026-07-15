@@ -1,7 +1,7 @@
 # Unreal gameplay content catalog
 
 - Status: Active
-- Last reviewed: 2026-07-14
+- Last reviewed: 2026-07-15
 
 ## Governing decisions
 
@@ -304,8 +304,9 @@ audio may suppress playback, but it must not remove the event or alter gameplay.
 <!-- markdownlint-enable MD013 -->
 
 A vehicle definition has one identity and any number of acquisition contexts.
-`FSharVehicleAcquisitionRow` contains vehicle identity, level identity,
-acquisition kind, seller or mission identity, coin price, progression predicate,
+`FSharVehicleAcquisitionRow` contains vehicle identity, chapter acquisition
+group, optional source-level alias, acquisition kind, seller or mission
+identity, coin price, progression predicate,
 phone-booth policy, and deterministic priority. Acquisition kinds are starting,
 purchase, mission reward, street-race reward, native road access, secret world
 access, mission-only, and completion override.
@@ -331,14 +332,25 @@ has no corresponding native profile evidence.
 
 | Field | Contract |
 | :--- | :--- |
-| `LevelId` | One canonical level identity. |
-| `SequenceOrdinal` | Stable main or bonus sequence position. |
-| `MissionClass` | Main, bonus, or street race. |
+| `ChapterId` | Canonical narrative chapter identity. |
+| `SourceLevelAlias` | Optional historic conversion alias only. |
+| `SequenceOrdinal` | Stable sequence position within its mission family. |
+<!-- markdownlint-disable-next-line MD013 -->
+| `MissionClass` | Story, bonus, race, wager, taxi, boss, or another registered side activity. |
 | `GiverCharacterId` | Optional mission-giver identity. |
-| `PlayableCharacterId` | Required controlled-character identity. |
+| `PlayableCharacterId` | Required or default controlled-character identity. |
+<!-- markdownlint-disable-next-line MD013 -->
+| `OfferDefinitionId` | Optional world offer, marker, dialogue, and availability definition. |
 | `PreviousMissionId` | Optional progression predecessor. |
 | `NextMissionId` | Optional progression successor. |
 | `StepTable` | Required ordered mission-step table. |
+<!-- markdownlint-disable-next-line MD013 -->
+| `ConditionDefinitionIds` | Ordered required, optional, failure, and recovery condition definitions. |
+<!-- markdownlint-disable-next-line MD013 -->
+| `PresentationProfileId` | Mission offer, conversation, marker, HUD, camera, and transition presentation. |
+<!-- markdownlint-disable-next-line MD013 -->
+| `BonusObjectiveIds` | Optional independently evaluated objective definitions. |
+| `BossEncounterId` | Optional typed encounter definition for a boss mission. |
 | `RewardId` | Optional completion reward. |
 <!-- markdownlint-disable-next-line MD013 -->
 | `CompletionTransition` | Unlock, chapter transition, world expansion, ending, or none. |
@@ -357,6 +369,8 @@ may move or gain additional entry points without changing its save key.
 | `SequenceOrdinal` | Dense zero-based order within the mission. |
 | `ObjectiveKind` | One value from the controlled objective taxonomy. |
 | `ObjectivePolicyId` | Required objective-specific runtime policy identity. |
+<!-- markdownlint-disable-next-line MD013 -->
+| `ConditionIds` | Ordered condition definitions active for this step or step range. |
 | `TargetIds` | Canonical entities, actors, zones, or items. |
 | `RequiredCount` | Non-negative completion count. |
 | `TimeLimitSeconds` | Optional positive timer. |
@@ -598,13 +612,21 @@ collection progress.
 
 ### Bonus missions
 
-Each of the seven levels has one bonus-mission slot. A bonus mission:
+Each historic chapter group retains one canonical bonus-mission slot. A bonus
+mission:
 
 - has a specific mission giver distinct from the main-story continuation;
-- can complete only once per save;
-- grants one declared vehicle reward; and
+- projects one typed offer and marker into `non_mission` when eligible;
+- can complete only once per save unless a separate replay policy is declared;
+- grants one declared vehicle reward or another typed reward exactly once;
+- may contain independently evaluated optional bonus objectives; and
 - remains optional for main-story progression unless another explicit predicate
   requires its reward.
+
+Mission offer, marker, acceptance, optional-objective, and completion behavior
+follow the
+<!-- markdownlint-disable-next-line MD013 -->
+[mission, interaction, interior, and notoriety runtime](mission-interaction-and-notoriety-runtime.md).
 
 ### Bonus game
 

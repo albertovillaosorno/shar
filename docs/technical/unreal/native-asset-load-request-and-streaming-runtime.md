@@ -1,7 +1,7 @@
 # Native asset load request and streaming runtime
 
 - Status: Active
-- Last reviewed: 2026-07-14
+- Last reviewed: 2026-07-15
 
 ## Governing decisions and specifications
 
@@ -309,7 +309,10 @@ Imported locators normalize into typed placement records such as:
 
 Each placement has stable identity, owner, world or Data Layer, transform,
 shape, activation policy, and verification evidence. Integer locator subtypes
-and nested source chunks remain provenance only.
+and nested source chunks remain provenance only. Registration, occupancy,
+enter/exit observations, domain adapters, and teardown follow the
+<!-- markdownlint-disable-next-line MD013 -->
+[authored spatial placement and trigger runtime](authored-spatial-placement-and-trigger-runtime.md).
 
 ## Roads, paths, and intersections
 

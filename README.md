@@ -1,5 +1,7 @@
 # SHAR
 
+<!-- markdownlint-disable MD013 -->
+
 SHAR is an AI-first deterministic migration pipeline and Unreal Engine 5
 reimplementation workspace. Its bounded goal is to rebuild a lawful local copy
 of the original game as a clean, native, playable, and moddable project.
@@ -904,6 +906,8 @@ Relevant decisions:
 - [Runtime parity tests](docs/adr/unreal/runtime/runtime-parity-test-boundary.md)
 - [Application lifecycle and mode runtime](docs/technical/unreal/application-lifecycle-and-mode-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Authored spatial placement and trigger runtime](docs/technical/unreal/authored-spatial-placement-and-trigger-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native platform bootstrap and error-recovery runtime](docs/technical/unreal/native-platform-bootstrap-and-error-recovery-runtime.md)
 - [Native asset load request and streaming runtime](docs/technical/unreal/native-asset-load-request-and-streaming-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -1384,3 +1388,5 @@ preservation of the repository in an unarchived state.
 
 The durable artifact is the licensed source and its recorded contracts, not a
 promise that its original author will remain available forever.
+
+<!-- markdownlint-enable MD013 -->

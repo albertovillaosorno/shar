@@ -1,16 +1,19 @@
 # Mission, interaction, interior, and notoriety runtime
 
 - Status: Active
-- Last reviewed: 2026-07-14
+- Last reviewed: 2026-07-15
 
 ## Governing decisions
 
 <!-- markdownlint-disable-next-line MD013 -->
 - [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Contextual interaction query and transaction boundary](../../adr/unreal/runtime/contextual-interaction-query-and-transaction.md)
 - [Contextual interaction runtime](contextual-interaction-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Authored spatial placement and trigger runtime](authored-spatial-placement-and-trigger-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Typed StateTree action sequences](../../adr/unreal/runtime/typed-state-tree-action-sequences.md)
 - [Typed action-sequence runtime](typed-action-sequence-runtime.md)
@@ -57,10 +60,11 @@ world from `non_mission` to `mission`. Mission-specific actors, vehicles,
 objective pickups, hazards, routes, Data Layers, dialogue, and scripted changes
 are created only after that lease commits.
 
-Completing, abandoning, or failing beyond recovery releases the mission lease and
-returns to `non_mission`. Only accepted persistent transactions survive release.
-The runtime rejects a second concurrent mission, a mission actor projected before
-acceptance, or a hidden campaign/test state used as a substitute.
+Completing, abandoning, or failing beyond recovery releases the mission lease
+and returns to `non_mission`. Only accepted persistent transactions survive
+release. The runtime rejects a second concurrent mission, a mission actor
+projected before acceptance, or a hidden campaign/test state used as a
+substitute.
 
 A story mission may force character, costume, vehicle, start transform, route,
 time window, weather presentation, or interaction policy. Those constraints end
@@ -142,6 +146,121 @@ it never becomes success through actor destruction, unloading, or missing data.
 Thresholds, counts, durations, and distances use explicit units and validated
 ranges. A policy cannot rely on a frame count, graphics preset, current refresh
 rate, or an implementation-defined floating-point comparison.
+
+## Mission offers and world markers
+
+`USharMissionOfferDefinition` projects one available mission or side activity
+into the connected world. It contains:
+
+- canonical mission and offer identities;
+- giver character identity;
+- interaction placement identity;
+- chapter, story, discovery, character, vehicle, clock, and mission-state
+  predicates;
+- primary and alternate marker presentation identities;
+- dialogue or conversation event identity;
+- one-shot, repeatable, completed, hidden, and unavailable policies;
+- map, radar, world, and accessibility presentation roles; and
+- required content bundles and teardown behavior.
+
+Offer availability is derived from catalog and progression state. A raw event
+locator, mission number, character pointer, bitmap name, or mutable enabled flag
+is not authority.
+
+The spatial subsystem reports eligible proximity or interaction evidence. The
+mission subsystem validates acceptance and acquires the gameplay-state lease.
+Presentation cannot start a mission by itself.
+
+`USharWorldMarkerDefinition` is non-authoritative presentation. It declares
+icon, animation, material, scale, distance, visibility, occlusion, safe-area,
+color,
+accessibility, alternate-state, one-shot, quality, and bundle policies.
+
+Markers use pooled native components, widgets, Niagara, or another reviewed
+presentation projection. Pool budgets are data and platform policy; one global
+fixed array is not the product limit.
+
+Distance scaling uses the active camera projection and bounded authored curves.
+A marker cannot reveal undiscovered map geometry, complete an objective, persist
+completion, or grant a reward. Missing optional presentation suppresses the
+marker while preserving a typed unavailable reason.
+
+Offer and marker teardown occurs on mission acceptance, completion, chapter
+change, giver invalidation, world unload, feature removal, or mod deactivation.
+Late presentation callbacks cannot reactivate an obsolete offer.
+
+## Optional bonus objectives
+
+`FSharBonusObjectiveDefinition` attaches one optional, independently evaluated
+condition to a mission or activity. Initial kinds are:
+
+- `no_damage`, requiring the declared player or vehicle damage channel to remain
+  within bounds;
+- `no_chase_collisions`, rejecting accepted pursuit-collision observations;
+- `time`, requiring completion before a bounded simulation-time deadline;
+- `position`, requiring a declared route position, finish rank, or spatial
+  relation; and
+- `hit_count`, requiring or limiting a typed accepted-hit count.
+
+Every definition contains objective identity, mission identity, start and end
+step, observation schemas, thresholds, units, participant scope, reset policy,
+checkpoint behavior, reward or achievement policy, presentation, and terminal
+result rules.
+
+A bonus objective starts only when its mission and declared step revision become
+active. It consumes immutable typed observations and emits one terminal result.
+It cannot infer success from a rendered icon, frame count, pointer state, or an
+unloaded target.
+
+Failure of an optional objective does not fail the mission unless the mission
+definition explicitly promotes it to a required objective. Mission restart and
+checkpoint restore follow the declared reset policy; loading cannot duplicate a
+reward or restore an already failed one through stale state.
+
+Reward, statistic, and achievement effects commit with the mission completion
+transaction or another explicit atomic transaction. Listener order and marker
+presentation never select the result.
+
+## Boss encounter execution
+
+The chapter runtime owns boss-slot availability and permanent world-expansion
+results. The mission runtime owns an active encounter session through
+`USharBossEncounterSession`.
+
+An encounter definition resolves:
+
+- boss slot and canonical boss identity;
+- arena and boundary placements;
+- controlled character and eligible vehicles;
+- phase graph and transition predicates;
+- health, armor, weak-point, weapon, and damage policies;
+- hazards, minions, projectiles, environmental actions, and safe recovery;
+- camera, marker, dialogue, audio, music, and presentation requests;
+- checkpoint and failure policy;
+- terminal reward and permanent world-expansion transaction; and
+- generic asset and mod-replacement identities.
+
+An abstract weapon pointer is not a boss model. Weapons and hazards are typed
+capabilities referenced by identity and owned by their combat or encounter
+adapters.
+
+Each phase accepts only observations matching encounter, phase, participant,
+target, arena, and world revisions. Actor destruction, streaming removal,
+missing presentation, or leaving the arena cannot become success unless the
+phase definition explicitly accepts that typed result.
+
+The confirmed mechanical-dinosaur and museum-skeleton encounters use original
+or appropriately licensed generic presentation and remain mod-replaceable. The
+third
+boss slot stays unavailable until a complete reviewed definition exists.
+
+Completion first commits the encounter result and permanent stadium or museum
+unlock, then releases mission-only actors, hazards, camera requests, markers,
+and arena restrictions. Retry restores the latest accepted encounter checkpoint.
+
+A boss presentation failure cannot revoke accepted damage or completion. A
+failed world-expansion transaction prevents terminal success and enters typed
+recovery instead of leaving a partially opened area.
 
 ## Travel objective
 
@@ -280,8 +399,8 @@ escape condition. A destroyed pursuer follows the objective's declared recovery
 or success policy; destruction alone cannot silently complete the objective.
 
 A compound destroy-then-avoid mission records destruction and escape as separate
-steps so mission completion and any chapter transition occur only after both have
-been accepted.
+steps so mission completion and any chapter transition occur only after both
+have been accepted.
 
 ## Race objective
 
@@ -319,6 +438,106 @@ World adapters publish immutable observations with:
 The mission session rejects stale, duplicate, future-step, wrong-mission, or
 unrecognized observations. Presentation events cannot be replayed as gameplay
 observations.
+
+## Mission condition evaluation
+
+`FSharMissionConditionDefinition` describes one required, optional, failure, or
+recovery condition without embedding condition logic in a mission-specific
+script. It contains:
+
+<!-- markdownlint-disable MD013 -->
+
+| Field | Contract |
+| :--- | :--- |
+| `ConditionId` | Stable identity unique within its owning mission definition. |
+| `ConditionKind` | One registered condition schema. |
+| `MissionId` | Owning canonical mission identity. |
+| `ActiveStepRange` | First and last step revisions during which evaluation is valid. |
+| `ParticipantScope` | Exact local player, character, vehicle, opponent, payload, or shared-world policy. |
+| `SubjectIds` | Ordered canonical vehicles, actors, routes, interiors, payloads, or zones. |
+| `ObservationSchemas` | Exact typed observations accepted by the evaluator. |
+| `Parameters` | Schema-validated thresholds, durations, counts, ranks, distances, and units. |
+| `SuspensionPolicyId` | Declared pauses for interior transitions, arrest resolution, cinematics, or other controlled states. |
+| `TerminalPolicy` | Violation, satisfaction, step rollback, mission failure, or non-terminal signal. |
+| `RecoveryTransitionId` | Required successor when the terminal policy is recoverable. |
+| `TelemetryProfileId` | Optional non-authoritative warning, meter, music, and accessibility projection. |
+
+<!-- markdownlint-enable MD013 -->
+
+The initial controlled condition kinds are:
+
+- `vehicle_damage`, evaluated against the declared vehicle and damage threshold;
+- `player_hit`, evaluated from accepted damage observations for the controlled
+  character;
+- `timeout`, evaluated from simulation time under the declared suspension policy;
+- `player_out_of_vehicle`, tracking the exact exited vehicle, grace period, and
+  whether entering another vehicle fails immediately;
+- `follow_distance`, evaluating bounded distance to the declared target and
+  publishing proximity telemetry;
+- `out_of_bounds`, accepting only the declared participant's failure-boundary
+  observation;
+- `race_opponent_finished`, accepting finish or checkpoint progress from the
+  configured opponent set;
+- `leave_interior`, publishing a typed transition signal without implicitly
+  failing the mission;
+- `finish_position`, comparing accepted ordered finish results with the required
+  rank;
+- `carrying_payload`, requiring the declared player vehicle to carry the exact
+  payload identity;
+- `not_abducted`, failing only when the controlled participant is abducted;
+- `notoriety_arrest`, following the active mission's declared arrest policy;
+- `keep_payload`, requesting a declared step rollback or failure when the payload
+  is destroyed; and
+- `collect_count`, comparing accepted collectible transactions with the declared
+  target set and count.
+
+A condition instance is initialized once for one mission-step revision, consumes
+only observations matching its mission, step, participant, subject, world, and
+session revisions, and is finalized exactly once before its bindings are
+released. A stale callback cannot affect a replacement condition. Conditions use
+explicit `pending`, `satisfied`, `violated`, and `invalid` states; a terminal state
+cannot reverse unless the definition declares a recoverable transition.
+
+Damage failure is driven by authoritative damage or destruction state, not the
+completion of an explosion effect. Race and finish conditions consume route and
+result identities, not generic waypoint events. A payload rollback emits a
+mission-transition request that the session validates; an event listener cannot
+change the current step directly.
+
+`TelemetryProfileId` may project close-to-failure state, proximity, countdown,
+warning, HUD, music, or accessibility cues. Telemetry is derived from the
+condition snapshot and cannot set the authoritative result. Missing optional
+telemetry leaves evaluation unchanged.
+
+## Mission presentation profile
+
+`USharMissionPresentationProfile` contains mission and offer presentation that is
+declarative but non-authoritative:
+
+- conversation camera profile and participant-specific camera presets;
+- optional camera override per dialogue-line identity;
+- best-side, speaker, listener, vehicle, and marker placement identities;
+- participant stature and framing tags;
+- ordered ambient animation pools per participant and deterministic or declared
+  random-selection policy;
+- marker, radar, map, briefing, objective, timer, proximity, and warning profiles;
+- conversation relocation, traffic-clearing, vehicle-visibility, and restoration
+  policy;
+- completion, failure, cancellation, and special-screen presentation routes; and
+- required bundles, fallback behavior, timeout, cancellation, and teardown.
+
+Mission acceptance, dialogue start, and presentation activation are separate
+transactions. When a conversation temporarily relocates participants or hides a
+vehicle, the presentation transaction captures the authoritative pre-state,
+applies only validated temporary changes, and restores that state on completion,
+cancellation, timeout, mission replacement, or world teardown. Restoration is
+idempotent and cannot overwrite a newer participant or vehicle revision.
+
+Camera selection, ambient animation, icon visibility, fades, and special-screen
+routing cannot complete a mission, advance a step, grant a reward, or mutate a
+save. Presentation failure returns a typed result to the session, which follows
+the definition's fallback or recovery policy without fabricating gameplay
+success.
 
 ## Interaction definition and reservation
 
@@ -421,8 +640,8 @@ Every structure declares one interior capability:
 A decorative window never implies an interior. Bart may break a window only when
 the structure declares an available interior, a breakable-entry policy,
 navigation support, mission permission, and a safe transition. The runtime
-rejects window entry that bypasses a chapter, terrain, boss, shortcut, or mission
-gate.
+rejects window entry that bypasses a chapter, terrain, boss, shortcut, or
+mission gate.
 
 ## Interior definition
 
@@ -465,9 +684,9 @@ The canonical interior set is:
 - Frink Observatory; and
 - Bart's Bedroom.
 
-Each interior supports at least one chapter-scoped or persistent gag and at least
-one declared mission or sandbox use. Costume and character interactions are
-optional and explicit.
+Each interior supports at least one chapter-scoped or persistent gag and at
+least one declared mission or sandbox use. Costume and character interactions
+are optional and explicit.
 
 ## Interior transition transaction
 

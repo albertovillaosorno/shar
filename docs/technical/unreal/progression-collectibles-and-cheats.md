@@ -1,7 +1,7 @@
 # Progression, collectibles, cheats, and credits
 
 - Status: Active
-- Last reviewed: 2026-07-14
+- Last reviewed: 2026-07-15
 
 ## Governing decisions
 
@@ -202,21 +202,23 @@ the completion or reward. The progression service validates the chapter,
 placement, activation state, current completion state, and reward policy before
 committing one transaction.
 
-A repeated gag concept in reused world geometry receives a distinct placement and
-completion key only when declared for a chapter or persistent world projection.
+A repeated gag concept in reused world geometry receives a distinct placement
+and completion key only when declared for a chapter or persistent world
+projection.
 Reusing one placement identity for incompatible projections is invalid. An
 interior gag follows the same ledger and remains placement-scoped even when the
 interior geometry is shared.
 
 Most gag definitions may grant currency, but the reward is explicit rather than
 implied. A gag with no declared reward still records completion when it counts
-toward chapter progress. A special reward amount is represented by its own reward
-policy and does not change the gag identity.
+toward chapter progress. A special reward amount is represented by its own
+reward policy and does not change the gag identity.
 
 After completion, a replayable gag may repeat presentation without replaying the
 currency transaction, completion key, statistics event, or chapter-progress
-increment. Streaming, mission restart, world reload, chapter unlock, save reload,
-or entering a second portal to the same interior cannot duplicate the accepted
+increment. Streaming, mission restart, world reload, chapter unlock, save
+reload, or entering a second portal to the same interior cannot duplicate the
+accepted
 result.
 
 Unused, unreachable, malformed, or unverified gag concepts remain inactive and
@@ -263,8 +265,9 @@ purchases use one atomic transaction:
 1. publish presentation only after commit succeeds.
 
 Failure leaves both balance and result unchanged. Repeating a permanent purchase
-returns the existing ownership result and never charges twice. Repeatable services
-such as repairs, motels, taxi fees, and wagers require a new service transaction.
+returns the existing ownership result and never charges twice. Repeatable
+services such as repairs, motels, taxi fees, and wagers require a new service
+transaction.
 
 Owned costumes are permanently menu-equippable. The player does not return to a
 shop merely to wear an owned costume.
@@ -284,12 +287,14 @@ grind-bound tests.
 ## Chapter collectible activation
 
 Chapter 1 persistent collectible sets activate at new game. Completing each
-chapter activates its successor's sets. Activated sets remain active permanently,
-so completing all story missions without collecting optional content leaves all
+chapter activates its successor's sets. Activated sets remain active
+permanently, so completing all story missions without collecting optional
+content leaves all
 seven chapter sets available together.
 
 Activation and collection are independent. Mission-objective pickups remain
-scoped to the active mission lease and do not enter persistent chapter activation.
+scoped to the active mission lease and do not enter persistent chapter
+activation.
 
 ## Collector-card definitions
 
@@ -468,7 +473,7 @@ The gallery view is derived from:
 - presentation availability; and
 - current cheat overlay when one is enabled.
 
-Adding a collected card validates subtype, level set, set ordinal, placement
+Adding a collected card validates subtype, chapter set, set ordinal, placement
 transaction, and existing progression state before one idempotent commit. Deck
 completion is calculated from the required identity set, not a mutable count.
 Removing cards is a development-only test operation and cannot occur through an
@@ -476,8 +481,8 @@ ordinary player or cheat overlay.
 
 The card-unlock cheat changes gallery visibility and eligibility projection
 only. It does not insert card identities into portable progression, complete
-chapter sets, unlock passive abilities, grant bonus maps, update achievements, or
-grant the movie ticket.
+chapter sets, unlock passive abilities, grant bonus maps, update achievements,
+or grant the movie ticket.
 
 ## Chapter and game progress projection
 
@@ -497,6 +502,169 @@ pause-menu widgets consume the same immutable projection and never recalculate
 it from visible entries. Exact scrapbook modes and gallery membership follow
 [Frontend shell and menu runtime](frontend-shell-and-menu-runtime.md).
 
+## Character-sheet decomposition
+
+The native runtime does not retain one process-global character sheet that owns
+all campaign, mission, race, collectible, vehicle, costume, media, tutorial, and
+percentage state.
+
+Portable state is decomposed by domain and stable identity:
+
+<!-- markdownlint-disable MD013 -->
+
+| Domain | Authoritative state |
+| :--- | :--- |
+| Campaign | Current chapter boundary, completed story missions, and accepted chapter transitions. |
+| Mission | Active mission checkpoint and completed mission transaction identities. |
+| Side activities | Completed bonus mission, street race, wager, taxi, and boss identities. |
+| Collectibles | Collected card, wasp, gag, and other placement transaction identities. |
+| Economy | Ordered currency ledger and permanent purchase identities. |
+| Characters and costumes | Unlocked, currently eligible, purchased, and equipped identities. |
+| Vehicles | Ownership, access, active vehicle, damage, repair, and retrieval state. |
+| Media and tutorials | Explicit viewed, unlocked, or acknowledged identities. |
+| Achievements | Accepted counters and completion identities under the achievement schema. |
+| World | Discovery, interiors, connectors, expansions, persistent placements, and clock state. |
+
+<!-- markdownlint-enable MD013 -->
+
+A projection service joins immutable snapshots for the scrapbook, pause menu,
+save-slot summary, achievement screen, mission browser, and diagnostics. The
+projection is not a second mutable copy of domain state.
+
+### Mission progression
+
+Mission state distinguishes:
+
+- available mission identity;
+- accepted active mission and checkpoint;
+- completed mission transaction;
+- chapter-final transition transaction;
+- replay eligibility;
+- accepted attempt count and declared skip eligibility or skip transaction;
+- optional-objective terminal result and reward-claim revision; and
+- best time, no-death, damage, position, score, or other registered evidence where
+  declared.
+
+The current and highest historic mission ordinals are derived compatibility
+projections only. They cannot skip an unavailable mission, infer a chapter
+transition, or replace the exact completed identity set.
+
+Story, bonus, street-race, taxi, wager, and boss results remain separate typed
+families. Completing one family cannot increment another because they shared an
+array slot or mission number.
+
+### Counts and completion
+
+Counts are derived from accepted identity sets and the active catalog revision.
+The runtime does not increment independent mutable totals for cards, gags,
+wasps, vehicles, costumes, missions, races, or rewards and then trust those
+totals as
+authority.
+
+A counted projection records:
+
+- required canonical identity set;
+- accepted completed identity set;
+- excluded, optional, mod-owned, and unavailable identities;
+- catalog and save revisions;
+- exact rational numerator and denominator; and
+- localized display rounding policy.
+
+Chapter and game completion use the current open-sandbox completion contract.
+Historic per-level denominators and one-sheet percentage formulas remain
+conversion evidence only.
+
+Adding, removing, or overriding catalog content cannot reinterpret an accepted
+save silently. Migration maps old ordinals or bit positions to canonical
+identities before projection.
+
+### Tutorial and media state
+
+Tutorial acknowledgement, cinematic or movie eligibility, viewing state, and
+credits access use separate stable identities and explicit predicates.
+
+A single boolean cannot stand for every tutorial or media item. Unlocking a
+movie, owning a ticket, viewing the movie, and receiving any completion credit
+are separate accepted states.
+
+Presentation failure or skipping playback cannot fabricate progression unless
+the product definition explicitly grants credit at another accepted step.
+
+Navigation assistance, radar visibility, camera preferences, input preferences,
+and similar player options belong to the device or platform-user configuration
+profile. Progression may query those settings when projecting guidance, but it
+cannot store them as campaign completion or reinterpret them during save
+migration.
+
+### Vehicle damage and character presentation
+
+Vehicle damage state belongs to the vehicle and save runtimes. Null, undamaged,
+damaged, disabled, and destroyed or husk-like presentation states are typed
+vehicle conditions, not fields owned by campaign progression.
+
+Costume ownership and equipped presentation belong to character/costume state.
+The progression projection may count ownership but cannot change the active
+complete-model presentation, animation, or semantic FBX preparation.
+
+### Save and migration
+
+Each domain contributes one versioned save section with canonical identities and
+accepted transaction revisions. Save composition validates every section before
+commit and publishes one terminal result.
+
+A legacy compact sheet may be imported only through an explicit converter that:
+
+1. validates source schema and bounds;
+1. maps mission, race, card, gag, wasp, vehicle, costume, tutorial, and media
+   ordinals to canonical identities;
+1. maps mission attempts, skips, best results, optional-objective outcomes,
+   purchases, vehicle health, persistent world-object bits, and registered global
+   state bits into their owning domain schemas;
+1. separates active checkpoint state from completed state;
+1. derives chapter and game projections from accepted identities;
+1. records unsupported or ambiguous entries as findings;
+1. validates cross-domain invariants; and
+1. commits one migrated save revision atomically.
+
+The converter cannot guess missing identities from counts, display names, array
+positions, or the highest mission number.
+
+### Queries
+
+Queries return immutable projections with catalog, save, and domain revisions.
+Initial query families include:
+
+- mission and chapter availability;
+- mission attempts, skip state, optional-objective result, and best evidence;
+- story completion;
+- side-activity completion;
+- card-set and collectible completion;
+- vehicle and costume ownership;
+- tutorial and media state;
+- exact chapter and game progress;
+- 100-percent eligibility; and
+- achievement reachability.
+
+A query cannot mutate progression, load presentation, or repair missing data.
+Cached projections invalidate by revision and never become durable authority.
+
+### Character-sheet failure behavior
+
+Projection or migration fails closed on:
+
+- unknown or duplicate canonical identity;
+- count and identity-set disagreement;
+- impossible mission or chapter ordering;
+- active checkpoint for a completed or unavailable mission;
+- cross-domain transaction mismatch;
+- stale catalog or save revision;
+- unmapped legacy ordinal or bit position;
+- ambiguous tutorial, media, vehicle, costume, or collectible record; or
+- a percentage that cannot be reproduced from exact identity sets.
+
+Failure preserves the prior accepted save. It does not clamp counts, advance the
+highest mission, or silently mark content complete.
+
 ## Achievement projection
 
 Achievements are required but pending implementation. The schema records stable
@@ -509,8 +677,9 @@ shortcuts, per-mission no-death records, major world expansions, purchases, and
 cumulative humorous actions. Every base condition remains obtainable through
 free roam, mission replay, side-activity replay, or post-game play.
 
-A mission no-death achievement is tracked per mission and can be retried. Current
-coin achievements observe an accepted balance threshold and do not consume
+A mission no-death achievement is tracked per mission and can be retried.
+Current coin achievements observe an accepted balance threshold and do not
+consume
 currency. Mods declare base-compatible, base-incompatible, or namespaced custom
 achievement policy.
 
@@ -761,8 +930,8 @@ than deleting state.
 - A completed purchase debits and grants atomically.
 - There are exactly seven collector-card sets with seven cards each in the
   verified base catalog.
-- A collected card belongs to exactly one set and one level.
-- One completed card set grants exactly one matching bonus map.
+- A collected card belongs to exactly one set and one chapter.
+- One completed card set grants its declared passive and any retained bonus map.
 - All 49 cards are required for the movie-ticket reward.
 - Cheat sequences contain exactly four logical tokens.
 - Session cheat overlays do not replace persisted ownership.
