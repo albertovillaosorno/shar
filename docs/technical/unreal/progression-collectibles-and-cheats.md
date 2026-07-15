@@ -542,8 +542,8 @@ Mission state distinguishes:
 - replay eligibility;
 - accepted attempt count and declared skip eligibility or skip transaction;
 - optional-objective terminal result and reward-claim revision; and
-- best time, no-death, damage, position, score, or other registered evidence where
-  declared.
+- best time, no-death, damage, position, score, or other registered evidence
+  where declared.
 
 The current and highest historic mission ordinals are derived compatibility
 projections only. They cannot skip an unavailable mission, infer a chapter
@@ -618,8 +618,8 @@ A legacy compact sheet may be imported only through an explicit converter that:
 1. maps mission, race, card, gag, wasp, vehicle, costume, tutorial, and media
    ordinals to canonical identities;
 1. maps mission attempts, skips, best results, optional-objective outcomes,
-   purchases, vehicle health, persistent world-object bits, and registered global
-   state bits into their owning domain schemas;
+   purchases, vehicle health, persistent world-object bits, and registered
+   global state bits into their owning domain schemas;
 1. separates active checkpoint state from completed state;
 1. derives chapter and game projections from accepted identities;
 1. records unsupported or ambiguous entries as findings;

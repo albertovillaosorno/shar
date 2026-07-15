@@ -469,7 +469,8 @@ The initial controlled condition kinds are:
 - `vehicle_damage`, evaluated against the declared vehicle and damage threshold;
 - `player_hit`, evaluated from accepted damage observations for the controlled
   character;
-- `timeout`, evaluated from simulation time under the declared suspension policy;
+- `timeout`, evaluated from simulation time under the declared suspension
+  policy;
 - `player_out_of_vehicle`, tracking the exact exited vehicle, grace period, and
   whether entering another vehicle fails immediately;
 - `follow_distance`, evaluating bounded distance to the declared target and
@@ -486,8 +487,8 @@ The initial controlled condition kinds are:
   payload identity;
 - `not_abducted`, failing only when the controlled participant is abducted;
 - `notoriety_arrest`, following the active mission's declared arrest policy;
-- `keep_payload`, requesting a declared step rollback or failure when the payload
-  is destroyed; and
+- `keep_payload`, requesting a declared step rollback or failure when the
+  payload is destroyed; and
 - `collect_count`, comparing accepted collectible transactions with the declared
   target set and count.
 
@@ -495,8 +496,8 @@ A condition instance is initialized once for one mission-step revision, consumes
 only observations matching its mission, step, participant, subject, world, and
 session revisions, and is finalized exactly once before its bindings are
 released. A stale callback cannot affect a replacement condition. Conditions use
-explicit `pending`, `satisfied`, `violated`, and `invalid` states; a terminal state
-cannot reverse unless the definition declares a recoverable transition.
+explicit `pending`, `satisfied`, `violated`, and `invalid` states; a terminal
+state cannot reverse unless the definition declares a recoverable transition.
 
 Damage failure is driven by authoritative damage or destruction state, not the
 completion of an explosion effect. Race and finish conditions consume route and
@@ -511,8 +512,8 @@ telemetry leaves evaluation unchanged.
 
 ## Mission presentation profile
 
-`USharMissionPresentationProfile` contains mission and offer presentation that is
-declarative but non-authoritative:
+`USharMissionPresentationProfile` contains mission and offer presentation that
+is declarative but non-authoritative:
 
 - conversation camera profile and participant-specific camera presets;
 - optional camera override per dialogue-line identity;
@@ -520,7 +521,8 @@ declarative but non-authoritative:
 - participant stature and framing tags;
 - ordered ambient animation pools per participant and deterministic or declared
   random-selection policy;
-- marker, radar, map, briefing, objective, timer, proximity, and warning profiles;
+- marker, radar, map, briefing, objective, timer, proximity, and warning
+  profiles;
 - conversation relocation, traffic-clearing, vehicle-visibility, and restoration
   policy;
 - completion, failure, cancellation, and special-screen presentation routes; and
