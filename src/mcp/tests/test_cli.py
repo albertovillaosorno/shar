@@ -102,6 +102,19 @@ def test_unknown_command_fails_before_opening_a_session(
     assert not captured.out
 
 
+def test_unknown_command_error_escapes_untrusted_text(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Unknown command evidence remains ASCII and single-line."""
+    exit_code = main(("bad\ninjected-☃",))
+    captured = capsys.readouterr()
+
+    assert exit_code == 2
+    assert "error: unknown command: bad\\ninjected-\\u2603" in captured.err
+    assert "bad\ninjected" not in captured.err
+    assert not captured.out
+
+
 def test_cli_rejects_non_finite_timeout_before_session(
     capsys: pytest.CaptureFixture[str],
 ) -> None:

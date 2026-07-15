@@ -150,7 +150,8 @@ def parse_invocation(arguments: tuple[str, ...]) -> CliInvocation:
     action = action_and_operands[0]
     operands = action_and_operands[1:]
     if action not in _KNOWN_ACTIONS and action not in _HELP_ACTIONS:
-        _fail_usage(f"unknown command: {action}")
+        escaped_action = action.encode("unicode_escape").decode("ascii")
+        _fail_usage(f"unknown command: {escaped_action}")
     return CliInvocation(
         endpoint=endpoint,
         timeout_seconds=timeout_seconds,
