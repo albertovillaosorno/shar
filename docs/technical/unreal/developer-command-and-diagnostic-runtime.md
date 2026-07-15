@@ -80,6 +80,62 @@ Definitions cannot contain source-language callbacks, memory addresses, raw
 function pointers, arbitrary executable text, machine-specific paths, or
 unbounded variadic argument rules.
 
+## Launch configuration and startup overrides
+
+Startup overrides use a separate immutable launch schema. They are parsed before
+application-mode entry and cannot be mutated as process-wide bits after startup.
+Every launch field declares:
+
+- canonical identity and typed value;
+- build and platform availability;
+- default source and precedence;
+- permission and shipping policy;
+- affected subsystem and readiness requirement;
+- redaction and diagnostic behavior; and
+- whether the field is test, presentation, or process configuration.
+
+Initial development families include:
+
+- startup campaign, level, mission, or demonstration identity;
+- front-end, startup-media, tutorial, traffic, pedestrian, and HUD test policy;
+- audio mix, music, dialogue, effects, and haptics diagnostic policy;
+- window, display, language, and platform presentation overrides;
+- profiling, memory, loading, frame-rate, bounds, and zone diagnostics;
+- deterministic input-injection and demonstration automation;
+- save, media, package, and missing-content fault injection; and
+- explicitly authorized developer or designer capabilities.
+
+Campaign, level, and mission overrides resolve through canonical content
+identities and ordinary availability checks. A trailing digit, enum position, or
+unchecked integer cannot select content.
+
+User-facing graphics, audio, input, language, and accessibility preferences
+remain owned by device configuration. A launch override may temporarily replace
+a value for editor or automation evidence, but it does not rewrite saved
+preferences.
+
+Shipping builds use an explicit allowlist limited to platform-required and
+product-approved startup fields. Developer diagnostics, random input, content
+skips, population removal, cheats, profiling, fault injection, and direct
+mission selection are excluded unless an authorized diagnostic package declares
+them.
+
+Unknown, duplicate, malformed, unavailable, or conflicting launch fields fail
+with typed diagnostics. Parsing never copies an unbounded token into a fixed
+buffer or evaluates the token as console text.
+
+Precedence is deterministic:
+
+1. repository and platform defaults;
+1. signed package or deployment profile;
+1. device-local user configuration;
+1. authorized launch profile; and
+1. explicit automation invocation when the build permits it.
+
+Later sources may override only fields whose schema allows that source. Launch
+configuration is recorded in the application diagnostic snapshot and cannot
+silently change after mode entry.
+
 ## Stable lookup
 
 Command identity is normalized during catalog generation. Lookup uses the

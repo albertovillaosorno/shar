@@ -283,8 +283,10 @@ input, mission time, rewards, collisions, and world interactions remain disabled
 A loading callback is accepted only when transition, destination, world, bundle,
 and service revisions still match.
 
-The loading plan never depends on platform heap replacement for correctness.
-Native world, object, asset, and gameplay-feature lifetimes own memory release.
+The loading plan follows the
+[native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md).
+It never depends on platform heap replacement for correctness. Native world,
+object, asset, and gameplay-feature lifetimes own memory release.
 
 ## Gameplay loading
 

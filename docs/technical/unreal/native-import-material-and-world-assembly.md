@@ -17,7 +17,9 @@ This specification defines the planned conversion of normalized FBX, texture,
 WAV, JSON, and MOV evidence into native Unreal assets. It applies only after the
 canonical conversion phases have produced validated engine-independent evidence.
 It does not change the binary FBX writer, package taxonomy, extraction behavior,
-or runtime gameplay contracts.
+or runtime gameplay contracts. Cooked runtime requests, package mounting, and
+source-decoder exclusion follow the
+[native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md).
 
 ## Import transaction
 

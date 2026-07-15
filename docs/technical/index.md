@@ -69,6 +69,7 @@ proprietary external formats.
 - [Mod package overlay runtime](unreal/mod-package-overlay-runtime.md)
 - [Music state and transition runtime](unreal/music-state-and-transition-runtime.md)
 - [Unreal MCP terminal translator](unreal/mcp-terminal-translator.md)
+- [Native asset load request and streaming runtime](unreal/native-asset-load-request-and-streaming-runtime.md)
 - [Native asset planning](unreal/native-asset-planning.md)
 - [Native import, material rebuild, and world assembly](unreal/native-import-material-and-world-assembly.md)
 - [Physical material and impact-response runtime](unreal/physical-material-and-impact-response-runtime.md)
@@ -97,7 +98,7 @@ proprietary external formats.
 
 ## Current coverage
 
-- Technical specifications: 58.
+- Technical specifications: 59.
 - Template records: 1.
 - Review date: 2026-07-14.
 - Status boundary: this catalog describes current repository behavior and does

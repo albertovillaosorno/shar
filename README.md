@@ -710,6 +710,7 @@ Relevant decisions and specifications:
 
 - [Staged mesh import and world assembly](docs/adr/unreal/import-adapters/staged-mesh-import-and-world-assembly.md)
 - [Native import, material rebuild, and world assembly](docs/technical/unreal/native-import-material-and-world-assembly.md)
+- [Native asset load request and streaming runtime](docs/technical/unreal/native-asset-load-request-and-streaming-runtime.md)
 - [Platform-native audio cooking and streaming](docs/adr/audio/platform-native-audio-cooking-and-streaming.md)
 - [Platform audio cooking and streaming](docs/technical/unreal/platform-audio-cooking-and-streaming.md)
 - [Native cinematic package strategy](docs/adr/rmv/unreal-native-cinematic-package.md)
@@ -755,6 +756,7 @@ Relevant decisions:
 - [Runtime parity boundary](docs/adr/unreal/runtime/remake-parity-boundary.md)
 - [Runtime parity tests](docs/adr/unreal/runtime/runtime-parity-test-boundary.md)
 - [Application lifecycle and mode runtime](docs/technical/unreal/application-lifecycle-and-mode-runtime.md)
+- [Native asset load request and streaming runtime](docs/technical/unreal/native-asset-load-request-and-streaming-runtime.md)
 - [Developer command and diagnostic runtime](docs/technical/unreal/developer-command-and-diagnostic-runtime.md)
 - [Device configuration and save-slot runtime](docs/technical/unreal/device-configuration-and-save-slot-runtime.md)
 - [Legacy runtime identity normalization](docs/technical/unreal/legacy-runtime-identity-normalization.md)

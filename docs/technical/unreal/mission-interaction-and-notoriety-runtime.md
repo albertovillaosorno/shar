@@ -312,8 +312,18 @@ reward or consumed save key.
 | :--- | :--- |
 | `GagId` | Canonical gag concept identity. |
 | `ActivationProfileId` | Input, proximity, cue, and animation policy. |
+| `SelectionPolicyId` | Weight, deterministic random pool, and eligibility rules. |
+| `AnimationSequenceId` | Intro, loop, outro, and cycle presentation. |
+| `SoundPresentationId` | Optional positional sound and residency policy. |
+| `DialoguePolicyId` | Optional instruction, acceptance, or rejection exchange. |
+| `MediaPolicyId` | Optional validated cinematic or scrapbook check. |
+| `CameraCueId` | Optional bounded camera-shake or shot request. |
 | `RewardPolicyId` | Optional currency or non-currency reward transaction. |
+| `EffectPolicyId` | Optional sparkle, icon, or collection presentation. |
+| `CollisionPolicyId` | Optional animation-collision participation. |
+| `ResidencyPolicyId` | Actor and sound load, unload, and prefetch ranges. |
 | `ReplayPolicy` | Presentation replay allowed or denied after completion. |
+| `PersistenceKeyId` | Optional level-scoped durable completion identity. |
 | `LocalePresentationId` | Optional localized media or presentation selection. |
 
 A placement owns a level-scoped completion key. Reused world geometry may place
@@ -324,6 +334,25 @@ Activation requires the interaction action, not contact alone. The visible cue,
 prompt, animation, sound, and reward are presentation of one accepted result.
 Reloading, changing missions, crossing a streaming boundary, or reactivating a
 replayable animation cannot grant the reward or completion key twice.
+
+A gag may be action-driven, trigger-driven, or presentation-only, but the
+activation profile declares exactly one authoritative start condition. Retrigger
+and replay rules are separate: a presentation may replay while its durable
+completion and reward remain committed once.
+
+Weighted pools use a deterministic seed derived from level, placement, session,
+and selection revision. Eligibility is evaluated before weighting. Array order,
+load order, and wall-clock time cannot change the selected gag.
+
+Animation intro, loop, and outro phases are bounded typed actions. Dialogue,
+cinematic, camera, sound, collision, sparkle, and collection effects are
+non-authoritative presentation adapters. Failure in one optional adapter cannot
+repeat or roll back an accepted reward.
+
+Residency policy may prefetch or release actor and sound presentation by
+distance, Data Layer, and interaction visibility. Unloading presentation
+releases handles but preserves placement identity, completion, cooldown, and
+selection revision.
 
 A source page, quote stub, unused prototype, or unreachable actor does not create
 a runtime gag or dialogue asset without validated placement evidence.
@@ -340,8 +369,14 @@ a runtime gag or dialogue asset without validated placement evidence.
 | `InteriorPortalId` | Required exit interaction placement. |
 | `InteriorDataLayers` | Runtime layers activated for the interior. |
 | `ExteriorDataLayers` | Runtime layers whose state is restored on exit. |
+| `LoadBundleId` | Required world, interaction, audio, camera, and UI assets. |
 | `SpawnTransformId` | Interior player arrival transform. |
 | `ReturnTransformId` | Exterior player return transform. |
+| `EntrySequenceId` | Orientation, input lease, transition, and arrival policy. |
+| `ExitSequenceId` | Exit cue, restoration, and return-control policy. |
+| `LightingProfileId` | Interior lighting and exposure definition. |
+| `ReflectionProfileId` | Optional mirror or planar-reflection presentation. |
+| `AnimationSetId` | Ambient interior animation definitions. |
 | `RestrictionProfileId` | Movement, combat, and action restrictions. |
 | `NotorietyTransitionId` | Interior-specific pursuit and decay policy. |
 | `InteractionPlacementIds` | Gags, characters, mission anchors, and costume stations. |
@@ -366,12 +401,19 @@ Entry is an atomic world-composition transaction:
 
 1. validate the portal, mission state, and interior definition;
 1. capture the player, selected vehicle, vehicle transform, and vehicle damage;
-1. stop unsafe transient player actions;
+1. acquire the transition input lease and stop unsafe transient actions;
+1. request the interior load bundle through the native loading coordinator;
 1. activate the interior Runtime Data Layers;
-1. verify required interior actors and interactions;
-1. move the player to the interior spawn transform;
+1. verify required actors, interactions, lighting, audio, and camera assets;
+1. move and orient the player at the interior spawn transform;
 1. apply the restriction and notoriety policies; and
 1. hide or deactivate exterior presentation only after the interior is ready.
+
+The load request follows the
+[native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md).
+A wipe, camera cut, sound cue, or animation may present the transition but
+cannot commit it. Input returns only after the target composition and spawn
+postcondition are verified.
 
 Exit performs the inverse transaction and restores the captured vehicle state.
 The selected vehicle remains in the exterior world at its accepted transform and
@@ -380,6 +422,16 @@ damage state unless a mission transition explicitly owns a different outcome.
 If any activation or verification step fails, the transaction restores the
 previous composition and player state. It never leaves both compositions active,
 loses the vehicle snapshot, or commits a partial transition.
+
+Mission restart, checkpoint recovery, and loaded-save placement classify the
+accepted spawn against canonical interior volumes. The runtime may reconstruct
+an already-committed interior session only when the interior, world, level, and
+save revisions match. Duplicate reset observations cannot switch compositions
+twice or reload gag rewards.
+
+Lighting, reflection, and ambient animation are presentation profiles activated
+with the interior scope. Their failure follows the declared required or degraded
+policy and never changes portal, mission, or progression authority.
 
 Indoors, the standard restriction profile disables sprint, jump, aerial attack,
 and successful attacks against non-player characters. The interaction subsystem

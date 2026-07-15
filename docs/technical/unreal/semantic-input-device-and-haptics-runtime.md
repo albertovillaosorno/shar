@@ -278,6 +278,64 @@ Wheel controls map to the same accelerate, brake, steer, handbrake, horn, menu,
 and camera actions used by other devices. Wheel-only presentation or tuning does
 not change vehicle physics authority.
 
+## Device sessions and action dispatch
+
+Every connected physical device is represented by one revisioned device session.
+The session owns the engine device handle, capability snapshot, calibration,
+active profile, local-player assignment, mapping leases, and output handles.
+
+Connection callbacks update only the device session. They do not call gameplay
+objects, mutate global button arrays, or infer player identity from a port
+index. Semantic actions are emitted only after the session validates:
+
+- the device and profile revisions;
+- local-player ownership;
+- active mapping context;
+- physical key and value type;
+- analog normalization and finite range;
+- trigger and modifier policy; and
+- focus or capture requirements.
+
+A disconnect first emits a typed device observation, releases active output,
+cancels held-action state, and then enters the assignment recovery policy. A
+reconnect creates a new observation revision and cannot revive stale callbacks.
+
+Character, vehicle, front-end, camera, and development inputs are action-catalog
+families, not separate arrays of virtual button numbers. Family membership
+controls availability and conflict validation; it never changes action identity.
+
+## Development input injection
+
+Automated input injection is available only to editor, automation, and
+explicitly authorized diagnostic builds. A request identifies:
+
+- automation session and deterministic seed;
+- local player and active device profile;
+- semantic action identity;
+- typed value and trigger transition;
+- duration or release condition;
+- expected world and mapping revisions; and
+- maximum action count and rate.
+
+Injected actions traverse the same semantic validation and gameplay consumption
+path as physical input. They cannot write physical button arrays, bypass focus,
+select arbitrary integer actions, or continue after session cancellation.
+
+Random-action fuzzing uses a bounded catalog subset and records every selected
+action and seed. It is excluded from shipping packages and never becomes a
+command-line gameplay option.
+
+## Wheel output channels
+
+Wheel output is resolved by capability rather than a platform force-type enum.
+The adapter may expose centering spring, damper, constant force, periodic
+vibration, collision impulse, and ordinary rumble channels.
+
+Each update contains finite magnitude, direction, frequency or pulse interval,
+duration, priority, and definition revision. Unsupported channels use a declared
+fallback or return `unavailable`; they are never cast to the nearest hardware
+effect number.
+
 ## Rebinding
 
 A binding transaction includes local profile, action identity, device class,
