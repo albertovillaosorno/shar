@@ -51,7 +51,18 @@ use std::{fmt, io};
 use schoenwald_filesystem::PathKind;
 use schoenwald_filesystem::adapters::driving::local;
 
-use crate::diagnostic::escaped_string;
+/// Returns provider text without raw controls or a second escape layer.
+fn escaped_provider_text(value: &str) -> String {
+    let mut output = String::new();
+    for character in value.chars() {
+        if character.is_control() {
+            output.extend(character.escape_default());
+        } else {
+            output.push(character);
+        }
+    }
+    output
+}
 
 /// Escapes one provider failure while retaining its native error chain.
 #[derive(Debug)]
@@ -83,7 +94,7 @@ pub(super) fn inspect_path_kind(path: &Path) -> io::Result<PathKind> {
         |source| {
             let kind = source.kind();
             let source_text = source.to_string();
-            let message = escaped_string(&source_text);
+            let message = escaped_provider_text(&source_text);
             io::Error::new(
                 kind,
                 EscapedProviderError {
@@ -93,4 +104,38 @@ pub(super) fn inspect_path_kind(path: &Path) -> io::Result<PathKind> {
             )
         },
     )
+}
+
+#[cfg(test)]
+mod tests {
+    #[cfg(windows)]
+    #[test]
+    fn provider_path_keeps_one_native_escape_layer() {
+        use std::ffi::OsString;
+        use std::os::windows::ffi::OsStringExt as _;
+
+        let path = std::path::PathBuf::from(
+            OsString::from_wide(
+                &[
+                    u16::from(b'a'),
+                    0xd800_u16,
+                    u16::from(b'b'),
+                ],
+            ),
+        );
+        let error = super::inspect_path_kind(&path)
+            .expect_err("non-Unicode path unexpectedly inspected");
+
+        assert!(
+            error
+                .to_string()
+                .contains(r"a\u{D800}b")
+        );
+        assert!(
+            !error
+                .to_string()
+                .contains(r"a\\u{D800}b")
+        );
+        assert!(std::error::Error::source(&error).is_some());
+    }
 }
