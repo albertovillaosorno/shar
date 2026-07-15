@@ -223,6 +223,24 @@ def test_toolset_catalog_rejects_duplicate_or_orphan_lines() -> None:
         _ = parse_toolset_catalog("Provides:\n")
 
 
+def test_toolset_catalog_rejects_excessive_registry_entries(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """One bounded response cannot amplify into unbounded schema requests."""
+    monkeypatch.setattr(
+        "mcp.src.domain.catalog._MAX_TOOLSET_SUMMARIES",
+        2,
+        raising=False,
+    )
+    catalog_text = """- FirstToolset.FirstToolset:
+- SecondToolset.SecondToolset:
+- ThirdToolset.ThirdToolset:
+"""
+
+    with pytest.raises(ProtocolError, match="toolset limit"):
+        _ = parse_toolset_catalog(catalog_text)
+
+
 @pytest.mark.parametrize(
     "second_name",
     ["create_asset", "EditorToolset.create_asset"],

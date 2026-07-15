@@ -71,6 +71,7 @@ _TOOLSET_HEADER_PREFIX = f"^- (?P<name>{_TOOLSET_NAME_PATTERN}):"
 _TOOLSET_HEADER = re.compile(
     f"{_TOOLSET_HEADER_PREFIX}{_TOOLSET_DESCRIPTION_PATTERN}"
 )
+_MAX_TOOLSET_SUMMARIES = 10_000
 
 
 class ToolsetSummary(NamedTuple):
@@ -130,6 +131,8 @@ def parse_toolset_catalog(text: str) -> tuple[ToolsetSummary, ...]:
                 fail_protocol(
                     f"toolset catalog line {number}: duplicate {current_name}"
                 )
+            if len(seen) >= _MAX_TOOLSET_SUMMARIES:
+                fail_protocol("toolset catalog exceeded its toolset limit")
             seen.add(current_name)
             first_description = header.group("description")
             description_lines = (
