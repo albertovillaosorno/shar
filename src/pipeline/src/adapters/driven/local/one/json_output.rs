@@ -60,39 +60,35 @@ pub(super) fn validate_generated_text_file(path: &Path) -> PipelineOutcome<()> {
         .map(str::to_ascii_lowercase);
     match extension.as_deref() {
         Some("json") => {
+            let label =
+                schoenwald_filesystem::DiagnosticPath::new(path).to_string();
             let bytes = fs::read(path).map_err(
                 |error| {
                     PipelineError::new(
                         format!(
-                            "failed to read generated JSON {}: {error}",
-                            path.display()
+                            "failed to read generated JSON {label}: {error}"
                         ),
                     )
                 },
             )?;
             validate_document(
-                &bytes,
-                &path
-                    .display()
-                    .to_string(),
+                &bytes, &label,
             )
         }
         Some("jsonl") => {
+            let label =
+                schoenwald_filesystem::DiagnosticPath::new(path).to_string();
             let text = fs::read_to_string(path).map_err(
                 |error| {
                     PipelineError::new(
                         format!(
-                            "failed to read generated JSONL {}: {error}",
-                            path.display()
+                            "failed to read generated JSONL {label}: {error}"
                         ),
                     )
                 },
             )?;
             validate_lines(
-                &text,
-                &path
-                    .display()
-                    .to_string(),
+                &text, &label,
             )
         }
         _ => Ok(()),
@@ -149,6 +145,35 @@ fn validate_lines(
 #[cfg(test)]
 mod tests {
     use super::{validate_document, validate_lines};
+
+    #[cfg(windows)]
+    #[test]
+    fn non_unicode_json_path_error_is_reversible() {
+        use std::ffi::OsString;
+        use std::os::windows::ffi::OsStringExt as _;
+
+        let path = std::path::PathBuf::from(
+            OsString::from_wide(
+                &[
+                    u16::from(b'a'),
+                    0xd800_u16,
+                    u16::from(b'b'),
+                    u16::from(b'.'),
+                    u16::from(b'j'),
+                    u16::from(b's'),
+                    u16::from(b'o'),
+                    u16::from(b'n'),
+                ],
+            ),
+        );
+        let error = super::validate_generated_text_file(&path)
+            .expect_err("missing non-Unicode JSON unexpectedly passed");
+        let rendered = error.to_string();
+        let prefix = r"failed to read generated JSON a\u{D800}b.json: ";
+        let Some(_source_message) = rendered.strip_prefix(prefix) else {
+            panic!("diagnostic lost native path: {rendered:?}");
+        };
+    }
 
     #[test]
     fn rejects_raw_control_characters() {
