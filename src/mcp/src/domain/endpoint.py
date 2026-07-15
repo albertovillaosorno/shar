@@ -90,6 +90,8 @@ class McpEndpoint(NamedTuple):
             fail_endpoint("MCP endpoint must not contain control characters")
         if any(character.isspace() for character in value):
             fail_endpoint("MCP endpoint must not contain whitespace")
+        if "?" in value or "#" in value:
+            fail_endpoint("MCP endpoint must not contain a query or fragment")
         try:
             parsed = urlsplit(value)
         except ValueError as error:
