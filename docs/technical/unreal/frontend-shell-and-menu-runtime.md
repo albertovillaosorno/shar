@@ -8,7 +8,7 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Canonical seven-level campaign and world variants](../../adr/unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
+- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
 - [UI parity boundary](../../adr/unreal/ui/ui-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
@@ -74,6 +74,7 @@ The frontend state is one of:
 - `slot_browser`;
 - `scrapbook`;
 - `unused_content`;
+- `achievements`;
 - `options`;
 - `credits`;
 - `transitioning_to_gameplay`;
@@ -121,11 +122,14 @@ unchanged until the user selects it.
 | `CatalogRevision` | Catalog revision required by the save. |
 | `LastAcceptedTime` | Platform-normalized display timestamp. |
 | `CampaignId` | Canonical campaign identity. |
-| `CurrentLevelId` | Last accepted campaign level. |
+| `CurrentChapterId` | Last accepted narrative chapter boundary. |
+| `GameplayState` | Accepted `mission` or `non_mission` state. |
 | `ResumeMissionId` | Optional valid checkpoint mission. |
-| `ResumeStepId` | Optional valid checkpoint step. |
-| `LevelProgress` | Read-only exact progress projection for the current level. |
+| `ResumeCheckpointId` | Optional accepted mission checkpoint. |
+| `ChapterProgress` | Read-only exact progress projection for the current chapter. |
 | `GameProgress` | Read-only exact overall progress projection. |
+| `WorldClock` | Accepted world-clock observation and revision. |
+| `MapDiscoveryRevision` | Accepted discovered-map state revision. |
 | `PlayableCharacterId` | Character shown in the summary. |
 | `MissingContentIds` | Required content unavailable to the current catalog. |
 | `MigrationState` | None, supported, unsupported, or failed. |
@@ -148,6 +152,7 @@ The primary menu exposes these semantic commands:
 | `load_game` | At least one logical slot summary is inspectable. |
 | `scrapbook` | One accepted progression snapshot is selectable. |
 | `unused_content` | The accepted Unused Content catalog and required generic fallback bundles resolve. |
+| `achievements` | Shows `Achievements pending` until the required achievement service and catalog are implemented. |
 | `options` | Device-local configuration service is available. |
 | `credits` | Credits definition and presentation bundle resolve. |
 | `quit` | Platform policy exposes an application-exit command. |
@@ -158,8 +163,12 @@ A command is visible according to product policy and enabled according to typed
 availability. Disabled commands expose a localized reason. A hidden command is
 never used to conceal a failed dependency that should be diagnosed.
 
-The main menu does not expose network login, cloud synchronization, multiplayer,
-a marketplace, a hosted mod browser, or a general-purpose launcher.
+The base main menu does not expose network login, cloud synchronization,
+matchmaking, multiplayer campaign, a marketplace, a hosted mod browser, or a
+general-purpose launcher. A validated server mod may contribute its own
+namespaced connection surface through a declared UI extension point governed by
+the
+[multiplayer adapter and community-server extension](../modding/multiplayer-adapter-and-community-server-extension.md).
 
 ## Unused Content command
 
@@ -186,6 +195,17 @@ Launching an Unused Content sandbox or preview creates a transient,
 non-progressing session. Closing it returns to the prior frontend state and
 releases all content, input, camera, audio, and mod-overlay leases.
 
+## Achievements command
+
+Achievements are required product scope but remain pending implementation. Until
+the achievement catalog and service are available, the command opens a bounded
+screen that displays `Achievements pending` and no fabricated progress.
+
+The final screen projects base and mod-owned achievements, current progress,
+no-missable reachability, platform mapping, mod compatibility, and replay routes.
+Every base achievement remains obtainable through free roam, mission replay,
+side-activity replay, or post-game play.
+
 ## New-game command
 
 New game requires a target logical slot. When the target contains accepted
@@ -195,15 +215,16 @@ accepted revision that would be replaced.
 After confirmation:
 
 1. request a fresh base-campaign domain snapshot;
-1. validate the initial level, protagonist, tutorial, starting vehicle, and
-   required content;
+1. validate Chapter 1, Homer, terrain family 1, the initial clock, map fog,
+   collectible activation, renewable-source eligibility, and required content;
 1. commit the new accepted save revision through the save service;
-1. request the campaign transition to Level 1; and
-1. keep the main menu active until the destination transaction is ready.
+1. request the connected world in `non_mission` state;
+1. select a valid Homer ambient vignette; and
+1. keep the main menu active until the world transaction is ready.
 
 Failure before the new revision commits leaves the prior slot unchanged. Failure
-after commit but before world activation retains the valid Level 1 resume state
-and returns a typed retry option.
+after commit but before world activation retains a valid Chapter 1 non-mission
+resume state and returns a typed retry option.
 
 ## Resume command
 
@@ -212,8 +233,9 @@ accepted-save time. The selection rule is deterministic when timestamps are
 equal: the lowest canonical slot identity wins.
 
 The command validates the slot again before transition. It resumes an accepted
-checkpoint when one exists; otherwise it activates the saved campaign level's
-free-roam start policy. A stale widget summary cannot bypass this revalidation.
+mission checkpoint when one exists; otherwise it activates the connected world
+in the saved chapter boundary's `non_mission` start policy. A stale widget summary
+cannot bypass this revalidation.
 
 ## Load-game screen
 
@@ -403,4 +425,5 @@ Automated verification includes:
 - idle-event cancellation without progression effects;
 - options rollback after failed engine or platform application;
 - credits skip, interruption, and return-state behavior; and
-- clean transition between frontend and every campaign level.
+- clean transition between frontend, the connected sandbox, every chapter
+  boundary, and mission checkpoint resume.

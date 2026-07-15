@@ -21,6 +21,7 @@ proprietary external formats.
 
 ## FBX conversion
 
+- [Character semantic preparation](fbx/character-semantic-preparation.md)
 - [Animation clip timing](fbx/animation/clip-timing.md)
 - [Animation rig model](fbx/animation/rig-model.md)
 - [First-principles scene writer](fbx/first-principles-scene-writer.md)
@@ -31,6 +32,10 @@ proprietary external formats.
 - [Skin attachment](fbx/skeletons/skin-attachment.md)
 - [Model output verification](fbx/validation/output-verification.md)
 
+## Gameplay
+
+- [Open sandbox campaign design](gameplay/open-sandbox-campaign-design.md)
+
 ## Localization
 
 <!-- markdownlint-disable-next-line MD013 -->
@@ -40,6 +45,8 @@ proprietary external formats.
 
 - [Local mod package model](modding/local-package-model.md)
 - [Mod package validation](modding/package-validation.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Multiplayer adapter and community-server extension](modding/multiplayer-adapter-and-community-server-extension.md)
 
 ## Pipeline
 
@@ -67,7 +74,7 @@ proprietary external formats.
 - [Camera rig, preset, and arbitration runtime](unreal/camera-rig-preset-and-arbitration-runtime.md)
 - [Camera system runtime](unreal/camera-system-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Campaign level composition and progress](unreal/campaign-level-composition-and-progress.md)
+- [Open sandbox chapter runtime](unreal/open-sandbox-chapter-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Developer command and diagnostic runtime](unreal/developer-command-and-diagnostic-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -130,7 +137,7 @@ proprietary external formats.
 
 ## Current coverage
 
-- Technical specifications: 61.
+- Technical specifications: 64.
 - Template records: 1.
 - Review date: 2026-07-15.
 - Status boundary: this catalog describes current repository behavior and does

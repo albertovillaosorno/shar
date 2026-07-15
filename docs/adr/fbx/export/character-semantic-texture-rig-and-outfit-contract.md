@@ -28,36 +28,34 @@ coordinates, texture resolution, atlas placement, material organization, and
 semantic mesh partitions, but it must not subdivide or inflate character
 geometry.
 
-Each prepared character exposes one integrated body-and-clothing representation,
-separate eye geometry where the source evidence supports it, and separate
-animation props where geometry and attachment evidence identify an independently
-activated object. Clothing is not converted into detachable runtime garments.
-Each published outfit is a complete integrated character FBX variant derived
-from one canonical topology, skeleton, skin-weight identity, and versioned
-outfit
-recipe.
+Each prepared character exposes one integrated body, clothing, and presentation
+representation. Clothing, handheld presentation props, and legacy costume pieces
+are not reconstructed as detachable runtime garments or attachments during this
+phase. One outfit or prop-bearing presentation equals one complete character FBX
+model. Homer with a donut is therefore another complete model rather than a base
+Homer plus a dynamically separated donut.
 
-The outfit algorithm is character-generic. Any compatible character may receive
-a validated outfit recipe, while the initial production catalog generates
-multiple outfit variants only for playable characters that have source-supported
-costumes. An outfit may change integrated clothing surfaces, colors, patterns,
-and supported accessories. It must not silently change collision, skeleton
-identity, skin weights, gameplay identity, or animation compatibility.
+The architecture may later accept authored modular garments, cloth simulation,
+chests, equipment, or attachment layers through stable interfaces comparable to
+modern skin systems. That capability is deliberately not inferred from the
+legacy characters. Reconstructing hidden bodies, transferring skin weights,
+solving clipping, and proving bind and animation compatibility add substantial
+risk while the complete-model representation is already faithful and stable.
 
 Texture generation creates a deterministic modern atlas and a semantic-region
 manifest. The minimum non-eye regions are skin, hair, shoes, legs, and torso.
 Evidence may require additional regions such as teeth, mouth, accessories,
-headwear, garment details, or detachable props. Patterns and overlays are moved
-into the atlas region owned by the corresponding body or clothing surface rather
-than retained as unrelated overlapping texture debt.
+headwear, garment details, or integrated presentation props. Patterns and
+overlays are moved into the atlas region owned by the corresponding body or
+clothing surface rather than retained as unrelated overlapping texture debt.
 
-Each eye exposes four independently addressable semantic regions: upper eyelid,
-lower eyelid, eye surface, and pupil or iris. Both eyes therefore expose eight
-eye regions. These are semantic UV and material regions, not a requirement to
-create eight separate mesh objects. The actual blink and eye-animation mechanism
-must be derived from source evidence, including bones, transforms, blend shapes,
-texture animation, or controllers. The pipeline must not invent an animation
-mechanism merely to satisfy the region taxonomy.
+Each eye exposes four independently addressable semantic layers: sclera, pupil,
+upper eyelid, and lower eyelid. Both eyes therefore expose eight semantic layer
+instances, but they need not become eight mesh objects. Layer bytes and semantic
+metadata produce a deterministic eye-profile hash. Characters with identical
+eye evidence may reference one shared profile, while any character can override
+one or more layers through a character-local profile. This phase does not add or
+change gaze, blink, controller, bone, transform, or texture-animation behavior.
 
 Base-color regeneration samples the validated source color associated with each
 covered surface and rasterizes the destination atlas from transformed UV
@@ -80,36 +78,37 @@ a versioned deterministic derivation recipe defines the output and its
 verification. The existence of such maps in comparison artifacts does not by
 itself authorize guessing them for source characters.
 
-Rig cleanup is visual and non-deforming. Bone hierarchy, bind and inverse-bind
-matrices, skin weights, animation local transforms, attachment identities, and
-deformation results remain invariant. Display length, display orientation, and
-non-deforming helper metadata may be normalized so bones are visually connected
-and point toward their semantic children. Support bones may be hidden from the
-default review display but remain present and functional. A visual cleanup that
-changes deformation or animation is a failure.
+Rig cleanup is optional, visual, and non-deforming. Bone hierarchy, bind and
+inverse-bind matrices, skin weights, animation local transforms, attachment
+identities, and deformation results remain invariant. A display change is
+accepted only when the same FBX metadata is interpreted consistently by the
+supported consumers and mathematical deformation remains unchanged. Importer-
+specific sidecars are not canonical. When visual continuity or support-bone
+hiding cannot be represented safely in FBX metadata, cleanup is deferred rather
+than approximated through rest-pose or hierarchy changes.
 
-Geometry that represents an independently activated animation prop, such as a
-handheld food item, is separated from the integrated character mesh only when
-connected-component, material, transform, attachment, animation, or controller
-evidence supports that classification. The prop receives a stable identity,
-attachment transform, owning socket or bone, and explicit clip activation. It is
-not permanently baked into every character animation.
+Geometry that appears with a character presentation, including handheld food or
+costume props, remains integrated in that complete model during this phase. The
+pipeline does not infer runtime sockets, activation clips, detachable props, or
+hidden base bodies from legacy evidence. Future authored equipment systems may
+use explicit attachments, but they do not change the current complete-model
+contract.
 
 ## Consequences
 
-- Complete character catalog export waits until semantic texture, eye, rig, and
-  representative outfit validation pass.
+- Complete character catalog export waits until semantic texture and eye-layer
+  validation passes for Krusty, Lisa, Principal Skinner, and Chief Wiggum.
 - Character polygon and vertex counts remain unchanged during this phase.
 - Mods can address stable semantic regions instead of editing incidental source
   texel islands.
-- Every outfit remains a self-contained FBX while sharing one auditable
-  topology,
-  rig, and skin source of truth.
-- Eye animation and detachable props remain evidence-driven rather than inferred
-  from appearance alone.
+- Every outfit or prop-bearing presentation remains a self-contained complete
+  model; no hidden body or modular garment reconstruction is required.
+- Equivalent eye layers share a deterministic content-hashed profile, while
+  character-local overrides remain possible.
+- Animation behavior is outside this phase and remains unchanged.
 - Validation compares topology counts, bind state, skin weights, sampled
-  deformation, animation timing, UV coverage, atlas hashes, semantic coverage,
-  texture bleed, outfit compatibility, and prop attachment behavior.
+  deformation, UV coverage, atlas and eye-layer hashes, semantic coverage, and
+  texture bleed.
 - Repeated preparation with equivalent evidence produces identical semantic
   manifests, atlas bytes, FBX structure, and capability reports.
 

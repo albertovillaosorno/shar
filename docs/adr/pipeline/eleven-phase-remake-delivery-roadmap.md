@@ -40,12 +40,12 @@ Phase 4 proceeds in the following fixed order:
    authority;
 1. implement deterministic character semantic-region discovery, UV
    transformation, modern atlas generation, and neutral color normalization;
-1. validate separately addressable eyes and preserve the source-supported eye
-   animation mechanism;
+1. expose sclera, pupil, upper-eyelid, and lower-eyelid ownership for both eyes
+   without changing gaze, blink, bone, transform, or texture-animation behavior;
 1. normalize skeleton display without changing hierarchy, bind state, skin
    weights, animation transforms, or deformation;
-1. validate playable-character outfit variants and evidence-backed detachable
-   animation props while keeping clothing integrated in each output FBX;
+1. validate complete outfit and integrated-prop character variants; do not
+   create modular garments, detachable animation props, or runtime attachments;
 1. generate and compare the complete deterministic character catalog;
 1. export standalone props, animated hazards, and wasps;
 1. decompose vehicles into body, wheels, trunk, and other evidence-supported
@@ -61,15 +61,19 @@ preparation belongs to canonical FBX. Phase 6 consumes and validates that
 prepared interchange evidence; it does not become the first owner of those
 separations.
 
-The roadmap excludes a hosted platform, marketplace, social layer, server
-browser, general launcher, connected sandbox, and multiplayer product.
+The roadmap excludes a first-party multiplayer campaign, matchmaking, hosted
+platform, marketplace, social layer, server browser, and general launcher. Phase
+9 still requires stable mod-facing server adapters so community packages can
+implement independently operated multiplayer modes without becoming base-product
+scope.
 
 ## Consequences
 
 - A later phase cannot claim completion while an earlier dependency remains
   unverified or failed.
-- Complete character catalog export cannot begin before representative semantic
-  texture, eye, rig-display, outfit, and detachable-prop conformance passes.
+- Complete character catalog export cannot begin before Krusty, Lisa, Principal
+  Skinner, and Chief Wiggum pass semantic texture, eye, rig-display, outfit, and
+  prop-bearing complete-model conformance.
 - Props and vehicles depend on the shared component and transform contracts.
 - World decomposition remains last within FBX work because it depends on stable
   component identity, geographic placement, and deterministic assembly.

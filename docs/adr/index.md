@@ -64,6 +64,9 @@ repository reference must point to the current owning decision.
 - [Collector cards, coins, rewards, gags, and wasps](gameplay/collectibles/collectibles-rewards-gags-and-wasps.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
+- [Open sandbox chapters and world progression](gameplay/open-sandbox-chapters-and-world-progression.md)
+  — Accepted
+<!-- markdownlint-disable-next-line MD013 -->
 - [Driving, traffic, and vehicle behavior parity](gameplay/vehicles/driving-traffic-and-vehicle-ai.md)
   — Accepted
 
@@ -95,6 +98,9 @@ repository reference must point to the current owning decision.
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
 - [Local mod trust and distribution boundary](modding/mod-safety-scanner-and-distribution.md)
+  — Accepted
+<!-- markdownlint-disable-next-line MD013 -->
+- [Mod-owned multiplayer adapters and community servers](modding/mod-owned-multiplayer-adapters-and-community-servers.md)
   — Accepted
 - [Voice and language mod packages](modding/voice-language-modding-suite.md) —
   Accepted
@@ -129,7 +135,7 @@ repository reference must point to the current owning decision.
 - [Native asset translation without copy-paste](pipeline/unreal/native-asset-translation-and-no-copy-paste.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Faithful seven-level world set](pipeline/unreal/faithful-seven-level-world-set.md)
+- [Faithful seven-chapter open-world scope](pipeline/unreal/faithful-seven-chapter-open-world-scope.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
 - [World assembly from normalized chunks](pipeline/unreal/world-assembly-from-normalized-chunks.md)
@@ -138,7 +144,7 @@ repository reference must point to the current owning decision.
 - [Faithful material normalization](pipeline/unreal/texture-superposition-shader.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Unified geographic world and level-state projection](pipeline/unreal/unified-geographic-world-and-level-state-projection.md)
+- [Unified open world and chapter projection](pipeline/unreal/unified-open-world-and-chapter-projection.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
 - [Unreal manifest and package taxonomy](pipeline/unreal/unreal-manifest-and-package-taxonomy.md)
@@ -181,9 +187,6 @@ repository reference must point to the current owning decision.
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
 - [C++-primary and Blueprint-compatible Unreal project](unreal/project/cpp-primary-blueprint-compatible-project.md)
-  — Accepted
-<!-- markdownlint-disable-next-line MD013 -->
-- [Canonical seven-level campaign and world variants](unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
 - [Data-driven Unreal gameplay content catalog](unreal/runtime/data-driven-gameplay-content-catalog.md)
@@ -237,7 +240,7 @@ repository reference must point to the current owning decision.
 
 ## Current coverage
 
-- Accepted decision records: 67.
+- Accepted decision records: 68.
 - Template records: 1.
 - Review date: 2026-07-14.
 - Status boundary: this catalog contains only accepted repository decisions;

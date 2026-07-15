@@ -7,6 +7,7 @@
 
 <!-- markdownlint-disable-next-line MD013 -->
 - [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
+- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Contextual interaction query and transaction boundary](../../adr/unreal/runtime/contextual-interaction-query-and-transaction.md)
 - [Contextual interaction runtime](contextual-interaction-runtime.md)
@@ -44,10 +45,26 @@ Four services own the runtime state described here:
 
 <!-- markdownlint-enable MD013 -->
 
-The progression service owns durable mission, gag, reward, and level completion.
-The save service persists only accepted checkpoints and completed transactions.
-World actors publish typed observations and execute presentation. They never own
-a progression key or authoritative state transition.
+The progression service owns durable mission, gag, reward, and chapter
+completion. The save service persists only accepted checkpoints and completed
+transactions. World actors publish typed observations and execute presentation.
+They never own a progression key or authoritative state transition.
+
+## Sandbox-state integration
+
+The mission subsystem may acquire the one gameplay-state lease that changes the
+world from `non_mission` to `mission`. Mission-specific actors, vehicles,
+objective pickups, hazards, routes, Data Layers, dialogue, and scripted changes
+are created only after that lease commits.
+
+Completing, abandoning, or failing beyond recovery releases the mission lease and
+returns to `non_mission`. Only accepted persistent transactions survive release.
+The runtime rejects a second concurrent mission, a mission actor projected before
+acceptance, or a hidden campaign/test state used as a substitute.
+
+A story mission may force character, costume, vehicle, start transform, route,
+time window, weather presentation, or interaction policy. Those constraints end
+with the mission unless a separate persistent unlock commits.
 
 ## Mission session state
 
@@ -263,7 +280,8 @@ escape condition. A destroyed pursuer follows the objective's declared recovery
 or success policy; destruction alone cannot silently complete the objective.
 
 A compound destroy-then-avoid mission records destruction and escape as separate
-steps so the level transition occurs only after both have been accepted.
+steps so mission completion and any chapter transition occur only after both have
+been accepted.
 
 ## Race objective
 
@@ -386,6 +404,26 @@ A source page, quote stub, unused prototype, or unreachable actor does not
 create
 a runtime gag or dialogue asset without validated placement evidence.
 
+## Structure and interior capability
+
+`USharStructureDefinition` is separate from terrain and contains structure,
+exterior-component, district, chapter, discovery, connector, door, window,
+streaming, and persistence identities.
+
+Every structure declares one interior capability:
+
+- `none`;
+- `linked`;
+- `streamed`;
+- `mission_only`; or
+- `future_slot`.
+
+A decorative window never implies an interior. Bart may break a window only when
+the structure declares an available interior, a breakable-entry policy,
+navigation support, mission permission, and a safe transition. The runtime
+rejects window entry that bypasses a chapter, terrain, boss, shortcut, or mission
+gate.
+
 ## Interior definition
 
 `USharInteriorDefinition` contains:
@@ -395,7 +433,9 @@ a runtime gag or dialogue asset without validated placement evidence.
 | Field | Contract |
 | :--- | :--- |
 | `InteriorId` | Canonical location identity. |
-| `LevelIds` | Level variants in which the interior is available. |
+| `StructureId` | Owning structure identity. |
+| `ChapterPredicate` | Chapter and persistent-unlock availability. |
+| `GameplayStatePredicate` | Mission or non-mission availability. |
 | `ExteriorPortalId` | Required entry interaction placement. |
 | `InteriorPortalId` | Required exit interaction placement. |
 | `InteriorDataLayers` | Runtime layers activated for the interior. |
@@ -425,8 +465,9 @@ The canonical interior set is:
 - Frink Observatory; and
 - Bart's Bedroom.
 
-Each interior supports at least one level-scoped gag and at least one declared
-mission use. Costume and character interactions are optional and explicit.
+Each interior supports at least one chapter-scoped or persistent gag and at least
+one declared mission or sandbox use. Costume and character interactions are
+optional and explicit.
 
 ## Interior transition transaction
 

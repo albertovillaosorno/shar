@@ -6,7 +6,7 @@
 ## Governing decisions
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Canonical seven-level campaign and world variants](../../../adr/unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
+- [Open sandbox chapters and world progression](../../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Common UI front end and progress projection](../../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -94,7 +94,7 @@ target. Preset tests prove resolved quality settings and visual invariants.
   hit-and-collect, destroy, avoid, race, retry, recovery, and exactly-once
   completion with malformed and stale observations.
 - Interaction suites cover Smart Object reservation, cancellation, gag replay,
-  interior transition rollback, vehicle-state preservation, and level-scoped
+  interior transition rollback, vehicle-state preservation, and chapter-scoped
   progression.
 - Notoriety suites cover fixed-point deltas, warning, pursuit waves, objective
   exemptions, decay, resolution, arrest, clamped fines, and interior policy.
@@ -102,9 +102,10 @@ target. Preset tests prove resolved quality settings and visual invariants.
   missing streamed actors, duplicate identities, and deterministic
   safe-transform
   recovery.
-- Campaign suites cover the seven-level order, one persistent geographic world,
-  Runtime Data Layer membership, fixed campaign time-of-day profiles, test-state
-  exclusion, story transitions, progress denominators, and rational percentage
+- Campaign suites cover the seven-chapter order, one persistent geographic
+  world, exclusive mission and non-mission state, cumulative unlocks, the
+  24-minute world clock, absence of any test level, story transitions, character
+  eligibility, checkpoint saves, map discovery, achievements, and progress
   projections.
 - Frontend suites cover Common UI stacks, focus, semantic input, logical slots,
   resume selection, new-game replacement, scrapbook parity, options rollback,

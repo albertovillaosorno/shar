@@ -14,13 +14,14 @@
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Driving, traffic, and vehicle behavior parity](../../adr/gameplay/vehicles/driving-traffic-and-vehicle-ai.md)
+- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
 
 ## Purpose
 
-This specification defines vehicle access classes, the complete base-campaign
-ownership roster, level traffic membership, secret placements, completion
-overrides, driver presentation, inaccessible development content, validation,
-and verification.
+This specification defines vehicle access classes, the faithful 42-vehicle
+source roster, the purchasable taxi extension, chapter-group traffic membership,
+secret placements, completion overrides, driver presentation, Unused Content,
+validation, and verification for the connected sandbox.
 
 It complements the transaction rules in
 <!-- markdownlint-disable-next-line MD013 -->
@@ -36,16 +37,16 @@ Every vehicle definition declares one or more explicit access rows.
 
 | Access class | Meaning |
 | :--- | :--- |
-| `starting` | Persistent ownership is granted when the level becomes available. |
+| `starting` | Persistent ownership is granted when the chapter acquisition group becomes available. |
 | `bonus_reward` | One accepted bonus-mission reward grants ownership. |
-| `street_race_reward` | Completing the level street-race set grants ownership. |
+| `street_race_reward` | Completing the chapter's historic street-race set grants ownership. |
 | `purchase` | One accepted offer transaction grants ownership. |
-| `traffic` | The level may spawn disposable drivable traffic instances. |
-| `secret_world` | One authored world placement grants temporary level access. |
+| `traffic` | An available world population profile may spawn disposable drivable traffic instances. |
+| `secret_world` | One authored world placement grants temporary sandbox access. |
 | `mission_forced` | A mission supplies the vehicle without granting ownership. |
 | `mission_required` | Mission activation requires existing ownership. |
 | `completion_override` | Full completion plus the declared cheat permits retrieval. |
-| `development_only` | Content remains unavailable to normal shipping gameplay. |
+| `unused_content` | Verified unused content ships through the dedicated Unused Content surface with generic fallbacks and mod-replaceable semantic slots. |
 
 <!-- markdownlint-enable MD013 -->
 
@@ -142,11 +143,25 @@ three purchases.
 | `hearse` | Purchase from Gil for 750 coins. |
 | `hover_bike` | Purchase from Gil for 1,000 coins. |
 
+## Open-sandbox taxi extension
+
+The faithful source roster contains 42 persistent vehicles. The connected sandbox
+adds `taxi` as one deliberate purchasable extension, producing 43 persistent
+base-game vehicle identities.
+
+Taxi traffic instances remain disposable and never grant ownership. One accepted
+taxi offer grants permanent ownership, retrieval access, and eligibility for the
+taxi side-mission catalog. Unique taxi milestones contribute to the taxi
+achievement; repeatable jobs produce bounded income and never gate story
+progression.
+
 ## Ownership invariants
 
-- The roster contains exactly six rows for each of seven levels.
+- The faithful source roster contains exactly six rows for each of seven historic
+  acquisition groups, plus the explicit taxi extension.
+- The base sandbox therefore contains 43 persistent vehicle identities.
 - Every row has exactly one ordinary acquisition class.
-- Starting ownership is level-gated and requires no currency transaction.
+- Starting ownership is chapter-gated and requires no currency transaction.
 - Bonus and street-race rewards commit exactly once.
 - Purchases use the declared offer, price, seller, and economy revision.
 - A mission placement may reference an owned vehicle without replaying its
@@ -174,10 +189,10 @@ Aliases include `atv` for `quad_bike`, `knightboat` for `knight_boat`, and
 `monster_truck` plus `obliteration_big_wheel_truck` for
 `obliteratatron_big_wheel_truck`.
 
-Secret access is level-scoped and temporary. Leaving the vehicle, replacing the
-world, restarting the level, or loading a save does not create ordinary
-ownership. The completion override may expose an eligible secret definition
-through retrieval without changing that rule.
+Secret access is placement-scoped and temporary. Leaving the vehicle, replacing
+the world session, restarting a mission, or loading a save does not create
+ordinary ownership. The completion override may expose an eligible secret
+definition through retrieval without changing that rule.
 
 ## Traffic rosters
 

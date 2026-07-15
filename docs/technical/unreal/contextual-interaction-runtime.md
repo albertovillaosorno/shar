@@ -211,7 +211,8 @@ returns `already_collected` without replaying rewards.
 
 Repair pickups target the vehicle the player currently occupies. When the player
 is on foot, they target the last valid player-controlled vehicle retained by the
-vehicle-context service for the current level. A successful repair restores the
+vehicle-context service for the current chapter and sandbox state. A successful
+repair restores the
 complete driveable state and all visible damage channels supported by the
 vehicle
 runtime. The base respawn interval is approximately one minute and is authored

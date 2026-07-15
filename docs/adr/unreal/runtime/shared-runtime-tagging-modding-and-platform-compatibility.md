@@ -26,6 +26,12 @@ requirements explicitly. A package must not infer compatibility from a physical
 asset location, filename, graphics preset, processor architecture, or operating
 system path.
 
+A community server mod uses the same semantic identities through a stable,
+transport-neutral server-adapter contract. The base product does not supply a
+multiplayer campaign, matchmaking, server browser, hosted network, moderation,
+or server persistence. Those capabilities belong to the community package and
+operator.
+
 ## Consequences
 
 - `Low`, `Medium`, `High`, `Epic`, and `Ultra` share stable semantic tags and
@@ -42,6 +48,9 @@ system path.
   decision; physical storage and account boundaries remain platform-specific.
 - Platform-specific capabilities fail explicitly rather than silently changing
   package meaning.
+- Community server packages declare protocol, authority, persistence,
+  package-set, and platform capabilities explicitly.
+- Base campaign saves and achievements remain separate from server-owned state.
 
 ## Rejected alternatives
 
@@ -50,3 +59,6 @@ system path.
 - Defining incompatible mod contracts for desktop, mobile, x64, or ARM64 builds.
 - Allowing graphics presets or device profiles to change mission, progression,
   save, physics, or simulation semantics.
+- Shipping an official multiplayer campaign or hosted server network as base
+  product scope.
+- Letting a server mod reinterpret local campaign saves or base achievements.

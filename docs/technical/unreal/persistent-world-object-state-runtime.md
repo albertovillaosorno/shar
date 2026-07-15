@@ -6,7 +6,7 @@
 ## Governing decisions
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Canonical seven-level campaign and world variants](../../adr/unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
+- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -201,10 +201,12 @@ actor
 may update the repository but cannot mutate a replacement actor without matching
 world, placement, and binding revisions.
 
-## Level transitions and restart
+## Chapter unlocks, gameplay-state transitions, and restart
 
-A level transition reads persistent state after the destination catalog and save
-revision are validated but before gameplay interactions are enabled.
+A chapter unlock or transition between `mission` and `non_mission` reads
+persistent state after the catalog and save revisions are validated but before
+new interactions are enabled. Chapter progression adds state cumulatively and
+cannot unload or reset earlier portable placements.
 
 Mission restart follows each definition's reset policy:
 
@@ -213,8 +215,8 @@ Mission restart follows each definition's reset policy:
 - `mission` resets through the mission restart transaction; or
 - `authored` applies a declared predicate and transition.
 
-A level reload cannot reset portable world state merely because actors are
-recreated.
+A world reload, chapter unlock, or mission-state transition cannot reset portable
+world state merely because actors are recreated.
 
 ## Save representation
 
@@ -253,7 +255,11 @@ Local split-screen players observe the same world placement state.
 
 A local player's interaction identity may be recorded as cause evidence, but it
 does not create a separate copy of a shared physical object's persistent state.
-Networked authority is absent unless separately authorized.
+The base campaign remains local and single-player. A validated community server
+mod may replace the session authority through the declared server-adapter port,
+but it must namespace server persistence and cannot reinterpret a base save. The
+adapter contract follows the
+[multiplayer adapter and community-server extension](../modding/multiplayer-adapter-and-community-server-extension.md).
 
 ## Failure behavior
 
@@ -281,7 +287,8 @@ Automated tests cover:
 - destruction, removal, consumption, and variant transitions;
 - duplicate and competing mutation requests;
 - reward and state atomicity;
-- stream out, stream in, level reload, restart, save, and load;
+- stream out, stream in, world reload, chapter unlock, mission restart, save, and
+  load;
 - default-state omission and bitset migration;
 - missing optional mod content;
 - late asynchronous results after actor replacement; and

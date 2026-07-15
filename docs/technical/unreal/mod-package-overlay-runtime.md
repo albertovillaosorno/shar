@@ -149,6 +149,27 @@ platform, accessibility, memory, and teardown checks as base content. Partial
 replacement is allowed only when every unreplaced field still resolves to a
 valid base fallback.
 
+## Achievement compatibility and mod achievements
+
+Every admitted projection declares an achievement policy:
+
+- `base_compatible`, preserving eligibility for declared base families;
+- `base_incompatible`, suspending only the affected base families while active;
+  or
+- `custom_achievement_provider`, registering namespaced package-owned
+  achievements.
+
+The declaration includes affected base identities, semantic changes, package and
+revision identity, migration, removal, replay, platform projection, and saved
+progress behavior. A mod cannot claim compatibility after reducing an exact base
+predicate or granting progress through replacement content that bypasses the
+original requirement.
+
+Mod achievements use stable namespaced identities and remain separate from base
+and platform mappings. Removing a mod cannot fabricate base progress or reinterpret
+an accepted mod counter. Base no-missable reachability is revalidated for every
+active base-compatible overlay set.
+
 ## Target-cooked asset overlays
 
 A cooked asset overlay contains assets built for one exact supported target and
@@ -174,6 +195,28 @@ utilities, or access undeclared native capabilities.
 
 The mounted content root is generated from package identity and revision. It is
 not a public target and cannot change package priority.
+
+## Community server projections
+
+A validated package may declare a `server_adapter` projection. The projection
+registers schemas and extension points for:
+
+- protocol and server-mode identity;
+- compatible package-set and catalog revisions;
+- player authentication delegated to the package;
+- join, leave, reconnect, and session lifecycle;
+- authority and ownership policy;
+- bounded world and entity snapshots;
+- transport-neutral commands, observations, and presentation cues;
+- server-owned persistence and migration;
+- namespaced achievements and moderation findings; and
+- teardown, disconnect, and fallback to a safe local state.
+
+The base runtime supplies the adapter boundary only. It does not supply
+transport, matchmaking, discovery, hosting, moderation, anti-cheat, remote
+accounts, uptime, or server support. Server projections cannot write server
+state into a base save, award base achievements without an accepted
+compatibility policy, or claim base campaign authority.
 
 ## Native extensions
 

@@ -26,6 +26,7 @@ The target product is defined to include:
 - validated native desktop and Android packages for the supported architecture
   matrix;
 - local deterministic drop-in mods;
+- a stable multiplayer-adapter boundary for mod-owned community-server modes;
 - user-facing AI skills for lawful mod creation; and
 - native Unreal control for AI agents through the official MCP server.
 
@@ -33,9 +34,10 @@ These are acceptance targets, not current availability claims. The roadmap below
 identifies completed, in-progress, and planned phases; native platform packaging
 remains planned.
 
-The project excludes multiplayer, a connected sandbox, a server browser, a
-hosted mod service, a marketplace, a social layer, and a general-purpose
-launcher or editor.
+The base product excludes a first-party multiplayer campaign, matchmaking,
+server browser, hosted service, marketplace, social layer, and general-purpose
+launcher or editor. It does expose stable mod-facing server adapters so community
+packages may implement and operate their own multiplayer modes and servers.
 
 ## Legal and publication boundary
 
@@ -198,10 +200,143 @@ The primary deliverables are:
 1. one command that rebuilds and packages the selected supported target; and
 1. end-to-end verification, optimization, and closure of the primary roadmap.
 
-The project does not include a separate modern gameplay mode, a connected
-sandbox, multiplayer, a server browser, a hosted mod service, a social layer, a
-general-purpose launcher, or a Roblox-like editor. Those products are outside
-this repository's scope.
+The project does not ship a first-party multiplayer campaign, matchmaking,
+server browser, hosted service, social layer, general-purpose launcher, or
+Roblox-like editor. It does provide stable mod-facing networking and server
+adapter contracts. Community packages may implement independently operated
+servers and multiplayer modes, but they own transport, rules, discovery,
+moderation, security, persistence, compatibility, and support. The base product
+uses one connected single-player sandbox around the faithful original mission
+sequences.
+
+### Open-sandbox product model
+
+The game has exactly two player-facing gameplay states:
+
+- **non-mission**, the persistent open sandbox; and
+- **mission**, one accepted story mission, side activity, race, taxi job, or boss
+  encounter.
+
+There is no Level 11 and no test level. Development uses ordinary isolated test
+fixtures that never appear in the campaign, saves, map, achievements, or content
+catalog.
+
+The story is organized into seven narrative **chapters**, not seven isolated
+player-facing levels. Historic level names remain source aliases only. Starting a
+new game places Homer directly in the world in non-mission state, with a contextual
+ambient vignette such as eating a donut, performing a gag, idling at home, or
+appearing at Moe's Tavern.
+
+The persistent map is connected with original or appropriately licensed bridges,
+roads, tunnels, paths, and transitions. Chapter 1 initially permits ordinary play
+only in terrain family 1. Later terrain families unlock through discovery and
+chapter progression. Undiscovered map regions remain covered by attractive cloud
+fog, while available mission markers remain visible without revealing hidden
+roads or landmarks.
+
+Mission-specific actors, vehicles, pickups, hazards, routes, and scripted changes
+exist only while their mission is active. The game supports saving during missions
+through deterministic checkpoints and resumes without duplicating rewards,
+collectibles, currency, boss completion, or achievement progress.
+
+Chapter collectible sets activate cumulatively. Chapter 1 cards, wasps, gags, and
+other persistent placements are available at new game. Completing each chapter's
+final story mission activates the next chapter's sets, and earlier uncollected
+content remains available. A player who completes the story first may therefore
+find all seven chapter sets active together.
+
+The menu shows collectible, costume, character, and achievement categories from
+the beginning. Purchased costumes are permanent and may be equipped from the menu.
+Unlocked eligible characters may be selected outside missions. Bart unlocks after
+Homer's final Chapter 1 mission, becomes unavailable after Chapter 2 until Chapter
+4 completes, and Lisa's missions force Lisa.
+
+Chapter transitions use chapter language, for example:
+
+> Congratulations. You completed the final mission of Chapter 1.
+>
+> Characters unlocked: Bart.
+
+The world runs a mandatory 24-real-minute sunrise, day, sunset, and night cycle.
+One real minute equals one in-game hour. Missions may require a time window, and
+the player may wait or sleep at declared homes, motels, or rest locations. Paid
+sleep, permanent costumes, vehicles, taxi participation, and instant vehicle
+repair provide fair recurring coin sinks.
+
+A bounded set of coin sources regenerates when a world session begins. One-time
+mission, collectible, chapter, boss, purchase, achievement, and discovery rewards
+never regenerate. Economy curves must grow gradually without excessive grinding
+and always preserve a recoverable path to story progress.
+
+There are 49 collector cards: seven sets of seven. Completing a whole chapter set
+unlocks one balanced passive ability. The base game therefore balances seven
+meaningful passives rather than 49 individual abilities.
+
+The game adds simple melee combat, sprint stamina, footprints, dirt, wetness, and
+other scalable world details. Bart gains zip-line traversal and may break a window
+only when the owning structure declares a real available interior and valid entry
+route. Every structure records whether its interior capability is none, linked,
+streamed, mission-only, or a future extension slot; structures and interiors
+remain separate from terrain.
+
+Burns' mansion becomes permanently accessible through a later traversal route
+originating inside the nuclear plant. The route remains locked until it cannot
+create unfair shortcuts for earlier missions that use terrain family 1.
+
+Chapter 7 keeps the world clock but applies permanent irradiated cloud cover. Day
+is humid, overcast, slightly brighter, and mildly hazy. Night is darker and more
+threatening, with readable distance, monsters, and sustained environmental horror
+rather than cheap jump scares. Radiation damages a visible health bar, zombies
+may attack, and a nearby vehicle explosion may cause immediate death and mission
+checkpoint restart. The Devil Homer costume suppresses ordinary zombie hostility
+without granting radiation or explosion immunity.
+
+The campaign reserves three boss slots, but only two are currently confirmed: a
+mechanical dinosaur encounter associated with the stadium near the end of Chapter
+2, and an Apu-associated Tyrannosaurus-skeleton encounter associated with the
+museum. Their models are original, generic, and mod-replaceable. Completing the
+encounters permanently opens the stadium and museum. The third boss remains
+pending rather than being invented.
+
+The purchasable taxi unlocks repeatable taxi side missions as a nod to classic
+open-world taxi gameplay and driving-focused Simpsons games. Completing every
+unique base taxi milestone earns an achievement; taxi work never gates the story.
+
+Achievements are required but still **pending implementation**. The base set is
+intentionally approachable and contains no missable achievements. Planned
+categories include chapters, cards, wasps, costumes, current coin totals, side
+missions, taxi milestones, 100 percent completion, every authored shortcut,
+per-mission no-death records, major world expansions, purchases, and humorous
+cumulative actions such as kicking 100 pedestrians.
+
+The intended completion tone is summarized by the joke:
+
+> The platinum trophy for Simpsons Hit & Run gave me Simpsonphobia.
+
+Mods declare whether they preserve base-achievement eligibility, suspend affected
+base progress, or provide namespaced mod-owned achievements. Mods may also replace
+semantic gameplay and presentation slots, including generic boss, connector, and
+Unused Content assets, without changing canonical identity or save meaning.
+
+Known bugs that permit impossible or near-instant campaign completion are fixed
+even when historical speedrun routes use them. Legitimate speedrunning remains
+supported through movement, route planning, vehicle control, mission execution,
+and intentional mechanics rather than corrupted state or computation defects.
+
+The visual baseline uses original cel-shaded materials and outlines inspired by
+the dimensional cartoon presentation of *The Simpsons Game*. No assets or
+proprietary shaders are copied. The style remains compatible with the day-night
+cycle, Chapter 7 horror, accessibility, Low through Ultra presets, and modded
+materials.
+
+Authoritative design and implementation records:
+
+- [Open sandbox chapters and world progression](docs/adr/gameplay/open-sandbox-chapters-and-world-progression.md)
+- [Open sandbox campaign design](docs/technical/gameplay/open-sandbox-campaign-design.md)
+- [Open sandbox chapter runtime](docs/technical/unreal/open-sandbox-chapter-runtime.md)
+- [Unified open world and chapter projection](docs/adr/pipeline/unreal/unified-open-world-and-chapter-projection.md)
+- [Mod-owned multiplayer adapters and community servers](docs/adr/modding/mod-owned-multiplayer-adapters-and-community-servers.md)
+- [Multiplayer adapter and community-server extension](docs/technical/modding/multiplayer-adapter-and-community-server-extension.md)
 
 ### Detailed legal and project boundary
 
@@ -451,14 +586,17 @@ Maya scripts are exploratory inspection aids only; importing an artifact into
 those applications is not generation, repair, validation, or acceptance
 evidence. The complete character package lane remains open until catalog
 production and the conformance criteria below are satisfied.
+The detailed preparation boundary is defined by the
+[character semantic preparation specification](docs/technical/fbx/character-semantic-preparation.md).
 
 Bulk character catalog generation is paused until character semantic texture,
-eye, rig-display, outfit, and detachable-prop preparation passes representative
-conformance tests. Transport success alone is not sufficient. The final local
-catalog remains `fbx-assets/characters/`: one self-contained FBX per canonical
-character or supported playable outfit variant, stored directly in that
-directory, plus one deterministic manifest. The directory remains ignored by
-Git.
+eye, and optional non-deforming rig-display preparation passes representative
+conformance tests. Animation changes are outside this phase. The representative
+set is Krusty, Lisa, Principal Skinner, and Chief Wiggum, resolved from their
+canonical base-model packages. Transport success alone is not sufficient. The
+final local catalog remains `fbx-assets/characters/`: one self-contained FBX per
+canonical character presentation, stored directly in that directory, plus one
+deterministic manifest. The directory remains ignored by Git.
 
 Phase 4 proceeds sequentially:
 
@@ -469,14 +607,15 @@ Phase 4 proceeds sequentially:
 1. preserve source polygon and vertex counts while normalizing neutral base color
    and moving authored patterns into the atlas region owned by their clothing or
    body surface;
-1. expose upper lid, lower lid, eye surface, and pupil or iris regions for both
-   eyes, while preserving the source-supported blink and eye-animation mechanism;
-1. correct skeleton display orientation and continuity without changing bone
-   hierarchy, bind state, skin weights, animation transforms, or deformation,
-   and hide support bones only from the default visual review;
-1. validate a character-generic outfit recipe with integrated complete FBX
-   variants for playable characters and evidence-backed detachable animation
-   props such as handheld objects;
+1. expose sclera, pupil, upper-lid, and lower-lid ownership for both eyes while
+   leaving animation behavior unchanged; identical eye layers share a
+   content-hashed profile, and any character may declare a local override;
+1. attempt skeleton display cleanup only through cross-consumer, non-deforming
+   metadata; defer it when a representation change would alter bind state,
+   transforms, skinning, animation, or importer behavior;
+1. publish every outfit or prop-bearing presentation as a complete model; the
+   current pipeline does not separate legacy clothing, handheld props, or Homer
+   with a donut into runtime garment or attachment layers;
 1. generate the complete character catalog twice and compare paths, structure,
    sizes, hashes, topology, texture manifests, rigs, skinning, and animation;
 1. export standalone props, animated hazards, wasps, cameras, and supported
@@ -488,24 +627,29 @@ Phase 4 proceeds sequentially:
 1. reconstruct and verify the one complete geographic map from those components
    before native Unreal import.
 
-The runtime uses that one map for all seven campaign levels. Each campaign level
-selects a fixed time-of-day profile and its own gameplay state over the shared
-geography. A non-campaign `level_11_test` state is reserved for dynamic day-night,
-lighting, streaming, mission, and placement experiments without changing
-campaign order or parity completion.
+The runtime uses that one connected map for all seven narrative chapters. Chapter
+progression adds cumulative terrain, collectible, structure, mission, population,
+weather, and presentation unlocks over persistent geography. The mandatory
+24-minute sunrise, day, sunset, and night cycle runs in the base game; no Level 11
+or campaign-visible test state exists.
 
 Character modernization in this phase does **not** increase polygon or vertex
 counts. It changes only deterministic UV placement, texture resolution, semantic
-material organization, evidence-supported mesh partitions, rig display metadata,
-and attachment organization. Clothing remains integrated in every published
-character FBX. Multiple outfits share one topology, skeleton, skin, and recipe
-source of truth; they are not detachable runtime garment layers.
+material organization, evidence-supported mesh partitions, and proven
+non-deforming review metadata. Clothing and presentation props remain integrated
+in every published character FBX. One outfit equals one complete model. Future
+modular garment, cloth, chest, and attachment systems may consume compatible
+models, but they are deliberately not reconstructed from the legacy characters
+because clipping, skin transfer, bind compatibility, and animation coupling add
+risk without improving the current canonical assets.
 
 The minimum non-eye semantic texture regions are skin, hair, shoes, legs, and
 torso. Evidence may add teeth, mouth, headwear, accessories, garment details, or
-props. Each eye has four independently addressable semantic regions: upper lid,
-lower lid, eye surface, and pupil or iris. These regions do not require eight
-separate mesh objects, and the pipeline must not guess how blinking works.
+integrated presentation props. Each eye has four independently addressable
+semantic layers: sclera, pupil, upper lid, and lower lid. Layer bytes and semantic
+metadata produce a content hash. Equivalent eyes may reference one shared profile,
+while a character-specific profile can override any layer without changing the
+other characters. This phase does not add gaze or blink animation behavior.
 
 Base-color atlases use neutral, linear-light color normalization and declared
 sRGB PNG encoding so runtime lighting and time of day can change appearance
@@ -524,12 +668,15 @@ replace repository-owned mathematical tests.
 
 Remaining work:
 
-- [ ] Implement deterministic character semantic-region and atlas generation.
-- [ ] Prove unchanged character topology and deformation after UV and rig-display
-  preparation.
-- [ ] Validate separately addressable eye regions and source-supported eye
-  animation.
-- [ ] Validate playable outfit recipes and detachable animation props.
+- [x] Implement deterministic character semantic-region and atlas generation.
+- [ ] Prove the same preparation contract on Krusty, Lisa, Principal Skinner,
+  and Chief Wiggum without character-specific algorithm branches.
+- [ ] Publish separately addressable sclera, pupil, upper-lid, and lower-lid
+  layers with shared-by-hash profiles and character-local overrides.
+- [ ] Determine whether cross-consumer skeleton display cleanup is possible
+  without changing rig behavior; otherwise record it as deferred.
+- [x] Define one outfit or prop-bearing presentation as one complete model and
+  defer modular legacy clothing reconstruction.
 - [ ] Generate the complete deterministic character catalog only after those
   gates pass.
 - [ ] Complete prop, wasp, and animated-object FBX coverage.
@@ -1003,7 +1150,7 @@ Final checklist:
 
 - [ ] Complete a full start-to-finish playthrough without known
   progression-blocking defects.
-- [ ] Verify every mission, level transition, vehicle, collectible, cinematic,
+- [ ] Verify every mission, chapter transition, vehicle, collectible, cinematic,
   save point, localization path, and ending.
 - [ ] Profile CPU, GPU, memory, storage, shader compilation, loading, streaming,
   and package-generation costs.

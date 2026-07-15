@@ -6,7 +6,7 @@
 ## Governing decisions
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Canonical seven-level campaign and world variants](../../adr/unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
+- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -123,8 +123,9 @@ The accepted balance is the previous accepted balance plus the ordered
 transaction batch. Validation occurs before any presentation pickup, sound, or
 counter animation is shown as successful.
 
-Coins transfer unchanged across level transitions. A level reload does not
-create a new balance and cannot replay accepted one-time source transactions.
+Coins persist across chapter unlocks, mission transitions, world reloads, and
+character switches. None creates a new balance or replays accepted one-time
+source transactions.
 
 ## Currency sources
 
@@ -197,24 +198,26 @@ The verified level totals are:
 
 Activation is accepted through the interaction runtime. A Smart Object slot,
 world actor, animation, sound, visible cue, or user-interface prompt never owns
-the completion or reward. The progression service validates the level,
-placement, current completion state, and reward policy before committing one
-transaction.
+the completion or reward. The progression service validates the chapter,
+placement, activation state, current completion state, and reward policy before
+committing one transaction.
 
-A repeated gag concept in reused world geometry receives a distinct placement
-and completion key only when it is declared for that level variant. Reusing the
-same actor identity across variants is invalid. An interior gag follows the same
-ledger and remains level-scoped even when the interior geometry is shared.
+A repeated gag concept in reused world geometry receives a distinct placement and
+completion key only when declared for a chapter or persistent world projection.
+Reusing one placement identity for incompatible projections is invalid. An
+interior gag follows the same ledger and remains placement-scoped even when the
+interior geometry is shared.
 
 Most gag definitions may grant currency, but the reward is explicit rather than
 implied. A gag with no declared reward still records completion when it counts
-toward level progress. A special reward amount is represented by its own reward
+toward chapter progress. A special reward amount is represented by its own reward
 policy and does not change the gag identity.
 
 After completion, a replayable gag may repeat presentation without replaying the
-currency transaction, completion key, statistics event, or level-progress
-increment. Streaming, mission restart, level reload, save reload, or entering a
-second portal to the same interior cannot duplicate the accepted result.
+currency transaction, completion key, statistics event, or chapter-progress
+increment. Streaming, mission restart, world reload, chapter unlock, save reload,
+or entering a second portal to the same interior cannot duplicate the accepted
+result.
 
 Unused, unreachable, malformed, or unverified gag concepts remain inactive and
 do not count toward the total. No separate gag quote collection is created for
@@ -246,25 +249,47 @@ mutation.
 Presentation may animate multiple coin objects, but the ledger remains the
 single balance authority.
 
-## Purchases
+## Purchases and recurring sinks
 
-Vehicle and costume purchases use one atomic transaction:
+Vehicle, costume, instant-repair, paid-sleep, taxi, wager, and convenience
+purchases use one atomic transaction:
 
-1. resolve the canonical offer and seller context;
-1. verify level, progression, availability, and current ownership;
+1. resolve the canonical offer and context;
+1. verify chapter, progression, availability, and current ownership or need;
 1. verify the accepted balance covers the exact price;
-1. stage the debit and reward unlock together;
-1. validate that the granted definition resolves through the catalog;
-1. commit the debit and unlock in one save revision; and
+1. stage the debit and resulting service or unlock together;
+1. validate every granted definition and postcondition;
+1. commit the debit and result in one save revision; and
 1. publish presentation only after commit succeeds.
 
-Failure leaves both balance and ownership unchanged. Repeating a completed
-purchase returns the existing ownership result and never charges twice.
+Failure leaves both balance and result unchanged. Repeating a permanent purchase
+returns the existing ownership result and never charges twice. Repeatable services
+such as repairs, motels, taxi fees, and wagers require a new service transaction.
 
-The current authored vehicle-and-costume purchase census requires 14,800 coins
-for complete purchase progression. This total is verification evidence, not a
-hardcoded economy rule. A generated catalog revision must explain any changed
-total through changed offers.
+Owned costumes are permanently menu-equippable. The player does not return to a
+shop merely to wear an owned costume.
+
+A bounded renewable coin-source set resets eligibility when a world session
+begins. One-time mission, chapter, collectible, boss, achievement, purchase, and
+discovery transactions never reset. Economy simulation proves that renewable
+income and recurring sinks preserve a recoverable story path without enabling
+instant unlimited purchases.
+
+The historic 14,800-coin purchase census is source evidence only. The open-world
+economy uses versioned mathematical curves for chapter income, permanent
+costumes, vehicles, repair, sleep, taxi work, wagers, and reasonable failure
+recovery. Every catalog revision explains changed totals and passes solvency and
+grind-bound tests.
+
+## Chapter collectible activation
+
+Chapter 1 persistent collectible sets activate at new game. Completing each
+chapter activates its successor's sets. Activated sets remain active permanently,
+so completing all story missions without collecting optional content leaves all
+seven chapter sets available together.
+
+Activation and collection are independent. Mission-objective pickups remain
+scoped to the active mission lease and do not enter persistent chapter activation.
 
 ## Collector-card definitions
 
@@ -273,9 +298,10 @@ Collector cards are not generic currency pickups. `FSharCollectibleRow` records:
 | Field | Contract |
 | :--- | :--- |
 | `CollectibleId` | Stable card identity. |
-| `SetId` | Owning level deck. |
+| `SetId` | Owning chapter deck. |
 | `SetOrdinal` | Dense ordinal within the deck. |
-| `LevelId` | Canonical level identity. |
+| `ChapterId` | Canonical chapter identity. |
+| `SourceLevelAlias` | Optional historic conversion alias only. |
 | `DisplayName` | Localizable gallery name. |
 | `Image` | Soft gallery image reference. |
 | `QuoteEvents` | Optional ordered collection-response references. |
@@ -401,15 +427,18 @@ The gallery reads collected identities from progression state and joins them to
 catalog definitions. It does not store a second mutable copy of collection
 state.
 
-Completing all seven cards in a level performs one atomic transition:
+Completing all seven cards in a chapter performs one atomic transition:
 
-- mark the level card set complete;
-- grant the matching bonus-race map reward;
-- update scrapbook completion; and
+- mark the chapter card set complete;
+- grant the matching bonus-race map reward where retained;
+- unlock the chapter's one bounded passive ability;
+- update scrapbook and achievement projection; and
 - publish the card-set completion event.
 
-Completing one level set cannot grant another level's map. Removing or replacing
-presentation assets does not revoke accepted card state.
+The base game has seven chapter-set passive abilities, not 49 card abilities.
+Completing one chapter set cannot grant another chapter's reward or passive.
+Removing or replacing presentation assets does not revoke accepted card or
+ability state.
 
 Collecting all 49 cards enables the movie-ticket reward transaction. Granting
 the ticket contributes to complete progression. Entering the associated movie
@@ -446,16 +475,18 @@ Removing cards is a development-only test operation and cannot occur through an
 ordinary player or cheat overlay.
 
 The card-unlock cheat changes gallery visibility and eligibility projection
-only.
-It does not insert all card identities into portable progression, complete level
-sets, grant bonus maps, or grant the movie ticket.
+only. It does not insert card identities into portable progression, complete
+chapter sets, unlock passive abilities, grant bonus maps, update achievements, or
+grant the movie ticket.
 
-## Level and game progress projection
+## Chapter and game progress projection
 
-The exact eight-category level formula, seven-level aggregation, counted vehicle
-roles, level denominators, and one-percent movie contribution are owned by
-<!-- markdownlint-disable-next-line MD013 -->
-[campaign level composition and progress](campaign-level-composition-and-progress.md).
+Chapter, story, optional-content, achievement, and 100-percent completion rules
+are owned by the
+[open sandbox chapter runtime](open-sandbox-chapter-runtime.md) and the
+[open sandbox campaign design](../gameplay/open-sandbox-campaign-design.md).
+Historic level denominators remain conversion evidence only and cannot create a
+player-facing level state.
 The complete 42-vehicle ownership census and the distinction between persistent,
 traffic, secret, mission, completion, and development access follow
 [Vehicle access and roster runtime](vehicle-access-and-roster-runtime.md).
@@ -465,6 +496,23 @@ campaign service calculates exact rational progress. Scrapbook, save-slot, and
 pause-menu widgets consume the same immutable projection and never recalculate
 it from visible entries. Exact scrapbook modes and gallery membership follow
 [Frontend shell and menu runtime](frontend-shell-and-menu-runtime.md).
+
+## Achievement projection
+
+Achievements are required but pending implementation. The schema records stable
+identity, exact predicate, counters, platform mapping, replay route, no-missable
+reachability, mod compatibility, presentation, and accepted progress revision.
+
+Base achievement families include chapter completion, cards, wasps, costumes,
+coin-total milestones, side missions, taxi milestones, 100 percent completion,
+shortcuts, per-mission no-death records, major world expansions, purchases, and
+cumulative humorous actions. Every base condition remains obtainable through
+free roam, mission replay, side-activity replay, or post-game play.
+
+A mission no-death achievement is tracked per mission and can be retried. Current
+coin achievements observe an accepted balance threshold and do not consume
+currency. Mods declare base-compatible, base-incompatible, or namespaced custom
+achievement policy.
 
 ## Objective integration
 
@@ -508,7 +556,7 @@ The cheat definition never stores a platform-specific key code as its identity.
 | `InputTokens` | Exactly four logical input tokens. |
 | `Prerequisite` | None, loaded profile, completed story, or developer build. |
 | `ActivationMode` | Enable-only, toggle, or immediate command. |
-| `Lifetime` | Session, current level, current mission, or persistent transaction. |
+| `Lifetime` | Session, current chapter boundary, current mission, or persistent transaction. |
 | `EffectKind` | Controlled effect taxonomy. |
 | `EffectParameters` | Typed parameters owned by the receiving subsystem. |
 | `FeedbackEvent` | Success, unavailable, disabled, or invalid-sequence feedback. |

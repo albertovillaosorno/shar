@@ -95,6 +95,25 @@ reduce authored quality, alter simulation, hide a failure, weaken validation, or
 change player-visible behavior. A change that does so is a limitation or defect,
 not an optimization.
 
+## Cel-shaded visual baseline
+
+Every preset preserves the project-owned cel-shaded visual identity. The style is
+inspired by the dimensional cartoon presentation of *The Simpsons Game* but uses
+original materials, outlines, lighting functions, textures, meshes, and shader
+code.
+
+The shared cel-shading profile controls stepped diffuse response, bounded
+specular response, character and vehicle outlines, depth and normal sensitivity,
+shadow integration, emissive treatment, material exceptions, and accessibility.
+
+Quality presets may change outline sampling, shadow resolution, distant material
+complexity, dirt and footprint density, haze quality, and optional post effects.
+They cannot remove mission-marker readability, hide radiation or combat hazards,
+change world-clock phases, or make Chapter 7 visibility unfair.
+
+The same profile supports sunrise, day, sunset, night, Chapter 7 irradiated cloud,
+humidity, haze, wetness, dirt, damage, and mod-replaceable material definitions.
+
 ## Platform lifecycle and memory evidence
 
 <!-- markdownlint-disable MD013 -->

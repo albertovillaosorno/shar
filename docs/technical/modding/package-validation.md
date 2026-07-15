@@ -9,6 +9,8 @@
 - [Local mod trust and distribution boundary](../../adr/modding/mod-safety-scanner-and-distribution.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Local drop-in mod packages and AI skills](../../adr/modding/drop-in-mod-packages-and-ai-skills.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Mod-owned multiplayer adapters and community servers](../../adr/modding/mod-owned-multiplayer-adapters-and-community-servers.md)
 
 ## Purpose
 
@@ -127,6 +129,37 @@ The dry-run preview records:
 
 Preview generation is side-effect-free. Repeating it with equivalent input and
 active state produces an equivalent result.
+
+## Achievement declaration validation
+
+Every package declares one achievement policy: `base_compatible`,
+`base_incompatible`, or `custom_achievement_provider`.
+
+Validation resolves every affected base achievement family, custom achievement
+identity, predicate, counter, platform mapping, save field, migration, replay
+route, and removal rule. A package cannot claim base compatibility when its
+changes reduce semantic difficulty, fabricate accepted progress, remove a
+required replay route, or make a base achievement missable.
+
+Custom achievements use namespaced package identities. They cannot reuse a base
+or another package's identity or platform mapping. The dry-run preview reports
+suspended base families and added or removed custom achievements explicitly.
+
+## Server-adapter declaration validation
+
+A server-capable package declares protocol identity and revision, server-mode
+identity, compatible package-set closure, authority model, player identity,
+serialization schemas, maximum message and snapshot bounds, persistence
+namespace, achievement policy, permissions, teardown, and reconnect behavior.
+
+Validation rejects ambiguous authority, unbounded messages, undeclared remote
+capabilities, base-save mutation, base-achievement fabrication, incompatible
+package sets, protocol downgrade without migration, or a declaration that
+implies official hosting or support.
+
+The dry-run preview reports every network capability, trust decision,
+native-code requirement, suspended base feature, server-owned save namespace,
+and connection surface added by the package.
 
 ## Activation admission
 

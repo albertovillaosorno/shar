@@ -5,7 +5,7 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Canonical seven-level campaign and world variants](../../adr/unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
+- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Contextual interaction query and transaction boundary](../../adr/unreal/runtime/contextual-interaction-query-and-transaction.md)
@@ -24,7 +24,7 @@ identity and one explicit availability class before import or runtime use.
 Detailed execution remains in the owning specifications:
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Campaign level composition and progress](campaign-level-composition-and-progress.md)
+- [Open sandbox chapter runtime](open-sandbox-chapter-runtime.md)
 - [Gameplay content catalog](gameplay-content-catalog.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Mission, interaction, interior, and notoriety runtime](mission-interaction-and-notoriety-runtime.md)
@@ -79,24 +79,25 @@ base availability value or silently grants ownership.
 
 ## Campaign identity
 
-The runtime represents one seven-level campaign. General game summaries and
-navigation indexes do not create aggregate `Game` , `Wiki` , or `AllContent`
-assets.
-They resolve to campaign-level documentation and diagnostic coverage records.
+The runtime represents one connected sandbox with seven ordered narrative
+chapters and exactly two player-facing gameplay states. General game summaries
+and navigation indexes do not create aggregate `Game`, `Wiki`, or `AllContent`
+assets. They resolve to campaign documentation and diagnostic coverage records.
 
 The campaign story remains the ordered investigation of surveillance, cola,
-alien control, and the final Level 7 response. Final shipping behavior is the
-authority. Prerelease, prototype, and unused variants are preserved only through
-the development-evidence contract below.
+alien control, and the final Chapter 7 response. Final shipping behavior is the
+authority. Verified Unused Content ships through its dedicated surface;
+prerelease, prototype, and rejected variants without an accepted identity remain
+under the development-evidence contract below.
 
 ## Verified mission slice
 
 <!-- markdownlint-disable MD013 -->
 
-| Mission identity | Level and class | Required contract |
+| Mission identity | Source chapter and class | Required contract |
 | :--- | :--- | :--- |
 | `the_cola_caper` | Level 1 tutorial | Drive to the Kwik-E-Mart, enter the interior, talk to Apu, collect the declared groceries, and unlock the main mission sequence. The tutorial is non-failing and not replayable in the same save after completion. |
-| `the_fat_and_furious` | Level 1 story finale | Start at the power plant, race Smithers to the manor, complete the Burns interaction, and unlock the Level 2 transition. The title alias without the second article resolves to this identity. |
+| `the_fat_and_furious` | Chapter 1 story finale; source Level 1 | Start at the power plant, race Smithers to the manor, complete the Burns interaction, commit Chapter 1 completion, unlock Bart, activate Chapter 2 collectibles, and expose the next Bart mission. The title alias without the second article resolves to this identity. |
 | `this_old_shanty` | Level 1 bonus | Complete Cletus's ordered collection chores and grant the declared vehicle reward once. |
 | `weapons_of_mass_delinquency` | Level 2 story mission 2 | Collect the ordered fireworks from named contacts, then escape the police pursuit without losing the mission vehicle state. Capitalization variants resolve to one identity. |
 | `vox_nerduli` | Level 2 story mission 3 | Race the declared opponent to the Java Server destination and publish one race result. |
@@ -157,9 +158,9 @@ race-route tests.
 
 | Vehicle identity | Availability and role | Required contract |
 | :--- | :--- | :--- |
-| `station_wagon` | `development_only` | Unused traffic candidate retained in diagnostics; absent from shipping traffic, ownership, secret, mission, and reward queries. |
-| `surveillance_van` | `shipping`, Level 1 purchase | Gil offer for 100 coins; ownership grants cross-level phone-booth access. Mission and cinematic placements remain separate roles. |
-| `taxi` | `traffic_only`, Level 2 | Driveable ambient traffic vehicle; ordinary traffic use never grants ownership. |
+| `station_wagon` | `Unused Content` | Ships through the dedicated Unused Content surface with generic fallback presentation where required and stable mod-replacement slots. Campaign ownership remains opt-in. |
+| `surveillance_van` | `shipping`, Chapter 1 purchase | Gil offer for 100 coins; ownership grants persistent sandbox retrieval access. Mission and cinematic placements remain separate roles. |
+| `taxi` | `shipping`, purchasable after its chapter prerequisite | Ordinary traffic use never grants ownership. Purchasing the taxi grants permanent sandbox access and unlocks taxi side missions, repeatable fares, unique milestones, and the all-taxi achievement path. |
 | `tractor` | `shipping`, Level 4 purchase | Willie offer for 400 coins; ownership grants cross-level phone-booth access. |
 | `wwii_vehicle` | `shipping`, Level 2 bonus reward | Grant once from the declared bonus mission and expose through phone booths after ownership. |
 | `wwii_vehicle_rocket` | `mission_only`, Level 7 | Distinct loadout variant required by the final delivery mission; never collapse into the ordinary WWII vehicle definition. |

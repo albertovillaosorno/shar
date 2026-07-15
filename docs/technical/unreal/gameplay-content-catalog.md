@@ -6,7 +6,7 @@
 ## Governing decisions
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Canonical seven-level campaign and world variants](../../adr/unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
+- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -29,7 +29,7 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Unreal manifest and package taxonomy](../../adr/pipeline/unreal/unreal-manifest-and-package-taxonomy.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Unified geographic world and level-state projection](../../adr/pipeline/unreal/unified-geographic-world-and-level-state-projection.md)
+- [Unified open world and chapter projection](../../adr/pipeline/unreal/unified-open-world-and-chapter-projection.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native world partition and data layers](../../adr/pipeline/unreal/world-partition-and-data-layer-import.md)
 
@@ -212,7 +212,7 @@ Every definition uses the same bundle vocabulary.
 | Bundle | Includes | Allowed load point |
 | :--- | :--- | :--- |
 | `Definition` | Definition object and generated rows | Catalog validation and save migration |
-| `Gameplay` | Collision, physics, objective, AI, and interaction assets | Active level or mission |
+| `Gameplay` | Collision, physics, objective, AI, and interaction assets | Available sandbox, chapter unlock, or active mission scope |
 | `Presentation` | Meshes, materials, animation, UI, and icons | Visible or previewed content |
 | `Audio` | Dialogue, music, vehicle, and interaction sounds | Audible content scope |
 | `Cinematic` | Sequences, media, cameras, and cinematic-only assets | Active cinematic |
@@ -238,8 +238,12 @@ presentation or audio assets for unrelated entities.
 | `DefaultVehicleId` | Optional canonical vehicle identity. |
 | `CostumeSetId` | Optional canonical costume-set identity. |
 | `QuoteTable` | Soft reference to ordered quote-event rows. |
-| `SkeletalMesh` | Soft presentation reference. |
-| `AnimationClass` | Soft animation Blueprint reference. |
+| `DefaultPresentationId` | Complete prepared base-model presentation identity. |
+| `PresentationVariantTable` | Complete outfit, costume, or prop-bearing model variants. |
+| `SemanticPreparationManifest` | FBX-owned UV, texture-region, eye-layer, rig-preservation, and variant evidence. |
+| `EyeProfileId` | Prepared sclera, pupil, upper-eyelid, and lower-eyelid ownership. |
+| `SkeletalMesh` | Soft default complete-model presentation reference. |
+| `AnimationClass` | Existing animation Blueprint consumer; no retargeting change is implied. |
 | `VoiceProfileId` | Canonical audio routing identity. |
 
 <!-- markdownlint-enable MD013 -->
@@ -247,6 +251,18 @@ presentation or audio assets for unrelated entities.
 Character placement in a world is separate from character identity. The same
 definition supports mission-giver, ambient, passenger, and playable placements
 through role-specific components and data-layer composition.
+
+Semantic UV, texture, eye, outfit, prop, and visual rig-display preparation is
+owned by the FBX pipeline and follows the
+[character semantic preparation](../fbx/character-semantic-preparation.md)
+specification. Unreal consumes prepared evidence and does not perform the first
+semantic split during UAsset import.
+
+Each current outfit or integrated-prop presentation resolves to one complete
+skeletal model. Equipping a costume selects that complete presentation at a safe
+point; it does not assemble external garments, detach a prop, reconstruct a
+hidden body, retarget animation, or alter hierarchy, bind state, skin weights,
+or deformation behavior.
 
 ## Quote-event rows
 
@@ -324,7 +340,8 @@ has no corresponding native profile evidence.
 | `NextMissionId` | Optional progression successor. |
 | `StepTable` | Required ordered mission-step table. |
 | `RewardId` | Optional completion reward. |
-| `CompletionTransition` | Unlock, level transition, ending, or none. |
+<!-- markdownlint-disable-next-line MD013 -->
+| `CompletionTransition` | Unlock, chapter transition, world expansion, ending, or none. |
 | `WorldLayerSetId` | Required world and data-layer composition. |
 
 Mission identity is independent of the world actor that starts it. A mission
@@ -401,14 +418,17 @@ different completion policies.
 ## Location definition
 
 `USharLocationDefinition` contains canonical geographic identity, world
-coordinates, bounds, parent district or route, level-state availability, World
-Partition data layers, interior-to-exterior ownership, mission entry points,
-interactive-object references, collectible placements, and streaming bounds.
+coordinates, bounds, parent district or route, chapter and discovery
+availability, World Partition Data Layers, structure and interior ownership,
+mission entry points, interactive-object references, collectible placements,
+connectors, shortcuts, and streaming bounds.
 
-One persistent geographic world owns reusable terrain and component placement.
-Seven campaign level identities and the non-campaign test state project behavior
-through deterministic data layers and definitions. Location definitions never
-collapse level-specific progression, collectibles, missions, or save identity.
+One persistent geographic world owns terrain and component placement. Seven
+chapters contribute cumulative unlocks while the active `mission` or
+`non_mission` state selects temporary gameplay projection. There is no test
+level projection. Location definitions never collapse chapter progression,
+mission state, collectibles, map discovery, structures, interiors, or save
+identity.
 
 ## Reward definition
 
@@ -419,16 +439,22 @@ create a second vehicle asset.
 
 ## Costume-set definition
 
-`USharCostumeSetDefinition` contains the owning character, level availability,
-and a soft costume-offer table. `FSharCostumeOfferRow` contains costume
-identity,
-display name, coin price, level, preview mesh or material references, and the
-purchase location identity.
+`USharCostumeSetDefinition` contains the owning character, chapter availability,
+menu visibility, eligibility, and a soft costume-offer table.
+`FSharCostumeOfferRow` contains costume identity, display name, permanent coin
+price, chapter prerequisite, complete prepared presentation identity, preview
+references, and optional purchase-location identity.
 
-Buying a costume changes presentation for the owning playable character. It
-must not change collision, movement, mission eligibility, save identity, voice
-identity, or gameplay tags unless a separate explicit gameplay definition owns
-that behavior.
+Every costume is visible from the start. Buying a costume commits permanent
+ownership, and an owned costume may be equipped from the menu at a safe point.
+A costume changes presentation by selecting one complete prepared model unless a
+separate explicit gameplay definition owns a bounded effect, such as Devil
+Homer's zombie-disguise rule. It must not otherwise change collision, movement,
+mission eligibility, save identity, voice identity, animation behavior, or
+undeclared gameplay tags.
+
+The catalog rejects a costume that requires returning to a shop after ownership,
+loses ownership at a chapter transition, or grants undeclared gameplay behavior.
 
 ## Bonus-mode definition
 
@@ -584,28 +610,34 @@ Each of the seven levels has one bonus-mission slot. A bonus mission:
 
 `bonus_game` is a top-down racing mode. It references the five playable
 character definitions and the catalog's eligible vehicle set. Each bonus map has
-an explicit collector-card completion predicate. Map unlocks are independent,
-and completing cards in one level does not unlock another level's map.
+an explicit chapter-card-set completion predicate. Map unlocks are independent,
+and completing one chapter set does not unlock another chapter's map.
 
 ### Character costumes
 
-Each level provides three ordinary costume offers for its playable character.
-Offers are purchased with coins at a declared clothing interaction. A purchased
-costume persists in save state and can be applied only to its owning character.
+Each historic chapter acquisition group provides three ordinary costume offers
+for its playable character. Offers are purchased with coins through a declared
+offer. A purchased costume persists, is visible from the beginning, and may be
+equipped from the menu at a safe point for its owning character.
 
 ## Progression and save-state contract
 
 Save data stores canonical identities and explicit state, never object paths or
 display names. The minimum state is:
 
-- current level identity;
+- current chapter identity;
+- `mission` or `non_mission` gameplay state;
 - completed mission identities;
-- active mission and step ordinal when resumable;
+- active mission and checkpoint identity when resumable;
+- unlocked and currently eligible character identities;
 - unlocked vehicle identities;
-- completed bonus-mission identities;
+- terrain, map discovery, connector, interior, and world-expansion state;
+- completed bonus-mission and taxi-milestone identities;
 - purchased and equipped costume identities;
-- collector-card completion by level;
-- unlocked bonus-map identities; and
+- collected cards and completed chapter-card sets;
+- unlocked passive ability and bonus-map identities;
+- world clock, health, stamina, and Chapter 7 survival state where required;
+- achievement progress and active mod-achievement policy; and
 - migration revision.
 
 Alias resolution occurs before save lookup. Save migration may redirect a
@@ -633,14 +665,19 @@ primary asset identifiers, row names, row order, aliases, tags, and references.
 
 ## World integration
 
-One persistent geographic map is the World Partition world. Seven campaign level
-states and the non-campaign `level_11_test` state are composed through data
-layers and definitions for mission actors, traffic, collectibles, interior
-availability, progression state, presentation variants, lighting, and
-level-specific interactions.
+One persistent geographic map is the World Partition world. Seven chapters add
+cumulative unlocks over that world. The exclusive `mission` or `non_mission`
+state selects transient projection for mission actors, traffic overrides,
+objective pickups, hazards, routes, dialogue, and interactions. There is no test
+level or campaign-visible development projection.
 
-Catalog definitions reference geographic location, component, placement, and
-layer-set identities. They never store mutable actor pointers as authority.
+The base world always owns dynamic sunrise, day, sunset, and night. Chapter 7
+adds its irradiated cloud, humidity, haze, hazard, and horror profile without
+creating another map or disabling the world clock.
+
+Catalog definitions reference geographic location, structure, interior,
+connector, component, placement, discovery, and Data Layer identities. They
+never store mutable actor pointers as authority.
 Runtime placement resolves actors from stable coordinate and transform records
 after the required World Partition cells and data layers are active.
 
@@ -1090,13 +1127,13 @@ that references an ambiguous family when an exact site placement is required.
 
 ## Verified fourth campaign and index slice
 
-The seven level pages, the aggregate level page, the Level 6 vehicle page, and
-the source main page are census or navigation evidence. Runtime campaign,
-level, vehicle, mission, race, collectible, and location identities are owned by
-the catalog and the
-<!-- markdownlint-disable-next-line MD013 -->
-[campaign level composition and progress](campaign-level-composition-and-progress.md)
-specification. Index pages never become duplicate primary assets.
+The seven historic level pages, their aggregate page, the Level 6 vehicle page,
+and the source main page are census or navigation evidence. Runtime campaign,
+chapter, vehicle, mission, race, collectible, and location identities are owned
+by the catalog and the
+[open sandbox chapter runtime](open-sandbox-chapter-runtime.md) specification.
+Source indexes never become duplicate primary assets or player-facing level
+states.
 
 The Level 7 sound page in this slice contains no independently identified sound
 rows. It therefore creates no audio definition. Level audio remains owned by the

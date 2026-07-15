@@ -9,6 +9,8 @@
 - [Local drop-in mod packages and AI skills](../../adr/modding/drop-in-mod-packages-and-ai-skills.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Mod-owned multiplayer adapters and community servers](../../adr/modding/mod-owned-multiplayer-adapters-and-community-servers.md)
 
 ## Purpose
 
@@ -37,6 +39,11 @@ A package declaration contains at least:
 | `Members` | Normalized member identities, lengths, hashes, media types, and roles. |
 | `Provenance` | Authorship, source, license, generation, and review evidence. |
 | `TrustLevel` | Declared trust boundary used by validation and activation policy. |
+| `MultiplayerCapabilities` | Optional server, client, transport, discovery, authority, and protocol declarations. |
+| `ServerPackageRoles` | Optional dedicated-server, listen-server, client, or shared package roles. |
+| `ProtocolRevision` | Exact optional multiplayer protocol revision. |
+| `NetworkSavePolicy` | None, ephemeral session, or namespaced mod-owned persistence. |
+| `NetworkAchievementPolicy` | Base-compatible, base-incompatible, or custom provider. |
 
 <!-- markdownlint-enable MD013 -->
 
@@ -173,5 +180,7 @@ and activation state.
 ## Known limits
 
 This specification does not create a hosted mod service, marketplace, remote
-code-delivery system, arbitrary native-code safety guarantee, or automatic
-cross-device package synchronization.
+code-delivery system, arbitrary native-code safety guarantee, automatic
+cross-device package synchronization, official server network, or first-party
+multiplayer mode. Community-server packages remain locally installed, validated,
+trusted, and independently operated.

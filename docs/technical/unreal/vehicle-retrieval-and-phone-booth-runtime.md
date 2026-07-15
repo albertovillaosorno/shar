@@ -29,7 +29,7 @@ development-only membership rules follow
 queries and transactions across level travel. It consumes read-only ports for:
 
 - gameplay catalog and aliases;
-- campaign reach and active level;
+- campaign reach, chapter boundary, terrain discovery, and sandbox availability;
 - accepted vehicle ownership and completion overrides;
 - vehicle health and active retrieval slot;
 - currency transactions;
@@ -112,7 +112,8 @@ mutation.
 Opening the browser performs:
 
 1. reserve the booth Smart Object slot;
-1. verify the active level, mission, player, and booth placement;
+1. verify the chapter boundary, gameplay state, mission policy, player, terrain,
+   and booth placement;
 1. snapshot health for the current owned active vehicle when present;
 1. persist that health in the candidate gameplay snapshot;
 1. query catalog, ownership, completion, currency, and mission policy;

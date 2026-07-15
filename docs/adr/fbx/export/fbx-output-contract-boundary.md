@@ -21,11 +21,12 @@ are not canonical outputs.
 
 Engine-independent semantic preparation belongs to the canonical scene and FBX
 phase before serialization. Character UV and texture modernization, semantic eye
-and outfit regions, non-destructive rig display metadata, detachable animation
-props, vehicle moving parts, world components, pivots, transforms, and
-geographic
-placements must therefore be present in FBX evidence rather than discovered for
-the first time during native Unreal import.
+ownership, complete outfit and prop-bearing variants, non-destructive
+rig-display metadata, vehicle moving parts, world components, pivots,
+transforms, and geographic placements must therefore be present in FBX
+evidence. Native Unreal import cannot discover those separations for the first
+time. Character animation
+behavior remains unchanged in this phase.
 
 Legacy helpers that invoke external content-authoring applications are outside
 the supported workflow and must be retired rather than used as evidence.

@@ -12,7 +12,7 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Gameplay census, presentation, and development-content boundary](gameplay-census-presentation-and-development-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Canonical seven-level campaign and world variants](../../adr/unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
+- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Driving, traffic, and vehicle behavior parity](../../adr/gameplay/vehicles/driving-traffic-and-vehicle-ai.md)
 - [Vehicle AI and route runtime](vehicle-ai-and-route-runtime.md)

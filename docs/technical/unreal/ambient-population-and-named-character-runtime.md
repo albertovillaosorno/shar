@@ -34,10 +34,12 @@ They are excluded from Mass population ownership and follow the
 ## Ownership
 
 `USharAmbientPopulationSubsystem` is a world subsystem. It owns the active
-population revision for the current world and level layers. It consumes:
+population revision for the connected world, chapter unlocks, gameplay state,
+clock phase, weather, and mission projection. It consumes:
 
 - canonical character and population definitions;
-- campaign level, Runtime Data Layer, and World Partition state;
+- chapter, discovery, gameplay-state, Runtime Data Layer, and World Partition
+  state;
 - population-zone and pedestrian-path records;
 - Mass entity templates and representation policies;
 - player, traffic, mission, interaction, and notoriety observations;
@@ -53,8 +55,10 @@ Object authority, or save transactions.
 
 | Field | Contract |
 | :--- | :--- |
-| `PopulationId` | Stable level or variant population identity. |
-| `LevelId` | Owning campaign level. |
+| `PopulationId` | Stable population-profile identity. |
+| `ChapterPredicate` | Chapter and persistent unlock availability. |
+| `GameplayStatePredicate` | Mission or non-mission eligibility. |
+| `ClockAndWeatherPredicate` | World phase, Chapter 7 atmosphere, and hazard availability. |
 | `RequiredLayerSetId` | Exact Runtime Data Layer composition. |
 | `ZoneIds` | Ordered population zones. |
 | `ArchetypeGroupIds` | Allowed weighted archetype groups. |
@@ -63,8 +67,9 @@ Object authority, or save transactions.
 | `RequiredNamedPlacements` | Named placements that must be present. |
 | `RevisionToken` | Deterministic generated-data revision. |
 
-A population definition is activated only after its level and layer set are
-accepted. It never infers population from visible sidewalks or loaded meshes.
+A population definition is activated only after its chapter, gameplay-state,
+clock, weather, discovery, and layer predicates are accepted. It never infers
+population from visible sidewalks or loaded meshes.
 
 ## Zone definition
 
@@ -143,6 +148,30 @@ Mass StateTree owns disposable pedestrian behavior. Repository-owned evaluators,
 tasks, and conditions consume typed observations and emit movement, look,
 conversation, reaction, fall, recovery, interaction, or promotion intent.
 StateTree never commits mission or save progress.
+
+## Ambient start vignettes
+
+`USharAmbientVignetteDefinition` selects safe non-mission presentation for a
+playable character after new game, load, or declared free-roam return. It includes
+location, character, animation, prop, audio, world-clock, chapter, cooldown,
+weight, and cancellation predicates.
+
+Homer's initial set may include eating a donut, performing a gag, idling at home,
+or appearing at Moe's Tavern. Vignettes are presentation-only and release cleanly
+when the player moves, switches character, opens a mission, or loads another
+state.
+
+## Chapter 7 zombies
+
+Chapter 7 population profiles may spawn zombie archetypes with actor promotion,
+melee attack, navigation, health damage, horror audio, and mission pinning.
+Hostility consumes character and costume tags. The Devil Homer disguise suppresses
+ordinary zombie target acquisition but does not affect radiation, bosses,
+scripted hostility, or explosion damage.
+
+Zombie density, representation, audio, and distant silhouettes respond to clock
+phase, irradiated weather, visibility, and quality budgets without changing
+combat rules.
 
 ## Representation LOD
 

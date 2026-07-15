@@ -10,7 +10,7 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Platform-native audio cooking and streaming](../../adr/audio/platform-native-audio-cooking-and-streaming.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Canonical seven-level campaign and world variants](../../adr/unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
+- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 
 ## Purpose
