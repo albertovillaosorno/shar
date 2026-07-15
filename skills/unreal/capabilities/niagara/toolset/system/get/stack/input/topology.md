@@ -48,41 +48,63 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to inspect one exact Niagara stack input's type, visibility,
+editability, dynamic state, and static-switch state without reading its value.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Discover the exact module and input leaf name from topology.
+- Populate every StackItemReference field and preserve the complete
+  `inputNameStack`.
+- Keep the system, emitter, script, module, and input identities paired.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "stackInputRef": {
+  "system": {"refPath": "/Niagara/VectorFields/VectorFieldVisualizationSystem.VectorFieldVisualizationSystem"},
+  "emitterName": "VectorFieldParticleEmitter",
+  "scriptName": "ParticleSpawnScript",
+  "moduleName": "SetVariables_D1F5C3144B416D5266BDFEBA95F1C835",
+  "rendererIndex": -1,
+  "inputNameStack": ["Particles.Lifetime"]
+}
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two reads returned `Particles.Lifetime` as visible, editable, dynamic, non-
+static-switch NiagaraFloat. The result independently confirmed the input leaf
+selected from the Particle Spawn Set Variables module.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Topology carries no value payload or schema metadata.
+- `inputNameStack` is an ordered path and can contain multiple names for nested
+  dynamic inputs.
+- Leaf names can include namespace prefixes such as `Particles.`.
+- Input refs become stale after module replacement or structural edits.
+- Missing input leaves fail with the full stack reference.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

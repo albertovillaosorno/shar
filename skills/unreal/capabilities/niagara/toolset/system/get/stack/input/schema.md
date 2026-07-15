@@ -47,41 +47,62 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to inspect the authored schema and metadata for one exact Niagara
+stack input before interpreting or changing its configuration.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Discover the exact module and input leaf name from topology.
+- Populate every StackItemReference field and preserve the complete
+  `inputNameStack`.
+- Keep the system, emitter, script, module, and input identities paired.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "inputReference": {
+  "system": {"refPath": "/Niagara/VectorFields/VectorFieldVisualizationSystem.VectorFieldVisualizationSystem"},
+  "emitterName": "VectorFieldParticleEmitter",
+  "scriptName": "ParticleSpawnScript",
+  "moduleName": "SetVariables_D1F5C3144B416D5266BDFEBA95F1C835",
+  "rendererIndex": -1,
+  "inputNameStack": ["Particles.Lifetime"]
+}
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two reads returned `Particles.Lifetime` as NiagaraFloat with expression support
+and complete metadata including category, variable GUID, edit and visibility
+conditions, widget customization, units, aliases, and advanced-display state.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Schema describes the input definition, not its current value mode.
+- Metadata can contain empty categories and string sentinels such as `None`.
+- Variable GUIDs are asset-authored and must not be guessed.
+- Contextual schema can differ from the standalone dynamic-input asset schema.
+- Missing input references fail explicitly.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

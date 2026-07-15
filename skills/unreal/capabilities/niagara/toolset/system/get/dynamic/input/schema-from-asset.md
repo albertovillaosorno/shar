@@ -47,41 +47,56 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this standalone read to inspect a Dynamic Input asset's authored inputs,
+outputs, types, and metadata before assigning it to a SHAR stack input.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use an exact indexed NiagaraScript Dynamic Input asset ref.
+- Confirm compatibility through `GetAvailableDynamicInputs` for the target type.
+- Treat this as asset discovery without stack context or values.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "dynamicInputAsset": {"refPath": "/Niagara/DynamicInputs/UniformRange/UniformRangedFloat.UniformRangedFloat"}
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two calls returned UniformRangedFloat with seven inputs and no outputs. Asset-
+order names were Minimum, Maximum, Random Seed, Override Randomness, Randomness
+Mode, Override Seed, and Fixed Random Seed. Types and metadata matched the
+contextual schema while ordering and prefixes differed.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Asset schema does not report current values, contextual visibility, or stack
+  assignment.
+- Asset input names can omit contextual `Module.` prefixes.
+- Asset order can differ from contextual order.
+- Compatibility must be checked separately for the target Niagara type.
+- Missing or wrong-type asset refs fail during parameter translation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

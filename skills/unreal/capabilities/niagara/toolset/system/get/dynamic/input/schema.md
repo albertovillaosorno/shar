@@ -47,41 +47,65 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to inspect the contextual schema of a dynamic input instance
+already assigned to a Niagara stack input.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Discover the exact dynamic stack input from stack-input data.
+- Populate every StackItemReference field and preserve the complete
+  `inputNameStack`.
+- Keep the system, emitter, script, module, and input identities paired.
+- Identify the dynamic asset through stack-input data before comparing schemas.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "dynamicInputReference": {
+  "system": {"refPath": "/Niagara/VectorFields/VectorFieldVisualizationSystem.VectorFieldVisualizationSystem"},
+  "emitterName": "VectorFieldParticleEmitter",
+  "scriptName": "ParticleSpawnScript",
+  "moduleName": "SetVariables_D1F5C3144B416D5266BDFEBA95F1C835",
+  "rendererIndex": -1,
+  "inputNameStack": ["Particles.Lifetime"]
+}
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two reads resolved UniformRangedFloat with seven contextual inputs and no
+outputs. Inputs were Minimum, Maximum, Module.Override Randomness, Randomness
+Mode, Module.Override Seed, Random Seed, and Fixed Random Seed, with complete
+metadata and conditions.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Contextual names can include `Module.` prefixes absent from the standalone
+  asset schema.
+- Contextual input order differed from asset-browsing order.
+- Schema carries metadata but not current values.
+- Conditional and hidden controls remain part of the schema.
+- Missing or non-dynamic stack references fail explicitly.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
