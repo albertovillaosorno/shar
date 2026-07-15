@@ -75,6 +75,18 @@ def test_two_part_plugin_version_normalizes_to_semver() -> None:
     )
 
 
+@pytest.mark.parametrize(
+    "invalid_version",
+    ["1.0\n", " 1.0"],
+)
+def test_plugin_version_rejects_surrounding_whitespace(
+    invalid_version: str,
+) -> None:
+    """Descriptor versions must not be silently trimmed before validation."""
+    with pytest.raises(ConfigurationError, match="one to three numeric parts"):
+        _ = normalize_unreal_mcp_version(invalid_version)
+
+
 def test_provider_reads_version_from_explicit_engine_root(
     tmp_path: Path,
 ) -> None:

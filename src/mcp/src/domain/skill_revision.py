@@ -93,7 +93,7 @@ def normalize_unreal_mcp_version(version_name: str) -> str:
     Returns:
         A `major.minor.patch` version string.
     """
-    match = _VERSION_PATTERN.fullmatch(version_name.strip())
+    match = _VERSION_PATTERN.fullmatch(version_name)
     if match is None:
         fail_configuration(
             "Unreal MCP VersionName must contain one to three numeric parts"
