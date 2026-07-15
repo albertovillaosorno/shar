@@ -5,17 +5,24 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Mass Entity ambient population](../../adr/unreal/runtime/mass-entity-ambient-population.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native flying-hazard actors and StateTree execution](../../adr/unreal/runtime/native-flying-hazard-actors-and-state-trees.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Flying-hazard and projectile runtime](flying-hazard-and-projectile-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
 
 ## Purpose
 
 This specification defines ambient pedestrian identity, zones, archetypes,
-weighted groups, deterministic spawning, representation LOD, movement, awareness,
+weighted groups, deterministic spawning, representation LOD, movement,
+awareness,
 threat response, impacts, conversations, named-character promotion, streaming,
 mission ownership, platform budgets, failure, and verification.
 
@@ -63,6 +70,8 @@ accepted. It never infers population from visible sidewalks or loaded meshes.
 
 `FSharPopulationZoneRow` contains:
 
+<!-- markdownlint-disable MD013 -->
+
 | Field | Contract |
 | :--- | :--- |
 | `ZoneId` | Stable zone identity. |
@@ -79,6 +88,8 @@ accepted. It never infers population from visible sidewalks or loaded meshes.
 | `ThreatPolicyId` | Reaction and recovery policy. |
 | `RequiredLayers` | Exact Runtime Data Layers. |
 | `ExclusionVolumes` | Mission, traffic, interior, and unsafe spawn exclusions. |
+
+<!-- markdownlint-enable MD013 -->
 
 Activation and removal distances form hysteresis. The removal boundary must be
 outside the activation boundary so entities do not churn at one threshold.
@@ -100,7 +111,8 @@ outside the activation boundary so entities do not churn at one threshold.
 - maximum simultaneous count; and
 - whether the row is disposable, promotable, or actor-required.
 
-`FSharAmbientArchetypeGroupRow` contains a deterministic ordered set of archetype
+`FSharAmbientArchetypeGroupRow` contains a deterministic ordered set of
+archetype
 identities and positive integer weights. Zero, negative, duplicate, missing, or
 platform-dependent weights are invalid.
 
@@ -141,7 +153,8 @@ Each archetype defines four presentation tiers:
 1. instanced static mesh representation for distant disposable entities; and
 1. no representation for valid far simulation or removal candidates.
 
-Representation changes preserve Mass entity identity, path state, reaction state,
+Representation changes preserve Mass entity identity, path state, reaction
+state,
 and deterministic seed. They cannot create a new canonical character or replay a
 conversation.
 
@@ -176,7 +189,8 @@ A disposable entity becomes removable only when:
 - it is outside the removal boundary or its owning cell is leaving the active
   world;
 - it has exceeded the visibility grace when visibility is material;
-- it is not in an impact, fall, recovery, conversation, interaction, or promotion
+- it is not in an impact, fall, recovery, conversation, interaction, or
+  promotion
   transaction;
 - it is not a mission, driver, race-host, cinematic, gag, or named placement;
 - it owns no Smart Object reservation; and
@@ -209,11 +223,14 @@ Threat observations include:
 The reaction state is one of observe, flinch, evade, panic, fall, recover, or
 resume. Priority and interruption rules are explicit.
 
-A vehicle-evade task chooses a validated lateral or path-safe destination. It does
-not teleport through geometry or into traffic. Failure to find a safe destination
+A vehicle-evade task chooses a validated lateral or path-safe destination. It
+does
+not teleport through geometry or into traffic. Failure to find a safe
+destination
 uses the declared brace or stop fallback.
 
-An accepted kick or vehicle impact may transition the pedestrian to physical fall
+An accepted kick or vehicle impact may transition the pedestrian to physical
+fall
 or ragdoll presentation. Recovery requires bounded linear and angular velocity,
 a valid floor, a clear stand capsule, no continuing threat, and the declared
 minimum rest time. Failure retains a safe fallen or recovery state rather than
@@ -234,7 +251,8 @@ Conversation candidates require:
 - cooldown eligibility for both participants.
 
 A short reservation prevents a third entity from taking either participant. The
-conversation emits presentation events and returns both entities to path behavior.
+conversation emits presentation events and returns both entities to path
+behavior.
 It creates no mission progress or permanent relationship state.
 
 ## Named-character placements
@@ -278,7 +296,8 @@ create aggregate `minor_characters` or `non_story_characters` runtime entities.
 
 Each named person receives a canonical character definition when evidence is
 covered. Group membership is a tag or query projection. Background, driver,
-race-host, gag, mission, cinematic, and talkable roles are placement capabilities,
+race-host, gag, mission, cinematic, and talkable roles are placement
+capabilities,
 not separate characters.
 
 ## Platform and quality budgets
@@ -294,7 +313,8 @@ not separate characters.
 - emergency degradation order.
 
 Budgets may reduce disposable density, update rate, representation fidelity,
-animation complexity, and optional voice concurrency. They cannot remove required
+animation complexity, and optional voice concurrency. They cannot remove
+required
 named placements, alter mission behavior, disable player interaction, or change
 notoriety semantics.
 

@@ -5,7 +5,9 @@
 
 ## Governing decision
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
 
 ## Purpose
@@ -23,6 +25,8 @@ packaging behavior required by Unreal.
 
 The required distribution matrix is:
 
+<!-- markdownlint-disable MD013 -->
+
 | Target identifier | Platform family | Native architecture | Product class | Presets |
 | :--- | :--- | :--- | :--- | :--- |
 | `windows-x64` | Windows | x64 | Desktop | Low through Ultra |
@@ -31,6 +35,8 @@ The required distribution matrix is:
 | `windows-arm64` | Windows | ARM64 | Desktop compatibility target | Low through Ultra |
 | `linux-arm64` | Linux | ARM64 | Desktop compatibility target | Low through Ultra |
 | `android-arm64` | Android | ARM64 | Mobile | Low only |
+
+<!-- markdownlint-enable MD013 -->
 
 Target identifiers are exact lowercase command and report values. Unknown
 identifiers, informal aliases, or a platform name without its architecture are
@@ -45,6 +51,8 @@ alone, and editor play do not prove availability.
 
 The five graphics presets are ordered and monotonic:
 
+<!-- markdownlint-disable MD013 -->
+
 | Preset | Contract |
 | :--- | :--- |
 | Low | Lowest supported native rendering configuration while preserving every gameplay-relevant visual and collision contract. Its art target remains comparable to the original game or a seventh-generation console presentation. |
@@ -52,6 +60,8 @@ The five graphics presets are ordered and monotonic:
 | High | A measured increase over Medium with no simulation or content divergence. |
 | Epic | Unreal's high-end native scalability baseline with every selected group at or above High. |
 | Ultra | Maximum supported quality for the active platform and hardware, including every stable optional feature selected for that target. |
+
+<!-- markdownlint-enable MD013 -->
 
 The exact command and report identifiers are `low`, `medium`, `high`, `epic`,
 and `ultra`. Player-facing labels use `Low`, `Medium`, `High`, `Epic`, and
@@ -84,6 +94,18 @@ that explicit preset selection, a performance change must not delete content,
 reduce authored quality, alter simulation, hide a failure, weaken validation, or
 change player-visible behavior. A change that does so is a limitation or defect,
 not an optimization.
+
+## Platform lifecycle and memory evidence
+
+<!-- markdownlint-disable MD013 -->
+Process entry, capability snapshots, display recovery, suspension, restart, legal presentation, and terminal exit follow the [native platform bootstrap and error-recovery runtime](native-platform-bootstrap-and-error-recovery-runtime.md).
+
+Target budgets, ownership scopes, pressure response, residency, leak verification, and packaged-memory evidence follow the [memory ownership, budget, and diagnostics runtime](memory-ownership-budget-and-diagnostics-runtime.md).
+<!-- markdownlint-enable MD013 -->
+
+A quality preset may alter declared optional residency, cache size, and visual
+streaming policy. It cannot redefine ownership, hide a hard-limit violation, or
+free required gameplay assets.
 
 ## Invariants
 

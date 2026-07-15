@@ -94,8 +94,13 @@ For each asserted format element, record:
 
 - [17 U.S.C. § 102(b)](../statutes/17-usc-102b.md).
 - [Google LLC v. Oracle America, Inc.](../cases/google-v-oracle.md).
+<!-- markdownlint-disable-next-line MD013 -->
 - [Lexmark International, Inc. v. Static Control Components, Inc.](../cases/lexmark-v-static-control.md).
+<!-- markdownlint-disable-next-line MD013 -->
 - [Lotus Development Corp. v. Borland International, Inc.](../cases/lotus-v-borland.md).
+<!-- markdownlint-disable-next-line MD013 -->
 - [SAS Institute, Inc. v. World Programming Limited](../cases/sas-v-world-programming.md).
+<!-- markdownlint-disable-next-line MD013 -->
 - [RJ Control Consultants, Inc. v. Multiject, LLC](../cases/rj-control-v-multiject.md).
+<!-- markdownlint-disable-next-line MD013 -->
 - [Premier Dealer Services, Inc. v. Allegiance Administrators, LLC](../cases/premier-dealer-v-allegiance.md).

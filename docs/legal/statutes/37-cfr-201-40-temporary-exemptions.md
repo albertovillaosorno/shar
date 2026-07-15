@@ -84,6 +84,7 @@ any reliance.
 - U.S. Copyright Office, ninth triennial proceeding, 2024 cycle:
   <https://www.copyright.gov/1201/2024/> (Accessed: 14 July 2026).
 - Final rule, 89 Fed. Reg. 85437, effective October 28, 2024:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://www.federalregister.gov/documents/2024/10/28/2024-24563/exemption-to-prohibition-on-circumvention-of-copyright-protection-systems-for-access-control>
   (Accessed: 14 July 2026).
 - U.S. Copyright Office, tenth triennial proceeding, 2027 cycle:

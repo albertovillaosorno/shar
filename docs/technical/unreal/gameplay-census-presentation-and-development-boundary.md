@@ -2,37 +2,48 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Canonical seven-level campaign and world variants](../../adr/unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Contextual interaction query and transaction boundary](../../adr/unreal/runtime/contextual-interaction-query-and-transaction.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native flying-hazard actors and StateTree execution](../../adr/unreal/runtime/native-flying-hazard-actors-and-state-trees.md)
 
 ## Purpose
 
 This specification closes the boundary between canonical shipping gameplay,
 role-specific world variants, presentation assets, and development evidence. A
-name found in source material does not automatically create a player-owned asset,
+name found in source material does not automatically create a player-owned
+asset,
 a mission, or a shipping feature. Every record must resolve to one canonical
 identity and one explicit availability class before import or runtime use.
 
 Detailed execution remains in the owning specifications:
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Campaign level composition and progress](campaign-level-composition-and-progress.md)
 - [Gameplay content catalog](gameplay-content-catalog.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Mission, interaction, interior, and notoriety runtime](mission-interaction-and-notoriety-runtime.md)
 - [Race route and opponent runtime](race-route-and-opponent-runtime.md)
 - [Vehicle access and roster runtime](vehicle-access-and-roster-runtime.md)
 - [Contextual interaction runtime](contextual-interaction-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Flying-hazard and projectile runtime](flying-hazard-and-projectile-runtime.md)
 
 ## Canonicalization
 
 Import normalizes evidence into stable identities before creating Unreal assets.
-Case differences, punctuation differences, alternate display titles, and duplicate
+Case differences, punctuation differences, alternate display titles, and
+duplicate
 index entries never create additional gameplay definitions.
 
 Each census record contains:
+
+<!-- markdownlint-disable MD013 -->
 
 | Field | Contract |
 | :--- | :--- |
@@ -46,7 +57,11 @@ Each census record contains:
 | `OwningDefinition` | Primary asset or generated row that owns runtime behavior. |
 | `VerificationIds` | Golden tests and import checks required before activation. |
 
+<!-- markdownlint-enable MD013 -->
+
 The availability enum is:
+
+<!-- markdownlint-disable MD013 -->
 
 | Value | Meaning |
 | :--- | :--- |
@@ -57,13 +72,16 @@ The availability enum is:
 | `diagnostic_only` | Metadata or review evidence with no runtime asset. |
 | `excluded` | Rejected evidence that cannot enter generated or runtime catalogs. |
 
+<!-- markdownlint-enable MD013 -->
+
 A cheat or mod overlay may query a broader catalog, but it never changes the
 base availability value or silently grants ownership.
 
 ## Campaign identity
 
 The runtime represents one seven-level campaign. General game summaries and
-navigation indexes do not create aggregate `Game`, `Wiki`, or `AllContent` assets.
+navigation indexes do not create aggregate `Game` , `Wiki` , or `AllContent`
+assets.
 They resolve to campaign-level documentation and diagnostic coverage records.
 
 The campaign story remains the ordered investigation of surveillance, cola,
@@ -72,6 +90,8 @@ authority. Prerelease, prototype, and unused variants are preserved only through
 the development-evidence contract below.
 
 ## Verified mission slice
+
+<!-- markdownlint-disable MD013 -->
 
 | Mission identity | Level and class | Required contract |
 | :--- | :--- | :--- |
@@ -86,6 +106,8 @@ the development-evidence contract below.
 | `and_baby_makes_8` | Level 5 story mission 2 | Escape the mafia pursuit and complete the declared destination sequence without promoting the pursuer to an owned vehicle. |
 | `this_little_piggy` | Level 5 story mission 4 | Require the American costume at activation, collect the donut trail, follow Wiggum, and complete the DMV destination sequence. |
 | `theres_something_about_monty` | Level 7 story mission 4 | Reach the power plant while avoiding the alien probe, then complete the authored vertical ascent to the terminal interaction. |
+
+<!-- markdownlint-enable MD013 -->
 
 Mission display titles, transcript text, music cues, costume gates, rewards, and
 ordered objective rows remain separate generated records. A summary page never
@@ -103,8 +125,12 @@ The race runtime has three street-race classes and one wager class:
 
 Levels 1 through 6 use Milhouse, Nelson, and Ralph for time trial, circuit, and
 checkpoint hosting. Level 7 uses zombie hosts for all three classes. Completing
-all three street races in a level grants that level's declared vehicle reward and
-contributes to level completion. Street races are optional for story progression.
+all three street races in a level grants that level's declared vehicle reward
+and
+contributes to level completion. Street races are optional for story
+progression.
+
+<!-- markdownlint-disable MD013 -->
 
 | Race identity | Required route contract |
 | :--- | :--- |
@@ -112,6 +138,8 @@ contributes to level completion. Street races are optional for story progression
 | `town_square_circuit_level_02` | Level 2 circuit hosted near the town-square Krusty Burger; complete four laps and finish first. |
 | `suburban_rich_checkpoint_level_04` | Start near the Evergreen Terrace stone sign, traverse the rich district and tunnel route, and finish at the power-plant bridge. |
 | `suburban_countryside_2_checkpoint_level_07` | Start at the school, traverse the Halloween suburban route, and finish at the power-plant parking lot against the Hearse, Ghost Ship, and Coffin Cart. |
+
+<!-- markdownlint-enable MD013 -->
 
 Every base level has one wager race hosted through the declared mob interaction.
 The entry fee is charged once at acceptance. Resetting or abandoning the race
@@ -125,6 +153,8 @@ race-route tests.
 
 ## Verified vehicle slice
 
+<!-- markdownlint-disable MD013 -->
+
 | Vehicle identity | Availability and role | Required contract |
 | :--- | :--- | :--- |
 | `station_wagon` | `development_only` | Unused traffic candidate retained in diagnostics; absent from shipping traffic, ownership, secret, mission, and reward queries. |
@@ -137,9 +167,14 @@ race-route tests.
 | `vote_quimby_truck` | `traffic_only`, Level 5 | Ambient truck with its declared campaign livery and horn event; no ownership implication. |
 | `witch_broom` | `traffic_only`, Level 7 | Small traffic vehicle with passenger seating, cackle horn event, no wheel-skid presentation, and no ordinary ownership. |
 
-The persistent base roster contains exactly 42 owned vehicles. Ownership may come
-from a level start, street-race reward, bonus-mission reward, or purchase. Mission
-use, forced use, opponent use, traffic use, prop use, and driver presentation are
+<!-- markdownlint-enable MD013 -->
+
+The persistent base roster contains exactly 42 owned vehicles. Ownership may
+come
+from a level start, street-race reward, bonus-mission reward, or purchase.
+Mission
+use, forced use, opponent use, traffic use, prop use, and driver presentation
+are
 orthogonal roles and never grant ownership.
 
 The unusable-vehicle census is one diagnostic set, not two gameplay families.
@@ -149,6 +184,8 @@ query policy over the same definition, never a rewrite of availability.
 
 ## Verified character and location slice
 
+<!-- markdownlint-disable MD013 -->
+
 | Identity | Required roles |
 | :--- | :--- |
 | `waylon_smithers` | Mission opponent, driver, bonus-mission participant, ambient placement, and cinematic placement under one character identity. |
@@ -156,8 +193,11 @@ query policy over the same definition, never a rewrite of availability.
 | `groundskeeper_willie` | School-area ambient placement, gag presentation, and Level 4 tractor vendor. |
 | `zombie_ambient` | Level 7 weighted ambient archetypes, street-race hosts, vendor presentation, and mission contacts; no named-character save identity. |
 
+<!-- markdownlint-enable MD013 -->
+
 The first suburban world includes separate canonical locations for the Simpsons
-house, Flanders house, Wiggum house, and the Gold House. The third-world location
+house, Flanders house, Wiggum house, and the Gold House. The third-world
+location
 slice includes Android's Dungeon, Wall E. Weasel's, Planet Hype, and their
 mission, gag, card, and route roles. Display groupings do not merge these world
 locations or their streaming identities.
@@ -173,7 +213,8 @@ completion.
 
 ## Wasp cameras
 
-Each base level contains exactly 20 wasp-camera targets, for 140 campaign targets.
+Each base level contains exactly 20 wasp-camera targets, for 140 campaign
+targets.
 Each target has stable level membership, placement identity, AI profile, damage
 state, currency reward, and level-progress row.
 
@@ -194,7 +235,8 @@ once.
 
 Vehicle impacts, kicks, and declared character attacks use the same damage port.
 The runtime must not reproduce any collision count after which cameras become
-non-collidable; collision and damage remain valid until authoritative destruction.
+non-collidable; collision and damage remain valid until authoritative
+destruction.
 
 ## Repair pickups
 
@@ -233,7 +275,8 @@ Required dynamic roles are:
 | `bonus_counter` | Bonus-game numeric presentation. |
 | `credits` | Ordered credits sequences. |
 
-Text already rasterized into a converted texture remains part of that texture and
+Text already rasterized into a converted texture remains part of that texture
+and
 does not create a runtime font dependency. Dynamic font assets must arrive
 through the package index with glyph coverage and metrics. Import never guesses
 a font file from a family name. Missing required roles fail cooking.
@@ -249,6 +292,8 @@ Prerelease changes, prototype differences, unused content, discarded vehicle
 variants, obsolete text, and research indexes do not override final shipping
 behavior. They normalize into `FSharDevelopmentContentRecord` with:
 
+<!-- markdownlint-disable MD013 -->
+
 | Field | Contract |
 | :--- | :--- |
 | `EvidenceId` | Stable diagnostic identity. |
@@ -257,6 +302,8 @@ behavior. They normalize into `FSharDevelopmentContentRecord` with:
 | `ObservedDifference` | Public domain-level summary without implementation text. |
 | `ShippingDecision` | Keep final behavior, restore verified behavior, diagnostic only, or reject. |
 | `VerificationIds` | Tests proving the decision cannot silently drift. |
+
+<!-- markdownlint-enable MD013 -->
 
 Development records are editor and test data only. They are excluded from
 shipping asset bundles, campaign queries, save schemas, rewards, traffic, and

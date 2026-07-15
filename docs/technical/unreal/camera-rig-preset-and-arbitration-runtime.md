@@ -5,8 +5,10 @@
 
 ## Governing decisions and specifications
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [HUD, radar, camera, and navigation parity](../../adr/unreal/ui/hud-radar-camera-and-navigation.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
 - [Camera system runtime](camera-system-runtime.md)
 
@@ -24,6 +26,8 @@ raw previous-camera pointers with validated identities and typed requests.
 
 ## Ownership
 
+<!-- markdownlint-disable MD013 -->
+
 | Authority | Responsibility |
 | :--- | :--- |
 | Camera catalog | Stable mode, rig, preset, target, transition, modifier, and availability identities. |
@@ -35,6 +39,8 @@ raw previous-camera pointers with validated identities and typed requests.
 | Gameplay services | Typed mission, vehicle, character, conversation, race, and locator observations. |
 | Development tools | Read-only frustum, rail, hull, collision, and candidate visualization. |
 
+<!-- markdownlint-enable MD013 -->
+
 A camera rig cannot write mission, progression, vehicle, character, locator,
 input-device, or save state. It can only consume an immutable observation and
 return a desired view plus optional presentation requests.
@@ -42,6 +48,8 @@ return a desired view plus optional presentation requests.
 ## Runtime topology
 
 The runtime module owns these C++ types:
+
+<!-- markdownlint-disable MD013 -->
 
 | Type | Responsibility |
 | :--- | :--- |
@@ -56,6 +64,8 @@ The runtime module owns these C++ types:
 | `FSharCameraTargetSnapshot` | Immutable target transform, motion, state, bounds, and sockets. |
 | `FSharDesiredCameraView` | Desired location, rotation, look target, FOV, aspect, planes, and modifier requests. |
 | `FSharCameraEvaluationResult` | Closed success or failure result with correction evidence. |
+
+<!-- markdownlint-enable MD013 -->
 
 The camera catalog is shared immutable data. Active requests, input, collision,
 and target snapshots are local-player state.
@@ -87,6 +97,8 @@ incompatible revisions fail catalog activation.
 
 Every rig declares one availability class:
 
+<!-- markdownlint-disable MD013 -->
+
 | Availability | Contract |
 | :--- | :--- |
 | `shipping_default` | Available through ordinary player or gameplay policy. |
@@ -95,6 +107,8 @@ Every rig declares one availability class:
 | `development_only` | Editor, automation, or authorized development builds only. |
 | `diagnostic_only` | Read-only verification and visualization; never a gameplay view. |
 | `excluded` | Preserved as evidence but unavailable at runtime. |
+
+<!-- markdownlint-enable MD013 -->
 
 Orbit-debug, tracker-debug, free-debug, snapshot inspection, and frustum drawing
 cannot appear in ordinary shipping mode rotation unless an accepted public
@@ -262,7 +276,8 @@ observations for the current player and rig policy. The result contains blocking
 hits, ground correction, target exclusion, query revision, and world frame.
 
 Collision correction is applied by one shared adapter. Rigs may choose different
-query shapes, radii, margins, lags, or fallback policies, but they cannot maintain
+query shapes, radii, margins, lags, or fallback policies, but they cannot
+maintain
 private unbounded intersection arrays.
 
 When no valid corrected position exists, the subsystem cuts or blends to the
@@ -329,7 +344,8 @@ Kull-style and tracker-style orbit rigs are classified as cheat or development
 modes unless a public product policy promotes them. They orbit a target using
 validated rotation, elevation, magnitude, FOV, and input limits.
 
-Tracker-style distance-to-FOV mapping is monotonic, clamped, and uses a validated
+Tracker-style distance-to-FOV mapping is monotonic, clamped, and uses a
+validated
 preset. Development controls cannot read an unrelated player's controller or
 persist modified preset values.
 
@@ -397,7 +413,8 @@ controllers cannot change gameplay state or select the next camera directly.
 ## Reverse rig
 
 A dedicated reverse rig may be selected when a vehicle snapshot satisfies the
-validated reverse policy. It defines rear position and target offsets, collision,
+validated reverse policy. It defines rear position and target offsets,
+collision,
 FOV, shake, transition, and minimum stable duration.
 
 The rig cannot switch from numerical velocity noise. If reverse state becomes
@@ -410,7 +427,8 @@ The super-sprint overview is an authored contextual rig. Each bonus race or
 world variant references a camera-shot definition containing position, target,
 up vector, FOV, aspect policy, and near and far planes.
 
-Platform-specific hardcoded arrays and special-case clipping hacks are forbidden.
+Platform-specific hardcoded arrays and special-case clipping hacks are
+forbidden.
 Target packaging may choose validated presentation variants, but every variant
 must preserve the same semantic framing and race visibility contract.
 
@@ -425,12 +443,14 @@ new target-set revisions. A rig cannot silently keep a stale target pointer.
 
 ## Wreckless locator rig
 
-Wreckless presentation is a contextual or cheat rig driven by typed camera-locator
+Wreckless presentation is a contextual or cheat rig driven by typed
+camera-locator
 observations. A locator observation contains locator identity, player identity,
 world transform, activation reason, expiry, and streaming revision.
 
 The rig chooses an eligible locator through deterministic priority and distance
-policy, then frames the current target with bounded distance-to-FOV mapping. When
+policy, then frames the current target with bounded distance-to-FOV mapping.
+When
 no locator is eligible, it uses the declared target-relative fallback.
 
 Raw global locator events and a mutable last-position sentinel are forbidden.

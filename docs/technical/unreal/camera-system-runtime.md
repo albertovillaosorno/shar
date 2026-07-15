@@ -5,9 +5,12 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [HUD, radar, camera, and navigation parity](../../adr/unreal/ui/hud-radar-camera-and-navigation.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
 
 ## Purpose
@@ -15,16 +18,20 @@
 This specification defines the native player-camera system, mode arbitration,
 vehicle and character tracking, animated shots, conversations, first-person and
 bumper views, camera collision, field of view, input, shake, cuts, blending,
-letterbox presentation, skipping, and recovery. It replaces direct mode switching,
+letterbox presentation, skipping, and recovery. It replaces direct mode
+switching,
 mode-owned global input, and restoration of raw prior-camera pointers with typed
 camera requests and deterministic policy.
 
 Detailed rig identities, imported presets, target snapshots, per-player
 isolation, rail and static cameras, specialized modes, modifiers, and diagnostic
 visualization follow the
+<!-- markdownlint-disable-next-line MD013 -->
 [camera rig, preset, and arbitration runtime](camera-rig-preset-and-arbitration-runtime.md).
 
 ## Ownership
+
+<!-- markdownlint-disable MD013 -->
 
 | Authority | Responsibility |
 | :--- | :--- |
@@ -35,12 +42,16 @@ visualization follow the
 | UI presentation | Letterbox, skip prompt, subtitle-safe region, and accessibility projection. |
 | Input service | Camera action values and active mapping context. |
 
+<!-- markdownlint-enable MD013 -->
+
 A camera mode never owns mission progression, conversation state, vehicle state,
 or input-device identity. It consumes immutable observations and returns a view.
 
 ## Runtime topology
 
 The runtime module owns these C++ types:
+
+<!-- markdownlint-disable MD013 -->
 
 | Type | Responsibility |
 | :--- | :--- |
@@ -55,12 +66,16 @@ The runtime module owns these C++ types:
 | `FSharCameraHandle` | Move-only cancellation and ownership handle. |
 | `FSharCameraObservation` | Immutable target transform, velocity, state, input, and world snapshot. |
 
+<!-- markdownlint-enable MD013 -->
+
 Gameplay systems request camera interest. Only the camera subsystem selects and
 activates a mode.
 
 ## Definition contract
 
 Every camera-mode definition contains:
+
+<!-- markdownlint-disable MD013 -->
 
 | Field | Contract |
 | :--- | :--- |
@@ -76,13 +91,16 @@ Every camera-mode definition contains:
 | `VerificationPolicy` | Required active mode, target, framing, and completion observations. |
 | `DefinitionRevision` | Immutable revision used to reject stale requests. |
 
+<!-- markdownlint-enable MD013 -->
+
 Presets use explicit units and validated bounds. Display names cannot select
 runtime behavior.
 
 ## Request arbitration
 
 A request contains requester identity, reason, priority class, mode identity,
-target identities, preset identity, transition policy, lifetime, and cancellation
+target identities, preset identity, transition policy, lifetime, and
+cancellation
 policy.
 
 Requests are ordered by:
@@ -95,7 +113,8 @@ Requests are ordered by:
 1. default follow mode; and
 1. debug mode when development policy permits it.
 
-Equal-priority requests use stable requester and request identities as tie-breakers.
+Equal-priority requests use stable requester and request identities as
+tie-breakers.
 Listener order and frame arrival order cannot decide the active camera.
 
 The active stack stores request identities and typed restoration policy, not raw
@@ -119,7 +138,8 @@ Every non-active result contains a typed reason.
 
 ## Shared view calculation
 
-Each mode produces a desired location, rotation, target, FOV, post-process preset,
+Each mode produces a desired location, rotation, target, FOV, post-process
+preset,
 and optional modifier requests. The player camera manager applies them in one
 native update path.
 
@@ -160,10 +180,12 @@ request ends.
 
 ## Chase camera
 
-Chase mode is a vehicle-follow specialization with a validated rod, position lag,
+Chase mode is a vehicle-follow specialization with a validated rod, position
+lag,
 target lag, minimum and maximum FOV, maximum-speed reference, and FOV lag.
 
-Speed-to-FOV mapping is monotonic and clamped. A reset, teleport, invalid target,
+Speed-to-FOV mapping is monotonic and clamped. A reset, teleport, invalid
+target,
 or extreme displacement triggers a declared cut or recovery blend rather than a
 single-frame sweep through the world.
 
@@ -178,7 +200,8 @@ policy as follow mode.
 
 ## First-person camera
 
-First-person mode binds to a character or vehicle socket and consumes native look
+First-person mode binds to a character or vehicle socket and consumes native
+look
 input. It declares:
 
 - socket or eye identity;
@@ -204,7 +227,8 @@ when the effect ends.
 
 ## Conversation camera
 
-Conversation mode consumes two stable character identities and a shot definition.
+Conversation mode consumes two stable character identities and a shot
+definition.
 A shot declares:
 
 - speaker and listener role;
@@ -216,7 +240,8 @@ A shot declares:
 - character-position locking permission; and
 - transition and cut behavior.
 
-Shot selection is deterministic from conversation identity, line or beat ordinal,
+Shot selection is deterministic from conversation identity, line or beat
+ordinal,
 speaker role, and shot policy. Free-form character names or array indices cannot
 select a shot.
 
@@ -251,7 +276,8 @@ raw future mode and activate it after the owner has been destroyed.
 
 ## Skipping
 
-Skip input is accepted only when the active definition permits it and the current
+Skip input is accepted only when the active definition permits it and the
+current
 sequence is at a safe skip point. A skip transaction:
 
 1. validates the request and active owner;
@@ -268,7 +294,8 @@ Letterbox presentation is a UI request owned by the active camera or cinematic
 handle. It declares transition duration, safe-area behavior, subtitle policy,
 and suppression rules.
 
-The camera subsystem does not draw bars directly. Releasing or failing the camera
+The camera subsystem does not draw bars directly. Releasing or failing the
+camera
 request releases the letterbox handle. A definition may suppress one transition
 only through explicit typed policy.
 
@@ -291,7 +318,8 @@ FOV values are finite and clamped to platform and accessibility policy. Dynamic
 FOV may use speed, state, boost, or authored sequence progress. Every mapping is
 versioned and deterministic.
 
-A mode transition blends FOV according to its transition policy. Releasing a mode
+A mode transition blends FOV according to its transition policy. Releasing a
+mode
 restores the selected lower-priority preset, not a cached numeric FOV from an
 unrelated world revision.
 
@@ -310,7 +338,8 @@ mapping stack.
 Shake, damage instability, speed effects, and other modifiers are independent
 requests. The player camera manager applies them after the base mode view.
 
-Each modifier declares priority, amplitude limits, duration, blend, accessibility
+Each modifier declares priority, amplitude limits, duration, blend,
+accessibility
 scaling, and cancellation. Disabling shake cannot change base camera position,
 mode selection, or gameplay state.
 
@@ -325,7 +354,8 @@ Debug state is excluded from save data and deterministic gameplay replay.
 
 ## Streaming and lifecycle
 
-Target destruction, world teardown, streaming, possession change, or local-player
+Target destruction, world teardown, streaming, possession change, or
+local-player
 removal invalidates affected requests. The subsystem then:
 
 1. cancels mode-local input, animation, UI, and modifier handles;
@@ -368,5 +398,6 @@ Automated verification proves:
 - animated completion and skip are exactly once;
 - letterbox, input, shake, and modifiers always release on terminal paths;
 - debug camera cannot influence shipping acceptance; and
-- fixed-step replay produces equivalent mode, target, transition, and view-policy
+- fixed-step replay produces equivalent mode, target, transition, and
+  view-policy
   results.

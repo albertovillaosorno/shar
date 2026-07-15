@@ -69,10 +69,13 @@ an Internet Archive capture of the Public.Resource.Org reporter duplicate.
 
 - *Micro Star v. FormGen, Inc.*, 154 F.3d 1107 (9th Cir. 1998), archived
   reported-opinion duplicate. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://web.archive.org/web/20151001104503/https://law.resource.org/pub/us/case/reporter/F3/154/154.F3d.1107.html>
   (Accessed: 13 July 2026).
+<!-- markdownlint-disable-next-line MD013 -->
 - [Lewis Galoob Toys, Inc. v. Nintendo of America, Inc](lewis-galoob-toys-v-nintendo.md).
 - [17 U.S.C. § 103](../statutes/17-usc-103.md).
 - [17 U.S.C. § 106](../statutes/17-usc-106.md).
 - [17 U.S.C. § 107](../statutes/17-usc-107.md).
+<!-- markdownlint-disable-next-line MD013 -->
 - [Derivative Works And Game Mods](../doctrines/derivative-works-and-game-mods.md).

@@ -28,6 +28,8 @@ The following matrix applies the accepted [Lawful local input and publication
 boundary][lawful-input-boundary] to the current repository surface. It records
 the publication baseline, not a license grant for any particular artifact.
 
+<!-- markdownlint-disable MD013 -->
+
 | Artifact class                                  | Public baseline                                           | Required evidence before inclusion                                                             |
 | :---------------------------------------------- | :-------------------------------------------------------- | :--------------------------------------------------------------------------------------------- |
 | Repository source, schemas, and documentation   | Allowed when independently authored or otherwise licensed | Provenance, license scope, and excluded-material scan                                          |
@@ -38,6 +40,8 @@ the publication baseline, not a license grant for any particular artifact.
 | Original game files and extracted payloads      | Excluded                                                  | No public-repository exception is established                                                  |
 | Converted game-derived output                   | Local only by default                                     | Source-content rights and output-specific distribution authority                               |
 | Third-party replacement media                   | Excluded by default                                       | Exact license, attribution, modification, and redistribution authority                         |
+
+<!-- markdownlint-enable MD013 -->
 
 The baseline does not change according to whether the repository is described as
 personal, educational, noncommercial, preservation-oriented, or open source.

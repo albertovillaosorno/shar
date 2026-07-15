@@ -44,6 +44,7 @@ controlling jurisdiction is materially unclear.
 
 ## Sources
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Lawful local input and publication boundary](../../adr/legal/lawful-local-input-and-publication-boundary.md)
 - [SHAR legal research index](../index.md)
 - [Software interoperability research][software-interoperability]

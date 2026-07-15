@@ -2,13 +2,15 @@
 
 - Status: Accepted
 - Decision date: 2026-07-14
-- Scope: Reusable character, vehicle, animation, and interaction action execution
+- Scope: Reusable character, vehicle, animation, and interaction action
+  execution
 
 ## Context
 
 Gameplay repeatedly needs bounded ordered actions: wait, publish a typed event,
 move a character, orient or position it, snap to ground, play or hold animation,
-change locomotion, open a vehicle door, jump, dodge, react, recover, or commit an
+change locomotion, open a vehicle door, jump, dodge, react, recover, or commit
+an
 interaction result. These actions need shared cancellation, resource ownership,
 timeouts, verification, and recovery.
 
@@ -40,7 +42,8 @@ kind. Duplicate identities, missing executors, incompatible resource claims,
 invalid timeouts, and unresolved assets fail validation before runtime. Array
 position and case-insensitive string hashing are not identity authority.
 
-Character movement uses Character Movement and authored navigation or interaction
+Character movement uses Character Movement and authored navigation or
+interaction
 slots. Animation uses montages, sections, slots, root motion, and notifies.
 Vehicle actions delegate to the vehicle application port. Domain effects and
 save changes remain outside the task and commit only through typed application
@@ -61,7 +64,8 @@ ports.
   states; a raw entrant counter cannot become negative or strand the door.
 - Cancellation and world streaming cannot leave input, locomotion, root motion,
   sounds, doors, or interaction slots locked.
-- Blueprint may configure reflected parameters and presentation assets but cannot
+- Blueprint may configure reflected parameters and presentation assets but
+  cannot
   add unregistered action kinds or domain mutations.
 
 ## Rejected alternatives

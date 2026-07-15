@@ -5,8 +5,11 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 
 ## Purpose
@@ -17,18 +20,23 @@ progression across supported operating systems and processor architectures.
 
 Logical slot policy, device-local settings, slot summaries, storage-provider
 readiness, quota, delete, reset, and user remediation follow the
+<!-- markdownlint-disable-next-line MD013 -->
 [device configuration and save-slot runtime](device-configuration-and-save-slot-runtime.md).
 Persistent destructible and consumable placement state follows the
+<!-- markdownlint-disable-next-line MD013 -->
 [persistent world-object state runtime](persistent-world-object-state-runtime.md).
 
 ## Repository model
 
 The gameplay domain produces an immutable logical save snapshot through a typed
 save port. The snapshot contains schema-defined values only. A platform storage
-adapter serializes, stages, validates, and commits that snapshot using the native
+adapter serializes, stages, validates, and commits that snapshot using the
+native
 storage and lifecycle facilities of the selected target.
 
 A logical save document contains at least:
+
+<!-- markdownlint-disable MD013 -->
 
 | Field | Contract |
 | :--- | :--- |
@@ -39,6 +47,8 @@ A logical save document contains at least:
 | `ProgressionState` | Levels, missions, collectibles, rewards, vehicles, costumes, and bonus-state records. |
 | `ResumeState` | Optional resumable mission and step identity recorded only at a valid checkpoint. |
 | `IntegrityRecord` | Deterministic length and checksum evidence for the complete serialized candidate. |
+
+<!-- markdownlint-enable MD013 -->
 
 A document never contains a native pointer, object address, compiler layout,
 platform path, drive letter, mount point, package filename, localized display
@@ -139,7 +149,8 @@ revision and never treats a staging file as successful progress.
 - x64 and ARM64 produce and consume logically equivalent documents.
 - The accepted revision is never overwritten in place.
 - A success result means the committed revision was read back and validated.
-- Failed writes, migrations, permissions, lifecycle flushes, and checksums retain
+- Failed writes, migrations, permissions, lifecycle flushes, and checksums
+  retain
   the last accepted revision.
 - Portable progression never depends on native paths, pointer width, byte order,
   display names, or graphics settings.
@@ -169,7 +180,8 @@ Failure returns a typed result and leaves no misleading success marker.
 
 ## Verification
 
-- Golden save documents generated from equivalent snapshots compare byte-for-byte
+- Golden save documents generated from equivalent snapshots compare
+  byte-for-byte
   across supported x64 and ARM64 test environments.
 - Every supported target reads the same golden documents into equivalent domain
   snapshots.

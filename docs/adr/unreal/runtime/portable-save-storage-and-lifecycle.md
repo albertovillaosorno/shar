@@ -11,7 +11,8 @@ Native integer layout, pointer width, byte order, filesystem behavior, path
 syntax, case sensitivity, process lifecycle, and mobile suspension must not
 create different progression or incompatible save identities.
 
-Android may suspend, background, or terminate a process under a bounded lifecycle
+Android may suspend, background, or terminate a process under a bounded
+lifecycle
 window. Desktop platforms also experience crashes, power loss, interrupted
 writes, and storage failures. A partially written save cannot be accepted as
 progress.
@@ -33,7 +34,8 @@ The domain owns save meaning through typed ports. Platform adapters own physical
 storage locations, permission handling, durable replacement, lifecycle signals,
 and operating-system diagnostics. A save operation stages and validates a
 complete candidate before replacing the previous accepted revision. Failure
-preserves the last valid save and never leaves a success marker for partial data.
+preserves the last valid save and never leaves a success marker for partial
+data.
 
 Android background and suspension signals may request a bounded flush of already
 committed domain state. They do not invent progress, skip validation, or mutate
@@ -53,7 +55,8 @@ Those mechanisms require separate authority.
 
 ## Consequences
 
-- Windows, Linux, macOS, Android, x64, and ARM64 share progression and save keys.
+- Windows, Linux, macOS, Android, x64, and ARM64 share progression and save
+  keys.
 - Save compatibility depends on schema and content revisions, not platform paths
   or native binary layout.
 - Canonical catalog identities survive platform transfer and migration.
@@ -62,7 +65,8 @@ Those mechanisms require separate authority.
   last accepted revision.
 - Device-local graphics and input presentation settings cannot change portable
   gameplay state.
-- Missing mod or catalog content returns a typed unavailable or migration result;
+- Missing mod or catalog content returns a typed unavailable or migration
+  result;
   it is not silently deleted from progression.
 
 ## Rejected alternatives

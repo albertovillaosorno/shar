@@ -67,5 +67,7 @@ Section 1201 analysis.
 - [Krause v. Titleserv, Inc](krause-v-titleserv.md).
 - [17 U.S.C. § 109](../statutes/17-usc-109.md).
 - [17 U.S.C. § 117](../statutes/17-usc-117.md).
+<!-- markdownlint-disable-next-line MD013 -->
 - [Lawful Copy And Local Game Modification](../doctrines/lawful-copy-and-local-game-modification.md).
+<!-- markdownlint-disable-next-line MD013 -->
 - [Software License Reverse-Engineering Clauses](../contracts/software-license-reverse-engineering-clauses.md).

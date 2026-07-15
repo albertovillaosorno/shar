@@ -79,6 +79,7 @@ service. A wrap label is descriptive, not dispositive.
 - *Specht v. Netscape Communications Corp.*, 306 F.3d 17 (2d Cir. 2002), Docket
   Nos. 01-7860, 01-7870, 01-7872, secondary duplicate copy with paragraph
   numbering:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://www.courtlistener.com/opinion/779363/christopher-specht-john-gibson-michael-fagan-sean-kelly-mark-gruber/>
   (Accessed: 13 July 2026).
 - Official authenticated Second Circuit opinion: not located in the reviewed

@@ -5,10 +5,15 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Canonical seven-level campaign and world variants](../../adr/unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native World Partition and Data Layers](../../adr/pipeline/unreal/world-partition-and-data-layer-import.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Collector cards, coins, rewards, gags, and wasps](../../adr/gameplay/collectibles/collectibles-rewards-gags-and-wasps.md)
 
 ## Purpose
@@ -23,6 +28,8 @@ idempotent state transactions.
 
 ## Ownership
 
+<!-- markdownlint-disable MD013 -->
+
 | Authority | Responsibility |
 | :--- | :--- |
 | World-placement catalog | Stable world, layer, region, placement, and state-schema identities. |
@@ -32,12 +39,16 @@ idempotent state transactions.
 | Save service | Serialize, migrate, validate, and commit portable world-state records. |
 | Import pipeline | Convert source regions and object evidence into stable native placements. |
 
+<!-- markdownlint-enable MD013 -->
+
 A streamed actor never owns durable state. It projects one accepted record and
 submits typed mutation requests to the persistent-world subsystem.
 
 ## Runtime topology
 
 The runtime module owns these C++ types:
+
+<!-- markdownlint-disable MD013 -->
 
 | Type | Responsibility |
 | :--- | :--- |
@@ -48,6 +59,8 @@ The runtime module owns these C++ types:
 | `FSharPersistentObjectState` | Canonical placement, state value, revision, and transaction evidence. |
 | `FSharPersistentMutationRequest` | Placement, expected revision, transition, cause, and authority. |
 | `FSharPersistentMutationResult` | Closed success or failure result with accepted state. |
+
+<!-- markdownlint-enable MD013 -->
 
 The repository stores no actor pointers, streaming-cell handles, package paths,
 source ordinals, or load-order positions.
@@ -68,7 +81,8 @@ Every persistent object has one canonical `PlacementId`. Its definition binds:
 - definition revision.
 
 Identity is generated from reviewed placement data. Actor discovery order,
-package load order, streaming order, array index, truncated hash, or display name
+package load order, streaming order, array index, truncated hash, or display
+name
 cannot select durable state.
 
 Two definitions with the same canonical placement identity fail catalog
@@ -77,7 +91,8 @@ activation. One source alias may resolve to only one placement identity.
 ## Region and sector conversion
 
 Source sector or zone values remain import provenance. Conversion binds each
-recognized source region to one canonical base-world and logical region identity.
+recognized source region to one canonical base-world and logical region
+identity.
 The generated mapping records:
 
 - exact source region value and optional name;
@@ -89,13 +104,16 @@ The generated mapping records:
 Runtime streaming does not search a table of partial region hashes. Unknown,
 ambiguous, or colliding source region values remain conversion findings.
 
-A level-global persistent placement uses an explicit level-global region identity.
+A level-global persistent placement uses an explicit level-global region
+identity.
 It is not appended to a synthetic final sector or assigned from current load
 order.
 
 ## State schemas
 
 Each definition selects one closed state schema. Initial schemas include:
+
+<!-- markdownlint-disable MD013 -->
 
 | Schema | States |
 | :--- | :--- |
@@ -105,11 +123,14 @@ Each definition selects one closed state schema. Initial schemas include:
 | `variant` | Definition-owned closed variant identities. |
 | `staged_destructible` | Ordered authored damage or payout stages plus `destroyed`. |
 
+<!-- markdownlint-enable MD013 -->
+
 A state schema declares legal transitions. Arbitrary integers, cleared bits, and
 actor visibility are not durable state authority.
 
 Presentation may have additional transient animation, debris, particle, sound,
-or physics state. Those values are rebuilt from the accepted persistent state and
+or physics state. Those values are rebuilt from the accepted persistent state
+and
 are not serialized unless a separate schema explicitly requires them.
 
 ## Mutation transaction
@@ -175,7 +196,8 @@ When a World Partition cell or Runtime Data Layer becomes ready, the subsystem:
 1. registers weak runtime bindings for later accepted updates; and
 1. releases those bindings when the actors or composition unload.
 
-Streaming order cannot allocate identity. A late state read for an unloaded actor
+Streaming order cannot allocate identity. A late state read for an unloaded
+actor
 may update the repository but cannot mutate a replacement actor without matching
 world, placement, and binding revisions.
 
@@ -197,7 +219,8 @@ recreated.
 ## Save representation
 
 Portable save data stores a deterministic map from canonical placement identity
-to non-default accepted state and revision evidence. Default state may be omitted
+to non-default accepted state and revision evidence. Default state may be
+omitted
 only when schema and catalog revisions make reconstruction unambiguous.
 
 A compact generated representation may use ordinals or bitsets inside one exact
@@ -218,7 +241,8 @@ Migration uses explicit redirects and state converters. It may:
 - preserve state for temporarily unavailable optional content; or
 - reject an incompatible mapping while preserving the old save.
 
-Deleting a definition cannot silently delete accepted portable state. Mod overlays
+Deleting a definition cannot silently delete accepted portable state. Mod
+overlays
 must namespace new placements and declare behavior when the providing mod is
 absent.
 
@@ -263,7 +287,8 @@ Automated tests cover:
 - late asynchronous results after actor replacement; and
 - equivalent logical state on every supported architecture and platform.
 
-Runtime assertions verify that a loaded persistent actor has exactly one matching
+Runtime assertions verify that a loaded persistent actor has exactly one
+matching
 placement definition and accepted state projection.
 
 ## Invariants

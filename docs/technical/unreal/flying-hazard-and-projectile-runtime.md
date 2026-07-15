@@ -5,8 +5,11 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native flying-hazard actors and StateTree execution](../../adr/unreal/runtime/native-flying-hazard-actors-and-state-trees.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 
@@ -22,12 +25,16 @@ lists with bounded native systems.
 
 The runtime has four authorities:
 
+<!-- markdownlint-disable MD013 -->
+
 | Authority | Responsibility |
 | :--- | :--- |
 | Gameplay catalog | Stable identities and immutable hazard definitions. |
 | Hazard subsystem | Validation, loaded-instance lookup, spawn coordination, pooling, and typed results. |
 | Pawn and StateTree | Per-instance perception, movement, behavior, animation state, and task lifetime. |
 | Domain services | Damage, currency, progression, mission observations, rewards, and save commits. |
+
+<!-- markdownlint-enable MD013 -->
 
 A collision callback, animation notify, projectile actor, visual effect, or
 StateTree task may request a domain operation. It cannot write progression,
@@ -36,6 +43,8 @@ currency, mission, or save storage directly.
 ## Runtime topology
 
 The runtime module owns these C++ types:
+
+<!-- markdownlint-disable MD013 -->
 
 | Type | Responsibility |
 | :--- | :--- |
@@ -50,12 +59,17 @@ The runtime module owns these C++ types:
 | `USharHazardSpawnDefinition` | Stable spawn identity, activation, persistence, and respawn policy. |
 | `ASharHazardSpawnAnchor` | Authored world anchor that references one spawn definition. |
 
+<!-- markdownlint-enable MD013 -->
+
 `ASharFlyingHazardPawn` is not a progression object. The persistent identity is
-owned by the catalog and save service and is rebound when presentation is loaded.
+owned by the catalog and save service and is rebound when presentation is
+loaded.
 
 ## Definition contract
 
 Every `USharFlyingHazardDefinition` contains:
+
+<!-- markdownlint-disable MD013 -->
 
 | Field | Contract |
 | :--- | :--- |
@@ -76,12 +90,16 @@ Every `USharFlyingHazardDefinition` contains:
 | `PoolingPolicy` | Preallocation count and reset contract. |
 | `VerificationIds` | Golden scenarios required before activation. |
 
+<!-- markdownlint-enable MD013 -->
+
 Invalid definitions fail asset validation. Runtime fallback never guesses a
 projectile, collision channel, reward, StateTree, target filter, or animation.
 
 ## Spawn definition
 
 Every `USharHazardSpawnDefinition` contains:
+
+<!-- markdownlint-disable MD013 -->
 
 | Field | Contract |
 | :--- | :--- |
@@ -95,6 +113,8 @@ Every `USharHazardSpawnDefinition` contains:
 | `RespawnDelay` | Required only when the policy uses a cooldown. |
 | `InitialStateTags` | Validated state supplied to the StateTree context. |
 | `DefinitionRevision` | Immutable revision used to reject stale loaded instances. |
+
+<!-- markdownlint-enable MD013 -->
 
 A counted wasp-camera placement uses permanent level persistence and `never`
 respawn after its destruction transaction commits. Streaming out an intact wasp
@@ -138,6 +158,8 @@ the instance and records a diagnostic instead of returning it to the pool.
 The hazard StateTree schema exposes read-only definition data and typed runtime
 ports. The canonical state vocabulary is:
 
+<!-- markdownlint-disable MD013 -->
+
 | State | Contract |
 | :--- | :--- |
 | `dormant` | Presentation may be loaded, but perception and movement are inactive. |
@@ -152,6 +174,8 @@ ports. The canonical state vocabulary is:
 | `damaged` | Apply damage reaction and evaluate shield or phase transitions. |
 | `dying` | Disable attacks, commit destruction once, play terminal presentation, and release resources. |
 | `despawned` | Unregister or pool after every terminal obligation is complete. |
+
+<!-- markdownlint-enable MD013 -->
 
 UFO templates may refine these states with `searching`, `approaching_target`,
 `beam_active`, `pulling_target`, `releasing_target`, and boss damage phases. A
@@ -193,7 +217,8 @@ timestamp, and expiration. The controller converts perception updates into a
 sorted immutable snapshot for the next StateTree evaluation. Listener order is
 never behavior priority.
 
-A stimulus with an unloaded source may remain as a location until its expiration,
+A stimulus with an unloaded source may remain as a location until its
+expiration,
 but cannot become a target requiring a live Actor. Stale or unresolved targets
 produce a typed rejection and return the StateTree to a safe state.
 
@@ -246,7 +271,8 @@ planner. Short obstacle avoidance may use bounded sweeps. Movement never depends
 on render visibility, camera direction, pointer order, or variable random seeds.
 
 Randomized orbit or evasion choices use a deterministic stream seeded from the
-campaign seed, `SpawnId`, definition revision, and action ordinal. Save data does
+campaign seed, `SpawnId` , definition revision, and action ordinal. Save data
+does
 not persist transient random-generator internals.
 
 ## Presentation and animation
@@ -269,6 +295,8 @@ still require the authoritative StateTree task and domain transaction.
 
 Every projectile definition contains:
 
+<!-- markdownlint-disable MD013 -->
+
 | Field | Contract |
 | :--- | :--- |
 | `ProjectileId` | Stable canonical identity. |
@@ -282,6 +310,8 @@ Every projectile definition contains:
 | `ImpactPolicy` | Typed player, vehicle, world, shield, and ignored-target effects. |
 | `PresentationPolicy` | Mesh, trail, audio, impact effect, and accessibility cue. |
 | `SubstepPolicy` | Maximum simulation step and iteration count. |
+
+<!-- markdownlint-enable MD013 -->
 
 ## Projectile lifecycle
 
@@ -340,7 +370,8 @@ and save policies.
 
 The tractor-beam component owns a bounded spatial query and target reservations.
 A target must pass class, mission, team, mass, collision, and liveness filters.
-Accepted targets are sorted by distance and stable identity before the configured
+Accepted targets are sorted by distance and stable identity before the
+configured
 maximum count is applied.
 
 Beam activation follows these phases:
@@ -375,10 +406,12 @@ camera completion.
 ## Damage, destruction, and rewards
 
 All damage requests include source, target, damage type, magnitude, hit result,
-mission context, and action ordinal. The domain service returns the authoritative
+mission context, and action ordinal. The domain service returns the
+authoritative
 result before presentation changes.
 
-Destruction is idempotent by persistent spawn identity. The transaction order is:
+Destruction is idempotent by persistent spawn identity. The transaction order
+is:
 
 1. reject a duplicate or ineligible request;
 1. commit damage and terminal state;
@@ -415,6 +448,8 @@ error; it does not silently reuse an incompatible pooled Pawn.
 
 ## Historical optimization translation
 
+<!-- markdownlint-disable MD013 -->
+
 | Historical technique | Original constraint | Unreal replacement |
 | :--- | :--- | :--- |
 | Fixed actor arrays and manual banks | Avoid dynamic allocation and old-console memory pressure. | World subsystem registries plus validated actor and projectile pools. |
@@ -426,6 +461,8 @@ error; it does not silently reuse an incompatible pooled Pawn.
 | Procedural drawable mutation | Limited animation asset pipeline. | Animation Blueprint, Control Rig, component animation, and material parameters. |
 | Global event listeners | Centralized low-cost awareness. | AI Perception stimuli and typed application events. |
 
+<!-- markdownlint-enable MD013 -->
+
 Native optimization cannot change attack timing, target ordering, damage,
 rewards, persistence, or mission observations.
 
@@ -434,7 +471,8 @@ rewards, persistence, or mission observations.
 - Every loaded hazard resolves to one definition and, when persistent, one spawn
   identity.
 - A persistent spawn identity has at most one live Pawn.
-- A pooled object has no previous owner, target, reward, collision, or task state.
+- A pooled object has no previous owner, target, reward, collision, or task
+  state.
 - Every movement step is swept and bounded.
 - Every projectile has one owner, one lifetime, and at most one impact result.
 - Every beam target has at most one reservation from one beam instance.
@@ -451,7 +489,8 @@ projectile, spawn identity, reward, or persistence revision is invalid. The
 instance enters a non-attacking diagnostic state, releases resources, and is
 unregistered or destroyed safely.
 
-A blocked movement query stops the Pawn and returns a typed failure. A projectile
+A blocked movement query stops the Pawn and returns a typed failure. A
+projectile
 activation failure produces no projectile and no cooldown commit unless the
 attack policy explicitly consumes the attempt. A beam failure releases all
 reservations. A reward or save failure prevents terminal cleanup until the
@@ -487,6 +526,7 @@ Automated tests must prove:
 - beam reservation, pull, capture, invalidation, and cancellation cleanup;
 - boss phase ordering and exactly-once terminal results;
 - camera rejection and interruption without gameplay blockage;
-- complete pooling reset after success, failure, cancellation, and world teardown;
+- complete pooling reset after success, failure, cancellation, and world
+  teardown;
   and
 - parity scenarios for every wasp and UFO definition used by the campaign.

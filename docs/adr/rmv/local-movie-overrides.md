@@ -24,7 +24,8 @@ resolve the same canonical cinematic and track identities.
   canonical source package or becoming a required dependency.
 - Override identity, validation, and selection remain deterministic while the
   media itself stays outside public history.
-- Physical paths and Android provider identifiers never become override identity.
+- Physical paths and Android provider identifiers never become override
+  identity.
 - An override must satisfy the canonical timeline and the selected target's
   verified media-player, codec, container, audio, and lifecycle contract.
 - Missing or invalid override media falls back to the supported canonical target

@@ -5,11 +5,17 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Canonical seven-level campaign and world variants](../../adr/unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Unified geographic world and level-state projection](../../adr/pipeline/unreal/unified-geographic-world-and-level-state-projection.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native world partition and data layers](../../adr/pipeline/unreal/world-partition-and-data-layer-import.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
 
 ## Purpose
@@ -34,6 +40,8 @@ Engine assets execute the contract. They do not infer or own campaign identity.
 
 `USharCampaignDefinition` is a non-Blueprint primary data asset with:
 
+<!-- markdownlint-disable MD013 -->
+
 | Field | Contract |
 | :--- | :--- |
 | `CampaignId` | Stable identity `base_campaign`. |
@@ -46,6 +54,8 @@ Engine assets execute the contract. They do not infer or own campaign identity.
 | `CreditsSequenceId` | Post-ending credits presentation. |
 | `RevisionToken` | Deterministic generated-data revision. |
 
+<!-- markdownlint-enable MD013 -->
+
 The ordered level list is dense, unique, and immutable for the base campaign.
 A mod may add a separate campaign definition but cannot insert rows into the
 base sequence or reuse its save keys.
@@ -53,6 +63,8 @@ base sequence or reuse its save keys.
 ## Level definition
 
 `USharLevelDefinition` is a non-Blueprint primary data asset with:
+
+<!-- markdownlint-disable MD013 -->
 
 | Field | Contract |
 | :--- | :--- |
@@ -79,6 +91,8 @@ base sequence or reuse its save keys.
 | `GagPlacementIds` | Exact level-specific counted placements. |
 | `AudioProfileId` | Level music, ambience, dialogue, and event policy. |
 | `CompletionTransition` | Successor level or campaign ending. |
+
+<!-- markdownlint-enable MD013 -->
 
 Starting vehicles and secret vehicles remain cataloged and playable but are not
 members of `ProgressionVehicleIds`.
@@ -186,6 +200,8 @@ completion but do not block the next story level.
 
 ## Street-race and wager membership
 
+<!-- markdownlint-disable MD013 -->
+
 | Level | Street-race set | Reward | Wager fee | Time | Payouts |
 | :--- | :--- | :--- | ---: | :--- | :--- |
 | 1 | time trial, circuit, checkpoint | `electaurus` | 20 | 3:15 | 40/60/80 |
@@ -196,9 +212,12 @@ completion but do not block the next story level.
 | 6 | resort time trial, casino circuit, Squidport checkpoint | `stutz_bearcat_36` | 45 | 1:55 | 90/135/180 |
 | 7 | store time trial, haunted circuit, countryside checkpoint | `open_wheel_race_car` | 50 | 1:30 | 100/150/200 |
 
+<!-- markdownlint-enable MD013 -->
+
 Payout values are easy, medium, and hard in that order. A wager-race attempt
 stages its entry debit and result transaction independently from level progress.
-Route topology, checkpoint order, opponents, position, timers, reset, finish, and
+Route topology, checkpoint order, opponents, position, timers, reset, finish,
+and
 exactly-once race-set rewards follow
 [Race route and opponent runtime](race-route-and-opponent-runtime.md).
 
@@ -246,7 +265,8 @@ Overall completion is:
 `0.99 * mean(level_01 through level_07 percentages) + movie_reward`
 
 `movie_reward` is `1.0` percentage point when the all-card movie reward is
-accepted and `0.0` otherwise. The runtime evaluates the equivalent exact rational
+accepted and `0.0` otherwise. The runtime evaluates the equivalent exact
+rational
 formula and formats the result for presentation.
 
 The all-card reward remains a separate transaction. Merely opening the movie
@@ -264,9 +284,11 @@ Each campaign level definition selects one generated Runtime Data Layer set
 containing only that level's variants and gameplay placements, plus one fixed
 time-of-day profile. Durable state for individual destructible, removable,
 consumable, or variant placements follows the
+<!-- markdownlint-disable-next-line MD013 -->
 [persistent world-object state runtime](persistent-world-object-state-runtime.md).
 
-The non-campaign `level_11_test` state selects development layers and may exercise
+The non-campaign `level_11_test` state selects development layers and may
+exercise
 the dynamic day-night cycle. It does not enter campaign ordering, completion, or
 save identity.
 

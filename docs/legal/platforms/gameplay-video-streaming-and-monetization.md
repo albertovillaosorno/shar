@@ -75,7 +75,8 @@ The current page separately describes generic or repetitive content and reused
 content, so the dated rename notice must not be mistaken for a complete version
 label for the live policy.
 
-Reused-content review applies to the channel as a whole and asks whether borrowed
+Reused-content review applies to the channel as a whole and asks whether
+borrowed
 material has significant original commentary, substantive modification, or
 educational or entertainment value. YouTube states that this review is separate
 from copyright, permission, and fair use, and that a channel can fail the rule
@@ -119,7 +120,9 @@ conditions, and required notices are verified.
 
 ## Supporting Bibliography
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [YouTube Game Content And Monetization Policies](../../bibliography/platform-policies/youtube-game-content-and-monetization.md).
+<!-- markdownlint-disable-next-line MD013 -->
 - [Xbox Game Content Usage Rules](../../bibliography/platform-policies/xbox-game-content-usage-rules.md).
 
 ## Primary And Official Sources

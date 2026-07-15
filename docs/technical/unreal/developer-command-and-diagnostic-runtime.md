@@ -6,8 +6,11 @@
 ## Governing decisions
 
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Validated game-feature mod overlays](../../adr/unreal/runtime/validated-game-feature-mod-overlays.md)
 
 ## Purpose
@@ -25,6 +28,8 @@ is not an ordinary player feature.
 
 ## Ownership
 
+<!-- markdownlint-disable MD013 -->
+
 | Authority | Responsibility |
 | :--- | :--- |
 | Command catalog | Stable command identities, schemas, permissions, availability, help, and aliases. |
@@ -34,13 +39,18 @@ is not an ordinary player feature.
 | Development UI | Entry, history, completion, output projection, and accessibility. |
 | Gameplay and domain services | Authoritative state transitions requested by permitted handlers. |
 
+<!-- markdownlint-enable MD013 -->
+
 The command runtime never owns progression, mission, vehicle, world, save,
-economy, or content state. A command handler may request a typed domain operation
+economy, or content state. A command handler may request a typed domain
+operation
 only when its definition authorizes that operation.
 
 ## Runtime topology
 
 The development module owns these C++ types:
+
+<!-- markdownlint-disable MD013 -->
 
 | Type | Responsibility |
 | :--- | :--- |
@@ -53,6 +63,8 @@ The development module owns these C++ types:
 | `FSharDeveloperCommandHandle` | Cancellation-safe handle for long-running work. |
 | `USharDeveloperConsoleViewModel` | Development-only entry, history, completion, and output projection. |
 
+<!-- markdownlint-enable MD013 -->
+
 The registry is world-aware. Definitions may be shared immutable assets, while
 active handles and caller permissions belong to a specific editor, world, or
 local-player scope.
@@ -60,6 +72,8 @@ local-player scope.
 ## Command definition
 
 Every command definition contains:
+
+<!-- markdownlint-disable MD013 -->
 
 | Field | Contract |
 | :--- | :--- |
@@ -75,6 +89,8 @@ Every command definition contains:
 | `ResultSchema` | Closed success and failure observation types. |
 | `Help` | Summary, argument descriptions, examples, and safety notes. |
 | `DefinitionRevision` | Immutable revision used to reject stale invocations. |
+
+<!-- markdownlint-enable MD013 -->
 
 Definitions cannot contain source-language callbacks, memory addresses, raw
 function pointers, arbitrary executable text, machine-specific paths, or
@@ -232,6 +248,8 @@ an application service or typed helper invoked directly.
 
 Every invocation returns one status:
 
+<!-- markdownlint-disable MD013 -->
+
 | Status | Meaning |
 | :--- | :--- |
 | `success` | The declared postcondition was observed. |
@@ -240,6 +258,8 @@ Every invocation returns one status:
 | `timed_out` | The authored bound elapsed and cleanup completed. |
 | `cancelled` | The caller or lifecycle cancelled the operation and cleanup completed. |
 | `queued` | The concurrency policy accepted the request for later execution. |
+
+<!-- markdownlint-enable MD013 -->
 
 Free-form text may accompany a result for developers, but text cannot drive
 subsequent gameplay or command transitions.
@@ -272,7 +292,8 @@ A batch plan records:
 - expected results; and
 - provenance for the repository-authored source.
 
-Unknown commands, parse errors, invalid aliases, or stale revisions fail the plan
+Unknown commands, parse errors, invalid aliases, or stale revisions fail the
+plan
 before the first side effect unless the plan explicitly declares an isolated
 best-effort diagnostic step.
 
@@ -290,7 +311,8 @@ Supported sinks are selected by build policy:
 - platform diagnostic output; and
 - explicitly configured repository-safe log file.
 
-The command surface cannot choose an arbitrary output path. Logs must not include
+The command surface cannot choose an arbitrary output path. Logs must not
+include
 credentials, private workstation paths, proprietary source paths, save payloads,
 or unrestricted object serialization.
 
@@ -317,12 +339,14 @@ presentation may expose a virtual keyboard, but both produce the same typed
 request.
 
 Opening the console acquires an input-mode lease and optional pause request.
-Closing, world travel, focus loss, controller removal, or UI destruction releases
+Closing, world travel, focus loss, controller removal, or UI destruction
+releases
 all leases. The console cannot leave gameplay input disabled.
 
 ## History and completion
 
-History stores bounded command identities and redacted typed arguments. Sensitive
+History stores bounded command identities and redacted typed arguments.
+Sensitive
 or non-repeatable arguments are omitted. History is device-local development
 state and never enters player saves.
 
@@ -352,36 +376,67 @@ one process-wide stack of mutable sections. Each draw request declares:
 - caller availability and permission.
 
 Supported primitive families include lines, arrows, circles, boxes, points,
-world text, screen text, and bounded graphs. Native engine debug-draw helpers may
+world text, screen text, and bounded graphs. Native engine debug-draw helpers
+may
 implement presentation, but they cannot become gameplay state.
 
 Sections are selected by stable identity. Push and pop order, fixed section
-capacity, pointer ownership, or toggling through an allocation array cannot select
+capacity, pointer ownership, or toggling through an allocation array cannot
+select
 which diagnostic data exists. One-frame sections clear automatically after the
 owning world frame; persistent sections require an explicit handle and teardown.
 
 Overlay requests are bounded by per-channel count, text length, lifetime, and
-memory budgets. Overflow drops lower-priority diagnostic presentation and records
+memory budgets. Overflow drops lower-priority diagnostic presentation and
+records
 one structured finding. It never corrupts gameplay memory or blocks simulation.
 
+## Screenshot and frame capture
+
+Screenshot and frame capture follow the
+<!-- markdownlint-disable-next-line MD013 -->
+[native platform bootstrap and error-recovery runtime](native-platform-bootstrap-and-error-recovery-runtime.md).
+Development commands may request a bounded capture by stable world, viewport,
+player, camera, frame, quality, locale, and presentation identity.
+
+Capture uses native screenshot or render-target facilities, an approved output
+destination, typed cancellation, redaction, and a closed result. Raw
+frame-buffer
+pointers, custom platform transfer protocols, and gameplay-owned pixel
+conversion
+are prohibited.
+
+Golden captures require deterministic readiness barriers. Image similarity is
+presentation evidence only and cannot replace gameplay, input, state, or timing
+verification.
+
 ## Runtime profiling
+<!-- markdownlint-disable-next-line MD013 -->
 
 Performance profiling uses native Unreal tracing, CSV profiling, Insights,
-platform counters, and repository-owned measurement labels. A profile scope
-contains:
+platform counters, and repository-owned measurement labels. Memory ownership,
+budgets, pressure, traces, leak verification, pools, and instance accounting
+follow the
+<!-- markdownlint-disable-next-line MD013 -->
+[memory ownership, budget, and diagnostics runtime](memory-ownership-budget-and-diagnostics-runtime.md).
+A profile scope contains:
 
+<!-- markdownlint-disable-next-line MD013 -->
 - stable sample identity;
 - parent scope identity;
 - thread and task context;
 - world and frame identity when applicable;
+<!-- markdownlint-disable-next-line MD013 -->
 - monotonic start and end observations;
+<!-- markdownlint-disable-next-line MD013 -->
 - count and optional byte metrics;
 - build and platform capability metadata; and
 - capture-session identity.
 
 Begin and end calls must be balanced in the same declared execution context.
 Missing end, recursive mismatch, cross-thread closure, non-monotonic time, or
-sample overflow records a profiling error rather than reassigning another sample.
+sample overflow records a profiling error rather than reassigning another
+sample.
 
 Frame aggregation may calculate inclusive time, exclusive time, call count,
 minimum, maximum, average, percentile, and bounded history. Presentation paging
@@ -389,12 +444,15 @@ is a view concern and cannot cap the number of instrumented identities in the
 trace format.
 
 Hardware performance counters are optional platform-adapter observations. A
-platform-specific counter implementation cannot change gameplay behavior, timing,
+platform-specific counter implementation cannot change gameplay behavior,
+timing,
 or quality policy. Unsupported counters return unavailable evidence and never
 fall back to guessed values.
 
-Profiling is disabled or compiled out according to package policy. Instrumentation
-must not allocate unbounded memory, retain destroyed worlds, expose private paths,
+Profiling is disabled or compiled out according to package policy.
+Instrumentation
+must not allocate unbounded memory, retain destroyed worlds, expose private
+paths,
 or write arbitrary files. Capture export uses an approved diagnostic destination
 and redaction policy.
 
@@ -408,6 +466,7 @@ repository's native assertion policy.
 Formatting uses bounded native strings. Invalid format data, overlong output,
 non-finite values, or encoding failure produces a safe diagnostic rather than a
 buffer overrun or truncated executable request.
+<!-- markdownlint-disable-next-line MD013 -->
 
 ## Mods and extensions
 
@@ -427,7 +486,8 @@ policy explicitly permits that identity and revision.
 ## Determinism
 
 Given the same catalog revision, caller profile, world snapshot, typed request,
-and application-service observations, lookup and dispatch select the same handler
+and application-service observations, lookup and dispatch select the same
+handler
 and result semantics.
 
 Wall-clock time, registration order, pointer address, hash-table iteration,

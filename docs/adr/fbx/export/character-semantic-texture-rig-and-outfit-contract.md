@@ -33,7 +33,8 @@ separate eye geometry where the source evidence supports it, and separate
 animation props where geometry and attachment evidence identify an independently
 activated object. Clothing is not converted into detachable runtime garments.
 Each published outfit is a complete integrated character FBX variant derived
-from one canonical topology, skeleton, skin-weight identity, and versioned outfit
+from one canonical topology, skeleton, skin-weight identity, and versioned
+outfit
 recipe.
 
 The outfit algorithm is character-generic. Any compatible character may receive
@@ -101,7 +102,8 @@ not permanently baked into every character animation.
 - Character polygon and vertex counts remain unchanged during this phase.
 - Mods can address stable semantic regions instead of editing incidental source
   texel islands.
-- Every outfit remains a self-contained FBX while sharing one auditable topology,
+- Every outfit remains a self-contained FBX while sharing one auditable
+  topology,
   rig, and skin source of truth.
 - Eye animation and detachable props remain evidence-driven rather than inferred
   from appearance alone.
@@ -118,6 +120,7 @@ not permanently baked into every character animation.
 - Increasing character polygon counts as part of texture modernization.
 - Treating clothing as a detachable runtime layer for every character.
 - Hand-painting each character or outfit as the production process.
-- Guessing blink behavior, shading maps, support-bone removal, or prop attachment.
+- Guessing blink behavior, shading maps, support-bone removal, or prop
+  attachment.
 - Using Blender, Maya, or another authoring application as the generation,
   repair, validation, or acceptance authority.

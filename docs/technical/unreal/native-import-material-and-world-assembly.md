@@ -6,9 +6,13 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Converted asset ingestion boundary](../../adr/unreal/import-adapters/converted-asset-ingestion-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Import review boundary](../../adr/unreal/import-adapters/import-review-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Staged mesh import and world assembly](../../adr/unreal/import-adapters/staged-mesh-import-and-world-assembly.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native asset translation without copy-paste](../../adr/pipeline/unreal/native-asset-translation-and-no-copy-paste.md)
 
 ## Purpose
@@ -19,16 +23,19 @@ canonical conversion phases have produced validated engine-independent evidence.
 It does not change the binary FBX writer, package taxonomy, extraction behavior,
 or runtime gameplay contracts. Cooked runtime requests, package mounting, and
 source-decoder exclusion follow the
+<!-- markdownlint-disable-next-line MD013 -->
 [native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md).
 
 ## Import transaction
 
 Each import uses one immutable plan and these phases:
 
-1. validate source identities, revisions, hashes, dependencies, and target names;
+1. validate source identities, revisions, hashes, dependencies, and target
+   names;
 1. import into a quarantined native staging area;
 1. read back mesh, media, audio, and data-asset structure;
-1. rebuild destination UV, texture, material, geometry, collision, and LOD state;
+1. rebuild destination UV, texture, material, geometry, collision, and LOD
+   state;
 1. assemble world components when the plan is a world package;
 1. verify every planned native property and dependency;
 1. publish the final stable package identities atomically; and
@@ -78,12 +85,16 @@ final package identity.
 Source UVs remain traceability evidence. They are not assumed to be the final
 native layout. Each mesh recipe declares one of these policies:
 
+<!-- markdownlint-disable MD013 -->
+
 | Policy | Contract |
 | :--- | :--- |
 | `preserve_validated` | Use a validated source UV channel without modification. |
 | `generate_destination` | Create a deterministic production UV channel and rebake textures. |
 | `preserve_and_generate_lightmap` | Preserve the material UV and generate a separate lightmap channel. |
 | `quarantine` | Reject the mesh because no valid deterministic destination exists. |
+
+<!-- markdownlint-enable MD013 -->
 
 A generated destination UV records chart boundaries, seams, orientation,
 padding, resolution class, overlap tolerance, output channel, and generator
@@ -176,13 +187,16 @@ valid when additional geometry would not improve the approved presentation goal.
 
 WAV import creates native sound assets and preserves normalized duration, sample
 rate, channel, loop, routing, subtitle, concurrency, and event identities. Cook
-settings are selected later by the target policy and cannot alter logical timing.
+settings are selected later by the target policy and cannot alter logical
+timing.
 
-JSON import creates typed data assets, tables, registries, StateTree bindings, or
+JSON import creates typed data assets, tables, registries, StateTree bindings,
+or
 purpose-built native records. Free-form JSON objects cannot become runtime
 reflection bags without a registered schema.
 
-MOV or normalized cinematic evidence creates validated media-source, media-player,
+MOV or normalized cinematic evidence creates validated media-source,
+media-player,
 texture, audio, subtitle, and synchronization assets according to the cinematic
 packaging policy. Import never assumes one container or codec works on every
 claimed target.

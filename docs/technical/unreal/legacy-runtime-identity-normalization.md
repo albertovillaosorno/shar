@@ -5,8 +5,11 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Converted asset ingestion boundary](../../adr/unreal/import-adapters/converted-asset-ingestion-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Import review boundary](../../adr/unreal/import-adapters/import-review-boundary.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 
@@ -22,6 +25,8 @@ chunk identifier, or string literal.
 
 ## Ownership
 
+<!-- markdownlint-disable MD013 -->
+
 | Authority | Responsibility |
 | :--- | :--- |
 | Conversion pipeline | Parse source values and emit normalized identity evidence. |
@@ -30,11 +35,15 @@ chunk identifier, or string literal.
 | Runtime subsystems | Consume typed native identities and policies. |
 | Provenance records | Preserve source ordinal, name, hash, chunk, and mapping revision. |
 
+<!-- markdownlint-enable MD013 -->
+
 No runtime subsystem may infer domain ownership from a source numeric range.
 
 ## Normalization record
 
 Every translated source identity produces one `FSharLegacyIdentityMapping` with:
+
+<!-- markdownlint-disable MD013 -->
 
 | Field | Contract |
 | :--- | :--- |
@@ -46,6 +55,8 @@ Every translated source identity produces one `FSharLegacyIdentityMapping` with:
 | `Availability` | Shipping, contextual, development, provenance-only, or rejected. |
 | `MappingRevision` | Immutable conversion-policy revision. |
 | `Evidence` | Package, manifest, or generated-record identity supporting the mapping. |
+
+<!-- markdownlint-enable MD013 -->
 
 Mappings are generated, reviewed, and immutable for a published catalog
 revision. Runtime code does not construct them from display text.
@@ -66,15 +77,39 @@ A native enum may represent a small closed execution vocabulary, but the enum
 value is generated from the canonical schema and is not required to equal the
 source ordinal.
 
+## Primitive width, alignment, and byte order
+
+Source platform aliases for integer width are conversion provenance only.
+Canonical records use explicit fixed-width signed and unsigned fields wherever
+serialization, hashing, identity, networking, or deterministic arithmetic depend
+on width.
+
+A source value that may be unaligned is decoded through a bounded reader that
+declares:
+
+- source width and signedness;
+- byte order;
+- required alignment or unaligned-read policy;
+- overflow and truncation behavior;
+- canonical native destination type; and
+- mapping and schema revision.
+
+Runtime code never reinterprets adjacent words as a wider native integer,
+depends
+on compiler padding, or changes comparison and hashing by target architecture.
+Malformed width, alignment, or byte-order evidence fails conversion.
+
 ## Actor-state values
 
-Source flying-actor state numbers map to canonical StateTree state identities and
+Source flying-actor state numbers map to canonical StateTree state identities
+and
 gameplay tags such as fade-in, passive, preparing attack, ready, attacking, and
 destroyed.
 
 The numeric source state is provenance. Native transitions, interruption,
 timeouts, and verification follow the flying-hazard StateTree contract. Save or
-replication state uses canonical state identity and definition revision, never an
+replication state uses canonical state identity and definition revision, never
+an
 unversioned source integer.
 
 ## Blob-shadow mappings
@@ -173,7 +208,8 @@ changing progression.
 ## Particle identities
 
 Source particle numbers map to stable Niagara-system or presentation-definition
-identities. A particle definition declares spawn transform, attachment, lifetime,
+identities. A particle definition declares spawn transform, attachment,
+lifetime,
 bounds, scalability, pooling, quality policy, and gameplay independence.
 
 A source particle number cannot select damage, reward, or destruction behavior.
@@ -185,12 +221,14 @@ Source physical-property class numbers map through the physical-material catalog
 to collision class, native physical material, density or mass policy, friction,
 restitution, surface type, and impact-response definitions.
 
-The source class value remains import evidence only. Runtime collision queries use
+The source class value remains import evidence only. Runtime collision queries
+use
 native channels, object types, component tags, and physical materials.
 
 ## Chunk identifiers
 
-Source package chunk numbers belong exclusively to extraction, normalization, and
+Source package chunk numbers belong exclusively to extraction, normalization,
+and
 import schema selection. They never become gameplay identities.
 
 A chunk mapping records:
@@ -203,7 +241,8 @@ A chunk mapping records:
 - evidence requirements.
 
 Unknown chunk identifiers remain explicit findings. A parser cannot reinterpret
-an unknown number as the nearest known type or silently discard required children.
+an unknown number as the nearest known type or silently discard required
+children.
 Native UAssets do not store source chunk numbers except in provenance metadata.
 
 ## State-prop callbacks
@@ -223,7 +262,8 @@ requests. The supported families include:
 - domain-specific collectible or prop results.
 
 A callback number cannot directly invoke arbitrary code. Every mapping declares
-payload schema, owning subsystem, idempotency, authority, timeout when applicable,
+payload schema, owning subsystem, idempotency, authority, timeout when
+applicable,
 and verification.
 
 ## Vehicle identities
@@ -235,7 +275,8 @@ platform rows.
 
 Source ordinal gaps, duplicate historical lists, placeholder values, and
 not-yet-enabled labels do not create new native identities. Save data, mission
-state, phone-booth retrieval, traffic, and race definitions use canonical vehicle
+state, phone-booth retrieval, traffic, and race definitions use canonical
+vehicle
 identity and definition revision.
 
 ## Source names and hashes
@@ -281,7 +322,8 @@ Shipping runtime code consumes generated native definitions. It must not:
 - dispatch source callback integers directly.
 
 A narrow compatibility adapter may accept a source value only at an import,
-migration, mod-ingestion, or test boundary and must return a typed mapping result.
+migration, mod-ingestion, or test boundary and must return a typed mapping
+result.
 
 ## Save and migration
 

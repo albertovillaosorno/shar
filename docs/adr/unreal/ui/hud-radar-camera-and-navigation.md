@@ -23,7 +23,8 @@ gameplay behavior across all supported graphics presets, presentation shapes,
 platforms, and input adapters.
 
 Keyboard and mouse, gamepad, and Android touch controls map to the same semantic
-player actions. Android provides native touch interaction for every action needed
+player actions. Android provides native touch interaction for every action
+needed
 to complete the game. A connected gamepad may replace touch presentation, but it
 does not select different gameplay behavior.
 

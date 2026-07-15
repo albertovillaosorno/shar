@@ -34,7 +34,8 @@ mouse, gamepad, and touch input into one semantic Common UI action set. Widgets
 do not inspect platform-specific key codes or choose gameplay behavior.
 
 The progression and campaign services calculate every completion value. The
-front end and pause-menu progress screen receive read-only projections containing
+front end and pause-menu progress screen receive read-only projections
+containing
 category counts, exact progress, one-decimal display values, rewards, and
 availability. A widget cannot infer completion from visible rows or mutate a
 save slot.
@@ -59,7 +60,8 @@ change command availability, save state, catalog identity, or gameplay.
   presentation; C++ services own commands and state.
 - Calendar themes and idle gags are deterministic presentation and always have a
   standard fallback.
-- Android uses the same screen and command model with touch-safe layout and input
+- Android uses the same screen and command model with touch-safe layout and
+  input
   adapters.
 - Front-end presentation may be replaced without migrating save or campaign
   identities.

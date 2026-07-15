@@ -5,9 +5,13 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Validated game-feature mod overlays](../../adr/unreal/runtime/validated-game-feature-mod-overlays.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Local drop-in mod packages and AI skills](../../adr/modding/drop-in-mod-packages-and-ai-skills.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Local mod trust and distribution boundary](../../adr/modding/mod-safety-scanner-and-distribution.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
 
 ## Purpose
@@ -42,18 +46,25 @@ conflicts, supersession, target compatibility, and admission.
 
 An accepted package declares one of three native projection classes.
 
+<!-- markdownlint-disable MD013 -->
+
 | Class | Runtime material | Portability |
 | :--- | :--- | :--- |
 | `data_overlay` | Structured semantic rows, tags, localization, tuning, definitions, and references. | Portable when every required capability resolves. |
 | `cooked_asset_overlay` | Target-cooked Unreal assets and Game Feature content. | Exact Unreal build, target, architecture, cook, and container compatibility required. |
 | `native_extension` | Executable module or library. | Inactive under this contract. |
 
-A mixed package uses the strictest class. A package cannot relabel a cooked asset
+<!-- markdownlint-enable MD013 -->
+
+A mixed package uses the strictest class. A package cannot relabel a cooked
+asset
 or executable member as portable data.
 
 ## Native projection declaration
 
 `FSharModNativeProjection` contains:
+
+<!-- markdownlint-disable MD013 -->
 
 | Field | Contract |
 | :--- | :--- |
@@ -75,12 +86,15 @@ or executable member as portable data.
 | `LoadBundles` | Required definition, gameplay, presentation, audio, and world bundles. |
 | `ChangeSetHash` | Hash of the deterministic semantic change set. |
 
+<!-- markdownlint-enable MD013 -->
+
 Physical archive paths, mount roots, filenames, and discovery order are not
 projection identity.
 
 ## Portable data overlays
 
-A data overlay contains normalized rows rather than arbitrary Unreal objects. The
+A data overlay contains normalized rows rather than arbitrary Unreal objects.
+The
 runtime validates each row against the same repository-owned schema used by base
 content.
 
@@ -110,7 +124,8 @@ validation and cannot reach this stage.
 ## Target-cooked asset overlays
 
 A cooked asset overlay contains assets built for one exact supported target and
-project cook revision. Runtime recooking and editor-only conversion are forbidden.
+project cook revision. Runtime recooking and editor-only conversion are
+forbidden.
 
 The package supplies an approved mounted container and one `UGameFeatureData`
 projection. The projection may declare:
@@ -120,7 +135,8 @@ projection. The projection may declare:
 - additional gameplay or presentation definitions;
 - components added to repository-owned extension points;
 - World Partition content and Runtime Data Layers;
-- user-interface, audio, media, animation, material, mesh, and effect assets; and
+- user-interface, audio, media, animation, material, mesh, and effect assets;
+  and
 - package-owned test or review metadata excluded from shipping activation.
 
 Game Feature actions may target only repository-owned extension points and
@@ -137,7 +153,8 @@ not a public target and cannot change package priority.
 unsupported-trust result containing the exact target and missing policy.
 
 A future native-extension implementation requires a separate accepted decision
-covering at least signature authority, publisher identity, ABI, process boundary,
+covering at least signature authority, publisher identity, ABI, process
+boundary,
 permissions, platform loading, crash containment, update rollback, and security
 response. Structural package validation is not sufficient.
 
@@ -199,12 +216,14 @@ It may not insert a level into `base_campaign`, change base level order, claim a
 base placement identity, or infer ownership from a map path.
 
 World content activates only after the owning base world and required layers are
-known. Removing an active world overlay either completes a governed transition to
+known. Removing an active world overlay either completes a governed transition
+to
 a safe base state or fails before deactivation.
 
 ## Save and determinism contract
 
-The portable save records active package identities and revisions separately from
+The portable save records active package identities and revisions separately
+from
 gameplay progression. It never stores mount routes, Game Feature URLs, object
 paths, or package discovery order as semantic state.
 

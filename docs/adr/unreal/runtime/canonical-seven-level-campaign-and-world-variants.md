@@ -9,7 +9,8 @@
 The game has seven ordered campaign levels that reuse one persistent geographic
 world. Each level selects a protagonist, calendar day, mission sequence,
 collectibles, rewards, traffic, interactions, audio, presentation variant, and
-fixed time-of-day profile. Treating every level as an unrelated map or geographic
+fixed time-of-day profile. Treating every level as an unrelated map or
+geographic
 authority would duplicate geometry and make cross-level identity, coordinates,
 progression, streaming, imports, mods, and tests disagree.
 

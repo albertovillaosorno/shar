@@ -5,13 +5,20 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Gameplay census, presentation, and development-content boundary](gameplay-census-presentation-and-development-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Canonical seven-level campaign and world variants](../../adr/unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Driving, traffic, and vehicle behavior parity](../../adr/gameplay/vehicles/driving-traffic-and-vehicle-ai.md)
 - [Vehicle AI and route runtime](vehicle-ai-and-route-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [HUD, radar, camera, and navigation parity](../../adr/unreal/ui/hud-radar-camera-and-navigation.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Event-driven music and ambience](../../adr/unreal/runtime/event-driven-music-and-ambience.md)
 
 ## Purpose
@@ -49,6 +56,8 @@ success.
 
 `USharRaceDefinition` is a non-Blueprint primary data asset containing:
 
+<!-- markdownlint-disable MD013 -->
+
 | Field | Contract |
 | :--- | :--- |
 | `RaceId` | Stable canonical race identity. |
@@ -66,6 +75,8 @@ success.
 | `RewardPolicyId` | Optional wager or street-race-set contribution. |
 | `RequiredLayers` | Exact Runtime Data Layers and streamed route cells. |
 | `RevisionToken` | Deterministic generated-data revision. |
+
+<!-- markdownlint-enable MD013 -->
 
 A race definition references canonical vehicle and character identities. An
 opponent placement never creates another vehicle or character definition.
@@ -88,7 +99,8 @@ opponent placement never creates another vehicle or character definition.
 | `RouteBounds` | Optional diagnostic and recovery corridor. |
 | `RequiredLayers` | Route-specific world-layer dependencies. |
 
-A route is accepted only when every checkpoint and waypoint resolves, ordering is
+A route is accepted only when every checkpoint and waypoint resolves, ordering
+is
 unambiguous, the finish is reachable, and required world content is active.
 Road splines, navigation meshes, road names, or visible arrows do not define
 race order implicitly.
@@ -152,14 +164,17 @@ acceptance and follows the progression economy contract.
 
 ## Starting grid
 
-`FSharRaceStartGridRow` declares one player transform and ordered opponent slots.
+`FSharRaceStartGridRow` declares one player transform and ordered opponent
+slots.
 Each transform includes location, rotation, initial gear and velocity policy,
 collision readiness, required layers, and a safe reset identity.
 
 Race activation:
 
-1. validates the race, route, vehicle, world, progression, and mission revisions;
-1. loads required definition, vehicle, character, audio, and presentation bundles;
+1. validates the race, route, vehicle, world, progression, and mission
+   revisions;
+1. loads required definition, vehicle, character, audio, and presentation
+   bundles;
 1. reserves the start grid and checkpoint session;
 1. places or validates the player vehicle;
 1. spawns or reuses each declared opponent outside active traffic ownership;
@@ -176,6 +191,8 @@ vehicle ownership.
 
 `FSharRaceOpponentRow` contains:
 
+<!-- markdownlint-disable MD013 -->
+
 | Field | Contract |
 | :--- | :--- |
 | `OpponentPlacementId` | Stable race-scoped placement identity. |
@@ -188,7 +205,10 @@ vehicle ownership.
 | `FailureDisposition` | Recover, withdraw, or fail owning mission. |
 | `PresentationProfileId` | HUD marker, radar icon, dialogue, and audio. |
 
-AI observes the same ordered route identities as the player. Navigation waypoints
+<!-- markdownlint-enable MD013 -->
+
+AI observes the same ordered route identities as the player. Navigation
+waypoints
 may guide steering but cannot mark checkpoints complete or change route order.
 Catch-up policy may adjust bounded target speed or shortcut selection; it cannot
 teleport, skip required checkpoints, or depend on frame rate.
@@ -203,7 +223,8 @@ Race position uses a deterministic progress tuple:
 1. fixed-step crossing timestamp for a completed finish; and
 1. canonical participant identity as the final stable tie breaker.
 
-The tuple is recalculated from accepted route observations and fixed-step vehicle
+The tuple is recalculated from accepted route observations and fixed-step
+vehicle
 poses. Euclidean distance to the finish alone cannot rank participants across a
 loop, branch, shortcut, or reversed segment.
 
@@ -217,7 +238,8 @@ thresholds, expiration event, and retry restoration.
 
 Timer values use the mission timer domain and fixed-step observations. Loading,
 frontend transition, platform suspension, or approved pause behavior follows the
-active policy. Frame rendering and audio duration never advance or expire a race.
+active policy. Frame rendering and audio duration never advance or expire a
+race.
 
 A timeout observation is accepted only when the timer domain reaches the exact
 boundary for the active race revision. A finish crossing accepted at or before
@@ -258,7 +280,8 @@ A full race retry normally restores the start grid and clears accepted route
 observations. A mission checkpoint may restore a declared later race start only
 when its definition explicitly owns that snapshot.
 
-Reset transforms are evaluated in deterministic order and must pass swept volume,
+Reset transforms are evaluated in deterministic order and must pass swept
+volume,
 world readiness, and route-direction checks. Failure to find a valid transform
 fails recovery without accepting race progress.
 
@@ -286,7 +309,8 @@ presentation and cannot substitute for the committed result.
 ## Street-race-set progression
 
 Each base level has three street races. Individual completion is stored by
-canonical race identity. The level street-race reward commits only when all three
+canonical race identity. The level street-race reward commits only when all
+three
 required identities are complete under the same accepted progression revision.
 
 Replaying a completed race may produce presentation but cannot grant the vehicle
@@ -315,6 +339,8 @@ Race start, warning, win, lose, retry, and leave-vehicle events are distinct.
 
 ## Verified route slice
 
+<!-- markdownlint-disable MD013 -->
+
 | Race identity | Verified contract |
 | :--- | :--- |
 | `rich_district_2_circuit_level_04` | Three laps; six AI route waypoints and five dense player checkpoints; opponents are Apu in the Longhorn, the Nuclear Waste Truck, and the Garbage Truck; first place required; player-vehicle destruction or ten seconds out of vehicle fails; no timer. |
@@ -322,14 +348,19 @@ Race start, warning, win, lose, retry, and leave-vehicle events are distinct.
 | `squidport_tourist_resort_time_trial_level_06` | Two laps through eight ordered checkpoints within 115 seconds; player-vehicle destruction or ten seconds out of vehicle fails. |
 | `squidport_2_checkpoint_level_06` | Six ordered checkpoints against Homer in the canonical Level 7 sports car placement; first place required; player-vehicle destruction or ten seconds out of vehicle fails. |
 
-The Level 3 and Level 6 Squidport checkpoint races are distinct route identities.
+<!-- markdownlint-enable MD013 -->
+
+The Level 3 and Level 6 Squidport checkpoint races are distinct route
+identities.
 Their similar display names cannot collapse checkpoints, opponents, rewards, or
 save keys.
 
 ## Mission race integration
 
-`S-M-R-T` uses a mission race against Skinner after the project pickup and travel
-stages. The route has three declared AI waypoints and one terminal race crossing.
+`S-M-R-T` uses a mission race against Skinner after the project pickup and
+travel
+stages. The route has three declared AI waypoints and one terminal race
+crossing.
 Winning advances the mission to the Springfield Elementary interior and Lisa
 interaction. It does not count as a street race.
 

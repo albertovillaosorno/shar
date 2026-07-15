@@ -5,20 +5,26 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
 
 ## Purpose
 
 This specification defines native road-vehicle artificial intelligence for
 traffic, waypoint routes, races, pursuit, evasion, target following, catch-up,
-local obstacle avoidance, lane decisions, recovery, and presentation. It replaces
+local obstacle avoidance, lane decisions, recovery, and presentation. It
+replaces
 fixed route arrays, hand-managed path segments, global debug registration, and
 frame-dependent steering with validated data and bounded native controllers.
 
 ## Ownership
+
+<!-- markdownlint-disable MD013 -->
 
 | Authority | Responsibility |
 | :--- | :--- |
@@ -29,12 +35,16 @@ frame-dependent steering with validated data and bounded native controllers.
 | Traffic subsystem | Ambient lane occupancy, intersection admission, density, and lifecycle. |
 | UI projection | HUD and radar icon presentation from typed vehicle observations. |
 
+<!-- markdownlint-enable MD013 -->
+
 The controller does not own vehicle physics, mission completion, traffic
 population identity, rewards, or HUD widgets.
 
 ## Runtime topology
 
 The runtime module owns these C++ types:
+
+<!-- markdownlint-disable MD013 -->
 
 | Type | Responsibility |
 | :--- | :--- |
@@ -47,6 +57,8 @@ The runtime module owns these C++ types:
 | `FSharVehicleDriveRequest` | Desired speed, steering, brake, reverse, turbo, and validity interval. |
 | `FSharVehicleAIObservation` | Immutable target, route, traffic, physics, and mission snapshot for one decision step. |
 
+<!-- markdownlint-enable MD013 -->
+
 Each active AI vehicle has one controller identity and one movement-command
 lease. Traffic coordination may constrain the request but cannot directly mutate
 mission or race state.
@@ -54,6 +66,8 @@ mission or race state.
 ## Definition contract
 
 Every `USharVehicleAIDefinition` contains:
+
+<!-- markdownlint-disable MD013 -->
 
 | Field | Contract |
 | :--- | :--- |
@@ -67,6 +81,8 @@ Every `USharVehicleAIDefinition` contains:
 | `RecoveryPolicyId` | Stuck, overturned, invalid route, limbo, and reset behavior. |
 | `PresentationPolicyId` | Radar, HUD, effects, and debug-view policy. |
 | `DefinitionRevision` | Immutable revision used to reject stale controllers. |
+
+<!-- markdownlint-enable MD013 -->
 
 Every route definition contains:
 
@@ -100,12 +116,14 @@ Its StateTree states include:
 - `recovering`.
 
 Intersection entry requires an explicit reservation or admission result. A lane
-change validates target-lane occupancy, remaining lane distance, merge clearance,
+change validates target-lane occupancy, remaining lane distance, merge
+clearance,
 and route continuity before steering begins.
 
 ### Waypoint and race
 
-Waypoint mode follows ordered target identities and emits typed observations when
+Waypoint mode follows ordered target identities and emits typed observations
+when
 it reaches a waypoint, the final waypoint, or the destination. The observation
 contains route identity, waypoint identity, ordinal, lap, vehicle identity, and
 verified world position.
@@ -116,7 +134,8 @@ direction, lane, trigger crossing, collectible state, or mission ownership.
 ### Chase
 
 Chase mode observes a stable target identity, projects both vehicles onto the
-road graph, and selects road following or bounded direct pursuit according to the
+road graph, and selects road following or bounded direct pursuit according to
+the
 approved beeline policy. Direct pursuit requires collision and reachability
 validation and cannot ignore required road, mission, or world boundaries.
 
@@ -125,7 +144,8 @@ uses the latest complete observation snapshot.
 
 ### Evade and target
 
-Evade mode maximizes declared separation while preserving valid road progress and
+Evade mode maximizes declared separation while preserving valid road progress
+and
 world bounds. Target mode follows an objective vehicle, collectible, or authored
 moving target according to its mission policy. Both remain route-controller
 modes rather than separate physics implementations.
@@ -133,6 +153,8 @@ modes rather than separate physics implementations.
 ## Driving state
 
 The canonical driving states are:
+
+<!-- markdownlint-disable MD013 -->
 
 | State | Contract |
 | :--- | :--- |
@@ -148,6 +170,8 @@ The canonical driving states are:
 | `stunned` | External gameplay policy temporarily suspends control. |
 | `out_of_control` | Physics read-back rejects normal drive authority. |
 | `recovering` | The recovery transaction is evaluating or applying a safe reset. |
+
+<!-- markdownlint-enable MD013 -->
 
 State transitions are driven by typed observations and policy. Animation,
 collision, or sound callbacks cannot select a driving state directly.
@@ -186,7 +210,8 @@ vehicle space. Each candidate receives typed costs for:
 - reverse or stop requirement; and
 - invalid or unloaded space.
 
-Candidate order and tie-breaking are deterministic. Collision sweeps validate the
+Candidate order and tie-breaking are deterministic. Collision sweeps validate
+the
 selected candidate before it becomes a drive request. If no candidate is safe,
 the controller brakes or stops according to policy instead of selecting the
 least-invalid position.
@@ -208,7 +233,8 @@ Traffic look-ahead distinguishes at minimum:
 - invalid world state.
 
 An impedance observation is rate-limited and identifies the blocked vehicle,
-obstacle class, duration, route identity, and current state. It may inform audio,
+obstacle class, duration, route identity, and current state. It may inform
+audio,
 notoriety, traffic recovery, or mission diagnostics, but listener order cannot
 change the current steering result.
 
@@ -251,8 +277,10 @@ turbo authority.
 
 ## Recovery
 
-Recovery begins only after a typed stuck or invalid-state observation. Inputs may
-include speed, wheel contact, route progress, displacement, orientation, collision,
+Recovery begins only after a typed stuck or invalid-state observation. Inputs
+may
+include speed, wheel contact, route progress, displacement, orientation,
+collision,
 visibility, and elapsed simulation time.
 
 Recovery options are ordered:
@@ -279,8 +307,10 @@ from simulation authority.
 
 ## UI and presentation
 
-HUD and radar icons are projections of typed vehicle observations. The controller
-publishes target, route, destination, and state identities; it does not create or
+HUD and radar icons are projections of typed vehicle observations. The
+controller
+publishes target, route, destination, and state identities; it does not create
+or
 own widgets.
 
 Debug route lines, path samples, potential values, target bounds, and controller
@@ -289,7 +319,8 @@ debug rendering is registered.
 
 ## Streaming and lifecycle
 
-A controller suspends safely when required road, lane, waypoint, target, or world
+A controller suspends safely when required road, lane, waypoint, target, or
+world
 state is unavailable. It may retain stable identities and normalized route
 progress, but it cannot continue integrating against unloaded pointers.
 
@@ -320,7 +351,8 @@ Automated verification proves:
 
 - route, lane, waypoint, and checkpoint ordering is stable;
 - equivalent observations produce equivalent drive requests;
-- traffic stops, intersection admission, lane changes, and swerves remain bounded;
+- traffic stops, intersection admission, lane changes, and swerves remain
+  bounded;
 - waypoint, lap, final-target, and destination observations are exactly once;
 - chase projection and direct pursuit obey collision and route policy;
 - catch-up remains inside declared speed, shortcut, turbo, and reset bounds;

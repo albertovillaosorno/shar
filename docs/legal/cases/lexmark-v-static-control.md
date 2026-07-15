@@ -66,4 +66,5 @@ compatibility lock does not decide the statutory elements.
   Available at: <https://www.ca6.uscourts.gov/opinions.pdf/04a0364p-06.pdf>
   (Accessed: 12 July 2026).
 - [MDY Industries, LLC v. Blizzard Entertainment, Inc.](mdy-v-blizzard.md).
+<!-- markdownlint-disable-next-line MD013 -->
 - [Software interoperability research](../doctrines/software-interoperability.md).

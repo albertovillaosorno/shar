@@ -68,21 +68,27 @@ registration alone, or possession of a copy.
 ## Primary Corporate Sources
 
 - Activision, Radical Entertainment title chronology:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://investor.activision.com/static-files/f115c945-e6b1-4b03-a6f6-dbe1bc77c6c2>
   (Accessed: 13 July 2026).
 - Activision Blizzard, 2009 Form 10-K:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://www.sec.gov/Archives/edgar/data/718877/000104746909002015/a2190811z10-k.htm>
   (Accessed: 13 July 2026).
 - Activision Blizzard, 2010 Form 10-K:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://www.sec.gov/Archives/edgar/data/718877/000104746910001649/a2196314z10-k.htm>
   (Accessed: 13 July 2026).
 - Microsoft, completion of the Activision Blizzard acquisition, 2023-10-13:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://news.microsoft.com/wp-content/uploads/prod/sites/653/2023/10/Phil-Spencer-email-to-Microsoft-employees.pdf>
   (Accessed: 13 July 2026).
 - Microsoft, Activision Blizzard subsidiary status, 2023-10-16:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://news.microsoft.com/source/2023/10/16/microsoft-commences-private-exchange-offers-and-activision-blizzard-commences-consent-solicitations/>
   (Accessed: 13 July 2026).
 - The Walt Disney Company, acquisition effective date, 2019-03-19:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://thewaltdisneycompany.com/press-releases/disney-21st-century-fox-acquisition-closing-date/>
   (Accessed: 13 July 2026).
 

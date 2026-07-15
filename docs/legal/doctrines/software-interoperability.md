@@ -53,6 +53,8 @@ The verified authorities support these bounded propositions:
 
 ## Claim-Separation Matrix
 
+<!-- markdownlint-disable MD013 -->
+
 | Issue                    | Required factual focus                                                                                      | Principal records                                                                                                                                |
 | :----------------------- | :---------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------- |
 | Copyrightability         | Exact element, originality, function, constraints, merger, selection, and arrangement                       | `google-v-oracle.md`, `lexmark-v-static-control.md`, `sas-v-world-programming.md`, `rj-control-v-multiject.md`, `premier-dealer-v-allegiance.md` |
@@ -62,6 +64,8 @@ The verified authorities support these bounded propositions:
 | Confidential information | Source, secrecy, acquisition, duties, exposure, independent derivation, and disclosure                      | `../statutes/18-usc-1836-and-1839.md`                                                                                                            |
 | Patent                   | Exact algorithm or claim, territory, legal status, implementation, and license                              | `patent-and-codec-risk.md`                                                                                                                       |
 | Trademark                | Exact public presentation, mark, owner, goods or services, audience, and confusion evidence                 | `trademark-and-compatibility-naming.md`                                                                                                          |
+
+<!-- markdownlint-enable MD013 -->
 
 ## SHAR Fact Matrix Required
 
@@ -114,9 +118,12 @@ identify:
 ## Primary Authorities
 
 - [Google LLC v. Oracle America, Inc.](../cases/google-v-oracle.md).
+<!-- markdownlint-disable-next-line MD013 -->
 - [Lexmark International, Inc. v. Static Control Components, Inc.](../cases/lexmark-v-static-control.md).
+<!-- markdownlint-disable-next-line MD013 -->
 - [MDY Industries, LLC v. Blizzard Entertainment, Inc.](../cases/mdy-v-blizzard.md).
 - [Sega Enterprises Ltd. v. Accolade, Inc.](../cases/sega-v-accolade.md).
+<!-- markdownlint-disable-next-line MD013 -->
 - [Sony Computer Entertainment, Inc. v. Connectix Corp.](../cases/sony-v-connectix.md).
 - [17 U.S.C. § 1201(f)](../statutes/17-usc-1201f.md).
 - [17 U.S.C. § 107](../statutes/17-usc-107.md).

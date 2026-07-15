@@ -51,4 +51,5 @@ based only on the functional purpose of the artifact.
   <https://www.opn.ca6.uscourts.gov/opinions.pdf/24a0039p-06.pdf> (Accessed: 12
   July 2026).
 - [RJ Control Consultants, Inc. v. Multiject, LLC](rj-control-v-multiject.md).
+<!-- markdownlint-disable-next-line MD013 -->
 - [File-format copyrightability research](../doctrines/file-format-copyrightability.md).

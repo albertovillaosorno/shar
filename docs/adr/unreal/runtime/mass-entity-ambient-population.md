@@ -26,7 +26,8 @@ signals, and Smart Object participation.
 `USharAmbientPopulationSubsystem`, a world subsystem, consumes deterministic
 population-zone definitions after the owning World Partition cell and Runtime
 Data Layers are active. It selects archetypes from explicit weighted groups
-and a stable session seed. Budgets are platform and quality presentation policies;
+and a stable session seed. Budgets are platform and quality presentation
+policies;
 they cannot remove required named or gameplay-relevant placements.
 
 Named characters retain one canonical character definition. A disposable ambient

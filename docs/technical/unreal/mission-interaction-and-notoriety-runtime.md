@@ -5,13 +5,18 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Contextual interaction query and transaction boundary](../../adr/unreal/runtime/contextual-interaction-query-and-transaction.md)
 - [Contextual interaction runtime](contextual-interaction-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Typed StateTree action sequences](../../adr/unreal/runtime/typed-state-tree-action-sequences.md)
 - [Typed action-sequence runtime](typed-action-sequence-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
 
 ## Purpose
@@ -28,12 +33,16 @@ loaded packages.
 
 Four services own the runtime state described here:
 
+<!-- markdownlint-disable MD013 -->
+
 | Service | Lifetime | Authority |
 | :--- | :--- | :--- |
 | `USharMissionSessionSubsystem` | World | Active mission, objective state, ordered transitions, failure, recovery, and completion. |
 | `USharInteractionSubsystem` | World | Interaction eligibility, reservation, execution, cancellation, and exactly-once results. |
 | `USharInteriorSubsystem` | World | Interior transition transactions, world composition, movement restrictions, and exterior restoration. |
 | `USharNotorietySubsystem` | World | Notoriety value, warning, pursuit, arrest, decay, and resolution. |
+
+<!-- markdownlint-enable MD013 -->
 
 The progression service owns durable mission, gag, reward, and level completion.
 The save service persists only accepted checkpoints and completed transactions.
@@ -65,7 +74,8 @@ session validates the declared successor.
 has not yet been accepted. `completed` is entered only after rewards, unlocks,
 and the mission completion key are committed exactly once.
 
-`failed` records a typed cause. `recovering` applies the declared restart policy,
+`failed` records a typed cause. `recovering` applies the declared restart
+policy,
 restores the accepted checkpoint, and verifies the restored world before the
 session can return to `active`.
 
@@ -93,6 +103,8 @@ it never becomes success through actor destruction, unloading, or missing data.
 
 `FSharObjectivePolicyRow` defines objective-specific behavior:
 
+<!-- markdownlint-disable MD013 -->
+
 | Field | Contract |
 | :--- | :--- |
 | `PolicyId` | Stable identity referenced by one or more mission steps. |
@@ -107,6 +119,8 @@ it never becomes success through actor destruction, unloading, or missing data.
 | `CatchUpProfileId` | Optional artificial-intelligence catch-up profile. |
 | `DropSequenceId` | Optional ordered dropped-item sequence. |
 | `PresentationProfileId` | Objective marker, radar, gauge, prompt, and briefing presentation. |
+
+<!-- markdownlint-enable MD013 -->
 
 Thresholds, counts, durations, and distances use explicit units and validated
 ranges. A policy cannot rely on a frame count, graphics preset, current refresh
@@ -195,7 +209,8 @@ sequence into completion.
 ## Collect and deliver objectives
 
 A `collect` objective accepts only declared item identities from their allowed
-source or placement. A `deliver` objective requires the accepted item set and the
+source or placement. A `deliver` objective requires the accepted item set and
+the
 declared destination or interaction.
 
 Collecting an item and delivering it are separate transaction boundaries when a
@@ -219,7 +234,8 @@ canonical vehicle. The payload definition records:
 - whether incidental disturbance emits a separately declared economy event.
 
 Attachment does not merge payload and vehicle identity. Vehicle replacement,
-retrieval, destruction, World Partition streaming, or actor reconstruction cannot
+retrieval, destruction, World Partition streaming, or actor reconstruction
+cannot
 silently deliver, duplicate, or delete the payload.
 
 Delivery is accepted only when the declared payload identity remains in an
@@ -229,13 +245,15 @@ volume, destruction effects, despawn, and presentation completion are not
 success.
 
 A fragile payload uses deterministic collision observations and validated
-thresholds rather than frame-rate-dependent contact callbacks. Retry restores the
+thresholds rather than frame-rate-dependent contact callbacks. Retry restores
+the
 exact declared carrier, payload state, attachment, route context, and accepted
 prior steps. It never preserves a partially destroyed candidate as success.
 
 ## Destroy and avoid objectives
 
-A `destroy` objective completes only from validated destruction of every required
+A `destroy` objective completes only from validated destruction of every
+required
 target. Despawn, garbage collection, World Partition deactivation, target
 replacement, or load failure never counts as destruction.
 
@@ -250,7 +268,8 @@ steps so the level transition occurs only after both have been accepted.
 ## Race objective
 
 A `race` objective consumes the canonical race definition, route rows, lap or
-checkpoint policy, ordered opponents, time limit, finish transition, and catch-up
+checkpoint policy, ordered opponents, time limit, finish transition, and
+catch-up
 profile. Route topology, checkpoint crossing, position, opponent state, timer,
 reset, finish, and street-race-set behavior follow
 [Race route and opponent runtime](race-route-and-opponent-runtime.md).
@@ -265,6 +284,8 @@ silently become a race.
 
 World adapters publish immutable observations with:
 
+<!-- markdownlint-disable MD013 -->
+
 | Field | Contract |
 | :--- | :--- |
 | `ObservationId` | Unique session-scoped identity for deduplication. |
@@ -274,6 +295,8 @@ World adapters publish immutable observations with:
 | `Kind` | Typed collision, overlap, destruction, collection, route, timer, or interaction event. |
 | `SimulationTime` | Monotonic fixed-step simulation timestamp. |
 | `Payload` | Schema-defined values for the observation kind. |
+
+<!-- markdownlint-enable MD013 -->
 
 The mission session rejects stale, duplicate, future-step, wrong-mission, or
 unrecognized observations. Presentation events cannot be replayed as gameplay
@@ -308,6 +331,8 @@ reward or consumed save key.
 
 `USharGagDefinition` extends the interaction definition with:
 
+<!-- markdownlint-disable MD013 -->
+
 | Field | Contract |
 | :--- | :--- |
 | `GagId` | Canonical gag concept identity. |
@@ -326,8 +351,11 @@ reward or consumed save key.
 | `PersistenceKeyId` | Optional level-scoped durable completion identity. |
 | `LocalePresentationId` | Optional localized media or presentation selection. |
 
+<!-- markdownlint-enable MD013 -->
+
 A placement owns a level-scoped completion key. Reused world geometry may place
-the same gag concept in several level variants, but each declared level placement
+the same gag concept in several level variants, but each declared level
+placement
 has one distinct progression identity.
 
 Activation requires the interaction action, not contact alone. The visible cue,
@@ -354,12 +382,15 @@ distance, Data Layer, and interaction visibility. Unloading presentation
 releases handles but preserves placement identity, completion, cooldown, and
 selection revision.
 
-A source page, quote stub, unused prototype, or unreachable actor does not create
+A source page, quote stub, unused prototype, or unreachable actor does not
+create
 a runtime gag or dialogue asset without validated placement evidence.
 
 ## Interior definition
 
 `USharInteriorDefinition` contains:
+
+<!-- markdownlint-disable MD013 -->
 
 | Field | Contract |
 | :--- | :--- |
@@ -380,6 +411,8 @@ a runtime gag or dialogue asset without validated placement evidence.
 | `RestrictionProfileId` | Movement, combat, and action restrictions. |
 | `NotorietyTransitionId` | Interior-specific pursuit and decay policy. |
 | `InteractionPlacementIds` | Gags, characters, mission anchors, and costume stations. |
+
+<!-- markdownlint-enable MD013 -->
 
 The canonical interior set is:
 
@@ -410,6 +443,7 @@ Entry is an atomic world-composition transaction:
 1. hide or deactivate exterior presentation only after the interior is ready.
 
 The load request follows the
+<!-- markdownlint-disable-next-line MD013 -->
 [native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md).
 A wipe, camera cut, sound cue, or animation may present the transition but
 cannot commit it. Input returns only after the target composition and spawn
@@ -444,7 +478,8 @@ Notoriety uses a fixed integer scale from `0` through `10,000`. It never stores
 an authoritative floating-point percentage.
 
 `FSharNotorietyEvent` contains a unique event identity, source identity,
-instigator identity, event kind, signed integer delta, objective policy identity,
+instigator identity, event kind, signed integer delta, objective policy
+identity,
 and simulation timestamp.
 
 The verified base policy defines:
@@ -489,14 +524,16 @@ During pursuit, decay follows the pursuit policy even when accepted offenses
 occur. Contact with active police vehicles is exempt from further notoriety.
 Other offenses remain governed by their normal policy.
 
-A pursuit enters `resolving` when the value reaches zero. No replacement wave may
+A pursuit enters `resolving` when the value reaches zero. No replacement wave
+may
 spawn after that transition. Resolution completes only after all remaining
 pursuers are destroyed, evaded, or explicitly withdrawn. New ordinary offenses
 are ignored during the bounded resolution window defined by the policy; the
 subsystem then returns to `dormant`.
 
 All decay delays and rates are policy data expressed in simulation-time units.
-They do not depend on frame rate, animation duration, audio duration, or graphics
+They do not depend on frame rate, animation duration, audio duration, or
+graphics
 preset.
 
 ## Arrest
@@ -535,7 +572,8 @@ recreating stale pursuers.
 
 ## World safety and recovery
 
-Every level defines safe player and vehicle recovery transforms for each streamed
+Every level defines safe player and vehicle recovery transforms for each
+streamed
 region, mission checkpoint, race reset, and interior portal.
 
 Out-of-bounds, invalid floor, unrecoverable penetration, missing collision, and
@@ -587,7 +625,8 @@ objective, notoriety, reward, and recovery transitions.
 
 ## Failure behavior
 
-Configuration errors fail validation and block cooking. Runtime absence caused by
+Configuration errors fail validation and block cooking. Runtime absence caused
+by
 unexpected streaming or corruption produces a typed mission or transition error,
 restores the last accepted state when possible, and records bounded diagnostics.
 
@@ -595,7 +634,8 @@ The runtime never guesses a replacement target, route, destination, vehicle,
 interaction, reward, or Data Layer. It never marks an objective complete to
 escape a blocked state.
 
-A failed reward or save transaction leaves the mission in `succeeded` and retries
+A failed reward or save transaction leaves the mission in `succeeded` and
+retries
 the transaction safely; it does not replay the final objective. A failed
 interior transaction restores the exterior. A failed arrest transaction restores
 control without applying an uncommitted fine.
@@ -622,7 +662,8 @@ Repository logic tests prove:
 - out-of-bounds recovery selects the declared valid transform; and
 - accidental defect fixtures never become parity requirements.
 
-Native automation verifies StateTree task registration, Smart Object reservation,
+Native automation verifies StateTree task registration, Smart Object
+reservation,
 Runtime Data Layer activation, actor bindings, user-interface projections,
 artificial-intelligence profiles, collision event classification, and cook-time
 validation.

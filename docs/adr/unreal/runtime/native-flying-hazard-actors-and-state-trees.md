@@ -54,7 +54,8 @@ cameras, UFO encounters, boss hazards, or their projectiles.
   progression, rewards, or persistence.
 - AI Perception and EQS replace broad global event listening and ad hoc waypoint
   searches with native, bounded queries.
-- Swept movement and projectile collision prevent frame-rate-dependent tunneling.
+- Swept movement and projectile collision prevent frame-rate-dependent
+  tunneling.
 - Pooling is an implementation detail; recycled instances cannot retain the
   previous owner's identity, target, reward, or reservation state.
 - Wasp-camera destruction, shield loss, projectile penalties, and UFO damage are

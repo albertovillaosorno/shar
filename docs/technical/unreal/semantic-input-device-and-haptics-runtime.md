@@ -6,11 +6,16 @@
 ## Governing decisions and specifications
 
 - [UI parity boundary](../../adr/unreal/ui/ui-parity-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [HUD, radar, camera, and navigation parity](../../adr/unreal/ui/hud-radar-camera-and-navigation.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Device configuration and save-slot runtime](device-configuration-and-save-slot-runtime.md)
 
 ## Purpose
@@ -25,10 +30,13 @@ custom physical-to-logical arrays, process-wide button timestamps, and
 platform-specific rumble tables compiled into gameplay code.
 
 All supported devices produce one semantic action model. Device capability and
-presentation may differ; mission, vehicle, camera, menu, and progression behavior
+presentation may differ; mission, vehicle, camera, menu, and progression
+behavior
 do not.
 
 ## Ownership
+
+<!-- markdownlint-disable MD013 -->
 
 | Authority | Responsibility |
 | :--- | :--- |
@@ -39,6 +47,8 @@ do not.
 | Haptics subsystem | Pattern selection, blending, output, accessibility, and teardown. |
 | Gameplay systems | Consume semantic actions and publish non-authoritative cues. |
 | Device configuration | Requested bindings, sensitivity, inversion, and haptics preferences. |
+
+<!-- markdownlint-enable MD013 -->
 
 The input runtime does not own mission state, vehicle state, camera state,
 front-end navigation state, or durable progression.
@@ -67,6 +77,8 @@ adapters. Gameplay code consumes semantic actions and stable observations.
 
 Every action definition contains:
 
+<!-- markdownlint-disable MD013 -->
+
 | Field | Contract |
 | :--- | :--- |
 | `ActionId` | Stable namespaced semantic identity. |
@@ -78,11 +90,14 @@ Every action definition contains:
 | `Availability` | Platform, device, mode, and package capability predicate. |
 | `Presentation` | Localizable label, category, and glyph role. |
 
+<!-- markdownlint-enable MD013 -->
+
 Examples include move, look, accelerate, reverse, steer, brake, handbrake,
 interact, attack, jump, sprint, horn, vehicle reset, camera controls, pause,
 menu navigation, submit, cancel, pointer click, and accessibility actions.
 
-A platform button name, direct-input offset, physical array index, or source enum
+A platform button name, direct-input offset, physical array index, or source
+enum
 ordinal is never the semantic identity.
 
 ## Mapping contexts and leases
@@ -237,11 +252,13 @@ entry uses native platform or Slate text input rather than gameplay key events.
 
 ## Mouse and pointer
 
-Mouse motion provides a relative gameplay look path and a pointer path for Common
+Mouse motion provides a relative gameplay look path and a pointer path for
+Common
 UI. The active mode and input-method policy choose presentation; one raw mouse
 object does not switch the entire process between front-end and gameplay modes.
 
-Pointer behavior uses Slate and Common UI hit testing, capture, focus, safe area,
+Pointer behavior uses Slate and Common UI hit testing, capture, focus, safe
+area,
 and viewport transforms. Custom hotspot enums and manual pixel-coordinate tests
 do not define widget interaction.
 
@@ -258,8 +275,10 @@ methods directly.
 Gamepad input uses engine keys for sticks, triggers, directional pads, face
 buttons, shoulders, stick clicks, and supported auxiliary controls.
 
-Axis and trigger ranges are normalized by the profile. Device glyphs are selected
-through the active Common Input method and platform mapping. A gameplay action is
+Axis and trigger ranges are normalized by the profile. Device glyphs are
+selected
+through the active Common Input method and platform mapping. A gameplay action
+is
 not renamed because one platform labels a face button differently.
 
 ## Steering wheel
@@ -353,7 +372,8 @@ The transaction:
 1. read-backs the active mapping; and
 1. commits or rolls back atomically.
 
-Binding display text and glyphs are projections. Device-local configuration stores
+Binding display text and glyphs are projections. Device-local configuration
+stores
 engine key identities, modifiers, and schema revision, not platform scan codes.
 
 ## Haptic cue model
@@ -372,7 +392,8 @@ accepted cause. A request contains:
 - world or presentation scope.
 
 The haptics subsystem resolves the active device capabilities and produces an
-output pattern. The cue is non-authoritative and cannot change damage, collision,
+output pattern. The cue is non-authoritative and cannot change damage,
+collision,
 mission, camera, or progression state.
 
 ## Haptic pattern definition
@@ -395,7 +416,8 @@ Frame-modulo pulse code and assumed motor indices are not portable authority.
 ## Collision and surface haptics
 
 Collision cues receive normalized physical evidence from the impact-response
-adapter. The haptics subsystem may map impulse, relative speed, surface, vehicle,
+adapter. The haptics subsystem may map impulse, relative speed, surface,
+vehicle,
 and player role into a bounded intensity.
 
 Repeated contacts use cooldown, aggregation, and priority policy. One physics
@@ -415,7 +437,8 @@ Device-local configuration owns:
 - reduced-intensity accessibility profile; and
 - wheel force-feedback preference.
 
-Disabling haptics stops active output safely but does not suppress the underlying
+Disabling haptics stops active output safely but does not suppress the
+underlying
 gameplay event. Preferences are device-local and do not enter portable
 progression.
 
@@ -446,11 +469,13 @@ hardware counter or output point is used.
 ## Effect lifecycle and blending
 
 Every active haptic or force-feedback effect has a move-only handle. Effects end
-on completion, explicit stop, device disconnect, local-player removal, mode exit,
+on completion, explicit stop, device disconnect, local-player removal, mode
+exit,
 world teardown, suspension, or subsystem destruction.
 
 Blending is deterministic by priority, group, start sequence, and definition
-policy. Motor gain, force magnitude, and duration are clamped to finite supported
+policy. Motor gain, force magnitude, and duration are clamped to finite
+supported
 ranges. A later weak effect cannot accidentally clear a stronger unrelated
 channel.
 
@@ -517,7 +542,8 @@ The input runtime fails closed on:
 - invalid platform callback scope; and
 - unauthorized shipping or mod input registration.
 
-Gameplay receives neutral input when required input evidence is invalid. A device
+Gameplay receives neutral input when required input evidence is invalid. A
+device
 or presentation failure cannot synthesize an action or mutate gameplay state.
 
 ## Validation

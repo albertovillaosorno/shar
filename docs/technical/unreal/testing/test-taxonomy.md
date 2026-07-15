@@ -5,21 +5,32 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Canonical seven-level campaign and world variants](../../../adr/unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Common UI front end and progress projection](../../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Event-driven music and ambience](../../../adr/unreal/runtime/event-driven-music-and-ambience.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Mass Entity ambient population](../../../adr/unreal/runtime/mass-entity-ambient-population.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Runtime parity test boundary](../../../adr/unreal/runtime/runtime-parity-test-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [State-driven missions, interactions, interiors, and notoriety](../../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Graphics quality presets and platform support](../../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Portable save storage and lifecycle](../../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Transactional phone-booth vehicle retrieval](../../../adr/unreal/runtime/transactional-phone-booth-vehicle-retrieval.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Validated game-feature mod overlays](../../../adr/unreal/runtime/validated-game-feature-mod-overlays.md)
 
 ## Purpose
 
 This specification explains how repository-owned Unreal tests are classified by
-the contract, native target, graphics preset, input adapter, and environment they
+the contract, native target, graphics preset, input adapter, and environment
+they
 prove.
 
 ## Repository model
@@ -37,13 +48,15 @@ target. Preset tests prove resolved quality settings and visual invariants.
 
 ## Invariants
 
-- A test names the boundary, platform, architecture, preset, and input adapter it
+- A test names the boundary, platform, architecture, preset, and input adapter
+  it
   proves when those dimensions are material.
 - Pure repository logic does not require a live editor or native platform
   package.
 - Integration tests use synthetic or repository-owned evidence.
 - Runtime parity claims map to observable behavior.
-- Mission-runtime tests name the objective kind, policy, transition, and recovery
+- Mission-runtime tests name the objective kind, policy, transition, and
+  recovery
   contract they prove.
 - Interaction tests distinguish reservation, presentation, progression, and save
   acceptance.
@@ -86,7 +99,8 @@ target. Preset tests prove resolved quality settings and visual invariants.
 - Notoriety suites cover fixed-point deltas, warning, pursuit waves, objective
   exemptions, decay, resolution, arrest, clamped fines, and interior policy.
 - World-safety suites cover out-of-bounds, invalid floor, collision penetration,
-  missing streamed actors, duplicate identities, and deterministic safe-transform
+  missing streamed actors, duplicate identities, and deterministic
+  safe-transform
   recovery.
 - Campaign suites cover the seven-level order, one persistent geographic world,
   Runtime Data Layer membership, fixed campaign time-of-day profiles, test-state
@@ -105,7 +119,8 @@ target. Preset tests prove resolved quality settings and visual invariants.
   opponents, position, catch-up, reset, World Partition, finish transactions,
   street-race-set rewards, replay, and mission-race exclusion.
 - Ambient-population suites cover deterministic Mass plans, representation LOD,
-  streaming hysteresis, avoidance, look-at, horn and violence reactions, fall and
+  streaming hysteresis, avoidance, look-at, horn and violence reactions, fall
+  and
   recovery, conversations, named-character promotion, and mission pinning.
 - Music suites cover level profiles, cue bindings, state priority, Quartz
   quantization, graph parameters, mission and race events, interior commit,
@@ -118,7 +133,8 @@ target. Preset tests prove resolved quality settings and visual invariants.
   shutdown tests.
 - Cross-architecture golden saves, migration fixtures, interrupted-write fault
   injection, and Android lifecycle termination prove transactional recovery.
-- Every required audio role verifies canonical duration, locale, loop boundaries,
+- Every required audio role verifies canonical duration, locale, loop
+  boundaries,
   event timing, loading policy, stream-cache behavior, concurrency, focus, and
   no-network playback through the native target audio route.
 - Every required cinematic verifies first and final frame, canonical duration,

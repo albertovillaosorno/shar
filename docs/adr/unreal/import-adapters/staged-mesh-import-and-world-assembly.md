@@ -20,7 +20,8 @@ reads the result back without letting mutable editor state become authority.
 
 ## Decision
 
-Phase 6 uses a staged native-import transaction. The importer first validates the
+Phase 6 uses a staged native-import transaction. The importer first validates
+the
 canonical FBX, texture, semantic-region, component, placement, and provenance
 manifests in a quarantined staging area. It then maps those approved identities
 to native meshes, textures, materials, physics assets, animation assets,
@@ -44,7 +45,8 @@ canonical character identity.
 
 Vehicle import consumes already separated body, wheels, trunk, and other
 supported moving components with their pivots and transforms. World import
-consumes already separated terrain, structures, windows, doors, linked interiors,
+consumes already separated terrain, structures, windows, doors, linked
+interiors,
 landmarks, props, bounds, and geographic placements. It creates the one native
 World Partition geography and its level-state data layers without rediscovering
 component boundaries from raw geometry.

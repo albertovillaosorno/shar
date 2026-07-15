@@ -23,14 +23,16 @@ separability, distribution, and remedies remain fact-specific.
 The Ninth Circuit's game-mod decisions draw a narrow factual boundary rather
 than declaring all modifications lawful or unlawful. In *Lewis Galoob Toys v.
 Nintendo*, a consumer accessory made temporary runtime changes, altered no game
-cartridge, created no independently usable display, and incorporated no protected
+cartridge, created no independently usable display, and incorporated no
+protected
 work in a concrete or permanent form. The court found no derivative work and
 also sustained an alternative fair-use analysis focused on private nonprofit use
 and unproven market harm.
 
 In *Micro Star v. FormGen*, commercially distributed level files permanently
 described new audiovisual displays and stories that drew from the original
-game's protected art, setting, and characters. The court found likely derivative-
+game's protected art, setting, and characters. The court found likely
+derivative-
 work infringement, rejected fair use, enforced the difference between free
 sharing and commercial distribution, and characterized *Galoob*'s alternative
 fair-use discussion as dicta.
@@ -71,6 +73,7 @@ the effect on existing or reasonably likely derivative markets.
 ## Required Authorities
 
 - 17 U.S.C. §§ 101, 103, 106, and 107.
+<!-- markdownlint-disable-next-line MD013 -->
 - [Lewis Galoob Toys, Inc. v. Nintendo of America, Inc](../cases/lewis-galoob-toys-v-nintendo.md).
 - [Micro Star v. FormGen, Inc](../cases/micro-star-v-formgen.md).
 - Current controlling authority in the governing jurisdiction, including later

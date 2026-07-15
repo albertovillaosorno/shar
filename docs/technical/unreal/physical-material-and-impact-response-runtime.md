@@ -5,8 +5,10 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
 
 ## Purpose
@@ -18,6 +20,8 @@ physical-material profiles and typed response identities.
 
 ## Ownership
 
+<!-- markdownlint-disable MD013 -->
+
 | Authority | Responsibility |
 | :--- | :--- |
 | Gameplay catalog | Stable surface, collision class, physical profile, and response identities. |
@@ -26,12 +30,16 @@ physical-material profiles and typed response identities.
 | Impact-response subsystem | Sound, Niagara, decal, animation, damage, and telemetry requests. |
 | Domain services | Damage, destruction, rewards, mission state, and persistence. |
 
+<!-- markdownlint-enable MD013 -->
+
 An impact response may present a sound, particle, decal, or animation. It cannot
 become the authority for damage, destruction, rewards, or save data.
 
 ## Runtime topology
 
 The runtime module owns these C++ types:
+
+<!-- markdownlint-disable MD013 -->
 
 | Type | Responsibility |
 | :--- | :--- |
@@ -42,12 +50,16 @@ The runtime module owns these C++ types:
 | `FSharImpactObservation` | Immutable participants, surfaces, impulse, speed, normal, point, and context. |
 | `FSharImpactResult` | Closed response identities, domain request identities, and rejection reasons. |
 
+<!-- markdownlint-enable MD013 -->
+
 The catalog is generated and immutable during an active world revision. Runtime
 registration order does not affect identity or response selection.
 
 ## Physical profile contract
 
 Every `USharPhysicalMaterialProfile` contains:
+
+<!-- markdownlint-disable MD013 -->
 
 | Field | Contract |
 | :--- | :--- |
@@ -61,6 +73,8 @@ Every `USharPhysicalMaterialProfile` contains:
 | `DamageResponseId` | Optional typed domain-damage policy. |
 | `GameplayTags` | Surface, material, breakability, vehicle, character, and world tags. |
 | `DefinitionRevision` | Immutable revision used to reject stale instances. |
+
+<!-- markdownlint-enable MD013 -->
 
 A profile cannot carry free-form sound, particle, or animation names. Those
 fields resolve through validated response identities.
@@ -98,7 +112,8 @@ mass without a corresponding collision and import revision.
 ## Friction and restitution
 
 Friction and restitution are native physical-material properties. Per-contact
-combine modes are explicit. A surface profile cannot change these properties from
+combine modes are explicit. A surface profile cannot change these properties
+from
 an impact callback.
 
 The runtime verifies:
@@ -125,7 +140,8 @@ The runtime verifies:
 - simulation timestamp and fixed-step ordinal; and
 - definition revisions.
 
-The observation is immutable after collision classification. Presentation systems
+The observation is immutable after collision classification. Presentation
+systems
 cannot replace its surfaces or impulse based on listener order.
 
 ## Response selection
@@ -173,7 +189,8 @@ a typed application-port result.
 
 ## Sound
 
-Impact sound requests include event identity, emitter identity, contact transform,
+Impact sound requests include event identity, emitter identity, contact
+transform,
 severity, surface identities, concurrency group, and deduplication key.
 
 Repeated physics contacts are rate-limited by contact pair and response policy.
@@ -182,11 +199,13 @@ result.
 
 ## Effects and decals
 
-Niagara and decal requests are presentation-only. The response definition declares
+Niagara and decal requests are presentation-only. The response definition
+declares
 spawn transform, orientation policy, scale curve, lifetime, pooling, material,
 and platform budget.
 
-Effects do not perform collision traces that redefine the impact surface. A decal
+Effects do not perform collision traces that redefine the impact surface. A
+decal
 may run a bounded placement trace only to confirm the original contact geometry.
 
 ## Animation reactions

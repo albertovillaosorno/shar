@@ -5,11 +5,16 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Canonical seven-level campaign and world variants](../../adr/unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
 - [UI parity boundary](../../adr/unreal/ui/ui-parity-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Device configuration and save-slot runtime](device-configuration-and-save-slot-runtime.md)
 
 ## Purpose
@@ -26,11 +31,15 @@ calendar, and content loading.
 
 The owning services are:
 
+<!-- markdownlint-disable MD013 -->
+
 | Service | Lifetime | Authority |
 | :--- | :--- | :--- |
 | `USharFrontendSubsystem` | Game instance | Frontend state, commands, navigation intent, slot selection, and gameplay transition requests. |
 | `USharFrontendInputSubsystem` | Local player | Semantic menu actions, active input method, focus restoration, and glyph context. |
 | `USharFrontendViewModelSubsystem` | Game instance | Immutable view-model construction from accepted domain snapshots. |
+
+<!-- markdownlint-enable MD013 -->
 
 The frontend subsystem never serializes saves, calculates progression, applies
 options directly to engine objects, grants rewards, or opens a world without an
@@ -70,7 +79,8 @@ The frontend state is one of:
 - `blocked`.
 
 `booting` remains active until required catalogs, local configuration, storage
-readiness, and slot summaries have typed results. A recoverable slot failure does
+readiness, and slot summaries have typed results. A recoverable slot failure
+does
 not block other valid slots or the new-game command. Missing required base
 content enters `blocked` with no false resume option.
 
@@ -127,6 +137,8 @@ settings are not save-slot identity.
 
 The primary menu exposes these semantic commands:
 
+<!-- markdownlint-disable MD013 -->
+
 | Command | Availability |
 | :--- | :--- |
 | `new_game` | Base campaign and an empty or replaceable target slot are available. |
@@ -136,6 +148,8 @@ The primary menu exposes these semantic commands:
 | `options` | Device-local configuration service is available. |
 | `credits` | Credits definition and presentation bundle resolve. |
 | `quit` | Platform policy exposes an application-exit command. |
+
+<!-- markdownlint-enable MD013 -->
 
 A command is visible according to product policy and enabled according to typed
 availability. Disabled commands expose a localized reason. A hidden command is
@@ -212,10 +226,12 @@ presentation. It has two canonical modes.
 
 Locked vehicle and clothing rows remain visible through the declared transparent
 or placeholder presentation. Visibility never grants ownership or changes
-progress. Mission and card rows use canonical level and ordinal identities rather
+progress. Mission and card rows use canonical level and ordinal identities
+rather
 than screenshot order.
 
-The pause-menu level-progress screen consumes the same level progress view model.
+The pause-menu level-progress screen consumes the same level progress view
+model.
 It cannot use a second formula or count visible widgets. The scrapbook is a
 main-menu extra and may be opened whenever one accepted progression snapshot is
 available; it is not gated by bonus-game availability.
@@ -226,7 +242,8 @@ diagnostic. It does not remove accepted progression or change the percentage.
 ## Options screen
 
 Options are device-local and separated from portable gameplay state. The screen
-edits a staged `FSharDeviceConfiguration` containing supported display, graphics,
+edits a staged `FSharDeviceConfiguration` containing supported display,
+graphics,
 audio, input, accessibility, language, safe-area, and platform presentation
 fields.
 
@@ -256,11 +273,14 @@ The frontend action set contains:
 - open contextual help; and
 - skip or pause presentation when the active screen permits it.
 
-Keyboard and mouse, gamepad, and touch adapters map physical input into this set.
+Keyboard and mouse, gamepad, and touch adapters map physical input into this
+set.
 Device discovery, assignment, rebinding, pointer capture, and haptic feedback
 follow the
+<!-- markdownlint-disable-next-line MD013 -->
 [semantic input, device, and haptics runtime](semantic-input-device-and-haptics-runtime.md).
-The active-input method changes glyphs and hints only. It does not change command
+The active-input method changes glyphs and hints only. It does not change
+command
 availability or navigation meaning.
 
 Every activatable screen declares an initial focus target and a restoration
@@ -284,12 +304,14 @@ before the main menu appears.
 ## Idle presentation
 
 The main-menu definition may contain an ordered set of idle events. Each event
-has a stable presentation identity, eligibility predicate, minimum idle duration,
+has a stable presentation identity, eligibility predicate, minimum idle
+duration,
 cooldown, weight, required bundle, and cancellation policy.
 
 Idle events may animate the living-room scene, show background characters,
 trigger ambient dialogue, or play non-interactive gags. Any navigation input
-cancels the active idle event at its declared safe point and restores menu focus.
+cancels the active idle event at its declared safe point and restores menu
+focus.
 
 Idle presentation does not grant gag completion, currency, collectibles,
 achievements, or campaign progress.

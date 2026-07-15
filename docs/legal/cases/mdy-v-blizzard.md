@@ -59,5 +59,7 @@ software license, and a restriction on use is not necessarily an access control.
   LLC v. Blizzard Entertainment, Inc.*, amended opinion. Available at:
   <https://cdn.ca9.uscourts.gov/datastore/opinions/2011/02/17/09-15932.pdf>
   (Accessed: 12 July 2026).
+<!-- markdownlint-disable-next-line MD013 -->
 - [Software-license reverse-engineering clauses](../contracts/software-license-reverse-engineering-clauses.md).
+<!-- markdownlint-disable-next-line MD013 -->
 - [17 U.S.C. § 1201 tool-distribution research](../statutes/17-usc-1201-trafficking.md).

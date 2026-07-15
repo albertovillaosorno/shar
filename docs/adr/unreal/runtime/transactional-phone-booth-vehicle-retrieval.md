@@ -28,11 +28,13 @@ mission policy, currency, and the selected booth placement.
 
 Selecting an eligible vehicle runs one transaction: validate eligibility,
 persist current owned-vehicle health, stage any required repair debit, load the
-selected primary-asset bundles, reserve a safe delivery transform, spawn or reuse
+selected primary-asset bundles, reserve a safe delivery transform, spawn or
+reuse
 one canonical vehicle instance, apply the declared driver presentation, verify
 world registration, and commit the active retrieval slot and economy revision.
 
-A destroyed owned vehicle requires the declared repair charge. The base policy is
+A destroyed owned vehicle requires the declared repair charge. The base policy
+is
 10 coins. Insufficient currency rejects the repair and preserves vehicle,
 currency, and world state.
 
@@ -50,7 +52,8 @@ remain separate purchase and character-presentation contracts.
 - Re-selecting the already active canonical vehicle reuses it when valid rather
   than creating a duplicate.
 - Repair, spawn, active-slot replacement, and read-back commit atomically.
-- Driver characters are presentation bindings and do not create vehicle identity.
+- Driver characters are presentation bindings and do not create vehicle
+  identity.
 - Booth placement controls delivery location but never vehicle ownership.
 - Failed loading, blocked transforms, stale projections, or save failure restore
   the prior accepted state.

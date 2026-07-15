@@ -12,7 +12,8 @@ assembly would make those relationships editor-order dependent.
 
 The runtime targets Windows, Linux, macOS, and Android. Unreal media players,
 operating-system decoders, supported containers, codec profiles, audio routing,
-resolution limits, and frame-rate limits differ by target. A normalized HAP video
+resolution limits, and frame-rate limits differ by target. A normalized HAP
+video
 with separate WAV tracks is useful conversion and review evidence, but it cannot
 be assumed to be the universal packaged playback format.
 
@@ -30,7 +31,8 @@ package relies on embedded HAP audio or timecode.
 Packaging generates a target media variant for each claimed native target. A
 variant declares the exact target identifier, Unreal media player or plugin,
 container, video codec and profile, audio strategy, dimensions, frame rate,
-bitrate or quality parameters, lengths, and hashes. The selected combination must
+bitrate or quality parameters, lengths, and hashes. The selected combination
+must
 be supported by the packaged Unreal build and verified on representative native
 hardware.
 
@@ -50,7 +52,8 @@ stream, external codec installation, runtime download, or network service for
 required story playback.
 
 If the selected target lacks a verified native playback route, packaging either
-performs a deterministic target transcode from normalized evidence or rejects the
+performs a deterministic target transcode from normalized evidence or rejects
+the
 target as unsupported. It does not silently ship an unverified file or fall back
 to missing cinematic content.
 
@@ -66,7 +69,8 @@ to missing cinematic content.
   timing contracts.
 - Video and audio synchronization is verified from the canonical timeline,
   normalized evidence, packaged variant, and native playback read-back.
-- Decoder, container, codec, or audio-routing failure blocks availability for the
+- Decoder, container, codec, or audio-routing failure blocks availability for
+  the
   affected target instead of producing a partial cinematic state.
 - Source media remains user evidence and is not published with repository
   documentation or source history.

@@ -21,7 +21,8 @@ Native UI preserves observable layout, interaction, state, timing, localization,
 and accessibility contracts through deterministic data and code rather than
 copied source-engine widgets.
 
-UI actions use one semantic input model. Keyboard and mouse, gamepad, and Android
+UI actions use one semantic input model. Keyboard and mouse, gamepad, and
+Android
 touch adapters map to that model without changing gameplay meaning. Layout
 responds to supported aspect ratios, resolutions, display densities, window
 modes, safe areas, and display cutouts.

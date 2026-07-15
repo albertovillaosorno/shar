@@ -5,6 +5,7 @@
 
 ## Governing decision
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Faithful material normalization](../../../adr/pipeline/unreal/texture-superposition-shader.md)
 
 ## Purpose

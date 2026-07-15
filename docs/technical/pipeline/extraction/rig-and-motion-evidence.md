@@ -5,6 +5,7 @@
 
 ## Governing decision
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Lossless fail-closed extraction](../../../adr/pipeline/extraction/lossless-extraction-contract.md)
 
 ## Purpose

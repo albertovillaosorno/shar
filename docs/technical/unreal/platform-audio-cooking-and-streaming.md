@@ -5,10 +5,15 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Platform-native audio cooking and streaming](../../adr/audio/platform-native-audio-cooking-and-streaming.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Event-driven music and ambience](../../adr/unreal/runtime/event-driven-music-and-ambience.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Latin American Spanish audio fallback](../../adr/audio/lmlm-spanish-latam-audio-fallback.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native cinematic package strategy](../../adr/rmv/unreal-native-cinematic-package.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
 
 ## Purpose
@@ -20,6 +25,8 @@ budgeting, failure, and verification for native Unreal packages.
 ## Normalized audio evidence
 
 Each decoded source produces one normalized PCM record containing at least:
+
+<!-- markdownlint-disable MD013 -->
 
 | Field | Contract |
 | :--- | :--- |
@@ -36,6 +43,8 @@ Each decoded source produces one normalized PCM record containing at least:
 | `GainMetadata` | Source gain and measured loudness evidence when available. |
 | `SourceRevision` | Provenance and deterministic source revision. |
 | `IntegrityRecord` | Length and hash evidence for metadata and PCM payload. |
+
+<!-- markdownlint-enable MD013 -->
 
 PCM WAV is a review and conversion representation. Runtime identity is the
 canonical audio record, not the WAV filename, storage route, Unreal object path,
@@ -70,13 +79,15 @@ preset. Asset-specific overrides are explicit, bounded, and validated.
 Dialogue prioritizes intelligibility, locale correctness, bounded start latency,
 and event timing. Music and ambient loops preserve declared loop sample
 boundaries. Cinematic audio follows the canonical cinematic timeline. Vehicle
-loops preserve pitch and transition behavior. UI and short gameplay cues preserve
+loops preserve pitch and transition behavior. UI and short gameplay cues
+preserve
 latency and priority. No policy may remove a required category.
 
 ## Target cooking
 
 Target cooking consumes normalized PCM evidence, canonical metadata, a complete
-role policy, and the selected Unreal target toolchain. It produces a target-native
+role policy, and the selected Unreal target toolchain. It produces a
+target-native
 cooked representation and manifest with:
 
 - target identifier;
@@ -95,7 +106,8 @@ prove another. Target transformation must preserve accepted duration, loop,
 locale, event, and audibility contracts.
 
 A target with no verified representation remains unsupported or receives a
-deterministically generated target variant. It never silently ships raw evidence,
+deterministically generated target variant. It never silently ships raw
+evidence,
 drops the audio, or substitutes an unrelated format.
 
 ## Streaming, residency, and cache
@@ -118,12 +130,14 @@ loaded eagerly. Locale changes invalidate only the affected presentation scopes
 and do not change canonical gameplay identity.
 
 Eviction cannot remove an asset required for an active dialogue line, cinematic,
-mission event, vehicle loop, or uninterruptible UI contract. A policy either pins
+mission event, vehicle loop, or uninterruptible UI contract. A policy either
+pins
 that scope or fails activation before playback begins.
 
 ## Android lifecycle and audio focus
 
-Android foreground, background, suspension, low-memory, output-device, and audio-
+Android foreground, background, suspension, low-memory, output-device, and
+audio-
 focus events map to typed platform audio events.
 
 Each role declares whether focus loss pauses, ducks, stops, or continues. The
@@ -135,7 +149,8 @@ Low-memory handling may evict inactive cached audio according to explicit
 priority. It cannot discard active required dialogue, corrupt loop state, change
 locale, or report a successful playback that did not occur.
 
-Android Low uses target-specific audio budgets independent of the graphics preset
+Android Low uses target-specific audio budgets independent of the graphics
+preset
 name. The visual Low requirement is not authority to lower audio semantics.
 Required audio remains local and playable without network access.
 
@@ -148,7 +163,8 @@ are not authority.
 
 A local audio override passes identity, PCM metadata, duration, loop, locale,
 target-cook, integrity, and native-playback validation. Desktop file import and
-Android managed import produce the same logical override. Invalid overrides leave
+Android managed import produce the same logical override. Invalid overrides
+leave
 the valid canonical target representation active.
 
 ## Invariants
@@ -191,7 +207,8 @@ scope before it begins.
 
 - PCM fixtures verify channels, sample rate, bit depth, sample count, duration,
   loop points, synchronization markers, lengths, and hashes.
-- Target-cook tests record policy, cooked members, transformations, dependencies,
+- Target-cook tests record policy, cooked members, transformations,
+  dependencies,
   and reproducible provenance for every claimed target.
 - Native package tests verify dialogue, music, ambient, vehicle, UI, gameplay,
   and cinematic roles on Windows, Linux, macOS, and Android packages.

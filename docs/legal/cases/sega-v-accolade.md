@@ -104,10 +104,12 @@ effects, technological measures, agreements, and governing jurisdiction.
 
 - *Sega Enterprises Ltd. v. Accolade, Inc.*, 977 F.2d 1510 (9th Cir. 1992), No.
   92-15655, secondary duplicate copy with reporter star pagination:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://www.courtlistener.com/opinion/593285/sega-enterprises-ltd-a-japanese-corporation-v-accolade-inc-a/>
   (Accessed: 13 July 2026).
 - U.S. Copyright Office, *Sega Enterprises Ltd. v. Accolade, Inc.* fair-use
   summary:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://www.copyright.gov/fair-use/summaries/segaenters-accolade-9thcir1992.pdf>
   (Accessed: 13 July 2026).
 - United States Court of Appeals for the Ninth Circuit, *Disney Enterprises,

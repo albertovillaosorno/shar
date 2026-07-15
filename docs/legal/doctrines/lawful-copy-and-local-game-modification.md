@@ -26,7 +26,8 @@ copies protected expression beyond what use requires, access controls are
 circumvented, contractual restrictions apply, or files are shared.
 
 Copy ownership depends on the governing jurisdiction and complete transaction.
-The Second Circuit's *Krause v. Titleserv* decision treated a custom-program user
+The Second Circuit's *Krause v. Titleserv* decision treated a custom-program
+user
 as an owner where it paid substantial consideration, received programs created
 for its sole benefit, held an indefinite and materially unrestricted right to
 possess and use the copies, and could discard or destroy them. The Ninth
@@ -40,7 +41,8 @@ not independently conclusive.
 
 - Section 117 expressly addresses some copies and adaptations made by the owner
   of a program copy for use with a machine.
-- *Krause v. Titleserv* treated repairs, routine data updates, migration to a new
+- *Krause v. Titleserv* treated repairs, routine data updates, migration to a
+  new
   computer system, and features serving custom software's established purpose as
   qualifying adaptations on its record. It also required the adapted program to
   remain within the contemplated manner of use.
@@ -93,7 +95,9 @@ not independently conclusive.
 - [17 U.S.C. § 1201](../statutes/17-usc-1201-trafficking.md).
 - [Krause v. Titleserv, Inc](../cases/krause-v-titleserv.md).
 - [Vernor v. Autodesk, Inc](../cases/vernor-v-autodesk.md).
+<!-- markdownlint-disable-next-line MD013 -->
 - [Lewis Galoob Toys, Inc. v. Nintendo of America, Inc](../cases/lewis-galoob-toys-v-nintendo.md).
 - [Micro Star v. FormGen, Inc](../cases/micro-star-v-formgen.md).
 - [Derivative works and game mods](derivative-works-and-game-mods.md).
+<!-- markdownlint-disable-next-line MD013 -->
 - [Software license reverse-engineering clauses](../contracts/software-license-reverse-engineering-clauses.md).

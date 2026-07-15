@@ -5,10 +5,14 @@
 
 ## Governing decisions and specifications
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
 - [Platform save storage and lifecycle](platform-save-storage-and-lifecycle.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
 
 ## Purpose
@@ -24,6 +28,8 @@ and callback-order completion with native schemas and transaction handles.
 
 ## Ownership
 
+<!-- markdownlint-disable MD013 -->
+
 | Authority | Responsibility |
 | :--- | :--- |
 | Configuration schema | Device-local setting identities, types, bounds, defaults, and migration. |
@@ -34,12 +40,16 @@ and callback-order completion with native schemas and transaction handles.
 | Front-end UI | Slot selection, confirmation, progress, failure, and recovery presentation. |
 | Gameplay domains | Immutable portable snapshot and accepted checkpoint metadata. |
 
+<!-- markdownlint-enable MD013 -->
+
 Neither configuration nor slot presentation owns gameplay progression. The save
 repository cannot apply a snapshot until all owning domains validate it.
 
 ## Runtime topology
 
 The platform module owns these C++ types:
+
+<!-- markdownlint-disable MD013 -->
 
 | Type | Responsibility |
 | :--- | :--- |
@@ -55,12 +65,16 @@ The platform module owns these C++ types:
 | `FSharSaveOperationHandle` | Move-only asynchronous operation and cancellation handle. |
 | `FSharSaveOperationResult` | Closed terminal status with verified resulting revision. |
 
+<!-- markdownlint-enable MD013 -->
+
 Active operations belong to one game instance and profile. Platform storage
 objects are hidden behind the adapter and never become gameplay identity.
 
 ## Device-configuration schema
 
 Every setting definition contains:
+
+<!-- markdownlint-disable MD013 -->
 
 | Field | Contract |
 | :--- | :--- |
@@ -74,7 +88,10 @@ Every setting definition contains:
 | `Migration` | Ordered converters from recognized prior revisions. |
 | `Presentation` | Localizable label, description, category, and accessibility metadata. |
 
-A setting name, section heading, text line, registration order, or handler pointer
+<!-- markdownlint-enable MD013 -->
+
+A setting name, section heading, text line, registration order, or handler
+pointer
 is not identity authority.
 
 ## Configuration document
@@ -101,6 +118,8 @@ text or depend on a fixed buffer size.
 
 Configuration load returns one result:
 
+<!-- markdownlint-disable MD013 -->
+
 | Result | Meaning |
 | :--- | :--- |
 | `loaded` | Current schema read and validated. |
@@ -108,6 +127,8 @@ Configuration load returns one result:
 | `defaulted` | No accepted configuration existed and defaults were committed. |
 | `quarantined` | Invalid local data was preserved for diagnostics before defaults. |
 | `failed` | No valid configuration or safe default commit was possible. |
+
+<!-- markdownlint-enable MD013 -->
 
 Defaulting never changes portable gameplay state. A hardware capability change
 may alter the resolved presentation value without rewriting the user's requested
@@ -148,14 +169,18 @@ or display order.
 - platform capability limits; and
 - presentation labels.
 
-A supported platform may expose a different physical storage model, but it cannot
+A supported platform may expose a different physical storage model, but it
+cannot
 silently reinterpret one logical slot as another. Product slot count is a
 validated policy, not a compile-time branch.
 
 ## Save-slot summary
 
-A slot summary is derived from the accepted portable document and platform commit
+A slot summary is derived from the accepted portable document and platform
+commit
 record. It contains:
+
+<!-- markdownlint-disable MD013 -->
 
 | Field | Contract |
 | :--- | :--- |
@@ -169,6 +194,8 @@ record. It contains:
 | `ContentStatus` | Required content available, optional missing, or blocked. |
 | `IntegrityStatus` | Verified, recoverable prior revision, or invalid. |
 | `Presentation` | Localizable derived label and thumbnail identity. |
+
+<!-- markdownlint-enable MD013 -->
 
 Localized display strings are generated after validation. They are never stored
 as checkpoint identity.
@@ -193,7 +220,8 @@ A section definition declares:
 - participation in portable or device-local state.
 
 Registration order and byte count cannot define the serialized layout. Missing a
-required section fails snapshot capture. Optional sections use explicit defaults.
+required section fails snapshot capture. Optional sections use explicit
+defaults.
 
 ## Save, load, and delete operations
 
@@ -210,7 +238,8 @@ Every operation records:
 - cancellation and timeout policy; and
 - verified resulting slot state.
 
-Delete is a separate confirmed transaction. It removes the selected accepted slot
+Delete is a separate confirmed transaction. It removes the selected accepted
+slot
 and its staging records without affecting another slot or device configuration.
 A failed delete reports the still-readable accepted state.
 
@@ -236,7 +265,8 @@ provider pointers as portable identity.
 
 ## Quota and creation size
 
-Before creating or replacing a slot, the adapter computes a conservative required
+Before creating or replacing a slot, the adapter computes a conservative
+required
 size for:
 
 - staged candidate;
@@ -255,13 +285,15 @@ Icons, banners, thumbnails, titles, and platform save-description resources are
 packaged native assets or generated metadata. They are not loaded from arbitrary
 runtime files before every save operation.
 
-Platform presentation assets may differ without changing logical slot identity or
+Platform presentation assets may differ without changing logical slot identity
+or
 portable save bytes.
 
 ## Storage remediation and formatting
 
 The application never formats general user storage or a platform account volume.
-When a provider reports an unsupported or uninitialized state, the adapter returns
+When a provider reports an unsupported or uninitialized state, the adapter
+returns
 one typed remediation such as:
 
 - retry after provider availability changes;
@@ -271,7 +303,8 @@ one typed remediation such as:
 - choose another application-supported container; or
 - continue without saving when product policy permits it.
 
-Any platform UI that can initialize dedicated application storage remains outside
+Any platform UI that can initialize dedicated application storage remains
+outside
 the gameplay save transaction and requires explicit user control.
 
 ## Asynchronous operation model
@@ -290,7 +323,8 @@ open.
 
 ## Suspension and shutdown
 
-Application suspension and exit may request bounded completion or cancellation of
+Application suspension and exit may request bounded completion or cancellation
+of
 active operations. The coordinator:
 
 - refuses new conflicting operations;

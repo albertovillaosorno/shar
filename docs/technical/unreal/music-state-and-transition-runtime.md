@@ -5,8 +5,11 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Event-driven music and ambience](../../adr/unreal/runtime/event-driven-music-and-ambience.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Platform-native audio cooking and streaming](../../adr/audio/platform-native-audio-cooking-and-streaming.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Canonical seven-level campaign and world variants](../../adr/unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 
@@ -28,12 +31,15 @@ interaction, notoriety, cinematic, platform-audio, and lifecycle ports. It emits
 presentation commands and diagnostics. It never advances gameplay, awards
 progression, or infers mission success from audio playback.
 
-The target audio adapter owns native cooking, stream cache, voices, output routes,
+The target audio adapter owns native cooking, stream cache, voices, output
+routes,
 and device focus. The music subsystem owns semantic state and transition intent.
 
 ## Definition assets
 
 The root gameplay catalog references:
+
+<!-- markdownlint-disable MD013 -->
 
 | Asset | Primary asset type | Purpose |
 | :--- | :--- | :--- |
@@ -44,6 +50,8 @@ The root gameplay catalog references:
 | Music state table | `FSharMusicStateRow` | Semantic state, priority, persistence, and required composition. |
 | Music binding table | `FSharMusicBindingRow` | Context and event to state transition. |
 | Music transition table | `FSharMusicTransitionRow` | Quantization, fades, interruption, and fallback. |
+
+<!-- markdownlint-enable MD013 -->
 
 ## Canonical composition identity
 
@@ -70,6 +78,8 @@ are never composition identity.
 
 `FSharMusicStateRow` contains:
 
+<!-- markdownlint-disable MD013 -->
+
 | Field | Contract |
 | :--- | :--- |
 | `StateId` | Stable semantic state identity. |
@@ -83,6 +93,8 @@ are never composition identity.
 | `InterruptionPolicy` | Events allowed to replace or overlay the state. |
 | `FallbackStateId` | Exact fallback when optional content is unavailable. |
 | `Required` | Whether activation fails without this state. |
+
+<!-- markdownlint-enable MD013 -->
 
 The active state stack is ordered by priority and activation sequence. Equal
 priority is valid only when the binding declares overlay composition; otherwise
@@ -114,6 +126,8 @@ completion are not semantic events.
 
 The verified base profiles define:
 
+<!-- markdownlint-disable MD013 -->
+
 | Level context | Canonical profile | Presentation direction |
 | :--- | :--- | :--- |
 | Level 1 | `music_profile_homer` | Orchestral comedy with a prominent low-brass motif. |
@@ -123,6 +137,8 @@ The verified base profiles define:
 | Level 5 | `music_profile_apu` | South Asian-inspired profile with declared plucked and reed instrumentation. |
 | Level 7 | `music_profile_halloween` | Horror profile with organ and theremin presentation. |
 
+<!-- markdownlint-enable MD013 -->
+
 These directions constrain composition and mix review. They are not procedural
 instrument-generation rules and do not replace normalized audio evidence.
 
@@ -130,6 +146,8 @@ instrument-generation rules and do not replace normalized audio evidence.
 
 The following canonical cue identities have verified mission or race contexts.
 A cue may bind the same composition to several states without duplicating audio.
+
+<!-- markdownlint-disable MD013 -->
 
 | Cue identity | Verified contexts |
 | :--- | :--- |
@@ -160,7 +178,10 @@ A cue may bind the same composition to several states without duplicating audio.
 | `cue_alien_probe` | `long_black_probes`, `alien_autotopsy_part_1`. |
 | `cue_town_hero` | second `theres_something_about_monty` state. |
 
-A mission with multiple cue bindings uses explicit step or semantic-state ranges.
+<!-- markdownlint-enable MD013 -->
+
+A mission with multiple cue bindings uses explicit step or semantic-state
+ranges.
 The binding table never assumes the entire mission uses the first cue.
 
 ## Standard state bindings
@@ -198,7 +219,8 @@ A transition request is revision-bound. If the tempo map or active state changes
 before execution, the request is recalculated or rejected according to policy.
 It cannot execute against stale timing.
 
-Pause may suspend clock advancement or retain a low-priority overlay according to
+Pause may suspend clock advancement or retain a low-priority overlay according
+to
 the active state. Unpause resumes at the accepted quantized position. Frame rate
 does not determine musical timing.
 
@@ -215,7 +237,8 @@ A music graph exposes only declared parameters such as:
 - pause or focus state; and
 - target-specific mix policy.
 
-Parameter names and ranges are generated from the music definition. Gameplay code
+Parameter names and ranges are generated from the music definition. Gameplay
+code
 never sets arbitrary graph parameters or object-path references.
 
 A graph read-back adapter verifies the active composition, section, transport
@@ -224,7 +247,8 @@ target cannot change semantic state.
 
 ## Mission and race integration
 
-Mission definitions bind semantic mission steps or state ranges to cue identities.
+Mission definitions bind semantic mission steps or state ranges to cue
+identities.
 The mission runtime emits start, normal, drama, warning, win, lose, retry, and
 complete events. The music subsystem does not inspect mission actor classes or
 stage numbers.
@@ -238,17 +262,20 @@ the declared threshold. The music subsystem does not poll a widget countdown.
 
 ## Interior and world integration
 
-Interior portals emit location enter and exit events only after the transactional
+Interior portals emit location enter and exit events only after the
+transactional
 interior state commits. The profile selects the exact interior state or declared
 fallback. Failed portal activation cannot switch music.
 
 World Partition streaming may load audio bundles early, but the active state
-changes only from semantic events. Streaming out an inactive zone cannot stop the
+changes only from semantic events. Streaming out an inactive zone cannot stop
+the
 current required score.
 
 ## Movies, loading, pause, and focus
 
-A movie transition declares whether score stops, pauses and resumes, ducks beneath
+A movie transition declares whether score stops, pauses and resumes, ducks
+beneath
 cinematic audio, or hands off at a named sync marker.
 
 Loading owns a blocking state with an explicit return destination. A failed load
@@ -284,9 +311,11 @@ Music activation or transition fails closed on:
 - target-cook duration, loop, or marker drift;
 - inability to satisfy an uninterruptible active state;
 - read-back mismatch; or
-- a binding that depends on a display title, filename, object path, or frame rate.
+- a binding that depends on a display title, filename, object path, or frame
+  rate.
 
-An optional-layer failure uses the exact fallback. A required-state failure blocks
+An optional-layer failure uses the exact fallback. A required-state failure
+blocks
 the owning level, mission, race, or frontend activation before misleading
 playback begins.
 

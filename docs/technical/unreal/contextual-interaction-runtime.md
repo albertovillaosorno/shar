@@ -2,11 +2,16 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Contextual interaction query and transaction boundary](../../adr/unreal/runtime/contextual-interaction-query-and-transaction.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Typed StateTree action sequences](../../adr/unreal/runtime/typed-state-tree-action-sequences.md)
 - [Typed action-sequence runtime](typed-action-sequence-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Transactional phone-booth vehicle retrieval](../../adr/unreal/runtime/transactional-phone-booth-vehicle-retrieval.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 
 ## Purpose
@@ -21,6 +26,8 @@ input or mutate unrelated domain storage.
 
 The runtime module owns these C++ types:
 
+<!-- markdownlint-disable MD013 -->
+
 | Type | Responsibility |
 | :--- | :--- |
 | `USharInteractionDefinition` | Primary data asset containing the stable interaction contract. |
@@ -33,6 +40,8 @@ The runtime module owns these C++ types:
 | `FSharInteractionReservation` | Move-only reservation token with source and interactor revisions. |
 | `FSharInteractionResult` | Typed success, rejection, cancellation, or compensated-failure result. |
 
+<!-- markdownlint-enable MD013 -->
+
 Blueprints may configure definitions and source components. They may not own
 candidate ordering, reward commits, save writes, economy mutations, vehicle
 ownership, mission progression, or compensation.
@@ -40,6 +49,8 @@ ownership, mission progression, or compensation.
 ## Definition contract
 
 Every `USharInteractionDefinition` contains:
+
+<!-- markdownlint-disable MD013 -->
 
 | Field | Contract |
 | :--- | :--- |
@@ -58,11 +69,15 @@ Every `USharInteractionDefinition` contains:
 | `CancellationPolicy` | Allowed phases and required compensation behavior. |
 | `VerificationPolicy` | Observable state that must confirm a successful commit. |
 
+<!-- markdownlint-enable MD013 -->
+
 Definitions with missing executor registration, unresolved references, invalid
 Gameplay Tags, an empty canonical identity, or contradictory input and slot
 policies fail asset validation and cannot enter the runtime catalog.
 
 ## Canonical interaction kinds
+
+<!-- markdownlint-disable MD013 -->
 
 | Kind | Required behavior |
 | :--- | :--- |
@@ -92,11 +107,14 @@ policies fail asset validation and cannot enter the runtime catalog.
 | `purchase_costume` | Quote the canonical offer, debit currency, grant the costume, and persist one atomic result. |
 | `generic_event` | Publish only a schema-registered event payload with a declared consumer. |
 
+<!-- markdownlint-enable MD013 -->
+
 No generic-event definition may substitute for a kind that has domain effects.
 
 ## Candidate discovery
 
-Each interactor maintains a bounded overlap set from interaction-source collision
+Each interactor maintains a bounded overlap set from interaction-source
+collision
 channels. Streaming registration and overlap notifications update the set;
 there is no world-wide per-frame actor scan.
 
@@ -117,7 +135,8 @@ Accepted candidates are sorted by:
 1. ascending squared distance to the resolved use slot; and
 1. ascending canonical interaction identity.
 
-Physics overlap order, actor creation order, streaming order, pointer values, and
+Physics overlap order, actor creation order, streaming order, pointer values,
+and
 frame timing are never selection inputs. The previous candidate remains selected
 only when it still wins the same ordering contract.
 
@@ -165,7 +184,8 @@ radius. Character movement uses the native movement component and animation
 montages; interaction code must not teleport a character to mask an invalid
 approach path unless the definition is explicitly a teleport interaction.
 
-Presentation preparation may lock movement and camera input only for the declared
+Presentation preparation may lock movement and camera input only for the
+declared
 phase. Every success, cancellation, source unload, character destruction, and
 executor failure restores those locks through one scoped presentation token.
 
@@ -192,21 +212,26 @@ returns `already_collected` without replaying rewards.
 Repair pickups target the vehicle the player currently occupies. When the player
 is on foot, they target the last valid player-controlled vehicle retained by the
 vehicle-context service for the current level. A successful repair restores the
-complete driveable state and all visible damage channels supported by the vehicle
-runtime. The base respawn interval is approximately one minute and is authored as
+complete driveable state and all visible damage channels supported by the
+vehicle
+runtime. The base respawn interval is approximately one minute and is authored
+as
 a duration, not encoded in the pickup actor.
 
 Alien-camera collectibles are adversarial destructible targets rather than
 passive overlaps. Destruction, currency reward, level-progress credit, visual
-shutdown, and mission observations commit once from the authoritative destruction
+shutdown, and mission observations commit once from the authoritative
+destruction
 result. Nearby repair or card pickups may publish an alert stimulus, but they do
 not call camera behavior directly.
 
 ## Vehicle and interior delegation
 
-Vehicle entry, phone-booth retrieval, and interior transitions remain application
+Vehicle entry, phone-booth retrieval, and interior transitions remain
+application
 ports. The interaction subsystem owns only candidate selection, reservation, and
-presentation handoff. It does not own seat state, vehicle spawning, world travel,
+presentation handoff. It does not own seat state, vehicle spawning, world
+travel,
 or interior streaming.
 
 If a delegated transaction times out or fails, the interaction result preserves
@@ -220,7 +245,8 @@ The displayed price, eligibility result, debit, ownership grant, and save write
 use one offer revision. A changed price or ownership state invalidates the
 reservation and requires a new quote.
 
-Currency is never debited before the grant is prepared. Success is published only
+Currency is never debited before the grant is prepared. Success is published
+only
 after the economy and ownership transaction commits durably. Duplicate purchase
 requests for an owned item return `already_owned` and never debit currency.
 
@@ -263,7 +289,8 @@ retries. It does not grant partial rewards or advance mission state.
 - World actors do not poll input or write save, mission, economy, or ownership
   storage.
 - Candidate ordering is deterministic for identical snapshots.
-- A source unload cannot leave movement, camera, animation, or slot locks active.
+- A source unload cannot leave movement, camera, animation, or slot locks
+  active.
 - Generic events cannot carry unregistered payloads or hidden domain effects.
 
 ## Verification

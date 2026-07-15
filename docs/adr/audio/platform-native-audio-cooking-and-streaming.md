@@ -6,28 +6,34 @@
 
 ## Context
 
-The pipeline preserves decoded audio as normalized PCM WAV evidence with explicit
-sample rate, bit depth, channels, sample count, timing, identity, and provenance.
+The pipeline preserves decoded audio as normalized PCM WAV evidence with
+explicit
+sample rate, bit depth, channels, sample count, timing, identity, and
+provenance.
 The runtime targets Windows, Linux, macOS, and Android across x64 and ARM64.
 Those targets have different native audio devices, cooked representations,
 decoder costs, memory limits, storage limits, lifecycle behavior, and output
 capabilities.
 
 Shipping every normalized WAV unchanged would confuse evidence with product
-representation and could waste memory or storage. Selecting one compressed format
-for every platform would make an unverified portability promise. Performance work
+representation and could waste memory or storage. Selecting one compressed
+format
+for every platform would make an unverified portability promise. Performance
+work
 must not remove dialogue, music, effects, localization, or gameplay timing.
 
 ## Decision
 
 Every audio asset has one platform-neutral canonical identity and normalized PCM
-contract. The contract records role, locale, channels, sample rate, sample count,
+contract. The contract records role, locale, channels, sample rate, sample
+count,
 duration, loop points, synchronization markers, loudness and gain metadata when
 available, dependencies, provenance, and revision.
 
 Normalized PCM WAV remains deterministic conversion and review evidence. Product
 packaging cooks a target-native Unreal audio representation according to an
-explicit target policy. The policy selects loading behavior, compression quality,
+explicit target policy. The policy selects loading behavior, compression
+quality,
 streaming or residency, chunking, seek behavior, concurrency, and platform audio
 routing without changing canonical identity or gameplay meaning.
 
@@ -40,13 +46,17 @@ requirements rather than filename or directory.
 Dialogue and cinematic synchronization preserve canonical sample timing and
 locale identity. Music and required loops preserve declared loop boundaries.
 Short latency-sensitive cues may be resident when measured budgets allow it;
-longer assets may stream or use native cache facilities. No category may load all
+longer assets may stream or use native cache facilities. No category may load
+all
 unrelated audio eagerly.
 
-Android uses target-specific cooked audio and bounded memory, stream-cache, voice,
-and decoder policies. Low graphics does not imply missing or semantically reduced
+Android uses target-specific cooked audio and bounded memory, stream-cache,
+voice,
+and decoder policies. Low graphics does not imply missing or semantically
+reduced
 audio. Android lifecycle and audio-focus events may pause, duck, stop, or resume
-according to explicit category policy, but cannot advance gameplay, fire an audio-
+according to explicit category policy, but cannot advance gameplay, fire an
+audio-
 driven event twice, substitute a different locale, or corrupt synchronization.
 
 Required audio is packaged locally. Gameplay, dialogue, music, and cinematics do
@@ -67,7 +77,8 @@ unverified playback.
   based on their runtime requirements.
 - Locale fallback and user-provided overrides resolve before target cooking and
   do not depend on physical filenames or platform paths.
-- Memory, storage, stream-cache, decoder, and concurrency budgets are measured per
+- Memory, storage, stream-cache, decoder, and concurrency budgets are measured
+  per
   target and representative scene.
 - Optimization may reduce encoded cost within an accepted target policy but
   cannot remove required content, break loops, change event timing, obscure
@@ -84,7 +95,8 @@ unverified playback.
   localization.
 - Changing sample timing, loop boundaries, event order, or locale to meet a
   performance target.
-- Requiring an Internet stream, external codec pack, or third-party runtime audio
+- Requiring an Internet stream, external codec pack, or third-party runtime
+  audio
   service for required playback.
 - Allowing audio focus, suspension, or device loss to fire gameplay events twice
   or silently select a different track.

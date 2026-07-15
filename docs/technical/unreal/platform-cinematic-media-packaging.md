@@ -5,8 +5,10 @@
 
 ## Governing decisions and evidence
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native cinematic package strategy](../../adr/rmv/unreal-native-cinematic-package.md)
 - [Local cinematic overrides](../../adr/rmv/local-movie-overrides.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
 - [Unreal Engine](../../bibliography/engine-and-plugins/unreal-engine.md)
 
@@ -20,6 +22,8 @@ lifecycle, fallback, and verification contracts for required local cinematics.
 
 Every cinematic has one platform-neutral definition containing at least:
 
+<!-- markdownlint-disable MD013 -->
+
 | Field | Contract |
 | :--- | :--- |
 | `CinematicId` | Stable canonical identity. |
@@ -31,6 +35,8 @@ Every cinematic has one platform-neutral definition containing at least:
 | `EventMarkers` | Deterministic gameplay, fade, transition, and completion events. |
 | `SourceRevision` | Normalized evidence revision and provenance. |
 | `VariantRequirements` | Required target variants and their acceptance state. |
+
+<!-- markdownlint-enable MD013 -->
 
 Timeline identity is independent of codec, container, file extension, media
 player, storage path, target architecture, graphics preset, and physical media
@@ -55,6 +61,8 @@ history.
 
 Each target variant has a deterministic manifest containing:
 
+<!-- markdownlint-disable MD013 -->
+
 | Field | Contract |
 | :--- | :--- |
 | `TargetId` | Exact canonical target identifier. |
@@ -69,8 +77,11 @@ Each target variant has a deterministic manifest containing:
 | `Members` | Lengths, hashes, roles, and package identities for every file. |
 | `VerificationRevision` | Native playback evidence accepted for this target. |
 
+<!-- markdownlint-enable MD013 -->
+
 The packaging plan resolves the media player, codec, container, and decoder
-availability from the selected Unreal build and native target. A player listed by
+availability from the selected Unreal build and native target. A player listed
+by
 engine documentation is still unproved for SHAR until the packaged target passes
 native playback verification.
 
@@ -112,7 +123,8 @@ materially drifted.
 
 Audio track identity is explicit and independent of video packaging. Numbered
 tracks preserve locale, role, channel, sample-rate, sample-count, and start-time
-metadata. A target may use Unreal-native audio assets synchronized to video rather
+metadata. A target may use Unreal-native audio assets synchronized to video
+rather
 than relying on media-player audio routing.
 
 Locale resolution follows the accepted audio fallback decisions. A platform
@@ -136,7 +148,8 @@ continues from a validated timeline position or restarts according to the
 cinematic's declared policy; it does not guess from decoder-local state.
 
 Required cinematics are packaged locally. Android playback does not require a
-network stream, runtime download, external provider URI, or user-installed codec.
+network stream, runtime download, external provider URI, or user-installed
+codec.
 
 ## Local overrides
 
@@ -144,7 +157,8 @@ A validated local cinematic override targets the canonical cinematic and track
 identities. It passes the same timeline, integrity, target-compatibility, and
 native-playback checks as a generated variant.
 
-A desktop file import or Android managed document import copies accepted override
+A desktop file import or Android managed document import copies accepted
+override
 media into controlled local storage. The external path or provider URI never
 becomes override identity. Invalid or unavailable overrides leave the accepted
 canonical target variant active.
@@ -175,10 +189,12 @@ Packaging or playback fails closed on:
   rate, audio route, or decoder capability;
 - absent required engine plugin or target decoder;
 - nondeterministic or incomplete target conversion;
-- duration, timestamp, subtitle, event, or audio-sample drift beyond the accepted
+- duration, timestamp, subtitle, event, or audio-sample drift beyond the
+  accepted
   tolerance;
 - missing, duplicate, reordered, or hash-mismatched members;
-- reliance on an external codec installation, network source, or runtime download;
+- reliance on an external codec installation, network source, or runtime
+  download;
 - Android lifecycle recovery without a validated timeline position;
 - playback completion firing more than once; or
 - an override that fails integrity, timeline, locale, target, or native-playback
@@ -196,7 +212,8 @@ active. Missing cinematic content is never reported as successful playback.
 - Target packaging tests record the selected player, plugin, codec, container,
   profile, dimensions, frame rate, quality parameters, members, and provenance.
 - Native package tests play every required cinematic on each claimed target and
-  verify first frame, final frame, duration, audio sync, subtitles, events, pause,
+  verify first frame, final frame, duration, audio sync, subtitles, events,
+  pause,
   resume, seek, skip, restart, and clean shutdown.
 - Cross-target comparison proves equivalent canonical event and progression
   results even when media encoding differs.
@@ -206,12 +223,14 @@ active. Missing cinematic content is never reported as successful playback.
 - Resource tests measure decode CPU, GPU, memory, storage throughput, package
   size, startup latency, dropped frames, and audio drift on representative
   hardware.
-- Override tests import equivalent media through desktop and Android adapters and
+- Override tests import equivalent media through desktop and Android adapters
+  and
   prove stable identity, validation, fallback, and rollback.
 
 ## Known limits
 
-No codec, container, player, maximum resolution, or maximum frame rate is claimed
+No codec, container, player, maximum resolution, or maximum frame rate is
+claimed
 portable merely because it appears in engine documentation. Exact target media
 profiles remain evidence-driven and may change with the selected Unreal build,
 platform SDK, operating-system decoder, or native hardware validation.

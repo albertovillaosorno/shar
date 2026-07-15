@@ -5,10 +5,14 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Gameplay census, presentation, and development-content boundary](gameplay-census-presentation-and-development-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Transactional phone-booth vehicle retrieval](../../adr/unreal/runtime/transactional-phone-booth-vehicle-retrieval.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Driving, traffic, and vehicle behavior parity](../../adr/gameplay/vehicles/driving-traffic-and-vehicle-ai.md)
 
 ## Purpose
@@ -19,6 +23,7 @@ overrides, driver presentation, inaccessible development content, validation,
 and verification.
 
 It complements the transaction rules in
+<!-- markdownlint-disable-next-line MD013 -->
 [Vehicle retrieval and phone-booth runtime](vehicle-retrieval-and-phone-booth-runtime.md).
 That specification owns browser, repair, loading, delivery, and rollback. This
 one owns which vehicle definitions may enter each access class.
@@ -26,6 +31,8 @@ one owns which vehicle definitions may enter each access class.
 ## Access classes
 
 Every vehicle definition declares one or more explicit access rows.
+
+<!-- markdownlint-disable MD013 -->
 
 | Access class | Meaning |
 | :--- | :--- |
@@ -39,6 +46,8 @@ Every vehicle definition declares one or more explicit access rows.
 | `mission_required` | Mission activation requires existing ownership. |
 | `completion_override` | Full completion plus the declared cheat permits retrieval. |
 | `development_only` | Content remains unavailable to normal shipping gameplay. |
+
+<!-- markdownlint-enable MD013 -->
 
 Access rows are additive but do not imply one another. Entering traffic, using a
 secret placement, driving a mission vehicle, or selecting a completion override
@@ -174,6 +183,8 @@ through retrieval without changing that rule.
 
 Each level declares exactly four ordinary traffic models.
 
+<!-- markdownlint-disable MD013 -->
+
 | Level | Canonical traffic roster |
 | :--- | :--- |
 | 1 | `minivan`, `glass_truck`, `mini_school_bus`, `pickup_road_vehicle` |
@@ -183,6 +194,8 @@ Each level declares exactly four ordinary traffic models.
 | 5 | `sports_car_b`, `suv`, `ambulance`, `vote_quimby_truck` |
 | 6 | `compact_car`, `pickup_road_vehicle`, `burns_armored_truck`, `itchy_and_scratchy_movie_truck` |
 | 7 | `coffin_cart`, `hallo_hearse`, `ghost_ship`, `witch_car` |
+
+<!-- markdownlint-enable MD013 -->
 
 A traffic row declares level membership, relative spawn weight, driver
 archetype, traffic tuning, horn or ambient-audio profile, color-variant policy,
@@ -215,7 +228,8 @@ separate access state. It does not:
 ## Driver presentation
 
 A vehicle may have level- or mission-scoped driver bindings. Examples include
-Homer, Bart, Lisa, Marge, Apu, Cletus, Grampa, Skinner and Agnes, Comic Book Guy,
+Homer, Bart, Lisa, Marge, Apu, Cletus, Grampa, Skinner and Agnes, Comic Book
+Guy,
 Professor Frink, Snake, Smithers, Otto, Chief Wiggum, and the zombie driver.
 
 Driver rows declare the vehicle, character placement, allowed contexts, dialogue
@@ -248,7 +262,8 @@ when needed for migration verification. Shipping gameplay, save state,
 progression, retrieval, traffic, races, missions, and user-facing package claims
 must not expose them without a separate accepted content decision.
 
-Prerelease screenshots, prototypes, unused variants, and abandoned placements are
+Prerelease screenshots, prototypes, unused variants, and abandoned placements
+are
 negative compatibility evidence. They do not override final roster or access
 records.
 

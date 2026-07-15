@@ -5,6 +5,7 @@
 
 ## Governing decision
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native Unreal MCP terminal bridge](../../../adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md)
 
 ## Purpose

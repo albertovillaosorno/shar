@@ -68,11 +68,13 @@ repository name may reproduce third-party branding without review.
   <https://www.uspto.gov/web/trademarks/tmog/20031216_OG.pdf>
   (Accessed: 14 July 2026).
 - Disney+, *The Simpsons* consumer page:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://www.disneyplus.com/browse/entity-cac75c8f-a9e2-4d95-ac73-1cf1cc7b9568>
   (Accessed: 14 July 2026).
 - FOX, *The Simpsons* consumer page:
   <https://www.fox.com/detail/series/SER000852IRHK/the-simpsons> (Accessed: 14
   July 2026).
+<!-- markdownlint-disable-next-line MD013 -->
 - [Lawful local input and publication boundary](../../adr/legal/lawful-local-input-and-publication-boundary.md).
 
 ## Verification Checklist

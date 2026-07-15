@@ -5,6 +5,7 @@
 
 ## Governing decision
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Extraction provenance and manifest linkage](../../../adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md)
 
 ## Purpose

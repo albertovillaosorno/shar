@@ -5,13 +5,16 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Local mod trust and distribution boundary](../../adr/modding/mod-safety-scanner-and-distribution.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Local drop-in mod packages and AI skills](../../adr/modding/drop-in-mod-packages-and-ai-skills.md)
 
 ## Purpose
 
 This specification defines how an untrusted local package is normalized,
-validated, previewed, and admitted into a candidate active set before any runtime
+validated, previewed, and admitted into a candidate active set before any
+runtime
 state changes.
 
 ## Validation pipeline
@@ -26,7 +29,8 @@ Validation executes these phases in order:
 1. validate provenance and trust metadata required by policy;
 1. resolve target, architecture, ABI, runtime, and capability compatibility;
 1. resolve dependencies, conflicts, supersession, and explicit priority;
-1. resolve every declared gameplay and asset target through canonical identities;
+1. resolve every declared gameplay and asset target through canonical
+   identities;
 1. compute a deterministic dry-run change and load-order plan;
 1. compare the plan with declaration constraints and current active state;
 1. validate a complete candidate active-set revision; and
@@ -74,13 +78,16 @@ Content-only packages declare required gameplay, asset, rendering, input, and
 platform capabilities. A content package may activate on multiple targets only
 when each required capability resolves on the active native game package.
 
-Native packages declare exact canonical target identifiers, ABI, runtime contract,
+Native packages declare exact canonical target identifiers, ABI, runtime
+contract,
 binary role, length, and hash. Validation rejects a binary for an undeclared
 operating system or architecture. Metadata scanning cannot establish native-code
-safety; a separate explicit trust decision remains required even after structural
+safety; a separate explicit trust decision remains required even after
+structural
 validation succeeds.
 
-Android managed import and desktop directory discovery use the same compatibility
+Android managed import and desktop directory discovery use the same
+compatibility
 rules. Android may report native-code loading as unsupported while accepting an
 otherwise portable content-only package.
 
@@ -102,7 +109,8 @@ state, policy, and capabilities.
 
 ## Target resolution and preview
 
-Every declared change resolves to a supported canonical gameplay, catalog, asset,
+Every declared change resolves to a supported canonical gameplay, catalog,
+asset,
 configuration, or presentation target. Raw filesystem paths and mutable editor
 locations are not valid public mod targets.
 
@@ -136,7 +144,8 @@ remains authoritative.
 - Package and member identity are independent of physical storage.
 - Desktop and Android imports normalize equivalent input identically.
 - Validation never executes package-provided native code.
-- All resource, path, integrity, compatibility, topology, and target checks finish
+- All resource, path, integrity, compatibility, topology, and target checks
+  finish
   before activation.
 - Load order is independent of directory enumeration and archive order.
 - Native binaries load only after exact target compatibility and explicit trust.
@@ -149,7 +158,8 @@ remains authoritative.
 The package remains staged or rejected on:
 
 - unsupported contract, parser ambiguity, or resource-limit violation;
-- invalid declaration, provenance, trust, member, path, length, or hash evidence;
+- invalid declaration, provenance, trust, member, path, length, or hash
+  evidence;
 - unsafe archive structure or normalized identity collision;
 - incompatible target, architecture, ABI, runtime, or capability;
 - unresolved dependency, conflict, supersession, or priority topology;
@@ -160,7 +170,8 @@ The package remains staged or rejected on:
 - any native-code package lacking the required explicit trust decision.
 
 Every failure returns a typed finding with package identity, phase, invariant,
-and corrective action. A failed preview or admission never mutates accepted local
+and corrective action. A failed preview or admission never mutates accepted
+local
 state.
 
 ## Verification
@@ -172,7 +183,8 @@ state.
 - Integrity tests cover short reads, trailing data, length mismatches, and hash
   mismatches.
 - Compatibility tests cover every canonical target identifier, content-only
-  portability, undeclared native binaries, ABI mismatches, and Android native-code
+  portability, undeclared native binaries, ABI mismatches, and Android
+  native-code
   rejection.
 - Topology tests cover dependencies, conflicts, supersession, cycles, priority,
   and discovery-order independence.
@@ -180,7 +192,8 @@ state.
   physical paths.
 - Preview tests compare repeated results and bind them to package, policy,
   capability, and active-set revisions.
-- Fault injection interrupts staging, validation, preview, admission, replacement,
+- Fault injection interrupts staging, validation, preview, admission,
+  replacement,
   and runtime read-back and proves that accepted state is preserved.
 - Desktop-directory and Android-managed imports of equivalent input produce the
   same findings and candidate logical changes.

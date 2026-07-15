@@ -21,8 +21,10 @@ authorized requests into reviewable packages.
 
 Package identity, dependency order, and activation state are independent of the
 physical storage adapter. Desktop targets may discover packages through a local
-user-visible directory. Android imports a selected package into application-owned
-storage through a native platform adapter. Both routes produce the same validated
+user-visible directory. Android imports a selected package into
+application-owned
+storage through a native platform adapter. Both routes produce the same
+validated
 package model before preview or activation.
 
 Content-only packages are portable when their declared capabilities are

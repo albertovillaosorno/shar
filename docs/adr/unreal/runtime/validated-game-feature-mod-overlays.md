@@ -7,11 +7,13 @@
 ## Context
 
 Local packages already have deterministic identity, validation, dependency,
-conflict, trust, preview, and atomic active-set contracts. Unreal still needs one
+conflict, trust, preview, and atomic active-set contracts. Unreal still needs
+one
 native projection for accepted content without reverting to loose file
 replacement, editor-directory discovery, or package-specific gameplay branches.
 
-Portable structured data, target-cooked Unreal assets, and native executable code
+Portable structured data, target-cooked Unreal assets, and native executable
+code
 have different compatibility and trust boundaries. Treating them as one load
 path would either reject useful portable content or overstate the safety and
 portability of executable extensions.

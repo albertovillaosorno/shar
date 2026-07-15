@@ -5,7 +5,9 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Local drop-in mod packages and AI skills](../../adr/modding/drop-in-mod-packages-and-ai-skills.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
 
 ## Purpose
@@ -17,6 +19,8 @@ rollback model for local mods without a hosted service.
 ## Package declaration
 
 A package declaration contains at least:
+
+<!-- markdownlint-disable MD013 -->
 
 | Field | Contract |
 | :--- | :--- |
@@ -33,6 +37,8 @@ A package declaration contains at least:
 | `Members` | Normalized member identities, lengths, hashes, media types, and roles. |
 | `Provenance` | Authorship, source, license, generation, and review evidence. |
 | `TrustLevel` | Declared trust boundary used by validation and activation policy. |
+
+<!-- markdownlint-enable MD013 -->
 
 Package identity is the canonical declaration identity and revision. A filename,
 archive name, physical directory, document-provider URI, import timestamp, or
@@ -94,10 +100,12 @@ package portability.
 ## Activation model
 
 Validation computes one deterministic activation plan from canonical package
-identity, explicit priority, dependencies, supersession, conflicts, capabilities,
+identity, explicit priority, dependencies, supersession, conflicts,
+capabilities,
 and trust policy. The plan is previewed before mutation.
 
-Activation creates a complete candidate active-set revision. The runtime validates
+Activation creates a complete candidate active-set revision. The runtime
+validates
 its dependency closure and resolved gameplay targets before atomically replacing
 the prior accepted active set. Failure preserves the previous revision and never
 leaves a partially active package graph.
@@ -113,7 +121,8 @@ saved identities.
 - Desktop and Android imports produce the same normalized declaration and member
   identities for equivalent input.
 - Explicit priority and dependency topology determine load order.
-- Case, Unicode, separator, and archive-entry differences cannot create platform-
+- Case, Unicode, separator, and archive-entry differences cannot create
+  platform-
   specific package meaning.
 - Content-only portability never grants native-code portability.
 - A target-specific member is selected only for its exact declared target.
@@ -146,7 +155,8 @@ and activation state.
 
 - Equivalent desktop-directory and Android-managed imports produce identical
   normalized package records.
-- Path fixtures cover separators, case collisions, Unicode collisions, traversal,
+- Path fixtures cover separators, case collisions, Unicode collisions,
+  traversal,
   absolute paths, links, duplicates, and archive-order variation.
 - Topology tests cover priority, dependencies, conflicts, supersession, cycles,
   and deterministic ordering.

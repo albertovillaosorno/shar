@@ -44,7 +44,8 @@ wheel has its own pivot, axle orientation, side and ordinal identity, steering
 and suspension role, and body-relative transform. The trunk is a distinct
 component when hinge or animation evidence supports it. Doors, hood panels,
 steering elements, lights, damage pieces, and other moving parts are separated
-only when package, hierarchy, pivot, controller, collision, or animation evidence
+only when package, hierarchy, pivot, controller, collision, or animation
+evidence
 supports that contract. Visual adjacency alone is insufficient.
 
 World FBX separates terrain from structures placed above it. Houses, buildings,

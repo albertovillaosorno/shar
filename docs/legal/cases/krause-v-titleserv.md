@@ -25,7 +25,8 @@ copy for § 117. The inquiry instead asks whether the possessor exercises enough
 incidents of ownership to be sensibly treated as the owner of that copy.
 
 The business qualified on the aggregate facts: it paid substantial consideration
-for programs developed for its sole benefit, stored the copies on its own server,
+for programs developed for its sole benefit, stored the copies on its own
+server,
 held an indefinite and materially unrestricted right to possess and use them,
 and could discard or destroy them at will. Copyright ownership remained with the
 author and was legally distinct from ownership of the particular program copies.
@@ -82,4 +83,5 @@ verified from CourtListener duplicates.
   (Accessed: 13 July 2026).
 - [Vernor v. Autodesk, Inc](vernor-v-autodesk.md).
 - [17 U.S.C. § 117](../statutes/17-usc-117.md).
+<!-- markdownlint-disable-next-line MD013 -->
 - [Lawful Copy And Local Game Modification](../doctrines/lawful-copy-and-local-game-modification.md).

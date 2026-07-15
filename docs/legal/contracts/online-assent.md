@@ -79,7 +79,10 @@ Even when formation is established, analyze separately:
 ## Primary Authorities
 
 - [Nguyen v. Barnes & Noble, Inc.](../cases/nguyen-v-barnes-and-noble.md).
+<!-- markdownlint-disable-next-line MD013 -->
 - [Berman v. Freedom Financial Network, LLC](../cases/berman-v-freedom-financial.md).
 - [Specht v. Netscape Communications Corp.](../cases/specht-v-netscape.md).
+<!-- markdownlint-disable-next-line MD013 -->
 - [MDY Industries, LLC v. Blizzard Entertainment, Inc.](../cases/mdy-v-blizzard.md).
+<!-- markdownlint-disable-next-line MD013 -->
 - [Software-license reverse-engineering clauses](software-license-reverse-engineering-clauses.md).

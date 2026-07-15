@@ -23,12 +23,16 @@ governing authority.
 
 Every durable proposition has one owning documentation surface:
 
+<!-- markdownlint-disable MD013 -->
+
 | Surface | Owns | Does not own |
 | :------ | :--- | :----------- |
 | ADR | Repository-impacting decisions | Commands, tutorials, implementation detail, or legal conclusions |
 | Technical | Current repository-owned behavior | New decisions or proprietary external-format documentation |
 | Bibliography | External evidence, provenance, confidence, and unresolved source questions | Architecture, legal permission, or operational authorization |
 | Legal | Dated authority summaries, factual limits, and unresolved legal application | Technical architecture or permission to act |
+
+<!-- markdownlint-enable MD013 -->
 
 When information is misplaced, move it to the owning record and update every
 reference. Do not preserve obsolete files or duplicate one contract merely for
@@ -135,11 +139,14 @@ unresolved question remains in the record that owns the proposition:
 - legal records use dated `Not Established` or equivalent fact-dependent limits;
 - technical records identify verification gaps only for current repository-owned
   behavior; and
-- undecided repository choices remain `Proposed` ADRs rather than research notes.
+- undecided repository choices remain `Proposed` ADRs rather than research
+  notes.
 
-Each unresolved item identifies the exact proposition, missing evidence, required
+Each unresolved item identifies the exact proposition, missing evidence,
+required
 source class, governing jurisdiction or technical scope, and acceptance
-condition. Verified findings update that same owning record. Missing private facts
+condition. Verified findings update that same owning record. Missing private
+facts
 are not inferred, and completed answer packets are not retained as a parallel
 public authority.
 

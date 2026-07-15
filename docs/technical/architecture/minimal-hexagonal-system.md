@@ -5,6 +5,7 @@
 
 ## Governing decision
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Minimal hexagonal architecture](../../adr/engineering/architecture/minimal-hexagonal-architecture.md)
 
 ## Purpose

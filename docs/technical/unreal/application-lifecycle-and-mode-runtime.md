@@ -6,23 +6,31 @@
 ## Governing decisions
 
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
 
 ## Purpose
 
-This specification defines native application startup, mode transitions, loading,
+This specification defines native application startup, mode transitions,
+loading,
 front-end entry, gameplay entry, pause, demonstration sessions, suspension,
-resume, and exit. It replaces singleton context objects, manually ordered manager
+resume, and exit. It replaces singleton context objects, manually ordered
+manager
 initialization, raw previous-and-next enums, platform heap choreography, and
 untyped global event callbacks with explicit asynchronous transition plans.
 
 Application mode coordinates subsystem readiness and presentation. It does not
-own mission, progression, save, input-device, vehicle, character, audio, or world
+own mission, progression, save, input-device, vehicle, character, audio, or
+world
 state.
 
 ## Ownership
+
+<!-- markdownlint-disable MD013 -->
 
 | Authority | Responsibility |
 | :--- | :--- |
@@ -34,12 +42,16 @@ state.
 | Input service | Per-local-player mapping contexts and mode-specific input leases. |
 | Audio service | Boot, front-end, loading, gameplay, pause, and demo audio states. |
 
+<!-- markdownlint-enable MD013 -->
+
 No mode directly calls another subsystem's internal manager methods. It submits
 a typed request and waits for structured completion evidence.
 
 ## Runtime topology
 
 The application module owns these C++ types:
+
+<!-- markdownlint-disable MD013 -->
 
 | Type | Responsibility |
 | :--- | :--- |
@@ -51,12 +63,16 @@ The application module owns these C++ types:
 | `FSharApplicationModeObservation` | Immutable current mode, world, profile, local players, readiness, and presentation state. |
 | `FSharApplicationModeResult` | Closed success or failure result with verified postconditions. |
 
+<!-- markdownlint-enable MD013 -->
+
 World-specific gameplay state remains in world and local-player subsystems. The
 coordinator stores stable identities and handles, not raw manager pointers.
 
 ## Canonical modes
 
 The initial catalog includes these mode identities:
+
+<!-- markdownlint-disable MD013 -->
 
 | Mode | Contract |
 | :--- | :--- |
@@ -72,6 +88,8 @@ The initial catalog includes these mode identities:
 | `loading_demo` | Isolated preparation of a bounded demonstration session. |
 | `demo` | Active non-progressing demonstration session. |
 | `exit` | Final cancellation, save flush policy, service shutdown, and process return. |
+
+<!-- markdownlint-enable MD013 -->
 
 Mode display names are not identity. Additional modes require a namespaced
 catalog definition and transition-graph validation.
@@ -106,7 +124,8 @@ A transition follows these phases:
 1. verify the target postcondition; and
 1. publish one terminal result.
 
-Failure before commit leaves the source mode active. Failure after commit follows
+Failure before commit leaves the source mode active. Failure after commit
+follows
 the definition's rollback or safe-recovery mode. A loading-screen animation or
 transport callback is not readiness evidence by itself.
 
@@ -145,6 +164,8 @@ second game loop.
 
 Every request reaches one status:
 
+<!-- markdownlint-disable MD013 -->
+
 | Status | Meaning |
 | :--- | :--- |
 | `success` | Target mode and all required postconditions are active. |
@@ -154,14 +175,25 @@ Every request reaches one status:
 | `cancelled` | An allowed cancellation restored the source or recovery mode. |
 | `superseded` | A higher-priority lifecycle request replaced the pending request. |
 
-Every non-success result includes a typed reason and the verified resulting mode.
+<!-- markdownlint-enable MD013 -->
+
+Every non-success result includes a typed reason and the verified resulting
+mode.
 
 ## Entry and exit modes
 
-`entry` is the minimum process-to-game-instance handoff. It may verify package,
-platform, command-line, crash-recovery, and game-instance prerequisites, but it
-cannot construct gameplay managers or select a player profile by side effect.
-Its only successful successor is the validated boot request.
+`entry` is the minimum process-to-game-instance handoff. Process launch,
+platform
+capabilities, service dependencies, native frame ownership, and platform
+recovery
+follow the
+<!-- markdownlint-disable-next-line MD013 -->
+[native platform bootstrap and error-recovery runtime](native-platform-bootstrap-and-error-recovery-runtime.md).
+Entry may verify package, launch-configuration, crash-recovery, and
+game-instance
+prerequisites, but it cannot construct gameplay managers or select a player
+profile by side effect. Its only successful successor is the validated boot
+request.
 
 `exit` is a terminal transition plan. It:
 
@@ -178,11 +210,13 @@ Its only successful successor is the validated boot request.
 Exit does not jump through gameplay, pause, or loading modes to trigger cleanup.
 A required save that has not reached a terminal result follows explicit block,
 cancel, or prior-revision policy. Shutdown order is declared by dependencies and
+<!-- markdownlint-disable-next-line MD013 -->
 cannot rely on singleton destruction order.
 
 ## Boot mode
 
-Boot mode prepares the minimum services needed for a valid front end. Its plan is
+Boot mode prepares the minimum services needed for a valid front end. Its plan
+is
 explicitly ordered by dependency, not by singleton construction side effects.
 
 The plan includes:
@@ -202,11 +236,13 @@ The plan includes:
 
 Services that can prepare independently may run concurrently when their declared
 resources do not conflict. The plan still publishes a deterministic readiness
+<!-- markdownlint-disable-next-line MD013 -->
 result.
 
 ## Configuration
 
-Configuration load returns one of `loaded`, `migrated`, `defaulted`, or `failed`.
+Configuration load returns one of `loaded` , `migrated` , `defaulted` , or
+`failed` .
 A missing optional device-local configuration may create validated defaults. A
 malformed or incompatible configuration is quarantined before defaults are
 written.
@@ -226,11 +262,13 @@ data asset. Each step declares:
 - minimum and maximum display policy;
 - skippability and skip prerequisite;
 - render layer and aspect policy;
+<!-- markdownlint-disable-next-line MD013 -->
 - failure fallback; and
 - completion evidence.
 
 Platform file paths are resolved during native packaging, not constructed by the
-runtime. Missing optional media advances to the next step. Missing required media
+runtime. Missing optional media advances to the next step. Missing required
+media
 returns a typed failure and follows the boot recovery policy.
 
 A development startup override may skip media or request a validated destination
@@ -246,17 +284,21 @@ Front-end entry requires:
 - profile-selection state;
 - save service availability or explicit offline fallback;
 - front-end UI and audio feature activation;
+<!-- markdownlint-disable-next-line MD013 -->
 - no retained gameplay-world authority; and
 - input leases for the active local front-end users.
 
 Returning from gameplay, demo, or super sprint must cancel world-bound handles
-before front-end commit. Front-end presentation cannot infer completion or unlock
+before front-end commit. Front-end presentation cannot infer completion or
+unlock
 state from the previous mode.
+<!-- markdownlint-disable-next-line MD013 -->
 
 The committed front end acquires one UI-navigation lease, one front-end audio
 state, and local-player menu input leases. It may discover slot summaries,
 rewards, and cheat availability through read-only ports. It cannot retain world
-physics, gameplay cameras, trigger volumes, vehicle simulation, mission state, or
+physics, gameplay cameras, trigger volumes, vehicle simulation, mission state,
+or
 world-bound render observers.
 
 A deferred front-end asset or audio callback must match the current mode and
@@ -275,23 +317,29 @@ The common loading plan owns:
 - local-player and controller preparation;
 - audio-bank and mix preparation;
 - save or transient-session snapshot validation;
+<!-- markdownlint-disable-next-line MD013 -->
 - timeout, cancellation, and recovery mode; and
 - one final readiness barrier.
 
 Loading UI may continue updating while preparation is in progress, but gameplay
-input, mission time, rewards, collisions, and world interactions remain disabled.
+input, mission time, rewards, collisions, and world interactions remain
+disabled.
+<!-- markdownlint-disable-next-line MD013 -->
 A loading callback is accepted only when transition, destination, world, bundle,
 and service revisions still match.
 
 The loading plan follows the
+<!-- markdownlint-disable-next-line MD013 -->
 [native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md).
 It never depends on platform heap replacement for correctness. Native world,
 object, asset, and gameplay-feature lifetimes own memory release.
+<!-- markdownlint-disable-next-line MD013 -->
 
 ## Gameplay loading
 
 `loading_gameplay` consumes one validated session request containing campaign,
-level, mission, player, character, vehicle, world composition, save revision, and
+level, mission, player, character, vehicle, world composition, save revision,
+and
 mod-set identities as applicable.
 
 Preparation includes:
@@ -302,11 +350,13 @@ Preparation includes:
 - required native asset bundles;
 - mission, population, vehicle, camera, audio, and UI subsystem readiness;
 - local-player creation and controller assignment;
+<!-- markdownlint-disable-next-line MD013 -->
 - save snapshot or new-session state;
 - spawn and recovery locations; and
 - final cross-subsystem read-back.
 
-The active mode changes to gameplay only after every required authority agrees on
+The active mode changes to gameplay only after every required authority agrees
+on
 the same session and world revision.
 
 ## Active gameplay mode
@@ -327,12 +377,16 @@ lifecycle lease set includes:
 Subsystem updates follow native engine tick groups and explicit dependencies.
 Application mode does not manually call every gameplay manager in one arbitrary
 order. Presentation may continue during selected partial-pause states, but it
+<!-- markdownlint-disable-next-line MD013 -->
 cannot advance domain time or durable transactions.
+<!-- markdownlint-disable-next-line MD013 -->
 
 Gameplay exit first freezes new mission and progression transactions, captures
 any permitted checkpoint candidate, releases local-player world input, and then
-tears down world-bound services. A level-complete or mission-complete result must
-already be committed by its owning domain before the mode transition consumes it.
+tears down world-bound services. A level-complete or mission-complete result
+must
+already be committed by its owning domain before the mode transition consumes
+it.
 
 ## Pause and resume
 
@@ -364,22 +418,26 @@ requests:
 
 Resume revalidates profile, storage, controller, display, audio, world, and
 transition state. A stale or unrecoverable world returns to a declared recovery
+<!-- markdownlint-disable-next-line MD013 -->
 mode, normally the front end.
 
 ## Demonstration loading
 
-`loading_demo` creates an isolated non-progressing session. Its request declares:
+`loading_demo` creates an isolated non-progressing session. Its request
+declares:
 
 - demo definition identity;
 - world and route;
 - character and vehicle presentation;
 - camera policy;
 - duration and exit conditions;
+<!-- markdownlint-disable-next-line MD013 -->
 - input policy;
 - audio and UI presentation; and
 - return mode.
 
-The loading transaction uses the same world, asset, audio, and verification ports
+The loading transaction uses the same world, asset, audio, and verification
+ports
 as gameplay loading. It cannot set a global demo flag and then rely on unrelated
 systems to infer altered behavior.
 
@@ -428,21 +486,25 @@ rules. Platform presentation and input adapters remain separate.
 
 ## Input
 
+<!-- markdownlint-disable-next-line MD013 -->
 Every committed mode owns a set of semantic input leases. Input registration is
 per local player and explicit about front-end, gameplay, pause, demo, or
 super-sprint actions. Device discovery, assignment, mappings, pointer behavior,
 and haptics follow the
+<!-- markdownlint-disable-next-line MD013 -->
 [semantic input, device, and haptics runtime](semantic-input-device-and-haptics-runtime.md).
 
 Transition preparation may stage mappings, but only commit activates them.
 Cancellation, controller removal, local-player removal, world teardown, and mode
 exit release all affected leases. A mode cannot leave a controller assigned to a
 destroyed player or retain a hidden input handler.
+<!-- markdownlint-disable-next-line MD013 -->
 
 ## Audio
 
 Mode definitions request audio states rather than calling internal audio-manager
-methods. Boot, front-end, loading, gameplay, pause, demo, and super-sprint states
+methods. Boot, front-end, loading, gameplay, pause, demo, and super-sprint
+states
 declare required banks, mixes, ambience, music, and transition policy.
 
 A loading completion callback is accepted only for the current transition and
@@ -455,15 +517,20 @@ streaming, and game-feature services. The application coordinator owns only the
 transition handle.
 
 A source mode's world remains authoritative until target preparation succeeds.
-After commit, obsolete worlds and features are torn down in declared order. No
-platform heap reset is required for correctness; memory ownership follows native
-object, world, subsystem, streaming, and asset-manager lifetimes.
+After commit, obsolete worlds and features are torn down in declared order.
+Memory ownership, budgets, pressure response, pools, and diagnostics follow the
+<!-- markdownlint-disable-next-line MD013 -->
+[memory ownership, budget, and diagnostics runtime](memory-ownership-budget-and-diagnostics-runtime.md).
+No platform heap reset is required for correctness; ownership follows native
+object, world, subsystem, feature, streaming, and asset-manager lifetimes.
+<!-- markdownlint-disable-next-line MD013 -->
 
 ## Events
 
 Subsystems publish typed readiness and lifecycle observations. The coordinator
 correlates them by transition, world, service, and revision identity. Channel,
 payload, scope, delivery, and subscription rules follow the
+<!-- markdownlint-disable-next-line MD013 -->
 [typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md).
 
 Untyped global events, listener order, and payload pointers cannot complete a
@@ -496,19 +563,24 @@ Every mode declares a safe recovery target. Typical policies are:
 - pause-resume invalidation back to front end;
 - super-sprint-load failure back to super-sprint front end; and
 - shutdown failure to best-effort process exit after recording diagnostics.
+<!-- markdownlint-disable-next-line MD013 -->
 
 Recovery cannot grant progression, duplicate rewards, retain stale worlds, or
+<!-- markdownlint-disable-next-line MD013 -->
 skip required save migration.
 
 ## Save boundary
 
-Application mode is device and session state, not portable progression. Saves may
+Application mode is device and session state, not portable progression. Saves
+may
 record the last safe front-end or gameplay resume intent, but they do not
-serialize raw context state, transition tasks, worlds, input handlers, or manager
+serialize raw context state, transition tasks, worlds, input handlers, or
+manager
 pointers.
 
 A save transaction begun before a transition either completes under its original
-session identity or is cancelled according to save policy. Mode change alone does
+session identity or is cancelled according to save policy. Mode change alone
+does
 not imply a successful save.
 
 ## Mods

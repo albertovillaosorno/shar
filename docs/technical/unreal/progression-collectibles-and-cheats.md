@@ -5,15 +5,24 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Canonical seven-level campaign and world variants](../../adr/unreal/runtime/canonical-seven-level-campaign-and-world-variants.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Collector cards, coins, rewards, gags, and wasps](../../adr/gameplay/collectibles/collectibles-rewards-gags-and-wasps.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native flying-hazard actors and StateTree execution](../../adr/unreal/runtime/native-flying-hazard-actors-and-state-trees.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Flying-hazard and projectile runtime](flying-hazard-and-projectile-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
 
 ## Purpose
@@ -44,6 +53,8 @@ mission completed or write progression directly.
 
 The root gameplay catalog references the following generated assets:
 
+<!-- markdownlint-disable MD013 -->
+
 | Asset | Primary asset type | Purpose |
 | :--- | :--- | :--- |
 | Progression catalog | `SharProgressionCatalog` | Currency, collectible sets, rewards, and completion rules. |
@@ -56,6 +67,8 @@ The root gameplay catalog references the following generated assets:
 | Credits table | `FSharCreditsSequenceRow` | Ordered rows, cues, playback mode, and return state. |
 | Calendar-theme table | `FSharCalendarThemeRow` | Date predicate and presentation-only overrides. |
 
+<!-- markdownlint-enable MD013 -->
+
 Definitions and tables live under the catalog's existing data roots. Secondary
 icons, meshes, sounds, sequences, and menu presentation remain soft references
 in the catalog's art, audio, media, and user-interface roots.
@@ -63,6 +76,8 @@ in the catalog's art, audio, media, and user-interface roots.
 ## Identity contract
 
 Canonical identifiers are stable lowercase `snake_case` values.
+
+<!-- markdownlint-disable MD013 -->
 
 | Domain | Identity examples | Rule |
 | :--- | :--- | :--- |
@@ -76,6 +91,8 @@ Canonical identifiers are stable lowercase `snake_case` values.
 | Credits | `front_end_credits`, `post_ending_credits` | Distinct playback and return contracts. |
 | Calendar theme | `christmas_menu`, `halloween_menu` | Presentation-only date rule. |
 
+<!-- markdownlint-enable MD013 -->
+
 A definition identity and a placement identity are never interchangeable. One
 collectible definition may have one placement, while one destructible source
 definition may have many separately consumed placements.
@@ -84,6 +101,8 @@ definition may have many separately consumed placements.
 
 The coin balance is a signed 64-bit domain value constrained to a non-negative
 accepted state. Every change is an immutable `FSharCurrencyTransaction` with:
+
+<!-- markdownlint-disable MD013 -->
 
 | Field | Contract |
 | :--- | :--- |
@@ -97,6 +116,8 @@ accepted state. Every change is an immutable `FSharCurrencyTransaction` with:
 | `MissionId` | Optional mission context. |
 | `TimestampOrdinal` | Deterministic transaction order, not wall-clock authority. |
 | `SavePolicy` | Persistent, transient-drop, or session-only. |
+
+<!-- markdownlint-enable MD013 -->
 
 The accepted balance is the previous accepted balance plus the ordered
 transaction batch. Validation occurs before any presentation pickup, sound, or
@@ -146,6 +167,8 @@ completion key is the ordered pair of `LevelId` and `GagPlacementId`.
 
 `FSharGagProgressRow` contains:
 
+<!-- markdownlint-disable MD013 -->
+
 | Field | Contract |
 | :--- | :--- |
 | `LevelId` | Exact level variant that owns the completion. |
@@ -156,6 +179,8 @@ completion key is the ordered pair of `LevelId` and `GagPlacementId`.
 | `CompletionKey` | Durable level-scoped save identity. |
 | `CountsForLevelCompletion` | Whether the placement contributes to the level gag total. |
 | `ReplayPolicy` | Whether presentation may replay after completion. |
+
+<!-- markdownlint-enable MD013 -->
 
 The verified level totals are:
 
@@ -210,6 +235,7 @@ mutation.
 - Repairing a destroyed selected vehicle through the retrieval interface costs
   10 coins when the repair condition applies. Eligibility, insufficient-currency
   rejection, health persistence, delivery, and rollback follow
+  <!-- markdownlint-disable-next-line MD013 -->
   [Vehicle retrieval and phone-booth runtime](vehicle-retrieval-and-phone-booth-runtime.md).
 - A wasp hit or destruction of the currently driven vehicle may emit a
   recoverable transient drop according to its definition.
@@ -259,10 +285,14 @@ Collector cards are not generic currency pickups. `FSharCollectibleRow` records:
 
 The shared card catalog uses a closed subtype:
 
+<!-- markdownlint-disable MD013 -->
+
 | Subtype | Contract |
 | :--- | :--- |
 | `collector` | Counted world collectible that belongs to one seven-card level set. |
 | `bonus` | Non-collector card metadata used only by an explicitly owning presentation or reward definition. |
+
+<!-- markdownlint-enable MD013 -->
 
 A bonus-card row does not become a world collectible, add scrapbook completion,
 or unlock a set reward merely because it shares the card schema. Its owner must
@@ -275,7 +305,8 @@ empty slots are discarded during normalization rather than preserved as runtime
 sentinels.
 
 Quote identities resolve through the dialogue or sound catalog. Array position,
-character enum ordinal, display text, and hashed source names are provenance only
+character enum ordinal, display text, and hashed source names are provenance
+only
 and cannot become native runtime authority. An unresolved quote fails catalog
 validation without invalidating the card's already accepted progression state.
 
@@ -285,7 +316,8 @@ cards total. Set ordinals are unique and dense from one through seven.
 ## Verified collector-card deck membership
 
 Each ordered display name below binds to the stable ordinal identity
-`collector_card_level_<level>_<ordinal>`. Localized display text and quote events
+`collector_card_level_<level>_<ordinal>` . Localized display text and quote
+events
 may change without changing that identity.
 
 ### Level 1
@@ -413,7 +445,8 @@ completion is calculated from the required identity set, not a mutable count.
 Removing cards is a development-only test operation and cannot occur through an
 ordinary player or cheat overlay.
 
-The card-unlock cheat changes gallery visibility and eligibility projection only.
+The card-unlock cheat changes gallery visibility and eligibility projection
+only.
 It does not insert all card identities into portable progression, complete level
 sets, grant bonus maps, or grant the movie ticket.
 
@@ -421,6 +454,7 @@ sets, grant bonus maps, or grant the movie ticket.
 
 The exact eight-category level formula, seven-level aggregation, counted vehicle
 roles, level denominators, and one-percent movie contribution are owned by
+<!-- markdownlint-disable-next-line MD013 -->
 [campaign level composition and progress](campaign-level-composition-and-progress.md).
 The complete 42-vehicle ownership census and the distinction between persistent,
 traffic, secret, mission, completion, and development access follow
@@ -466,6 +500,8 @@ The cheat definition never stores a platform-specific key code as its identity.
 
 `FSharCheatDefinitionRow` contains:
 
+<!-- markdownlint-disable MD013 -->
+
 | Field | Contract |
 | :--- | :--- |
 | `CheatId` | Stable logical effect identity. |
@@ -476,6 +512,8 @@ The cheat definition never stores a platform-specific key code as its identity.
 | `EffectKind` | Controlled effect taxonomy. |
 | `EffectParameters` | Typed parameters owned by the receiving subsystem. |
 | `FeedbackEvent` | Success, unavailable, disabled, or invalid-sequence feedback. |
+
+<!-- markdownlint-enable MD013 -->
 
 Input recognition is controller-scoped. A controller must explicitly activate
 cheat entry before its four-token sequence is accepted. Duplicate sequences and
@@ -500,7 +538,8 @@ input cannot advance the recognizer. Recognition returns one of `matched`,
 `unknown_sequence`, `unavailable`, `prerequisite_failed`, or `input_cancelled`.
 
 Sequence lookup is a generated map from the four-token tuple to one canonical
-cheat identity. It does not convert the tuple into an array index, depend on cheat
+cheat identity. It does not convert the tuple into an array index, depend on
+cheat
 enum order, or broadcast through a fixed callback list.
 
 A matched definition is sent to `USharCheatEffectSubsystem`, which validates the
@@ -557,10 +596,14 @@ progression.
 
 Credits are deterministic presentation sequences with two entry modes:
 
+<!-- markdownlint-disable MD013 -->
+
 | Sequence | Entry | Return contract |
 | :--- | :--- | :--- |
 | `front_end_credits` | Explicit front-end selection | Return to the invoking front-end state. |
 | `post_ending_credits` | Final mission and ending transition | Continue to the declared post-ending front-end state. |
+
+<!-- markdownlint-enable MD013 -->
 
 `FSharCreditsSequenceRow` contains ordered text identity, role category,
 presentation style, scroll timing, optional dialogue cue, optional music cue,
@@ -594,6 +637,8 @@ theme falls back to the ordinary menu without failing profile load.
 
 Intentional environmental references use `FSharEnvironmentalReferenceRow` with:
 
+<!-- markdownlint-disable MD013 -->
+
 | Field | Contract |
 | :--- | :--- |
 | `ReferenceId` | Stable presentation identity. |
@@ -605,6 +650,8 @@ Intentional environmental references use `FSharEnvironmentalReferenceRow` with:
 | `InteractionPolicy` | None, inspect, activate, destroy, collect, or ambience trigger. |
 | `ProgressionEffect` | Explicit reward identity or none. |
 | `LegacyStatus` | Intentional, accidental out-of-bounds, or unused. |
+
+<!-- markdownlint-enable MD013 -->
 
 The verified intentional presentation set includes:
 
@@ -634,7 +681,9 @@ interaction policy.
 
 ## Save integration
 
-Persistent destructible, removable, consumable, and variant placement state follows
+Persistent destructible, removable, consumable, and variant placement state
+follows
+<!-- markdownlint-disable-next-line MD013 -->
 the [persistent world-object state runtime](persistent-world-object-state-runtime.md).
 
 Portable progression stores:
@@ -732,6 +781,7 @@ Editor and runtime integration tests verify:
 
 This specification establishes the complete architecture and the verified
 currency, collector-card, destructible-source, cheat, credits, and calendar
-slice. Gags, wasp behavior, wager races, every purchase offer, every credits row,
+slice. Gags, wasp behavior, wager races, every purchase offer, every credits
+row,
 and every environmental reference extend these contracts when their coverage
 entries are reviewed; they do not introduce parallel state models.

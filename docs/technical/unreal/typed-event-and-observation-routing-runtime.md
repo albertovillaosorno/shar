@@ -5,10 +5,14 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Typed StateTree action sequences](../../adr/unreal/runtime/typed-state-tree-action-sequences.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Event-driven music and ambience](../../adr/unreal/runtime/event-driven-music-and-ambience.md)
 
 ## Purpose
@@ -17,8 +21,10 @@ This specification defines typed domain events, lifecycle observations,
 presentation cues, subscription ownership, delivery phases, tracing, and failure
 behavior for the native Unreal runtime.
 
-It replaces one process-wide event enum, raw `void*` payloads, singleton listener
-maps, inheritance-based listeners, destructor-driven deregistration, and behavior
+It replaces one process-wide event enum, raw `void*` payloads, singleton
+listener
+maps, inheritance-based listeners, destructor-driven deregistration, and
+behavior
 that depends on listener-array order.
 
 The event runtime is not a command bus, query service, or substitute for direct
@@ -105,7 +111,8 @@ Durable or replayable events contain canonical identities and values only. They
 do not contain actor pointers, vehicle pointers, component addresses, C strings,
 compiler-layout structs, or platform handles.
 
-A same-world transient observation may contain `TWeakObjectPtr`, `FObjectKey`, or
+A same-world transient observation may contain `TWeakObjectPtr` , `FObjectKey` ,
+or
 an engine object handle when the schema explicitly permits it. Consumers must
 still tolerate invalidation before handling. A weak object reference cannot be
 the only identity for a durable fact.

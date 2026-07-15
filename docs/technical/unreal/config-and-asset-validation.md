@@ -5,6 +5,7 @@
 
 ## Governing decision
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [C++-primary and Blueprint-compatible Unreal project](../../adr/unreal/project/cpp-primary-blueprint-compatible-project.md)
 
 ## Purpose

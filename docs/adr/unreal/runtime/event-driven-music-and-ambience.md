@@ -12,7 +12,8 @@ world events. A playlist or widget-owned sound selection cannot preserve those
 transitions, loop boundaries, resume positions, or deterministic event timing.
 
 Track display names are not reliable runtime identity. Several musical
-compositions are reused by different missions, races, and level states, while one
+compositions are reused by different missions, races, and level states, while
+one
 mission may transition between more than one composition or layer.
 
 ## Decision
@@ -23,7 +24,8 @@ resolves them against the active level audio profile, mission or race identity,
 state priority, and current music revision.
 
 Quartz owns sample-aligned clocks, quantized transitions, and resume boundaries.
-MetaSound or repository-owned native audio graphs own stems, layers, transitions,
+MetaSound or repository-owned native audio graphs own stems, layers,
+transitions,
 and parameterized presentation. Canonical composition, state, cue, loop, and
 transition identities remain independent of Unreal object paths and descriptive
 track titles.
@@ -57,4 +59,5 @@ resume behavior, and fallback. Audio completion alone never advances gameplay.
 - Advancing missions because an audio component stopped.
 - Maintaining separate race, mission, mobile, and desktop music logic.
 - Unquantized transitions whose timing depends on frame rate.
-- Restarting every composition after pause, interior travel, or short focus loss.
+- Restarting every composition after pause, interior travel, or short focus
+  loss.

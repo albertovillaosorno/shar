@@ -5,9 +5,13 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Typed StateTree action sequences](../../adr/unreal/runtime/typed-state-tree-action-sequences.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Contextual interaction query and transaction boundary](../../adr/unreal/runtime/contextual-interaction-query-and-transaction.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Transactional phone-booth vehicle retrieval](../../adr/unreal/runtime/transactional-phone-booth-vehicle-retrieval.md)
 
 ## Purpose
@@ -19,9 +23,12 @@ payloads with validated definitions and typed StateTree tasks.
 
 ## Ownership
 
-The action runtime coordinates presentation and movement. It does not own mission,
+The action runtime coordinates presentation and movement. It does not own
+mission,
 progression, reward, economy, save, vehicle-ownership, or collectible state.
 Those effects remain behind application ports.
+
+<!-- markdownlint-disable MD013 -->
 
 | Authority | Responsibility |
 | :--- | :--- |
@@ -31,9 +38,13 @@ Those effects remain behind application ports.
 | Native task library | Typed movement, animation, vehicle, delay, event, and state operations. |
 | Domain services | Authoritative gameplay effects and persistent results. |
 
+<!-- markdownlint-enable MD013 -->
+
 ## Runtime topology
 
 The runtime module owns these C++ types:
+
+<!-- markdownlint-disable MD013 -->
 
 | Type | Responsibility |
 | :--- | :--- |
@@ -47,6 +58,8 @@ The runtime module owns these C++ types:
 | `FSharActionLease` | Move-only lease for one declared resource. |
 | `FSharActionSequenceHandle` | Cancellation-safe handle for one active sequence. |
 
+<!-- markdownlint-enable MD013 -->
+
 The StateTree schema exposes these types as external data. It never receives raw
 pointers whose lifetime is not represented by a weak object handle or stable
 identity.
@@ -54,6 +67,8 @@ identity.
 ## Definition contract
 
 Every `USharActionDefinition` contains:
+
+<!-- markdownlint-disable MD013 -->
 
 | Field | Contract |
 | :--- | :--- |
@@ -69,7 +84,11 @@ Every `USharActionDefinition` contains:
 | `PresentationPolicy` | Optional animation, sound, effects, prompt, and camera data. |
 | `DefinitionRevision` | Immutable revision used to reject stale requests. |
 
+<!-- markdownlint-enable MD013 -->
+
 Every `USharActionSequenceDefinition` contains:
+
+<!-- markdownlint-disable MD013 -->
 
 | Field | Contract |
 | :--- | :--- |
@@ -82,7 +101,10 @@ Every `USharActionSequenceDefinition` contains:
 | `VerificationPolicy` | Final observable sequence postcondition. |
 | `DefinitionRevision` | Immutable revision used to reject stale execution. |
 
-Definitions cannot contain source-language callbacks, free-form script fragments,
+<!-- markdownlint-enable MD013 -->
+
+Definitions cannot contain source-language callbacks, free-form script
+fragments,
 unregistered event strings, or machine-specific object paths.
 
 ## Registry
@@ -96,7 +118,8 @@ when:
 - the parameter schema does not match the execution kind;
 - a sequence references a missing or incompatible action;
 - required resources are undeclared or conflict within a parallel state;
-- an asset, montage, socket, vehicle door, state, or event identity is unresolved;
+- an asset, montage, socket, vehicle door, state, or event identity is
+  unresolved;
 - a timeout or retry policy is invalid; or
 - a definition revision is inconsistent with generated data.
 
@@ -133,7 +156,8 @@ The coordinator exposes `idle`, `preparing`, `running`, `cancelling`, and
 Pending work is rejected or superseded through typed policy when another request
 arrives before handoff.
 
-Every task uses the closed lifecycle `sleeping`, `running`, `succeeded`, `failed`,
+Every task uses the closed lifecycle `sleeping` , `running` , `succeeded` ,
+`failed` ,
 `timed_out`, or `cancelled`. StateTree task status and `FSharActionResult` must
 agree. A task cannot report completion solely because its object was cleared or
 its owner changed state.
@@ -144,6 +168,8 @@ Character gameplay state is a typed projection over authoritative movement,
 vehicle, collision, and action-sequence observations. The canonical high-level
 states are:
 
+<!-- markdownlint-disable MD013 -->
+
 | State | Contract |
 | :--- | :--- |
 | `locomotion` | Character Movement owns walking, running, jumping, and grounded recovery. |
@@ -153,10 +179,13 @@ states are:
 | `simulation_reaction` | Ragdoll or other physics-owned reaction temporarily supersedes normal movement. |
 | `disabled` | No ordinary locomotion or vehicle sequence may start. |
 
+<!-- markdownlint-enable MD013 -->
+
 State changes are requested through one character-state port. Enter and exit
 hooks acquire or release resources, but they cannot contain hidden mission or
 vehicle-ownership mutations. Vehicle entry and exit publish typed start and end
-observations only after their corresponding sequence postconditions are verified.
+observations only after their corresponding sequence postconditions are
+verified.
 
 An invalid door side, blocked exit, missing floor, destroyed vehicle, streaming
 change, or interrupted transition follows the sequence failure and compensation
@@ -167,6 +196,8 @@ ownership.
 
 `FSharActionResult` has one status:
 
+<!-- markdownlint-disable MD013 -->
+
 | Status | Meaning |
 | :--- | :--- |
 | `success` | The declared postcondition was observed. |
@@ -176,12 +207,17 @@ ownership.
 | `cancelled` | A permitted external cancellation completed cleanup. |
 | `compensated` | A failure occurred and the declared compensation restored a valid state. |
 
-Every non-success result contains a typed reason. Free-form log text is diagnostic
+<!-- markdownlint-enable MD013 -->
+
+Every non-success result contains a typed reason. Free-form log text is
+diagnostic
 only and cannot drive a transition.
 
 ## Resource model
 
 The resource arbiter supports these canonical resources:
+
+<!-- markdownlint-disable MD013 -->
 
 | Resource | Typical access |
 | :--- | :--- |
@@ -196,6 +232,8 @@ The resource arbiter supports these canonical resources:
 | `camera_interest` | Shared request handle; final selection belongs to the camera subsystem. |
 | `audio_emitter.<name>` | Exclusive only when stop and replacement semantics require it. |
 | `domain_transaction.<kind>` | Exclusive for one idempotent commit identity. |
+
+<!-- markdownlint-enable MD013 -->
 
 Claims are sorted by canonical resource identity before acquisition to prevent
 order-dependent deadlock. Partial acquisition releases all earlier leases before
@@ -216,13 +254,17 @@ Every native action task follows this lifecycle:
 1. release all leases and transient handles; and
 1. return the closed result.
 
-Cancellation enters the same cleanup path. Destruction, streaming, world teardown,
-controller replacement, StateTree stop, and interaction invalidation are explicit
+Cancellation enters the same cleanup path. Destruction, streaming, world
+teardown,
+controller replacement, StateTree stop, and interaction invalidation are
+explicit
 cancellation reasons.
 
 ## Canonical action vocabulary
 
 The registered execution kinds are:
+
+<!-- markdownlint-disable MD013 -->
 
 | Kind | Required behavior |
 | :--- | :--- |
@@ -249,6 +291,8 @@ The registered execution kinds are:
 | `surf` | Maintain the authored vehicle-relative presentation while attachment remains valid. |
 | `assign_parameter` | Write one sequence-local typed value; it cannot mutate domain storage. |
 | `commit_domain_effect` | Request one registered idempotent application transaction and verify its result. |
+
+<!-- markdownlint-enable MD013 -->
 
 A new kind requires a schema change, native implementation, validation, and
 contract tests. It cannot be added only through a display name.
@@ -283,9 +327,11 @@ rejected rather than teleported.
 
 ### Ground snap
 
-`ground_snap` performs a bounded floor query using the character collision shape.
+`ground_snap` performs a bounded floor query using the character collision
+shape.
 It rejects missing floors, non-walkable normals, penetration, or a correction
-larger than the authored maximum. It never becomes general out-of-bounds recovery.
+larger than the authored maximum. It never becomes general out-of-bounds
+recovery.
 
 ## Character locomotion and reactions
 
@@ -294,8 +340,10 @@ locomotion data from authoritative components. They do not integrate their own
 parallel movement simulation.
 
 Jump uses Character Movement launch and falling state. Pre-jump, airborne,
-optional repeated jump, slam, landing, and recovery are explicit StateTree states
-or montage sections. Gravity, launch velocity, target, and boost policy are typed
+optional repeated jump, slam, landing, and recovery are explicit StateTree
+states
+or montage sections. Gravity, launch velocity, target, and boost policy are
+typed
 parameters. Landing success requires a valid floor and restored movement mode.
 
 Dodge, cringe, flail, get-up, kick, and surf tasks each declare entry state,
@@ -304,7 +352,8 @@ state. They cannot infer gameplay contact from animation time alone.
 
 ## Animation actions
 
-Animation actions use montages, sections, slot groups, root motion, and notifies.
+Animation actions use montages, sections, slot groups, root motion, and
+notifies.
 Every definition declares:
 
 - montage and optional section identity;
@@ -332,16 +381,19 @@ acquiring control. Door tasks additionally resolve one canonical door identity.
 
 A door action declares operation, delay, duration or required animation notify,
 collision behavior, and character relationship. It succeeds only when the
-vehicle port reports the requested terminal door state. Cancellation releases the
+vehicle port reports the requested terminal door state. Cancellation releases
+the
 door lease and requests the declared safe state.
 
-`release_vehicle_doors` clears only temporary action ownership. It does not force
+`release_vehicle_doors` clears only temporary action ownership. It does not
+force
 all doors open or closed and cannot override damage, lock, or mission policy.
 
 ## Typed events
 
 `publish_event` uses a registered event identity and a reflected payload struct.
 Channel, schema, scope, subscription, delivery, and tracing behavior follow the
+<!-- markdownlint-disable-next-line MD013 -->
 [typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md).
 The event envelope contains sequence identity, action identity, action ordinal,
 source identity, optional target identity, world time, and definition revision.
@@ -353,7 +405,8 @@ returned result, not a broadcast event.
 ## Contextual interaction integration
 
 The interaction subsystem starts a sequence only after candidate selection,
-reservation, and final eligibility validation. The sequence receives the move-only
+reservation, and final eligibility validation. The sequence receives the
+move-only
 interaction reservation lease and must return it on every terminal path.
 
 Typical phases are:
@@ -391,6 +444,8 @@ effect.
 An automatic door is a contextual world action with no manual input. It uses an
 authored trigger or Smart Object occupancy query and these states:
 
+<!-- markdownlint-disable MD013 -->
+
 | State | Contract |
 | :--- | :--- |
 | `closed` | No eligible occupant is present and collision is in the closed state. |
@@ -400,13 +455,17 @@ authored trigger or Smart Object occupancy query and these states:
 | `blocked` | A sweep or overlap prevents safe closing. |
 | `disabled` | Definition, world, mission, or damage state forbids operation. |
 
+<!-- markdownlint-enable MD013 -->
+
 Occupancy is a set of stable actor handles, not a raw integer counter. Duplicate
 enter and missing exit notifications cannot make occupancy negative. Destroyed,
 unloaded, or ineligible occupants are removed during reconciliation.
 
-The door opens on the transition from zero to one eligible occupant and closes on
+The door opens on the transition from zero to one eligible occupant and closes
+on
 the transition from one to zero. A new occupant during closing returns the door
-to opening. A blocked close remains open or retries according to authored policy.
+to opening. A blocked close remains open or retries according to authored
+policy.
 Sound starts and stops with the transition handle and is always cleared on
 cancellation, destruction, pooling, or world teardown.
 
@@ -414,7 +473,8 @@ cancellation, destruction, pooling, or world teardown.
 
 Contextual action definitions such as toggle, reverse, play once, looping play,
 automatic play, destroy prop, vending machine, phone, dialogue, collectible,
-teleport, repair pickup, purchase, and nitro resolve through canonical action and
+teleport, repair pickup, purchase, and nitro resolve through canonical action
+and
 interaction identities.
 
 The action catalog records execution kind explicitly. Multiple display aliases
@@ -448,7 +508,8 @@ Cleanup order is:
 1. publish the terminal result; and
 1. clear sequence-local data.
 
-Compensation cannot reverse a committed idempotent domain transaction. It instead
+Compensation cannot reverse a committed idempotent domain transaction. It
+instead
 reconciles presentation to the committed state.
 
 ## Streaming and destruction
@@ -459,10 +520,13 @@ sequence before the actor or component is destroyed.
 
 Actor destruction, controller replacement, vehicle destruction, interaction
 source invalidation, and world teardown are terminal cancellation inputs. Tasks
-must use weak object handles and stable identities so cleanup does not dereference
+must use weak object handles and stable identities so cleanup does not
+dereference
 destroyed objects.
 
 ## Historical optimization translation
+
+<!-- markdownlint-disable MD013 -->
 
 | Historical technique | Original constraint | Unreal replacement |
 | :--- | :--- | :--- |
@@ -473,6 +537,8 @@ destroyed objects.
 | Direct character transform writes | Simple scripted alignment. | Character Movement, navigation, Smart Object slots, and bounded presentation alignment. |
 | Raw global event payloads | Low-overhead cross-system signaling. | Reflected typed events and application-port results. |
 | Entrant counters for automatic doors | Minimal trigger state. | Stable occupancy sets and explicit door states. |
+
+<!-- markdownlint-enable MD013 -->
 
 Native optimization cannot change action order, timing policy, resource
 exclusivity, domain results, or cancellation cleanup.
@@ -501,7 +567,8 @@ is `rejected` with a typed reason.
 A runtime failure stops further steps, runs the declared compensation, and
 verifies a valid state. It returns `failed`, `timed_out`, `cancelled`, or
 `compensated`.
-Unknown exceptions, stale callbacks, duplicate completion, and resource leaks are
+Unknown exceptions, stale callbacks, duplicate completion, and resource leaks
+are
 contract violations and fail automated tests.
 
 ## Validation
@@ -515,7 +582,8 @@ Asset and generated-data validation rejects:
 - circular or unreachable sequence transitions;
 - missing timeouts for tasks that can wait indefinitely without explicit
   permission;
-- unresolved montages, sections, slots, notifies, sockets, doors, states, events,
+- unresolved montages, sections, slots, notifies, sockets, doors, states,
+  events,
   or interaction definitions;
 - one-shot actions without idempotent completion identity;
 - automatic doors without open, close, blocked, and cancellation policies; and
@@ -531,14 +599,16 @@ Automated tests must prove:
   acquisition;
 - success, rejection, failure, timeout, cancellation, and compensation paths for
   every execution kind;
-- no resource leak after actor, controller, vehicle, source, or world destruction;
+- no resource leak after actor, controller, vehicle, source, or world
+  destruction;
 - montage completion by notify or montage result and safety timeout behavior;
 - arrive, orient, position, and ground-snap tolerances and invalid paths;
 - jump, dodge, cringe, flail, get-up, kick, and surf state restoration;
 - vehicle-door ownership, cancellation, damage, and release behavior;
 - one typed event with one action ordinal under repeated callbacks;
 - one-shot retry before completion and idempotent retry after commit;
-- automatic-door duplicate enter, missing exit, blocked close, reopen, streaming,
+- automatic-door duplicate enter, missing exit, blocked close, reopen,
+  streaming,
   and destruction reconciliation;
 - interaction reservation release on every terminal path; and
 - parity scenarios for every registered campaign action identity.

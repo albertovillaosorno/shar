@@ -41,7 +41,8 @@ definitions expose slots, eligibility tags, and presentation data. The
 interactor service owns validation, execution, cancellation, exactly-once
 completion, and progression effects.
 
-The active world uses World Partition and Runtime Data Layers for level variants,
+The active world uses World Partition and Runtime Data Layers for level
+variants,
 mission overlays, interiors, and progression-driven presentation. Data Layers
 never define canonical identity or save keys. Indoor transitions keep the same
 world authority alive, preserve the selected vehicle snapshot, activate the

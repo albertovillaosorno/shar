@@ -49,6 +49,8 @@ reliable protectability analysis.
 
 - United States Court of Appeals for the Federal Circuit (2023), *SAS Institute,
   Inc. v. World Programming Limited*, No. 2021-1542. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://www.cafc.uscourts.gov/opinions-orders/21-1542.OPINION.4-6-2023_2106573.pdf>
   (Accessed: 12 July 2026).
+<!-- markdownlint-disable-next-line MD013 -->
 - [File-format copyrightability research](../doctrines/file-format-copyrightability.md).

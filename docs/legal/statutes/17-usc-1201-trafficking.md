@@ -74,6 +74,7 @@ For every challenged item, identify:
 ## Primary Sources
 
 - Office of the Law Revision Counsel, 17 U.S.C. § 1201:
+  <!-- markdownlint-disable-next-line MD013 -->
   <https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title17-section1201&num=0&edition=prelim>
   (Accessed: 13 July 2026).
 - [17 U.S.C. § 1201(f)](17-usc-1201f.md).

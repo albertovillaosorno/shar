@@ -5,9 +5,13 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD013 -->
 - [Transactional phone-booth vehicle retrieval](../../adr/unreal/runtime/transactional-phone-booth-vehicle-retrieval.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
 
 ## Purpose
@@ -44,6 +48,8 @@ canonical placement identity. Common UI presents the immutable query result.
 
 `FSharVehicleRetrievalEntry` contains:
 
+<!-- markdownlint-disable MD013 -->
+
 | Field | Contract |
 | :--- | :--- |
 | `VehicleId` | Canonical vehicle identity. |
@@ -60,13 +66,16 @@ canonical placement identity. Common UI presents the immutable query result.
 | `UnavailableReason` | Typed reason when not selectable. |
 | `ProjectionRevision` | Catalog, progression, mission, currency, and world revision. |
 
+<!-- markdownlint-enable MD013 -->
+
 Health is stored as an integer domain value. Presentation may render a whole
 percentage but never writes the value.
 
 ## Browser membership
 
 The normal browser projects vehicle definitions associated with campaign levels
-up to the highest accepted reached level. It includes owned and locked entries so
+up to the highest accepted reached level. It includes owned and locked entries
+so
 acquisition progress is visible. Ordering is deterministic by campaign level,
 acquisition role, offer ordinal, and canonical vehicle identity.
 
@@ -117,7 +126,8 @@ cannot repair, replace, or grant that vehicle.
 
 ## Selection and repair
 
-Selecting an entry validates the projection revision and the exact vehicle state.
+Selecting an entry validates the projection revision and the exact vehicle
+state.
 A locked, unavailable, stale, or mission-forbidden entry returns typed feedback.
 
 A destroyed owned vehicle requires an explicit repair confirmation. The base
@@ -126,7 +136,8 @@ Repair is one currency transaction linked to the vehicle and retrieval request.
 If the current balance is below the charge, selection fails without a debit,
 health change, or world mutation.
 
-A damaged but non-destroyed vehicle retains its accepted health and does not incur
+A damaged but non-destroyed vehicle retains its accepted health and does not
+incur
 the destroyed-vehicle repair charge.
 
 ## Delivery plan
@@ -173,7 +184,8 @@ A valid selection performs:
 1. retire the superseded owned instance only after commit; and
 1. close Common UI, release the Smart Object slot, and publish success feedback.
 
-A repeated request with the same request identity returns the accepted result and
+A repeated request with the same request identity returns the accepted result
+and
 never charges or spawns twice.
 
 ## Driver presentation
@@ -205,11 +217,13 @@ Each mission step declares one retrieval policy:
 - `owned_vehicle_only`; or
 - `declared_vehicle_only`.
 
-A forced-vehicle step normally uses `disabled`. A required-vehicle gate may allow
+A forced-vehicle step normally uses `disabled` . A required-vehicle gate may
+allow
 the booth so the player can retrieve the exact owned required vehicle. A mission
 cannot use the booth to convert a forced or target vehicle into ownership.
 
-Mission restart restores the mission policy and active mission vehicle separately
+Mission restart restores the mission policy and active mission vehicle
+separately
 from the player's persistent retrieval slot.
 
 ## Clothing boundary
