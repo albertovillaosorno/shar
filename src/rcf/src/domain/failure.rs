@@ -128,8 +128,13 @@ impl Display for ArchiveError {
             } => {
                 write!(
                     formatter,
-                    "IO error at {}: {source}",
+                    "IO error at {}: ",
                     DiagnosticPath::new(path)
+                )?;
+                let source_text = source.to_string();
+                write_escaped_text(
+                    formatter,
+                    &source_text,
                 )
             }
         }
@@ -150,6 +155,7 @@ impl std::error::Error for ArchiveError {
 
 #[cfg(test)]
 mod tests {
+    use std::error::Error as _;
     #[cfg(windows)]
     use std::ffi::OsString;
     use std::io;
@@ -159,6 +165,25 @@ mod tests {
     use std::path::PathBuf;
 
     use super::ArchiveError;
+
+    #[test]
+    fn io_error_escapes_source_control_characters() {
+        let error = ArchiveError::io(
+            "archive.rcf",
+            io::Error::other("read\nfailure"),
+        );
+
+        let rendered = error.to_string();
+
+        assert!(
+            !rendered
+                .chars()
+                .any(char::is_control),
+            "diagnostic contains a control character: {rendered:?}"
+        );
+        assert!(rendered.contains(r"read\nfailure"));
+        assert!(error.source().is_some());
+    }
 
     #[test]
     fn unsafe_entry_path_error_escapes_control_characters() {
