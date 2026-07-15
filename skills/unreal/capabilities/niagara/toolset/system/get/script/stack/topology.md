@@ -47,41 +47,64 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to inspect every module in one Niagara script stack in execution
+order, including each module's enabled state and input topology.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Obtain a valid script usage name from emitter topology.
+- Populate every StackItemReference field; leave module and input-name fields
+  empty and use renderer index `-1` for a script-level reference.
+- Keep the system, emitter, and script identities paired.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "scriptRef": {
+    "system": {"refPath": "/Niagara/VectorFields/VectorFieldVisualizationSystem.VectorFieldVisualizationSystem"},
+    "emitterName": "VectorFieldParticleEmitter",
+    "scriptName": "ParticleUpdateScript",
+    "moduleName": "",
+    "rendererIndex": -1,
+    "inputNameStack": []
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two Particle Update reads returned six enabled modules in stable order:
+SampleVectorField, ApplyVectorField, one Set Variables assignment, UpdateAge,
+Color, and SolveForcesAndVelocity. Their input counts were 10, 4, 1, 5, 3, and
+17. Emitter Spawn independently returned a valid empty module array.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Module order is execution-significant and should be preserved.
+- Empty stacks are valid and return a script object with an empty module array.
+- Topology describes inputs but carries no configured values.
+- Assignment-module names can contain generated GUID suffixes.
+- Empty script names and invalid script-usage names fail differently.
+- Script refs become stale after structural stack edits.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

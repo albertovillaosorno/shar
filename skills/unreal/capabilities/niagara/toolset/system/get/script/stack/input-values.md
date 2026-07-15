@@ -47,41 +47,67 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to collect resolved input values for every module in one Niagara
+script stack while preserving the stack's module order.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Obtain a valid script usage name from emitter topology.
+- Populate every StackItemReference field; leave module and input-name fields
+  empty and use renderer index `-1` for a script-level reference.
+- Keep the system, emitter, and script identities paired.
+- Pair the result with script topology when input types, visibility, or asset
+  identity are needed.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "scriptRef": {
+    "system": {"refPath": "/Niagara/VectorFields/VectorFieldVisualizationSystem.VectorFieldVisualizationSystem"},
+    "emitterName": "VectorFieldParticleEmitter",
+    "scriptName": "ParticleUpdateScript",
+    "moduleName": "",
+    "rendererIndex": -1,
+    "inputNameStack": []
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two Particle Update reads returned six value records in the same order as
+topology. Input counts matched topology exactly: 10, 4, 1, 5, 3, and 17. The
+records exposed linked variables, literals, dynamic values, and assignment
+inputs. Emitter Spawn independently returned an empty array.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The result is a direct module-value array rather than a script wrapper.
+- Values use heterogeneous instanced structs; inspect each `struct` ref before
+  parsing the payload.
+- This read omits module schema metadata and visibility.
+- Empty stacks return `[]`.
+- Module order should be compared with topology rather than inferred from names.
+- Empty or invalid script names fail explicitly.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
