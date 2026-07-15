@@ -46,41 +46,55 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to read the serialized default value authored on one RigVM pin.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Resolve the pin through `list_pins`.
+- Treat every result as a string regardless of underlying pin type.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "control_rig": {"refPath": "/AnimatorKit/UtilityRigs/CRU_AddLocator.CRU_AddLocator"},
+  "pin": {
+    "refPath":
+      "/AnimatorKit/UtilityRigs/CRU_AddLocator.CRU_AddLocator:RigVMModel.SpawnControl.Name"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two passes returned `Locator` for SpawnControl.Name. VariableNode.Value returned
+an empty string despite being connected; execution pins returned `()`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Values are serialized strings, including structs, enums, and execution
+  sentinels.
+- An empty string does not prove the pin is unused or unconnected.
+- Check connections separately.
+- Wrong pin object types fail during translation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
