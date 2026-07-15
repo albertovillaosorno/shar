@@ -153,7 +153,7 @@ first place is required.
 ### Mission race
 
 A mission race may be a point-to-point competition against one mission target.
-Its race result advances the owning mission step but does not contribute to the
+Its race result advances the owning mission stage but does not contribute to the
 street-race set unless the race definition explicitly owns that progression row.
 
 ### Wager race
@@ -295,7 +295,7 @@ mission, race-set, reward, economy, dialogue, music, and save revisions.
 
 Commit may:
 
-- advance a mission step;
+- advance a mission stage;
 - mark one street race complete;
 - complete the level race set when all three races are accepted;
 - grant the declared race-set vehicle exactly once;

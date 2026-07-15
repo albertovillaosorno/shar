@@ -908,6 +908,10 @@ Relevant decisions:
 <!-- markdownlint-disable-next-line MD013 -->
 - [Authored spatial placement and trigger runtime](docs/technical/unreal/authored-spatial-placement-and-trigger-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Mission definition, stage, and objective runtime](docs/technical/unreal/mission-definition-stage-and-objective-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Mission, interaction, interior, and notoriety runtime](docs/technical/unreal/mission-interaction-and-notoriety-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native platform bootstrap and error-recovery runtime](docs/technical/unreal/native-platform-bootstrap-and-error-recovery-runtime.md)
 - [Native asset load request and streaming runtime](docs/technical/unreal/native-asset-load-request-and-streaming-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->

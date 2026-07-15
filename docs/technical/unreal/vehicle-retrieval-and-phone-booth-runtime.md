@@ -96,7 +96,7 @@ retrieval. It never grants purchase, reward, or ordinary ownership state.
 
 The booth interaction is unavailable while:
 
-- phone-booth interactions are disabled by the active mission step;
+- phone-booth interactions are disabled by the active mission stage;
 - a mission-failure or recovery transition owns input;
 - another user owns the Smart Object slot;
 - the frontend or pause stack is already entering a blocking transition;
@@ -210,7 +210,7 @@ replacing the vehicle or replaying any acquisition reward.
 
 ## Mission integration
 
-Each mission step declares one retrieval policy:
+Each mission stage declares one retrieval policy:
 
 - `allowed`;
 - `disabled`;
@@ -218,7 +218,7 @@ Each mission step declares one retrieval policy:
 - `owned_vehicle_only`; or
 - `declared_vehicle_only`.
 
-A forced-vehicle step normally uses `disabled` . A required-vehicle gate may
+A forced-vehicle stage normally uses `disabled` . A required-vehicle gate may
 allow
 the booth so the player can retrieve the exact owned required vehicle. A mission
 cannot use the booth to convert a forced or target vehicle into ownership.

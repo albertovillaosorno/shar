@@ -15,6 +15,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Authored spatial placement and trigger runtime](authored-spatial-placement-and-trigger-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Mission definition, stage, and objective runtime](mission-definition-stage-and-objective-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Typed StateTree action sequences](../../adr/unreal/runtime/typed-state-tree-action-sequences.md)
 - [Typed action-sequence runtime](typed-action-sequence-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -75,30 +77,40 @@ with the mission unless a separate persistent unlock commits.
 A mission session has one canonical mission identity and one state:
 
 - `idle`;
-- `preparing`;
+- `accepted`;
+- `loading`;
+- `ready`;
 - `active`;
+- `transitioning`;
 - `succeeded`;
 - `failed`;
-- `recovering`; or
+- `recovering`;
+- `cancelled`; or
 - `completed`.
 
-`preparing` resolves the mission definition, step table, objective policies,
-required bundles, world layers, actors, and restart checkpoint before gameplay
-begins. A missing dependency rejects the start without changing progression.
+`accepted` reserves the mission identity and gameplay-state lease. `loading`
+executes the correlated mission load plan. `ready` means every required bundle,
+Data Layer, participant, route, placement, and adapter passed its readiness
+barrier without starting gameplay.
 
-`active` owns exactly one current step. Compound objectives are represented by
-ordered child steps rather than hidden script state. A step transition is
-accepted only after the current objective reports a terminal result and the
-session validates the declared successor.
+`active` owns exactly one current stage. A stage transition is accepted only
+after the root objective and required conditions report compatible terminal
+results and the session validates the declared successor.
 
-`succeeded` means the final objective completed but its progression transaction
-has not yet been accepted. `completed` is entered only after rewards, unlocks,
-and the mission completion key are committed exactly once.
+`transitioning` finalizes the current stage, executes its declared transition,
+verifies postconditions, and activates the successor. `succeeded` means the
+final
+stage result is accepted but its progression transaction has not yet committed.
 
-`failed` records a typed cause. `recovering` applies the declared restart
-policy,
-restores the accepted checkpoint, and verifies the restored world before the
-session can return to `active`.
+`failed` records a typed cause. `recovering` restores and verifies the declared
+checkpoint. `cancelled` records an accepted non-completion result. `completed`
+is
+entered only after rewards, unlocks, and mission completion commit exactly once.
+
+Definition compilation, load barriers, stage lifecycle, objective adapters,
+checkpoint restoration, abort, and completion follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Mission definition, stage, and objective runtime](mission-definition-stage-and-objective-runtime.md).
 
 ## StateTree projection
 
@@ -117,7 +129,8 @@ logic. Validation rejects mission definitions that require an unregistered task,
 condition, evaluator, transition, or external data binding.
 
 A task failure propagates through the hierarchy to the nearest declared recovery
-or failure transition. Unhandled failure terminates the step with a typed error;
+or failure transition. Unhandled failure terminates the stage with a typed
+error;
 it never becomes success through actor destruction, unloading, or missing data.
 
 ## Objective policy row
@@ -128,14 +141,14 @@ it never becomes success through actor destruction, unloading, or missing data.
 
 | Field | Contract |
 | :--- | :--- |
-| `PolicyId` | Stable identity referenced by one or more mission steps. |
+| `PolicyId` | Stable identity referenced by one or more mission stages. |
 | `ObjectiveKind` | Exact controlled objective kind. |
 | `RouteId` | Optional ordered route or destination identity. |
 | `TargetIds` | Ordered canonical target identities. |
 | `StartTrigger` | Immediate, proximity, interaction, dialogue completion, or explicit signal. |
 | `CompletionRule` | Typed predicate evaluated from accepted observations. |
 | `FailureRule` | Typed predicate with a declared grace period where applicable. |
-| `RecoveryRule` | Restart step, restart mission, restore checkpoint, or return to free roam. |
+| `RecoveryRule` | Restart stage, restart mission, restore checkpoint, or return to free roam. |
 | `NotorietyPolicyId` | Required policy for target contact and objective exemptions. |
 | `CatchUpProfileId` | Optional artificial-intelligence catch-up profile. |
 | `DropSequenceId` | Optional ordered dropped-item sequence. |
@@ -203,11 +216,12 @@ condition to a mission or activity. Initial kinds are:
 - `hit_count`, requiring or limiting a typed accepted-hit count.
 
 Every definition contains objective identity, mission identity, start and end
-step, observation schemas, thresholds, units, participant scope, reset policy,
+stage, observation schemas, thresholds, units, participant scope, reset policy,
 checkpoint behavior, reward or achievement policy, presentation, and terminal
 result rules.
 
-A bonus objective starts only when its mission and declared step revision become
+A bonus objective starts only when its mission and declared stage revision
+become
 active. It consumes immutable typed observations and emits one terminal result.
 It cannot infer success from a rendered icon, frame count, pointer state, or an
 unloaded target.
@@ -297,7 +311,7 @@ state.
 Progress derives from route and target state, not from rendered gauge pixels.
 The user interface receives normalized separation and warning state from the
 objective. Falling outside the failure boundary for the full grace duration
-fails the step. Overtaking the target does not complete the step and can fail
+fails the stage. Overtaking the target does not complete the stage and can fail
 when the policy defines a maximum lead.
 
 Catch-up adjusts the target's bounded speed or route behavior from the declared
@@ -384,7 +398,7 @@ A fragile payload uses deterministic collision observations and validated
 thresholds rather than frame-rate-dependent contact callbacks. Retry restores
 the
 exact declared carrier, payload state, attachment, route context, and accepted
-prior steps. It never preserves a partially destroyed candidate as success.
+prior stages. It never preserves a partially destroyed candidate as success.
 
 ## Destroy and avoid objectives
 
@@ -399,7 +413,7 @@ escape condition. A destroyed pursuer follows the objective's declared recovery
 or success policy; destruction alone cannot silently complete the objective.
 
 A compound destroy-then-avoid mission records destruction and escape as separate
-steps so mission completion and any chapter transition occur only after both
+stages so mission completion and any chapter transition occur only after both
 have been accepted.
 
 ## Race objective
@@ -427,7 +441,8 @@ World adapters publish immutable observations with:
 | :--- | :--- |
 | `ObservationId` | Unique session-scoped identity for deduplication. |
 | `MissionId` | Active mission identity. |
-| `StepOrdinal` | Active step ordinal. |
+| `StageId` | Active canonical stage identity. |
+| `StageRevision` | Exact active stage activation revision. |
 | `SourceId` | Canonical actor, item, zone, or interaction identity. |
 | `Kind` | Typed collision, overlap, destruction, collection, route, timer, or interaction event. |
 | `SimulationTime` | Monotonic fixed-step simulation timestamp. |
@@ -435,7 +450,7 @@ World adapters publish immutable observations with:
 
 <!-- markdownlint-enable MD013 -->
 
-The mission session rejects stale, duplicate, future-step, wrong-mission, or
+The mission session rejects stale, duplicate, future-stage, wrong-mission, or
 unrecognized observations. Presentation events cannot be replayed as gameplay
 observations.
 
@@ -452,13 +467,13 @@ script. It contains:
 | `ConditionId` | Stable identity unique within its owning mission definition. |
 | `ConditionKind` | One registered condition schema. |
 | `MissionId` | Owning canonical mission identity. |
-| `ActiveStepRange` | First and last step revisions during which evaluation is valid. |
+| `ActiveStageRange` | First and last stage revisions during which evaluation is valid. |
 | `ParticipantScope` | Exact local player, character, vehicle, opponent, payload, or shared-world policy. |
 | `SubjectIds` | Ordered canonical vehicles, actors, routes, interiors, payloads, or zones. |
 | `ObservationSchemas` | Exact typed observations accepted by the evaluator. |
 | `Parameters` | Schema-validated thresholds, durations, counts, ranks, distances, and units. |
 | `SuspensionPolicyId` | Declared pauses for interior transitions, arrest resolution, cinematics, or other controlled states. |
-| `TerminalPolicy` | Violation, satisfaction, step rollback, mission failure, or non-terminal signal. |
+| `TerminalPolicy` | Violation, satisfaction, stage rollback, mission failure, or non-terminal signal. |
 | `RecoveryTransitionId` | Required successor when the terminal policy is recoverable. |
 | `TelemetryProfileId` | Optional non-authoritative warning, meter, music, and accessibility projection. |
 
@@ -487,13 +502,14 @@ The initial controlled condition kinds are:
   payload identity;
 - `not_abducted`, failing only when the controlled participant is abducted;
 - `notoriety_arrest`, following the active mission's declared arrest policy;
-- `keep_payload`, requesting a declared step rollback or failure when the
+- `keep_payload`, requesting a declared stage rollback or failure when the
   payload is destroyed; and
 - `collect_count`, comparing accepted collectible transactions with the declared
   target set and count.
 
-A condition instance is initialized once for one mission-step revision, consumes
-only observations matching its mission, step, participant, subject, world, and
+A condition instance is initialized once for one mission-stage revision,
+consumes
+only observations matching its mission, stage, participant, subject, world, and
 session revisions, and is finalized exactly once before its bindings are
 released. A stale callback cannot affect a replacement condition. Conditions use
 explicit `pending`, `satisfied`, `violated`, and `invalid` states; a terminal
@@ -503,7 +519,7 @@ Damage failure is driven by authoritative damage or destruction state, not the
 completion of an explosion effect. Race and finish conditions consume route and
 result identities, not generic waypoint events. A payload rollback emits a
 mission-transition request that the session validates; an event listener cannot
-change the current step directly.
+change the current stage directly.
 
 `TelemetryProfileId` may project close-to-failure state, proximity, countdown,
 warning, HUD, music, or accessibility cues. Telemetry is derived from the
@@ -536,7 +552,7 @@ cancellation, timeout, mission replacement, or world teardown. Restoration is
 idempotent and cannot overwrite a newer participant or vehicle revision.
 
 Camera selection, ambient animation, icon visibility, fades, and special-screen
-routing cannot complete a mission, advance a step, grant a reward, or mutate a
+routing cannot complete a mission, advance a stage, grant a reward, or mutate a
 save. Presentation failure returns a typed result to the session, which follows
 the definition's fallback or recovery policy without fabricating gameplay
 success.
@@ -818,7 +834,7 @@ The transaction:
 1. preserves unrelated world damage and mission state; and
 1. returns notoriety to `dormant`.
 
-Arrest does not fail an active mission unless that mission step explicitly
+Arrest does not fail an active mission unless that mission stage explicitly
 states an arrest failure condition.
 
 ## Interior notoriety behavior
@@ -870,11 +886,11 @@ objective, notoriety, reward, and recovery transitions.
 ## Invariants
 
 - One world has at most one authoritative mission session.
-- One mission session has exactly one active step.
-- A terminal step result is accepted once.
+- One mission session has exactly one active stage revision.
+- A terminal stage result is accepted once.
 - A mission completion and each reward are committed once.
 - Every objective uses a registered policy compatible with its kind.
-- Every observation belongs to the current mission and step.
+- Every observation belongs to the current mission and stage revision.
 - A target unload never substitutes for completion or destruction.
 - A drop, interaction result, gag key, and notoriety event are deduplicated by
   stable identity.
@@ -906,7 +922,7 @@ control without applying an uncommitted fine.
 
 Repository logic tests prove:
 
-- every mission step resolves one compatible objective policy;
+- every mission stage resolves one compatible objective policy;
 - travel completes only from the declared destination;
 - follow distance, lead, grace, retry start, and catch-up are deterministic;
 - follow-and-collect preserves ordered drops and normal target notoriety;
@@ -920,7 +936,7 @@ Repository logic tests prove:
 - notoriety thresholds, warning, waves, decay, resolution, arrest, and fines use
   the fixed policy;
 - police contact during pursuit is exempt while unrelated offenses are not;
-- arrest preserves the active mission unless its step declares failure;
+- arrest preserves the active mission unless its stage declares failure;
 - out-of-bounds recovery selects the declared valid transform; and
 - accidental defect fixtures never become parity requirements.
 

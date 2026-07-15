@@ -343,7 +343,7 @@ has no corresponding native profile evidence.
 | `OfferDefinitionId` | Optional world offer, marker, dialogue, and availability definition. |
 | `PreviousMissionId` | Optional progression predecessor. |
 | `NextMissionId` | Optional progression successor. |
-| `StepTable` | Required ordered mission-step table. |
+| `StageTable` | Required ordered mission-stage table. |
 <!-- markdownlint-disable-next-line MD013 -->
 | `ConditionDefinitionIds` | Ordered required, optional, failure, and recovery condition definitions. |
 <!-- markdownlint-disable-next-line MD013 -->
@@ -359,26 +359,39 @@ has no corresponding native profile evidence.
 Mission identity is independent of the world actor that starts it. A mission
 may move or gain additional entry points without changing its save key.
 
-## Mission-step rows
+## Mission-stage rows
 
-`FSharMissionStepRow` contains:
+`FSharMissionStageRow` contains:
+
+<!-- markdownlint-disable MD013 -->
 
 | Field | Contract |
 | :--- | :--- |
 | `MissionId` | Owning mission identity. |
+| `StageId` | Stable mission-scoped stage identity. |
 | `SequenceOrdinal` | Dense zero-based order within the mission. |
 | `ObjectiveKind` | One value from the controlled objective taxonomy. |
 | `ObjectivePolicyId` | Required objective-specific runtime policy identity. |
-<!-- markdownlint-disable-next-line MD013 -->
-| `ConditionIds` | Ordered condition definitions active for this step or step range. |
+| `ConditionIds` | Ordered required, failure, optional, and recovery conditions. |
+| `ParticipantBindingIds` | Characters, vehicles, AI, payloads, and world actors. |
+| `RouteAndWaypointIds` | Ordered route, checkpoint, destination, and recovery identities. |
 | `TargetIds` | Canonical entities, actors, zones, or items. |
 | `RequiredCount` | Non-negative completion count. |
-| `TimeLimitSeconds` | Optional positive timer. |
-| `ForcedVehicleId` | Optional vehicle required for this step. |
+| `TimePolicyId` | Countdown, count-up, inherited, added, paused, or untimed policy. |
+| `ForcedVehicleId` | Optional vehicle required for this stage. |
 | `OpponentIds` | Ordered race, chase, or avoid participants. |
 | `LocationId` | Canonical location or route identity. |
-| `SuccessTransition` | Next step or mission completion. |
-| `FailurePolicy` | Restart step, restart mission, or return to free roam. |
+| `LockRequirementIds` | Explicit vehicle, costume, reward, or progression requirements. |
+| `LoadPlanId` | Stage-specific asset and world-composition plan. |
+| `CheckpointPolicyId` | Checkpoint creation and restore behavior. |
+| `SuccessTransition` | Declared successor or mission completion. |
+| `FailureTransition` | Stage retry, checkpoint restore, mission retry, abort, or failure. |
+| `PresentationProfileId` | HUD, camera, dialogue, countdown, music, and transition requests. |
+| `WorldPolicyId` | Traffic, population, notoriety, safe-zone, and control policy. |
+| `FinalPolicy` | Whether accepted success may terminate the mission. |
+| `BonusObjectiveStartIds` | Optional objectives activated by this stage revision. |
+
+<!-- markdownlint-enable MD013 -->
 
 The controlled objective taxonomy includes:
 
@@ -401,20 +414,25 @@ The controlled objective taxonomy includes:
 - `complete`.
 
 A compound mission is an ordered composition of these objective contracts. It
-is not represented as one opaque script. Every step exposes preconditions,
+is not represented as one opaque script. Every stage exposes preconditions,
 observable progress, success, failure, and deterministic recovery. The source
 concept commonly described as go-to maps to `travel`; it does not create a
-second objective kind. Objective execution, target-contact policy, interaction,
-interior, notoriety, and recovery behavior follow the
+second objective kind. Definition compilation, stage execution, objective
+adapters, participant bindings, loading, checkpoint, abort, and progression
+behavior follow the
+<!-- markdownlint-disable-next-line MD013 -->
+[mission definition, stage, and objective runtime](mission-definition-stage-and-objective-runtime.md).
+Interaction, interior, notoriety, and world-safety behavior follow the
 <!-- markdownlint-disable-next-line MD013 -->
 [mission, interaction, interior, and notoriety runtime](mission-interaction-and-notoriety-runtime.md).
 
 ## Avoid objective contract
 
-An `avoid` step declares one or more pursuer identities, an escape condition,
+An `avoid` stage declares one or more pursuer identities, an escape condition,
 and a reset policy. Completion requires all pursuers to remain outside the
 configured detection or pursuit threshold for the configured duration. Merely
-reaching a destination does not complete an avoid step unless the step declares
+reaching a destination does not complete an avoid stage unless the stage
+declares
 that destination as its escape condition.
 
 Pursuer destruction, despawn, world streaming, or mission restart must not
@@ -744,7 +762,7 @@ Catalog generation fails closed on:
 - missing Asset Manager registration or cook rules;
 - invalid gameplay tags;
 - nondeterministic table order;
-- gaps or duplicates in mission-step or checkpoint ordinals;
+- gaps or duplicates in mission-stage or checkpoint ordinals;
 - negative counts or non-positive configured timers;
 - forced vehicles without required gameplay assets;
 - rewards that reference inaccessible or missing definitions;
@@ -767,7 +785,7 @@ Engine-independent tests verify:
 - alias uniqueness and cycle rejection;
 - deterministic generation order;
 - schema validation;
-- mission-step and race-checkpoint topology;
+- mission-stage and race-checkpoint topology;
 - progression predicates;
 - save migration; and
 - package-to-definition membership.

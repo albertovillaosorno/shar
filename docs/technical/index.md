@@ -90,6 +90,8 @@ proprietary external formats.
 <!-- markdownlint-disable-next-line MD013 -->
 - [Memory ownership, budget, and diagnostics runtime](unreal/memory-ownership-budget-and-diagnostics-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Mission definition, stage, and objective runtime](unreal/mission-definition-stage-and-objective-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Mission, interaction, interior, and notoriety runtime](unreal/mission-interaction-and-notoriety-runtime.md)
 - [Mod package overlay runtime](unreal/mod-package-overlay-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -139,7 +141,7 @@ proprietary external formats.
 
 ## Current coverage
 
-- Technical specifications: 65.
+- Technical specifications: 66.
 - Template records: 1.
 - Review date: 2026-07-15.
 - Status boundary: this catalog describes current repository behavior and does

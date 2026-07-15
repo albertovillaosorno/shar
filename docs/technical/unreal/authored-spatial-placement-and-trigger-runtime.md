@@ -319,11 +319,11 @@ not mutate the target actor directly.
 ## Mission, race, and checkpoint placements
 
 Mission start, objective, destination, checkpoint, route, failure, and recovery
-placements reference canonical mission, step, route, checkpoint, participant,
+placements reference canonical mission, stage, route, checkpoint, participant,
 vehicle, approach, dwell, and gameplay-state policies.
 
 The mission subsystem validates every observation against the active mission and
-step revision. An overlap from an inactive mission, old checkpoint, unloaded
+stage revision. An overlap from an inactive mission, old checkpoint, unloaded
 route, wrong vehicle, or wrong participant cannot complete an objective.
 
 Race checkpoints additionally declare order, lap, direction, crossing plane,
