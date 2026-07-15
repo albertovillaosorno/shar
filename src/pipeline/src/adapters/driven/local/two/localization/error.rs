@@ -86,8 +86,8 @@ impl Error {
     }
 }
 
-/// Returns untrusted source text without raw control characters.
-fn escaped_source_text(value: &str) -> String {
+/// Returns untrusted diagnostic text without raw control characters.
+fn escaped_diagnostic_text(value: &str) -> String {
     let mut output = String::new();
     for character in value.chars() {
         if character.is_control() {
@@ -110,14 +110,17 @@ impl std::fmt::Display for Error {
                 source,
             } => {
                 let source_text = source.to_string();
-                let rendered_source = escaped_source_text(&source_text);
+                let rendered_source = escaped_diagnostic_text(&source_text);
                 write!(
                     formatter,
                     "{}: {rendered_source}",
                     DiagnosticPath::new(path)
                 )
             }
-            Self::InvalidSource(message) => formatter.write_str(message),
+            Self::InvalidSource(message) => {
+                let rendered_message = escaped_diagnostic_text(message);
+                formatter.write_str(&rendered_message)
+            }
         }
     }
 }
@@ -151,6 +154,16 @@ mod tests {
             r"language.bin: read\ninjected"
         );
         assert!(std::error::Error::source(&error).is_some());
+    }
+
+    #[test]
+    fn invalid_source_escapes_control_characters() {
+        let error = super::Error::invalid("invalid\nsource");
+
+        assert_eq!(
+            error.to_string(),
+            r"invalid\nsource"
+        );
     }
 
     #[cfg(windows)]
