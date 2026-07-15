@@ -46,41 +46,58 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to verify a Texture2D's source dimensions before SHAR evaluates
+aspect ratio, UI sizing, memory expectations, or texture-processing
+requirements.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use an exact indexed Texture2D object ref.
+- Treat `x` as width and `y` as height in source pixels.
+- Verify class compatibility before using dimensions in a downstream workflow.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "texture": {
+    "refPath": "/AudioWidgets/AudioFader/AudioFader_Inner.AudioFader_Inner"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Repeated reads returned `40 × 1728` for AudioFader_Inner. Independent fixtures
+returned `1 × 1` for T_White_srgb, `96 × 96` for AudioFader_Normal, `13 × 12`
+for ScrubHandleDown_Clamped, and `256 × 256` for the Niagara system icon.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Dimensions describe the Texture2D source size exposed by the asset, not its
+  current on-screen size.
+- The result does not report mip count, compression, pixel format, streaming
+  state, virtual-texture state, or memory cost.
+- Asset names can be misleading; `BlackVT4x4` reported `128 × 128`.
+- Non-Texture2D and missing refs fail during parameter translation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
