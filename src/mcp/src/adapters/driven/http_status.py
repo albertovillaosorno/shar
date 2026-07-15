@@ -49,6 +49,7 @@ from typing import Never
 
 from mcp.src.adapters.driven.response_validation import (
     matches_integer_request_id,
+    validated_json_rpc_error_message,
 )
 from mcp.src.domain.errors import fail_protocol
 from mcp.src.domain.json_types import JsonObject, require_json_object
@@ -113,9 +114,4 @@ def _validated_error_message(
     code = error.get("code")
     if not isinstance(code, int) or isinstance(code, bool):
         return None
-    message = error.get("message")
-    return (
-        message
-        if isinstance(message, str) and message and message.isprintable()
-        else None
-    )
+    return validated_json_rpc_error_message(error.get("message"))

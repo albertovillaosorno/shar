@@ -66,6 +66,7 @@ _VISIBLE_ASCII_MAXIMUM = 0x7E
 _MAX_SESSION_ID_LENGTH = 4_096
 _MAX_SERVER_METADATA_LENGTH = 4_096
 _MAX_TOOL_NAME_BYTES = 4_096
+_MAX_JSON_RPC_ERROR_MESSAGE_BYTES = 64 * 1_024
 
 
 def parse_initialized_session(
@@ -137,6 +138,25 @@ def _require_server_metadata(value: object, *, field: str) -> str:
     return value
 
 
+def validated_json_rpc_error_message(value: object) -> str | None:
+    """Return one bounded printable JSON-RPC error message when valid.
+
+    Args:
+        value: Candidate error message value.
+
+    Returns:
+        Validated text, or `None` when the value is unsuitable for display.
+    """
+    if (
+        not isinstance(value, str)
+        or not value
+        or not value.isprintable()
+        or len(value.encode()) > _MAX_JSON_RPC_ERROR_MESSAGE_BYTES
+    ):
+        return None
+    return value
+
+
 def matches_integer_request_id(value: object, request_id: int) -> bool:
     """Return whether a response id exactly matches one integer request."""
     return (
@@ -179,12 +199,8 @@ def require_json_rpc_result(
         code = error.get("code")
         if not isinstance(code, int) or isinstance(code, bool):
             fail_protocol("JSON-RPC error.code must be an integer")
-        message = error.get("message")
-        if (
-            not isinstance(message, str)
-            or not message
-            or not message.isprintable()
-        ):
+        message = validated_json_rpc_error_message(error.get("message"))
+        if message is None:
             fail_protocol(
                 "JSON-RPC error.message must be non-empty printable text"
             )

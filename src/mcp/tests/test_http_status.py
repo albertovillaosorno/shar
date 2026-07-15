@@ -84,6 +84,31 @@ def test_rpc_error_reports_server_message() -> None:
         raise_http_status_error(400, payload, request_id=1)
 
 
+def test_oversized_rpc_error_uses_status_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An oversized server message cannot replace the stable HTTP status."""
+    monkeypatch.setattr(
+        "mcp.src.adapters.driven.response_validation._MAX_JSON_RPC_ERROR_MESSAGE_BYTES",
+        4,
+        raising=False,
+    )
+    payload: JsonObject = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "error": {
+            "code": -32600,
+            "message": "abcde",
+        },
+    }
+
+    with pytest.raises(
+        ProtocolError,
+        match=r"^MCP server returned HTTP 400$",
+    ):
+        raise_http_status_error(400, payload, request_id=1)
+
+
 def test_malformed_rpc_error_uses_status_fallback() -> None:
     """Only a complete JSON-RPC error may replace the HTTP status message."""
     payloads: tuple[JsonObject, ...] = (

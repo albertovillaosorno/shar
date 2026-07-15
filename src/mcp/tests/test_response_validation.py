@@ -328,6 +328,29 @@ def test_result_requires_well_formed_json_rpc_error() -> None:
         _ = require_json_rpc_result(valid_error, _REQUEST_ID)
 
 
+def test_result_rejects_excessive_json_rpc_error_message(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """One server error cannot become an oversized exception diagnostic."""
+    monkeypatch.setattr(
+        "mcp.src.adapters.driven.response_validation._MAX_JSON_RPC_ERROR_MESSAGE_BYTES",
+        4,
+        raising=False,
+    )
+    exchange = HttpExchange(
+        status=200,
+        session_id=None,
+        payload={
+            "jsonrpc": "2.0",
+            "id": _REQUEST_ID,
+            "error": {"code": -32000, "message": "abcde"},
+        },
+    )
+
+    with pytest.raises(ProtocolError, match=r"JSON-RPC error\.message"):
+        _ = require_json_rpc_result(exchange, _REQUEST_ID)
+
+
 def test_result_requires_exact_integer_request_id() -> None:
     """Boolean and floating identifiers cannot alias an integer request."""
     for response_id in (True, 1.0):
