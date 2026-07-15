@@ -95,11 +95,11 @@ mount `/ModelContextProtocol/`, and the native MCP description.
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
+[REVIEW_REQUIRED]
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Current**
+- Manual guidance status: **Review required**
 
 ## Before invocation
 
