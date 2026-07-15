@@ -53,6 +53,7 @@ use std::fs::File;
 use std::io::{ErrorKind, Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 
+use schoenwald_filesystem::DiagnosticPath;
 use schoenwald_filesystem::adapters::driving::local;
 
 use crate::domain::path_policy::contains_unsafe_unicode_path_control;
@@ -138,8 +139,7 @@ impl ArchiveSource for FileArchiveSource {
                     ArchiveError::invalid_archive(
                         format!(
                             "archive path has no UTF-8 stem: {}",
-                            self.path
-                                .display()
+                            DiagnosticPath::new(&self.path)
                         ),
                     )
                 },
@@ -397,7 +397,39 @@ fn safe_relative_path(entry_name: &str) -> Result<PathBuf, ArchiveError> {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(windows)]
+    use std::ffi::OsString;
+    #[cfg(windows)]
+    use std::os::windows::ffi::OsStringExt as _;
+
     use super::*;
+
+    #[cfg(windows)]
+    #[test]
+    fn archive_stem_error_preserves_unpaired_utf16_path_unit() {
+        let path = PathBuf::from(OsString::from_wide(&[
+            u16::from(b'a'),
+            0xd800,
+            u16::from(b'b'),
+            u16::from(b'.'),
+            u16::from(b'r'),
+            u16::from(b'c'),
+            u16::from(b'f'),
+        ]));
+        let source = FileArchiveSource::new(path);
+
+        let result = source.archive_stem();
+        let Err(error) = result else {
+            panic!("non-Unicode archive stem unexpectedly succeeded");
+        };
+        let rendered = error.to_string();
+
+        assert!(
+            rendered.contains(r"a\u{D800}b.rcf"),
+            "diagnostic lost the native path unit: {rendered:?}"
+        );
+        assert!(!rendered.contains('\u{fffd}'));
+    }
 
     #[test]
     fn rejects_parent_traversal() {
