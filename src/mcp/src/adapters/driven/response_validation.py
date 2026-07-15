@@ -65,6 +65,7 @@ _VISIBLE_ASCII_MINIMUM = 0x21
 _VISIBLE_ASCII_MAXIMUM = 0x7E
 _MAX_SESSION_ID_LENGTH = 4_096
 _MAX_SERVER_METADATA_LENGTH = 4_096
+_MAX_TOOL_NAME_BYTES = 4_096
 
 
 def parse_initialized_session(
@@ -222,6 +223,10 @@ def parse_tool_names(result: JsonObject) -> tuple[str, ...]:
             or any(character.isspace() for character in name)
         ):
             fail_protocol(f"tools/list.tools[{index}].name is invalid")
+        if len(name.encode()) > _MAX_TOOL_NAME_BYTES:
+            fail_protocol(
+                f"tools/list.tools[{index}].name exceeds its byte limit"
+            )
         if name in seen:
             fail_protocol(f"duplicate tool identity: {name}")
         seen.add(name)

@@ -233,6 +233,20 @@ def test_tool_names_reject_control_characters() -> None:
             _ = parse_tool_names({"tools": [{"name": name}]})
 
 
+def test_tool_names_reject_excessive_identity_bytes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """One discovery identity cannot consume the aggregate name budget."""
+    monkeypatch.setattr(
+        "mcp.src.adapters.driven.response_validation._MAX_TOOL_NAME_BYTES",
+        4,
+        raising=False,
+    )
+
+    with pytest.raises(ProtocolError, match="name exceeds its byte limit"):
+        _ = parse_tool_names({"tools": [{"name": "abcde"}]})
+
+
 def test_tool_names_reject_duplicate_identities() -> None:
     """Top-level capability discovery cannot contain duplicate names."""
     with pytest.raises(ProtocolError, match="duplicate tool identity"):
