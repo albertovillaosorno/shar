@@ -49,6 +49,14 @@ use std::path::{Path, PathBuf};
 
 use schoenwald_filesystem::DiagnosticPath;
 
+/// Returns untrusted diagnostic text without raw control characters.
+fn escaped_text(value: &str) -> String {
+    value
+        .chars()
+        .flat_map(char::escape_default)
+        .collect()
+}
+
 #[derive(Debug)]
 /// Rmverror.
 pub enum RmvError {
@@ -84,11 +92,15 @@ impl core::fmt::Display for RmvError {
             Self::Io {
                 path,
                 source,
-            } => write!(
-                formatter,
-                "{}: {source}",
-                DiagnosticPath::new(path)
-            ),
+            } => {
+                let source_text = source.to_string();
+                write!(
+                    formatter,
+                    "{}: {}",
+                    DiagnosticPath::new(path),
+                    escaped_text(&source_text)
+                )
+            }
             Self::InputRootInsideOutput(path) => {
                 write!(
                     formatter,
@@ -150,6 +162,7 @@ impl std::error::Error for RmvError {
 
 #[cfg(test)]
 mod tests {
+    use std::error::Error as _;
     #[cfg(windows)]
     use std::ffi::OsString;
     use std::io;
@@ -159,6 +172,25 @@ mod tests {
     use std::path::PathBuf;
 
     use super::RmvError;
+
+    #[test]
+    fn io_error_escapes_source_control_characters() {
+        let error = RmvError::Io {
+            path: PathBuf::from("movie.rmv"),
+            source: io::Error::other("read\nfailure"),
+        };
+
+        let rendered = error.to_string();
+
+        assert!(
+            !rendered
+                .chars()
+                .any(char::is_control),
+            "diagnostic contains a control character: {rendered:?}"
+        );
+        assert!(rendered.contains(r"read\nfailure"));
+        assert!(error.source().is_some());
+    }
 
     #[test]
     fn invalid_movie_stem_error_escapes_control_characters() {
