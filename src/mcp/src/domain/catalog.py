@@ -72,6 +72,7 @@ _TOOLSET_HEADER = re.compile(
     f"{_TOOLSET_HEADER_PREFIX}{_TOOLSET_DESCRIPTION_PATTERN}"
 )
 _MAX_TOOLSET_SUMMARIES = 10_000
+_MAX_TOOLS_PER_TOOLSET = 10_000
 
 
 class ToolsetSummary(NamedTuple):
@@ -194,6 +195,8 @@ def parse_toolset_definition(
     raw_tools = schema.get("tools")
     if not isinstance(raw_tools, list):
         fail_protocol(f"toolset {toolset_name}: missing tools array")
+    if len(raw_tools) > _MAX_TOOLS_PER_TOOLSET:
+        fail_protocol("toolset schema exceeded its tool limit")
     tools = tuple(
         _parse_tool(toolset_name, item, index)
         for index, item in enumerate(raw_tools)

@@ -241,6 +241,27 @@ def test_toolset_catalog_rejects_excessive_registry_entries(
         _ = parse_toolset_catalog(catalog_text)
 
 
+def test_toolset_schema_rejects_excessive_tools(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """One schema cannot expand into an unbounded generated skill set."""
+    monkeypatch.setattr(
+        "mcp.src.domain.catalog._MAX_TOOLS_PER_TOOLSET",
+        2,
+        raising=False,
+    )
+    schema: JsonObject = {
+        "tools": [
+            {"name": "first", "inputSchema": {}},
+            {"name": "second", "inputSchema": {}},
+            {"name": "third", "inputSchema": {}},
+        ]
+    }
+
+    with pytest.raises(ProtocolError, match="tool limit"):
+        _ = parse_toolset_definition("EditorToolset", json.dumps(schema))
+
+
 @pytest.mark.parametrize(
     "second_name",
     ["create_asset", "EditorToolset.create_asset"],
