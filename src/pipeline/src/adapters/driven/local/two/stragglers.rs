@@ -266,10 +266,10 @@ fn semantic_json_for(
     ext: &str,
 ) -> PipelineOutcome<String> {
     let bytes = local_read_bytes(source).map_err(io_error(source))?;
-    let text = decode_straggler_text(
+    let decoded_text = decode_straggler_text(
         &bytes, relative, ext,
     )?;
-    let text = text.as_ref();
+    let text = decoded_text.as_ref();
     let mut json = JsonObject::new();
     json.field(
         "schema",

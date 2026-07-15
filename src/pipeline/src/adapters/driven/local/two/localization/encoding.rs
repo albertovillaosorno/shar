@@ -144,7 +144,11 @@ pub(in crate::adapters::driven::local::two) fn windows_1252_to_string(
     for byte in bytes {
         let decoded = match byte {
             0x00..=0x7f | 0xa0..=0xff => Some(char::from(*byte)),
-            0x80..=0x9f => WINDOWS_1252_C1[usize::from(byte - 0x80)],
+            0x80..=0x9f => (*byte)
+                .checked_sub(0x80)
+                .and_then(|offset| WINDOWS_1252_C1.get(usize::from(offset)))
+                .copied()
+                .flatten(),
         };
         let Some(character) = decoded else {
             return Err(*byte);

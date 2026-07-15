@@ -783,10 +783,10 @@ fn resolve_shared_texture_member<'index>(
 fn normalized_texture_png_file_name(
     texture_reference: &str
 ) -> Result<String, PipelineError> {
-    let texture_reference = texture_reference.trim_end_matches('\u{0}');
-    let mut components = Path::new(texture_reference).components();
-    if texture_reference.is_empty()
-        || texture_reference != texture_reference.trim()
+    let normalized_reference = texture_reference.trim_end_matches('\u{0}');
+    let mut components = Path::new(normalized_reference).components();
+    if normalized_reference.is_empty()
+        || normalized_reference != normalized_reference.trim()
         || !matches!(
             components.next(),
             Some(std::path::Component::Normal(_))
@@ -798,12 +798,12 @@ fn normalized_texture_png_file_name(
         return Err(
             PipelineError::new(
                 format!(
-                    "invalid shader texture reference: {texture_reference}"
+                    "invalid shader texture reference: {normalized_reference}"
                 ),
             ),
         );
     }
-    let stem = texture_reference
+    let stem = normalized_reference
         .rsplit_once('.')
         .filter(
             |(_, extension)| {
@@ -812,14 +812,14 @@ fn normalized_texture_png_file_name(
             },
         )
         .map_or(
-            texture_reference,
+            normalized_reference,
             |(value, _)| value,
         );
     if stem.is_empty() {
         return Err(
             PipelineError::new(
                 format!(
-                    "invalid shader texture reference: {texture_reference}"
+                    "invalid shader texture reference: {normalized_reference}"
                 ),
             ),
         );
