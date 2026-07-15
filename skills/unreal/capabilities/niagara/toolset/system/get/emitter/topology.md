@@ -50,41 +50,67 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to inspect one Niagara emitter's four script stacks, ordered
+modules and input descriptors, simulation target, and renderer-instance
+references.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Obtain the exact emitter name from `GetSystemSummary`.
+- Populate every StackItemReference field; use empty script/module/input values
+  and renderer index `-1` for an emitter-level reference.
+- Keep the system ref and emitter name paired.
+- Call input-value tools separately when actual configured values are required.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "emitterRef": {
+    "system": {"refPath": "/Niagara/VectorFields/VectorFieldVisualizationSystem.VectorFieldVisualizationSystem"},
+    "emitterName": "VectorFieldParticleEmitter",
+    "scriptName": "",
+    "moduleName": "",
+    "rendererIndex": -1,
+    "inputNameStack": []
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two Particle calls returned empty Emitter Spawn, two Emitter Update modules, two
+Particle Spawn modules, six Particle Update modules, and one sprite renderer at
+index `0`. Bounding Box returned two Emitter Update modules, one Particle Update
+module, and one mesh renderer. Script and module ordering was stable.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Topology includes input descriptors but intentionally carries no input values.
+- All four script-stack objects are present even when their module arrays are
+  empty.
+- Assignment-module names can contain generated GUID suffixes.
+- Renderer refs use an emitter-local index.
+- Module names and generated refs can change after graph edits or duplication.
+- Missing emitter names fail explicitly.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

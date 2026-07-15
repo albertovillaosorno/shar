@@ -48,41 +48,63 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to verify one Niagara emitter's enabled state, simulation target,
+and renderer classes without walking its full script stacks.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Obtain the exact emitter name from `GetSystemSummary`.
+- Populate every StackItemReference field; use empty script/module/input values
+  and renderer index `-1` for an emitter-level reference.
+- Keep the system ref and emitter name paired.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "emitterRef": {
+    "system": {"refPath": "/Niagara/VectorFields/VectorFieldVisualizationSystem.VectorFieldVisualizationSystem"},
+    "emitterName": "VectorFieldParticleEmitter",
+    "scriptName": "",
+    "moduleName": "",
+    "rendererIndex": -1,
+    "inputNameStack": []
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two reads per emitter returned stable metadata. Bounding Box and Arrow were
+enabled CPU simulations with mesh renderers; Particle was an enabled GPU
+simulation with a sprite renderer. The results matched the parent System summary
+independently.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This read does not include modules, renderer properties, or input values.
+- Empty emitter names fail before lookup.
+- Missing names raise an error that lists available emitters.
+- Renderer classes are de-duplicated class refs, not renderer-instance refs.
+- Use topology for renderer indexes and stack ownership.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

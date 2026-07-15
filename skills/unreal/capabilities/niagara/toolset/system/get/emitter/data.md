@@ -54,41 +54,65 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to read the complete reflected property values for one Niagara
+emitter when SHAR needs settings beyond the typed summary.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Obtain the exact emitter name from `GetSystemSummary`.
+- Populate every StackItemReference field; use empty script/module/input values
+  and renderer index `-1` for an emitter-level reference.
+- Keep the system ref and emitter name paired.
+- Parse `returnValue.propertyValues` as JSON before reading individual fields.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "emitterRef": {
+    "system": {"refPath": "/Niagara/VectorFields/VectorFieldVisualizationSystem.VectorFieldVisualizationSystem"},
+    "emitterName": "VectorFieldParticleEmitter",
+    "scriptName": "",
+    "moduleName": "",
+    "rendererIndex": -1,
+    "inputNameStack": []
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two calls for both Bounding Box and Particle returned stable 22-property JSON
+documents. The CPU and GPU emitters differed in `SimTarget` but shared local-
+space false, determinism false, seed `0`, automatic allocation, zero
+preallocation, no persistent IDs, and valid ±100 fixed-bounds values.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- `propertyValues` is nested JSON text and requires a second parse.
+- Reflected values use C++ PascalCase such as `SimTarget` and `FixedBounds`.
+- A FixedBounds value exists regardless of the active bounds-calculation mode.
+- Floating values can include serialization residue.
+- Missing emitters raise an error listing available names.
+- Prefer `GetEmitterSummary` for common typed metadata.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

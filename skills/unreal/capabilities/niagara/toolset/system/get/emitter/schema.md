@@ -47,41 +47,57 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this global tool to discover the current editable Niagara emitter property
+schema before SHAR interprets emitter data or prepares a separately authorized
+settings change.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Parse `returnValue.propertySchema` as JSON.
+- Compare lower-camel schema keys with the PascalCase fields returned by
+  `GetEmitterData`.
+- Use enum values exactly as returned.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two calls returned byte-stable JSON text with 56 property schemas. Coverage
+included identity, enablement, emitter mode, versioning, local space,
+determinism, random seed, interpolated spawn mode, CPU/GPU simulation target,
+importance, bounds mode, fixed bounds, persistent IDs, platform/scalability
+settings, GPU spawn limits, and allocation controls.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- `propertySchema` is nested JSON text and requires a second parse.
+- This global class schema takes no emitter reference.
+- Some reflected fields such as `name` and `bIsEnabled` have no simple JSON
+  `type` in the generated schema.
+- Schema lower-camel names differ from emitter-data PascalCase names.
+- Schema availability does not authorize mutation or establish project policy.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
