@@ -47,41 +47,60 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this global tool to discover the current editable Niagara System property
+schema before SHAR interprets `GetSystemData` or prepares a separately
+authorized settings change.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Call this before relying on remembered property names or value shapes.
+- Parse `returnValue.propertySchema` as JSON.
+- Match schema lower-camel keys to the corresponding serialized data fields
+  carefully.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two calls returned byte-stable JSON text containing 51 property schemas.
+Coverage included template description, preview object, rapid-iteration baking,
+attribute compression and trimming, large-world support, render overrides,
+current-frame requirements, scalability, fixed bounds, effect type, determinism,
+random seed, warmup, fixed tick, and pooling limits.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- `propertySchema` is JSON text nested inside the structured result and requires
+  a second parse.
+- This is a global class schema and takes no system ref.
+- Schema keys use lower-camel spelling, while `GetSystemData` values use
+  reflected upper-camel spelling for many fields.
+- Nested scalability and platform schemas are large; consume only fields
+  relevant to the current task.
+- Schema availability describes accepted shapes, not mutation safety or project
+  policy.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

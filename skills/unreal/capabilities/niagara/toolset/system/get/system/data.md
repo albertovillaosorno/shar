@@ -47,41 +47,61 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to read editable Niagara System asset settings such as
+determinism, bounds, warmup, fixed tick, attribute processing, effect type, and
+pooling limits.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use an exact indexed Niagara System object ref.
+- Parse `returnValue.propertyValues` as JSON before reading settings.
+- Compare values with `GetSystemSchema` rather than inferring types from
+  serialized values.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "system": {"refPath": "/Niagara/VectorFields/VectorFieldVisualizationSystem.VectorFieldVisualizationSystem"}
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two vector-system calls returned a stable 51-property JSON document. It was
+deterministic with seed `0`, used large-world coordinates and current-frame
+data, had no fixed bounds mode or warmup, and used pool limit `32`.
+FountainLightweight exposed the same field set but had determinism disabled and
+an empty template description.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- `propertyValues` is JSON text nested inside the structured return value and
+  requires a second parse.
+- Reflected value keys use upper-camel forms such as `FixedBounds`, while the
+  schema uses lower-camel forms such as `fixedBounds`.
+- Floating-point values can contain binary representation residue.
+- `EffectType` can serialize as the string `None`; it is not JSON null.
+- A valid FixedBounds value is present even when `bFixedBounds` is false.
+- Missing system refs fail during parameter translation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

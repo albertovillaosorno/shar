@@ -48,41 +48,62 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to inventory modules, dynamic inputs, data-interface classes, and
+renderer classes referenced by a Niagara System before SHAR evaluates migration,
+cleanup, or packaging impact.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use an exact indexed Niagara System ref.
+- Treat returned refs as dependency evidence, not permission to modify those
+  assets.
+- Compare with emitter topology when dependency ownership matters.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "system": {"refPath": "/Niagara/VectorFields/VectorFieldVisualizationSystem.VectorFieldVisualizationSystem"}
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two vector-system calls returned 15 modules, five dynamic inputs, Color Curve
+data-interface usage, and mesh plus sprite renderer classes. Dependencies
+included vector-field construction, sampling, application, spawn, lifetime,
+color, solver, and System State assets. FountainLightweight independently
+returned only System State and empty dynamic-input, data-interface, and renderer
+arrays.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Assignment modules can be graph-local object refs rather than standalone asset
+  paths.
+- Data-interface entries report classes, while module and dynamic-input entries
+  generally report asset or graph refs.
+- Empty arrays are valid for lightweight systems.
+- This read does not prove runtime execution order or whether every dependency
+  is active in every platform configuration.
+- Missing system refs fail during parameter translation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
