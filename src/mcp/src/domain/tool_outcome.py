@@ -65,8 +65,27 @@ class ToolCallOutcome(NamedTuple):
             This outcome when the native call succeeded.
         """
         if self.is_error:
-            fail_tool_call(self.text or "Unreal tool call failed")
+            message = (
+                _escape_diagnostic_controls(self.text)
+                if self.text
+                else "Unreal tool call failed"
+            )
+            fail_tool_call(message)
         return self
+
+
+def _escape_diagnostic_controls(value: str) -> str:
+    """Render nonprintable tool text without changing printable evidence.
+
+    Returns:
+        Text with nonprintable characters represented by visible escapes.
+    """
+    return "".join(
+        character
+        if character.isprintable()
+        else character.encode("unicode_escape").decode("ascii")
+        for character in value
+    )
 
 
 def parse_tool_outcome(value: object) -> ToolCallOutcome:

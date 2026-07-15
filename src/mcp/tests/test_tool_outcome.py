@@ -122,6 +122,26 @@ def test_tool_outcome_native_error_fails_on_demand() -> None:
         _ = failed.require_success()
 
 
+def test_tool_outcome_native_error_escapes_diagnostic_controls() -> None:
+    """Native error text cannot inject terminal control characters."""
+    failed = parse_tool_outcome(
+        {
+            "content": [
+                {
+                    "type": "text",
+                    "text": "blocked\n\x1b[2J",
+                }
+            ],
+            "isError": True,
+        }
+    )
+
+    assert failed.text == "blocked\n\x1b[2J"
+    with pytest.raises(ToolCallError) as captured:
+        _ = failed.require_success()
+    assert str(captured.value) == r"blocked\n\x1b[2J"
+
+
 @pytest.mark.parametrize(
     ("outcome", "message"),
     _MALFORMED_CASES,
