@@ -13,6 +13,10 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Frontend shell and menu runtime](frontend-shell-and-menu-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Common UI navigation, menu, and modal runtime](common-ui-navigation-menu-and-modal-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Frontend media, gallery, and audio runtime](frontend-media-gallery-and-audio-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Device configuration and save-slot runtime](device-configuration-and-save-slot-runtime.md)

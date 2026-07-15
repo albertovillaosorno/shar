@@ -10,13 +10,13 @@ examples, or documentation.
 - Evidence status: Partially verified — Project descriptor, selected engine
   association, installed Unreal Engine 5.8.0 promoted build changelist 55116800,
   release branch identity, current Epic EULA, its generative-AI input
-  restriction,
-  public source-access rules, and Unreal Engine 5.8 Media Framework and Electra
-  boundaries were verified. Accepted regional agreement, bundled notices,
-  decoder availability, and external-service retention remain environment- or
-  service-specific.
+  restriction, public source-access rules, Common UI input routing and action
+  data, managed subsystem lifetimes, Asset Manager primary-asset and bundle
+  boundaries, and Unreal Engine 5.8 Media Framework and Electra boundaries were
+  verified. Accepted regional agreement, bundled notices, decoder availability,
+  and external-service retention remain environment- or service-specific.
 - Counsel review: Not performed.
-- As-of date: 2026-07-14.
+- As-of date: 2026-07-15.
 - Subject class: Proprietary real-time engine, editor, toolchain, and SDK.
 
 ## Covered Material
@@ -99,6 +99,19 @@ royalty or seat analysis.
 - Epic Games (n.d.) *Unreal Engine documentation*. Available at:
   <https://dev.epicgames.com/documentation/en-us/unreal-engine/> (Accessed: 14
   July 2026).
+- Epic Games (2026) *Common UI Quickstart Guide for Unreal Engine 5.8*.
+  Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/common-ui-quickstart-guide-for-unreal-engine>
+  (Accessed: 15 July 2026).
+- Epic Games (2026) *Programming Subsystems in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/programming-subsystems-in-unreal-engine>
+  (Accessed: 15 July 2026).
+- Epic Games (2026) *Asset Management in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/asset-management-in-unreal-engine>
+  (Accessed: 15 July 2026).
 - Epic Games (2026) *Media Framework Technical Reference for Unreal Engine 5.8*.
   Available at:
   <!-- markdownlint-disable-next-line MD013 -->

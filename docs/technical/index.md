@@ -76,6 +76,8 @@ proprietary external formats.
 - [Camera rig, preset, and arbitration runtime](unreal/camera-rig-preset-and-arbitration-runtime.md)
 - [Camera system runtime](unreal/camera-system-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Common UI navigation, menu, and modal runtime](unreal/common-ui-navigation-menu-and-modal-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Open sandbox chapter runtime](unreal/open-sandbox-chapter-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Developer command and diagnostic runtime](unreal/developer-command-and-diagnostic-runtime.md)
@@ -84,6 +86,8 @@ proprietary external formats.
 - [Frontend shell and menu runtime](unreal/frontend-shell-and-menu-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Frontend screen flow and settings runtime](unreal/frontend-screen-flow-and-settings-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Frontend media, gallery, and audio runtime](unreal/frontend-media-gallery-and-audio-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Unreal configuration and asset validation](unreal/config-and-asset-validation.md)
 - [Unreal gameplay content catalog](unreal/gameplay-content-catalog.md)

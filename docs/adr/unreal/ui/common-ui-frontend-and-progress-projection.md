@@ -18,26 +18,44 @@ project needs one fixed composition of those native facilities.
 
 ## Decision
 
-The front end uses Common UI. Its navigation stack contains four fixed layers:
-boot, primary screen, modal, and notification. Every screen derives from the
-project's C++ Common Activatable Widget base and receives immutable view data.
-Blueprint and widget assets own layout, animation, styling, and presentation
-only.
+The front end uses Common UI. `UCommonGameViewportClient` is the viewport input
+routing base, and the navigation stack contains four fixed layers: boot, primary
+screen, modal, and notification. Every screen derives from the project's C++
+Common Activatable Widget base and receives immutable view data. Blueprint and
+widget assets own layout, animation, styling, and presentation only.
 
-`USharFrontendSubsystem`, a `UGameInstanceSubsystem`, owns boot state, main-menu
-commands, accepted save-slot summaries, new-game requests, resume selection,
-load requests, scrapbook entry, options entry, credits entry, calendar-theme
-selection, and transitions into or out of gameplay.
+`USharUiNavigationSubsystem`, a `UGameInstanceSubsystem`, owns the registered
+screen catalog, typed navigation transactions, bounded restoration history,
+layer reservations, asset leases, and the accepted screen revision. Frontend
+and in-game routers use separate screen catalogs while sharing this kernel; they
+do not exchange global integer messages or live widget pointers.
+
+`USharFrontendSubsystem`, also a `UGameInstanceSubsystem`, owns boot state,
+main-menu commands, accepted save-slot summaries, new-game requests, resume
+selection, load requests, scrapbook entry, options entry, credits entry,
+calendar-theme selection, and transitions into or out of gameplay.
 
 `USharFrontendInputSubsystem`, a `ULocalPlayerSubsystem`, maps keyboard and
-mouse, gamepad, and touch input into one semantic Common UI action set. Widgets
-do not inspect platform-specific key codes or choose gameplay behavior.
+mouse, gamepad, and touch input into one semantic Common UI action set. Common
+UI action data and controller data assets own user-interface action and glyph
+projection. Widgets do not inspect platform-specific key codes, infer ownership
+from controller indexes, or choose gameplay behavior.
+
+Screen definitions and heavy presentation families are Asset Manager primary
+assets with named bundles. Navigation retains streamable handles for the
+accepted screen lease and rejects completion from a cancelled or superseded
+request. Required bundles, view data, actions, and focus must validate before a
+destination is committed.
+
+Messages and prompts are typed modal transactions with semantic response
+identities and safe defaults. Save, storage, settings, media, and application
+operations remain owned by their application services; a modal response or
+animation completion cannot claim that an operation succeeded.
 
 The progression and campaign services calculate every completion value. The
 front end and pause-menu progress screen receive read-only projections
-containing
-category counts, exact progress, one-decimal display values, rewards, and
-availability. A widget cannot infer completion from visible rows or mutate a
+containing category counts, exact progress, one-decimal display values, rewards,
+and availability. A widget cannot infer completion from visible rows or mutate a
 save slot.
 
 Calendar and idle-menu scenes are presentation policies. They may replace menu

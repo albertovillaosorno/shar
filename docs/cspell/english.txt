@@ -20,6 +20,7 @@ autostarts
 browsewrap
 cinematics
 clickwrap
+cooldown
 copyrightability
 datablock
 datastream
@@ -30,6 +31,7 @@ eulers
 factfinder
 florida
 halloween
+inspectable
 italian
 keyframing
 lockfiles
@@ -64,6 +66,7 @@ protectable
 ragdoll
 recordation
 recordations
+recoverably
 redistributables
 reimplementation
 reparents
