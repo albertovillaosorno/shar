@@ -16,77 +16,41 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Control-safe rendering of application-owned diagnostic paths.
+//   - The application-local compatibility function for diagnostic paths.
 // - Must-Not:
-//   - Access storage, normalize path identity, or choose command wording.
+//   - Reimplement native path escaping, access storage, or normalize identity.
 // - Allows:
-//   - Deterministic printable and hexadecimal escaping of native path bytes.
+//   - Return the shared filesystem renderer as owned diagnostic text.
 // - Split-When:
-//   - Split when another diagnostic value needs a distinct encoding contract.
+//   - Game-manifest requires a genuinely distinct path presentation grammar.
 // - Merge-When:
-//   - Another application module owns the same native-path rendering boundary.
+//   - Application call sites can consume the shared display wrapper directly.
 // - Summary:
-//   - Prevents raw path controls from reaching operator diagnostics.
+//   - Shared diagnostic path compatibility facade.
 // - Description:
-//   - Preserves visible path context while escaping non-printable bytes.
+//   - Keeps application call sites stable while the filesystem domain owns
+//   - platform-aware and reversible native path rendering.
 // - Usage:
 //   - Used by game-manifest application errors and invalid-path diagnostics.
 // - Defaults:
-//   - Printable ASCII remains readable and all other bytes use lowercase hex.
+//   - Rendering behavior is exactly the shared filesystem contract.
 //
 // ADRs:
 // - docs/adr/pipeline/game-manifest-ledger.md
+// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
 //
 // Large file:
 //   - false
 //
 
-//! Control-safe path rendering for application diagnostics.
-//!
-//! Native path bytes remain identifiable without emitting terminal controls.
+//! Application-local facade for shared diagnostic path rendering.
 
 use std::path::Path;
 
-/// Renders one path without raw controls or lossy Unicode replacement.
+use schoenwald_filesystem::DiagnosticPath;
+
+/// Renders one native path through the shared reversible contract.
 #[must_use]
 pub(super) fn escaped_path(path: &Path) -> String {
-    let encoded = path
-        .as_os_str()
-        .as_encoded_bytes();
-    let mut output = String::with_capacity(encoded.len());
-    for byte in encoded {
-        let value = *byte;
-        if value == b'\\' {
-            output.push('\\');
-            output.push('\\');
-        } else if value == b' ' || value.is_ascii_graphic() {
-            output.push(char::from(value));
-        } else {
-            append_hex_byte(
-                &mut output,
-                value,
-            );
-        }
-    }
-    output
-}
-
-/// Appends one byte as a deterministic lowercase hexadecimal escape.
-fn append_hex_byte(
-    output: &mut String,
-    byte: u8,
-) {
-    output.push('\\');
-    output.push('x');
-    output.push(hex_digit(byte >> 4_u32));
-    output.push(hex_digit(byte & 0x0f_u8));
-}
-
-/// Converts one hexadecimal nibble into its lowercase display digit.
-fn hex_digit(value: u8) -> char {
-    char::from_digit(
-        u32::from(value),
-        16_u32,
-    )
-    .unwrap_or('?')
+    DiagnosticPath::new(path).to_string()
 }

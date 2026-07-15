@@ -110,7 +110,7 @@ fn invalid_path_errors_escape_control_characters() {
     let rendered = error.to_string();
 
     assert!(!rendered.contains('\u{1b}'));
-    assert!(rendered.contains("\\x1b"));
+    assert!(rendered.contains("\\u{1b}"));
     assert!(rendered.contains("game"));
 }
 
@@ -126,7 +126,7 @@ fn path_errors_escape_control_characters() {
     let rendered = error.to_string();
 
     assert!(!rendered.contains('\u{1b}'));
-    assert!(rendered.contains("\\x1b"));
+    assert!(rendered.contains("\\u{1b}"));
     assert!(rendered.contains("game"));
     assert!(rendered.contains("blocked"));
 }

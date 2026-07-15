@@ -107,7 +107,7 @@ impl ValidateManifest {
                 ManifestError::Invalid(
                     format!(
                         "game directory not found: {}",
-                        game_dir.display()
+                        super::diagnostic_path::escaped_path(game_dir)
                     ),
                 ),
             );
@@ -129,7 +129,7 @@ impl ValidateManifest {
                     ManifestError::Invalid(
                         format!(
                             "manifest not found: {}",
-                            manifest_path.display()
+                            super::diagnostic_path::escaped_path(&manifest_path)
                         ),
                     )
                 },

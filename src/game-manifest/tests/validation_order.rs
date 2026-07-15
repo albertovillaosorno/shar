@@ -49,6 +49,11 @@ use std::cell::Cell;
 use std::io;
 use std::path::{Path, PathBuf};
 
+#[cfg(windows)]
+use std::ffi::OsString;
+#[cfg(windows)]
+use std::os::windows::ffi::OsStringExt as _;
+
 use game_manifest::{GameTree, PathKind, TextArtifactStore, ValidateManifest};
 use schoenwald_cli as _;
 use schoenwald_filesystem as _;
@@ -78,6 +83,24 @@ impl GameTree for ScanObservingTree {
 }
 
 struct MalformedStore;
+
+struct MissingTree;
+
+impl GameTree for MissingTree {
+    fn kind(
+        &self,
+        _path: &Path,
+    ) -> io::Result<PathKind> {
+        Ok(PathKind::Missing)
+    }
+
+    fn files(
+        &self,
+        _root: &Path,
+    ) -> io::Result<Vec<PathBuf>> {
+        Ok(Vec::new())
+    }
+}
 
 impl TextArtifactStore for MalformedStore {
     fn read_optional(
@@ -111,4 +134,30 @@ fn malformed_manifest_fails_before_tree_scan() {
         .scanned
         .get();
     assert!(!was_scanned);
+}
+
+#[cfg(windows)]
+#[test]
+fn missing_game_error_preserves_unpaired_utf16_path_unit() {
+    let game_dir = PathBuf::from(OsString::from_wide(&[
+        u16::from(b'a'),
+        0xd800,
+        u16::from(b'b'),
+    ]));
+
+    let result = ValidateManifest::execute(
+        &MissingTree,
+        &MalformedStore,
+        &game_dir,
+    );
+    let Err(error) = result else {
+        panic!("missing game directory unexpectedly validated");
+    };
+    let rendered = error.to_string();
+
+    assert!(
+        rendered.contains(r"a\u{D800}b"),
+        "diagnostic lost the native path unit: {rendered:?}"
+    );
+    assert!(!rendered.contains(r"\u{fffd}"));
 }
