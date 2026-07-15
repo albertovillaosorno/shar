@@ -32,7 +32,7 @@
 // - Usage:
 //   - Called by standard filesystem adapter operations.
 // - Defaults:
-//   - Paths use Rust's loss-tolerant display adapter.
+//   - Paths use the shared reversible diagnostic renderer.
 //
 // ADRs:
 // - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
@@ -46,6 +46,8 @@
 //! Native error categories and source chains remain available.
 use std::path::Path;
 use std::{fmt, io};
+
+use crate::domain::DiagnosticPath;
 
 /// Context retained around one native filesystem failure.
 #[derive(Debug)]
@@ -80,7 +82,7 @@ pub(super) fn with_path(
     let kind = source.kind();
     let message = format!(
         "{operation} `{}` failed: {source}",
-        path.display()
+        DiagnosticPath::new(path)
     );
     io::Error::new(
         kind,
@@ -101,7 +103,7 @@ pub(super) fn invalid_input(
         io::ErrorKind::InvalidInput,
         format!(
             "{operation} `{}` failed: {message}",
-            path.display()
+            DiagnosticPath::new(path)
         ),
     )
 }

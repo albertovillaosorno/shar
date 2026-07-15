@@ -46,8 +46,10 @@
 //! Storage access remains outside this layer.
 use std::path::{Component, Path, PathBuf};
 
+mod diagnostic_path;
 mod path_safety;
 
+pub use diagnostic_path::DiagnosticPath;
 pub use path_safety::validate_portable_path;
 
 /// Observable kind of one external path.

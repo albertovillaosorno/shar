@@ -48,8 +48,9 @@ use std::path::{Component, Path};
 use std::string::FromUtf8Error;
 use std::{fmt, io};
 
-use super::diagnostic_path::DiagnosticPath;
-use crate::domain::{resolve_under, validate_portable_path, validate_root};
+use crate::domain::{
+    DiagnosticPath, resolve_under, validate_portable_path, validate_root,
+};
 
 /// Context retained around one typed application failure.
 #[derive(Debug)]

@@ -44,7 +44,6 @@
 //! Shared filesystem application use cases.
 //!
 //! Commands depend only on pure domain values and outbound ports.
-mod diagnostic_path;
 mod path_validation;
 
 use std::collections::BTreeSet;

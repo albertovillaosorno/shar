@@ -44,34 +44,12 @@
 
 //! Domain model for Radical Sound `.rsd` audio containers.
 mod error;
+mod escaped_path;
 mod export_report;
 mod rsd;
 mod wav;
 
-/// Wraps one untrusted path for exact, control-safe diagnostic rendering.
-pub(crate) struct EscapedPath<'a>(&'a std::path::Path);
-
-impl<'a> EscapedPath<'a> {
-    /// Creates one borrowed diagnostic wrapper without normalizing the path.
-    #[must_use]
-    pub(crate) const fn new(path: &'a std::path::Path) -> Self {
-        Self(path)
-    }
-}
-
-impl core::fmt::Display for EscapedPath<'_> {
-    fn fmt(
-        &self,
-        formatter: &mut core::fmt::Formatter<'_>,
-    ) -> core::fmt::Result {
-        escaped_path::write_path(
-            formatter, self.0,
-        )
-    }
-}
-
-mod escaped_path;
-
+pub(crate) use escaped_path::EscapedPath;
 pub use error::RsdError;
 pub use export_report::{ExportReport, SourceRootReport};
 pub use rsd::{RsdAudio, RsdEncoding, RsdHeader};

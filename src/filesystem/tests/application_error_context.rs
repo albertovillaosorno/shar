@@ -49,7 +49,7 @@ use std::path::{Path, PathBuf, StripPrefixError};
 use std::string::FromUtf8Error;
 use std::{fs, io};
 
-use schoenwald_filesystem::RootedPathError;
+use schoenwald_filesystem::{DiagnosticPath, RootedPathError};
 use schoenwald_filesystem::adapters::driving::local;
 use schoenwald_filesystem::application::CollectRegularFiles;
 use schoenwald_filesystem::ports::TreeReader;
@@ -63,8 +63,8 @@ fn require_context(
     if !rendered.contains(operation) {
         return Err(format!("missing operation context: {rendered}"));
     }
-    let displayed = path.to_string_lossy();
-    if !rendered.contains(displayed.as_ref()) {
+    let displayed = DiagnosticPath::new(path).to_string();
+    if !rendered.contains(&displayed) {
         return Err(format!("missing path context: {rendered}"));
     }
     Ok(())
@@ -181,6 +181,16 @@ fn control_path_error_is_single_line_and_reversible() -> Result<(), String> {
         );
     }
     Ok(())
+}
+
+#[test]
+fn diagnostic_path_distinguishes_literal_escape_from_control() {
+    let literal = DiagnosticPath::new(Path::new(r"bad\npath")).to_string();
+    let control = DiagnosticPath::new(Path::new("bad\npath")).to_string();
+
+    assert_eq!(literal, r"bad\\npath");
+    assert_eq!(control, r"bad\npath");
+    assert_ne!(literal, control);
 }
 
 #[test]

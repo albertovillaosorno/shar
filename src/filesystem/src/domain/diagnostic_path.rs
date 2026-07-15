@@ -1,7 +1,7 @@
 // File:
 //   - diagnostic_path.rs
 // Path:
-//   - src/filesystem/src/application/diagnostic_path.rs
+//   - src/filesystem/src/domain/diagnostic_path.rs
 //
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
@@ -24,16 +24,16 @@
 // - Split-When:
 //   - Another diagnostic transport requires a distinct escaping grammar.
 // - Merge-When:
-//   - Another filesystem application module owns the same path rendering.
+//   - Another filesystem domain module owns the same path rendering.
 // - Summary:
 //   - Lossless diagnostic wrapper for shared filesystem paths.
 // - Description:
 //   - Preserves path identity without allowing controls or native invalid units
 //   - to alter terminal diagnostics.
 // - Usage:
-//   - Used by shared filesystem application errors before text reaches callers.
+//   - Used by filesystem and caller-domain errors before text reaches terminals.
 // - Defaults:
-//   - Printable ASCII stays readable; other units use reversible escapes.
+//   - Scalars use Rust default escapes; invalid native units use uppercase escapes.
 //
 // ADRs:
 // - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
@@ -46,12 +46,12 @@
 use std::path::Path;
 
 /// Wraps one untrusted path without normalizing its native identity.
-pub(super) struct DiagnosticPath<'a>(&'a Path);
+pub struct DiagnosticPath<'a>(&'a Path);
 
 impl<'a> DiagnosticPath<'a> {
     /// Creates one borrowed diagnostic path renderer.
     #[must_use]
-    pub(super) const fn new(path: &'a Path) -> Self {
+    pub const fn new(path: &'a Path) -> Self {
         Self(path)
     }
 }
@@ -67,17 +67,11 @@ impl core::fmt::Display for DiagnosticPath<'_> {
     }
 }
 
-/// Writes printable ASCII directly and escapes every other scalar.
+/// Writes one scalar through Rust's stable reversible escaping grammar.
 fn write_character(
     formatter: &mut core::fmt::Formatter<'_>,
     character: char,
 ) -> core::fmt::Result {
-    if character.is_ascii() && !character.is_control() {
-        return write!(
-            formatter,
-            "{character}"
-        );
-    }
     for escaped in character.escape_default() {
         write!(
             formatter,

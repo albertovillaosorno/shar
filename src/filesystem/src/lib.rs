@@ -50,5 +50,6 @@ pub mod domain;
 pub mod ports;
 
 pub use domain::{
-    PathKind, RootedPathError, resolve_under, validate_portable_path,
+    DiagnosticPath, PathKind, RootedPathError, resolve_under,
+    validate_portable_path,
 };

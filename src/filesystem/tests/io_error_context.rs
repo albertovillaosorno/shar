@@ -53,6 +53,7 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{fs, io};
 
+use schoenwald_filesystem::DiagnosticPath;
 use schoenwald_filesystem::adapters::driving::local;
 
 static CASE_ID: AtomicUsize = AtomicUsize::new(0);
@@ -79,9 +80,13 @@ fn require_context(
     if !rendered.contains(operation) {
         return Err(format!("missing operation context: {rendered}"));
     }
-    let displayed_path = path.to_string_lossy();
-    if !rendered.contains(displayed_path.as_ref()) {
-        return Err(format!("missing path context: {rendered}"));
+    let displayed_path = DiagnosticPath::new(path).to_string();
+    if !rendered.contains(&displayed_path) {
+        return Err(
+            format!(
+                "missing path context: expected {displayed_path:?} in {rendered:?}"
+            ),
+        );
     }
     Ok(())
 }
