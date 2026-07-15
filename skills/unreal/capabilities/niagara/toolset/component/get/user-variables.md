@@ -48,41 +48,61 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to inspect the current user-parameter values exposed by one
+Niagara Component, including component-owned data-interface instances and
+overrides.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Obtain a live Niagara Component ref from ActorTools or another verified
+  component source.
+- Keep the owning Blueprint or actor alive while consuming the component ref.
+- Compare with the System read when distinguishing defaults from overrides.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "component": {"refPath": "/Game/B_SHAR_MCP_Niagara_Component_ReadFixture.B_SHAR_MCP_Niagara_Component_ReadFixture_C:Niagara_GEN_VARIABLE"}
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two complete disposable wrapper cycles returned the same nine variables and
+values. Component names omitted the `User.` prefix. `FieldIntensity` was float
+`1`; vector location was zero, scale was one, rotation was identity, and the
+vector-field data interface was duplicated under the generated component.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The return value is a direct array, unlike the System tool's `userVariables`
+  wrapper.
+- Component variable names omit the `User.` prefix.
+- Data-interface refs are component-owned and become invalid when the component
+  or asset is deleted.
+- Component refs can become stale after Blueprint compilation or structural
+  edits.
+- Components whose systems expose no user parameters return an empty array.
+- Missing component refs fail during parameter translation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

@@ -48,41 +48,65 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to read one Niagara Component user variable by exact type after
+discovering its current definition through `GetUserVariables`.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Obtain the component and variable type from `GetUserVariables`.
+- Preserve `classStructOrEnum` exactly.
+- Verify that the returned instanced-value struct matches the requested type.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "component": {"refPath": "/Game/B_SHAR_MCP_Niagara_Component_ReadFixture.B_SHAR_MCP_Niagara_Component_ReadFixture_C:Niagara_GEN_VARIABLE"},
+  "var": {
+    "name": "FieldIntensity",
+    "type": {
+      "classStructOrEnum": {"refPath": "/Script/Niagara.NiagaraFloat"}
+    }
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two disposable cycles and two reads per cycle returned `FieldIntensity` as
+NiagaraFloat value `1`. Both `FieldIntensity` and `User.FieldIntensity`
+resolved. A missing name and a real name paired with NiagaraBool returned
+successful variable shells whose `value` object was empty.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Name lookup accepts both prefixed and unprefixed user-variable names.
+- Missing names and type mismatches do not raise errors; they return an empty
+  `value` object.
+- Treat an empty value as lookup failure and verify name plus type against
+  `GetUserVariables` first.
+- Returned values use an instanced struct whose `struct` ref determines the
+  value shape.
+- Component refs and component-owned data interfaces become stale after deletion
+  or recompilation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

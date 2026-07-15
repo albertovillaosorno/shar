@@ -47,41 +47,58 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to inventory a Niagara System's authored user parameters, types,
+descriptions, and default values before SHAR creates component overrides or
+Blueprint bindings.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use an exact indexed Niagara System object ref.
+- Preserve the full `User.` parameter names and reflected type definitions.
+- Treat the result as system defaults rather than component runtime values.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "system": {"refPath": "/Niagara/VectorFields/VectorFieldVisualizationSystem.VectorFieldVisualizationSystem"}
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two calls returned nine stable parameters: two Booleans, one coordinate-space
+enum, two floats, two vectors, one quaternion, and one vector-field data
+interface. Names retained the `User.` prefix; `User.FieldIntensity` defaulted to
+float `1`. FountainLightweight independently returned an empty list.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The result is wrapped in an object under `userVariables`.
+- Values are authored system defaults and do not include component-level
+  overrides.
+- Data-interface defaults can reference objects owned by the Niagara System.
+- Niagara Boolean values use Niagara's integer-backed representation.
+- Empty user-variable lists are valid.
+- Missing system refs fail during parameter translation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
