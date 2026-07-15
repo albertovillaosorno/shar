@@ -92,9 +92,12 @@ impl core::fmt::Display for ManifestError {
                 source,
             } => {
                 let rendered_path = super::diagnostic_path::escaped_path(path);
+                let source_text = source.to_string();
+                let rendered_source =
+                    super::diagnostic_path::escaped_text(&source_text);
                 write!(
                     formatter,
-                    "{operation} {rendered_path}: {source}"
+                    "{operation} {rendered_path}: {rendered_source}"
                 )
             }
             Self::Invalid(message) => formatter.write_str(message),

@@ -45,6 +45,7 @@
 //!
 //! Path diagnostics must preserve context without emitting terminal controls.
 
+use std::error::Error as _;
 use std::io;
 use std::path::{Path, PathBuf};
 
@@ -112,6 +113,26 @@ fn invalid_path_errors_escape_control_characters() {
     assert!(!rendered.contains('\u{1b}'));
     assert!(rendered.contains("\\u{1b}"));
     assert!(rendered.contains("game"));
+}
+
+#[test]
+fn io_errors_escape_source_control_characters() {
+    let error = ManifestError::io(
+        "inspect",
+        PathBuf::from("game"),
+        io::Error::other("blocked\ninjected"),
+    );
+
+    let rendered = error.to_string();
+
+    assert!(
+        !rendered
+            .chars()
+            .any(char::is_control),
+        "diagnostic contains a control character: {rendered:?}"
+    );
+    assert!(rendered.contains(r"blocked\ninjected"));
+    assert!(error.source().is_some());
 }
 
 #[test]

@@ -54,3 +54,12 @@ use schoenwald_filesystem::DiagnosticPath;
 pub(super) fn escaped_path(path: &Path) -> String {
     DiagnosticPath::new(path).to_string()
 }
+
+/// Renders untrusted source text without raw control characters.
+#[must_use]
+pub(super) fn escaped_text(value: &str) -> String {
+    value
+        .chars()
+        .flat_map(char::escape_default)
+        .collect()
+}
