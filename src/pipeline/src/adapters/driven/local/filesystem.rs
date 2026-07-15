@@ -71,7 +71,7 @@ pub(super) fn collect_files(
             PipelineError::new(
                 format!(
                     "failed to inspect {}: {error}",
-                    root.display()
+                    schoenwald_filesystem::DiagnosticPath::new(root)
                 ),
             )
         },
@@ -81,7 +81,7 @@ pub(super) fn collect_files(
                 PipelineError::new(
                     format!(
                         "failed to list {}: {error}",
-                        root.display()
+                        schoenwald_filesystem::DiagnosticPath::new(root)
                     ),
                 )
             },

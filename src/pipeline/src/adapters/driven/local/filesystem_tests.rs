@@ -50,6 +50,35 @@ use std::fs;
 
 use super::collect_files;
 
+#[cfg(windows)]
+#[test]
+fn non_unicode_root_error_is_reversible() -> Result<(), String> {
+    use std::ffi::OsString;
+    use std::os::windows::ffi::OsStringExt as _;
+
+    let root = std::path::PathBuf::from(
+        OsString::from_wide(
+            &[
+                u16::from(b'a'),
+                0xd800_u16,
+                u16::from(b'b'),
+            ],
+        ),
+    );
+    let result = collect_files(&root);
+    let Some(error) = result.err() else {
+        return Err("non-Unicode root unexpectedly succeeded".to_owned());
+    };
+    let rendered = error.to_string();
+    if !rendered.contains(r"a\u{D800}b") {
+        return Err(format!("diagnostic lost native root: {rendered:?}"));
+    }
+    if rendered.contains('\u{fffd}') {
+        return Err(format!("diagnostic used replacement text: {rendered:?}"));
+    }
+    Ok(())
+}
+
 #[test]
 fn collect_files_returns_paths_in_canonical_order() -> Result<(), String> {
     let root = std::env::temp_dir().join(
