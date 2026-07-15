@@ -53,6 +53,14 @@ use schoenwald_filesystem::DiagnosticPath;
 use crate::domain::{format_unix_date, rtf_to_markdown};
 use crate::ports::RtfSource;
 
+/// Returns untrusted diagnostic text without raw control characters.
+fn escaped_text(value: &str) -> String {
+    value
+        .chars()
+        .flat_map(char::escape_default)
+        .collect()
+}
+
 /// Affiliation and provenance disclaimer prepended to generated documents.
 const DISCLAIMER: &str =
     "\
@@ -78,11 +86,12 @@ impl core::fmt::Display for ConvertReadmeError {
         &self,
         formatter: &mut core::fmt::Formatter<'_>,
     ) -> core::fmt::Result {
+        let source_text = self.source.to_string();
         write!(
             formatter,
             "failed to read {}: {}",
             DiagnosticPath::new(&self.path),
-            self.source
+            escaped_text(&source_text)
         )
     }
 }
@@ -152,6 +161,7 @@ fn header(date: Option<&str>) -> String {
 
 #[cfg(test)]
 mod tests {
+    use std::error::Error as _;
     #[cfg(windows)]
     use std::ffi::OsString;
     use std::io;
@@ -164,6 +174,17 @@ mod tests {
     use super::ConvertReadme;
     use crate::ports::{RtfSnapshot, RtfSource};
 
+    struct ControlFailingSource;
+
+    impl RtfSource for ControlFailingSource {
+        fn load(
+            &self,
+            _path: &Path,
+        ) -> io::Result<RtfSnapshot> {
+            Err(io::Error::other("read\nfailure"))
+        }
+    }
+
     struct FailingSource;
 
     impl RtfSource for FailingSource {
@@ -173,6 +194,27 @@ mod tests {
         ) -> io::Result<RtfSnapshot> {
             Err(io::Error::other("read failure"))
         }
+    }
+
+    #[test]
+    fn read_error_escapes_source_control_characters() {
+        let result = ConvertReadme::execute(
+            &ControlFailingSource,
+            Path::new("readme.rtf"),
+        );
+        let Err(error) = result else {
+            panic!("failing source unexpectedly converted");
+        };
+        let rendered = error.to_string();
+
+        assert!(
+            !rendered
+                .chars()
+                .any(char::is_control),
+            "diagnostic contains a control character: {rendered:?}"
+        );
+        assert!(rendered.contains(r"read\nfailure"));
+        assert!(error.source().is_some());
     }
 
     #[cfg(windows)]
