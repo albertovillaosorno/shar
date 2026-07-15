@@ -44,20 +44,26 @@
 
 """Project-scoped UnrealBuildTool XML cache contracts."""
 
-from pathlib import Path
+from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pathlib import Path
 from Scripts import repair_unreal_project
 
 
-def test_cache_path_matches_unreal_build_tool_selection() -> None:
-    project_path = Path("C:/workspace/shar/shar.uproject")
+def test_cache_path_matches_unreal_build_tool_selection(
+    tmp_path: Path,
+) -> None:
+    project_path = tmp_path / "shar.uproject"
 
     cache_path = repair_unreal_project.project_xml_config_cache_path(
         project_path
     )
 
-    assert cache_path == Path(
-        "C:/workspace/shar/Intermediate/Build/XmlConfigCache.bin"
+    assert cache_path == (
+        tmp_path / "Intermediate" / "Build" / "XmlConfigCache.bin"
     )
 
 

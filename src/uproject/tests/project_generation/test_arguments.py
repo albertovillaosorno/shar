@@ -44,13 +44,17 @@
 
 """Command argument contracts for Unreal project-file generation."""
 
-from pathlib import Path
+from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pathlib import Path
 from Scripts import repair_unreal_project
 
 
-def test_workspace_generation_arguments_are_bounded() -> None:
-    project_path = Path("C:/workspace/shar/shar.uproject")
+def test_workspace_generation_arguments_are_bounded(tmp_path: Path) -> None:
+    project_path = tmp_path / "shar.uproject"
 
     arguments = repair_unreal_project.workspace_generation_arguments(
         project_path
@@ -78,8 +82,8 @@ def test_workspace_generation_arguments_are_bounded() -> None:
     )
 
 
-def test_solution_generation_arguments_are_bounded() -> None:
-    project_path = Path("C:/workspace/shar/shar.uproject")
+def test_solution_generation_arguments_are_bounded(tmp_path: Path) -> None:
+    project_path = tmp_path / "shar.uproject"
 
     arguments = repair_unreal_project.solution_generation_arguments(
         project_path
