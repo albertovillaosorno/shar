@@ -46,41 +46,57 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to verify a scalar Control Rig value at an exact Sequencer frame
+for SHAR animation and interpolation checks.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The LevelSequence must contain the requested Control Rig track.
+- Discover the exact control name and type through `get_controls_info`.
+- Read the same frame used by the matching setter or authored key.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "sequence": {
+    "refPath": "/Game/LS_SHAR_MCP_ScalarRead_1.LS_SHAR_MCP_ScalarRead_1"
+  },
+  "control_rig_asset_path": "/Game/CR_SHAR_MCP_ScalarRead_1",
+  "control_name": "FloatControl",
+  "frame": 24
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two disposable cycles keyed FloatControl to `12.5` at frame 24 and returned the
+direct number `12.5`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Reading BoolControl through this float getter returned `0` instead of raising.
+- A numeric result therefore does not prove type compatibility.
+- Validate the FLOAT type through `get_controls_info`.
+- The result is a direct number, not JSON text.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

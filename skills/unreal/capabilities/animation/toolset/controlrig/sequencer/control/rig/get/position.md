@@ -46,41 +46,57 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to verify a position-only Control Rig channel at an exact
+Sequencer frame for SHAR placement and motion checks.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The LevelSequence must contain the requested Control Rig track.
+- Discover the exact control name and type through `get_controls_info`.
+- Read the same frame used by the matching setter or authored key.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "sequence": {
+    "refPath": "/Game/LS_SHAR_MCP_ScalarRead_1.LS_SHAR_MCP_ScalarRead_1"
+  },
+  "control_rig_asset_path": "/Game/CR_SHAR_MCP_ScalarRead_1",
+  "control_name": "PositionControl",
+  "frame": 24
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two disposable cycles keyed PositionControl to `(10, 20, 30)` at frame 24 and
+returned matching x, y, and z fields.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The return value is JSON text and requires a second parse.
+- Validate the POSITION type and control name before reading.
+- This is the control value, not the rig or actor world transform.
+- Use `get_world_transform` when world-space evidence is required.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

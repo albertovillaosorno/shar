@@ -49,41 +49,59 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to read location and rotation from a Transform-compatible Control
+Rig control at an exact Sequencer frame.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The LevelSequence must contain the requested Control Rig track.
+- Discover the exact control name and type through `get_controls_info`.
+- Read the exact authored frame rather than relying on the playhead.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "sequence": {
+    "refPath": "/Game/LS_SHAR_MCP_TransformRead_2.LS_SHAR_MCP_TransformRead_2"
+  },
+  "control_rig_asset_path": "/Game/CR_SHAR_MCP_TransformRead_2",
+  "control_name": "EulerControl",
+  "frame": 24
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two cycles keyed EulerControl to location `(-1, -2, -3)` and rotation `(10, 20,
+30)` at frame 24. The generic getter returned those fields and intentionally
+omitted scale.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The return value is JSON text and requires a second parse.
+- Missing controls return an identity location and rotation rather than raising.
+- The current proof used an EULER_TRANSFORM control.
+- Keying a native Transform control through `set_transform` failed because
+  Unreal could not pythonize RigControlType value `7`.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

@@ -48,41 +48,59 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to sample a level actor world transform at a Sequencer frame and
+compare it with the actor or component state used by SHAR cinematic validation.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Keep the target sequence open and evaluable.
+- Use the exact live actor name or label from the current editor world.
+- Confirm the actor belongs to the intended sequence or level context.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "sequence": {
+    "refPath": "/Game/LS_SHAR_MCP_TransformRead_2.LS_SHAR_MCP_TransformRead_2"
+  },
+  "actor_name": "SkeletalMeshActor_7",
+  "frame": 24
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two disposable spawnable actors returned zero location and zero rotation at
+frame 24. Independent component reads showed zero relative location and rotation
+with unit scale.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The return value is JSON text and requires a second parse.
+- Spawnable actor names are transient and changed between reconstructed
+  fixtures.
+- Missing actor names raise explicitly.
+- A zero transform is valid data only after independently confirming the live
+  actor state.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
