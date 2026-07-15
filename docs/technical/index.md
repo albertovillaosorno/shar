@@ -60,6 +60,7 @@ proprietary external formats.
 - [Camera system runtime](unreal/camera-system-runtime.md)
 - [Campaign level composition and progress](unreal/campaign-level-composition-and-progress.md)
 - [Developer command and diagnostic runtime](unreal/developer-command-and-diagnostic-runtime.md)
+- [Device configuration and save-slot runtime](unreal/device-configuration-and-save-slot-runtime.md)
 - [Frontend shell and menu runtime](unreal/frontend-shell-and-menu-runtime.md)
 - [Unreal configuration and asset validation](unreal/config-and-asset-validation.md)
 - [Unreal gameplay content catalog](unreal/gameplay-content-catalog.md)
@@ -71,6 +72,7 @@ proprietary external formats.
 - [Native asset planning](unreal/native-asset-planning.md)
 - [Native import, material rebuild, and world assembly](unreal/native-import-material-and-world-assembly.md)
 - [Physical material and impact-response runtime](unreal/physical-material-and-impact-response-runtime.md)
+- [Persistent world-object state runtime](unreal/persistent-world-object-state-runtime.md)
 - [Platform audio cooking and streaming](unreal/platform-audio-cooking-and-streaming.md)
 - [Platform cinematic media packaging](unreal/platform-cinematic-media-packaging.md)
 - [Platform, quality, and optimization contract](unreal/platform-quality-and-optimization.md)
@@ -93,7 +95,7 @@ proprietary external formats.
 
 ## Current coverage
 
-- Technical specifications: 54.
+- Technical specifications: 56.
 - Template records: 1.
 - Review date: 2026-07-14.
 - Status boundary: this catalog describes current repository behavior and does

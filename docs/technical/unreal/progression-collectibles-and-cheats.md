@@ -634,6 +634,9 @@ interaction policy.
 
 ## Save integration
 
+Persistent destructible, removable, consumable, and variant placement state follows
+the [persistent world-object state runtime](persistent-world-object-state-runtime.md).
+
 Portable progression stores:
 
 - accepted coin balance and transaction revision;

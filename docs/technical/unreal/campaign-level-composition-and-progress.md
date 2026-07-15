@@ -261,7 +261,9 @@ The three base-world families are:
 
 Each base world is one persistent World Partition world. A level definition
 selects one generated Runtime Data Layer set containing only that level's
-variants and gameplay placements.
+variants and gameplay placements. Durable state for individual destructible,
+removable, consumable, or variant placements follows the
+[persistent world-object state runtime](persistent-world-object-state-runtime.md).
 
 Level 7 is a substantial suburban variant, not a fourth geographic family.
 Renamed locations such as `spook_e_mart` and `zombie_burger` are aliases or

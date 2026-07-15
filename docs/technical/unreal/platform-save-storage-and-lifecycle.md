@@ -1,7 +1,7 @@
 # Platform save storage and lifecycle
 
 - Status: Active
-- Last reviewed: 2026-07-13
+- Last reviewed: 2026-07-14
 
 ## Governing decisions
 
@@ -14,6 +14,12 @@
 This specification defines the repository-owned save document, transaction,
 migration, platform-storage adapter, and lifecycle behavior required to preserve
 progression across supported operating systems and processor architectures.
+
+Logical slot policy, device-local settings, slot summaries, storage-provider
+readiness, quota, delete, reset, and user remediation follow the
+[device configuration and save-slot runtime](device-configuration-and-save-slot-runtime.md).
+Persistent destructible and consumable placement state follows the
+[persistent world-object state runtime](persistent-world-object-state-runtime.md).
 
 ## Repository model
 

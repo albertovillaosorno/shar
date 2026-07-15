@@ -125,6 +125,30 @@ Every request reaches one status:
 
 Every non-success result includes a typed reason and the verified resulting mode.
 
+## Entry and exit modes
+
+`entry` is the minimum process-to-game-instance handoff. It may verify package,
+platform, command-line, crash-recovery, and game-instance prerequisites, but it
+cannot construct gameplay managers or select a player profile by side effect.
+Its only successful successor is the validated boot request.
+
+`exit` is a terminal transition plan. It:
+
+1. rejects new non-exit mode requests;
+1. closes modal front-end and pause interactions;
+1. resolves required save and configuration policy;
+1. cancels or joins bounded asynchronous handles;
+1. releases local-player input and presentation leases;
+1. tears down active worlds and gameplay features;
+1. stops media and audio through typed service requests;
+1. flushes permitted diagnostics and platform metadata; and
+1. returns control to the platform only after terminal verification.
+
+Exit does not jump through gameplay, pause, or loading modes to trigger cleanup.
+A required save that has not reached a terminal result follows explicit block,
+cancel, or prior-revision policy. Shutdown order is declared by dependencies and
+cannot rely on singleton destruction order.
+
 ## Boot mode
 
 Boot mode prepares the minimum services needed for a valid front end. Its plan is
@@ -198,6 +222,39 @@ Returning from gameplay, demo, or super sprint must cancel world-bound handles
 before front-end commit. Front-end presentation cannot infer completion or unlock
 state from the previous mode.
 
+The committed front end acquires one UI-navigation lease, one front-end audio
+state, and local-player menu input leases. It may discover slot summaries,
+rewards, and cheat availability through read-only ports. It cannot retain world
+physics, gameplay cameras, trigger volumes, vehicle simulation, mission state, or
+world-bound render observers.
+
+A deferred front-end asset or audio callback must match the current mode and
+feature revision. Completion from an earlier front-end visit cannot reactivate a
+released screen or dismiss a newer loading state.
+
+## Loading-mode contract
+
+Every loading mode is a preparation transaction, not an active gameplay mode.
+The common loading plan owns:
+
+- destination request and transition identity;
+- staged world and game-feature handles;
+- Asset Manager bundle requests;
+- loading-screen and progress observations;
+- local-player and controller preparation;
+- audio-bank and mix preparation;
+- save or transient-session snapshot validation;
+- timeout, cancellation, and recovery mode; and
+- one final readiness barrier.
+
+Loading UI may continue updating while preparation is in progress, but gameplay
+input, mission time, rewards, collisions, and world interactions remain disabled.
+A loading callback is accepted only when transition, destination, world, bundle,
+and service revisions still match.
+
+The loading plan never depends on platform heap replacement for correctness.
+Native world, object, asset, and gameplay-feature lifetimes own memory release.
+
 ## Gameplay loading
 
 `loading_gameplay` consumes one validated session request containing campaign,
@@ -218,6 +275,31 @@ Preparation includes:
 
 The active mode changes to gameplay only after every required authority agrees on
 the same session and world revision.
+
+## Active gameplay mode
+
+The committed gameplay mode activates one verified session composition. Its
+lifecycle lease set includes:
+
+- world and Runtime Data Layer composition;
+- mission and objective execution;
+- character, vehicle, traffic, and population simulation;
+- physics, collision, trigger, and interaction services;
+- camera managers for each local player;
+- HUD, radar, navigation, and presentation;
+- gameplay audio, music, ambience, and dialogue;
+- persistent-world state projection; and
+- save-boundary and checkpoint observations.
+
+Subsystem updates follow native engine tick groups and explicit dependencies.
+Application mode does not manually call every gameplay manager in one arbitrary
+order. Presentation may continue during selected partial-pause states, but it
+cannot advance domain time or durable transactions.
+
+Gameplay exit first freezes new mission and progression transactions, captures
+any permitted checkpoint candidate, releases local-player world input, and then
+tears down world-bound services. A level-complete or mission-complete result must
+already be committed by its owning domain before the mode transition consumes it.
 
 ## Pause and resume
 
@@ -285,9 +367,28 @@ command. It does not enable arbitrary mode changes.
 
 ## Super-sprint modes
 
-Super-sprint front-end, loading, and active modes use the same transition
-transaction and local-player isolation rules. The request declares participants,
-controllers, vehicles, race, world, camera, UI, and return identity.
+`super_sprint_front_end` owns participant selection, controller assignment,
+vehicle selection, race selection, and return intent. It may load front-end-only
+presentation bundles but cannot construct the race world or start race time.
+
+`loading_super_sprint` validates the complete participant and race request, then
+uses the common loading contract for world, local players, vehicles, characters,
+audio, cameras, UI, and route readiness. Every local player must have one stable
+identity, controller assignment, viewport policy, and accepted vehicle before
+commit.
+
+The committed `super_sprint` mode owns the transient race session. It activates:
+
+- race route, lap, checkpoint, and finish policy;
+- split-screen viewport and camera assignments;
+- local-player input and vehicle command leases;
+- race HUD, countdown, result, and return presentation;
+- gameplay physics, collision, effects, and audio; and
+- explicit non-campaign reward or progression policy.
+
+Race start occurs only after mode commit and verified participant readiness.
+Returning to the super-sprint front end cancels race-bound handles and destroys
+the race world before selection UI becomes interactive.
 
 Historical platform-specific context variants do not create different gameplay
 rules. Platform presentation and input adapters remain separate.

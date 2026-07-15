@@ -281,6 +281,67 @@ A caller may adjust a permitted channel's presentation threshold for the current
 development session. Blocking a channel cannot disable safety, validation,
 transaction, or crash diagnostics.
 
+## Diagnostic overlay
+
+Development visualization uses a world-aware diagnostic-draw service rather than
+one process-wide stack of mutable sections. Each draw request declares:
+
+- stable channel and section identity;
+- world and optional local-player identity;
+- primitive kind;
+- finite positions, dimensions, and color values;
+- world-space or screen-space projection;
+- lifetime or one-frame policy;
+- depth and visibility policy; and
+- caller availability and permission.
+
+Supported primitive families include lines, arrows, circles, boxes, points,
+world text, screen text, and bounded graphs. Native engine debug-draw helpers may
+implement presentation, but they cannot become gameplay state.
+
+Sections are selected by stable identity. Push and pop order, fixed section
+capacity, pointer ownership, or toggling through an allocation array cannot select
+which diagnostic data exists. One-frame sections clear automatically after the
+owning world frame; persistent sections require an explicit handle and teardown.
+
+Overlay requests are bounded by per-channel count, text length, lifetime, and
+memory budgets. Overflow drops lower-priority diagnostic presentation and records
+one structured finding. It never corrupts gameplay memory or blocks simulation.
+
+## Runtime profiling
+
+Performance profiling uses native Unreal tracing, CSV profiling, Insights,
+platform counters, and repository-owned measurement labels. A profile scope
+contains:
+
+- stable sample identity;
+- parent scope identity;
+- thread and task context;
+- world and frame identity when applicable;
+- monotonic start and end observations;
+- count and optional byte metrics;
+- build and platform capability metadata; and
+- capture-session identity.
+
+Begin and end calls must be balanced in the same declared execution context.
+Missing end, recursive mismatch, cross-thread closure, non-monotonic time, or
+sample overflow records a profiling error rather than reassigning another sample.
+
+Frame aggregation may calculate inclusive time, exclusive time, call count,
+minimum, maximum, average, percentile, and bounded history. Presentation paging
+is a view concern and cannot cap the number of instrumented identities in the
+trace format.
+
+Hardware performance counters are optional platform-adapter observations. A
+platform-specific counter implementation cannot change gameplay behavior, timing,
+or quality policy. Unsupported counters return unavailable evidence and never
+fall back to guessed values.
+
+Profiling is disabled or compiled out according to package policy. Instrumentation
+must not allocate unbounded memory, retain destroyed worlds, expose private paths,
+or write arbitrary files. Capture export uses an approved diagnostic destination
+and redaction policy.
+
 ## Assertions and failures
 
 Assertions remain native engine or repository validation mechanisms. A command
@@ -351,6 +412,10 @@ Required tests include:
 - asynchronous completion, timeout, cancellation, and late callback rejection;
 - world teardown and PIE restart cleanup;
 - structured log redaction and category filtering;
+- diagnostic section identity, lifetime, bounds, and world teardown;
+- overlay overflow and invalid primitive rejection;
+- balanced profile scopes and cross-thread mismatch rejection;
+- frame aggregation, bounded history, and unsupported hardware counters;
 - input lease restoration;
 - history redaction;
 - unauthorized shipping exclusion; and

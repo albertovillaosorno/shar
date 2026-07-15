@@ -10,6 +10,7 @@
 - [UI parity boundary](../../adr/unreal/ui/ui-parity-boundary.md)
 - [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
 - [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
+- [Device configuration and save-slot runtime](device-configuration-and-save-slot-runtime.md)
 
 ## Purpose
 
