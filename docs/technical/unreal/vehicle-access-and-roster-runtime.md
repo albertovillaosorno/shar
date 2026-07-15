@@ -14,6 +14,7 @@
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Driving, traffic, and vehicle behavior parity](../../adr/gameplay/vehicles/driving-traffic-and-vehicle-ai.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
 
 ## Purpose
@@ -145,9 +146,9 @@ three purchases.
 
 ## Open-sandbox taxi extension
 
-The faithful source roster contains 42 persistent vehicles. The connected sandbox
-adds `taxi` as one deliberate purchasable extension, producing 43 persistent
-base-game vehicle identities.
+The faithful source roster contains 42 persistent vehicles. The connected
+sandbox adds `taxi` as one deliberate purchasable extension, producing 43
+persistent base-game vehicle identities.
 
 Taxi traffic instances remain disposable and never grant ownership. One accepted
 taxi offer grants permanent ownership, retrieval access, and eligibility for the
@@ -157,7 +158,7 @@ progression.
 
 ## Ownership invariants
 
-- The faithful source roster contains exactly six rows for each of seven historic
+- The faithful source roster contains six rows for each of seven historic
   acquisition groups, plus the explicit taxi extension.
 - The base sandbox therefore contains 43 persistent vehicle identities.
 - Every row has exactly one ordinary acquisition class.

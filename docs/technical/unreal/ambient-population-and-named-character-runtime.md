@@ -58,7 +58,7 @@ Object authority, or save transactions.
 | `PopulationId` | Stable population-profile identity. |
 | `ChapterPredicate` | Chapter and persistent unlock availability. |
 | `GameplayStatePredicate` | Mission or non-mission eligibility. |
-| `ClockAndWeatherPredicate` | World phase, Chapter 7 atmosphere, and hazard availability. |
+| `ClockAndWeatherPredicate` | World phase, Chapter 7 atmosphere, and hazards. |
 | `RequiredLayerSetId` | Exact Runtime Data Layer composition. |
 | `ZoneIds` | Ordered population zones. |
 | `ArchetypeGroupIds` | Allowed weighted archetype groups. |
@@ -152,22 +152,22 @@ StateTree never commits mission or save progress.
 ## Ambient start vignettes
 
 `USharAmbientVignetteDefinition` selects safe non-mission presentation for a
-playable character after new game, load, or declared free-roam return. It includes
-location, character, animation, prop, audio, world-clock, chapter, cooldown,
-weight, and cancellation predicates.
+playable character after new game, load, or declared free-roam return. It
+includes location, character, animation, prop, audio, world-clock, chapter,
+cooldown, weight, and cancellation predicates.
 
-Homer's initial set may include eating a donut, performing a gag, idling at home,
-or appearing at Moe's Tavern. Vignettes are presentation-only and release cleanly
-when the player moves, switches character, opens a mission, or loads another
-state.
+Homer's initial set may include eating a donut, performing a gag, idling at
+home, or appearing at Moe's Tavern. Vignettes are presentation-only and release
+cleanly when the player moves, switches character, opens a mission, or loads
+another state.
 
 ## Chapter 7 zombies
 
 Chapter 7 population profiles may spawn zombie archetypes with actor promotion,
 melee attack, navigation, health damage, horror audio, and mission pinning.
-Hostility consumes character and costume tags. The Devil Homer disguise suppresses
-ordinary zombie target acquisition but does not affect radiation, bosses,
-scripted hostility, or explosion damage.
+Hostility consumes character and costume tags. The Devil Homer disguise
+suppresses ordinary zombie target acquisition but does not affect radiation,
+bosses, scripted hostility, or explosion damage.
 
 Zombie density, representation, audio, and distant silhouettes respond to clock
 phase, irradiated weather, visibility, and quality budgets without changing

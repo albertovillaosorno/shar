@@ -166,9 +166,9 @@ predicate or granting progress through replacement content that bypasses the
 original requirement.
 
 Mod achievements use stable namespaced identities and remain separate from base
-and platform mappings. Removing a mod cannot fabricate base progress or reinterpret
-an accepted mod counter. Base no-missable reachability is revalidated for every
-active base-compatible overlay set.
+and platform mappings. Removing a mod cannot fabricate base progress or
+reinterpret an accepted mod counter. Base no-missable reachability is
+revalidated for every active base-compatible overlay set.
 
 ## Target-cooked asset overlays
 

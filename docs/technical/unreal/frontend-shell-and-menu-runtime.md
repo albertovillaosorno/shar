@@ -126,7 +126,7 @@ unchanged until the user selects it.
 | `GameplayState` | Accepted `mission` or `non_mission` state. |
 | `ResumeMissionId` | Optional valid checkpoint mission. |
 | `ResumeCheckpointId` | Optional accepted mission checkpoint. |
-| `ChapterProgress` | Read-only exact progress projection for the current chapter. |
+| `ChapterProgress` | Exact progress projection for the current chapter. |
 | `GameProgress` | Read-only exact overall progress projection. |
 | `WorldClock` | Accepted world-clock observation and revision. |
 | `MapDiscoveryRevision` | Accepted discovered-map state revision. |
@@ -168,6 +168,7 @@ matchmaking, multiplayer campaign, a marketplace, a hosted mod browser, or a
 general-purpose launcher. A validated server mod may contribute its own
 namespaced connection surface through a declared UI extension point governed by
 the
+<!-- markdownlint-disable-next-line MD013 -->
 [multiplayer adapter and community-server extension](../modding/multiplayer-adapter-and-community-server-extension.md).
 
 ## Unused Content command
@@ -202,9 +203,9 @@ the achievement catalog and service are available, the command opens a bounded
 screen that displays `Achievements pending` and no fabricated progress.
 
 The final screen projects base and mod-owned achievements, current progress,
-no-missable reachability, platform mapping, mod compatibility, and replay routes.
-Every base achievement remains obtainable through free roam, mission replay,
-side-activity replay, or post-game play.
+no-missable reachability, platform mapping, mod compatibility, and replay
+routes. Every base achievement remains obtainable through free roam, mission
+replay, side-activity replay, or post-game play.
 
 ## New-game command
 
@@ -234,8 +235,8 @@ equal: the lowest canonical slot identity wins.
 
 The command validates the slot again before transition. It resumes an accepted
 mission checkpoint when one exists; otherwise it activates the connected world
-in the saved chapter boundary's `non_mission` start policy. A stale widget summary
-cannot bypass this revalidation.
+in the saved chapter boundary's `non_mission` start policy. A stale widget
+summary cannot bypass this revalidation.
 
 ## Load-game screen
 

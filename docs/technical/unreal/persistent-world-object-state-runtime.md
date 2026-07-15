@@ -215,8 +215,8 @@ Mission restart follows each definition's reset policy:
 - `mission` resets through the mission restart transaction; or
 - `authored` applies a declared predicate and transition.
 
-A world reload, chapter unlock, or mission-state transition cannot reset portable
-world state merely because actors are recreated.
+A world reload, chapter unlock, or mission-state transition cannot reset
+portable world state merely because actors are recreated.
 
 ## Save representation
 
@@ -259,6 +259,7 @@ The base campaign remains local and single-player. A validated community server
 mod may replace the session authority through the declared server-adapter port,
 but it must namespace server persistence and cannot reinterpret a base save. The
 adapter contract follows the
+<!-- markdownlint-disable-next-line MD013 -->
 [multiplayer adapter and community-server extension](../modding/multiplayer-adapter-and-community-server-extension.md).
 
 ## Failure behavior
@@ -287,8 +288,8 @@ Automated tests cover:
 - destruction, removal, consumption, and variant transitions;
 - duplicate and competing mutation requests;
 - reward and state atomicity;
-- stream out, stream in, world reload, chapter unlock, mission restart, save, and
-  load;
+- stream out, stream in, world reload, chapter unlock, mission restart, save,
+  and load;
 - default-state omission and bitset migration;
 - missing optional mod content;
 - late asynchronous results after actor replacement; and
