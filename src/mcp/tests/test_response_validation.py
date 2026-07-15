@@ -154,6 +154,36 @@ def test_initialize_rejects_controls_in_server_metadata(field: str) -> None:
         )
 
 
+@pytest.mark.parametrize("field", ["name", "version"])
+def test_initialize_rejects_excessive_server_metadata_length(
+    field: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Initialization metadata cannot retain oversized printable text."""
+    monkeypatch.setattr(
+        "mcp.src.adapters.driven.response_validation._MAX_SERVER_METADATA_LENGTH",
+        4,
+        raising=False,
+    )
+    result = _initialize_result(server_name="name")
+    server_info: JsonObject = {
+        "name": "name",
+        "version": "1.0",
+    }
+    server_info[field] = "abcde"
+    result["serverInfo"] = server_info
+
+    with pytest.raises(
+        ProtocolError,
+        match=rf"serverInfo\.{field} exceeds its length limit",
+    ):
+        _ = parse_initialized_session(
+            _exchange(result),
+            _REQUEST_ID,
+            expected_protocol_version=_PROTOCOL_VERSION,
+        )
+
+
 def test_initialize_protocol_error_does_not_reflect_control_text() -> None:
     """Malformed negotiation text cannot add lines to diagnostics."""
     result = _initialize_result(protocol_version="bad\ninjected")

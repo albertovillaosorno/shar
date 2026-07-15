@@ -64,6 +64,7 @@ _JSON_RPC_VERSION = "2.0"
 _VISIBLE_ASCII_MINIMUM = 0x21
 _VISIBLE_ASCII_MAXIMUM = 0x7E
 _MAX_SESSION_ID_LENGTH = 4_096
+_MAX_SERVER_METADATA_LENGTH = 4_096
 
 
 def parse_initialized_session(
@@ -100,22 +101,39 @@ def parse_initialized_session(
         outcome.get("serverInfo"),
         context="initialize result.serverInfo",
     )
-    server_name = server_info.get("name")
-    server_version = server_info.get("version")
-    if not isinstance(server_name, str):
-        fail_protocol("serverInfo.name must be text")
-    if any(not character.isprintable() for character in server_name):
-        fail_protocol("serverInfo.name must be printable text")
-    if not isinstance(server_version, str):
-        fail_protocol("serverInfo.version must be text")
-    if any(not character.isprintable() for character in server_version):
-        fail_protocol("serverInfo.version must be printable text")
+    server_name = _require_server_metadata(
+        server_info.get("name"),
+        field="name",
+    )
+    server_version = _require_server_metadata(
+        server_info.get("version"),
+        field="version",
+    )
     return McpSession(
         session_id=session_id,
         protocol_version=expected_protocol_version,
         server_name=server_name,
         server_version=server_version,
     )
+
+
+def _require_server_metadata(value: object, *, field: str) -> str:
+    """Return one bounded printable server metadata field.
+
+    Args:
+        value: Candidate metadata value.
+        field: Server-info member used in diagnostics.
+
+    Returns:
+        Validated text, including an allowed empty string.
+    """
+    if not isinstance(value, str):
+        fail_protocol(f"serverInfo.{field} must be text")
+    if any(not character.isprintable() for character in value):
+        fail_protocol(f"serverInfo.{field} must be printable text")
+    if len(value) > _MAX_SERVER_METADATA_LENGTH:
+        fail_protocol(f"serverInfo.{field} exceeds its length limit")
+    return value
 
 
 def matches_integer_request_id(value: object, request_id: int) -> bool:
