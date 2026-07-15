@@ -110,6 +110,37 @@ Failure before commit leaves the source mode active. Failure after commit follow
 the definition's rollback or safe-recovery mode. A loading-screen animation or
 transport callback is not readiness evidence by itself.
 
+## Mode requests and frame execution
+
+Callers submit typed mode requests; they do not push, pop, or replace an ordinal
+context stack directly. Every request records source mode, target mode, reason,
+priority, caller, expected revisions, parameters, and stable request identity.
+
+Pause and other reversible overlays receive an explicit return token naming the
+retained session and permitted predecessor. Returning validates that token
+rather than reading the previous value from a mutable global stack. Root
+transitions such as front end, gameplay load, recovery, and exit replace the
+active mode only through the ordinary transition transaction.
+
+The coordinator evaluates requests at one declared game-instance safe point. A
+request issued while another transition is preparing is rejected, queued,
+cancelled, or superseded by the concurrency policy. Two requests arriving in one
+frame use priority and stable request identity; callback arrival and container
+order cannot select the winner.
+
+Mode commit occurs before the target receives active input or simulation leases.
+The source remains authoritative until commit. Native subsystem and tick-group
+ordering performs per-frame work after commit; the coordinator does not manually
+update every manager from one custom timer callback.
+
+Engine delta time and pause policy govern simulation. Development breakpoint or
+single-step handling may clamp diagnostic presentation time, but cannot rewrite
+accepted gameplay time or silently substitute a fixed frame duration.
+
+Audio, input, save, world, and presentation services tick through their native
+owners. A mode request coordinates leases and readiness; it does not become a
+second game loop.
+
 ## Result model
 
 Every request reaches one status:
@@ -397,7 +428,9 @@ rules. Platform presentation and input adapters remain separate.
 
 Every committed mode owns a set of semantic input leases. Input registration is
 per local player and explicit about front-end, gameplay, pause, demo, or
-super-sprint actions.
+super-sprint actions. Device discovery, assignment, mappings, pointer behavior,
+and haptics follow the
+[semantic input, device, and haptics runtime](semantic-input-device-and-haptics-runtime.md).
 
 Transition preparation may stage mappings, but only commit activates them.
 Cancellation, controller removal, local-player removal, world teardown, and mode
@@ -427,7 +460,9 @@ object, world, subsystem, streaming, and asset-manager lifetimes.
 ## Events
 
 Subsystems publish typed readiness and lifecycle observations. The coordinator
-correlates them by transition, world, service, and revision identity.
+correlates them by transition, world, service, and revision identity. Channel,
+payload, scope, delivery, and subscription rules follow the
+[typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md).
 
 Untyped global events, listener order, and payload pointers cannot complete a
 transition. A late event for an earlier transition is ignored and recorded.

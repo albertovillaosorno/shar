@@ -79,6 +79,8 @@ proprietary external formats.
 - [Platform save storage and lifecycle](unreal/platform-save-storage-and-lifecycle.md)
 - [Progression, collectibles, cheats, and credits](unreal/progression-collectibles-and-cheats.md)
 - [Race route and opponent runtime](unreal/race-route-and-opponent-runtime.md)
+- [Semantic input, device, and haptics runtime](unreal/semantic-input-device-and-haptics-runtime.md)
+- [Typed event and observation routing runtime](unreal/typed-event-and-observation-routing-runtime.md)
 - [Vehicle access and roster runtime](unreal/vehicle-access-and-roster-runtime.md)
 - [Vehicle AI and route runtime](unreal/vehicle-ai-and-route-runtime.md)
 - [Vehicle retrieval and phone-booth runtime](unreal/vehicle-retrieval-and-phone-booth-runtime.md)
@@ -95,7 +97,7 @@ proprietary external formats.
 
 ## Current coverage
 
-- Technical specifications: 56.
+- Technical specifications: 58.
 - Template records: 1.
 - Review date: 2026-07-14.
 - Status boundary: this catalog describes current repository behavior and does

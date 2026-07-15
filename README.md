@@ -759,6 +759,8 @@ Relevant decisions:
 - [Device configuration and save-slot runtime](docs/technical/unreal/device-configuration-and-save-slot-runtime.md)
 - [Legacy runtime identity normalization](docs/technical/unreal/legacy-runtime-identity-normalization.md)
 - [Persistent world-object state runtime](docs/technical/unreal/persistent-world-object-state-runtime.md)
+- [Semantic input, device, and haptics runtime](docs/technical/unreal/semantic-input-device-and-haptics-runtime.md)
+- [Typed event and observation routing runtime](docs/technical/unreal/typed-event-and-observation-routing-runtime.md)
 - [Portable save storage and lifecycle](docs/adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
 - [Platform save storage and lifecycle](docs/technical/unreal/platform-save-storage-and-lifecycle.md)
 - [Contextual interaction query and transaction boundary](docs/adr/unreal/runtime/contextual-interaction-query-and-transaction.md)

@@ -341,6 +341,8 @@ all doors open or closed and cannot override damage, lock, or mission policy.
 ## Typed events
 
 `publish_event` uses a registered event identity and a reflected payload struct.
+Channel, schema, scope, subscription, delivery, and tracing behavior follow the
+[typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md).
 The event envelope contains sequence identity, action identity, action ordinal,
 source identity, optional target identity, world time, and definition revision.
 

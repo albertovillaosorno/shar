@@ -257,6 +257,9 @@ The frontend action set contains:
 - skip or pause presentation when the active screen permits it.
 
 Keyboard and mouse, gamepad, and touch adapters map physical input into this set.
+Device discovery, assignment, rebinding, pointer capture, and haptic feedback
+follow the
+[semantic input, device, and haptics runtime](semantic-input-device-and-haptics-runtime.md).
 The active-input method changes glyphs and hints only. It does not change command
 availability or navigation meaning.
 
