@@ -46,20 +46,16 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-Use this tool to read a narrow set of effective SHAR UObject properties when a
-more specific toolset is unavailable or when an independent reflection check is
-needed. The verified fixture reads map, gameplay-class, and split-screen values
-from the Maps settings default object.
+Use this tool to read a bounded set of reflected property values after SHAR
+discovers valid property names through `list_properties`.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-- Resolve a valid object reference first.
-- Discover readable names with `list_properties` and request only the needed
-  subset.
-- Parse `returnValue` as JSON.
-- Treat the read as effective editor state, which can include inherited defaults.
+- Supply a valid object ref.
+- Discover property names first and request only the values needed.
+- Parse the returned JSON string before consuming values.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
@@ -67,12 +63,12 @@ from the Maps settings default object.
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
 ```json
 {
-  "instance": {
-    "refPath": "/Script/EngineSettings.Default__GameMapsSettings"
-  },
+  "instance": {"refPath": "/Engine/BasicShapes/Cube.Cube"},
   "properties": [
-    "GameDefaultMap",
-    "bUseSplitscreen"
+    "lODGroup",
+    "lightMapResolution",
+    "lightMapCoordinateIndex",
+    "bAllowCPUAccess"
   ]
 }
 ```
@@ -81,31 +77,34 @@ from the Maps settings default object.
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-Repeated reads were byte-identical and returned the OpenWorld map soft path
-plus `true` for split screen. A five-property read matched
-`GetSectionPropertyValues` after normalizing key casing, while
-`DefaultEngine.ini` independently confirmed the explicit game-map package.
+Two compact cube reads returned LOD group string `None`, light-map resolution
+`64`, coordinate index `1`, and CPU access `false`. Bounds extensions were zero
+vectors and mesh-distance-field generation was false. Empty property lists
+returned JSON text `{}`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-- `returnValue` is a JSON-encoded string.
-- Property lookup is case-insensitive, but returned keys preserve the requested
-  spelling and order.
-- An empty property list returns `{}`.
-- If any requested property cannot be read, the entire call fails.
-- Values can include Unreal defaults that are not authored in project INI files.
+- The return value is JSON text and requires a second parse.
+- Property lookup is case-insensitive, but output keys preserve requested
+  spelling.
+- Duplicate property names collapse to one output key.
+- If any requested property is unreadable, the complete request fails rather
+  than returning partial values.
+- Missing object refs fail during parameter translation.
+- The string `None` can represent an Unreal enum or name value; it is not JSON
+  null.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

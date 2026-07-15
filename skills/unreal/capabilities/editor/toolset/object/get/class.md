@@ -46,18 +46,15 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-Use this tool to resolve the concrete Unreal class behind a known SHAR editor
-object before selecting reflection, settings, or class-discovery operations. The
-verified fixture identifies the object that owns the project Maps settings.
+Use this tool to resolve an exact Unreal object's reflected class before SHAR
+selects a class-specific inspection or mutation tool.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-- The canonical SHAR editor and Toolset Registry must be ready.
-- `instance.refPath` must resolve to a valid UObject or UClass in the editor.
-- Obtain the object path from a prior bounded discovery or verified subsystem
-  identity rather than guessing it.
+- Supply a valid object ref rather than a package-only path.
+- Use the returned class ref to confirm type compatibility independently.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
@@ -65,9 +62,7 @@ verified fixture identifies the object that owns the project Maps settings.
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
 ```json
 {
-  "instance": {
-    "refPath": "/Script/EngineSettings.Default__GameMapsSettings"
-  }
+  "instance": {"refPath": "/Engine/BasicShapes/Cube.Cube"}
 }
 ```
 <!-- END MANUAL FIELD: validated-arguments -->
@@ -75,30 +70,29 @@ verified fixture identifies the object that owns the project Maps settings.
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-Two calls returned `/Script/EngineSettings.GameMapsSettings`. The same class
-was independently found through `search_subclasses`, and `list_properties`
-exposed the 17 properties used by the verified Maps settings section. A missing
-object path was rejected during parameter validation.
+Two cube calls returned `/Script/Engine.StaticMesh`. Two WorldGridMaterial calls
+returned `/Script/Engine.Material`. These independently matched the classes
+required by StaticMeshTools and MaterialTools.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-- An invalid object path fails before the native read executes.
-- Passing a UClass reference is accepted; the current implementation returns that
-  class path itself rather than a separate metaclass identity.
-- The result proves class identity only; it does not prove inheritance, current
-  property values, editability, save state, or package ownership.
+- The result is the object's concrete reflected class, not its complete
+  inheritance chain.
+- Generated Blueprint objects can return generated `_C` classes.
+- Object refs can become stale after deletion or recompilation.
+- Missing object refs fail during parameter translation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
