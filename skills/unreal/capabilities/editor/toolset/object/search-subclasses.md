@@ -46,18 +46,16 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-Use this tool to resolve a loaded Unreal class from a narrow partial name before
-SHAR performs reflection or class-specific inspection. The verified query finds
-the class that backs the project Maps settings object.
+Use this tool to resolve loaded Unreal classes from a base class and case-
+insensitive path substring before SHAR performs class-specific inspection.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
 - `base_class.refPath` must resolve to a valid UClass.
-- The live schema requires `class_name`, even though its prose describes the
-  filter as optional.
-- Use a selective substring to avoid an unnecessarily broad class enumeration.
+- The live schema requires an explicit `class_name`, including an empty string.
+- Prefer a selective substring to avoid broad loaded-session inventories.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
@@ -76,30 +74,34 @@ the class that backs the project Maps settings object.
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-Two calls returned exactly
-`/Script/EngineSettings.GameMapsSettings`. A lowercase filter returned the same
-result, and `get_class` independently returned that class for
-`Default__GameMapsSettings`. A deliberately missing substring returned `[]`.
+Two exact and lowercase filters returned only
+`/Script/EngineSettings.GameMapsSettings`. Searching Actor subclasses for
+`StaticMeshActor` returned `/Script/Engine.StaticMeshActor`; a missing substring
+returned `[]`. An empty Actor filter returned 388 loaded classes and included
+`/Script/Engine.Actor` itself.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-- The substring filter is case-insensitive.
-- No match is an empty array rather than an error.
-- `class_name` is required by the current live schema.
-- An empty or very broad filter can produce a large editor-session class set.
-- Enabled modules and plugins can change the available subclass results.
+- The substring filter is case-insensitive and searches class paths.
+- No match returns an empty array rather than an error.
+- An empty filter includes the base class itself and can produce a very large
+  result.
+- The inventory includes native and loaded generated classes from enabled
+  content.
+- Results depend on loaded modules, plugins, and editor-session state.
+- Invalid base-class refs fail during parameter translation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

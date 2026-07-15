@@ -46,10 +46,9 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-Use this tool to discover the readable reflection schema of a SHAR editor object
-before calling `get_properties` or planning a controlled mutation. The verified
-Maps settings object exposes map references, class references, split-screen
-options, and map-to-game-mode collections.
+Use this tool to discover the readable reflection schema of an Unreal object
+before SHAR requests bounded property values or plans a separately authorized
+mutation.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
@@ -57,8 +56,8 @@ options, and map-to-game-mode collections.
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
 - The object reference must resolve in the current editor session.
 - Parse `returnValue` as JSON.
-- Use the returned property names and value shapes as discovery evidence before
-  constructing a narrower property read.
+- Use returned property names and schemas as discovery evidence before calling
+  `get_properties`.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
@@ -76,31 +75,34 @@ options, and map-to-game-mode collections.
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-Two calls returned byte-identical JSON with 17 top-level property entries.
-Its SHA-256 matched the schema returned independently by
-`GetSectionSchema` for `Project/Project/Maps`. Selected entries were then read
-successfully through `get_properties`.
+Two GameMapsSettings calls returned byte-stable JSON with 17 properties,
+including editor and game maps, split-screen options, game-instance class,
+default game modes, and map-prefix aliases. The engine cube independently
+returned a stable 32-property schema including Nanite, materials, collision,
+light-map, bounds, and streaming fields.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
 - Despite the tool name, the result is a JSON-encoded property-schema map, not a
-  simple array of names.
-- Serialized schema keys use lower-camel spelling.
-- The schema describes readable shapes, not current values, mutability, save
-  behavior, or whether a value is project-authored versus inherited.
-- Invalid object references fail parameter validation.
+  simple name array.
+- Schema keys use the tool's reflected lower-camel spelling, including forms
+  such as `lODGroup`.
+- The schema describes readable shapes, not current values, mutability,
+  persistence, or authorship.
+- Large nested structs can produce large results; narrow subsequent value reads.
+- Invalid object refs fail during parameter translation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
