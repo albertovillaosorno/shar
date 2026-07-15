@@ -89,7 +89,28 @@ _CLIENT_VERSION = package_version()
 _HTTP_ACCEPTED = 202
 _MAX_TOOL_LIST_PAGES = 256
 _MAX_TOOL_NAMES = 100_000
+_MAX_TOOL_NAME_BYTES = DEFAULT_MAX_RESPONSE_BYTES
 _MAX_PAGINATION_CURSOR_BYTES = DEFAULT_MAX_RESPONSE_BYTES
+
+
+def _extend_tool_names(
+    tools: list[str],
+    page_tools: tuple[str, ...],
+    tool_name_bytes: int,
+) -> int:
+    """Append one page within aggregate tool count and byte budgets.
+
+    Returns:
+        Updated aggregate UTF-8 tool-name byte count.
+    """
+    if len(tools) + len(page_tools) > _MAX_TOOL_NAMES:
+        fail_protocol("tools/list exceeded its tool limit")
+    page_tool_name_bytes = sum(len(name.encode()) for name in page_tools)
+    updated_tool_name_bytes = tool_name_bytes + page_tool_name_bytes
+    if updated_tool_name_bytes > _MAX_TOOL_NAME_BYTES:
+        fail_protocol("tools/list exceeded its tool name byte limit")
+    tools.extend(page_tools)
+    return updated_tool_name_bytes
 
 
 class StreamableHttpTransport:
@@ -210,6 +231,7 @@ class StreamableHttpTransport:
             cursor: str | None = None
             seen_cursors: set[str] = set()
             cursor_bytes = 0
+            tool_name_bytes = 0
             page_count = 0
             while True:
                 if page_count >= _MAX_TOOL_LIST_PAGES:
@@ -230,9 +252,11 @@ class StreamableHttpTransport:
                 )
                 outcome = require_json_rpc_result(exchange, request_id)
                 page_tools = parse_tool_names(outcome)
-                if len(tools) + len(page_tools) > _MAX_TOOL_NAMES:
-                    fail_protocol("tools/list exceeded its tool limit")
-                tools.extend(page_tools)
+                tool_name_bytes = _extend_tool_names(
+                    tools,
+                    page_tools,
+                    tool_name_bytes,
+                )
                 next_cursor = outcome.get("nextCursor")
                 if next_cursor is None:
                     break

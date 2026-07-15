@@ -273,6 +273,33 @@ def test_transport_rejects_excessive_paginated_tool_count(
         assert len(tool_list_requests) == 2
 
 
+def test_transport_rejects_excessive_paginated_tool_name_bytes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Tool counts cannot hide an unbounded aggregate name payload."""
+    first_page_bytes = len("list_toolsets") + len("describe_toolset")
+    monkeypatch.setattr(
+        "mcp.src.adapters.driven.streamable_http._MAX_TOOL_NAME_BYTES",
+        first_page_bytes,
+    )
+    with FakeUnrealServer() as server:
+        transport = StreamableHttpTransport(
+            McpEndpoint.parse(server.endpoint),
+            timeout_seconds=2.0,
+        )
+        session = transport.initialize()
+        with pytest.raises(ProtocolError, match="tool name byte limit"):
+            _ = transport.list_tools(session)
+        transport.close(session)
+
+        tool_list_requests = tuple(
+            request
+            for request in server.requests
+            if request.get("method") == "tools/list"
+        )
+        assert len(tool_list_requests) == 2
+
+
 def test_transport_rejects_excessive_pagination_cursor_bytes(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
