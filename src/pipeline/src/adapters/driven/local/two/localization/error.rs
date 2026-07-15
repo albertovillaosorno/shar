@@ -50,6 +50,8 @@
 
 use std::path::PathBuf;
 
+use schoenwald_filesystem::DiagnosticPath;
+
 /// Errors returned by localization parsing and merge boundaries.
 #[derive(Debug)]
 pub(super) enum Error {
@@ -84,6 +86,19 @@ impl Error {
     }
 }
 
+/// Returns untrusted source text without raw control characters.
+fn escaped_source_text(value: &str) -> String {
+    let mut output = String::new();
+    for character in value.chars() {
+        if character.is_control() {
+            output.extend(character.escape_default());
+        } else {
+            output.push(character);
+        }
+    }
+    output
+}
+
 impl std::fmt::Display for Error {
     fn fmt(
         &self,
@@ -94,10 +109,12 @@ impl std::fmt::Display for Error {
                 path,
                 source,
             } => {
+                let source_text = source.to_string();
+                let rendered_source = escaped_source_text(&source_text);
                 write!(
                     formatter,
-                    "{}: {source}",
-                    path.display()
+                    "{}: {rendered_source}",
+                    DiagnosticPath::new(path)
                 )
             }
             Self::InvalidSource(message) => formatter.write_str(message),
@@ -105,7 +122,60 @@ impl std::fmt::Display for Error {
     }
 }
 
-impl std::error::Error for Error {}
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Io {
+                source,
+                ..
+            } => Some(source),
+            Self::InvalidSource(_) => None,
+        }
+    }
+}
 
 /// Result shared by localization source operations.
 pub(super) type Outcome<T> = Result<T, Error>;
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn io_error_escapes_source_controls_and_preserves_chain() {
+        let error = super::Error::io(
+            std::path::PathBuf::from("language.bin"),
+            std::io::Error::other("read\ninjected"),
+        );
+
+        assert_eq!(
+            error.to_string(),
+            r"language.bin: read\ninjected"
+        );
+        assert!(std::error::Error::source(&error).is_some());
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn io_error_preserves_unpaired_utf16_path_unit() {
+        use std::ffi::OsString;
+        use std::os::windows::ffi::OsStringExt as _;
+
+        let path = std::path::PathBuf::from(
+            OsString::from_wide(
+                &[
+                    u16::from(b'a'),
+                    0xd800_u16,
+                    u16::from(b'b'),
+                ],
+            ),
+        );
+        let error = super::Error::io(
+            path,
+            std::io::Error::other("read failure"),
+        );
+
+        assert_eq!(
+            error.to_string(),
+            r"a\u{D800}b: read failure"
+        );
+    }
+}
