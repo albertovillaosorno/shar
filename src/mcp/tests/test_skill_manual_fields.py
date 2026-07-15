@@ -174,6 +174,26 @@ def test_merge_rejects_malformed_manual_field_marker() -> None:
         )
 
 
+def test_malformed_marker_error_does_not_reflect_controls() -> None:
+    """Malformed marker text cannot inject terminal control characters."""
+    existing = document("old generated purpose").replace(
+        begin_marker("project-use-cases"),
+        "<!-- BEGIN MANUAL FIELD: project-use-cases\x07 -->",
+    )
+
+    with pytest.raises(ProtocolError) as caught:
+        _ = merge_manual_fields(
+            document("new generated purpose"),
+            existing,
+            context="capabilities/malformed.md",
+        )
+
+    assert str(caught.value) == (
+        "capabilities/malformed.md: existing skill: "
+        "malformed manual field marker"
+    )
+
+
 def test_merge_rejects_reordered_manual_field_pairs() -> None:
     """Protected field pairs retain one stable document order."""
     existing = document("old generated purpose")

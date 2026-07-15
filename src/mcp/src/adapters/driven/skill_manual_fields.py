@@ -276,7 +276,7 @@ def _check_marker_lines(content: str, *, context: str) -> None:
         if _MARKER_SENTINEL not in line:
             continue
         if _MARKER_PATTERN.fullmatch(line) is None:
-            fail_protocol(f"{context}: malformed manual field marker: {line}")
+            fail_protocol(f"{context}: malformed manual field marker")
 
 
 def _marker_event(
