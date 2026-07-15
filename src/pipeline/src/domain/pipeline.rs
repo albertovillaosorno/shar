@@ -128,12 +128,26 @@ impl PipelineError {
     }
 }
 
+/// Returns untrusted diagnostic text without raw control characters.
+fn escaped_diagnostic_text(value: &str) -> String {
+    let mut output = String::new();
+    for character in value.chars() {
+        if character.is_control() {
+            output.extend(character.escape_default());
+        } else {
+            output.push(character);
+        }
+    }
+    output
+}
+
 impl core::fmt::Display for PipelineError {
     fn fmt(
         &self,
         formatter: &mut core::fmt::Formatter<'_>,
     ) -> core::fmt::Result {
-        formatter.write_str(&self.message)
+        let rendered_message = escaped_diagnostic_text(&self.message);
+        formatter.write_str(&rendered_message)
     }
 }
 

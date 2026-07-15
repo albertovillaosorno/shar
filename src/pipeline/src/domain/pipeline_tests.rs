@@ -45,7 +45,17 @@
 //!
 //! Each case proves report arithmetic rejects values beyond its scalar range.
 
-use super::StageReport;
+use super::{PipelineError, StageReport};
+
+#[test]
+fn pipeline_error_escapes_control_characters() {
+    let error = PipelineError::new("invalid\nsource\\evidence");
+
+    assert_eq!(
+        error.to_string(),
+        r"invalid\nsource\evidence"
+    );
+}
 
 #[test]
 fn rejects_stage_file_count_overflow() -> Result<(), String> {
