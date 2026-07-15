@@ -46,41 +46,57 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to resolve the UMovieSceneCustomBinding objects attached to one
+exact binding proxy.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use a binding whose type was checked with `get_custom_binding_type`.
+- Keep the owning sequence open while resolving session objects.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "binding": {
+    "bindingId": "00000000-0000-0000-0000-000000000000",
+    "sequence": {
+      "refPath": "/Game/LS_SHAR_MCP_CustomBindingFixture_1.LS_SHAR_MCP_CustomBindingFixture_1"
+    }
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+In two cycles, the camera actor returned one UObject whose path ended
+`_CustomBinding_0`. CameraComponent and a zero-GUID proxy returned `[]`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Custom-binding UObject paths contain fixture- and actor-specific identities
+  and should not be persisted.
+- Empty is valid for standard or invalid bindings.
+- Results are not the actors resolved by `get_bound_objects`.
+- Returned objects can become stale after sequence reconstruction.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

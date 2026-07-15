@@ -49,41 +49,60 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to distinguish modern custom MovieScene bindings from standard
+possessable component bindings before SHAR performs binding-type-specific
+operations.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Rediscover the binding proxy from the active LevelSequence.
+- Keep its sequence and GUID paired.
+- Treat an empty string as a valid standard or invalid-binding result.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "binding": {
+    "bindingId": "00000000-0000-0000-0000-000000000000",
+    "sequence": {
+      "refPath": "/Game/LS_SHAR_MCP_CustomBindingFixture_1.LS_SHAR_MCP_CustomBindingFixture_1"
+    }
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two disposable camera cycles returned
+`/Script/MovieSceneTracks.MovieSceneSpawnableActorBinding` for CineCameraActor
+and `""` for CameraComponent. A zero-GUID proxy also returned `""`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Empty string is ambiguous between a standard possessable and an invalid proxy.
+- Verify the binding through name, ID, or object reads before interpreting
+  absence.
+- Binding GUIDs change when a sequence is rebuilt.
+- Custom-binding class paths can vary with engine and plugin versions.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
