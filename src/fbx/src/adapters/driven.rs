@@ -67,3 +67,7 @@ pub mod decoded_skin_source;
 pub mod generated_package_index;
 /// Optional Maya script that imports the canonical sibling FBX.
 pub mod maya_import_helper;
+/// In-memory semantic character texture artifact transaction.
+pub mod semantic_character_texture;
+/// Deterministic PNG byte adapter for semantic character textures.
+pub mod semantic_texture_png;

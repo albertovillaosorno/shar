@@ -49,6 +49,7 @@
 //! texture.
 pub mod binding;
 pub mod reference;
+pub mod semantic;
 
 pub use binding::{MaterialBinding, MaterialBindingError};
 // Explicit facade names keep downstream imports unambiguous across domain
