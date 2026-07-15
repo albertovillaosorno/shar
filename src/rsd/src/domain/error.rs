@@ -141,15 +141,30 @@ pub enum RsdError {
     },
 }
 
+/// Returns untrusted source text without raw control characters.
+fn escaped_source_text(value: &str) -> String {
+    let mut output = String::new();
+    for character in value.chars() {
+        if character.is_control() {
+            output.extend(character.escape_default());
+        } else {
+            output.push(character);
+        }
+    }
+    output
+}
+
 /// Writes one path-scoped failure without erasing its typed source.
 fn write_path_error(
     formatter: &mut core::fmt::Formatter<'_>,
     path: &std::path::Path,
     source: &dyn core::fmt::Display,
 ) -> core::fmt::Result {
+    let source_text = source.to_string();
+    let rendered_source = escaped_source_text(&source_text);
     write!(
         formatter,
-        "{}: {source}",
+        "{}: {rendered_source}",
         EscapedPath::new(path)
     )
 }
@@ -457,5 +472,57 @@ impl std::error::Error for RsdError {
             } => Some(source.as_ref()),
             _ => None,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::error::Error as _;
+    use std::io;
+    use std::path::PathBuf;
+
+    use super::RsdError;
+
+    #[test]
+    fn io_error_escapes_source_control_characters() {
+        let error = RsdError::Io {
+            path: PathBuf::from("audio.rsd"),
+            source: io::Error::other("read\ninjected"),
+        };
+
+        let rendered = error.to_string();
+
+        assert!(
+            !rendered
+                .chars()
+                .any(char::is_control),
+            "diagnostic contains a control character: {rendered:?}"
+        );
+        assert!(rendered.contains(r"read\ninjected"));
+        assert!(error.source().is_some());
+    }
+
+    #[test]
+    fn source_audio_error_keeps_one_escape_layer() {
+        let inner = RsdError::Io {
+            path: PathBuf::from("inner.rsd"),
+            source: io::Error::other("read\ninjected"),
+        };
+        let error = RsdError::SourceAudio {
+            path: PathBuf::from("outer.rsd"),
+            source: Box::new(inner),
+        };
+
+        let rendered = error.to_string();
+
+        assert!(
+            !rendered
+                .chars()
+                .any(char::is_control),
+            "diagnostic contains a control character: {rendered:?}"
+        );
+        assert!(rendered.contains(r"read\ninjected"));
+        assert!(!rendered.contains(r"read\\ninjected"));
+        assert!(error.source().is_some());
     }
 }
