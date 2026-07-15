@@ -87,6 +87,33 @@ def test_plugin_version_rejects_surrounding_whitespace(
         _ = normalize_unreal_mcp_version(invalid_version)
 
 
+@pytest.mark.parametrize(
+    "association",
+    ["5.8\n", " 5.8"],
+)
+def test_provider_rejects_padded_engine_association(
+    tmp_path: Path,
+    association: str,
+) -> None:
+    """Project engine identities must not be silently trimmed."""
+    project = tmp_path / "project" / "shar.uproject"
+    engine = tmp_path / "UE_5.8"
+    _write_json(project, {"EngineAssociation": association})
+    _write_json(
+        engine / _PLUGIN_RELATIVE_PATH,
+        {"VersionName": "1.0"},
+    )
+
+    with pytest.raises(
+        ConfigurationError,
+        match="EngineAssociation must be canonical text",
+    ):
+        _ = FilesystemUnrealMcpVersionProvider(
+            project,
+            environment={"UNREAL_ENGINE_ROOT": str(engine)},
+        ).read_version()
+
+
 def test_provider_reads_version_from_explicit_engine_root(
     tmp_path: Path,
 ) -> None:

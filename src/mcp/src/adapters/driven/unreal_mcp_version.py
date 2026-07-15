@@ -93,9 +93,15 @@ class FilesystemUnrealMcpVersionProvider:
             context="Unreal project descriptor",
         )
         association = project.get("EngineAssociation")
-        if not isinstance(association, str) or not association.strip():
+        if not isinstance(association, str) or not association:
             fail_configuration("Unreal project EngineAssociation must be text")
-        descriptor = self._resolve_plugin_descriptor(association.strip())
+        if association != association.strip() or any(
+            not character.isprintable() for character in association
+        ):
+            fail_configuration(
+                "Unreal project EngineAssociation must be canonical text"
+            )
+        descriptor = self._resolve_plugin_descriptor(association)
         plugin = _read_json_object(
             descriptor,
             context="Unreal MCP plugin descriptor",
