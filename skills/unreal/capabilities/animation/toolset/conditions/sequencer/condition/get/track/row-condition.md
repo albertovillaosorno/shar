@@ -46,41 +46,56 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to read the condition class assigned to one zero-based row of a
+MovieScene track.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use an exact track ref and the authored row index.
+- Read track and section conditions separately when reconstructing the full
+  evaluation policy.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "track": {"refPath": "/Game/LS_SHAR_MCP_ConditionFixture_1.LS_SHAR_MCP_ConditionFixture_1:MovieScene_0.MovieSceneCameraCutTrack_0"},
+  "row_index": 0
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two disposable cycles initially returned `""` for row 0, round-tripped
+`/Script/MovieScene.MovieSceneGroupCondition`, and returned `""` after clearing.
+Unused row 99 also returned `""`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- No condition is represented by an empty string.
+- Out-of-range or unused rows can also return `""`; the read does not prove the
+  row exists.
+- Validate row existence through track sections or row metadata before
+  interpreting absence.
+- Passing a non-track ref fails during translation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
