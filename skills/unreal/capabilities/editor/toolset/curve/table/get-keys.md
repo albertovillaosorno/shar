@@ -46,41 +46,56 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to read every time/value key authored in one CurveTable row before
+SHAR samples or replaces the curve.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use an exact CurveTable ref.
+- Discover the row through `list_rows`.
+- Treat an empty key list as a valid row.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "curve_table": {"refPath": "/Game/CT_SHAR_MCP_ReadFixture_1.CT_SHAR_MCP_ReadFixture_1"},
+  "row_name": "Speed"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two cycles returned Speed keys `(0,0)`, `(1,10)`, and `(2.5,25)`, plus Density
+key `(3,0.5)`. Replacing Speed returned only `(4,40)`. The default Curve row
+returned `[]`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- `set_keys` replaces the complete row rather than appending.
+- Integral times and values can serialize as integers even when submitted as
+  floats.
+- Missing rows raise instead of returning `[]`.
+- Key order follows curve time order in the verified fixture.
+- Wrong-type assets fail during translation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
