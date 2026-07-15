@@ -32,7 +32,7 @@
 // - Usage:
 //   - Used only by the standard-stream driven adapter.
 // - Defaults:
-//   - Provider messages are preserved after the operation prefix.
+//   - Provider controls are escaped after the operation prefix.
 //
 // ADRs:
 // - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
@@ -71,6 +71,14 @@ const fn byte_unit(count: usize) -> &'static str {
     } else {
         "bytes"
     }
+}
+
+/// Returns untrusted provider text without raw control characters.
+fn escaped_text(value: &str) -> String {
+    value
+        .chars()
+        .flat_map(char::escape_default)
+        .collect()
 }
 
 impl core::fmt::Display for StreamOperation {
@@ -165,10 +173,11 @@ impl core::fmt::Display for StreamOperationError {
         formatter: &mut core::fmt::Formatter<'_>,
     ) -> core::fmt::Result {
         let operation = self.operation;
-        let source = &self.source;
+        let source_text = self.source.to_string();
+        let rendered_source = escaped_text(&source_text);
         write!(
             formatter,
-            "failed to {operation}: {source}"
+            "failed to {operation}: {rendered_source}"
         )
     }
 }
@@ -196,7 +205,31 @@ pub(super) fn contextualize(
 
 #[cfg(test)]
 mod tests {
-    use super::StreamOperation;
+    use std::error::Error as _;
+    use std::io;
+
+    use super::{StreamOperation, contextualize};
+
+    #[test]
+    fn provider_error_escapes_source_control_characters() {
+        let error = contextualize(
+            StreamOperation::Flush {
+                accepted_bytes: 4,
+            },
+            io::Error::other("flush\ninjected"),
+        );
+
+        let rendered = error.to_string();
+
+        assert!(
+            !rendered
+                .chars()
+                .any(char::is_control),
+            "diagnostic contains a control character: {rendered:?}"
+        );
+        assert!(rendered.contains(r"flush\ninjected"));
+        assert!(error.source().is_some());
+    }
 
     #[test]
     fn one_byte_progress_uses_the_singular_unit() {
