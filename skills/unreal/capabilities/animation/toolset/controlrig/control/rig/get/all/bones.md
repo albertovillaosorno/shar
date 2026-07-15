@@ -46,41 +46,52 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to inventory bone elements authored in a Control Rig hierarchy
+before SHAR performs bone-parent or transform operations.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use an exact ControlRigBlueprint ref.
+- Treat an empty list as valid for module or utility rigs with no authored
+  bones.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "control_rig": {"refPath": "/Game/CR_SHAR_MCP_HierarchyFixture_1.CR_SHAR_MCP_HierarchyFixture_1"}
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two disposable hierarchy cycles returned exactly `RootBone`. The compact
+authored `CRU_AddLocator` utility rig returned an empty bone inventory.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Results contain hierarchy keys, not skeletal-mesh bone indices.
+- Empty does not mean the Control Rig asset is invalid.
+- Element names are type-scoped identities.
+- Wrong asset types fail during parameter translation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

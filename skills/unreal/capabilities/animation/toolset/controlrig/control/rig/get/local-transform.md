@@ -46,41 +46,55 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to read a hierarchy element transform relative to its parent in
+current or initial state.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use an exact hierarchy key.
+- Set `initial` according to whether setup or current state is required.
+- Resolve the parent when interpreting local translation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "control_rig": {"refPath": "/Game/CR_SHAR_MCP_HierarchyFixture_1.CR_SHAR_MCP_HierarchyFixture_1"},
+  "item": {"type": "Null", "name": "AimNull"},
+  "initial": true
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two cycles returned AimNull initial local translation X=5 relative to RootBone
+at X=10. RootBone local translation was X=10.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Missing elements can return an identity transform instead of raising.
+- A control created with default settings returned zero scale in current local
+  state.
+- Initial and current transforms can diverge after edits.
+- Verify element existence before trusting identity-like results.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

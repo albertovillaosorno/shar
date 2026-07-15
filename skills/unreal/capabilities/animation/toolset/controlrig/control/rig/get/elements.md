@@ -46,41 +46,53 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to enumerate a complete Control Rig hierarchy or filter it to one
+element type.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use an exact ControlRigBlueprint ref.
+- Omit `element_type` when requesting every element.
+- Use a concrete type such as Bone, Null, or Control for filtering.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "control_rig": {"refPath": "/Game/CR_SHAR_MCP_HierarchyFixture_1.CR_SHAR_MCP_HierarchyFixture_1"}
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two cycles returned RootBone, AimNull, and MainControl when `element_type` was
+omitted. Bone, Null, and Control filters each returned their one matching key.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Explicit `element_type: "All"` unexpectedly returned `[]`; omission returned
+  all elements.
+- Preserve hierarchy order when reconstructing parent chains.
+- Empty filters are valid when a type is absent.
+- Wrong asset types fail during translation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

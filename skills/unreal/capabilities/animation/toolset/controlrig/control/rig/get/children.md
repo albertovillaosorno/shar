@@ -46,41 +46,54 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to traverse direct or recursive descendants of one typed Control
+Rig hierarchy element.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use an exact ControlRigBlueprint ref.
+- Supply both element type and name from a live hierarchy inventory.
+- Choose recursive mode explicitly.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "control_rig": {"refPath": "/Game/CR_SHAR_MCP_HierarchyFixture_1.CR_SHAR_MCP_HierarchyFixture_1"},
+  "item": {"type": "Bone", "name": "RootBone"},
+  "recursive": true
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two cycles returned AimNull for direct traversal and AimNull followed by
+MainControl for recursive traversal from RootBone.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Missing elements return `[]` rather than raising.
+- The result order follows hierarchy traversal order.
+- Type and name must be paired; names alone are insufficient.
+- Wrong Control Rig asset types fail during translation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
