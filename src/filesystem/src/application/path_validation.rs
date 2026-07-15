@@ -48,6 +48,7 @@ use std::path::{Component, Path};
 use std::string::FromUtf8Error;
 use std::{fmt, io};
 
+use super::diagnostic_path::DiagnosticPath;
 use crate::domain::{resolve_under, validate_portable_path, validate_root};
 
 /// Context retained around one typed application failure.
@@ -88,7 +89,7 @@ pub(super) fn path_error(
         kind,
         format!(
             "{operation} `{}` failed: {message}",
-            path.display()
+            DiagnosticPath::new(path)
         ),
     )
 }
@@ -105,7 +106,7 @@ where
 {
     let message = format!(
         "{operation} `{}` failed: {source}",
-        path.display()
+        DiagnosticPath::new(path)
     );
     io::Error::new(
         kind,

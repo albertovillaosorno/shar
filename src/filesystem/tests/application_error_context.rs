@@ -163,6 +163,27 @@ fn portable_path_error_includes_operation_and_path() -> Result<(), String> {
 }
 
 #[test]
+fn control_path_error_is_single_line_and_reversible() -> Result<(), String> {
+    let path = Path::new("bad\npath");
+    let result = local::path_kind(path);
+    let Err(error) = result else {
+        return Err("control-bearing path unexpectedly inspected".to_owned());
+    };
+    let rendered = error.to_string();
+    if rendered.contains('\n') {
+        return Err(
+            format!("path diagnostic contains a raw newline: {rendered:?}"),
+        );
+    }
+    if !rendered.contains(r"bad\npath") {
+        return Err(
+            format!("path diagnostic lost escaped identity: {rendered}"),
+        );
+    }
+    Ok(())
+}
+
+#[test]
 fn root_creation_error_includes_operation_and_path() -> Result<(), String> {
     let path = if cfg!(windows) {
         Path::new(r"C:\")
