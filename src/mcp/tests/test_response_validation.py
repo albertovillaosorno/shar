@@ -114,6 +114,28 @@ def test_initialize_rejects_wrong_protocol_and_malformed_metadata() -> None:
         )
 
 
+@pytest.mark.parametrize("field", ["name", "version"])
+def test_initialize_rejects_controls_in_server_metadata(field: str) -> None:
+    """Server metadata cannot retain JSON-escaped control characters."""
+    result = _initialize_result(server_name="unreal-mcp")
+    server_info: JsonObject = {
+        "name": "unreal-mcp",
+        "version": "1.0.0",
+    }
+    server_info[field] = "bad\ninjected"
+    result["serverInfo"] = server_info
+
+    with pytest.raises(
+        ProtocolError,
+        match=rf"serverInfo\.{field} must be printable text",
+    ):
+        _ = parse_initialized_session(
+            _exchange(result),
+            _REQUEST_ID,
+            expected_protocol_version=_PROTOCOL_VERSION,
+        )
+
+
 def test_initialize_protocol_error_does_not_reflect_control_text() -> None:
     """Malformed negotiation text cannot add lines to diagnostics."""
     result = _initialize_result(protocol_version="bad\ninjected")

@@ -103,8 +103,12 @@ def parse_initialized_session(
     server_version = server_info.get("version")
     if not isinstance(server_name, str):
         fail_protocol("serverInfo.name must be text")
+    if any(not character.isprintable() for character in server_name):
+        fail_protocol("serverInfo.name must be printable text")
     if not isinstance(server_version, str):
         fail_protocol("serverInfo.version must be text")
+    if any(not character.isprintable() for character in server_version):
+        fail_protocol("serverInfo.version must be printable text")
     return McpSession(
         session_id=session_id,
         protocol_version=expected_protocol_version,
