@@ -71,12 +71,26 @@ impl PackageIntakeError {
     }
 }
 
+/// Returns untrusted diagnostic text without raw control characters.
+fn escaped_diagnostic_text(value: &str) -> String {
+    let mut output = String::new();
+    for character in value.chars() {
+        if character.is_control() {
+            output.extend(character.escape_default());
+        } else {
+            output.push(character);
+        }
+    }
+    output
+}
+
 impl fmt::Display for PackageIntakeError {
     fn fmt(
         &self,
         formatter: &mut fmt::Formatter<'_>,
     ) -> fmt::Result {
-        formatter.write_str(&self.message)
+        let rendered_message = escaped_diagnostic_text(&self.message);
+        formatter.write_str(&rendered_message)
     }
 }
 
@@ -2765,9 +2779,19 @@ fn parse_json_string_at(
 #[cfg(test)]
 mod tests {
     use super::{
-        MAX_JSON_NESTING, PackageRole, PhaseThreePackageIndex,
-        PhaseThreePackageRow, parse_json_string_at,
+        MAX_JSON_NESTING, PackageIntakeError, PackageRole,
+        PhaseThreePackageIndex, PhaseThreePackageRow, parse_json_string_at,
     };
+
+    #[test]
+    fn package_intake_error_escapes_control_characters() {
+        let error = PackageIntakeError::new("invalid\npackage\\evidence");
+
+        assert_eq!(
+            error.to_string(),
+            r"invalid\npackage\evidence"
+        );
+    }
 
     const SAMPLE_MEMBERS_FIELD: &str = concat!(
         "\"members\":[",
