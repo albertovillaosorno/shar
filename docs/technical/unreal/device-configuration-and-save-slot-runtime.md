@@ -1,7 +1,7 @@
 # Device configuration and save-slot runtime
 
 - Status: Active
-- Last reviewed: 2026-07-14
+- Last reviewed: 2026-07-15
 
 ## Governing decisions and specifications
 
@@ -12,6 +12,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
 - [Platform save storage and lifecycle](platform-save-storage-and-lifecycle.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
 
@@ -152,6 +154,26 @@ Front-end settings edits use a staged transaction:
 Cancel restores the committed projection. A renderer or application restart
 requirement is reported explicitly and never simulated by silently ignoring the
 new value.
+
+## Frontend settings edit sessions
+
+The frontend opens one `FSharSettingsEditSession` against the accepted device
+configuration revision. Category widgets edit a typed draft and cannot write
+individual fields or platform state directly.
+
+Input binding, sensitivity, inversion, haptics, audio, display, graphics,
+language, accessibility, and presentation fields declare schema, range, default,
+compatibility, preview, and persistence policy. Commit validates and applies the
+complete draft atomically; cancellation restores every scoped preview.
+
+Risky display changes use a temporary platform preview, monotonic confirmation
+deadline, and known-safe rollback journal. Reject, timeout, focus loss,
+suspension, adapter loss, failed verification, or interrupted startup restores
+the accepted safe mode before normal frontend presentation.
+
+The detailed capture, preview, commit, and recovery sequence follows the
+<!-- markdownlint-disable-next-line MD013 -->
+[frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md).
 
 ## Logical save slots
 

@@ -83,6 +83,8 @@ proprietary external formats.
 - [Device configuration and save-slot runtime](unreal/device-configuration-and-save-slot-runtime.md)
 - [Frontend shell and menu runtime](unreal/frontend-shell-and-menu-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Frontend screen flow and settings runtime](unreal/frontend-screen-flow-and-settings-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Unreal configuration and asset validation](unreal/config-and-asset-validation.md)
 - [Unreal gameplay content catalog](unreal/gameplay-content-catalog.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -147,7 +149,7 @@ proprietary external formats.
 
 ## Current coverage
 
-- Technical specifications: 69.
+- Technical specifications: 70.
 - Template records: 1.
 - Review date: 2026-07-15.
 - Status boundary: this catalog describes current repository behavior and does

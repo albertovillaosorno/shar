@@ -906,6 +906,8 @@ Relevant decisions:
 - [Runtime parity tests](docs/adr/unreal/runtime/runtime-parity-test-boundary.md)
 - [Application lifecycle and mode runtime](docs/technical/unreal/application-lifecycle-and-mode-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Frontend screen flow and settings runtime](docs/technical/unreal/frontend-screen-flow-and-settings-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Authored spatial placement and trigger runtime](docs/technical/unreal/authored-spatial-placement-and-trigger-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Mission definition, stage, and objective runtime](docs/technical/unreal/mission-definition-stage-and-objective-runtime.md)

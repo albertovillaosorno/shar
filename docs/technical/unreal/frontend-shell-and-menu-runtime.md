@@ -1,7 +1,7 @@
 # Frontend shell and menu runtime
 
 - Status: Active
-- Last reviewed: 2026-07-14
+- Last reviewed: 2026-07-15
 
 ## Governing decisions
 
@@ -14,6 +14,8 @@
 - [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Device configuration and save-slot runtime](device-configuration-and-save-slot-runtime.md)
 
@@ -72,10 +74,13 @@ The frontend state is one of:
 - `booting`;
 - `main_menu`;
 - `slot_browser`;
+- `gallery`;
 - `scrapbook`;
 - `unused_content`;
 - `achievements`;
+- `local_bonus_setup`;
 - `options`;
+- `settings_edit`;
 - `credits`;
 - `transitioning_to_gameplay`;
 - `returning_from_gameplay`; or
@@ -93,11 +98,15 @@ semantic action.
 
 ## Boot transaction
 
-Boot performs these ordered operations:
+Boot executes the validated task graph defined by the
+<!-- markdownlint-disable-next-line MD013 -->
+[frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md).
+The required base tasks are:
 
 1. initialize the root gameplay and user-interface catalogs;
+1. resolve platform, legal, locale, and accessibility requirements;
 1. load device-local configuration through the platform adapter;
-1. query logical save-slot summaries;
+1. query storage readiness and logical save-slot summaries;
 1. validate each summary against save schema and catalog revision rules;
 1. determine the most recent resumable accepted slot;
 1. select the standard or calendar front-end presentation theme;
@@ -289,6 +298,35 @@ available; it is not gated by bonus-game availability.
 
 Missing presentation for an accepted identity produces a placeholder and typed
 diagnostic. It does not remove accepted progression or change the percentage.
+
+## Local bonus-mode setup
+
+A local bonus-mode command opens a bounded setup session rather than campaign
+multiplayer. The view model exposes the selected bonus-mode rules, supported
+local-player count, joined player and device assignments, character or
+presentation choices, map and round options, readiness, and disabled reasons.
+
+Join, leave, selection, and readiness are typed local-player transactions. A
+controller index never defines participant identity. Starting the session
+requires every participant, device, option, and content dependency to validate.
+Cancellation releases temporary assignments and preserves campaign progression.
+
+The detailed setup, navigation, and transition contract follows the
+<!-- markdownlint-disable-next-line MD013 -->
+[frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md).
+
+## Controller loss and recovery
+
+The frontend consumes typed device and assignment observations. Losing the only
+valid navigation device opens one correlated reassignment modal, pauses owned
+media or transitions when policy requires it, and retains prior focus.
+
+Reconnection succeeds only after the input subsystem accepts a compatible local
+player assignment. Duplicate disconnects do not stack prompts, and a newly
+enumerated device cannot inherit ownership from a physical index. Recovery,
+media pause, modal lifetime, and focus restoration follow the
+<!-- markdownlint-disable-next-line MD013 -->
+[frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md).
 
 ## Options screen
 

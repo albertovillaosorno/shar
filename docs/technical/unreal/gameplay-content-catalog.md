@@ -224,6 +224,28 @@ Every definition uses the same bundle vocabulary.
 additional bundles required by the current role. A mission must not preload all
 presentation or audio assets for unrelated entities.
 
+## Frontend screen and flow definitions
+
+`USharFrontendScreenDefinition` is a catalog-reachable primary asset containing
+canonical screen identity, Common UI layer, widget class, view-model schema,
+semantic action set, entry and exit policy, required bundles, focus,
+accessibility, failure, and feature ownership.
+
+`USharFrontendFlowDefinition` contains validated navigation edges, boot-task
+graph, loading-presentation choices, modal policies, local bonus-mode setup
+routes, and feature-overlay boundaries. Screen and flow identity never derive
+from widget names, integer message values, package order, or platform-specific
+source files.
+
+Gallery, options, save-browser, language, legal, loading, media, and replay
+screens reference canonical catalog and domain identities. Presentation assets
+may vary by platform, locale, accessibility, theme, and quality without changing
+screen or command identity.
+
+The detailed runtime contract follows the
+<!-- markdownlint-disable-next-line MD013 -->
+[frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md).
+
 ## Character definition
 
 `USharCharacterDefinition` extends the shared definition with:

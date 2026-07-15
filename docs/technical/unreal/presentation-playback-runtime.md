@@ -17,6 +17,8 @@
 - [Camera rig, preset, and arbitration runtime](camera-rig-preset-and-arbitration-runtime.md)
 - [Platform cinematic media packaging](platform-cinematic-media-packaging.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md)
 
 ## Purpose
@@ -305,6 +307,26 @@ publish `skipped` to the owner.
 Cancellation is distinct from skip. Owner replacement, mission abort, feature
 removal, world teardown, target destruction, or load failure may cancel playback
 without satisfying the owner's objective.
+
+## Frontend cinematic input and recovery
+
+Frontend and boot media requests declare minimum unskippable time, semantic skip
+and confirm actions, pause policy, controller-loss behavior, audio focus,
+fallback, and accepted owner results.
+
+Raw decoder buttons, platform controller maps, and device indices never decide
+skip or ownership. A skip before eligibility returns `skip_not_allowed`. An
+accepted skip publishes one terminal result and executes the same camera, audio,
+input, display, and asset restoration contract as normal completion.
+
+Losing the assigned navigation device may pause playback and open one correlated
+reassignment modal. Reconnection resumes only after the input subsystem accepts
+a compatible local-player assignment. Duplicate disconnects cannot stack prompts
+or revive stale callbacks.
+
+The screen and recovery flow follows the
+<!-- markdownlint-disable-next-line MD013 -->
+[frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md).
 
 ## Completion result
 

@@ -1,7 +1,7 @@
 # Semantic input, device, and haptics runtime
 
 - Status: Active
-- Last reviewed: 2026-07-14
+- Last reviewed: 2026-07-15
 
 ## Governing decisions and specifications
 
@@ -17,6 +17,8 @@
 - [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Device configuration and save-slot runtime](device-configuration-and-save-slot-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md)
 
 ## Purpose
 
@@ -375,6 +377,26 @@ The transaction:
 Binding display text and glyphs are projections. Device-local configuration
 stores
 engine key identities, modifiers, and schema revision, not platform scan codes.
+
+## Frontend binding capture
+
+The Common UI binding editor opens one typed capture request through the local
+player input subsystem. It declares the action, binding slot, eligible device
+classes and value types, reserved-input policy, timeout, cancellation, conflict
+policy, and expected configuration revision.
+
+The input subsystem returns an engine-key identity, device class, axis or
+direction metadata, modifiers, and capability revision. The frontend displays
+localized labels and glyphs from that accepted result. It never converts virtual
+key integers, button offsets, platform strings, or manual pointer hotspots into
+binding authority.
+
+A disconnect, focus loss, back action, timeout, feature removal, or failed
+conflict resolution cancels the capture and restores the last accepted draft.
+Commit persists the complete validated profile through the device-configuration
+transaction defined by the
+<!-- markdownlint-disable-next-line MD013 -->
+[frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md).
 
 ## Haptic cue model
 

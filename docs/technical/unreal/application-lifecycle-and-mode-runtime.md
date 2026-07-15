@@ -1,7 +1,7 @@
 # Application lifecycle and mode runtime
 
 - Status: Active
-- Last reviewed: 2026-07-14
+- Last reviewed: 2026-07-15
 
 ## Governing decisions
 
@@ -12,6 +12,8 @@
 - [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md)
 
 ## Purpose
 
@@ -334,6 +336,20 @@ The loading plan follows the
 It never depends on platform heap replacement for correctness. Native world,
 object, asset, and gameplay-feature lifetimes own memory release.
 <!-- markdownlint-disable-next-line MD013 -->
+
+### Loading progress authority
+
+Loading presentation consumes the correlated load-plan snapshot defined by the
+<!-- markdownlint-disable-next-line MD013 -->
+[frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md).
+Progress comes only from validated operation producers and required readiness
+barriers.
+
+Process memory use, free memory, expected file counts, callback counts, elapsed
+animation time, and frame count are not progress authority. Operations without a
+meaningful measure remain indeterminate. A loading screen may reach its visual
+end state only after the lifecycle service accepts the terminal transition
+result.
 
 ## Gameplay loading
 

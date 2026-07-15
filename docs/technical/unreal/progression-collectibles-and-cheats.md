@@ -26,6 +26,8 @@
 - [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md)
 
 ## Purpose
 
@@ -237,18 +239,21 @@ that grants progression directly from presentation code.
 Currency loss is represented by explicit transactions, never direct counter
 mutation.
 
+<!-- markdownlint-disable MD013 -->
+
 - A police capture applies a 50-coin fine, clamped so the balance cannot become
   negative.
 - Repairing a destroyed selected vehicle through the retrieval interface costs
   10 coins when the repair condition applies. Eligibility, insufficient-currency
   rejection, health persistence, delivery, and rollback follow
-  <!-- markdownlint-disable-next-line MD013 -->
   [Vehicle retrieval and phone-booth runtime](vehicle-retrieval-and-phone-booth-runtime.md).
 - A wasp hit or destruction of the currently driven vehicle may emit a
   recoverable transient drop according to its definition.
 - Recoverable dropped coins retain a source batch identity and expiration. A
   recovered drop reverses only the corresponding pending loss.
 - An expired drop finalizes the loss exactly once.
+
+<!-- markdownlint-enable MD013 -->
 
 Presentation may animate multiple coin objects, but the ledger remains the
 single balance authority.
@@ -531,6 +536,29 @@ The card-unlock cheat changes gallery visibility and eligibility projection
 only. It does not insert card identities into portable progression, complete
 chapter sets, unlock passive abilities, grant bonus maps, update achievements,
 or grant the movie ticket.
+
+## Frontend card and mission galleries
+
+Gallery view models are immutable projections of accepted catalog, progression,
+and replay-eligibility revisions.
+
+The card gallery exposes canonical deck order, collected state, title, episode,
+description, quote, image presentation, full-view eligibility, focus, and
+accessibility alternatives. Thumbnail or high-resolution asset availability
+cannot grant collection or change deck order. Missing presentation uses the
+declared fallback while preserving identity and progress.
+
+The mission gallery exposes canonical mission and chapter identities, display
+order, completion, replay policy, required content, image and title
+presentation, checkpoint policy, and disabled reason. Runtime code never derives
+mission identity from a screenshot filename or menu ordinal.
+
+Selecting an eligible mission submits a replay transition containing the exact
+save, progression, mission, participant, checkpoint, content, and isolation
+revisions. Widget exit, image load, or transition animation cannot start replay.
+Detailed screen and asset lifetime follows the
+<!-- markdownlint-disable-next-line MD013 -->
+[frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md).
 
 ## Chapter and game progress projection
 
@@ -949,7 +977,8 @@ interaction policy.
 Persistent destructible, removable, consumable, and variant placement state
 follows
 <!-- markdownlint-disable-next-line MD013 -->
-the [persistent world-object state runtime](persistent-world-object-state-runtime.md).
+the [persistent world-object state
+runtime](persistent-world-object-state-runtime.md).
 
 Portable progression stores:
 
