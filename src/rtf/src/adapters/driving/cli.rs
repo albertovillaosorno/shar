@@ -48,6 +48,7 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 use schoenwald_cli::{CliProgram, CommandOutcome, run_process};
+use schoenwald_filesystem::DiagnosticPath;
 
 use crate::adapters::driven::{FileMarkdownSink, FileRtfSource};
 use crate::application::ConvertReadme;
@@ -89,8 +90,8 @@ impl CliProgram for RtfConversionProgram {
                         CommandOutcome::success().stderr_line(
                             format!(
                                 "converted {} -> {}",
-                                input.display(),
-                                destination.display()
+                                DiagnosticPath::new(&input),
+                                DiagnosticPath::new(destination)
                             ),
                         )
                     },
@@ -124,7 +125,7 @@ pub fn run(
                 |error| {
                     format!(
                         "failed to write {}: {error}",
-                        destination.display()
+                        DiagnosticPath::new(destination)
                     )
                 },
             )?;
@@ -140,9 +141,16 @@ pub fn run_env() -> ExitCode {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(windows)]
+    use std::ffi::OsString;
+    #[cfg(windows)]
+    use std::fs;
+    #[cfg(windows)]
+    use std::os::windows::ffi::OsStringExt as _;
+
     use schoenwald_cli::CliProgram;
 
-    use super::{RtfConversionProgram, USAGE};
+    use super::{RtfConversionProgram, USAGE, run};
 
     #[test]
     fn excess_arguments_return_one_usage_diagnostic() -> Result<(), String> {
@@ -169,6 +177,45 @@ mod tests {
                     chunk.text()
                 ),
             );
+        }
+        Ok(())
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn write_error_preserves_unpaired_utf16_destination_unit()
+    -> Result<(), String> {
+        let root = std::env::temp_dir().join(
+            format!("schoenwald-rtf-diagnostic-{}", std::process::id()),
+        );
+        fs::create_dir_all(&root).map_err(|error| error.to_string())?;
+        let input = root.join("input.rtf");
+        fs::write(
+            &input,
+            br"{\rtf1\ansi hello}",
+        )
+        .map_err(|error| error.to_string())?;
+        let output = root.join(OsString::from_wide(&[
+            u16::from(b'a'),
+            0xd800,
+            u16::from(b'b'),
+        ]));
+
+        let result = run(
+            &input,
+            Some(&output),
+        );
+
+        fs::remove_file(&input).map_err(|error| error.to_string())?;
+        fs::remove_dir(&root).map_err(|error| error.to_string())?;
+        let Err(error) = result else {
+            return Err("invalid destination unexpectedly succeeded".to_owned());
+        };
+        if !error.contains(r"a\u{D800}b") {
+            return Err(format!("diagnostic lost native path unit: {error:?}"));
+        }
+        if error.contains('\u{fffd}') {
+            return Err(format!("diagnostic used lossy replacement: {error:?}"));
         }
         Ok(())
     }
