@@ -219,6 +219,8 @@ class FakeUnrealRequestHandler(BaseHTTPRequestHandler):
             result = {"tools": [{"name": "call_tool", "inputSchema": {}}]}
             if server.behavior.repeat_cursor:
                 result["nextCursor"] = "repeat"
+            elif server.behavior.advance_cursor:
+                result["nextCursor"] = f"{cursor}-next"
         self._write_rpc_result(payload.get("id"), result)
 
     def _write_tool_call(self, payload: JsonObject) -> None:

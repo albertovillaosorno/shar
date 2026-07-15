@@ -67,6 +67,7 @@ class FakeUnrealBehavior(NamedTuple):
     """Deterministic protocol switches for one synthetic server."""
 
     repeat_cursor: bool = False
+    advance_cursor: bool = False
     delay_tool_calls: bool = False
     cancellation_delay_seconds: float = 0.0
     empty_toolsets: bool = False
@@ -84,6 +85,7 @@ class FakeUnrealServer:
         self,
         *,
         repeat_cursor: bool = False,
+        advance_cursor: bool = False,
         delay_tool_calls: bool = False,
         cancellation_delay_seconds: float = 0.0,
         empty_toolsets: bool = False,
@@ -91,6 +93,7 @@ class FakeUnrealServer:
         """Create a stopped server with deterministic behavior."""
         behavior = FakeUnrealBehavior(
             repeat_cursor=repeat_cursor,
+            advance_cursor=advance_cursor,
             delay_tool_calls=delay_tool_calls,
             cancellation_delay_seconds=cancellation_delay_seconds,
             empty_toolsets=empty_toolsets,

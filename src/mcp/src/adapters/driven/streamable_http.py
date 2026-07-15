@@ -87,6 +87,7 @@ _PROTOCOL_VERSION = "2025-11-25"
 _CLIENT_NAME = "shar-unreal-mcp-cli"
 _CLIENT_VERSION = package_version()
 _HTTP_ACCEPTED = 202
+_MAX_TOOL_LIST_PAGES = 256
 
 
 class StreamableHttpTransport:
@@ -206,7 +207,11 @@ class StreamableHttpTransport:
             tools: list[str] = []
             cursor: str | None = None
             seen_cursors: set[str] = set()
+            page_count = 0
             while True:
+                if page_count >= _MAX_TOOL_LIST_PAGES:
+                    fail_protocol("tools/list exceeded its page limit")
+                page_count += 1
                 params: JsonObject = {}
                 if cursor is not None:
                     params["cursor"] = cursor

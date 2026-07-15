@@ -221,6 +221,32 @@ def test_transport_rejects_repeated_pagination_cursor() -> None:
         transport.close(session)
 
 
+def test_transport_rejects_unbounded_unique_pagination(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Unique cursors cannot keep tools/list running without a page ceiling."""
+    monkeypatch.setattr(
+        "mcp.src.adapters.driven.streamable_http._MAX_TOOL_LIST_PAGES",
+        2,
+    )
+    with FakeUnrealServer(advance_cursor=True) as server:
+        transport = StreamableHttpTransport(
+            McpEndpoint.parse(server.endpoint),
+            timeout_seconds=2.0,
+        )
+        session = transport.initialize()
+        with pytest.raises(ProtocolError, match="page limit"):
+            _ = transport.list_tools(session)
+        transport.close(session)
+
+        tool_list_requests = tuple(
+            request
+            for request in server.requests
+            if request.get("method") == "tools/list"
+        )
+        assert len(tool_list_requests) == 2
+
+
 def test_transport_cancels_timed_out_tool_request() -> None:
     """A timed-out native tool call is cancelled by its original request ID."""
     with FakeUnrealServer(
