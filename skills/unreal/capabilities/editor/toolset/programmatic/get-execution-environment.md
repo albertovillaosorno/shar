@@ -49,41 +49,60 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool before any SHAR programmatic tool script to learn the current
+sandbox language, allowed modules, entrypoint contract, and registered-tool
+calling convention.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Call this tool once in the current workflow before `execute_tool_script`.
+- Read the returned instructions completely.
+- Inspect output schemas for every registered tool the script will call before
+  parsing its results.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two calls returned byte-identical data: language `python`, 1,790 instruction
+characters, and six allowed modules (`json`, `math`, `datetime`, `copy`, `re`,
+and `time`). The instructions required a `run()` function returning `Dict[str,
+Any]` and described registered-tool calls through `execute_tool(tool_name,
+json_input)`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The environment instructions are runtime authority and can change with the
+  toolset revision.
+- Only listed modules may be imported; raw Unreal Python modules are not
+  exposed.
+- `execute_tool` composes registered MCP tools and does not grant arbitrary
+  object or filesystem access.
+- Tool-list schemas describe inputs; inspect output schemas before parsing
+  return values.
+- Reading the environment does not authorize mutation or script execution.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
