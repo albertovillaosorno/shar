@@ -46,41 +46,56 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to search the Asset Registry for assets that explicitly reference
+one registered Gameplay Tag before SHAR evaluates change impact.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Select an exact registered tag from `ListTags`.
+- Ensure relevant content mounts and Asset Registry discovery are complete.
+- Treat an empty result as a valid no-indexed-referencer baseline.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "tagName": "GameplayCue.Test"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two calls returned an empty package-path array for `GameplayCue.Test`. The tag
+independently existed, had metadata, and was reported by Gameplay Cue
+inspection, proving that tag registration does not imply an indexed asset
+referencer.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Empty means no qualifying Asset Registry references were found; it does not
+  prove no code, configuration, or runtime references exist.
+- The result contains package paths rather than object refs.
+- Registry freshness and mounted content affect coverage.
+- Unknown tags raise a tag-does-not-exist error; an empty string raises a
+  distinct empty-name error.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

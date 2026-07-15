@@ -46,41 +46,55 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to inventory registered Gameplay Tags before SHAR inspects tag
+metadata, searches references, or prepares a separately authorized tag change.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass an explicit parent tag or an empty string for the complete registry.
+- Treat returned fully qualified names as authoritative inputs for other
+  Gameplay Tags tools.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "parentTag": "GameplayCue"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two complete calls returned 31 sorted tags across Enhanced Input, Gameplay Cue,
+Input User Settings, Niagara, StateTree test, and generic test namespaces.
+`GameplayCue` returned only `GameplayCue.Test`; using leaf parent
+`GameplayCue.Test` returned an empty array.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The parent itself is not included; only descendants are returned.
+- A valid leaf parent therefore returns an empty array.
+- Unknown parent strings also return an empty array rather than an error.
+- Results include engine and plugin tags, not only project-authored tags.
+- Registry contents change with loaded plugins and tag-source configuration.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
