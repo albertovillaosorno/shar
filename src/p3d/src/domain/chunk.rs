@@ -70,12 +70,26 @@ impl P3dError {
     }
 }
 
+/// Returns untrusted diagnostic text without raw control characters.
+fn escaped_diagnostic_text(value: &str) -> String {
+    let mut output = String::new();
+    for character in value.chars() {
+        if character.is_control() {
+            output.extend(character.escape_default());
+        } else {
+            output.push(character);
+        }
+    }
+    output
+}
+
 impl fmt::Display for P3dError {
     fn fmt(
         &self,
         formatter: &mut fmt::Formatter<'_>,
     ) -> fmt::Result {
-        formatter.write_str(&self.message)
+        let rendered_message = escaped_diagnostic_text(&self.message);
+        formatter.write_str(&rendered_message)
     }
 }
 
@@ -616,7 +630,17 @@ const fn classify_chunk(id: u32) -> ChunkKind {
 
 #[cfg(test)]
 mod tests {
-    use super::{Endian, analyze_p3d, parse_range, read_u32};
+    use super::{Endian, P3dError, analyze_p3d, parse_range, read_u32};
+
+    #[test]
+    fn invalid_source_error_escapes_control_characters() {
+        let error = P3dError::invalid_source("invalid\nsource");
+
+        assert_eq!(
+            error.to_string(),
+            r"invalid\nsource"
+        );
+    }
 
     #[test]
     fn chunk_u32_reader_rejects_offset_overflow() -> Result<(), String> {
