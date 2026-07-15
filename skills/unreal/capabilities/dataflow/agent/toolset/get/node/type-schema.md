@@ -47,41 +47,58 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to inspect one Dataflow node type's pins, editable properties,
+category, tooltip, and status flags before SHAR configures that node.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Select a `typeName` from `ListNodeTypes`.
+- Parse the returned JSON string before using pins or properties.
+- Preserve property defaults as serialized strings.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "typeName": "FDataflowBranchNode"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two Branch calls returned three inputs (`TrueValue`, `FalseValue`, and
+`bCondition`), one `Result` output, and editable Boolean property `bCondition`
+defaulting to `True`. Uniform Fracture independently returned 16 inputs, three
+outputs, and 18 editable properties.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The return value is JSON text and requires a second parse.
+- Type lookup is case-insensitive; lowercase `fdataflowbranchnode` resolved to
+  the canonical type.
+- An unknown nonempty type returned a sentinel schema with `typeName`, display
+  name, and category set to `None`, plus no pins, instead of raising.
+- An empty type name raises an explicit error.
+- Property defaults are Unreal serialized text, not necessarily JSON-native
+  values.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

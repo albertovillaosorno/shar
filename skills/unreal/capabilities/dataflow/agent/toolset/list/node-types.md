@@ -46,41 +46,57 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to discover registered Dataflow node types before SHAR requests a
+node schema or prepares a separately authorized graph edit.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use the common-only inventory by default.
+- Request the complete inventory only when deprecated or experimental types are
+  relevant.
+- Parse the returned JSON string before inspecting entries.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "bCommonOnly": true
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two common-only calls returned a stable 433-entry JSON array. Two complete calls
+returned 465 entries. Each descriptor included type name, display name,
+category, tooltip, and deprecated and experimental flags; examples included
+Branch, Print, scalar math nodes, GeometryCollection nodes, and Mesh Boolean.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The return value is JSON text and requires a second parse.
+- `bCommonOnly` excludes deprecated and experimental types but still returns a
+  large inventory.
+- Type names, not display names, are the authoritative inputs for
+  `GetNodeTypeSchema`.
+- Results depend on loaded Dataflow modules and engine revision.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

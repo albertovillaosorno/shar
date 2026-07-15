@@ -47,41 +47,56 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to inspect a Dataflow asset's node inventory, positions, pin
+types, GUIDs, and explicit connections during SHAR graph review.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use an exact indexed `/Script/DataflowEngine.Dataflow` object path.
+- Parse the returned JSON string.
+- Treat node GUIDs and names as graph-local identities.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "graph": {"refPath": "/GeometryCollectionPlugin/DataflowTemplates/DF_GC_Template_Source.DF_GC_Template_Source"}
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two calls returned graph `DF_GC_Template_Source` with three nodes and five
+connections. The nodes were Create Geometry Collection From Sources, Uniform
+Fracture, and Geometry Collection Terminal, with stable GUIDs, positions,
+input/output pin names, and types. The Groom empty template independently
+returned four nodes and four connections.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The return value is JSON text and requires a second parse.
+- Structure contains authored nodes and links, not evaluated runtime data.
+- Node GUIDs, names, and positions can change after graph edits or duplication.
+- Pin GUIDs are separate from human-readable pin names.
+- Missing graph refs fail during parameter translation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
