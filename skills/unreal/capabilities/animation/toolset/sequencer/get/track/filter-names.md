@@ -46,41 +46,52 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this editor-global tool to discover the Sequencer track-filter labels
+available in the current editor installation.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require a live Sequencer subsystem.
+- Treat labels as UI filter identities rather than asset classes.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two independent cycles returned the same 23 labels: Audio, Camera, Camera Cut,
+Condition, Control Rig Control, Data Layer, Event, Fade, Folder, Keyed, Level
+Visibility, Light, Media, Niagara, Particle System, Selected, Selected Anim
+Layers, Shot, Skeletal Mesh, Subsequence, Time Dilation, Time Warp, and Unbound.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This tool takes no sequence argument.
+- Results describe registered editor filters, not tracks present in the active
+  sequence.
+- Ordering reflects UI registration and is not semantic ranking.
+- Plugins can change the inventory between editor installations.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
