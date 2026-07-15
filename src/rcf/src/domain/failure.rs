@@ -49,6 +49,8 @@ use std::fmt::{Display, Formatter};
 use std::io;
 use std::path::PathBuf;
 
+use schoenwald_filesystem::DiagnosticPath;
+
 /// Closed error taxonomy for archive parsing and extraction.
 #[derive(Debug)]
 pub enum ArchiveError {
@@ -112,7 +114,7 @@ impl Display for ArchiveError {
                 write!(
                     formatter,
                     "IO error at {}: {source}",
-                    path.display()
+                    DiagnosticPath::new(path)
                 )
             }
         }
@@ -128,5 +130,40 @@ impl std::error::Error for ArchiveError {
             } => Some(source),
             Self::InvalidArchive(_) | Self::UnsafeEntryPath(_) => None,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[cfg(windows)]
+    use std::ffi::OsString;
+    use std::io;
+    #[cfg(windows)]
+    use std::os::windows::ffi::OsStringExt as _;
+    #[cfg(windows)]
+    use std::path::PathBuf;
+
+    use super::ArchiveError;
+
+    #[cfg(windows)]
+    #[test]
+    fn io_error_preserves_unpaired_utf16_path_unit() {
+        let path = PathBuf::from(OsString::from_wide(&[
+            u16::from(b'a'),
+            0xd800,
+            u16::from(b'b'),
+        ]));
+        let error = ArchiveError::io(
+            path,
+            io::Error::other("read failure"),
+        );
+
+        let rendered = error.to_string();
+
+        assert!(
+            rendered.contains(r"a\u{D800}b"),
+            "diagnostic lost the native path unit: {rendered:?}"
+        );
+        assert!(!rendered.contains('\u{fffd}'));
     }
 }
