@@ -90,6 +90,7 @@ _HTTP_ACCEPTED = 202
 _MAX_TOOL_LIST_PAGES = 256
 _MAX_TOOL_NAMES = 100_000
 _MAX_TOOL_NAME_BYTES = DEFAULT_MAX_RESPONSE_BYTES
+_MAX_SINGLE_CURSOR_BYTES = 4_096
 _MAX_PAGINATION_CURSOR_BYTES = DEFAULT_MAX_RESPONSE_BYTES
 
 
@@ -267,6 +268,10 @@ class StreamableHttpTransport:
                 if next_cursor in seen_cursors:
                     fail_protocol("tools/list returned a repeated cursor")
                 next_cursor_bytes = len(next_cursor.encode())
+                if next_cursor_bytes > _MAX_SINGLE_CURSOR_BYTES:
+                    fail_protocol(
+                        "tools/list exceeded its single cursor byte limit"
+                    )
                 if (
                     cursor_bytes + next_cursor_bytes
                     > _MAX_PAGINATION_CURSOR_BYTES

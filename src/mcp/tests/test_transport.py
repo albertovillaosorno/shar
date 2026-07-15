@@ -300,6 +300,33 @@ def test_transport_rejects_excessive_paginated_tool_name_bytes(
         assert len(tool_list_requests) == 2
 
 
+def test_transport_rejects_excessive_single_cursor_bytes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """One opaque cursor cannot consume the next request body budget."""
+    monkeypatch.setattr(
+        "mcp.src.adapters.driven.streamable_http._MAX_SINGLE_CURSOR_BYTES",
+        len("page-2") - 1,
+        raising=False,
+    )
+    with FakeUnrealServer(advance_cursor=True) as server:
+        transport = StreamableHttpTransport(
+            McpEndpoint.parse(server.endpoint),
+            timeout_seconds=2.0,
+        )
+        session = transport.initialize()
+        with pytest.raises(ProtocolError, match="single cursor byte limit"):
+            _ = transport.list_tools(session)
+        transport.close(session)
+
+        tool_list_requests = tuple(
+            request
+            for request in server.requests
+            if request.get("method") == "tools/list"
+        )
+        assert len(tool_list_requests) == 1
+
+
 def test_transport_rejects_excessive_pagination_cursor_bytes(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
