@@ -464,10 +464,33 @@ identity.
 
 ## Reward definition
 
-`USharRewardDefinition` contains reward kind, granted canonical identities,
-progression predicate, repeatability, presentation references, and save-state
-key. Vehicle rewards grant access to an existing vehicle definition; they never
-create a second vehicle asset.
+`USharRewardDefinition` contains:
+
+<!-- markdownlint-disable MD013 -->
+
+| Field | Contract |
+| :--- | :--- |
+| `RewardId` | Canonical reward identity. |
+| `RewardKind` | Vehicle ownership, costume ownership, currency, media, feature, service, or another registered kind. |
+| `GrantedDefinitionIds` | Ordered canonical identities granted by the reward. |
+| `ProgressionPredicateId` | Mission, race, collectible, achievement, purchase, or system eligibility. |
+| `RepeatabilityPolicy` | Permanent once, repeatable service, per-attempt, or another registered policy. |
+| `TransactionKeyPolicy` | Deterministic exactly-once key construction. |
+| `PresentationProfileId` | Unlock, purchase, preview, audio, and accessibility presentation. |
+| `SaveSchemaId` | Durable ownership or completion projection. |
+| `SupersessionPolicyId` | Replacement and mod-overlay behavior. |
+
+<!-- markdownlint-enable MD013 -->
+
+Vehicle and costume rewards grant access to existing canonical definitions; they
+never create duplicate assets or alternate save identities.
+
+`FSharMerchandiseOfferRow` contains offer identity, reward identity, seller
+role,
+seller placement, chapter and progression predicates, currency kind, exact
+price, stock and repeatability policy, preview presentation, and offer revision.
+Seller roles are extensible catalog identities rather than a closed runtime type
+switch.
 
 ## Costume-set definition
 

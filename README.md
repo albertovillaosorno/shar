@@ -912,6 +912,10 @@ Relevant decisions:
 <!-- markdownlint-disable-next-line MD013 -->
 - [Mission, interaction, interior, and notoriety runtime](docs/technical/unreal/mission-interaction-and-notoriety-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Mission world-entity and respawn runtime](docs/technical/unreal/mission-world-entity-and-respawn-runtime.md)
+- [Pedestrian path runtime](docs/technical/unreal/pedestrian-path-runtime.md)
+- [Presentation playback runtime](docs/technical/unreal/presentation-playback-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native platform bootstrap and error-recovery runtime](docs/technical/unreal/native-platform-bootstrap-and-error-recovery-runtime.md)
 - [Native asset load request and streaming runtime](docs/technical/unreal/native-asset-load-request-and-streaming-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->

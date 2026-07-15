@@ -93,6 +93,8 @@ proprietary external formats.
 - [Mission definition, stage, and objective runtime](unreal/mission-definition-stage-and-objective-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Mission, interaction, interior, and notoriety runtime](unreal/mission-interaction-and-notoriety-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Mission world-entity and respawn runtime](unreal/mission-world-entity-and-respawn-runtime.md)
 - [Mod package overlay runtime](unreal/mod-package-overlay-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Music state and transition runtime](unreal/music-state-and-transition-runtime.md)
@@ -107,6 +109,8 @@ proprietary external formats.
 <!-- markdownlint-disable-next-line MD013 -->
 - [Physical material and impact-response runtime](unreal/physical-material-and-impact-response-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Pedestrian path runtime](unreal/pedestrian-path-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Persistent world-object state runtime](unreal/persistent-world-object-state-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Platform audio cooking and streaming](unreal/platform-audio-cooking-and-streaming.md)
@@ -116,6 +120,8 @@ proprietary external formats.
 - [Platform, quality, and optimization contract](unreal/platform-quality-and-optimization.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Platform save storage and lifecycle](unreal/platform-save-storage-and-lifecycle.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Presentation playback runtime](unreal/presentation-playback-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Progression, collectibles, cheats, and credits](unreal/progression-collectibles-and-cheats.md)
 - [Race route and opponent runtime](unreal/race-route-and-opponent-runtime.md)
@@ -141,7 +147,7 @@ proprietary external formats.
 
 ## Current coverage
 
-- Technical specifications: 66.
+- Technical specifications: 69.
 - Template records: 1.
 - Review date: 2026-07-15.
 - Status boundary: this catalog describes current repository behavior and does

@@ -20,6 +20,10 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Authored spatial placement and trigger runtime](authored-spatial-placement-and-trigger-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Mission world-entity and respawn runtime](mission-world-entity-and-respawn-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Presentation playback runtime](presentation-playback-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md)
 - [Race route and opponent runtime](race-route-and-opponent-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -631,6 +635,71 @@ Navigation arrows, lit routes, animated icons, collection effects, and
 arrival dialogue are optional presentation. A missing route projection
 cannot complete or fail the objective unless navigation is itself a
 declared gameplay rule.
+
+## Contextual talk objective
+
+A `talk` objective binds one exact character placement, contextual interaction,
+conversation offer, and mission-stage revision. The target may be promoted from
+ambient representation before the interaction becomes eligible.
+
+Availability requires:
+
+- the exact character and placement revisions;
+- an accepted interaction source and reservation policy;
+- target readiness and compatible busy state;
+- participant, distance, approach, and input eligibility;
+- active mission and stage revisions; and
+- required dialogue and presentation readiness.
+
+A busy, unloaded, replaced, or reserved target makes the interaction unavailable
+without failing the objective unless the policy says otherwise. Availability
+changes update the candidate and prompt projection; they do not recreate the
+objective or mutate input globally.
+
+Success requires the contextual interaction subsystem's accepted conversation
+handoff. A trigger overlap, button press, prompt display, marker removal, or
+letterbox transition is not success.
+
+The objective owns no character, trigger, prompt, input, traffic, or
+presentation
+state directly. Finalization releases the exact reservations and projections and
+cannot restore over a newer interaction or input owner.
+
+## Timer objective
+
+A `timer` objective declares an exact duration, time source, start boundary,
+suspension policy, and terminal result. It uses the mission timing contract and
+records elapsed simulation ticks for the active objective revision.
+
+The timer may represent a bounded pause, wait, survival interval, presentation
+barrier, or another registered duration policy. It cannot use frame count,
+wall-clock time, animation duration, or an uncorrelated callback.
+
+Completion occurs once at the exact accepted boundary. Pause, interior
+transition, cinematic, platform suspension, mission recovery, and frontend state
+follow the declared suspension policy. Reset creates a new objective revision
+and
+restores the authored duration rather than retaining stale elapsed time.
+
+A timer has no implicit reward, currency, mission-success, or presentation side
+effect. The owning stage declares what follows the accepted result.
+
+## Race objective binding
+
+A `race` objective references one canonical race definition, route revision,
+participant set, start grid, timer policy, and accepted result policy.
+Checkpoint,
+lap, position, finish, retry, wager, and race-set progression follow the
+[race route and opponent runtime](race-route-and-opponent-runtime.md).
+
+The mission adapter translates one accepted race result into objective intent.
+It
+cannot calculate position from actor pointers, inspect HUD state, advance laps
+from trigger visibility, or complete when an opponent unloads.
+
+Race presentation, including finish markers, lap counters, position, damage,
+proximity, and route guidance, observes the race snapshot. It does not own route
+progress or objective completion.
 
 ## Asynchronous vehicle-load objective
 

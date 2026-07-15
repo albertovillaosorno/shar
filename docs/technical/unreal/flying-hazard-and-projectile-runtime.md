@@ -1,7 +1,7 @@
 # Flying-hazard and projectile runtime
 
 - Status: Active
-- Last reviewed: 2026-07-14
+- Last reviewed: 2026-07-15
 
 ## Governing decisions
 
@@ -11,6 +11,8 @@
 - [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Mission world-entity and respawn runtime](mission-world-entity-and-respawn-runtime.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 
 ## Purpose
@@ -387,6 +389,28 @@ Beam activation follows these phases:
 
 A damaged, destroyed, unloaded, cancelled, or mission-disabled UFO releases all
 targets. A target that becomes invalid is released without a capture result.
+
+## Tractor-beam target ownership
+
+Each accepted beam target owns one reservation containing hazard, beam, target,
+mission, world, and request revisions. A reserved dynamic object remains owned
+by
+its original domain until the capture transaction commits.
+
+The beam may apply bounded pull acceleration and orientation presentation while
+the reservation is valid. It cannot remove a traffic vehicle, mission prop,
+payload, or persistent world object from its owning service before the accepted
+capture or destruction result.
+
+At the capture point, the beam submits one typed result. The target's owning
+service decides whether to destroy, consume, detach, relocate, disable, or
+reject
+the result. Scene removal, render disappearance, and actor release are teardown
+consequences rather than gameplay authority.
+
+Cancelling the beam releases every reservation and restores normal simulation or
+enters the target's declared recovery policy. A target cannot remain referenced
+by a destroyed or unloaded hazard.
 
 ## UFO encounter contract
 

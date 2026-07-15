@@ -16,6 +16,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Flying-hazard and projectile runtime](flying-hazard-and-projectile-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Mission world-entity and respawn runtime](mission-world-entity-and-respawn-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
@@ -283,6 +285,52 @@ economy uses versioned mathematical curves for chapter income, permanent
 costumes, vehicles, repair, sleep, taxi work, wagers, and reasonable failure
 recovery. Every catalog revision explains changed totals and passes solvency and
 grind-bound tests.
+
+## Reward grants and merchandise offers
+
+A reward definition and a merchandise offer are different records. A reward
+describes what can be granted and under which progression predicate. An offer
+quotes one reward or service in a seller context with a price and availability
+revision.
+
+`FSharRewardGrantTransaction` contains:
+
+- reward definition identity;
+- source mission, race, collectible, purchase, achievement, or system identity;
+- granted vehicle, costume, currency, media, or feature identities;
+- participant and save-slot identity;
+- repeatability and ownership policy;
+- source and catalog revisions;
+- exactly-once transaction key; and
+- resulting progression revision.
+
+A reward grant validates every target identity before commit. Granting a vehicle
+or costume creates ownership of the existing canonical definition; it does not
+create another asset or alias identity.
+
+`FSharMerchandiseOffer` contains:
+
+- offer and reward identities;
+- seller role and seller placement identity;
+- chapter, mission, progression, and feature predicates;
+- exact currency price and currency kind;
+- stock and repeatability policy;
+- preview and presentation profile;
+- offer, catalog, and save revisions; and
+- replacement or supersession policy.
+
+Seller roles are catalog data rather than a fixed enum in runtime code. A shop,
+mission giver, contextual interaction, frontend menu, or mod feature can expose
+an offer only through a validated seller binding.
+
+Purchase uses the atomic transaction above. A stale offer, changed price,
+already-owned permanent reward, insufficient balance, missing seller, or invalid
+grant rejects before debit. A repeated accepted request returns the existing
+transaction result.
+
+Reward synchronization derives projections from the accepted save ledger. It
+does not copy mutable flags between a reward manager and a separate character
+sheet or rely on an update queue to converge state.
 
 ## Chapter collectible activation
 

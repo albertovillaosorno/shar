@@ -1,7 +1,7 @@
 # Camera rig, preset, and arbitration runtime
 
 - Status: Active
-- Last reviewed: 2026-07-14
+- Last reviewed: 2026-07-15
 
 ## Governing decisions and specifications
 
@@ -11,6 +11,7 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
 - [Camera system runtime](camera-system-runtime.md)
+- [Presentation playback runtime](presentation-playback-runtime.md)
 
 ## Purpose
 
@@ -406,9 +407,16 @@ A relative animated rig binds an authored camera animation to a stable target or
 anchor transform. The animation produces a local camera transform that is
 composed with one validated offset matrix and current target snapshot.
 
+The presentation playback subsystem owns asset readiness, animation lifecycle,
+skip, cancellation, owner correlation, and teardown. It submits one typed camera
+request carrying the presentation and owner revisions. The camera subsystem
+retains arbitration, view calculation, blend, preemption, and restoration
+authority.
+
 Pending mode switches, letterbox ownership, sequence completion, skip policy,
 and restoration follow the ordinary authored-camera request contract. Animation
-controllers cannot change gameplay state or select the next camera directly.
+controllers and presentation callbacks cannot change gameplay state, select the
+next camera, or restore a stale previous-camera pointer.
 
 ## Reverse rig
 

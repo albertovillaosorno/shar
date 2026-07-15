@@ -1,7 +1,7 @@
 # Platform cinematic media packaging
 
 - Status: Active
-- Last reviewed: 2026-07-13
+- Last reviewed: 2026-07-15
 
 ## Governing decisions and evidence
 
@@ -11,6 +11,10 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
 - [Unreal Engine](../../bibliography/engine-and-plugins/unreal-engine.md)
+
+## Related runtime specification
+
+- [Presentation playback runtime](presentation-playback-runtime.md)
 
 ## Purpose
 

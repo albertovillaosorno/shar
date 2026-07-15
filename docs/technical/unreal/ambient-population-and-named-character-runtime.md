@@ -1,12 +1,14 @@
 # Ambient population and named-character runtime
 
 - Status: Active
-- Last reviewed: 2026-07-14
+- Last reviewed: 2026-07-15
 
 ## Governing decisions
 
 <!-- markdownlint-disable-next-line MD013 -->
 - [Mass Entity ambient population](../../adr/unreal/runtime/mass-entity-ambient-population.md)
+- [Pedestrian path runtime](pedestrian-path-runtime.md)
+- [Presentation playback runtime](presentation-playback-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native flying-hazard actors and StateTree execution](../../adr/unreal/runtime/native-flying-hazard-actors-and-state-trees.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -210,6 +212,29 @@ A spawn candidate is eligible only when:
 
 Candidate ordering is deterministic by zone, path, spawn slot, and archetype.
 Each frame admits only the bounded number allowed by the population budget.
+
+## Pedestrian path integration
+
+Population zones select only paths whose chapter, gameplay-state, world-layer,
+and archetype predicates are active. Path assignment, segment progress,
+capacity,
+ZoneGraph projection, Smart Object handoff, promotion, and streaming follow the
+[pedestrian path runtime](pedestrian-path-runtime.md).
+
+A spawned ambient entity receives one accepted path reservation before movement.
+Population density cannot exceed path capacity by creating untracked walkers.
+When no eligible reservation exists, the planner waits, chooses another path, or
+skips one disposable spawn according to policy.
+
+Named-character promotion transfers the same path identity, segment progress,
+and reservation to the actor representation. A mission or interaction takeover
+may pause, reroute, or release the assignment, but it cannot strand path
+capacity.
+
+Cosmetic blink and facial-idle layers follow the
+[presentation playback runtime](presentation-playback-runtime.md). They remain
+non-authoritative and may scale with representation quality without changing
+identity, awareness, conversation, or mission behavior.
 
 ## Removal and streaming
 

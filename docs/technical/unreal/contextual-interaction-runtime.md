@@ -8,6 +8,8 @@
 - [Typed StateTree action sequences](../../adr/unreal/runtime/typed-state-tree-action-sequences.md)
 - [Typed action-sequence runtime](typed-action-sequence-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Mission world-entity and respawn runtime](mission-world-entity-and-respawn-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Transactional phone-booth vehicle retrieval](../../adr/unreal/runtime/transactional-phone-booth-vehicle-retrieval.md)
@@ -214,12 +216,16 @@ returns `already_collected` without replaying rewards.
 Repair pickups target the vehicle the player currently occupies. When the player
 is on foot, they target the last valid player-controlled vehicle retained by the
 vehicle-context service for the current chapter and sandbox state. A successful
-repair restores the
-complete driveable state and all visible damage channels supported by the
-vehicle
-runtime. The base respawn interval is approximately one minute and is authored
-as
-a duration, not encoded in the pickup actor.
+repair restores the complete driveable state and all visible damage channels
+supported by the vehicle runtime.
+
+Respawnable pickup families declare independent typed policies and durations.
+Repair, temporary boost, hazard, and mod-defined pickups do not share one global
+interval or runtime type switch. Cooldown, streaming, checkpoint, and
+restoration
+behavior follows the
+<!-- markdownlint-disable-next-line MD013 -->
+[mission world-entity and respawn runtime](mission-world-entity-and-respawn-runtime.md).
 
 Alien-camera collectibles are adversarial destructible targets rather than
 passive overlaps. Destruction, currency reward, level-progress credit, visual

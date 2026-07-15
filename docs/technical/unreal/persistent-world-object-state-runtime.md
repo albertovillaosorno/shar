@@ -1,7 +1,7 @@
 # Persistent world-object state runtime
 
 - Status: Active
-- Last reviewed: 2026-07-14
+- Last reviewed: 2026-07-15
 
 ## Governing decisions
 
@@ -15,6 +15,8 @@
 - [Native World Partition and Data Layers](../../adr/pipeline/unreal/world-partition-and-data-layer-import.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Collector cards, coins, rewards, gags, and wasps](../../adr/gameplay/collectibles/collectibles-rewards-gags-and-wasps.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Mission world-entity and respawn runtime](mission-world-entity-and-respawn-runtime.md)
 
 ## Purpose
 

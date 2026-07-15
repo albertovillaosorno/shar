@@ -1,7 +1,7 @@
 # Race route and opponent runtime
 
 - Status: Active
-- Last reviewed: 2026-07-14
+- Last reviewed: 2026-07-15
 
 ## Governing decisions
 
@@ -16,6 +16,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Driving, traffic, and vehicle behavior parity](../../adr/gameplay/vehicles/driving-traffic-and-vehicle-ai.md)
 - [Vehicle AI and route runtime](vehicle-ai-and-route-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Mission definition, stage, and objective runtime](mission-definition-stage-and-objective-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [HUD, radar, camera, and navigation parity](../../adr/unreal/ui/hud-radar-camera-and-navigation.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -130,6 +132,38 @@ lap ordinal, vehicle identity, fixed-step timestamp, and observation identity.
 Duplicate, stale, out-of-order, wrong-direction, or wrong-race observations are
 rejected.
 
+## Lap and checkpoint state machine
+
+Each participant owns one race-progress state containing:
+
+- race, route, and participant revisions;
+- current lap ordinal;
+- next required checkpoint ordinal;
+- accepted checkpoint prefix;
+- current path segment and normalized progress;
+- finish state and accepted finish tick; and
+- recovery snapshot identity.
+
+A checkpoint observation advances progress only when it matches the exact next
+required checkpoint for the active lap. Accepting the final route checkpoint may
+activate the finish projection, but it does not finish the race until the finish
+crossing itself is accepted.
+
+A closed route advances from the closure checkpoint to the next lap only after
+all required checkpoints in the current lap are accepted. The next lap begins
+with a new lap revision and checkpoint prefix. The final lap closes into the
+finish transaction instead of another rollover.
+
+Opponent progress uses the same checkpoint and lap contract. AI route
+controllers
+may publish candidate progress, but the race runtime validates checkpoint order,
+lap rollover, and finish before accepting it.
+
+A participant that unloads, becomes inactive, or loses its controller retains
+its last accepted progress or follows the declared withdrawal or recovery
+policy.
+It cannot be marked finished by disappearance.
+
 ## Race classes
 
 ### Time trial
@@ -230,6 +264,23 @@ loop, branch, shortcut, or reversed segment.
 
 HUD ordinal presentation is a projection of this tuple. A widget cannot become
 position authority.
+
+## Finish-position bonus evaluation
+
+A finish-position bonus objective consumes the accepted ordered finish result
+for
+one race revision. Its definition declares the required position, eligible
+participant, activation stage, reset policy, reward policy, and whether a tie is
+accepted.
+
+The bonus remains pending until the participant has an accepted finish result. A
+live HUD position, temporary overtake, opponent deactivation, route-marker
+state,
+or predicted ordering cannot satisfy or fail it.
+
+Checkpoint restore and full retry clear uncommitted finish-position evidence. An
+accepted mission result records the optional objective once with the same race
+and mission completion transaction.
 
 ## Timers and warnings
 

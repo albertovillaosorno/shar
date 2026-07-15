@@ -1,12 +1,13 @@
 # Typed action-sequence runtime
 
 - Status: Active
-- Last reviewed: 2026-07-14
+- Last reviewed: 2026-07-15
 
 ## Governing decisions
 
 <!-- markdownlint-disable-next-line MD013 -->
 - [Typed StateTree action sequences](../../adr/unreal/runtime/typed-state-tree-action-sequences.md)
+- [Presentation playback runtime](presentation-playback-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Contextual interaction query and transaction boundary](../../adr/unreal/runtime/contextual-interaction-query-and-transaction.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -373,6 +374,34 @@ changing the animation asset's frame count is forbidden.
 An idle montage may be superseded by a higher-priority locomotion or interaction
 action. Its cancellation restores the prior idle policy without reporting
 failure unless the sequence explicitly requires uninterrupted completion.
+
+## Presentation playback tasks
+
+A presentation task submits one typed request to the presentation playback
+subsystem and waits for one revision-correlated result. The task definition
+contains:
+
+- presentation definition identity;
+- owner and sequence revisions;
+- participant and target bindings;
+- required terminal result kinds;
+- skip and cancellation policy;
+- timeout and fallback policy; and
+- compensation behavior.
+
+The task cannot load arbitrary content, freeze world state, select a camera,
+inspect a render flag, or infer completion from animation time. Animation,
+camera, cosmetic, and media lifecycle follows the
+[presentation playback runtime](presentation-playback-runtime.md).
+
+`completed` or an explicitly accepted `skipped` result may satisfy the task.
+`cancelled`, `failed`, unavailable presentation, target loss, and owner
+replacement follow the task's declared transition. A stale result cannot advance
+a replacement sequence.
+
+Cancellation requests playback teardown and waits for compensation to complete
+before releasing the task's resources. The action sequence never restores input,
+camera, HUD, or world presentation through cached global state.
 
 ## Vehicle actions
 
