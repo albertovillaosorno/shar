@@ -237,6 +237,24 @@ def test_json_payload_rejects_duplicate_object_keys() -> None:
         )
 
 
+def test_duplicate_key_error_escapes_control_text() -> None:
+    """Duplicate JSON member names remain reversible and single-line."""
+    body = (
+        b'{"jsonrpc":"2.0","id":1,"result":'
+        b'{"bad\\ninjected":1,"bad\\ninjected":2}}'
+    )
+
+    with pytest.raises(ProtocolError) as caught:
+        _ = read_http_payload(
+            MemoryResponse(body, headers={"Content-Type": "application/json"}),
+            1,
+            max_response_bytes=len(body),
+        )
+
+    assert str(caught.value) == "duplicate JSON key: bad\\ninjected"
+    assert "\n" not in str(caught.value)
+
+
 def test_declared_content_length_fails_before_body_read() -> None:
     """An oversized or malformed Content-Length fails immediately."""
     with pytest.raises(ProtocolError, match="exceeded 4 bytes"):

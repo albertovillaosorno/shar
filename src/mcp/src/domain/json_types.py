@@ -66,7 +66,8 @@ class DuplicateJsonKeyError(ValueError):
 
     def __init__(self, key: str) -> None:
         """Create one duplicate-member failure."""
-        super().__init__(f"duplicate JSON key: {key}")
+        escaped_key = key.encode("unicode_escape").decode("ascii")
+        super().__init__(f"duplicate JSON key: {escaped_key}")
 
 
 def reject_duplicate_json_object(
