@@ -69,8 +69,12 @@ def package_version() -> str:
         resolved = distribution_version(_DISTRIBUTION_NAME)
     except PackageNotFoundError:
         resolved = _source_project_version()
-    if not resolved.strip():
-        fail_configuration("translator package version must not be empty")
+    if (
+        not resolved
+        or resolved != resolved.strip()
+        or any(not character.isprintable() for character in resolved)
+    ):
+        fail_configuration("translator package version is invalid")
     return resolved
 
 

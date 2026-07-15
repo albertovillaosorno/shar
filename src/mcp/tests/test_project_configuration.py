@@ -151,6 +151,31 @@ def test_translator_version_matches_package_metadata() -> None:
     assert project["version"] == package_version()
 
 
+@pytest.mark.parametrize(
+    "invalid_version",
+    ["1.0.0\ninjected", " 1.0.0 "],
+)
+def test_translator_version_rejects_noncanonical_text(
+    invalid_version: str,
+) -> None:
+    """Client metadata cannot retain controls or surrounding whitespace."""
+    package_version.cache_clear()
+    try:
+        with (
+            patch(
+                "mcp.src.adapters.driven.package_version.distribution_version",
+                return_value=invalid_version,
+            ),
+            pytest.raises(
+                ConfigurationError,
+                match="package version is invalid",
+            ),
+        ):
+            _ = package_version()
+    finally:
+        package_version.cache_clear()
+
+
 def test_translator_source_version_wraps_invalid_utf8(tmp_path: Path) -> None:
     """Unreadable source metadata remains a typed configuration failure."""
     metadata = tmp_path / "pyproject.toml"
