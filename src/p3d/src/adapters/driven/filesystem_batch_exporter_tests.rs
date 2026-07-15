@@ -46,7 +46,16 @@
 //! These cases protect JSON report identity and output path rules without
 //! creating persistent local state.
 
+#[cfg(windows)]
+use std::ffi::OsString;
+#[cfg(windows)]
+use std::os::windows::ffi::OsStringExt as _;
 use std::path::Path;
+#[cfg(windows)]
+use std::path::PathBuf;
+
+#[cfg(windows)]
+use schoenwald_filesystem::DiagnosticPath;
 
 use super::{
     escape_json, path_without_extension, report_line, root_identity_path,
@@ -68,6 +77,30 @@ fn report_rows_preserve_json_string_identity() {
     let escaped = escape_json(&error);
     let contains = row.contains(&escaped);
     assert!(contains);
+}
+
+#[cfg(windows)]
+#[test]
+fn report_rows_preserve_unpaired_utf16_path_units() {
+    let path = PathBuf::from(OsString::from_wide(&[
+        u16::from(b'a'),
+        0xd800,
+        u16::from(b'b'),
+    ]));
+    let row = report_line(
+        "failed",
+        &path,
+        &path,
+        &path,
+        "read failure",
+    );
+    let expected = escape_json(&DiagnosticPath::new(&path).to_string());
+
+    assert!(
+        row.contains(&expected),
+        "report row lost native path identity: {row:?}"
+    );
+    assert!(!row.contains('\u{fffd}'));
 }
 
 #[test]

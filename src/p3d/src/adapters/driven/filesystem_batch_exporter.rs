@@ -47,7 +47,7 @@
 //! completion and output identity stay local.
 use std::path::{Path, PathBuf};
 
-use schoenwald_filesystem::PathKind;
+use schoenwald_filesystem::{DiagnosticPath, PathKind};
 use schoenwald_filesystem::adapters::driving::local;
 
 use super::LosslessPackageExporter;
@@ -210,21 +210,9 @@ fn report_line(
             "\"error\":\"{}\"}}\n",
         ),
         escape_json(status),
-        escape_json(
-            &root
-                .display()
-                .to_string()
-        ),
-        escape_json(
-            &input
-                .display()
-                .to_string()
-        ),
-        escape_json(
-            &output
-                .display()
-                .to_string()
-        ),
+        escape_json(&DiagnosticPath::new(root).to_string()),
+        escape_json(&DiagnosticPath::new(input).to_string()),
+        escape_json(&DiagnosticPath::new(output).to_string()),
         escape_json(error)
     )
 }
