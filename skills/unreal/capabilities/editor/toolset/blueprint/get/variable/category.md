@@ -49,41 +49,58 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to inspect a Blueprint member variable's current My Blueprint
+category before SHAR reorganizes variable presentation.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use an exact Blueprint ref and a member variable returned by `list_variables`.
+- Do not pass local function variables.
+- Treat the result as editor organization metadata.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "blueprint": {"refPath": "/Game/B_SHAR_MCP_Blueprint_ReadFixture2.B_SHAR_MCP_Blueprint_ReadFixture2"},
+  "variable_name": "SHARReadVariable"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Across two disposable cycles, a newly added Boolean member variable returned
+category `Default`. After setting `SHAR|Verification`, two reads per cycle
+returned that exact category. Both cycles compiled successfully and the fixture
+was deleted afterward.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The current tool returned `Default` for an uncategorized new variable, despite
+  prose suggesting an empty string.
+- Category text can contain hierarchy separators such as `|`.
+- Categories affect editor organization, not runtime behavior.
+- Missing variables raise an explicit variable-not-found error.
+- Native pointer addresses inside error text are session-specific and should not
+  be asserted.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

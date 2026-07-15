@@ -46,41 +46,60 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to read the serialized default value of one exact Blueprint input
+pin before SHAR compares, verifies, or separately authorizes a pin change.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Obtain a `PinID` from `get_node_infos` or `get_node_type_pins`.
+- Prefer an input data pin that supports default values.
+- Keep the owning graph and node alive while consuming the PinID.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "pin": {
+    "node": {"refPath": "/Game/B_SHAR_MCP_Blueprint_ReadFixture2.B_SHAR_MCP_Blueprint_ReadFixture2:EventGraph.K2Node_IfThenElse_0"},
+    "direction": "EGPD_Input",
+    "index_id": 1
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+A disposable Branch node's Boolean `Condition` pin initially returned string
+`true`. After `set_pin_value` assigned `false`, two reads returned `false`.
+Reading the execution input, the `then` output, or the same output index through
+output direction returned an empty string.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Values are serialized strings rather than typed JSON primitives.
+- Execution pins and output pins can return an empty string instead of an error.
+- An empty string therefore does not prove a valid editable default-value pin.
+- Out-of-range `index_id` values raise an explicit error.
+- Pin indices and node refs can change after graph edits or recompilation.
+- Discover the exact PinID immediately before reading it.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
