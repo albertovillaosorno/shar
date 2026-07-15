@@ -48,6 +48,8 @@
 use std::io;
 use std::path::{Path, PathBuf};
 
+use schoenwald_filesystem::DiagnosticPath;
+
 use crate::domain::{format_unix_date, rtf_to_markdown};
 use crate::ports::RtfSource;
 
@@ -79,8 +81,7 @@ impl core::fmt::Display for ConvertReadmeError {
         write!(
             formatter,
             "failed to read {}: {}",
-            self.path
-                .display(),
+            DiagnosticPath::new(&self.path),
             self.source
         )
     }
@@ -147,4 +148,55 @@ fn header(date: Option<&str>) -> String {
     }
     header.push_str("\n---\n\n");
     header
+}
+
+#[cfg(test)]
+mod tests {
+    #[cfg(windows)]
+    use std::ffi::OsString;
+    use std::io;
+    #[cfg(windows)]
+    use std::os::windows::ffi::OsStringExt as _;
+    use std::path::Path;
+    #[cfg(windows)]
+    use std::path::PathBuf;
+
+    use super::ConvertReadme;
+    use crate::ports::{RtfSnapshot, RtfSource};
+
+    struct FailingSource;
+
+    impl RtfSource for FailingSource {
+        fn load(
+            &self,
+            _path: &Path,
+        ) -> io::Result<RtfSnapshot> {
+            Err(io::Error::other("read failure"))
+        }
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn read_error_preserves_unpaired_utf16_path_unit() {
+        let path = PathBuf::from(OsString::from_wide(&[
+            u16::from(b'a'),
+            0xd800,
+            u16::from(b'b'),
+        ]));
+
+        let result = ConvertReadme::execute(
+            &FailingSource,
+            &path,
+        );
+        let Err(error) = result else {
+            panic!("failing source unexpectedly converted");
+        };
+        let rendered = error.to_string();
+
+        assert!(
+            rendered.contains(r"a\u{D800}b"),
+            "diagnostic lost the native path unit: {rendered:?}"
+        );
+        assert!(!rendered.contains('\u{fffd}'));
+    }
 }
