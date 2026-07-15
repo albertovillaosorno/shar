@@ -51,6 +51,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import NamedTuple
 from urllib.parse import SplitResult, urlsplit
 
@@ -62,6 +63,7 @@ _ASCII_DELETE = 0x7F
 _DEFAULT_PORT = 8000
 _DEFAULT_PATH = "/mcp"
 _MAX_PORT = 65_535
+_MALFORMED_PERCENT_ESCAPE = re.compile(r"%(?![0-9A-Fa-f]{2})")
 
 
 def _validate_raw_endpoint_text(value: str) -> None:
@@ -75,6 +77,8 @@ def _validate_raw_endpoint_text(value: str) -> None:
         fail_endpoint("MCP endpoint must not contain whitespace")
     if not value.isascii():
         fail_endpoint("MCP endpoint must use ASCII URL text")
+    if _MALFORMED_PERCENT_ESCAPE.search(value) is not None:
+        fail_endpoint("MCP endpoint contains a malformed percent escape")
     if "?" in value or "#" in value:
         fail_endpoint("MCP endpoint must not contain a query or fragment")
 

@@ -69,6 +69,8 @@ if TYPE_CHECKING:
 def test_endpoint_accepts_only_explicit_loopback_http() -> None:
     endpoint = McpEndpoint.parse("http://127.0.0.1:8123/mcp")
     assert endpoint.url == "http://127.0.0.1:8123/mcp"
+    encoded = McpEndpoint.parse("http://127.0.0.1:8123/mcp%20v2")
+    assert encoded.path == "/mcp%20v2"
 
     with pytest.raises(EndpointValidationError):
         _ = McpEndpoint.parse("https://127.0.0.1:8123/mcp")
@@ -99,6 +101,9 @@ def test_endpoint_rejects_noncanonical_text_and_empty_port() -> None:
         "\x01http://127.0.0.1:8000/mcp",
         "http://127.0.0.1:8000/\x00mcp",
         "http://127.0.0.1:8000/☃",
+        "http://127.0.0.1:8000/mcp%",
+        "http://127.0.0.1:8000/mcp%2",
+        "http://127.0.0.1:8000/mcp%GG",
         "http://127.0.0.1:8000/mcp?",
         "http://127.0.0.1:8000/mcp#",
         "http://127.0.0.1:/mcp",
