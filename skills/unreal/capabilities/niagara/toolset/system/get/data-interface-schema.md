@@ -47,41 +47,63 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to discover editable properties for an exact Niagara Data
+Interface class before SHAR interprets or separately authorizes data-interface
+configuration.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Obtain the exact data-interface class from a Niagara type definition or
+  dependency read.
+- Parse `returnValue.propertySchema` as JSON when it is nonempty.
+- Use the concrete subclass schema rather than relying on the abstract base
+  class.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "dataInterfaceClass": {
+    "refPath": "/Script/Niagara.NiagaraDataInterfaceVectorField"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two VectorField calls returned four stable fields: VectorField asset plus X, Y,
+and Z tiling toggles. ColorCurve independently returned eleven fields covering
+four rich curves, optional curve asset, LUT use and optimization, curve
+exposure, threshold override, optimization threshold, and exposed binding name.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- `propertySchema` is nested JSON text and requires a second parse.
+- The abstract NiagaraDataInterface base class is a valid input but returns an
+  empty schema string.
+- Concrete subclasses can have substantially different and deeply nested
+  schemas.
+- Non-data-interface classes and missing classes fail during parameter
+  translation.
+- Schema availability does not authorize data-interface mutation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

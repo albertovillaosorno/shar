@@ -47,41 +47,62 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to discover indexed Niagara Dynamic Input assets compatible with
+an exact value type before SHAR chooses procedural input generation.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Obtain the exact Niagara type definition from module or input schema.
+- Preserve the `classStructOrEnum` ref exactly.
+- Treat returned assets as candidates requiring separate schema inspection.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "type": {
+    "classStructOrEnum": {
+      "refPath": "/Script/Niagara.NiagaraFloat"
+    }
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two calls per type returned stable inventories: 54 NiagaraFloat dynamic inputs,
+43 Vector3f inputs, and 14 NiagaraBool inputs. Results included curves, random
+ranges, arithmetic, masks, camera and position helpers, conversions,
+interpolation, comparison, and scalability assets.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Compatibility is type-based and does not prove suitability for a specific
+  module input or script usage.
+- Results are asset refs without schemas or default values.
+- Ordering reflects the live indexed catalog and should not be treated as
+  semantic ranking.
+- A valid but unsupported type such as StaticMesh returned `[]` rather than an
+  error.
+- Missing type-definition refs fail during parameter translation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
