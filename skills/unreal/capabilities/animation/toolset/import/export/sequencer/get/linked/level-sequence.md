@@ -46,41 +46,61 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to detect the LevelSequence linked to a SHAR AnimSequence before
+synchronization, re-export, ownership, or cleanup decisions.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass a valid AnimSequence asset.
+- Treat an empty string as a valid unlinked state.
+- Do not infer a link from skeleton compatibility or asset naming.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+    "anim_sequence": {
+        "refPath": (
+            "/Engine/Tutorial/SubEditors/TutorialAssets/Character/"
+            "Tutorial_Walk_Fwd.Tutorial_Walk_Fwd"
+        )
+    }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Tutorial_Walk_Fwd and Tutorial_Idle both returned `""`, proving a valid unlinked
+AnimSequence state. Passing a disposable LevelSequence failed with the explicit
+AnimSequence type error.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The return value is a plain content-path string.
+- `""` is the valid sentinel for no linked LevelSequence.
+- Direct `link_anim_sequence` currently reports its documented binding as
+  missing.
+- Export with `create_link=true` returned `false` in the compatible disposable
+  fixture, so positive link output remains upstream-blocked.
+- Engine tutorial assets were read only and never modified.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

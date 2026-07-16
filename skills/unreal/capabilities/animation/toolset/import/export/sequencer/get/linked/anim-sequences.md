@@ -49,41 +49,61 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to detect AnimSequences currently linked to a SHAR LevelSequence
+before export, rebake, synchronization, or cleanup decisions.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass a valid LevelSequence asset.
+- Treat an empty array as a valid unlinked state.
+- Do not infer links from skeletal animation sections alone.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+    "sequence": {
+        "refPath": (
+            "/Game/LS_SHAR_MCP_UnlinkedReadProbe_1."
+            "LS_SHAR_MCP_UnlinkedReadProbe_1"
+        )
+    }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two disposable LevelSequences returned `[]` for linked AnimSequences. Passing
+the engine Tutorial AnimSequences as the sequence argument failed with the
+explicit LevelSequence type error.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The return value is an already parsed array.
+- `[]` means no link metadata exists; it does not mean the sequence has no
+  animation tracks.
+- Direct `link_anim_sequence` currently rejects its documented binding argument.
+- `export_anim_sequence(create_link=true)` returned `false` in the compatible
+  disposable fixture, so populated-link output remains upstream-blocked.
+- Disposable sequence paths must not be persisted.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
