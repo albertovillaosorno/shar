@@ -69,7 +69,8 @@ independently verified.
 1. Apply the narrowest filters and limits available.
 1. Reject unknown fields copied from old schemas.
 
-Do not use `null`, an empty string, zero, or an empty array as a generic substitute
+Do not use `null`, an empty string, zero, or an empty array as a generic
+substitute
 for a missing required value.
 
 ## String identities
@@ -140,7 +141,8 @@ still accepted by the live schema.
 ## Enums and constrained strings
 
 Use only values present in the live enum or pattern. Preserve spelling and case.
-When the generated skill contains a long enum list, refresh `describe` instead of
+When the generated skill contains a long enum list, refresh `describe` instead
+of
 assuming the checked-in list is current.
 
 ## Command construction
@@ -200,7 +202,8 @@ partially completed operation.
 ## Promotion to manual guidance
 
 After successful independent verification, record a repository-safe example in
-the protected `Validated argument example` field. Include only the minimum fields
+the protected `Validated argument example` field. Include only the minimum
+fields
 needed to demonstrate the reproduced SHAR use case.
 
 ## Stop conditions

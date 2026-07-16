@@ -6,6 +6,7 @@ Generated from live MCP metadata; no engine source is copied.
 
 - Domain: Core and governance
 - Operational posture: **Persistent mutation likely**
+<!-- markdownlint-disable-next-line MD013 -->
 - Interface digest: `c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
 
 ## Native identities
@@ -105,6 +106,7 @@ An invalid verbosity value failed and left the restored `Log` state unchanged.
 1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
+<!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
 - Manual guidance status: **Current**
 

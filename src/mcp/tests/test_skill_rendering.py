@@ -59,6 +59,9 @@ from mcp.src.adapters.driven.skill_manual_field_schema import MANUAL_FIELDS
 from mcp.src.adapters.driven.skill_manual_review import (
     MANUAL_REVIEW_PLACEHOLDER,
 )
+from mcp.src.adapters.driven.skill_markdown_policy import (
+    render_unbreakable_line,
+)
 from mcp.src.adapters.driven.skill_markdown_renderer import (
     MarkdownSkillRenderer,
 )
@@ -107,6 +110,18 @@ def test_taxonomy_owns_every_known_toolset_once() -> None:
 
     with pytest.raises(ProtocolError, match="lacks skill taxonomy ownership"):
         _ = category_for_toolset("FuturePlugin.UnownedToolset")
+
+
+def test_unbreakable_generated_lines_use_one_exact_narrow_guard() -> None:
+    """Only generated lines beyond 80 columns receive the MD013 marker."""
+    short_line = "x" * 80
+    long_line = "x" * 81
+
+    assert render_unbreakable_line(short_line) == (short_line,)
+    assert render_unbreakable_line(long_line) == (
+        "<!-- markdownlint-disable-next-line MD013 -->",
+        long_line,
+    )
 
 
 def test_renderer_creates_one_explanatory_skill_per_capability() -> None:

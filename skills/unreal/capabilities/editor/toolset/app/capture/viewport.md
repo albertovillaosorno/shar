@@ -6,6 +6,7 @@ Generated from live MCP metadata; no engine source is copied.
 
 - Domain: Core and governance
 - Operational posture: **Review required**
+<!-- markdownlint-disable-next-line MD013 -->
 - Interface digest: `c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
 
 ## Native identities
@@ -104,7 +105,8 @@ the active camera.
 - Live viewport bytes are not deterministic even when dimensions and camera
   metadata are stable; compare visual content and structured metadata rather
   than hashes.
-- `bShowUI: false` hides editor overlays and may differ from the operator's exact
+- `bShowUI: false` hides editor overlays and may differ from the operator's
+  exact
   on-screen view.
 - Null annotations produce no grid or actor labels. Annotation settings must be
   bounded to avoid an incoherent image.
@@ -118,6 +120,7 @@ the active camera.
 1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
+<!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
 - Manual guidance status: **Current**
 

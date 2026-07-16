@@ -6,6 +6,7 @@ Generated from live MCP metadata; no engine source is copied.
 
 - Domain: Effects, physics, and procedural
 - Operational posture: **Expected read-only**
+<!-- markdownlint-disable-next-line MD013 -->
 - Interface digest: `c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
 
 ## Native identities
@@ -78,7 +79,8 @@ or audits a module in an effects stack.
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
 Repeated calls returned identical decoded metadata: asset name
-`InitializeParticle`, usage `Module`, visibility `Hidden`, bitmask `90`, category
+`InitializeParticle`, usage `Module`, visibility `Hidden`, bitmask `90`,
+category
 `Initialization`, deprecated true, and suggested false. AssetTools independently
 returned class `NiagaraScript` and matching raw registry tags.
 <!-- END MANUAL FIELD: project-verification -->
@@ -88,7 +90,8 @@ returned class `NiagaraScript` and matching raw registry tags.
 <!-- BEGIN MANUAL FIELD: known-caveats -->
 - The tool reads Asset Registry tags and does not load the UObject.
 - Metadata represents the exposed published version, not hidden script versions.
-- Raw AssetTools tags encode booleans and integers as strings; the digest returns
+- Raw AssetTools tags encode booleans and integers as strings; the digest
+  returns
   typed values.
 - A missing object path raises `No asset found` rather than returning an empty
   digest.
@@ -100,6 +103,7 @@ returned class `NiagaraScript` and matching raw registry tags.
 1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
+<!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
 - Manual guidance status: **Current**
 

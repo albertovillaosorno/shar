@@ -38,12 +38,14 @@ Inspect the live description for possible side effects such as:
 1. Check JSON-RPC and native `isError` state.
 1. Inspect structured output before prose or logs.
 1. Validate returned identities and counts.
-1. Follow pagination until complete or until the approved evidence is sufficient.
+1. Follow pagination until complete or until the approved evidence is
+   sufficient.
 1. Record whether the result is a snapshot, cache, or live editor query.
 
 ## Scope control
 
-Large worlds, registries, logs, graphs, test catalogs, and hierarchies can create
+Large worlds, registries, logs, graphs, test catalogs, and hierarchies can
+create
 unreviewable output. Prefer:
 
 - exact asset or object identity;

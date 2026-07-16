@@ -69,7 +69,8 @@ Inspect graph ownership, node identities, pins, links, and compilation state.
 
 ### Sequencer or Control Rig mutation
 
-Inspect binding, track, section, channel, key, frame, control, or hierarchy state
+Inspect binding, track, section, channel, key, frame, control, or hierarchy
+state
 at the exact requested scope.
 
 ### Plugin or Game Feature transition
@@ -93,12 +94,14 @@ Determine whether completion requires:
 - plugin or Game Feature state confirmation;
 - repository validation.
 
-A correct in-memory state is incomplete when the requested outcome is persistent.
+A correct in-memory state is incomplete when the requested outcome is
+persistent.
 
 ## Record reusable project evidence
 
 After successful independent verification, update only relevant protected fields
-in the per-tool skill. Record reproducible prerequisites, arguments, verification
+in the per-tool skill. Record reproducible prerequisites, arguments,
+verification
 steps, and caveats.
 
 Keep `[TODO]` or `[FILL_ME]` when evidence remains incomplete, ambiguous, or not
@@ -215,6 +218,7 @@ Stop and escalate when recovery would require:
 - modifying Epic's native plugin source;
 - disabling transport, protocol, schema, or safety validation;
 - deleting unknown assets or broad editor state;
-- enabling an outbound MCP client not present in the current project configuration;
+- enabling an outbound MCP client not present in the current project
+  configuration;
 - guessing whether an asynchronous mutation completed;
 - operating beyond approved target scope.

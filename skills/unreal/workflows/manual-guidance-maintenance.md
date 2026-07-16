@@ -1,6 +1,7 @@
 # Manual guidance maintenance
 
-Read [`../index.md`](../index.md) and the exact per-tool skill before editing any
+Read [`../index.md`](../index.md) and the exact per-tool skill before editing
+any
 protected field.
 
 ## Goal
@@ -163,12 +164,14 @@ the new native tool has equivalent semantics and schema.
 
 - The field contains project-specific evidence, not copied native prose.
 - The live schema still matches the argument and prerequisite claims.
-- The example uses stable project identities rather than workstation-specific values.
+- The example uses stable project identities rather than workstation-specific
+  values.
 - The example scope is narrow and safe to adapt.
 - Verification uses a separate evidence source.
 - Marker identities and order are unchanged.
 - Unresolved uncertainty remains visible as a placeholder.
-- The reviewed revision equals the current revision only after live revalidation.
+- The reviewed revision equals the current revision only after live
+  revalidation.
 - The central index counts match the per-skill status values.
 
 ## Stop conditions
@@ -181,5 +184,6 @@ Stop and repair before regeneration when:
 - the generated status says **Review required** and the task depends on the
   stale guidance;
 - the evidence came from another project and was not reproduced;
-- the proposed text would imply a broader state change than the reproduced evidence;
+- the proposed text would imply a broader state change than the reproduced
+  evidence;
 - a rename would require guessing whether prior guidance still applies.

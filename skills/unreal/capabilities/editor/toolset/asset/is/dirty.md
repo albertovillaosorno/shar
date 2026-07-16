@@ -6,6 +6,7 @@ Generated from live MCP metadata; no engine source is copied.
 
 - Domain: Assets and data
 - Operational posture: **Expected read-only**
+<!-- markdownlint-disable-next-line MD013 -->
 - Interface digest: `c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
 
 ## Native identities
@@ -73,7 +74,8 @@ fixture was clean.
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
 Two calls returned `false`. Existence, class, registry-tag, and metadata reads
-remained stable, and checkout state also returned `false`. A missing asset raised
+remained stable, and checkout state also returned `false`. A missing asset
+raised
 `Asset does not exist`.
 <!-- END MANUAL FIELD: project-verification -->
 
@@ -93,6 +95,7 @@ remained stable, and checkout state also returned `false`. A missing asset raise
 1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
+<!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
 - Manual guidance status: **Current**
 

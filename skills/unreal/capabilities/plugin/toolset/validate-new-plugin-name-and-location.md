@@ -6,6 +6,7 @@ Generated from live MCP metadata; no engine source is copied.
 
 - Domain: Core and governance
 - Operational posture: **Expected read-only**
+<!-- markdownlint-disable-next-line MD013 -->
 - Interface digest: `c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
 
 ## Native identities
@@ -99,7 +100,8 @@ not permit engine placement.
   the verified editor session.
 - The template descriptor must exactly match one returned by live discovery; a
   reconstructed descriptor with an invented path is rejected.
-- `true` proves only the current preflight result. It does not create the plugin,
+- `true` proves only the current preflight result. It does not create the
+  plugin,
   prove later filesystem writes, compile modules, save packages, or prevent the
   name from becoming occupied before creation.
 - Engine placement is rejected when `bCanBePlacedInEngine` is false.
@@ -111,6 +113,7 @@ not permit engine placement.
 [REVIEW_REQUIRED]
 <!-- END MANUAL FIELD: manual-review-revision -->
 
+<!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
 - Manual guidance status: **Review required**
 

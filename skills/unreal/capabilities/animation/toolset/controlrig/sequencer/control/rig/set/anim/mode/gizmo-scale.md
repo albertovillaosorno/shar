@@ -1,11 +1,13 @@
 # Set anim mode gizmo scale
 
+<!-- markdownlint-disable-next-line MD013 -->
 [Return to the central Unreal MCP index](../../../../../../../../../../index.md).
 
 Generated from live MCP metadata; no engine source is copied.
 
 - Domain: Animation and cinematics
 - Operational posture: **Persistent mutation likely**
+<!-- markdownlint-disable-next-line MD013 -->
 - Interface digest: `c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
 
 ## Native identities
@@ -82,6 +84,7 @@ A revision mismatch marks preserved guidance for human review.
 [REVIEW_REQUIRED]
 <!-- END MANUAL FIELD: manual-review-revision -->
 
+<!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
 - Manual guidance status: **Review required**
 

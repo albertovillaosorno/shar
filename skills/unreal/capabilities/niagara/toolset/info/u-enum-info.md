@@ -6,6 +6,7 @@ Generated from live MCP metadata; no engine source is copied.
 
 - Domain: Effects, physics, and procedural
 - Operational posture: **Review required**
+<!-- markdownlint-disable-next-line MD013 -->
 - Interface digest: `c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
 
 ## Native identities
@@ -95,7 +96,8 @@ Independent reflected engine metadata confirmed the declared sequence from
   every member is an appropriate user-facing or runtime input.
 - Display names and descriptions are diagnostic metadata and must not replace
   canonical enum names in tool arguments.
-- A class path, missing enum, or empty reference raises a native parameter error.
+- A class path, missing enum, or empty reference raises a native parameter
+  error.
 - Numeric enum values and membership can change with the engine or plugin
   version; query the live editor before constructing dependent arguments.
 <!-- END MANUAL FIELD: known-caveats -->
@@ -106,6 +108,7 @@ Independent reflected engine metadata confirmed the declared sequence from
 1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
+<!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
 - Manual guidance status: **Current**
 

@@ -129,7 +129,8 @@ Before a persistent mutation, retain:
 
 ### One clear capability
 
-Open the exact skill, refresh its schema, and continue to the appropriate read or
+Open the exact skill, refresh its schema, and continue to the appropriate read
+or
 mutation workflow.
 
 ### Two plausible capabilities

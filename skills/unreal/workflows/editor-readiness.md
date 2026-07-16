@@ -183,4 +183,5 @@ Stop before any tool call when:
 - the generated digest is stale;
 - a required editor context is missing;
 - completing readiness would require modifying Epic plugin source;
-- cleanup would require terminating a process not launched by the current operation.
+- cleanup would require terminating a process not launched by the current
+  operation.

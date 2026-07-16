@@ -6,6 +6,7 @@ Generated from live MCP metadata; no engine source is copied.
 
 - Domain: Core and governance
 - Operational posture: **Execution or transient mutation likely**
+<!-- markdownlint-disable-next-line MD013 -->
 - Interface digest: `c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
 
 ## Native identities
@@ -49,7 +50,8 @@ A revision mismatch marks preserved guidance for human review.
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
 Use this tool to execute a small, explicitly reviewed set of Unreal automation
-tests by their exact full paths after SHAR has discovered and listed them. Prefer
+tests by their exact full paths after SHAR has discovered and listed them.
+Prefer
 this capability when the intended identities are already known and the target
 set is easier to audit as a list than as a filter.
 <!-- END MANUAL FIELD: project-use-cases -->
@@ -108,6 +110,7 @@ The validated call executed exactly one test and returned `total: 1`,
 1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
+<!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
 - Manual guidance status: **Current**
 

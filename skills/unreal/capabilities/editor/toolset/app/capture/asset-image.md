@@ -6,6 +6,7 @@ Generated from live MCP metadata; no engine source is copied.
 
 - Domain: Core and governance
 - Operational posture: **Review required**
+<!-- markdownlint-disable-next-line MD013 -->
 - Interface digest: `c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
 
 ## Native identities
@@ -91,7 +92,8 @@ A missing engine asset path raised `Asset not found` and produced no image.
 - A valid preview does not prove source provenance, package validity, material
   correctness, animation behavior, collision, or runtime integration.
 - Missing assets raise a native error rather than returning an empty image.
-- Repeated previews can be stable for a static cached asset, but byte identity is
+- Repeated previews can be stable for a static cached asset, but byte identity
+  is
   not a general contract for every asset type.
 <!-- END MANUAL FIELD: known-caveats -->
 
@@ -101,6 +103,7 @@ A missing engine asset path raised `Asset not found` and produced no image.
 1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
+<!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
 - Manual guidance status: **Current**
 

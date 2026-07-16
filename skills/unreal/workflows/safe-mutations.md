@@ -129,7 +129,8 @@ Inspect node identity, pins, links, graph ownership, and compilation state.
 
 ### Sequencer or Control Rig mutation
 
-Inspect the exact binding, track, section, channel, key, frame, or control state.
+Inspect the exact binding, track, section, channel, key, frame, or control
+state.
 
 ### Plugin or Game Feature mutation
 

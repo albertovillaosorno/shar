@@ -60,6 +60,9 @@ from mcp.src.adapters.driven.skill_description import (
     parse_description,
 )
 from mcp.src.adapters.driven.skill_manual_fields import render_manual_section
+from mcp.src.adapters.driven.skill_markdown_policy import (
+    render_unbreakable_line,
+)
 from mcp.src.adapters.driven.skill_schema_renderer import (
     example_arguments,
     render_example_json,
@@ -107,13 +110,17 @@ def render_tool_skill(
     lines = [
         f"# {_display_name(tool.name)}",
         "",
-        f"[Return to the central Unreal MCP index]({index_link}).",
+        *render_unbreakable_line(
+            f"[Return to the central Unreal MCP index]({index_link})."
+        ),
         "",
         _GENERATED_NOTICE,
         "",
         f"- Domain: {category.title}",
         f"- Operational posture: **{posture.label}**",
-        f"- Interface digest: `{revision.interface_digest}`",
+        *render_unbreakable_line(
+            f"- Interface digest: `{revision.interface_digest}`"
+        ),
         "",
         "## Native identities",
         "",

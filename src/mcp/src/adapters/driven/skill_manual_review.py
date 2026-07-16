@@ -47,6 +47,9 @@ from __future__ import annotations
 import re
 from typing import NamedTuple
 
+from mcp.src.adapters.driven.skill_markdown_policy import (
+    render_unbreakable_line,
+)
 from mcp.src.domain.errors import fail_protocol
 
 MANUAL_REVIEW_FIELD_KEY = "manual-review-revision"
@@ -80,7 +83,9 @@ def render_manual_review_lines(
     """
     state = _state(current_revision, reviewed_revision)
     return [
-        f"- Current revision: `{state.current_revision}`",
+        *render_unbreakable_line(
+            f"- Current revision: `{state.current_revision}`"
+        ),
         (
             "- Manual guidance status: "
             f"**{_status_label(is_current=state.is_current)}**"

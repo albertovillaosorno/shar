@@ -55,6 +55,9 @@ import textwrap
 from html import escape
 from typing import TYPE_CHECKING, cast
 
+from mcp.src.adapters.driven.skill_markdown_policy import (
+    render_unbreakable_line,
+)
 from mcp.src.domain.errors import fail_protocol
 from mcp.src.domain.json_types import JsonObject, JsonValue, require_json_object
 
@@ -180,7 +183,7 @@ def _field_lines(
     pattern = schema.get("pattern")
     if isinstance(pattern, str) and pattern:
         pattern = _inline_schema_text(pattern, "pattern")
-        lines.append(f"- Pattern: `{pattern}`")
+        lines.extend(render_unbreakable_line(f"- Pattern: `{pattern}`"))
     lines.extend(["- Purpose:", ""])
     lines.extend(_wrapped_note(description or _missing_description(name)))
     lines.append("")

@@ -6,6 +6,7 @@ Generated from live MCP metadata; no engine source is copied.
 
 - Domain: Core and governance
 - Operational posture: **Expected read-only**
+<!-- markdownlint-disable-next-line MD013 -->
 - Interface digest: `c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
 
 ## Native identities
@@ -57,9 +58,11 @@ the lightweight state check before requesting detailed per-test results.
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
 - `DiscoverTests` must have completed successfully in the same editor session.
-- When monitoring a run, retain the exact selected test identities and invocation
+- When monitoring a run, retain the exact selected test identities and
+  invocation
   evidence separately.
-- Poll at a bounded cadence; do not treat repeated transport success as progress.
+- Poll at a bounded cadence; do not treat repeated transport success as
+  progress.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
@@ -100,6 +103,7 @@ exact `RunTestsByFilter`, it again reported one complete and passed test but
 1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
+<!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
 - Manual guidance status: **Current**
 

@@ -13,7 +13,8 @@ deterministic and reviewable than a sequence of individual terminal calls.
 Use this workflow for a tool that executes Python or another native editor-side
 script capable of calling multiple Toolset Registry capabilities.
 
-Do not choose programmatic execution merely because it is shorter to type. Prefer
+Do not choose programmatic execution merely because it is shorter to type.
+Prefer
 individual calls when they provide clearer state boundaries, per-step
 verification, or simpler recovery.
 
@@ -38,7 +39,8 @@ Before writing a script:
 1. Record the allowed modules, helper objects, execution limits, and required
    entry-point signature.
 1. Stop when the returned environment differs from the generated skill.
-1. Do not import filesystem, process, network, or operating-system modules unless
+1. Do not import filesystem, process, network, or operating-system modules
+   unless
    the live environment explicitly permits and the task requires them.
 
 ## Script design

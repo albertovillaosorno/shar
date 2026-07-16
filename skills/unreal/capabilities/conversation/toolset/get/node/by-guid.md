@@ -6,6 +6,7 @@ Generated from live MCP metadata; no engine source is copied.
 
 - Domain: Gameplay and AI
 - Operational posture: **Expected read-only**
+<!-- markdownlint-disable-next-line MD013 -->
 - Interface digest: `c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
 
 ## Native identities
@@ -79,6 +80,7 @@ A revision mismatch marks preserved guidance for human review.
 [REVIEW_REQUIRED]
 <!-- END MANUAL FIELD: manual-review-revision -->
 
+<!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
 - Manual guidance status: **Review required**
 
@@ -108,6 +110,7 @@ Represents a reference to a UObject or UClass.
 
 - Required: **yes**
 - Type: `string`
+<!-- markdownlint-disable-next-line MD013 -->
 - Pattern: `^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$`
 - Purpose:
 

@@ -53,6 +53,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from mcp.src.adapters.driven.skill_document_layout import tool_skill_path
+from mcp.src.adapters.driven.skill_markdown_policy import (
+    render_unbreakable_line,
+)
 from mcp.src.domain.errors import fail_protocol
 from mcp.src.domain.skill_categories import CATEGORIES, SkillCategory
 
@@ -112,8 +115,12 @@ def render_root_index(
         "Every link opens one focused per-tool skill.",
         "",
         f"- Unreal MCP version: `{revision.unreal_mcp_version}`",
-        f"- Interface digest: `{revision.interface_digest}`",
-        f"- Manual review revision: `{revision.token}`",
+        *render_unbreakable_line(
+            f"- Interface digest: `{revision.interface_digest}`"
+        ),
+        *render_unbreakable_line(
+            f"- Manual review revision: `{revision.token}`"
+        ),
         f"- Toolsets: **{toolset_count}**",
         f"- Capabilities: **{tool_count}**",
         f"{_MANUAL_CURRENT_PREFIX}0**",
@@ -143,7 +150,8 @@ def render_root_index(
         "## Workflow skills",
         "",
     ]
-    lines.extend(f"- [{title}]({path})" for title, path in _WORKFLOWS)
+    for title, path in _WORKFLOWS:
+        lines.extend(render_unbreakable_line(f"- [{title}]({path})"))
     lines.extend(["", "## Capability taxonomy", ""])
     for category in CATEGORIES:
         lines.extend(_category_lines(category, grouped[category.slug]))
@@ -172,10 +180,9 @@ def _category_lines(
                 "",
             ]
         )
-        lines.extend(
-            f"- [`{tool.name}`]({tool_skill_path(toolset, tool)})"
-            for tool in sorted(toolset.tools, key=lambda item: item.name)
-        )
+        for tool in sorted(toolset.tools, key=lambda item: item.name):
+            link = f"- [`{tool.name}`]({tool_skill_path(toolset, tool)})"
+            lines.extend(render_unbreakable_line(link))
         lines.append("")
     return lines
 

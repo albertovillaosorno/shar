@@ -85,7 +85,8 @@ _REQUIRED_SKILL_SECTIONS = (
     "## Common failure modes",
 )
 _MAX_SKILL_LINES = 300
-_MAX_PROSE_LINE_LENGTH = 100
+_MAX_PROSE_LINE_LENGTH = 80
+_MARKDOWNLINT_MD013_NEXT_LINE = "<!-- markdownlint-disable-next-line MD013 -->"
 _GENERAL_POLICY_TERMS = (
     "approval",
     "permission from the user",
@@ -164,6 +165,8 @@ def test_generated_tree_counts_and_page_bounds_are_stable() -> None:
     assert len(skill_files) == _EXPECTED_SKILL_FILES
     assert expected_sample.is_file()
     assert not nested_indexes
+    for path in generated:
+        _assert_generated_line_policy(path)
     for path in skill_files:
         _assert_skill_quality(path)
 
@@ -206,14 +209,20 @@ def _assert_skill_quality(path: Path) -> None:
     assert _REVISION_PATTERN.search(text) is not None
     assert _STATUS_PATTERN.search(text) is not None
 
+
+def _assert_generated_line_policy(path: Path) -> None:
+    text = path.read_text(encoding="utf-8")
+    lines = text.splitlines()
     in_code_block = False
-    for line in lines:
+    for index, line in enumerate(lines):
         if line.startswith("```"):
             in_code_block = not in_code_block
             continue
         assert line.rstrip() == line
-        if not in_code_block:
-            assert len(line) <= _MAX_PROSE_LINE_LENGTH
+        if in_code_block or len(line) <= _MAX_PROSE_LINE_LENGTH:
+            continue
+        assert index > 0
+        assert lines[index - 1] == _MARKDOWNLINT_MD013_NEXT_LINE
     assert not in_code_block
 
 
