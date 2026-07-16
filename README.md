@@ -115,7 +115,7 @@ The primary delivery sequence is fixed by decision record. Current status is:
 | :--- | :--- | :--- |
 | 1 | Decode required source evidence | Complete |
 | 2 | Generate the minor-unit manifest | Complete |
-| 3 | Classify deterministic packages | In progress |
+| 3 | Classify deterministic packages | Complete |
 | 4 | Generate semantically prepared first-principles binary FBX | In progress |
 | 5 | Establish native Unreal MCP terminal control | In progress |
 | 6 | Create native Unreal assets | Planned |
@@ -125,10 +125,12 @@ The primary delivery sequence is fixed by decision record. Current status is:
 | 10 | Package validated native platform builds | Planned |
 | 11 | Optimize, verify, document, and close | Planned |
 
-Phase 3 remains in progress until every successful manifest row has concrete
-classification, complete source linkage, no successful `unknown` result, and
-repeatable generation with stable identities, ordering, membership, and rendered
-rows.
+Phase 3 is complete. A fresh audit covered all 119,361 manifest units with zero
+failures or error rows. The generated index contains 2,964 unique packages with
+concrete classifications, complete one-time physical coverage, valid source
+linkage, and no successful placeholder or error result. Two complete generations
+were byte-identical, including package identities, ordering, membership, roles,
+category and subcategory counts, and rendered rows.
 
 The status table is informational, not a delivery warranty.
 
@@ -513,12 +515,13 @@ Completion criteria:
 
 ### Phase 3 — Organize minor units into packages
 
-**Status:** In progress.
+**Status:** Complete.
 
-**Executive result:** The implemented package-index path composes isolated
-records into deterministic entity packages for downstream planning. Final
-coverage acceptance remains open until the generated evidence satisfies the
-complete classification and repeatability contract.
+**Executive result:** The package-index path composes every accepted minor unit
+into deterministic entity packages for downstream planning. Fresh generated
+evidence proves complete classification, source linkage, one-time physical
+coverage, and repeatability across all 119,361 manifest units and 2,964 package
+rows.
 
 Implemented boundary work:
 
@@ -530,15 +533,15 @@ Implemented boundary work:
   worlds, and do-not-import metadata.
 - [x] Reject successful placeholder labels and error package identifiers.
 
-Remaining acceptance work:
+Completed acceptance work:
 
-- [ ] Regenerate the complete package index from the current manifest.
-- [ ] Prove that every successful row has a concrete category and subcategory,
+- [x] Regenerate the complete package index from the current manifest.
+- [x] Prove that every successful row has a concrete category and subcategory,
   complete source linkage, and no successful `unknown` or error classification.
-- [ ] Repeat generation and compare package identities, ordering, membership,
+- [x] Repeat generation and compare package identities, ordering, membership,
   member roles, category counts, subcategory counts, and rendered rows.
-- [ ] Record current totals only from the validated generated evidence instead of
-  retaining a historical package count in this roadmap.
+- [x] Record current totals only from validated generated evidence: 119,361
+  manifest units and 2,964 deterministic package rows.
 
 Completion criteria:
 
