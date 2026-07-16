@@ -47,42 +47,63 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to attach reviewed package metadata to a SHAR asset for local
+provenance, workflow state, or bounded automation markers.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass an existing editable asset content path.
+- Read current package metadata before setting values.
+- Keep metadata distinct from Asset Registry tags.
+- Save the asset after accepted metadata changes when persistence matters.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "asset_path": "/Game/SHAR_MCP_AssetLifecycle_8/ST_Original",
+  "set_tags": {
+    "SHARProbe": "AssetLifecycle",
+    "Cycle": "8"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two cycles returned JSON null and GetMetadataTags immediately read back
+`SHARProbe` and `Cycle`. GetAssetTags did not expose those package metadata
+values.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This is a persistent package-metadata mutation and returns JSON null.
+- Package metadata is separate from Asset Registry tags and FindAssets tag
+  filters.
+- Duplicating the asset preserved content but produced an empty metadata map.
+- Metadata authored on a duplicate was preserved when that asset moved.
+- Removing metadata is currently blocked by UStruct conversion whether
+  `set_tags` is omitted, empty, or nonempty; do not claim removal success.
+- Verify changes with GetMetadataTags rather than GetAssetTags.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

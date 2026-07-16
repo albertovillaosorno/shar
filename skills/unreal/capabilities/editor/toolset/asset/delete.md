@@ -47,42 +47,57 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to remove a disposable SHAR asset or bounded folder after
+references, rollback requirements, and ownership have been checked.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Confirm the exact path belongs to the current task.
+- Inspect referencers before deleting shared assets.
+- Preserve recoverable data when rollback may be needed.
+- Never use a broad project folder as disposable cleanup scope.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "path": "/Game/SHAR_MCP_AssetLifecycle_8"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two cycles recursively removed the disposable folder containing the original,
+copied, and moved StringTables. The operation returned true and Exists confirmed
+the folder was absent.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This is destructive and may remove a folder recursively.
+- Boolean return values are not sufficient cleanup evidence: imported
+  StringTable cleanup previously returned false while Exists reported false.
+- Always verify the exact path is absent after the operation.
+- Removing assets can leave broken references in other packages.
+- Do not remove unrelated dirty or concurrently owned content.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
