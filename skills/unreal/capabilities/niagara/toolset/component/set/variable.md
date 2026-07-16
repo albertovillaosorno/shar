@@ -48,42 +48,75 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to set a typed per-component Niagara user override for a SHAR
+effect instance without modifying the system asset default.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Assign the intended NiagaraSystem first.
+- Discover the exact user parameter name and Niagara type from the system.
+- Keep the variable type and value struct identical.
+- Read `instanceParameterOverrides` after writing.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+    "component": {
+    "refPath": (
+        "/Temp/Untitled_1.Untitled_1:PersistentLevel."
+        "NiagaraActor_1.NiagaraComponent0"
+    )
+},
+    "variable": {
+        "name": "User.SHARSpeed",
+        "type": {
+            "classStructOrEnum": {
+                "refPath": "/Script/Niagara.NiagaraFloat"
+            }
+        },
+        "value": {
+            "struct": {"refPath": "/Script/Niagara.NiagaraFloat"},
+            "value": {"value": 8.5},
+        },
+    },
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two cycles wrote float `8.5` as bytes `[0, 0, 8, 65]`, then replaced it with
+`12.5` as `[0, 0, 72, 65]` while retaining one matching override.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This mutation returns JSON null and performs no schema-membership validation.
+- Unknown names are accepted and create new raw overrides.
+- The same name with another Niagara type is accepted as a second override.
+- A mismatched value struct is also accepted and can overwrite bytes under the
+  declared type; one float override received Int32 bytes `[7, 0, 0, 0]`.
+- Validate name, type, and struct before calling, then independently inspect
+  override bytes.
+- A StaticMesh component argument fails NiagaraComponent type validation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

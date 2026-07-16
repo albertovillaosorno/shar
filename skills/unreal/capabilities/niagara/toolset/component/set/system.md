@@ -48,42 +48,71 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to assign or replace the NiagaraSystem used by a SHAR
+NiagaraComponent while preserving component initialization semantics.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass a live NiagaraComponent and a valid NiagaraSystem asset.
+- Capture current `asset` and `instanceParameterOverrides` first.
+- Decide explicitly whether compatible overrides should be preserved.
+- Use a disposable actor or component for validation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+    "niagaraComponent": {
+    "refPath": (
+        "/Temp/Untitled_1.Untitled_1:PersistentLevel."
+        "NiagaraActor_1.NiagaraComponent0"
+    )
+},
+    "system": {
+    "refPath": (
+        "/Game/NS_SHAR_MCP_ComponentA_5."
+        "NS_SHAR_MCP_ComponentA_5"
+    )
+},
+    "bResetExistingOverrideParameters": True,
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two cycles assigned system A to an empty NiagaraComponent, switched to
+compatible system B with reset false, and switched back to A with reset true.
+Every successful call returned JSON null.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Component and spawned actor paths are transient world identities.
+- Assigning the same system again raises `New Niagara System is the same as the
+  existing System`.
+- In this fixture, compatible `User.SHARSpeed` overrides survived both reset
+  false and reset true system switches.
+- Do not assume the reset flag cleared overrides; re-read
+  `instanceParameterOverrides`.
+- A StaticMesh component argument fails NiagaraComponent type validation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
