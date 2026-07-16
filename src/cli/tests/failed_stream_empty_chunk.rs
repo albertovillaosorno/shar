@@ -45,12 +45,16 @@
 //!
 //! Delivery summaries classify chunks according to stream state first.
 
+#[path = "support/output_error.rs"]
+mod support;
+
 use std::io;
 
 use schoenwald_cli::{
     ArgumentError, ArgumentSource, CliProgram, CommandOutcome, OutputSink,
     OutputStream, RunInvocation,
 };
+use support::output_error;
 
 struct EmptyArguments;
 
@@ -99,16 +103,13 @@ fn empty_chunk_after_failed_stream_is_suppressed() {
     let mut arguments = EmptyArguments;
     let mut output = DenyStandardOutput;
 
-    let result = RunInvocation::execute(
-        &EmptyAfterFailureProgram,
-        &mut arguments,
-        &mut output,
+    let error = output_error(
+        RunInvocation::execute(
+            &EmptyAfterFailureProgram,
+            &mut arguments,
+            &mut output,
+        ),
     );
-
-    assert!(result.is_err());
-    let Some(error) = result.err() else {
-        return;
-    };
     assert_eq!(
         error.output_chunk_count(),
         3

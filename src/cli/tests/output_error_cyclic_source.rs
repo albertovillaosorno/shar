@@ -45,6 +45,9 @@
 //!
 //! Custom error sources may form cycles and must not be revisited repeatedly.
 
+#[path = "support/output_error.rs"]
+mod support;
+
 use std::error::Error;
 use std::io;
 use std::sync::Arc;
@@ -54,6 +57,7 @@ use schoenwald_cli::{
     ArgumentError, ArgumentSource, CliProgram, CommandOutcome, OutputSink,
     OutputStream, RunInvocation,
 };
+use support::output_error;
 
 struct EmptyArguments;
 
@@ -130,16 +134,13 @@ fn cyclic_provider_source_stops_after_canonicalization() {
         source_calls: Arc::clone(&source_calls),
     };
 
-    let result = RunInvocation::execute(
-        &DiagnosticProgram,
-        &mut arguments,
-        &mut output,
+    let error = output_error(
+        RunInvocation::execute(
+            &DiagnosticProgram,
+            &mut arguments,
+            &mut output,
+        ),
     );
-
-    assert!(result.is_err());
-    let Some(error) = result.err() else {
-        return;
-    };
     let _diagnostic = error.to_string();
     assert_eq!(
         source_calls.load(Ordering::SeqCst),
@@ -239,16 +240,13 @@ fn multi_node_provider_cycle_visits_each_node_once() {
     let mut arguments = EmptyArguments;
     let mut output = MultiCycleSink;
 
-    let result = RunInvocation::execute(
-        &DiagnosticProgram,
-        &mut arguments,
-        &mut output,
+    let error = output_error(
+        RunInvocation::execute(
+            &DiagnosticProgram,
+            &mut arguments,
+            &mut output,
+        ),
     );
-
-    assert!(result.is_err());
-    let Some(error) = result.err() else {
-        return;
-    };
     let _diagnostic = error.to_string();
     assert_eq!(
         FIRST_SOURCE_CALLS.load(Ordering::SeqCst),

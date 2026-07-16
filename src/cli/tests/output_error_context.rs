@@ -45,12 +45,19 @@
 //!
 //! Callers must distinguish result-channel and diagnostic-channel failures.
 
+#[path = "support/failing_write_sink.rs"]
+mod failing_write_sink;
+#[path = "support/output_error.rs"]
+mod support;
+
 use std::io;
 
+use failing_write_sink::FailingWriteSink;
 use schoenwald_cli::{
     ArgumentError, ArgumentSource, CliProgram, CommandOutcome, ExitStatus,
     OutputSink, OutputStream, RunInvocation,
 };
+use support::output_error;
 
 struct EmptyArguments;
 
@@ -93,16 +100,13 @@ fn output_error_identifies_the_failed_stream() {
     let mut arguments = EmptyArguments;
     let mut output = DeniedOutput;
 
-    let result = RunInvocation::execute(
-        &DiagnosticProgram,
-        &mut arguments,
-        &mut output,
+    let error = output_error(
+        RunInvocation::execute(
+            &DiagnosticProgram,
+            &mut arguments,
+            &mut output,
+        ),
     );
-
-    assert!(result.is_err());
-    let Some(error) = result.err() else {
-        return;
-    };
     assert_eq!(
         error.status(),
         ExitStatus::Failure
@@ -170,16 +174,13 @@ fn output_error_preserves_the_second_failed_stream() {
     let mut arguments = EmptyArguments;
     let mut output = BothStreamsDenied;
 
-    let result = RunInvocation::execute(
-        &BothStreamsProgram,
-        &mut arguments,
-        &mut output,
+    let error = output_error(
+        RunInvocation::execute(
+            &BothStreamsProgram,
+            &mut arguments,
+            &mut output,
+        ),
     );
-
-    assert!(result.is_err());
-    let Some(error) = result.err() else {
-        return;
-    };
     assert_eq!(
         error.stream(),
         OutputStream::Stdout
@@ -224,49 +225,22 @@ impl CliProgram for TwoChunkDiagnosticProgram {
     }
 }
 
-#[derive(Default)]
-struct DenySecondChunk {
-    /// Number of writes attempted by the runner.
-    calls: usize,
-}
-
-impl OutputSink for DenySecondChunk {
-    fn write(
-        &mut self,
-        _stream: OutputStream,
-        _text: &str,
-    ) -> io::Result<()> {
-        let call = self.calls;
-        self.calls = self
-            .calls
-            .saturating_add(1);
-        if call == 1 {
-            return Err(
-                io::Error::new(
-                    io::ErrorKind::PermissionDenied,
-                    "second chunk denied",
-                ),
-            );
-        }
-        Ok(())
-    }
-}
-
 #[test]
 fn output_error_identifies_the_failed_chunk_position() {
     let mut arguments = EmptyArguments;
-    let mut output = DenySecondChunk::default();
-
-    let result = RunInvocation::execute(
-        &TwoChunkDiagnosticProgram,
-        &mut arguments,
-        &mut output,
+    let mut output = FailingWriteSink::new(
+        1,
+        io::ErrorKind::PermissionDenied,
+        "second chunk denied",
     );
 
-    assert!(result.is_err());
-    let Some(error) = result.err() else {
-        return;
-    };
+    let error = output_error(
+        RunInvocation::execute(
+            &TwoChunkDiagnosticProgram,
+            &mut arguments,
+            &mut output,
+        ),
+    );
     assert_eq!(
         error.chunk_index(),
         1

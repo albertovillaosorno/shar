@@ -45,12 +45,16 @@
 //!
 //! Equal provider messages must not erase distinct failure categories.
 
+#[path = "support/output_error.rs"]
+mod support;
+
 use std::io;
 
 use schoenwald_cli::{
     ArgumentError, ArgumentSource, CliProgram, CommandOutcome, OutputSink,
     OutputStream, RunInvocation,
 };
+use support::output_error;
 
 struct EmptyArguments;
 
@@ -95,15 +99,14 @@ fn render_failure(kind: io::ErrorKind) -> String {
     let mut output = MatchingMessageSink {
         kind,
     };
-    let result = RunInvocation::execute(
-        &DiagnosticProgram,
-        &mut arguments,
-        &mut output,
-    );
-    let Some(error) = result.err() else {
-        return String::new();
-    };
-    error.to_string()
+    output_error(
+        RunInvocation::execute(
+            &DiagnosticProgram,
+            &mut arguments,
+            &mut output,
+        ),
+    )
+    .to_string()
 }
 
 #[test]
@@ -148,16 +151,13 @@ fn display_retains_the_raw_operating_system_error_code() {
     let mut arguments = EmptyArguments;
     let mut output = RawOsErrorSink;
 
-    let result = RunInvocation::execute(
-        &DiagnosticProgram,
-        &mut arguments,
-        &mut output,
+    let error = output_error(
+        RunInvocation::execute(
+            &DiagnosticProgram,
+            &mut arguments,
+            &mut output,
+        ),
     );
-
-    assert!(result.is_err());
-    let Some(error) = result.err() else {
-        return;
-    };
     assert!(
         error
             .to_string()
@@ -211,16 +211,13 @@ fn display_finds_raw_codes_in_provider_source_chains() {
     let mut arguments = EmptyArguments;
     let mut output = NestedRawOsErrorSink;
 
-    let result = RunInvocation::execute(
-        &DiagnosticProgram,
-        &mut arguments,
-        &mut output,
+    let error = output_error(
+        RunInvocation::execute(
+            &DiagnosticProgram,
+            &mut arguments,
+            &mut output,
+        ),
     );
-
-    assert!(result.is_err());
-    let Some(error) = result.err() else {
-        return;
-    };
     assert!(
         error
             .to_string()

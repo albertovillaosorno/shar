@@ -45,12 +45,18 @@
 //!
 //! Otherwise identical primary failures must preserve final delivery results.
 
+#[path = "support/failing_write_sink.rs"]
+mod failing_write_sink;
+#[path = "support/output_error.rs"]
+mod support;
+
 use std::io;
 
+use failing_write_sink::FailingWriteSink;
 use schoenwald_cli::{
-    ArgumentError, ArgumentSource, CliProgram, CommandOutcome, OutputSink,
-    OutputStream, RunInvocation,
+    ArgumentError, ArgumentSource, CliProgram, CommandOutcome, RunInvocation,
 };
+use support::output_error;
 
 struct EmptyArguments;
 
@@ -86,46 +92,21 @@ impl CliProgram for LaterPrimaryProgram {
     }
 }
 
-#[derive(Default)]
-struct FirstWriteDenied {
-    /// Number of sink calls attempted by the runner.
-    calls: usize,
-}
-
-impl OutputSink for FirstWriteDenied {
-    fn write(
-        &mut self,
-        _stream: OutputStream,
-        _text: &str,
-    ) -> io::Result<()> {
-        let call = self.calls;
-        self.calls = self
-            .calls
-            .saturating_add(1);
-        if call == 0 {
-            return Err(
-                io::Error::new(
-                    io::ErrorKind::BrokenPipe,
-                    "blocked",
-                ),
-            );
-        }
-        Ok(())
-    }
-}
-
 fn render_delivery(command: &dyn CliProgram) -> String {
     let mut arguments = EmptyArguments;
-    let mut output = FirstWriteDenied::default();
-    let result = RunInvocation::execute(
-        command,
-        &mut arguments,
-        &mut output,
+    let mut output = FailingWriteSink::new(
+        0,
+        io::ErrorKind::BrokenPipe,
+        "blocked",
     );
-    let Some(error) = result.err() else {
-        return String::new();
-    };
-    error.to_string()
+    output_error(
+        RunInvocation::execute(
+            command,
+            &mut arguments,
+            &mut output,
+        ),
+    )
+    .to_string()
 }
 
 #[test]

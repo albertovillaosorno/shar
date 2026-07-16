@@ -45,6 +45,9 @@
 //!
 //! A failed chunk must not suppress later chunks that can still be written.
 
+#[path = "support/output_error.rs"]
+mod support;
+
 use std::cell::{Cell, RefCell};
 use std::io;
 
@@ -52,6 +55,7 @@ use schoenwald_cli::{
     ArgumentError, ArgumentSource, CliProgram, CommandOutcome, OutputSink,
     OutputStream, RunInvocation,
 };
+use support::output_error;
 
 struct EmptyArguments;
 
@@ -170,16 +174,13 @@ fn a_failed_stream_suppresses_later_chunks_on_that_stream() {
     let mut arguments = EmptyArguments;
     let mut sink = FailingFirstSink::default();
 
-    let result = RunInvocation::execute(
-        &ThreeChunkProgram,
-        &mut arguments,
-        &mut sink,
+    let error = output_error(
+        RunInvocation::execute(
+            &ThreeChunkProgram,
+            &mut arguments,
+            &mut sink,
+        ),
     );
-
-    assert!(result.is_err());
-    let Some(error) = result.err() else {
-        return;
-    };
     assert_eq!(
         error.kind(),
         io::ErrorKind::BrokenPipe
