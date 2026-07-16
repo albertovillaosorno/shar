@@ -9,7 +9,7 @@
   platform-selected law, and any publisher-selected law.
 - Authority level: Federal statute and current official YouTube and Xbox
   materials.
-- As-of date: 2026-07-15.
+- As-of date: 2026-07-16.
 - Counsel review: Not performed.
 
 ## Question Presented
@@ -40,6 +40,14 @@ contrast, commentary or criticism that actually addresses the game, footage, or
 feature shown may supply a more distinct purpose and a justification for the
 amount used. That distinction informs only part of the first factor and does not
 replace the remaining factors.
+
+*American Broadcasting Companies, Inc. v. Aereo, Inc.* adds a separate public-
+performance boundary for streaming services. Subscriber initiation, one-to-one
+connections, and a unique technical copy do not automatically avoid liability
+when a service functions like a cable retransmitter delivering the same
+broadcast programming to many unrelated paying viewers. The Supreme Court's
+limited holding did not decide ordinary creator uploads, local playback, cloud
+storage, remote DVRs, reproduction, or fair use.
 
 ## Factors Supporting A Commentary-Driven Video
 
@@ -156,6 +164,8 @@ conditions, and required notices are verified.
 
 ## Primary And Official Sources
 
+- Supreme Court of the United States, [*American Broadcasting Companies, Inc.
+  v. Aereo, Inc.*][aereo-opinion], 573 U.S. 431 (2014) (Accessed: 16 July 2026).
 - Supreme Court of the United States, [*Andy Warhol Foundation for the Visual
   Arts, Inc. v. Goldsmith*][warhol-opinion], 598 U.S. 508 (2023) (Accessed: 15
   July 2026).
@@ -183,6 +193,7 @@ conditions, and required notices are verified.
   (Accessed: 15 July 2026).
 - Xbox, [Game Content Usage Rules][xbox-rules] (Accessed: 14 July 2026).
 
+[aereo-opinion]: https://www.law.cornell.edu/supremecourt/text/13-461
 [warhol-opinion]:
   https://www.supremecourt.gov/opinions/22pdf/21-869_87ad.pdf
 [lenz-opinion]:

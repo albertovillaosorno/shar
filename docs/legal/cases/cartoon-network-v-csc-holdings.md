@@ -48,6 +48,13 @@ transmit-clause analysis. It expressly refused to create general immunity for
 content-delivery systems and did not decide other reproduction or secondary-
 liability theories.
 
+*American Broadcasting Companies, Inc. v. Aereo, Inc.* later held that a cable-
+like service publicly performed broadcast programs despite using subscriber-
+specific antennas, copies, and one-to-one transmissions initiated by users. The
+Supreme Court described that holding as limited. It did not decide remote-
+storage DVRs, cloud storage, reproduction, or the short-lived buffer issue
+resolved here.
+
 ## Limits And Unresolved Questions
 
 - The buffer holding depends on both technical embodiment and duration,
@@ -101,5 +108,7 @@ publication permission or eliminates possible secondary liability.
   (Accessed: 16 July 2026).
 - [17 U.S.C. § 101](../statutes/17-usc-101.md).
 - [17 U.S.C. § 106](../statutes/17-usc-106.md).
+<!-- markdownlint-disable-next-line MD013 -->
+- [American Broadcasting Companies, Inc. v. Aereo, Inc.](american-broadcasting-v-aereo.md).
 - [MAI Systems Corp. v. Peak Computer, Inc.](mai-systems-v-peak-computer.md).
 - [Capitol Records, LLC v. ReDigi Inc.](capitol-records-v-redigi.md).
