@@ -51,42 +51,66 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to create or replace a small reviewed plain-text file inside
+the SHAR project Saved root or another explicitly allowed content root.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Resolve an absolute path under an allowed root.
+- Confirm that overwriting the destination is intended.
+- Restrict content to an approved plain-text format.
+- Plan explicit cleanup for disposable validation files.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "file_path": (
+    "C:/workspace/shar/src/uproject/Saved/"
+    "SHAR_MCP_FileProbe_1.txt"
+  ),
+  "content": "Hello, Springfield!
+Line 2: café ☕
+"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two cycles returned JSON null, created the file, preserved Unicode, and
+overwrote it with replacement content. ReadFile independently returned the exact
+logical text after each write.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This is a filesystem mutation and returns JSON null.
+- Existing files are overwritten without a separate confirmation step.
+- The path must be absolute; relative paths may resolve against the engine
+  installation.
+- Paths outside allowed roots, traversal outside Saved, and unsupported binary
+  extensions are rejected.
+- Windows wrote CRLF bytes even though ReadFile returned normalized `
+` text.
+- Delete disposable files explicitly after validation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
