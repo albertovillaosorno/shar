@@ -60,7 +60,10 @@ from mcp.src.domain.catalog import (
 )
 from mcp.src.domain.endpoint import McpEndpoint
 from mcp.src.domain.errors import EndpointValidationError, ProtocolError
-from mcp.src.domain.json_types import normalize_json
+from mcp.src.domain.json_types import (
+    normalize_json,
+    reject_duplicate_json_object,
+)
 
 if TYPE_CHECKING:
     from mcp.src.domain.json_types import JsonObject
@@ -213,6 +216,24 @@ def test_json_normalizer_rejects_excessive_container_items(
 
     with pytest.raises(ProtocolError, match="container item limit"):
         _ = normalize_json(value, context="payload")
+
+
+def test_json_object_hook_rejects_excessive_members_before_copy(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Parsed objects are bounded before duplicate-key mapping allocation."""
+    monkeypatch.setattr(
+        "mcp.src.domain.json_types._MAX_CONTAINER_ITEMS",
+        2,
+    )
+    pairs: list[tuple[str, object]] = [
+        ("first", 1),
+        ("second", 2),
+        ("third", 3),
+    ]
+
+    with pytest.raises(ProtocolError, match="container item limit"):
+        _ = reject_duplicate_json_object(pairs)
 
 
 def test_toolset_definition_rejects_duplicate_json_keys() -> None:

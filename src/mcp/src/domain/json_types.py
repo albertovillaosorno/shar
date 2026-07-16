@@ -91,6 +91,7 @@ def reject_duplicate_json_object(
     Raises:
         DuplicateJsonKeyError: When one member name appears more than once.
     """
+    _require_container_item_limit(len(pairs), context="JSON object")
     result: dict[str, object] = {}
     for key, value in pairs:
         if key in result:
