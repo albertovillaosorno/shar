@@ -49,41 +49,75 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to attach an authored Control Rig to a skeletal binding in a
+disposable or SHAR LevelSequence before control discovery, keying, or layered
+animation work.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Treat this as a mutation despite the generated read-only posture.
+- Open the target LevelSequence and use a live MovieSceneBindingProxy.
+- Assign a compatible SkeletalMesh to the bound component first.
+- Verify the Control Rig asset exists and supports the requested layered mode.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+    "sequence": {
+        "refPath": (
+            "/Game/LS_SHAR_MCP_FindTrackExample."
+            "LS_SHAR_MCP_FindTrackExample"
+        )
+    },
+    "binding": {
+        "bindingId": "C55E5062-409C-9255-B2EC-E9B96622697B",
+        "sequence": {
+            "refPath": (
+                "/Game/LS_SHAR_MCP_FindTrackExample."
+                "LS_SHAR_MCP_FindTrackExample"
+            )
+        },
+    },
+    "control_rig_asset_path": "/AnimatorKit/UtilityRigs/CRU_AddLocator",
+    "is_layered": False,
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Repeated non-layered CRU_AddLocator calls returned the same track and left
+exactly one Control Rig parameter track. Layered AddControl calls were also
+idempotent and remained layered when later called with `is_layered: false`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This tool mutates the sequence; the generated operational posture is
+  inaccurate.
+- The return value is JSON text and requires a second parse.
+- `is_layered` is creation-time-only and does not convert an existing track.
+- Layered creation is rig-dependent: AddControl succeeded, while CRU_AddLocator
+  and CRD_SculptDeformer failed.
+- Missing Control Rig assets raise explicitly.
+- Binding GUIDs and nested track paths change when the sequence is rebuilt.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
