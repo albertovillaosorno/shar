@@ -19,6 +19,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Mission definition, stage, and objective runtime](mission-definition-stage-and-objective-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Local split-screen minigame session UI runtime](local-split-screen-minigame-session-ui-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [HUD, radar, camera, and navigation parity](../../adr/unreal/ui/hud-radar-camera-and-navigation.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Event-driven music and ambience](../../adr/unreal/runtime/event-driven-music-and-ambience.md)
@@ -387,6 +389,13 @@ scan world actors or infer race state from icon visibility.
 Music transitions follow
 [Music state and transition runtime](music-state-and-transition-runtime.md).
 Race start, warning, win, lose, retry, and leave-vehicle events are distinct.
+
+The built-in local split-screen race consumes the same canonical route, lap,
+position, countdown, and result state through
+<!-- markdownlint-disable-next-line MD013 -->
+[Local split-screen minigame session UI runtime](local-split-screen-minigame-session-ui-runtime.md).
+Its lobby and summary remain presentation adapters; the race service owns start,
+finish, points, wins, times, and did-not-finish results.
 
 ## Verified route slice
 

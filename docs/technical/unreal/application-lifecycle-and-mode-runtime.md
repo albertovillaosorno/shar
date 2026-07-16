@@ -14,6 +14,8 @@
 - [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Local split-screen minigame session UI runtime](local-split-screen-minigame-session-ui-runtime.md)
 
 ## Purpose
 
@@ -499,6 +501,13 @@ the race world before selection UI becomes interactive.
 
 Historical platform-specific context variants do not create different gameplay
 rules. Platform presentation and input adapters remain separate.
+
+The complete built-in lobby, join, controller, character, vehicle, readiness,
+countdown, per-player HUD, pause, summary, replay, and teardown behavior follows
+<!-- markdownlint-disable-next-line MD013 -->
+[Local split-screen minigame session UI runtime](local-split-screen-minigame-session-ui-runtime.md).
+That same-device transient session remains separate from mod-owned network
+multiplayer and cannot become campaign progression authority implicitly.
 
 ## Input
 

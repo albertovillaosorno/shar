@@ -26,6 +26,13 @@ The base campaign remains single-player. No official multiplayer campaign mode,
 cooperative story progression, matchmaking service, account service, hosted
 server list, or first-party community server is part of the base product.
 
+The base product may include a same-device local split-screen competitive
+minigame. That session is locally authoritative, transient, and isolated from
+campaign progression. Its local participants, controller assignments,
+`ULocalPlayer` instances, viewports, and results are not network players, server
+identities, replicated authority, or proof that campaign systems support online
+play.
+
 The repository must preserve a stable multiplayer-adapter extension boundary for
 validated mods. That boundary may support mod-owned:
 

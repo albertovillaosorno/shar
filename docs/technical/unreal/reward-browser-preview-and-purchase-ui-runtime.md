@@ -13,6 +13,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Common UI navigation, menu, and modal runtime](common-ui-navigation-menu-and-modal-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [HUD feedback cue and presentation-primitives runtime](hud-feedback-cue-and-presentation-primitives-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Vehicle retrieval and phone-booth runtime](vehicle-retrieval-and-phone-booth-runtime.md)
 - [Vehicle access and roster runtime](vehicle-access-and-roster-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -300,6 +302,12 @@ world. Preview actors:
 
 Preview setup never requires a synchronous render flush. Loading, scene
 construction, and teardown are request-owned asynchronous operations.
+
+Opening-light, closing-light, star, rating-bar, damaged-state, and carousel
+presentation use registered pure presentation primitives. Their animations
+cannot change selection, affordability, tuning, damage, ownership, or
+transaction
+state, and stale animation completion cannot release a replacement preview.
 
 ## Camera, lighting, and framing
 

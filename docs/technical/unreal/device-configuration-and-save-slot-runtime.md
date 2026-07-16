@@ -15,6 +15,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [In-game HUD, pause, and transition runtime](in-game-hud-pause-and-transition-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
 
 ## Purpose
@@ -267,6 +269,37 @@ A failed delete reports the still-readable accepted state.
 
 Reset-gameplay creates a new portable snapshot through domain reset ports. It is
 not implemented by clearing an arbitrary memory buffer.
+
+## In-game save browser transaction
+
+The in-game save browser is a blocking Common UI screen backed by one immutable
+slot projection. Opening it validates the current profile, provider, accepted
+save revision, application mode, and pause ownership before exposing any action.
+
+Each visible row contains stable slot identity, localized summary, accepted
+commit time, integrity state, overwrite eligibility, and typed remediation. Slot
+ordering uses the deterministic summary rules above; widget order and raw
+platform timestamps do not become authority.
+
+Selecting an empty slot opens a save confirmation when product policy requires
+it. Selecting an occupied slot opens an overwrite confirmation tied to the exact
+slot and revision shown. Confirming creates one operation identity and disables
+conflicting input until the terminal result or declared cancellation point.
+
+A corrupt slot is never loaded or overwritten implicitly. The browser may offer
+a separately confirmed delete transaction, then rebuild the projection only
+after read-back verifies the resulting provider state.
+
+Unavailable, uninitialized, full, permission-blocked, or externally changed
+storage returns typed remediation. Retry, choose provider, open platform storage
+management, delete a corrupt slot, or continue without saving are distinct
+results. Continuing without saving never reports a successful save or advances
+the accepted save revision.
+
+The screen remains active until save, delete, provider selection, or remediation
+reaches one verified terminal state. Late save, delete, format-like platform UI,
+or provider callbacks must match operation, profile, slot, container, and screen
+revision before they can close or refresh the browser.
 
 ## Storage-provider state
 

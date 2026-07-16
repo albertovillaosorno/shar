@@ -43,6 +43,18 @@ identities, source revisions, accessibility profiles, retained asset leases,
 timeout, and cancellation behavior. A stale gameplay observation or animation
 callback cannot mutate the accepted HUD or complete a replacement transition.
 
+Short-lived card, currency, countdown, notoriety, mission, item, and target
+feedback uses bounded per-player or explicitly shared cue channels. The cue
+scheduler consumes typed accepted observations, applies deterministic priority,
+coalescing, exclusion, and accessibility policy, and returns one terminal
+result.
+A visual countdown cannot start gameplay or grant input authority.
+
+Numeric formatting, text scrolling, sliders, color modulation, transforms, and
+radar icon projection are pure reusable presentation primitives. They evaluate
+from immutable source state and cannot become mission, progression, economy,
+input, race, or navigation authority.
+
 ## Consequences
 
 - HUD, radar, camera, route guidance, and navigation remain separate native

@@ -17,6 +17,7 @@ Bonestorm
 Borland
 Boudin
 BurntSushi
+Canyonero
 Cel
 Cognitect
 Connectix
@@ -55,6 +56,7 @@ Spahr
 Specht
 Spinemelter
 Squishee
+Squidport
 Stenberg
 Torruella
 Truevision
@@ -102,6 +104,7 @@ ralph
 sega
 selma
 simpsons
+squidport
 smithers
 sony
 specht

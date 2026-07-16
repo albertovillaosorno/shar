@@ -18,6 +18,10 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [In-game HUD, pause, and transition runtime](in-game-hud-pause-and-transition-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [HUD feedback cue and presentation-primitives runtime](hud-feedback-cue-and-presentation-primitives-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Local split-screen minigame session UI runtime](local-split-screen-minigame-session-ui-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Mission briefing, result, and replay UI runtime](mission-briefing-result-and-replay-ui-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Reward browser, preview, and purchase UI runtime](reward-browser-preview-and-purchase-ui-runtime.md)

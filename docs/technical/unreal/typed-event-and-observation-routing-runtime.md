@@ -14,6 +14,8 @@
 - [Typed StateTree action sequences](../../adr/unreal/runtime/typed-state-tree-action-sequences.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Event-driven music and ambience](../../adr/unreal/runtime/event-driven-music-and-ambience.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [HUD feedback cue and presentation-primitives runtime](hud-feedback-cue-and-presentation-primitives-runtime.md)
 
 ## Purpose
 
@@ -295,6 +297,14 @@ Examples include:
 
 A cue cannot grant rewards, complete missions, change damage, or mutate portable
 state.
+
+Short-lived HUD cues are scheduled from accepted observations through the
+per-player and shared arbitration contract in
+<!-- markdownlint-disable-next-line MD013 -->
+[HUD feedback cue and presentation-primitives runtime](hud-feedback-cue-and-presentation-primitives-runtime.md).
+Cue queues are bounded, accessibility-aware, revision-correlated, and distinct
+from domain event delivery. An animation callback cannot reconstruct authority
+or complete the observation that caused it.
 
 ## Queries and read models
 

@@ -94,7 +94,11 @@ proprietary external formats.
 <!-- markdownlint-disable-next-line MD013 -->
 - [In-game HUD, pause, and transition runtime](unreal/in-game-hud-pause-and-transition-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [HUD feedback cue and presentation-primitives runtime](unreal/hud-feedback-cue-and-presentation-primitives-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Legacy runtime identity normalization](unreal/legacy-runtime-identity-normalization.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Local split-screen minigame session UI runtime](unreal/local-split-screen-minigame-session-ui-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Memory ownership, budget, and diagnostics runtime](unreal/memory-ownership-budget-and-diagnostics-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->

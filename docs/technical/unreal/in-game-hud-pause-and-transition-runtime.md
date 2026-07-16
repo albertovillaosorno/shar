@@ -15,6 +15,10 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Common UI navigation, menu, and modal runtime](common-ui-navigation-menu-and-modal-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [HUD feedback cue and presentation-primitives runtime](hud-feedback-cue-and-presentation-primitives-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Local split-screen minigame session UI runtime](local-split-screen-minigame-session-ui-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Mission, interaction, interior, and notoriety runtime](mission-interaction-and-notoriety-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Semantic input, device, and haptics runtime](semantic-input-device-and-haptics-runtime.md)
@@ -359,6 +363,13 @@ Local bonus-mode HUD definitions may expose speed, route markers, opponents,
 waypoints, finish markers, collectibles, and reset actions. Membership comes
 from the active local-session definition, not from hardcoded widget names.
 
+The built-in local split-screen minigame uses the complete session, lobby,
+controller, loading, pause, summary, and teardown contract in
+<!-- markdownlint-disable-next-line MD013 -->
+[Local split-screen minigame session UI runtime](local-split-screen-minigame-session-ui-runtime.md).
+Local split-screen identities remain separate from future network-session or
+server identities.
+
 A manual reset request is a typed gameplay command. The HUD cannot move a
 vehicle or respawn a player directly.
 
@@ -367,9 +378,20 @@ vehicle or respawn a player directly.
 Tutorial presentation contains tutorial identity, localized text, optional art,
 blocking policy, accepted actions, narration, timing, and source revision.
 
-A tutorial may use a letterbox or modal layer. It cannot mark itself completed;
-completion is accepted only after the tutorial service commits the result.
-Closing or superseding the tutorial releases its focus and asset leases.
+A blocking tutorial uses a Common UI modal or declared letterbox layer and owns
+one semantic focus lease. Its projection includes the exact tutorial revision,
+input method, prompt glyph data, minimum reading time, and whether dismissal or
+permanent tutorial disablement is currently eligible.
+
+Confirm, dismiss, and disable-tutorial actions are distinct typed commands.
+Disabling future tutorials updates device or profile configuration through a
+verified settings transaction; it does not retroactively complete gameplay or
+silently dismiss another player's tutorial.
+
+A tutorial cannot mark itself completed. Completion is accepted only after the
+tutorial service commits the result. Closing, cancelling, or superseding the
+tutorial releases focus, narration, input, and asset leases exactly once. A late
+animation or settings callback cannot close a replacement tutorial.
 
 ## Pause request transaction
 

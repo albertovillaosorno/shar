@@ -601,6 +601,7 @@ referencers
 reparent
 reparenting
 replacen
+revisioned
 retarget
 retargets
 revtbl
@@ -633,6 +634,7 @@ shptxt
 shuf
 sln
 slnx
+simulatable
 smarttag
 smarttagtype
 soundfx
@@ -644,6 +646,7 @@ sse
 statetree
 staticval
 subchunks
+substate
 subvolume
 subvolumes
 svb

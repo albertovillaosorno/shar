@@ -29,6 +29,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [HUD feedback cue and presentation-primitives runtime](hud-feedback-cue-and-presentation-primitives-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Mission briefing, result, and replay UI runtime](mission-briefing-result-and-replay-ui-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Reward browser, preview, and purchase UI runtime](reward-browser-preview-and-purchase-ui-runtime.md)
@@ -540,6 +542,30 @@ The card-unlock cheat changes gallery visibility and eligibility projection
 only. It does not insert card identities into portable progression, complete
 chapter sets, unlock passive abilities, grant bonus maps, update achievements,
 or grant the movie ticket.
+
+## In-game card browser
+
+The pause-time card browser consumes the same immutable gallery projection as
+the
+frontend. Opening it validates pause ownership, local-player focus, progression
+revision, card-catalog revision, and presentation readiness before activating a
+blocking Common UI layer.
+
+The browser preserves canonical deck order, collected state, localized metadata,
+full-view eligibility, and declared fallback art. It does not maintain a second
+pause-specific card collection or infer identity from a widget slot.
+
+Back, previous, next, inspect, and close are semantic UI actions. Closing
+restores
+the exact pause screen and focus owner that opened the browser. A late
+thumbnail,
+high-resolution art, or transition callback cannot change the accepted card or
+close a replacement screen.
+
+Card-collected, chapter-set-complete, complete-deck, and unlock feedback follows
+<!-- markdownlint-disable-next-line MD013 -->
+[HUD feedback cue and presentation-primitives runtime](hud-feedback-cue-and-presentation-primitives-runtime.md).
+Those cues project committed progression and cannot grant collection or unlocks.
 
 ## Frontend card and mission galleries
 
