@@ -24,6 +24,12 @@ Contract formation, scope, breach, remedies, statutory exceptions, and copyright
 preemption are separate questions. A statutory copyright defense does not by
 itself decide whether an independently enforceable contract exists.
 
+*ProCD, Inc. v. Zeidenberg* enforced post-purchase software terms under
+Wisconsin's Uniform Commercial Code where package notice, displayed terms, a
+return route, and continued use supported formation. It also treated a promise
+binding only the parties as different from a copyright right against the world,
+while refusing to hold that every claim labeled `contract` escapes preemption.
+
 *Bowers v. Baystate Technologies, Inc.* held, under the First Circuit law the
 Federal Circuit predicted would apply, that a properly formed software contract
 could prohibit reverse engineering even though copyright law separately allows
@@ -69,6 +75,8 @@ private terms.
 - Every product, platform, download, SDK, and service agreement actually shown.
 - Complete assent interface evidence and transaction records.
 - Controlling state contract law and federal preemption authority.
+- [ProCD, Inc. v. Zeidenberg](../cases/procd-v-zeidenberg.md), for one
+  post-purchase formation and contract-preemption analysis.
 <!-- markdownlint-disable-next-line MD013 -->
 - [Bowers v. Baystate Technologies, Inc.](../cases/bowers-v-baystate-technologies.md),
   for one influential private-contract analysis and its contrary dissent.

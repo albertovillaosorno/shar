@@ -70,6 +70,7 @@ may cite ADRs for technical facts, but ADRs are not legal authority.
 - [Nguyen v. Barnes & Noble, Inc](cases/nguyen-v-barnes-and-noble.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Premier Dealer Services, Inc. v. Allegiance Administrators, LLC](cases/premier-dealer-v-allegiance.md)
+- [ProCD, Inc. v. Zeidenberg](cases/procd-v-zeidenberg.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [RJ Control Consultants, Inc. v. Multiject, LLC](cases/rj-control-v-multiject.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -134,7 +135,7 @@ fact-specific result is not determined. Hosting, public access, noncommercial
 purpose, independent implementation, interoperability intent, or an accepted ADR
 does not determine a legal outcome by itself.
 
-- Active legal records: 56.
+- Active legal records: 57.
 - Review date: 2026-07-16.
 - Statutory currentness: the Office of the Law Revision Counsel classification
   tables were checked on 2026-07-14. The published 119th Congress tables cover

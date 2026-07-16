@@ -7,7 +7,7 @@
 - Jurisdiction: State contract law, selected law, federal preemption, and forum
   rules.
 - Authority level: Cross-jurisdiction contract research record.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-16.
 - Counsel review: Not performed.
 
 ## Question Presented
@@ -20,8 +20,14 @@ to the exact conduct?
 
 Online contract formation commonly requires adequate notice and a manifestation
 of assent under the governing state law. Interface labels such as browsewrap,
-clickwrap, and sign-in-wrap describe presentation patterns but do not decide the
-legal result.
+clickwrap, sign-in-wrap, and shrink-wrap describe presentation patterns but do
+not decide the legal result.
+
+In *ProCD, Inc. v. Zeidenberg*, the Seventh Circuit enforced terms presented
+inside a retail software package where the package gave notice, the software
+displayed the terms, the buyer could return the product, and the buyer used it
+instead of rejecting it. The court applied Wisconsin's Uniform Commercial Code
+and did not establish that every post-purchase term is enforceable.
 
 In *Nguyen v. Barnes & Noble*, the Ninth Circuit declined to enforce terms where
 the user lacked actual notice and the interface did not require affirmative
@@ -78,6 +84,7 @@ Even when formation is established, analyze separately:
 
 ## Primary Authorities
 
+- [ProCD, Inc. v. Zeidenberg](../cases/procd-v-zeidenberg.md).
 - [Nguyen v. Barnes & Noble, Inc.](../cases/nguyen-v-barnes-and-noble.md).
 <!-- markdownlint-disable-next-line MD013 -->
 - [Berman v. Freedom Financial Network, LLC](../cases/berman-v-freedom-financial.md).
