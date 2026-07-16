@@ -47,42 +47,65 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to replace the complete key set of one SHAR CurveTable row
+with a reviewed deterministic sequence.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass a mutable CurveTable and existing row.
+- Capture the current key list for rollback.
+- Supply every key that should remain after replacement.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+    "curve_table": {
+    "refPath": (
+        "/Game/CT_SHAR_MCP_MutationProbe_2."
+        "CT_SHAR_MCP_MutationProbe_2"
+    )
+},
+    "row_name": "Speed",
+    "keys": [
+        {"time": 4.0, "value": 40.0},
+        {"time": 0.0, "value": 0.0},
+        {"time": 2.5, "value": 25.0},
+    ],
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two cycles replaced all prior Speed keys. Readback contained only times 0, 2.5,
+and 4 in sorted order, and the mutation returned Boolean true.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This mutation replaces the entire row rather than appending.
+- Input order is normalized to numeric time order on readback.
+- Integral numbers may serialize without decimal points.
+- Re-read all keys before accepting the mutation.
+- A StaticMesh argument fails CurveTable type validation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

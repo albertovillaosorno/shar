@@ -47,42 +47,63 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to append one time/value sample to a SHAR CurveTable row while
+retaining the row’s existing samples.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass a mutable CurveTable and an existing row name.
+- Inspect current key times before insertion.
+- Decide explicitly whether duplicate times are acceptable.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+    "curve_table": {
+    "refPath": (
+        "/Game/CT_SHAR_MCP_MutationProbe_2."
+        "CT_SHAR_MCP_MutationProbe_2"
+    )
+},
+    "row_name": "Speed",
+    "key": {"time": 2.0, "value": 20.0},
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two cycles added times 2 and 1 and read them back sorted as 1 then 2. Adding
+another key at time 1 succeeded and produced values 15 then 10 at that same
+time.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This mutation returns Boolean true on success.
+- Keys are read back in numeric time order.
+- Duplicate times are allowed; a newer duplicate appeared before the older key
+  at the same time.
+- Use SetKeys when replacement or de-duplication is required.
+- A StaticMesh argument fails CurveTable type validation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
