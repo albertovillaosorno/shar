@@ -51,42 +51,62 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to create a SHAR StringTable from a reviewed CSV source
+containing localisation keys and source strings.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Provide an absolute local source-file path.
+- Include `Key` and `SourceString` header columns.
+- Choose an unused destination asset name.
+- Keep import sources outside the public repository when they are temporary.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "folder_path": "/Game",
+  "asset_name": "ST_SHAR_MCP_ImportFixture_1",
+  "source_file": "C:/Temp/shar-string-table-import.csv"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two UTF-8 CSV imports returned one StringTable reference each. Both tables
+contained `Greeting` and `Farewell`; namespace matched the asset name and table
+ID matched the object path.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This is a persistent asset import and returns a one-element reference list.
+- Additional metadata columns are accepted, but namespace is derived from the
+  asset path.
+- Importing into an existing asset name raises `already exists`.
+- Missing required headers produce a generic import failure.
+- In both cycles AssetTools.delete returned false even though AssetTools.exists
+  then returned false; verify absence rather than trusting the delete Boolean
+  alone.
+- Temporary source files must be removed after import.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

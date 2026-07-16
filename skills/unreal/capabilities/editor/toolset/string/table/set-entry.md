@@ -50,42 +50,63 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to add or replace a source-string entry in a SHAR StringTable
+while preserving the table asset identity.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass a mutable StringTable asset.
+- Choose the exact case-sensitive key.
+- Read the existing key and value before replacement when rollback matters.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+    "string_table": {
+    "refPath": (
+        "/Game/ST_SHAR_MCP_MutationFixture_1."
+        "ST_SHAR_MCP_MutationFixture_1"
+    )
+},
+    "key": "Greeting",
+    "value": "Hello, Springfield!",
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two cycles added `Greeting` and `Farewell`, then replaced `Greeting` with
+`Welcome to Springfield!`. Replacement retained the original key order and
+returned JSON null.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This mutation returns JSON null.
+- Existing keys are replaced rather than duplicated.
+- Replacing a value does not reorder the key.
+- Re-read ListKeys and GetEntry because transport success contains no changed
+  value.
+- A StaticMesh argument fails StringTable type validation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
