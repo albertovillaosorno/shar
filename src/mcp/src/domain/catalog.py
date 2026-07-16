@@ -73,6 +73,7 @@ _TOOLSET_HEADER = re.compile(
 )
 _MAX_TOOLSET_SUMMARIES = 10_000
 _MAX_TOOLS_PER_TOOLSET = 10_000
+_MAX_DESCRIPTION_BYTES = 64 * 1_024
 
 
 class ToolsetSummary(NamedTuple):
@@ -156,10 +157,26 @@ def _toolset_summary(
     name: str,
     description_lines: list[str],
 ) -> ToolsetSummary:
-    return ToolsetSummary(
-        name=name,
-        description="\n".join(description_lines).strip(),
+    description = _validated_description(
+        "\n".join(description_lines).strip(),
+        context=f"toolset {name}",
     )
+    return ToolsetSummary(name=name, description=description)
+
+
+def _validated_description(value: object, *, context: str) -> str:
+    if not isinstance(value, str):
+        fail_protocol(f"{context}: description must be text")
+    try:
+        size = len(value.encode())
+    except UnicodeEncodeError as error:
+        fail_protocol(
+            f"{context}: description contains invalid Unicode",
+            cause=error,
+        )
+    if size > _MAX_DESCRIPTION_BYTES:
+        fail_protocol(f"{context}: description byte limit exceeded")
+    return value
 
 
 def parse_toolset_definition(
@@ -204,9 +221,10 @@ def parse_toolset_definition(
     names = [tool.name for tool in tools]
     if len(set(names)) != len(names):
         fail_protocol(f"toolset {toolset_name}: duplicate tool identity")
-    description = schema.get("description", "")
-    if not isinstance(description, str):
-        fail_protocol(f"toolset {toolset_name}: description must be text")
+    description = _validated_description(
+        schema.get("description", ""),
+        context=f"toolset {toolset_name}",
+    )
     return ToolsetDefinition(
         name=toolset_name,
         description=description,
@@ -226,9 +244,10 @@ def _parse_tool(
     if not isinstance(raw_name, str) or not raw_name:
         fail_protocol(f"{context}: name must be non-empty text")
     name = canonical_tool_identity(toolset_name, raw_name)
-    description = tool.get("description", "")
-    if not isinstance(description, str):
-        fail_protocol(f"{context}: description must be text")
+    description = _validated_description(
+        tool.get("description", ""),
+        context=context,
+    )
     input_schema = require_json_object(
         tool.get("inputSchema", {}),
         context=f"{context}.inputSchema",

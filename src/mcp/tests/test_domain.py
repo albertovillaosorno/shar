@@ -65,6 +65,19 @@ from mcp.src.domain.json_types import normalize_json
 if TYPE_CHECKING:
     from mcp.src.domain.json_types import JsonObject
 
+_DESCRIPTION_LIMIT_SCHEMAS: tuple[JsonObject, ...] = (
+    {"description": "abcde", "tools": []},
+    {
+        "tools": [
+            {
+                "name": "create_asset",
+                "description": "abcde",
+                "inputSchema": {},
+            }
+        ]
+    },
+)
+
 
 def test_endpoint_accepts_only_explicit_loopback_http() -> None:
     endpoint = McpEndpoint.parse("http://127.0.0.1:8123/mcp")
@@ -241,6 +254,20 @@ def test_toolset_catalog_rejects_excessive_registry_entries(
         _ = parse_toolset_catalog(catalog_text)
 
 
+def test_toolset_catalog_rejects_excessive_description_bytes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """One registry description cannot consume the generated skill budget."""
+    monkeypatch.setattr(
+        "mcp.src.domain.catalog._MAX_DESCRIPTION_BYTES",
+        4,
+        raising=False,
+    )
+
+    with pytest.raises(ProtocolError, match="description byte limit"):
+        _ = parse_toolset_catalog("- EditorToolset.EditorToolset: abcde\n")
+
+
 def test_toolset_schema_rejects_excessive_tools(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -259,6 +286,22 @@ def test_toolset_schema_rejects_excessive_tools(
     }
 
     with pytest.raises(ProtocolError, match="tool limit"):
+        _ = parse_toolset_definition("EditorToolset", json.dumps(schema))
+
+
+@pytest.mark.parametrize("schema", _DESCRIPTION_LIMIT_SCHEMAS)
+def test_toolset_schema_rejects_excessive_description_bytes(
+    schema: JsonObject,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Schema prose cannot expand into oversized generated Markdown."""
+    monkeypatch.setattr(
+        "mcp.src.domain.catalog._MAX_DESCRIPTION_BYTES",
+        4,
+        raising=False,
+    )
+
+    with pytest.raises(ProtocolError, match="description byte limit"):
         _ = parse_toolset_definition("EditorToolset", json.dumps(schema))
 
 
