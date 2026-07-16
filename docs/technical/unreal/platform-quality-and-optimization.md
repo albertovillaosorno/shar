@@ -11,6 +11,8 @@
 - [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
 
 ## Purpose
 
@@ -98,6 +100,15 @@ Partition follow
 Converted cell and partition artifacts may provide deterministic diagnostics,
 but quality policy cannot replace Unreal's renderer or hide gameplay-required
 content through a second runtime visibility tree.
+
+Actor/component composition, Chaos simulation, cooked collision, physical
+profiles, query surfaces, breakables, and measured ISM or HISM selection follow
+<!-- markdownlint-disable-next-line MD013 -->
+[World render-entity and physics runtime](world-render-entity-and-physics-runtime.md).
+Quality may change rendering and validated solver cost, but it cannot remove
+required collision or physics, change entity identity, or alter accepted
+gameplay
+results.
 
 A lower graphics preset may deliberately select lower visual settings. Outside
 that explicit preset selection, a performance change must not delete content,

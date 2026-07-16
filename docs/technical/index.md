@@ -152,6 +152,8 @@ proprietary external formats.
 - [Vehicle AI and route runtime](unreal/vehicle-ai-and-route-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Vehicle retrieval and phone-booth runtime](unreal/vehicle-retrieval-and-phone-booth-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [World render-entity and physics runtime](unreal/world-render-entity-and-physics-runtime.md)
 - [Editor guardrails](unreal/testing/editor-guardrails.md)
 - [Unreal test taxonomy](unreal/testing/test-taxonomy.md)
 

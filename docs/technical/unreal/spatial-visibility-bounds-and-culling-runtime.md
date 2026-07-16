@@ -279,6 +279,51 @@ policy. The builder records resulting imbalance and overlap cost.
 
 A median based only on mutable insertion order is invalid.
 
+## Flattened partition artifact
+
+An optional diagnostic tree is published as one immutable versioned array. Each
+node stores checked child indices, parent index, subtree range, bounds, split
+data, membership digest, and terminal reason.
+
+Flattening uses canonical preorder and verifies:
+
+- one root and no unreachable nodes;
+- child ranges contained by the owning subtree;
+- no cycles or duplicate ownership;
+- finite bounds and split planes;
+- parent and child bounds containment;
+- deterministic subtree sizes; and
+- identical digest across clean builds.
+
+Runtime code cannot navigate the artifact through pointer subtraction, implicit
+sibling offsets, mutable linked nodes, or recursive ownership. Scratch, reserve,
+use, and swap arrays are implementation details replaced by bounded native
+containers with explicit capacity and failure behavior.
+
+## Traversal and marking diagnostics
+
+Repository tooling may traverse a build artifact to compare native visibility or
+to inspect converted world membership. A traversal request contains artifact,
+world, view, query, filter, and revision identities.
+
+The closed traversal results are:
+
+- visited node set;
+- accepted leaf set;
+- rejected subtree set;
+- intersecting subtree set;
+- primitive membership projection; and
+- validation or numerical findings.
+
+Mark-all, sphere, frustum, subtree, union, intersection, and difference
+operations
+produce immutable bitsets or checked identity sets. They do not reuse mutable
+per-node flags as cross-view state.
+
+A traversal filter is a registered pure predicate over immutable node and
+primitive metadata. It cannot call gameplay code, mutate streaming, or retain
+raw entity pointers.
+
 ## Convex view volume
 
 A visibility query may project the accepted camera into a finite convex volume.
@@ -340,6 +385,71 @@ The conceptual order is:
 
 The exact internal renderer implementation remains engine-owned. Tests assert
 observable correctness and budgets, not private internal call order.
+
+## Scene registration and membership
+
+A primitive enters renderer visibility through native component registration.
+Repository state records canonical entity, component, world, representation,
+bounds, mobility, and registration revisions.
+
+Registration requires:
+
+- an accepted world and representation revision;
+- finite conservative bounds;
+- valid mobility, material, shadow, and visibility policy;
+- ready assets and component render state; and
+- no conflicting replacement or teardown transaction.
+
+Moving, attaching, detaching, changing representation, or changing bounds uses
+native transform and render-state invalidation. Repository code does not insert,
+remove, or move a drawable through custom leaf-owned pointer lists.
+
+World unload, Data Layer deactivation, component destruction, feature removal,
+and representation replacement unregister the exact accepted component. A late
+move or render callback cannot restore an older membership revision.
+
+## Per-view marking and immutable visibility sets
+
+Each accepted view produces independent renderer-owned visibility state.
+Repository diagnostics may capture immutable comparison sets keyed by view,
+world, frame, primitive, and representation revisions.
+
+Diagnostic set operations may compute:
+
+- conservative union for shared streaming evidence;
+- intersection for multi-view optimization analysis;
+- difference between native and converted diagnostics;
+- subtree or region membership; and
+- opaque, masked, translucent, shadow, or diagnostic classifications.
+
+These sets are evidence only. Mutable marks stored inside shared tree nodes
+cannot
+be reused across local players, scene captures, cinematic cameras, shadow views,
+or asynchronous diagnostics.
+
+## Render-pass and shadow separation
+
+Visibility admission does not manually submit opaque, translucent, or shadow
+objects. Unreal's renderer owns mesh draw commands, material pass selection,
+translucency sorting, depth behavior, shadow views, and final submission.
+
+Repository policy may configure component and material participation in:
+
+- opaque and masked base passes;
+- translucent passes;
+- depth and custom-depth passes;
+- static, dynamic, virtual, contact, or capsule shadows;
+- reflection and scene-capture views; and
+- development-only visualization.
+
+A camera-distance rank, shader name, linked-list order, or custom sort callback
+is
+not portable draw authority. A primitive can participate in several renderer
+views without being duplicated as several world entities.
+
+Shadow visibility is evaluated from its own accepted shadow view and component
+policy. A main-view rejection does not by itself remove a valid shadow caster,
+and a shadow pass cannot mutate gameplay or persistent visibility.
 
 ## Distance culling
 
@@ -494,7 +604,11 @@ Diagnostics may expose:
 - distance and explicit visibility policy;
 - World Partition and HLOD correlation;
 - cell occupancy, weight, centroid, and overlap;
-- partition depth and imbalance;
+- partition depth, subtree ranges, terminal reasons, and imbalance;
+- traversal visits, accepted leaves, and rejected subtrees;
+- native-versus-converted diagnostic set differences;
+- scene registration and transform revision;
+- per-view opaque, translucent, shadow, and diagnostic classifications;
 - rejected, intersecting, and accepted counts;
 - occlusion and overdraw evidence exposed by supported engine tools;
 - stale update and invalid-number counts; and
@@ -515,8 +629,13 @@ Failures include:
 - zero or invalid granularity;
 - coordinate or integer overflow;
 - non-deterministic cell membership or partition output;
+- malformed flattened tree, child range, parent link, or subtree size;
+- traversal with a stale artifact or impure filter;
 - empty or invalid child partitions;
 - malformed plane or convex-volume data;
+- duplicate or stale scene registration;
+- shared mutable visibility marks across views;
+- repository-owned manual draw submission or shadow sorting;
 - stale view, primitive, world, or feature revision;
 - culling policy that removes gameplay-required semantics;
 - explicit visibility mutation without an owning transaction;
@@ -534,7 +653,12 @@ Content and build validation proves:
 - world-to-cell mapping is deterministic at boundaries;
 - non-empty cells and memberships have stable identities;
 - weighted partition output is deterministic and bounded;
-- node indices, subtree sizes, and leaf reasons are valid;
+- flattened node indices, parent links, subtree ranges, sizes, and leaf reasons
+  are valid;
+- traversal and set operations are immutable, deterministic, and revisioned;
+- scene registration and transform invalidation use native engine paths;
+- no shared mutable mark state crosses accepted views;
+- render-pass and shadow participation remains renderer-owned;
 - convex-volume tests agree with native engine tests within tolerance;
 - every gameplay-relevant primitive has a valid visibility policy;
 - LOD and HLOD retain required silhouettes and landmarks;
@@ -553,7 +677,12 @@ Required automated and visual tests include:
 - deterministic non-empty cell extraction;
 - weighted-median and uniform split tie-breaks;
 - unsplittable and maximum-depth leaves;
-- contiguous serialized-node index validation;
+- flattened node, parent, child, subtree, and digest validation;
+- immutable traversal union, intersection, difference, and subtree marking;
+- stale artifact, view, and filter rejection;
+- native component registration, move, detach, replacement, and teardown;
+- independent opaque, translucent, shadow, scene-capture, and local-player
+  views;
 - box, sphere, point, and convex-volume classification;
 - degenerate and nearly parallel plane rejection;
 - fast camera rotation and occlusion recovery;
@@ -572,9 +701,13 @@ Required automated and visual tests include:
 - Culling never becomes gameplay, streaming, collision, or navigation authority.
 - Converted cells and partition trees are versioned evidence, not pointer-based
   runtime identity.
+- Flattened trees use checked indices and immutable traversal results.
+- Native component registration owns runtime scene membership.
 - Cell construction and partition output are deterministic.
 - Runtime rejection is conservative when numerical certainty is unavailable.
-- Every local or cinematic view has an independent visibility result.
+- Every local, cinematic, capture, or shadow view has an independent visibility
+  result.
+- Unreal owns material pass selection, translucency sorting, and shadow views.
 - Quality presets may change cost and representation, not required semantics.
 - Explicit gameplay visibility requires a typed owning transaction.
 - Teardown releases only policy and artifacts owned by the exact revision.

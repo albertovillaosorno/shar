@@ -10,6 +10,8 @@
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
 
 ## Purpose
 
@@ -141,8 +143,15 @@ The runtime verifies:
 - definition revisions.
 
 The observation is immutable after collision classification. Presentation
-systems
-cannot replace its surfaces or impulse based on listener order.
+systems cannot replace its surfaces or impulse based on listener order.
+
+Chaos contact callbacks and primitive-component hit events are adapters. Their
+body, component, entity, solver-frame, and world revisions are normalized
+through
+<!-- markdownlint-disable-next-line MD013 -->
+[World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
+before response selection. A raw pre-contact or post-contact callback cannot
+apply damage, delete an entity, grant a reward, or change persistence directly.
 
 ## Response selection
 

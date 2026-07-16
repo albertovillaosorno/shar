@@ -36,6 +36,18 @@ specular, roughness, metallic, glossiness, emissive, and ambient-occlusion maps
 remain optional unless the approved FBX preparation recipe marks them required.
 A detected map is bound only after semantic and color-space validation.
 
+Approved components map to a closed native representation catalog: static mesh,
+native instance group, skeletal or articulated prop, rigid body, linear blocker,
+query surface, breakable composite, or another registered composition. The
+importer creates and reads back component hierarchy, mobility, bounds, collision
+profiles, physical materials, Physics Assets, instance identity maps, and
+breakable replacement policy before publication.
+
+Collision and query geometry are cooked during import. Shipping runtime cannot
+parse source triangle strips, construct custom flat-triangle stores, allocate a
+parallel drawable scene graph, or infer physical behavior from a source wrapper
+class. Actor and component composition is data-driven and validated.
+
 Character import preserves the FBX topology, skeleton hierarchy, bind state,
 skin weights, animation timing, semantic regions, integrated outfit identity,
 eye-animation mechanism, and detachable-prop attachments. It may generate

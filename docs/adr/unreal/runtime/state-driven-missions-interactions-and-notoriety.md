@@ -53,6 +53,18 @@ definitions expose slots, eligibility tags, and presentation data. The
 interactor service owns validation, execution, cancellation, exactly-once
 completion, and progression effects.
 
+World render entities use validated native Actor and component composition.
+Primitive-component hits, Chaos contacts, sleep or wake, animation, visibility,
+and renderer callbacks are revisioned observations only. They may propose
+impact,
+damage, interaction, recovery, or breakage work, but mission and application
+services commit destruction, collection, reward, persistence, respawn, and
+objective results through typed transactions.
+
+A body sleeping, a primitive being culled, an Actor unloading, or a break
+animation playing cannot complete or fail a mission. Stale physics, collision,
+render, or teardown callbacks cannot mutate a replacement entity revision.
+
 The active world uses World Partition and Runtime Data Layers for level
 variants,
 mission overlays, interiors, and progression-driven presentation. Data Layers

@@ -19,6 +19,8 @@
 - [Persistent world-object state runtime](persistent-world-object-state-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Authored spatial placement and trigger runtime](authored-spatial-placement-and-trigger-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
 
 ## Purpose
 
@@ -278,8 +280,14 @@ accepted interaction, and explicit transformation are distinct results.
 
 Destruction commits once by entity revision. Visual explosion, debris, audio,
 camera shake, and HUD removal follow the result. World unload, actor removal,
-and
-render visibility are not destruction.
+and render visibility are not destruction.
+
+Actor/component composition, Chaos bodies, cooked query surfaces, collision
+profiles, sleep and wake, force requests, and breakable replacement follow
+<!-- markdownlint-disable-next-line MD013 -->
+[World render-entity and physics runtime](world-render-entity-and-physics-runtime.md).
+Physics and collision callbacks provide revisioned evidence; they cannot commit
+the mission result or persistent destruction themselves.
 
 ## Collision recovery
 

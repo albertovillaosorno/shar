@@ -14,8 +14,10 @@ examples, or documentation.
   data, managed subsystem lifetimes, C++ UMG MVVM viewmodels and field
   notifications, Asset Manager primary-asset and bundle boundaries, Sequencer
   timeline and track authoring, localization and culture fallback, Control Rig
-  integration, visibility and occlusion culling, and Unreal Engine 5.8 Media
-  Framework and Electra boundaries were verified. Accepted
+  integration, visibility and occlusion culling, Chaos physics, collision and
+  traces, native physics components, ISM and HISM behavior, Chaos Visual
+  Debugger, and Unreal Engine 5.8 Media Framework and Electra boundaries were
+  verified. Accepted
   regional agreement, bundled notices, decoder availability,
   and external-service retention remain environment- or service-specific.
 - Counsel review: Not performed.
@@ -136,6 +138,31 @@ royalty or seat analysis.
   Available at:
   <!-- markdownlint-disable-next-line MD013 -->
   <https://dev.epicgames.com/documentation/en-us/unreal-engine/visibility-and-occlusion-culling-in-unreal-engine>
+  (Accessed: 15 July 2026).
+- Epic Games (2026) *Physics in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/physics-in-unreal-engine>
+  (Accessed: 15 July 2026).
+- Epic Games (2026) *Collision in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/collision-in-unreal-engine>
+  (Accessed: 15 July 2026).
+- Epic Games (2026) *Traces with Raycasts in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/traces-with-raycasts-in-unreal-engine>
+  (Accessed: 15 July 2026).
+- Epic Games (2026) *Physics Components in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/physics-components-in-unreal-engine>
+  (Accessed: 15 July 2026).
+- Epic Games (2026) *Instanced Static Mesh Component in Unreal Engine 5.8*.
+  Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/instanced-static-mesh-component-in-unreal-engine>
+  (Accessed: 15 July 2026).
+- Epic Games (2026) *Chaos Visual Debugger in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/chaos-visual-debugger-in-unreal-engine>
   (Accessed: 15 July 2026).
 - Epic Games (2026) *Media Framework Technical Reference for Unreal Engine 5.8*.
   Available at:

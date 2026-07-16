@@ -17,6 +17,8 @@
 - [Collector cards, coins, rewards, gags, and wasps](../../adr/gameplay/collectibles/collectibles-rewards-gags-and-wasps.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Mission world-entity and respawn runtime](mission-world-entity-and-respawn-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
 
 ## Purpose
 
@@ -169,6 +171,15 @@ When a destroyed or removed placement streams in again, the subsystem may:
 
 The projection policy cannot grant rewards again. A reset or respawn requires an
 explicit definition and accepted reset transaction.
+
+Runtime Actor, component, Chaos-body, instance-index, and scene-registration
+state follows
+<!-- markdownlint-disable-next-line MD013 -->
+[World render-entity and physics runtime](world-render-entity-and-physics-runtime.md).
+Persistence stores canonical placement and schema-owned state only. A body going
+to sleep, a primitive being culled, or an Actor unloading cannot mark a
+placement
+destroyed or removed.
 
 ## Persistent rewards
 

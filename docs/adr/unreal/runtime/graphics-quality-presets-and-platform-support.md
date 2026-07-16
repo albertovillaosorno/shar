@@ -73,6 +73,21 @@ Unreal facilities requires measured benefit, deterministic output, conservative
 failure behavior, and a separate accepted decision. Culling never becomes
 streaming, collision, navigation, mission, interaction, or gameplay authority.
 
+World render entities use validated native Actor and component composition.
+Chaos owns rigid-body simulation; primitive components own collision and
+renderer
+registration; ISM or HISM is selected only for measured repeated-mesh cases with
+stable project identity outside engine instance indices. Repository code does
+not
+recreate a drawable scene graph, rigid-body solver, manual draw lists, or custom
+runtime triangle-collision store.
+
+Quality may change LOD, HLOD, Nanite, instancing, materials, shadows, optional
+effects, and validated solver cost settings. It cannot change collision
+profiles,
+physical surfaces, entity identity, breakage transactions, required physics,
+mission results, or persistence.
+
 Making the game usable on more hardware is a desirable consequence of correct,
 efficient engineering, not the product objective. The objective remains a
 faithful, high-quality implementation with no avoidable technical debt.

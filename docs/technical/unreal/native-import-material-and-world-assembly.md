@@ -15,6 +15,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native asset translation without copy-paste](../../adr/pipeline/unreal/native-asset-translation-and-no-copy-paste.md)
 
 ## Purpose
@@ -184,6 +186,24 @@ surface reconstruction only when it preserves:
 
 Vertex count is never a quality metric by itself. An unchanged mesh remains
 valid when additional geometry would not improve the approved presentation goal.
+
+## Render-entity and collision cooking
+
+Import maps approved component and placement identities to the closed native
+representation classes in
+<!-- markdownlint-disable-next-line MD013 -->
+[World render-entity and physics runtime](world-render-entity-and-physics-runtime.md).
+The plan selects static mesh, native instancing, skeletal prop, rigid body,
+linear blocker, query surface, breakable composite, or registered composite.
+
+Collision import produces cooked simple shapes, Physics Assets, static query
+meshes, physical-material bindings, and registered collision profiles. Shipping
+runtime cannot parse source triangle strips or rebuild flat-triangle arrays.
+
+Read-back verifies component hierarchy, mobility, bounds, collision responses,
+query channels, mass or density, Physics Asset bindings, instance identity maps,
+and breakable replacement policy. A mesh asset alone is not proof that its world
+entity or physics representation is ready.
 
 ## Native audio, data, and cinematic import
 

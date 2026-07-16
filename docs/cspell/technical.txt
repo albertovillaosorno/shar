@@ -88,6 +88,7 @@ GOURAUD
 HSPLINE
 HSTREE
 HSV
+HISM
 HLOD
 IHDR
 IMA
@@ -312,6 +313,7 @@ atv
 bak
 basedpyright
 bbq
+breakability
 bik
 bink
 binormal
@@ -336,6 +338,7 @@ cel
 chkpts
 cho
 classpath
+collidable
 colorschememapping
 colortbl
 commandlet
@@ -355,6 +358,7 @@ defchp
 deff
 defpap
 delenv
+destructibles
 despawn
 despawning
 democams

@@ -13,6 +13,7 @@
 - [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
 - [Native import, material rebuild, and world assembly](native-import-material-and-world-assembly.md)
 - [Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md)
+- [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
 - [Platform audio cooking and streaming](platform-audio-cooking-and-streaming.md)
 - [Platform cinematic media packaging](platform-cinematic-media-packaging.md)
 <!-- markdownlint-enable MD013 -->
@@ -375,6 +376,15 @@ World requests coordinate:
 Streaming visibility alone is not readiness. Required actors, placements,
 collision, navigation, mission anchors, and subsystem snapshots must match the
 same world revision.
+
+World-entity construction and teardown follow
+<!-- markdownlint-disable-next-line MD013 -->
+[World render-entity and physics runtime](world-render-entity-and-physics-runtime.md).
+A region becomes gameplay-ready only after required Actor/component composition,
+cooked collision, query surfaces, physical profiles, and simulation policy are
+validated. Unload disables new commands, records required state, unregisters
+components and bodies, destroys Actors, and releases retained assets under one
+correlated transaction.
 
 ## Interior loading
 
