@@ -217,7 +217,7 @@ def parse_toolset_definition(
         )
     except DuplicateJsonKeyError as error:
         fail_protocol(str(error), cause=error)
-    except json.JSONDecodeError as error:
+    except ValueError as error:
         fail_protocol(
             f"toolset {toolset}: schema is not valid JSON",
             cause=error,

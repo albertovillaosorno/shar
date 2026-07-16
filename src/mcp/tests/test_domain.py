@@ -261,6 +261,20 @@ def test_toolset_definition_rejects_duplicate_json_keys() -> None:
         )
 
 
+def test_toolset_definition_wraps_excessive_integer_digits() -> None:
+    """Schema decoder integer limits remain typed protocol failures."""
+    previous_limit = sys.get_int_max_str_digits()
+    try:
+        sys.set_int_max_str_digits(640)
+        number = "1" * 641
+        schema_text = f'{{"tools":[],"value":{number}}}'
+
+        with pytest.raises(ProtocolError, match="schema is not valid JSON"):
+            _ = parse_toolset_definition("EditorToolset", schema_text)
+    finally:
+        sys.set_int_max_str_digits(previous_limit)
+
+
 def test_toolset_catalog_preserves_multiline_descriptions() -> None:
     """Qualified headers delimit toolsets and preserve nested bullets."""
     catalog_text = """- EditorToolset.EditorToolset: Editor operations
