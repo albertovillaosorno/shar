@@ -28,9 +28,12 @@ The verified authorities support these bounded propositions:
 - *Lexmark* rejected the asserted access-control theory where the challenged
   sequence did not prevent access to otherwise available program code. It did
   not create a universal compatibility exception.
-- *MDY* separates copyright-license conditions from contractual covenants and
-  treats § 1201(a) access-control analysis as distinct from infringement in the
-  Ninth Circuit.
+- *Chamberlain* required proof of unauthorized access and an access-to-
+  infringement nexus in the Federal Circuit where homeowners used compatible
+  replacement transmitters with purchased equipment.
+- *MDY* separates copyright-license conditions from contractual covenants,
+  rejects the *Chamberlain* nexus in the Ninth Circuit, and treats § 1201(a)
+  access-control analysis as distinct from infringement.
 - *Davidson* enforced accepted reverse-engineering restrictions, sustained DMCA
   claims involving a game-service authentication bypass, and rejected § 1201(f)
   where the emulator omitted product-key validation and enabled unauthorized
@@ -63,7 +66,7 @@ The verified authorities support these bounded propositions:
 | :----------------------- | :---------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Copyrightability         | Exact element, originality, function, constraints, merger, selection, and arrangement                       | `google-v-oracle.md`, `lexmark-v-static-control.md`, `sas-v-world-programming.md`, `rj-control-v-multiject.md`, `premier-dealer-v-allegiance.md`                                                     |
 | Fair use                 | Purpose, character, necessity, amount, final output, market, alternatives, and jurisdiction                 | `sega-v-accolade.md`, `sony-v-connectix.md`, `google-v-oracle.md`                                                                                                                                    |
-| Access controls          | Protected work, measure, ordinary access route, circumvention act, tool design, marketing, and distribution | `lexmark-v-static-control.md`, `mdy-v-blizzard.md`, `davidson-v-jung.md`                                                                                                                             |
+| Access controls          | Protected work, measure, ordinary access route, circumvention act, tool design, marketing, and distribution | `chamberlain-v-skylink.md`, `lexmark-v-static-control.md`, `mdy-v-blizzard.md`, `davidson-v-jung.md`                                                                                                 |
 | Contract                 | Exact terms, notice, assent, condition or covenant, scope, governing law, and remedy                        | `davidson-v-jung.md`, `mdy-v-blizzard.md`, `bowers-v-baystate-technologies.md`, `vault-v-quaid-software.md`, `nguyen-v-barnes-and-noble.md`, `berman-v-freedom-financial.md`, `specht-v-netscape.md` |
 | Confidential information | Source, secrecy, acquisition, duties, exposure, independent derivation, and disclosure                      | `../statutes/18-usc-1836-and-1839.md`                                                                                                                                                                |
 | Patent                   | Exact algorithm or claim, territory, legal status, implementation, and license                              | `patent-and-codec-risk.md`                                                                                                                                                                           |
@@ -122,6 +125,8 @@ identify:
 ## Primary Authorities
 
 - [Google LLC v. Oracle America, Inc.](../cases/google-v-oracle.md).
+<!-- markdownlint-disable-next-line MD013 -->
+- [Chamberlain Group, Inc. v. Skylink Technologies, Inc.](../cases/chamberlain-v-skylink.md).
 - [Davidson & Associates, Inc. v. Jung](../cases/davidson-v-jung.md).
 <!-- markdownlint-disable-next-line MD013 -->
 - [Lexmark International, Inc. v. Static Control Components, Inc.](../cases/lexmark-v-static-control.md).

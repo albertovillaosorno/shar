@@ -34,6 +34,14 @@ themselves create a defense to § 1201(a)(2) or § 1201(b). Any permanent
 exception, including § 1201(f), must be applied through its own exact
 conditions.
 
+*Chamberlain Group, Inc. v. Skylink Technologies, Inc.* required the claimant to
+prove unauthorized access and, in the Federal Circuit, a connection between that
+access and infringement of a copyright right. It rejected liability where
+homeowners were authorized to use replacement transmitters and no infringement
+or facilitating connection was alleged. The Ninth Circuit later rejected that
+access-to-infringement nexus in *MDY Industries, LLC v. Blizzard Entertainment,
+Inc.*, so the required relationship is jurisdiction-specific.
+
 *Davidson & Associates, Inc. v. Jung* affirmed anti-trafficking liability for a
 game-service emulator on a record involving circumvention of a server
 authentication sequence, access to an online-service mode without valid unique
@@ -85,6 +93,9 @@ For every challenged item, identify:
   <!-- markdownlint-disable-next-line MD013 -->
   <https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title17-section1201&num=0&edition=prelim>
   (Accessed: 16 July 2026).
+<!-- markdownlint-disable-next-line MD013 -->
+- [Chamberlain Group, Inc. v. Skylink Technologies, Inc.](../cases/chamberlain-v-skylink.md),
+  for the Federal Circuit's authorization, claimant-burden, and nexus analysis.
 - [Davidson & Associates, Inc. v. Jung](../cases/davidson-v-jung.md), for the
   Eighth Circuit's game-service authentication and emulator analysis.
 - [17 U.S.C. § 1201(f)](17-usc-1201f.md).

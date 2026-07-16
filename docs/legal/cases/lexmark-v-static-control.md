@@ -6,7 +6,7 @@
 - Court: United States Court of Appeals for the Sixth Circuit.
 - Authority: 387 F.3d 522 (6th Cir. 2004).
 - Decision date: 2004-10-26.
-- As-of date: 2026-07-12.
+- As-of date: 2026-07-16.
 - Counsel review: Not performed.
 
 ## Question Presented
@@ -31,6 +31,13 @@ The opinion also analyzed the Toner Loading Program through copyrightability,
 merger, and scenes-a-faire principles. It did not treat the mere theoretical
 availability of alternative implementations as conclusive proof of protectable
 expression.
+
+Like *Chamberlain Group, Inc. v. Skylink Technologies, Inc.*, the decision
+requires an exact account of the work, measure, ordinary access route, and
+accused compatibility technology. The cases reach their results through
+different statutory failures: *Lexmark* found no effective control over access
+to otherwise available program code, while *Chamberlain* found authorization and
+no required access-to-infringement nexus in the Federal Circuit.
 
 ## Limits And Procedural Posture
 
@@ -64,7 +71,9 @@ compatibility lock does not decide the statutory elements.
 - United States Court of Appeals for the Sixth Circuit (2004), *Lexmark
   International, Inc. v. Static Control Components, Inc.*, 387 F.3d 522.
   Available at: <https://www.ca6.uscourts.gov/opinions.pdf/04a0364p-06.pdf>
-  (Accessed: 12 July 2026).
+  (Accessed: 16 July 2026).
+<!-- markdownlint-disable-next-line MD013 -->
+- [Chamberlain Group, Inc. v. Skylink Technologies, Inc.](chamberlain-v-skylink.md).
 - [MDY Industries, LLC v. Blizzard Entertainment, Inc.](mdy-v-blizzard.md).
 <!-- markdownlint-disable-next-line MD013 -->
 - [Software interoperability research](../doctrines/software-interoperability.md).

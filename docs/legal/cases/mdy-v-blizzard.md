@@ -6,7 +6,7 @@
 - Court: United States Court of Appeals for the Ninth Circuit.
 - Authority: 629 F.3d 928 (9th Cir. 2010), amended 2011-02-17.
 - Decision date: 2010-12-14.
-- As-of date: 2026-07-12.
+- As-of date: 2026-07-16.
 - Counsel review: Not performed.
 
 ## Question Presented
@@ -33,6 +33,13 @@ access-control process.
 The amended disposition did not decide a § 1201(f) defense because the issue was
 not preserved in the manner required for appellate review.
 
+The court expressly rejected the Federal Circuit's access-to-infringement nexus
+from *Chamberlain Group, Inc. v. Skylink Technologies, Inc.* It treated
+§ 1201(a) as creating access-control liability distinct from copyright
+infringement. This disagreement means that absence of infringement does not end
+§ 1201(a) analysis in the Ninth Circuit, even though authorization and the exact
+protected work and measure remain necessary.
+
 ## Limits And Procedural Boundary
 
 - The covenant-versus-condition analysis depends on the exact agreement and the
@@ -58,7 +65,10 @@ software license, and a restriction on use is not necessarily an access control.
 - United States Court of Appeals for the Ninth Circuit (2011), *MDY Industries,
   LLC v. Blizzard Entertainment, Inc.*, amended opinion. Available at:
   <https://cdn.ca9.uscourts.gov/datastore/opinions/2011/02/17/09-15932.pdf>
-  (Accessed: 12 July 2026).
+  (Accessed: 16 July 2026).
+<!-- markdownlint-disable-next-line MD013 -->
+- [Chamberlain Group, Inc. v. Skylink Technologies, Inc.](chamberlain-v-skylink.md),
+  for the Federal Circuit nexus the Ninth Circuit rejected.
 <!-- markdownlint-disable-next-line MD013 -->
 - [Software-license reverse-engineering clauses](../contracts/software-license-reverse-engineering-clauses.md).
 <!-- markdownlint-disable-next-line MD013 -->

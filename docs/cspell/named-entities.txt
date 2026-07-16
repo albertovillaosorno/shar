@@ -22,6 +22,7 @@ Bowers
 BurntSushi
 Canyonero
 Cel
+Chamberlain
 Cognitect
 Condé
 Connectix
@@ -64,6 +65,7 @@ PATENTSCOPE
 Quaid
 Sedlik
 Simpsons
+Skylink
 Smarch
 Sotomayor
 Spahr
@@ -89,6 +91,7 @@ bartman
 baystate
 beeman
 berman
+chamberlain
 cletus
 cleveland
 connectix
@@ -127,6 +130,7 @@ ralph
 sega
 selma
 simpsons
+skylink
 squidport
 smithers
 sony
