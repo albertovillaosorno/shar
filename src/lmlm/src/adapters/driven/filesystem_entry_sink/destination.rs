@@ -257,7 +257,6 @@ pub(super) fn preflight_destinations(
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeSet;
-
     #[cfg(windows)]
     use std::ffi::OsString;
     #[cfg(windows)]
@@ -271,11 +270,15 @@ mod tests {
     #[test]
     fn collision_error_preserves_unpaired_utf16_destination_unit()
     -> Result<(), String> {
-        let destination = PathBuf::from(OsString::from_wide(&[
-            u16::from(b'a'),
-            0xd800,
-            u16::from(b'b'),
-        ]));
+        let destination = PathBuf::from(
+            OsString::from_wide(
+                &[
+                    u16::from(b'a'),
+                    0xd800,
+                    u16::from(b'b'),
+                ],
+            ),
+        );
         let mut files = BTreeSet::new();
         let mut directories = BTreeSet::new();
         register_portable_destination(

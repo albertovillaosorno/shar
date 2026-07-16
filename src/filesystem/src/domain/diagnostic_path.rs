@@ -61,12 +61,17 @@ impl<'a> DiagnosticPath<'a> {
 }
 
 /// Wraps one untrusted source message without changing its evidence.
-pub struct DiagnosticText<'a>(&'a str);
+#[derive(Debug, Clone, Copy)]
+#[expect(
+    clippy::redundant_pub_crate,
+    reason = "The parent module re-exports this renderer across the crate."
+)]
+pub(crate) struct DiagnosticText<'a>(&'a str);
 
 impl<'a> DiagnosticText<'a> {
     /// Creates one borrowed diagnostic text renderer.
     #[must_use]
-    pub const fn new(value: &'a str) -> Self {
+    pub(crate) const fn new(value: &'a str) -> Self {
         Self(value)
     }
 }

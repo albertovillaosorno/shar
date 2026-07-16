@@ -46,7 +46,7 @@
 //! A failed chunk must not suppress later chunks that can still be written.
 
 #[path = "support/output_error.rs"]
-mod support;
+pub mod support;
 
 use std::cell::{Cell, RefCell};
 use std::io;

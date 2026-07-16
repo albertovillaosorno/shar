@@ -45,13 +45,12 @@
 //!
 //! Untrusted paths and source messages must not inject terminal lines.
 
-use std::io;
-use std::path::PathBuf;
-
 #[cfg(windows)]
 use std::ffi::OsString;
+use std::io;
 #[cfg(windows)]
 use std::os::windows::ffi::OsStringExt as _;
+use std::path::PathBuf;
 
 use lmlm::{ExtractArchiveError, LmlmError};
 use schoenwald_cli as _;
@@ -87,11 +86,15 @@ fn extraction_errors_escape_control_characters() {
 #[cfg(windows)]
 #[test]
 fn extraction_error_preserves_unpaired_utf16_path_unit() {
-    let path = PathBuf::from(OsString::from_wide(&[
-        u16::from(b'a'),
-        0xd800,
-        u16::from(b'b'),
-    ]));
+    let path = PathBuf::from(
+        OsString::from_wide(
+            &[
+                u16::from(b'a'),
+                0xd800,
+                u16::from(b'b'),
+            ],
+        ),
+    );
     let error = ExtractArchiveError::Read {
         path,
         source: io::Error::other("read failure"),

@@ -46,7 +46,7 @@
 //! Custom error sources may form cycles and must not be revisited repeatedly.
 
 #[path = "support/output_error.rs"]
-mod support;
+pub mod support;
 
 use std::error::Error;
 use std::io;

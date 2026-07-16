@@ -46,7 +46,7 @@
 //! Equal provider messages must not erase distinct failure categories.
 
 #[path = "support/output_error.rs"]
-mod support;
+pub mod support;
 
 use std::io;
 

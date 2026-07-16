@@ -48,6 +48,7 @@ use std::io;
 use schoenwald_cli::{OutputSink, OutputStream};
 
 /// Output sink that fails one selected write.
+#[derive(Debug, Clone, Copy)]
 pub struct FailingWriteSink {
     calls: usize,
     failure_index: usize,

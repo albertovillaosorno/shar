@@ -46,7 +46,7 @@
 //! Delivery summaries classify chunks according to stream state first.
 
 #[path = "support/output_error.rs"]
-mod support;
+pub mod support;
 
 use std::io;
 

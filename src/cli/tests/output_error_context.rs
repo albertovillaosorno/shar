@@ -46,9 +46,9 @@
 //! Callers must distinguish result-channel and diagnostic-channel failures.
 
 #[path = "support/failing_write_sink.rs"]
-mod failing_write_sink;
+pub mod failing_write_sink;
 #[path = "support/output_error.rs"]
-mod support;
+pub mod support;
 
 use std::io;
 
