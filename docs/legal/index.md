@@ -53,6 +53,7 @@ may cite ADRs for technical facts, but ADRs are not legal authority.
 - [Andy Warhol Foundation for the Visual Arts, Inc. v. Goldsmith](cases/andy-warhol-foundation-v-goldsmith.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Berman v. Freedom Financial Network, LLC](cases/berman-v-freedom-financial.md)
+- [Bowers v. Baystate Technologies, Inc.](cases/bowers-v-baystate-technologies.md)
 - [Google LLC v. Oracle America, Inc](cases/google-v-oracle.md)
 - [Krause v. Titleserv, Inc](cases/krause-v-titleserv.md)
 - [Lenz v. Universal Music Corp.](cases/lenz-v-universal-music.md)
@@ -130,7 +131,7 @@ fact-specific result is not determined. Hosting, public access, noncommercial
 purpose, independent implementation, interoperability intent, or an accepted ADR
 does not determine a legal outcome by itself.
 
-- Active legal records: 53.
+- Active legal records: 54.
 - Review date: 2026-07-15.
 - Statutory currentness: the Office of the Law Revision Counsel classification
   tables were checked on 2026-07-14. The published 119th Congress tables cover

@@ -12,10 +12,12 @@ Anson
 Anysphere
 Astronics
 Batchelder
+Baystate
 Berman
 Bonestorm
 Borland
 Boudin
+Bowers
 BurntSushi
 Canyonero
 Cel
@@ -38,6 +40,7 @@ Honeybunny
 Infopaq
 Jebano
 Jebediah
+Justia
 Kagan
 Kaydara
 Krekel

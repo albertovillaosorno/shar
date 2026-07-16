@@ -8,7 +8,7 @@
   every jurisdiction where conduct or distribution occurs.
 - Authority level: Exact agreement text, assent evidence, statutes, and
   controlling contract and preemption cases.
-- As-of date: 2026-07-12.
+- As-of date: 2026-07-15.
 - Counsel review: Not performed.
 
 ## Question Presented
@@ -23,6 +23,19 @@ policy, and jurisdiction affect enforceability?
 Contract formation, scope, breach, remedies, statutory exceptions, and copyright
 preemption are separate questions. A statutory copyright defense does not by
 itself decide whether an independently enforceable contract exists.
+
+*Bowers v. Baystate Technologies, Inc.* held, under the First Circuit law the
+Federal Circuit predicted would apply, that a properly formed software contract
+could prohibit reverse engineering even though copyright law separately allows
+some reverse engineering to identify unprotectable ideas. Mutual assent and
+consideration supplied contractual elements beyond a copyright claim, and the
+promise bound the contracting parties rather than creating a right against the
+world.
+
+That decision is not a nationwide rule that every restriction is enforceable.
+The dissent would have found the prohibition preempted, and formation, notice,
+scope, governing law, public policy, statutory text, remedies, and later
+controlling authority remain independent questions.
 
 ## Not Established
 
@@ -45,6 +58,8 @@ private terms.
 - Every product, platform, download, SDK, and service agreement actually shown.
 - Complete assent interface evidence and transaction records.
 - Controlling state contract law and federal preemption authority.
+- [Bowers v. Baystate Technologies, Inc.](../cases/bowers-v-baystate-technologies.md),
+  for one influential contract and preemption analysis and its contrary dissent.
 - Applicable statutes, including 17 U.S.C. §§ 301 and 1201(f).
 
 ## Verification Checklist

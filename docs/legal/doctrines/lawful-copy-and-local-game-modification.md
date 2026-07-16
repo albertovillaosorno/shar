@@ -6,7 +6,7 @@
   fact-specific.
 - Jurisdiction: United States baseline; other jurisdictions unresolved.
 - Authority level: Cross-authority research record.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-15.
 - Counsel review: Not performed.
 
 ## Question Presented
@@ -36,6 +36,14 @@ licensee where the copyright owner used a license designation, significantly
 restricted transfer, and imposed notable use restrictions. Physical possession,
 a purchase receipt, payment, and the word `license` are therefore relevant but
 not independently conclusive.
+
+Copyright and contract must then be assessed separately. *Bowers v. Baystate
+Technologies, Inc.* enforced a properly formed reverse-engineering prohibition
+under the First Circuit law the Federal Circuit predicted would apply, even
+while preserving the separate copyright principle that some reverse engineering
+can be fair use. The decision does not prove that a physical-copy purchaser
+accepted a term, that a later service agreement governs an earlier disc
+transaction, or that every jurisdiction would enforce the same restriction.
 
 ## Why Local Use Is Legally Different From Distribution
 
@@ -93,6 +101,7 @@ not independently conclusive.
 - [17 U.S.C. § 109](../statutes/17-usc-109.md).
 - [17 U.S.C. § 117](../statutes/17-usc-117.md).
 - [17 U.S.C. § 1201](../statutes/17-usc-1201-trafficking.md).
+- [Bowers v. Baystate Technologies, Inc.](../cases/bowers-v-baystate-technologies.md).
 - [Krause v. Titleserv, Inc](../cases/krause-v-titleserv.md).
 - [Vernor v. Autodesk, Inc](../cases/vernor-v-autodesk.md).
 <!-- markdownlint-disable-next-line MD013 -->
