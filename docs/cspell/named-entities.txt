@@ -20,6 +20,7 @@ BurntSushi
 Canyonero
 Cel
 Cognitect
+Condé
 Connectix
 Dagblades
 Danske
@@ -27,6 +28,8 @@ Doshi
 Drachenberg
 Forening
 Gabbo
+Galoob
+Goldsmith
 Gyan
 Hashemi
 Hinnant
@@ -35,6 +38,7 @@ Honeybunny
 Infopaq
 Jebano
 Jebediah
+Kagan
 Kaydara
 Krekel
 Kull
@@ -44,6 +48,7 @@ Lexmark
 Mahmoud
 Moby
 Multiject
+Nast
 Newlib
 Nygard
 Ofek
@@ -59,10 +64,13 @@ Spinemelter
 Squishee
 Squidport
 Stenberg
+Titleserv
 Torruella
 Truevision
 USPTO
+Vernor
 Vidvox
+Warhol
 Wreckless
 agnes
 albertovillaosorno

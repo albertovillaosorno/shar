@@ -2,13 +2,14 @@
 
 > [Legal Research Disclaimer](../disclaimer.md) applies to this record.
 
-- Status: United States statutory and live official YouTube and Xbox policy
-  frameworks verified; game-specific publisher permission is not established.
+- Status: United States statutory, controlling fair-use, and live official
+  YouTube and Xbox policy frameworks verified; game-specific publisher
+  permission is not established.
 - Jurisdiction: United States baseline, uploader location, viewer territories,
   platform-selected law, and any publisher-selected law.
 - Authority level: Federal statute and current official YouTube and Xbox
   materials.
-- As-of date: 2026-07-14.
+- As-of date: 2026-07-15.
 - Counsel review: Not performed.
 
 ## Question Presented
@@ -31,6 +32,14 @@ use may support a commentary-driven video, but the four statutory factors must
 be assessed for the actual upload. Monetization is relevant but does not by
 itself defeat fair use. YouTube separately decides platform and monetization
 eligibility, while only a court can finally determine fair use.
+
+The analysis must identify the specific challenged use. Adding a new message,
+visual treatment, or general narration is not independently dispositive when the
+secondary use serves the same or a highly similar purpose as the original. By
+contrast, commentary or criticism that actually addresses the game, footage, or
+feature shown may supply a more distinct purpose and a justification for the
+amount used. That distinction informs only part of the first factor and does not
+replace the remaining factors.
 
 ## Factors Supporting A Commentary-Driven Video
 
@@ -127,25 +136,30 @@ conditions, and required notices are verified.
 
 ## Primary And Official Sources
 
+- Supreme Court of the United States, [*Andy Warhol Foundation for the Visual
+  Arts, Inc. v. Goldsmith*][warhol-opinion], 598 U.S. 508 (2023) (Accessed: 15
+  July 2026).
 - Office of the Law Revision Counsel, [17 U.S.C. § 101][section-101]
   (Accessed: 14 July 2026).
 - Office of the Law Revision Counsel, [17 U.S.C. § 106][section-106]
   (Accessed: 13 July 2026).
 - Office of the Law Revision Counsel, [17 U.S.C. § 107][section-107]
-  (Accessed: 13 July 2026).
+  (Accessed: 15 July 2026).
 - U.S. Copyright Office, [More Information on Fair Use][copyright-office]
-  (Accessed: 13 July 2026).
+  (Accessed: 15 July 2026).
 - YouTube, [Terms of Service][youtube-terms] (Accessed: 13 July 2026).
 - YouTube Help, [Fair use on YouTube][youtube-fair-use] (Accessed: 13 July
   2026).
-- YouTube Help, [Video game and software content][youtube-games] (Accessed: 14
+- YouTube Help, [Video game and software content][youtube-games] (Accessed: 15
   July 2026).
 - YouTube Help, [What kind of content can I monetize?][youtube-monetize]
   (Accessed: 13 July 2026).
 - YouTube Help, [YouTube channel monetization policies][youtube-channel]
-  (Accessed: 14 July 2026).
+  (Accessed: 15 July 2026).
 - Xbox, [Game Content Usage Rules][xbox-rules] (Accessed: 14 July 2026).
 
+[warhol-opinion]:
+  https://www.supremecourt.gov/opinions/22pdf/21-869_87ad.pdf
 [section-101]:
   https://uscode.house.gov/view.xhtml?req=(title:17%20section:101%20edition:prelim)
 [section-106]:

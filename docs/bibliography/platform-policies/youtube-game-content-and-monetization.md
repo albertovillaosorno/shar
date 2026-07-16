@@ -13,7 +13,7 @@ for the YouTube Partner Program in a specific case.
   channel eligibility, Content ID outcomes, and game-specific rights remain
   fact-specific.
 - Counsel review: Not performed.
-- As-of date: 2026-07-14.
+- As-of date: 2026-07-15.
 - Subject class: Official platform monetization and creator-content policies.
 - Jurisdictional scope: Platform policy; separate copyright and contract rules
   depend on the uploader, content, agreement, and governing law.
@@ -117,11 +117,11 @@ music or other separately controlled content.
 ## Source References
 
 - YouTube (n.d.) *Video game and software content*. Available at:
-  <https://support.google.com/youtube/answer/138161?hl=en> (Accessed: 14 July
+  <https://support.google.com/youtube/answer/138161?hl=en> (Accessed: 15 July
   2026).
 - YouTube (n.d.) *YouTube channel monetization policies*. Live page with an
   update history that includes a notice dated 15 July 2025. Available at:
-  <https://support.google.com/youtube/answer/1311392?hl=en> (Accessed: 14 July
+  <https://support.google.com/youtube/answer/1311392?hl=en> (Accessed: 15 July
   2026).
 - SHAR repository (2026) Legal analysis of gameplay video, streaming, and
   monetization boundaries.
