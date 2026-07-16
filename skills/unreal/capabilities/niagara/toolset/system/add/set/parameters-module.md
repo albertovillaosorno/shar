@@ -50,42 +50,88 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to create a Set Parameters assignment module in a SHAR Niagara
+stack when named particle, emitter, or system parameters must be authored
+directly.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use a full mutable emitter with a real script-stack name.
+- Choose unique parameter names and matching Niagara types.
+- Supply at least one initial typed parameter entry.
+- Use a disposable system for validation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+    "moduleLocationRef": {
+    "system": {
+    "refPath": (
+        "/Game/NS_SHAR_MCP_SetParamsProbe_2."
+        "NS_SHAR_MCP_SetParamsProbe_2"
+    )
+},
+    "emitterName": "SHARExtra",
+    "scriptName": "ParticleUpdateScript",
+    "moduleName": "",
+    "rendererIndex": -1,
+    "inputNameStack": [],
+},
+    "parameters": [
+        {
+            "variable": {
+                "name": "Particles.SHARValue",
+                "type": {
+                    "classStructOrEnum": {
+                        "refPath": "/Script/Niagara.NiagaraFloat"
+                    }
+                },
+            },
+            "defaultValue": {
+                "struct": {
+                    "refPath": "/Script/Niagara.NiagaraFloat"
+                },
+                "value": {"value": 1.25},
+            },
+        }
+    ],
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two cycles appended one enabled Set Parameters module after `ParticleState`. Its
+first input was `Particles.SHARValue` with float default `1.25`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This is a persistent stack mutation.
+- The generated module name follows `SetVariables_<32-hex GUID>` and changes
+  when rebuilt.
+- Rediscover the exact module name before later entry operations.
+- The return is parsed module topology and marks `bIsSetParametersModule` true.
+- Lightweight inherited emitters with script name `None` are unsuitable.
+- A StaticMesh system fails NiagaraSystem type validation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

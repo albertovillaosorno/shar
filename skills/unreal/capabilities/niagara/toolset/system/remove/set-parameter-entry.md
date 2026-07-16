@@ -50,42 +50,68 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to remove an obsolete named assignment from a SHAR Niagara Set
+Parameters module after confirming no downstream module depends on it.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Rediscover the current Set Parameters module name.
+- Confirm the exact parameter name through GetModuleInputValues.
+- Preserve the value and type if rollback may be needed.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+    "moduleRef": {
+    "system": {
+    "refPath": (
+        "/Game/NS_SHAR_MCP_SetParamsProbe_2."
+        "NS_SHAR_MCP_SetParamsProbe_2"
+    )
+},
+    "emitterName": "SHARExtra",
+    "scriptName": "ParticleUpdateScript",
+    "moduleName": "SetVariables_<rediscovered GUID>",
+    "rendererIndex": -1,
+    "inputNameStack": [],
+},
+    "parameterName": "Particles.SHARExtra",
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two cycles removed `Particles.SHARExtra`, leaving `Particles.SHARValue`
+unchanged. Each successful removal returned JSON null.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This is a destructive module mutation and returns JSON null.
+- Removing a missing parameter raises `not found`; it is not a no-op.
+- Parameter names include their namespace and must match exactly.
+- Verify remaining inputs with GetModuleInputValues.
+- Removing the final entry was not tested; do not assume the module deletes
+  itself.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

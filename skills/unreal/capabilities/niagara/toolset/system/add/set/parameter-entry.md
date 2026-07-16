@@ -50,42 +50,81 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to append a typed assignment to an existing SHAR Niagara Set
+Parameters module without rebuilding the module.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Rediscover the transient Set Parameters module name from fresh topology.
+- Choose a parameter name not already present.
+- Keep variable type and default-value struct identical.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+    "moduleRef": {
+    "system": {
+    "refPath": (
+        "/Game/NS_SHAR_MCP_SetParamsProbe_2."
+        "NS_SHAR_MCP_SetParamsProbe_2"
+    )
+},
+    "emitterName": "SHARExtra",
+    "scriptName": "ParticleUpdateScript",
+    "moduleName": "SetVariables_<rediscovered GUID>",
+    "rendererIndex": -1,
+    "inputNameStack": [],
+},
+    "entry": {
+    "variable": {
+        "name": "Particles.SHARExtra",
+        "type": {
+            "classStructOrEnum": {
+                "refPath": "/Script/Niagara.NiagaraFloat"
+            }
+        },
+    },
+    "defaultValue": {
+        "struct": {"refPath": "/Script/Niagara.NiagaraFloat"},
+        "value": {"value": 2.5},
+    },
+},
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two cycles appended `Particles.SHARExtra` with float value `2.5`, preserving
+`Particles.SHARValue` first and returning topology with both entries.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This is a persistent module mutation.
+- The return is updated module topology, not only the new entry.
+- Adding an existing parameter name raises `already exists` and instructs
+  removal first.
+- Duplicate failure preserved all prior values; it does not replace defaults.
+- Module GUID names must never be persisted between rebuilt fixtures.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
