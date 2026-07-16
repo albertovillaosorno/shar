@@ -55,6 +55,7 @@ Leavy
 Lenz
 Leval
 Lexmark
+MAI
 Mahmoud
 Moby
 Multiject
@@ -64,6 +65,7 @@ Nygard
 Ofek
 Osorno
 PATENTSCOPE
+Peak
 Quaid
 ReDigi
 Sedlik
@@ -125,6 +127,7 @@ lisa
 lou
 louie
 maggie
+mai
 milhouse
 moe
 moleman
@@ -132,6 +135,7 @@ multiject
 ned
 netscape
 nguyen
+peak
 quaid
 ralph
 redigi

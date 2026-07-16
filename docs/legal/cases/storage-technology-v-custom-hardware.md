@@ -23,7 +23,8 @@ password protocol?
 
 The Federal Circuit vacated a preliminary injunction. It held that the service
 company was likely to prevail on its § 117(c) defense for activation-created RAM
-copies. The machine owners authorized the company to power on and maintain their
+copies. Unlike the pre-§ 117(c) record in *MAI Systems Corp. v. Peak Computer,
+Inc.*, the machine owners authorized the company to power on and maintain their
 systems, the full program was automatically copied into RAM during startup, and
 that copying was necessary to operate the machines.
 
@@ -106,6 +107,7 @@ without resolving jurisdiction.
   <https://law.resource.org/pub/us/case/reporter/F3/421/421.F3d.1307.04-1462.html>
   (Accessed: 16 July 2026).
 - [17 U.S.C. § 117](../statutes/17-usc-117.md).
+- [MAI Systems Corp. v. Peak Computer, Inc.](mai-systems-v-peak-computer.md).
 <!-- markdownlint-disable-next-line MD013 -->
 - [17 U.S.C. § 1201 tool-distribution research](../statutes/17-usc-1201-trafficking.md).
 <!-- markdownlint-disable-next-line MD013 -->
