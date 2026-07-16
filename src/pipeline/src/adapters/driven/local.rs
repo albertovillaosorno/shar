@@ -55,6 +55,7 @@ use crate::domain::{
 };
 use crate::ports::{FbxExportOptions, PipelineOperations};
 
+mod character_catalog;
 mod fbx_export;
 mod fbx_manifest;
 mod filesystem;
@@ -139,6 +140,17 @@ impl PipelineOperations for LocalPipeline {
     ) -> PipelineOutcome<StageReport> {
         fbx_manifest::write_phase_three_fbx_manifest(
             index_path, selector, output_dir,
+        )
+    }
+
+    fn export_character_catalog(
+        &self,
+        index_path: &Path,
+        output_dir: &Path,
+        base_root: &Path,
+    ) -> PipelineOutcome<StageReport> {
+        character_catalog::export_character_catalog(
+            index_path, output_dir, base_root,
         )
     }
 

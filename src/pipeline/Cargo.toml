@@ -29,6 +29,8 @@ lmlm = { path = "../lmlm" }
 fbx = { path = "../fbx" }
 # shar-json-text owns lossless JSON string-content escaping shared across format boundaries.
 shar-json-text = { path = "../json-text" }
+# shar-sha256 provides deterministic artifact identities without duplicating cryptographic primitives across adapters.
+shar-sha256 = { path = "../sha256" }
 
 # serde_json enforces final extracted JSON and JSONL syntax before the pipeline publishes completion.
 serde_json = "1"

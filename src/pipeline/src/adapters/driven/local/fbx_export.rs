@@ -55,7 +55,7 @@
 //! rediscovered from local filesystem layout, and every member id receives an
 //! explicit capability outcome in the deterministic report. Binary FBX 7.7
 //! is the sole FBX representation; optional review support emits scripts.
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
 use fbx::adapters::driven::binary_character_writer::{
@@ -73,6 +73,14 @@ use fbx::adapters::driven::decoded_skin_source::load_character;
 use fbx::adapters::driven::maya_import_helper::{
     Summary as MayaImportHelperSummary, write as write_maya_import_helper,
 };
+use fbx::adapters::driven::semantic_character_texture::request::{
+    ExtraMaterialRequest, GroupAddressRequest,
+};
+use fbx::adapters::driven::semantic_character_texture::{
+    PreparedSemanticCharacter, SemanticTextureArtifactError,
+    SemanticTextureRequest, prepare_semantic_character,
+    publish_prepared_semantic_character,
+};
 use fbx::domain::animation::AnimationClip;
 use fbx::domain::character::CharacterAsset;
 use fbx::domain::texture::MaterialBinding;
@@ -81,6 +89,8 @@ use schoenwald_filesystem::adapters::driving::local::{
     file_len as local_file_len, read_bytes as local_read_bytes,
     write_text as local_write_text,
 };
+use serde_json::{Value, json};
+use shar_sha256::digest_hex;
 
 use super::fbx_manifest::stable_file_stem;
 use crate::domain::package::{
@@ -94,6 +104,9 @@ use crate::ports::FbxExportOptions;
 const CHARACTERS_CATEGORY: &str = "characters";
 /// Shared character rig and texture dependency subcategory.
 const CHARACTER_SHARED_SUBCATEGORY: &str = "characters/rig/common";
+/// Full general animation bank used by manually verified non-playable exports.
+const GENERAL_CHARACTER_ANIMATION_SUBCATEGORY: &str =
+    "characters/homer/animation-set";
 
 /// One deterministic capability decision for the export report.
 struct CapabilityItem {
@@ -172,6 +185,8 @@ struct ClassifiedMembers<'row> {
     skeletons: Vec<&'row PhaseThreePackageMember>,
     /// Skin members in package order.
     skins: Vec<&'row PhaseThreePackageMember>,
+    /// Rigid prop mesh members in package order.
+    meshes: Vec<&'row PhaseThreePackageMember>,
     /// Composite drawable members in package order.
     composites: Vec<&'row PhaseThreePackageMember>,
     /// Animation clip members deferred to a later capability pass.
@@ -187,6 +202,13 @@ struct ClassifiedMembers<'row> {
     /// Members outside the character contract.
     unsupported: Vec<&'row PhaseThreePackageMember>,
 }
+
+/// Semantic group ownership returned by exact shader classification.
+type SemanticGroupOwnership = (
+    Vec<GroupAddressRequest>,
+    Option<GroupAddressRequest>,
+    BTreeSet<String>,
+);
 
 /// Export one selected model package to a character FBX artifact.
 ///
@@ -295,6 +317,802 @@ pub(super) fn export_fbx_package(
         helper_artifact.as_ref(),
         maya_artifact.as_ref(),
     )
+}
+
+/// Prepare, publish, and verify one catalog character package.
+pub(super) fn export_prepared_character_package(
+    index: &PhaseThreePackageIndex,
+    package: &PhaseThreePackageRow,
+    output_root: &Path,
+    base_root: &Path,
+) -> Result<Value, PipelineError> {
+    validate_character_package(package)?;
+    let members = classify_members(package)?;
+    let character = build_character(
+        package, &members, base_root,
+    )?;
+    let animation_package = resolve_animation_package(
+        index, package,
+    )?;
+    let input_dir = output_root
+        .join(".texture-inputs")
+        .join(&package.package_id);
+    remove_texture_staging_dir(&input_dir)?;
+    let result = (|| {
+        let (materials, _capabilities) = resolve_materials(
+            index, package, &members, base_root, &input_dir,
+        )?;
+        let mut request = semantic_request(
+            index,
+            package,
+            &members,
+            &character,
+            &materials,
+            animation_package,
+            base_root,
+            &input_dir,
+        )?;
+        let source_topology = topology_counts(&character)?;
+        let (prepared, selected_mode) =
+            prepare_with_source_fallback(&mut request)?;
+        let prepared_topology = topology_counts(&prepared.character)?;
+        if prepared_topology != source_topology
+            || prepared
+                .character
+                .bones
+                .len()
+                != character
+                    .bones
+                    .len()
+        {
+            return Err(
+                PipelineError::new(
+                    format!(
+                        "semantic preparation changed topology or rig for {}",
+                        package.package_id
+                    ),
+                ),
+            );
+        }
+        let package_dir = output_root.join(&package.package_id);
+        let summary = publish_prepared_semantic_character(
+            &package_dir,
+            &prepared,
+        )
+        .map_err(
+            |error| {
+                PipelineError::new(
+                    format!(
+                        "prepared character publication failed for {}: {error}",
+                        package.package_id
+                    ),
+                )
+            },
+        )?;
+        verify_summary(
+            package,
+            &summary,
+            &prepared,
+            source_topology,
+        )?;
+        catalog_entry(
+            package,
+            animation_package,
+            &package_dir,
+            &prepared,
+            &summary,
+            source_topology,
+            selected_mode,
+        )
+    })();
+    let cleanup = remove_texture_staging_dir(&input_dir);
+    let entry = result?;
+    cleanup?;
+    Ok(entry)
+}
+
+/// Build one explicit semantic request from decoded package evidence.
+#[expect(
+    clippy::too_many_arguments,
+    clippy::too_many_lines,
+    reason = "Package evidence and semantic policy form one request \
+              transaction."
+)]
+fn semantic_request(
+    index: &PhaseThreePackageIndex,
+    package: &PhaseThreePackageRow,
+    members: &ClassifiedMembers<'_>,
+    character: &CharacterAsset,
+    materials: &[MaterialBinding],
+    animation_package: Option<&PhaseThreePackageRow>,
+    base_root: &Path,
+    input_dir: &Path,
+) -> Result<SemanticTextureRequest, PipelineError> {
+    let binding_by_material = materials
+        .iter()
+        .map(
+            |binding| {
+                (
+                    binding
+                        .material_name
+                        .as_str(),
+                    binding,
+                )
+            },
+        )
+        .collect::<BTreeMap<_, _>>();
+    let (body_groups, eye_group, extra_material_names) =
+        semantic_group_ownership(character)?;
+    let body_texture_path = body_texture_path(
+        character,
+        &body_groups,
+        &binding_by_material,
+        input_dir,
+    )?;
+    let mut extra_materials = Vec::new();
+    let mut untextured_materials = Vec::new();
+    for material_name in extra_material_names {
+        let binding = binding_by_material
+            .get(material_name.as_str())
+            .ok_or_else(
+                || {
+                    PipelineError::new(
+                        format!(
+                            "material {material_name} has no resolved binding \
+                             for {}",
+                            package.package_id
+                        ),
+                    )
+                },
+            )?;
+        if let Some(output_file_name) = binding
+            .texture_file_name
+            .as_ref()
+        {
+            extra_materials.push(
+                ExtraMaterialRequest {
+                    material_name,
+                    texture_path: input_dir.join(output_file_name),
+                    output_file_name: output_file_name.clone(),
+                },
+            );
+        } else {
+            untextured_materials.push(material_name);
+        }
+    }
+    let skeleton_path = members
+        .skeletons
+        .first()
+        .map(|member| base_root.join(&member.path))
+        .ok_or_else(
+            || PipelineError::new("character catalog package lost skeleton"),
+        )?;
+    let skin_paths = members
+        .skins
+        .iter()
+        .map(|member| base_root.join(&member.path))
+        .collect();
+    let mesh_paths = members
+        .meshes
+        .iter()
+        .map(|member| base_root.join(&member.path))
+        .collect();
+    let composite_paths = members
+        .composites
+        .iter()
+        .map(|member| base_root.join(&member.path))
+        .collect();
+    let general_animation_paths = animation_member_paths(
+        animation_package,
+        base_root,
+    )?;
+    let eye_frame_paths = eye_group
+        .map(
+            |_address| {
+                shared_eye_frame_paths(
+                    index, base_root,
+                )
+            },
+        )
+        .transpose()?;
+    Ok(
+        SemanticTextureRequest {
+            character_name: package
+                .package_id
+                .clone(),
+            skeleton_path,
+            skin_paths,
+            mesh_paths,
+            composite_paths,
+            general_animation_paths,
+            character_animation_paths: Vec::new(),
+            body_texture_path,
+            body_texture_mode: "semantic-atlas".to_owned(),
+            body_texture_address_mode: "tile".to_owned(),
+            eye_frame_paths,
+            body_groups,
+            eye_group,
+            color_overrides: Vec::new(),
+            hair_luminance_ratio: 0.2,
+            body_atlas_width: 2048,
+            body_atlas_height: 2048,
+            body_atlas_padding: 8,
+            body_atlas_background: [
+                128, 128, 128, 255,
+            ],
+            eye_output_size: 64,
+            extra_materials,
+            untextured_materials,
+        },
+    )
+}
+
+/// Classify body, eye, and accessory groups from exact shader identities.
+fn semantic_group_ownership(
+    character: &CharacterAsset
+) -> Result<SemanticGroupOwnership, PipelineError> {
+    let mut body_groups = Vec::new();
+    let mut eye_group = None;
+    let mut extra_materials = BTreeSet::new();
+    for (part_index, part) in character
+        .parts
+        .iter()
+        .enumerate()
+    {
+        for (group_index, group) in part
+            .mesh
+            .groups
+            .iter()
+            .enumerate()
+        {
+            let address = GroupAddressRequest {
+                part_index,
+                group_index,
+            };
+            let shader = group
+                .shader
+                .to_ascii_lowercase();
+            if shader.contains("char_swatches") {
+                body_groups.push(address);
+            } else if shader.contains("eyeball") {
+                if eye_group
+                    .replace(address)
+                    .is_some()
+                {
+                    return Err(
+                        PipelineError::new(
+                            format!(
+                                "character {} has multiple eye groups",
+                                character.name
+                            ),
+                        ),
+                    );
+                }
+            } else {
+                let _inserted = extra_materials.insert(
+                    group
+                        .shader
+                        .clone(),
+                );
+            }
+        }
+    }
+    if body_groups.is_empty() {
+        return Err(
+            PipelineError::new(
+                format!(
+                    "character {} has no body swatch group",
+                    character.name
+                ),
+            ),
+        );
+    }
+    Ok(
+        (
+            body_groups,
+            eye_group,
+            extra_materials,
+        ),
+    )
+}
+
+/// Require every selected body shader to resolve to identical source pixels.
+fn body_texture_path(
+    character: &CharacterAsset,
+    body_groups: &[GroupAddressRequest],
+    bindings: &BTreeMap<&str, &MaterialBinding>,
+    input_dir: &Path,
+) -> Result<PathBuf, PipelineError> {
+    let mut candidates = BTreeMap::<String, PathBuf>::new();
+    for address in body_groups {
+        let group = character
+            .parts
+            .get(address.part_index)
+            .and_then(
+                |part| {
+                    part.mesh
+                        .groups
+                        .get(address.group_index)
+                },
+            )
+            .ok_or_else(|| PipelineError::new("body group disappeared"))?;
+        let binding = bindings
+            .get(
+                group
+                    .shader
+                    .as_str(),
+            )
+            .ok_or_else(
+                || {
+                    PipelineError::new(
+                        format!(
+                            "body shader {} has no material binding",
+                            group.shader
+                        ),
+                    )
+                },
+            )?;
+        if let Some(file_name) = binding
+            .texture_file_name
+            .as_ref()
+        {
+            let _previous = candidates.insert(
+                file_name.clone(),
+                input_dir.join(file_name),
+            );
+        }
+    }
+    let mut selected = None;
+    let mut selected_hash = None;
+    for path in candidates.into_values() {
+        let bytes = local_read_bytes(&path).map_err(
+            |error| {
+                PipelineError::new(
+                    format!(
+                        "body source texture read failed for {}: {error}",
+                        path.display()
+                    ),
+                )
+            },
+        )?;
+        let hash = digest_hex(&bytes);
+        if selected_hash
+            .as_ref()
+            .is_some_and(|existing| existing != &hash)
+        {
+            return Err(
+                PipelineError::new(
+                    format!(
+                        "character {} body shaders resolve to different \
+                         source textures",
+                        character.name
+                    ),
+                ),
+            );
+        }
+        selected_hash = Some(hash);
+        if selected.is_none() {
+            selected = Some(path);
+        }
+    }
+    selected
+        .ok_or_else(|| PipelineError::new("body texture selection is empty"))
+}
+
+/// Resolve decoded animation member paths from one selected bank.
+fn animation_member_paths(
+    animation_package: Option<&PhaseThreePackageRow>,
+    base_root: &Path,
+) -> Result<Vec<PathBuf>, PipelineError> {
+    let package = animation_package.ok_or_else(
+        || PipelineError::new("character catalog animation package is missing"),
+    )?;
+    let paths = package
+        .members()
+        .iter()
+        .filter(
+            |member| {
+                member.kind == "p3d-animation"
+                    && member.source_chunk_kind == "animation"
+            },
+        )
+        .map(|member| base_root.join(&member.path))
+        .collect::<Vec<_>>();
+    if paths.is_empty() {
+        return Err(
+            PipelineError::new(
+                format!(
+                    "animation package {} has no decoded clips",
+                    package.package_id
+                ),
+            ),
+        );
+    }
+    Ok(paths)
+}
+
+/// Resolve the four shared eye-frame PNGs by exact portable file name.
+fn shared_eye_frame_paths(
+    index: &PhaseThreePackageIndex,
+    base_root: &Path,
+) -> Result<[PathBuf; 4], PipelineError> {
+    let matches = index
+        .packages()
+        .iter()
+        .filter(
+            |package| {
+                package.category == CHARACTERS_CATEGORY
+                    && package.subcategory == CHARACTER_SHARED_SUBCATEGORY
+            },
+        )
+        .collect::<Vec<_>>();
+    let package = match matches.as_slice() {
+        [package] => *package,
+        [] => {
+            return Err(
+                PipelineError::new("shared character package is missing"),
+            );
+        }
+        _ => {
+            return Err(
+                PipelineError::new("shared character package is ambiguous"),
+            );
+        }
+    };
+    let mut paths = BTreeMap::new();
+    for member in package.members() {
+        let Some(file_name) = Path::new(&member.path)
+            .file_name()
+            .and_then(|name| name.to_str())
+        else {
+            continue;
+        };
+        if [
+            "eyeball.bmp.0.png",
+            "eyeball.bmp.1.png",
+            "eyeball.bmp.2.png",
+            "eyeball.bmp.3.png",
+        ]
+        .contains(&file_name)
+        {
+            let _previous = paths.insert(
+                file_name.to_owned(),
+                base_root.join(&member.path),
+            );
+        }
+    }
+    [
+        "eyeball.bmp.0.png",
+        "eyeball.bmp.1.png",
+        "eyeball.bmp.2.png",
+        "eyeball.bmp.3.png",
+    ]
+    .map(
+        |file_name| {
+            paths
+                .remove(file_name)
+                .ok_or_else(
+                    || {
+                        PipelineError::new(
+                            format!("shared eye frame is missing: {file_name}"),
+                        )
+                    },
+                )
+        },
+    )
+    .into_iter()
+    .collect::<Result<Vec<_>, _>>()?
+    .try_into()
+    .map_err(
+        |_paths: Vec<PathBuf>| PipelineError::new("eye frame count mismatch"),
+    )
+}
+
+/// Prefer semantic-atlas output and fall back only on body-classifier failure.
+fn prepare_with_source_fallback(
+    request: &mut SemanticTextureRequest
+) -> Result<
+    (
+        PreparedSemanticCharacter,
+        &'static str,
+    ),
+    PipelineError,
+> {
+    match prepare_semantic_character(request) {
+        Ok(prepared) => Ok(
+            (
+                prepared,
+                "semantic-atlas",
+            ),
+        ),
+        Err(SemanticTextureArtifactError::Body(_body_error)) => {
+            "preserve-source".clone_into(&mut request.body_texture_mode);
+            prepare_semantic_character(request)
+                .map(
+                    |prepared| {
+                        (
+                            prepared,
+                            "preserve-source",
+                        )
+                    },
+                )
+                .map_err(
+                    |error| {
+                        PipelineError::new(
+                            format!(
+                                "source-preserving character preparation \
+                                 failed: {error:?}"
+                            ),
+                        )
+                    },
+                )
+        }
+        Err(error) => Err(
+            PipelineError::new(
+                format!("semantic character preparation failed: {error:?}"),
+            ),
+        ),
+    }
+}
+
+/// Count primitive groups, vertices, and triangles with checked arithmetic.
+fn topology_counts(
+    character: &CharacterAsset
+) -> Result<[usize; 3], PipelineError> {
+    let mut groups = 0_usize;
+    let mut vertices = 0_usize;
+    let mut triangles = 0_usize;
+    for part in &character.parts {
+        for group in &part
+            .mesh
+            .groups
+        {
+            groups = groups
+                .checked_add(1)
+                .ok_or_else(|| PipelineError::new("group count overflow"))?;
+            vertices = vertices
+                .checked_add(
+                    group
+                        .positions
+                        .len(),
+                )
+                .ok_or_else(|| PipelineError::new("vertex count overflow"))?;
+            triangles = triangles
+                .checked_add(
+                    group
+                        .triangles
+                        .len(),
+                )
+                .ok_or_else(|| PipelineError::new("triangle count overflow"))?;
+        }
+    }
+    Ok(
+        [
+            groups, vertices, triangles,
+        ],
+    )
+}
+
+/// Require the binary writer summary to match the prepared aggregate exactly.
+fn verify_summary(
+    package: &PhaseThreePackageRow,
+    summary: &CharacterBinaryFbxSummary,
+    prepared: &PreparedSemanticCharacter,
+    topology: [usize; 3],
+) -> Result<(), PipelineError> {
+    let [
+        groups,
+        _vertices,
+        _triangles,
+    ] = topology;
+    if summary.bones
+        != prepared
+            .character
+            .bones
+            .len()
+        || summary.geometries != groups
+        || summary.animations
+            != prepared
+                .animations
+                .len()
+        || summary.animations == 0
+        || summary.clusters == 0
+        || summary.materials == 0
+        || summary.textures == 0
+    {
+        return Err(
+            PipelineError::new(
+                format!(
+                    "binary FBX summary is incomplete for {}: {summary:?}",
+                    package.package_id
+                ),
+            ),
+        );
+    }
+    Ok(())
+}
+
+/// Render one deterministic catalog entry after artifact verification.
+#[expect(
+    clippy::too_many_lines,
+    reason = "Artifact checks and row rendering form one evidence transaction."
+)]
+fn catalog_entry(
+    package: &PhaseThreePackageRow,
+    animation_package: Option<&PhaseThreePackageRow>,
+    package_dir: &Path,
+    prepared: &PreparedSemanticCharacter,
+    summary: &CharacterBinaryFbxSummary,
+    topology: [usize; 3],
+    selected_mode: &str,
+) -> Result<Value, PipelineError> {
+    let fbx_file_name = format!(
+        "{}.fbx",
+        prepared
+            .artifacts
+            .summary
+            .character_id
+    );
+    let fbx_path = package_dir.join(&fbx_file_name);
+    let fbx_bytes = local_read_bytes(&fbx_path).map_err(
+        |error| {
+            PipelineError::new(format!("FBX verification read failed: {error}"))
+        },
+    )?;
+    verify_external_binary_fbx(
+        package, &fbx_bytes,
+    )?;
+    let texture_dir = package_dir.join("textures");
+    let mut texture_files = std::fs::read_dir(&texture_dir)
+        .map_err(
+            |error| {
+                PipelineError::new(
+                    format!("texture directory read failed: {error}"),
+                )
+            },
+        )?
+        .map(
+            |entry| {
+                entry.map_err(
+                    |error| {
+                        PipelineError::new(
+                            format!("texture entry read failed: {error}"),
+                        )
+                    },
+                )
+            },
+        )
+        .collect::<Result<Vec<_>, _>>()?;
+    texture_files.sort_by_key(std::fs::DirEntry::file_name);
+    let mut texture_rows = Vec::new();
+    for entry in texture_files {
+        let path = entry.path();
+        if !path.is_file() {
+            return Err(
+                PipelineError::new(
+                    format!(
+                        "unexpected texture directory entry: {}",
+                        path.display()
+                    ),
+                ),
+            );
+        }
+        let bytes = local_read_bytes(&path).map_err(
+            |error| PipelineError::new(format!("texture read failed: {error}")),
+        )?;
+        let file_name = path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .ok_or_else(
+                || PipelineError::new("texture file name is not UTF-8"),
+            )?;
+        texture_rows.push(
+            json!({
+                "path": format!("{}/textures/{file_name}", package.package_id),
+                "bytes": bytes.len(),
+                "sha256": digest_hex(&bytes),
+            }),
+        );
+    }
+    for binding in &prepared.materials {
+        if let Some(file_name) = binding
+            .texture_file_name
+            .as_deref()
+            && !texture_dir
+                .join(file_name)
+                .is_file()
+        {
+            return Err(
+                PipelineError::new(
+                    format!(
+                        "external texture reference is missing for {}: \
+                         {file_name}",
+                        package.package_id
+                    ),
+                ),
+            );
+        }
+    }
+    let texture_plan = local_read_bytes(&package_dir.join("texture-plan.json"))
+        .map_err(
+            |error| {
+                PipelineError::new(format!("texture-plan read failed: {error}"))
+            },
+        )?;
+    let [
+        group_count,
+        vertex_count,
+        triangle_count,
+    ] = topology;
+    Ok(
+        json!({
+            "package_id": package.package_id,
+            "subcategory": package.subcategory,
+            "animation_package_id": animation_package
+                .map(|row| &row.package_id),
+            "body_mode": selected_mode,
+            "eye_modeled": prepared.artifacts.eye_layer_pngs.is_some(),
+            "eye_profile_sha256": prepared.artifacts.eye_profile_sha256,
+            "fbx": {
+                "path": format!("{}/{fbx_file_name}", package.package_id),
+                "bytes": fbx_bytes.len(),
+                "sha256": digest_hex(&fbx_bytes),
+                "version": 7700_i32,
+                "texture_storage": "external",
+                "packed_images": 0_i32,
+            },
+            "texture_plan": {
+                "path": format!("{}/texture-plan.json", package.package_id),
+                "bytes": texture_plan.len(),
+                "sha256": digest_hex(&texture_plan),
+            },
+            "textures": texture_rows,
+            "source_and_output_topology": {
+                "parts": prepared.character.parts.len(),
+                "groups": group_count,
+                "vertices": vertex_count,
+                "triangles": triangle_count,
+                "bones": prepared.character.bones.len(),
+                "preserved": true,
+            },
+            "writer_summary": {
+                "geometries": summary.geometries,
+                "bones": summary.bones,
+                "clusters": summary.clusters,
+                "materials": summary.materials,
+                "textures": summary.textures,
+                "animations": summary.animations,
+            },
+        }),
+    )
+}
+
+/// Verify canonical binary version, external textures, and no embedded payload.
+fn verify_external_binary_fbx(
+    package: &PhaseThreePackageRow,
+    bytes: &[u8],
+) -> Result<(), PipelineError> {
+    const MAGIC: &[u8] = b"Kaydara FBX Binary  \0\x1a\0";
+    let version = bytes
+        .get(23..27)
+        .and_then(|slice| <[u8; 4]>::try_from(slice).ok())
+        .map(u32::from_le_bytes);
+    if bytes.get(..MAGIC.len()) != Some(MAGIC)
+        || version != Some(7700)
+        || bytes
+            .windows(b"Content".len())
+            .any(|window| window == b"Content")
+    {
+        return Err(
+            PipelineError::new(
+                format!(
+                    "binary FBX contract verification failed for {}",
+                    package.package_id
+                ),
+            ),
+        );
+    }
+    Ok(())
 }
 
 /// Require one selected package to be a supported character FBX model.
@@ -497,6 +1315,9 @@ fn classify_members(
             "p3d-skin" => classified
                 .skins
                 .push(member),
+            "p3d-mesh" => classified
+                .meshes
+                .push(member),
             "p3d-composite-drawable" => classified
                 .composites
                 .push(member),
@@ -597,6 +1418,15 @@ fn build_character(
         .iter()
         .map(PathBuf::as_path)
         .collect();
+    let mesh_paths: Vec<PathBuf> = members
+        .meshes
+        .iter()
+        .map(|member| base_root.join(&member.path))
+        .collect();
+    let mesh_path_refs: Vec<&Path> = mesh_paths
+        .iter()
+        .map(PathBuf::as_path)
+        .collect();
     let composite_paths: Vec<PathBuf> = members
         .composites
         .iter()
@@ -610,6 +1440,7 @@ fn build_character(
         &stable_file_stem(&package.subcategory),
         &skeleton_path,
         &skin_path_refs,
+        &mesh_path_refs,
         &composite_path_refs,
     )
     .map_err(
@@ -624,41 +1455,75 @@ fn build_character(
     )
 }
 
-/// Resolve the unique companion animation-set row from package taxonomy.
+/// Resolve the deterministic animation-set row for one character presentation.
 fn resolve_animation_package<'index>(
     index: &'index PhaseThreePackageIndex,
     package: &PhaseThreePackageRow,
 ) -> Result<Option<&'index PhaseThreePackageRow>, PipelineError> {
-    let Some(identity_root) = package
-        .subcategory
-        .strip_suffix("/base-model")
-    else {
-        return Ok(None);
-    };
-    let target = format!("{identity_root}/animation-set");
-    let matches = index
-        .packages()
-        .iter()
-        .filter(
-            |candidate| {
-                candidate.category == CHARACTERS_CATEGORY
-                    && candidate.subcategory == target
-            },
-        )
-        .collect::<Vec<_>>();
-    match matches.as_slice() {
-        [] => Ok(None),
-        [animation_package] => Ok(Some(*animation_package)),
-        _ => Err(
-            PipelineError::new(
-                format!(
-                    "character package {} has multiple animation-set rows for \
-                     subcategory {target}",
-                    package.package_id
-                ),
+    let candidates = animation_subcategory_candidates(&package.subcategory);
+    for target in candidates {
+        let matches = index
+            .packages()
+            .iter()
+            .filter(
+                |candidate| {
+                    candidate.category == CHARACTERS_CATEGORY
+                        && candidate.subcategory == target
+                },
+            )
+            .collect::<Vec<_>>();
+        match matches.as_slice() {
+            [] => {}
+            [animation_package] => return Ok(Some(*animation_package)),
+            _ => {
+                return Err(
+                    PipelineError::new(
+                        format!(
+                            "character package {} has multiple animation-set \
+                             rows for subcategory {target}",
+                            package.package_id
+                        ),
+                    ),
+                );
+            }
+        }
+    }
+    Err(
+        PipelineError::new(
+            format!(
+                "character package {} has no identity-specific or general \
+                 animation-set row",
+                package.package_id
             ),
         ),
+    )
+}
+
+/// Return identity-specific then general animation subcategories in priority
+/// order.
+fn animation_subcategory_candidates(subcategory: &str) -> Vec<String> {
+    let identity_root = subcategory
+        .strip_suffix("/base-model")
+        .or_else(
+            || {
+                subcategory
+                    .split_once("/costume/")
+                    .map(|(root, _costume)| root)
+            },
+        );
+    let mut candidates = Vec::with_capacity(2);
+    if let Some(root) = identity_root {
+        candidates.push(format!("{root}/animation-set"));
     }
+    if candidates
+        .first()
+        .is_none_or(
+            |candidate| candidate != GENERAL_CHARACTER_ANIMATION_SUBCATEGORY,
+        )
+    {
+        candidates.push(GENERAL_CHARACTER_ANIMATION_SUBCATEGORY.to_owned());
+    }
+    candidates
 }
 
 /// Load every skeletal animation clip from one companion index row.
@@ -778,6 +1643,14 @@ fn resolve_shared_texture_member<'index>(
 > {
     let expected_file_name =
         normalized_texture_png_file_name(texture_reference)?;
+    let accepted_file_names = if expected_file_name == "char_swatches.png" {
+        vec![
+            expected_file_name,
+            "char_swatches_lit.png".to_owned(),
+        ]
+    } else {
+        vec![expected_file_name]
+    };
     let matches = index
         .packages()
         .iter()
@@ -804,7 +1677,13 @@ fn resolve_shared_texture_member<'index>(
                     && Path::new(&member.path)
                         .file_name()
                         .and_then(|value| value.to_str())
-                        .is_some_and(|name| name == expected_file_name)
+                        .is_some_and(
+                            |name| {
+                                accepted_file_names
+                                    .iter()
+                                    .any(|item| item == name)
+                            },
+                        )
             },
         )
         .collect::<Vec<_>>();
@@ -872,9 +1751,13 @@ fn normalized_texture_png_file_name(
 
 /// Immutable output paths and package identity for one character export.
 struct CharacterExportTarget<'path> {
+    /// Private decoded-texture staging directory.
     texture_staging_dir: &'path Path,
+    /// Published external-texture directory.
     texture_dir: &'path Path,
+    /// Final binary FBX path.
     fbx_path: &'path Path,
+    /// Stable package identity used in diagnostics.
     package_id: &'path str,
 }
 
@@ -1263,6 +2146,12 @@ fn member_capability_items(
     );
     append_capability_items(
         &mut items,
+        &members.meshes,
+        "converted",
+        "composite prop exported as a rigid one-bone skinned part",
+    );
+    append_capability_items(
+        &mut items,
         &members.composites,
         "converted",
         "composite drawable validated against skeleton and skins",
@@ -1484,7 +2373,11 @@ fn file_len(path: &Path) -> Result<u64, PipelineError> {
 
 #[cfg(test)]
 mod tests {
-    use super::{deferred_material_identity, normalized_texture_png_file_name};
+    use super::{
+        GENERAL_CHARACTER_ANIMATION_SUBCATEGORY,
+        animation_subcategory_candidates, deferred_material_identity,
+        normalized_texture_png_file_name,
+    };
 
     #[test]
     fn deferred_material_preserves_decoded_shader_identity() {
@@ -1512,6 +2405,43 @@ mod tests {
                 .ok()
                 .as_deref(),
             Some("char_swatches_lit.png")
+        );
+    }
+
+    #[test]
+    fn character_animation_candidates_prefer_identity_specific_banks() {
+        assert_eq!(
+            animation_subcategory_candidates("characters/apu/base-model"),
+            vec![
+                "characters/apu/animation-set".to_owned(),
+                GENERAL_CHARACTER_ANIMATION_SUBCATEGORY.to_owned(),
+            ]
+        );
+        assert_eq!(
+            animation_subcategory_candidates("characters/lisa/costume/cool"),
+            vec![
+                "characters/lisa/animation-set".to_owned(),
+                GENERAL_CHARACTER_ANIMATION_SUBCATEGORY.to_owned(),
+            ]
+        );
+    }
+
+    #[test]
+    fn character_animation_candidates_use_general_bank_for_other_models() {
+        assert_eq!(
+            animation_subcategory_candidates("characters/krusty/base-model"),
+            vec![
+                "characters/krusty/animation-set".to_owned(),
+                GENERAL_CHARACTER_ANIMATION_SUBCATEGORY.to_owned(),
+            ]
+        );
+        assert_eq!(
+            animation_subcategory_candidates("characters/boy1/crowd-model"),
+            vec![GENERAL_CHARACTER_ANIMATION_SUBCATEGORY.to_owned()]
+        );
+        assert_eq!(
+            animation_subcategory_candidates("characters/homer/base-model"),
+            vec![GENERAL_CHARACTER_ANIMATION_SUBCATEGORY.to_owned()]
         );
     }
 }

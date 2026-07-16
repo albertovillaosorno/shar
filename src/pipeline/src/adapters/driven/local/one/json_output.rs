@@ -166,13 +166,22 @@ mod tests {
                 ],
             ),
         );
-        let error = super::validate_generated_text_file(&path)
-            .expect_err("missing non-Unicode JSON unexpectedly passed");
+        let result = super::validate_generated_text_file(&path);
+        assert!(
+            result.is_err(),
+            "missing non-Unicode JSON unexpectedly passed"
+        );
+        let Err(error) = result else {
+            return;
+        };
         let rendered = error.to_string();
         let prefix = r"failed to read generated JSON a\u{D800}b.json: ";
-        let Some(_source_message) = rendered.strip_prefix(prefix) else {
-            panic!("diagnostic lost native path: {rendered:?}");
-        };
+        assert!(
+            rendered
+                .strip_prefix(prefix)
+                .is_some(),
+            "diagnostic lost native path: {rendered:?}"
+        );
     }
 
     #[test]

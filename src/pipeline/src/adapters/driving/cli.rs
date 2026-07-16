@@ -83,6 +83,7 @@ const USAGE: &str = concat!(
     "metadata-fill-minor-units|edit-minor-unit-metadata|",
     "index-minor-units|audit-minor-units [game-root] [extracted-root] | ",
     "plan-fbx-package [index-jsonl] [selector] [output-dir] | ",
+    "fbx-export-characters [index-jsonl] [output-dir] [base-root] | ",
     "fbx-export [index-jsonl] [selector] [output-dir] [base-root] ",
     "[--blender-helper (experimental/unsupported; may not work)] ",
     "[--maya (optional Maya import script)] ",
@@ -146,6 +147,9 @@ impl CliProgram for PipelineCli {
         if command == "plan-fbx-package" {
             return run_fbx_manifest(&parsed.positionals);
         }
+        if command == "fbx-export-characters" {
+            return run_character_catalog(&parsed.positionals);
+        }
         if command == "fbx-export" {
             let outcome = run_fbx_export(
                 &parsed.positionals,
@@ -187,6 +191,7 @@ fn is_known_command(command: &str) -> bool {
             | "index-minor-units"
             | "audit-minor-units"
             | "plan-fbx-package"
+            | "fbx-export-characters"
             | "fbx-export"
     )
 }
@@ -292,6 +297,40 @@ fn run_fbx_manifest(arguments: &[String]) -> CommandOutcome {
             Path::new(index_path),
             &selector,
             Path::new(output_dir),
+        ),
+    );
+    render_result(
+        result,
+        Path::new(output_dir),
+    )
+}
+
+/// Runs the complete package-index-driven character FBX catalog export.
+fn run_character_catalog(arguments: &[String]) -> CommandOutcome {
+    if let Some(outcome) = reject_extra_positionals(
+        arguments, 3,
+    ) {
+        return outcome;
+    }
+    let Some(index_path) = arguments.first() else {
+        return missing_argument("package index path");
+    };
+    let Some(output_dir) = arguments.get(1) else {
+        return missing_argument("output directory");
+    };
+    let base_root = arguments
+        .get(2)
+        .map_or(
+            ".",
+            String::as_str,
+        );
+    let provider = LocalPipeline;
+    let application = PipelineService::new(&provider);
+    let result = one_stage(
+        application.export_character_catalog(
+            Path::new(index_path),
+            Path::new(output_dir),
+            Path::new(base_root),
         ),
     );
     render_result(

@@ -198,6 +198,23 @@ where
             )
     }
 
+    /// Exports every skinned character package as a verified FBX catalog.
+    ///
+    /// # Errors
+    ///
+    /// Returns the provider's validated pipeline failure.
+    pub fn export_character_catalog(
+        &self,
+        index_path: &Path,
+        output_dir: &Path,
+        base_root: &Path,
+    ) -> PipelineOutcome<StageReport> {
+        self.provider
+            .export_character_catalog(
+                index_path, output_dir, base_root,
+            )
+    }
+
     /// Exports one selected phase-three package as an FBX artifact.
     ///
     /// # Errors

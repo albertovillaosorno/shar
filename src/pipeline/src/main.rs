@@ -60,6 +60,7 @@ use schoenwald_cli as _;
 use schoenwald_filesystem as _;
 use serde_json as _;
 use shar_json_text as _;
+use shar_sha256 as _;
 
 fn main() -> ExitCode {
     pipeline::adapters::driving::run_env()

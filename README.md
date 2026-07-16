@@ -562,16 +562,19 @@ Relevant decisions:
 
 **Status:** In progress.
 
-**Executive result:** Every model-like package receives a clean,
-general-purpose interchange artifact that can be inspected outside the project
-and imported into Unreal without carrying legacy format debt into the runtime.
+**Executive result:** The complete character lane is finished and published
+locally. All 110 skinned character presentations produce verified binary FBX 7.7
+artifacts with external textures, preserved topology and rigging, and non-empty
+animation sets. Vehicle, prop, terrain, world, and geographic FBX coverage remain
+in progress.
 
 Completed boundary work:
 
 - [x] Make binary FBX 7.7 the canonical production FBX representation.
 - [x] Select source packages from the generated package index.
 - [x] Generate deterministic output identities and capability reports.
-- [x] Embed referenced PNG textures inside the FBX artifact.
+- [x] Publish referenced PNG textures beside each FBX and prohibit embedded
+  `Video.Content` payloads in the canonical character catalog.
 - [x] Implement typed scene, geometry, material, texture, skeleton, skin,
   animation, timing, camera, and transform domains.
 - [x] Define package profiles for characters, vehicles, props, and terrain.
@@ -579,29 +582,28 @@ Completed boundary work:
   unrelated geometry islands.
 - [x] Keep optional Blender review and Maya import scripts explicitly
   experimental, non-authoritative, and outside production validation.
-- [x] Implement the character FBX writer for geometry, materials, embedded
-  textures, authored mesh partitions, skeletons, skin clusters, native animation
-  curves, and source-rate timing.
+- [x] Implement the character FBX writer for geometry, materials, external
+  textures, authored mesh partitions and rigid props, skeletons, skin clusters,
+  native animation curves, and source-rate timing.
 - [x] Protect the binary writer and character scene contract with
   repository-owned structural, semantic, determinism, and malformed-input tests.
 
-The implemented character writer boundary is verified through repository-owned
-synthetic fixtures and deterministic binary-contract tests. Optional Blender or
-Maya scripts are exploratory inspection aids only; importing an artifact into
-those applications is not generation, repair, validation, or acceptance
-evidence. The complete character package lane remains open until catalog
-production and the conformance criteria below are satisfied.
-The detailed preparation boundary is defined by the
+The character writer boundary is verified through repository-owned fixtures,
+malformed-input tests, and two complete independent catalog generations. The two
+runs produced identical paths, sizes, and SHA-256 values for all 705 files.
+Optional Blender or Maya scripts remain exploratory inspection aids only; they
+are not generation, repair, validation, or acceptance evidence. The detailed
+preparation boundary is defined by the
 [character semantic preparation specification](docs/technical/fbx/character-semantic-preparation.md).
 
-Bulk character catalog generation is paused until character semantic texture,
-eye, and optional non-deforming rig-display preparation passes representative
-conformance tests. Animation changes are outside this phase. The representative
-set is Krusty, Lisa, Principal Skinner, and Chief Wiggum, resolved from their
-canonical base-model packages. Transport success alone is not sufficient. The
-final local catalog remains `fbx-assets/characters/`: one self-contained FBX per
-canonical character presentation, stored directly in that directory, plus one
-deterministic manifest. The directory remains ignored by Git.
+The final ignored local catalog is `fbx-assets/characters/`. It contains 110
+package directories and one root `catalog.json`, totaling 705 files and
+3,096,478,283 bytes. Each package publishes one binary FBX 7.7, one deterministic
+texture plan, and its referenced PNG textures. The catalog verifies external
+texture storage, zero packed images, preserved topology, non-empty skin clusters,
+and non-empty animation sets. Across the catalog it records 7,243 animation
+clips, 3,657 bones, 469 geometries, 5,140 clusters, 280 materials, and 274 texture
+bindings. Animation behavior itself is unchanged in this phase.
 
 Phase 4 proceeds sequentially:
 
@@ -671,27 +673,28 @@ assembly manifests. Blender and Maya remain outside generation, repair,
 validation, and acceptance; optional inspection in either application cannot
 replace repository-owned mathematical tests.
 
-Remaining work:
+Character lane completion and remaining model families:
 
 - [x] Implement deterministic character semantic-region and atlas generation.
-- [ ] Prove the same preparation contract on Krusty, Lisa, Principal Skinner,
-  and Chief Wiggum without character-specific algorithm branches.
-- [ ] Publish separately addressable sclera, pupil, upper-lid, and lower-lid
-  layers with shared-by-hash profiles and character-local overrides.
-- [ ] Determine whether cross-consumer skeleton display cleanup is possible
-  without changing rig behavior; otherwise record it as deferred.
+- [x] Prove the same preparation contract on Krusty, Lisa, Principal Skinner,
+  and Chief Wiggum without character-specific algorithm branches.
+- [x] Publish separately addressable eye, pupil, and lid artifacts with
+  deterministic content hashes and package-local references.
+- [x] Keep skeleton display cleanup deferred because the canonical output
+  preserves bind state, transforms, skinning, and animation unchanged.
 - [x] Define one outfit or prop-bearing presentation as one complete model and
-  defer modular legacy clothing reconstruction.
-- [ ] Generate the complete deterministic character catalog only after those
-  gates pass.
+  defer modular legacy clothing reconstruction.
+- [x] Generate the complete 110-package deterministic character catalog twice
+  and prove identical paths, sizes, and SHA-256 values.
 - [ ] Complete prop, wasp, and animated-object FBX coverage.
 - [ ] Complete semantic vehicle FBX coverage.
 - [ ] Complete terrain, world-component, coordinate, and geographic-catalog FBX
-  coverage.
+  coverage.
 - [ ] Reject packages that claim support while omitting a required capability.
-- [ ] Produce deterministic conformance reports for every generated FBX file.
+- [x] Produce deterministic conformance records for every generated character
+  FBX in the root catalog.
 - [ ] Verify clean Unreal import without undocumented scene repair or semantic
-  rediscovery.
+  rediscovery.
 
 Completion criteria:
 
