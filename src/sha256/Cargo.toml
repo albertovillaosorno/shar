@@ -1,0 +1,11 @@
+[package]
+name = "shar-sha256"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Dependency-free SHA-256 identities shared by SHAR crates."
+publish = false
+
+[lib]
+name = "shar_sha256"
+path = "src/lib.rs"

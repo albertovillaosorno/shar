@@ -15,6 +15,8 @@ name = "semantic-character-texture"
 path = "src/semantic_character_texture_cli.rs"
 
 [dependencies]
+# shar-sha256 owns the dependency-free repository SHA-256 primitive.
+shar-sha256 = { path = "../sha256" }
 # schoenwald-filesystem centralizes complete UTF-8 reads and directory creation while FBX create-new writes and texture copies remain adapter-specific.
 schoenwald-filesystem = { path = "../filesystem" }
 # serde is retained because the exporter needs typed JSON decoding for

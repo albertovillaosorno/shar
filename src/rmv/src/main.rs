@@ -46,6 +46,7 @@ use std::process::ExitCode;
 
 use schoenwald_cli as _;
 use schoenwald_filesystem as _;
+use shar_sha256 as _;
 
 fn main() -> ExitCode {
     rmv::adapters::driving::cli::run_env()

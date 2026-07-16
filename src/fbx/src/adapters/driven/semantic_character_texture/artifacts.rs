@@ -45,7 +45,8 @@
 //
 
 //! Final semantic character texture byte-bundle assembly.
-use super::sha256::digest_hex;
+use shar_sha256::digest_hex;
+
 use super::{
     ExternalTextureArtifact, SemanticTextureArtifactError,
     SemanticTextureArtifacts, SemanticTextureRequest, SemanticTextureSummary,

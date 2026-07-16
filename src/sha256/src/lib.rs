@@ -1,7 +1,7 @@
 // File:
-//   - sha256.rs
+//   - lib.rs
 // Path:
-//   - src/fbx/src/adapters/driven/semantic_character_texture/sha256.rs
+//   - src/sha256/src/lib.rs
 //
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
@@ -16,32 +16,29 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Deterministic SHA-256 identities for prepared character artifacts.
+//   - Dependency-free SHA-256 hashing shared by SHAR crates.
 // - Must-Not:
-//   - Read files, invoke processes, discover assets, or expose hash state.
+//   - Read files, perform network access, expose mutable hash state, or own
+//   - domain-specific identity types.
 // - Allows:
-//   - Pure in-memory hashing and lowercase hexadecimal projection.
+//   - Hash exact in-memory bytes and project standard lowercase hexadecimal.
 // - Split-When:
-//   - Another FBX artifact family requires an independently public hash value.
+//   - Incremental streaming requires an independently testable state machine.
 // - Merge-When:
-//   - A repository-common offline hash crate owns this exact implementation.
+//   - A reviewed repository-common cryptography crate owns this exact
+//   - primitive.
 // - Summary:
-//   - Offline SHA-256 helper for prepared character artifacts.
-// - Description:
-//   - Avoids a network-only dependency while preserving standard SHA-256.
-// - Usage:
-//   - Called by semantic character artifact assembly after PNG encoding.
-// - Defaults:
-//   - Returns one lowercase 64-character digest.
+//   - Provides one offline SHA-256 implementation for repository consumers.
 //
 // ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
+// - docs/adr/engineering/architecture/project-core-separation.md
 //
 // Large file:
 //   - false
 //
 
-//! Small offline SHA-256 implementation for prepared character identities.
+//! Dependency-free SHA-256 hashing for exact in-memory bytes.
+
 /// Standard SHA-256 initial state.
 const INITIAL: [u32; 8] = [
     0x6a09_e667,
@@ -53,6 +50,7 @@ const INITIAL: [u32; 8] = [
     0x1f83_d9ab,
     0x5be0_cd19,
 ];
+
 /// Standard SHA-256 round constants.
 const ROUND_CONSTANTS: [u32; 64] = [
     0x428a_2f98,
@@ -121,26 +119,9 @@ const ROUND_CONSTANTS: [u32; 64] = [
     0xc671_78f2,
 ];
 
-/// Return one lowercase SHA-256 digest for exact bytes.
-pub(super) fn digest_hex(data: &[u8]) -> String {
-    let digest = digest(data);
-    let mut output = String::with_capacity(64);
-    for byte in digest {
-        use core::fmt::Write as _;
-        if write!(
-            output,
-            "{byte:02x}"
-        )
-        .is_err()
-        {
-            return output;
-        }
-    }
-    output
-}
-
-/// Hash exact bytes into the standard 32-byte digest.
-fn digest(data: &[u8]) -> [u8; 32] {
+/// Hash exact bytes into the standard 32-byte SHA-256 digest.
+#[must_use]
+pub fn digest(data: &[u8]) -> [u8; 32] {
     let mut state = INITIAL;
     let bit_length = u64::try_from(data.len())
         .unwrap_or(u64::MAX)
@@ -168,6 +149,30 @@ fn digest(data: &[u8]) -> [u8; 32] {
         chunk.copy_from_slice(&value.to_be_bytes());
     }
     output
+}
+
+/// Render one digest as 64 lowercase hexadecimal characters.
+#[must_use]
+pub fn hex(digest: [u8; 32]) -> String {
+    let mut output = String::with_capacity(64);
+    for byte in digest {
+        use core::fmt::Write as _;
+        if write!(
+            output,
+            "{byte:02x}"
+        )
+        .is_err()
+        {
+            return output;
+        }
+    }
+    output
+}
+
+/// Hash exact bytes and render the lowercase hexadecimal digest.
+#[must_use]
+pub fn digest_hex(data: &[u8]) -> String {
+    hex(digest(data))
 }
 
 /// Apply one standard SHA-256 compression block.

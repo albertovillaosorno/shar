@@ -75,8 +75,6 @@ mod manifest;
 mod package;
 #[path = "semantic_character_texture/request.rs"]
 pub mod request;
-#[path = "semantic_character_texture/sha256.rs"]
-mod sha256;
 
 pub use request::{BodyTextureMode, SemanticTextureRequest};
 

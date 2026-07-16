@@ -6,6 +6,7 @@ members = [
   "src/pipeline",
   "src/game-manifest",
   "src/json-text",
+  "src/sha256",
   "src/fbx",
   "src/lmlm",
   "src/p3d",
