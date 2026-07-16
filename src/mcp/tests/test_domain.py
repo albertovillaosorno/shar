@@ -236,6 +236,19 @@ def test_toolset_catalog_rejects_duplicate_or_orphan_lines() -> None:
         _ = parse_toolset_catalog("Provides:\n")
 
 
+def test_toolset_catalog_rejects_excessive_identity_bytes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Catalog identities are bounded before describe_toolset requests."""
+    monkeypatch.setattr(
+        "mcp.src.domain.tool_identity._MAX_IDENTITY_BYTES",
+        4,
+    )
+
+    with pytest.raises(ProtocolError, match="byte limit"):
+        _ = parse_toolset_catalog("- Long.Name:\n")
+
+
 def test_toolset_catalog_rejects_excessive_registry_entries(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

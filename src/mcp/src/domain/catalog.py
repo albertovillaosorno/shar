@@ -72,7 +72,7 @@ _TOOLSET_NAME_PATTERN = r"[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)+"
 _TOOLSET_DESCRIPTION_PATTERN = r"(?: (?P<description>.*))?$"
 _TOOLSET_HEADER_PREFIX = f"^- (?P<name>{_TOOLSET_NAME_PATTERN}):"
 _TOOLSET_HEADER = re.compile(
-    f"{_TOOLSET_HEADER_PREFIX}{_TOOLSET_DESCRIPTION_PATTERN}"
+    f"{_TOOLSET_HEADER_PREFIX}{_TOOLSET_DESCRIPTION_PATTERN}",
 )
 _MAX_TOOLSET_SUMMARIES = 10_000
 _MAX_TOOLS_PER_TOOLSET = 10_000
@@ -124,14 +124,22 @@ def parse_toolset_catalog(text: str) -> tuple[ToolsetSummary, ...]:
         if header is not None:
             if current_name is not None:
                 summaries.append(
-                    _toolset_summary(current_name, description_lines)
+                    _toolset_summary(
+                        current_name,
+                        description_lines,
+                    ),
                 )
             matched_name = header.group("name")
             if matched_name is None:
                 fail_protocol(
-                    f"toolset catalog line {number}: missing toolset name"
+                    f"toolset catalog line {number}: missing toolset name",
                 )
-            current_name = cast("str", matched_name)
+            current_name = validated_toolset_identity(
+                cast(
+                    "str",
+                    matched_name,
+                ),
+            )
             if current_name in seen:
                 fail_protocol(
                     f"toolset catalog line {number}: duplicate {current_name}"
@@ -140,9 +148,7 @@ def parse_toolset_catalog(text: str) -> tuple[ToolsetSummary, ...]:
                 fail_protocol("toolset catalog exceeded its toolset limit")
             seen.add(current_name)
             first_description = header.group("description")
-            description_lines = (
-                [] if first_description is None else [first_description]
-            )
+            description_lines = _initial_description_lines(first_description)
             continue
         if current_name is None:
             if line.strip():
@@ -154,6 +160,10 @@ def parse_toolset_catalog(text: str) -> tuple[ToolsetSummary, ...]:
     if current_name is not None:
         summaries.append(_toolset_summary(current_name, description_lines))
     return tuple(summaries)
+
+
+def _initial_description_lines(value: str | None) -> list[str]:
+    return [] if value is None else [value]
 
 
 def _toolset_summary(
@@ -219,7 +229,11 @@ def parse_toolset_definition(
     if len(raw_tools) > _MAX_TOOLS_PER_TOOLSET:
         fail_protocol("toolset schema exceeded its tool limit")
     tools = tuple(
-        _parse_tool(toolset, item, index)
+        _parse_tool(
+            toolset,
+            item,
+            index,
+        )
         for index, item in enumerate(raw_tools)
     )
     names = [tool.name for tool in tools]
