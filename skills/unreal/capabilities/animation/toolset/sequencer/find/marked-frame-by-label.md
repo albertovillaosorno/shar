@@ -46,41 +46,61 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to resolve a named Sequencer bookmark to its current marked-frame
+index before SHAR cinematic navigation, deletion, or frame-specific validation.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use a valid LevelSequence containing marked frames.
+- Discover current labels with `get_marked_frames`; indexes can change after
+  deletion.
+- Treat labels as case-insensitive in the current editor build.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+  "sequence": {
+    "refPath": (
+      "/Game/LS_SHAR_MCP_MarkedFrameProbe_3."
+      "LS_SHAR_MCP_MarkedFrameProbe_3"
+    )
+  },
+  "label": "B"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two disposable cycles added frames 12, 24, and 36. Unreal assigned labels A, B,
+and C; lookups returned indexes 0, 1, and 2. Lowercase `a` and `b` matched the
+same indexes.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Missing and empty labels return `-1` rather than raising.
+- Label matching is case-insensitive.
+- Deleting frame B made B return `-1` and moved C from index 2 to index 1.
+- The returned index is positional and must not be persisted across edits.
+- Newly added labels are editor-generated and may differ after reconstruction.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
