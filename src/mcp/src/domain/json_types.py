@@ -61,6 +61,7 @@ type JsonValue = JsonScalar | list[JsonValue] | dict[str, JsonValue]
 type JsonObject = dict[str, JsonValue]
 
 _MAX_CONTAINER_ITEMS = 100_000
+_MAX_JSON_KEY_BYTES = 4_096
 
 
 def _escape_diagnostic_text(value: str) -> str:
@@ -75,6 +76,12 @@ class DuplicateJsonKeyError(ValueError):
         """Create one duplicate-member failure."""
         escaped_key = _escape_diagnostic_text(key)
         super().__init__(f"duplicate JSON key: {escaped_key}")
+
+
+def _require_json_key_byte_limit(value: str, *, context: str) -> None:
+    size = len(value.encode("utf-8", errors="surrogatepass"))
+    if size > _MAX_JSON_KEY_BYTES:
+        fail_protocol(f"{context}: JSON key byte limit exceeded")
 
 
 def reject_duplicate_json_object(
@@ -94,6 +101,7 @@ def reject_duplicate_json_object(
     _require_container_item_limit(len(pairs), context="JSON object")
     result: dict[str, object] = {}
     for key, value in pairs:
+        _require_json_key_byte_limit(key, context="JSON object")
         if key in result:
             raise DuplicateJsonKeyError(key)
         result[key] = value
@@ -154,6 +162,7 @@ def _normalize_json_value(value: object, *, context: str) -> JsonValue:
                 raw_key,
                 context=f"{context}: JSON key",
             )
+            _require_json_key_byte_limit(key, context=context)
             if key in result:
                 fail_protocol(f"{context}: duplicate normalized JSON key")
             diagnostic_key = _escape_diagnostic_text(key)

@@ -236,6 +236,22 @@ def test_json_object_hook_rejects_excessive_members_before_copy(
         _ = reject_duplicate_json_object(pairs)
 
 
+def test_json_rejects_excessive_key_bytes_before_context_copy(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """One object key cannot expand mapping and diagnostic allocations."""
+    monkeypatch.setattr(
+        "mcp.src.domain.json_types._MAX_JSON_KEY_BYTES",
+        4,
+        raising=False,
+    )
+
+    with pytest.raises(ProtocolError, match="JSON key byte limit"):
+        _ = reject_duplicate_json_object([("abcde", 1)])
+    with pytest.raises(ProtocolError, match="JSON key byte limit"):
+        _ = normalize_json({"abcde": 1}, context="payload")
+
+
 def test_toolset_definition_rejects_duplicate_json_keys() -> None:
     """Live schemas cannot silently replace an earlier object member."""
     with pytest.raises(ProtocolError, match="duplicate JSON key: tools"):
