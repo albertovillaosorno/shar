@@ -50,42 +50,70 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to apply a native Fix-style Niagara stack repair after SHAR
+issue inspection identifies a specific current issue and fix pair.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Call GetStackIssues after compilation is settled.
+- Select an issue whose fix has `style: Fix`.
+- Use the returned issue and fix IDs immediately.
+- Capture stack topology and issue counts before mutation.
+- Use a disposable system for validation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "system": {
+    "refPath": (
+      "/Game/NS_SHAR_MCP_StackIssueProbe_6."
+      "NS_SHAR_MCP_StackIssueProbe_6"
+    )
+  },
+  "issueId": "d7c39a94ec04737bebfbdaf2809a395d",
+  "fixId": "c482ba4e3e10d3406e09fcb3d0e65676"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two cycles applied the `Add new dependency module SolveForcesAndVelocity` fix to
+a GravityForce dependency error. After compilation settled, the solver module
+was appended and the error count changed from one to zero.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This is a persistent stack mutation.
+- In both cycles the fix was applied, but the call returned `Cannot collect
+  stack issues while a compile is in flight` during its post-fix verification.
+- Treat that error as ambiguous: poll GetSystemCompileState, then verify
+  topology and GetStackIssues before retrying.
+- Reusing the old issue ID after repair raises `No stack issue with IssueId`.
+- Issue IDs changed across rebuilt fixtures; rediscover them immediately before
+  invocation.
+- Only a Fix-style action was validated. The live description says Link-style
+  actions are rejected.
+- A StaticMesh system argument fails NiagaraSystem type validation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
