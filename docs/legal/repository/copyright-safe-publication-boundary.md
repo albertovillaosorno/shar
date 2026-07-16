@@ -63,6 +63,13 @@ server, or recipient device can create a new copy even when only one complete
 usable instance exists at a time. First sale therefore does not by itself
 authorize uploading game-derived output or a protected payload.
 
+*Metro-Goldwyn-Mayer Studios Inc. v. Grokster, Ltd.* requires review of the
+repository's public purpose evidence. Feature descriptions, examples, tutorials,
+demonstrations, support messages, and release wording must not promote
+infringement or target demand for unauthorized substitutes. Mere knowledge,
+ordinary technical support, or failure to filter is not independently enough to
+establish inducement.
+
 ## Validation
 
 - Inspect every proposed tracked path and blob.
@@ -75,6 +82,8 @@ authorize uploading game-derived output or a protected payload.
 
 - [Interoperability and user responsibility][interoperability-boundary]
 - [Capitol Records, LLC v. ReDigi Inc.](../cases/capitol-records-v-redigi.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Metro-Goldwyn-Mayer Studios Inc. v. Grokster, Ltd.](../cases/mgm-studios-v-grokster.md)
 - [Universal City Studios, Inc. v. Corley](../cases/universal-v-corley.md)
 - [GitHub hosting and terms](../platforms/github-hosting-and-terms.md)
 

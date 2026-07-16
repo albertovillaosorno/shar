@@ -76,6 +76,8 @@ may cite ADRs for technical facts, but ADRs are not legal authority.
 <!-- markdownlint-disable-next-line MD013 -->
 - [MAI Systems Corp. v. Peak Computer, Inc](cases/mai-systems-v-peak-computer.md)
 - [MDY Industries, LLC v. Blizzard Entertainment, Inc](cases/mdy-v-blizzard.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Metro-Goldwyn-Mayer Studios Inc. v. Grokster, Ltd](cases/mgm-studios-v-grokster.md)
 - [Micro Star v. FormGen, Inc](cases/micro-star-v-formgen.md)
 - [Nguyen v. Barnes & Noble, Inc](cases/nguyen-v-barnes-and-noble.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -150,7 +152,7 @@ fact-specific result is not determined. Hosting, public access, noncommercial
 purpose, independent implementation, interoperability intent, or an accepted ADR
 does not determine a legal outcome by itself.
 
-- Active legal records: 66.
+- Active legal records: 67.
 - Review date: 2026-07-16.
 - Statutory currentness: the Office of the Law Revision Counsel classification
   tables were checked on 2026-07-14. The published 119th Congress tables cover

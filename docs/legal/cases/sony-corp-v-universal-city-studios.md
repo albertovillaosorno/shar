@@ -56,9 +56,14 @@ based only on constructive knowledge that some customers might make unauthorized
 copies where the manufacturers' contact with consumers was the ordinary product
 sale and the recorder had substantial legitimate uses.
 
-Later authority must be reviewed for inducement, active encouragement, product
-design, services, continuing relationships, and other materially different
-conduct. Labels such as `general purpose`, `interoperable`, or `user
+*Metro-Goldwyn-Mayer Studios Inc. v. Grokster, Ltd.* later held that *Sony* does
+not protect a distributor who acts with the object of promoting infringement,
+shown by clear expression or affirmative steps that foster unlawful use. Mere
+knowledge, ordinary support, or failure to filter is not independently enough.
+
+Later authority must therefore be reviewed for inducement, active encouragement,
+product design, services, continuing relationships, and other materially
+different conduct. Labels such as `general purpose`, `interoperable`, or `user
 controlled` do not establish the rule's conditions.
 
 ## Fair-Use Limits
@@ -107,6 +112,8 @@ inducement, access-control, contract, or platform-policy risk.
   (Accessed: 16 July 2026).
 - [17 U.S.C. § 106](../statutes/17-usc-106.md).
 - [17 U.S.C. § 107](../statutes/17-usc-107.md).
+<!-- markdownlint-disable-next-line MD013 -->
+- [Metro-Goldwyn-Mayer Studios Inc. v. Grokster, Ltd.](mgm-studios-v-grokster.md).
 <!-- markdownlint-disable-next-line MD013 -->
 - [American Broadcasting Companies, Inc. v. Aereo, Inc.](american-broadcasting-v-aereo.md).
 <!-- markdownlint-disable-next-line MD013 -->
