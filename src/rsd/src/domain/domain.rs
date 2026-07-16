@@ -49,8 +49,8 @@ mod export_report;
 mod rsd;
 mod wav;
 
-pub(crate) use escaped_path::EscapedPath;
 pub use error::RsdError;
+pub(crate) use escaped_path::EscapedPath;
 pub use export_report::{ExportReport, SourceRootReport};
 pub use rsd::{RsdAudio, RsdEncoding, RsdHeader};
 pub use wav::WavAudio;

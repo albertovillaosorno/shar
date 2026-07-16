@@ -186,7 +186,10 @@ mod tests {
     fn write_error_preserves_unpaired_utf16_destination_unit()
     -> Result<(), String> {
         let root = std::env::temp_dir().join(
-            format!("schoenwald-rtf-diagnostic-{}", std::process::id()),
+            format!(
+                "schoenwald-rtf-diagnostic-{}",
+                std::process::id()
+            ),
         );
         fs::create_dir_all(&root).map_err(|error| error.to_string())?;
         let input = root.join("input.rtf");
@@ -195,11 +198,15 @@ mod tests {
             br"{\rtf1\ansi hello}",
         )
         .map_err(|error| error.to_string())?;
-        let output = root.join(OsString::from_wide(&[
-            u16::from(b'a'),
-            0xd800,
-            u16::from(b'b'),
-        ]));
+        let output = root.join(
+            OsString::from_wide(
+                &[
+                    u16::from(b'a'),
+                    0xd800,
+                    u16::from(b'b'),
+                ],
+            ),
+        );
 
         let result = run(
             &input,
@@ -209,13 +216,17 @@ mod tests {
         fs::remove_file(&input).map_err(|error| error.to_string())?;
         fs::remove_dir(&root).map_err(|error| error.to_string())?;
         let Err(error) = result else {
-            return Err("invalid destination unexpectedly succeeded".to_owned());
+            return Err(
+                "invalid destination unexpectedly succeeded".to_owned(),
+            );
         };
         if !error.contains(r"a\u{D800}b") {
             return Err(format!("diagnostic lost native path unit: {error:?}"));
         }
         if error.contains('\u{fffd}') {
-            return Err(format!("diagnostic used lossy replacement: {error:?}"));
+            return Err(
+                format!("diagnostic used lossy replacement: {error:?}"),
+            );
         }
         Ok(())
     }

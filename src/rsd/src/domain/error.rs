@@ -499,7 +499,11 @@ mod tests {
             "diagnostic contains a control character: {rendered:?}"
         );
         assert!(rendered.contains(r"read\ninjected"));
-        assert!(error.source().is_some());
+        assert!(
+            error
+                .source()
+                .is_some()
+        );
     }
 
     #[test]
@@ -523,6 +527,10 @@ mod tests {
         );
         assert!(rendered.contains(r"read\ninjected"));
         assert!(!rendered.contains(r"read\\ninjected"));
-        assert!(error.source().is_some());
+        assert!(
+            error
+                .source()
+                .is_some()
+        );
     }
 }

@@ -47,8 +47,8 @@
 //! completion and output identity stay local.
 use std::path::{Path, PathBuf};
 
-use schoenwald_filesystem::{DiagnosticPath, PathKind};
 use schoenwald_filesystem::adapters::driving::local;
+use schoenwald_filesystem::{DiagnosticPath, PathKind};
 
 use super::LosslessPackageExporter;
 use super::filesystem_batch_cache::is_cache_complete;

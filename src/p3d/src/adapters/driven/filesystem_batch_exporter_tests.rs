@@ -82,11 +82,15 @@ fn report_rows_preserve_json_string_identity() {
 #[cfg(windows)]
 #[test]
 fn report_rows_preserve_unpaired_utf16_path_units() {
-    let path = PathBuf::from(OsString::from_wide(&[
-        u16::from(b'a'),
-        0xd800,
-        u16::from(b'b'),
-    ]));
+    let path = PathBuf::from(
+        OsString::from_wide(
+            &[
+                u16::from(b'a'),
+                0xd800,
+                u16::from(b'b'),
+            ],
+        ),
+    );
     let row = report_line(
         "failed",
         &path,

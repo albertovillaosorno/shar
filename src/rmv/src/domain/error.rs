@@ -189,7 +189,11 @@ mod tests {
             "diagnostic contains a control character: {rendered:?}"
         );
         assert!(rendered.contains(r"read\nfailure"));
-        assert!(error.source().is_some());
+        assert!(
+            error
+                .source()
+                .is_some()
+        );
     }
 
     #[test]
@@ -210,11 +214,15 @@ mod tests {
     #[cfg(windows)]
     #[test]
     fn path_errors_preserve_unpaired_utf16_unit() {
-        let path = PathBuf::from(OsString::from_wide(&[
-            u16::from(b'a'),
-            0xd800,
-            u16::from(b'b'),
-        ]));
+        let path = PathBuf::from(
+            OsString::from_wide(
+                &[
+                    u16::from(b'a'),
+                    0xd800,
+                    u16::from(b'b'),
+                ],
+            ),
+        );
         let errors = [
             RmvError::Io {
                 path: path.clone(),

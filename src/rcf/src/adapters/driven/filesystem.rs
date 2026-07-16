@@ -407,15 +407,19 @@ mod tests {
     #[cfg(windows)]
     #[test]
     fn archive_stem_error_preserves_unpaired_utf16_path_unit() {
-        let path = PathBuf::from(OsString::from_wide(&[
-            u16::from(b'a'),
-            0xd800,
-            u16::from(b'b'),
-            u16::from(b'.'),
-            u16::from(b'r'),
-            u16::from(b'c'),
-            u16::from(b'f'),
-        ]));
+        let path = PathBuf::from(
+            OsString::from_wide(
+                &[
+                    u16::from(b'a'),
+                    0xd800,
+                    u16::from(b'b'),
+                    u16::from(b'.'),
+                    u16::from(b'r'),
+                    u16::from(b'c'),
+                    u16::from(b'f'),
+                ],
+            ),
+        );
         let source = FileArchiveSource::new(path);
 
         let result = source.archive_stem();
