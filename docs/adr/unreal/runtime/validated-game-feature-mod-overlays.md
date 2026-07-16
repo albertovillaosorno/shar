@@ -38,9 +38,18 @@ base constructor in place, intercept unrelated asset loads, mutate base bundles,
 register raw package callbacks, or leave constructors and retained handles after
 feature removal.
 
-Feature removal cancels owned construction requests, tears down owned runtime
-objects, releases streamable handles, unregisters namespaced constructors and
-assets, and invalidates stale callbacks as one transaction.
+A cooked overlay may also add namespaced render-scope policy, Niagara and
+breakable-presentation definitions, road-network overlays, traffic-control
+policy, and diagnostic views. It cannot replace the engine frame loop, renderer,
+base VFX definitions, base road graph, traffic authority, or unrelated route
+queries.
+
+Feature removal cancels owned construction, render-scope, VFX, route, and
+traffic
+requests; tears down owned runtime objects and effects; releases streamable
+handles; unregisters namespaced constructors, assets, policies, and graph
+overlays; restores scoped base state; and invalidates stale callbacks as one
+transaction.
 
 Native executable packages are not loaded by this decision. They remain inactive
 unless a separate accepted native-extension trust, ABI, signing, loading, and

@@ -16,9 +16,11 @@ examples, or documentation.
   references, asynchronous loading and streamable-handle behavior, Sequencer
   timeline and track authoring, localization and culture fallback, Control Rig
   integration, visibility and occlusion culling, post-process lens facilities,
-  Chaos physics, collision and traces, native physics components, ISM and HISM
-  behavior, Chaos Visual Debugger, and Unreal Engine 5.8 Media Framework and
-  Electra boundaries were verified. Accepted regional agreement, bundled
+  Niagara systems and emitters, native actor tick groups and prerequisites,
+  spline-component authoring, navigation-system boundaries, Chaos physics,
+  collision and traces, native physics components, ISM and HISM behavior, Chaos
+  Visual Debugger, and Unreal Engine 5.8 Media Framework and Electra boundaries
+  were verified. Accepted regional agreement, bundled
   notices, decoder availability, and external-service retention remain
   environment- or service-specific.
 - Counsel review: Not performed.
@@ -148,6 +150,23 @@ royalty or seat analysis.
 - Epic Games (2026) *Post Process Effects in Unreal Engine 5.8*. Available at:
   <!-- markdownlint-disable-next-line MD013 -->
   <https://dev.epicgames.com/documentation/en-us/unreal-engine/post-process-effects-in-unreal-engine>
+  (Accessed: 16 July 2026).
+- Epic Games (2026) *Niagara Overview in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/overview-of-niagara-effects-for-unreal-engine>
+  (Accessed: 16 July 2026).
+- Epic Games (2026) *Actor Ticking in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/actor-ticking-in-unreal-engine>
+  (Accessed: 16 July 2026).
+- Epic Games (2026) *Blueprint Spline Components Overview in Unreal Engine 5.8*.
+  Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/blueprint-spline-components-overview-in-unreal-engine>
+  (Accessed: 16 July 2026).
+- Epic Games (2026) *Navigation System in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/navigation-system-in-unreal-engine>
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Physics in Unreal Engine 5.8*. Available at:
   <!-- markdownlint-disable-next-line MD013 -->

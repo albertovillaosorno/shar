@@ -1,13 +1,15 @@
 # Application lifecycle and mode runtime
 
 - Status: Active
-- Last reviewed: 2026-07-15
+- Last reviewed: 2026-07-16
 
 ## Governing decisions
 
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Native render-frame, view, and layer runtime](native-render-frame-view-and-layer-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -163,6 +165,13 @@ accepted gameplay time or silently substitute a fixed frame duration.
 Audio, input, save, world, and presentation services tick through their native
 owners. A mode request coordinates leases and readiness; it does not become a
 second game loop.
+
+Frame execution, native tick groups, local-player views, render scopes, loading
+barriers, presentation freezes, display policy, and renderer ownership follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Native render-frame, view, and layer runtime](native-render-frame-view-and-layer-runtime.md).
+A completed timer callback, visible frame, or successful buffer presentation
+cannot commit an application-mode transition.
 
 ## Result model
 

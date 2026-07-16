@@ -1,7 +1,7 @@
 # Unreal platform, quality, and optimization contract
 
 - Status: Active
-- Last reviewed: 2026-07-13
+- Last reviewed: 2026-07-16
 
 ## Governing decision
 
@@ -13,6 +13,12 @@
 - [Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Native render-frame, view, and layer runtime](native-render-frame-view-and-layer-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Road-network geometry and traffic runtime](road-network-geometry-and-traffic-runtime.md)
 
 ## Purpose
 
@@ -109,6 +115,23 @@ Quality may change rendering and validated solver cost, but it cannot remove
 required collision or physics, change entity identity, or alter accepted
 gameplay
 results.
+
+Frame execution, local-player views, display policy, post processing, telemetry,
+and renderer-owned submission follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Native render-frame, view, and layer runtime](native-render-frame-view-and-layer-runtime.md).
+Niagara systems, Effect Types, spawn counts, pooling, fragments, and cosmetic
+fallbacks follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md).
+
+Road spline fidelity, graph identity, legal connectivity, traffic-control
+semantics, route reachability, and deterministic path results follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Road-network geometry and traffic runtime](road-network-geometry-and-traffic-runtime.md).
+A quality preset may reduce road rendering or ambient traffic density within
+accepted policy, but it cannot change the canonical graph or required route
+semantics.
 
 A lower graphics preset may deliberately select lower visual settings. Outside
 that explicit preset selection, a performance change must not delete content,

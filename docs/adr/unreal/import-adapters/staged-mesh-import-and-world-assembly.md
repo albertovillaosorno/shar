@@ -54,10 +54,21 @@ variants, fallback policy, and complete rollback evidence. Shipping runtime uses
 Asset Manager and retained streamable handles to load those native assets and a
 closed constructor registry to prepare them.
 
+Niagara import publishes cooked Systems, Emitters, Effect Types, typed parameter
+schemas, lifetime, pooling, scalability, vehicle bindings, and breakable
+presentation fallbacks. Road import publishes canonical roads, segments, lanes,
+intersections, legal movements, traffic controls, deterministic splines, graph
+edges, spatial-index evidence, overlays, and content digests.
+
+Prepared renderables register through native Actor and component lifecycle and
+accepted render scopes. Import does not publish ordinal render layers, custom
+manager loops, manual pass lists, or a second runtime renderer.
+
 Source chunk handlers, wrapper singletons, mutable listener pointers, integer
-callback user data, loader overrides, fixed global-entity arrays, and
-null-object
-cancellation protocols are excluded from the packaged runtime.
+callback user data, loader overrides, fixed global-entity or particle arrays,
+road pools, source particle or breakable inventories, and null-object
+cancellation
+protocols are excluded from the packaged runtime.
 
 Character import preserves the FBX topology, skeleton hierarchy, bind state,
 skin weights, animation timing, semantic regions, integrated outfit identity,

@@ -123,6 +123,8 @@ proprietary external formats.
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native platform bootstrap and error-recovery runtime](unreal/native-platform-bootstrap-and-error-recovery-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Native render-frame, view, and layer runtime](unreal/native-render-frame-view-and-layer-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Physical material and impact-response runtime](unreal/physical-material-and-impact-response-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Pedestrian path runtime](unreal/pedestrian-path-runtime.md)
@@ -144,9 +146,13 @@ proprietary external formats.
 - [Progression, collectibles, cheats, and credits](unreal/progression-collectibles-and-cheats.md)
 - [Race route and opponent runtime](unreal/race-route-and-opponent-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Road-network geometry and traffic runtime](unreal/road-network-geometry-and-traffic-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Reward browser, preview, and purchase UI runtime](unreal/reward-browser-preview-and-purchase-ui-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Semantic input, device, and haptics runtime](unreal/semantic-input-device-and-haptics-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Transient VFX and breakable-presentation runtime](unreal/transient-vfx-and-breakable-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Typed event and observation routing runtime](unreal/typed-event-and-observation-routing-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->

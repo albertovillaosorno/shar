@@ -67,10 +67,16 @@ an accepted application-state revision; animation markers, collision enablement,
 visibility, and local state enums cannot commit the transition themselves.
 
 Native scene queries, closest-road or path lookups, terrain classification, and
-line-of-sight checks are immutable evidence. They may inform a mission or
-interaction decision but cannot activate objectives, move entities, or mutate
-progression directly. Stale physics, collision, query, render, or teardown
-callbacks cannot mutate a replacement entity revision.
+line-of-sight checks are immutable evidence. The cooked road graph owns stable
+road, lane, intersection, legal-movement, traffic-control, and connectivity
+semantics, while traffic owns reservations and occupancy. Missions may apply
+revisioned road-policy overlays but cannot mutate the base graph.
+
+Queries, route results, render frames, Niagara completion, fragment cleanup, and
+intersection proximity may inform a mission or interaction decision but cannot
+activate objectives, move entities, commit breakage, grant rewards, or mutate
+progression directly. Stale physics, collision, query, route, VFX, render, or
+teardown callbacks cannot mutate a replacement entity revision.
 
 The active world uses World Partition and Runtime Data Layers for level
 variants,

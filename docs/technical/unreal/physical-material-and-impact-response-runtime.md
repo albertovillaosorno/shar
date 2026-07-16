@@ -1,7 +1,7 @@
 # Physical material and impact-response runtime
 
 - Status: Active
-- Last reviewed: 2026-07-14
+- Last reviewed: 2026-07-16
 
 ## Governing decisions
 
@@ -12,6 +12,8 @@
 - [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md)
 
 ## Purpose
 
@@ -208,14 +210,16 @@ result.
 
 ## Effects and decals
 
-Niagara and decal requests are presentation-only. The response definition
-declares
-spawn transform, orientation policy, scale curve, lifetime, pooling, material,
-and platform budget.
+Niagara and decal requests are presentation-only. Their typed parameter schema,
+coordinate space, lifetime, pooling, scalability, vehicle binding, local-player
+policy, and teardown follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md).
 
 Effects do not perform collision traces that redefine the impact surface. A
 decal
 may run a bounded placement trace only to confirm the original contact geometry.
+VFX completion cannot acknowledge damage, breakage, reward, or mission results.
 
 ## Animation reactions
 
@@ -233,8 +237,11 @@ subsystem may request break evaluation but cannot destroy or reward the object
 itself.
 
 On committed destruction, presentation may spawn fragments, sound, effects,
-decals, and camera interest according to the response definition. Pooling and
-cleanup cannot replay the domain result.
+decals, and camera interest according to the response definition and
+<!-- markdownlint-disable-next-line MD013 -->
+[Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md).
+Pooling, queue pressure, fallback, completion, and cleanup cannot replay or
+reinterpret the domain result.
 
 ## Vehicles and characters
 

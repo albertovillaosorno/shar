@@ -204,6 +204,7 @@ Runtimecompletionplanner
 Runtimecompletionrule
 Runtimemoviecandidate
 SCALEMATRIX
+SDR
 SELFCOLL
 SELFCOLLISION
 SHADOWMESH
@@ -274,8 +275,10 @@ VDPM
 VERTEXOFFSET
 VERTEXSHADER
 VINPUT
+VFX
 VRS
 Vertexshader
+Vfx
 Viewmodel
 Vtx
 WALKERCAM
@@ -336,6 +339,7 @@ capsys
 cardsfx
 carsound
 cel
+centerlines
 chkpts
 cho
 classpath
@@ -581,6 +585,8 @@ pgp
 pgptbl
 phonecamera
 phong
+phonorecord
+phonorecords
 picprop
 pict
 pnseclvl
@@ -612,6 +618,7 @@ redbgd
 referencers
 remeshing
 renderable
+renderables
 reparent
 reparenting
 replacen

@@ -1,7 +1,7 @@
 # Vehicle AI and route runtime
 
 - Status: Active
-- Last reviewed: 2026-07-14
+- Last reviewed: 2026-07-16
 
 ## Governing decisions
 
@@ -12,6 +12,8 @@
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Road-network geometry and traffic runtime](road-network-geometry-and-traffic-runtime.md)
 
 ## Purpose
 
@@ -30,6 +32,7 @@ frame-dependent steering with validated data and bounded native controllers.
 | :--- | :--- |
 | Gameplay catalog | Stable vehicle, route, lane, checkpoint, waypoint, and policy identities. |
 | Mission and race services | Objective state, opponent membership, completion, failure, and catch-up permission. |
+| Road-network subsystem | Immutable road, segment, lane, intersection, traffic-control, connectivity, spline, and query snapshots. |
 | Vehicle AI controller | Target observation, route progress, driving state, steering requests, and recovery. |
 | Vehicle movement port | Throttle, brake, steering, handbrake, reverse, turbo, and physical read-back. |
 | Traffic subsystem | Ambient lane occupancy, intersection admission, density, and lifecycle. |
@@ -92,8 +95,16 @@ Every route definition contains:
 - terminal destination and arrival tolerance;
 - optional shortcut branches with eligibility and skill thresholds;
 - expected traversal direction and lap behavior;
+- road-network and overlay revisions;
 - route-repopulation and streaming policy; and
 - verification scenarios.
+
+Road, segment, lane, intersection, legal-movement, speed, density, shortcut,
+traffic-control, spatial-index, and path-query semantics follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Road-network geometry and traffic runtime](road-network-geometry-and-traffic-runtime.md).
+The vehicle controller consumes immutable graph results and never owns the base
+road graph.
 
 Route order is canonical. World discovery cannot silently reorder waypoints,
 lanes, or shortcuts.
@@ -191,9 +202,17 @@ A path window is rebuilt when:
 - recovery resets the vehicle; or
 - accumulated projection error exceeds policy.
 
-Rebuilding never searches the entire world without bounds. Candidate road
-segments are constrained by the route definition, loaded cells, and spatial
-query radius.
+Rebuilding never searches the entire world without bounds. Candidate roads,
+segments, and lanes come from one exact
+[road-network snapshot](road-network-geometry-and-traffic-runtime.md), accepted
+route definition, loaded regions, overlay revision, and bounded spatial query.
+
+Closest-road projection, normalized road and segment progress, directed
+traversal
+distance, legal lane movements, shortcut eligibility, intersection reservations,
+and deterministic path results carry graph and query revisions. A late path or
+projection result cannot mutate a controller after graph replacement, region
+unload, route change, or vehicle recovery.
 
 ## Local obstacle avoidance
 
@@ -319,10 +338,10 @@ debug rendering is registered.
 
 ## Streaming and lifecycle
 
-A controller suspends safely when required road, lane, waypoint, target, or
-world
-state is unavailable. It may retain stable identities and normalized route
-progress, but it cannot continue integrating against unloaded pointers.
+A controller suspends safely when required road, lane, intersection, graph,
+overlay, waypoint, target, or world state is unavailable. It may retain stable
+identities and normalized route progress, but it cannot continue integrating
+against unloaded pointers or a retired road-network revision.
 
 Traffic pooling and representation changes reset controller-local target,
 obstacle, route-window, timer, recovery, and presentation state. A recycled
@@ -335,8 +354,10 @@ The controller fails closed when:
 
 - its definition or route revision is missing or stale;
 - the vehicle movement port is unavailable;
-- required waypoints, lanes, or road segments do not resolve;
-- route order is ambiguous;
+- required graph, overlay, road, intersection, lane, movement, waypoint, or
+  segment identity does not resolve;
+- route order, path cost, legal movement, or equal-cost tie-break is ambiguous;
+- a road projection or path result is stale, truncated, or unavailable;
 - no safe steering or stop response exists;
 - catch-up exceeds declared bounds;
 - recovery cannot prove a safe result; or
@@ -349,14 +370,24 @@ It does not silently switch controller mode or select an arbitrary destination.
 
 Automated verification proves:
 
-- route, lane, waypoint, and checkpoint ordering is stable;
-- equivalent observations produce equivalent drive requests;
-- traffic stops, intersection admission, lane changes, and swerves remain
+- road-network, overlay, route, lane, waypoint, and checkpoint ordering is
+  stable;
+- equivalent graph and controller observations produce equivalent drive
+  requests;
+- equal-cost paths, closest-road candidates, legal movements, and intersection
+  admissions resolve deterministically;
+- traffic stops, intersection reservations, lane changes, and swerves remain
   bounded;
 - waypoint, lap, final-target, and destination observations are exactly once;
 - chase projection and direct pursuit obey collision and route policy;
 - catch-up remains inside declared speed, shortcut, turbo, and reset bounds;
 - obstacle avoidance never selects an invalid candidate;
 - recovery produces a safe valid transform or a typed failure;
+- graph revision, closure, region unload, and teleport trigger bounded
+  replanning;
+- stale, truncated, cancelled, and unavailable path results never mutate the
+  controller;
 - controller behavior is independent of debug rendering; and
-- fixed-step replay produces the same state transitions and route progress.
+- fixed-step replay produces the same state transitions, selected graph path,
+  and
+  route progress.

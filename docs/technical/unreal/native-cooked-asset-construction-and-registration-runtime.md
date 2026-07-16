@@ -20,6 +20,10 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Native render-frame, view, and layer runtime](native-render-frame-view-and-layer-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md)
 
 ## Purpose
@@ -454,8 +458,20 @@ bounds policy.
 
 The constructor does not clone source drawable wrappers or infer physics from a
 class name. Physics-enabled definitions require a complete collision and
-physical
-profile before preparation succeeds.
+physical profile before preparation succeeds.
+
+Static entity construction validates one closed composition of native mesh,
+material, collision, mobility, shadow, bounds, instance, and world-placement
+policy. A source wrapper, tree-node class, or static-physics loader name cannot
+select behavior at runtime.
+
+Converted spatial-tree data may be retained as deterministic import evidence and
+diagnostics under
+<!-- markdownlint-disable-next-line MD013 -->
+[Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md).
+It is not constructed as a second authoritative runtime renderer or visibility
+tree. Unreal component registration and renderer facilities own active scene
+membership.
 
 ## Animated construction
 
@@ -501,6 +517,23 @@ A sky presentation cannot become world identity, time authority, weather
 authority, streaming authority, or mission state merely because it spans the
 visible world.
 
+## Particle construction
+
+Particle construction binds cooked Niagara Systems, Effect Types, parameter
+schemas, attachment policy, coordinate space, lifetime class, scalability,
+pooling eligibility, platform variants, and fallback according to
+<!-- markdownlint-disable-next-line MD013 -->
+[Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md).
+
+The constructor prepares native assets and optional components only. It cannot
+load source particle factories, allocate fixed source instance arrays, assign
+integer player handles, require a per-frame keepalive call, or register a custom
+scene-graph particle object.
+
+Continuous effects become active only after a bounded owner lease is accepted.
+One-shot completion and pool release publish typed presentation results rather
+than gameplay events.
+
 ## Breakable construction
 
 Breakable definitions bind intact representation, collision, optional Geometry
@@ -509,8 +542,25 @@ persistence, and teardown.
 
 Construction prepares presentation capability only. Destruction still requires
 an accepted gameplay or persistence transaction. An animation ending cannot
-grant
-coins, rewards, or progression.
+grant coins, rewards, or progression.
+
+## Render-scope registration handoff
+
+A prepared renderable object transfers its immutable Actor, component, asset,
+world, placement, and presentation revisions to
+<!-- markdownlint-disable-next-line MD013 -->
+[Native render-frame, view, and layer runtime](native-render-frame-view-and-layer-runtime.md).
+The render boundary validates the active application scope and native view
+eligibility before presentation.
+
+Construction does not add raw drawables to ordinal layers, own cameras or views,
+submit shadows or translucent passes, begin or end a view, drive the engine
+frame,
+or interpret one rendered frame as gameplay readiness.
+
+Renderer registration occurs through native Actor and component lifecycle after
+construction commit. Scope suspension, world unload, feature removal, and object
+replacement tear down the exact accepted registration and retained handles.
 
 ## Collision and physical-profile binding
 
@@ -580,6 +630,9 @@ Development diagnostics expose:
 - dependency graph and bundle membership;
 - constructor registration and selected construction kind;
 - prepared Actor and component hierarchy;
+- render-scope and native registration handoff;
+- Niagara, Effect Type, parameter-schema, and VFX lease preparation;
+- converted spatial-tree evidence and native-scene registration policy;
 - handle owner and transfer state;
 - fallback and replacement decisions;
 - stale callback count;
@@ -604,7 +657,11 @@ The boundary fails closed on:
 - null-object cancellation encoding;
 - stale request, world, placement, feature, or bundle revision;
 - prepared object with undeclared components;
-- collision, physics, animation, or presentation class mismatch;
+- collision, physics, animation, Niagara, Effect Type, or presentation class
+  mismatch;
+- particle construction without a typed parameter schema or bounded lifetime;
+- prepared renderable object with no compatible render-scope handoff;
+- converted spatial tree requested as a second runtime renderer;
 - missing rollback or teardown path;
 - handle release before ownership transfer;
 - duplicate terminal result; and
@@ -625,8 +682,12 @@ Cook and content validation proves:
 - every construction plan has prepare, commit, rollback, and teardown paths;
 - no runtime source parser or wrapper loader is packaged;
 - every collision and Physics Asset binding is valid;
-- every stateful, animated, lens, sky, query, and breakable definition has a
-  declared fallback or required-platform proof;
+- every stateful, animated, lens, sky, query, particle, and breakable definition
+  has a declared fallback or required-platform proof;
+- every particle definition binds a cooked Niagara System, Effect Type, typed
+  parameter schema, lifetime, pooling, and scalability policy;
+- static and spatial constructor output registers through native scene paths;
+- every renderable constructor has a compatible render-scope handoff;
 - handles remain retained for their required scopes;
 - cancellation and stale-callback behavior are deterministic; and
 - feature removal releases all owned registrations and assets.
@@ -647,8 +708,12 @@ Required automated tests include:
 - stale callback rejection after supersession and world unload;
 - duplicate terminal-result rejection;
 - shared immutable assets with independent placements;
-- static, instanced, animated, rigid, stateful, query, lens, sky, and breakable
-  construction;
+- static, instanced, animated, rigid, stateful, query, lens, sky, particle, and
+  breakable construction;
+- static spatial evidence with native scene registration and no second runtime
+  renderer;
+- Niagara parameter-schema, lifetime, scalability, and pool preparation;
+- render-scope handoff, suspension, replacement, and teardown;
 - feature activation and removal;
 - synchronous-load budget enforcement;
 - identical results across supported frame rates; and
@@ -665,6 +730,12 @@ Required automated tests include:
 - Cancellation is a typed terminal result, not a null-object callback.
 - Constructor registries are immutable and namespaced per accepted revision.
 - Shared assets never imply shared mutable placement state.
+- Particle construction never owns effect lifetime without a bounded
+  presentation
+  lease or one-shot completion policy.
+- Converted spatial trees never replace native renderer scene registration.
+- Renderable construction cannot bypass the accepted render scope or native view
+  boundary.
 - Feature removal releases every owned registration, handle, and object.
 - A loaded object cannot bypass world, placement, feature, or gameplay
   validation.

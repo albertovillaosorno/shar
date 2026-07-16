@@ -1,7 +1,7 @@
 # World render-entity and physics runtime
 
 - Status: Active
-- Last reviewed: 2026-07-15
+- Last reviewed: 2026-07-16
 
 ## Governing decisions and specifications
 
@@ -25,6 +25,10 @@
   runtime](native-asset-load-request-and-streaming-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native cooked-asset construction and registration runtime](native-cooked-asset-construction-and-registration-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Native render-frame, view, and layer runtime](native-render-frame-view-and-layer-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md)
 
 ## Purpose
 
@@ -781,11 +785,13 @@ After commit, the service may disable or remove the intact representation, spawn
 or activate the declared broken representation, transfer or create physics
 bodies, publish effects, and persist the accepted result.
 
-Geometry Collections, replacement Actors, or authored animation may implement
-the
-presentation. None can decide that the break transaction succeeded merely
-because
-an animation played.
+Geometry Collections, replacement Actors, authored animation, and Niagara may
+implement the presentation through
+<!-- markdownlint-disable-next-line MD013 -->
+[Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md).
+None can decide that the break transaction succeeded merely because an
+animation,
+fragment sequence, or effect completed.
 
 ## Render-layer and content identity
 
@@ -801,9 +807,17 @@ stable chapter, mission, region, and package identities from their owning
 catalogs.
 
 A numeric render layer, level number, mission number, or array position may
-remain
-inside a versioned conversion artifact. It cannot become a runtime save key,
-package identity, camera authority, visibility authority, or feature namespace.
+remain inside a versioned conversion artifact. It cannot become a runtime save
+key, package identity, camera authority, visibility authority, or feature
+namespace.
+
+Application scopes, local-player views, loading barriers, frontend and world
+composition, presentation freezes, frame execution, display policy, and renderer
+handoff follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Native render-frame, view, and layer runtime](native-render-frame-view-and-layer-runtime.md).
+A world entity cannot add itself to an ordinal render layer or drive frame
+submission.
 
 ## Render and shadow policy
 

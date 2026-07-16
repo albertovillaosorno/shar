@@ -1,7 +1,7 @@
 # Native import, material rebuild, and world assembly
 
 - Status: Planned
-- Last reviewed: 2026-07-14
+- Last reviewed: 2026-07-16
 - Delivery phase: Phase 6 only
 
 ## Governing decisions
@@ -18,6 +18,12 @@
 - [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native cooked-asset construction and registration runtime](native-cooked-asset-construction-and-registration-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Native render-frame, view, and layer runtime](native-render-frame-view-and-layer-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Road-network geometry and traffic runtime](road-network-geometry-and-traffic-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native asset translation without copy-paste](../../adr/pipeline/unreal/native-asset-translation-and-no-copy-paste.md)
 
@@ -217,6 +223,38 @@ platform variants, and fallback policy for
 No source wrapper, chunk handler, mutable listener callback, loader override,
 fixed global-entity registry, or source sub-loader is included in shipping
 runtime. Cook validation fails when a native construction path depends on one.
+
+## Niagara and breakable-presentation cooking
+
+Import converts normalized effect and breakable evidence into cooked Niagara
+Systems, Emitters, Effect Types, typed parameter schemas, platform variants,
+scalability policy, Geometry Collections or replacement representations,
+fragment assets, and complete presentation fallbacks under
+<!-- markdownlint-disable-next-line MD013 -->
+[Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md).
+
+Read-back verifies every Niagara variable name and type, lifetime class,
+coordinate-space binding, pool-reset contract, quality fallback, breakable
+result
+binding, replacement representation, and teardown path. Shipping runtime cannot
+load source particle factories, particle inventories, breakable inventories, or
+fixed source queues.
+
+## Road-network cooking
+
+Import converts normalized road, lane, segment, intersection, traffic-control,
+and connectivity evidence into the immutable graph, spline, sample,
+spatial-index,
+overlay, and bundle assets defined by
+<!-- markdownlint-disable-next-line MD013 -->
+[Road-network geometry and traffic runtime](road-network-geometry-and-traffic-runtime.md).
+
+Road cooking validates finite curves, joins, directions, legal lane movements,
+intersection conflict groups, speed and density units, deterministic path
+ordering, closest-road tie-breaks, World Partition ownership, and identical
+graph
+digests across clean builds. Shipping runtime does not reconstruct source linked
+lists or allocate fixed road pools.
 
 ## Native audio, data, and cinematic import
 

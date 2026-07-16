@@ -83,10 +83,26 @@ recreate a drawable scene graph, rigid-body solver, manual draw lists, or custom
 runtime triangle-collision store.
 
 Quality may change LOD, HLOD, Nanite, instancing, materials, shadows, optional
-effects, and validated solver cost settings. It cannot change collision
-profiles,
-physical surfaces, entity identity, breakage transactions, required physics,
-mission results, or persistence.
+effects, Niagara complexity, post processing, display resolution, frame pacing,
+and validated solver cost settings. It cannot change collision profiles,
+physical
+surfaces, entity identity, breakage transactions, required physics, mission
+results, or persistence.
+
+Unreal's native frame loop, tick groups, local-player views, renderer passes,
+and
+platform presentation remain authoritative. Repository code does not drive
+rendering from a timer callback, maintain ordinal drawable layers, submit manual
+world passes, or infer readiness from a visible frame.
+
+Niagara owns particle simulation and rendering. Effect pooling, spawn counts,
+fragments, and cosmetic fallback may vary by preset, but VFX completion cannot
+commit gameplay and every continuous effect remains bounded by a typed lease.
+
+Road meshes, ambient traffic density, and diagnostics may scale, but canonical
+road, lane, intersection, legal-movement, traffic-control, and
+route-connectivity
+semantics remain identical across presets and platforms.
 
 Making the game usable on more hardware is a desirable consequence of correct,
 efficient engineering, not the product objective. The objective remains a
