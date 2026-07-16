@@ -423,8 +423,12 @@ mod tests {
         let source = FileArchiveSource::new(path);
 
         let result = source.archive_stem();
+        assert!(
+            result.is_err(),
+            "non-Unicode archive stem unexpectedly succeeded"
+        );
         let Err(error) = result else {
-            panic!("non-Unicode archive stem unexpectedly succeeded");
+            return;
         };
         let rendered = error.to_string();
 

@@ -153,8 +153,12 @@ fn missing_game_error_preserves_unpaired_utf16_path_unit() {
         &MalformedStore,
         &game_dir,
     );
+    assert!(
+        result.is_err(),
+        "missing game directory unexpectedly validated"
+    );
     let Err(error) = result else {
-        panic!("missing game directory unexpectedly validated");
+        return;
     };
     let rendered = error.to_string();
 

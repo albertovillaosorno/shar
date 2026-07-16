@@ -123,8 +123,14 @@ mod tests {
                 ],
             ),
         );
-        let error = super::inspect_path_kind(&path)
-            .expect_err("non-Unicode path unexpectedly inspected");
+        let result = super::inspect_path_kind(&path);
+        assert!(
+            result.is_err(),
+            "non-Unicode path unexpectedly inspected"
+        );
+        let Err(error) = result else {
+            return;
+        };
 
         assert!(
             error

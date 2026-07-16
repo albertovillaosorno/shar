@@ -45,4 +45,9 @@
 
 //! RSD-local compatibility name for shared diagnostic path rendering.
 
+#[expect(
+    clippy::redundant_pub_crate,
+    reason = "Widening this compatibility alias would expose an internal \
+              detail."
+)]
 pub(crate) use schoenwald_filesystem::DiagnosticPath as EscapedPath;

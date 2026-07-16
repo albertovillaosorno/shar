@@ -204,8 +204,12 @@ mod tests {
             &ControlFailingSource,
             Path::new("readme.rtf"),
         );
+        assert!(
+            result.is_err(),
+            "failing source unexpectedly converted"
+        );
         let Err(error) = result else {
-            panic!("failing source unexpectedly converted");
+            return;
         };
         let rendered = error.to_string();
 
@@ -240,8 +244,12 @@ mod tests {
             &FailingSource,
             &path,
         );
+        assert!(
+            result.is_err(),
+            "failing source unexpectedly converted"
+        );
         let Err(error) = result else {
-            panic!("failing source unexpectedly converted");
+            return;
         };
         let rendered = error.to_string();
 
