@@ -60,6 +60,8 @@ type JsonScalar = str | int | float | bool | None
 type JsonValue = JsonScalar | list[JsonValue] | dict[str, JsonValue]
 type JsonObject = dict[str, JsonValue]
 
+_MAX_CONTAINER_ITEMS = 100_000
+
 
 def _escape_diagnostic_text(value: str) -> str:
     """Return reversible ASCII text for one diagnostic fragment."""
@@ -105,6 +107,11 @@ def _normalize_json_text(value: str, *, context: str) -> str:
         fail_protocol(f"{context}: unpaired Unicode surrogate", cause=error)
 
 
+def _require_container_item_limit(size: int, *, context: str) -> None:
+    if size > _MAX_CONTAINER_ITEMS:
+        fail_protocol(f"{context}: JSON container item limit exceeded")
+
+
 def normalize_json(value: object, *, context: str) -> JsonValue:
     """Return one deeply validated JSON value.
 
@@ -137,6 +144,7 @@ def _normalize_json_value(value: object, *, context: str) -> JsonValue:
         return value
     if isinstance(value, dict):
         raw_mapping = cast("dict[object, object]", value)
+        _require_container_item_limit(len(raw_mapping), context=context)
         result: JsonObject = {}
         for raw_key, raw_value in raw_mapping.items():
             if not isinstance(raw_key, str):
@@ -155,6 +163,7 @@ def _normalize_json_value(value: object, *, context: str) -> JsonValue:
         return result
     if isinstance(value, list):
         raw_items = cast("list[object]", value)
+        _require_container_item_limit(len(raw_items), context=context)
         return [
             _normalize_json_value(item, context=f"{context}[{index}]")
             for index, item in enumerate(raw_items)

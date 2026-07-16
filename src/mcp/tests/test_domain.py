@@ -193,6 +193,28 @@ def test_json_normalizer_rejects_excessive_nesting() -> None:
         _ = normalize_json(value, context="payload")
 
 
+@pytest.mark.parametrize(
+    "value",
+    [
+        {"first": 1, "second": 2, "third": 3},
+        [1, 2, 3],
+    ],
+)
+def test_json_normalizer_rejects_excessive_container_items(
+    value: object,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """One JSON container cannot force unbounded normalization copies."""
+    monkeypatch.setattr(
+        "mcp.src.domain.json_types._MAX_CONTAINER_ITEMS",
+        2,
+        raising=False,
+    )
+
+    with pytest.raises(ProtocolError, match="container item limit"):
+        _ = normalize_json(value, context="payload")
+
+
 def test_toolset_definition_rejects_duplicate_json_keys() -> None:
     """Live schemas cannot silently replace an earlier object member."""
     with pytest.raises(ProtocolError, match="duplicate JSON key: tools"):
