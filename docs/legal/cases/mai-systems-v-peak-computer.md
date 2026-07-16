@@ -42,6 +42,12 @@ activating a lawfully programmed machine for maintenance or repair by the owner,
 lessee, or an authorized service provider. That maintenance-specific rule did
 not exist when *MAI Systems* was decided.
 
+*Cartoon Network LP, LLLP v. CSC Holdings, Inc.* later distinguished *MAI
+Systems*. The Second Circuit explained that *MAI Systems* did not separately
+litigate the duration requirement. It held that automatically overwritten
+buffers lasting no more than 1.2 seconds were not fixed copies on its different
+technical record and did not create a universal time threshold.
+
 *Storage Technology Corp. v. Custom Hardware Engineering & Consulting, Inc.*
 later applied § 117(c) in the Federal Circuit and found an independent service
 company likely protected on its preliminary-injunction record. The machines'
@@ -97,6 +103,8 @@ modification, or repository publication.
   (Accessed: 16 July 2026).
 - [17 U.S.C. § 101](../statutes/17-usc-101.md).
 - [17 U.S.C. § 117](../statutes/17-usc-117.md).
+<!-- markdownlint-disable-next-line MD013 -->
+- [Cartoon Network LP, LLLP v. CSC Holdings, Inc.](cartoon-network-v-csc-holdings.md).
 <!-- markdownlint-disable-next-line MD013 -->
 - [Storage Technology Corp. v. Custom Hardware Engineering & Consulting, Inc.](storage-technology-v-custom-hardware.md).
 - [Vernor v. Autodesk, Inc.](vernor-v-autodesk.md).

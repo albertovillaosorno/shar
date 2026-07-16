@@ -32,6 +32,11 @@ Receipt and storage in a new material object for more than transitory duration
 created a new phonorecord even when the amount of data existing throughout the
 process remained constant.
 
+That persistent destination storage differs from the automatically overwritten
+buffers in *Cartoon Network LP, LLLP v. CSC Holdings, Inc.* The Second Circuit
+there held that buffers lasting no more than 1.2 seconds failed the duration
+requirement on their fact-specific record.
+
 Section 109(a) limits the distribution right for a particular lawfully made copy
 or phonorecord. It does not address or excuse the creation of a new copy under
 the reproduction right. Because version 1.0 necessarily made new phonorecords,
@@ -98,6 +103,8 @@ material.
 - [17 U.S.C. § 101](../statutes/17-usc-101.md).
 - [17 U.S.C. § 106](../statutes/17-usc-106.md).
 - [17 U.S.C. § 109](../statutes/17-usc-109.md).
+<!-- markdownlint-disable-next-line MD013 -->
+- [Cartoon Network LP, LLLP v. CSC Holdings, Inc.](cartoon-network-v-csc-holdings.md).
 - [Kirtsaeng v. John Wiley & Sons, Inc.](kirtsaeng-v-john-wiley.md).
 <!-- markdownlint-disable-next-line MD013 -->
 - [Copyright-safe publication boundary](../repository/copyright-safe-publication-boundary.md).

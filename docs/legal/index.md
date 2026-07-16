@@ -57,6 +57,8 @@ may cite ADRs for technical facts, but ADRs are not legal authority.
 - [Bowers v. Baystate Technologies, Inc.](cases/bowers-v-baystate-technologies.md)
 - [Capitol Records, LLC v. ReDigi Inc](cases/capitol-records-v-redigi.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Cartoon Network LP, LLLP v. CSC Holdings, Inc](cases/cartoon-network-v-csc-holdings.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Chamberlain Group, Inc. v. Skylink Technologies, Inc](cases/chamberlain-v-skylink.md)
 - [Davidson & Associates, Inc. v. Jung](cases/davidson-v-jung.md)
 - [Google LLC v. Oracle America, Inc](cases/google-v-oracle.md)
@@ -144,7 +146,7 @@ fact-specific result is not determined. Hosting, public access, noncommercial
 purpose, independent implementation, interoperability intent, or an accepted ADR
 does not determine a legal outcome by itself.
 
-- Active legal records: 63.
+- Active legal records: 64.
 - Review date: 2026-07-16.
 - Statutory currentness: the Office of the Law Revision Counsel classification
   tables were checked on 2026-07-14. The published 119th Congress tables cover
