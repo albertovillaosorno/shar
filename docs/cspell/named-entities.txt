@@ -65,6 +65,7 @@ Ofek
 Osorno
 PATENTSCOPE
 Quaid
+ReDigi
 Sedlik
 Simpsons
 Skylink
@@ -133,6 +134,7 @@ netscape
 nguyen
 quaid
 ralph
+redigi
 sega
 selma
 simpsons

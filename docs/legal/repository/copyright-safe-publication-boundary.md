@@ -56,6 +56,13 @@ risk when the publisher knows the destination material and maintains the link to
 disseminate it. Ordinary source links, compatibility references, and research
 citations require their own facts and are not categorically prohibited.
 
+*Capitol Records, LLC v. ReDigi Inc.* also rejects treating destination storage
+as the same material object merely because source data is deleted during a
+digital transfer. Fixing protected content on a repository host, artifact
+server, or recipient device can create a new copy even when only one complete
+usable instance exists at a time. First sale therefore does not by itself
+authorize uploading game-derived output or a protected payload.
+
 ## Validation
 
 - Inspect every proposed tracked path and blob.
@@ -67,6 +74,7 @@ citations require their own facts and are not categorically prohibited.
 ## Related Authorities
 
 - [Interoperability and user responsibility][interoperability-boundary]
+- [Capitol Records, LLC v. ReDigi Inc.](../cases/capitol-records-v-redigi.md)
 - [Universal City Studios, Inc. v. Corley](../cases/universal-v-corley.md)
 - [GitHub hosting and terms](../platforms/github-hosting-and-terms.md)
 
