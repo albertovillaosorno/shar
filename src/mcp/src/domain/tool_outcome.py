@@ -50,6 +50,7 @@ from mcp.src.domain.errors import fail_protocol, fail_tool_call
 from mcp.src.domain.json_types import JsonObject, JsonValue, require_json_object
 
 _MAX_CONTENT_BLOCKS = 100_000
+_MAX_PROJECTED_TEXT_BYTES = 64 * 1_024 * 1_024
 
 
 class ToolCallOutcome(NamedTuple):
@@ -118,6 +119,7 @@ def _extract_text(outcome: JsonObject) -> str:
     if len(raw_content) > _MAX_CONTENT_BLOCKS:
         fail_protocol("tools/call outcome exceeded its content block limit")
     parts: list[str] = []
+    projected_text_bytes = 0
     for index, raw_item in enumerate(raw_content):
         item = require_json_object(
             raw_item,
@@ -137,5 +139,9 @@ def _extract_text(outcome: JsonObject) -> str:
         text = item.get("text")
         if not isinstance(text, str):
             fail_protocol("tools/call outcome: text content must contain text")
+        separator_bytes = 1 if parts else 0
+        projected_text_bytes += separator_bytes + len(text.encode())
+        if projected_text_bytes > _MAX_PROJECTED_TEXT_BYTES:
+            fail_protocol("tools/call outcome exceeded its text byte limit")
         parts.append(text)
     return "\n".join(parts)

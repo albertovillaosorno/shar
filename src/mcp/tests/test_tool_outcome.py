@@ -176,6 +176,26 @@ def test_tool_outcome_rejects_excessive_content_blocks(
         _ = parse_tool_outcome(outcome)
 
 
+def test_tool_outcome_rejects_excessive_projected_text_bytes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Text projection cannot allocate another unbounded response copy."""
+    monkeypatch.setattr(
+        "mcp.src.domain.tool_outcome._MAX_PROJECTED_TEXT_BYTES",
+        4,
+        raising=False,
+    )
+    outcome: JsonObject = {
+        "content": [
+            {"type": "text", "text": "ab"},
+            {"type": "text", "text": "cd"},
+        ]
+    }
+
+    with pytest.raises(ProtocolError, match="text byte limit"):
+        _ = parse_tool_outcome(outcome)
+
+
 def test_tool_outcome_preserves_valid_non_text_content() -> None:
     """Non-text blocks remain raw without inventing a text projection."""
     outcome = parse_tool_outcome(
