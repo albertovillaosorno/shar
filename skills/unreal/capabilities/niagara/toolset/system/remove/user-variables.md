@@ -48,42 +48,70 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to remove obsolete SHAR Niagara user parameters after
+confirming no component, module, or gameplay binding still depends on them.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass a disposable or intentionally mutable NiagaraSystem.
+- Rediscover the exact variable name and Niagara type first.
+- Remove only variables owned by the requested change.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+    "system": {
+    "refPath": (
+        "/Game/NS_SHAR_MCP_MutationProbe_2."
+        "NS_SHAR_MCP_MutationProbe_2"
+    )
+},
+    "variablesToRemove": [
+        {
+            "name": "User.SHARSpeed",
+            "type": {
+                "classStructOrEnum": {
+                    "refPath": "/Script/Niagara.NiagaraFloat"
+                }
+            },
+        }
+    ],
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two systems removed `User.SHARSpeed` and then reported no user variables. Each
+successful mutation returned JSON null.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This mutation returns JSON null.
+- Name and type jointly identify the variable to remove.
+- Removing the same variable again raises `not found` and lists available
+  variables.
+- Verify the resulting inventory through `GetSystemSummary`.
+- A StaticMesh system argument fails type validation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

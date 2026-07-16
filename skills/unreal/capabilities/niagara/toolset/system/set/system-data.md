@@ -48,42 +48,64 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to update schema-backed NiagaraSystem properties for SHAR
+effects before compilation, diagnostics, or packaging.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass a disposable or intentionally mutable NiagaraSystem.
+- Read `GetSystemSchema` before choosing property names.
+- Encode `systemData.propertyValues` as JSON text.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+    "system": {
+    "refPath": (
+        "/Game/NS_SHAR_MCP_MutationProbe_2."
+        "NS_SHAR_MCP_MutationProbe_2"
+    )
+},
+    "systemData": {
+        "propertyValues": '{"bSupportLargeWorldCoordinates":false}'
+    },
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+In two cloned systems, `bSupportLargeWorldCoordinates` changed from `true` to
+`false` and persisted through `GetSystemData`. The mutation returned JSON null.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This mutation returns JSON null, not a Boolean success flag.
+- `propertyValues` is nested JSON text and must be serialized once inside the
+  request.
+- Set only properties returned by the current system schema.
+- Re-read system data because transport success alone does not prove
+  persistence.
+- A StaticMesh system argument fails type validation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

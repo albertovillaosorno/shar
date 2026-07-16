@@ -48,42 +48,76 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to add or replace typed Niagara user parameters needed by SHAR
+effects, gameplay bindings, or component overrides.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass a disposable or intentionally mutable NiagaraSystem.
+- Use matching Niagara type references in `type` and `defaultValue.struct`.
+- Include the `User.` namespace in the variable name.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+    "system": {
+    "refPath": (
+        "/Game/NS_SHAR_MCP_MutationProbe_2."
+        "NS_SHAR_MCP_MutationProbe_2"
+    )
+},
+    "variablesToAdd": [
+        {
+            "name": "User.SHARSpeed",
+            "type": {
+                "classStructOrEnum": {
+                    "refPath": "/Script/Niagara.NiagaraFloat"
+                }
+            },
+            "defaultValue": {
+                "struct": {
+                    "refPath": "/Script/Niagara.NiagaraFloat"
+                },
+                "value": {"value": 12.5},
+            },
+        }
+    ],
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two systems added `User.SHARSpeed` with default `12.5`. Re-adding the same name
+and type with `24.75` replaced the default and retained exactly one variable.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This mutation returns JSON null.
+- Re-adding the same name and type replaces the definition rather than
+  appending.
+- Type and default-value struct references must agree.
+- Verify through `GetSystemSummary`; the mutation result contains no details.
+- A StaticMesh system argument fails type validation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

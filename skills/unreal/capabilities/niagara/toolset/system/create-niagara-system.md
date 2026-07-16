@@ -48,42 +48,61 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to create a disposable or authored SHAR NiagaraSystem from a
+known template before emitter, renderer, module, variable, or diagnostic work.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Verify the destination path is unused.
+- Pass an existing NiagaraSystem template.
+- Use a disposable `/Game` name for validation and delete it afterward.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "assetName": "NS_SHAR_MCP_MutationProbe_2",
+  "assetPath": "/Game",
+  "templateSystem": {
+    "refPath": (
+      "/Niagara/DefaultAssets/Templates/Systems/"
+      "MinimalLightweight.MinimalLightweight"
+    )
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two creations returned the exact new asset reference. Each clone inherited one
+enabled `Minimal` CPUSim emitter, no renderer classes, and no user variables.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This is a persistent asset mutation until the created asset is deleted.
+- The returned value is a NiagaraSystem object reference.
+- Check `AssetTools.exists` before creation to avoid name collisions.
+- A StaticMesh template fails with an explicit NiagaraSystem type error.
+- The source template was read only and never modified.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
