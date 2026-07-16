@@ -34,6 +34,13 @@ themselves create a defense to § 1201(a)(2) or § 1201(b). Any permanent
 exception, including § 1201(f), must be applied through its own exact
 conditions.
 
+*Universal City Studios, Inc. v. Corley* upheld an injunction against posting a
+decryption program and against record-specific purposeful linking to copies of
+that program. The Second Circuit recognized computer code as expression but
+sustained regulation of its functional circumvention capability. Potential fair
+uses of the decrypted works did not create a right to distribute the access-
+circumvention tool.
+
 *Chamberlain Group, Inc. v. Skylink Technologies, Inc.* required the claimant to
 prove unauthorized access and, in the Federal Circuit, a connection between that
 access and infringement of a copyright right. It rejected liability where
@@ -93,6 +100,8 @@ For every challenged item, identify:
   <!-- markdownlint-disable-next-line MD013 -->
   <https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title17-section1201&num=0&edition=prelim>
   (Accessed: 16 July 2026).
+- [Universal City Studios, Inc. v. Corley](../cases/universal-v-corley.md), for
+  the Second Circuit's decryption-tool, linking, fair-use, and speech analysis.
 <!-- markdownlint-disable-next-line MD013 -->
 - [Chamberlain Group, Inc. v. Skylink Technologies, Inc.](../cases/chamberlain-v-skylink.md),
   for the Federal Circuit's authorization, claimant-burden, and nexus analysis.

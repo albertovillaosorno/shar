@@ -3,7 +3,7 @@
 > [Legal Research Disclaimer](../disclaimer.md) applies to this record.
 
 - Status: Repository publication boundary.
-- As-of date: 2026-07-12.
+- As-of date: 2026-07-16.
 - Counsel review: Not performed.
 
 ## Purpose
@@ -48,6 +48,14 @@ personal, educational, noncommercial, preservation-oriented, or open source.
 Those facts may be relevant to a legal analysis but do not supply publication
 authority by themselves.
 
+*Universal City Studios, Inc. v. Corley* also requires a separate publication
+review for functional access-circumvention material. A potential lawful use of
+content reached after circumvention does not itself authorize distribution of a
+decryption tool. Purposeful links to such a tool can also present trafficking
+risk when the publisher knows the destination material and maintains the link to
+disseminate it. Ordinary source links, compatibility references, and research
+citations require their own facts and are not categorically prohibited.
+
 ## Validation
 
 - Inspect every proposed tracked path and blob.
@@ -59,6 +67,7 @@ authority by themselves.
 ## Related Authorities
 
 - [Interoperability and user responsibility][interoperability-boundary]
+- [Universal City Studios, Inc. v. Corley](../cases/universal-v-corley.md)
 - [GitHub hosting and terms](../platforms/github-hosting-and-terms.md)
 
 [interoperability-boundary]: interoperability-and-user-responsibility.md
