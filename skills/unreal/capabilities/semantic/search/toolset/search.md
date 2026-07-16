@@ -48,31 +48,58 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool as a bounded preflight for AI-assisted SHAR asset discovery.
+It distinguishes assets present in the Asset Registry from assets currently
+available through the SemanticSearch index.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project and SemanticSearch toolset must be ready.
+- The configured embedding provider must accept the current editor request.
+- Supply non-empty `query`, `classFilter`, and `pathRegexes` fields exactly
+  as required by the live schema.
+- Use a bounded `k` and a virtual-path regular expression whenever the target
+  content family is known.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "query": "character",
+  "classFilter": [],
+  "pathRegexes": [
+    "^/Game/.*"
+  ],
+  "k": 5
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two identical bounded `/Game` calls returned `returnValue: []` without an
+MCP error. As an independent control, `AssetTools.find_assets` found
+`/BaseMaterial/Materials/Functions/MF_Rotate2D`, proving that an empty
+SemanticSearch result does not establish that the editor has no assets.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Search availability depends on both SemanticSearch index coverage and the
+  configured embedding provider.
+- A separate `/BaseMaterial` query failed with HTTP 401 when the embedding
+  provider had no credential; do not retry by exposing or weakening secrets.
+- An empty array is a successful query result, not proof that the Asset
+  Registry is empty. Verify important absences with an independent registry
+  query.
+- The current output schema states relevance ordering but does not expose a
+  numeric score field.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision

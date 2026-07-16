@@ -47,31 +47,66 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to restore a captured SHAR level-viewport camera after
+bounded inspection, framing, or focus operations without changing any
+project asset.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project must be open with an active level viewport.
+- Capture the current transform with `GetCameraTransform` before changing it.
+- Supply every location, rotation, and scale component required by the live
+  schema.
+- Keep the operation outside PIE unless the requested camera belongs to PIE.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "transform": {
+    "location": {
+      "x": -610.426708,
+      "y": 429.850689,
+      "z": 208.675465
+    },
+    "rotation": {
+      "pitch": 8.952503,
+      "yaw": -61.121499,
+      "roll": 0
+    },
+    "scale": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    }
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The call returned `returnValue: null`. A separate
+`GetCameraTransform` call returned the same location, rotation, and unit
+scale, proving that the active level viewport applied the complete transform.
+The verified call reused the captured pre-state, so the operator camera was
+left unchanged.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The mutation is transient editor state; it does not save a camera asset.
+- The response does not contain the applied transform, so a fresh
+  `GetCameraTransform` call is required for verification.
+- Unreal normalizes floating-point values and negative zero in the returned
+  transform; compare numeric values rather than serialized text.
+- Capture the pre-state before any non-no-op movement so recovery is exact.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision

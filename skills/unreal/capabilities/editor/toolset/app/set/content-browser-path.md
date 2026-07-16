@@ -53,7 +53,9 @@ A revision mismatch marks preserved guidance for human review.
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- An active Content Browser instance must already exist in the editor.
+- Capture its current virtual path with `GetContentBrowserPath`.
+- Use a virtual Content Browser folder, not a workstation filesystem path.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
@@ -65,13 +67,21 @@ A revision mismatch marks preserved guidance for human review.
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+In the verified SHAR session, `GetContentBrowserPath` returned an empty
+string and navigation to `/BaseMaterial/Materials/Functions` failed closed.
+The native error reported that the browser remained at the empty path, so no
+editor state changed.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The tool requires an active Content Browser; an open editor and ready MCP
+  endpoint are not sufficient.
+- When no active browser exists, the current implementation rejects the call
+  after confirming that the requested path was not applied.
+- Keep the validated argument placeholder until a session with an active
+  browser can navigate and then restore a captured pre-state.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
