@@ -48,6 +48,7 @@ Jung
 Justia
 Kagan
 Kaydara
+Kirtsaeng
 Krekel
 Kull
 Leavy
@@ -83,6 +84,7 @@ USPTO
 Vernor
 Vidvox
 Warhol
+Wiley
 Wreckless
 Zeidenberg
 agnes
@@ -113,6 +115,7 @@ jimbo
 jung
 kang
 kearney
+kirtsaeng
 kodos
 krusty
 lenny
@@ -139,4 +142,5 @@ smithers
 sony
 specht
 wiggum
+wiley
 willie

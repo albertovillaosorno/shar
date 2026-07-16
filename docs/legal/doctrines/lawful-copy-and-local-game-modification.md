@@ -26,12 +26,17 @@ copies protected expression beyond what use requires, access controls are
 circumvented, contractual restrictions apply, or files are shared.
 
 Copy ownership depends on the governing jurisdiction and complete transaction.
+*Kirtsaeng v. John Wiley & Sons, Inc.* held that § 109(a)'s first-sale rule can
+apply to a particular lawfully made copy manufactured abroad with the copyright
+owner's authorization. That rule permits disposition of that copy; it does not
+authorize reproduction, adaptation, retention of a duplicate, or publication of
+its contents.
+
 The Second Circuit's *Krause v. Titleserv* decision treated a custom-program
 user as an owner where it paid substantial consideration, received programs
 created for its sole benefit, held an indefinite and materially unrestricted
-right to
-possess and use the copies, and could discard or destroy them. The Ninth
-Circuit's *Vernor v. Autodesk* decision instead treated a transferee as a
+right to possess and use the copies, and could discard or destroy them. The
+Ninth Circuit's *Vernor v. Autodesk* decision instead treated a transferee as a
 licensee where the copyright owner used a license designation, significantly
 restricted transfer, and imposed notable use restrictions. Physical possession,
 a purchase receipt, payment, and the word `license` are therefore relevant but
@@ -112,6 +117,7 @@ reverse engineering as machine maintenance.
 - [17 U.S.C. § 1201](../statutes/17-usc-1201-trafficking.md).
 <!-- markdownlint-disable-next-line MD013 -->
 - [Bowers v. Baystate Technologies, Inc.](../cases/bowers-v-baystate-technologies.md).
+- [Kirtsaeng v. John Wiley & Sons, Inc.](../cases/kirtsaeng-v-john-wiley.md).
 - [Krause v. Titleserv, Inc](../cases/krause-v-titleserv.md).
 - [Vault Corp. v. Quaid Software Ltd.](../cases/vault-v-quaid-software.md).
 <!-- markdownlint-disable-next-line MD013 -->

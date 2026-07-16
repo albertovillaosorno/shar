@@ -4,7 +4,7 @@
 
 - Status: Repository risk boundary; legal outcomes remain fact-specific.
 - Jurisdiction: User- and conduct-specific.
-- As-of date: 2026-07-12.
+- As-of date: 2026-07-16.
 - Counsel review: Not performed.
 
 ## Purpose
@@ -27,6 +27,10 @@ reverse-engineering, modification, conversion, or distribution is lawful.
   outside the approved repository workflow.
 - Generated artifacts remain subject to rights in their source content and are
   not presumed redistributable.
+- First sale may permit disposition of a particular lawfully made owned copy,
+  including one manufactured abroad, but does not authorize reproducing its
+  contents, retaining a duplicate, publishing a converted build, or treating a
+  license or account entitlement as ownership.
 - No third-party affiliation, endorsement, sponsorship, or approval is claimed.
 
 ## Legal Review Boundary
@@ -48,6 +52,8 @@ controlling jurisdiction is materially unclear.
 - [Lawful local input and publication boundary](../../adr/legal/lawful-local-input-and-publication-boundary.md)
 - [SHAR legal research index](../index.md)
 - [Software interoperability research][software-interoperability]
+- [17 U.S.C. § 109](../statutes/17-usc-109.md)
+- [Kirtsaeng v. John Wiley & Sons, Inc.](../cases/kirtsaeng-v-john-wiley.md)
 - [17 U.S.C. § 1201(f)](../statutes/17-usc-1201f.md)
 
 [software-interoperability]: ../doctrines/software-interoperability.md

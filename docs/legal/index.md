@@ -59,6 +59,7 @@ may cite ADRs for technical facts, but ADRs are not legal authority.
 - [Chamberlain Group, Inc. v. Skylink Technologies, Inc](cases/chamberlain-v-skylink.md)
 - [Davidson & Associates, Inc. v. Jung](cases/davidson-v-jung.md)
 - [Google LLC v. Oracle America, Inc](cases/google-v-oracle.md)
+- [Kirtsaeng v. John Wiley & Sons, Inc](cases/kirtsaeng-v-john-wiley.md)
 - [Krause v. Titleserv, Inc](cases/krause-v-titleserv.md)
 - [Lenz v. Universal Music Corp.](cases/lenz-v-universal-music.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -140,7 +141,7 @@ fact-specific result is not determined. Hosting, public access, noncommercial
 purpose, independent implementation, interoperability intent, or an accepted ADR
 does not determine a legal outcome by itself.
 
-- Active legal records: 60.
+- Active legal records: 61.
 - Review date: 2026-07-16.
 - Statutory currentness: the Office of the Law Revision Counsel classification
   tables were checked on 2026-07-14. The published 119th Congress tables cover
