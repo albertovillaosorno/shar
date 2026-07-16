@@ -49,6 +49,13 @@ broadcast programming to many unrelated paying viewers. The Supreme Court's
 limited holding did not decide ordinary creator uploads, local playback, cloud
 storage, remote DVRs, reproduction, or fair use.
 
+*Sony Corp. of America v. Universal City Studios, Inc.* does not convert those
+streaming uses into private time-shifting. Its fair-use holding involved
+private, noncommercial home recording of freely broadcast programs for later
+viewing.
+Uploading gameplay, retaining a public library, retransmitting to others, or
+operating a paid service changes the purpose, audience, copies, and market.
+
 ## Factors Supporting A Commentary-Driven Video
 
 - The creator supplies original narration, criticism, instruction, debugging,
@@ -166,6 +173,8 @@ conditions, and required notices are verified.
 
 - Supreme Court of the United States, [*American Broadcasting Companies, Inc.
   v. Aereo, Inc.*][aereo-opinion], 573 U.S. 431 (2014) (Accessed: 16 July 2026).
+- Supreme Court of the United States, [*Sony Corp. of America v. Universal City
+  Studios, Inc.*][sony-opinion], 464 U.S. 417 (1984) (Accessed: 16 July 2026).
 - Supreme Court of the United States, [*Andy Warhol Foundation for the Visual
   Arts, Inc. v. Goldsmith*][warhol-opinion], 598 U.S. 508 (2023) (Accessed: 15
   July 2026).
@@ -194,6 +203,7 @@ conditions, and required notices are verified.
 - Xbox, [Game Content Usage Rules][xbox-rules] (Accessed: 14 July 2026).
 
 [aereo-opinion]: https://www.law.cornell.edu/supremecourt/text/13-461
+[sony-opinion]: https://www.law.cornell.edu/supremecourt/text/464/417
 [warhol-opinion]:
   https://www.supremecourt.gov/opinions/22pdf/21-869_87ad.pdf
 [lenz-opinion]:

@@ -88,6 +88,8 @@ may cite ADRs for technical facts, but ADRs are not legal authority.
 - [Sega Enterprises Ltd. v. Accolade, Inc](cases/sega-v-accolade.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Sony Computer Entertainment, Inc. v. Connectix Corp](cases/sony-v-connectix.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Sony Corp. of America v. Universal City Studios, Inc](cases/sony-corp-v-universal-city-studios.md)
 - [Specht v. Netscape Communications Corp](cases/specht-v-netscape.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Storage Technology Corp. v. Custom Hardware Engineering & Consulting, Inc](cases/storage-technology-v-custom-hardware.md)
@@ -148,7 +150,7 @@ fact-specific result is not determined. Hosting, public access, noncommercial
 purpose, independent implementation, interoperability intent, or an accepted ADR
 does not determine a legal outcome by itself.
 
-- Active legal records: 65.
+- Active legal records: 66.
 - Review date: 2026-07-16.
 - Statutory currentness: the Office of the Law Revision Counsel classification
   tables were checked on 2026-07-14. The published 119th Congress tables cover

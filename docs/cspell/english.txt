@@ -46,6 +46,7 @@ nondirectory
 nonfilesystem
 nonfinite
 noninfringing
+nonminimal
 nonliteral
 nonoverlapping
 nonportable

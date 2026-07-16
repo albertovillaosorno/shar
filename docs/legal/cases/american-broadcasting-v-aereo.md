@@ -113,6 +113,8 @@ or platform eligibility.
   (Accessed: 16 July 2026).
 - [17 U.S.C. § 106](../statutes/17-usc-106.md).
 <!-- markdownlint-disable-next-line MD013 -->
+- [Sony Corp. of America v. Universal City Studios, Inc.](sony-corp-v-universal-city-studios.md).
+<!-- markdownlint-disable-next-line MD013 -->
 - [Cartoon Network LP, LLLP v. CSC Holdings, Inc.](cartoon-network-v-csc-holdings.md).
 <!-- markdownlint-disable-next-line MD013 -->
 - [Gameplay video, streaming, and monetization](../platforms/gameplay-video-streaming-and-monetization.md).
