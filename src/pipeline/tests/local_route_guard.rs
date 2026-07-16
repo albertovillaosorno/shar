@@ -70,37 +70,10 @@ fn public_files_reject_local_asset_route_literals() -> Result<(), String> {
         "extracted"
     );
     let root = repository_root()?;
-    let files = repository_files(&root)?;
-    let mut failures = Vec::new();
-    for relative in files
-        .lines()
-        .filter(|line| is_scanned_source_file(line))
-    {
-        let absolute = root.join(relative);
-        let Ok(text) = std::fs::read_to_string(&absolute) else {
-            continue;
-        };
-        let lines = text
-            .lines()
-            .collect::<Vec<_>>();
-        for (index, line) in lines
-            .iter()
-            .enumerate()
-        {
-            if line.contains(route_literal)
-                && !has_route_exception(
-                    &lines, index,
-                )
-            {
-                failures.push(
-                    format!(
-                        "{relative}:{}",
-                        index.saturating_add(1)
-                    ),
-                );
-            }
-        }
-    }
+    let failures = route_failures(
+        &root,
+        route_literal,
+    )?;
     if failures.is_empty() {
         Ok(())
     } else {
@@ -128,6 +101,113 @@ fn lists_untracked_nonignored_public_files() -> Result<(), String> {
                 .to_owned(),
         )
     }
+}
+
+#[test]
+fn detects_local_asset_route_literal_in_all_untracked_files() -> Result<(), String> {
+    let root = std::env::temp_dir().join(
+        format!(
+            "shar-route-guard-files-{}",
+            std::process::id()
+        ),
+    );
+    drop(std::fs::remove_dir_all(&root));
+    let result = (|| {
+        std::fs::create_dir_all(&root)
+            .map_err(|error| format!("fixture create failed: {error}"))?;
+        let output = Command::new("git")
+            .arg("init")
+            .arg("--quiet")
+            .current_dir(&root)
+            .output()
+            .map_err(|error| format!("fixture git init failed: {error}"))?;
+        if !output
+            .status
+            .success()
+        {
+            return Err(
+                format!(
+                    "fixture git init returned failure: {}",
+                    String::from_utf8_lossy(&output.stderr)
+                ),
+            );
+        }
+        let route_literal = concat!(
+            "game",
+            "/",
+            "extracted"
+        );
+        std::fs::write(
+            root.join("canary.yml"),
+            format!("path: {route_literal}\n"),
+        )
+        .map_err(|error| format!("YAML fixture write failed: {error}"))?;
+        let mut binary = vec![0xff_u8];
+        binary.extend_from_slice(route_literal.as_bytes());
+        binary.push(b'\n');
+        std::fs::write(
+            root.join("canary.bin"),
+            binary,
+        )
+        .map_err(|error| format!("binary fixture write failed: {error}"))?;
+        let failures = route_failures(
+            &root,
+            route_literal,
+        )?;
+        if failures
+            == [
+                "canary.bin:1",
+                "canary.yml:1",
+            ]
+        {
+            Ok(())
+        } else {
+            Err(
+                format!(
+                    "public-file route literals were not detected: {failures:?}"
+                ),
+            )
+        }
+    })();
+    drop(std::fs::remove_dir_all(&root));
+    result
+}
+
+fn route_failures(
+    root: &Path,
+    route_literal: &str,
+) -> Result<Vec<String>, String> {
+    let files = repository_files(root)?;
+    let mut failures = Vec::new();
+    for relative in files.lines() {
+        let absolute = root.join(relative);
+        let Ok(bytes) = std::fs::read(&absolute) else {
+            continue;
+        };
+        let text = String::from_utf8_lossy(&bytes);
+        let lines = text
+            .lines()
+            .collect::<Vec<_>>();
+        for (index, line) in lines
+            .iter()
+            .enumerate()
+        {
+            if line.contains(route_literal)
+                && !has_route_exception(
+                    &lines, index,
+                )
+            {
+                failures.push(
+                    format!(
+                        "{relative}:{}",
+                        index.saturating_add(1)
+                    ),
+                );
+            }
+        }
+    }
+    failures.sort();
+    Ok(failures)
 }
 
 fn untracked_repository_fixture() -> Result<String, String> {
@@ -211,28 +291,6 @@ fn repository_root() -> Result<PathBuf, String> {
             );
         }
     }
-}
-
-/// Limit scanning to text formats where public route literals can be reviewed,
-/// while binary and generated payload trees remain outside the test contract.
-fn is_scanned_source_file(path: &str) -> bool {
-    let suffix = Path::new(path)
-        .extension()
-        .and_then(|value| value.to_str())
-        .unwrap_or_default();
-    matches!(
-        suffix,
-        "rs" | "toml"
-            | "md"
-            | "json"
-            | "jsonc"
-            | "sh"
-            | "py"
-            | "cpp"
-            | "hpp"
-            | "h"
-            | "cs"
-    )
 }
 
 /// Accept only the exact marker plus a long nearby explanation because route
