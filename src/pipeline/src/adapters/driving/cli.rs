@@ -86,6 +86,7 @@ const USAGE: &str = concat!(
     "fbx-export [index-jsonl] [selector] [output-dir] [base-root] ",
     "[--blender-helper (experimental/unsupported; may not work)] ",
     "[--maya (optional Maya import script)] ",
+    "[--embed-textures (legacy compatibility)] ",
     "[--verbosity detailed|minimal] ",
     "[--log <path>|--no-log]",
 );
@@ -128,6 +129,11 @@ impl CliProgram for PipelineCli {
             return CommandOutcome::failure()
                 .stderr_line("invalid arguments: --maya requires fbx-export");
         }
+        if parsed.embed_textures && command != "fbx-export" {
+            return CommandOutcome::failure().stderr_line(
+                "invalid arguments: --embed-textures requires fbx-export",
+            );
+        }
         if let Err(error) = install_progress(
             parsed.verbosity,
             parsed
@@ -146,6 +152,7 @@ impl CliProgram for PipelineCli {
                 FbxExportOptions {
                     blender_helper: parsed.blender_helper,
                     maya: parsed.maya,
+                    embed_textures: parsed.embed_textures,
                 },
             );
             if parsed.blender_helper {

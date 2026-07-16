@@ -49,7 +49,11 @@ mod semantic_body;
 
 use std::collections::BTreeSet;
 
-use fbx::domain::texture::semantic::{BodyRegion, plan_body_texture};
+use fbx::domain::character::CharacterAsset;
+use fbx::domain::texture::semantic::{
+    BodyRegion, BodyTexturePlan, BoneFamily, Rgba8, RgbaImage, RgbaImageError,
+    TextureAddressMode, plan_body_texture,
+};
 use semantic_body::{BODY_COLORS, body_fixture};
 
 #[test]
@@ -67,15 +71,24 @@ fn plans_five_regions_deterministically_and_changes_only_uvs()
     if first != second {
         return Err("equivalent planning was not deterministic".to_owned());
     }
-    if first.source_vertex_count != 15 || first.source_triangle_count != 5 {
+    validate_plan_shape(&first)?;
+    validate_atlas_colors(&first)?;
+    validate_uv_only_change(
+        &character, first,
+    )
+}
+
+/// Validate source counts, semantic lanes, and chart containment.
+fn validate_plan_shape(plan: &BodyTexturePlan) -> Result<(), String> {
+    if plan.source_vertex_count != 15 || plan.source_triangle_count != 5 {
         return Err(
             format!(
                 "unexpected source counts: vertices={}, triangles={}",
-                first.source_vertex_count, first.source_triangle_count,
+                plan.source_vertex_count, plan.source_triangle_count,
             ),
         );
     }
-    let regions = first
+    let regions = plan
         .color_assignments
         .iter()
         .map(|assignment| assignment.region)
@@ -87,7 +100,7 @@ fn plans_five_regions_deterministically_and_changes_only_uvs()
     {
         return Err(format!("unexpected semantic regions: {regions:?}"));
     }
-    if first
+    if plan
         .charts
         .len()
         != 5
@@ -95,91 +108,102 @@ fn plans_five_regions_deterministically_and_changes_only_uvs()
         return Err(
             format!(
                 "expected five charts, got {}",
-                first
-                    .charts
+                plan.charts
                     .len()
             ),
         );
     }
-    for (index, first_chart) in first
+    for (index, first) in plan
         .charts
         .iter()
         .enumerate()
     {
-        for second_chart in first
+        for second in plan
             .charts
             .iter()
             .skip(index + 1)
         {
             if overlaps(
-                first_chart.cell,
-                second_chart.cell,
+                first.cell,
+                second.cell,
             ) {
                 return Err(
                     format!(
                         "chart cells overlap: {} and {}",
-                        first_chart.id, second_chart.id,
+                        first.id, second.id,
                     ),
                 );
             }
         }
-        if first_chart
+        let escaped = first
             .content
             .x
-            < first_chart
+            < first
                 .cell
                 .x
-            || first_chart
+            || first
                 .content
                 .y
-                < first_chart
+                < first
                     .cell
                     .y
-            || first_chart
+            || first
                 .content
                 .right()
-                > first_chart
+                > first
                     .cell
                     .right()
-            || first_chart
+            || first
                 .content
                 .bottom()
-                > first_chart
+                > first
                     .cell
-                    .bottom()
-        {
+                    .bottom();
+        if escaped {
             return Err(
                 format!(
                     "chart content escaped its cell: {}",
-                    first_chart.id,
+                    first.id
                 ),
             );
         }
     }
-    let atlas_colors = first
+    Ok(())
+}
+
+/// Require every synthetic source color to survive atlas rasterization.
+fn validate_atlas_colors(plan: &BodyTexturePlan) -> Result<(), String> {
+    let colors = plan
         .atlas
         .pixels()
         .iter()
         .copied()
         .collect::<BTreeSet<_>>();
     for color in BODY_COLORS {
-        if !atlas_colors.contains(&color) {
+        if !colors.contains(&color) {
             return Err(format!("atlas omitted source color {color:?}"));
         }
     }
+    Ok(())
+}
+
+/// Prove semantic preparation changed only selected UV coordinates.
+fn validate_uv_only_change(
+    character: &CharacterAsset,
+    plan: BodyTexturePlan,
+) -> Result<(), String> {
     let original_uvs = character.parts[0]
         .mesh
         .groups[0]
         .uvs
         .clone();
-    let remapped_uvs = first
+    let remapped_uvs = &plan
         .remapped_character
         .parts[0]
         .mesh
         .groups[0]
-        .uvs
-        .clone();
-    if original_uvs == remapped_uvs {
+        .uvs;
+    if original_uvs == *remapped_uvs {
         return Err("semantic planning did not remap UVs".to_owned());
     }
     if remapped_uvs
@@ -190,15 +214,101 @@ fn plans_five_regions_deterministically_and_changes_only_uvs()
     {
         return Err("remapped UV escaped the atlas".to_owned());
     }
-    let mut normalized = first
-        .remapped_character
-        .clone();
+    let mut normalized = plan.remapped_character;
     normalized.parts[0]
         .mesh
         .groups[0]
         .uvs = original_uvs;
-    if normalized != character {
+    if normalized != *character {
         return Err("semantic planning changed data outside UVs".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn tiled_sampling_wraps_before_v_up_texel_selection() -> Result<(), String> {
+    let blue = Rgba8::new(
+        0, 0, 255, 255,
+    );
+    let image = RgbaImage::new(
+        2,
+        2,
+        vec![
+            Rgba8::new(
+                255, 0, 0, 255,
+            ),
+            Rgba8::new(
+                0, 255, 0, 255,
+            ),
+            blue,
+            Rgba8::new(
+                255, 255, 0, 255,
+            ),
+        ],
+    )
+    .map_err(|error| format!("sampling fixture failed: {error:?}"))?;
+    let base = image
+        .sample_uv_v_up_with_address_mode(
+            [
+                0.25, 0.25,
+            ],
+            TextureAddressMode::Tile,
+        )
+        .map_err(|error| format!("base sample failed: {error:?}"))?;
+    let wrapped = image
+        .sample_uv_v_up_with_address_mode(
+            [
+                0.25, 1.25,
+            ],
+            TextureAddressMode::Tile,
+        )
+        .map_err(|error| format!("wrapped sample failed: {error:?}"))?;
+    if base != blue || wrapped != base {
+        return Err(
+            format!(
+                "tiled sampling did not preserve repeated texel: {wrapped:?}"
+            ),
+        );
+    }
+    if image.sample_uv_v_up_with_address_mode(
+        [
+            0.25, 1.25,
+        ],
+        TextureAddressMode::Clamp,
+    ) != Err(RgbaImageError::InvalidUv)
+    {
+        return Err("clamp mode accepted an out-of-range UV".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn classifies_legacy_pelvis_support_joint_as_lower_body() {
+    assert_eq!(
+        BoneFamily::from_bone_id("Ass_Joint"),
+        BoneFamily::LowerBody,
+    );
+}
+
+#[test]
+fn semantic_atlas_allows_an_empty_hair_lane() -> Result<(), String> {
+    let (character, source, mut recipe) = body_fixture()?;
+    recipe
+        .color_overrides
+        .insert(
+            BODY_COLORS[1],
+            BodyRegion::Skin,
+        );
+    let planned = plan_body_texture(
+        &character, &source, &recipe,
+    )
+    .map_err(|error| format!("optional lane planning failed: {error:?}"))?;
+    if planned
+        .charts
+        .iter()
+        .any(|chart| chart.region == BodyRegion::Hair)
+    {
+        return Err("hair lane was populated without hair evidence".to_owned());
     }
     Ok(())
 }

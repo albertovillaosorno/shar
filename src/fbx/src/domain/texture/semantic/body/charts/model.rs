@@ -53,9 +53,9 @@ use super::super::types::{AtlasChart, ProjectionAxis};
 
 /// Projected two-dimensional bounds for one chart.
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub(super) struct ProjectionBounds {
-    pub(super) minimum: [f32; 2],
-    pub(super) maximum: [f32; 2],
+pub(in crate::domain::texture::semantic::body) struct ProjectionBounds {
+    pub(in crate::domain::texture::semantic::body) minimum: [f32; 2],
+    pub(in crate::domain::texture::semantic::body) maximum: [f32; 2],
 }
 
 impl ProjectionBounds {
@@ -79,11 +79,20 @@ pub(super) struct ProjectedChart {
     pub(super) group: GroupAddress,
     pub(super) region: BodyRegion,
     pub(super) source_color: Rgba8,
+    pub(super) sample_source: bool,
+    pub(super) source_sampled_triangles: Vec<usize>,
     pub(super) triangle_indices: Vec<usize>,
     pub(super) vertex_indices: Vec<usize>,
     pub(super) projection: ProjectionAxis,
     pub(super) projected_positions: BTreeMap<usize, [f32; 2]>,
     pub(super) bounds: ProjectionBounds,
+}
+
+/// Exact atlas placement for one full source-UV texture block.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(in crate::domain::texture::semantic::body) struct SourceUvPlacement {
+    pub(in crate::domain::texture::semantic::body) origin: [u32; 2],
+    pub(in crate::domain::texture::semantic::body) scale: u32,
 }
 
 /// One atlas-placed chart with exact destination pixel positions.
@@ -92,4 +101,6 @@ pub(in crate::domain::texture::semantic::body) struct PlacedChart {
     pub(in crate::domain::texture::semantic::body) public: AtlasChart,
     pub(in crate::domain::texture::semantic::body) pixel_positions:
         BTreeMap<usize, [f32; 2]>,
+    pub(in crate::domain::texture::semantic::body) source_uv_placement:
+        Option<SourceUvPlacement>,
 }

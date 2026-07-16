@@ -45,6 +45,15 @@
 use super::color::Rgba8;
 use super::image::{RgbaImage, RgbaImageError, checked_pixel_count};
 
+/// Texture-address behavior applied before source-texel selection.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TextureAddressMode {
+    /// Reject coordinates outside the closed zero-through-one interval.
+    Clamp,
+    /// Repeat coordinates modulo one, matching tiled runtime sampling.
+    Tile,
+}
+
 impl RgbaImage {
     /// Sample one V-up UV coordinate using source texel ownership.
     ///
@@ -70,6 +79,36 @@ impl RgbaImage {
         self.pixel(
             x, y,
         )
+    }
+
+    /// Sample one V-up UV coordinate through an explicit address mode.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when either coordinate is non-finite or clamp mode
+    /// receives a coordinate outside the closed zero-through-one interval.
+    pub fn sample_uv_v_up_with_address_mode(
+        &self,
+        uv: [f32; 2],
+        address_mode: TextureAddressMode,
+    ) -> Result<Rgba8, RgbaImageError> {
+        match address_mode {
+            TextureAddressMode::Clamp => self.sample_uv_v_up(uv),
+            TextureAddressMode::Tile => {
+                let u = tiled_coordinate(f64::from(uv[0]))?;
+                let v = tiled_coordinate(f64::from(uv[1]))?;
+                let x = unit_coordinate_to_index(
+                    u, self.width,
+                )?;
+                let y = unit_coordinate_to_index(
+                    1.0 - v,
+                    self.height,
+                )?;
+                self.pixel(
+                    x, y,
+                )
+            }
+        }
     }
 
     /// Scale the image with deterministic nearest-neighbor sampling.
@@ -107,6 +146,14 @@ impl RgbaImage {
             width, height, pixels,
         )
     }
+}
+
+/// Normalize one finite coordinate for tiled texture addressing.
+fn tiled_coordinate(value: f64) -> Result<f64, RgbaImageError> {
+    if !value.is_finite() {
+        return Err(RgbaImageError::InvalidUv);
+    }
+    Ok(value.rem_euclid(1.0))
 }
 
 /// Convert one unit coordinate into source-texel ownership.

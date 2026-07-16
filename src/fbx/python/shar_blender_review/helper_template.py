@@ -83,6 +83,7 @@ class _ArmatureData(Protocol):
     """Armature display state required for animation review."""
 
     pose_position: str
+    display_type: str
 
 
 class _Object(Protocol):
@@ -340,6 +341,7 @@ def main() -> None:
 
     armature = _require_single_armature(scene)
     armature.data.pose_position = "POSE"
+    armature.data.display_type = "STICK"
     armature.show_in_front = True
     _ = bpy.ops.object.select_all(action="DESELECT")
     armature.select_set(state=True)

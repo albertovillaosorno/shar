@@ -53,12 +53,14 @@ use crate::domain::mesh::PrimitiveGroup;
 mod components;
 #[path = "eye/frames.rs"]
 mod frames;
+#[path = "eye/layers.rs"]
+mod layers;
 #[path = "eye/types.rs"]
 mod types;
 
 pub use types::{
     EyeComponent, EyeFrameEvidence, EyeRegion, EyeSemanticPlan, EyeSide,
-    EyeTextureError,
+    EyeTextureError, EyeTextureLayers,
 };
 
 /// Analyze two eye mesh components and the source four-frame blink sequence.
@@ -77,11 +79,17 @@ pub fn analyze_eye_frames(
         source_frames,
         output_size,
     )?;
+    let layers = layers::build(
+        &analyzed.modern_frames[0],
+        analyzed.pupil_color,
+        analyzed.lid_color,
+    )?;
     Ok(
         EyeSemanticPlan {
             components,
             frame_evidence: analyzed.evidence,
             modern_frames: analyzed.modern_frames,
+            layers,
             lid_color: analyzed.lid_color,
             surface_color: analyzed.surface_color,
             pupil_color: analyzed.pupil_color,

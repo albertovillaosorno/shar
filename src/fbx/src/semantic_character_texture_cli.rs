@@ -31,8 +31,8 @@
 // - Summary:
 //   - Transactional semantic character texture CLI.
 // - Description:
-//   - Publishes one body atlas, four eye frames, and one manifest only after
-//   - the complete in-memory preparation succeeds.
+//   - Publishes one external-texture FBX, one body texture, three eye images,
+//   - optional explicit material textures, and one manifest atomically.
 // - Usage:
 //   - `semantic-character-texture <request.json> <new-output-directory>`.
 // - Defaults:
@@ -53,9 +53,10 @@ use std::env;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
+use fbx::adapters::driven::binary_character_writer::write_binary_character_fbx;
 use fbx::adapters::driven::semantic_character_texture::{
-    SemanticTextureArtifacts, SemanticTextureRequest,
-    build_semantic_texture_artifacts,
+    PreparedSemanticCharacter, SemanticTextureRequest,
+    prepare_semantic_character,
 };
 use schoenwald_filesystem::adapters::driving::local::{
     create_dir_all, path_kind, read_utf8, write_bytes,
@@ -94,12 +95,13 @@ fn run() -> Result<String, String> {
     let request: SemanticTextureRequest =
         serde_json::from_str(&request_text)
             .map_err(|error| format!("request JSON failed: {error}"))?;
-    let artifacts = build_semantic_texture_artifacts(&request)
+    let prepared = prepare_semantic_character(&request)
         .map_err(|error| format!("preparation failed: {error:?}"))?;
     publish(
         &output_path,
-        &artifacts,
+        &prepared,
     )?;
+    let artifacts = &prepared.artifacts;
     serde_json::to_string(
         &serde_json::json!({
             "character_id": artifacts.summary.character_id,
@@ -107,8 +109,11 @@ fn run() -> Result<String, String> {
             "body_triangle_count": artifacts.summary.body_triangle_count,
             "body_chart_count": artifacts.summary.body_chart_count,
             "eye_region_count": artifacts.summary.eye_region_count,
-            "body_atlas_size": artifacts.summary.body_atlas_size,
+            "animation_count": artifacts.summary.animation_count,
+            "body_texture_size": artifacts.summary.body_texture_size,
             "eye_frame_size": artifacts.summary.eye_frame_size,
+            "eye_profile_sha256": artifacts.eye_profile_sha256,
+            "fbx": format!("{}.fbx", artifacts.summary.character_id),
             "output": output_path,
         }),
     )
@@ -118,7 +123,7 @@ fn run() -> Result<String, String> {
 /// Publish all artifacts through one hidden staging directory rename.
 fn publish(
     output: &Path,
-    artifacts: &SemanticTextureArtifacts,
+    prepared: &PreparedSemanticCharacter,
 ) -> Result<(), String> {
     ensure_missing(
         output, "output",
@@ -130,7 +135,7 @@ fn publish(
     create_dir_all(&staging)
         .map_err(|error| format!("staging create failed: {error}"))?;
     let result = write_artifacts(
-        &staging, artifacts,
+        &staging, prepared,
     )
     .and_then(
         |()| {
@@ -149,24 +154,58 @@ fn publish(
 /// Write the complete fixed artifact set below one staging directory.
 fn write_artifacts(
     staging: &Path,
-    artifacts: &SemanticTextureArtifacts,
+    prepared: &PreparedSemanticCharacter,
 ) -> Result<(), String> {
+    let artifacts = &prepared.artifacts;
+    let textures = staging.join("textures");
+    create_dir_all(&textures)
+        .map_err(|error| format!("texture directory create failed: {error}"))?;
     write(
-        &staging.join("body-atlas.png"),
-        &artifacts.body_atlas_png,
+        &textures.join("body-atlas.png"),
+        &artifacts.body_texture_png,
     )?;
-    for (index, bytes) in artifacts
-        .eye_frame_pngs
-        .iter()
-        .enumerate()
-    {
+    for (file_name, bytes) in [
+        (
+            "eye.png",
+            &artifacts.eye_layer_pngs[0],
+        ),
+        (
+            "eye-pupil.png",
+            &artifacts.eye_layer_pngs[1],
+        ),
+        (
+            "eye-lids.png",
+            &artifacts.eye_layer_pngs[2],
+        ),
+    ] {
         write(
-            &staging.join(format!("eye-frame-{index}.png")),
+            &textures.join(file_name),
             bytes,
         )?;
     }
+    for extra in &artifacts.extra_textures {
+        write(
+            &textures.join(&extra.file_name),
+            &extra.png,
+        )?;
+    }
+    let fbx_path = staging.join(
+        format!(
+            "{}.fbx",
+            artifacts
+                .summary
+                .character_id
+        ),
+    );
+    write_binary_character_fbx(
+        &prepared.character,
+        &prepared.materials,
+        &prepared.animations,
+        &fbx_path,
+    )
+    .map_err(|error| format!("prepared FBX write failed: {error:?}"))?;
     write(
-        &staging.join("semantic-texture-plan.json"),
+        &staging.join("texture-plan.json"),
         &artifacts.manifest_json,
     )
 }
@@ -204,5 +243,5 @@ fn staging_path(output: &Path) -> Result<PathBuf, String> {
         .ok_or_else(
             || "output directory requires a UTF-8 leaf name".to_owned(),
         )?;
-    Ok(output.with_file_name(format!(".{name}.semantic-texture-staging",)))
+    Ok(output.with_file_name(format!(".{name}.textures-staging")))
 }

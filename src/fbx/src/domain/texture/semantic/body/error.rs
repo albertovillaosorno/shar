@@ -50,7 +50,7 @@ use super::super::region::BodyRegion;
 use super::recipe::GroupAddress;
 
 /// Semantic texture planning failure.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum SemanticTextureError {
     /// Image-domain validation failed.
     Image(RgbaImageError),
@@ -86,13 +86,6 @@ pub enum SemanticTextureError {
         /// Source vertex ordinal.
         vertex: usize,
     },
-    /// More than one bone had the same strongest influence on one vertex.
-    AmbiguousDominantInfluence {
-        /// Source group.
-        group: GroupAddress,
-        /// Source vertex ordinal.
-        vertex: usize,
-    },
     /// One dominant bone could not support semantic classification.
     UnsupportedBoneEvidence {
         /// Source color under classification.
@@ -104,8 +97,6 @@ pub enum SemanticTextureError {
     AmbiguousColorEvidence(Rgba8),
     /// The first opaque body-atlas lane encountered source transparency.
     TransparentSourceBodyColor(Rgba8),
-    /// A required minimum body region had no source evidence.
-    MissingRequiredRegion(BodyRegion),
     /// Triangle vertices sampled more than one exact source color.
     MixedSourceColorTriangle {
         /// Source group.

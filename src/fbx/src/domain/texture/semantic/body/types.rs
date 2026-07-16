@@ -74,6 +74,8 @@ pub enum ProjectionAxis {
     Xz,
     /// Project Y and Z.
     Yz,
+    /// Preserve the source texture UV parameterization.
+    SourceUv,
 }
 
 impl ProjectionAxis {
@@ -91,6 +93,7 @@ impl ProjectionAxis {
             Self::Xy => "xy",
             Self::Xz => "xz",
             Self::Yz => "yz",
+            Self::SourceUv => "source-uv",
         }
     }
 
@@ -101,7 +104,7 @@ impl ProjectionAxis {
         position: [f32; 3],
     ) -> [f32; 2] {
         match self {
-            Self::Xy => [
+            Self::Xy | Self::SourceUv => [
                 position[0],
                 position[1],
             ],
@@ -169,8 +172,12 @@ pub struct AtlasChart {
     pub group: GroupAddress,
     /// Parent semantic region.
     pub region: BodyRegion,
-    /// Exact preserved source color.
+    /// Exact preserved source color for flat charts.
     pub source_color: Rgba8,
+    /// True when one or more triangles resample source UV evidence.
+    pub sample_source: bool,
+    /// Source triangle ordinals that resample original UV evidence.
+    pub source_sampled_triangles: Vec<usize>,
     /// Source triangle ordinals included in the chart.
     pub triangle_indices: Vec<usize>,
     /// Source vertex ordinals included in the chart.

@@ -64,8 +64,77 @@ pub(super) fn render(
     request: &SemanticTextureRequest,
     body: &BodyTexturePlan,
     eye: &EyeSemanticPlan,
+    eye_profile_sha256: &str,
 ) -> Result<Vec<u8>, String> {
-    let selected_uvs = request
+    let selected_uvs = selected_uvs(
+        request, body,
+    )?;
+    let assignments = assignments(body);
+    let charts = charts(body);
+    let eye_components = eye_components(eye);
+    let eye_frames = eye_frames(eye);
+    let changed_character_fields =
+        if request.body_texture_mode == "semantic-atlas" {
+            vec!["selected-group-uvs"]
+        } else {
+            Vec::new()
+        };
+    let manifest = json!({
+        "schema_version": 1,
+        "character_id": request.character_name,
+        "topology_policy": {
+            "polygon_or_vertex_increase": false,
+            "changed_character_fields": changed_character_fields,
+        },
+        "body": {
+            "mode": request.body_texture_mode,
+            "artifact": "textures/body-atlas.png",
+            "width": body.atlas.width(),
+            "height": body.atlas.height(),
+            "padding": request.body_atlas_padding,
+            "texture_address_mode": request.body_texture_address_mode,
+            "source_vertex_count": body.source_vertex_count,
+            "source_triangle_count": body.source_triangle_count,
+            "semantic_region_count": 5,
+            "color_assignments": assignments,
+            "charts": charts,
+            "selected_group_uvs": selected_uvs,
+        },
+        "eyes": {
+            "eye_group": {
+                "part_index": request.eye_group.part_index,
+                "group_index": request.eye_group.group_index,
+            },
+            "semantic_region_count": eye.semantic_region_count,
+            "profile_sha256": eye_profile_sha256,
+            "canonical_layers": {
+                "sclera_rgba": rgba(eye.surface_color),
+                "pupil": "textures/eye-pupil.png",
+                "lids": "textures/eye-lids.png",
+                "upper_lid_uv_rect": [0.0, 0.0, 1.0, 0.5],
+                "lower_lid_uv_rect": [0.0, 0.5, 1.0, 1.0],
+            },
+            "derived_open_eye": "textures/eye.png",
+            "lid_rgba": rgba(eye.lid_color),
+            "sclera_rgba": rgba(eye.surface_color),
+            "pupil_rgba": rgba(eye.pupil_color),
+            "components": eye_components,
+            "derived_compatibility_frames": eye_frames,
+            "animation_changes": false,
+        },
+    });
+    let mut bytes = serde_json::to_vec_pretty(&manifest)
+        .map_err(|error| format!("semantic manifest encode failed: {error}"))?;
+    bytes.push(b'\n');
+    Ok(bytes)
+}
+
+/// Render selected group UV arrays without exposing local source paths.
+fn selected_uvs(
+    request: &SemanticTextureRequest,
+    body: &BodyTexturePlan,
+) -> Result<Vec<Value>, String> {
+    request
         .body_groups
         .iter()
         .map(
@@ -98,9 +167,12 @@ pub(super) fn render(
                 )
             },
         )
-        .collect::<Result<Vec<Value>, String>>()?;
-    let assignments = body
-        .color_assignments
+        .collect()
+}
+
+/// Render deterministic source-color assignments.
+fn assignments(body: &BodyTexturePlan) -> Vec<Value> {
+    body.color_assignments
         .iter()
         .map(
             |assignment| {
@@ -124,9 +196,12 @@ pub(super) fn render(
                 })
             },
         )
-        .collect::<Vec<_>>();
-    let charts = body
-        .charts
+        .collect()
+}
+
+/// Render deterministic body chart placement and raster evidence.
+fn charts(body: &BodyTexturePlan) -> Vec<Value> {
+    body.charts
         .iter()
         .map(
             |chart| {
@@ -136,6 +211,13 @@ pub(super) fn render(
                     "group_index": chart.group.group_index,
                     "region": chart.region.as_str(),
                     "source_rgba": rgba(chart.source_color),
+                    "raster_mode": if chart.sample_source {
+                        "source-sampled"
+                    } else {
+                        "flat-color"
+                    },
+                    "source_sampled_triangle_indices":
+                        chart.source_sampled_triangles,
                     "projection": chart.projection.as_str(),
                     "triangle_indices": chart.triangle_indices,
                     "vertex_indices": chart.vertex_indices,
@@ -144,9 +226,12 @@ pub(super) fn render(
                 })
             },
         )
-        .collect::<Vec<_>>();
-    let eye_components = eye
-        .components
+        .collect()
+}
+
+/// Render the two disconnected semantic eye components.
+fn eye_components(eye: &EyeSemanticPlan) -> Vec<Value> {
+    eye.components
         .iter()
         .map(
             |component| {
@@ -155,17 +240,20 @@ pub(super) fn render(
                     "centroid_x": component.centroid_x,
                     "vertex_indices": component.vertex_indices,
                     "regions": [
+                        "sclera",
+                        "pupil",
                         "upper-lid",
                         "lower-lid",
-                        "surface",
-                        "pupil-iris",
                     ],
                 })
             },
         )
-        .collect::<Vec<_>>();
-    let eye_frames = eye
-        .frame_evidence
+        .collect()
+}
+
+/// Render deterministic four-frame blink evidence.
+fn eye_frames(eye: &EyeSemanticPlan) -> Vec<Value> {
+    eye.frame_evidence
         .iter()
         .map(
             |evidence| {
@@ -176,55 +264,14 @@ pub(super) fn render(
                     "lower_lid_pixel_count": evidence.lower_lid_pixel_count,
                     "preserved_pupil_pixel_count":
                         evidence.preserved_pupil_pixel_count,
-                    "artifact": format!(
-                        "eye-frame-{}.png",
-                        evidence.frame_index,
-                    ),
                 })
             },
         )
-        .collect::<Vec<_>>();
-    let manifest = json!({
-        "schema_version": 1,
-        "character_id": request.character_name,
-        "topology_policy": {
-            "polygon_or_vertex_increase": false,
-            "changed_character_fields": ["selected-group-uvs"],
-        },
-        "body": {
-            "artifact": "body-atlas.png",
-            "width": body.atlas.width(),
-            "height": body.atlas.height(),
-            "padding": request.body_atlas_padding,
-            "source_vertex_count": body.source_vertex_count,
-            "source_triangle_count": body.source_triangle_count,
-            "semantic_region_count": 5,
-            "color_assignments": assignments,
-            "charts": charts,
-            "selected_group_uvs": selected_uvs,
-        },
-        "eyes": {
-            "eye_group": {
-                "part_index": request.eye_group.part_index,
-                "group_index": request.eye_group.group_index,
-            },
-            "semantic_region_count": eye.semantic_region_count,
-            "lid_rgba": rgba(eye.lid_color),
-            "surface_rgba": rgba(eye.surface_color),
-            "pupil_iris_rgba": rgba(eye.pupil_color),
-            "components": eye_components,
-            "frames": eye_frames,
-            "animation_mechanism": "source-texture-frame-sequence",
-        },
-    });
-    let mut bytes = serde_json::to_vec_pretty(&manifest)
-        .map_err(|error| format!("semantic manifest encode failed: {error}"))?;
-    bytes.push(b'\n');
-    Ok(bytes)
+        .collect()
 }
 
 /// Project one exact color into manifest channel order.
-fn rgba(color: Rgba8) -> [u8; 4] {
+const fn rgba(color: Rgba8) -> [u8; 4] {
     color.channels()
 }
 

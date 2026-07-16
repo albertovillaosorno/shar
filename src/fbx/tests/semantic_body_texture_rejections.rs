@@ -50,7 +50,7 @@ mod semantic_body;
 
 use fbx::domain::skin::SkinInfluence;
 use fbx::domain::texture::semantic::{
-    BodyRegion, BoneFamily, SemanticTextureError, plan_body_texture,
+    BodyRegion, SemanticTextureError, plan_body_texture,
 };
 use semantic_body::{BODY_COLORS, body_fixture};
 
@@ -77,15 +77,15 @@ fn rejects_a_triangle_that_samples_more_than_one_source_color()
         {
             Ok(())
         }
-        other => Err(
-            format!("expected mixed source-color rejection, got {other:?}",),
-        ),
+        other => {
+            Err(format!("expected mixed source-color rejection, got {other:?}"))
+        }
     }
 }
 
 #[test]
-fn requires_reviewed_color_for_cross_family_ties() -> Result<(), String> {
-    let (mut character, source, mut recipe) = body_fixture()?;
+fn seam_tie_defers_to_remaining_color_evidence() -> Result<(), String> {
+    let (mut character, source, recipe) = body_fixture()?;
     let influences = &mut character.parts[0].group_influences[0];
     let head = influences
         .iter_mut()
@@ -99,18 +99,53 @@ fn requires_reviewed_color_for_cross_family_ties() -> Result<(), String> {
             weight: 0.5,
         },
     );
+    let planned = plan_body_texture(
+        &character, &source, &recipe,
+    )
+    .map_err(|error| format!("seam tie should defer: {error:?}"))?;
+    let assignment = planned
+        .color_assignments
+        .iter()
+        .find(|assignment| assignment.color == BODY_COLORS[0])
+        .ok_or_else(|| "missing automatic skin assignment".to_owned())?;
+    let vote_count: u32 = assignment
+        .family_counts
+        .values()
+        .sum();
+    if assignment.overridden || vote_count != 2 {
+        return Err(
+            format!("seam tie was not deferred correctly: {assignment:?}"),
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn requires_reviewed_color_when_every_vote_is_tied() -> Result<(), String> {
+    let (mut character, source, mut recipe) = body_fixture()?;
+    let influences = &mut character.parts[0].group_influences[0];
+    for vertex_index in 0_u32..3 {
+        let head = influences
+            .iter_mut()
+            .find(|influence| influence.vertex_index == vertex_index)
+            .ok_or_else(|| "missing synthetic head influence".to_owned())?;
+        head.weight = 0.5;
+        influences.push(
+            SkinInfluence {
+                vertex_index,
+                bone_id: "spine".to_owned(),
+                weight: 0.5,
+            },
+        );
+    }
     match plan_body_texture(
         &character, &source, &recipe,
     ) {
-        Err(SemanticTextureError::AmbiguousDominantInfluence {
-            group,
-            vertex,
-        }) if group.part_index == 0
-            && group.group_index == 0
-            && vertex == 0 => {}
+        Err(SemanticTextureError::AmbiguousColorEvidence(color))
+            if color == BODY_COLORS[0] => {}
         other => {
             return Err(
-                format!("expected cross-family tie rejection, got {other:?}",),
+                format!("expected color-level tie rejection, got {other:?}"),
             );
         }
     }
@@ -130,13 +165,12 @@ fn requires_reviewed_color_for_cross_family_ties() -> Result<(), String> {
         .find(|assignment| assignment.color == BODY_COLORS[0])
         .ok_or_else(|| "missing reviewed skin assignment".to_owned())?;
     if !assignment.overridden
-        || assignment
+        || !assignment
             .family_counts
-            .get(&BoneFamily::Unsupported)
-            != Some(&1)
+            .is_empty()
     {
         return Err(
-            format!("reviewed tie evidence was not preserved: {assignment:?}",),
+            format!("reviewed tie evidence was not preserved: {assignment:?}"),
         );
     }
     Ok(())

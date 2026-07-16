@@ -47,6 +47,7 @@
 use super::super::super::region::BodyRegion;
 use super::super::error::SemanticTextureError;
 use super::super::recipe::AtlasConfig;
+use super::super::types::ProjectionAxis;
 use super::model::{PlacedChart, ProjectedChart};
 
 #[path = "packing/grid.rs"]
@@ -58,9 +59,10 @@ mod mapping;
 pub(super) fn atlas_uv(
     position: [f32; 2],
     config: &AtlasConfig,
+    projection: ProjectionAxis,
 ) -> [f32; 2] {
     mapping::atlas_uv(
-        position, config,
+        position, config, projection,
     )
 }
 
@@ -68,6 +70,7 @@ pub(super) fn atlas_uv(
 pub(super) fn place(
     charts: &[ProjectedChart],
     config: &AtlasConfig,
+    source_texture_size: [u32; 2],
 ) -> Result<Vec<PlacedChart>, SemanticTextureError> {
     let mut placed = Vec::with_capacity(charts.len());
     for region in BodyRegion::ALL {
@@ -76,7 +79,7 @@ pub(super) fn place(
             .filter(|chart| chart.region == region)
             .collect::<Vec<_>>();
         if region_charts.is_empty() {
-            return Err(SemanticTextureError::MissingRequiredRegion(region));
+            continue;
         }
         let region_rect = grid::semantic_column(
             config, region,
@@ -98,7 +101,10 @@ pub(super) fn place(
             )?;
             placed.push(
                 mapping::map_chart(
-                    chart, cell, config,
+                    chart,
+                    cell,
+                    config,
+                    source_texture_size,
                 )?,
             );
         }

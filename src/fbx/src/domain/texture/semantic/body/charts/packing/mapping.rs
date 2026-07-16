@@ -49,19 +49,15 @@ use std::collections::BTreeMap;
 
 use super::super::super::error::SemanticTextureError;
 use super::super::super::recipe::AtlasConfig;
-use super::super::super::types::{AtlasChart, PixelRect};
-use super::super::model::{PlacedChart, ProjectedChart};
+use super::super::super::types::{AtlasChart, PixelRect, ProjectionAxis};
+use super::super::model::{PlacedChart, ProjectedChart, SourceUvPlacement};
 
 /// Fit one projected chart into one padded cell and calculate pixel positions.
-#[expect(
-    clippy::cast_possible_truncation,
-    reason = "Mapped coordinates are finite and bounded by checked atlas \
-              pixel rectangles before conversion to f32."
-)]
 pub(super) fn map_chart(
     chart: &ProjectedChart,
     cell: PixelRect,
     config: &AtlasConfig,
+    source_texture_size: [u32; 2],
 ) -> Result<PlacedChart, SemanticTextureError> {
     let inset = config
         .padding
@@ -85,6 +81,30 @@ pub(super) fn map_chart(
             .checked_sub(inset)
             .ok_or(SemanticTextureError::RegionGridTooSmall(chart.region))?,
     };
+    if chart.projection == ProjectionAxis::SourceUv {
+        return map_source_uv_chart(
+            chart,
+            cell,
+            inner,
+            source_texture_size,
+        );
+    }
+    map_orthographic_chart(
+        chart, cell, inner,
+    )
+}
+
+/// Fit one orthographically projected chart into the padded cell.
+#[expect(
+    clippy::cast_possible_truncation,
+    reason = "Mapped coordinates are finite and bounded by checked atlas \
+              pixel rectangles before conversion to f32."
+)]
+fn map_orthographic_chart(
+    chart: &ProjectedChart,
+    cell: PixelRect,
+    inner: PixelRect,
+) -> Result<PlacedChart, SemanticTextureError> {
     let available = [
         f64::from(inner.width - 1),
         f64::from(inner.height - 1),
@@ -121,21 +141,23 @@ pub(super) fn map_chart(
     ];
     let mut pixel_positions = BTreeMap::new();
     for (vertex, projected) in &chart.projected_positions {
-        let x = origin[0]
-            + (f64::from(projected[0])
-                - f64::from(
-                    chart
-                        .bounds
-                        .minimum[0],
-                ))
-                * scale;
-        let y = origin[1]
-            + (f64::from(
+        let x = (f64::from(projected[0])
+            - f64::from(
                 chart
                     .bounds
-                    .maximum[1],
-            ) - f64::from(projected[1]))
-                * scale;
+                    .minimum[0],
+            ))
+        .mul_add(
+            scale, origin[0],
+        );
+        let y = (f64::from(
+            chart
+                .bounds
+                .maximum[1],
+        ) - f64::from(projected[1]))
+        .mul_add(
+            scale, origin[1],
+        );
         pixel_positions.insert(
             *vertex,
             [
@@ -146,25 +168,143 @@ pub(super) fn map_chart(
     let content = pixel_bounds(&pixel_positions)?;
     Ok(
         PlacedChart {
-            public: AtlasChart {
-                id: chart
-                    .id
-                    .clone(),
-                group: chart.group,
-                region: chart.region,
-                source_color: chart.source_color,
-                triangle_indices: chart
-                    .triangle_indices
-                    .clone(),
-                vertex_indices: chart
-                    .vertex_indices
-                    .clone(),
-                projection: chart.projection,
-                cell,
-                content,
-            },
+            public: public_chart(
+                chart, cell, content,
+            ),
             pixel_positions,
+            source_uv_placement: None,
         },
+    )
+}
+
+/// Map one source-UV chart into an exact integer texel-multiple block.
+#[expect(
+    clippy::cast_precision_loss,
+    reason = "Checked u32 atlas coordinates are represented as f32 UV source \
+              positions to match the mesh domain."
+)]
+fn map_source_uv_chart(
+    chart: &ProjectedChart,
+    cell: PixelRect,
+    inner: PixelRect,
+    source_texture_size: [u32; 2],
+) -> Result<PlacedChart, SemanticTextureError> {
+    let [
+        source_width,
+        source_height,
+    ] = source_texture_size;
+    if source_width == 0 || source_height == 0 {
+        return Err(SemanticTextureError::NumericOverflow);
+    }
+    let scale = (inner.width / source_width).min(inner.height / source_height);
+    if scale == 0 {
+        return Err(SemanticTextureError::RegionGridTooSmall(chart.region));
+    }
+    let width = source_width
+        .checked_mul(scale)
+        .ok_or(SemanticTextureError::NumericOverflow)?;
+    let height = source_height
+        .checked_mul(scale)
+        .ok_or(SemanticTextureError::NumericOverflow)?;
+    let origin = [
+        inner
+            .x
+            .checked_add((inner.width - width) / 2)
+            .ok_or(SemanticTextureError::NumericOverflow)?,
+        inner
+            .y
+            .checked_add((inner.height - height) / 2)
+            .ok_or(SemanticTextureError::NumericOverflow)?,
+    ];
+    let mut pixel_positions = BTreeMap::new();
+    for (vertex, uv) in &chart.projected_positions {
+        pixel_positions.insert(
+            *vertex,
+            [
+                origin[0] as f32
+                    + source_axis(
+                        uv[0], width,
+                    )?,
+                origin[1] as f32
+                    + source_axis(
+                        1.0 - uv[1],
+                        height,
+                    )?,
+            ],
+        );
+    }
+    Ok(
+        PlacedChart {
+            public: public_chart(
+                chart,
+                cell,
+                PixelRect {
+                    x: origin[0],
+                    y: origin[1],
+                    width,
+                    height,
+                },
+            ),
+            pixel_positions,
+            source_uv_placement: Some(
+                SourceUvPlacement {
+                    origin,
+                    scale,
+                },
+            ),
+        },
+    )
+}
+
+/// Build the public chart evidence shared by every placement policy.
+fn public_chart(
+    chart: &ProjectedChart,
+    cell: PixelRect,
+    content: PixelRect,
+) -> AtlasChart {
+    AtlasChart {
+        id: chart
+            .id
+            .clone(),
+        group: chart.group,
+        region: chart.region,
+        source_color: chart.source_color,
+        sample_source: chart.sample_source,
+        source_sampled_triangles: chart
+            .source_sampled_triangles
+            .clone(),
+        triangle_indices: chart
+            .triangle_indices
+            .clone(),
+        vertex_indices: chart
+            .vertex_indices
+            .clone(),
+        projection: chart.projection,
+        cell,
+        content,
+    }
+}
+
+/// Map one normalized source coordinate inside an exact texel block.
+fn source_axis(
+    value: f32,
+    extent: u32,
+) -> Result<f32, SemanticTextureError> {
+    const OWNERSHIP_BIAS: f32 = 1.0e-4;
+    let extent = u16::try_from(extent)
+        .map(f32::from)
+        .map_err(|_error| SemanticTextureError::NumericOverflow)?;
+    let maximum = extent - OWNERSHIP_BIAS;
+    Ok(
+        value
+            .mul_add(
+                extent,
+                OWNERSHIP_BIAS,
+            )
+            .clamp(
+                OWNERSHIP_BIAS,
+                maximum,
+            ),
     )
 }
 
@@ -177,7 +317,14 @@ pub(super) fn map_chart(
 pub(super) fn atlas_uv(
     position: [f32; 2],
     config: &AtlasConfig,
+    projection: ProjectionAxis,
 ) -> [f32; 2] {
+    if projection == ProjectionAxis::SourceUv {
+        return [
+            position[0] / config.width as f32,
+            1.0 - position[1] / config.height as f32,
+        ];
+    }
     [
         position[0] / (config.width - 1) as f32,
         1.0 - position[1] / (config.height - 1) as f32,

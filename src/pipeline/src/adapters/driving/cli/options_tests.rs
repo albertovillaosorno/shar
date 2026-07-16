@@ -72,6 +72,7 @@ mod cases {
                     log_file: Some(PathBuf::from(DEFAULT_LOG_FILE)),
                     blender_helper: false,
                     maya: false,
+                    embed_textures: false,
                 },
             )
         );
@@ -94,6 +95,7 @@ mod cases {
                     log_file: None,
                     blender_helper: false,
                     maya: false,
+                    embed_textures: false,
                 },
             )
         );
@@ -115,6 +117,7 @@ mod cases {
                     log_file: Some(PathBuf::from("logs/custom/run.jsonl")),
                     blender_helper: false,
                     maya: false,
+                    embed_textures: false,
                 },
             )
         );
@@ -136,6 +139,7 @@ mod cases {
                     log_file: Some(PathBuf::from(DEFAULT_LOG_FILE)),
                     blender_helper: false,
                     maya: false,
+                    embed_textures: false,
                 },
             )
         );
@@ -157,6 +161,7 @@ mod cases {
                     log_file: Some(PathBuf::from(DEFAULT_LOG_FILE)),
                     blender_helper: true,
                     maya: false,
+                    embed_textures: false,
                 },
             )
         );
@@ -178,6 +183,7 @@ mod cases {
                     log_file: Some(PathBuf::from(DEFAULT_LOG_FILE)),
                     blender_helper: false,
                     maya: true,
+                    embed_textures: false,
                 },
             )
         );

@@ -61,3 +61,4 @@ pub use eye::{
 };
 pub use image::{RgbaImage, RgbaImageError};
 pub use region::{BodyRegion, BoneFamily};
+pub use sampling::TextureAddressMode;

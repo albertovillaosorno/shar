@@ -68,13 +68,84 @@ pub(super) fn analyze(
         frames,
         output_size,
     )?;
+    let (lid_color, surface_color, pupil_indices, pupil_color) =
+        source_palette(frames)?;
+    let lid_sets = frames
+        .iter()
+        .map(
+            |frame| {
+                exact_color_indices(
+                    frame.pixels(),
+                    lid_color,
+                )
+            },
+        )
+        .collect::<Vec<_>>();
+    closure::validate(
+        &lid_sets,
+        frames[0].width(),
+        frames[0].height(),
+    )?;
+    for frame_index in [
+        1_usize, 2,
+    ] {
+        if pupil_indices
+            .iter()
+            .any(
+                |index| {
+                    let pixel = frames[frame_index].pixels()[*index];
+                    pixel != frames[0].pixels()[*index] && pixel != lid_color
+                },
+            )
+        {
+            return Err(
+                EyeTextureError::PupilChangedBeforeClosure {
+                    frame: frame_index,
+                },
+            );
+        }
+    }
+    let evidence = lid_sets
+        .iter()
+        .enumerate()
+        .map(
+            |(frame_index, indices)| {
+                closure::frame_evidence(
+                    frame_index,
+                    indices,
+                    &pupil_indices,
+                    frames,
+                )
+            },
+        )
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(
+        SourceEvidence {
+            frames: evidence,
+            lid_color,
+            surface_color,
+            pupil_color,
+        },
+    )
+}
+
+/// Resolve closed-lid, sclera, and pupil evidence from source frames.
+fn source_palette(
+    frames: &[RgbaImage; 4]
+) -> Result<
+    (
+        Rgba8,
+        Rgba8,
+        BTreeSet<usize>,
+        Rgba8,
+    ),
+    EyeTextureError,
+> {
     let closed_pixels = frames[3].pixels();
-    let Some(lid_color) = closed_pixels
+    let lid_color = closed_pixels
         .first()
         .copied()
-    else {
-        return Err(EyeTextureError::InvalidFrameDimensions);
-    };
+        .ok_or(EyeTextureError::InvalidFrameDimensions)?;
     if closed_pixels
         .iter()
         .any(|color| *color != lid_color)
@@ -116,62 +187,13 @@ pub(super) fn analyze(
             },
         )
         .ok_or(EyeTextureError::MissingPupilEvidence)?;
-    let lid_sets = frames
-        .iter()
-        .map(
-            |frame| {
-                exact_color_indices(
-                    frame.pixels(),
-                    lid_color,
-                )
-            },
-        )
-        .collect::<Vec<_>>();
-    closure::validate(
-        &lid_sets,
-        frames[0].width(),
-        frames[0].height(),
-    )?;
-    for frame_index in [
-        1_usize, 2,
-    ] {
-        if pupil_indices
-            .iter()
-            .any(
-                |index| {
-                    frames[frame_index].pixels()[*index]
-                        != frames[0].pixels()[*index]
-                },
-            )
-        {
-            return Err(
-                EyeTextureError::PupilChangedBeforeClosure {
-                    frame: frame_index,
-                },
-            );
-        }
-    }
-    let evidence = lid_sets
-        .iter()
-        .enumerate()
-        .map(
-            |(frame_index, indices)| {
-                closure::frame_evidence(
-                    frame_index,
-                    indices,
-                    &pupil_indices,
-                    frames,
-                )
-            },
-        )
-        .collect::<Result<Vec<_>, _>>()?;
     Ok(
-        SourceEvidence {
-            frames: evidence,
+        (
             lid_color,
             surface_color,
+            pupil_indices,
             pupil_color,
-        },
+        ),
     )
 }
 

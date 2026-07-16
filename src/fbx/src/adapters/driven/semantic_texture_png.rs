@@ -176,7 +176,7 @@ fn rgba_pixels(
 }
 
 /// Expand one normalized pixel to RGBA.
-fn rgba_pixel(
+const fn rgba_pixel(
     color_type: png::ColorType,
     channels: &[u8],
 ) -> Result<Rgba8, SemanticPngError> {

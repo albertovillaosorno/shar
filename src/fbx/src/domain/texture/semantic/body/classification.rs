@@ -64,11 +64,18 @@ mod dominant;
 #[path = "classification/triangles.rs"]
 mod triangles;
 
+/// Per-triangle chart ownership and raster policy.
+#[derive(Clone, Copy, Debug)]
+pub(super) struct TriangleClassification {
+    pub(super) color: Rgba8,
+    pub(super) region: BodyRegion,
+    pub(super) sample_source: bool,
+}
+
 /// Per-group immutable classification used by chart generation.
 #[derive(Clone, Debug)]
 pub(super) struct GroupClassification {
-    pub(super) colors: Vec<Rgba8>,
-    pub(super) regions: Vec<BodyRegion>,
+    pub(super) triangles: Vec<TriangleClassification>,
 }
 
 /// Complete deterministic classification output.
@@ -107,6 +114,7 @@ pub(super) fn classify(
         let group_colors = sample_group_colors(
             group,
             source_texture,
+            recipe,
         )?;
         let dominant_evidence = dominant::dominant_bones(
             *address,
@@ -156,6 +164,26 @@ pub(super) fn classify(
             },
         )
         .collect::<BTreeMap<_, _>>();
+    let groups = classify_groups(
+        character, recipe, sampled, &by_color,
+    )?;
+    Ok(
+        Classification {
+            groups,
+            assignments,
+            vertex_count,
+            triangle_count,
+        },
+    )
+}
+
+/// Build per-group triangle ownership from resolved color regions.
+fn classify_groups(
+    character: &CharacterAsset,
+    recipe: &BodySemanticRecipe,
+    mut sampled: BTreeMap<GroupAddress, Vec<Rgba8>>,
+    by_color: &BTreeMap<Rgba8, BodyRegion>,
+) -> Result<BTreeMap<GroupAddress, GroupClassification>, SemanticTextureError> {
     let mut groups = BTreeMap::new();
     for address in &recipe.groups {
         let (group, _influences) = selected_group(
@@ -179,7 +207,7 @@ pub(super) fn classify(
                 },
             )
             .collect::<Result<Vec<_>, _>>()?;
-        triangles::validate(
+        let triangle_classifications = triangles::classify(
             *address,
             group,
             &group_colors,
@@ -188,19 +216,11 @@ pub(super) fn classify(
         groups.insert(
             *address,
             GroupClassification {
-                colors: group_colors,
-                regions,
+                triangles: triangle_classifications,
             },
         );
     }
-    Ok(
-        Classification {
-            groups,
-            assignments,
-            vertex_count,
-            triangle_count,
-        },
-    )
+    Ok(groups)
 }
 
 /// Resolve one selected primitive group and its explicit influences.
@@ -238,6 +258,7 @@ pub(super) fn selected_group(
 fn sample_group_colors(
     group: &PrimitiveGroup,
     source_texture: &RgbaImage,
+    recipe: &BodySemanticRecipe,
 ) -> Result<Vec<Rgba8>, SemanticTextureError> {
     let mut group_colors = Vec::with_capacity(
         group
@@ -245,7 +266,10 @@ fn sample_group_colors(
             .len(),
     );
     for uv in &group.uvs {
-        let color = source_texture.sample_uv_v_up(*uv)?;
+        let color = source_texture.sample_uv_v_up_with_address_mode(
+            *uv,
+            recipe.texture_address_mode,
+        )?;
         if color.alpha != u8::MAX {
             return Err(
                 SemanticTextureError::TransparentSourceBodyColor(color),
@@ -271,7 +295,13 @@ fn record_family_counts(
         .copied()
         .zip(evidence)
     {
-        if dominant.family == BoneFamily::Unsupported
+        let family_counts = counts
+            .entry(color)
+            .or_default();
+        let Some(family) = dominant.family else {
+            continue;
+        };
+        if family == BoneFamily::Unsupported
             && !recipe
                 .color_overrides
                 .contains_key(&color)
@@ -285,10 +315,8 @@ fn record_family_counts(
                 },
             );
         }
-        let entry = counts
-            .entry(color)
-            .or_default()
-            .entry(dominant.family)
+        let entry = family_counts
+            .entry(family)
             .or_default();
         *entry = entry
             .checked_add(1)

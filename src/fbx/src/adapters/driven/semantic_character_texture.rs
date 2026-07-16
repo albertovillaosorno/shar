@@ -37,7 +37,8 @@
 // - Usage:
 //   - Called by the focused local CLI and behavioral artifact tests.
 // - Defaults:
-//   - Produces one body atlas, four eye frames, and one manifest in memory.
+//   - Preserves one body texture, derives three eye images, and renders one
+//   - manifest in memory; semantic atlas remapping is explicit opt-in.
 //
 // ADRs:
 // - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
@@ -51,37 +52,71 @@
 //
 
 //! In-memory semantic character texture artifact transaction.
+use std::collections::BTreeSet;
 use std::path::Path;
 
 use schoenwald_filesystem::adapters::driving::local::read_bytes;
 
+use crate::adapters::driven::decoded_animation_source::load_animation_clips;
 use crate::adapters::driven::decoded_skin_source::load_character;
 use crate::adapters::driven::semantic_texture_png::decode_png_bytes;
+use crate::domain::animation::AnimationClip;
 use crate::domain::mesh::PrimitiveGroup;
 use crate::domain::texture::semantic::{
-    GroupAddress, analyze_eye_frames, plan_body_texture,
+    BodyTexturePlan, GroupAddress, RgbaImage, analyze_eye_frames,
+    plan_body_texture,
 };
 
 #[path = "semantic_character_texture/artifacts.rs"]
 mod artifacts;
 #[path = "semantic_character_texture/manifest.rs"]
 mod manifest;
+#[path = "semantic_character_texture/package.rs"]
+mod package;
 #[path = "semantic_character_texture/request.rs"]
 pub mod request;
+#[path = "semantic_character_texture/sha256.rs"]
+mod sha256;
 
-pub use request::SemanticTextureRequest;
+pub use request::{BodyTextureMode, SemanticTextureRequest};
 
 /// Complete deterministic artifact byte bundle.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SemanticTextureArtifacts {
-    /// Modern body atlas PNG bytes.
-    pub body_atlas_png: Vec<u8>,
-    /// Four modern eye texture-frame PNG byte sequences.
-    pub eye_frame_pngs: [Vec<u8>; 4],
+    /// Preserved source body texture or generated semantic atlas PNG bytes.
+    pub body_texture_png: Vec<u8>,
+    /// Derived open eye, independent pupil, and paired-lid PNG bytes.
+    pub eye_layer_pngs: [Vec<u8>; 3],
+    /// SHA-256 identity of the sclera color, pupil, and lid SSOT.
+    pub eye_profile_sha256: String,
+    /// Explicit extra material textures in stable file-name order.
+    pub extra_textures: Vec<ExternalTextureArtifact>,
     /// Deterministic JSON manifest bytes with one trailing newline.
     pub manifest_json: Vec<u8>,
     /// Compact observable generation summary.
     pub summary: SemanticTextureSummary,
+}
+
+/// One explicit external texture copied into the prepared package.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ExternalTextureArtifact {
+    /// Portable file name below `textures/`.
+    pub file_name: String,
+    /// Deterministic RGBA PNG bytes.
+    pub png: Vec<u8>,
+}
+
+/// Complete prepared character package before filesystem publication.
+#[derive(Clone, Debug, PartialEq)]
+pub struct PreparedSemanticCharacter {
+    /// Character with the selected body texture policy applied.
+    pub character: crate::domain::character::CharacterAsset,
+    /// Complete material bindings for every primitive-group shader.
+    pub materials: Vec<crate::domain::texture::MaterialBinding>,
+    /// General and character-specific skeletal clips in request order.
+    pub animations: Vec<AnimationClip>,
+    /// Generated and copied texture artifacts.
+    pub artifacts: SemanticTextureArtifacts,
 }
 
 /// Compact artifact generation summary.
@@ -97,8 +132,10 @@ pub struct SemanticTextureSummary {
     pub body_chart_count: usize,
     /// Semantic eye region count across two components.
     pub eye_region_count: usize,
-    /// Modern body atlas dimensions.
-    pub body_atlas_size: [u32; 2],
+    /// Skeletal animation clip count written into the prepared FBX.
+    pub animation_count: usize,
+    /// Published body texture dimensions.
+    pub body_texture_size: [u32; 2],
     /// Modern square eye frame dimension.
     pub eye_frame_size: u32,
 }
@@ -114,6 +151,10 @@ pub enum SemanticTextureArtifactError {
     Request(String),
     /// Decoded character loading failed.
     Character(String),
+    /// Skeletal animation loading or binding failed.
+    Animation(String),
+    /// Two requested skeletal clips resolved to the same stable name.
+    DuplicateAnimationClip(String),
     /// Input image read failed.
     Read {
         /// Input role or frame identity.
@@ -129,21 +170,25 @@ pub enum SemanticTextureArtifactError {
     MissingEyeGroup(GroupAddress),
     /// Pure semantic eye analysis failed.
     Eye(String),
-    /// Exactly four eye images could not be assembled.
+    /// Material or extra-texture package assembly failed.
+    Package(String),
+    /// Exactly three canonical eye layers could not be assembled.
+    EyeLayerCount,
+    /// Exactly four compatibility eye images could not be assembled.
     EyeFrameCount,
     /// Manifest rendering failed.
     Manifest(String),
 }
 
-/// Build every semantic texture artifact in memory from one explicit request.
+/// Prepare one complete remapped character package in memory.
 ///
 /// # Errors
 ///
-/// Returns an error when any component, image, semantic plan, encode, or
-/// manifest stage fails. No output file is written by this function.
-pub fn build_semantic_texture_artifacts(
+/// Returns an error when any component, image, semantic plan, material,
+/// texture, encode, or manifest stage fails. No output file is written.
+pub fn prepare_semantic_character(
     request: &SemanticTextureRequest
-) -> Result<SemanticTextureArtifacts, SemanticTextureArtifactError> {
+) -> Result<PreparedSemanticCharacter, SemanticTextureArtifactError> {
     let character_name = request
         .character_name
         .trim();
@@ -175,28 +220,112 @@ pub fn build_semantic_texture_artifacts(
     .map_err(
         |error| SemanticTextureArtifactError::Character(format!("{error:?}")),
     )?;
+    let animations = load_requested_animations(
+        request,
+        &character.bones,
+    )?;
     let body_source = decode_image(
         "body-texture",
         &request.body_texture_path,
     )?;
+    let body_mode = request
+        .body_texture_mode()
+        .map_err(
+            |error| SemanticTextureArtifactError::Request(format!("{error:?}")),
+        )?;
     let recipe = request
         .body_recipe()
         .map_err(
             |error| SemanticTextureArtifactError::Request(format!("{error:?}")),
         )?;
-    let body = plan_body_texture(
-        &character,
-        &body_source,
-        &recipe,
+    let body = match body_mode {
+        BodyTextureMode::PreserveSource => preserve_body_texture(
+            &character,
+            &body_source,
+            &recipe.groups,
+        )?,
+        BodyTextureMode::SemanticAtlas => plan_body_texture(
+            &character,
+            &body_source,
+            &recipe,
+        )
+        .map_err(
+            |error| SemanticTextureArtifactError::Body(format!("{error:?}")),
+        )?,
+    };
+    let eye = prepare_eye(
+        &character, request,
+    )?;
+    let package = package::build(
+        request,
+        &body.remapped_character,
+    )?;
+    let artifacts = artifacts::assemble(
+        request,
+        &body,
+        &eye,
+        animations.len(),
+        package.extra_textures,
+    )?;
+    Ok(
+        PreparedSemanticCharacter {
+            character: body.remapped_character,
+            materials: package.materials,
+            animations,
+            artifacts,
+        },
+    )
+}
+
+/// Load all requested skeletal clips and require unique stable names.
+fn load_requested_animations(
+    request: &SemanticTextureRequest,
+    bones: &[crate::domain::skeleton::Bone],
+) -> Result<Vec<AnimationClip>, SemanticTextureArtifactError> {
+    let paths = request
+        .general_animation_paths
+        .iter()
+        .chain(&request.character_animation_paths)
+        .map(std::path::PathBuf::as_path)
+        .collect::<Vec<_>>();
+    let animations = load_animation_clips(
+        &paths, bones,
     )
     .map_err(
-        |error| SemanticTextureArtifactError::Body(format!("{error:?}")),
+        |error| SemanticTextureArtifactError::Animation(format!("{error:?}")),
     )?;
+    let mut names = BTreeSet::new();
+    for animation in &animations {
+        if !names.insert(
+            animation
+                .name
+                .clone(),
+        ) {
+            return Err(
+                SemanticTextureArtifactError::DuplicateAnimationClip(
+                    animation
+                        .name
+                        .clone(),
+                ),
+            );
+        }
+    }
+    Ok(animations)
+}
+
+/// Decode and analyze the four eye frames for one selected eye group.
+fn prepare_eye(
+    character: &crate::domain::character::CharacterAsset,
+    request: &SemanticTextureRequest,
+) -> Result<
+    crate::domain::texture::semantic::EyeSemanticPlan,
+    SemanticTextureArtifactError,
+> {
     let eye_group_address: GroupAddress = request
         .eye_group
         .into();
     let eye_group = group(
-        &character,
+        character,
         eye_group_address,
     )?;
     let eye_sources = request
@@ -217,15 +346,105 @@ pub fn build_semantic_texture_artifacts(
         .map_err(
             |_frames: Vec<_>| SemanticTextureArtifactError::EyeFrameCount,
         )?;
-    let eye = analyze_eye_frames(
+    analyze_eye_frames(
         eye_group,
         &eye_sources,
         request.eye_output_size,
     )
-    .map_err(|error| SemanticTextureArtifactError::Eye(format!("{error:?}")))?;
-    artifacts::assemble(
-        request, &body, &eye,
+    .map_err(|error| SemanticTextureArtifactError::Eye(format!("{error:?}")))
+}
+
+/// Preserve source body UVs and pixels while validating selected groups.
+fn preserve_body_texture(
+    character: &crate::domain::character::CharacterAsset,
+    source: &RgbaImage,
+    groups: &[GroupAddress],
+) -> Result<BodyTexturePlan, SemanticTextureArtifactError> {
+    let mut vertex_count = 0_usize;
+    let mut triangle_count = 0_usize;
+    for address in groups {
+        let part = character
+            .parts
+            .get(address.part_index)
+            .ok_or_else(
+                || {
+                    SemanticTextureArtifactError::Body(
+                        format!("missing body part: {address:?}"),
+                    )
+                },
+            )?;
+        let group = part
+            .mesh
+            .groups
+            .get(address.group_index)
+            .ok_or_else(
+                || {
+                    SemanticTextureArtifactError::Body(
+                        format!("missing body group: {address:?}"),
+                    )
+                },
+            )?;
+        if group
+            .uvs
+            .len()
+            != group
+                .positions
+                .len()
+        {
+            return Err(
+                SemanticTextureArtifactError::Body(
+                    format!("body group has incomplete UVs: {address:?}"),
+                ),
+            );
+        }
+        vertex_count = vertex_count
+            .checked_add(
+                group
+                    .positions
+                    .len(),
+            )
+            .ok_or_else(
+                || {
+                    SemanticTextureArtifactError::Body(
+                        "body count overflow".to_owned(),
+                    )
+                },
+            )?;
+        triangle_count = triangle_count
+            .checked_add(
+                group
+                    .triangles
+                    .len(),
+            )
+            .ok_or_else(
+                || {
+                    SemanticTextureArtifactError::Body(
+                        "body count overflow".to_owned(),
+                    )
+                },
+            )?;
+    }
+    Ok(
+        BodyTexturePlan {
+            atlas: source.clone(),
+            remapped_character: character.clone(),
+            color_assignments: Vec::new(),
+            charts: Vec::new(),
+            source_vertex_count: vertex_count,
+            source_triangle_count: triangle_count,
+        },
     )
+}
+
+/// Build only the texture artifacts for callers that do not publish an FBX.
+///
+/// # Errors
+///
+/// Returns the same failures as [`prepare_semantic_character`].
+pub fn build_semantic_texture_artifacts(
+    request: &SemanticTextureRequest
+) -> Result<SemanticTextureArtifacts, SemanticTextureArtifactError> {
+    Ok(prepare_semantic_character(request)?.artifacts)
 }
 
 /// Decode one explicit input PNG through repository-owned I/O and PNG adapters.

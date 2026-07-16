@@ -60,9 +60,22 @@ const PIPELINE_EXPORT: &str =
     include_str!("../../pipeline/src/adapters/driven/local/fbx_export.rs");
 const PIPELINE_OPTIONS: &str =
     include_str!("../../pipeline/src/adapters/driving/cli/options.rs");
+const SEMANTIC_TEXTURE_CLI: &str =
+    include_str!("../src/semantic_character_texture_cli.rs");
+const SEMANTIC_TEXTURE_PACKAGE: &str = include_str!(
+    "../src/adapters/driven/semantic_character_texture/package.rs",
+);
 
 #[test]
 fn exposes_only_binary_fbx_7700_and_script_helpers() -> Result<(), String> {
+    let contract_sources = [
+        DRIVEN_MODULE,
+        PIPELINE_EXPORT,
+        PIPELINE_OPTIONS,
+        SEMANTIC_TEXTURE_CLI,
+        SEMANTIC_TEXTURE_PACKAGE,
+    ]
+    .join("\n");
     for required in [
         "pub mod binary_character_writer;",
         "mod binary_fbx;",
@@ -70,13 +83,15 @@ fn exposes_only_binary_fbx_7700_and_script_helpers() -> Result<(), String> {
         "write_binary_character_fbx",
         "write_maya_import_helper",
         ".maya.py",
+        "write_binary_character_fbx_embedded",
+        "embed_textures",
+        "&prepared.animations",
+        "body-atlas.png",
     ] {
-        if !format!("{DRIVEN_MODULE}\n{PIPELINE_EXPORT}").contains(required) {
+        if !contract_sources.contains(required) {
             return Err(format!("missing binary-only contract: {required}"));
         }
     }
-    let owned_sources =
-        format!("{DRIVEN_MODULE}\n{PIPELINE_EXPORT}\n{PIPELINE_OPTIONS}");
     for forbidden in [
         "ascii_character_writer",
         "ascii_scene_writer",
@@ -87,7 +102,7 @@ fn exposes_only_binary_fbx_7700_and_script_helpers() -> Result<(), String> {
         "MayaAscii",
         "maya_ascii",
     ] {
-        if owned_sources.contains(forbidden) {
+        if contract_sources.contains(forbidden) {
             return Err(
                 format!("retired FBX export surface returned: {forbidden}"),
             );

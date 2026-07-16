@@ -49,7 +49,9 @@
 use std::collections::BTreeMap;
 
 use super::super::super::color::Rgba8;
+use super::super::super::image::RgbaImageError;
 use super::super::super::region::BodyRegion;
+use super::super::super::sampling::TextureAddressMode;
 use super::super::error::SemanticTextureError;
 use super::super::recipe::GroupAddress;
 use super::super::types::ProjectionAxis;
@@ -59,16 +61,42 @@ use crate::domain::mesh::PrimitiveGroup;
 /// Minimum accepted doubled projected triangle area.
 const MINIMUM_PROJECTED_AREA: f32 = 1.0e-10;
 
-/// Project one connected chart through the strongest valid orthographic axes.
+/// Immutable chart-projection ownership and sampling request.
+pub(super) struct ProjectionRequest {
+    pub(super) id: String,
+    pub(super) address: GroupAddress,
+    pub(super) region: BodyRegion,
+    pub(super) source_color: Rgba8,
+    pub(super) source_sampled_triangles: Vec<usize>,
+    pub(super) address_mode: TextureAddressMode,
+}
+
+/// Project one connected chart through source UVs or orthographic axes.
 pub(super) fn project(
-    id: String,
-    address: GroupAddress,
-    region: BodyRegion,
-    source_color: Rgba8,
+    request: ProjectionRequest,
     group: &PrimitiveGroup,
     triangle_indices: Vec<usize>,
     vertex_indices: Vec<usize>,
 ) -> Result<ProjectedChart, SemanticTextureError> {
+    if !request
+        .source_sampled_triangles
+        .is_empty()
+    {
+        return source_uv_projection(
+            request,
+            group,
+            triangle_indices,
+            vertex_indices,
+        );
+    }
+    let ProjectionRequest {
+        id,
+        address,
+        region,
+        source_color,
+        source_sampled_triangles,
+        address_mode: _,
+    } = request;
     let mut best: Option<Candidate> = None;
     for axis in ProjectionAxis::ALL {
         let candidate = candidate(
@@ -102,6 +130,8 @@ pub(super) fn project(
             group: address,
             region,
             source_color,
+            sample_source: false,
+            source_sampled_triangles,
             triangle_indices,
             vertex_indices,
             projection: best.axis,
@@ -109,6 +139,92 @@ pub(super) fn project(
             bounds: best.bounds,
         },
     )
+}
+
+/// Preserve one patterned chart through its original source UV coordinates.
+fn source_uv_projection(
+    request: ProjectionRequest,
+    group: &PrimitiveGroup,
+    triangle_indices: Vec<usize>,
+    vertex_indices: Vec<usize>,
+) -> Result<ProjectedChart, SemanticTextureError> {
+    let ProjectionRequest {
+        id,
+        address,
+        region,
+        source_color,
+        source_sampled_triangles,
+        address_mode,
+    } = request;
+    let mut positions = BTreeMap::new();
+    let mut minimum = [f32::INFINITY; 2];
+    let mut maximum = [f32::NEG_INFINITY; 2];
+    for vertex in &vertex_indices {
+        let uv = group
+            .uvs
+            .get(*vertex)
+            .copied()
+            .ok_or(SemanticTextureError::NumericOverflow)?;
+        let uv = normalize_uv(
+            uv,
+            address_mode,
+        )?;
+        minimum[0] = minimum[0].min(uv[0]);
+        minimum[1] = minimum[1].min(uv[1]);
+        maximum[0] = maximum[0].max(uv[0]);
+        maximum[1] = maximum[1].max(uv[1]);
+        positions.insert(
+            *vertex, uv,
+        );
+    }
+    let bounds = ProjectionBounds {
+        minimum,
+        maximum,
+    };
+    if bounds.width() <= 0.0 || bounds.height() <= 0.0 {
+        return Err(SemanticTextureError::DegenerateChartProjection(id));
+    }
+    Ok(
+        ProjectedChart {
+            id,
+            group: address,
+            region,
+            source_color,
+            sample_source: true,
+            source_sampled_triangles,
+            triangle_indices,
+            vertex_indices,
+            projection: ProjectionAxis::SourceUv,
+            projected_positions: positions,
+            bounds,
+        },
+    )
+}
+
+/// Normalize one finite UV coordinate through the declared address mode.
+fn normalize_uv(
+    uv: [f32; 2],
+    address_mode: TextureAddressMode,
+) -> Result<[f32; 2], SemanticTextureError> {
+    if !uv[0].is_finite() || !uv[1].is_finite() {
+        return Err(SemanticTextureError::Image(RgbaImageError::InvalidUv));
+    }
+    match address_mode {
+        TextureAddressMode::Clamp => {
+            if !(0.0..=1.0).contains(&uv[0]) || !(0.0..=1.0).contains(&uv[1]) {
+                return Err(
+                    SemanticTextureError::Image(RgbaImageError::InvalidUv),
+                );
+            }
+            Ok(uv)
+        }
+        TextureAddressMode::Tile => Ok(
+            [
+                uv[0].rem_euclid(1.0),
+                uv[1].rem_euclid(1.0),
+            ],
+        ),
+    }
 }
 
 /// One valid projection candidate and its geometric score.

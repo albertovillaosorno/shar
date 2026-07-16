@@ -50,6 +50,7 @@ use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 use super::super::super::color::Rgba8;
 use super::super::super::region::BodyRegion;
+use super::super::super::sampling::TextureAddressMode;
 use super::super::classification::{
     Classification, GroupClassification, selected_group,
 };
@@ -64,6 +65,7 @@ use crate::domain::mesh::PrimitiveGroup;
 pub(super) fn discover(
     character: &CharacterAsset,
     classification: &Classification,
+    address_mode: TextureAddressMode,
 ) -> Result<Vec<ProjectedChart>, SemanticTextureError> {
     let mut charts = Vec::new();
     for (address, group_classification) in &classification.groups {
@@ -74,6 +76,7 @@ pub(super) fn discover(
             *address,
             group,
             group_classification,
+            address_mode,
         )?;
         charts.extend(discovered);
     }
@@ -109,6 +112,7 @@ fn discover_group(
     address: GroupAddress,
     group: &PrimitiveGroup,
     classification: &GroupClassification,
+    address_mode: TextureAddressMode,
 ) -> Result<Vec<ProjectedChart>, SemanticTextureError> {
     let mut by_key: BTreeMap<
         (
@@ -117,27 +121,16 @@ fn discover_group(
         ),
         Vec<usize>,
     > = BTreeMap::new();
-    for (triangle, indices) in group
+    for (triangle, triangle_classification) in classification
         .triangles
         .iter()
         .enumerate()
     {
-        let vertex = usize::try_from(indices[0])
-            .map_err(|_error| SemanticTextureError::NumericOverflow)?;
-        let region = classification
-            .regions
-            .get(vertex)
-            .copied()
-            .ok_or(SemanticTextureError::NumericOverflow)?;
-        let color = classification
-            .colors
-            .get(vertex)
-            .copied()
-            .ok_or(SemanticTextureError::NumericOverflow)?;
         by_key
             .entry(
                 (
-                    region, color,
+                    triangle_classification.region,
+                    triangle_classification.color,
                 ),
             )
             .or_default()
@@ -165,12 +158,34 @@ fn discover_group(
                     );
                 }
             }
+            let source_sampled_triangles = component
+                .iter()
+                .copied()
+                .filter(
+                    |triangle| {
+                        classification
+                            .triangles
+                            .get(*triangle)
+                            .is_some_and(|item| item.sample_source)
+                    },
+                )
+                .collect::<Vec<_>>();
             let id = chart_id(
                 address, region, color, ordinal,
             );
             charts.push(
                 projection::project(
-                    id, address, region, color, group, component, vertices,
+                    projection::ProjectionRequest {
+                        id,
+                        address,
+                        region,
+                        source_color: color,
+                        source_sampled_triangles,
+                        address_mode,
+                    },
+                    group,
+                    component,
+                    vertices,
                 )?,
             );
         }

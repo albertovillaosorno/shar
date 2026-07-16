@@ -42,7 +42,7 @@
 //
 
 //! Stable body-region and bone-evidence identities.
-/// Minimum non-eye semantic body regions.
+/// Stable non-eye semantic body regions; individual characters may omit lanes.
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum BodyRegion {
     /// Exposed skin and skin-colored surfaces.
@@ -127,7 +127,7 @@ impl BoneFamily {
         if contains_any(
             &tokens,
             &[
-                "pelvis", "hip", "knee", "thigh", "calf", "leg",
+                "ass", "pelvis", "hip", "knee", "thigh", "calf", "leg",
             ],
         ) {
             return Self::LowerBody;

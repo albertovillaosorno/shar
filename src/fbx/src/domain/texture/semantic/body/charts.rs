@@ -67,16 +67,22 @@ mod projection;
 /// Build the complete atlas and UV-remapped character from classification.
 pub(super) fn build_plan(
     character: &CharacterAsset,
+    source_texture: &RgbaImage,
     recipe: &BodySemanticRecipe,
     classification: Classification,
 ) -> Result<BodyTexturePlan, SemanticTextureError> {
     let projected = discovery::discover(
         character,
         &classification,
+        recipe.texture_address_mode,
     )?;
     let placed = packing::place(
         &projected,
         &recipe.atlas,
+        [
+            source_texture.width(),
+            source_texture.height(),
+        ],
     )?;
     let mut atlas = RgbaImage::filled(
         recipe
@@ -106,6 +112,7 @@ pub(super) fn build_plan(
         raster::rasterize(
             &mut atlas,
             &mut coverage,
+            source_texture,
             source_group,
             chart,
             recipe
@@ -151,7 +158,11 @@ fn apply_uvs(
             .get_mut(*vertex)
             .ok_or(SemanticTextureError::NumericOverflow)?;
         *uv = packing::atlas_uv(
-            *position, config,
+            *position,
+            config,
+            chart
+                .public
+                .projection,
         );
     }
     Ok(())

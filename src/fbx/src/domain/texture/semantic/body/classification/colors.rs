@@ -43,7 +43,7 @@
 //
 
 //! Strict source-color semantic voting.
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 
 use super::super::super::color::Rgba8;
 use super::super::super::region::{BodyRegion, BoneFamily};
@@ -59,15 +59,18 @@ pub(super) fn classify_colors(
     let brightest_exposed = counts
         .iter()
         .filter(
-            |(_color, families)| {
-                unique_winner(families) == Some(BoneFamily::Exposed)
+            |(color, families)| {
+                recipe
+                    .color_overrides
+                    .get(color)
+                    == Some(&BodyRegion::Skin)
+                    || unique_winner(families) == Some(BoneFamily::Exposed)
             },
         )
         .map(|(color, _families)| color.relative_luminance())
         .max_by(f32::total_cmp)
         .unwrap_or(0.0);
     let mut assignments = Vec::with_capacity(counts.len());
-    let mut present = BTreeSet::new();
     for (color, family_counts) in counts {
         let (region, overridden) = match recipe
             .color_overrides
@@ -86,7 +89,6 @@ pub(super) fn classify_colors(
                 false,
             ),
         };
-        present.insert(region);
         assignments.push(
             SourceColorAssignment {
                 color: *color,
@@ -95,11 +97,6 @@ pub(super) fn classify_colors(
                 overridden,
             },
         );
-    }
-    for region in BodyRegion::ALL {
-        if !present.contains(&region) {
-            return Err(SemanticTextureError::MissingRequiredRegion(region));
-        }
     }
     Ok(assignments)
 }

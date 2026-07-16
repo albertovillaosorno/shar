@@ -34,7 +34,7 @@
 // - Usage:
 //   - Called after every source decode and pure semantic planning stage passes.
 // - Defaults:
-//   - Produces one body atlas, four eye frames, and one manifest.
+//   - Encodes one selected body texture, three eye images, and one manifest.
 //
 // ADRs:
 // - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
@@ -45,9 +45,11 @@
 //
 
 //! Final semantic character texture byte-bundle assembly.
+use super::sha256::digest_hex;
 use super::{
-    SemanticTextureArtifactError, SemanticTextureArtifacts,
-    SemanticTextureRequest, SemanticTextureSummary, manifest,
+    ExternalTextureArtifact, SemanticTextureArtifactError,
+    SemanticTextureArtifacts, SemanticTextureRequest, SemanticTextureSummary,
+    manifest,
 };
 use crate::adapters::driven::semantic_texture_png::encode_png_bytes;
 use crate::domain::texture::semantic::{BodyTexturePlan, EyeSemanticPlan};
@@ -57,31 +59,46 @@ pub(super) fn assemble(
     request: &SemanticTextureRequest,
     body: &BodyTexturePlan,
     eye: &EyeSemanticPlan,
+    animation_count: usize,
+    extra_textures: Vec<ExternalTextureArtifact>,
 ) -> Result<SemanticTextureArtifacts, SemanticTextureArtifactError> {
-    let body_atlas_png = encode_png_bytes(&body.atlas).map_err(
+    let body_texture_png = encode_png_bytes(&body.atlas).map_err(
         |error| SemanticTextureArtifactError::Png(format!("{error:?}")),
     )?;
-    let eye_pngs = eye
-        .modern_frames
-        .iter()
-        .map(encode_png_bytes)
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(
-            |error| SemanticTextureArtifactError::Png(format!("{error:?}")),
-        )?;
-    let eye_frame_pngs: [_; 4] = eye_pngs
+    let eye_pngs = [
+        &eye.layers
+            .composite,
+        &eye.layers
+            .pupil,
+        &eye.layers
+            .lids,
+    ]
+    .into_iter()
+    .map(encode_png_bytes)
+    .collect::<Result<Vec<_>, _>>()
+    .map_err(|error| SemanticTextureArtifactError::Png(format!("{error:?}")))?;
+    let eye_layer_pngs = eye_pngs
         .try_into()
         .map_err(
-            |_frames: Vec<_>| SemanticTextureArtifactError::EyeFrameCount,
+            |_layers: Vec<_>| SemanticTextureArtifactError::EyeLayerCount,
         )?;
+    let eye_profile_sha256 = eye_profile_sha256(
+        &eye_layer_pngs,
+        eye.surface_color,
+    );
     let manifest_json = manifest::render(
-        request, body, eye,
+        request,
+        body,
+        eye,
+        &eye_profile_sha256,
     )
     .map_err(SemanticTextureArtifactError::Manifest)?;
     Ok(
         SemanticTextureArtifacts {
-            body_atlas_png,
-            eye_frame_pngs,
+            body_texture_png,
+            eye_layer_pngs,
+            eye_profile_sha256,
+            extra_textures,
             manifest_json,
             summary: SemanticTextureSummary {
                 character_id: request
@@ -94,7 +111,8 @@ pub(super) fn assemble(
                     .charts
                     .len(),
                 eye_region_count: eye.semantic_region_count,
-                body_atlas_size: [
+                animation_count,
+                body_texture_size: [
                     body.atlas
                         .width(),
                     body.atlas
@@ -104,4 +122,30 @@ pub(super) fn assemble(
             },
         },
     )
+}
+
+/// Hash the sclera color plus independent pupil and lid textures.
+fn eye_profile_sha256(
+    layers: &[Vec<u8>; 3],
+    sclera_color: crate::domain::texture::semantic::Rgba8,
+) -> String {
+    let mut evidence = Vec::new();
+    evidence.extend_from_slice(b"sclera-rgba");
+    evidence.push(0);
+    evidence.extend_from_slice(&sclera_color.channels());
+    evidence.push(0xff);
+    for (role, bytes) in [
+        (
+            "pupil", &layers[1],
+        ),
+        (
+            "lids", &layers[2],
+        ),
+    ] {
+        evidence.extend_from_slice(role.as_bytes());
+        evidence.push(0);
+        evidence.extend_from_slice(bytes);
+        evidence.push(0xff);
+    }
+    digest_hex(&evidence)
 }

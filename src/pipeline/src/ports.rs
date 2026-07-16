@@ -58,6 +58,8 @@ pub struct FbxExportOptions {
     pub blender_helper: bool,
     /// Emit an optional script that imports the canonical FBX into Maya.
     pub maya: bool,
+    /// Embed PNG payloads for explicit legacy compatibility.
+    pub embed_textures: bool,
 }
 
 /// Supplies output inventory evidence for one generated root.

@@ -311,14 +311,12 @@ fn writes_deterministic_animation_graph() {
     let first_summary = write_binary_character_fbx(
         &character,
         &materials,
-        &[],
         &clips,
         &first_path,
     );
     let second_summary = write_binary_character_fbx(
         &character,
         &materials,
-        &[],
         &clips,
         &second_path,
     );
@@ -395,7 +393,6 @@ fn rejects_animation_time_above_signed_fbx_limit() {
     let result = write_binary_character_fbx(
         &character,
         &[material],
-        &[],
         &[animation],
         &path,
     );
@@ -447,7 +444,6 @@ fn rejects_animation_frames_below_one_ktime_tick() {
     let result = write_binary_character_fbx(
         &character,
         &[material],
-        &[],
         &[animation],
         &path,
     );

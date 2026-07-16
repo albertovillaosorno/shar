@@ -87,6 +87,7 @@ pub fn plan_body_texture(
     )?;
     charts::build_plan(
         character,
+        source_texture,
         recipe,
         classification,
     )

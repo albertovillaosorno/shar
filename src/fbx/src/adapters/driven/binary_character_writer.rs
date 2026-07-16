@@ -110,6 +110,15 @@ pub struct EmbeddedTexture {
     pub content: Vec<u8>,
 }
 
+/// Texture-storage policy selected for one character document.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CharacterTextureStorage {
+    /// Reference sibling files under `textures/` without `Video.Content`.
+    External,
+    /// Preserve legacy self-contained `Video.Content` payloads explicitly.
+    Embedded,
+}
+
 /// Deterministic summary of one binary character FBX document.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct CharacterBinaryFbxSummary {
@@ -125,6 +134,14 @@ pub struct CharacterBinaryFbxSummary {
     pub textures: usize,
     /// Skeletal animation stacks written to the document.
     pub animations: usize,
+}
+
+/// Texture-storage policy and optional payload lookup for one document.
+struct TexturePayloadContext<'map, 'name, 'content> {
+    /// Embedded payloads keyed by portable external texture file name.
+    embedded: &'map BTreeMap<&'name str, &'content [u8]>,
+    /// Selected external or compatibility-embedded storage policy.
+    storage: CharacterTextureStorage,
 }
 
 /// One binary-writer geometry group with raw FBX identity.
@@ -296,7 +313,7 @@ struct CharacterFbxDocument {
     summary: CharacterBinaryFbxSummary,
 }
 
-/// Write one validated character as a binary FBX 7.7 document.
+/// Write one validated character as an external-texture binary FBX 7.7 file.
 ///
 /// # Errors
 ///
@@ -306,7 +323,48 @@ struct CharacterFbxDocument {
 pub fn write_binary_character_fbx(
     character: &CharacterAsset,
     materials: &[MaterialBinding],
+    animations: &[AnimationClip],
+    path: &Path,
+) -> Result<CharacterBinaryFbxSummary, CharacterBinaryFbxError> {
+    write_binary_character_fbx_with_storage(
+        character,
+        materials,
+        &[],
+        CharacterTextureStorage::External,
+        animations,
+        path,
+    )
+}
+
+/// Write one validated character with explicit embedded compatibility payloads.
+///
+/// # Errors
+///
+/// Returns an error under the same conditions as
+/// [`write_binary_character_fbx`] or when embedded payload validation fails.
+pub fn write_binary_character_fbx_embedded(
+    character: &CharacterAsset,
+    materials: &[MaterialBinding],
     embedded_textures: &[EmbeddedTexture],
+    animations: &[AnimationClip],
+    path: &Path,
+) -> Result<CharacterBinaryFbxSummary, CharacterBinaryFbxError> {
+    write_binary_character_fbx_with_storage(
+        character,
+        materials,
+        embedded_textures,
+        CharacterTextureStorage::Embedded,
+        animations,
+        path,
+    )
+}
+
+/// Serialize one character with an explicit texture-storage policy.
+fn write_binary_character_fbx_with_storage(
+    character: &CharacterAsset,
+    materials: &[MaterialBinding],
+    embedded_textures: &[EmbeddedTexture],
+    texture_storage: CharacterTextureStorage,
     animations: &[AnimationClip],
     path: &Path,
 ) -> Result<CharacterBinaryFbxSummary, CharacterBinaryFbxError> {
@@ -314,6 +372,7 @@ pub fn write_binary_character_fbx(
         character,
         materials,
         embedded_textures,
+        texture_storage,
         animations,
     )?;
     let bytes = encode_binary_document(&document.nodes).map_err(
@@ -332,16 +391,20 @@ fn build_character_document(
     character: &CharacterAsset,
     materials: &[MaterialBinding],
     embedded_textures: &[EmbeddedTexture],
+    texture_storage: CharacterTextureStorage,
     animations: &[AnimationClip],
 ) -> Result<CharacterFbxDocument, CharacterBinaryFbxError> {
     let material_slots = material_slots(
         character, materials,
     )
     .map_err(CharacterBinaryFbxError::from)?;
-    let embedded_texture_contents = embedded_texture_contents(
-        materials,
-        embedded_textures,
-    )?;
+    let embedded_texture_contents = match texture_storage {
+        CharacterTextureStorage::External => BTreeMap::new(),
+        CharacterTextureStorage::Embedded => embedded_texture_contents(
+            materials,
+            embedded_textures,
+        )?,
+    };
     let bone_transforms =
         bone_transforms(character).map_err(CharacterBinaryFbxError::from)?;
     let groups =
@@ -369,11 +432,15 @@ fn build_character_document(
             reason: format!("{error:?}"),
         },
     )?;
+    let texture_payloads = TexturePayloadContext {
+        embedded: &embedded_texture_contents,
+        storage: texture_storage,
+    };
     let nodes = document_nodes(
         character,
         &groups,
         &material_slots,
-        &embedded_texture_contents,
+        &texture_payloads,
         &bone_transforms,
         &bone_ordinals,
         &animation_plan,
@@ -410,7 +477,7 @@ fn document_nodes(
     character: &CharacterAsset,
     groups: &[BinaryGroup<'_>],
     material_slots: &BTreeMap<String, MaterialSlot<'_>>,
-    embedded_textures: &BTreeMap<&str, &[u8]>,
+    texture_payloads: &TexturePayloadContext<'_, '_, '_>,
     bone_transforms: &[BoneTransform],
     bone_ordinals: &BTreeMap<&str, usize>,
     animation_plan: &BinaryAnimationPlan,
@@ -448,7 +515,7 @@ fn document_nodes(
                 character,
                 groups,
                 material_slots,
-                embedded_textures,
+                texture_payloads,
                 bone_transforms,
                 bone_ordinals,
                 animation_plan,
@@ -1071,7 +1138,7 @@ fn objects(
     character: &CharacterAsset,
     groups: &[BinaryGroup<'_>],
     material_slots: &BTreeMap<String, MaterialSlot<'_>>,
-    embedded_textures: &BTreeMap<&str, &[u8]>,
+    texture_payloads: &TexturePayloadContext<'_, '_, '_>,
     bone_transforms: &[BoneTransform],
     bone_ordinals: &BTreeMap<&str, usize>,
     animation_plan: &BinaryAnimationPlan,
@@ -1102,23 +1169,33 @@ fn objects(
             .binding
             .texture_file_name
         {
-            let content = embedded_textures
-                .get(texture_file.as_str())
-                .ok_or_else(
-                    || CharacterBinaryFbxError::MissingEmbeddedTexture {
-                        file_name: texture_file.clone(),
-                    },
-                )?;
+            let relative_path = texture_relative_path(
+                texture_file,
+                texture_payloads.storage,
+            );
+            let content = match texture_payloads.storage {
+                CharacterTextureStorage::External => None,
+                CharacterTextureStorage::Embedded => Some(
+                    *texture_payloads
+                        .embedded
+                        .get(texture_file.as_str())
+                        .ok_or_else(
+                            || CharacterBinaryFbxError::MissingEmbeddedTexture {
+                                file_name: texture_file.clone(),
+                            },
+                        )?,
+                ),
+            };
             children.push(
                 texture_node(
                     slot,
-                    texture_file,
+                    &relative_path,
                 )?,
             );
             children.push(
                 video_node(
                     slot,
-                    texture_file,
+                    &relative_path,
                     content,
                 )?,
             );
@@ -1699,7 +1776,18 @@ fn material_node(
     )
 }
 
-/// Build one texture object referencing its embedded video payload.
+/// Build the portable FBX path for one validated texture file name.
+fn texture_relative_path(
+    file_name: &str,
+    storage: CharacterTextureStorage,
+) -> String {
+    match storage {
+        CharacterTextureStorage::External => format!("textures/{file_name}"),
+        CharacterTextureStorage::Embedded => file_name.to_owned(),
+    }
+}
+
+/// Build one texture object referencing its video clip.
 fn texture_node(
     slot: &MaterialSlot<'_>,
     relative_path: &str,
@@ -1749,15 +1837,53 @@ fn texture_node(
     )
 }
 
-/// Build one video clip carrying a self-contained PNG payload.
+/// Build one video clip with an optional compatibility payload.
 fn video_node(
     slot: &MaterialSlot<'_>,
     relative_path: &str,
-    content: &[u8],
+    content: Option<&[u8]>,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
     let name = &slot
         .binding
         .material_name;
+    let mut children = vec![
+        string_node(
+            "Type", "Clip",
+        ),
+        BinaryNode::branch(
+            "Properties70",
+            vec![
+                xref_string_property(
+                    "Path",
+                    relative_path,
+                ),
+                xref_string_property(
+                    "RelPath",
+                    relative_path,
+                ),
+            ],
+        ),
+        i32_node(
+            "UseMipMap",
+            0,
+        ),
+        string_node(
+            "Filename",
+            relative_path,
+        ),
+        string_node(
+            "RelativeFilename",
+            relative_path,
+        ),
+    ];
+    if let Some(payload) = content {
+        children.push(
+            BinaryNode::leaf(
+                "Content",
+                vec![BinaryProperty::Bytes(payload.to_vec())],
+            ),
+        );
+    }
     Ok(
         BinaryNode::new(
             "Video",
@@ -1771,40 +1897,7 @@ fn video_node(
                 ),
                 string("Clip"),
             ],
-            vec![
-                string_node(
-                    "Type", "Clip",
-                ),
-                BinaryNode::branch(
-                    "Properties70",
-                    vec![
-                        xref_string_property(
-                            "Path",
-                            relative_path,
-                        ),
-                        xref_string_property(
-                            "RelPath",
-                            relative_path,
-                        ),
-                    ],
-                ),
-                i32_node(
-                    "UseMipMap",
-                    0,
-                ),
-                string_node(
-                    "Filename",
-                    relative_path,
-                ),
-                string_node(
-                    "RelativeFilename",
-                    relative_path,
-                ),
-                BinaryNode::leaf(
-                    "Content",
-                    vec![BinaryProperty::Bytes(content.to_vec())],
-                ),
-            ],
+            children,
         ),
     )
 }

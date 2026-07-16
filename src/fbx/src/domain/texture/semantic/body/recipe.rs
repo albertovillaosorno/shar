@@ -50,6 +50,7 @@ use std::collections::BTreeMap;
 
 use super::super::color::Rgba8;
 use super::super::region::BodyRegion;
+use super::super::sampling::TextureAddressMode;
 use super::error::SemanticTextureError;
 
 /// Stable location of one primitive group inside a character aggregate.
@@ -126,6 +127,8 @@ pub struct BodySemanticRecipe {
     pub groups: Vec<GroupAddress>,
     /// Reviewed exact source-color classifications for ambiguous evidence.
     pub color_overrides: BTreeMap<Rgba8, BodyRegion>,
+    /// Source texture addressing applied before palette sampling.
+    pub texture_address_mode: TextureAddressMode,
     /// Maximum exposed-color luminance ratio classified as hair.
     pub hair_luminance_ratio: f32,
     /// Destination atlas contract.
@@ -141,6 +144,7 @@ impl BodySemanticRecipe {
     pub fn new(
         mut groups: Vec<GroupAddress>,
         color_overrides: BTreeMap<Rgba8, BodyRegion>,
+        texture_address_mode: TextureAddressMode,
         hair_luminance_ratio: f32,
         atlas: AtlasConfig,
     ) -> Result<Self, SemanticTextureError> {
@@ -163,6 +167,7 @@ impl BodySemanticRecipe {
             Self {
                 groups,
                 color_overrides,
+                texture_address_mode,
                 hair_luminance_ratio,
                 atlas,
             },

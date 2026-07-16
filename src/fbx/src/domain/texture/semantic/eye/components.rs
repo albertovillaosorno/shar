@@ -83,18 +83,10 @@ pub(super) fn discover(
             vertices[0],
         );
     }
-    for vertex in 0..group
-        .positions
-        .len()
-    {
-        if !referenced.contains(&vertex) {
-            return Err(
-                EyeTextureError::UncoveredVertex {
-                    vertex,
-                },
-            );
-        }
-    }
+    validate_coverage(
+        group,
+        &referenced,
+    )?;
     let mut pending = referenced;
     let mut components = Vec::new();
     while let Some(seed) = pending.pop_first() {
@@ -162,6 +154,26 @@ pub(super) fn discover(
     )
 }
 
+/// Require every mesh vertex to belong to one eye component.
+fn validate_coverage(
+    group: &PrimitiveGroup,
+    referenced: &BTreeSet<usize>,
+) -> Result<(), EyeTextureError> {
+    for vertex in 0..group
+        .positions
+        .len()
+    {
+        if !referenced.contains(&vertex) {
+            return Err(
+                EyeTextureError::UncoveredVertex {
+                    vertex,
+                },
+            );
+        }
+    }
+    Ok(())
+}
+
 /// Add one undirected adjacency edge.
 fn connect(
     adjacency: &mut BTreeMap<usize, BTreeSet<usize>>,
@@ -179,33 +191,29 @@ fn connect(
 }
 
 /// Calculate one component's horizontal centroid.
-#[expect(
-    clippy::cast_precision_loss,
-    reason = "Component vertex counts are bounded by in-memory mesh arrays \
-              and f32 matches the source position representation."
-)]
 fn centroid_x(
     group: &PrimitiveGroup,
     vertices: &[usize],
 ) -> Result<f32, EyeTextureError> {
-    let mut sum = 0.0_f64;
+    let mut sum = 0.0_f32;
     for vertex in vertices {
         let position = group
             .positions
             .get(*vertex)
             .ok_or(EyeTextureError::NumericOverflow)?;
-        sum += f64::from(position[0]);
+        sum += position[0];
     }
-    let count = u64::try_from(vertices.len())
+    let count = u16::try_from(vertices.len())
+        .map(f32::from)
         .map_err(|_error| EyeTextureError::NumericOverflow)?;
-    if count == 0 {
+    if count == 0.0 {
         return Err(
             EyeTextureError::ComponentCount {
                 actual: 0,
             },
         );
     }
-    Ok((sum / count as f64) as f32)
+    Ok(sum / count)
 }
 
 /// Convert one domain vertex index into the host index type.

@@ -55,6 +55,7 @@ use fbx::domain::skeleton::Bone;
 use fbx::domain::skin::SkinInfluence;
 use fbx::domain::texture::semantic::{
     AtlasConfig, BodySemanticRecipe, GroupAddress, Rgba8, RgbaImage,
+    TextureAddressMode,
 };
 
 /// Stable synthetic colors in body-region order.
@@ -85,6 +86,25 @@ pub fn body_fixture() -> Result<
     ),
     String,
 > {
+    let group = body_group()?;
+    let character = body_character(group)?;
+    let image = RgbaImage::new(
+        5,
+        1,
+        BODY_COLORS.to_vec(),
+    )
+    .map_err(|error| format!("palette failed: {error:?}"))?;
+    Ok(
+        (
+            character,
+            image,
+            body_recipe()?,
+        ),
+    )
+}
+
+/// Build the five disconnected flat-color primitive groups as one group.
+fn body_group() -> Result<PrimitiveGroup, String> {
     let mut positions = Vec::new();
     let mut uvs = Vec::new();
     let mut indices = Vec::new();
@@ -120,14 +140,18 @@ pub fn body_fixture() -> Result<
             ],
         );
     }
-    let group = PrimitiveGroup::new(
+    PrimitiveGroup::new(
         0,
         "synthetic-body",
         positions,
         uvs,
         &indices,
     )
-    .map_err(|error| format!("body group failed: {error:?}"))?;
+    .map_err(|error| format!("body group failed: {error:?}"))
+}
+
+/// Build one skinned synthetic character around the body group.
+fn body_character(group: PrimitiveGroup) -> Result<CharacterAsset, String> {
     let mesh = MeshAsset::new(
         "synthetic-body",
         vec![group],
@@ -154,6 +178,21 @@ pub fn body_fixture() -> Result<
             );
         }
     }
+    CharacterAsset::new(
+        "synthetic-character",
+        body_skeleton(),
+        vec![
+            SkinnedPart {
+                mesh,
+                group_influences: vec![influences],
+            },
+        ],
+    )
+    .map_err(|error| format!("character failed: {error:?}"))
+}
+
+/// Build the shared synthetic body skeleton.
+fn body_skeleton() -> Vec<Bone> {
     let identity = [
         1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0,
         0.0, 1.0,
@@ -176,23 +215,11 @@ pub fn body_fixture() -> Result<
             },
         );
     }
-    let character = CharacterAsset::new(
-        "synthetic-character",
-        skeleton,
-        vec![
-            SkinnedPart {
-                mesh,
-                group_influences: vec![influences],
-            },
-        ],
-    )
-    .map_err(|error| format!("character failed: {error:?}"))?;
-    let image = RgbaImage::new(
-        5,
-        1,
-        BODY_COLORS.to_vec(),
-    )
-    .map_err(|error| format!("palette failed: {error:?}"))?;
+    skeleton
+}
+
+/// Build the stable five-column semantic atlas recipe.
+fn body_recipe() -> Result<BodySemanticRecipe, String> {
     let atlas = AtlasConfig::new(
         250,
         100,
@@ -202,7 +229,7 @@ pub fn body_fixture() -> Result<
         ),
     )
     .map_err(|error| format!("atlas failed: {error:?}"))?;
-    let recipe = BodySemanticRecipe::new(
+    BodySemanticRecipe::new(
         vec![
             GroupAddress {
                 part_index: 0,
@@ -210,13 +237,9 @@ pub fn body_fixture() -> Result<
             },
         ],
         BTreeMap::new(),
+        TextureAddressMode::Clamp,
         0.20,
         atlas,
     )
-    .map_err(|error| format!("recipe failed: {error:?}"))?;
-    Ok(
-        (
-            character, image, recipe,
-        ),
-    )
+    .map_err(|error| format!("recipe failed: {error:?}"))
 }

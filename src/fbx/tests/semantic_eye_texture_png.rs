@@ -54,7 +54,8 @@ use fbx::adapters::driven::semantic_texture_png::{
     decode_png_bytes, encode_png_bytes,
 };
 use fbx::domain::texture::semantic::{
-    EyeSide, EyeTextureError, Rgba8, RgbaImage, analyze_eye_frames,
+    EyeSemanticPlan, EyeSide, EyeTextureError, Rgba8, RgbaImage,
+    analyze_eye_frames,
 };
 use semantic_eye::{eye_frames, eye_group};
 
@@ -73,7 +74,14 @@ fn preserves_two_eye_components_and_four_frame_closure() -> Result<(), String> {
     if first != second {
         return Err("equivalent eye analysis was not deterministic".to_owned());
     }
-    let sides = first
+    validate_eye_components(&first)?;
+    validate_blink_evidence(&first)?;
+    validate_eye_layers(&first)
+}
+
+/// Validate stable two-component eye ownership.
+fn validate_eye_components(plan: &EyeSemanticPlan) -> Result<(), String> {
+    let sides = plan
         .components
         .iter()
         .map(|component| component.side)
@@ -86,7 +94,7 @@ fn preserves_two_eye_components_and_four_frame_closure() -> Result<(), String> {
     {
         return Err(format!("unexpected eye sides: {sides:?}"));
     }
-    if first
+    if plan
         .components
         .iter()
         .any(
@@ -101,19 +109,24 @@ fn preserves_two_eye_components_and_four_frame_closure() -> Result<(), String> {
         return Err(
             format!(
                 "unexpected eye components: {:?}",
-                first.components,
+                plan.components
             ),
         );
     }
-    if first.semantic_region_count != 8 {
+    if plan.semantic_region_count != 8 {
         return Err(
             format!(
                 "expected eight semantic eye regions, got {}",
-                first.semantic_region_count,
+                plan.semantic_region_count,
             ),
         );
     }
-    let lid_counts = first
+    Ok(())
+}
+
+/// Validate monotonic four-frame lid and pupil evidence.
+fn validate_blink_evidence(plan: &EyeSemanticPlan) -> Result<(), String> {
+    let lid_counts = plan
         .frame_evidence
         .iter()
         .map(|evidence| evidence.lid_pixel_count)
@@ -125,30 +138,29 @@ fn preserves_two_eye_components_and_four_frame_closure() -> Result<(), String> {
     {
         return Err(format!("unexpected lid counts: {lid_counts:?}"));
     }
-    let upper_counts = first
+    let upper = plan
         .frame_evidence
         .iter()
         .map(|evidence| evidence.upper_lid_pixel_count)
         .collect::<Vec<_>>();
-    let lower_counts = first
+    let lower = plan
         .frame_evidence
         .iter()
         .map(|evidence| evidence.lower_lid_pixel_count)
         .collect::<Vec<_>>();
-    if upper_counts
+    if upper
         != [
             0, 16, 24, 32,
         ]
-        || lower_counts != upper_counts
+        || lower != upper
     {
         return Err(
             format!(
-                "asymmetric lid evidence: upper={upper_counts:?}, \
-                 lower={lower_counts:?}",
+                "asymmetric lid evidence: upper={upper:?}, lower={lower:?}",
             ),
         );
     }
-    let preserved = first
+    let preserved = plan
         .frame_evidence
         .iter()
         .map(|evidence| evidence.preserved_pupil_pixel_count)
@@ -160,13 +172,89 @@ fn preserves_two_eye_components_and_four_frame_closure() -> Result<(), String> {
     {
         return Err(format!("unexpected pupil preservation: {preserved:?}"));
     }
-    if first
+    Ok(())
+}
+
+/// Validate modern dimensions and independent white/pupil layers.
+fn validate_eye_layers(plan: &EyeSemanticPlan) -> Result<(), String> {
+    if plan
         .modern_frames
         .iter()
         .any(|frame| frame.width() != 16 || frame.height() != 16)
     {
         return Err(
             "modernized eye frames have incorrect dimensions".to_owned(),
+        );
+    }
+    let white = Rgba8::new(
+        255, 255, 255, 255,
+    );
+    if plan
+        .layers
+        .composite
+        .pixels()
+        .iter()
+        .any(|color| *color != white)
+    {
+        return Err("eye compatibility texture was not pure white".to_owned());
+    }
+    let alpha = plan
+        .layers
+        .pupil
+        .pixels()
+        .iter()
+        .map(|color| color.alpha)
+        .collect::<std::collections::BTreeSet<_>>();
+    if alpha
+        != [
+            0, 255,
+        ]
+        .into_iter()
+        .collect()
+    {
+        return Err(format!("unexpected pupil-layer alpha: {alpha:?}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn accepts_symmetric_lid_occlusion_of_pupil_pixels() -> Result<(), String> {
+    let group = eye_group()?;
+    let mut frames = eye_frames()?;
+    let lid = Rgba8::new(
+        255, 210, 0, 255,
+    );
+    for frame_index in [
+        1_usize, 2,
+    ] {
+        for y in [
+            3_u32, 4,
+        ] {
+            frames[frame_index]
+                .set_pixel(
+                    2, y, lid,
+                )
+                .map_err(
+                    |error| format!("lid occlusion fixture failed: {error:?}"),
+                )?;
+        }
+    }
+    let planned = analyze_eye_frames(
+        &group, &frames, 16,
+    )
+    .map_err(|error| format!("lid occlusion should be accepted: {error:?}"))?;
+    let preserved = planned
+        .frame_evidence
+        .iter()
+        .map(|evidence| evidence.preserved_pupil_pixel_count)
+        .collect::<Vec<_>>();
+    if preserved
+        != [
+            4, 2, 2, 0,
+        ]
+    {
+        return Err(
+            format!("unexpected occluded pupil evidence: {preserved:?}"),
         );
     }
     Ok(())
@@ -191,9 +279,7 @@ fn rejects_pupil_changes_before_the_fully_closed_frame() -> Result<(), String> {
         Err(EyeTextureError::PupilChangedBeforeClosure {
             frame: 2,
         }) => Ok(()),
-        other => {
-            Err(format!("expected pupil-change rejection, got {other:?}",))
-        }
+        other => Err(format!("expected pupil-change rejection, got {other:?}")),
     }
 }
 
@@ -242,7 +328,7 @@ fn png_round_trip_and_indexed_expansion_are_stable() -> Result<(), String> {
     .map_err(|error| format!("expected image failed: {error:?}"))?;
     if expanded != expected {
         return Err(
-            format!("indexed PNG expansion changed pixels: {expanded:?}",),
+            format!("indexed PNG expansion changed pixels: {expanded:?}"),
         );
     }
     Ok(())

@@ -54,12 +54,14 @@
 #[path = "common/binary_artifact.rs"]
 pub mod binary_artifact;
 
+use std::fs;
 use std::mem::size_of;
 use std::path::PathBuf;
 
 use binary_artifact::read_binary_pair;
 use fbx::adapters::driven::binary_character_writer::{
     CharacterBinaryFbxSummary, EmbeddedTexture, write_binary_character_fbx,
+    write_binary_character_fbx_embedded,
 };
 use fbx::domain::character::{CharacterAsset, SkinnedPart};
 use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
@@ -271,6 +273,62 @@ fn byte_window_count(
         .count()
 }
 
+#[test]
+fn external_textures_are_default_and_payloads_are_omitted() {
+    let path = output_path("external-textures");
+    let character_result = synthetic_character();
+    assert!(
+        character_result.is_ok(),
+        "synthetic character should build: {character_result:?}"
+    );
+    let Some(character) = character_result.ok() else {
+        return;
+    };
+    let materials_result = materials();
+    assert!(
+        materials_result.is_ok(),
+        "synthetic materials should build: {materials_result:?}"
+    );
+    let Some(materials) = materials_result.ok() else {
+        return;
+    };
+    let summary = write_binary_character_fbx(
+        &character,
+        &materials,
+        &[],
+        &path,
+    );
+    assert!(
+        summary.is_ok(),
+        "external FBX write failed: {summary:?}"
+    );
+    let bytes_result = fs::read(&path);
+    assert!(
+        bytes_result.is_ok(),
+        "external FBX read failed: {bytes_result:?}"
+    );
+    let Some(bytes) = bytes_result.ok() else {
+        return;
+    };
+    assert!(
+        bytes
+            .windows(b"textures/skin.png".len())
+            .any(|window| window == b"textures/skin.png"),
+        "external FBX must reference the sibling textures directory"
+    );
+    let embedded_png = &embedded_textures()[0].content;
+    assert!(
+        !bytes
+            .windows(embedded_png.len())
+            .any(|window| window == embedded_png),
+        "external FBX must omit Video.Content payload bytes"
+    );
+    assert!(
+        fs::remove_file(&path).is_ok(),
+        "external FBX cleanup should succeed"
+    );
+}
+
 // One ordered byte-level regression verifies header, graph tokens, footer, and
 // deterministic repeated output without splitting shared artifact evidence.
 #[expect(
@@ -302,14 +360,14 @@ fn writes_deterministic_binary_fbx_7700_with_standard_footer() {
     };
 
     let textures = embedded_textures();
-    let first_summary = write_binary_character_fbx(
+    let first_summary = write_binary_character_fbx_embedded(
         &character,
         &materials,
         &textures,
         &[],
         &first_path,
     );
-    let second_summary = write_binary_character_fbx(
+    let second_summary = write_binary_character_fbx_embedded(
         &character,
         &materials,
         &textures,

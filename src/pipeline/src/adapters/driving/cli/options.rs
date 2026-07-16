@@ -66,6 +66,8 @@ pub(super) struct ParsedArguments {
     pub(super) blender_helper: bool,
     /// Whether `fbx-export` should emit the optional Maya import script.
     pub(super) maya: bool,
+    /// Whether `fbx-export` should embed compatibility texture payloads.
+    pub(super) embed_textures: bool,
 }
 
 impl Default for ParsedArguments {
@@ -76,6 +78,7 @@ impl Default for ParsedArguments {
             log_file: Some(PathBuf::from(DEFAULT_LOG_FILE)),
             blender_helper: false,
             maya: false,
+            embed_textures: false,
         }
     }
 }
@@ -237,6 +240,11 @@ pub(super) fn parse_common_arguments(
         }
         if parse_options && argument == "--maya" {
             parsed.maya = true;
+            index = index.saturating_add(1);
+            continue;
+        }
+        if parse_options && argument == "--embed-textures" {
+            parsed.embed_textures = true;
             index = index.saturating_add(1);
             continue;
         }

@@ -57,9 +57,9 @@ use crate::domain::skin::SkinInfluence;
 /// Dominant semantic evidence for one source vertex.
 #[derive(Clone, Debug)]
 pub(super) struct DominantEvidence {
-    /// Semantic family of the strongest influence set.
-    pub(super) family: BoneFamily,
-    /// Representative bone or reviewed override marker for diagnostics.
+    /// Semantic family of the strongest influence set, or no vote for a tie.
+    pub(super) family: Option<BoneFamily>,
+    /// Representative bone or tie marker for diagnostics.
     pub(super) bone_id: String,
 }
 
@@ -164,24 +164,21 @@ fn dominant_bone(
             },
         );
     if cross_family_tie {
-        if overridden_colors.contains_key(&color) {
-            return Ok(
-                DominantEvidence {
-                    family: BoneFamily::Unsupported,
-                    bone_id: "reviewed-color-override".to_owned(),
-                },
-            );
-        }
-        return Err(
-            SemanticTextureError::AmbiguousDominantInfluence {
-                group: address,
-                vertex,
+        let marker = if overridden_colors.contains_key(&color) {
+            "reviewed-color-override"
+        } else {
+            "cross-family-tie"
+        };
+        return Ok(
+            DominantEvidence {
+                family: None,
+                bone_id: marker.to_owned(),
             },
         );
     }
     Ok(
         DominantEvidence {
-            family: strongest_family,
+            family: Some(strongest_family),
             bone_id: bone_id.clone(),
         },
     )

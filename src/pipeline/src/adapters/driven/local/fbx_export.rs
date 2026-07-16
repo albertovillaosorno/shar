@@ -60,6 +60,7 @@ use std::path::{Path, PathBuf};
 
 use fbx::adapters::driven::binary_character_writer::{
     CharacterBinaryFbxSummary, EmbeddedTexture, write_binary_character_fbx,
+    write_binary_character_fbx_embedded,
 };
 use fbx::adapters::driven::blender_review_helper::{
     HelperSummary, write_review_helper,
@@ -208,8 +209,9 @@ pub(super) fn export_fbx_package(
     validate_character_package(package)?;
     let members = classify_members(package)?;
     let package_dir = output_dir.join(&package.package_id);
+    let texture_dir = package_dir.join("textures");
     let texture_staging_dir = package_dir.join(".texture-staging");
-    remove_texture_staging_dir(&package_dir.join("textures"))?;
+    ensure_texture_output_absent(&texture_dir)?;
     remove_texture_staging_dir(&texture_staging_dir)?;
     let character = build_character(
         package, &members, base_root,
@@ -237,14 +239,20 @@ pub(super) fn export_fbx_package(
     );
     let file_stem = stable_file_stem(&package.subcategory);
     let fbx_path = package_dir.join(format!("{file_stem}.fbx"));
-    let summary = write_embedded_character_fbx(
+    let export_target = CharacterExportTarget {
+        texture_staging_dir: &texture_staging_dir,
+        texture_dir: &texture_dir,
+        fbx_path: &fbx_path,
+        package_id: &package.package_id,
+    };
+    let summary = serialize_selected_texture_storage(
         &character,
         &materials,
         &animations,
-        &texture_staging_dir,
-        &fbx_path,
-        &package.package_id,
+        &export_target,
+        options.embed_textures,
     )?;
+    capability_items.push(texture_storage_capability(options.embed_textures));
     let helper_output = write_optional_blender_helper(
         options.blender_helper,
         &BlenderHelperRequest {
@@ -261,7 +269,7 @@ pub(super) fn export_fbx_package(
     } else {
         None
     };
-    let maya_output = write_optional_maya_helper(
+    let maya_artifact = materialize_optional_maya_helper(
         options.maya,
         &MayaHelperRequest {
             package_id: &package.package_id,
@@ -270,13 +278,8 @@ pub(super) fn export_fbx_package(
             fbx_path: &fbx_path,
             animations: &animations,
         },
+        &mut capability_items,
     )?;
-    let maya_artifact = if let Some(output) = maya_output {
-        capability_items.push(output.capability);
-        Some(output.artifact)
-    } else {
-        None
-    };
     capability_items.extend(member_capability_items(&members));
     let report_path = package_dir.join("capability-report.json");
     write_capability_report(
@@ -380,6 +383,22 @@ fn write_optional_blender_helper(
     )
 }
 
+/// Materialize one optional Maya helper and append its capability evidence.
+fn materialize_optional_maya_helper(
+    enabled: bool,
+    request: &MayaHelperRequest<'_>,
+    capabilities: &mut Vec<CapabilityItem>,
+) -> Result<Option<MayaHelperArtifact>, PipelineError> {
+    let Some(output) = write_optional_maya_helper(
+        enabled, request,
+    )?
+    else {
+        return Ok(None);
+    };
+    capabilities.push(output.capability);
+    Ok(Some(output.artifact))
+}
+
 /// Materialize one requested Maya import helper and capability decision.
 fn write_optional_maya_helper(
     enabled: bool,
@@ -436,6 +455,30 @@ fn write_optional_maya_helper(
             },
         ),
     )
+}
+
+/// Report the selected texture-storage policy explicitly.
+fn texture_storage_capability(embed_textures: bool) -> CapabilityItem {
+    if embed_textures {
+        return CapabilityItem {
+            id: "derived:texture-storage".to_owned(),
+            outcome: "converted",
+            reason: concat!(
+                "legacy compatibility mode stores PNG payloads in ",
+                "Video.Content and does not publish sibling textures",
+            )
+            .to_owned(),
+        };
+    }
+    CapabilityItem {
+        id: "derived:texture-storage".to_owned(),
+        outcome: "converted",
+        reason: concat!(
+            "canonical mode omits Video.Content and references immutable ",
+            "sibling files under textures/",
+        )
+        .to_owned(),
+    }
 }
 
 /// Classify package members into character export families.
@@ -827,6 +870,85 @@ fn normalized_texture_png_file_name(
     Ok(format!("{stem}.png"))
 }
 
+/// Immutable output paths and package identity for one character export.
+struct CharacterExportTarget<'path> {
+    texture_staging_dir: &'path Path,
+    texture_dir: &'path Path,
+    fbx_path: &'path Path,
+    package_id: &'path str,
+}
+
+/// Dispatch one character export through the selected texture-storage policy.
+fn serialize_selected_texture_storage(
+    character: &CharacterAsset,
+    materials: &[MaterialBinding],
+    animations: &[AnimationClip],
+    target: &CharacterExportTarget<'_>,
+    embed_textures: bool,
+) -> Result<CharacterBinaryFbxSummary, PipelineError> {
+    if embed_textures {
+        return write_embedded_character_fbx(
+            character,
+            materials,
+            animations,
+            target.texture_staging_dir,
+            target.fbx_path,
+            target.package_id,
+        );
+    }
+    write_external_character_fbx(
+        character,
+        materials,
+        animations,
+        target.texture_staging_dir,
+        target.texture_dir,
+        target.fbx_path,
+        target.package_id,
+    )
+}
+
+/// Publish sibling textures and write an external-reference FBX.
+fn write_external_character_fbx(
+    character: &CharacterAsset,
+    materials: &[MaterialBinding],
+    animations: &[AnimationClip],
+    texture_staging_dir: &Path,
+    texture_dir: &Path,
+    fbx_path: &Path,
+    package_id: &str,
+) -> Result<CharacterBinaryFbxSummary, PipelineError> {
+    std::fs::rename(
+        texture_staging_dir,
+        texture_dir,
+    )
+    .map_err(
+        |error| {
+            PipelineError::new(
+                format!(
+                    "failed to publish external texture directory {}: {error}",
+                    texture_dir.display()
+                ),
+            )
+        },
+    )?;
+    let export_result = write_binary_character_fbx(
+        character, materials, animations, fbx_path,
+    )
+    .map_err(
+        |error| {
+            let context = "character FBX serialization failed";
+            PipelineError::new(format!("{context} for {package_id}: {error:?}"))
+        },
+    );
+    match export_result {
+        Ok(summary) => Ok(summary),
+        Err(error) => {
+            remove_texture_staging_dir(texture_dir)?;
+            Err(error)
+        }
+    }
+}
+
 /// Serialize one self-contained FBX and always remove private texture staging.
 fn write_embedded_character_fbx(
     character: &CharacterAsset,
@@ -841,7 +963,7 @@ fn write_embedded_character_fbx(
             materials,
             texture_staging_dir,
         )?;
-        write_binary_character_fbx(
+        write_binary_character_fbx_embedded(
             character,
             materials,
             &embedded_textures,
@@ -899,6 +1021,21 @@ fn read_embedded_textures(
         );
     }
     Ok(textures)
+}
+
+/// Reject one already published external texture directory.
+fn ensure_texture_output_absent(path: &Path) -> Result<(), PipelineError> {
+    if !path.exists() {
+        return Ok(());
+    }
+    Err(
+        PipelineError::new(
+            format!(
+                "external texture output already exists: {}",
+                path.display()
+            ),
+        ),
+    )
 }
 
 /// Remove the private texture staging directory before or after one export.

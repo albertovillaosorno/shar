@@ -199,7 +199,7 @@ struct GridScore {
 
 impl GridScore {
     /// Compare scores while preserving deterministic tie preferences.
-    fn stronger_than(
+    const fn stronger_than(
         &self,
         other: &Self,
     ) -> bool {

@@ -120,6 +120,17 @@ pub struct EyeFrameEvidence {
     pub preserved_pupil_pixel_count: usize,
 }
 
+/// Three eye images used by the prepared character package.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct EyeTextureLayers {
+    /// Derived open-eye compatibility texture referenced by the FBX.
+    pub composite: RgbaImage,
+    /// Transparent texture containing only pupil pixels.
+    pub pupil: RgbaImage,
+    /// One lid-color square split into upper and lower semantic halves.
+    pub lids: RgbaImage,
+}
+
 /// Complete two-eye, four-frame semantic plan.
 #[derive(Clone, Debug, PartialEq)]
 pub struct EyeSemanticPlan {
@@ -127,8 +138,10 @@ pub struct EyeSemanticPlan {
     pub components: Vec<EyeComponent>,
     /// Four source-frame evidence rows.
     pub frame_evidence: Vec<EyeFrameEvidence>,
-    /// Four nearest-neighbor modernized frames preserving source behavior.
+    /// Four nearest-neighbor compatibility frames preserving source behavior.
     pub modern_frames: [RgbaImage; 4],
+    /// Three canonical textures for sclera, pupil, and paired lids.
+    pub layers: EyeTextureLayers,
     /// Exact fully closed lid color.
     pub lid_color: Rgba8,
     /// Dominant open eye surface color.
@@ -182,7 +195,7 @@ pub enum EyeTextureError {
         /// Source frame ordinal.
         frame: usize,
     },
-    /// One partial closure changed a pupil or iris source pixel.
+    /// One partial closure changed a pupil pixel to a non-lid color.
     PupilChangedBeforeClosure {
         /// Source frame ordinal.
         frame: usize,

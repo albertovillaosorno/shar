@@ -53,15 +53,42 @@ use crate::domain::mesh::PrimitiveGroup;
 mod dilation;
 #[path = "raster/triangle.rs"]
 mod triangle;
+#[path = "raster/triangle_source.rs"]
+mod triangle_source;
 
 /// Rasterize one placed chart and dilate its color inside its reserved cell.
 pub(super) fn rasterize(
     atlas: &mut RgbaImage,
     coverage: &mut [bool],
+    source_texture: &RgbaImage,
     group: &PrimitiveGroup,
     chart: &PlacedChart,
     padding: u32,
 ) -> Result<(), SemanticTextureError> {
+    if chart
+        .public
+        .sample_source
+    {
+        let covered = triangle_source::paint(
+            atlas,
+            coverage,
+            source_texture,
+            chart,
+        )?;
+        if covered == 0 {
+            return Err(
+                SemanticTextureError::EmptyRasterizedChart(
+                    chart
+                        .public
+                        .id
+                        .clone(),
+                ),
+            );
+        }
+        return dilation::apply(
+            atlas, coverage, chart, padding,
+        );
+    }
     let mut covered = 0_usize;
     for triangle_index in &chart
         .public
@@ -82,12 +109,11 @@ pub(super) fn rasterize(
                 chart, indices[2],
             )?,
         ];
+        let painted = triangle::paint(
+            atlas, coverage, chart, points,
+        )?;
         covered = covered
-            .checked_add(
-                triangle::paint(
-                    atlas, coverage, chart, points,
-                )?,
-            )
+            .checked_add(painted)
             .ok_or(SemanticTextureError::NumericOverflow)?;
     }
     if covered == 0 {
