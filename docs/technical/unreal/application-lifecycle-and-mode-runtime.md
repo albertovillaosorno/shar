@@ -11,6 +11,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native render-frame, view, and layer runtime](native-render-frame-view-and-layer-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Native gameplay audio, dialogue, and listener boundary](../../adr/unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
@@ -543,6 +545,16 @@ declare required banks, mixes, ambience, music, and transition policy.
 
 A loading completion callback is accepted only for the current transition and
 audio revision. Late callbacks cannot activate audio in a replacement mode.
+
+Vehicle audio, dialogue queues, local-player listeners, positional sources,
+ducking, subtitles, and mouth presentation are owned by their dedicated runtime
+contracts. A mode transition freezes new affected requests, validates target
+audio
+and listener readiness, commits the new leases atomically, and then releases
+obsolete sources and callbacks.
+
+An audio component becoming audible or completing playback cannot commit a mode,
+mission, interaction, vehicle, or save transition.
 
 ## World and feature lifecycle
 

@@ -355,6 +355,8 @@ controlrig
 convinit
 creatim
 cspell
+crossfade
+crossfades
 customfiles
 customtext
 cvars
@@ -588,6 +590,7 @@ phonecamera
 phong
 phonorecord
 phonorecords
+powerslide
 picprop
 pict
 pnseclvl
@@ -623,6 +626,7 @@ renderables
 reparent
 reparenting
 replacen
+respawning
 revisioned
 retarget
 retargets
@@ -662,6 +666,8 @@ smarttag
 smarttagtype
 soundfx
 soundwave
+spatialization
+spatialized
 spain
 splitn
 spt
@@ -670,6 +676,8 @@ statetree
 staticval
 subchunks
 substate
+submix
+submixes
 subvolume
 subvolumes
 svb

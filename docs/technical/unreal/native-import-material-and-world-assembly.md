@@ -25,6 +25,12 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Road-network geometry and traffic runtime](road-network-geometry-and-traffic-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Vehicle audio and avatar-sound runtime](vehicle-audio-and-avatar-sound-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native asset translation without copy-paste](../../adr/pipeline/unreal/native-asset-translation-and-no-copy-paste.md)
 
 ## Purpose
@@ -262,6 +268,28 @@ WAV import creates native sound assets and preserves normalized duration, sample
 rate, channel, loop, routing, subtitle, concurrency, and event identities. Cook
 settings are selected later by the target policy and cannot alter logical
 timing.
+
+Vehicle-audio import publishes stable profiles, role layers, typed source
+parameters, gear and pitch curves, shift envelopes, surface groups, damage,
+horn,
+door, overlay, attenuation, concurrency, mix, streaming, and platform policy for
+<!-- markdownlint-disable-next-line MD013 -->
+[Vehicle audio and avatar-sound runtime](vehicle-audio-and-avatar-sound-runtime.md).
+
+Dialogue import converts source metadata into stable line, conversation,
+selection-group, event-binding, participant-role, locale, subtitle, priority,
+probability, lifetime, positional, mouth, ducking, and fallback definitions for
+<!-- markdownlint-disable-next-line MD013 -->
+[Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md).
+Every parsed source field is recorded as provenance and validated during import;
+shipping runtime never parses filenames, directory fragments, underscore counts,
+short character codes, event text, level, mission, role, or conversation order.
+
+Spatial-audio import publishes listener policies, attenuation and concurrency
+assets, source definitions, attachment classes, split-screen policy, focus,
+occlusion, reverb, virtualization, streaming, and platform fallback for
+<!-- markdownlint-disable-next-line MD013 -->
+[Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md).
 
 JSON import creates typed data assets, tables, registries, StateTree bindings,
 or

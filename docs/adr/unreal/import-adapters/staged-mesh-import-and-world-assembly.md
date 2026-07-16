@@ -60,6 +60,15 @@ presentation fallbacks. Road import publishes canonical roads, segments, lanes,
 intersections, legal movements, traffic controls, deterministic splines, graph
 edges, spatial-index evidence, overlays, and content digests.
 
+Audio import publishes native sources, vehicle-audio profiles, typed parameters,
+curves, attenuation, concurrency, mix and streaming policy; typed dialogue
+lines,
+conversations, event bindings, selection groups, locales, subtitles, priorities,
+probabilities, positional and mouth policy; and explicit listener and
+moving-source
+definitions. Source filenames and short character or event codes remain import
+provenance only and are not parsed in packaged runtime.
+
 Prepared renderables register through native Actor and component lifecycle and
 accepted render scopes. Import does not publish ordinal render layers, custom
 manager loops, manual pass lists, or a second runtime renderer.

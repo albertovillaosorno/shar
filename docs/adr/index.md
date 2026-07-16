@@ -204,6 +204,9 @@ repository reference must point to the current owning decision.
 - [Event-driven music and ambience](unreal/runtime/event-driven-music-and-ambience.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
+- [Native gameplay audio, dialogue, and listener boundary](unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md)
+  — Accepted
+<!-- markdownlint-disable-next-line MD013 -->
 - [Mass Entity ambient population](unreal/runtime/mass-entity-ambient-population.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->

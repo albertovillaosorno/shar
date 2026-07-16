@@ -40,16 +40,19 @@ feature removal.
 
 A cooked overlay may also add namespaced render-scope policy, Niagara and
 breakable-presentation definitions, road-network overlays, traffic-control
-policy, and diagnostic views. It cannot replace the engine frame loop, renderer,
-base VFX definitions, base road graph, traffic authority, or unrelated route
-queries.
+policy, vehicle-audio profiles, dialogue lines, conversations, event bindings,
+selection groups, listener and positional-source definitions, subtitles, mixes,
+and diagnostic views. It cannot replace the engine frame loop, renderer, audio
+device, base VFX or audio definitions, base road graph, traffic authority,
+listener policy, dialogue usage outside its namespace, or unrelated route and
+event queries.
 
-Feature removal cancels owned construction, render-scope, VFX, route, and
-traffic
-requests; tears down owned runtime objects and effects; releases streamable
-handles; unregisters namespaced constructors, assets, policies, and graph
-overlays; restores scoped base state; and invalidates stale callbacks as one
-transaction.
+Feature removal cancels owned construction, render-scope, VFX, route, traffic,
+vehicle-audio, dialogue, listener, and positional-source requests; tears down
+owned runtime objects, effects, playback, subtitles, mouth and ducking leases;
+releases streamable handles; unregisters namespaced constructors, assets,
+policies, dialogue content, listeners, and graph overlays; restores scoped base
+state; and invalidates stale callbacks as one transaction.
 
 Native executable packages are not loaded by this decision. They remain inactive
 unless a separate accepted native-extension trust, ABI, signing, loading, and

@@ -83,6 +83,8 @@ proprietary external formats.
 - [Developer command and diagnostic runtime](unreal/developer-command-and-diagnostic-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Device configuration and save-slot runtime](unreal/device-configuration-and-save-slot-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Dialogue selection, queue, and playback runtime](unreal/dialogue-selection-queue-and-playback-runtime.md)
 - [Frontend shell and menu runtime](unreal/frontend-shell-and-menu-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Frontend screen flow and settings runtime](unreal/frontend-screen-flow-and-settings-runtime.md)
@@ -141,6 +143,8 @@ proprietary external formats.
 <!-- markdownlint-disable-next-line MD013 -->
 - [Presentation playback runtime](unreal/presentation-playback-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Spatial audio listener and positional-source runtime](unreal/spatial-audio-listener-and-positional-source-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Spatial visibility, bounds, and culling runtime](unreal/spatial-visibility-bounds-and-culling-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Progression, collectibles, cheats, and credits](unreal/progression-collectibles-and-cheats.md)
@@ -158,6 +162,8 @@ proprietary external formats.
 <!-- markdownlint-disable-next-line MD013 -->
 - [Vehicle access and roster runtime](unreal/vehicle-access-and-roster-runtime.md)
 - [Vehicle AI and route runtime](unreal/vehicle-ai-and-route-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Vehicle audio and avatar-sound runtime](unreal/vehicle-audio-and-avatar-sound-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Vehicle retrieval and phone-booth runtime](unreal/vehicle-retrieval-and-phone-booth-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->

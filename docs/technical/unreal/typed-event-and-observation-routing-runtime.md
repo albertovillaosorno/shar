@@ -1,7 +1,7 @@
 # Typed event and observation routing runtime
 
 - Status: Active
-- Last reviewed: 2026-07-14
+- Last reviewed: 2026-07-16
 
 ## Governing decisions
 
@@ -14,6 +14,14 @@
 - [Typed StateTree action sequences](../../adr/unreal/runtime/typed-state-tree-action-sequences.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Event-driven music and ambience](../../adr/unreal/runtime/event-driven-music-and-ambience.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Native gameplay audio, dialogue, and listener boundary](../../adr/unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Vehicle audio and avatar-sound runtime](vehicle-audio-and-avatar-sound-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [HUD feedback cue and presentation-primitives runtime](hud-feedback-cue-and-presentation-primitives-runtime.md)
 
@@ -261,13 +269,32 @@ the owning physics adapter before domain publication.
 
 ## Dialogue and audio observations
 
-Dialogue and conversation messages identify participants, dialogue or quote
-event, conversation session, role, playback policy, and accepted state. They do
-not pass mutable character pointers or raw sound-name strings as authority.
+Dialogue and conversation requests identify semantic event, participants,
+conversation, line or selection-group policy, role, world, local-player, locale,
+priority, lifetime, positional policy, and expected revisions. Matching and
+queue
+results return immutable canonical identities from
+<!-- markdownlint-disable-next-line MD013 -->
+[Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md).
+They never pass mutable character pointers, raw sound-name strings, linked queue
+nodes, or callback user data as authority.
+
+Vehicle-audio observations carry vehicle, movement, gear, speed, surface,
+damage,
+horn, door, local-player, and world revisions to
+<!-- markdownlint-disable-next-line MD013 -->
+[Vehicle audio and avatar-sound runtime](vehicle-audio-and-avatar-sound-runtime.md).
+Listener candidates and positional-source observations carry camera, view,
+participant, transform, velocity, attachment, listener-policy, and world
+revisions
+to
+<!-- markdownlint-disable-next-line MD013 -->
+[Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md).
 
 Animation-sound and music-state observations resolve canonical sound, animation,
 positional policy, and music-state identities through the content catalog.
-Presentation failure cannot roll back an accepted gameplay fact.
+Audio playback, subtitles, mouth animation, virtualization, or completion cannot
+publish a domain success or roll back an accepted gameplay fact.
 
 ## Lifecycle integration
 

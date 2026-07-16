@@ -17,10 +17,11 @@ examples, or documentation.
   timeline and track authoring, localization and culture fallback, Control Rig
   integration, visibility and occlusion culling, post-process lens facilities,
   Niagara systems and emitters, native actor tick groups and prerequisites,
-  spline-component authoring, navigation-system boundaries, Chaos physics,
-  collision and traces, native physics components, ISM and HISM behavior, Chaos
-  Visual Debugger, and Unreal Engine 5.8 Media Framework and Electra boundaries
-  were verified. Accepted regional agreement, bundled
+  spline-component authoring, navigation-system boundaries, Unreal Audio Engine,
+  Sound Attenuation, MetaSounds, Sound Concurrency and voice-management policy,
+  Chaos physics, collision and traces, native physics components, ISM and HISM
+  behavior, Chaos Visual Debugger, and Unreal Engine 5.8 Media Framework and
+  Electra boundaries were verified. Accepted regional agreement, bundled
   notices, decoder availability, and external-service retention remain
   environment- or service-specific.
 - Counsel review: Not performed.
@@ -167,6 +168,23 @@ royalty or seat analysis.
 - Epic Games (2026) *Navigation System in Unreal Engine 5.8*. Available at:
   <!-- markdownlint-disable-next-line MD013 -->
   <https://dev.epicgames.com/documentation/en-us/unreal-engine/navigation-system-in-unreal-engine>
+  (Accessed: 16 July 2026).
+- Epic Games (2026) *Audio Engine Overview in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/audio-engine-overview-in-unreal-engine>
+  (Accessed: 16 July 2026).
+- Epic Games (2026) *Sound Attenuation in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/sound-attenuation-in-unreal-engine>
+  (Accessed: 16 July 2026).
+- Epic Games (2026) *MetaSounds in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/metasounds-in-unreal-engine>
+  (Accessed: 16 July 2026).
+- Epic Games (2026) *Sound Concurrency Reference Guide for Unreal Engine 5.8*.
+  Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/sound-concurrency-reference-guide>
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Physics in Unreal Engine 5.8*. Available at:
   <!-- markdownlint-disable-next-line MD013 -->

@@ -1,7 +1,7 @@
 # Presentation playback runtime
 
 - Status: Active
-- Last reviewed: 2026-07-15
+- Last reviewed: 2026-07-16
 
 ## Governing decisions and specifications
 
@@ -20,6 +20,10 @@
 - [Frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Frontend media, gallery, and audio runtime](frontend-media-gallery-and-audio-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Common UI navigation, menu, and modal runtime](common-ui-navigation-menu-and-modal-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -384,9 +388,18 @@ or interaction eligibility.
 ## Dialogue character presentation
 
 Dialogue presentation consumes accepted speaker, listener, line, conversation,
-character-representation, and audio revisions. It may request ambient idles,
-speaking layers, listening layers, look-at presentation, facial curves, and
-camera targets without owning dialogue progression.
+character-representation, and audio revisions from
+<!-- markdownlint-disable-next-line MD013 -->
+[Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md).
+It may request ambient idles, speaking layers, listening layers, look-at
+presentation, facial curves, and camera targets without owning dialogue
+progression.
+
+Positional speaker and listener projection follows
+<!-- markdownlint-disable-next-line MD013 -->
+[Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md).
+Presentation playback cannot select a dialogue variant, reorder the queue, or
+reinterpret native audio completion as a domain result.
 
 A character presentation profile declares:
 

@@ -19,6 +19,12 @@
 - [Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Road-network geometry and traffic runtime](road-network-geometry-and-traffic-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Vehicle audio and avatar-sound runtime](vehicle-audio-and-avatar-sound-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md)
 
 ## Purpose
 
@@ -132,6 +138,22 @@ semantics, route reachability, and deterministic path results follow
 A quality preset may reduce road rendering or ambient traffic density within
 accepted policy, but it cannot change the canonical graph or required route
 semantics.
+
+Audio quality may change codec, sample rate, optional layers, MetaSound graph
+complexity, spatialization implementation, occlusion and reverb cost, update
+frequency, concurrency, voice count, virtualization, and ambient significance
+within
+<!-- markdownlint-disable-next-line MD013 -->
+[Vehicle audio and avatar-sound runtime](vehicle-audio-and-avatar-sound-runtime.md),
+<!-- markdownlint-disable-next-line MD013 -->
+[Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md),
+and
+<!-- markdownlint-disable-next-line MD013 -->
+[Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md).
+
+It cannot remove required dialogue, change deterministic line selection, alter
+subtitles, reassign listener ownership, leak local-player audio, reinterpret
+vehicle gear or damage, or change gameplay results.
 
 A lower graphics preset may deliberately select lower visual settings. Outside
 that explicit preset selection, a performance change must not delete content,

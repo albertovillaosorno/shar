@@ -1,7 +1,7 @@
 # Platform audio cooking and streaming
 
 - Status: Active
-- Last reviewed: 2026-07-14
+- Last reviewed: 2026-07-16
 
 ## Governing decisions
 
@@ -9,6 +9,8 @@
 - [Platform-native audio cooking and streaming](../../adr/audio/platform-native-audio-cooking-and-streaming.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Event-driven music and ambience](../../adr/unreal/runtime/event-driven-music-and-ambience.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Native gameplay audio, dialogue, and listener boundary](../../adr/unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Latin American Spanish audio fallback](../../adr/audio/lmlm-spanish-latam-audio-fallback.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -77,10 +79,21 @@ Role policy is not inferred from a folder, filename, duration alone, or graphics
 preset. Asset-specific overrides are explicit, bounded, and validated.
 
 Dialogue prioritizes intelligibility, locale correctness, bounded start latency,
-and event timing. Music and ambient loops preserve declared loop sample
-boundaries. Cinematic audio follows the canonical cinematic timeline. Vehicle
-loops preserve pitch and transition behavior. UI and short gameplay cues
-preserve
+and event timing. Its runtime metadata, deterministic selection, queueing,
+subtitles, positional policy, and completion correlation follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md).
+
+Vehicle loops preserve pitch and transition behavior through
+<!-- markdownlint-disable-next-line MD013 -->
+[Vehicle audio and avatar-sound runtime](vehicle-audio-and-avatar-sound-runtime.md).
+Listener and moving-source projection follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md).
+
+Music and ambient loops preserve declared loop sample boundaries. Cinematic
+audio
+follows the canonical cinematic timeline. UI and short gameplay cues preserve
 latency and priority. No policy may remove a required category.
 
 ## Target cooking

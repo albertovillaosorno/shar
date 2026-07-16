@@ -1,7 +1,7 @@
 # Ambient population and named-character runtime
 
 - Status: Active
-- Last reviewed: 2026-07-15
+- Last reviewed: 2026-07-16
 
 ## Governing decisions
 
@@ -9,6 +9,8 @@
 - [Mass Entity ambient population](../../adr/unreal/runtime/mass-entity-ambient-population.md)
 - [Pedestrian path runtime](pedestrian-path-runtime.md)
 - [Presentation playback runtime](presentation-playback-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native flying-hazard actors and StateTree execution](../../adr/unreal/runtime/native-flying-hazard-actors-and-state-trees.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -304,10 +306,18 @@ Conversation candidates require:
 - a deterministic conversation event identity; and
 - cooldown eligibility for both participants.
 
-A short reservation prevents a third entity from taking either participant. The
-conversation emits presentation events and returns both entities to path
-behavior.
-It creates no mission progress or permanent relationship state.
+A short reservation prevents a third entity from taking either participant.
+Eligibility publishes immutable participant and event context to
+<!-- markdownlint-disable-next-line MD013 -->
+[Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md),
+which owns deterministic line matching, queueing, positional playback,
+subtitles,
+and completion observations.
+
+The population service retains movement and reservation authority. Dialogue
+selection, audio completion, subtitles, or mouth animation cannot release the
+participants, create mission progress, or write permanent relationship state.
+The reservation ends only through its accepted interaction or population result.
 
 ## Named-character placements
 

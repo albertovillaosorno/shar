@@ -14,6 +14,8 @@
 - [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Road-network geometry and traffic runtime](road-network-geometry-and-traffic-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Vehicle audio and avatar-sound runtime](vehicle-audio-and-avatar-sound-runtime.md)
 
 ## Purpose
 
@@ -331,6 +333,14 @@ controller
 publishes target, route, destination, and state identities; it does not create
 or
 own widgets.
+
+Engine, shift, reverse, in-air, skid, horn, damage, overlay, backup, and door
+audio consume the same immutable vehicle observations through
+<!-- markdownlint-disable-next-line MD013 -->
+[Vehicle audio and avatar-sound runtime](vehicle-audio-and-avatar-sound-runtime.md).
+The controller cannot select an audio clip, infer a gear from pitch, or accept
+an
+audio callback as movement, route, recovery, or mission evidence.
 
 Debug route lines, path samples, potential values, target bounds, and controller
 state are development-only overlays. Shipping behavior cannot depend on whether

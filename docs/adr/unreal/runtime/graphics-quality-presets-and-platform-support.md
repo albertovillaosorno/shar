@@ -99,6 +99,15 @@ Niagara owns particle simulation and rendering. Effect pooling, spawn counts,
 fragments, and cosmetic fallback may vary by preset, but VFX completion cannot
 commit gameplay and every continuous effect remains bounded by a typed lease.
 
+The native audio engine owns playback, attenuation, spatialization, concurrency,
+routing, mixing, virtualization, and platform output. Presets may change codecs,
+sample rates, optional layers, MetaSound complexity, voice limits, occlusion,
+reverb, and spatialization implementations. They cannot remove required
+dialogue,
+change deterministic line selection, alter subtitles, reassign listener
+ownership,
+leak local-player audio, or reinterpret vehicle state.
+
 Road meshes, ambient traffic density, and diagnostics may scale, but canonical
 road, lane, intersection, legal-movement, traffic-control, and
 route-connectivity

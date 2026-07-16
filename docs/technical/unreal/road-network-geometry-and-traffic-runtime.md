@@ -209,6 +209,25 @@ records:
 Segment joins are validated for positional and directional continuity. A gap or
 self-intersection beyond declared tolerance fails publication.
 
+Every segment also publishes deterministic geometric query evidence:
+
+- four canonical boundary corners or equivalent cooked boundary representation;
+- left and right edge normals;
+- segment plane or surface normal;
+- road-facing and cross-road axes;
+- segment length, width, lane width, and lane count;
+- start and end height and grade;
+- unit distance and unit height projection;
+- lane-center position at normalized progress;
+- join points and neighboring-segment evidence;
+- local-to-world transform and accepted scale; and
+- conservative box and sphere bounds.
+
+Queries reject non-finite transforms, degenerate axes, invalid lane ordinals,
+progress outside declared policy, and geometry from a retired graph revision.
+Runtime interpolation uses the cooked representation; it does not reconstruct
+source segment objects or expose mutable corner pointers.
+
 ## Lane definition
 
 `FSharLaneDefinition` contains:
@@ -294,6 +313,19 @@ Traffic-control definitions include:
 Source enum values such as no-stop or N-way are conversion evidence. Runtime
 uses
 closed semantic identities and definitions.
+
+A signal policy may use semantic phases such as `red`, `yellow`, `green`, and
+`advance_green`. Each phase declares eligible movement groups, minimum and
+maximum
+duration, transition constraints, world-time and pause behavior, emergency or
+mission override, synchronization group, and deterministic next-phase selection.
+
+Signal phase changes publish revisioned observations. A vehicle still requires
+an
+accepted reservation or admission result; seeing a green presentation cannot
+grant entry by itself. Fixed road ordinals and one magic turn duration are
+import
+evidence only.
 
 ## Intersection reservations
 
@@ -605,6 +637,32 @@ retired graph or unloaded region is rejected before controller mutation.
 
 Traffic reservations use one authority and deterministic conflict arbitration.
 
+## Road visualization and diagnostic rendering
+
+Road, lane, segment, terrain, spawn, bounds, tangent, normal, connection,
+signal,
+and reservation visualization is development-only presentation through native
+debug drawing or registered diagnostic components.
+
+Visualization requests carry graph, overlay, world, local-player, view, and
+request revisions. They may select loaded regions, road identities, terrain
+classes, spawn-eligible segments, boxes, spheres, or another bounded diagnostic
+filter.
+
+Diagnostic rendering cannot:
+
+- create or mutate road geometry;
+- change terrain or physical-surface identity;
+- reserve or release an intersection;
+- spawn traffic;
+- affect path cost or closest-road results;
+- become shipping renderer authority; or
+- keep an unloaded graph revision alive.
+
+Visual tests compare deterministic query and geometry evidence rather than
+relying
+on one process-global debug singleton or mutable display flags.
+
 ## Diagnostics
 
 Development diagnostics may expose:
@@ -650,8 +708,11 @@ Cook and definition validation prove:
 
 - every graph identity and reference resolves;
 - curve and sample output is finite and deterministic;
+- every segment has valid corners, axes, normals, height, lane width, transform,
+  progress projection, and conservative bounds;
 - road, lane, and intersection joins satisfy tolerance;
 - lane directions and legal movements are complete;
+- signal phases, transitions, timings, and movement groups are valid;
 - required route pairs remain reachable;
 - deterministic path and closest-road tie-breaks are stable;
 - speed, density, shortcut, and difficulty units are valid;
@@ -669,10 +730,15 @@ Required automated and visual tests include:
 - cubic curve and spline conversion;
 - finite, degenerate, and discontinuous geometry rejection;
 - lane offset, tangent, normal, and progress interpolation;
+- segment corner, edge-normal, plane-normal, height, transform, lane-center,
+  progress, box, and sphere queries;
 - road-segment point and distance lookup;
 - intersection point containment and join validation;
 - legal left, straight, right, merge, split, and continuation movements;
-- traffic-control reservation, fairness, expiry, and cancellation;
+- red, yellow, green, and advance-green phase transitions;
+- traffic-control timing, pause, override, movement-group, reservation,
+  fairness,
+  expiry, and cancellation;
 - deterministic equal-cost route selection;
 - unreachable, bounded, cancelled, and stale path results;
 - closest-road and closest-lane tie-breaks;

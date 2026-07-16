@@ -1,7 +1,7 @@
 # Camera rig, preset, and arbitration runtime
 
 - Status: Active
-- Last reviewed: 2026-07-15
+- Last reviewed: 2026-07-16
 
 ## Governing decisions and specifications
 
@@ -12,6 +12,8 @@
 - [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
 - [Camera system runtime](camera-system-runtime.md)
 - [Presentation playback runtime](presentation-playback-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md)
 
@@ -250,6 +252,16 @@ collision observations, and elapsed simulation time. It returns:
 Non-finite transforms, invalid planes, inverted projection ranges, unresolved
 look targets, or unsupported target kinds return a typed failure before the view
 is applied.
+
+After the camera and view commit, the subsystem publishes one immutable listener
+candidate containing local-player, view, camera, world, position, orientation,
+velocity, controlled-participant, and interior revisions to
+<!-- markdownlint-disable-next-line MD013 -->
+[Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md).
+
+The camera runtime does not write directly to the platform audio device, clamp a
+listener to an arbitrary participant, select the split-screen mix, or retain an
+audio listener after view teardown.
 
 ## Input mapping
 

@@ -72,10 +72,17 @@ road, lane, intersection, legal-movement, traffic-control, and connectivity
 semantics, while traffic owns reservations and occupancy. Missions may apply
 revisioned road-policy overlays but cannot mutate the base graph.
 
-Queries, route results, render frames, Niagara completion, fragment cleanup, and
-intersection proximity may inform a mission or interaction decision but cannot
-activate objectives, move entities, commit breakage, grant rewards, or mutate
-progression directly. Stale physics, collision, query, route, VFX, render, or
+Queries, route results, render frames, Niagara completion, fragment cleanup,
+dialogue selection, queue admission, audio playback, subtitles, mouth animation,
+listener updates, and intersection proximity may inform presentation but cannot
+activate objectives, release interaction reservations, move entities, commit
+breakage, grant rewards, or mutate progression directly.
+
+Mission and interaction services publish typed dialogue eligibility and consume
+only typed presentation results. Dialogue runtime cannot infer domain success
+from
+filename metadata, line completion, queue state, or audio callbacks. Stale
+physics, collision, query, route, VFX, dialogue, audio, listener, render, or
 teardown callbacks cannot mutate a replacement entity revision.
 
 The active world uses World Partition and Runtime Data Layers for level
