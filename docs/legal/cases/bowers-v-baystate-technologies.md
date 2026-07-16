@@ -1,4 +1,4 @@
-# Bowers v. Baystate Technologies, Inc.
+# Bowers v. Baystate Technologies, Inc
 
 > [Legal Research Disclaimer](../disclaimer.md) applies to this record.
 
@@ -44,6 +44,10 @@ the same injury under copyright and contract theories.
   term binding.
 - Formation, notice, scope, unconscionability, public policy, statutory text,
   waiver doctrine, remedies, and later authority remain separate questions.
+- *Vault Corp. v. Quaid Software Ltd.* reached a different result for a license
+  restriction authorized by a Louisiana statute that conflicted with § 117. The
+  *Bowers* majority distinguished that state-law scheme from the private promise
+  before it.
 - The decision did not hold that reverse engineering is copyright infringement
   whenever a contract prohibits it.
 - The dissent would have found the reverse-engineering prohibition preempted and
@@ -77,6 +81,7 @@ and controlling law.
   (Fed. Cir. 2003), public opinion text. Available at:
   <https://law.justia.com/cases/federal/appellate-courts/F3/320/1317/615628/>
   (Accessed: 15 July 2026).
+- [Vault Corp. v. Quaid Software Ltd.](vault-v-quaid-software.md).
 <!-- markdownlint-disable-next-line MD013 -->
 - [Software license reverse-engineering clauses](../contracts/software-license-reverse-engineering-clauses.md).
 - [17 U.S.C. § 301](../statutes/17-usc-301.md).

@@ -27,9 +27,9 @@ circumvented, contractual restrictions apply, or files are shared.
 
 Copy ownership depends on the governing jurisdiction and complete transaction.
 The Second Circuit's *Krause v. Titleserv* decision treated a custom-program
-user
-as an owner where it paid substantial consideration, received programs created
-for its sole benefit, held an indefinite and materially unrestricted right to
+user as an owner where it paid substantial consideration, received programs
+created for its sole benefit, held an indefinite and materially unrestricted
+right to
 possess and use the copies, and could discard or destroy them. The Ninth
 Circuit's *Vernor v. Autodesk* decision instead treated a transferee as a
 licensee where the copyright owner used a license designation, significantly
@@ -37,22 +37,23 @@ restricted transfer, and imposed notable use restrictions. Physical possession,
 a purchase receipt, payment, and the word `license` are therefore relevant but
 not independently conclusive.
 
-Copyright and contract must then be assessed separately. *Bowers v. Baystate
-Technologies, Inc.* enforced a properly formed reverse-engineering prohibition
-under the First Circuit law the Federal Circuit predicted would apply, even
-while preserving the separate copyright principle that some reverse engineering
-can be fair use. The decision does not prove that a physical-copy purchaser
-accepted a term, that a later service agreement governs an earlier disc
-transaction, or that every jurisdiction would enforce the same restriction.
+Copyright and contract must then be assessed separately. *Vault Corp. v. Quaid
+Software Ltd.* invalidated a state-act-backed decompilation restriction that
+conflicted with § 117. *Bowers v. Baystate Technologies, Inc.* later enforced a
+private reverse-engineering promise under the First Circuit law the Federal
+Circuit predicted would apply and distinguished the statutory scheme in
+*Vault*. Neither decision proves that a physical-copy purchaser accepted a
+term, that a later service agreement governs an earlier disc transaction, or
+that every jurisdiction would enforce the same restriction.
 
 ## Why Local Use Is Legally Different From Distribution
 
 - Section 117 expressly addresses some copies and adaptations made by the owner
   of a program copy for use with a machine.
 - *Krause v. Titleserv* treated repairs, routine data updates, migration to a
-  new
-  computer system, and features serving custom software's established purpose as
-  qualifying adaptations on its record. It also required the adapted program to
+  new computer system, and features serving custom software's established
+  purpose as qualifying adaptations on its record. It also required the adapted
+  program to
   remain within the contemplated manner of use.
 - *Lewis Galoob Toys v. Nintendo* treated temporary runtime changes that altered
   no cartridge and incorporated no protected display in permanent form
@@ -101,8 +102,10 @@ transaction, or that every jurisdiction would enforce the same restriction.
 - [17 U.S.C. § 109](../statutes/17-usc-109.md).
 - [17 U.S.C. § 117](../statutes/17-usc-117.md).
 - [17 U.S.C. § 1201](../statutes/17-usc-1201-trafficking.md).
+<!-- markdownlint-disable-next-line MD013 -->
 - [Bowers v. Baystate Technologies, Inc.](../cases/bowers-v-baystate-technologies.md).
 - [Krause v. Titleserv, Inc](../cases/krause-v-titleserv.md).
+- [Vault Corp. v. Quaid Software Ltd.](../cases/vault-v-quaid-software.md).
 - [Vernor v. Autodesk, Inc](../cases/vernor-v-autodesk.md).
 <!-- markdownlint-disable-next-line MD013 -->
 - [Lewis Galoob Toys, Inc. v. Nintendo of America, Inc](../cases/lewis-galoob-toys-v-nintendo.md).

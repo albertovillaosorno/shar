@@ -13,6 +13,7 @@ Anysphere
 Astronics
 Batchelder
 Baystate
+Berkman
 Berman
 Bonestorm
 Borland
@@ -58,6 +59,7 @@ Nygard
 Ofek
 Osorno
 PATENTSCOPE
+Quaid
 Sedlik
 Simpsons
 Smarch

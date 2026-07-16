@@ -33,9 +33,13 @@ promise bound the contracting parties rather than creating a right against the
 world.
 
 That decision is not a nationwide rule that every restriction is enforceable.
-The dissent would have found the prohibition preempted, and formation, notice,
-scope, governing law, public policy, statutory text, remedies, and later
-controlling authority remain independent questions.
+*Vault Corp. v. Quaid Software Ltd.* held that a Louisiana statute authorizing a
+license restriction against decompilation or disassembly conflicted with § 117
+and was preempted. *Bowers* later distinguished that statutory scheme from the
+private promise before it. The *Bowers* dissent would also have found the
+reverse-engineering prohibition preempted. Formation, notice, scope, governing
+law, public policy, statutory text, remedies, and later controlling authority
+therefore remain independent questions.
 
 ## Not Established
 
@@ -58,8 +62,11 @@ private terms.
 - Every product, platform, download, SDK, and service agreement actually shown.
 - Complete assent interface evidence and transaction records.
 - Controlling state contract law and federal preemption authority.
+<!-- markdownlint-disable-next-line MD013 -->
 - [Bowers v. Baystate Technologies, Inc.](../cases/bowers-v-baystate-technologies.md),
-  for one influential contract and preemption analysis and its contrary dissent.
+  for one influential private-contract analysis and its contrary dissent.
+- [Vault Corp. v. Quaid Software Ltd.](../cases/vault-v-quaid-software.md),
+  for the conflicting state-license-act and § 117 analysis.
 - Applicable statutes, including 17 U.S.C. §§ 301 and 1201(f).
 
 ## Verification Checklist

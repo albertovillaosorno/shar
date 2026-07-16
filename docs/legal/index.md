@@ -53,6 +53,7 @@ may cite ADRs for technical facts, but ADRs are not legal authority.
 - [Andy Warhol Foundation for the Visual Arts, Inc. v. Goldsmith](cases/andy-warhol-foundation-v-goldsmith.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Berman v. Freedom Financial Network, LLC](cases/berman-v-freedom-financial.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Bowers v. Baystate Technologies, Inc.](cases/bowers-v-baystate-technologies.md)
 - [Google LLC v. Oracle America, Inc](cases/google-v-oracle.md)
 - [Krause v. Titleserv, Inc](cases/krause-v-titleserv.md)
@@ -76,6 +77,7 @@ may cite ADRs for technical facts, but ADRs are not legal authority.
 <!-- markdownlint-disable-next-line MD013 -->
 - [Sony Computer Entertainment, Inc. v. Connectix Corp](cases/sony-v-connectix.md)
 - [Specht v. Netscape Communications Corp](cases/specht-v-netscape.md)
+- [Vault Corp. v. Quaid Software Ltd.](cases/vault-v-quaid-software.md)
 - [Vernor v. Autodesk, Inc](cases/vernor-v-autodesk.md)
 
 ## Doctrinal Analysis
@@ -131,7 +133,7 @@ fact-specific result is not determined. Hosting, public access, noncommercial
 purpose, independent implementation, interoperability intent, or an accepted ADR
 does not determine a legal outcome by itself.
 
-- Active legal records: 54.
+- Active legal records: 55.
 - Review date: 2026-07-15.
 - Statutory currentness: the Office of the Law Revision Counsel classification
   tables were checked on 2026-07-14. The published 119th Congress tables cover

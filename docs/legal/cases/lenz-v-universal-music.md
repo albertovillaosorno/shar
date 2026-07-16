@@ -1,4 +1,4 @@
-# Lenz v. Universal Music Corp.
+# Lenz v. Universal Music Corp
 
 > [Legal Research Disclaimer](../disclaimer.md) applies to this record.
 
