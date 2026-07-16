@@ -375,6 +375,44 @@ vehicle or respawn a player directly.
 
 ## Tutorial presentation
 
+`USharTutorialSubsystem`, a game-instance subsystem, owns tutorial definitions,
+profile-scoped completion, eligibility projections, the bounded pending queue,
+and the currently accepted tutorial request. World-scoped gameplay observations
+are normalized by the typed observation router before eligibility evaluation.
+
+A tutorial definition contains:
+
+- canonical tutorial identity and definition revision;
+- typed observation predicates that may propose it;
+- participant, world, chapter, mission, interaction, and vehicle filters;
+- prerequisite and mutual-exclusion tutorial identities;
+- repeat, once-per-profile, once-per-save, and session policy;
+- localized text, optional art, narration, and prompt actions;
+- blocking, timing, priority, coalescing, and replacement policy;
+- dismissal and permanent-disable eligibility; and
+- accepted completion and persistence behavior.
+
+Raw event numbers, enum ordinals, listener removal, mutable queue slots, and bit
+positions are not tutorial identity or eligibility authority.
+
+An observation proposes a tutorial; it does not immediately display or mark it
+seen. The subsystem validates the exact observation, participant, world,
+progression, settings, catalog, and tutorial-state revisions. It then rejects,
+coalesces, replaces, or enqueues the proposal according to deterministic
+priority
+and stable identity order.
+
+The queue is bounded. Only one blocking tutorial may own a local player's focus
+at a time. Shared tutorials use an explicit viewport scope and cannot borrow one
+player's action context. A terminal tutorial result triggers eligibility
+re-evaluation before the next request starts.
+
+Prerequisites are data-driven. For example, a traffic-vehicle tutorial may
+require the accepted player-vehicle entry tutorial, and race, bonus-mission, and
+wager tutorials remain separate identities even when proposed by one observation
+family. Completing or suppressing one definition cannot silently mark another
+seen.
+
 Tutorial presentation contains tutorial identity, localized text, optional art,
 blocking policy, accepted actions, narration, timing, and source revision.
 
@@ -386,12 +424,20 @@ permanent tutorial disablement is currently eligible.
 Confirm, dismiss, and disable-tutorial actions are distinct typed commands.
 Disabling future tutorials updates device or profile configuration through a
 verified settings transaction; it does not retroactively complete gameplay or
-silently dismiss another player's tutorial.
+silently dismiss another player's tutorial. Separately disabling observation
+proposals for a test or special mode is transient session policy and cannot
+rewrite persistent completion.
+
+Portable state stores canonical accepted tutorial identities with schema and
+source revisions. A generated bitset may be a versioned storage representation,
+but enum position never becomes domain identity. Loading validates unknown,
+removed, aliased, or feature-owned tutorials before publishing eligibility.
 
 A tutorial cannot mark itself completed. Completion is accepted only after the
-tutorial service commits the result. Closing, cancelling, or superseding the
-tutorial releases focus, narration, input, and asset leases exactly once. A late
-animation or settings callback cannot close a replacement tutorial.
+tutorial service commits the exact terminal result. Closing, cancelling, or
+superseding the tutorial releases focus, narration, input, and asset leases
+exactly once. A late dialog, animation, observation, save, or settings callback
+cannot close, complete, or mark seen a replacement tutorial.
 
 ## Pause request transaction
 

@@ -88,6 +88,7 @@ GOURAUD
 HSPLINE
 HSTREE
 HSV
+HLOD
 IHDR
 IMA
 IMAT
@@ -331,6 +332,7 @@ camset
 capsys
 cardsfx
 carsound
+cel
 chkpts
 cho
 classpath
@@ -483,6 +485,8 @@ mgroup
 mgrow
 mhide
 mhtmltag
+minimap
+minimaps
 minimis
 minversion
 mklink
@@ -596,14 +600,20 @@ radmusic
 radp
 rcf
 rdblquote
+rebake
+rebaked
+rebaking
 redbgd
 referencers
+remeshing
+renderable
 reparent
 reparenting
 replacen
 revisioned
 retarget
 retargets
+retriable
 revtbl
 revtim
 ripgrep
@@ -663,6 +673,8 @@ txtbible
 ubtplugin
 umg
 umvvm
+unskippable
+unsplittable
 uplugin
 upr
 uproject

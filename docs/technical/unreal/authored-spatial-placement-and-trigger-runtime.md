@@ -13,6 +13,7 @@
 - [Typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md)
 - [Native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md)
 - [Camera rig, preset, and arbitration runtime](camera-rig-preset-and-arbitration-runtime.md)
+- [Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md)
 
 ## Purpose
 
@@ -370,6 +371,12 @@ transition policy, priority, and owning presentation scope.
 The renderer, camera, audio, or presentation adapter consumes the observation.
 The placement does not count active triggers in mutable local state to decide
 permanent occlusion behavior.
+
+Renderer-owned bounds, frustum rejection, occlusion, distance policy, and
+converted cell diagnostics follow
+[Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md).
+An overlap observation may request explicit visibility policy, but it cannot
+publish a draw list, unload a region, or reinterpret culling as gameplay absence.
 
 Conflicting regions use declared priority and deterministic identity ordering.
 World unload releases all requests and restores the owner's fallback state.

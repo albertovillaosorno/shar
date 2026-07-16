@@ -12,6 +12,8 @@
 - [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
 - [Camera system runtime](camera-system-runtime.md)
 - [Presentation playback runtime](presentation-playback-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md)
 
 ## Purpose
 
@@ -492,6 +494,14 @@ explicit owner and cannot survive that owner's request.
 Frustum, rail, hull, cylinder, collision, candidate, and target diagnostics are
 read-only development views. They consume the same validated snapshots and
 results used by runtime evaluation.
+
+The camera subsystem owns accepted view and projection revisions. Renderer-owned
+primitive bounds, per-view frustum rejection, occlusion, and converted
+convex-volume diagnostics follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md).
+A camera diagnostic cannot publish a second draw list or mutate world
+visibility.
 
 Diagnostic geometry:
 

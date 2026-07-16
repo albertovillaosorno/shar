@@ -19,6 +19,14 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Frontend media, gallery, and audio runtime](frontend-media-gallery-and-audio-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Common UI navigation, menu, and modal runtime](common-ui-navigation-menu-and-modal-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md)
 
 ## Purpose
@@ -33,6 +41,28 @@ runtime behavior hidden behind aggregate translation units.
 Presentation playback observes gameplay state and emits typed presentation
 results. It does not own mission completion, dialogue progression, rewards,
 character identity, camera authority, or save state.
+
+## Native Unreal composition
+
+The runtime uses:
+
+- `USharPresentationPlaybackSubsystem`, a world-scoped subsystem, as the
+  request,
+  queue, playback-revision, cancellation, result, and teardown authority;
+- the Asset Manager and retained streamable handles for presentation bundles;
+- Level Sequence and its player for authored composite cinematic timelines;
+- animation montages, animation sequences, Animation Blueprints, and Control Rig
+  for character presentation;
+- the camera subsystem for cuts, blends, targets, and restoration;
+- Media Framework adapters for packaged cinematic media;
+- Common UI and UMG for overlays, type-on text, and registered transitions;
+- the localization manager, `FText`, String Tables, and culture fallback for
+  player-facing text and localized media selection; and
+- typed observations and terminal results for application, dialogue, mission,
+  interaction, and frontend owners.
+
+Level Sequence, animation, media, widget, camera, and render objects are bounded
+adapters. None can become a second application or gameplay scheduler.
 
 ## Ownership
 
@@ -155,6 +185,36 @@ Acceptance follows this sequence:
 Partial preparation rolls back assets, adapters, camera requests, input leases,
 HUD suppression, and world-presentation effects.
 
+## Queue and arbitration
+
+Queued playback uses `FSharPresentationQueueEntryId`, a stable channel identity,
+priority, insertion sequence, owner revision, and cancellation token. The queue
+is bounded by registered channel policy rather than a compile-time event array.
+
+A channel declares:
+
+- maximum pending and active requests;
+- priority and deterministic tie-break order;
+- first-in, first-out behavior within equal priority;
+- duplicate, replace, merge, and reject rules;
+- exclusivity compatibility;
+- starvation and deadline policy; and
+- teardown behavior for queued and active requests.
+
+Acceptance of a queue entry does not mean playback has started. One correlated
+lifecycle publishes `queued`, `loading`, `ready`, `started`, and exactly one
+terminal result. Begin, load-complete, marker, stop, and end observations carry
+the queue entry, request, owner, world, and presentation revisions.
+
+Clearing a queue is a typed cancellation transaction. It cancels each owned
+pending or active entry, compensates committed leases, releases retained assets,
+and records terminal results. It cannot reset pooled memory and silently discard
+owner obligations.
+
+A callback may start only the accepted head entry for its channel. Late load or
+end callbacks cannot advance a replacement entry, release its leases, or invoke
+an older raw callback object.
+
 ## Asynchronous loading
 
 Asset loading is revision-correlated. A load request records:
@@ -172,6 +232,57 @@ start playback, mutate owner state, or release another request's assets.
 
 Content already resident follows the same readiness barrier as newly loaded
 content. Residency does not bypass validation or create a different start path.
+
+## Culture and localized presentation
+
+Presentation culture comes from the accepted Unreal localization environment,
+including user preference, platform culture, product-supported culture, and the
+engine culture-fallback chain. Hardware-language enums, platform compile-time
+branches, filename suffixes, and media audio indices are adapter evidence rather
+than portable identity.
+
+A localized presentation request records:
+
+- requested and resolved culture names;
+- localization-target and String Table revisions;
+- text, subtitle, voice, and media-variant identities;
+- fallback chain and terminal fallback reason;
+- number, date, line-break, and bidirectional-text policy; and
+- accessibility alternatives.
+
+Player-facing text remains `FText` until the final adapter boundary. A missing
+translation follows the declared fallback chain and records a finding; it cannot
+select an unrelated asset or change gameplay behavior.
+
+Localized media selection validates packaged track or variant availability
+before
+playback commit. Culture changes supersede older readiness work and cannot swap
+text, subtitles, or audio under an accepted playback revision unless the
+definition explicitly supports a correlated live update.
+
+## Type-on text presentation
+
+Type-on text is a non-authoritative presentation adapter over immutable
+localized
+`FText`. It reveals Unicode grapheme clusters using locale-aware boundaries; it
+does not insert terminators into a mutable string buffer or expose partial raw
+storage to widgets.
+
+`FSharTypeOnTextPolicy` declares:
+
+- reveal rate and time source;
+- punctuation and authored pause markers;
+- minimum and maximum display duration;
+- pause, resume, reveal-all, dismiss, and replacement behavior;
+- narration synchronization;
+- right-to-left and bidirectional layout support;
+- reduced-motion and instant-text alternatives; and
+- completion result mapping.
+
+Pausing preserves the exact reveal cursor and accepted text revision. Resume,
+reveal-all, timeout, user dismissal, replacement, and owner cancellation each
+produce one correlated result. A stale timer cannot reveal or hide replacement
+text.
 
 ## Exclusivity and scoped leases
 
@@ -270,6 +381,96 @@ It resumes with a new correlated schedule rather than replaying a stale timer.
 Cosmetic layer failure cannot alter character state, dialogue, mission progress,
 or interaction eligibility.
 
+## Dialogue character presentation
+
+Dialogue presentation consumes accepted speaker, listener, line, conversation,
+character-representation, and audio revisions. It may request ambient idles,
+speaking layers, listening layers, look-at presentation, facial curves, and
+camera targets without owning dialogue progression.
+
+A character presentation profile declares:
+
+- eligible ambient and conversation animation identities;
+- deterministic sequential or seeded selection policy;
+- speaking, listening, interruption, and return-to-idle blends;
+- facial, jaw, blink, and eye-look channels;
+- Animation Blueprint and optional Control Rig bindings;
+- representation and LOD support;
+- missing-bone or missing-curve fallback; and
+- cancellation and restoration behavior.
+
+Ambient selection derives from conversation, participant, profile, and accepted
+selection-count identities. Global random-call order and frame rate cannot
+change
+which animation is chosen.
+
+Speaking begins and ends from typed dialogue or audio observations. Authored
+facial curves, animation data, or validated audio-driven envelopes are
+preferred.
+A bounded procedural jaw fallback may be used only when declared by the profile;
+it uses deterministic input, clamps to authored limits, and never writes a named
+skeleton joint through an uncorrelated random tick.
+
+Camera-per-line metadata submits ordinary camera requests. A dialogue line,
+animation marker, mouth motion, or camera cut cannot advance the conversation or
+mark the line accepted.
+
+## Level Sequence and composite playback
+
+Authored non-interactive scenes use registered Level Sequence definitions. A
+sequence definition declares:
+
+- sequence asset and playback range;
+- display rate and tick resolution;
+- camera, animation, audio, event, visibility, and effects tracks;
+- deterministic frame or marker identities;
+- intro, loop, outro, and completion policy;
+- bound actor and spawnable resolution;
+- skip and restoration behavior; and
+- fallback for unsupported or missing optional tracks.
+
+A legacy scene-graph or camera presentation converts to a validated sequence or
+another registered composite definition. Source filenames, inventory sections,
+and player-type enums do not survive as runtime authority.
+
+Sequence evaluation is presentation evidence. Event tracks may publish typed
+observations or satisfy declared presentation barriers, but they cannot call
+mission, application, save, or progression mutation directly.
+
+Simple animation playback uses the same request lifecycle. Intro, loop, and
+outro ranges have explicit markers, and completion is derived from the accepted
+player state rather than rendering or a guessed frame count.
+
+## Registered transition composition
+
+Fades, iris wipes, color changes, show and hide actions, transforms, spring-like
+motion, scale pulses, spins, pauses, and event barriers are registered
+presentation nodes. They compose as an immutable validated graph rather than raw
+objects linked by pointers.
+
+Each node declares:
+
+- stable node identity and closed node kind;
+- duration, time source, curve, and accessibility policy;
+- input and output value schema;
+- owned widget, overlay, camera, or visibility lease;
+- predecessors and successors by checked identity;
+- completion and cancellation result; and
+- compensation and restoration behavior.
+
+The graph rejects cycles unless the definition declares a bounded loop, missing
+nodes, ambiguous joins, incompatible resource claims, and terminal paths without
+cleanup. Parallel branches may run only when their leases are compatible.
+
+A display node may request a screen route, input-state change, application-mode
+transition, gameplay resume, or typed event through the owning application port.
+Visual completion merely satisfies a presentation barrier; it cannot switch
+context, resume simulation, change input authority, or mutate gameplay directly.
+
+Reduced-motion policy may replace movement, spring, spin, pulse, or iris nodes
+with an equivalent fade or instant semantic transition while preserving focus,
+result, and owner-visible timing guarantees.
+
 ## Sequence and action integration
 
 The typed action-sequence runtime may request presentation playback and wait for
@@ -364,9 +565,32 @@ The media definition and packaging specification select the supported adapter at
 build and runtime boundaries.
 
 A missing required platform variant fails readiness. An optional accessibility
-or
-presentation fallback must be declared and produce the same owner-visible result
-policy.
+or presentation fallback must be declared and produce the same owner-visible
+result policy.
+
+## Overlay and render adapter
+
+A presentation overlay is a scoped render and UI adapter owned by the accepted
+playback revision. It may project a fade color, letterbox, texture, media
+surface,
+or diagnostic frame through native Unreal rendering and UMG.
+
+The adapter does not own a process-global render layer, freeze or thaw the
+world,
+remove another subsystem's drawables, or infer playback completion from whether
+it rendered. HUD suppression, world-presentation focus, camera priority, and
+simulation pause are independent leases with independent restoration evidence.
+
+Overlay construction, visibility, and destruction carry request, world, view,
+and presentation revisions. A stale fade or render callback cannot reinitialize
+the HUD, resume gameplay, restore an old camera, or remove a replacement
+overlay.
+
+Cinematic and overlay views follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md).
+Temporary camera or visibility changes do not become durable world or streaming
+state.
 
 ## Update and render boundaries
 
@@ -420,8 +644,13 @@ Development diagnostics expose immutable snapshots of:
 - active asset handles;
 - input, camera, HUD, audio, and world leases;
 - playback time and time source;
+- queue channel, position, priority, and arbitration result;
+- requested and resolved culture and localized variant;
+- type-on text reveal cursor and accessibility policy;
+- Level Sequence range, marker, and bound-object revisions;
+- transition-graph node and owned leases;
 - skip and fallback eligibility;
-- cosmetic schedule state;
+- cosmetic and dialogue-animation schedule state;
 - target representation binding; and
 - last load, playback, cancellation, restoration, or teardown finding.
 
@@ -437,7 +666,13 @@ The runtime fails closed on:
 - stale owner, world, target, asset, or request revision;
 - load completion without a matching request;
 - playback start before readiness;
+- unbounded queue, ambiguous priority, or starvation without policy;
 - duplicate terminal result;
+- invalid culture, text revision, media variant, or fallback chain;
+- invalid Unicode reveal boundary or mutable text-buffer presentation;
+- malformed Level Sequence binding, range, marker, or terminal path;
+- cyclic or incomplete transition graph;
+- dialogue animation or procedural facial motion without correlated ownership;
 - invalid skip or cancellation context;
 - lost target without a recovery or fallback policy;
 - exclusivity without scoped leases;
@@ -461,7 +696,13 @@ Definition validation proves:
 - every exclusivity effect uses a scoped lease;
 - every adapter has a stop and release path;
 - every owner result is revision-correlated;
-- cosmetic schedules are deterministic; and
+- queue capacity, priority, replacement, and cancellation are bounded;
+- culture, localized variant, and fallback chains resolve deterministically;
+- type-on text uses immutable `FText` and Unicode reveal boundaries;
+- every Level Sequence binding, marker, range, and terminal path resolves;
+- every transition graph is bounded, acyclic or explicitly loop-bounded, and
+  cancellation-safe;
+- cosmetic and dialogue-animation schedules are deterministic; and
 - overlays cannot gain authoritative gameplay behavior.
 
 ## Tests
@@ -470,13 +711,20 @@ Required automated tests include:
 
 - resident and asynchronous load readiness equivalence;
 - late load callback rejection;
+- bounded queue ordering, replacement, coalescing, starvation, and clear;
 - start, pause, resume, stop, complete, skip, cancel, fail, and release;
 - nested compatible exclusivity leases;
 - incompatible request wait, preemption, and rejection;
 - camera request acceptance, preemption, completion, and restoration;
+- culture fallback and localized media-variant selection;
+- type-on grapheme reveal for combining marks, emoji, and bidirectional text;
+- type-on pause, resume, reveal-all, replacement, and reduced-motion behavior;
+- Level Sequence binding, marker, intro, loop, outro, skip, and cancellation;
+- transition graph joins, parallel leases, bounded loops, and compensation;
 - animation target loss and representation transfer;
-- deterministic blink schedules across frame rates;
+- deterministic blink and ambient-dialogue schedules across frame rates;
 - blink suppression during dialogue and facial animation;
+- authored facial curves and bounded procedural fallback;
 - skip hold, vote, denial, acceptance, and duplicate input;
 - media platform result normalization;
 - required media variant rejection and declared fallback;
@@ -487,11 +735,17 @@ Required automated tests include:
 ## Invariants
 
 - Every active playback has one canonical request and owner revision.
+- Queue order and arbitration are bounded, deterministic, and
+  revision-correlated.
 - Loading completion never starts playback without owner revalidation.
+- Culture and localized presentation resolve through one accepted fallback
+  chain.
+- Type-on text never mutates localized source storage.
+- Level Sequence and transition graphs remain presentation adapters.
 - Rendering never mutates lifecycle state.
 - Exclusive presentation uses scoped leases with exact restoration.
 - Camera authority remains in the camera subsystem.
-- Cosmetic animation cannot change gameplay or progression.
+- Cosmetic and dialogue animation cannot change gameplay or progression.
 - One playback revision publishes at most one terminal owner result.
 - Skip and cancellation are distinct typed outcomes.
 - Platform adapters share one result and teardown contract.

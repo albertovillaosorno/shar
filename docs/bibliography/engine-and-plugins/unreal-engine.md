@@ -12,8 +12,10 @@ examples, or documentation.
   release branch identity, current Epic EULA, its generative-AI input
   restriction, public source-access rules, Common UI input routing and action
   data, managed subsystem lifetimes, C++ UMG MVVM viewmodels and field
-  notifications, Asset Manager primary-asset and bundle boundaries, and Unreal
-  Engine 5.8 Media Framework and Electra boundaries were verified. Accepted
+  notifications, Asset Manager primary-asset and bundle boundaries, Sequencer
+  timeline and track authoring, localization and culture fallback, Control Rig
+  integration, visibility and occlusion culling, and Unreal Engine 5.8 Media
+  Framework and Electra boundaries were verified. Accepted
   regional agreement, bundled notices, decoder availability,
   and external-service retention remain environment- or service-specific.
 - Counsel review: Not performed.
@@ -116,6 +118,24 @@ royalty or seat analysis.
 - Epic Games (2026) *UMG Viewmodel for Unreal Engine 5.8*. Available at:
   <!-- markdownlint-disable-next-line MD013 -->
   <https://dev.epicgames.com/documentation/en-us/unreal-engine/umg-viewmodel-for-unreal-engine>
+  (Accessed: 15 July 2026).
+- Epic Games (2026) *Sequencer Cinematic Editor for Unreal Engine 5.8*.
+  Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/sequencer-cinematic-editor-unreal-engine>
+  (Accessed: 15 July 2026).
+- Epic Games (2026) *Localization Overview for Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/localization-overview-for-unreal-engine>
+  (Accessed: 15 July 2026).
+- Epic Games (2026) *Control Rig in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/control-rig-in-unreal-engine>
+  (Accessed: 15 July 2026).
+- Epic Games (2026) *Visibility and Occlusion Culling in Unreal Engine 5.8*.
+  Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/visibility-and-occlusion-culling-in-unreal-engine>
   (Accessed: 15 July 2026).
 - Epic Games (2026) *Media Framework Technical Reference for Unreal Engine 5.8*.
   Available at:

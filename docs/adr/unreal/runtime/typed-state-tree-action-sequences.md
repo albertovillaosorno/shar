@@ -43,11 +43,21 @@ invalid timeouts, and unresolved assets fail validation before runtime. Array
 position and case-insensitive string hashing are not identity authority.
 
 Character movement uses Character Movement and authored navigation or
-interaction
-slots. Animation uses montages, sections, slots, root motion, and notifies.
-Vehicle actions delegate to the vehicle application port. Domain effects and
-save changes remain outside the task and commit only through typed application
-ports.
+interaction slots. Animation uses montages, sections, slots, root motion, and
+notifies. Vehicle actions delegate to the vehicle application port. Domain
+effects and save changes remain outside the task and commit only through typed
+application ports.
+
+Queued media, Level Sequences, type-on text, dialogue-facing animation, camera
+playback, and visual transition graphs execute through the presentation playback
+subsystem. A StateTree task may request that playback and await one correlated
+terminal result, but the presentation subsystem is an adapter rather than a
+second gameplay scheduler.
+
+A visual transition may satisfy a presentation barrier. It cannot switch
+application mode, resume simulation, change input authority, publish gameplay
+events, or commit domain state except through the owning typed application port
+and accepted action-sequence transition.
 
 ## Consequences
 

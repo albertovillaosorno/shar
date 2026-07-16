@@ -12,6 +12,7 @@
 - [Lossless extraction contract](../../adr/pipeline/extraction/lossless-extraction-contract.md)
 - [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
 - [Native import, material rebuild, and world assembly](native-import-material-and-world-assembly.md)
+- [Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md)
 - [Platform audio cooking and streaming](platform-audio-cooking-and-streaming.md)
 - [Platform cinematic media packaging](platform-cinematic-media-packaging.md)
 <!-- markdownlint-enable MD013 -->

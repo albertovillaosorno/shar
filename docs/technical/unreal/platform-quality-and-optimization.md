@@ -9,6 +9,8 @@
 - [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md)
 
 ## Purpose
 
@@ -88,6 +90,14 @@ material quality, visibility systems, instancing, asynchronous work, memory
 budgets, and platform renderers are used before custom replacements. C++ hot
 paths are optimized through profiling, bounded allocation, appropriate data
 layout, deterministic concurrency, and removal of redundant work.
+
+Bounds, distance rules, per-view frusta, occlusion, LOD, HLOD, Nanite, and World
+Partition follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md).
+Converted cell and partition artifacts may provide deterministic diagnostics,
+but quality policy cannot replace Unreal's renderer or hide gameplay-required
+content through a second runtime visibility tree.
 
 A lower graphics preset may deliberately select lower visual settings. Outside
 that explicit preset selection, a performance change must not delete content,

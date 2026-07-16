@@ -61,6 +61,18 @@ must preserve correctness and the selected visual contract. Removing quality,
 content, determinism, or gameplay behavior to make performance numbers appear
 better is limitation, not optimization.
 
+Unreal Engine remains authoritative for primitive bounds, per-view frustum
+culling, supported dynamic occlusion, precomputed visibility, distance culling,
+LOD, HLOD, Nanite, World Partition, and final render submission. Repository code
+may configure, validate, diagnose, and compare these facilities, but it does not
+fork the renderer or maintain a second authoritative runtime visibility tree.
+
+Converted bounds, cells, weighted partitions, and convex-volume tests are
+versioned build evidence and diagnostics. Shipping runtime use beyond native
+Unreal facilities requires measured benefit, deterministic output, conservative
+failure behavior, and a separate accepted decision. Culling never becomes
+streaming, collision, navigation, mission, interaction, or gameplay authority.
+
 Making the game usable on more hardware is a desirable consequence of correct,
 efficient engineering, not the product objective. The objective remains a
 faithful, high-quality implementation with no avoidable technical debt.

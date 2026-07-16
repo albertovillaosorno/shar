@@ -37,6 +37,7 @@ Jebano
 Jebediah
 Kaydara
 Krekel
+Kull
 Leavy
 Leval
 Lexmark
@@ -62,6 +63,7 @@ Torruella
 Truevision
 USPTO
 Vidvox
+Wreckless
 agnes
 albertovillaosorno
 barnes

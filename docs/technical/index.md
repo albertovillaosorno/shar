@@ -137,6 +137,8 @@ proprietary external formats.
 <!-- markdownlint-disable-next-line MD013 -->
 - [Presentation playback runtime](unreal/presentation-playback-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Spatial visibility, bounds, and culling runtime](unreal/spatial-visibility-bounds-and-culling-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Progression, collectibles, cheats, and credits](unreal/progression-collectibles-and-cheats.md)
 - [Race route and opponent runtime](unreal/race-route-and-opponent-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->

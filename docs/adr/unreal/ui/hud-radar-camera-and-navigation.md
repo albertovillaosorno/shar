@@ -55,6 +55,17 @@ radar icon projection are pure reusable presentation primitives. They evaluate
 from immutable source state and cannot become mission, progression, economy,
 input, race, or navigation authority.
 
+Tutorials use canonical data definitions, typed observation predicates,
+prerequisites, a bounded deterministic queue, immutable eligibility projections,
+and profile- or save-scoped accepted completion. Event numbers, enum positions,
+listener removal, widget closure, and dialog callbacks cannot become tutorial
+identity or seen-state authority.
+
+Only the accepted tutorial request owns focus, narration, input, and
+presentation
+leases. Late observations, animation, settings, or persistence callbacks cannot
+complete, dismiss, or mark seen a replacement tutorial.
+
 ## Consequences
 
 - HUD, radar, camera, route guidance, and navigation remain separate native

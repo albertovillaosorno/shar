@@ -13,6 +13,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Staged mesh import and world assembly](../../adr/unreal/import-adapters/staged-mesh-import-and-world-assembly.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native asset translation without copy-paste](../../adr/pipeline/unreal/native-asset-translation-and-no-copy-paste.md)
 
 ## Purpose
@@ -252,6 +254,13 @@ instead of arbitrary authored disappearance of complete houses or world parts.
 This rule does not disable native frustum culling, occlusion culling, streaming,
 platform budgets, or explicit mission-driven visibility. Those mechanisms remain
 valid when their policy and fallback representation are declared.
+
+Converted bounds, cell occupancy, weighted partition, and convex-volume evidence
+follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md).
+They support deterministic build validation and diagnostics; they do not replace
+Unreal's runtime renderer or become world-object identity.
 
 LOD generation records reduction targets, preserved boundaries, material merge
 policy, collision policy, screen-size thresholds, HLOD grouping, and generator
