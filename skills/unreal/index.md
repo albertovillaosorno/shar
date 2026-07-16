@@ -16,8 +16,8 @@ Every link opens one focused per-tool skill.
 - Manual review revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
 - Toolsets: **52**
 - Capabilities: **830**
-- Manual guidance current: **346**
-- Manual guidance review required: **484**
+- Manual guidance current: **350**
+- Manual guidance review required: **480**
 - Protocol: `2025-11-25`
 
 ## Usage

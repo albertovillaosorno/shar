@@ -49,42 +49,64 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to inspect Niagara stack errors, warnings, and informational
+findings before SHAR effects are accepted, packaged, or used as templates.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass a valid NiagaraSystem asset.
+- Query compile state first when a system may still be compiling.
+- Read one system at a time to keep the compile wait bounded.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+    "system": {
+        "refPath": (
+            "/Game/NS_SHAR_MCP_DiagnosticProbe_2."
+            "NS_SHAR_MCP_DiagnosticProbe_2"
+        )
+    }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two systems cloned from MinimalLightweight returned zero errors, warnings, and
+informational issues with an empty `issues` array. A StaticMesh argument failed
+type validation.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The return value is an already parsed object.
+- An empty issue inventory is a valid clean snapshot, not evidence that issues
+  never existed.
+- Dismissed issues are included when present, but no issue record was available
+  in this fixture.
+- Broad engine-template scans can exceed the transport window while compilation
+  settles.
+- Do not call ApplyStackIssueFix without rediscovering current issue and fix
+  identifiers.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
