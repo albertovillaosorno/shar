@@ -46,5 +46,7 @@ Unreal session. `pipeline` is the intended caller and orchestration owner.
 Relevant decisions:
 
 - [Asset-conversion boundary](../../docs/adr/unreal/architecture.md)
-- [Native Unreal MCP terminal bridge](../../docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md)
-- [Eleven-phase roadmap](../../docs/adr/pipeline/eleven-phase-remake-delivery-roadmap.md)
+- [Native Unreal MCP terminal
+  bridge](../../docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md)
+- [Eleven-phase
+  roadmap](../../docs/adr/pipeline/eleven-phase-remake-delivery-roadmap.md)

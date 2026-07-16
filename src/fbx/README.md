@@ -9,7 +9,8 @@ The package index is an intake contract, not a geometry model.
 
 `ports/package_index.rs` defines the inbound port that resolves one stable
 Phase 3 package id into package evidence: package id, model family, model member
-ids, material member ids, texture member ids, and animation member ids. Implementations
+ids, material member ids, texture member ids, and animation member ids.
+Implementations
 of that port may read generated package-index JSONL, but they must only return
 stable evidence. They must not translate meshes, decide FBX topology, read local
 asset routes, write files, or choose Blender behavior.
@@ -99,5 +100,6 @@ through props, vehicles, and world pieces in that order.
 
 FBX is only for model-like assets. Gameplay state, vehicle physics, world
 streaming, mission logic, UI logic, and other non-model data must remain in
-Unreal-native Phase 5 translators or companion reports. They must not be faked as
+Unreal-native Phase 5 translators or companion reports. They must not be faked
+as
 FBX content.
