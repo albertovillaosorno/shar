@@ -45,6 +45,7 @@
 from __future__ import annotations
 
 import json
+import sys
 from typing import TYPE_CHECKING
 
 import pytest
@@ -194,6 +195,37 @@ def test_provider_wraps_invalid_utf8_descriptor(
             project,
             environment={"UNREAL_ENGINE_ROOT": str(engine)},
         ).read_version()
+
+
+def test_provider_wraps_excessive_descriptor_integer_digits(
+    tmp_path: Path,
+) -> None:
+    """Descriptor decoder integer limits remain configuration failures."""
+    project = tmp_path / "project" / "shar.uproject"
+    engine = tmp_path / "UE_5.8"
+    _write_json(project, {"EngineAssociation": "5.8"})
+    descriptor = engine / _PLUGIN_RELATIVE_PATH
+    descriptor.parent.mkdir(parents=True, exist_ok=True)
+    previous_limit = sys.get_int_max_str_digits()
+    try:
+        sys.set_int_max_str_digits(640)
+        number = "1" * 641
+        _ = descriptor.write_text(
+            f'{{"VersionName":"1.0","value":{number}}}\n',
+            encoding="utf-8",
+            newline="\n",
+        )
+
+        with pytest.raises(
+            ConfigurationError,
+            match="cannot read Unreal MCP plugin descriptor",
+        ):
+            _ = FilesystemUnrealMcpVersionProvider(
+                project,
+                environment={"UNREAL_ENGINE_ROOT": str(engine)},
+            ).read_version()
+    finally:
+        sys.set_int_max_str_digits(previous_limit)
 
 
 def test_provider_classifies_non_finite_descriptor_json(
