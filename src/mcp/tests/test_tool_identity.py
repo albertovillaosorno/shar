@@ -80,6 +80,29 @@ def test_tool_identity_rejects_control_characters() -> None:
             _ = canonical_tool_identity(_TOOLSET, name)
 
 
+@pytest.mark.parametrize(
+    ("toolset_name", "tool_name"),
+    [
+        ("abcde", "tool"),
+        ("Toolset.Name", "abcde"),
+    ],
+)
+def test_tool_identity_rejects_excessive_utf8_bytes(
+    toolset_name: str,
+    tool_name: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Native identities cannot become oversized routes or path segments."""
+    monkeypatch.setattr(
+        "mcp.src.domain.tool_identity._MAX_IDENTITY_BYTES",
+        4,
+        raising=False,
+    )
+
+    with pytest.raises(ProtocolError, match="byte limit"):
+        _ = canonical_tool_identity(toolset_name, tool_name)
+
+
 def test_tool_identity_rejects_mismatched_or_malformed_names() -> None:
     with pytest.raises(ProtocolError, match="does not belong"):
         _ = native_tool_leaf(

@@ -47,6 +47,8 @@ from __future__ import annotations
 
 from mcp.src.domain.errors import fail_protocol
 
+_MAX_IDENTITY_BYTES = 4_096
+
 
 def canonical_tool_identity(toolset_name: str, tool_name: str) -> str:
     """Return one fully qualified tool identity.
@@ -98,6 +100,8 @@ def _validated_identity(value: str, *, context: str) -> str:
         fail_protocol(f"{context} must not be empty")
     if not normalized.isprintable():
         fail_protocol(f"{context} must contain printable characters only")
+    if len(normalized.encode()) > _MAX_IDENTITY_BYTES:
+        fail_protocol(f"{context} exceeded its byte limit")
     if any(character.isspace() for character in normalized):
         fail_protocol(f"{context} must not contain whitespace")
     if normalized.startswith(".") or normalized.endswith("."):
