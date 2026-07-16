@@ -70,7 +70,7 @@
               deterministic numeric contracts."
 )]
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use super::binary_fbx::{BinaryNode, BinaryProperty};
 use super::binary_identity::{BinaryIdentityError, bone_ids};
@@ -136,6 +136,8 @@ pub(super) enum BinaryAnimationError {
     SignedIdOverflow(u64),
     /// Bone track did not reference an exported skeleton bone.
     UnknownBone(String),
+    /// Two clips used the same logical stack and take name.
+    DuplicateClipName(String),
     /// Two clips used frame rates that cannot share one FBX scene setting.
     MixedFrameRate,
     /// Frame-time conversion overflowed the signed FBX time field.
@@ -160,6 +162,7 @@ pub(super) fn build_animation_plan(
     clips: &[AnimationClip],
     bone_ordinals: &BTreeMap<&str, usize>,
 ) -> Result<BinaryAnimationPlan, BinaryAnimationError> {
+    validate_unique_clip_names(clips)?;
     let frame_rate = shared_frame_rate(clips)?;
     let mut active_stack_name = String::new();
     if let Some(clip) = clips.first() {
@@ -380,6 +383,27 @@ fn track_ids(
             ],
         },
     )
+}
+
+/// Require one logical stack and take name per clip.
+fn validate_unique_clip_names(
+    clips: &[AnimationClip],
+) -> Result<(), BinaryAnimationError> {
+    let mut names = BTreeSet::new();
+    for clip in clips {
+        if !names.insert(
+            clip.name
+                .as_str(),
+        ) {
+            return Err(
+                BinaryAnimationError::DuplicateClipName(
+                    clip.name
+                        .clone(),
+                ),
+            );
+        }
+    }
+    Ok(())
 }
 
 /// Require one frame rate shared by every clip in the FBX scene.
@@ -884,6 +908,41 @@ fn checked_f32(value: f64) -> Result<f32, BinaryAnimationError> {
         return Err(BinaryAnimationError::ValueOverflow);
     }
     Ok(narrowed)
+}
+
+#[cfg(test)]
+#[test]
+fn build_animation_plan_rejects_duplicate_clip_names() {
+    let clips = [
+        AnimationClip {
+            name: "walk".to_owned(),
+            frame_rate: 30.0_f64,
+            cyclic: false,
+            frame_count: 1,
+            tracks: Vec::new(),
+            ignored_group_ids: Vec::new(),
+        },
+        AnimationClip {
+            name: "walk".to_owned(),
+            frame_rate: 30.0_f64,
+            cyclic: false,
+            frame_count: 1,
+            tracks: Vec::new(),
+            ignored_group_ids: Vec::new(),
+        },
+    ];
+
+    assert!(
+        matches!(
+            build_animation_plan(
+                &clips,
+                &BTreeMap::new(),
+            ),
+            Err(BinaryAnimationError::DuplicateClipName(name))
+                if name == "walk"
+        ),
+        "duplicate logical clip names must not emit duplicate stacks or takes"
+    );
 }
 
 #[cfg(test)]
