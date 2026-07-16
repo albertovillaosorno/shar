@@ -48,42 +48,71 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to set a typed Niagara module input for SHAR effects,
+including local values, linked parameters, enums, dynamic inputs, or supported
+expressions.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass a live stack-input reference with the complete input-name chain.
+- Discover the input type through module topology or GetModuleInputValues.
+- Use a matching instanced-value struct and payload.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+    "stackInputRef": {
+    "system": {
+    "refPath": (
+        "/Game/NS_SHAR_MCP_ModuleProbe_3."
+        "NS_SHAR_MCP_ModuleProbe_3"
+    )
+},
+    "emitterName": "SHARExtra",
+    "scriptName": "ParticleUpdateScript",
+    "moduleName": "GravityForce",
+    "rendererIndex": -1,
+    "inputNameStack": ["Gravity"],
+},
+    "inputData": {
+        "struct": {"refPath": "/Script/CoreUObject.Vector3f"},
+        "value": {"x": 1.5, "y": -2.25, "z": 3.75},
+    },
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two cycles changed `GravityForce.Gravity` from `(0, 0, -980)` to `(1.5, -2.25,
+3.75)`. The return value matched the stored typed Vector3f value.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Unlike many Niagara mutations, this tool returns the resulting stored value.
+- The `struct` must match the input type exactly.
+- Dynamic-input chains require every nested name in `inputNameStack`.
+- Re-read GetModuleInputValues to confirm persistence.
+- Stale module or input names raise rather than creating a new input.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

@@ -48,42 +48,70 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to disable or re-enable a SHAR Niagara module without removing
+its position, inputs, or authored configuration from the stack.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass a live module reference with exact system, emitter, script, and module
+  names.
+- Confirm the module currently exists in emitter topology.
+- Re-read topology after the mutation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+    "moduleRef": {
+    "system": {
+    "refPath": (
+        "/Game/NS_SHAR_MCP_ModuleProbe_3."
+        "NS_SHAR_MCP_ModuleProbe_3"
+    )
+},
+    "emitterName": "SHARExtra",
+    "scriptName": "ParticleUpdateScript",
+    "moduleName": "GravityForce",
+    "rendererIndex": -1,
+    "inputNameStack": [],
+},
+    "bEnabled": False,
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+In two cycles, `GravityForce` changed from enabled to disabled and back to
+enabled. Both successful mutation calls returned JSON null, while topology
+reflected each state.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This mutation returns JSON null.
+- Disabled modules remain in the stack and retain their inputs.
+- Transport success is insufficient; verify the module `enabled` field in fresh
+  topology.
+- Script and module names are exact and case-sensitive identities.
+- A removed or stale module reference raises explicitly.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

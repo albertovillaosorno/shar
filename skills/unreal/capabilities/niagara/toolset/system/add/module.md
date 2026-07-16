@@ -49,42 +49,77 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to insert a Niagara module into a specific SHAR emitter script
+stack before configuring forces, initialization, spawning, color, or utility
+behavior.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass a mutable system containing a full Niagara emitter.
+- Use the exact script name returned by emitter topology.
+- Select a NiagaraScript module compatible with that stack.
+- Use a disposable system for validation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+    "moduleLocationRef": {
+    "system": {
+    "refPath": (
+        "/Game/NS_SHAR_MCP_ModuleProbe_3."
+        "NS_SHAR_MCP_ModuleProbe_3"
+    )
+},
+    "emitterName": "SHARExtra",
+    "scriptName": "ParticleUpdateScript",
+    "moduleName": "",
+    "rendererIndex": -1,
+    "inputNameStack": [],
+},
+    "moduleAsset": {
+        "refPath": (
+            "/Niagara/Modules/Update/Forces/"
+            "GravityForce.GravityForce"
+        )
+    },
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two cycles appended `GravityForce` after `ParticleState` in
+`SHARExtra.ParticleUpdateScript`. The returned topology was enabled and exposed
+`Gravity` and `Coordinate Space` inputs.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This is a persistent stack mutation and returns parsed module topology without
+  input values.
+- Use GetModuleInputValues for stored values.
+- Lightweight inherited emitters can expose script names as `None` and reject
+  normal module insertion.
+- Wrong system and module asset types fail parameter translation.
+- Rediscover module names after stack reconstruction.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
