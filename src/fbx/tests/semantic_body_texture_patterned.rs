@@ -58,7 +58,7 @@ use shar_sha256 as _;
 #[test]
 #[expect(
     clippy::indexing_slicing,
-    reason = "Fixture literals are constructor-validated."
+    reason = "Fixed fixture constructors validate literals before indexing."
 )]
 fn preserves_one_anchored_pattern_without_topology_changes()
 -> Result<(), String> {

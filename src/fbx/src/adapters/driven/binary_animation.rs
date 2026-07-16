@@ -387,7 +387,7 @@ fn track_ids(
 
 /// Require one logical stack and take name per clip.
 fn validate_unique_clip_names(
-    clips: &[AnimationClip],
+    clips: &[AnimationClip]
 ) -> Result<(), BinaryAnimationError> {
     let mut names = BTreeSet::new();
     for clip in clips {

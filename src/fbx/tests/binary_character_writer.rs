@@ -278,7 +278,7 @@ fn byte_window_count(
 #[test]
 #[expect(
     clippy::indexing_slicing,
-    reason = "Fixture literals are constructor-validated."
+    reason = "Fixed fixture constructors validate literals before indexing."
 )]
 fn external_textures_are_default_and_payloads_are_omitted() {
     let path = output_path("external-textures");

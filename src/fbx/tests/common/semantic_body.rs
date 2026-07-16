@@ -116,7 +116,7 @@ pub(super) fn body_fixture() -> Result<
 /// Build the five disconnected flat-color primitive groups as one group.
 #[expect(
     clippy::arithmetic_side_effects,
-    reason = "Fixture literals are constructor-validated."
+    reason = "Fixed fixture constructors validate literals before indexing."
 )]
 fn body_group() -> Result<PrimitiveGroup, String> {
     let mut positions = Vec::new();
@@ -167,7 +167,7 @@ fn body_group() -> Result<PrimitiveGroup, String> {
 /// Build one skinned synthetic character around the body group.
 #[expect(
     clippy::arithmetic_side_effects,
-    reason = "Fixture literals are constructor-validated."
+    reason = "Fixed fixture constructors validate literals before indexing."
 )]
 fn body_character(group: PrimitiveGroup) -> Result<CharacterAsset, String> {
     let mesh = MeshAsset::new(

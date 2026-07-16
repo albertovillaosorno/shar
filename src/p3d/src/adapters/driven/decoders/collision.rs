@@ -236,8 +236,8 @@ pub fn physics_json(chunk: &[u8]) -> Option<String> {
     let mut children = Vec::new();
     if reader.pos() < header_size {
         // Some static-instance physics chunks inline vector and inertia chunks
-        // in the header region, so rejecting them would lose authored mass
-        // data.
+        // in the header region; preserve them because they encode authored mass
+        // properties that would otherwise be discarded.
         children.extend(
             subchunks(
                 chunk,

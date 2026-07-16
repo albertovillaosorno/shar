@@ -75,8 +75,7 @@ const SEMANTIC_TEXTURE_PUBLICATION: &str = include_str!(
 );
 
 #[test]
-fn exposes_only_binary_fbx_7700_without_authoring_helpers()
--> Result<(), String> {
+fn exposes_only_binary_fbx_7700() -> Result<(), String> {
     let contract_sources = [
         DRIVEN_MODULE,
         PIPELINE_EXPORT,

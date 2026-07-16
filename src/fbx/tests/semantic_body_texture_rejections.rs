@@ -62,7 +62,7 @@ use shar_sha256 as _;
 #[test]
 #[expect(
     clippy::indexing_slicing,
-    reason = "Fixture literals are constructor-validated."
+    reason = "Fixed fixture constructors validate literals before indexing."
 )]
 fn rejects_a_triangle_that_samples_more_than_one_source_color()
 -> Result<(), String> {
@@ -95,7 +95,7 @@ fn rejects_a_triangle_that_samples_more_than_one_source_color()
 #[test]
 #[expect(
     clippy::indexing_slicing,
-    reason = "Fixture literals are constructor-validated."
+    reason = "Fixed fixture constructors validate literals before indexing."
 )]
 fn seam_tie_defers_to_remaining_color_evidence() -> Result<(), String> {
     let (mut character, source, recipe) = body_fixture()?;
@@ -136,7 +136,7 @@ fn seam_tie_defers_to_remaining_color_evidence() -> Result<(), String> {
 #[test]
 #[expect(
     clippy::indexing_slicing,
-    reason = "Fixture literals are constructor-validated."
+    reason = "Fixed fixture constructors validate literals before indexing."
 )]
 fn requires_reviewed_color_when_every_vote_is_tied() -> Result<(), String> {
     let (mut character, source, mut recipe) = body_fixture()?;

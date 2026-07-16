@@ -224,7 +224,7 @@ fn validate_eye_layers(plan: &EyeSemanticPlan) -> Result<(), String> {
 #[test]
 #[expect(
     clippy::indexing_slicing,
-    reason = "Fixture literals are constructor-validated."
+    reason = "Fixed fixture constructors validate literals before indexing."
 )]
 fn accepts_symmetric_lid_occlusion_of_pupil_pixels() -> Result<(), String> {
     let group = eye_group()?;

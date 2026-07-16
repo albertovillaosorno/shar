@@ -172,7 +172,7 @@ fn patterned_skeleton() -> Vec<Bone> {
 /// Build the exact 4x4 source pattern used by the fixture.
 #[expect(
     clippy::indexing_slicing,
-    reason = "Fixture literals are constructor-validated."
+    reason = "Fixed fixture constructors validate literals before indexing."
 )]
 fn patterned_source() -> Result<RgbaImage, String> {
     let yellow = Rgba8::new(

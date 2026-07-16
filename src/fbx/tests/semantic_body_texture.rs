@@ -86,7 +86,7 @@ fn plans_five_regions_deterministically_and_changes_only_uvs()
 /// Validate source counts, semantic lanes, and chart containment.
 #[expect(
     clippy::arithmetic_side_effects,
-    reason = "Fixture literals are constructor-validated."
+    reason = "Fixed fixture constructors validate literals before indexing."
 )]
 fn validate_plan_shape(plan: &BodyTexturePlan) -> Result<(), String> {
     if plan.source_vertex_count != 15 || plan.source_triangle_count != 5 {
@@ -199,7 +199,7 @@ fn validate_atlas_colors(plan: &BodyTexturePlan) -> Result<(), String> {
 /// Prove semantic preparation changed only selected UV coordinates.
 #[expect(
     clippy::indexing_slicing,
-    reason = "Fixture literals are constructor-validated."
+    reason = "Fixed fixture constructors validate literals before indexing."
 )]
 fn validate_uv_only_change(
     character: &CharacterAsset,

@@ -104,7 +104,8 @@ fn lists_untracked_nonignored_public_files() -> Result<(), String> {
 }
 
 #[test]
-fn detects_local_asset_route_literal_in_all_untracked_files() -> Result<(), String> {
+fn detects_local_asset_route_literal_in_all_untracked_files()
+-> Result<(), String> {
     let root = std::env::temp_dir().join(
         format!(
             "shar-route-guard-files-{}",
@@ -164,7 +165,8 @@ fn detects_local_asset_route_literal_in_all_untracked_files() -> Result<(), Stri
         } else {
             Err(
                 format!(
-                    "public-file route literals were not detected: {failures:?}"
+                    "public-file route literals were not detected: \
+                     {failures:?}"
                 ),
             )
         }

@@ -130,8 +130,8 @@ fn detects_windows_linux_and_macos_paths_in_untracked_files()
 
 fn machine_path_failures(root: &Path) -> Result<Vec<String>, String> {
     let files = repository_files(root)?;
-    let prefixes = machine_path_prefixes()
-        .map(|prefix| prefix.to_ascii_lowercase());
+    let prefixes =
+        machine_path_prefixes().map(|prefix| prefix.to_ascii_lowercase());
     let mut failures = Vec::new();
     for relative in files.lines() {
         let absolute = root.join(relative);
@@ -144,8 +144,7 @@ fn machine_path_failures(root: &Path) -> Result<Vec<String>, String> {
             .enumerate()
         {
             if line_has_machine_path(
-                line,
-                &prefixes,
+                line, &prefixes,
             ) {
                 failures.push(
                     format!(
@@ -175,7 +174,7 @@ fn line_has_machine_path(
                         |(index, _)| {
                             index == 0
                                 || is_path_boundary(
-                                    normalized.as_bytes()[index - 1]
+                                    normalized.as_bytes()[index - 1],
                                 )
                         },
                     )
