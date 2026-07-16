@@ -8,7 +8,7 @@
   every jurisdiction where conduct or distribution occurs.
 - Authority level: Exact agreement text, assent evidence, statutes, and
   controlling contract and preemption cases.
-- As-of date: 2026-07-15.
+- As-of date: 2026-07-16.
 - Counsel review: Not performed.
 
 ## Question Presented
@@ -37,9 +37,16 @@ That decision is not a nationwide rule that every restriction is enforceable.
 license restriction against decompilation or disassembly conflicted with § 117
 and was preempted. *Bowers* later distinguished that statutory scheme from the
 private promise before it. The *Bowers* dissent would also have found the
-reverse-engineering prohibition preempted. Formation, notice, scope, governing
-law, public policy, statutory text, remedies, and later controlling authority
-therefore remain independent questions.
+reverse-engineering prohibition preempted.
+
+*Davidson & Associates, Inc. v. Jung* then applied similar private-promise
+reasoning in a game-service dispute. The Eighth Circuit held that defendants who
+accepted end-user and service terms had contractually relinquished reverse-
+engineering rights and rejected conflict preemption. The case also involved a
+separate authentication bypass and DMCA analysis, so its contract result cannot
+be detached from the exact agreements, conduct, and remedies before the court.
+Formation, notice, scope, governing law, public policy, statutory text,
+remedies, and later controlling authority remain independent questions.
 
 ## Not Established
 
@@ -67,6 +74,8 @@ private terms.
   for one influential private-contract analysis and its contrary dissent.
 - [Vault Corp. v. Quaid Software Ltd.](../cases/vault-v-quaid-software.md),
   for the conflicting state-license-act and § 117 analysis.
+- [Davidson & Associates, Inc. v. Jung](../cases/davidson-v-jung.md), for an
+  Eighth Circuit game-service contract, preemption, and DMCA application.
 - Applicable statutes, including 17 U.S.C. §§ 301 and 1201(f).
 
 ## Verification Checklist

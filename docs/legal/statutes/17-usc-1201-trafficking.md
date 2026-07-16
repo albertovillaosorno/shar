@@ -7,7 +7,7 @@
 - Jurisdiction: United States federal law.
 - Authority level: Federal statute.
 - Statutory currentness: Text contains laws in effect on June 24, 2026.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-16.
 - Counsel review: Not performed.
 
 ## Question Presented
@@ -33,6 +33,14 @@ The temporary exemptions created through § 1201(a)(1) rulemaking do not by
 themselves create a defense to § 1201(a)(2) or § 1201(b). Any permanent
 exception, including § 1201(f), must be applied through its own exact
 conditions.
+
+*Davidson & Associates, Inc. v. Jung* affirmed anti-trafficking liability for a
+game-service emulator on a record involving circumvention of a server
+authentication sequence, access to an online-service mode without valid unique
+product keys, limited commercially significant purpose apart from avoiding the
+service restrictions, and distribution of the emulator. The holding is
+fact-specific and does not classify every compatible server or emulator as a
+circumvention tool.
 
 ## Tool-Specific Evidence Required
 
@@ -76,6 +84,8 @@ For every challenged item, identify:
 - Office of the Law Revision Counsel, 17 U.S.C. § 1201:
   <!-- markdownlint-disable-next-line MD013 -->
   <https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title17-section1201&num=0&edition=prelim>
-  (Accessed: 13 July 2026).
+  (Accessed: 16 July 2026).
+- [Davidson & Associates, Inc. v. Jung](../cases/davidson-v-jung.md), for the
+  Eighth Circuit's game-service authentication and emulator analysis.
 - [17 U.S.C. § 1201(f)](17-usc-1201f.md).
 - [Temporary Section 1201 exemptions](37-cfr-201-40-temporary-exemptions.md).

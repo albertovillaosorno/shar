@@ -6,7 +6,7 @@
   exact facts.
 - Jurisdiction: United States baseline; other jurisdictions unresolved.
 - Authority level: Cross-authority research record.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-16.
 - Counsel review: Not performed.
 
 ## Question Presented
@@ -31,6 +31,10 @@ The verified authorities support these bounded propositions:
 - *MDY* separates copyright-license conditions from contractual covenants and
   treats § 1201(a) access-control analysis as distinct from infringement in the
   Ninth Circuit.
+- *Davidson* enforced accepted reverse-engineering restrictions, sustained DMCA
+  claims involving a game-service authentication bypass, and rejected § 1201(f)
+  where the emulator omitted product-key validation and enabled unauthorized
+  copies to use protected online-service features.
 - *Nguyen* and *Berman* require fact-specific online notice and assent analysis;
   wrap labels alone do not determine formation.
 - *SAS*, *RJ Control*, and *Premier Dealer* require granular identification and
@@ -55,15 +59,15 @@ The verified authorities support these bounded propositions:
 
 <!-- markdownlint-disable MD013 -->
 
-| Issue                    | Required factual focus                                                                                      | Principal records                                                                                                                                |
-| :----------------------- | :---------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Copyrightability         | Exact element, originality, function, constraints, merger, selection, and arrangement                       | `google-v-oracle.md`, `lexmark-v-static-control.md`, `sas-v-world-programming.md`, `rj-control-v-multiject.md`, `premier-dealer-v-allegiance.md` |
-| Fair use                 | Purpose, character, necessity, amount, final output, market, alternatives, and jurisdiction                 | `sega-v-accolade.md`, `sony-v-connectix.md`, `google-v-oracle.md`                                                                                |
-| Access controls          | Protected work, measure, ordinary access route, circumvention act, tool design, marketing, and distribution | `lexmark-v-static-control.md`, `mdy-v-blizzard.md`                                                                                               |
-| Contract                 | Exact terms, notice, assent, condition or covenant, scope, governing law, and remedy                        | `mdy-v-blizzard.md`, `nguyen-v-barnes-and-noble.md`, `berman-v-freedom-financial.md`, `specht-v-netscape.md`                                     |
-| Confidential information | Source, secrecy, acquisition, duties, exposure, independent derivation, and disclosure                      | `../statutes/18-usc-1836-and-1839.md`                                                                                                            |
-| Patent                   | Exact algorithm or claim, territory, legal status, implementation, and license                              | `patent-and-codec-risk.md`                                                                                                                       |
-| Trademark                | Exact public presentation, mark, owner, goods or services, audience, and confusion evidence                 | `trademark-and-compatibility-naming.md`                                                                                                          |
+| Issue                    | Required factual focus                                                                                      | Principal records                                                                                                                                                                                    |
+| :----------------------- | :---------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Copyrightability         | Exact element, originality, function, constraints, merger, selection, and arrangement                       | `google-v-oracle.md`, `lexmark-v-static-control.md`, `sas-v-world-programming.md`, `rj-control-v-multiject.md`, `premier-dealer-v-allegiance.md`                                                     |
+| Fair use                 | Purpose, character, necessity, amount, final output, market, alternatives, and jurisdiction                 | `sega-v-accolade.md`, `sony-v-connectix.md`, `google-v-oracle.md`                                                                                                                                    |
+| Access controls          | Protected work, measure, ordinary access route, circumvention act, tool design, marketing, and distribution | `lexmark-v-static-control.md`, `mdy-v-blizzard.md`, `davidson-v-jung.md`                                                                                                                             |
+| Contract                 | Exact terms, notice, assent, condition or covenant, scope, governing law, and remedy                        | `davidson-v-jung.md`, `mdy-v-blizzard.md`, `bowers-v-baystate-technologies.md`, `vault-v-quaid-software.md`, `nguyen-v-barnes-and-noble.md`, `berman-v-freedom-financial.md`, `specht-v-netscape.md` |
+| Confidential information | Source, secrecy, acquisition, duties, exposure, independent derivation, and disclosure                      | `../statutes/18-usc-1836-and-1839.md`                                                                                                                                                                |
+| Patent                   | Exact algorithm or claim, territory, legal status, implementation, and license                              | `patent-and-codec-risk.md`                                                                                                                                                                           |
+| Trademark                | Exact public presentation, mark, owner, goods or services, audience, and confusion evidence                 | `trademark-and-compatibility-naming.md`                                                                                                                                                              |
 
 <!-- markdownlint-enable MD013 -->
 
@@ -118,6 +122,7 @@ identify:
 ## Primary Authorities
 
 - [Google LLC v. Oracle America, Inc.](../cases/google-v-oracle.md).
+- [Davidson & Associates, Inc. v. Jung](../cases/davidson-v-jung.md).
 <!-- markdownlint-disable-next-line MD013 -->
 - [Lexmark International, Inc. v. Static Control Components, Inc.](../cases/lexmark-v-static-control.md).
 <!-- markdownlint-disable-next-line MD013 -->

@@ -27,6 +27,7 @@ Condé
 Connectix
 Dagblades
 Danske
+Davidson
 Doshi
 Drachenberg
 Forening
@@ -41,6 +42,7 @@ Honeybunny
 Infopaq
 Jebano
 Jebediah
+Jung
 Justia
 Kagan
 Kaydara
@@ -83,11 +85,13 @@ albertovillaosorno
 barnes
 bart
 bartman
+baystate
 beeman
 berman
 cletus
 cleveland
 connectix
+davidson
 dolph
 eddie
 flanders
@@ -99,6 +103,7 @@ grampa
 hibbert
 hugo
 jimbo
+jung
 kang
 kearney
 kodos
@@ -116,6 +121,7 @@ multiject
 ned
 netscape
 nguyen
+quaid
 ralph
 sega
 selma
