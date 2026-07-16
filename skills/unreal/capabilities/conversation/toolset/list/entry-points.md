@@ -46,41 +46,58 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to enumerate compiled conversation entry points before SHAR
+dialogue routing, trigger validation, or entry-tag selection.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass a valid ConversationDatabase asset.
+- Use `DataAssetTools.create` only for disposable empty-state validation.
+- Treat an empty array as a valid compiled-database state, not an error.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+    "conversation": {
+        "refPath": (
+            "/Game/DA_SHAR_MCP_ConversationReadProbe_2."
+            "DA_SHAR_MCP_ConversationReadProbe_2"
+        )
+    }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two disposable ConversationDatabase assets returned `[]` for entry points. A
+StaticMesh argument failed with the explicit ConversationDatabase type error.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The return value is an already parsed array, not JSON text.
+- A newly created ConversationDatabase validly returns `[]`.
+- Passing an unrelated asset fails parameter translation.
+- Disposable asset paths must not be persisted.
+- An empty database has no entry tags or destination GUIDs to inspect.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
