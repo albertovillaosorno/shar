@@ -49,6 +49,7 @@
 use std::path::Path;
 
 /// Wraps one untrusted path without normalizing its native identity.
+#[derive(Debug)]
 pub struct DiagnosticPath<'a>(&'a Path);
 
 impl<'a> DiagnosticPath<'a> {
@@ -60,12 +61,12 @@ impl<'a> DiagnosticPath<'a> {
 }
 
 /// Wraps one untrusted source message without changing its evidence.
-pub(crate) struct DiagnosticText<'a>(&'a str);
+pub struct DiagnosticText<'a>(&'a str);
 
 impl<'a> DiagnosticText<'a> {
     /// Creates one borrowed diagnostic text renderer.
     #[must_use]
-    pub(crate) const fn new(value: &'a str) -> Self {
+    pub const fn new(value: &'a str) -> Self {
         Self(value)
     }
 }
@@ -75,10 +76,12 @@ impl core::fmt::Display for DiagnosticText<'_> {
         &self,
         formatter: &mut core::fmt::Formatter<'_>,
     ) -> core::fmt::Result {
-        for character in self.0.chars() {
+        for character in self
+            .0
+            .chars()
+        {
             write_character(
-                formatter,
-                character,
+                formatter, character,
             )?;
         }
         Ok(())

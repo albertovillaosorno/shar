@@ -132,7 +132,11 @@ fn io_errors_escape_source_control_characters() {
         "diagnostic contains a control character: {rendered:?}"
     );
     assert!(rendered.contains(r"blocked\ninjected"));
-    assert!(error.source().is_some());
+    assert!(
+        error
+            .source()
+            .is_some()
+    );
 }
 
 #[test]

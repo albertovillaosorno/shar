@@ -46,13 +46,12 @@
 //! Manifest shape must be proven before current tree evidence is scanned.
 
 use std::cell::Cell;
-use std::io;
-use std::path::{Path, PathBuf};
-
 #[cfg(windows)]
 use std::ffi::OsString;
+use std::io;
 #[cfg(windows)]
 use std::os::windows::ffi::OsStringExt as _;
+use std::path::{Path, PathBuf};
 
 use game_manifest::{GameTree, PathKind, TextArtifactStore, ValidateManifest};
 use schoenwald_cli as _;
@@ -139,11 +138,15 @@ fn malformed_manifest_fails_before_tree_scan() {
 #[cfg(windows)]
 #[test]
 fn missing_game_error_preserves_unpaired_utf16_path_unit() {
-    let game_dir = PathBuf::from(OsString::from_wide(&[
-        u16::from(b'a'),
-        0xd800,
-        u16::from(b'b'),
-    ]));
+    let game_dir = PathBuf::from(
+        OsString::from_wide(
+            &[
+                u16::from(b'a'),
+                0xd800,
+                u16::from(b'b'),
+            ],
+        ),
+    );
 
     let result = ValidateManifest::execute(
         &MissingTree,

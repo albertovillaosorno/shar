@@ -49,10 +49,10 @@ use std::path::{Path, PathBuf, StripPrefixError};
 use std::string::FromUtf8Error;
 use std::{fs, io};
 
-use schoenwald_filesystem::{DiagnosticPath, RootedPathError};
 use schoenwald_filesystem::adapters::driving::local;
 use schoenwald_filesystem::application::CollectRegularFiles;
 use schoenwald_filesystem::ports::TreeReader;
+use schoenwald_filesystem::{DiagnosticPath, RootedPathError};
 
 fn require_context(
     error: &io::Error,
@@ -188,9 +188,18 @@ fn diagnostic_path_distinguishes_literal_escape_from_control() {
     let literal = DiagnosticPath::new(Path::new(r"bad\npath")).to_string();
     let control = DiagnosticPath::new(Path::new("bad\npath")).to_string();
 
-    assert_eq!(literal, r"bad\\npath");
-    assert_eq!(control, r"bad\npath");
-    assert_ne!(literal, control);
+    assert_eq!(
+        literal,
+        r"bad\\npath"
+    );
+    assert_eq!(
+        control,
+        r"bad\npath"
+    );
+    assert_ne!(
+        literal,
+        control
+    );
 }
 
 #[test]

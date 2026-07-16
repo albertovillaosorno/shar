@@ -129,7 +129,9 @@ impl ValidateManifest {
                     ManifestError::Invalid(
                         format!(
                             "manifest not found: {}",
-                            super::diagnostic_path::escaped_path(&manifest_path)
+                            super::diagnostic_path::escaped_path(
+                                &manifest_path
+                            )
                         ),
                     )
                 },

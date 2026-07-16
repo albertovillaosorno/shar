@@ -173,7 +173,9 @@ impl core::fmt::Display for StreamOperationError {
         formatter: &mut core::fmt::Formatter<'_>,
     ) -> core::fmt::Result {
         let operation = self.operation;
-        let source_text = self.source.to_string();
+        let source_text = self
+            .source
+            .to_string();
         let rendered_source = escaped_text(&source_text);
         write!(
             formatter,
@@ -228,7 +230,11 @@ mod tests {
             "diagnostic contains a control character: {rendered:?}"
         );
         assert!(rendered.contains(r"flush\ninjected"));
-        assert!(error.source().is_some());
+        assert!(
+            error
+                .source()
+                .is_some()
+        );
     }
 
     #[test]

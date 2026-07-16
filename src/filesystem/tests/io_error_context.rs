@@ -84,7 +84,8 @@ fn require_context(
     if !rendered.contains(&displayed_path) {
         return Err(
             format!(
-                "missing path context: expected {displayed_path:?} in {rendered:?}"
+                "missing path context: expected {displayed_path:?} in \
+                 {rendered:?}"
             ),
         );
     }

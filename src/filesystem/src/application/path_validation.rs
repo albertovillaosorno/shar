@@ -355,6 +355,10 @@ mod tests {
             "diagnostic contains a control character: {rendered:?}"
         );
         assert!(rendered.contains(r"source\nfailure"));
-        assert!(error.source().is_some());
+        assert!(
+            error
+                .source()
+                .is_some()
+        );
     }
 }
