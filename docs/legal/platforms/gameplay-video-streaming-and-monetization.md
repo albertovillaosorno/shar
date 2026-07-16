@@ -67,6 +67,26 @@ replace the remaining factors.
 - Claims that purchase, attribution, noncommercial status, or “no infringement
   intended” automatically creates permission or fair use.
 
+## Notice And Counter-Notice Boundary
+
+A supportable fair-use position does not prevent a platform from removing a
+video, applying an automated claim, restricting monetization, or requiring the
+creator to use a notice-dispute process. Those platform actions do not finally
+determine infringement or fair use.
+
+In the Ninth Circuit, *Lenz v. Universal Music Corp.* requires a copyright
+holder to consider fair use before sending a DMCA takedown notification that
+contains the statutory good-faith statement. The standard is subjective, so a
+court's later disagreement does not by itself establish a knowing
+misrepresentation. Ignoring fair use or falsely claiming a good-faith assessment
+can still support § 512(f) analysis on the required facts.
+
+A creator should not submit a counter-notice casually. The statutory process can
+require identifying information and consent to jurisdiction, and restoration can
+be interrupted by a filed court action. Preserve the exact notice, upload,
+editing project, publisher policy, licenses, platform messages, and resulting
+injury before making consequential representations.
+
 ## YouTube-Specific Boundary
 
 YouTube's current monetization guidance states that video-game monetization
@@ -139,11 +159,16 @@ conditions, and required notices are verified.
 - Supreme Court of the United States, [*Andy Warhol Foundation for the Visual
   Arts, Inc. v. Goldsmith*][warhol-opinion], 598 U.S. 508 (2023) (Accessed: 15
   July 2026).
+- United States Court of Appeals for the Ninth Circuit, [*Lenz v. Universal
+  Music Corp.*][lenz-opinion], 815 F.3d 1145 (9th Cir. 2016) (Accessed: 15 July
+  2026).
 - Office of the Law Revision Counsel, [17 U.S.C. § 101][section-101]
   (Accessed: 14 July 2026).
 - Office of the Law Revision Counsel, [17 U.S.C. § 106][section-106]
   (Accessed: 13 July 2026).
 - Office of the Law Revision Counsel, [17 U.S.C. § 107][section-107]
+  (Accessed: 15 July 2026).
+- Office of the Law Revision Counsel, [17 U.S.C. § 512][section-512]
   (Accessed: 15 July 2026).
 - U.S. Copyright Office, [More Information on Fair Use][copyright-office]
   (Accessed: 15 July 2026).
@@ -160,12 +185,16 @@ conditions, and required notices are verified.
 
 [warhol-opinion]:
   https://www.supremecourt.gov/opinions/22pdf/21-869_87ad.pdf
+[lenz-opinion]:
+  https://cdn.ca9.uscourts.gov/datastore/opinions/2016/03/17/13-16106.pdf
 [section-101]:
   https://uscode.house.gov/view.xhtml?req=(title:17%20section:101%20edition:prelim)
 [section-106]:
   https://uscode.house.gov/view.xhtml?req=(title:17%20section:106%20edition:prelim)
 [section-107]:
   https://uscode.house.gov/view.xhtml?req=(title:17%20section:107%20edition:prelim)
+[section-512]:
+  https://uscode.house.gov/view.xhtml?req=(title:17%20section:512%20edition:prelim)
 [copyright-office]: https://www.copyright.gov/fair-use/more-info.html
 [youtube-terms]: https://www.youtube.com/t/terms
 [youtube-fair-use]: https://support.google.com/youtube/answer/9783148?hl=en

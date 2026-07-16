@@ -55,6 +55,7 @@ may cite ADRs for technical facts, but ADRs are not legal authority.
 - [Berman v. Freedom Financial Network, LLC](cases/berman-v-freedom-financial.md)
 - [Google LLC v. Oracle America, Inc](cases/google-v-oracle.md)
 - [Krause v. Titleserv, Inc](cases/krause-v-titleserv.md)
+- [Lenz v. Universal Music Corp.](cases/lenz-v-universal-music.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Lewis Galoob Toys, Inc. v. Nintendo of America, Inc](cases/lewis-galoob-toys-v-nintendo.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -129,7 +130,7 @@ fact-specific result is not determined. Hosting, public access, noncommercial
 purpose, independent implementation, interoperability intent, or an accepted ADR
 does not determine a legal outcome by itself.
 
-- Active legal records: 52.
+- Active legal records: 53.
 - Review date: 2026-07-15.
 - Statutory currentness: the Office of the Law Revision Counsel classification
   tables were checked on 2026-07-14. The published 119th Congress tables cover
