@@ -46,41 +46,60 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to inspect one live Dataflow editor node before SHAR graph
+rewiring, property updates, or schema-sensitive procedural validation.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass a live DataflowEdNode ref returned by `AddNode` or another node-producing
+  endpoint.
+- Do not construct the ref from a node name or GUID alone.
+- Use `GetNodeTypeSchema` when type-level defaults are sufficient.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+  "node": {
+    "refPath": (
+      "/Game/DF_SHAR_MCP_NodeInfoProbe_1."
+      "DF_SHAR_MCP_NodeInfoProbe_1:SHARBranch"
+    )
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two disposable Branch nodes returned stable name, type, display name,
+FlowControl category, position, three input pins, one output pin, a 32-character
+GUID, and string-valued `bCondition` property overrides.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The return value is JSON text and requires a second parse.
+- Node GUIDs differ when the disposable graph is rebuilt.
+- Property values such as Boolean `bCondition` are serialized as strings.
+- `GetGraphStructure` returns presentation records, not reusable live node refs.
+- Passing the Dataflow graph asset itself fails parameter translation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
