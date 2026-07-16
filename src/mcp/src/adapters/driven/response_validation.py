@@ -66,6 +66,7 @@ _VISIBLE_ASCII_MAXIMUM = 0x7E
 _MAX_SESSION_ID_LENGTH = 4_096
 _MAX_SERVER_METADATA_LENGTH = 4_096
 _MAX_TOOL_NAME_BYTES = 4_096
+_MAX_TOOLS_PER_PAGE = 100_000
 _MAX_JSON_RPC_ERROR_MESSAGE_BYTES = 64 * 1_024
 
 
@@ -223,6 +224,8 @@ def parse_tool_names(result: JsonObject) -> tuple[str, ...]:
     raw_tools = result.get("tools")
     if not isinstance(raw_tools, list):
         fail_protocol("tools/list result omitted tools array")
+    if len(raw_tools) > _MAX_TOOLS_PER_PAGE:
+        fail_protocol("tools/list exceeded its page tool limit")
     names: list[str] = []
     seen: set[str] = set()
     for index, raw_tool in enumerate(raw_tools):

@@ -247,6 +247,27 @@ def test_tool_names_reject_excessive_identity_bytes(
         _ = parse_tool_names({"tools": [{"name": "abcde"}]})
 
 
+def test_tool_names_reject_excessive_page_entries(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """One tools/list page cannot force unbounded normalization work."""
+    monkeypatch.setattr(
+        "mcp.src.adapters.driven.response_validation._MAX_TOOLS_PER_PAGE",
+        2,
+        raising=False,
+    )
+    result: JsonObject = {
+        "tools": [
+            {"name": "first"},
+            {"name": "second"},
+            {"name": "third"},
+        ]
+    }
+
+    with pytest.raises(ProtocolError, match="page tool limit"):
+        _ = parse_tool_names(result)
+
+
 def test_tool_names_reject_duplicate_identities() -> None:
     """Top-level capability discovery cannot contain duplicate names."""
     with pytest.raises(ProtocolError, match="duplicate tool identity"):
