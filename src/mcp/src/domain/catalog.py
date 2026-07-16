@@ -63,7 +63,10 @@ from mcp.src.domain.json_types import (
     reject_duplicate_json_object,
     require_json_object,
 )
-from mcp.src.domain.tool_identity import canonical_tool_identity
+from mcp.src.domain.tool_identity import (
+    canonical_tool_identity,
+    validated_toolset_identity,
+)
 
 _TOOLSET_NAME_PATTERN = r"[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)+"
 _TOOLSET_DESCRIPTION_PATTERN = r"(?: (?P<description>.*))?$"
@@ -193,6 +196,7 @@ def parse_toolset_definition(
         A complete validated toolset definition.
 
     """
+    toolset = validated_toolset_identity(toolset_name)
     try:
         parsed = cast(
             "object",
@@ -205,28 +209,28 @@ def parse_toolset_definition(
         fail_protocol(str(error), cause=error)
     except json.JSONDecodeError as error:
         fail_protocol(
-            f"toolset {toolset_name}: schema is not valid JSON",
+            f"toolset {toolset}: schema is not valid JSON",
             cause=error,
         )
-    schema = require_json_object(parsed, context=f"toolset {toolset_name}")
+    schema = require_json_object(parsed, context=f"toolset {toolset}")
     raw_tools = schema.get("tools")
     if not isinstance(raw_tools, list):
-        fail_protocol(f"toolset {toolset_name}: missing tools array")
+        fail_protocol(f"toolset {toolset}: missing tools array")
     if len(raw_tools) > _MAX_TOOLS_PER_TOOLSET:
         fail_protocol("toolset schema exceeded its tool limit")
     tools = tuple(
-        _parse_tool(toolset_name, item, index)
+        _parse_tool(toolset, item, index)
         for index, item in enumerate(raw_tools)
     )
     names = [tool.name for tool in tools]
     if len(set(names)) != len(names):
-        fail_protocol(f"toolset {toolset_name}: duplicate tool identity")
+        fail_protocol(f"toolset {toolset}: duplicate tool identity")
     description = _validated_description(
         schema.get("description", ""),
-        context=f"toolset {toolset_name}",
+        context=f"toolset {toolset}",
     )
     return ToolsetDefinition(
-        name=toolset_name,
+        name=toolset,
         description=description,
         tools=tools,
         raw_schema=schema,

@@ -50,6 +50,18 @@ from mcp.src.domain.errors import fail_protocol
 _MAX_IDENTITY_BYTES = 4_096
 
 
+def validated_toolset_identity(value: str) -> str:
+    """Return one canonical native Toolset Registry identity.
+
+    Args:
+        value: Candidate toolset identity.
+
+    Returns:
+        The normalized bounded identity.
+    """
+    return _validated_identity(value, context="toolset name")
+
+
 def canonical_tool_identity(toolset_name: str, tool_name: str) -> str:
     """Return one fully qualified tool identity.
 
@@ -60,7 +72,7 @@ def canonical_tool_identity(toolset_name: str, tool_name: str) -> str:
     Returns:
         The canonical `<toolset>.<leaf>` tool identity.
     """
-    toolset = _validated_identity(toolset_name, context="toolset name")
+    toolset = validated_toolset_identity(toolset_name)
     tool = _validated_identity(tool_name, context="tool name")
     prefix = f"{toolset}."
     if tool.startswith(prefix):

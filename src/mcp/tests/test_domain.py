@@ -268,6 +268,38 @@ def test_toolset_catalog_rejects_excessive_description_bytes(
         _ = parse_toolset_catalog("- EditorToolset.EditorToolset: abcde\n")
 
 
+def test_toolset_schema_normalizes_toolset_identity_without_tools() -> None:
+    """An empty schema still uses the canonical Toolset Registry identity."""
+    definition = parse_toolset_definition(
+        "  EditorToolset  ",
+        json.dumps({"tools": []}),
+    )
+
+    assert definition.name == "EditorToolset"
+
+
+@pytest.mark.parametrize(
+    ("toolset_name", "message"),
+    [
+        ("abcde", "byte limit"),
+        ("bad\nname", "printable"),
+    ],
+)
+def test_toolset_schema_validates_identity_without_tools(
+    toolset_name: str,
+    message: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Toolset identity validation cannot depend on a non-empty tools array."""
+    monkeypatch.setattr(
+        "mcp.src.domain.tool_identity._MAX_IDENTITY_BYTES",
+        4,
+    )
+
+    with pytest.raises(ProtocolError, match=message):
+        _ = parse_toolset_definition(toolset_name, json.dumps({"tools": []}))
+
+
 def test_toolset_schema_rejects_excessive_tools(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
