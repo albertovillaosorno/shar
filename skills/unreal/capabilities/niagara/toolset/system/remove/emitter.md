@@ -48,42 +48,68 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to remove an obsolete SHAR Niagara emitter together with its
+scripts, modules, and renderers after dependency review.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass a live emitter reference from the intended system.
+- Confirm the emitter name with `GetSystemSummary`.
+- Ensure no remaining module or gameplay behavior depends on the emitter.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+    "emitterToRemove": {
+    "system": {
+    "refPath": (
+        "/Game/NS_SHAR_MCP_EmitterProbe_3."
+        "NS_SHAR_MCP_EmitterProbe_3"
+    )
+},
+    "emitterName": "SHARExtra",
+    "scriptName": "",
+    "moduleName": "",
+    "rendererIndex": -1,
+    "inputNameStack": [],
+}
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two cycles removed `SHARExtra`, leaving only `Minimal`. Each successful removal
+returned JSON null; a second removal failed and listed `[Minimal]` as the
+available emitter inventory.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This is a destructive system mutation and returns JSON null.
+- Removal deletes the emitter instance and its associated stack contents.
+- Removing a missing emitter raises and includes the current available emitter
+  names.
+- Verify the remaining inventory through `GetSystemSummary`.
+- The non-emitter stack-reference fields are still required by the live schema.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

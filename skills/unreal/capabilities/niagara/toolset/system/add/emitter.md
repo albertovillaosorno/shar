@@ -49,42 +49,68 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to add a named emitter instance to a disposable or authored
+SHAR NiagaraSystem from a known emitter template.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass a mutable NiagaraSystem and a NiagaraEmitter template.
+- Choose an emitter instance name not already present in the system.
+- Use a disposable system for validation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+    "system": {
+    "refPath": (
+        "/Game/NS_SHAR_MCP_EmitterProbe_3."
+        "NS_SHAR_MCP_EmitterProbe_3"
+    )
+},
+    "templateEmitter": {
+        "refPath": (
+            "/Niagara/DefaultAssets/Templates/Emitters/"
+            "Minimal.Minimal"
+        )
+    },
+    "emitterName": "SHARExtra",
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two systems added `SHARExtra` beside `Minimal`. The new CPUSim emitter was
+enabled, had one sprite renderer, and reported module counts 0, 1, 1, and 1
+across its four stacks.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This is a persistent system mutation and returns a large parsed topology
+  object.
+- Input values are not included in the returned topology.
+- Verify the emitter inventory with `GetSystemSummary`.
+- Emitter templates are copied; the source asset is not modified.
+- Wrong system and template asset types fail parameter translation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

@@ -48,42 +48,72 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to update schema-backed emitter properties such as local-space
+simulation or deterministic random configuration for SHAR effects.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass a live emitter reference from the target NiagaraSystem.
+- Read current emitter data and schema-compatible field names first.
+- Encode `emitterData.propertyValues` as JSON text.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+    "emitter": {
+    "system": {
+    "refPath": (
+        "/Game/NS_SHAR_MCP_EmitterProbe_3."
+        "NS_SHAR_MCP_EmitterProbe_3"
+    )
+},
+    "emitterName": "SHARExtra",
+    "scriptName": "",
+    "moduleName": "",
+    "rendererIndex": -1,
+    "inputNameStack": [],
+},
+    "emitterData": {
+        "propertyValues": '{"bLocalSpace":true,"RandomSeed":2468}'
+    },
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+In two cycles, `SHARExtra` changed from local-space false and random seed 0 to
+local-space true and random seed 2468 while remaining CPUSim and non-
+deterministic.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This mutation returns JSON null.
+- Property names follow emitter C++ casing, including `bLocalSpace` and
+  `RandomSeed`.
+- `propertyValues` is nested JSON text.
+- Re-read `GetEmitterData` and parse its property-values blob to prove
+  persistence.
+- Rediscover emitter names after structural mutations.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
