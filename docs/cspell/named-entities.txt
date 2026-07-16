@@ -75,6 +75,7 @@ Spinemelter
 Squishee
 Squidport
 Stenberg
+StorageTek
 Titleserv
 Torruella
 Truevision

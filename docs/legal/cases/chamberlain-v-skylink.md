@@ -46,6 +46,12 @@ trafficking by the defendant, and absence of an applicable statutory exception.
 Only after the claimant establishes the required elements does a defendant bear
 the burden for an affirmative statutory defense.
 
+*Storage Technology Corp. v. Custom Hardware Engineering & Consulting, Inc.*
+later applied this framework to maintenance devices that bypassed a password
+protocol. Because the challenged RAM copy occurred whenever the equipment
+started and was likely protected by § 117(c) and customer licenses, the Federal
+Circuit found no sufficient relationship between the bypass and infringement.
+
 ## Limits And Circuit Disagreement
 
 - The opinion did not hold that every replacement part, universal transmitter,
@@ -101,6 +107,8 @@ protected service features presents materially different facts.
 <!-- markdownlint-disable-next-line MD013 -->
 - [17 U.S.C. § 1201 tool-distribution research](../statutes/17-usc-1201-trafficking.md).
 - [MDY Industries, LLC v. Blizzard Entertainment, Inc.](mdy-v-blizzard.md).
+<!-- markdownlint-disable-next-line MD013 -->
+- [Storage Technology Corp. v. Custom Hardware Engineering & Consulting, Inc.](storage-technology-v-custom-hardware.md).
 <!-- markdownlint-disable-next-line MD013 -->
 - [Lexmark International, Inc. v. Static Control Components, Inc.](lexmark-v-static-control.md).
 <!-- markdownlint-disable-next-line MD013 -->

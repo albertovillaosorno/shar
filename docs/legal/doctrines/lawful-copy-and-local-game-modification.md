@@ -6,7 +6,7 @@
   fact-specific.
 - Jurisdiction: United States baseline; other jurisdictions unresolved.
 - Authority level: Cross-authority research record.
-- As-of date: 2026-07-15.
+- As-of date: 2026-07-16.
 - Counsel review: Not performed.
 
 ## Question Presented
@@ -45,6 +45,14 @@ Circuit predicted would apply and distinguished the statutory scheme in
 *Vault*. Neither decision proves that a physical-copy purchaser accepted a
 term, that a later service agreement governs an earlier disc transaction, or
 that every jurisdiction would enforce the same restriction.
+
+Section 117(c) addresses a different and narrower situation: a machine owner or
+lessee may authorize a copy created solely by activating a lawfully programmed
+machine for maintenance or repair, subject to use, destruction, and access
+limits. *Storage Technology Corp. v. Custom Hardware Engineering & Consulting,
+Inc.* applied that rule to an independent service company at the preliminary-
+injunction stage. It does not classify content modification, enhancement, or
+reverse engineering as machine maintenance.
 
 ## Why Local Use Is Legally Different From Distribution
 
@@ -106,6 +114,8 @@ that every jurisdiction would enforce the same restriction.
 - [Bowers v. Baystate Technologies, Inc.](../cases/bowers-v-baystate-technologies.md).
 - [Krause v. Titleserv, Inc](../cases/krause-v-titleserv.md).
 - [Vault Corp. v. Quaid Software Ltd.](../cases/vault-v-quaid-software.md).
+<!-- markdownlint-disable-next-line MD013 -->
+- [Storage Technology Corp. v. Custom Hardware Engineering & Consulting, Inc.](../cases/storage-technology-v-custom-hardware.md).
 - [Vernor v. Autodesk, Inc](../cases/vernor-v-autodesk.md).
 <!-- markdownlint-disable-next-line MD013 -->
 - [Lewis Galoob Toys, Inc. v. Nintendo of America, Inc](../cases/lewis-galoob-toys-v-nintendo.md).

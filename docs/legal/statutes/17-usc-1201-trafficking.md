@@ -45,9 +45,18 @@ circumvention tool.
 prove unauthorized access and, in the Federal Circuit, a connection between that
 access and infringement of a copyright right. It rejected liability where
 homeowners were authorized to use replacement transmitters and no infringement
-or facilitating connection was alleged. The Ninth Circuit later rejected that
-access-to-infringement nexus in *MDY Industries, LLC v. Blizzard Entertainment,
-Inc.*, so the required relationship is jurisdiction-specific.
+or facilitating connection was alleged.
+
+*Storage Technology Corp. v. Custom Hardware Engineering & Consulting, Inc.*
+applied that framework to maintenance devices that bypassed a password protocol.
+The automatic RAM copy occurred whenever the equipment started, whether or not
+the devices were used, and the service company was likely protected by § 117(c)
+and customer activation rights. The court therefore found no sufficient nexus to
+copyright infringement; a possible contract violation was not enough.
+
+The Ninth Circuit later rejected the Federal Circuit's access-to-infringement
+nexus in *MDY Industries, LLC v. Blizzard Entertainment, Inc.*, so absence of
+infringement does not end § 1201(a) analysis in every jurisdiction.
 
 *Davidson & Associates, Inc. v. Jung* affirmed anti-trafficking liability for a
 game-service emulator on a record involving circumvention of a server
@@ -105,6 +114,9 @@ For every challenged item, identify:
 <!-- markdownlint-disable-next-line MD013 -->
 - [Chamberlain Group, Inc. v. Skylink Technologies, Inc.](../cases/chamberlain-v-skylink.md),
   for the Federal Circuit's authorization, claimant-burden, and nexus analysis.
+<!-- markdownlint-disable-next-line MD013 -->
+- [Storage Technology Corp. v. Custom Hardware Engineering & Consulting, Inc.](../cases/storage-technology-v-custom-hardware.md),
+  for the Federal Circuit's maintenance-password and activation-copy analysis.
 - [Davidson & Associates, Inc. v. Jung](../cases/davidson-v-jung.md), for the
   Eighth Circuit's game-service authentication and emulator analysis.
 - [17 U.S.C. § 1201(f)](17-usc-1201f.md).

@@ -31,6 +31,9 @@ The verified authorities support these bounded propositions:
 - *Chamberlain* required proof of unauthorized access and an access-to-
   infringement nexus in the Federal Circuit where homeowners used compatible
   replacement transmitters with purchased equipment.
+- *StorageTek* applied that nexus to maintenance-password devices and separately
+  treated activation-created RAM copies as likely protected by § 117(c) and
+  customer license rights on the preliminary-injunction record.
 - *MDY* separates copyright-license conditions from contractual covenants,
   rejects the *Chamberlain* nexus in the Ninth Circuit, and treats § 1201(a)
   access-control analysis as distinct from infringement.
@@ -66,7 +69,7 @@ The verified authorities support these bounded propositions:
 | :----------------------- | :---------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Copyrightability         | Exact element, originality, function, constraints, merger, selection, and arrangement                       | `google-v-oracle.md`, `lexmark-v-static-control.md`, `sas-v-world-programming.md`, `rj-control-v-multiject.md`, `premier-dealer-v-allegiance.md`                                                     |
 | Fair use                 | Purpose, character, necessity, amount, final output, market, alternatives, and jurisdiction                 | `sega-v-accolade.md`, `sony-v-connectix.md`, `google-v-oracle.md`                                                                                                                                    |
-| Access controls          | Protected work, measure, ordinary access route, circumvention act, tool design, marketing, and distribution | `chamberlain-v-skylink.md`, `lexmark-v-static-control.md`, `mdy-v-blizzard.md`, `davidson-v-jung.md`                                                                                                 |
+| Access controls          | Protected work, measure, ordinary access route, circumvention act, tool design, marketing, and distribution | `chamberlain-v-skylink.md`, `storage-technology-v-custom-hardware.md`, `lexmark-v-static-control.md`, `mdy-v-blizzard.md`, `davidson-v-jung.md`                                                      |
 | Contract                 | Exact terms, notice, assent, condition or covenant, scope, governing law, and remedy                        | `davidson-v-jung.md`, `mdy-v-blizzard.md`, `bowers-v-baystate-technologies.md`, `vault-v-quaid-software.md`, `nguyen-v-barnes-and-noble.md`, `berman-v-freedom-financial.md`, `specht-v-netscape.md` |
 | Confidential information | Source, secrecy, acquisition, duties, exposure, independent derivation, and disclosure                      | `../statutes/18-usc-1836-and-1839.md`                                                                                                                                                                |
 | Patent                   | Exact algorithm or claim, territory, legal status, implementation, and license                              | `patent-and-codec-risk.md`                                                                                                                                                                           |
@@ -127,6 +130,8 @@ identify:
 - [Google LLC v. Oracle America, Inc.](../cases/google-v-oracle.md).
 <!-- markdownlint-disable-next-line MD013 -->
 - [Chamberlain Group, Inc. v. Skylink Technologies, Inc.](../cases/chamberlain-v-skylink.md).
+<!-- markdownlint-disable-next-line MD013 -->
+- [Storage Technology Corp. v. Custom Hardware Engineering & Consulting, Inc.](../cases/storage-technology-v-custom-hardware.md).
 - [Davidson & Associates, Inc. v. Jung](../cases/davidson-v-jung.md).
 <!-- markdownlint-disable-next-line MD013 -->
 - [Lexmark International, Inc. v. Static Control Components, Inc.](../cases/lexmark-v-static-control.md).
