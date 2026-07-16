@@ -217,6 +217,31 @@ def test_cli_rejects_invalid_operands_before_session(
     assert not captured.out
 
 
+def test_cli_wraps_excessive_argument_integer_digits(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Argument decoder integer limits remain stable usage failures."""
+    previous_limit = sys.get_int_max_str_digits()
+    try:
+        sys.set_int_max_str_digits(640)
+        number = "1" * 641
+        exit_code = main(
+            (
+                "raw-call",
+                "call_tool",
+                "--arguments",
+                f'{{"value":{number}}}',
+            )
+        )
+    finally:
+        sys.set_int_max_str_digits(previous_limit)
+    captured = capsys.readouterr()
+
+    assert exit_code == 2
+    assert "--arguments is not valid JSON" in captured.err
+    assert not captured.out
+
+
 def test_cli_rejects_duplicate_argument_keys_before_session(
     capsys: pytest.CaptureFixture[str],
 ) -> None:

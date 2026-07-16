@@ -270,7 +270,7 @@ def _parse_arguments_option(operands: tuple[str, ...]) -> JsonObject:
         )
     except DuplicateJsonKeyError as error:
         _fail_usage(str(error), cause=error)
-    except json.JSONDecodeError as error:
+    except ValueError as error:
         _fail_usage("--arguments is not valid JSON", cause=error)
     if not isinstance(parsed, dict):
         _fail_usage("--arguments must contain one JSON object")
