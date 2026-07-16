@@ -55,41 +55,76 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to inspect deterministic output data from one PCG node after
+executing a disposable or SHAR graph instance, including bounded attribute and
+element slices.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use only one actor at a time for a graph asset because inspection state is
+  shared.
+- Pass an exact PCGNode ref discovered from graph structure.
+- Call once to enable inspection, execute the graph instance, then call again.
+- Wait for every call to complete before touching another actor using the graph.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+    "pCGVolume": {
+        "refPath": (
+            "/Temp/Untitled_1.Untitled_1:PersistentLevel."
+            "SHAR_MCP_PCG_DataViewProbe_1_hw9yklcblrek_1275803093"
+        )
+    },
+    "node": {
+        "refPath": (
+            "/Game/PCG_SHAR_MCP_DataViewProbe_1."
+            "PCG_SHAR_MCP_DataViewProbe_1:SHARGridNode"
+        )
+    },
+    "attributeName": "$Position",
+    "pinLabel": "Out",
+    "startIndex": 0,
+    "endIndex": 1,
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two disposable Create Points Grid graphs produced one point at the origin. After
+the required first-call error and execution, full reads returned transform,
+density, bounds, color, steepness, and seed; `$Position` returned one `[0, 0,
+0]` element.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The successful return value is JSON text and requires a second parse.
+- The first call normally raises while enabling inspection; execute before
+  retrying.
+- A missing pin raises and lists available output pins.
+- `startIndex` equal to the element count raises out-of-bounds instead of
+  returning an empty slice.
+- Never inspect actors sharing one graph concurrently; the tool metadata warns
+  this can freeze Unreal.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
