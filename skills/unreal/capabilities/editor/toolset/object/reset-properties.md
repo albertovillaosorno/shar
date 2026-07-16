@@ -48,42 +48,67 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to remove selected per-object overrides and restore reflected
+class defaults after a bounded SHAR property experiment.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use a disposable or explicitly task-owned UObject.
+- Capture current values and expected class defaults.
+- Name only the properties owned by the current task.
+- Verify unaffected properties remain unchanged.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "instance": {
+    "refPath": (
+      "/Game/NS_SHAR_MCP_ObjectPropertyProbe_4."
+      "NS_SHAR_MCP_ObjectPropertyProbe_4"
+    )
+  },
+  "properties": [
+    "bSupportLargeWorldCoordinates",
+    "WarmupTickDelta"
+  ]
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two cycles reset WarmupTime independently, leaving the Boolean and tick delta
+overrides intact, then reset the remaining fields and restored all three
+NiagaraSystem defaults.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This mutation returns Boolean true when all requested defaults are applied.
+- Reset is selective; properties omitted from the list retain their current
+  overrides.
+- A missing property raises while reading the class-default object.
+- An empty property list returns true as a no-op.
+- Default floating-point values may contain float32 serialization noise.
+- Re-read every targeted and intentionally untargeted property after reset.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

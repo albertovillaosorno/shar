@@ -47,42 +47,70 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this generic mutation only when a more specific SHAR tool does not expose
+the required reflected UObject property update.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use a disposable or explicitly task-owned UObject.
+- Discover exact reflected property names first.
+- Read the current values for rollback and verification.
+- Encode `values` as a JSON-formatted string, not a nested request object.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "instance": {
+    "refPath": (
+      "/Game/NS_SHAR_MCP_ObjectPropertyProbe_4."
+      "NS_SHAR_MCP_ObjectPropertyProbe_4"
+    )
+  },
+  "values": (
+    "{\"bSupportLargeWorldCoordinates\":false,"
+    "\"WarmupTime\":2.5,\"WarmupTickDelta\":0.125}"
+  )
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two cycles returned true. Large-world support changed to false, tick delta
+became 0.125, and Niagara normalized requested warmup time 2.5 to 2.375.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This is a persistent UObject mutation and returns Boolean true on accepted
+  conversion.
+- A true return does not prove exact value preservation; Niagara quantized
+  WarmupTime.
+- Invalid numeric strings and object-shaped numeric values returned true but
+  stored zero.
+- Boolean string `"false"` converted to false.
+- Unknown property names raise and list properties that could not be set.
+- An empty JSON object returns true as a no-op.
+- Always re-read every changed property and prefer a domain-specific tool when
+  available.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
