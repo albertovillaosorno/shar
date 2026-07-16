@@ -43,6 +43,15 @@
 //
 
 //! Monotonic eye closure validation and evidence projection.
+#![expect(
+    clippy::arithmetic_side_effects,
+    clippy::indexing_slicing,
+    clippy::integer_division,
+    clippy::shadow_reuse,
+    reason = "Validated equal-sized frames bound deterministic eyelid closure \
+              math and indexing."
+)]
+
 use std::collections::BTreeSet;
 
 use super::super::super::image::RgbaImage;

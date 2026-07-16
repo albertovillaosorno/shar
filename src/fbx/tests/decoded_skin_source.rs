@@ -54,9 +54,11 @@ use std::path::PathBuf;
 use fbx::adapters::driven::decoded_skin_source::{
     SkinSourceError, load_character, load_skeleton, load_skin_part,
 };
+use png as _;
 use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
+use shar_sha256 as _;
 
 fn temp_path(label: &str) -> PathBuf {
     std::env::temp_dir().join(
@@ -262,6 +264,7 @@ fn rejects_declared_composite_skin_count_mismatch() -> Result<(), String> {
         "character",
         &skeleton_path,
         &[],
+        &[],
         &composite_paths,
     )
     .err();
@@ -311,6 +314,7 @@ fn rejects_declared_composite_prop_count_mismatch() -> Result<(), String> {
         "character",
         &skeleton_path,
         &[],
+        &[],
         &composite_paths,
     )
     .err();
@@ -359,6 +363,7 @@ fn rejects_declared_composite_effect_count_mismatch() -> Result<(), String> {
     let error = load_character(
         "character",
         &skeleton_path,
+        &[],
         &[],
         &composite_paths,
     )

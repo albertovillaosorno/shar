@@ -46,6 +46,12 @@
 //
 
 //! Connected flat-color semantic chart discovery.
+#![expect(
+    unused_results,
+    reason = "Set insertion results are intentionally irrelevant after \
+              duplicate-resistant discovery."
+)]
+
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 use super::super::super::color::Rgba8;

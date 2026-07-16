@@ -54,7 +54,12 @@ use fbx::domain::texture::semantic::{
     BodyRegion, BodyTexturePlan, BoneFamily, Rgba8, RgbaImage, RgbaImageError,
     TextureAddressMode, plan_body_texture,
 };
+use png as _;
+use schoenwald_filesystem as _;
 use semantic_body::{BODY_COLORS, body_fixture};
+use serde as _;
+use serde_json as _;
+use shar_sha256 as _;
 
 #[test]
 fn plans_five_regions_deterministically_and_changes_only_uvs()
@@ -79,6 +84,10 @@ fn plans_five_regions_deterministically_and_changes_only_uvs()
 }
 
 /// Validate source counts, semantic lanes, and chart containment.
+#[expect(
+    clippy::arithmetic_side_effects,
+    reason = "Fixture literals are constructor-validated."
+)]
 fn validate_plan_shape(plan: &BodyTexturePlan) -> Result<(), String> {
     if plan.source_vertex_count != 15 || plan.source_triangle_count != 5 {
         return Err(
@@ -188,6 +197,10 @@ fn validate_atlas_colors(plan: &BodyTexturePlan) -> Result<(), String> {
 }
 
 /// Prove semantic preparation changed only selected UV coordinates.
+#[expect(
+    clippy::indexing_slicing,
+    reason = "Fixture literals are constructor-validated."
+)]
 fn validate_uv_only_change(
     character: &CharacterAsset,
     plan: BodyTexturePlan,
@@ -293,7 +306,7 @@ fn classifies_legacy_pelvis_support_joint_as_lower_body() {
 #[test]
 fn semantic_atlas_allows_an_empty_hair_lane() -> Result<(), String> {
     let (character, source, mut recipe) = body_fixture()?;
-    recipe
+    let _previous = recipe
         .color_overrides
         .insert(
             BODY_COLORS[1],

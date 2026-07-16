@@ -49,9 +49,11 @@
 // This integration target inherits the crate's serialization dependencies
 // even though these pure domain regressions do not deserialize fixtures.
 use fbx::domain::mesh::{MeshError, PrimitiveGroup};
+use png as _;
 use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
+use shar_sha256 as _;
 
 #[test]
 fn reports_missing_face_indices() {

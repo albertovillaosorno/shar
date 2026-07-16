@@ -50,6 +50,12 @@
 //
 
 //! Deterministic semantic texture PNG byte adapter.
+#![expect(
+    clippy::indexing_slicing,
+    reason = "PNG chunk and scanline indices are bounded by validated \
+              dimensions and chunk lengths."
+)]
+
 use std::io::Cursor;
 
 use crate::domain::texture::semantic::{Rgba8, RgbaImage, RgbaImageError};

@@ -45,6 +45,12 @@
 //
 
 //! Semantic eye analysis values and failure taxonomy.
+#![expect(
+    missing_copy_implementations,
+    reason = "Semantic errors intentionally remain non-Copy to preserve \
+              future diagnostic payload flexibility."
+)]
+
 use super::super::color::Rgba8;
 use super::super::image::{RgbaImage, RgbaImageError};
 

@@ -49,9 +49,11 @@
 
 use fbx::domain::transform::affine_inverse::{InverseError, invert_affine};
 use fbx::domain::transform::matrix::{TrsParts, compose, multiply};
+use png as _;
 use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
+use shar_sha256 as _;
 
 const TOLERANCE: f64 = 1e-9;
 const IDENTITY: [f64; 16] = [

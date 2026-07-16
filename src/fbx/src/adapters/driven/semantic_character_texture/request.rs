@@ -47,6 +47,12 @@
 //
 
 //! Explicit semantic character texture artifact request.
+#![expect(
+    clippy::module_name_repetitions,
+    reason = "Request types retain explicit semantic-texture names at the \
+              public adapter boundary."
+)]
+
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 
@@ -67,6 +73,9 @@ pub struct SemanticTextureRequest {
     pub skeleton_path: PathBuf,
     /// Explicit decoded skin component paths.
     pub skin_paths: Vec<PathBuf>,
+    /// Explicit decoded rigid prop mesh component paths.
+    #[serde(default)]
+    pub mesh_paths: Vec<PathBuf>,
     /// Explicit decoded composite component paths.
     pub composite_paths: Vec<PathBuf>,
     /// Shared or default skeletal animation component paths.
@@ -81,12 +90,15 @@ pub struct SemanticTextureRequest {
     pub body_texture_mode: String,
     /// Source texture addressing: `tile` or `clamp`.
     pub body_texture_address_mode: String,
-    /// Exactly four source eye texture-frame PNG paths in animation order.
-    pub eye_frame_paths: [PathBuf; 4],
+    /// Exactly four source eye texture-frame PNG paths when an eye group
+    /// exists.
+    #[serde(default)]
+    pub eye_frame_paths: Option<[PathBuf; 4]>,
     /// Primitive groups included in the integrated body and clothing atlas.
     pub body_groups: Vec<GroupAddressRequest>,
-    /// Primitive group containing both eye components.
-    pub eye_group: GroupAddressRequest,
+    /// Primitive group containing eye components when the model has them.
+    #[serde(default)]
+    pub eye_group: Option<GroupAddressRequest>,
     /// Reviewed exact source-color overrides.
     pub color_overrides: Vec<ColorOverrideRequest>,
     /// Maximum exposed-color luminance ratio classified as hair.
@@ -104,6 +116,9 @@ pub struct SemanticTextureRequest {
     /// Explicit non-body, non-eye material texture bindings.
     #[serde(default)]
     pub extra_materials: Vec<ExtraMaterialRequest>,
+    /// Explicit non-body, non-eye materials with no source texture.
+    #[serde(default)]
+    pub untextured_materials: Vec<String>,
 }
 
 /// Body texture preparation policy selected by one explicit request.
@@ -228,6 +243,8 @@ pub enum RequestError {
     UnknownBodyTextureMode(String),
     /// Texture-address identity was not `tile` or `clamp`.
     UnknownTextureAddressMode(String),
+    /// An eye group or its four frame paths were supplied without the other.
+    IncompleteEyeSelection,
     /// Two override rows targeted the same exact source color.
     DuplicateColorOverride(Rgba8),
 }

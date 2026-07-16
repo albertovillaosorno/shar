@@ -42,6 +42,11 @@
 //
 
 //! Stable body-region and bone-evidence identities.
+#![expect(
+    clippy::module_name_repetitions,
+    reason = "Region names remain explicit across semantic texture manifests."
+)]
+
 /// Stable non-eye semantic body regions; individual characters may omit lanes.
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum BodyRegion {

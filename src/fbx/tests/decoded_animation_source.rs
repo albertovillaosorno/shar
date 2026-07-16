@@ -57,9 +57,11 @@ use fbx::adapters::driven::decoded_animation_source::load_animation_clips;
 use fbx::domain::animation::BoneAnimationTrack;
 use fbx::domain::animation::quaternion::decode_signed_i16_wxyz;
 use fbx::domain::skeleton::Bone;
+use png as _;
 use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
+use shar_sha256 as _;
 
 const TOLERANCE: f64 = 1e-10;
 

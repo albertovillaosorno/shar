@@ -44,6 +44,12 @@
 //
 
 //! Ordered flat-color atlas rasterization.
+#![expect(
+    clippy::shadow_reuse,
+    reason = "Raster stages intentionally refine validated coordinate and \
+              dimension terms."
+)]
+
 use super::super::image::RgbaImage;
 use super::charts::model::PlacedChart;
 use super::error::SemanticTextureError;

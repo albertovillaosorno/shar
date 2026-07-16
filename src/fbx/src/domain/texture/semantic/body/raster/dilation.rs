@@ -45,6 +45,13 @@
 //
 
 //! Deterministic chart-cell-bounded edge dilation.
+#![expect(
+    clippy::default_numeric_fallback,
+    clippy::indexing_slicing,
+    reason = "Validated image dimensions bound neighborhood indexing and \
+              fixed kernel constants."
+)]
+
 use super::super::super::image::RgbaImage;
 use super::super::charts::model::PlacedChart;
 use super::super::error::SemanticTextureError;

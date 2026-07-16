@@ -55,9 +55,11 @@ use fbx::adapters::driven::decoded_component_source::{
     DecodedComponentError, DecodedComponentSource,
 };
 use fbx::ports::component_source::ComponentSource;
+use png as _;
 use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
+use shar_sha256 as _;
 
 fn temp_root(label: &str) -> PathBuf {
     std::env::temp_dir().join(

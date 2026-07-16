@@ -42,6 +42,12 @@
 //
 
 //! Flat and anchored-pattern triangle classification boundary.
+#![expect(
+    clippy::indexing_slicing,
+    reason = "Triangle indices are validated against mesh topology before \
+              classification."
+)]
+
 use super::super::super::color::Rgba8;
 use super::super::super::region::BodyRegion;
 use super::super::error::SemanticTextureError;

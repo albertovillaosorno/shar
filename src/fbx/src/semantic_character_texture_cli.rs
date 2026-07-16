@@ -50,23 +50,28 @@
 
 //! Transactional semantic character texture artifact CLI.
 use std::env;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::ExitCode;
 
-use fbx::adapters::driven::binary_character_writer::write_binary_character_fbx;
 use fbx::adapters::driven::semantic_character_texture::{
-    PreparedSemanticCharacter, SemanticTextureRequest,
-    prepare_semantic_character,
+    SemanticTextureRequest, prepare_semantic_character,
+    publish_prepared_semantic_character,
 };
-use schoenwald_filesystem::adapters::driving::local::{
-    create_dir_all, path_kind, read_utf8, write_bytes,
-};
-use schoenwald_filesystem::domain::PathKind;
+use png as _;
+use schoenwald_filesystem::adapters::driving::local::read_utf8;
+use serde as _;
+use shar_sha256 as _;
 
 /// Fixed CLI usage contract.
 const USAGE: &str =
     "semantic-character-texture <request.json> <new-output-directory>";
 
+#[expect(
+    clippy::print_stdout,
+    clippy::print_stderr,
+    reason = "The CLI contract writes success and failure diagnostics to \
+              standard streams."
+)]
 fn main() -> ExitCode {
     match run() {
         Ok(summary) => {
@@ -85,11 +90,15 @@ fn run() -> Result<String, String> {
     let arguments = env::args_os()
         .skip(1)
         .collect::<Vec<_>>();
-    if arguments.len() != 2 {
+    let [
+        request_argument,
+        output_argument,
+    ] = arguments.as_slice()
+    else {
         return Err(format!("usage: {USAGE}"));
-    }
-    let request_path = PathBuf::from(&arguments[0]);
-    let output_path = PathBuf::from(&arguments[1]);
+    };
+    let request_path = PathBuf::from(request_argument);
+    let output_path = PathBuf::from(output_argument);
     let request_text = read_utf8(&request_path)
         .map_err(|error| format!("request read failed: {error}"))?;
     let request: SemanticTextureRequest =
@@ -97,7 +106,7 @@ fn run() -> Result<String, String> {
             .map_err(|error| format!("request JSON failed: {error}"))?;
     let prepared = prepare_semantic_character(&request)
         .map_err(|error| format!("preparation failed: {error:?}"))?;
-    publish(
+    let _summary = publish_prepared_semantic_character(
         &output_path,
         &prepared,
     )?;
@@ -118,130 +127,4 @@ fn run() -> Result<String, String> {
         }),
     )
     .map_err(|error| format!("summary JSON failed: {error}"))
-}
-
-/// Publish all artifacts through one hidden staging directory rename.
-fn publish(
-    output: &Path,
-    prepared: &PreparedSemanticCharacter,
-) -> Result<(), String> {
-    ensure_missing(
-        output, "output",
-    )?;
-    let staging = staging_path(output)?;
-    ensure_missing(
-        &staging, "staging",
-    )?;
-    create_dir_all(&staging)
-        .map_err(|error| format!("staging create failed: {error}"))?;
-    let result = write_artifacts(
-        &staging, prepared,
-    )
-    .and_then(
-        |()| {
-            std::fs::rename(
-                &staging, output,
-            )
-            .map_err(|error| format!("output publish failed: {error}"))
-        },
-    );
-    if result.is_err() {
-        let _cleanup_result = std::fs::remove_dir_all(&staging);
-    }
-    result
-}
-
-/// Write the complete fixed artifact set below one staging directory.
-fn write_artifacts(
-    staging: &Path,
-    prepared: &PreparedSemanticCharacter,
-) -> Result<(), String> {
-    let artifacts = &prepared.artifacts;
-    let textures = staging.join("textures");
-    create_dir_all(&textures)
-        .map_err(|error| format!("texture directory create failed: {error}"))?;
-    write(
-        &textures.join("body-atlas.png"),
-        &artifacts.body_texture_png,
-    )?;
-    for (file_name, bytes) in [
-        (
-            "eye.png",
-            &artifacts.eye_layer_pngs[0],
-        ),
-        (
-            "eye-pupil.png",
-            &artifacts.eye_layer_pngs[1],
-        ),
-        (
-            "eye-lids.png",
-            &artifacts.eye_layer_pngs[2],
-        ),
-    ] {
-        write(
-            &textures.join(file_name),
-            bytes,
-        )?;
-    }
-    for extra in &artifacts.extra_textures {
-        write(
-            &textures.join(&extra.file_name),
-            &extra.png,
-        )?;
-    }
-    let fbx_path = staging.join(
-        format!(
-            "{}.fbx",
-            artifacts
-                .summary
-                .character_id
-        ),
-    );
-    write_binary_character_fbx(
-        &prepared.character,
-        &prepared.materials,
-        &prepared.animations,
-        &fbx_path,
-    )
-    .map_err(|error| format!("prepared FBX write failed: {error:?}"))?;
-    write(
-        &staging.join("texture-plan.json"),
-        &artifacts.manifest_json,
-    )
-}
-
-/// Write one artifact without parent creation because staging already exists.
-fn write(
-    path: &Path,
-    bytes: &[u8],
-) -> Result<(), String> {
-    write_bytes(
-        path, bytes, false,
-    )
-    .map_err(|error| format!("artifact write failed: {error}"))
-}
-
-/// Require one path to be absent before a fail-closed publication transaction.
-fn ensure_missing(
-    path: &Path,
-    role: &str,
-) -> Result<(), String> {
-    match path_kind(path)
-        .map_err(|error| format!("{role} path inspection failed: {error}"))?
-    {
-        PathKind::Missing => Ok(()),
-        kind => Err(format!("{role} path already exists as {kind:?}")),
-    }
-}
-
-/// Derive one hidden sibling staging identity from the output leaf name.
-fn staging_path(output: &Path) -> Result<PathBuf, String> {
-    let name = output
-        .file_name()
-        .and_then(|value| value.to_str())
-        .filter(|value| !value.is_empty())
-        .ok_or_else(
-            || "output directory requires a UTF-8 leaf name".to_owned(),
-        )?;
-    Ok(output.with_file_name(format!(".{name}.textures-staging")))
 }

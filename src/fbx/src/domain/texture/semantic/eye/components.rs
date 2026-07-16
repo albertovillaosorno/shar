@@ -49,12 +49,22 @@
 //
 
 //! Deterministic two-eye connected-component discovery.
+#![expect(
+    clippy::arithmetic_side_effects,
+    clippy::indexing_slicing,
+    clippy::shadow_reuse,
+    clippy::too_many_lines,
+    unused_results,
+    reason = "Validated topology bounds component indices; fixture assertions \
+              document the side-splitting contract."
+)]
+
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 use super::types::{EyeComponent, EyeSide, EyeTextureError};
 use crate::domain::mesh::PrimitiveGroup;
 
-/// Discover exactly two connected components and assign stable side identities.
+/// Discover two eye sides from one or more disconnected islands per side.
 pub(super) fn discover(
     group: &PrimitiveGroup
 ) -> Result<Vec<EyeComponent>, EyeTextureError> {
@@ -114,7 +124,7 @@ pub(super) fn discover(
             ),
         );
     }
-    if components.len() != 2 {
+    if components.len() < 2 {
         return Err(
             EyeTextureError::ComponentCount {
                 actual: components.len(),
@@ -127,9 +137,75 @@ pub(super) fn discover(
                 .total_cmp(&right.0)
         },
     );
-    if components[0]
-        .0
-        .total_cmp(&components[1].0)
+    let mut split = None;
+    let mut largest_gap = None;
+    let mut ambiguous = false;
+    for position in 1..components.len() {
+        let gap = components[position].0 - components[position - 1].0;
+        match largest_gap {
+            None => {
+                largest_gap = Some(gap);
+                split = Some(position);
+                ambiguous = false;
+            }
+            Some(current)
+                if gap
+                    .total_cmp(&current)
+                    .is_gt() =>
+            {
+                largest_gap = Some(gap);
+                split = Some(position);
+                ambiguous = false;
+            }
+            Some(current)
+                if gap
+                    .total_cmp(&current)
+                    .is_eq() =>
+            {
+                ambiguous = true;
+            }
+            Some(_current) => {}
+        }
+    }
+    if ambiguous || largest_gap.is_none_or(|gap| gap <= 0.0) {
+        return Err(EyeTextureError::AmbiguousComponentSides);
+    }
+    let split = split.ok_or(EyeTextureError::AmbiguousComponentSides)?;
+    let (negative_components, positive_components) = components.split_at(split);
+    let mut negative_vertices = negative_components
+        .iter()
+        .flat_map(
+            |component| {
+                component
+                    .1
+                    .iter()
+                    .copied()
+            },
+        )
+        .collect::<Vec<_>>();
+    let mut positive_vertices = positive_components
+        .iter()
+        .flat_map(
+            |component| {
+                component
+                    .1
+                    .iter()
+                    .copied()
+            },
+        )
+        .collect::<Vec<_>>();
+    negative_vertices.sort_unstable();
+    positive_vertices.sort_unstable();
+    let negative_centroid = centroid_x(
+        group,
+        &negative_vertices,
+    )?;
+    let positive_centroid = centroid_x(
+        group,
+        &positive_vertices,
+    )?;
+    if negative_centroid
+        .total_cmp(&positive_centroid)
         .is_eq()
     {
         return Err(EyeTextureError::AmbiguousComponentSides);
@@ -138,17 +214,13 @@ pub(super) fn discover(
         vec![
             EyeComponent {
                 side: EyeSide::NegativeX,
-                vertex_indices: components[0]
-                    .1
-                    .clone(),
-                centroid_x: components[0].0,
+                vertex_indices: negative_vertices,
+                centroid_x: negative_centroid,
             },
             EyeComponent {
                 side: EyeSide::PositiveX,
-                vertex_indices: components[1]
-                    .1
-                    .clone(),
-                centroid_x: components[1].0,
+                vertex_indices: positive_vertices,
+                centroid_x: positive_centroid,
             },
         ],
     )
@@ -219,4 +291,101 @@ fn centroid_x(
 /// Convert one domain vertex index into the host index type.
 fn index(value: u32) -> Result<usize, EyeTextureError> {
     usize::try_from(value).map_err(|_error| EyeTextureError::NumericOverflow)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::discover;
+    use crate::domain::mesh::PrimitiveGroup;
+
+    #[test]
+    fn merges_multiple_disconnected_islands_per_eye_side() {
+        let positions = vec![
+            [
+                -2.2, 0.0, 0.0,
+            ],
+            [
+                -2.0, 0.2, 0.0,
+            ],
+            [
+                -1.8, 0.0, 0.0,
+            ],
+            [
+                -1.7, 0.0, 0.0,
+            ],
+            [
+                -1.5, 0.2, 0.0,
+            ],
+            [
+                -1.3, 0.0, 0.0,
+            ],
+            [
+                1.3, 0.0, 0.0,
+            ],
+            [
+                1.5, 0.2, 0.0,
+            ],
+            [
+                1.7, 0.0, 0.0,
+            ],
+            [
+                1.8, 0.0, 0.0,
+            ],
+            [
+                2.0, 0.2, 0.0,
+            ],
+            [
+                2.2, 0.0, 0.0,
+            ],
+        ];
+        let indices = [
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+        ];
+        let group_result = PrimitiveGroup::new(
+            0,
+            "eye",
+            positions,
+            Vec::new(),
+            &indices,
+        );
+        assert!(
+            group_result.is_ok(),
+            "fixture group failed: {group_result:?}"
+        );
+        let Ok(group) = group_result else {
+            return;
+        };
+        let discovery_result = discover(&group);
+        assert!(
+            discovery_result.is_ok(),
+            "eye discovery failed: {discovery_result:?}"
+        );
+        let Ok(components) = discovery_result else {
+            return;
+        };
+        let [
+            left,
+            right,
+        ] = components.as_slice()
+        else {
+            assert_eq!(
+                components.len(),
+                2
+            );
+            return;
+        };
+
+        assert_eq!(
+            left.vertex_indices
+                .len(),
+            6
+        );
+        assert_eq!(
+            right
+                .vertex_indices
+                .len(),
+            6
+        );
+        assert!(left.centroid_x < right.centroid_x);
+    }
 }

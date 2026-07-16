@@ -42,6 +42,12 @@
 //
 
 //! Patterned semantic chart texel-grid rasterizer.
+#![expect(
+    clippy::indexing_slicing,
+    reason = "Validated triangle and UV cardinalities bound source sampling \
+              indices."
+)]
+
 use super::super::super::image::RgbaImage;
 use super::super::charts::model::PlacedChart;
 use super::super::error::SemanticTextureError;

@@ -73,9 +73,12 @@ mod artifacts;
 mod manifest;
 #[path = "semantic_character_texture/package.rs"]
 mod package;
+#[path = "semantic_character_texture/publication.rs"]
+mod publication;
 #[path = "semantic_character_texture/request.rs"]
 pub mod request;
 
+pub use publication::publish_prepared_semantic_character;
 pub use request::{BodyTextureMode, SemanticTextureRequest};
 
 /// Complete deterministic artifact byte bundle.
@@ -83,10 +86,10 @@ pub use request::{BodyTextureMode, SemanticTextureRequest};
 pub struct SemanticTextureArtifacts {
     /// Preserved source body texture or generated semantic atlas PNG bytes.
     pub body_texture_png: Vec<u8>,
-    /// Derived open eye, independent pupil, and paired-lid PNG bytes.
-    pub eye_layer_pngs: [Vec<u8>; 3],
-    /// SHA-256 identity of the sclera color, pupil, and lid SSOT.
-    pub eye_profile_sha256: String,
+    /// Derived open eye, pupil, and paired-lid PNG bytes when eyes exist.
+    pub eye_layer_pngs: Option<[Vec<u8>; 3]>,
+    /// SHA-256 identity of the eye-layer SSOT when eyes exist.
+    pub eye_profile_sha256: Option<String>,
     /// Explicit extra material textures in stable file-name order.
     pub extra_textures: Vec<ExternalTextureArtifact>,
     /// Deterministic JSON manifest bytes with one trailing newline.
@@ -134,8 +137,8 @@ pub struct SemanticTextureSummary {
     pub animation_count: usize,
     /// Published body texture dimensions.
     pub body_texture_size: [u32; 2],
-    /// Modern square eye frame dimension.
-    pub eye_frame_size: u32,
+    /// Modern square eye frame dimension when the model has an eye component.
+    pub eye_frame_size: Option<u32>,
 }
 
 /// Semantic character texture artifact failure.
@@ -204,6 +207,11 @@ pub fn prepare_semantic_character(
         .iter()
         .map(std::path::PathBuf::as_path)
         .collect::<Vec<_>>();
+    let mesh_paths = request
+        .mesh_paths
+        .iter()
+        .map(std::path::PathBuf::as_path)
+        .collect::<Vec<_>>();
     let composite_paths = request
         .composite_paths
         .iter()
@@ -213,6 +221,7 @@ pub fn prepare_semantic_character(
         character_name,
         &request.skeleton_path,
         &skin_paths,
+        &mesh_paths,
         &composite_paths,
     )
     .map_err(
@@ -261,7 +270,7 @@ pub fn prepare_semantic_character(
     let artifacts = artifacts::assemble(
         request,
         &body,
-        &eye,
+        eye.as_ref(),
         animations.len(),
         package.extra_textures,
     )?;
@@ -311,23 +320,42 @@ fn load_requested_animations(
     Ok(animations)
 }
 
-/// Decode and analyze the four eye frames for one selected eye group.
+/// Decode and analyze the four eye frames when one eye group exists.
 fn prepare_eye(
     character: &crate::domain::character::CharacterAsset,
     request: &SemanticTextureRequest,
 ) -> Result<
-    crate::domain::texture::semantic::EyeSemanticPlan,
+    Option<crate::domain::texture::semantic::EyeSemanticPlan>,
     SemanticTextureArtifactError,
 > {
-    let eye_group_address: GroupAddress = request
-        .eye_group
-        .into();
+    let (eye_group_request, eye_frame_paths) = match (
+        request.eye_group,
+        request
+            .eye_frame_paths
+            .as_ref(),
+    ) {
+        (None, None) => return Ok(None),
+        (Some(group_request), Some(frame_paths)) => (
+            group_request,
+            frame_paths,
+        ),
+        (None, Some(_)) | (Some(_), None) => {
+            return Err(
+                SemanticTextureArtifactError::Request(
+                    format!(
+                        "{:?}",
+                        request::RequestError::IncompleteEyeSelection
+                    ),
+                ),
+            );
+        }
+    };
+    let eye_group_address: GroupAddress = eye_group_request.into();
     let eye_group = group(
         character,
         eye_group_address,
     )?;
-    let eye_sources = request
-        .eye_frame_paths
+    let eye_source_images = eye_frame_paths
         .iter()
         .enumerate()
         .map(
@@ -339,7 +367,7 @@ fn prepare_eye(
             },
         )
         .collect::<Result<Vec<_>, _>>()?;
-    let eye_sources: [_; 4] = eye_sources
+    let eye_sources: [_; 4] = eye_source_images
         .try_into()
         .map_err(
             |_frames: Vec<_>| SemanticTextureArtifactError::EyeFrameCount,
@@ -349,6 +377,7 @@ fn prepare_eye(
         &eye_sources,
         request.eye_output_size,
     )
+    .map(Some)
     .map_err(|error| SemanticTextureArtifactError::Eye(format!("{error:?}")))
 }
 
@@ -449,10 +478,7 @@ pub fn build_semantic_texture_artifacts(
 fn decode_image(
     role: &str,
     path: &Path,
-) -> Result<
-    crate::domain::texture::semantic::RgbaImage,
-    SemanticTextureArtifactError,
-> {
+) -> Result<RgbaImage, SemanticTextureArtifactError> {
     let bytes = read_bytes(path).map_err(
         |error| SemanticTextureArtifactError::Read {
             role: role.to_owned(),

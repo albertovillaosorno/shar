@@ -46,6 +46,14 @@
 //
 
 //! Deterministic non-degenerate orthographic chart projection.
+#![expect(
+    clippy::shadow_reuse,
+    clippy::unneeded_field_pattern,
+    unused_results,
+    reason = "Private projection candidates intentionally reuse geometric \
+              terms and discard replaced map values."
+)]
+
 use std::collections::BTreeMap;
 
 use super::super::super::color::Rgba8;
@@ -63,11 +71,17 @@ const MINIMUM_PROJECTED_AREA: f32 = 1.0e-10;
 
 /// Immutable chart-projection ownership and sampling request.
 pub(super) struct ProjectionRequest {
+    /// Stable chart identity carried into the projection result.
     pub(super) id: String,
+    /// Source primitive-group address being projected.
     pub(super) address: GroupAddress,
+    /// Semantic body region assigned to the chart.
     pub(super) region: BodyRegion,
+    /// Authored source color used by flat-color charts.
     pub(super) source_color: Rgba8,
+    /// Triangles that must preserve source-texture sampling.
     pub(super) source_sampled_triangles: Vec<usize>,
+    /// Source texture addressing policy used for UV normalization.
     pub(super) address_mode: TextureAddressMode,
 }
 
@@ -229,10 +243,15 @@ fn normalize_uv(
 
 /// One valid projection candidate and its geometric score.
 struct Candidate {
+    /// Orthographic axis represented by this candidate.
     axis: ProjectionAxis,
+    /// Projected position for every candidate vertex.
     positions: BTreeMap<usize, [f32; 2]>,
+    /// Candidate bounds used to normalize and score the chart.
     bounds: ProjectionBounds,
+    /// Smallest doubled triangle area in the candidate projection.
     minimum_area: f32,
+    /// Sum of doubled triangle areas in the candidate projection.
     total_area: f32,
 }
 

@@ -60,7 +60,9 @@ use crate::domain::texture::semantic::GroupAddress;
 
 /// Complete package binding result.
 pub(super) struct PackageBindings {
+    /// Exact material bindings for every primitive-group shader.
     pub(super) materials: Vec<MaterialBinding>,
+    /// Extra external PNG artifacts in stable file-name order.
     pub(super) extra_textures: Vec<ExternalTextureArtifact>,
 }
 
@@ -75,13 +77,13 @@ pub(super) fn build(
         .copied()
         .map(Into::into)
         .collect::<BTreeSet<GroupAddress>>();
-    let eye_group: GroupAddress = request
+    let eye_group = request
         .eye_group
-        .into();
-    if body_groups.contains(&eye_group) {
+        .map(Into::into);
+    if eye_group.is_some_and(|address| body_groups.contains(&address)) {
         return Err(package_error("eye group also appears in body groups"));
     }
-    let mut bindings = BTreeMap::<String, String>::new();
+    let mut bindings = BTreeMap::<String, Option<String>>::new();
     for address in &body_groups {
         bind_group(
             character,
@@ -90,13 +92,19 @@ pub(super) fn build(
             &mut bindings,
         )?;
     }
-    bind_group(
-        character,
-        eye_group,
-        "eye.png",
+    if let Some(address) = eye_group {
+        bind_group(
+            character,
+            address,
+            "eye.png",
+            &mut bindings,
+        )?;
+    }
+    let extra_textures = assemble_extra_materials(
+        request,
         &mut bindings,
     )?;
-    let extra_textures = assemble_extra_materials(
+    assemble_untextured_materials(
         request,
         &mut bindings,
     )?;
@@ -111,8 +119,7 @@ pub(super) fn build(
         .map(
             |(material, texture)| {
                 MaterialBinding::new(
-                    material,
-                    Some(texture),
+                    material, texture,
                 )
                 .map_err(
                     |error| {
@@ -135,7 +142,7 @@ pub(super) fn build(
 /// Decode and bind every explicit extra-material texture.
 fn assemble_extra_materials(
     request: &SemanticTextureRequest,
-    bindings: &mut BTreeMap<String, String>,
+    bindings: &mut BTreeMap<String, Option<String>>,
 ) -> Result<
     BTreeMap<String, ExternalTextureArtifact>,
     SemanticTextureArtifactError,
@@ -195,37 +202,78 @@ fn assemble_extra_materials(
                 )
             },
         )?;
-        if textures
-            .insert(
+        let artifact = ExternalTextureArtifact {
+            file_name: extra
+                .output_file_name
+                .clone(),
+            png,
+        };
+        if let Some(existing) = textures.get(&extra.output_file_name) {
+            if existing != &artifact {
+                return Err(
+                    package_error(
+                        format!(
+                            "conflicting extra texture output: {}",
+                            extra.output_file_name
+                        ),
+                    ),
+                );
+            }
+        } else {
+            let _previous = textures.insert(
                 extra
                     .output_file_name
                     .clone(),
-                ExternalTextureArtifact {
-                    file_name: extra
-                        .output_file_name
-                        .clone(),
-                    png,
-                },
+                artifact,
+            );
+        }
+        let _previous = bindings.insert(
+            binding.material_name,
+            Some(
+                extra
+                    .output_file_name
+                    .clone(),
+            ),
+        );
+    }
+    Ok(textures)
+}
+
+/// Bind explicit shader-only materials without inventing texture artifacts.
+fn assemble_untextured_materials(
+    request: &SemanticTextureRequest,
+    bindings: &mut BTreeMap<String, Option<String>>,
+) -> Result<(), SemanticTextureArtifactError> {
+    for material_name in &request.untextured_materials {
+        let binding = MaterialBinding::new(
+            material_name.clone(),
+            None,
+        )
+        .map_err(
+            |error| {
+                package_error(format!("invalid untextured material: {error:?}"))
+            },
+        )?;
+        if bindings
+            .insert(
+                binding
+                    .material_name
+                    .clone(),
+                None,
             )
             .is_some()
         {
             return Err(
                 package_error(
                     format!(
-                        "duplicate extra texture output: {}",
-                        extra.output_file_name
+                        "untextured material shadows another binding: {}",
+                        binding.material_name
                     ),
                 ),
             );
         }
-        bindings.insert(
-            binding.material_name,
-            extra
-                .output_file_name
-                .clone(),
-        );
     }
-    Ok(textures)
+    Ok(())
 }
 
 /// Bind one selected group shader to one generated texture identity.
@@ -233,21 +281,20 @@ fn bind_group(
     character: &CharacterAsset,
     address: GroupAddress,
     texture: &str,
-    bindings: &mut BTreeMap<String, String>,
+    bindings: &mut BTreeMap<String, Option<String>>,
 ) -> Result<(), SemanticTextureArtifactError> {
     let shader = group_shader(
         character, address,
     )?;
+    let selected = Some(texture.to_owned());
     if let Some(existing) = bindings.insert(
         shader.clone(),
-        texture.to_owned(),
-    ) && existing != texture
+        selected.clone(),
+    ) && existing != selected
     {
         return Err(
             package_error(
-                format!(
-                    "shader {shader} maps to both {existing} and {texture}"
-                ),
+                format!("shader {shader} maps to conflicting texture policies"),
             ),
         );
     }
@@ -258,8 +305,8 @@ fn bind_group(
 fn validate_group_coverage(
     character: &CharacterAsset,
     body_groups: &BTreeSet<GroupAddress>,
-    eye_group: GroupAddress,
-    bindings: &BTreeMap<String, String>,
+    eye_group: Option<GroupAddress>,
+    bindings: &BTreeMap<String, Option<String>>,
 ) -> Result<(), SemanticTextureArtifactError> {
     let body_shaders = body_groups
         .iter()
@@ -271,9 +318,15 @@ fn validate_group_coverage(
             },
         )
         .collect::<Result<BTreeSet<_>, _>>()?;
-    let eye_shader = group_shader(
-        character, eye_group,
-    )?;
+    let eye_shader = eye_group
+        .map(
+            |address| {
+                group_shader(
+                    character, address,
+                )
+            },
+        )
+        .transpose()?;
     let mut used = BTreeSet::new();
     for (part_index, part) in character
         .parts
@@ -302,7 +355,14 @@ fn validate_group_coverage(
                     ),
                 );
             }
-            if group.shader == eye_shader && address != eye_group {
+            if eye_shader
+                .as_ref()
+                .is_some_and(
+                    |shader| {
+                        group.shader == *shader && Some(address) != eye_group
+                    },
+                )
+            {
                 return Err(
                     package_error(
                         format!(
@@ -322,7 +382,7 @@ fn validate_group_coverage(
                     ),
                 );
             }
-            used.insert(
+            let _inserted = used.insert(
                 group
                     .shader
                     .clone(),

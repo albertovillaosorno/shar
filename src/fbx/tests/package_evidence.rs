@@ -46,9 +46,11 @@
 use fbx::ports::package_index::{
     ModelPackageEvidence, PackageIndexError, PackageModelFamily,
 };
+use png as _;
 use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
+use shar_sha256 as _;
 
 #[test]
 fn canonicalizes_package_evidence_member_order() {

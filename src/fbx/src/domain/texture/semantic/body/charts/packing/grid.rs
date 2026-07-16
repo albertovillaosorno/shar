@@ -46,6 +46,13 @@
 //
 
 //! Deterministic integer semantic atlas grid policy.
+#![expect(
+    clippy::arithmetic_side_effects,
+    clippy::integer_division,
+    reason = "Checked atlas dimensions bound deterministic integer grid \
+              packing and private carriers."
+)]
+
 use super::super::super::super::region::BodyRegion;
 use super::super::super::error::SemanticTextureError;
 use super::super::super::recipe::AtlasConfig;
@@ -54,7 +61,9 @@ use super::super::super::types::PixelRect;
 /// One selected row-and-column grid.
 #[derive(Clone, Copy)]
 pub(super) struct Grid {
+    /// Number of columns in the selected atlas grid.
     columns: usize,
+    /// Number of rows in the selected atlas grid.
     rows: usize,
 }
 
@@ -191,9 +200,13 @@ pub(super) fn cell(
 
 /// Stable integer score for one candidate grid.
 struct GridScore {
+    /// Smallest interior cell dimension after padding.
     minimum_dimension: u32,
+    /// Interior cell area used as the secondary score.
     area: u64,
+    /// Number of unused grid slots after all charts are placed.
     unused: usize,
+    /// Column count used as the deterministic final tie-breaker.
     columns: usize,
 }
 

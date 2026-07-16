@@ -47,7 +47,12 @@ use fbx::domain::mesh::PrimitiveGroup;
 use fbx::domain::texture::semantic::{Rgba8, RgbaImage};
 
 /// Build one primitive group with two disconnected eye components.
-pub fn eye_group() -> Result<PrimitiveGroup, String> {
+#[expect(
+    clippy::redundant_pub_crate,
+    reason = "Parent tests import this fixture; broader visibility is not \
+              public API."
+)]
+pub(super) fn eye_group() -> Result<PrimitiveGroup, String> {
     PrimitiveGroup::new(
         0,
         "synthetic-eyes",
@@ -85,7 +90,12 @@ pub fn eye_group() -> Result<PrimitiveGroup, String> {
 }
 
 /// Build four symmetric monotonic blink frames with persistent pupil pixels.
-pub fn eye_frames() -> Result<[RgbaImage; 4], String> {
+#[expect(
+    clippy::redundant_pub_crate,
+    reason = "Parent tests import this fixture; broader visibility is not \
+              public API."
+)]
+pub(super) fn eye_frames() -> Result<[RgbaImage; 4], String> {
     let white = Rgba8::new(
         255, 255, 255, 255,
     );

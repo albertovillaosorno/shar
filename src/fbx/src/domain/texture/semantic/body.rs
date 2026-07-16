@@ -46,6 +46,12 @@
 //
 
 //! Public semantic body-atlas planning facade.
+#![expect(
+    clippy::module_name_repetitions,
+    reason = "Body semantic types retain explicit names across adapter \
+              boundaries."
+)]
+
 use super::image::RgbaImage;
 use crate::domain::character::CharacterAsset;
 

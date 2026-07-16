@@ -70,9 +70,11 @@ use fbx::domain::skin::SkinInfluence;
 use fbx::domain::texture::MaterialBinding;
 use fbx::domain::transform::affine_inverse::invert_affine;
 use fbx::domain::transform::matrix::{TrsParts, compose, multiply};
+use png as _;
 use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
+use shar_sha256 as _;
 
 const BINARY_MAGIC: &[u8; 23] = b"Kaydara FBX Binary  \x00\x1a\x00";
 const FBX_VERSION: u32 = 7_700;
@@ -274,6 +276,10 @@ fn byte_window_count(
 }
 
 #[test]
+#[expect(
+    clippy::indexing_slicing,
+    reason = "Fixture literals are constructor-validated."
+)]
 fn external_textures_are_default_and_payloads_are_omitted() {
     let path = output_path("external-textures");
     let character_result = synthetic_character();

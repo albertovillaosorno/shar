@@ -46,6 +46,12 @@
 //
 
 //! Validated semantic body preparation recipe.
+#![expect(
+    clippy::indexing_slicing,
+    reason = "Recipe group addresses are validated before exact part and \
+              group access."
+)]
+
 use std::collections::BTreeMap;
 
 use super::super::color::Rgba8;

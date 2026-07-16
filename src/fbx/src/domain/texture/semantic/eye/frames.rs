@@ -43,6 +43,7 @@
 //
 
 //! Four-frame eye texture modernization orchestration.
+
 use super::super::color::Rgba8;
 use super::super::image::RgbaImage;
 use super::types::{EyeFrameEvidence, EyeTextureError};
@@ -54,10 +55,15 @@ mod evidence;
 
 /// Complete internal frame analysis returned to the eye facade.
 pub(super) struct AnalyzedFrames {
+    /// Ordered evidence records for the four authored eye frames.
     pub(super) evidence: Vec<EyeFrameEvidence>,
+    /// Modernized open-through-closed frames in canonical order.
     pub(super) modern_frames: [RgbaImage; 4],
+    /// Dominant authored eyelid color.
     pub(super) lid_color: Rgba8,
+    /// Dominant authored sclera or eye-surface color.
     pub(super) surface_color: Rgba8,
+    /// Dominant authored pupil color.
     pub(super) pupil_color: Rgba8,
 }
 

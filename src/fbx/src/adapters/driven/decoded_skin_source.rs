@@ -54,11 +54,13 @@
 //! Every count, palette slot, and identity is checked before the character
 //! aggregate is built, so malformed extraction evidence fails closed instead
 //! of producing a silently wrong FBX document.
+use std::collections::BTreeMap;
 use std::path::Path;
 
 use schoenwald_filesystem::adapters::driving::local;
 use serde::Deserialize;
 
+use super::decoded_component_source::read_mesh;
 use crate::domain::character::{CharacterAsset, CharacterError, SkinnedPart};
 use crate::domain::mesh::{
     MeshAsset, MeshError, PrimitiveGroup, triangulate_strip,
@@ -78,14 +80,24 @@ const WEIGHT_SUM_TOLERANCE: f32 = 1e-3;
 ///
 /// Returns an error when one component cannot be read, parsed, or validated
 /// against the character contract.
+#[expect(
+    clippy::too_many_lines,
+    reason = "Character assembly validates one complete skeleton, skin, prop, \
+              and composite transaction."
+)]
 pub fn load_character(
     name: &str,
     skeleton_path: &Path,
     skin_paths: &[&Path],
+    mesh_paths: &[&Path],
     composite_paths: &[&Path],
 ) -> Result<CharacterAsset, SkinSourceError> {
     let (skeleton_name, bones) = load_skeleton(skeleton_path)?;
-    let mut parts = Vec::with_capacity(skin_paths.len());
+    let mut parts = Vec::with_capacity(
+        skin_paths
+            .len()
+            .saturating_add(mesh_paths.len()),
+    );
     let mut part_names = Vec::with_capacity(skin_paths.len());
     for skin_path in skin_paths {
         let (part, decoded_skeleton_reference) = load_skin_part(
@@ -109,12 +121,105 @@ pub fn load_character(
         );
         parts.push(part);
     }
+    let mut prop_bindings = BTreeMap::new();
     for composite_path in composite_paths {
-        ensure_composite_consistency(
+        for (prop_name, joint) in composite_prop_bindings(
             composite_path,
             &skeleton_name,
             &part_names,
+            bones.len(),
+        )? {
+            if prop_bindings
+                .insert(
+                    prop_name.clone(),
+                    joint,
+                )
+                .is_some()
+            {
+                return Err(
+                    SkinSourceError::Prop(
+                        format!(
+                            "duplicate composite prop binding: {prop_name}"
+                        ),
+                    ),
+                );
+            }
+        }
+    }
+    for mesh_path in mesh_paths {
+        let requested_id = mesh_path
+            .file_stem()
+            .and_then(|value| value.to_str())
+            .ok_or_else(
+                || {
+                    SkinSourceError::Prop(
+                        format!(
+                            "prop mesh path has no UTF-8 file stem: {}",
+                            mesh_path.display()
+                        ),
+                    )
+                },
+            )?;
+        let mesh = read_mesh(
+            mesh_path,
+            requested_id,
+        )
+        .map_err(
+            |error| {
+                SkinSourceError::Prop(
+                    format!(
+                        "prop mesh decode failed for {}: {error:?}",
+                        mesh_path.display()
+                    ),
+                )
+            },
         )?;
+        let joint = prop_bindings
+            .remove(&mesh.name)
+            .ok_or_else(
+                || {
+                    SkinSourceError::Prop(
+                        format!(
+                            "prop mesh {} has no composite binding",
+                            mesh.name
+                        ),
+                    )
+                },
+            )?;
+        let bone_id = bones
+            .get(joint)
+            .map(
+                |bone| {
+                    bone.id
+                        .clone()
+                },
+            )
+            .ok_or_else(
+                || {
+                    SkinSourceError::Prop(
+                        format!(
+                            "prop mesh {} references missing joint {joint}",
+                            mesh.name
+                        ),
+                    )
+                },
+            )?;
+        let group_influences = rigid_group_influences(
+            &mesh, &bone_id,
+        )?;
+        parts.push(
+            SkinnedPart {
+                mesh,
+                group_influences,
+            },
+        );
+    }
+    if let Some((prop_name, _joint)) = prop_bindings.first_key_value() {
+        return Err(
+            SkinSourceError::Prop(
+                format!("composite prop has no decoded mesh: {prop_name}"),
+            ),
+        );
     }
     CharacterAsset::new(
         name, bones, parts,
@@ -570,13 +675,13 @@ fn group_influences(
             },
         );
     }
-    let mut merged: std::collections::BTreeMap<
+    let mut merged: BTreeMap<
         (
             u32,
             String,
         ),
         f32,
-    > = std::collections::BTreeMap::new();
+    > = BTreeMap::new();
     for (vertex, slots) in decoded
         .matrices
         .iter()
@@ -744,12 +849,65 @@ fn vertex_weights(
     )
 }
 
-/// Ensure one composite drawable matches loaded skeleton and skin names.
-fn ensure_composite_consistency(
+/// Build one normalized full-weight influence for every rigid prop vertex.
+fn rigid_group_influences(
+    mesh: &MeshAsset,
+    bone_id: &str,
+) -> Result<Vec<Vec<SkinInfluence>>, SkinSourceError> {
+    mesh.groups
+        .iter()
+        .map(
+            |group| {
+                group
+                    .positions
+                    .iter()
+                    .enumerate()
+                    .map(
+                        |(vertex, _position)| {
+                            let vertex_index = u32::try_from(vertex).map_err(
+                                |_error| {
+                                    SkinSourceError::Prop(
+                                        format!(
+                                            "prop mesh {} exceeds the FBX \
+                                             vertex index range",
+                                            mesh.name
+                                        ),
+                                    )
+                                },
+                            )?;
+                            Ok(
+                                SkinInfluence {
+                                    vertex_index,
+                                    bone_id: bone_id.to_owned(),
+                                    weight: 1.0,
+                                },
+                            )
+                        },
+                    )
+                    .collect::<Result<Vec<_>, SkinSourceError>>()
+            },
+        )
+        .collect()
+}
+
+/// Validate one composite and return its rigid prop-to-joint bindings.
+#[expect(
+    clippy::too_many_lines,
+    reason = "Composite count, skeleton, skin, prop, and joint checks form \
+              one atomic validation."
+)]
+fn composite_prop_bindings(
     path: &Path,
     skeleton_name: &str,
     part_names: &[String],
-) -> Result<(), SkinSourceError> {
+    bone_count: usize,
+) -> Result<
+    Vec<(
+        String,
+        usize,
+    )>,
+    SkinSourceError,
+> {
     let decoded: DecodedComposite = read_json(path)?;
     if decoded.schema != "composite_drawable" {
         return Err(
@@ -816,7 +974,53 @@ fn ensure_composite_consistency(
             );
         }
     }
-    Ok(())
+    let mut bindings = Vec::with_capacity(
+        decoded
+            .props
+            .len(),
+    );
+    for prop in decoded.props {
+        if prop.kind != "prop" {
+            return Err(
+                SkinSourceError::Prop(
+                    format!(
+                        "composite {} contains unsupported prop kind {}",
+                        path.display(),
+                        prop.kind
+                    ),
+                ),
+            );
+        }
+        let prop_name = trim_decoded_identity(&prop.name);
+        if prop_name.is_empty() {
+            return Err(
+                SkinSourceError::Prop(
+                    format!(
+                        "composite {} contains a blank prop name",
+                        path.display()
+                    ),
+                ),
+            );
+        }
+        if prop.skeleton_joint_id >= bone_count {
+            return Err(
+                SkinSourceError::Prop(
+                    format!(
+                        "composite prop {prop_name} references joint {} \
+                         outside {} bones",
+                        prop.skeleton_joint_id, bone_count
+                    ),
+                ),
+            );
+        }
+        bindings.push(
+            (
+                prop_name,
+                prop.skeleton_joint_id,
+            ),
+        );
+    }
+    Ok(bindings)
 }
 
 /// Trim decoded fixed-width identity padding without touching inner text.
@@ -1118,6 +1322,8 @@ pub enum SkinSourceError {
         /// Domain mesh error.
         error: MeshError,
     },
+    /// Rigid composite prop loading or binding failed.
+    Prop(String),
     /// Character aggregate validation failed.
     Character(CharacterError),
 }
@@ -1285,7 +1491,7 @@ struct DecodedComposite {
     prop_count: u32,
     /// Prop bindings listed by the composite.
     #[serde(default)]
-    props: Vec<serde_json::Value>,
+    props: Vec<DecodedCompositeProp>,
     /// Number of effect bindings declared by the decoded source.
     #[serde(
         default,
@@ -1295,6 +1501,24 @@ struct DecodedComposite {
     /// Effect bindings listed by the composite.
     #[serde(default)]
     effects: Vec<serde_json::Value>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+/// One rigid mesh prop attached to a skeleton joint.
+struct DecodedCompositeProp {
+    /// Binding kind, required to be `prop`.
+    kind: String,
+    /// Referenced mesh name with fixed-width padding.
+    name: String,
+    /// Translucency flag retained for schema compatibility.
+    #[serde(rename = "is_translucent")]
+    _is_translucent: serde_json::Value,
+    /// Zero-based skeleton joint position owning the rigid prop.
+    skeleton_joint_id: usize,
+    /// Sort order retained for schema compatibility.
+    #[serde(rename = "sort_order")]
+    _sort_order: serde_json::Value,
 }
 
 #[derive(Deserialize)]

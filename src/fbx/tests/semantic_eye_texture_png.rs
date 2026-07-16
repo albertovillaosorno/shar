@@ -57,7 +57,11 @@ use fbx::domain::texture::semantic::{
     EyeSemanticPlan, EyeSide, EyeTextureError, Rgba8, RgbaImage,
     analyze_eye_frames,
 };
+use schoenwald_filesystem as _;
 use semantic_eye::{eye_frames, eye_group};
+use serde as _;
+use serde_json as _;
+use shar_sha256 as _;
 
 #[test]
 fn preserves_two_eye_components_and_four_frame_closure() -> Result<(), String> {
@@ -218,6 +222,10 @@ fn validate_eye_layers(plan: &EyeSemanticPlan) -> Result<(), String> {
 }
 
 #[test]
+#[expect(
+    clippy::indexing_slicing,
+    reason = "Fixture literals are constructor-validated."
+)]
 fn accepts_symmetric_lid_occlusion_of_pupil_pixels() -> Result<(), String> {
     let group = eye_group()?;
     let mut frames = eye_frames()?;

@@ -59,39 +59,54 @@ use crate::domain::texture::semantic::{BodyTexturePlan, EyeSemanticPlan};
 pub(super) fn assemble(
     request: &SemanticTextureRequest,
     body: &BodyTexturePlan,
-    eye: &EyeSemanticPlan,
+    eye: Option<&EyeSemanticPlan>,
     animation_count: usize,
     extra_textures: Vec<ExternalTextureArtifact>,
 ) -> Result<SemanticTextureArtifacts, SemanticTextureArtifactError> {
     let body_texture_png = encode_png_bytes(&body.atlas).map_err(
         |error| SemanticTextureArtifactError::Png(format!("{error:?}")),
     )?;
-    let eye_pngs = [
-        &eye.layers
-            .composite,
-        &eye.layers
-            .pupil,
-        &eye.layers
-            .lids,
-    ]
-    .into_iter()
-    .map(encode_png_bytes)
-    .collect::<Result<Vec<_>, _>>()
-    .map_err(|error| SemanticTextureArtifactError::Png(format!("{error:?}")))?;
-    let eye_layer_pngs = eye_pngs
-        .try_into()
+    let (eye_layer_pngs, eye_profile_sha256) = if let Some(eye_plan) = eye {
+        let eye_pngs = [
+            &eye_plan
+                .layers
+                .composite,
+            &eye_plan
+                .layers
+                .pupil,
+            &eye_plan
+                .layers
+                .lids,
+        ]
+        .into_iter()
+        .map(encode_png_bytes)
+        .collect::<Result<Vec<_>, _>>()
         .map_err(
-            |_layers: Vec<_>| SemanticTextureArtifactError::EyeLayerCount,
+            |error| SemanticTextureArtifactError::Png(format!("{error:?}")),
         )?;
-    let eye_profile_sha256 = eye_profile_sha256(
-        &eye_layer_pngs,
-        eye.surface_color,
-    );
+        let layers: [Vec<u8>; 3] = eye_pngs
+            .try_into()
+            .map_err(
+                |_layers: Vec<_>| SemanticTextureArtifactError::EyeLayerCount,
+            )?;
+        let profile = eye_profile_sha256(
+            &layers,
+            eye_plan.surface_color,
+        );
+        (
+            Some(layers),
+            Some(profile),
+        )
+    } else {
+        (
+            None, None,
+        )
+    };
     let manifest_json = manifest::render(
         request,
         body,
         eye,
-        &eye_profile_sha256,
+        eye_profile_sha256.as_deref(),
     )
     .map_err(SemanticTextureArtifactError::Manifest)?;
     Ok(
@@ -111,7 +126,10 @@ pub(super) fn assemble(
                 body_chart_count: body
                     .charts
                     .len(),
-                eye_region_count: eye.semantic_region_count,
+                eye_region_count: eye.map_or(
+                    0,
+                    |eye_plan| eye_plan.semantic_region_count,
+                ),
                 animation_count,
                 body_texture_size: [
                     body.atlas
@@ -119,7 +137,8 @@ pub(super) fn assemble(
                     body.atlas
                         .height(),
                 ],
-                eye_frame_size: eye.modern_frames[0].width(),
+                eye_frame_size: eye
+                    .map(|eye_plan| eye_plan.modern_frames[0].width()),
             },
         },
     )

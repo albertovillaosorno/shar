@@ -63,9 +63,11 @@ use fbx::domain::shader::{
 use fbx::ports::scene_writer::{
     SceneArtifactError, SceneArtifactReceipt, SceneArtifactTarget,
 };
+use png as _;
 use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
+use shar_sha256 as _;
 
 #[test]
 fn rejects_incomplete_blender_command_plans() {

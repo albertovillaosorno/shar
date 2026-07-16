@@ -47,9 +47,11 @@
 
 use fbx::domain::animation::{AnimationCapability, AnimationRequirement};
 use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
+use png as _;
 use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
+use shar_sha256 as _;
 
 fn group(
     index: usize,

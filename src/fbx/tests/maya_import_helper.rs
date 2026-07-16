@@ -58,9 +58,11 @@ use fbx::adapters::driven::maya_import_helper::{
     Error as MayaImportHelperError, Summary as MayaImportHelperSummary,
     write as write_maya_import_helper,
 };
+use png as _;
 use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
+use shar_sha256 as _;
 
 fn temp_root(label: &str) -> PathBuf {
     std::env::temp_dir().join(

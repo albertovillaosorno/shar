@@ -42,6 +42,12 @@
 //
 
 //! Pure semantic character texture preparation.
+#![expect(
+    clippy::module_name_repetitions,
+    reason = "Public semantic texture names remain explicit at the domain \
+              boundary."
+)]
+
 pub mod body;
 pub mod color;
 pub mod eye;

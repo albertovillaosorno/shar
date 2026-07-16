@@ -49,9 +49,11 @@ use fbx::adapters::driven::generated_package_index::{
     GeneratedPackageCatalog, PackageIndexAdapterError,
 };
 use fbx::ports::package_index::PackageIndexReader;
+use png as _;
 use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
+use shar_sha256 as _;
 
 #[test]
 fn rejects_invalid_generated_package_selectors() {

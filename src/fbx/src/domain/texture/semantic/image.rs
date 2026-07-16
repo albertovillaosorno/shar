@@ -44,6 +44,14 @@
 //
 
 //! Checked file-container-independent RGBA image storage.
+#![expect(
+    clippy::indexing_slicing,
+    clippy::module_name_repetitions,
+    clippy::shadow_reuse,
+    reason = "Validated image dimensions bound storage access; explicit names \
+              preserve the domain boundary."
+)]
+
 use super::color::Rgba8;
 
 /// Image value validation failure.
@@ -74,8 +82,11 @@ pub enum RgbaImageError {
 /// One top-left-origin RGBA image independent from a file container.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RgbaImage {
+    /// Image width in pixels.
     pub(super) width: u32,
+    /// Image height in pixels.
     pub(super) height: u32,
+    /// Row-major top-left-origin RGBA pixel storage.
     pub(super) pixels: Vec<Rgba8>,
 }
 

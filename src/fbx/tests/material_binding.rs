@@ -47,9 +47,11 @@
 //! rejected before adapter staging or deterministic scene serialization.
 
 use fbx::domain::texture::{MaterialBinding, MaterialBindingError};
+use png as _;
 use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
+use shar_sha256 as _;
 
 #[test]
 fn rejects_blank_material_binding_identities() {

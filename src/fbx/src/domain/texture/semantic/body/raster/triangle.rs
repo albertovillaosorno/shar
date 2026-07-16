@@ -44,6 +44,13 @@
 //
 
 //! Deterministic flat-color triangle pixel coverage.
+#![expect(
+    clippy::as_conversions,
+    clippy::indexing_slicing,
+    reason = "Validated raster bounds make pixel casts and triangle indexing \
+              deterministic."
+)]
+
 use super::super::super::image::RgbaImage;
 use super::super::charts::model::PlacedChart;
 use super::super::error::SemanticTextureError;

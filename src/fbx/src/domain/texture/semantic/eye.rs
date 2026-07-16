@@ -46,6 +46,12 @@
 //
 
 //! Evidence-driven semantic eye analysis.
+#![expect(
+    clippy::module_name_repetitions,
+    reason = "Eye semantic types retain explicit names at the public domain \
+              boundary."
+)]
+
 use super::image::RgbaImage;
 use crate::domain::mesh::PrimitiveGroup;
 

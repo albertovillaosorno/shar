@@ -69,9 +69,11 @@ use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 use fbx::domain::skeleton::Bone;
 use fbx::domain::skin::SkinInfluence;
 use fbx::domain::texture::MaterialBinding;
+use png as _;
 use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
+use shar_sha256 as _;
 
 const ANIMATION_TOKENS: [&[u8]; 14] = [
     b"AnimationStack",

@@ -45,6 +45,17 @@
 //
 
 //! Aspect-preserving projected chart coordinate mapping.
+#![expect(
+    clippy::arithmetic_side_effects,
+    clippy::as_conversions,
+    clippy::default_numeric_fallback,
+    clippy::integer_division,
+    clippy::shadow_reuse,
+    unused_results,
+    reason = "Validated chart extents bound deterministic pixel mapping and \
+              intentional numeric projection."
+)]
+
 use std::collections::BTreeMap;
 
 use super::super::super::error::SemanticTextureError;

@@ -51,9 +51,11 @@
 //! explanatory documentation may still name retired formats.
 
 use fbx as _;
+use png as _;
 use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
+use shar_sha256 as _;
 
 const DRIVEN_MODULE: &str = include_str!("../src/adapters/driven.rs");
 const PIPELINE_EXPORT: &str =
@@ -65,6 +67,9 @@ const SEMANTIC_TEXTURE_CLI: &str =
 const SEMANTIC_TEXTURE_PACKAGE: &str = include_str!(
     "../src/adapters/driven/semantic_character_texture/package.rs",
 );
+const SEMANTIC_TEXTURE_PUBLICATION: &str = include_str!(
+    "../src/adapters/driven/semantic_character_texture/publication.rs",
+);
 
 #[test]
 fn exposes_only_binary_fbx_7700_and_script_helpers() -> Result<(), String> {
@@ -74,6 +79,7 @@ fn exposes_only_binary_fbx_7700_and_script_helpers() -> Result<(), String> {
         PIPELINE_OPTIONS,
         SEMANTIC_TEXTURE_CLI,
         SEMANTIC_TEXTURE_PACKAGE,
+        SEMANTIC_TEXTURE_PUBLICATION,
     ]
     .join("\n");
     for required in [

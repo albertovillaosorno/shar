@@ -59,7 +59,12 @@ use fbx::domain::texture::semantic::{
 };
 
 /// Stable synthetic colors in body-region order.
-pub const BODY_COLORS: [Rgba8; 5] = [
+#[expect(
+    clippy::redundant_pub_crate,
+    reason = "Parent tests import this fixture; broader visibility is not \
+              public API."
+)]
+pub(super) const BODY_COLORS: [Rgba8; 5] = [
     Rgba8::new(
         255, 210, 0, 255,
     ),
@@ -78,7 +83,12 @@ pub const BODY_COLORS: [Rgba8; 5] = [
 ];
 
 /// Build one five-region synthetic character, source image, and recipe.
-pub fn body_fixture() -> Result<
+#[expect(
+    clippy::redundant_pub_crate,
+    reason = "Parent tests import this fixture; broader visibility is not \
+              public API."
+)]
+pub(super) fn body_fixture() -> Result<
     (
         CharacterAsset,
         RgbaImage,
@@ -104,6 +114,10 @@ pub fn body_fixture() -> Result<
 }
 
 /// Build the five disconnected flat-color primitive groups as one group.
+#[expect(
+    clippy::arithmetic_side_effects,
+    reason = "Fixture literals are constructor-validated."
+)]
 fn body_group() -> Result<PrimitiveGroup, String> {
     let mut positions = Vec::new();
     let mut uvs = Vec::new();
@@ -151,6 +165,10 @@ fn body_group() -> Result<PrimitiveGroup, String> {
 }
 
 /// Build one skinned synthetic character around the body group.
+#[expect(
+    clippy::arithmetic_side_effects,
+    reason = "Fixture literals are constructor-validated."
+)]
 fn body_character(group: PrimitiveGroup) -> Result<CharacterAsset, String> {
     let mesh = MeshAsset::new(
         "synthetic-body",

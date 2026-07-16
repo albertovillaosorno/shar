@@ -52,9 +52,11 @@ use fbx::ports::package_index::{
     ModelPackageEvidence, PackageIndexError, PackageIndexReader,
     PackageModelFamily,
 };
+use png as _;
 use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
+use shar_sha256 as _;
 
 #[test]
 fn rejects_unknown_jsonl_fields() {

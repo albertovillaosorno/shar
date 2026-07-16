@@ -45,6 +45,12 @@
 //
 
 //! Ordered flat-color semantic body classification transaction.
+#![expect(
+    unused_results,
+    reason = "Private classification carriers mirror the documented recipe \
+              and replace no existing keys."
+)]
+
 use std::collections::BTreeMap;
 
 use super::super::color::Rgba8;
@@ -67,23 +73,31 @@ mod triangles;
 /// Per-triangle chart ownership and raster policy.
 #[derive(Clone, Copy, Debug)]
 pub(super) struct TriangleClassification {
+    /// Deterministic representative color assigned to the triangle.
     pub(super) color: Rgba8,
+    /// Semantic body region assigned to the triangle.
     pub(super) region: BodyRegion,
+    /// Whether the triangle retains source-texture sampling.
     pub(super) sample_source: bool,
 }
 
 /// Per-group immutable classification used by chart generation.
 #[derive(Clone, Debug)]
 pub(super) struct GroupClassification {
+    /// Per-triangle classifications in source order.
     pub(super) triangles: Vec<TriangleClassification>,
 }
 
 /// Complete deterministic classification output.
 #[derive(Clone, Debug)]
 pub(super) struct Classification {
+    /// Group classifications keyed by exact source address.
     pub(super) groups: BTreeMap<GroupAddress, GroupClassification>,
+    /// Stable source-color assignments rendered into the manifest.
     pub(super) assignments: Vec<SourceColorAssignment>,
+    /// Total selected vertex count before atlas generation.
     pub(super) vertex_count: usize,
+    /// Total selected triangle count before atlas generation.
     pub(super) triangle_count: usize,
 }
 

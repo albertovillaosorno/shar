@@ -48,9 +48,18 @@ mod semantic_patterned_body;
 use fbx::domain::texture::semantic::{
     ProjectionAxis, TextureAddressMode, plan_body_texture,
 };
+use png as _;
+use schoenwald_filesystem as _;
 use semantic_patterned_body::patterned_body_fixture;
+use serde as _;
+use serde_json as _;
+use shar_sha256 as _;
 
 #[test]
+#[expect(
+    clippy::indexing_slicing,
+    reason = "Fixture literals are constructor-validated."
+)]
 fn preserves_one_anchored_pattern_without_topology_changes()
 -> Result<(), String> {
     let (character, source, recipe) = patterned_body_fixture()?;

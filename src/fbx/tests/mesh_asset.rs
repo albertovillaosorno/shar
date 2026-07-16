@@ -51,9 +51,11 @@
 use fbx::domain::mesh::{
     MeshAsset, MeshError, PrimitiveGroup, mesh_asset_to_geometry,
 };
+use png as _;
 use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
+use shar_sha256 as _;
 
 fn primitive_group(index: usize) -> PrimitiveGroup {
     PrimitiveGroup {

@@ -54,7 +54,12 @@ use fbx::domain::texture::semantic::{
 };
 
 /// Build one safe anchored patterned chart fixture.
-pub fn patterned_body_fixture() -> Result<
+#[expect(
+    clippy::redundant_pub_crate,
+    reason = "Parent tests import this fixture; broader visibility is not \
+              public API."
+)]
+pub(super) fn patterned_body_fixture() -> Result<
     (
         CharacterAsset,
         RgbaImage,
@@ -165,6 +170,10 @@ fn patterned_skeleton() -> Vec<Bone> {
 }
 
 /// Build the exact 4x4 source pattern used by the fixture.
+#[expect(
+    clippy::indexing_slicing,
+    reason = "Fixture literals are constructor-validated."
+)]
 fn patterned_source() -> Result<RgbaImage, String> {
     let yellow = Rgba8::new(
         255, 210, 0, 255,

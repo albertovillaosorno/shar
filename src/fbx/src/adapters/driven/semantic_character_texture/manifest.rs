@@ -63,16 +63,19 @@ use crate::domain::texture::semantic::{
 pub(super) fn render(
     request: &SemanticTextureRequest,
     body: &BodyTexturePlan,
-    eye: &EyeSemanticPlan,
-    eye_profile_sha256: &str,
+    eye: Option<&EyeSemanticPlan>,
+    eye_profile_sha256: Option<&str>,
 ) -> Result<Vec<u8>, String> {
     let selected_uvs = selected_uvs(
         request, body,
     )?;
     let assignments = assignments(body);
     let charts = charts(body);
-    let eye_components = eye_components(eye);
-    let eye_frames = eye_frames(eye);
+    let eyes = eyes(
+        request,
+        eye,
+        eye_profile_sha256,
+    )?;
     let changed_character_fields =
         if request.body_texture_mode == "semantic-atlas" {
             vec!["selected-group-uvs"]
@@ -80,7 +83,7 @@ pub(super) fn render(
             Vec::new()
         };
     let manifest = json!({
-        "schema_version": 1,
+        "schema_version": 1_i32,
         "character_id": request.character_name,
         "topology_policy": {
             "polygon_or_vertex_increase": false,
@@ -95,33 +98,12 @@ pub(super) fn render(
             "texture_address_mode": request.body_texture_address_mode,
             "source_vertex_count": body.source_vertex_count,
             "source_triangle_count": body.source_triangle_count,
-            "semantic_region_count": 5,
+            "semantic_region_count": 5_i32,
             "color_assignments": assignments,
             "charts": charts,
             "selected_group_uvs": selected_uvs,
         },
-        "eyes": {
-            "eye_group": {
-                "part_index": request.eye_group.part_index,
-                "group_index": request.eye_group.group_index,
-            },
-            "semantic_region_count": eye.semantic_region_count,
-            "profile_sha256": eye_profile_sha256,
-            "canonical_layers": {
-                "sclera_rgba": rgba(eye.surface_color),
-                "pupil": "textures/eye-pupil.png",
-                "lids": "textures/eye-lids.png",
-                "upper_lid_uv_rect": [0.0, 0.0, 1.0, 0.5],
-                "lower_lid_uv_rect": [0.0, 0.5, 1.0, 1.0],
-            },
-            "derived_open_eye": "textures/eye.png",
-            "lid_rgba": rgba(eye.lid_color),
-            "sclera_rgba": rgba(eye.surface_color),
-            "pupil_rgba": rgba(eye.pupil_color),
-            "components": eye_components,
-            "derived_compatibility_frames": eye_frames,
-            "animation_changes": false,
-        },
+        "eyes": eyes,
     });
     let mut bytes = serde_json::to_vec_pretty(&manifest)
         .map_err(|error| format!("semantic manifest encode failed: {error}"))?;
@@ -227,6 +209,46 @@ fn charts(body: &BodyTexturePlan) -> Vec<Value> {
             },
         )
         .collect()
+}
+
+/// Render optional eye evidence without fabricating an absent eye component.
+fn eyes(
+    request: &SemanticTextureRequest,
+    eye: Option<&EyeSemanticPlan>,
+    eye_profile_sha256: Option<&str>,
+) -> Result<Value, String> {
+    match (
+        request.eye_group,
+        eye,
+        eye_profile_sha256,
+    ) {
+        (None, None, None) => Ok(Value::Null),
+        (Some(group), Some(plan), Some(profile)) => Ok(
+            json!({
+                "eye_group": {
+                    "part_index": group.part_index,
+                    "group_index": group.group_index,
+                },
+                "semantic_region_count": plan.semantic_region_count,
+                "profile_sha256": profile,
+                "canonical_layers": {
+                    "sclera_rgba": rgba(plan.surface_color),
+                    "pupil": "textures/eye-pupil.png",
+                    "lids": "textures/eye-lids.png",
+                    "upper_lid_uv_rect": [0.0, 0.0, 1.0, 0.5],
+                    "lower_lid_uv_rect": [0.0, 0.5, 1.0, 1.0],
+                },
+                "derived_open_eye": "textures/eye.png",
+                "lid_rgba": rgba(plan.lid_color),
+                "sclera_rgba": rgba(plan.surface_color),
+                "pupil_rgba": rgba(plan.pupil_color),
+                "components": eye_components(plan),
+                "derived_compatibility_frames": eye_frames(plan),
+                "animation_changes": false,
+            }),
+        ),
+        _ => Err("semantic eye manifest evidence is inconsistent".to_owned()),
+    }
 }
 
 /// Render the two disconnected semantic eye components.

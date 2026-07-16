@@ -57,7 +57,9 @@ use schoenwald_filesystem::adapters::driving::local;
 use serde::Deserialize;
 use serde_json::Value;
 
-use crate::domain::mesh::{MeshAsset, MeshError, PrimitiveGroup};
+use crate::domain::mesh::{
+    MeshAsset, MeshError, PrimitiveGroup, triangulate_strip,
+};
 use crate::domain::scene::identity::is_portable_path_segment;
 use crate::domain::texture::{MaterialBinding, MaterialBindingError};
 use crate::ports::component_source::ComponentSource;
@@ -176,8 +178,13 @@ fn is_single_path_segment(value: &str) -> bool {
     is_portable_path_segment(value)
 }
 
-/// Internal helper for the adapter implementation.
-fn read_mesh(
+/// Read one decoded mesh from an explicit component path.
+#[expect(
+    clippy::too_many_lines,
+    reason = "Strict mesh schema validation remains one atomic decode \
+              boundary."
+)]
+pub(super) fn read_mesh(
     path: &Path,
     requested_id: &str,
 ) -> Result<MeshAsset, DecodedComponentError> {
@@ -189,12 +196,35 @@ fn read_mesh(
             ),
         );
     }
-    if decoded.name != requested_id {
+    let decoded_name = decoded_mesh_identity(&decoded.name);
+    if decoded_name != requested_id {
         return Err(
             DecodedComponentError::MeshIdentityMismatch {
                 requested: requested_id.to_owned(),
                 decoded: decoded.name,
             },
+        );
+    }
+    if decoded
+        .primitive_group_count
+        .is_some_and(
+            |declared| {
+                usize::try_from(declared)
+                    != Ok(
+                        decoded
+                            .prim_groups
+                            .len(),
+                    )
+            },
+        )
+    {
+        return Err(
+            DecodedComponentError::MeshEvidence(
+                format!(
+                    "mesh {decoded_name} primitive-group count does not match \
+                     decoded groups"
+                ),
+            ),
         );
     }
     let groups = decoded
@@ -203,6 +233,50 @@ fn read_mesh(
         .enumerate()
         .map(
             |(index, group)| {
+                if group
+                    .vertex_count
+                    .is_some_and(
+                        |declared| {
+                            usize::try_from(declared)
+                                != Ok(
+                                    group
+                                        .positions
+                                        .len(),
+                                )
+                        },
+                    )
+                {
+                    return Err(
+                        DecodedComponentError::MeshEvidence(
+                            format!(
+                                "mesh {decoded_name} group {index} vertex \
+                                 count mismatch"
+                            ),
+                        ),
+                    );
+                }
+                if group
+                    .index_count
+                    .is_some_and(
+                        |declared| {
+                            usize::try_from(declared)
+                                != Ok(
+                                    group
+                                        .indices
+                                        .len(),
+                                )
+                        },
+                    )
+                {
+                    return Err(
+                        DecodedComponentError::MeshEvidence(
+                            format!(
+                                "mesh {decoded_name} group {index} index \
+                                 count mismatch"
+                            ),
+                        ),
+                    );
+                }
                 if let Some(channel) = group
                     .uvs
                     .iter()
@@ -247,19 +321,47 @@ fn read_mesh(
                     Some(channel) => channel.coords,
                     None => Vec::new(),
                 };
+                let triangles = match group.prim_type {
+                    0 => group.indices,
+                    1 => triangulate_strip(&group.indices)
+                        .map_err(DecodedComponentError::Mesh)?
+                        .into_iter()
+                        .flatten()
+                        .collect(),
+                    other => {
+                        return Err(
+                            DecodedComponentError::MeshEvidence(
+                                format!(
+                                    "mesh {decoded_name} group {index} uses \
+                                     unsupported primitive type {other}"
+                                ),
+                            ),
+                        );
+                    }
+                };
+                let normals = group.normals;
                 PrimitiveGroup::new(
                     index,
-                    group.shader,
+                    decoded_material_identity(&group.shader),
                     group.positions,
                     uvs,
-                    &group.indices,
+                    &triangles,
+                )
+                .and_then(
+                    |primitive_group| {
+                        if normals.is_empty() {
+                            Ok(primitive_group)
+                        } else {
+                            primitive_group.with_normals(normals)
+                        }
+                    },
                 )
                 .map_err(DecodedComponentError::Mesh)
             },
         )
         .collect::<Result<Vec<_>, _>>()?;
     MeshAsset::new(
-        decoded.name,
+        decoded_name,
         groups,
     )
     .map_err(DecodedComponentError::Mesh)
@@ -326,7 +428,9 @@ fn resolve_material_from_source(
                     )
                 },
             )?;
-        if external_file_name != expected_file_name {
+        let accepted_alias = expected_file_name == "char_swatches.png"
+            && external_file_name == "char_swatches_lit.png";
+        if external_file_name != expected_file_name && !accepted_alias {
             return Err(
                 DecodedComponentError::ExternalTextureMismatch {
                     expected: expected_file_name,
@@ -459,6 +563,14 @@ fn shader_member_identity(value: &str) -> String {
     identity.push_str(unpadded);
     identity.push_str(&"_".repeat(padding_length));
     identity
+}
+
+/// Normalize one fixed-width mesh identity for FBX domain use.
+fn decoded_mesh_identity(value: &str) -> String {
+    value
+        .trim_end_matches('\u{0}')
+        .trim()
+        .to_owned()
 }
 
 /// Normalize one fixed-width shader identity for FBX domain use.
@@ -631,6 +743,8 @@ pub enum DecodedComponentError {
         /// Identity declared inside the decoded mesh.
         decoded: String,
     },
+    /// Decoded mesh count or topology evidence was internally inconsistent.
+    MeshEvidence(String),
     /// One primitive group declared a UV channel without coordinates.
     EmptyUvChannel {
         /// Primitive-group position in the decoded mesh.
@@ -754,8 +868,38 @@ struct DecodedMesh {
     schema: String,
     /// Mesh display name.
     name: String,
+    /// Decoded mesh version retained for source validation.
+    #[serde(
+        default,
+        rename = "version"
+    )]
+    _version: u32,
+    /// Optional primitive-group count declared by the decoded source.
+    #[serde(
+        default,
+        rename = "num_prim_groups"
+    )]
+    primitive_group_count: Option<u32>,
     /// Primitive groups carried by the decoded mesh.
     prim_groups: Vec<DecodedPrimitiveGroup>,
+    /// Render status retained for schema compatibility.
+    #[serde(
+        default,
+        rename = "render_status"
+    )]
+    _render_status: Value,
+    /// Bounding box retained for source evidence.
+    #[serde(
+        default,
+        rename = "bounding_box"
+    )]
+    _bounding_box: Value,
+    /// Bounding sphere retained for source evidence.
+    #[serde(
+        default,
+        rename = "bounding_sphere"
+    )]
+    _bounding_sphere: Value,
 }
 
 #[derive(Deserialize)]
@@ -764,9 +908,51 @@ struct DecodedMesh {
 struct DecodedPrimitiveGroup {
     /// Shader name referenced by this primitive group.
     shader: String,
+    /// Vertex-shader identity retained for source compatibility.
+    #[serde(
+        default,
+        rename = "vertex_shader"
+    )]
+    _vertex_shader: String,
+    /// Primitive topology selector: triangle list or triangle strip.
+    #[serde(default)]
+    prim_type: u32,
+    /// Vertex-format mask retained for source compatibility.
+    #[serde(
+        default,
+        rename = "vertex_format"
+    )]
+    _vertex_format: u32,
+    /// Optional declared vertex count.
+    #[serde(
+        default,
+        rename = "vertex_count"
+    )]
+    vertex_count: Option<u32>,
+    /// Optional declared index count.
+    #[serde(
+        default,
+        rename = "index_count"
+    )]
+    index_count: Option<u32>,
+    /// Matrix count retained for rigid-mesh compatibility.
+    #[serde(
+        default,
+        rename = "matrix_count"
+    )]
+    _matrix_count: u32,
     /// Vertex positions decoded for this group.
     positions: Vec<[f32; 3]>,
-    /// Triangle index stream decoded for this group.
+    /// Packed normals retained for source evidence.
+    #[serde(
+        default,
+        rename = "packed_normals"
+    )]
+    _packed_normals: Value,
+    /// Optional per-vertex normals aligned with positions.
+    #[serde(default)]
+    normals: Vec<[f32; 3]>,
+    /// Primitive index stream decoded for this group.
     indices: Vec<u32>,
     #[serde(default)]
     /// UV channels decoded for this group.

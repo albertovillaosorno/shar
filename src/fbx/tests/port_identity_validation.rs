@@ -54,9 +54,11 @@ use fbx::adapters::driving::cli::{
 use fbx::ports::scene_writer::{
     SceneArtifactError, SceneArtifactReceipt, SceneArtifactTarget,
 };
+use png as _;
 use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
+use shar_sha256 as _;
 
 #[test]
 fn rejects_padded_blender_output_file_ids() {

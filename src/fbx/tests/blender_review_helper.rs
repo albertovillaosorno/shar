@@ -62,9 +62,11 @@ use fbx::adapters::driven::blender_review_helper::{
 use fbx::domain::animation::{
     AnimationClip, BoneAnimationTrack, LocalTransformSample,
 };
+use png as _;
 use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
+use shar_sha256 as _;
 
 const fn sample() -> LocalTransformSample {
     LocalTransformSample {

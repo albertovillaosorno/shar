@@ -44,6 +44,13 @@
 //
 
 //! Exact source eye-frame color evidence analysis.
+#![expect(
+    clippy::arithmetic_side_effects,
+    clippy::indexing_slicing,
+    reason = "Validated frame dimensions bound evidence accumulation and \
+              private carriers."
+)]
+
 use std::collections::{BTreeMap, BTreeSet};
 
 use super::super::super::color::Rgba8;
@@ -53,9 +60,13 @@ use super::closure;
 
 /// Complete source evidence consumed by frame modernization.
 pub(super) struct SourceEvidence {
+    /// Ordered source-frame measurements used by modernization.
     pub(super) frames: Vec<EyeFrameEvidence>,
+    /// Dominant eyelid color derived from source evidence.
     pub(super) lid_color: Rgba8,
+    /// Dominant eye-surface color derived from source evidence.
     pub(super) surface_color: Rgba8,
+    /// Dominant pupil color derived from source evidence.
     pub(super) pupil_color: Rgba8,
 }
 

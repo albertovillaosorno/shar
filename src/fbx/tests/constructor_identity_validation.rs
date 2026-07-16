@@ -57,9 +57,11 @@ use fbx::domain::shader::{
     MaterialChannel, ShaderRequirement, ShaderRequirementError,
 };
 use fbx::domain::texture::{MaterialBinding, MaterialBindingError};
+use png as _;
 use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
+use shar_sha256 as _;
 
 fn positions() -> Vec<[f32; 3]> {
     vec![

@@ -42,6 +42,15 @@
 //
 
 //! Deterministic V-up UV sampling and nearest-neighbor scaling.
+#![expect(
+    clippy::arithmetic_side_effects,
+    clippy::as_conversions,
+    clippy::default_numeric_fallback,
+    clippy::integer_division,
+    reason = "Validated UV and image bounds make deterministic sampling \
+              arithmetic and casts explicit."
+)]
+
 use super::color::Rgba8;
 use super::image::{RgbaImage, RgbaImageError, checked_pixel_count};
 
