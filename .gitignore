@@ -11,6 +11,7 @@ desktop.ini
 *.swo
 *~
 ~$*
+NUL
 
 # ==============================================================================
 # Secrets, Credentials, & Local Environment Files
