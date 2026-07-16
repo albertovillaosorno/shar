@@ -50,42 +50,72 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to add a renderer implementation to a SHAR Niagara emitter
+before configuring sprite, mesh, ribbon, light, or component presentation.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass a live emitter location in a mutable NiagaraSystem.
+- Choose a concrete NiagaraRendererProperties class.
+- Inspect the emitter topology before and after insertion.
+- Use a disposable system for validation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+    "newRendererLocation": {
+    "system": {
+    "refPath": (
+        "/Game/NS_SHAR_MCP_RendererProbe_3."
+        "NS_SHAR_MCP_RendererProbe_3"
+    )
+},
+    "emitterName": "SHARExtra",
+    "scriptName": "",
+    "moduleName": "",
+    "rendererIndex": -1,
+    "inputNameStack": [],
+},
+    "rendererClass": {
+        "refPath": "/Script/Niagara.NiagaraSpriteRendererProperties"
+    },
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two systems added a second sprite renderer to `SHARExtra`. The returned index
+was 1, and the emitter topology increased from one renderer to two.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This is a persistent emitter mutation.
+- The return contains only `rendererIndex` and `rendererClass`; it is not a
+  complete stack reference.
+- Merge the returned index with the original system and emitter location before
+  Get, Set, or Remove calls.
+- A StaticMesh system fails as an invalid NiagaraSystem.
+- A StaticMesh renderer class fails as an invalid Class.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

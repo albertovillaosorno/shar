@@ -48,42 +48,67 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to remove an obsolete renderer from a SHAR Niagara emitter
+after confirming another renderer still supplies the required presentation.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass a complete renderer stack reference.
+- Confirm the current renderer count and target index from emitter topology.
+- Remove only the renderer owned by the requested change.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+    "rendererToRemove": {
+    "system": {
+    "refPath": (
+        "/Game/NS_SHAR_MCP_RendererProbe_3."
+        "NS_SHAR_MCP_RendererProbe_3"
+    )
+},
+    "emitterName": "SHARExtra",
+    "scriptName": "",
+    "moduleName": "",
+    "rendererIndex": 1,
+    "inputNameStack": [],
+}
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two cycles removed renderer index 1 from `SHARExtra`, reducing its renderer
+count from two to one. Each successful removal returned JSON null.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This is a destructive emitter mutation and returns JSON null.
+- Renderer indexes are positional and must be rediscovered after removal.
+- Repeating the removal raised an out-of-bounds error and reported that the
+  emitter had one renderer.
+- Verify the resulting renderer list through GetEmitterTopology.
+- The non-renderer stack-reference fields remain required by the live schema.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

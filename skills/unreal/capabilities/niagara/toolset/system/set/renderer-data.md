@@ -50,42 +50,72 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to configure schema-backed Niagara renderer properties such as
+enablement, shadow behavior, sorting, or camera-facing behavior for SHAR
+effects.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass a complete renderer stack reference, including system, emitter, and
+  renderer index.
+- Read the concrete renderer schema before choosing property names.
+- Encode `rendererData.propertyValues` as JSON text.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+    "renderer": {
+    "system": {
+    "refPath": (
+        "/Game/NS_SHAR_MCP_RendererProbe_3."
+        "NS_SHAR_MCP_RendererProbe_3"
+    )
+},
+    "emitterName": "SHARExtra",
+    "scriptName": "",
+    "moduleName": "",
+    "rendererIndex": 1,
+    "inputNameStack": [],
+},
+    "rendererData": {
+        "propertyValues": '{"bIsEnabled":false,"bCastShadows":false}'
+    },
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+In two cycles, the added sprite renderer changed `bIsEnabled` and `bCastShadows`
+from true to false. GetRendererData confirmed both values after the mutation.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This mutation returns JSON null.
+- `propertyValues` is nested JSON text.
+- The partial object returned by AddRenderer lacks system and emitter identity.
+- An unset optional `sortOrderHint` remained null even when supplied, so re-read
+  every field instead of assuming persistence.
+- Renderer indexes can change after structural edits.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
