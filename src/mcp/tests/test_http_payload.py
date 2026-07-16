@@ -202,6 +202,28 @@ def test_json_payload_rejects_excessive_nesting() -> None:
         )
 
 
+def test_json_payload_wraps_excessive_integer_digits() -> None:
+    """Decoder integer limits remain typed protocol failures."""
+    previous_limit = sys.get_int_max_str_digits()
+    try:
+        sys.set_int_max_str_digits(640)
+        number = b"1" * 641
+        prefix = b'{"jsonrpc":"2.0","id":1,"result":{"value":'
+        body = prefix + number + b"}}"
+
+        with pytest.raises(ProtocolError, match="not valid JSON"):
+            _ = read_http_payload(
+                MemoryResponse(
+                    body,
+                    headers={"Content-Type": "application/json"},
+                ),
+                1,
+                max_response_bytes=len(body),
+            )
+    finally:
+        sys.set_int_max_str_digits(previous_limit)
+
+
 def test_json_payload_wraps_invalid_utf8() -> None:
     """Unreadable JSON bytes remain a typed protocol failure."""
     body = b'{"jsonrpc":"2.0","id":1,"result":"\xff"}'

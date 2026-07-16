@@ -286,7 +286,7 @@ def _decode_json(body: bytes, *, context: str) -> JsonObject:
         )
     except DuplicateJsonKeyError as error:
         fail_protocol(str(error), cause=error)
-    except (UnicodeError, json.JSONDecodeError) as error:
+    except ValueError as error:
         fail_protocol(f"{context} is not valid JSON", cause=error)
     return require_json_object(parsed, context=context)
 
