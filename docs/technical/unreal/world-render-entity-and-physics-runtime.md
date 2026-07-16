@@ -23,6 +23,8 @@
 - [Mission world-entity and respawn runtime](mission-world-entity-and-respawn-runtime.md)
 - [Native asset load request and streaming
   runtime](native-asset-load-request-and-streaming-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Native cooked-asset construction and registration runtime](native-cooked-asset-construction-and-registration-runtime.md)
 
 ## Purpose
 
@@ -104,9 +106,15 @@ The boundary uses stable identities for:
 - `FSharCollisionProfileId`;
 - `FSharPhysicalProfileId`;
 - `FSharBreakableDefinitionId`;
+- `FSharStatefulPropDefinitionId`;
+- `FSharStatefulPropRevision`;
 - `FSharInstanceGroupId`;
 - `FSharInstanceId`;
 - `FSharQuerySurfaceId`;
+- `FSharSceneQueryId`;
+- `FSharSceneQueryRevision`;
+- `FSharLensPresentationId`;
+- `FSharWorldPresentationId`;
 - `FSharWorldCompositionRevision`; and
 - `FSharEntityRequestId`.
 
@@ -131,6 +139,10 @@ addresses are not durable identity.
 | `BoundsPolicyId` | Conservative bounds and optional validated extension policy. |
 | `ShadowPolicyId` | Native dynamic, static, virtual, contact, capsule, or disabled policy. |
 | `BreakableDefinitionId` | Optional destruction and replacement transaction. |
+| `StatefulPropDefinitionId` | Optional accepted-state, animation, collision, visibility, and event projection. |
+| `SceneQueryPolicyId` | Optional native trace, overlap, surface, road, path, and line-of-sight query policy. |
+| `LensPresentationId` | Optional per-view lens, flare, bloom, and occlusion presentation policy. |
+| `WorldPresentationId` | Optional sky, atmosphere, horizon, dome, cloud, and world-background policy. |
 | `PersistencePolicyId` | Durable state ownership and migration behavior. |
 | `StreamingPolicyId` | Region, bundle, readiness, retention, and teardown behavior. |
 | `QualityPolicyId` | LOD, HLOD, Nanite, instancing, shadow, and effect policy by target. |
@@ -152,11 +164,20 @@ The closed representation classes are:
 - `static_collision`, for static render geometry with registered collision;
 - `repeated_static`, for measured identical placements using native instancing;
 - `movable_rigid`, for a movable Chaos rigid body with one primary visual;
+- `animated_visual`, for an animated presentation without authoritative physics;
+- `animated_collision`, for authored animation with synchronized cooked
+  collision;
 - `animated_rigid`, for an animated or articulated prop with bounded physics;
+- `stateful_prop`, for a typed accepted-state projection across presentation,
+  collision, and physical channels;
 - `linear_blocker`, for authored fence or barrier geometry;
 - `query_surface`, for collision or scene-query geometry without ordinary visual
   presentation;
-- `breakable_composite`, for a registered destruction representation; and
+- `breakable_composite`, for a registered destruction representation;
+- `world_presentation`, for world-scoped sky, atmosphere, horizon, or dome
+  presentation;
+- `lens_presentation`, for per-view lens, bloom, flare, and occlusion
+  presentation; and
 - `registered_composite`, for a validated component assembly not covered by the
   simpler classes.
 
@@ -226,6 +247,30 @@ Material translucency, shader identity, or draw cost never becomes entity type
 or
 world identity. Unreal's mesh drawing pipeline owns batching and final pass
 submission.
+
+## Procedural and diagnostic geometry
+
+Mutable triangle strips, immediate-mode vertex arrays, and source primitive
+groups
+are not ordinary shipping world representations. Required world geometry is
+cooked into native mesh assets during import.
+
+A runtime-generated mesh is allowed only for a registered bounded use case such
+as diagnostics, editor visualization, or genuinely dynamic geometry that cannot
+be authored or cooked. Its definition declares:
+
+- owner and lifetime;
+- vertex, index, section, and material limits;
+- collision policy;
+- bounds update policy;
+- game-thread and render-thread ownership;
+- platform and quality support;
+- deterministic generation inputs; and
+- teardown behavior.
+
+Development bounding boxes, query triangles, roads, paths, and collision volumes
+use engine debug drawing or dedicated diagnostic components. They cannot become
+shipping content accidentally or provide gameplay authority through rendering.
 
 ## Repeated static instances
 
@@ -313,6 +358,138 @@ state. A missing Physics Asset, bone, body, controller, or animation binding
 fails
 or uses an explicit non-simulated fallback.
 
+## Animated visual entities
+
+An animated visual entity uses a skeletal mesh, component animation, Level
+Sequence binding, Animation Blueprint, or registered native controller without
+an
+authoritative rigid body.
+
+Its definition declares:
+
+- animation asset and controller identities;
+- deterministic initial phase or accepted seed policy;
+- loop, pause, resume, reset, and terminal behavior;
+- transform and root-motion authority;
+- optional particle, audio, and material channels;
+- conservative animated bounds;
+- visibility and quality policy; and
+- streaming and teardown behavior.
+
+Animation start phase derives from stable definition, placement, world, and seed
+identities. Load timing, frame rate, and global random-call order cannot alter
+the
+selected phase.
+
+An animated visual may request presentation effects from authored markers. It
+cannot publish gameplay events, move an authoritative collision body, grant a
+reward, or persist state merely because a frame or loop completed.
+
+## Animated collision entities
+
+An animated collision entity synchronizes authored animation with cooked native
+collision under one accepted pose and physics revision. The definition declares:
+
+- visual and collision component identities;
+- authoritative pose source;
+- collision-body or Physics Asset bindings;
+- kinematic, query-only, overlap, or simulated policy;
+- body and shape enablement by accepted animation state;
+- transform and bounds update policy;
+- contact observation policy; and
+- fallback when a required bone or collision shape is unavailable.
+
+Collision updates follow supported Unreal component or Physics Asset paths. A
+runtime cannot hand-edit source collision volumes, retain a second pose tree, or
+update one body from an uncorrelated animation callback.
+
+## Stateful props
+
+A stateful prop projects one accepted domain or application state across render,
+animation, collision, physics, audio, effects, and interaction channels. It does
+not own the state transition authority.
+
+`FSharStatefulPropDefinition` contains:
+
+- canonical prop and state identities;
+- initial-state policy;
+- allowed transition graph;
+- per-state representation and material bindings;
+- per-state animation, collision, simulation, and visibility policy;
+- typed input observations that may propose a transition;
+- typed terminal results expected from the owning service;
+- breakage and replacement policy;
+- persistence and respawn policy; and
+- accessibility, quality, streaming, and teardown behavior.
+
+The closed projection states may include idle, entering, exiting, moving,
+charging, charged, attacking, hit, destroyed, and other definition-owned values.
+Source enum positions are conversion evidence only.
+
+A collision, animation marker, player action, or event observation proposes
+work.
+The owning mission, interaction, damage, or world-object service validates and
+commits the transition. The prop then applies the accepted state revision.
+
+Visibility, collision-body enablement, physical simulation, and animation are
+committed together or compensated together. A late animation, collision, event,
+or save callback cannot apply an older state to a replacement prop.
+
+Stateful prop presentation cannot generate coins, rewards, progression, mission
+completion, or persistent destruction directly. Those effects require typed
+application transactions and exactly-once result identities.
+
+## World sky and background presentation
+
+World-scoped sky, atmosphere, cloud, horizon, dome, and background presentation
+uses native Unreal world and lighting components selected by an accepted visual
+profile.
+
+A world-presentation definition declares:
+
+- world and presentation identities;
+- sky, atmosphere, cloud, light, material, and optional animation assets;
+- time-of-day and weather input projections;
+- transform and camera-relative policy;
+- quality and platform variants;
+- bounds or always-visible policy where native components require it;
+- activation, blending, and replacement behavior; and
+- teardown and restoration behavior.
+
+The presentation consumes accepted world-clock, weather, chapter, and visual
+state. It cannot become their authority. One camera-relative dome or composite
+cannot define world position, streaming readiness, mission state, or save state.
+
+## Lens and flare presentation
+
+Lens presentation is per accepted view. It prefers Unreal camera and
+post-process
+lens facilities when they satisfy the authored contract. A custom flare adapter
+requires a registered definition and explicit evidence that native facilities
+are
+insufficient.
+
+`FSharLensPresentationDefinition` declares:
+
+- source light or emitter identity;
+- eligible camera and viewport classes;
+- bloom, flare, dirt-mask, and color policy;
+- screen-space and world-space placement policy;
+- bounded occlusion or visibility evidence;
+- temporal smoothing in seconds rather than per-frame increments;
+- split-screen, scene-capture, cinematic, and editor behavior;
+- accessibility and photosensitivity policy;
+- quality and platform fallback; and
+- cancellation and teardown behavior.
+
+Occlusion results are view-local and revisioned. One process-global framebuffer
+read-back queue, shared billboard intensity, or fixed flare array cannot control
+multiple local players, shadow views, scene captures, or cinematic cameras.
+
+A delayed occlusion result may affect presentation intensity only after view,
+world, emitter, and definition revisions are revalidated. It cannot hide the
+source entity, alter gameplay visibility, or publish a domain result.
+
 ## Linear blockers and fences
 
 A fence or linear blocker converts authored endpoints, height, thickness,
@@ -340,6 +517,7 @@ Converted triangle evidence records:
 - triangle and material-slot identity;
 - collision cooking policy;
 - physical surface binding;
+- terrain and interior classification;
 - bounds and provenance; and
 - conversion findings.
 
@@ -351,6 +529,107 @@ are produced during import.
 Queries return engine hit results normalized to typed project results. A query
 surface does not render itself merely to prove collision and does not become
 mission or interaction authority.
+
+## Native scene-query service
+
+`USharSceneQuerySubsystem`, a world subsystem, normalizes native Unreal traces,
+overlaps, sweeps, navigation projections, and registered road or path lookups.
+It
+replaces one process-wide intersection singleton and mutable same-frame caches.
+
+`FSharSceneQueryRequest` contains:
+
+- query and owner identities;
+- world and composition revisions;
+- participant or source entity revision;
+- line, shape, overlap, closest-surface, closest-road, or line-of-sight kind;
+- start, end, center, rotation, extent, and radius as applicable;
+- trace channel, object types, and collision profile;
+- ignored canonical entity identities;
+- complex-versus-simple policy;
+- physical-surface and terrain filters;
+- maximum result count and deterministic ordering;
+- synchronous or approved asynchronous execution policy; and
+- diagnostics context.
+
+A raw pointer to an object to avoid is converted to a checked canonical identity
+and weak runtime binding before execution.
+
+## Scene-query result
+
+`FSharSceneQueryResult` contains:
+
+- query, owner, world, and scene-query revisions;
+- terminal status;
+- ordered hit, overlap, road, path, or surface results;
+- canonical entity and component identities;
+- impact point, normal, distance, time, and penetration evidence;
+- physical material, surface, terrain, and interior classification;
+- blocking and overlap classification;
+- native face or item index only as transient diagnostics;
+- truncation or fallback evidence; and
+- execution cost and findings.
+
+Results are immutable. Native component pointers, face indices, and hit-array
+positions are not durable identity.
+
+## Closest road and path queries
+
+Closest-road and closest-path requests use the accepted road, path, and world
+registries plus native spatial or navigation facilities. They declare eligible
+road classes, direction, lane, mission, interior, and participant filters.
+
+Equal-distance candidates resolve by declared priority, canonical road or path
+identity, and segment identity. Mutable insertion order or first pointer found
+in
+a tree cannot determine the result.
+
+A closest-road result is query evidence. It cannot move a vehicle, activate a
+mission route, or change traffic state without a typed owner transaction.
+
+## Line-of-sight queries
+
+Line-of-sight requests declare whether height is respected, which collision
+channels and object types participate, ignored identities, maximum range, and
+whether transparent or query-only surfaces are eligible.
+
+The result distinguishes clear, blocked, invalid, cancelled, and unavailable.
+Two-dimensional horizontal tests are a separate explicit query kind; they are
+not
+a hidden flag that silently discards height.
+
+Line-of-sight evidence may inform artificial intelligence, cameras, interaction,
+or presentation. It cannot directly mutate those systems.
+
+## Query caching
+
+Query caching is optional, bounded, and keyed by the complete normalized
+request,
+world collision-scene revision, query-policy revision, and execution frame or
+simulation step where appropriate.
+
+A cache entry stores immutable result data, not raw triangle or entity pointers.
+It is invalidated by relevant component movement, collision-profile changes,
+world streaming, Data Layer transitions, feature removal, or scene-query
+revision.
+
+A same-position or same-radius heuristic without world and filter revisions is
+not a valid cache key. Cache hits and misses cannot change result ordering or
+terminal status.
+
+## Query concurrency and budgets
+
+Synchronous queries run only on supported engine threads and within declared
+per-system budgets. Approved asynchronous queries carry copied request data and
+revalidate the owner and world before publication.
+
+Each caller declares maximum hits, maximum candidate count, timeout, and
+fallback.
+A fixed reserve array cannot silently truncate candidates without typed
+evidence.
+
+Development diagnostics may compare native results with converted spatial
+evidence, but cannot publish a second collision authority.
 
 ## Collision profiles
 
@@ -508,6 +787,24 @@ presentation. None can decide that the break transaction succeeded merely
 because
 an animation played.
 
+## Render-layer and content identity
+
+World, frontend, local-player, cinematic, reflection, capture, diagnostic, and
+shadow views are native renderer and application scopes. They are not selected
+by
+legacy level or mission enum ordinals.
+
+A render-scope request carries canonical world, application mode, viewport,
+participant, camera, feature, and presentation revisions. Content definitions
+use
+stable chapter, mission, region, and package identities from their owning
+catalogs.
+
+A numeric render layer, level number, mission number, or array position may
+remain
+inside a versioned conversion artifact. It cannot become a runtime save key,
+package identity, camera authority, visibility authority, or feature namespace.
+
 ## Render and shadow policy
 
 Primitive components use Unreal's renderer for opaque, masked, translucent,
@@ -643,10 +940,16 @@ Development diagnostics expose immutable snapshots of:
 - collision profile and physical profile;
 - simulation, sleep, wake, velocity, and support state;
 - recent collision and force observations;
+- stateful-prop identity, accepted state, transition, and projection revision;
+- scene-query request, filters, cache key, candidates, hits, and result
+  revision;
+- world-sky and lens-presentation identity, view, occlusion, and intensity
+  state;
 - breakage and persistence state;
 - streaming and retained asset handles;
 - native shadow and visibility policy; and
-- last construction, collision, simulation, breakage, or teardown finding.
+- last construction, collision, query, presentation, simulation, breakage, or
+  teardown finding.
 
 Chaos Visual Debugger, collision visualization, bounds views, and
 repository-owned
@@ -666,12 +969,21 @@ The runtime fails closed on:
 - query-only geometry requested as a rigid body;
 - collision without a registered profile;
 - simulation with a conflicting transform owner;
-- stale entity, body, representation, world, or request revision;
+- malformed stateful-prop transition or mixed projection revision;
+- animation, collision, or visibility applying an unaccepted prop state;
+- scene query with invalid channel, filter, extent, world, or result limit;
+- stale or incomplete query cache key;
+- nondeterministic closest-road, closest-path, or hit ordering;
+- lens occlusion or intensity state shared across unrelated views;
+- world presentation attempting world-clock, weather, mission, or save mutation;
+- stale entity, body, representation, state, query, view, world, or request
+  revision;
 - saved or replicated raw instance index;
 - source triangle parsing attempted in shipping runtime;
 - breakage without replacement, persistence, or teardown policy;
 - renderer callback attempting gameplay mutation;
-- collision callback attempting direct mission, reward, or save mutation;
+- collision or query callback attempting direct mission, reward, or save
+  mutation;
 - world unload with registered components or retained bodies; or
 - feature removal with owned Actors, components, bodies, or asset handles.
 
@@ -692,10 +1004,22 @@ Definition and converted-asset validation prove:
 - mobility, simulation, collision, and transform ownership are compatible;
 - ISM or HISM groups preserve stable project identities through index changes;
 - cooked collision replaces source-triangle runtime parsing;
+- stateful-prop graphs, per-state projections, and compensation paths are valid;
+- animated visual and collision entities use deterministic start and pose
+  policy;
+- scene-query channels, object types, filters, limits, ordering, and cache keys
+  are
+  complete and deterministic;
+- closest-road, closest-path, terrain, interior, and line-of-sight mappings use
+  canonical identities;
+- lens and world-presentation definitions have independent per-view and
+  world-scoped ownership plus platform fallbacks;
 - physical profiles use supported Chaos settings;
 - every breakable has a complete replacement and persistence path;
 - every streaming and feature owner has complete teardown; and
-- no component or physics callback has domain mutation authority.
+- no render, animation, collision, physics, or query callback has domain
+  mutation
+  authority.
 
 ## Tests
 
@@ -708,14 +1032,27 @@ Required automated tests include:
 - movable rigid-body start, force, impulse, collision, sleep, wake, and
   teardown;
 - animated-to-physics and physics-to-animation handoff;
+- deterministic animated-visual start phase and reset;
+- animated-collision pose, body, bounds, and fallback synchronization;
+- stateful-prop accepted transition, compensation, duplicate observation, and
+  stale callback rejection;
+- stateful-prop reward and persistence isolation;
 - missing Physics Asset and non-simulated fallback;
 - fence shape generation and collision profile binding;
 - cooked query surface line, box, sphere, capsule, overlap, and sweep results;
+- closest-road and closest-path deterministic tie-breaks;
+- horizontal and full three-dimensional line-of-sight behavior;
+- scene-query cache invalidation after movement, profile change, streaming, and
+  feature removal;
+- query truncation and budget evidence;
 - collision observation normalization and duplicate suppression;
+- independent lens occlusion and intensity for split-screen and scene capture;
+- lens fallback and temporal smoothing across frame rates;
+- world-sky activation, blend, replacement, and teardown;
 - breakage success, rejection, duplicate request, and rollback;
 - persistence and respawn reconstruction;
-- streaming unload during load, simulation, collision, and breakage;
-- stale async, physics, animation, and render callback rejection;
+- streaming unload during load, simulation, query, collision, and breakage;
+- stale async, physics, animation, query, lens, and render callback rejection;
 - native shadow and translucency behavior across quality presets;
 - local split-screen visibility without duplicate world entities;
 - feature removal with zero retained Actors, components, bodies, and assets; and
@@ -727,8 +1064,18 @@ Required automated tests include:
 - Actor and component composition is definition-driven and validated.
 - Unreal owns renderer registration and final draw submission.
 - Chaos owns accepted rigid-body simulation state.
-- Collision and physics callbacks publish evidence, not domain mutations.
+- Render, animation, collision, physics, and query callbacks publish evidence,
+  not
+  domain mutations.
+- Stateful props project one accepted state revision across all channels.
+- Scene-query results are immutable, bounded, revisioned, and deterministically
+  ordered.
+- Query caches include world, policy, filter, and collision-scene revisions.
+- Lens presentation is per view and cannot become gameplay visibility authority.
+- World presentation consumes world state but never owns it.
 - Stable instance identity never equals an engine array index.
+- Legacy render-layer, level, and mission ordinals never become runtime
+  identity.
 - Source triangle geometry is cooked before shipping runtime.
 - Culling never disables collision, physics, persistence, or gameplay state.
 - Breakage commits before replacement presentation is accepted.

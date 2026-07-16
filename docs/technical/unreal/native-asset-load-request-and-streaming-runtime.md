@@ -12,6 +12,7 @@
 - [Lossless extraction contract](../../adr/pipeline/extraction/lossless-extraction-contract.md)
 - [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
 - [Native import, material rebuild, and world assembly](native-import-material-and-world-assembly.md)
+- [Native cooked-asset construction and registration runtime](native-cooked-asset-construction-and-registration-runtime.md)
 - [Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md)
 - [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
 - [Platform audio cooking and streaming](platform-audio-cooking-and-streaming.md)
@@ -276,6 +277,28 @@ The following source families are import evidence, not shipping runtime loaders:
 
 The native runtime does not instantiate a source chunk handler to construct
 actors or gameplay services during play.
+
+## Construction handoff
+
+A successful asset-load result transfers retained handles and immutable loaded
+object identities to
+<!-- markdownlint-disable-next-line MD013 -->
+[Native cooked-asset construction and registration runtime](native-cooked-asset-construction-and-registration-runtime.md).
+The construction subsystem revalidates definition, bundle, world, placement, and
+feature revisions before preparing native objects.
+
+Load completion cannot:
+
+- instantiate an arbitrary wrapper class;
+- call a mutable process-global listener;
+- encode cancellation as a null entity;
+- add a drawable to a fixed global-entity array;
+- override another constructor or engine handler;
+- activate collision, simulation, interaction, or mission behavior; or
+- publish gameplay readiness before construction commit.
+
+The load subsystem owns packages and handles. The construction subsystem owns
+prepared native objects. World and gameplay services own activation.
 
 ## Generic scene packages
 

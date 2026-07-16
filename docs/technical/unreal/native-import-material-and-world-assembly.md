@@ -17,6 +17,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Native cooked-asset construction and registration runtime](native-cooked-asset-construction-and-registration-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native asset translation without copy-paste](../../adr/pipeline/unreal/native-asset-translation-and-no-copy-paste.md)
 
 ## Purpose
@@ -204,6 +206,17 @@ Read-back verifies component hierarchy, mobility, bounds, collision responses,
 query channels, mass or density, Physics Asset bindings, instance identity maps,
 and breakable replacement policy. A mesh asset alone is not proof that its world
 entity or physics representation is ready.
+
+The import transaction also publishes immutable construction definitions,
+primary
+asset and bundle metadata, soft-reference class constraints, dependency digests,
+platform variants, and fallback policy for
+<!-- markdownlint-disable-next-line MD013 -->
+[Native cooked-asset construction and registration runtime](native-cooked-asset-construction-and-registration-runtime.md).
+
+No source wrapper, chunk handler, mutable listener callback, loader override,
+fixed global-entity registry, or source sub-loader is included in shipping
+runtime. Cook validation fails when a native construction path depends on one.
 
 ## Native audio, data, and cinematic import
 

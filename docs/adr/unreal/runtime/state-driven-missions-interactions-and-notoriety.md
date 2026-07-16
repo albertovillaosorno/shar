@@ -62,8 +62,15 @@ services commit destruction, collection, reward, persistence, respawn, and
 objective results through typed transactions.
 
 A body sleeping, a primitive being culled, an Actor unloading, or a break
-animation playing cannot complete or fail a mission. Stale physics, collision,
-render, or teardown callbacks cannot mutate a replacement entity revision.
+animation playing cannot complete or fail a mission. Stateful props project only
+an accepted application-state revision; animation markers, collision enablement,
+visibility, and local state enums cannot commit the transition themselves.
+
+Native scene queries, closest-road or path lookups, terrain classification, and
+line-of-sight checks are immutable evidence. They may inform a mission or
+interaction decision but cannot activate objectives, move entities, or mutate
+progression directly. Stale physics, collision, query, render, or teardown
+callbacks cannot mutate a replacement entity revision.
 
 The active world uses World Partition and Runtime Data Layers for level
 variants,

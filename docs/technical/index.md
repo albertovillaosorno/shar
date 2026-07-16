@@ -115,6 +115,8 @@ proprietary external formats.
 - [Unreal MCP terminal translator](unreal/mcp-terminal-translator.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native asset load request and streaming runtime](unreal/native-asset-load-request-and-streaming-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Native cooked-asset construction and registration runtime](unreal/native-cooked-asset-construction-and-registration-runtime.md)
 - [Native asset planning](unreal/native-asset-planning.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native import, material rebuild, and world assembly](unreal/native-import-material-and-world-assembly.md)

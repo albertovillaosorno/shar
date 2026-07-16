@@ -12,16 +12,17 @@ examples, or documentation.
   release branch identity, current Epic EULA, its generative-AI input
   restriction, public source-access rules, Common UI input routing and action
   data, managed subsystem lifetimes, C++ UMG MVVM viewmodels and field
-  notifications, Asset Manager primary-asset and bundle boundaries, Sequencer
+  notifications, Asset Manager primary-asset and bundle boundaries, soft
+  references, asynchronous loading and streamable-handle behavior, Sequencer
   timeline and track authoring, localization and culture fallback, Control Rig
-  integration, visibility and occlusion culling, Chaos physics, collision and
-  traces, native physics components, ISM and HISM behavior, Chaos Visual
-  Debugger, and Unreal Engine 5.8 Media Framework and Electra boundaries were
-  verified. Accepted
-  regional agreement, bundled notices, decoder availability,
-  and external-service retention remain environment- or service-specific.
+  integration, visibility and occlusion culling, post-process lens facilities,
+  Chaos physics, collision and traces, native physics components, ISM and HISM
+  behavior, Chaos Visual Debugger, and Unreal Engine 5.8 Media Framework and
+  Electra boundaries were verified. Accepted regional agreement, bundled
+  notices, decoder availability, and external-service retention remain
+  environment- or service-specific.
 - Counsel review: Not performed.
-- As-of date: 2026-07-15.
+- As-of date: 2026-07-16.
 - Subject class: Proprietary real-time engine, editor, toolchain, and SDK.
 
 ## Covered Material
@@ -117,6 +118,11 @@ royalty or seat analysis.
   <!-- markdownlint-disable-next-line MD013 -->
   <https://dev.epicgames.com/documentation/en-us/unreal-engine/asset-management-in-unreal-engine>
   (Accessed: 15 July 2026).
+- Epic Games (2026) *Asynchronous Asset Loading in Unreal Engine 5.8*.
+  Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/asynchronous-asset-loading-in-unreal-engine>
+  (Accessed: 16 July 2026).
 - Epic Games (2026) *UMG Viewmodel for Unreal Engine 5.8*. Available at:
   <!-- markdownlint-disable-next-line MD013 -->
   <https://dev.epicgames.com/documentation/en-us/unreal-engine/umg-viewmodel-for-unreal-engine>
@@ -139,6 +145,10 @@ royalty or seat analysis.
   <!-- markdownlint-disable-next-line MD013 -->
   <https://dev.epicgames.com/documentation/en-us/unreal-engine/visibility-and-occlusion-culling-in-unreal-engine>
   (Accessed: 15 July 2026).
+- Epic Games (2026) *Post Process Effects in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/post-process-effects-in-unreal-engine>
+  (Accessed: 16 July 2026).
 - Epic Games (2026) *Physics in Unreal Engine 5.8*. Available at:
   <!-- markdownlint-disable-next-line MD013 -->
   <https://dev.epicgames.com/documentation/en-us/unreal-engine/physics-in-unreal-engine>

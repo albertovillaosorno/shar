@@ -48,6 +48,17 @@ parse source triangle strips, construct custom flat-triangle stores, allocate a
 parallel drawable scene graph, or infer physical behavior from a source wrapper
 class. Actor and component composition is data-driven and validated.
 
+The importer publishes immutable construction definitions, primary-asset and
+bundle metadata, class-restricted soft references, dependency digests, target
+variants, fallback policy, and complete rollback evidence. Shipping runtime uses
+Asset Manager and retained streamable handles to load those native assets and a
+closed constructor registry to prepare them.
+
+Source chunk handlers, wrapper singletons, mutable listener pointers, integer
+callback user data, loader overrides, fixed global-entity arrays, and
+null-object
+cancellation protocols are excluded from the packaged runtime.
+
 Character import preserves the FBX topology, skeleton hierarchy, bind state,
 skin weights, animation timing, semantic regions, integrated outfit identity,
 eye-animation mechanism, and detachable-prop attachments. It may generate
