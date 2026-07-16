@@ -54,7 +54,8 @@
 //! decoded component is loaded through the fbx crate adapters. Nothing is
 //! rediscovered from local filesystem layout, and every member id receives an
 //! explicit capability outcome in the deterministic report. Binary FBX 7.7
-//! is the sole FBX representation; optional review support emits scripts.
+//! is the sole FBX representation and no authoring-application sidecar is
+//! emitted.
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
@@ -62,17 +63,11 @@ use fbx::adapters::driven::binary_character_writer::{
     CharacterBinaryFbxSummary, EmbeddedTexture, write_binary_character_fbx,
     write_binary_character_fbx_embedded,
 };
-use fbx::adapters::driven::blender_review_helper::{
-    HelperSummary, write_review_helper,
-};
 use fbx::adapters::driven::decoded_animation_source::load_animation_clips;
 use fbx::adapters::driven::decoded_component_source::{
     DecodedComponentError, DecodedComponentSource,
 };
 use fbx::adapters::driven::decoded_skin_source::load_character;
-use fbx::adapters::driven::maya_import_helper::{
-    Summary as MayaImportHelperSummary, write as write_maya_import_helper,
-};
 use fbx::adapters::driven::semantic_character_texture::request::{
     ExtraMaterialRequest, GroupAddressRequest,
 };
@@ -116,66 +111,6 @@ struct CapabilityItem {
     outcome: &'static str,
     /// Deterministic decision reason.
     reason: String,
-}
-
-/// Optional experimental Blender helper tracked by the export report.
-struct BlenderHelperArtifact {
-    /// Generated standalone Blender helper script.
-    script_path: PathBuf,
-    /// Native timing evidence preserved by the helper.
-    summary: HelperSummary,
-}
-
-/// Inputs required to materialize one optional Blender helper.
-struct BlenderHelperRequest<'request> {
-    /// Stable package identity used in diagnostics.
-    package_id: &'request str,
-    /// Package output directory containing the sibling FBX.
-    package_dir: &'request Path,
-    /// Stable artifact stem shared by the FBX and helper.
-    file_stem: &'request str,
-    /// Final sibling FBX path referenced by the helper.
-    fbx_path: &'request Path,
-    /// Native skeletal clips establishing source timing.
-    animations: &'request [AnimationClip],
-}
-
-/// Optional helper output and capability evidence returned together.
-struct BlenderHelperOutput {
-    /// Generated files and timing summary.
-    artifact: BlenderHelperArtifact,
-    /// Capability-report item describing the optional conversion.
-    capability: CapabilityItem,
-}
-
-/// Optional Maya import helper tracked by the export report.
-struct MayaHelperArtifact {
-    /// Generated standalone Maya import script.
-    script_path: PathBuf,
-    /// Generated helper file count.
-    summary: MayaImportHelperSummary,
-}
-
-/// Inputs required to materialize one optional Maya import helper.
-struct MayaHelperRequest<'request> {
-    /// Stable package identity used in diagnostics.
-    package_id: &'request str,
-    /// Package output directory containing the sibling FBX.
-    package_dir: &'request Path,
-    /// Stable artifact stem shared by the FBX and helper.
-    file_stem: &'request str,
-    /// Final sibling binary FBX path referenced by the helper.
-    fbx_path: &'request Path,
-    /// Validated skeletal clips establishing the exported frame rate.
-    animations: &'request [AnimationClip],
-}
-
-/// Optional Maya helper and capability evidence returned together.
-struct MayaHelperOutput {
-    /// Generated script and file-count summary.
-    artifact: MayaHelperArtifact,
-    /// Capability-report item describing the optional helper.
-    capability: CapabilityItem,
 }
 
 /// Classified member paths driving one character export.
@@ -275,33 +210,6 @@ pub(super) fn export_fbx_package(
         options.embed_textures,
     )?;
     capability_items.push(texture_storage_capability(options.embed_textures));
-    let helper_output = write_optional_blender_helper(
-        options.blender_helper,
-        &BlenderHelperRequest {
-            package_id: &package.package_id,
-            package_dir: &package_dir,
-            file_stem: &file_stem,
-            fbx_path: &fbx_path,
-            animations: &animations,
-        },
-    )?;
-    let helper_artifact = if let Some(output) = helper_output {
-        capability_items.push(output.capability);
-        Some(output.artifact)
-    } else {
-        None
-    };
-    let maya_artifact = materialize_optional_maya_helper(
-        options.maya,
-        &MayaHelperRequest {
-            package_id: &package.package_id,
-            package_dir: &package_dir,
-            file_stem: &file_stem,
-            fbx_path: &fbx_path,
-            animations: &animations,
-        },
-        &mut capability_items,
-    )?;
     capability_items.extend(member_capability_items(&members));
     let report_path = package_dir.join("capability-report.json");
     write_capability_report(
@@ -314,8 +222,6 @@ pub(super) fn export_fbx_package(
         &summary,
         &fbx_path,
         &report_path,
-        helper_artifact.as_ref(),
-        maya_artifact.as_ref(),
     )
 }
 
@@ -1144,135 +1050,6 @@ fn validate_character_package(
         );
     }
     Ok(())
-}
-
-/// Materialize one requested Blender helper and capability decision.
-fn write_optional_blender_helper(
-    enabled: bool,
-    request: &BlenderHelperRequest<'_>,
-) -> Result<Option<BlenderHelperOutput>, PipelineError> {
-    if !enabled {
-        return Ok(None);
-    }
-    let script_path = request
-        .package_dir
-        .join(
-            format!(
-                "{}.blender.py",
-                request.file_stem
-            ),
-        );
-    let summary = write_review_helper(
-        request.fbx_path,
-        request.animations,
-        &script_path,
-    )
-    .map_err(
-        |error| {
-            PipelineError::new(
-                format!(
-                    "Blender helper failed for {}: {error:?}",
-                    request.package_id
-                ),
-            )
-        },
-    )?;
-    let capability = CapabilityItem {
-        id: "derived:blender-review-helper".to_owned(),
-        outcome: "converted",
-        reason: format!(
-            concat!(
-                "experimental unsupported Blender helper may not work; ",
-                "it preserves native {} fps timing",
-            ),
-            summary.source_fps
-        ),
-    };
-    Ok(
-        Some(
-            BlenderHelperOutput {
-                artifact: BlenderHelperArtifact {
-                    script_path,
-                    summary,
-                },
-                capability,
-            },
-        ),
-    )
-}
-
-/// Materialize one optional Maya helper and append its capability evidence.
-fn materialize_optional_maya_helper(
-    enabled: bool,
-    request: &MayaHelperRequest<'_>,
-    capabilities: &mut Vec<CapabilityItem>,
-) -> Result<Option<MayaHelperArtifact>, PipelineError> {
-    let Some(output) = write_optional_maya_helper(
-        enabled, request,
-    )?
-    else {
-        return Ok(None);
-    };
-    capabilities.push(output.capability);
-    Ok(Some(output.artifact))
-}
-
-/// Materialize one requested Maya import helper and capability decision.
-fn write_optional_maya_helper(
-    enabled: bool,
-    request: &MayaHelperRequest<'_>,
-) -> Result<Option<MayaHelperOutput>, PipelineError> {
-    if !enabled {
-        return Ok(None);
-    }
-    let script_path = request
-        .package_dir
-        .join(
-            format!(
-                "{}.maya.py",
-                request.file_stem
-            ),
-        );
-    let frame_rate = request
-        .animations
-        .first()
-        .map(|clip| clip.frame_rate);
-    let summary = write_maya_import_helper(
-        request.fbx_path,
-        frame_rate,
-        &script_path,
-    )
-    .map_err(
-        |error| {
-            PipelineError::new(
-                format!(
-                    "Maya import helper failed for {}: {error:?}",
-                    request.package_id
-                ),
-            )
-        },
-    )?;
-    Ok(
-        Some(
-            MayaHelperOutput {
-                artifact: MayaHelperArtifact {
-                    script_path,
-                    summary,
-                },
-                capability: CapabilityItem {
-                    id: "derived:maya-import-helper".to_owned(),
-                    outcome: "converted",
-                    reason: concat!(
-                        "optional Maya script imports the canonical binary \
-                         FBX 7.7 and configures Maya to the validated \
-                         exported frame rate when animations are present; ",
-                        "no alternate FBX or Maya-native scene is emitted",
-                    )
-                    .to_owned(),
-                },
-            },
-        ),
-    )
 }
 
 /// Report the selected texture-storage policy explicitly.
@@ -2262,88 +2039,22 @@ fn stage_report(
     summary: &CharacterBinaryFbxSummary,
     fbx_path: &Path,
     report_path: &Path,
-    helper: Option<&BlenderHelperArtifact>,
-    maya: Option<&MayaHelperArtifact>,
 ) -> Result<StageReport, PipelineError> {
     let fbx_bytes = file_len(fbx_path)?;
     let report_bytes = file_len(report_path)?;
-    let (helper_files, helper_bytes, helper_note) =
-        if let Some(artifact) = helper {
-            let bytes = file_len(&artifact.script_path)?;
-            (
-                artifact
-                    .summary
-                    .files,
-                bytes,
-                format!(
-                    "experimental-unsupported:{}:{}fps",
-                    artifact
-                        .script_path
-                        .display(),
-                    artifact
-                        .summary
-                        .source_fps
-                ),
-            )
-        } else {
-            (
-                0,
-                0,
-                "disabled".to_owned(),
-            )
-        };
-    let (maya_files, maya_bytes, maya_note) = if let Some(artifact) = maya {
-        (
-            artifact
-                .summary
-                .files,
-            file_len(&artifact.script_path)?,
-            artifact
-                .script_path
-                .display()
-                .to_string(),
-        )
-    } else {
-        (
-            0,
-            0,
-            "disabled".to_owned(),
-        )
-    };
-    let files_with_blender = StageReport::checked_file_total(
-        "fbx-export",
-        2,
-        helper_files,
-    )?;
-    let files = StageReport::checked_file_total(
-        "fbx-export",
-        files_with_blender,
-        maya_files,
-    )?;
-    let bytes_with_report = StageReport::checked_byte_total(
+    let bytes = StageReport::checked_byte_total(
         "fbx-export",
         fbx_bytes,
         report_bytes,
     )?;
-    let bytes_with_blender = StageReport::checked_byte_total(
-        "fbx-export",
-        bytes_with_report,
-        helper_bytes,
-    )?;
-    let bytes = StageReport::checked_byte_total(
-        "fbx-export",
-        bytes_with_blender,
-        maya_bytes,
-    )?;
     Ok(
         StageReport {
             name: "fbx-export",
-            files,
+            files: 2,
             bytes,
             note: format!(
                 "package={} output={} bones={} geometries={} clusters={} \
-                 materials={} textures={} animations={} blender_helper={} \
-                 maya_helper={}",
+                 materials={} textures={} animations={}",
                 package.package_id,
                 fbx_path.display(),
                 summary.bones,
@@ -2351,9 +2062,7 @@ fn stage_report(
                 summary.clusters,
                 summary.materials,
                 summary.textures,
-                summary.animations,
-                helper_note,
-                maya_note
+                summary.animations
             ),
         },
     )

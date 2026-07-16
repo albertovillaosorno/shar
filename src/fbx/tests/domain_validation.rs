@@ -48,9 +48,6 @@
 
 use std::path::PathBuf;
 
-use fbx::adapters::driven::blender_scene_writer::{
-    BlenderCommandPlan, BlenderCommandPlanError,
-};
 use fbx::adapters::driving::cli::{
     CliExportSelection, CliExportSelectionError,
 };
@@ -68,34 +65,6 @@ use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
 use shar_sha256 as _;
-
-#[test]
-fn rejects_incomplete_blender_command_plans() {
-    assert_eq!(
-        BlenderCommandPlan::new(
-            "   ",
-            "script.py",
-            "output.fbx"
-        ),
-        Err(BlenderCommandPlanError::MissingExecutable)
-    );
-    assert_eq!(
-        BlenderCommandPlan::new(
-            "blender",
-            "   ",
-            "output.fbx"
-        ),
-        Err(BlenderCommandPlanError::MissingScript)
-    );
-    assert_eq!(
-        BlenderCommandPlan::new(
-            "blender",
-            "script.py",
-            "   "
-        ),
-        Err(BlenderCommandPlanError::MissingOutputFile)
-    );
-}
 
 #[test]
 fn rejects_incomplete_cli_export_selections() {

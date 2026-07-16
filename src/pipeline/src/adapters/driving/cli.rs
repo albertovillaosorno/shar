@@ -69,12 +69,6 @@ use crate::ports::FbxExportOptions;
 
 mod options;
 
-/// Warning emitted whenever the experimental Blender helper is requested.
-const BLENDER_HELPER_WARNING: &str = concat!(
-    "warning: --blender-helper is experimental and unsupported; ",
-    "it may not work across Blender versions",
-);
-
 /// Complete pipeline command usage text.
 const USAGE: &str = concat!(
     "usage: pipeline ",
@@ -85,8 +79,6 @@ const USAGE: &str = concat!(
     "plan-fbx-package [index-jsonl] [selector] [output-dir] | ",
     "fbx-export-characters [index-jsonl] [output-dir] [base-root] | ",
     "fbx-export [index-jsonl] [selector] [output-dir] [base-root] ",
-    "[--blender-helper (experimental/unsupported; may not work)] ",
-    "[--maya (optional Maya import script)] ",
     "[--embed-textures (legacy compatibility)] ",
     "[--verbosity detailed|minimal] ",
     "[--log <path>|--no-log]",
@@ -121,15 +113,6 @@ impl CliProgram for PipelineCli {
                     .stderr_line(USAGE);
             }
         };
-        if parsed.blender_helper && command != "fbx-export" {
-            return CommandOutcome::failure().stderr_line(
-                "invalid arguments: --blender-helper requires fbx-export",
-            );
-        }
-        if parsed.maya && command != "fbx-export" {
-            return CommandOutcome::failure()
-                .stderr_line("invalid arguments: --maya requires fbx-export");
-        }
         if parsed.embed_textures && command != "fbx-export" {
             return CommandOutcome::failure().stderr_line(
                 "invalid arguments: --embed-textures requires fbx-export",
@@ -151,18 +134,12 @@ impl CliProgram for PipelineCli {
             return run_character_catalog(&parsed.positionals);
         }
         if command == "fbx-export" {
-            let outcome = run_fbx_export(
+            return run_fbx_export(
                 &parsed.positionals,
                 FbxExportOptions {
-                    blender_helper: parsed.blender_helper,
-                    maya: parsed.maya,
                     embed_textures: parsed.embed_textures,
                 },
             );
-            if parsed.blender_helper {
-                return outcome.stderr_line(BLENDER_HELPER_WARNING);
-            }
-            return outcome;
         }
         run_pipeline_command(
             command,
@@ -472,7 +449,7 @@ fn render_success(
 mod tests {
     use schoenwald_cli::{CliProgram, ExitStatus, OutputStream};
 
-    use super::{BLENDER_HELPER_WARNING, PipelineCli, USAGE};
+    use super::{PipelineCli, USAGE};
 
     #[test]
     fn manifest_rejects_extra_positionals() -> Result<(), String> {
@@ -524,89 +501,6 @@ mod tests {
                 format!(
                     "unexpected usage output: {:?}",
                     chunk.text()
-                ),
-            );
-        }
-        Ok(())
-    }
-
-    #[test]
-    fn blender_helper_is_marked_experimental_and_unsupported()
-    -> Result<(), String> {
-        for required in [
-            "experimental/unsupported",
-            "may not work",
-        ] {
-            if !USAGE.contains(required) {
-                return Err(
-                    format!("usage omitted Blender warning: {required}"),
-                );
-            }
-        }
-        for required in [
-            "experimental",
-            "unsupported",
-            "may not work",
-        ] {
-            if !BLENDER_HELPER_WARNING.contains(required) {
-                return Err(format!("warning omitted status: {required}"));
-            }
-        }
-        Ok(())
-    }
-
-    #[test]
-    fn blender_helper_is_rejected_for_other_commands() -> Result<(), String> {
-        let outcome = PipelineCli.execute(
-            &[
-                "index-minor-units".to_owned(),
-                "--blender-helper".to_owned(),
-            ],
-        );
-        if outcome.status() != ExitStatus::Failure {
-            return Err("misplaced Blender helper option must fail".to_owned());
-        }
-        let [diagnostic] = outcome.output() else {
-            return Err("misplaced option must emit one diagnostic".to_owned());
-        };
-        if diagnostic.text()
-            != "invalid arguments: --blender-helper requires fbx-export
-"
-        {
-            return Err(
-                format!(
-                    "unexpected diagnostic: {:?}",
-                    diagnostic.text()
-                ),
-            );
-        }
-        Ok(())
-    }
-
-    #[test]
-    fn maya_is_rejected_for_other_commands() -> Result<(), String> {
-        let outcome = PipelineCli.execute(
-            &[
-                "index-minor-units".to_owned(),
-                "--maya".to_owned(),
-            ],
-        );
-        if outcome.status() != ExitStatus::Failure {
-            return Err("misplaced Maya option must fail".to_owned());
-        }
-        let [diagnostic] = outcome.output() else {
-            return Err(
-                "misplaced Maya option must emit one diagnostic".to_owned(),
-            );
-        };
-        if diagnostic.text()
-            != "invalid arguments: --maya requires fbx-export
-"
-        {
-            return Err(
-                format!(
-                    "unexpected diagnostic: {:?}",
-                    diagnostic.text()
                 ),
             );
         }

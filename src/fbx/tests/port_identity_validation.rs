@@ -45,9 +45,6 @@
 //!
 //! Synthetic identities prove boundary constructors fail closed before work.
 
-use fbx::adapters::driven::blender_scene_writer::{
-    BlenderCommandPlan, BlenderCommandPlanError,
-};
 use fbx::adapters::driving::cli::{
     CliExportSelection, CliExportSelectionError,
 };
@@ -59,76 +56,6 @@ use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
 use shar_sha256 as _;
-
-#[test]
-fn rejects_padded_blender_output_file_ids() {
-    let result = BlenderCommandPlan::new(
-        "blender",
-        "script.py",
-        " output.fbx",
-    );
-
-    assert_eq!(
-        result,
-        Err(BlenderCommandPlanError::NonCanonicalOutputFile)
-    );
-}
-
-#[test]
-fn rejects_padded_blender_script_ids() {
-    let result = BlenderCommandPlan::new(
-        "blender",
-        " script.py",
-        "output.fbx",
-    );
-
-    assert_eq!(
-        result,
-        Err(BlenderCommandPlanError::NonCanonicalScript)
-    );
-}
-
-#[test]
-fn rejects_padded_blender_executable_ids() {
-    let result = BlenderCommandPlan::new(
-        " blender",
-        "script.py",
-        "output.fbx",
-    );
-
-    assert_eq!(
-        result,
-        Err(BlenderCommandPlanError::NonCanonicalExecutable)
-    );
-}
-
-#[test]
-fn rejects_control_characters_in_blender_command_fields() {
-    assert_eq!(
-        BlenderCommandPlan::new(
-            "blender\nalias",
-            "script.py",
-            "output.fbx",
-        ),
-        Err(BlenderCommandPlanError::NonCanonicalExecutable)
-    );
-    assert_eq!(
-        BlenderCommandPlan::new(
-            "blender",
-            "script\nalias.py",
-            "output.fbx",
-        ),
-        Err(BlenderCommandPlanError::NonCanonicalScript)
-    );
-    assert_eq!(
-        BlenderCommandPlan::new(
-            "blender",
-            "script.py",
-            "output\nalias.fbx",
-        ),
-        Err(BlenderCommandPlanError::NonCanonicalOutputFile)
-    );
-}
 
 #[test]
 fn rejects_padded_cli_output_paths() {

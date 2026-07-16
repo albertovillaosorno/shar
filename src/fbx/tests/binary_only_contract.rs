@@ -26,9 +26,9 @@
 // - Merge-When:
 //   - A repository architecture gate owns the identical source assertions.
 // - Summary:
-//   - Prevents ASCII FBX, FBX 7.4, and alternate Maya FBX reintroduction.
+//   - Prevents alternate FBX formats and authoring-helper reintroduction.
 // - Description:
-//   - Proves the direct binary writer API and script-only review integrations.
+//   - Proves the direct binary writer API and absence of external helpers.
 // - Usage:
 //   - Run through the fbx crate test suite.
 // - Defaults:
@@ -44,8 +44,8 @@
 //! Binary-only FBX export architecture regression.
 //!
 //! This test inspects only public composition-root source text. It guards the
-//! direct binary writer API, FBX 7.7 identity, and script-only Blender/Maya
-//! integrations without reading generated assets or local machine paths.
+//! direct binary writer API, FBX 7.7 identity, and retirement of external
+//! authoring helpers without reading generated assets or local machine paths.
 //!
 //! Rejected legacy tokens are intentionally kept out of implementation source;
 //! explanatory documentation may still name retired formats.
@@ -60,8 +60,11 @@ use shar_sha256 as _;
 const DRIVEN_MODULE: &str = include_str!("../src/adapters/driven.rs");
 const PIPELINE_EXPORT: &str =
     include_str!("../../pipeline/src/adapters/driven/local/fbx_export.rs");
+const PIPELINE_CLI: &str =
+    include_str!("../../pipeline/src/adapters/driving/cli.rs");
 const PIPELINE_OPTIONS: &str =
     include_str!("../../pipeline/src/adapters/driving/cli/options.rs");
+const PIPELINE_PORTS: &str = include_str!("../../pipeline/src/ports.rs");
 const SEMANTIC_TEXTURE_CLI: &str =
     include_str!("../src/semantic_character_texture_cli.rs");
 const SEMANTIC_TEXTURE_PACKAGE: &str = include_str!(
@@ -72,11 +75,14 @@ const SEMANTIC_TEXTURE_PUBLICATION: &str = include_str!(
 );
 
 #[test]
-fn exposes_only_binary_fbx_7700_and_script_helpers() -> Result<(), String> {
+fn exposes_only_binary_fbx_7700_without_authoring_helpers()
+-> Result<(), String> {
     let contract_sources = [
         DRIVEN_MODULE,
         PIPELINE_EXPORT,
+        PIPELINE_CLI,
         PIPELINE_OPTIONS,
+        PIPELINE_PORTS,
         SEMANTIC_TEXTURE_CLI,
         SEMANTIC_TEXTURE_PACKAGE,
         SEMANTIC_TEXTURE_PUBLICATION,
@@ -85,10 +91,7 @@ fn exposes_only_binary_fbx_7700_and_script_helpers() -> Result<(), String> {
     for required in [
         "pub mod binary_character_writer;",
         "mod binary_fbx;",
-        "pub mod maya_import_helper;",
         "write_binary_character_fbx",
-        "write_maya_import_helper",
-        ".maya.py",
         "write_binary_character_fbx_embedded",
         "embed_textures",
         "&prepared.animations",
@@ -107,6 +110,14 @@ fn exposes_only_binary_fbx_7700_and_script_helpers() -> Result<(), String> {
         ".maya.fbx",
         "MayaAscii",
         "maya_ascii",
+        "blender_review_helper",
+        "blender_scene_writer",
+        "maya_import_helper",
+        "write_review_helper",
+        "write_maya_import_helper",
+        "--blender-helper",
+        "--maya",
+        ".maya.py",
     ] {
         if contract_sources.contains(forbidden) {
             return Err(

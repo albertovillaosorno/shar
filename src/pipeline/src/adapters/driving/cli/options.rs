@@ -61,11 +61,6 @@ pub(super) struct ParsedArguments {
     pub(super) verbosity: ProgressVerbosity,
     /// Selected latest-run log, or `None` when logging is disabled.
     pub(super) log_file: Option<PathBuf>,
-    /// Whether `fbx-export` should emit the experimental unsupported
-    /// Blender helper.
-    pub(super) blender_helper: bool,
-    /// Whether `fbx-export` should emit the optional Maya import script.
-    pub(super) maya: bool,
     /// Whether `fbx-export` should embed compatibility texture payloads.
     pub(super) embed_textures: bool,
 }
@@ -76,8 +71,6 @@ impl Default for ParsedArguments {
             positionals: Vec::new(),
             verbosity: ProgressVerbosity::Detailed,
             log_file: Some(PathBuf::from(DEFAULT_LOG_FILE)),
-            blender_helper: false,
-            maya: false,
             embed_textures: false,
         }
     }
@@ -230,16 +223,6 @@ pub(super) fn parse_common_arguments(
                 &mut verbosity_selected,
                 ProgressVerbosity::Detailed,
             )?;
-            index = index.saturating_add(1);
-            continue;
-        }
-        if parse_options && argument == "--blender-helper" {
-            parsed.blender_helper = true;
-            index = index.saturating_add(1);
-            continue;
-        }
-        if parse_options && argument == "--maya" {
-            parsed.maya = true;
             index = index.saturating_add(1);
             continue;
         }

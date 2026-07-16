@@ -28,7 +28,7 @@
 // - Summary:
 //   - Common pipeline option parser regressions.
 // - Description:
-//   - Verifies progress, logging, helper, and positional contracts.
+//   - Verifies progress, logging, texture, and positional contracts.
 // - Usage:
 //   - Included by options.rs under cfg(test).
 // - Defaults:
@@ -70,8 +70,6 @@ mod cases {
                     ],
                     verbosity: ProgressVerbosity::Detailed,
                     log_file: Some(PathBuf::from(DEFAULT_LOG_FILE)),
-                    blender_helper: false,
-                    maya: false,
                     embed_textures: false,
                 },
             )
@@ -93,8 +91,6 @@ mod cases {
                     positionals: vec![String::from("game")],
                     verbosity: ProgressVerbosity::Minimal,
                     log_file: None,
-                    blender_helper: false,
-                    maya: false,
                     embed_textures: false,
                 },
             )
@@ -115,8 +111,6 @@ mod cases {
                     positionals: Vec::new(),
                     verbosity: ProgressVerbosity::Minimal,
                     log_file: Some(PathBuf::from("logs/custom/run.jsonl")),
-                    blender_helper: false,
-                    maya: false,
                     embed_textures: false,
                 },
             )
@@ -137,8 +131,6 @@ mod cases {
                     positionals: vec![String::from("--minimal")],
                     verbosity: ProgressVerbosity::Detailed,
                     log_file: Some(PathBuf::from(DEFAULT_LOG_FILE)),
-                    blender_helper: false,
-                    maya: false,
                     embed_textures: false,
                 },
             )
@@ -146,55 +138,17 @@ mod cases {
     }
 
     #[test]
-    fn blender_helper_is_explicit_and_preserves_positionals() {
-        assert_eq!(
-            parse_common_arguments(
-                &[
-                    String::from("--blender-helper"),
-                    String::from("index.jsonl"),
-                ],
-            ),
-            Ok(
-                ParsedArguments {
-                    positionals: vec![String::from("index.jsonl")],
-                    verbosity: ProgressVerbosity::Detailed,
-                    log_file: Some(PathBuf::from(DEFAULT_LOG_FILE)),
-                    blender_helper: true,
-                    maya: false,
-                    embed_textures: false,
-                },
-            )
-        );
-    }
-
-    #[test]
-    fn maya_is_explicit_and_preserves_positionals() {
-        assert_eq!(
-            parse_common_arguments(
-                &[
-                    String::from("--maya"),
-                    String::from("index.jsonl"),
-                ],
-            ),
-            Ok(
-                ParsedArguments {
-                    positionals: vec![String::from("index.jsonl")],
-                    verbosity: ProgressVerbosity::Detailed,
-                    log_file: Some(PathBuf::from(DEFAULT_LOG_FILE)),
-                    blender_helper: false,
-                    maya: true,
-                    embed_textures: false,
-                },
-            )
-        );
-    }
-
-    #[test]
-    fn unknown_option_is_rejected() {
-        assert_eq!(
-            parse_common_arguments(&[String::from("--silent")],),
-            Err(String::from("unknown option: --silent"))
-        );
+    fn unknown_and_retired_options_are_rejected() {
+        for option in [
+            "--silent",
+            "--blender-helper",
+            "--maya",
+        ] {
+            assert_eq!(
+                parse_common_arguments(&[option.to_owned()]),
+                Err(format!("unknown option: {option}"))
+            );
+        }
     }
 
     #[test]

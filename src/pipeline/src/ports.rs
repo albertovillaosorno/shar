@@ -51,13 +51,9 @@ use crate::domain::{
     PipelineReport, StageReport,
 };
 
-/// Optional artifacts requested for one phase-three FBX export.
+/// Optional storage policy requested for one phase-three FBX export.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct FbxExportOptions {
-    /// Emit the experimental unsupported Blender review helper.
-    pub blender_helper: bool,
-    /// Emit an optional script that imports the canonical FBX into Maya.
-    pub maya: bool,
     /// Embed PNG payloads for explicit legacy compatibility.
     pub embed_textures: bool,
 }
