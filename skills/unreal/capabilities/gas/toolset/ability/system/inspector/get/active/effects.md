@@ -47,41 +47,61 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to inspect gameplay effects currently active on a SHAR actor
+before duration, stacking, inhibition, or cleanup validation.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass a live Actor that owns an AbilitySystemComponent.
+- Resolve the actor from the current editor world rather than persisting its
+  path.
+- Treat an empty array as valid only after proving the component exists.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```python
+{
+  "actor": {
+    "refPath": (
+      "/Temp/Untitled_1.Untitled_1:PersistentLevel."
+      "AbilitySystemTestPawn_1"
+    )
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Three disposable AbilitySystemTestPawn actors returned `[]` for active effects.
+The same read on a plain Actor raised the explicit missing-component error.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The return value is an already parsed array, not JSON text.
+- A valid AbilitySystemComponent can legitimately return `[]`.
+- A plain Actor raises `does not have an AbilitySystemComponent`.
+- Spawnable actor object paths are temporary and change between sequences.
+- An empty result is a snapshot and does not prove that effects were never
+  applied.
+- Re-read after ability-system mutations or world evaluation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
