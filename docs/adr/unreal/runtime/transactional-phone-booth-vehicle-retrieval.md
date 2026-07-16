@@ -26,6 +26,17 @@ The subsystem builds an immutable projection from canonical catalog definitions,
 accepted ownership, campaign reach, completion overrides, vehicle health, active
 mission policy, currency, and the selected booth placement.
 
+The Common UI browser consumes that projection through C++ UMG viewmodels. It
+loads thumbnail and three-dimensional preview bundles through the Asset Manager
+and renders them in an isolated presentation scene with no gameplay, ownership,
+repair, or world authority. Rapid selection changes cancel the prior preview
+lease, and stale asset callbacks cannot replace the accepted selection.
+
+Browser selection hands the exact vehicle, booth, projection, mission, currency,
+and world revisions to the retrieval service. A visible or loaded preview never
+grants ownership, repairs damage, debits currency, spawns a gameplay vehicle, or
+claims that persistence completed.
+
 Selecting an eligible vehicle runs one transaction: validate eligibility,
 persist current owned-vehicle health, stage any required repair debit, load the
 selected primary-asset bundles, reserve a safe delivery transform, spawn or

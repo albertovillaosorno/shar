@@ -64,6 +64,7 @@ Dkd
 Dkf
 Dsg
 Dyna
+Despawning
 ENVMAP
 ETR
 EXPRESSIONOFFSETS
@@ -109,6 +110,7 @@ Losslesspackagewriter
 MATRIXLIST
 MATRIXPALETTE
 MCP
+MVVM
 MEMCARD
 MEMORYIMAGEINDEXLIST
 MEMORYIMAGEVERTEXDESCRIPTIONLIST
@@ -257,6 +259,7 @@ Thumbstick
 Trs
 UBT
 UMG
+UMVVM
 UPROPERTY
 USELIGHT
 UVLIST
@@ -270,6 +273,7 @@ VERTEXSHADER
 VINPUT
 VRS
 Vertexshader
+Viewmodel
 Vtx
 WALKERCAM
 WAVEFORMATEX
@@ -349,6 +353,8 @@ defchp
 deff
 defpap
 delenv
+despawn
+despawning
 democams
 dialogf
 dialogg
@@ -424,6 +430,8 @@ hudmap
 ihdr
 ingame
 ingamel
+interactable
+interactor
 jebano
 latam
 latentstyles
@@ -527,6 +535,7 @@ mvfmf
 mvfml
 mvtof
 mvtol
+mvvm
 mzero
 nanite
 nesttableprops
@@ -650,6 +659,7 @@ txe
 txtbible
 ubtplugin
 umg
+umvvm
 uplugin
 upr
 uproject
@@ -657,6 +667,8 @@ usc
 userprops
 uvs
 verts
+viewmodel
+viewmodels
 visibleend
 vsconfig
 wavs

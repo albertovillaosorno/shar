@@ -18,6 +18,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Mission, interaction, interior, and notoriety runtime](mission-interaction-and-notoriety-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Mission briefing, result, and replay UI runtime](mission-briefing-result-and-replay-ui-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Authored spatial placement and trigger runtime](authored-spatial-placement-and-trigger-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Mission world-entity and respawn runtime](mission-world-entity-and-respawn-runtime.md)

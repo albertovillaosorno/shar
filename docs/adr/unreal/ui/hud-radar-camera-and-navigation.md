@@ -24,9 +24,24 @@ platforms, and input adapters.
 
 Keyboard and mouse, gamepad, and Android touch controls map to the same semantic
 player actions. Android provides native touch interaction for every action
-needed
-to complete the game. A connected gamepad may replace touch presentation, but it
-does not select different gameplay behavior.
+needed to complete the game. A connected gamepad may replace touch presentation,
+but it does not select different gameplay behavior.
+
+`USharInGameUiSubsystem`, a `UGameInstanceSubsystem`, owns shared in-game screen
+routing, overlay definitions, pause policy, and fade, iris, or letterbox leases.
+`USharPlayerHudSubsystem`, a `ULocalPlayerSubsystem`, owns each local player's
+HUD projection, focus, input method, safe area, and split-screen presentation.
+
+C++ UMG viewmodels publish immutable mission, timer, race, vehicle, notoriety,
+currency, action, radar, and tutorial state through field notifications. Common
+UI widgets own layout, activation, focus, animation, styles, and semantic action
+presentation only. Gameplay services remain the authorities for every projected
+value and command result.
+
+HUD overlays and blocking transitions are registered data with stable
+identities, source revisions, accessibility profiles, retained asset leases,
+timeout, and cancellation behavior. A stale gameplay observation or animation
+callback cannot mutate the accepted HUD or complete a replacement transition.
 
 ## Consequences
 

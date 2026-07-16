@@ -35,6 +35,18 @@ and bind parameters. A mission does not own a hand-authored StateTree containing
 unique progression logic, and Blueprint cannot define completion, failure,
 recovery, reward, or save semantics.
 
+Mission briefing, loading, result, statistics, and replay screens consume
+immutable mission and progression projections. Failure categories and hint sets
+are typed catalog data, and hint selection is deterministic from mission,
+failure, attempt, and content revisions. User-interface animation or widget
+state cannot start, complete, fail, retry, abort, skip, or replay a mission.
+
+The base campaign skip policy becomes eligible after seven accepted failed
+attempts for a skippable mission, while terminal missions in the final campaign
+sequence remain non-skippable. Retry, abort, skip, and replay are explicit
+application transactions with idempotency, loading, rollback, progression, and
+save behavior; a screen never reloads a mission directly.
+
 Smart Objects represent reservable interaction anchors for gags, conversations,
 costume stations, interior portals, and other authored activities. Smart Object
 definitions expose slots, eligibility tags, and presentation data. The

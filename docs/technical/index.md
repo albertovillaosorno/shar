@@ -92,9 +92,13 @@ proprietary external formats.
 - [Unreal configuration and asset validation](unreal/config-and-asset-validation.md)
 - [Unreal gameplay content catalog](unreal/gameplay-content-catalog.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [In-game HUD, pause, and transition runtime](unreal/in-game-hud-pause-and-transition-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Legacy runtime identity normalization](unreal/legacy-runtime-identity-normalization.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Memory ownership, budget, and diagnostics runtime](unreal/memory-ownership-budget-and-diagnostics-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Mission briefing, result, and replay UI runtime](unreal/mission-briefing-result-and-replay-ui-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Mission definition, stage, and objective runtime](unreal/mission-definition-stage-and-objective-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -131,6 +135,8 @@ proprietary external formats.
 <!-- markdownlint-disable-next-line MD013 -->
 - [Progression, collectibles, cheats, and credits](unreal/progression-collectibles-and-cheats.md)
 - [Race route and opponent runtime](unreal/race-route-and-opponent-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Reward browser, preview, and purchase UI runtime](unreal/reward-browser-preview-and-purchase-ui-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Semantic input, device, and haptics runtime](unreal/semantic-input-device-and-haptics-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->

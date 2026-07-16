@@ -16,6 +16,12 @@
 - [Frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md)
 - [Frontend shell and menu runtime](frontend-shell-and-menu-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [In-game HUD, pause, and transition runtime](in-game-hud-pause-and-transition-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Mission briefing, result, and replay UI runtime](mission-briefing-result-and-replay-ui-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Reward browser, preview, and purchase UI runtime](reward-browser-preview-and-purchase-ui-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Semantic input, device, and haptics runtime](semantic-input-device-and-haptics-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md)

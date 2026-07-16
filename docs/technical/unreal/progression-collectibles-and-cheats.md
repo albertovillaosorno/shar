@@ -28,6 +28,10 @@
 - [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Mission briefing, result, and replay UI runtime](mission-briefing-result-and-replay-ui-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Reward browser, preview, and purchase UI runtime](reward-browser-preview-and-purchase-ui-runtime.md)
 
 ## Purpose
 

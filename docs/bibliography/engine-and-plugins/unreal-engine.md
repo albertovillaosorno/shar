@@ -11,9 +11,10 @@ examples, or documentation.
   association, installed Unreal Engine 5.8.0 promoted build changelist 55116800,
   release branch identity, current Epic EULA, its generative-AI input
   restriction, public source-access rules, Common UI input routing and action
-  data, managed subsystem lifetimes, Asset Manager primary-asset and bundle
-  boundaries, and Unreal Engine 5.8 Media Framework and Electra boundaries were
-  verified. Accepted regional agreement, bundled notices, decoder availability,
+  data, managed subsystem lifetimes, C++ UMG MVVM viewmodels and field
+  notifications, Asset Manager primary-asset and bundle boundaries, and Unreal
+  Engine 5.8 Media Framework and Electra boundaries were verified. Accepted
+  regional agreement, bundled notices, decoder availability,
   and external-service retention remain environment- or service-specific.
 - Counsel review: Not performed.
 - As-of date: 2026-07-15.
@@ -111,6 +112,10 @@ royalty or seat analysis.
 - Epic Games (2026) *Asset Management in Unreal Engine 5.8*. Available at:
   <!-- markdownlint-disable-next-line MD013 -->
   <https://dev.epicgames.com/documentation/en-us/unreal-engine/asset-management-in-unreal-engine>
+  (Accessed: 15 July 2026).
+- Epic Games (2026) *UMG Viewmodel for Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/umg-viewmodel-for-unreal-engine>
   (Accessed: 15 July 2026).
 - Epic Games (2026) *Media Framework Technical Reference for Unreal Engine 5.8*.
   Available at:
