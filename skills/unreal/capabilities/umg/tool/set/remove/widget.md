@@ -47,42 +47,70 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to remove one exact disposable or explicitly approved SHAR widget
+subtree after its descendants, bindings, variables, animations, and references
+have been inventoried.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Resolve the exact widget and descendants through `GetWidgets`.
+- Capture the parent, slot, sibling order, subtree, and any binding or variable
+  dependencies.
+- Confirm the subtree is disposable or has an approved reconstruction path.
+- Define the expected remaining depth-first widget order.
+- Compile after removal and decide separately whether to save.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "widgetBlueprint": {
+    "refPath": "/Game/SHAR_MCP_Validation/WBP_MCP_WidgetTree.WBP_MCP_WidgetTree"
+  },
+  "widget": {
+    "refPath": "/Game/SHAR_MCP_Validation/WBP_MCP_WidgetTree.WBP_MCP_WidgetTree:WidgetTree.RightColumn"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Before removal, `RightColumn` contained the moved `PrimaryAction` button.
+The call returned `true`. `GetWidgets` then returned only `RootCanvas` and
+`LeftColumn`, proving that the addressed panel and its child were removed as a
+subtree. Removing `RootCanvas` returned `true` and left an empty tree.
+`CompileWidgetBlueprint` returned `true` for both the populated moved tree and
+the final empty tree.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Removal deletes the addressed widget and all descendants.
+- The boolean result requires an independent `GetWidgets` absence and remaining-
+  order check.
+- Removing the root can leave a valid empty Widget Blueprint.
+- Bindings, graph references, animations, generated variables, and named-slot
+  relationships can outlive structural assumptions and need separate checks.
+- Removal changes the unsaved Widget Blueprint and requires separate compile and
+  save decisions.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

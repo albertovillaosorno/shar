@@ -48,42 +48,73 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to move one SHAR widget to a reviewed parent panel and sibling
+position while preserving the widget instance and subtree.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Resolve the exact widget and destination panel through `GetWidgets`.
+- Capture the source parent, slot, sibling order, and widget subtree.
+- Confirm the destination accepts the widget and will not create a hierarchy
+  cycle.
+- Choose the destination child index explicitly.
+- Define inverse movement or disposable subtree removal before mutation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "widgetBlueprint": {
+    "refPath": "/Game/SHAR_MCP_Validation/WBP_MCP_WidgetTree.WBP_MCP_WidgetTree"
+  },
+  "widget": {
+    "refPath": "/Game/SHAR_MCP_Validation/WBP_MCP_WidgetTree.WBP_MCP_WidgetTree:WidgetTree.PrimaryAction"
+  },
+  "newParent": {
+    "refPath": "/Game/SHAR_MCP_Validation/WBP_MCP_WidgetTree.WBP_MCP_WidgetTree:WidgetTree.RightColumn"
+  },
+  "childIndex": 0
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The call returned the same `PrimaryAction` widget reference with parent
+`RightColumn` and a new slot ending in `RightColumn.VerticalBoxSlot_0`.
+`GetWidgets` changed from `RootCanvas`, `LeftColumn`, `PrimaryAction`,
+`RightColumn` to `RootCanvas`, `LeftColumn`, `RightColumn`, `PrimaryAction`,
+proving the new depth-first hierarchy. Compilation returned `true`. Removing
+`RightColumn` then removed the moved button with its destination subtree.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Moving a widget replaces its panel slot; retain the returned slot reference.
+- Slot-specific layout properties may be lost or require translation when the
+  parent panel class changes.
+- The destination must be a compatible `PanelWidget` and must not be inside the
+  moved widget's subtree.
+- `childIndex: -1` appends; explicit indices define sibling order.
+- Movement changes the unsaved Widget Blueprint and requires separate compile
+  and save decisions.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

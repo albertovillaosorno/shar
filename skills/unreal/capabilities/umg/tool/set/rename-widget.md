@@ -47,42 +47,70 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to assign a reviewed semantic name to one SHAR widget while
+preserving its class, parent relationship, slot, and subtree.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Resolve the exact widget through `GetWidgets`.
+- Confirm the requested display name is unique in the widget tree.
+- Capture the current widget reference, parent, slot, and child relationships.
+- Retain the updated widget reference returned by the rename for all later
+  operations.
+- Define compile and structure checks after mutation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "widgetBlueprint": {
+    "refPath": "/Game/SHAR_MCP_Validation/WBP_MCP_WidgetTree.WBP_MCP_WidgetTree"
+  },
+  "widget": {
+    "refPath": "/Game/SHAR_MCP_Validation/WBP_MCP_WidgetTree.WBP_MCP_WidgetTree:WidgetTree.ActionButton"
+  },
+  "newDisplayName": "PrimaryAction"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The call returned updated widget info with name `PrimaryAction` and a new
+reference ending in `WidgetTree.PrimaryAction`. Its class remained
+`/Script/UMG.Button`, and its parent and slot still belonged to `LeftColumn`.
+`GetWidgets` no longer returned `ActionButton` and returned `PrimaryAction` in
+the same depth-first position. The renamed reference was then accepted by
+`MoveWidget`, and the resulting tree compiled successfully.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Renaming changes the widget object reference; stale pre-rename references
+  must not be reused.
+- The operation changes the internal widget name, not only a designer caption.
+- Bindings, graph references, animations, generated variables, and external
+  assumptions require independent verification.
+- Duplicate or invalid names can fail or be normalized by Unreal.
+- Rename changes the unsaved Widget Blueprint and requires separate compile and
+  save decisions.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

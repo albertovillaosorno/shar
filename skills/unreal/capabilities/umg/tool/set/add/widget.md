@@ -50,42 +50,74 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to add one exact SHAR widget class at a reviewed location in a
+Widget Blueprint tree for bounded HUD, menu, prompt, overlay, or debug UI work.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Supply an exact loaded Widget Blueprint reference.
+- Inspect the current tree with `GetWidgets` and resolve the intended parent.
+- Confirm the widget class is valid and the display name is unique.
+- Choose the child index explicitly when sibling order matters.
+- Define exact widget or subtree removal and compile verification before a
+  disposable mutation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "widgetBlueprint": {
+    "refPath": "/Game/SHAR_MCP_Validation/WBP_MCP_WidgetTree.WBP_MCP_WidgetTree"
+  },
+  "parentWidget": {
+    "refPath": "/Game/SHAR_MCP_Validation/WBP_MCP_WidgetTree.WBP_MCP_WidgetTree:WidgetTree.LeftColumn"
+  },
+  "widgetClass": {
+    "refPath": "/Script/UMG.Button"
+  },
+  "widgetDisplayName": "ActionButton",
+  "childIndex": 0
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The disposable tree began empty. Adding a `CanvasPanel` without a parent
+created the root. Two `VerticalBox` widgets added at indices `0` and `1` became
+root children. Adding the button at index `0` under `LeftColumn` returned its
+exact widget, parent, and `VerticalBoxSlot_0` references. `GetWidgets` then
+returned depth-first order `RootCanvas`, `LeftColumn`, `ActionButton`,
+`RightColumn`. Later removals restored an empty, compilable widget tree.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Omitting `parentWidget` creates the root only when the tree is empty.
+- The supplied parent must accept children; not every widget is a panel.
+- `childIndex: -1` appends, while explicit indices control panel order.
+- The returned slot type depends on the parent panel class.
+- Widget references are asset-internal identities and can change after rename or
+  replacement.
+- Addition changes the unsaved Widget Blueprint and requires separate compile
+  and save decisions.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
