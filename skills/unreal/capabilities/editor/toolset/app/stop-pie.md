@@ -48,42 +48,58 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to terminate the exact PIE or simulation session started by a
+bounded SHAR editor test before returning to asset, world, camera, or package
+operations.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The current operation must own the active test session; do not stop an
+  operator-started or unrelated session.
+- `IsPIERunning` must return `true` immediately before the call.
+- Preserve any runtime evidence required from the session before stopping it.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+After a verified simulation start, the call returned `returnValue: null`.
+A separate `IsPIERunning` call returned `false`. The same start-stop cycle was
+repeated successfully, and the final editor state was stopped.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The tool stops either standard PIE or Simulate-In-Editor; it is not limited
+  to the session mode used in the validated example.
+- Calling it without an active session is rejected with
+  `A play session is not currently running.`
+- Runtime-only state disappears with the session unless another operation has
+  explicitly persisted supported editor assets or configuration.
+- Verify the final state independently instead of treating `returnValue: null`
+  as sufficient evidence.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

@@ -52,42 +52,67 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to start one bounded SHAR simulation session before checking
+runtime initialization, autonomous world behavior, logs, or other PIE-only
+state, with `StopPIE` defined as mandatory cleanup.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project must have the intended current level loaded.
+- `IsPIERunning` must return `false` before the call.
+- Choose standard PIE or simulation deliberately and keep the play mode
+  in-process for deterministic MCP completion tracking.
+- Define the matching `StopPIE` call in a `finally` recovery path.
+- Choose `warmupSeconds` from the initialization evidence required by the task.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "options": {
+    "bSimulate": true,
+    "playMode": "PlayMode_Simulate",
+    "warmupSeconds": 0
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The call returned `returnValue: null`. A separate `IsPIERunning` call
+returned `true`, proving that the simulation session had started. `StopPIE`
+then returned `returnValue: null`, and a final independent state read returned
+`false`. A second reproduced cycle produced the same lifecycle results.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- `bSimulate: true` runs world ticking, AI, physics, and subsystems without
+  spawning or possessing a player pawn.
+- `warmupSeconds: 0` completes after native PIE startup but adds no
+  project-specific settling time.
+- A second start while PIE or simulation is active is rejected with
+  `A play session is already running.`
+- The session can change transient runtime state and logs; always stop the
+  session owned by the current operation before further editor mutations.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
