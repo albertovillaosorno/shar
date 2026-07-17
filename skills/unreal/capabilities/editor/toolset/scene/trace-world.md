@@ -47,42 +47,72 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to measure one bounded SHAR world-space line against current
+scene collision before spawn, camera, placement, ground-clearance, or
+line-of-sight decisions.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR editor world must be loaded and stable.
+- Derive start and end coordinates from current project evidence.
+- Confirm the segment length and direction are bounded for the requested check.
+- Treat the result as current world collision state; rerun after geometry,
+  streaming, collision, or world changes.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "start": {
+    "x": 0,
+    "y": 0,
+    "z": 100000
+  },
+  "end": {
+    "x": 0,
+    "y": 0,
+    "z": -100000
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two identical vertical traces returned `returnValue: 100000`, proving a
+stable first hit at world-space `z: 0` along the 200,000-unit segment. Two
+identical horizontal traces from `(0, 0, 100000)` to `(1000, 0, 100000)`
+returned `null`, reproducing the no-hit branch. No actor, component, asset, or
+editor state changed.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The tool returns only the distance from the start point, not the hit actor,
+  component, location, normal, material, or collision channel.
+- `null` is a successful no-hit result.
+- The trace schema exposes no collision-channel, ignore-list, shape, or complex-
+  collision selection.
+- A hit at distance zero can mean the start lies inside collision; choose start
+  points deliberately.
+- Results depend on current loaded and collision-enabled world state.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
