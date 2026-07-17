@@ -63,6 +63,13 @@ server, or recipient device can create a new copy even when only one complete
 usable instance exists at a time. First sale therefore does not by itself
 authorize uploading game-derived output or a protected payload.
 
+*Authors Guild v. Google, Inc.* distinguishes complete internal processing from
+a constrained public search output on its record. That distinction does not make
+a repository index automatically publishable. Search results, manifests,
+reports, and previews must omit reconstructable expression and must not provide
+a substitute for the original files. Complete local input remains outside public
+history unless separate distribution authority exists.
+
 *Metro-Goldwyn-Mayer Studios Inc. v. Grokster, Ltd.* requires review of the
 repository's public purpose evidence. Feature descriptions, examples, tutorials,
 demonstrations, support messages, and release wording must not promote
@@ -81,6 +88,7 @@ establish inducement.
 ## Related Authorities
 
 - [Interoperability and user responsibility][interoperability-boundary]
+- [Authors Guild v. Google, Inc](../cases/authors-guild-v-google.md)
 - [Capitol Records, LLC v. ReDigi Inc.](../cases/capitol-records-v-redigi.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Metro-Goldwyn-Mayer Studios Inc. v. Grokster, Ltd.](../cases/mgm-studios-v-grokster.md)
