@@ -47,42 +47,86 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to place one SHAR scene actor at an exact world transform for
+bounded import review, spawn-point correction, alignment, or deterministic
+scene assembly.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project must have the target level loaded.
+- Resolve the exact actor and capture its complete transform with
+  `get_actor_transform`.
+- Choose world or relative space explicitly and define restoration to the
+  captured transform before mutation.
+- Verify that no parent, construction script, simulation, or other editor
+  operation will overwrite the requested transform.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "actor": {
+    "refPath": "/Temp/Untitled_1.Untitled_1:PersistentLevel.PlayerStart_UAID_F02F74551BF5599B01_1153002503"
+  },
+  "xform": {
+    "location": {
+      "x": -190,
+      "y": 0,
+      "z": 92.0001
+    },
+    "rotation": {
+      "pitch": 0,
+      "yaw": 180,
+      "roll": 0
+    },
+    "scale": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    }
+  },
+  "worldspace": true
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The call returned `returnValue: true`. A separate
+`get_actor_transform` call showed the `PlayerStart` location changed from
+`x: -200` to `x: -190` while rotation, scale, `y`, and `z` remained unchanged.
+Reapplying the captured transform returned `true`, and an independent read
+matched every original numeric component exactly.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- `worldspace: true` interprets the supplied transform in world space; relative
+  behavior was not exercised.
+- The live schema permits omitted transform groups for existing actors, but the
+  validated example supplies the complete state for reviewability.
+- Transform changes affect loaded level state and can become persistent if the
+  level is saved.
+- A `true` result requires an independent transform read, especially when
+  construction logic or parent relationships may rewrite actor state.
+- Actor references from `/Temp` worlds are session-specific.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

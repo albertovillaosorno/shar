@@ -47,42 +47,73 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to rotate one SHAR scene actor so its forward direction aims at
+an exact world-space point before bounded camera, spawn, interaction, or visual
+alignment review.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project must have the target level loaded.
+- Resolve the actor and capture its complete transform with
+  `get_actor_transform`.
+- Obtain the target position from current scene evidence rather than guessing a
+  coordinate.
+- Define exact transform restoration through `set_actor_transform` before the
+  call.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "actor": {
+    "refPath": "/Temp/Untitled_1.Untitled_1:PersistentLevel.PlayerStart_UAID_F02F74551BF5599B01_1153002503"
+  },
+  "target": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The call returned `returnValue: null`. The target coordinate came from the
+current directional light actor. A separate transform read showed the
+`PlayerStart` rotation changed from pitch `0`, yaw `180`, roll `0` to
+approximately pitch `-24.702454`, yaw `0`, roll `0`. Location and scale were
+unchanged. Reapplying the captured transform restored every component exactly.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The response does not include the resulting rotation; verify with
+  `get_actor_transform`.
+- The operation changed rotation only in the verified case, but callers must
+  still compare the complete transform.
+- The target is a world-space position, not an actor reference; read another
+  actor's location first when actor-to-actor aiming is required.
+- Rotation changes affect loaded level state and can become persistent if the
+  level is saved.
+- Actor references from `/Temp` worlds are session-specific.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
