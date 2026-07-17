@@ -68,6 +68,8 @@ pub struct PrimitiveGroup {
     pub positions: Vec<[f32; 3]>,
     /// Optional per-vertex normals aligned with positions.
     pub normals: Vec<[f32; 3]>,
+    /// Optional normalized per-vertex colors in RGBA order.
+    pub colors: Vec<[f32; 4]>,
     /// Optional primary UV channel.
     pub uvs: Vec<[f32; 2]>,
     /// Triangle indices after deterministic triangulation.
@@ -197,6 +199,7 @@ impl PrimitiveGroup {
                 shader: shader_name,
                 positions,
                 normals: Vec::new(),
+                colors: Vec::new(),
                 uvs,
                 triangles,
             },
@@ -253,6 +256,51 @@ impl PrimitiveGroup {
         Ok(self)
     }
 
+    /// Attach normalized per-vertex colors validated against position count.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the color count differs from the position count or
+    /// one RGBA component is not finite.
+    pub fn with_colors(
+        mut self,
+        colors: Vec<[f32; 4]>,
+    ) -> Result<Self, MeshError> {
+        if colors.len()
+            != self
+                .positions
+                .len()
+        {
+            return Err(
+                MeshError::ColorCountMismatch {
+                    shader: self.shader,
+                    positions: self
+                        .positions
+                        .len(),
+                    colors: colors.len(),
+                },
+            );
+        }
+        for (vertex, color) in colors
+            .iter()
+            .enumerate()
+        {
+            if let Some(axis) = color
+                .iter()
+                .position(|component| !component.is_finite())
+            {
+                return Err(
+                    MeshError::NonFiniteColor {
+                        vertex,
+                        axis,
+                    },
+                );
+            }
+        }
+        self.colors = colors;
+        Ok(self)
+    }
+
     /// Returns true when the group has usable UVs.
     #[must_use]
     pub fn has_uvs(&self) -> bool {
@@ -266,6 +314,14 @@ impl PrimitiveGroup {
     pub fn has_normals(&self) -> bool {
         !self
             .normals
+            .is_empty()
+    }
+
+    /// Returns true when the group has usable normalized per-vertex colors.
+    #[must_use]
+    pub fn has_colors(&self) -> bool {
+        !self
+            .colors
             .is_empty()
     }
 }

@@ -136,6 +136,23 @@ fn synthetic_character() -> Result<CharacterAsset, String> {
             )
         },
     )
+    .and_then(
+        |group| {
+            group.with_colors(
+                vec![
+                    [
+                        1.0, 0.0, 0.0, 1.0,
+                    ],
+                    [
+                        0.0, 1.0, 0.0, 0.5,
+                    ],
+                    [
+                        0.0, 0.0, 1.0, 0.25,
+                    ],
+                ],
+            )
+        },
+    )
     .map_err(|error| format!("synthetic primitive group failed: {error:?}"))?;
     let mesh = MeshAsset::new(
         "body",
@@ -495,6 +512,18 @@ fn writes_deterministic_binary_fbx_7700_with_standard_footer() {
             .windows(b"root\0\x01Model".len())
             .any(|window| window == b"root\0\x01Model")
     );
+    for token in [
+        b"LayerElementColor".as_slice(),
+        b"ColorSet_1".as_slice(),
+        b"ColorIndex".as_slice(),
+    ] {
+        assert!(
+            first
+                .windows(token.len())
+                .any(|window| window == token),
+            "missing binary vertex-color token: {token:?}"
+        );
+    }
     assert!(
         first
             .windows(b"TransformAssociateModel".len())

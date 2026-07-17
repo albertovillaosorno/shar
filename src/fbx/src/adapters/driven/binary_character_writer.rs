@@ -1374,6 +1374,9 @@ fn geometry_node(
     if group.has_uvs() {
         children.push(uv_layer(group)?);
     }
+    if group.has_colors() {
+        children.push(color_layer(group)?);
+    }
     children.push(material_layer());
     children.push(layer_node(group));
     Ok(
@@ -1533,6 +1536,70 @@ fn uv_layer(
     )
 }
 
+/// Build one primary per-vertex color layer in normalized RGBA order.
+fn color_layer(
+    group: &PrimitiveGroup
+) -> Result<BinaryNode, CharacterBinaryFbxError> {
+    let colors = group
+        .colors
+        .iter()
+        .flat_map(
+            |color| {
+                color
+                    .iter()
+                    .copied()
+                    .map(f64::from)
+            },
+        )
+        .collect();
+    let indices = uv_indices(group)
+        .into_iter()
+        .map(
+            |value| {
+                i32::try_from(value).map_err(
+                    |_conversion_error| {
+                        CharacterBinaryFbxError::IndexExceedsI32 {
+                            context: "color index",
+                            value: i64::from(value),
+                        }
+                    },
+                )
+            },
+        )
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(
+        BinaryNode::new(
+            "LayerElementColor",
+            vec![BinaryProperty::I32(0)],
+            vec![
+                i32_node(
+                    "Version", 101,
+                ),
+                string_node(
+                    "Name",
+                    "ColorSet_1",
+                ),
+                string_node(
+                    "MappingInformationType",
+                    "ByPolygonVertex",
+                ),
+                string_node(
+                    "ReferenceInformationType",
+                    "IndexToDirect",
+                ),
+                BinaryNode::leaf(
+                    "Colors",
+                    vec![BinaryProperty::F64Array(colors)],
+                ),
+                BinaryNode::leaf(
+                    "ColorIndex",
+                    vec![BinaryProperty::I32Array(indices)],
+                ),
+            ],
+        ),
+    )
+}
+
 /// Build the all-same material layer.
 fn material_layer() -> BinaryNode {
     BinaryNode::new(
@@ -1573,6 +1640,9 @@ fn layer_node(group: &PrimitiveGroup) -> BinaryNode {
     }
     if group.has_uvs() {
         elements.push(layer_element("LayerElementUV"));
+    }
+    if group.has_colors() {
+        elements.push(layer_element("LayerElementColor"));
     }
     elements.push(layer_element("LayerElementMaterial"));
     BinaryNode::new(

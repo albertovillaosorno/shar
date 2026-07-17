@@ -850,7 +850,7 @@ fn vertex_weights(
 }
 
 /// Build one normalized full-weight influence for every rigid prop vertex.
-fn rigid_group_influences(
+pub(super) fn rigid_group_influences(
     mesh: &MeshAsset,
     bone_id: &str,
 ) -> Result<Vec<Vec<SkinInfluence>>, SkinSourceError> {
@@ -896,7 +896,7 @@ fn rigid_group_influences(
     reason = "Composite count, skeleton, skin, prop, and joint checks form \
               one atomic validation."
 )]
-fn composite_prop_bindings(
+pub(super) fn composite_prop_bindings(
     path: &Path,
     skeleton_name: &str,
     part_names: &[String],

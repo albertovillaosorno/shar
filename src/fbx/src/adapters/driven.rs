@@ -58,6 +58,9 @@ mod binary_identity;
 pub mod decoded_animation_source;
 /// Decoded component source adapter.
 pub mod decoded_component_source;
+/// Selected rigid-prop source adapter.
+pub mod decoded_rigid_prop_source;
+/// Decoded skeleton, skin, and composite source adapter.
 pub mod decoded_skin_source;
 /// Generated package-index reader adapter.
 pub mod generated_package_index;

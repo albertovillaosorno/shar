@@ -119,6 +119,22 @@ pub enum MeshError {
         /// Component axis inside the normal.
         axis: usize,
     },
+    /// Vertex-color count did not match the position count.
+    ColorCountMismatch {
+        /// Shader using the mismatched group.
+        shader: String,
+        /// Position count.
+        positions: usize,
+        /// Vertex-color count.
+        colors: usize,
+    },
+    /// One normalized vertex-color component was not finite.
+    NonFiniteColor {
+        /// Color containing the invalid component.
+        vertex: usize,
+        /// Component axis inside RGBA.
+        axis: usize,
+    },
     /// One index referenced a vertex outside the position array.
     IndexOutOfBounds {
         /// Invalid vertex index.

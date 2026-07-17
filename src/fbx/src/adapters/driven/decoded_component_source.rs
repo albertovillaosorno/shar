@@ -64,6 +64,9 @@ use crate::domain::scene::identity::is_portable_path_segment;
 use crate::domain::texture::{MaterialBinding, MaterialBindingError};
 use crate::ports::component_source::ComponentSource;
 
+/// Maximum integer value of one packed PDDI color channel.
+const MAX_COLOR_CHANNEL: f32 = 255.0;
+
 /// Decoded component source rooted at one normalized package directory.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct DecodedComponentSource {
@@ -171,6 +174,95 @@ fn component_path(
             .join(family)
             .join(format!("{member_id}.{extension}")),
     )
+}
+
+/// Resolve one shader JSON path, accepting deterministic fixed-width padding.
+fn shader_component_path(
+    package_root: &Path,
+    shader_name: &str,
+) -> Result<PathBuf, DecodedComponentError> {
+    let direct = component_path(
+        package_root,
+        "shader",
+        shader_name,
+        "json",
+    )?;
+    if direct.is_file() {
+        return Ok(direct);
+    }
+    let shader_dir = package_root
+        .join("components")
+        .join("shader");
+    let entries = fs::read_dir(&shader_dir).map_err(
+        |error| DecodedComponentError::Read {
+            path: shader_dir
+                .display()
+                .to_string(),
+            source: error.to_string(),
+        },
+    )?;
+    let mut candidates = entries
+        .map(
+            |entry| {
+                entry.map_err(
+                    |error| DecodedComponentError::Read {
+                        path: shader_dir
+                            .display()
+                            .to_string(),
+                        source: error.to_string(),
+                    },
+                )
+            },
+        )
+        .collect::<Result<Vec<_>, _>>()?
+        .into_iter()
+        .map(|entry| entry.path())
+        .filter(
+            |path| {
+                path.extension()
+                    .and_then(|value| value.to_str())
+                    .is_some_and(
+                        |extension| extension.eq_ignore_ascii_case("json"),
+                    )
+            },
+        )
+        .filter(
+            |path| {
+                path.file_stem()
+                    .and_then(|value| value.to_str())
+                    .and_then(|stem| stem.strip_prefix(shader_name))
+                    .is_some_and(
+                        |padding| {
+                            !padding.is_empty()
+                                && padding
+                                    .chars()
+                                    .all(|character| character == '_')
+                        },
+                    )
+            },
+        )
+        .collect::<Vec<_>>();
+    candidates.sort();
+    match candidates.as_slice() {
+        [candidate] => Ok(candidate.clone()),
+        [] => Ok(direct),
+        _ => Err(
+            DecodedComponentError::AmbiguousShaderMember {
+                shader: shader_name.to_owned(),
+                candidates: candidates
+                    .iter()
+                    .map(
+                        |path| {
+                            path.file_name()
+                                .and_then(|value| value.to_str())
+                                .unwrap_or_default()
+                                .to_owned()
+                        },
+                    )
+                    .collect(),
+            },
+        ),
+    }
 }
 
 /// Return whether a stable identity is exactly one normal path segment.
@@ -340,6 +432,11 @@ pub(super) fn read_mesh(
                     }
                 };
                 let normals = group.normals;
+                let colors = group
+                    .colours
+                    .into_iter()
+                    .map(decode_vertex_color)
+                    .collect::<Vec<_>>();
                 PrimitiveGroup::new(
                     index,
                     decoded_material_identity(&group.shader),
@@ -353,6 +450,15 @@ pub(super) fn read_mesh(
                             Ok(primitive_group)
                         } else {
                             primitive_group.with_normals(normals)
+                        }
+                    },
+                )
+                .and_then(
+                    |primitive_group| {
+                        if colors.is_empty() {
+                            Ok(primitive_group)
+                        } else {
+                            primitive_group.with_colors(colors)
                         }
                     },
                 )
@@ -388,11 +494,9 @@ fn resolve_material_from_source(
     shader_name: &str,
     external_texture_source: Option<&Path>,
 ) -> Result<MaterialBinding, DecodedComponentError> {
-    let shader_path = component_path(
+    let shader_path = shader_component_path(
         package_root,
-        "shader",
         shader_name,
-        "json",
     )?;
     let shader: DecodedShader = read_json(&shader_path)?;
     ensure_shader_evidence(
@@ -537,6 +641,7 @@ fn texture_stem(reference: &str) -> Result<&str, DecodedComponentError> {
             |(_, extension)| {
                 extension.eq_ignore_ascii_case("bmp")
                     || extension.eq_ignore_ascii_case("png")
+                    || extension.eq_ignore_ascii_case("tga")
             },
         )
         .map_or(
@@ -581,12 +686,30 @@ fn decoded_material_identity(value: &str) -> String {
         .to_owned()
 }
 
+/// Decode one PDDI `0xAARRGGBB` color into normalized FBX RGBA order.
+fn decode_vertex_color(value: u32) -> [f32; 4] {
+    let [
+        alpha,
+        red,
+        green,
+        blue,
+    ] = value.to_be_bytes();
+    [
+        f32::from(red) / MAX_COLOR_CHANNEL,
+        f32::from(green) / MAX_COLOR_CHANNEL,
+        f32::from(blue) / MAX_COLOR_CHANNEL,
+        f32::from(alpha) / MAX_COLOR_CHANNEL,
+    ]
+}
+
 /// Ensure one decoded shader carries internally consistent source evidence.
 fn ensure_shader_evidence(
     shader: &DecodedShader,
     shader_name: &str,
 ) -> Result<(), DecodedComponentError> {
-    if shader_member_identity(&shader.name) != shader_name {
+    let logical_identity = decoded_material_identity(&shader.name);
+    let member_identity = shader_member_identity(&shader.name);
+    if logical_identity != shader_name && member_identity != shader_name {
         return Err(
             DecodedComponentError::ShaderIdentityMismatch {
                 requested: shader_name.to_owned(),
@@ -777,6 +900,13 @@ pub enum DecodedComponentError {
         /// IO error text.
         source: String,
     },
+    /// More than one fixed-width shader member matched one logical identity.
+    AmbiguousShaderMember {
+        /// Logical shader identity requested by the caller.
+        shader: String,
+        /// Matching padded member file names.
+        candidates: Vec<String>,
+    },
     /// Decoded shader identity did not match the requested member identity.
     ShaderIdentityMismatch {
         /// Shader member identity requested by the caller.
@@ -952,6 +1082,9 @@ struct DecodedPrimitiveGroup {
     /// Optional per-vertex normals aligned with positions.
     #[serde(default)]
     normals: Vec<[f32; 3]>,
+    /// Optional packed vertex colors in PDDI `0xAARRGGBB` order.
+    #[serde(default)]
+    colours: Vec<u32>,
     /// Primitive index stream decoded for this group.
     indices: Vec<u32>,
     #[serde(default)]

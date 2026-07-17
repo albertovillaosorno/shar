@@ -73,6 +73,7 @@ fn primitive_group(index: usize) -> PrimitiveGroup {
             ],
         ],
         normals: Vec::new(),
+        colors: Vec::new(),
         uvs: Vec::new(),
         triangles: vec![
             [
