@@ -1,7 +1,7 @@
 # Native platform bootstrap and error-recovery runtime
 
 - Status: Active
-- Last reviewed: 2026-07-15
+- Last reviewed: 2026-07-17
 
 ## Governing decisions and specifications
 
@@ -14,6 +14,7 @@
 - [Device configuration and save-slot runtime](device-configuration-and-save-slot-runtime.md)
 - [Semantic input, device, and haptics runtime](semantic-input-device-and-haptics-runtime.md)
 - [Native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md)
+- [Unreal configuration and asset validation](config-and-asset-validation.md)
 <!-- markdownlint-enable MD013 -->
 
 ## Purpose
@@ -251,6 +252,43 @@ Presentation declares:
 Locale selection follows the ordinary localization service. Missing required
 text blocks the package or fails safely to an approved fallback language.
 Mojibake, invalid encoding, or array-offset language selection is forbidden.
+
+## Localized error evidence normalization
+
+Normalized language-specific text files are semantic import evidence only. They
+are converted into one localization source keyed by canonical error identity and
+message role. Intake records:
+
+- source culture and encoding;
+- canonical error identity;
+- title, body, action, accessibility, and optional legal text roles;
+- formatting placeholders and argument types;
+- platform applicability;
+- required and optional translation state;
+- prioritized culture fallback;
+- normalization and review result; and
+- generated localization target revision.
+
+Separate language files cannot define separate errors, actions, severity, retry,
+or recovery behavior. Those semantics remain in the platform error catalog.
+Source line order, heading text, platform-era abbreviations, punctuation, and
+physical-media terminology are evidence only.
+
+Import rejects:
+
+- malformed or ambiguous encoding;
+- missing canonical error identity;
+- duplicate culture and message-role mappings;
+- placeholder disagreement across cultures;
+- translated text that introduces an unsupported action;
+- missing required shipping cultures without an approved fallback;
+- raw translated strings embedded in code or native headers; and
+- any row that cannot reach a closed recovery result.
+
+Generated localization is validated through
+[Unreal configuration and asset validation](config-and-asset-validation.md).
+Runtime selects the active culture through Unreal internationalization and uses
+its prioritized fallback chain; it never indexes a language array manually.
 
 ## Recovery transaction
 

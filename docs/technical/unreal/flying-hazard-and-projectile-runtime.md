@@ -1,7 +1,7 @@
 # Flying-hazard and projectile runtime
 
 - Status: Active
-- Last reviewed: 2026-07-15
+- Last reviewed: 2026-07-17
 
 ## Governing decisions
 
@@ -13,6 +13,8 @@
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Mission world-entity and respawn runtime](mission-world-entity-and-respawn-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Progression, collectibles, cheats, and credits](progression-collectibles-and-cheats.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 
 ## Purpose
@@ -121,6 +123,20 @@ Every `USharHazardSpawnDefinition` contains:
 A counted wasp-camera placement uses permanent level persistence and `never`
 respawn after its destruction transaction commits. Streaming out an intact wasp
 does not count as destruction and does not alter progress.
+
+A spawn profile also declares its active-instance budget and optional
+level-hazard reward-reserve identity. The base wasp profile permits at most one
+active wasp in the owning world scope. Mods or later content may declare another
+bounded value, but admission remains deterministic and cannot exceed the
+profile.
+
+A reserve-backed spawn atomically acquires one reward reservation before
+construction. Insufficient reserve, an occupied active budget, stale world or
+level revisions, proximity cooldown, or an ineligible trigger rejects the spawn
+without creating a Pawn. Despawn before destruction releases the reservation;
+destruction converts it to the declared coin batch under
+<!-- markdownlint-disable-next-line MD013 -->
+[Progression, collectibles, cheats, and credits](progression-collectibles-and-cheats.md).
 
 ## Loaded-instance registry
 
@@ -441,7 +457,8 @@ is:
 1. commit damage and terminal state;
 1. record persistent destruction when required;
 1. record counted progression when required;
-1. grant the declared reward once;
+1. convert the accepted hazard-reward reservation into one declared coin batch,
+   or grant another registered reward exactly once;
 1. publish mission and presentation observations; and
 1. permit pooling or unloading.
 
@@ -495,6 +512,8 @@ rewards, persistence, or mission observations.
 - Every loaded hazard resolves to one definition and, when persistent, one spawn
   identity.
 - A persistent spawn identity has at most one live Pawn.
+- The base wasp profile has at most one active wasp in its owning world scope.
+- A reserve-backed live wasp owns exactly one accepted reward reservation.
 - A pooled object has no previous owner, target, reward, collision, or task
   state.
 - Every movement step is swept and bounded.
@@ -531,6 +550,8 @@ Asset validation rejects:
 - impossible altitude or clearance ranges;
 - attack policies without a compatible projectile or beam;
 - rewards without idempotency identity;
+- non-positive active-hazard budgets;
+- reserve-backed spawns without a valid reserve identity and reward amount;
 - permanent counted placements with a respawn policy other than explicit reset;
 - StateTree tasks that claim undeclared resources; and
 - references outside canonical package identities.
@@ -545,6 +566,10 @@ Automated tests must prove:
 - shield absorption, break, overflow, reset, and pooling behavior;
 - one projectile impact and one penalty from overlapping collision callbacks;
 - one wasp progression and reward commit under repeated destruction requests;
+- active-budget rejection when the base world already has one accepted wasp;
+- reserve acquisition, emitted batch, collected-unit removal, expired-unit
+  return,
+  cancellation release, and duplicate-callback rejection;
 - persistent destruction across stream unload and reload;
 - no reward from unload, pool return, or rejected spawn;
 - beam reservation, pull, capture, invalidation, and cancellation cleanup;

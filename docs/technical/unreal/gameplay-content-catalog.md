@@ -1,7 +1,7 @@
 # Unreal gameplay content catalog
 
 - Status: Active
-- Last reviewed: 2026-07-15
+- Last reviewed: 2026-07-17
 
 ## Governing decisions
 
@@ -32,13 +32,21 @@
 - [Unified open world and chapter projection](../../adr/pipeline/unreal/unified-open-world-and-chapter-projection.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native world partition and data layers](../../adr/pipeline/unreal/world-partition-and-data-layer-import.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Native art authoring, style, and asset validation contract](native-art-authoring-style-and-asset-validation-contract.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Progression, collectibles, cheats, and credits](progression-collectibles-and-cheats.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Flying hazard and projectile runtime](flying-hazard-and-projectile-runtime.md)
 
 ## Purpose
 
 This specification defines the canonical Unreal representation for gameplay
 content. It fixes identity, asset placement, schemas, loading, progression,
 validation, and verification for characters, vehicles, missions, locations,
-rewards, costumes, dialogue events, races, and bonus modes.
+rewards, costumes, dialogue events, races, bonus modes, billboards, collector
+cards, ambient and interactive gags, interiors, pedestrians, and presentation
+catalogs.
 
 The catalog is the runtime-facing composition layer above deterministic package
 plans. It does not decode source formats, rediscover package membership, or let
@@ -88,6 +96,11 @@ scan another root or infer ownership from an arbitrary folder.
 │   ├── Music
 │   ├── Rewards
 │   ├── Costumes
+│   ├── Billboards
+│   ├── CollectorCards
+│   ├── Gags
+│   ├── Interiors
+│   ├── PresentationCatalogs
 │   ├── BonusModes
 │   └── Tables
 │       ├── Aliases
@@ -95,6 +108,10 @@ scan another root or infer ownership from an arbitrary folder.
 │       ├── MissionSteps
 │       ├── RaceCheckpoints
 │       ├── VehicleTuning
+│       ├── BillboardPlacements
+│       ├── CollectorCardPlacements
+│       ├── GagBindings
+│       ├── InteriorPresentations
 │       └── CostumeOffers
 ├── Art
 │   ├── Characters
@@ -126,6 +143,8 @@ stable after publication. Primary asset names use those identifiers and never
 include display punctuation, localization, level placement, source filenames,
 or local routes.
 
+<!-- markdownlint-disable MD013 -->
+
 | Asset family | Primary asset type | Object name |
 | :--- | :--- | :--- |
 | Root catalog | `SharCatalog` | `DA_SHAR_GameplayCatalog` |
@@ -140,7 +159,14 @@ or local routes.
 | Music composition | `SharMusicComposition` | `DA_Music_<canonical_id>` |
 | Reward | `SharReward` | `DA_Reward_<canonical_id>` |
 | Costume set | `SharCostumeSet` | `DA_CostumeSet_<canonical_id>` |
+| Billboard | `SharBillboard` | `DA_Billboard_<canonical_id>` |
+| Collector card | `SharCollectorCard` | `DA_CollectorCard_<canonical_id>` |
+| Gag | `SharGag` | `DA_Gag_<canonical_id>` |
+| Interior presentation | `SharInteriorPresentation` | `DA_InteriorPresentation_<canonical_id>` |
+| Presentation catalog | `SharPresentationCatalog` | `DA_PresentationCatalog_<canonical_id>` |
 | Bonus mode | `SharBonusMode` | `DA_BonusMode_<canonical_id>` |
+
+<!-- markdownlint-enable MD013 -->
 
 Secondary asset prefixes are fixed:
 
@@ -533,6 +559,263 @@ undeclared gameplay tags.
 The catalog rejects a costume that requires returning to a shop after ownership,
 loses ownership at a chapter transition, or grants undeclared gameplay behavior.
 
+## Billboard definition
+
+`USharBillboardDefinition` contains:
+
+<!-- markdownlint-disable MD013 -->
+
+| Field | Contract |
+| :--- | :--- |
+| `BillboardId` | Canonical sign or environmental-graphic identity. |
+| `PresentationAssetId` | Approved mesh, material, texture, decal, or animated presentation identity. |
+| `LocalizationPolicyId` | Fixed graphic, localized material, text overlay, or another declared policy. |
+| `PlacementPolicyId` | Allowed location, zone, structure, route, surface, and orientation rules. |
+| `VariantIds` | Approved visual, chapter, damage, daypart, or rotating variants. |
+| `InteractionPolicyId` | None, mission target, breakable, collectible-adjacent, camera target, or another registered policy. |
+| `StreamingProfileId` | Bundle, Data Layer, HLOD, instancing, and residency policy. |
+| `RightsAndApprovalState` | Import-review state that must be accepted before publication. |
+
+<!-- markdownlint-enable MD013 -->
+
+`FSharBillboardPlacementRow` identifies billboard, world, location, zone, stable
+placement, transform, surface or structure owner, chapter availability, variant,
+Data Layer, and expected revisions.
+
+Production columns such as approved, completed, placed, assigned, date, or
+review
+comment are not runtime booleans. They are consumed by the private import review
+and only accepted semantic definitions and placements reach this catalog.
+
+A billboard identity is independent of the number of placements. Rotating or
+animated presentation uses an explicit material, state-prop, or presentation
+profile; it is not inferred from a spreadsheet column or texture filename.
+
+## Collector-card definition
+
+`USharCollectorCardDefinition` contains:
+
+<!-- markdownlint-disable MD013 -->
+
+| Field | Contract |
+| :--- | :--- |
+| `CollectorCardId` | Canonical card identity. |
+| `SetId` | Owning chapter or registered card-set identity. |
+| `Ordinal` | Dense stable ordinal within the set. |
+| `TitleTextKey` | Localized title key. |
+| `DescriptionTextKey` | Localized description or trivia key. |
+| `FrontPresentationId` | Card-front material, texture, mesh, or widget presentation. |
+| `DetailPresentationId` | Full-detail gallery presentation. |
+| `AudioProfileId` | Optional collection and gallery audio. |
+| `UnlockPolicyId` | Collection and persistence rule. |
+| `ProgressionContributionId` | Chapter and game-completion contribution. |
+| `ReplacementPolicyId` | Overlay and supersession behavior. |
+
+<!-- markdownlint-enable MD013 -->
+
+`FSharCollectorCardPlacementRow` contains card, world, chapter, location,
+placement, transform, visibility, accessibility, collision, pickup, radar,
+streaming, and save revisions.
+
+Cards are not identified by display title, source row order, chapter text, or a
+historical numeric code. Alternate titles and punctuation normalize to aliases.
+One card has one durable collection key even when several descriptions or review
+rows refer to it.
+
+Placement validation requires:
+
+- the card belongs to the declared set and chapter;
+- its ordinal is unique and dense where the set requires it;
+- the location and placement exist;
+- the pickup is reachable through accepted gameplay;
+- radar and presentation references resolve;
+- collection state persists exactly once;
+- gallery detail and localized text exist; and
+- the card contributes to completion through one declared rule.
+
+Card runtime, collection, save state, reward contribution, and gallery
+projection
+follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Progression, collectibles, cheats, and credits](progression-collectibles-and-cheats.md).
+
+## Gag definition
+
+`USharGagDefinition` contains:
+
+- canonical gag identity;
+- ambient, interactive, mission, cinematic, or another registered gag class;
+- eligible chapters, levels, locations, interiors, zones, and placements;
+- participant character and prop roles;
+- animation catalog and choreography references;
+- dialogue, audio, VFX, camera, and subtitle bindings;
+- trigger, interaction, repeatability, cooldown, and completion policy;
+- collision and inaccessible-presentation rules;
+- progression, reward, persistence, and save behavior;
+- required asset bundles;
+- quality and platform policy; and
+- replacement and teardown behavior.
+
+Gags use stable semantic identities. A scene filename, animation filename,
+source
+line color, prose description, or historical interior table position cannot
+become runtime identity.
+
+### Ambient-gag binding
+
+`FSharAmbientGagBindingRow` contains gag, interior or world presentation zone,
+chapter, participant set, optional prop set, load bundle, playback policy, delay
+or cooldown policy, weight, exclusion group, camera-visibility rule, and
+expected
+revisions.
+
+An ambient gag may be looping or one-shot. Timing is expressed through typed
+animation and scheduling policy rather than inserted empty source frames.
+Temporary chairs, handheld props, or other set dressing are explicitly owned by
+the gag presentation lease and cannot duplicate authoritative interior geometry.
+
+Ambient presentation may occur outside player-reachable space, but it still
+requires valid bounds, collision separation, streaming, audio, animation, and
+teardown.
+
+### Interactive-gag binding
+
+`FSharInteractiveGagBindingRow` contains gag, interaction definition, world or
+interior placement, activation requirements, camera and input policy, animation,
+audio, VFX, participant roles, repeatability, cooldown, completion, progression,
+reward, persistence, and cancellation behavior.
+
+An interactive gag commits completion only through the progression transaction.
+Animation, dialogue, VFX, or a source completion column cannot grant completion.
+
+Gag completion and persistence follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Progression, collectibles, cheats, and credits](progression-collectibles-and-cheats.md).
+Character animation follows
+<!-- markdownlint-disable-next-line MD013 -->
+[Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md).
+
+## Interior-presentation definition
+
+`USharInteriorPresentationDefinition` contains:
+
+- canonical interior and owning structure identities;
+- portal, door, transition, entry, exit, and safe-spawn identities;
+- chapter and progression availability;
+- world, Level Instance, Data Layer, streaming, and bundle policy;
+- ambient and interactive character placements;
+- ambient and interactive gag bindings;
+- temporary presentation props;
+- camera-cut, loading, audio, reverb, lighting, and material profiles;
+- player-reachable and presentation-only zones;
+- collision and navigation policy;
+- mission and collectible references; and
+- teardown and failure behavior.
+
+`FSharInteriorCharacterPlacementRow` identifies interior, stable placement,
+character definition, role, ambient animation or behavior, dialogue profile,
+chapter availability, mission exclusions, interaction policy, and expected
+revisions.
+
+A character model, gag, dialogue line, or prop may appear in several interiors
+through separate placement rows without creating duplicate character or asset
+identities.
+
+Interior transitions and interaction authority follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Mission, interaction, interior, and notoriety runtime](mission-interaction-and-notoriety-runtime.md).
+
+## Presentation-catalog definition
+
+`USharPresentationCatalogDefinition` groups content for one bounded user-facing
+surface such as a chapter scrapbook, reward gallery, card browser, vehicle
+preview, costume browser, or completion summary.
+
+It declares:
+
+- catalog and surface identities;
+- ordered registered content families;
+- chapter and progression scope;
+- visible locked, unlocked, purchased, collected, and completed states;
+- preview and detail presentation references;
+- localized title and description keys;
+- sorting and grouping policy;
+- completion-weight policy;
+- input, camera, audio, and accessibility profiles;
+- platform and local-player scope; and
+- replacement and teardown behavior.
+
+Presentation catalogs are projections of authoritative progression. Selecting,
+previewing, rotating, animating, damaging, opening, or playing an item cannot
+change ownership or completion.
+
+Scrapbook, card-gallery, reward-browser, costume, vehicle, media, and statistics
+surfaces consume these definitions through their dedicated UI runtimes.
+
+## Semantic content-source normalization
+
+Normalized Markdown, CSV, text, and JSON design evidence may establish content
+facts after review. Intake follows one deterministic transaction:
+
+1. classify the source as semantic design evidence rather than raw art or
+   production administration;
+1. identify the intended content family and schema;
+1. normalize encoding, line endings, headings, columns, and empty cells;
+1. separate product semantics from production approval, completion, assignment,
+   date, and review metadata;
+1. normalize canonical identities and aliases;
+1. resolve chapters, levels, locations, interiors, participants, assets,
+   rewards,
+   placements, dialogue, animation, and progression references;
+1. reject ambiguous, duplicate, contradictory, or incomplete rows;
+1. generate typed definitions and rows in deterministic order;
+1. validate the complete reference graph and required native asset bundles;
+1. compare counts and identities with accepted normalized manifests; and
+1. publish one catalog revision atomically.
+
+The runtime never opens historical CSV, Markdown, text, or office documents.
+Generated Data Assets and Data Tables are the only catalog inputs.
+
+## Content-family reconciliation
+
+A broad content list and a family-specific table may refer to the same entity.
+Reconciliation uses stable semantic identity and records:
+
+- source fact identities;
+- canonical definition identity;
+- accepted aliases;
+- family and role;
+- chapter and location scope;
+- expected native assets;
+- placement and progression references;
+- conflicts and resolution;
+- accepted omissions; and
+- terminal result.
+
+One source row does not automatically create one runtime object. Repeated rows,
+review variants, chapter placements, and completion-tracking copies may collapse
+into one definition plus several typed placement or availability rows.
+
+## Production metadata boundary
+
+The following fields remain import-review metadata unless a separate public
+product contract explicitly owns a safe semantic subset:
+
+- approval state;
+- completion state;
+- assignment or owner;
+- milestone;
+- date;
+- review comment;
+- source-workstation or source-folder state;
+- source episode or reference-review state;
+- art-production status;
+- placement-complete status; and
+- free-form production notes.
+
+They do not become runtime progression, visibility, ownership, unlock, purchase,
+collection, interaction, or placement state.
+
 ## Bonus-mode definition
 
 `USharBonusModeDefinition` contains mode rules, eligible characters, eligible
@@ -787,6 +1070,17 @@ streaming source or the step fails before activation.
   would not unlock it.
 - Every reward grants an existing definition.
 - Every costume belongs to one character and one purchase rule.
+- Every billboard placement resolves one accepted billboard, location, world,
+  transform, presentation, and streaming profile.
+- Every collector card belongs to one set, has one durable collection key, and
+  resolves one reachable placement and gallery presentation.
+- Every gag has one typed class, participant and prop roles, trigger or
+  scheduling
+  policy, presentation bindings, and completion authority.
+- Every interior presentation resolves portals, safe placements, streaming,
+  characters, gags, collision, and teardown.
+- Production approval, completion, assignment, milestone, and review metadata
+  never become runtime state.
 - Every quote row has a unique character, event, and variant key.
 - Every race has a dense checkpoint order and explicit direction.
 - Gameplay tags classify content but never determine identity.
@@ -811,6 +1105,12 @@ Catalog generation fails closed on:
 - negative counts or non-positive configured timers;
 - forced vehicles without required gameplay assets;
 - rewards that reference inaccessible or missing definitions;
+- billboard, card, gag, interior, or presentation-catalog rows with unresolved
+  semantic identities, placements, assets, progression, or teardown;
+- card-set ordinal gaps, duplicate durable collection keys, or unreachable card
+  placements;
+- production approval, completion, assignment, milestone, or review metadata
+  entering runtime definitions;
 - a level placement without a valid geographic-world, coordinate, placement,
   and data-layer composition;
 - platform or preset cooking that removes, duplicates, or rekeys a required
@@ -832,6 +1132,12 @@ Engine-independent tests verify:
 - schema validation;
 - mission-stage and race-checkpoint topology;
 - progression predicates;
+- billboard, collector-card, gag, interior-presentation, and
+  presentation-catalog
+  schema normalization;
+- card-set ordinals, durable keys, placement reachability, and gallery
+  references;
+- production-metadata exclusion and family reconciliation;
 - save migration; and
 - package-to-definition membership.
 
@@ -849,6 +1155,9 @@ Editor integration tests verify:
   Android Low preserves the same definitions through its mobile presentation
   implementations;
 - World Partition and data-layer activation produces the expected placements;
+- billboard, card, gag, and interior bundles load only their declared native
+  presentation dependencies;
+- production-only columns are absent from generated Data Assets and Data Tables;
 - read-back state matches the approved native asset plan; and
 - a second generation produces no semantic diff.
 

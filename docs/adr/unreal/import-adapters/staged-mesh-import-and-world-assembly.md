@@ -18,6 +18,14 @@ Native Unreal import still needs a transaction that validates evidence, creates
 destination assets, applies engine-specific material and streaming policy, and
 reads the result back without letting mutable editor state become authority.
 
+The public authoring contract, rather than a historical workstation layout or
+source filename convention, owns semantic asset identity, geometry and topology,
+scale, pivots, hierarchy, rig, animation, material and texture families,
+collision, LOD, world-kit, vehicle, platform, quality, and validation policy.
+Normalized manifests own asset and animation counts; raw DCC, image, model,
+package, audio, video, Office, and cache files do not receive individual runtime
+or semantic-coverage authority.
+
 ## Decision
 
 Phase 6 uses a staged native-import transaction. The importer first validates
@@ -50,9 +58,17 @@ class. Actor and component composition is data-driven and validated.
 
 The importer publishes immutable construction definitions, primary-asset and
 bundle metadata, class-restricted soft references, dependency digests, target
-variants, fallback policy, and complete rollback evidence. Shipping runtime uses
-Asset Manager and retained streamable handles to load those native assets and a
-closed constructor registry to prepare them.
+variants, fallback policy, Data Validation state, and complete rollback
+evidence.
+Shipping runtime uses Asset Manager and retained streamable handles to load
+those
+native assets and a closed constructor registry to prepare them.
+
+Project validators inspect naming, semantic identity, geometry, transforms,
+materials, textures, rig and animation compatibility, collision, LOD and HLOD,
+world ownership, dependencies, platform profiles, catalog references, private
+metadata, and native read-back. Import success alone is transport evidence and
+cannot publish an asset that fails the accepted authoring definition.
 
 Niagara import publishes cooked Systems, Emitters, Effect Types, typed parameter
 schemas, lifetime, pooling, scalability, vehicle bindings, and breakable

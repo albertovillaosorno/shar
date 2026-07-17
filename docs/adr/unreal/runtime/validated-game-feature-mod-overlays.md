@@ -50,8 +50,10 @@ state-prop definitions, states, transitions and markers, character definitions,
 movement profiles, input contexts, material variants, attached props, footprint
 definitions, character animation catalogs, clips, poses, track profiles,
 Montages, Slots, Sections, sync groups, marker and curve schemas, dialogue
-gestures, vehicle-handoff choreographies, supersprint tracks, routes, grids,
-rulesets, artificial-intelligence policies, vehicle definitions and variants,
+gestures, vehicle-handoff choreographies, billboards and placements, collector
+cards and placements, ambient and interactive gags, interior presentations,
+presentation catalogs, supersprint tracks, routes, grids, rulesets,
+artificial-intelligence policies, vehicle definitions and variants,
 movement and wheel profiles,
 powertrain, steering, brake, suspension, tire, damage, reset, parked, pursuit,
 husk, input, haptics, material, light, audio, VFX, camera and HUD definitions,
@@ -76,7 +78,8 @@ animation catalog, clip, pose, montage, marker, curve, playback, choreography,
 vehicle handoff, vehicle construction, control, artificial-intelligence,
 physics,
 route, parking, pursuit, husk, damage, reset, input, haptics, camera, prop,
-interaction, footprint, supersprint, checkpoint, result, coin-presentation, and
+interaction, footprint, billboard, collector-card, gag, interior-presentation,
+presentation-catalog, supersprint, checkpoint, result, coin-presentation, and
 sparkle requests; tears down owned runtime objects, effects, Audio Components,
 playback, subtitles, mouth, ducking, Actor, component, controller, vehicle,
 native-physics, camera, HUD, route, and presentation leases; clears submix, bus,

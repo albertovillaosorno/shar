@@ -1,7 +1,7 @@
 # Road-network geometry and traffic runtime
 
 - Status: Active
-- Last reviewed: 2026-07-16
+- Last reviewed: 2026-07-17
 
 ## Governing decisions and specifications
 
@@ -423,6 +423,37 @@ Search bounds and cancellation are explicit. An incomplete path never
 masquerades
 as success.
 
+## Intersection route-guidance projection
+
+Mission route guidance projects one accepted road path into typed intersection
+cues. The request declares:
+
+- source and destination world positions;
+- nearest eligible source and destination road projections;
+- graph, mission, objective, local-player, and settings revisions;
+- shortcut eligibility;
+- guidance-eligible intersection identities;
+- cue look-ahead and wrong-way confirmation policy;
+- presentation profile; and
+- cancellation and fallback.
+
+The base guidance profile selects a deterministic shortest eligible route while
+excluding undiscovered or disallowed shortcuts. Each selected intersection may
+publish one directional cue toward the next accepted path element. At least one
+subsequent eligible intersection outside the selected branch may publish a typed
+wrong-way cue when the player deviates far enough for that feedback to be
+useful.
+
+Cues are registered world presentation definitions, not geometry edits or route
+authority. They may use animated arrows, decals, materials, Niagara, or another
+validated presentation profile. They cannot steer a vehicle, block a road,
+complete an objective, or change the accepted route.
+
+The player may disable intersection guidance independently of radar. Disabling
+presentation does not stop path queries required by mission or artificial-
+intelligence systems. Streaming, graph revision, route replacement, objective
+change, pause, cancellation, and world teardown remove stale cues atomically.
+
 ## Closest-road and closest-path queries
 
 A closest-road request declares:
@@ -754,6 +785,8 @@ Cook and definition validation prove:
 - signal phases, transitions, timings, and movement groups are valid;
 - required route pairs remain reachable;
 - deterministic path and closest-road tie-breaks are stable;
+- intersection guidance resolves only accepted route elements, has deterministic
+  wrong-way cues, and removes stale presentation on revision change;
 - speed, density, shortcut, and difficulty units are valid;
 - traffic-control conflict groups are consistent;
 - spatial-index output matches canonical geometry;
@@ -785,6 +818,8 @@ Required automated and visual tests include:
 - speed-unit conversion and overlay behavior;
 - density policy without fixed allocation assumptions;
 - shortcut eligibility and mission closure overlays;
+- intersection arrow ordering, wrong-way cue selection, independent setting
+  disablement, and stale-cue teardown;
 - graph revision change and vehicle replanning;
 - cross-region path readiness and unload;
 - feature overlay activation and complete removal;

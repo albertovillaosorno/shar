@@ -31,17 +31,19 @@ examples, or documentation.
   `UChaosWheeledVehicleMovementComponent`, native wheel, suspension, engine,
   transmission, differential, asynchronous physics, vehicle animation, and
   vehicle setup boundaries, the experimental Chaos Modular Vehicles distinction,
-  FBX animation import, Animation Sequence frame-range and Skeleton binding,
-  Animation Blueprints, Animation Montage sections and slots, Sync Groups and
-  Sync Markers, root motion, Motion Warping, native physics components, ISM and
-  HISM behavior, Chaos Visual Debugger, and Unreal Engine 5.8 Media Framework
-  and
-  Electra boundaries were verified.
+  FBX static-mesh, skeletal-mesh, animation, material, and LOD import, import
+  options, Animation Sequence frame-range and Skeleton binding, Animation
+  Blueprints, Animation Montage sections and slots, Sync Groups and Sync
+  Markers,
+  root motion, Motion Warping, native Data Validation, native physics
+  components,
+  ISM and HISM behavior, Chaos Visual Debugger, and Unreal Engine 5.8 Media
+  Framework and Electra boundaries were verified.
   Accepted regional agreement, bundled
   notices, decoder availability, and external-service retention remain
   environment- or service-specific.
 - Counsel review: Not performed.
-- As-of date: 2026-07-16.
+- As-of date: 2026-07-17.
 - Subject class: Proprietary real-time engine, editor, toolchain, and SDK.
 
 ## Covered Material
@@ -137,6 +139,10 @@ royalty or seat analysis.
   <!-- markdownlint-disable-next-line MD013 -->
   <https://dev.epicgames.com/documentation/en-us/unreal-engine/asset-management-in-unreal-engine>
   (Accessed: 15 July 2026).
+- Epic Games (2026) *Data Validation in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/unreal-engine/data-validation-in-unreal-engine?lang=en-US>
+  (Accessed: 17 July 2026).
 - Epic Games (2026) *Asynchronous Asset Loading in Unreal Engine 5.8*.
   Available at:
   <!-- markdownlint-disable-next-line MD013 -->
@@ -252,6 +258,32 @@ royalty or seat analysis.
   <!-- markdownlint-disable-next-line MD013 -->
   <https://dev.epicgames.com/documentation/en-us/unreal-engine/overview-of-state-tree-in-unreal-engine>
   (Accessed: 16 July 2026).
+- Epic Games (2026) *Importing Static Meshes Using FBX in Unreal Engine 5.8*.
+  Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/importing-static-meshes-using-fbx-in-unreal-engine>
+  (Accessed: 17 July 2026).
+- Epic Games (2026) *Importing Skeletal Meshes Using FBX in Unreal Engine 5.8*.
+  Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/importing-skeletal-meshes-using-fbx-in-unreal-engine>
+  (Accessed: 17 July 2026).
+- Epic Games (2026) *Importing Static Mesh LODs Using FBX in Unreal Engine 5.8*.
+  Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/importing-static-mesh-lods-using-fbx-in-unreal-engine>
+  (Accessed: 17 July 2026).
+- Epic Games (2026) *Importing Skeletal Mesh LODs Using FBX in Unreal Engine
+  5.8*.
+  Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/importing-skeletal-mesh-lods-using-fbx-in-unreal-engine>
+  (Accessed: 17 July 2026).
+- Epic Games (2026) *Importing Materials Reference in Unreal Engine 5.8*.
+  Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/importing-materials-reference-in-unreal-engine>
+  (Accessed: 17 July 2026).
 - Epic Games (2026) *Importing Animations Using FBX in Unreal Engine 5.8*.
   Available at:
   <!-- markdownlint-disable-next-line MD013 -->

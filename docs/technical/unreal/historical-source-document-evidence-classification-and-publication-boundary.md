@@ -1,7 +1,7 @@
 # Historical source-document evidence classification and publication boundary
 
 - Status: Active
-- Last reviewed: 2026-07-16
+- Last reviewed: 2026-07-17
 
 ## Governing decisions and records
 
@@ -19,6 +19,8 @@
   data](../../legal/doctrines/privacy-and-personal-data.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native import, material rebuild, and world assembly](native-import-material-and-world-assembly.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Native art authoring, style, and asset validation contract](native-art-authoring-style-and-asset-validation-contract.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Progression, collectibles, cheats, and credits](progression-collectibles-and-cheats.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -333,6 +335,16 @@ Each fact contains:
 Facts are grouped by target concern such as world assembly, placement,
 collision,
 materials, state props, animation, naming, streaming, rendering, or validation.
+Accepted art facts are normalized through
+<!-- markdownlint-disable-next-line MD013 -->
+[Native art authoring, style, and asset validation contract](native-art-authoring-style-and-asset-validation-contract.md)
+before import. Historical polygon counts, folder rules, workstation steps,
+exporter settings, platform viewers, completion checklists, and naming
+conventions
+remain evidence until a typed authoring profile and native validation rule
+accepts
+or supersedes them.
+
 A fact with no public owner remains private research and cannot be treated as a
 shipping requirement.
 

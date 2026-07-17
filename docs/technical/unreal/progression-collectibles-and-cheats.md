@@ -1,7 +1,7 @@
 # Progression, collectibles, cheats, and credits
 
 - Status: Active
-- Last reviewed: 2026-07-16
+- Last reviewed: 2026-07-17
 
 ## Governing decisions
 
@@ -241,6 +241,65 @@ Coin collection sounds follow
 Sparkles and collection effects follow
 <!-- markdownlint-disable-next-line MD013 -->
 [Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md).
+
+### Attraction and collection presentation
+
+A coin definition may declare an attraction radius, eligible collector classes,
+homing duration, acceleration profile, arrival tolerance, and interruption
+policy. On-foot characters and occupied vehicles are separate eligibility modes.
+
+Crossing the attraction radius creates one revisioned collection proposal. After
+eligibility and duplicate suppression pass, the currency ledger commits exactly
+once and the coin may home toward the accepted collector or local-player HUD.
+Homing is presentation of an accepted transaction; losing the target, changing
+camera, pausing, streaming, or skipping the flight cannot duplicate or revoke
+the
+balance result.
+
+Several coins may arrive together. Audio uses bounded concurrency, aggregation,
+or rate policy while preserving each accepted transaction and a satisfying
+multi-coin sequence. Sound suppression under pressure cannot suppress currency.
+
+The accepted open-world progression model uses one global spendable coin
+balance.
+Historical level-scoped balances are migration evidence only and do not create
+seven independent runtime wallets.
+
+## Level hazard-reward reserve
+
+Each chapter or registered level profile may own one finite
+`FSharHazardRewardReserve` distinct from the spendable currency balance. It
+contains:
+
+- reserve identity and revision;
+- owning chapter or level;
+- capacity and currently available units;
+- active hazard-reward reservation identities;
+- emitted pickup-batch identities;
+- collected, expired, returned, and cancelled totals;
+- save and reset policy; and
+- invariant and diagnostic state.
+
+Spawning a wasp that uses the reserve atomically reserves its declared reward
+amount. Insufficient available units rejects that spawn without changing any
+other state. Destruction converts the reservation into one emitted coin batch.
+Collected units leave the reserve and enter the spendable ledger through
+ordinary
+collection transactions. Uncollected units that expire return to the reserve
+exactly once. Despawn or cancellation before destruction releases the
+reservation
+without emitting a reward.
+
+Recoverable coins lost from a player penalty may also return to the reserve on
+expiry when their source definition explicitly declares that coupling. Collected
+recoverable coins reverse only their pending loss and do not also replenish the
+reserve.
+
+Reserve capacity, reward amount, active-hazard budget, collection, expiry, and
+return policy are data-driven and validated. Presentation objects, pool slots,
+wasp pointers, or frame order cannot mutate the reserve. Wasp spawn and
+destruction consume this contract through
+[Flying-hazard and projectile runtime](flying-hazard-and-projectile-runtime.md).
 
 ## Gag completion
 
@@ -1120,6 +1179,12 @@ than deleting state.
 - One accepted transaction identity changes the ledger at most once.
 - A persistent world source pays at most once per save.
 - A destructible's staged payouts sum to its declared total.
+- Coin attraction and HUD flight never grant, duplicate, or revoke currency.
+- One hazard-reward reservation is either emitted, returned, or cancelled
+  exactly
+  once.
+- Collected hazard-reward units leave the reserve; expired uncollected units
+  return exactly once.
 - A completed purchase debits and grants atomically.
 - There are exactly seven collector-card sets with seven cards each in the
   verified base catalog.
@@ -1141,6 +1206,10 @@ The progression layer fails closed on:
 - invalid negative balances or arithmetic overflow;
 - one-time source replay;
 - payout stages that exceed or fail to reach the declared total;
+- attraction, collection, expiry, or HUD-flight callbacks that would replay a
+  currency transaction;
+- hazard-reward reserve underflow, duplicate reservation, or units that are both
+  collected and returned;
 - purchase debit without a resolvable grant;
 - duplicate card ordinals, incomplete level decks, or a card in multiple sets;
 - a set reward that targets the wrong level;

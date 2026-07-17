@@ -96,6 +96,8 @@ proprietary external formats.
 - [Frontend media, gallery, and audio runtime](unreal/frontend-media-gallery-and-audio-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Unreal configuration and asset validation](unreal/config-and-asset-validation.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Native art authoring, style, and asset validation contract](unreal/native-art-authoring-style-and-asset-validation-contract.md)
 - [Unreal gameplay content catalog](unreal/gameplay-content-catalog.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Gameplay audio source, residency, mix, and environment runtime](unreal/gameplay-audio-source-residency-mix-and-environment-runtime.md)

@@ -1,7 +1,7 @@
 # In-game HUD, pause, and transition runtime
 
 - Status: Active
-- Last reviewed: 2026-07-15
+- Last reviewed: 2026-07-17
 
 ## Governing decisions and specifications
 
@@ -323,6 +323,21 @@ declared map bounds; they do not mutate world cameras or navigation identity.
 Radar movement, resizing, and safe-area placement use responsive layout data.
 A development-only movable-radar tool remains outside shipping behavior.
 
+The base mission radar profile declares a fixed world-range policy rather than
+speed-driven auto-zoom. Its exact validated range is data, not a compile-time
+constant. Free-roam may use an `auto` visibility policy that reveals only the
+next eligible story-mission start marker when the player enters its declared
+range. Mission profiles may add artificial-intelligence vehicles, pursuit
+vehicles, checkpoints, objectives, collectibles, and key locations.
+
+Off-range moving threats and mission vehicles may use edge-clamped directional
+icons. Off-range collectibles and ordinary locations are hidden unless their
+registered profile explicitly permits another behavior. Pursuit icons have a
+distinct pulse, color, or animation profile without changing pursuit authority.
+Radar settings expose registered `auto` and `off` policies, while route guidance
+has its own independent setting. A decorative sweep, glow, pulse, or fade is
+presentation only and cannot discover, select, or complete an objective.
+
 ## Fade transaction
 
 A fade request contains owner, source and target opacity, duration, easing,
@@ -605,6 +620,8 @@ Validation proves:
 - all blocking transitions have timeout and cancellation behavior;
 - every local-player HUD has independent focus and state;
 - map markers resolve to registered presentation profiles;
+- radar fixed-range, auto-visibility, off-range, pursuit, and independent route-
+  guidance setting policies are complete;
 - pause commands resolve to typed application commands;
 - settings fields resolve to the device-configuration schema;
 - responsive and accessibility profiles are complete; and
@@ -621,6 +638,8 @@ Automated tests cover:
 - lap, collectible, currency, and mission-result exactly-once observations;
 - normalized meter boundaries and invalid values;
 - message queue overflow and replacement policy;
+- fixed-range radar, free-roam auto visibility, off-range threat clamping,
+  collectible hiding, pursuit pulse, radar off, and independent route guidance;
 - duplicate, conflicting, cancelled, and stale fade requests;
 - iris readiness barriers and reduced-motion fallbacks;
 - letterbox accept, cancel, skip, and suppressed-action policy;

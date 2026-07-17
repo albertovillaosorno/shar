@@ -1,7 +1,7 @@
 # Native import, material rebuild, and world assembly
 
 - Status: Planned
-- Last reviewed: 2026-07-16
+- Last reviewed: 2026-07-17
 - Delivery phase: Phase 6 only
 
 ## Governing decisions
@@ -47,6 +47,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Native art authoring, style, and asset validation contract](native-art-authoring-style-and-asset-validation-contract.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native asset translation without copy-paste](../../adr/pipeline/unreal/native-asset-translation-and-no-copy-paste.md)
 
 ## Purpose
@@ -77,6 +79,21 @@ Each import uses one immutable plan and these phases:
 
 A successful editor call is transport evidence only. Publication occurs after
 native read-back matches the complete plan.
+
+The immutable plan is produced from
+<!-- markdownlint-disable-next-line MD013 -->
+[Native art authoring, style, and asset validation contract](native-art-authoring-style-and-asset-validation-contract.md).
+It carries semantic asset identity, authoring revision, unit and axis policy,
+geometry and topology expectations, pivot and hierarchy roles, material and
+texture families, collision, LOD, Skeleton, animation, vehicle, world-kit,
+platform, quality, and Data Validation requirements. Import does not reconstruct
+those decisions from source filenames, folders, material slot order, or editor
+defaults.
+
+Normalized manifests own source-asset and animation counts. Raw DCC scenes,
+textures, package files, office documents, screenshots, and other non-semantic
+artifacts are conversion inputs and never become per-file runtime or coverage
+authority.
 
 ## FBX source contract
 

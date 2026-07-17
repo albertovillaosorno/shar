@@ -1,7 +1,7 @@
 # Unreal platform, quality, and optimization contract
 
 - Status: Active
-- Last reviewed: 2026-07-16
+- Last reviewed: 2026-07-17
 
 ## Governing decision
 
@@ -37,6 +37,8 @@
 - [Local supersprint race session runtime](local-supersprint-race-session-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Native art authoring, style, and asset validation contract](native-art-authoring-style-and-asset-validation-contract.md)
 
 ## Purpose
 
@@ -232,6 +234,28 @@ that explicit preset selection, a performance change must not delete content,
 reduce authored quality, alter simulation, hide a failure, weaken validation, or
 change player-visible behavior. A change that does so is a limitation or defect,
 not an optimization.
+
+## Art-authoring budgets and variants
+
+Asset-class budgets, authoring profiles, geometry and topology checks, texture
+and material roles, Skeleton and animation readiness, vehicle hierarchy, world
+kits, collision, LOD, HLOD, Nanite, native import, Data Validation, and
+read-back
+follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Native art authoring, style, and asset validation contract](native-art-authoring-style-and-asset-validation-contract.md).
+
+Budgets are typed by asset class, screen role, platform, graphics preset,
+streaming scope, and expected instance count. Historical fixed polygon or
+texture
+numbers may inform an initial profile but cannot become one universal limit.
+
+A lower-quality variant must retain the same semantic content identity and
+preserve required silhouette, palette, collision, sockets, interactions,
+collectible visibility, mission readability, vehicle and character
+compatibility,
+and native dependency closure. Raw art files are counted from normalized
+manifests rather than from per-file coverage rows.
 
 ## Cel-shaded visual baseline
 
