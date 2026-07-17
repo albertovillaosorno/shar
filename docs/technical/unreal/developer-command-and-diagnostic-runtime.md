@@ -14,6 +14,8 @@
 - [Validated game-feature mod overlays](../../adr/unreal/runtime/validated-game-feature-mod-overlays.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
 
 ## Purpose
 
@@ -397,7 +399,10 @@ one structured finding. It never corrupts gameplay memory or blocks simulation.
 
 Audio diagnostics consume immutable snapshots from
 <!-- markdownlint-disable-next-line MD013 -->
-[Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md).
+[Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
+and
+<!-- markdownlint-disable-next-line MD013 -->
+[Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md).
 Registered views may show:
 
 - output-device and audio-engine revision;

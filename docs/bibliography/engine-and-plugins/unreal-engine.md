@@ -19,12 +19,13 @@ examples, or documentation.
   Niagara systems and emitters, native actor tick groups and prerequisites,
   spline-component authoring, navigation-system boundaries, Unreal Audio Mixer,
   Sound Attenuation, MetaSounds, Sound Concurrency and voice-management policy,
-  Sound Classes and Sound Mixes, submix graphs and effect chains, Audio Volumes,
-  audio project settings and quality controls, Chaos physics, collision and
-  traces, native physics components, ISM and HISM behavior, Chaos Visual
-  Debugger,
-  and Unreal Engine 5.8 Media Framework and Electra boundaries were verified.
-  Accepted regional agreement, bundled
+  Sound Classes and Sound Mixes, Audio Modulation, submix graphs and effect
+  chains, Audio Volumes, native audio stream caching, audio project settings and
+  quality controls, Chaos physics, collision and traces, native physics
+  components, ISM and HISM behavior, Chaos Visual Debugger, and Unreal Engine
+  5.8
+  Media Framework and Electra boundaries were verified. Accepted regional
+  agreement, bundled
   notices, decoder availability, and external-service retention remain
   environment- or service-specific.
 - Counsel review: Not performed.
@@ -209,6 +210,16 @@ royalty or seat analysis.
   Available at:
   <!-- markdownlint-disable-next-line MD013 -->
   <https://dev.epicgames.com/documentation/en-us/unreal-engine/audio-settings-in-the-unreal-engine-project-settings>
+  (Accessed: 16 July 2026).
+- Epic Games (2026) *Audio Modulation Overview in Unreal Engine 5.8*. Available
+  at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/audio-modulation-overview-in-unreal-engine>
+  (Accessed: 16 July 2026).
+- Epic Games (2026) *Audio Stream Caching Overview in Unreal Engine 5.8*.
+  Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/an-overview-of-audio-stream-caching-in-unreal-engine>
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Physics in Unreal Engine 5.8*. Available at:
   <!-- markdownlint-disable-next-line MD013 -->

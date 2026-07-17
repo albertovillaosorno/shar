@@ -8,6 +8,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native gameplay audio, dialogue, and listener boundary](../../adr/unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Platform audio cooking and streaming](platform-audio-cooking-and-streaming.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md)
@@ -435,7 +437,71 @@ Application modes request semantic mix states such as:
 - recovery.
 
 The application coordinator requests a mix revision but does not modify Sound
-Classes or submix effect chains directly.
+Classes or submix effect chains directly. Native device, Audio Component,
+source-voice, stream-cache, fade, callback, output-layout, and parameter
+behavior
+follows
+<!-- markdownlint-disable-next-line MD013 -->
+[Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md).
+
+## Mode-scoped sound-effect bindings
+
+Frontend, gameplay, pause, store, loading, cinematic, credits, minigame, and
+recovery modes activate immutable event-binding sets. A binding declares:
+
+- semantic event and accepted cause identity;
+- application-mode and world eligibility;
+- canonical source definition;
+- owner, local-player, and positional policy;
+- priority, concurrency, significance, and queue behavior;
+- required or optional status;
+- mix, ducking, environment, and listener policy;
+- deterministic variation and parameter mapping;
+- cancellation and supersession; and
+- terminal diagnostics.
+
+Frontend bindings may cover navigation accept, back, scroll, cheat accepted,
+cheat rejected, settings previews, and accessibility feedback. Gameplay bindings
+may cover collision, footsteps, jump, object kick, switches, collection, doors,
+mission presentation, warnings, hazards, breakage, and world interactions. Pause
+bindings may cover open, close, continue, cancel, and preview cues.
+
+The target does not instantiate one mutable event-listener subclass per mode,
+register and unregister raw event enums, or select a sound through a six-player
+first-free array. Typed event routing, canonical definitions, concurrency,
+significance, and bounded queues decide admission.
+
+## Settings-preview audio
+
+Car, dialogue, music, ambience, interface, and effects settings previews are
+ordinary canonical playback requests correlated to one settings revision. Each
+preview declares the role under review, target value, source definition,
+routing,
+owner, local player, replacement policy, and cancellation token.
+
+A preview may temporarily bypass or compensate for the role value being edited
+so
+that the user can hear the proposed result exactly once. Preview completion
+cannot
+save, accept, reject, or migrate the setting. Only the settings transaction may
+commit durable values.
+
+## Content-load orchestration
+
+Level, mission, character, vehicle, frontend, minigame, dialogue-language, and
+feature audio are requested through semantic residency scopes. Source-era
+cluster
+names, vehicle tables, placeholder slots, formatted resource keys, archive
+names,
+namespace positions, and loader callback order remain import provenance only.
+
+A load request resolves primary-asset bundles and retained handles, validates
+the
+required native readiness level, and returns a typed result. Unload decrements
+semantic ownership and cannot release content still protected by another world,
+mission, vehicle, dialogue, music, cinematic, frontend, accessibility, or
+feature
+scope.
 
 ## Ducking
 

@@ -118,6 +118,8 @@ proprietary external formats.
 - [Music state and transition runtime](unreal/music-state-and-transition-runtime.md)
 - [Unreal MCP terminal translator](unreal/mcp-terminal-translator.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Native audio device, resource, player, and tuning adapter runtime](unreal/native-audio-device-resource-player-and-tuning-adapter-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native asset load request and streaming runtime](unreal/native-asset-load-request-and-streaming-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native cooked-asset construction and registration runtime](unreal/native-cooked-asset-construction-and-registration-runtime.md)

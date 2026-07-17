@@ -69,9 +69,13 @@ subtitles, priorities, probabilities, positional and mouth policy; and explicit
 listener and moving-source definitions.
 
 Source filenames, short character or event codes, resource hashes, cluster
-ordinals, fixed source slots, namespace membership, and platform reverb classes
-remain import provenance only and are not parsed or instantiated as packaged
-runtime authority.
+ordinals, fixed source slots, clip and stream player arrays, custom file
+instances, sound-memory regions, namespace membership, script-created sound
+objects, tuning wiring graphs, raw callbacks, and platform reverb classes remain
+import provenance only and are not parsed or instantiated as packaged runtime
+authority. Unreal's Audio Mixer, Audio Components, stream cache, Sound Classes,
+mixes, modulation, submixes, and native device lifecycle remain engine
+authority.
 
 Prepared renderables register through native Actor and component lifecycle and
 accepted render scopes. Import does not publish ordinal render layers, custom

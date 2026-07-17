@@ -25,6 +25,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [HUD feedback cue and presentation-primitives runtime](hud-feedback-cue-and-presentation-primitives-runtime.md)
 
 ## Purpose
@@ -301,12 +303,16 @@ environment, priority, lifetime, and expected revisions to
 [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md).
 
 Residency, source-readiness, queue admission, voice pressure, virtualization,
-mix,
-ducking, Audio Volume, reverb, pause, output-device, and terminal playback
-observations return typed immutable results. They never route raw resource
-names,
-cluster ordinals, player slots, namespace pointers, effect handles, or callback
-user data.
+mix, ducking, Audio Volume, reverb, pause, output-device, and terminal playback
+observations return typed immutable results. Native device readiness, component
+acquisition, stream-cache priming, source admission, fade, parameter, device
+change, and callback correlation follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md).
+
+They never route raw resource names, clip or stream player slots, cluster
+ordinals, namespace pointers, native source voices, file instances, sound-memory
+regions, effect handles, callback pointers, or untyped callback data.
 
 Animation-sound and music-state observations resolve canonical sound, animation,
 positional policy, and music-state identities through the content catalog.

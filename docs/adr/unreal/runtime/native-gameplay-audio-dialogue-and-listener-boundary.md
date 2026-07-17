@@ -2,8 +2,8 @@
 
 - Status: Accepted
 - Decision date: 2026-07-16
-- Scope: Vehicle audio, gameplay dialogue, spatial listeners, and positional
-  sources
+- Scope: Gameplay audio, dialogue, listeners, positional sources, native audio
+  devices, source resources, playback adapters, and tuning policy
 
 ## Context
 
@@ -69,12 +69,24 @@ replacement Actor, different local player, or superseding playback request.
 
 Generic gameplay sources use canonical definitions, typed parameters, bounded
 leases, deterministic optional-playback policy, and exactly-once terminal
-results.
-Audio assets are retained through scope-owned Asset Manager bundles rather than
-fixed sound clusters or namespace arrays. Sound Classes, Sound Mixes, submixes,
-buses, modulation, Audio Volumes, and native environment effects own routing,
-ducking, reverb, and platform mixing. Process-global generic players,
-platform-specific reverb controllers, and mutable debug pages are excluded.
+results. Audio assets are retained through scope-owned Asset Manager bundles
+rather than fixed sound clusters or namespace arrays. Sound Classes, Sound
+Mixes,
+submixes, buses, modulation, Audio Volumes, and native environment effects own
+routing, ducking, reverb, and platform mixing.
+
+Unreal's Audio Mixer is the only default runtime renderer. Project code does not
+allocate clip or stream player arrays, capture the first free player, manage
+custom sound-memory swap regions, construct file-data sources, poll linked
+player
+lists, wire tuning groups through scripts, or expose raw renderer callbacks.
+`UAudioComponent`, native source admission, stream caching, device lifecycle,
+output layout, fades, parameter updates, and callbacks are wrapped only by a
+revisioned project adapter that preserves semantic ownership and typed results.
+
+Process-global generic players, custom renderer managers, platform-specific
+reverb controllers, source namespaces, script-created sound objects, untyped
+callbacks, and mutable debug pages are excluded.
 
 Audio quality settings may change codec, sample rate, voice count, streaming,
 virtualization, attenuation implementation, effect cost, and optional cosmetic
@@ -101,6 +113,10 @@ canonical event results.
 - Generic sources, residency bundles, Sound Classes, mixes, submixes, buses,
   environmental effects, and capacity results are typed, revisioned, and
   scope-owned.
+- Unreal owns source voices, decoding, stream cache, Audio Components, DSP,
+  submix processing, device output, and platform backends.
+- Native readiness, playback, fade, parameter, virtualization, and device
+  callbacks are correlated to current project revisions before acceptance.
 - Required active audio cannot be evicted silently, and optional playback cannot
   depend on global random or first-free-slot order.
 - World unload, feature removal, vehicle replacement, player removal, and locale
@@ -123,6 +139,15 @@ canonical event results.
   platform, animated-object, hazard, or generic players as durable identity.
 - Fixed-size sound clusters, ordinal cluster names, raw resource hashes, and
   namespace pointers as residency authority.
+- Fixed clip and stream player arrays, first-free capture, custom file
+  instances,
+  manual resource capture counts, linked-list polling, and sound-memory swap
+  regions as renderer architecture.
+- Source-script object factories, tuning wiring graphs, or mutable group paths
+  as
+  Sound Class, mix, or modulation authority.
+- Raw renderer callbacks with untyped user data or one callback object shared
+  across unrelated playback revisions.
 - Separate platform reverb controllers and manually serviced effect fades as
   semantic environment state.
 - Mutable debug pages that can force playback, retain resources, or change

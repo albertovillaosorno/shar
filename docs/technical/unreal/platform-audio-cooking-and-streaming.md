@@ -14,6 +14,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Latin American Spanish audio fallback](../../adr/audio/lmlm-spanish-latam-audio-fallback.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native cinematic package strategy](../../adr/rmv/unreal-native-cinematic-package.md)

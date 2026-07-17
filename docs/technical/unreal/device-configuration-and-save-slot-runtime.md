@@ -1,7 +1,7 @@
 # Device configuration and save-slot runtime
 
 - Status: Active
-- Last reviewed: 2026-07-15
+- Last reviewed: 2026-07-16
 
 ## Governing decisions and specifications
 
@@ -18,6 +18,8 @@
 - [In-game HUD, pause, and transition runtime](in-game-hud-pause-and-transition-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
 
 ## Purpose
 
@@ -176,6 +178,33 @@ the accepted safe mode before normal frontend presentation.
 The detailed capture, preview, commit, and recovery sequence follows the
 <!-- markdownlint-disable-next-line MD013 -->
 [frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md).
+
+## Audio settings
+
+Audio settings use stable schema identities for master, music, ambience,
+dialogue, vehicle, effects, and interface volume; output-layout preference;
+dynamic-range profile; headphone or spatialization preference when exposed;
+dialogue language; subtitles; and accessibility audio policy.
+
+Every value is bounded and capability-checked. Historical property indexes,
+property counts, text keys, stereo or surround bit flags, and raw float strings
+are migration evidence only.
+
+Preview, native projection, output-device behavior, Sound Class or modulation
+application, callback correlation, and rollback follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md).
+
+A preview lease is reversible and belongs to the current settings edit revision.
+A preview sound or fade completing cannot commit the setting. Commit persists
+the
+entire validated draft atomically, applies one new audio-settings revision, and
+cancels superseded previews. Cancellation restores the previously committed
+projection, including volume, mix, output, device, and accessibility state.
+
+Unsupported output layouts or device preferences resolve through explicit
+fallback or validation failure. The settings repository does not create, reset,
+or terminate the native audio renderer directly.
 
 ## Logical save slots
 

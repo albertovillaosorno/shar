@@ -32,10 +32,18 @@ available, dependencies, provenance, and revision.
 
 Normalized PCM WAV remains deterministic conversion and review evidence. Product
 packaging cooks a target-native Unreal audio representation according to an
-explicit target policy. The policy selects loading behavior, compression
-quality,
-streaming or residency, chunking, seek behavior, concurrency, and platform audio
-routing without changing canonical identity or gameplay meaning.
+explicit target policy. The policy selects Sound Wave loading behavior,
+compression quality, streaming or residency, chunking, seek behavior,
+concurrency, Sound Class loading, native quality, and platform audio routing
+without changing canonical identity or gameplay meaning.
+
+Unreal's Audio Mixer, Audio Components, native stream cache, Sound Classes,
+Sound Mixes, Audio Modulation, submixes, effects, and platform device backend
+are
+the default runtime execution layer. The repository does not ship a translated
+clip/stream player pool, custom decoder and memory-region manager,
+script-created
+resource graph, or platform-specific renderer fork.
 
 Audio roles are explicit. At minimum, dialogue, music, cinematic audio, vehicle
 loops, ambient loops, UI cues, and short gameplay effects may use different

@@ -41,25 +41,29 @@ feature removal.
 A cooked overlay may also add namespaced render-scope policy, Niagara and
 breakable-presentation definitions, road-network overlays, traffic-control
 policy, vehicle-audio profiles, generic source definitions, audio-residency
-bundles, approved Sound Class branches, mixes, submix sends, modulation,
-environment definitions, reverb effects, collision-audio profiles, dialogue
-lines, conversations, event bindings, selection groups, listener and positional-
-source definitions, subtitles, and diagnostic views.
+bundles, approved Sound Class branches, mixes, Control Buses, modulation,
+submix sends, source and submix effects, environment definitions, reverb
+effects,
+collision-audio profiles, dialogue lines, conversations, event bindings,
+selection groups, listener and positional-source definitions, subtitles, and
+diagnostic views.
 
-It cannot replace the engine frame loop, renderer, audio device, master Sound
-Class or submix graph, base VFX or audio definitions, protected residency
-scopes,
-platform mix policy, base road graph, traffic authority, listener policy,
-dialogue usage outside its namespace, or unrelated route and event queries.
+It cannot replace the engine frame loop, renderer, Audio Mixer, native audio
+device, master Sound Class or submix graph, platform backend, stream cache,
+protected residency scopes, platform mix or output policy, base VFX or audio
+definitions, base road graph, traffic authority, listener policy, dialogue usage
+outside its namespace, or unrelated route and event queries.
 
 Feature removal cancels owned construction, render-scope, VFX, route, traffic,
-vehicle-audio, generic-audio, residency, mix, environment, dialogue, listener,
-and positional-source requests; tears down owned runtime objects, effects,
-playback, subtitles, mouth and ducking leases; clears submix and environment
-overrides; releases streamable handles; unregisters namespaced constructors,
-assets, policies, audio definitions, dialogue content, listeners, and graph
-overlays; restores scoped base state; and invalidates stale callbacks as one
-transaction.
+vehicle-audio, generic-audio, residency, mix, modulation, environment, dialogue,
+listener, and positional-source requests; tears down owned runtime objects,
+effects, Audio Components, playback, subtitles, mouth and ducking leases; clears
+submix, bus, and environment overrides; releases retained handles; unregisters
+namespaced constructors, assets, policies, audio definitions, event bindings,
+dialogue content, listeners, and graph overlays; rejects stale device, loading,
+fade, playback, and callback results; restores scoped base state; and proves
+zero
+owned native and project audio resources as one transaction.
 
 Native executable packages are not loaded by this decision. They remain inactive
 unless a separate accepted native-extension trust, ABI, signing, loading, and

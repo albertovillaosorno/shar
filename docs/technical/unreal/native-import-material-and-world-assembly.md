@@ -33,6 +33,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native asset translation without copy-paste](../../adr/pipeline/unreal/native-asset-translation-and-no-copy-paste.md)
 
 ## Purpose
@@ -301,10 +303,21 @@ reverb effects, platform fallbacks, and diagnostic metadata for
 <!-- markdownlint-disable-next-line MD013 -->
 [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md).
 
-Fixed source arrays, cluster ordinals, maximum-resource constants, raw resource
-keys, namespace membership, player slots, and platform reverb-controller classes
-remain source provenance only. Packaged runtime consumes validated native assets
-and immutable definitions.
+Fixed source arrays, clip and stream player slots, custom file instances, sound
+memory regions, resource capture counts, cluster ordinals, maximum-resource
+constants, raw resource keys, namespace membership, script-created sound
+objects,
+manual tuning wires, callback pointers, and platform reverb-controller classes
+remain source provenance only.
+
+Cooked source class, Sound Wave loading behavior, stream-cache policy, native
+component lifecycle, Sound Class hierarchy, Sound Mix or modulation routing,
+submix graph, output policy, device recovery, and typed callback correlation are
+validated for
+<!-- markdownlint-disable-next-line MD013 -->
+[Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md).
+Packaged runtime consumes native assets and immutable definitions rather than a
+translated custom renderer.
 
 JSON import creates typed data assets, tables, registries, StateTree bindings,
 or
