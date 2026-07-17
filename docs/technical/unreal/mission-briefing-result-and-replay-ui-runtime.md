@@ -120,6 +120,18 @@ Definitions reject duplicate mission identities, unresolved text, missing
 required bundles, unsupported actions, invalid transition graphs, and result
 mappings that omit a possible failure category.
 
+Historical mission-title, hint, and icon tables are import evidence only. Intake
+resolves one canonical mission or failure category, one selected localized title
+or reason, one bounded hint set, and one registered icon or cue identity with
+accessible text and fallback policy.
+
+Proposal columns remain alternatives until an explicit selection is recorded.
+Source row order, color keys, item descriptions, filenames, blank cells, and
+spreadsheet headings are not runtime identity. Duplicate tables collapse by
+content digest and semantic identity; changed revisions are compared field by
+field. Missing required text or icon mappings fail publication rather than
+selecting the first non-empty source cell.
+
 ## Presentation states
 
 One request is in exactly one state:
@@ -501,7 +513,13 @@ Validation proves:
 
 - every mission has one presentation definition or declared fallback;
 - every possible mission failure condition maps to a reason;
+- historical title proposals have one explicit selected result or remain
+  unpublished;
 - hint sets contain valid localized identities and bounded membership;
+- every required mission icon resolves one registered cue identity, accessible
+  text, and fallback policy;
+- source proposal columns, color keys, descriptions, row order, and blank cells
+  create no presentation identity;
 - retry, abort, skip, and replay policies resolve to mission commands;
 - base skip thresholds and terminal exclusions are represented correctly;
 - chapter and mission ordering contain no duplicate identities;
@@ -515,6 +533,12 @@ Validation proves:
 Automated tests cover:
 
 - normal, race, bonus, wager, tutorial, and special briefing profiles;
+- historical title-proposal selection, no-selection rejection, duplicate-table
+  collapse, and changed-revision comparison;
+- mission-hint import, deterministic bounded membership, empty-set behavior, and
+  failure-category ownership;
+- mission-icon semantic mapping, accessibility text, required/optional fallback,
+  and source color-key rejection;
 - empty, immediate, delayed, cancelled, failed, and stale load plans;
 - confirmation before and after accepted readiness;
 - duplicate confirmation and cancellation;

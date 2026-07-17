@@ -184,6 +184,40 @@ per-level assumptions, source ordering, and stakeholder notes cannot enter the
 mission graph. An unresolved proposal publishes no partial mission, stage,
 participant, placement, or progression definition.
 
+## Historical mission-bundle reconciliation
+
+Per-level breakdowns, level summaries, mission outlines, functionality records,
+presentation records, race designs, and source mission scripts may describe the
+same candidate mission graph. The compiler groups them by canonical chapter,
+mission, stage, objective, participant, route, and presentation identities
+before
+selecting facts.
+
+Reconciliation records:
+
+- source fact and revision identities;
+- accepted aliases for historical level, mission, and stage labels;
+- candidate objective adapter and condition schemas;
+- participant, vehicle, route, placement, reward, dialogue, and presentation
+  references;
+- conflicts, duplicates, omissions, and supersession decisions; and
+- one complete accepted graph or an explicit unresolved result.
+
+Source mission numbers, document order, folder labels, headings, prose step
+numbers, script commands, and apparent revision age are not authority. Exact
+content duplicates collapse to one fact set. A changed copy is compared fact by
+fact and cannot partially overwrite an accepted mission.
+
+Mission-editing instructions that mention source DCC scenes, locator files,
+checkout operations, source-control paths, or workstation procedures generate no
+runtime or target-authoring contract. They remain historical implementation
+provenance only.
+
+Mission title, hint, and icon evidence is referenced through stable presentation
+identities. The mission graph never selects a proposal column, parses display
+text,
+or uses source color keys as gameplay state.
+
 ## Mission definition envelope
 
 Each mission definition contains:
@@ -952,6 +986,14 @@ Definition validation proves:
   rejected, or unresolved result;
 - unresolved proposal facts generate no mission, stage, objective, participant,
   placement, or progression definition;
+- every historical mission bundle has one reconciled fact graph or an explicit
+  unresolved result;
+- exact duplicate sources collapse and changed revisions cannot partially
+  overwrite an accepted mission;
+- title, hint, and icon references resolve through stable presentation
+  identities;
+- source editing paths, DCC scenes, checkout instructions, and script ordering
+  create no runtime or target-authoring authority;
 - every mission and stage identity is unique;
 - stage ordinals are dense and transitions resolve;
 - every stage owns exactly one root objective;
@@ -972,6 +1014,12 @@ Required automated tests include:
 - deterministic conversion from equivalent mission evidence;
 - external proposal-set merge, conflict, accepted adaptation, supersession,
   rejection, unresolved-state isolation, and zero partial publication;
+- mission-bundle grouping across breakdowns, level summaries, outlines,
+  functionality, presentation, race, and script evidence;
+- exact duplicate collapse, changed-revision comparison, conflict findings, and
+  zero partial overwrite;
+- source DCC, locator, checkout, path, and editing-process rejection;
+- stable presentation references for mission titles, hints, and icons;
 - unknown, duplicate, malformed, out-of-order, and
   unclosed command rejection;
 - invalid argument count, units, enums, and references;

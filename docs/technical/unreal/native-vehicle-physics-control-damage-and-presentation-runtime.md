@@ -183,6 +183,28 @@ Every physical quantity declares units. Unlabelled tuning constants, magic
 thresholds, compile-time platform branches, and mutable singleton parameters are
 not target architecture.
 
+Historical vehicle performance-rating tables and numeric tuning tables have
+different authority. Ratings describe qualitative handling intent such as speed,
+acceleration, control, stability, mass, toughness, or role; they do not directly
+set simulation fields or prove native behavior.
+
+A candidate tuning row is accepted only after import resolves:
+
+- one canonical vehicle and definition revision;
+- one registered target field with declared units and conversion rule;
+- finite value, supported range, and platform or quality applicability;
+- conflicts with qualitative intent, duplicate tables, and current definitions;
+- deterministic native construction and read-back; and
+- measured behavior against the accepted validation envelope.
+
+Source column position, abbreviated headings, blank units, old/new folder
+labels,
+apparent revision age, and raw spreadsheet values are provenance only. Exact
+duplicates collapse to one fact set. Ambiguous units, unknown fields, non-finite
+values, conflicting rows, or missing native read-back fail import without
+changing
+the last accepted vehicle definition.
+
 ## Fixed and modular composition
 
 The standard vehicle system uses one fixed Skeletal Mesh topology with a Physics
@@ -1025,6 +1047,12 @@ Cook and startup validation prove:
   wheel,
   material, curve, collision, and asset compatibility;
 - unit-labelled and finite tuning values;
+- historical performance ratings remain qualitative intent and cannot directly
+  set simulation fields;
+- every imported tuning row resolves a canonical vehicle, registered target
+  field, units, conversion rule, supported range, applicability, and provenance;
+- duplicate and old/new tuning tables collapse or reconcile without implicit
+  overwrite, and accepted values match native read-back and measured behavior;
 - valid engine, transmission, differential, steering, brake, suspension, tire,
   and wheel configurations;
 - compatible wheel bones, sockets, Physics Asset bodies, and animation bindings;
@@ -1047,6 +1075,10 @@ with a typed diagnostic rather than constructing a partial vehicle.
 Required automated and integration tests include:
 
 - construction success and rollback;
+- qualitative performance-rating import without direct simulation-field writes;
+- numeric tuning-table field mapping, unit conversion, finite/range rejection,
+  duplicate collapse, changed-revision conflict, native read-back, and measured
+  behavioral validation;
 - native physics-state create, destroy, and replacement;
 - deterministic input-command projection;
 - Enhanced Input context acquisition and release;

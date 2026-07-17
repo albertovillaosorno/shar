@@ -506,6 +506,76 @@ Source script commands, Sunday-drive terminology, source objective counts, and
 fixed level ordering are evidence only. Runtime consumes validated typed assets
 and application transactions.
 
+### Mission bundles, summaries, and revision families
+
+A historical per-level mission bundle may contain a mission breakdown, mission
+script summary, dialogue summary, outline, functionality record, presentation
+record, hints, title proposals, icon requirements, race notes, and source
+editing
+instructions. These records are correlated by candidate chapter, mission, stage,
+participant, objective, and presentation identities; filenames, folder names,
+source level numbers, row positions, and document ordering are provenance only.
+
+Mission breakdowns and level summaries may contribute candidate stages,
+objectives, participants, vehicles, routes, timers, failures, rewards,
+interactions, cinematics, dialogue contexts, and world dependencies. Conflicting
+breakdowns, outlines, and source scripts remain unresolved until one typed
+mission
+graph is selected through the authority hierarchy. No document is complete
+merely
+because it is longer or appears in a newer-looking folder.
+
+Mission-dialogue summaries contribute participant roles, semantic events,
+conversation membership, mission and stage context, conditions, presentation
+intent, and candidate localization bindings. Raw dialogue, audio aliases, source
+annotations, replacement notes, and performance directions remain private
+localization evidence.
+
+Hint, title, and icon tables normalize into:
+
+- one canonical mission or failure-category owner;
+- localized title, briefing, reason, and hint identities;
+- deterministic bounded hint-set membership;
+- one semantic icon or cue identity with accessible text;
+- optional proposal aliases and an explicit selected result; and
+- fallback, revision, and validation policy.
+
+Source color keys, item descriptions, proposal columns, row order, filenames,
+and
+blank cells do not become runtime identity. Unselected title proposals and
+missing
+required icon mappings fail publication rather than silently selecting a source
+column.
+
+Mission-editing documents that describe source-era Maya files, checkout paths,
+locator placement, source scripts, or workstation procedures are implementation
+and provenance evidence only. They do not define target authoring, runtime file
+layout, source control, or native Unreal ownership.
+
+Exact duplicate documents and old/new folder copies collapse to one fact set by
+content digest and semantic identity. Folder labels such as `Old` and `New
+Design`
+are not authority. A changed revision is compared fact by fact and records
+accepted, adapted, superseded, rejected, or unresolved results.
+
+Gameplay-minute schedules may inform pacing, tutorial density, activity balance,
+and expected player flow. They do not create a runtime clock, mission ordinal,
+progression gate, or completion requirement unless a current contract explicitly
+adopts that fact.
+
+Vehicle performance ratings are qualitative design intent; vehicle tuning tables
+are candidate numeric evidence. Ratings never substitute for measured native
+behavior. Tuning values require units, finite bounds, canonical vehicle
+identity,
+field mapping, target applicability, conversion provenance, and native read-back
+before acceptance.
+
+Legacy content lists may contribute candidate characters, vehicles, rewards,
+costumes, billboards, gags, placements, and role relationships. Approval,
+completion, in-game, assignment, and placement-status columns remain production
+metadata. Historical counts and list membership cannot override accepted
+catalogs.
+
 ### Multiplayer
 
 The base campaign is single-player and local-authority. Historical split-screen
@@ -769,9 +839,8 @@ Prohibited public outputs include:
 Validation proves:
 
 - every retained record is eligible semantic text;
-- excluded administration, approval, personal, empty, raw-art, and binary
-  evidence
-  is absent from the ledger;
+- excluded administration, approval, personal, empty, pagination/title-only,
+  raw-art, and binary evidence is absent from the ledger;
 - every extracted fact has one class and terminal owner;
 - conflicts follow the authority hierarchy;
 - every external proposal fact belongs to one versioned proposal set and has one
@@ -828,6 +897,14 @@ Automated tests cover:
 - external mission/story proposal-set grouping, duplicate-draft collapse,
   cross-document conflict, accepted adaptation, rejection, unresolved isolation,
   and zero partial publication;
+- mission-bundle grouping across breakdown, level, outline, functionality,
+  presentation, race, dialogue, title, hint, icon, and source-editing records;
+- exact duplicate and old/new revision collapse with fact-level supersession;
+- title, hint, and icon selection with proposal, fallback, and accessibility
+  validation;
+- gameplay-minute pacing extraction without implicit runtime progression;
+- qualitative vehicle-rating versus unit-labelled numeric-tuning reconciliation;
+- legacy content-list conversion with production-status exclusion;
 - feature-specific owner routing and duplicate integrated-summary collapse;
 - visual-requirement state extraction with source-art and production-data
   exclusion;
@@ -853,6 +930,11 @@ Automated tests cover:
 
 - Raw and empty artifacts do not receive semantic coverage rows.
 - Source documents never execute or ship.
+- Pagination/title-only export shells do not receive semantic coverage.
+- Exact duplicate documents collapse to one fact set without gaining authority.
+- Old/new folder labels and apparent revision age never select accepted facts.
+- Source DCC, checkout, path, and editing instructions never define target
+  authoring or runtime architecture.
 - Product goals do not preserve obsolete implementation automatically.
 - Newer accepted decisions supersede historical counts and modes.
 - External proposal sets never override accepted campaign or catalog state by

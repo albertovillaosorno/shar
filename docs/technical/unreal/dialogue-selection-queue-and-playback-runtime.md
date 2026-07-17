@@ -245,6 +245,25 @@ licensor-receipt, and audio-reuse columns can block publication or select a
 private review path but never select runtime content, change priority, or alter
 participant eligibility.
 
+Historical per-level mission-dialogue summaries are reconciled with conversation
+sheets and accepted mission definitions before publication. They may contribute
+candidate speaker roles, semantic events, mission and stage context,
+conversation
+membership, branch conditions, presentation intent, and localization bindings.
+
+Raw prose, performance directions, replacement notes, source audio aliases,
+headings, scene order, and source mission numbers remain private evidence or
+provenance. A summary cannot create a required conversation until every retained
+line, participant, event, condition, locale, subtitle, audio, and fallback
+binding
+resolves. Conflicting summaries and sheets produce an explicit finding; the
+importer does not prefer the longer, later-looking, or differently named source.
+
+Exact duplicate dialogue records collapse by content digest and semantic
+identity.
+A changed revision is compared line by line and cannot silently replace an
+accepted localized line or conversation member.
+
 ## Participant context
 
 `FSharDialogueParticipantSnapshot` contains:
@@ -791,6 +810,10 @@ Cook and content validation proves:
   table or is rejected;
 - every retained source-event alias resolves uniquely to one canonical event,
   speaker or archetype owner, and event binding;
+- every mission-dialogue summary line either reconciles with one accepted
+  conversation member or records an explicit conflict, omission, or rejection;
+- exact duplicate dialogue summaries collapse and changed revisions cannot
+  silently replace accepted localization, audio, participant, or condition data;
 - every line has positional, listener, concurrency, ducking, lifetime, and
   completion policy;
 - every mouth and subtitle binding correlates to the exact line revision;
@@ -804,6 +827,11 @@ Required automated tests include:
 
 - import conversion of line, speaker, role, event, order, level, mission, and
   conversation metadata;
+- mission-dialogue summary reconciliation with conversation sheets and accepted
+  mission definitions;
+- raw prose, performance direction, replacement note, audio-alias, heading, and
+  source-order exclusion;
+- exact duplicate collapse and changed-revision line comparison;
 - sound-event alias normalization, placeholder rejection, speaker and archetype
   ownership, closed priority-token mapping, malformed priority rejection, source
   and reuse provenance, and coverage-matrix generation;

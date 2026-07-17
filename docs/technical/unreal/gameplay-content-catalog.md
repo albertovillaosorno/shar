@@ -798,6 +798,19 @@ One source row does not automatically create one runtime object. Repeated rows,
 review variants, chapter placements, and completion-tracking copies may collapse
 into one definition plus several typed placement or availability rows.
 
+Exact duplicate documents and old/new folder copies collapse to one fact set by
+content digest and semantic identity. Folder labels, apparent revision age, file
+length, and repeated placement do not determine authority. Changed revisions are
+compared field by field and record accepted, adapted, superseded, rejected, or
+unresolved results before one catalog revision can publish.
+
+Legacy master content lists may contribute candidate character, vehicle, reward,
+costume, billboard, gag, placement, role, and availability facts. Approval,
+completion, in-game, assignment, reference-review, and placement-status columns
+remain production metadata. Historical counts, row membership, ordering, and
+status flags cannot create visibility, ownership, unlock, placement, or runtime
+availability.
+
 External mission and story proposal sets follow
 <!-- markdownlint-disable-next-line MD013 -->
 [Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md).
@@ -1070,6 +1083,11 @@ streaming source or the step fails before activation.
 
 - One canonical gameplay entity has one primary asset identifier.
 - Every alias resolves directly to one canonical identity.
+- Exact duplicate source documents collapse to one fact set and cannot multiply
+  definitions, placements, aliases, or availability rows.
+- Old/new folder labels, apparent revision age, historical counts, and
+  production
+  status flags never determine catalog authority.
 - Every catalog-reachable primary asset is included in cook rules.
 - Canonical identities, aliases, progression keys, table rows, and gameplay
   bundles remain logically identical across platforms, architectures, and
@@ -1150,6 +1168,9 @@ Engine-independent tests verify:
 - card-set ordinals, durable keys, placement reachability, and gallery
   references;
 - production-metadata exclusion and family reconciliation;
+- exact duplicate collapse and fact-level old/new revision reconciliation;
+- legacy character, vehicle, reward, costume, billboard, gag, placement, role,
+  and availability-list conversion without status-field authority;
 - save migration; and
 - package-to-definition membership.
 
