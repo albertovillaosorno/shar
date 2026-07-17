@@ -50,42 +50,66 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to place one exact SHAR scene actor into a deterministic World
+Outliner folder before bounded organization, review, or folder-scoped queries.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project must have the target level loaded.
+- Resolve the exact actor through a current scene read.
+- Enumerate folders with `get_folders` and capture the actor's current folder
+  membership through `get_actors_in_folder`.
+- Confirm the destination path is absent or intentionally shared.
+- Define restoration to the captured folder; use an empty path only when root
+  placement has been proven.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "actor": {
+    "refPath": "/Temp/Untitled_1.Untitled_1:PersistentLevel.PlayerStart_UAID_F02F74551BF5599B01_1153002503"
+  },
+  "folder_path": "SHAR_MCP_Validation"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The actor was proven at the Outliner root by enumerating every current folder
+and confirming it belonged to none. The call returned `returnValue: null`.
+`get_folders` then included `SHAR_MCP_Validation`, and an independent
+`get_actors_in_folder` call returned exactly the requested `PlayerStart` actor.
+The subsequent rename-delete cycle restored root placement.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The tool creates the destination folder implicitly when it does not exist.
+- `get_actors_in_folder` rejects an empty path, so root placement must be proven
+  by excluding the actor from every path returned by `get_folders`.
+- An empty destination moves the actor to the Outliner root.
+- Folder assignment changes loaded level state and can persist if the level is
+  saved.
+- Actor references from `/Temp` worlds are session-specific.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

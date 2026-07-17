@@ -52,42 +52,62 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to rename one fully inventoried SHAR World Outliner folder while
+preserving its actor membership and nested folder relationships.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Enumerate all current folder paths and actors before the rename.
+- Confirm the source exists and the destination does not exist unless an
+  intentional merge has been approved.
+- Bound the expected affected actor count, including actors under subfolders.
+- Define the inverse rename or another exact restoration path before mutation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "old_path": "SHAR_MCP_Validation",
+  "new_path": "SHAR_MCP_Validation_Renamed"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The source folder contained exactly one actor. The call returned
+`returnValue: 1`. The old path then failed as nonexistent, `get_folders`
+contained only the renamed temporary path, and `get_actors_in_folder` returned
+that same `PlayerStart` actor under the new path. Deleting the renamed folder
+returned the actor to its proven original root placement.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The operation recursively updates actors in child folders, so the affected
+  scope can exceed the direct source-folder membership.
+- Renaming to an existing path merges folder contents; that behavior was not
+  exercised.
+- The returned integer must match the precomputed affected actor count.
+- Folder renames alter loaded level state and can persist if the level is saved.
+- A missing source path is reported as an error rather than an empty result.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

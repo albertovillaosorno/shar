@@ -52,42 +52,63 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to remove one emptyable SHAR World Outliner folder after its
+direct actors and subfolder behavior have been completely inventoried.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Confirm the exact folder exists through `get_folders`.
+- Capture every directly contained actor and all subfolders before deletion.
+- Determine the parent folder or root destination that will receive moved
+  actors.
+- Bound the expected moved-actor count and define independent membership checks
+  for the resulting folder state.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "folder_path": "SHAR_MCP_Validation_Renamed"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The temporary folder contained exactly one `PlayerStart` actor and no
+subfolders. The call returned `returnValue: 1`. `get_folders` no longer returned
+the deleted path. Enumerating every remaining folder showed the actor belonged
+to none, proving that it had moved back to the Outliner root. Final cleanup
+returned the same original three-folder inventory.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Actors directly in the deleted folder move to its parent rather than being
+  deleted.
+- Child folders are re-rooted under the parent, so deletion can change more than
+  one visible path even when the returned count is small.
+- The returned integer counts moved actors, not deleted folders or subfolders.
+- Deleting a missing folder raises an error.
+- Folder deletion changes loaded level state and can persist if the level is
+  saved.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
