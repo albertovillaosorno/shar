@@ -46,6 +46,13 @@ verified from a permitted secondary duplicate; an official authenticated copy
 was not located in the reviewed official repositories, and later controlling
 Second Circuit treatment has not been established here.
 
+In *UMG Recordings, Inc. v. Augusto*, unsolicited promotional CDs arrived
+without a prior request or agreement. Labels asserting that acceptance created a
+license did not establish assent where recipients made no response, and federal
+unordered-merchandise law gave them disposal rights inconsistent with the
+asserted restrictions. The case concerns those physical shipments and does not
+replace state-law formation analysis for ordered products or online interfaces.
+
 ## Formation Evidence Required
 
 For every relevant agreement, preserve:
@@ -89,6 +96,7 @@ Even when formation is established, analyze separately:
 <!-- markdownlint-disable-next-line MD013 -->
 - [Berman v. Freedom Financial Network, LLC](../cases/berman-v-freedom-financial.md).
 - [Specht v. Netscape Communications Corp.](../cases/specht-v-netscape.md).
+- [UMG Recordings, Inc. v. Augusto](../cases/umg-recordings-v-augusto.md).
 <!-- markdownlint-disable-next-line MD013 -->
 - [MDY Industries, LLC v. Blizzard Entertainment, Inc.](../cases/mdy-v-blizzard.md).
 <!-- markdownlint-disable-next-line MD013 -->

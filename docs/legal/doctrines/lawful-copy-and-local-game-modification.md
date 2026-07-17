@@ -42,6 +42,13 @@ restricted transfer, and imposed notable use restrictions. Physical possession,
 a purchase receipt, payment, and the word `license` are therefore relevant but
 not independently conclusive.
 
+*UMG Recordings, Inc. v. Augusto* treated unsolicited promotional CDs as owned
+copies where recipients had not requested or assented to the shipments, the
+sender did not track or require return of the copies, and federal
+unordered-merchandise law allowed disposal. That physical-copy result does not
+extend to ordered software, retained duplicates, extracted content, or digital
+transfers that create another copy.
+
 *Wall Data Inc. v. Los Angeles County Sheriff's Department* adds a copy-count
 boundary. Installing complete software copies on more computers than a
 per-device license authorized was infringement even though access controls
@@ -132,6 +139,7 @@ reverse engineering as machine maintenance.
 <!-- markdownlint-disable-next-line MD013 -->
 - [Storage Technology Corp. v. Custom Hardware Engineering & Consulting, Inc.](../cases/storage-technology-v-custom-hardware.md).
 - [Vernor v. Autodesk, Inc](../cases/vernor-v-autodesk.md).
+- [UMG Recordings, Inc. v. Augusto](../cases/umg-recordings-v-augusto.md).
 <!-- markdownlint-disable-next-line MD013 -->
 - [Wall Data Inc. v. Los Angeles County Sheriff's Department](../cases/wall-data-v-los-angeles-county-sheriff.md).
 <!-- markdownlint-disable-next-line MD013 -->

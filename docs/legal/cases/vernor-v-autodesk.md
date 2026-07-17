@@ -46,6 +46,12 @@ had to prove the asserted original license or absence of a sale. General
 licensing testimony and generic templates did not substitute for admissible
 transaction-specific agreements on that record.
 
+[*UMG Recordings, Inc. v. Augusto*](umg-recordings-v-augusto.md) distinguished
+*Vernor* when unsolicited promotional CDs were sent without prior request,
+assent, tracking, or a return obligation. The software-user considerations did
+not convert those recipients into licensees merely because restrictive wording
+appeared on the physical copies.
+
 The court distinguished [*Krause v. Titleserv, Inc.*](krause-v-titleserv.md)
 because that record had no written license agreement, the user had paid
 substantial consideration for programs developed for its sole benefit, and the
@@ -80,6 +86,7 @@ Section 1201 analysis.
   <https://cdn.ca9.uscourts.gov/datastore/opinions/2010/09/10/09-35969.pdf>
   (Accessed: 13 July 2026).
 - [Krause v. Titleserv, Inc](krause-v-titleserv.md).
+- [UMG Recordings, Inc. v. Augusto](umg-recordings-v-augusto.md).
 <!-- markdownlint-disable-next-line MD013 -->
 - [Wall Data Inc. v. Los Angeles County Sheriff's Department](wall-data-v-los-angeles-county-sheriff.md).
 - [17 U.S.C. § 109](../statutes/17-usc-109.md).

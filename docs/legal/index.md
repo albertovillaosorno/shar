@@ -96,6 +96,7 @@ may cite ADRs for technical facts, but ADRs are not legal authority.
 - [Specht v. Netscape Communications Corp](cases/specht-v-netscape.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Storage Technology Corp. v. Custom Hardware Engineering & Consulting, Inc](cases/storage-technology-v-custom-hardware.md)
+- [UMG Recordings, Inc. v. Augusto](cases/umg-recordings-v-augusto.md)
 - [Universal City Studios, Inc. v. Corley](cases/universal-v-corley.md)
 - [Vault Corp. v. Quaid Software Ltd.](cases/vault-v-quaid-software.md)
 - [Vernor v. Autodesk, Inc](cases/vernor-v-autodesk.md)
@@ -155,7 +156,7 @@ fact-specific result is not determined. Hosting, public access, noncommercial
 purpose, independent implementation, interoperability intent, or an accepted ADR
 does not determine a legal outcome by itself.
 
-- Active legal records: 69.
+- Active legal records: 70.
 - Review date: 2026-07-16.
 - Statutory currentness: the Office of the Law Revision Counsel classification
   tables were checked on 2026-07-14. The published 119th Congress tables cover
