@@ -50,42 +50,65 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to place one SHAR Blueprint member variable in a reviewed My
+Blueprint category or restore its default category.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Confirm the member variable exists with `list_variables`.
+- Capture its current value with `get_variable_category`.
+- Choose the exact category text, including any intended hierarchy separator.
+- Use an empty string only when resetting to the default category.
+- Define the inverse category and compile verification before mutation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "blueprint": {
+    "refPath": "/Game/SHAR_MCP_Validation/BP_MCP_Variables.BP_MCP_Variables"
+  },
+  "variable_name": "ValidationScore",
+  "category": "SHAR|Validation"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The new variable initially reported category `Default`. Setting
+`SHAR|Validation` returned `null`, and the category getter returned the exact
+new text. Passing an empty category also returned `null`; the getter then
+returned `Default`, restoring the observed initial state. Both the custom and
+reset states compiled successfully before variable removal.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Success returns `null`; use `get_variable_category` for verification.
+- In the validated actor Blueprint, the default getter value was `Default`.
+- An empty category resets the override rather than creating an empty UI group.
+- Category separators affect editor organization but not runtime semantics.
+- The operation applies to member variables, not function-local variables.
+- The operation changes unsaved state and needs separate compile and save
+  decisions.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

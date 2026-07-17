@@ -47,42 +47,65 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to remove one exact disposable or explicitly approved SHAR
+Blueprint member or function-local variable.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Confirm the exact variable exists with `list_variables`.
+- Capture category, replication, type, scope, and all graph references.
+- Omit `graph` for a member variable or provide the exact function graph for a
+  local variable.
+- Confirm the variable is disposable or has an approved reconstruction path.
+- Define the expected remaining variable list and compile check.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "blueprint": {
+    "refPath": "/Game/SHAR_MCP_Validation/BP_MCP_Variables.BP_MCP_Variables"
+  },
+  "name": "ValidationScore"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Before removal, the member list contained exactly `ValidationScore`, with its
+category and replication restored to defaults. Removal returned `null`.
+`list_variables` then returned an empty array, and strict Blueprint compilation
+succeeded. Deleting the disposable Blueprint and its virtual folder left no
+asset registry or filesystem residue.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Success returns `null`; verify exact absence with `list_variables`.
+- Removal can orphan graph nodes, defaults, bindings, or external assumptions.
+- Supplying `graph` targets a function-local variable instead of a member.
+- Capture type and metadata because this tool does not return reconstruction
+  data.
+- The operation is destructive within unsaved Blueprint state and needs a
+  separate save decision.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

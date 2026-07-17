@@ -51,42 +51,66 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to add one reviewed primitive or built-in struct variable to a
+SHAR Blueprint member set or function-local scope.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Supply an exact loaded Blueprint reference.
+- Confirm the variable name is absent with `list_variables`.
+- Choose a documented type name and optional container type exactly.
+- Omit `graph` for a member variable; provide an exact function graph for a
+  local variable.
+- Define variable removal and compile verification before a disposable call.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "blueprint": {
+    "refPath": "/Game/SHAR_MCP_Validation/BP_MCP_Variables.BP_MCP_Variables"
+  },
+  "name": "ValidationScore",
+  "type_name": "int"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The disposable actor Blueprint began with no member variables. Adding the
+`int` member returned `null`. An independent `list_variables` call then returned
+exactly `ValidationScore`. Category and replication reads reported the default
+states, later mutations compiled successfully, and removal restored the empty
+member-variable list before the asset was deleted without residue.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Success returns `null`; verify membership through `list_variables`.
+- Supported scalar and built-in struct names are schema-specific strings.
+- `MAP` uses a string key type according to the live tool contract.
+- Supplying `graph` changes the operation from member to local variable scope.
+- Object and arbitrary struct types use their dedicated capabilities.
+- The operation changes unsaved state and needs separate compile and save
+  decisions.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

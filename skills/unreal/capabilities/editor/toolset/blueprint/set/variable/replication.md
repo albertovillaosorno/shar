@@ -50,42 +50,65 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to configure one SHAR Blueprint member variable as not
+replicated, replicated, or RepNotify after networking intent is reviewed.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Confirm the member variable exists and is suitable for network replication.
+- Capture the current mode with `get_variable_replication`.
+- Choose exactly `None`, `Replicated`, or `RepNotify` from the live schema.
+- For `RepNotify`, define how the generated `OnRep_` function will be inspected.
+- Define the inverse mode and compile verification before mutation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "blueprint": {
+    "refPath": "/Game/SHAR_MCP_Validation/BP_MCP_Variables.BP_MCP_Variables"
+  },
+  "variable_name": "ValidationScore",
+  "replication": "Replicated"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The variable initially reported replication mode `None`. Setting
+`Replicated` returned `null`, and the replication getter returned exactly
+`Replicated`. Resetting the mode to `None` also returned `null`, and the getter
+restored the initial value. The Blueprint compiled with warnings treated as
+errors in both states before the variable was removed.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Success returns `null`; verify with `get_variable_replication`.
+- Replication mode alone does not prove actor replication or network behavior.
+- `RepNotify` can create an `OnRep_` function and needs separate graph checks.
+- Variable ownership, authority, update frequency, and serialization remain
+  project-level networking decisions.
+- The operation changes unsaved state and needs separate compile and save
+  decisions.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
