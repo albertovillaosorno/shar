@@ -47,42 +47,60 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to remove one disposable or explicitly approved SHAR
+Blueprint graph node after its connections and rollback requirements are known.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Confirm the node belongs to the intended graph and current task.
+- Inspect and remove or preserve every connection before deletion.
+- Capture the node type, position, and pins when rollback may be needed.
+- Define graph search, strict compilation, and asset cleanup after deletion.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "node": {
+    "refPath": "/Game/SHAR_MCP_Validation/BP_MCP_NodeLifecycle.BP_MCP_NodeLifecycle:EventGraph.K2Node_IfThenElse_1"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two disconnected Branch nodes were deleted in reverse creation order. Each
+call returned `null`. Strict Blueprint compilation succeeded afterward,
+`find_nodes` returned an empty list for the title `Branch`, and graph DSL showed
+only the default BeginPlay, actor-overlap, and Tick events. Deleting the bounded
+validation folder restored virtual and physical asset absence.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The tool has no structured return value and is destructive.
+- Delete or break graph connections deliberately before removing the node.
+- A stale nested node reference can fail after graph structure changes.
+- Verify absence with graph discovery and compile the Blueprint separately.
+- Delete only disposable nodes or nodes explicitly approved by the task.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

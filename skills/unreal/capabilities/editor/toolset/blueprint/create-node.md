@@ -47,42 +47,69 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to add one exact node type to a reviewed SHAR Blueprint graph
+when its native type ID has been discovered in the same live graph context.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Resolve the exact Blueprint and graph references in the current session.
+- Discover the node type with `find_node_types`; do not invent type IDs.
+- Capture the graph node inventory and choose an explicit initial position.
+- Define strict compilation, node inspection, deletion, and asset cleanup before
+  creating a disposable node.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "graph": {
+    "refPath": "/Game/SHAR_MCP_Validation/BP_MCP_NodeLifecycle.BP_MCP_NodeLifecycle:EventGraph"
+  },
+  "pos": {
+    "x": 160,
+    "y": 240
+  },
+  "type_id": "Utilities|FlowControl|Branch"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+`find_node_types` returned `Utilities|FlowControl|Branch` in the disposable
+actor Blueprint EventGraph. Two create calls returned distinct
+`K2Node_IfThenElse` references. `get_node_infos` reported the requested
+`(160, 240)` position, the Branch type ID, `execute` and `Condition` inputs,
+`then` and `else` outputs, and the default Boolean value `true`. The Blueprint
+compiled with warnings treated as errors.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Node type IDs are graph-context-sensitive and must come from live discovery.
+- The returned node reference is a session-sensitive nested object path.
+- `declaring_class` is optional and was omitted for the native Branch node.
+- Creating a node does not connect it, arrange it, compile the Blueprint, or
+  save the asset automatically.
+- Use `get_node_infos` rather than the transport result to verify type, pins,
+  and position.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
