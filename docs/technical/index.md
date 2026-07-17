@@ -94,6 +94,8 @@ proprietary external formats.
 - [Unreal configuration and asset validation](unreal/config-and-asset-validation.md)
 - [Unreal gameplay content catalog](unreal/gameplay-content-catalog.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Gameplay audio source, residency, mix, and environment runtime](unreal/gameplay-audio-source-residency-mix-and-environment-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [In-game HUD, pause, and transition runtime](unreal/in-game-hud-pause-and-transition-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [HUD feedback cue and presentation-primitives runtime](unreal/hud-feedback-cue-and-presentation-primitives-runtime.md)

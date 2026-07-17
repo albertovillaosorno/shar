@@ -25,6 +25,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Common UI navigation, menu, and modal runtime](common-ui-navigation-menu-and-modal-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md)
@@ -453,6 +455,59 @@ mission, application, save, or progression mutation directly.
 Simple animation playback uses the same request lifecycle. Intro, loop, and
 outro ranges have explicit markers, and completion is derived from the accepted
 player state rather than rendering or a guessed frame count.
+
+## Sequence audio groups
+
+A composite scene may reference one or more `FSharSequenceAudioGroupId` values.
+Each group declares:
+
+- stable group and revision identity;
+- sequence, scene, frontend gag, or cinematic ownership;
+- ordered or parallel source definitions;
+- required and optional audio bundles;
+- preload deadline and failure policy;
+- start marker, seek, loop, and completion behavior;
+- pause, continue, skip, stop, and release behavior;
+- dialogue, music, effects, ambience, and mix roles;
+- Sound Class, concurrency, submix, ducking, and listener policy;
+- terminal result and cleanup requirements; and
+- platform and culture variants.
+
+The group acquires residency through
+<!-- markdownlint-disable-next-line MD013 -->
+[Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
+and retains the accepted handles until the sequence reaches its declared
+terminal
+state.
+
+Loading, playback, stop, pause, continue, and release are separate typed
+transactions. A group cannot play before its owning presentation request and
+required assets are current. Stop and release are idempotent and invalidate late
+readiness or completion callbacks.
+
+Frontend gags, authored non-interactive scenes, character vignettes, and other
+registered composites resolve canonical definitions rather than a fixed source
+enum or hard-coded gag array. Missing optional audio may use the declared
+fallback;
+missing required audio fails preparation before visual playback commits.
+
+A sequence-audio completion may satisfy the owning presentation barrier. It
+cannot
+advance gameplay, acknowledge a mission or interaction, close a frontend route,
+or infer that the visual sequence completed.
+
+## Sequence audio pause and skip
+
+Pause, application focus loss, output-device change, cinematic interruption, and
+user skip preserve one correlated group revision. The definition declares
+whether
+each source pauses, continues, ducks, stops, seeks on resume, or is replaced.
+
+Skip follows the same restoration transaction as normal completion: it stops or
+fades owned sources, releases ducking and mix leases, restores superseded music
+or
+ambience state, releases residency, and publishes one terminal result. A raw
+native stop callback cannot perform partial restoration.
 
 ## Registered transition composition
 

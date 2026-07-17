@@ -14,6 +14,8 @@
 - [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
 
 ## Purpose
 
@@ -200,13 +202,34 @@ a typed application-port result.
 
 ## Sound
 
-Impact sound requests include event identity, emitter identity, contact
-transform,
-severity, surface identities, concurrency group, and deduplication key.
+An accepted impact publishes one immutable `FSharCollisionAudioObservation`
+with:
 
-Repeated physics contacts are rate-limited by contact pair and response policy.
-The limiter cannot suppress a required domain event or exactly-once destruction
-result.
+- impact, source-body, target-body, emitter, and causation identities;
+- contact position, normal, relative velocity, impulse, and accepted severity;
+- source and target physical-material and collision-class identities;
+- collision-audio profile and canonical source-definition identity;
+- typed pitch, gain, filter, switch, and graph parameters;
+- positional-source, attenuation, concurrency, residency, and listener policy;
+- world, physics, definition, and request revisions; and
+- cooldown, duplicate-suppression, priority, and diagnostics evidence.
+
+Source selection, loading, positional playback, parameter updates, concurrency,
+voice pressure, and terminal results follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md).
+
+Repeated physics contacts are rate-limited by canonical contact pair, response
+policy, physics revision, and deterministic time window. Raw sound strings,
+resource hashes, player slots, callback pointers, and global random selection
+are
+prohibited.
+
+The audio adapter cannot change the observed surfaces or severity, apply damage
+or
+impulse, commit breakage, raise notoriety, complete a mission, or write
+persistence. The limiter cannot suppress a required domain event or exactly-once
+destruction result, and audio completion cannot acknowledge either result.
 
 ## Effects and decals
 

@@ -31,6 +31,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native asset translation without copy-paste](../../adr/pipeline/unreal/native-asset-translation-and-no-copy-paste.md)
 
 ## Purpose
@@ -290,6 +292,19 @@ assets, source definitions, attachment classes, split-screen policy, focus,
 occlusion, reverb, virtualization, streaming, and platform fallback for
 <!-- markdownlint-disable-next-line MD013 -->
 [Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md).
+
+Gameplay-audio import also publishes canonical generic source definitions, typed
+parameters, deterministic optional-playback policy, collision-audio profiles,
+Sound Classes, Sound Mixes, submixes, buses, modulation, concurrency, residency
+scopes, primary-asset bundles, environment definitions, Audio Volume bindings,
+reverb effects, platform fallbacks, and diagnostic metadata for
+<!-- markdownlint-disable-next-line MD013 -->
+[Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md).
+
+Fixed source arrays, cluster ordinals, maximum-resource constants, raw resource
+keys, namespace membership, player slots, and platform reverb-controller classes
+remain source provenance only. Packaged runtime consumes validated native assets
+and immutable definitions.
 
 JSON import creates typed data assets, tables, registries, StateTree bindings,
 or

@@ -67,6 +67,15 @@ attachments, world ownership, listener policy, virtualization, and teardown are
 revisioned. A late source or listener callback cannot mutate a released world,
 replacement Actor, different local player, or superseding playback request.
 
+Generic gameplay sources use canonical definitions, typed parameters, bounded
+leases, deterministic optional-playback policy, and exactly-once terminal
+results.
+Audio assets are retained through scope-owned Asset Manager bundles rather than
+fixed sound clusters or namespace arrays. Sound Classes, Sound Mixes, submixes,
+buses, modulation, Audio Volumes, and native environment effects own routing,
+ducking, reverb, and platform mixing. Process-global generic players,
+platform-specific reverb controllers, and mutable debug pages are excluded.
+
 Audio quality settings may change codec, sample rate, voice count, streaming,
 virtualization, attenuation implementation, effect cost, and optional cosmetic
 layers within accepted policy. They cannot remove required dialogue, alter line
@@ -89,6 +98,11 @@ canonical event results.
 - Local players and frontend presentation use explicit listener policy.
 - Positional audio follows native attenuation, spatialization, occlusion, and
   audio-component lifetime.
+- Generic sources, residency bundles, Sound Classes, mixes, submixes, buses,
+  environmental effects, and capacity results are typed, revisioned, and
+  scope-owned.
+- Required active audio cannot be evicted silently, and optional playback cannot
+  depend on global random or first-free-slot order.
 - World unload, feature removal, vehicle replacement, player removal, and locale
   change cancel or migrate only explicitly owned playback state.
 - Headless servers execute semantic gameplay without requiring an audio device.
@@ -105,9 +119,14 @@ canonical event results.
 - Hard-coding player zero as the only listener for every mode and local player.
 - Clamping one global listener to an arbitrary participant without declared
   split-screen policy.
-- Fixed arrays of engine, skid, horn, damage, overlay, backup, or door players
-  as
-  durable channel identity.
+- Fixed arrays of engine, skid, horn, damage, overlay, backup, door, traffic,
+  platform, animated-object, hazard, or generic players as durable identity.
+- Fixed-size sound clusters, ordinal cluster names, raw resource hashes, and
+  namespace pointers as residency authority.
+- Separate platform reverb controllers and manually serviced effect fades as
+  semantic environment state.
+- Mutable debug pages that can force playback, retain resources, or change
+  mixes.
 - Vehicle-audio code mutating gear, speed, damage, terrain, or mission state.
 - Positional sources retaining raw Actor or camera pointers across world unload.
 - Graphics or mobile presets dropping required dialogue or changing line choice.

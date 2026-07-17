@@ -1,7 +1,7 @@
 # Developer command and diagnostic runtime
 
 - Status: Active
-- Last reviewed: 2026-07-14
+- Last reviewed: 2026-07-16
 
 ## Governing decisions
 
@@ -12,6 +12,8 @@
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Validated game-feature mod overlays](../../adr/unreal/runtime/validated-game-feature-mod-overlays.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
 
 ## Purpose
 
@@ -390,6 +392,32 @@ Overlay requests are bounded by per-channel count, text length, lifetime, and
 memory budgets. Overflow drops lower-priority diagnostic presentation and
 records
 one structured finding. It never corrupts gameplay memory or blocks simulation.
+
+## Audio diagnostics
+
+Audio diagnostics consume immutable snapshots from
+<!-- markdownlint-disable-next-line MD013 -->
+[Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md).
+Registered views may show:
+
+- output-device and audio-engine revision;
+- active, queued, virtualized, paused, stopping, and failed sources;
+- semantic source, role, owner, world, local-player, and feature identities;
+- listener and nearby-source positions;
+- Sound Class, Sound Mix, submix, bus, send, modulation, and effect state;
+- residency scopes, bundles, retained handles, memory, and stream-cache demand;
+- concurrency, significance, voice, decoder, underrun, and starvation results;
+- Audio Volume, room, environment, reverb, and fade state; and
+- stale callback, fallback, cancellation, and teardown findings.
+
+Page identity and selection are stable definitions, not a fixed five-page array.
+Visible line count, screen position, text color, nearby-object radius, and dump
+format are development presentation settings.
+
+Audio diagnostics cannot force a source, alter a player, retain an asset, change
+a
+mix, move a listener, select an environment, clear a queue, or mutate gameplay.
+Shipping builds exclude or permanently disable mutable audio-debug controls.
 
 ## Screenshot and frame capture
 

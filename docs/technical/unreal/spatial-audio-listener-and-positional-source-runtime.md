@@ -14,6 +14,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Platform audio cooking and streaming](platform-audio-cooking-and-streaming.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md)
@@ -390,8 +392,72 @@ and projects it into a native audio component. It tracks:
 - cancellation and teardown evidence.
 
 The adapter does not poll every possible Actor through one process-global
-manager.
-World and feature subsystems own bounded source collections.
+manager. World and feature subsystems own bounded source collections.
+
+## Moving-source families
+
+Registered moving-source families include:
+
+- ambient and artificial-intelligence traffic vehicles;
+- mission, chase, emergency, or scripted vehicles;
+- the currently controlled avatar vehicle and its positional idle layer;
+- animated props and collision entities with optional joint attachment;
+- moving platforms and mechanical world objects;
+- flying hazards and stateful hostile actors;
+- vehicle horns, sirens, overlays, backup warnings, and explosion tails; and
+- namespaced Game Feature source families.
+
+Each family resolves a source definition, attachment class, listener policy,
+priority, concurrency, residency, and lifetime. Source strings and source-class
+branches are import evidence only.
+
+Traffic and artificial-intelligence vehicles publish immutable spawn, despawn,
+movement, horn, overlay, damage, and destruction observations. Presentation may
+start, replace, virtualize, or release a source lease, but it cannot spawn or
+remove the vehicle, choose its route, apply damage, or commit destruction.
+
+The avatar-vehicle positional layer follows the accepted controlled-vehicle and
+local-player revisions. Vehicle entry, exit, replacement, respawn, world travel,
+and local-player removal release or transfer the lease through an explicit
+transaction; no global event listener keeps the previous vehicle alive.
+
+Animated-object and platform sources bind to a validated Actor, component,
+socket,
+bone, or pose joint at commit. Missing authored settings produce a typed
+optional
+failure or owning-feature activation failure rather than a raw lookup warning.
+
+## Stateful hazard audio
+
+A stateful hazard may define an audio presentation graph with states such as
+idle,
+fade-in, charging, charged, attack, damage, destroyed, and fade-out. Each edge
+declares trigger, source and destination state, interruption, source asset,
+parameters, fade, looping, and terminal behavior.
+
+Native playback completion may advance only the accepted presentation edge. It
+cannot change hazard artificial intelligence, health, attack eligibility,
+destruction, reward, mission, or persistence state.
+
+Late completion from a replaced hazard, retired source lease, unloaded world, or
+removed feature is rejected by source, Actor, world, and feature revisions.
+
+## Capacity and source admission
+
+Moving-source capacity is governed by Sound Concurrency, significance, voice,
+stream, and project source-budget policy rather than fixed traffic, artificial-
+intelligence, platform, animated-object, or hazard arrays.
+
+Admission returns an explicit result such as admitted, virtualized, queued,
+rejected by concurrency, rejected by source budget, cancelled, or superseded.
+An optional source may be dropped deterministically; a required source cannot be
+silently lost because the first free array slot was unavailable.
+
+Horn cooldowns, traffic overlays, sirens, and timed source changes use typed
+timers
+or leases owned by the source instance. A process-global timer list cannot
+mutate
+a source after its owner or world has been released.
 
 ## Velocity and Doppler evidence
 

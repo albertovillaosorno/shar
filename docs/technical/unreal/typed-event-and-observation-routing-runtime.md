@@ -23,6 +23,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [HUD feedback cue and presentation-primitives runtime](hud-feedback-cue-and-presentation-primitives-runtime.md)
 
 ## Purpose
@@ -291,10 +293,26 @@ to
 <!-- markdownlint-disable-next-line MD013 -->
 [Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md).
 
+Generic gameplay-audio requests carry canonical source definition, semantic
+role,
+owner, causation, world, mode, local-player, feature, residency, mix,
+environment, priority, lifetime, and expected revisions to
+<!-- markdownlint-disable-next-line MD013 -->
+[Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md).
+
+Residency, source-readiness, queue admission, voice pressure, virtualization,
+mix,
+ducking, Audio Volume, reverb, pause, output-device, and terminal playback
+observations return typed immutable results. They never route raw resource
+names,
+cluster ordinals, player slots, namespace pointers, effect handles, or callback
+user data.
+
 Animation-sound and music-state observations resolve canonical sound, animation,
 positional policy, and music-state identities through the content catalog.
-Audio playback, subtitles, mouth animation, virtualization, or completion cannot
-publish a domain success or roll back an accepted gameplay fact.
+Audio playback, subtitles, mouth animation, residency, mix state, environmental
+effects, virtualization, or completion cannot publish a domain success or roll
+back an accepted gameplay fact.
 
 ## Lifecycle integration
 

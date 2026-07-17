@@ -12,6 +12,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native gameplay audio, dialogue, and listener boundary](../../adr/unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Latin American Spanish audio fallback](../../adr/audio/lmlm-spanish-latam-audio-fallback.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native cinematic package strategy](../../adr/rmv/unreal-native-cinematic-package.md)
@@ -142,10 +144,18 @@ transition scopes. Unrelated locales, characters, levels, and cinematics are not
 loaded eagerly. Locale changes invalidate only the affected presentation scopes
 and do not change canonical gameplay identity.
 
+Runtime scope definitions, primary-asset bundles, retained streamable handles,
+shared references, load transactions, source leases, Sound Class routing, mix
+state, environmental reverb, concurrency, pressure results, and release follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md).
+Target cooking remains authority over the representation placed in those
+bundles.
+
 Eviction cannot remove an asset required for an active dialogue line, cinematic,
-mission event, vehicle loop, or uninterruptible UI contract. A policy either
-pins
-that scope or fails activation before playback begins.
+mission event, music state, vehicle loop, environmental transition, or
+uninterruptible UI contract. A policy either pins that scope or fails activation
+before playback begins.
 
 ## Android lifecycle and audio focus
 

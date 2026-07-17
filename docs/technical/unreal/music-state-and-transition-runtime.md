@@ -1,7 +1,7 @@
 # Music state and transition runtime
 
 - Status: Active
-- Last reviewed: 2026-07-14
+- Last reviewed: 2026-07-16
 
 ## Governing decisions
 
@@ -9,6 +9,10 @@
 - [Event-driven music and ambience](../../adr/unreal/runtime/event-driven-music-and-ambience.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Platform-native audio cooking and streaming](../../adr/audio/platform-native-audio-cooking-and-streaming.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
@@ -121,6 +125,86 @@ The fixed event vocabulary includes:
 Every event contains a stable event identity, context identities, simulation or
 presentation timestamp, and source revision. Frame callbacks and audio-component
 completion are not semantic events.
+
+## Event binding and context resolution
+
+Imported event tables become typed bindings from semantic event, level profile,
+mission or race identity, mission phase, interior, application mode, controlled-
+vehicle state, notoriety, and feature revision to one music-state request.
+
+Level numbers, mission array positions, event-enum ordinals, formatted strings,
+source script indices, and current-region text are conversion evidence only. The
+packaged runtime never constructs event names from level or mission numbers and
+never indexes a composition by source table order.
+
+A binding may require one of the following contexts:
+
+- frontend, loading, gameplay, pause, store, movie, demonstration, or credits;
+- canonical level and protagonist profile;
+- free drive, mission, race, interior, pursuit, or world-event state;
+- mission and stage identity plus accepted phase;
+- race identity and accepted phase;
+- controlled-vehicle entry or exit revision;
+- interior identity and world-composition revision; or
+- namespaced feature state.
+
+Missing or ambiguous context returns a typed binding failure or deterministic
+fallback. It does not trigger an arbitrary default script index.
+
+## Music request transaction
+
+A semantic request carries request, event, state, profile, level, mission, race,
+interior, mode, world, feature, and music-catalog revisions plus priority,
+transition policy, cancellation token, and diagnostics correlation.
+
+The subsystem:
+
+1. validates the event and context against the active catalog;
+1. resolves the target state and required composition assets;
+1. acquires the required residency lease;
+1. prepares Quartz, MetaSound, source, and mix state;
+1. revalidates the active request;
+1. commits the transition at the declared quantization boundary;
+1. publishes immutable active-state evidence; and
+1. releases replaced preparation and residency state.
+
+A request cancelled during preparation cannot start after a later frontend,
+mission, race, interior, movie, or level transition.
+
+## Composition residency and preparation
+
+Music and ambience compositions use scope-owned bundles through
+<!-- markdownlint-disable-next-line MD013 -->
+[Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md).
+Required frontend, level, mission, race, interior, stinger, and credits assets
+are
+ready before the owning state commits.
+
+The music subsystem retains stable handles and semantic composition identity. It
+does not take ownership of a loader inventory object, raw composition pointer,
+search path, or source namespace.
+
+Preparation completion means that the accepted composition, graph, clock, loop,
+and mix are ready. It cannot complete loading mode, start gameplay, or
+acknowledge
+a mission result by itself.
+
+## Transition service and delayed starts
+
+Music transport advances from Quartz and native audio timing. Wall-clock
+millisecond deltas and one manually serviced performance object are not target
+architecture.
+
+A delayed post-mission, post-race, level, or stinger transition is represented
+by
+one revisioned barrier with an explicit terminal condition, timeout, fallback,
+and cancellation policy. A graph reaching an idle region may satisfy that
+presentation barrier, but it cannot create the underlying mission or race
+result.
+
+Equal events received in a short interval use typed duplicate-suppression and
+supersession rules. Static previous-event variables, raw locator pointers, and
+wall-clock coincidence cannot select music state.
 
 ## Level motif profiles
 

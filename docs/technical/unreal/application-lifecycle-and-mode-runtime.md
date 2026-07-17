@@ -13,6 +13,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native gameplay audio, dialogue, and listener boundary](../../adr/unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
@@ -547,14 +549,22 @@ A loading completion callback is accepted only for the current transition and
 audio revision. Late callbacks cannot activate audio in a replacement mode.
 
 Vehicle audio, dialogue queues, local-player listeners, positional sources,
-ducking, subtitles, and mouth presentation are owned by their dedicated runtime
-contracts. A mode transition freezes new affected requests, validates target
-audio
-and listener readiness, commits the new leases atomically, and then releases
-obsolete sources and callbacks.
+generic gameplay sources, music and sequence-audio groups, residency scopes,
+Sound Class and mix state, ducking, environmental reverb, subtitles, and mouth
+presentation are owned by their dedicated runtime contracts.
+
+A mode transition freezes new affected requests, validates target audio bundles,
+source definitions, mix, environment, music, sequence, and listener readiness,
+commits the new leases atomically, and then releases obsolete sources, bundles,
+handles, mixes, effects, and callbacks.
+
+Frontend, loading, gameplay, pause, movie, store, demonstration, focus-loss, and
+recovery modes request semantic mix and residency states. They do not manipulate
+native player arrays, sound clusters, submix effect chains, or platform reverb
+controllers directly.
 
 An audio component becoming audible or completing playback cannot commit a mode,
-mission, interaction, vehicle, or save transition.
+mission, interaction, vehicle, sequence, or save transition.
 
 ## World and feature lifecycle
 

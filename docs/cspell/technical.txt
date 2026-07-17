@@ -352,6 +352,7 @@ commandlets
 conin
 conout
 controlrig
+cooldowns
 convinit
 creatim
 cspell
@@ -579,6 +580,7 @@ oldsprops
 oldtprops
 oleclsid
 optionsmenu
+overdriven
 palf
 passwordhash
 pcg
@@ -659,6 +661,7 @@ shppict
 shprslt
 shptxt
 shuf
+sidechain
 sln
 slnx
 simulatable
@@ -668,6 +671,7 @@ soundfx
 soundwave
 spatialization
 spatialized
+spatializer
 spain
 splitn
 spt

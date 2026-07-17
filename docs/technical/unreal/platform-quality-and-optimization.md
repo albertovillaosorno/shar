@@ -25,6 +25,8 @@
 - [Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
 
 ## Purpose
 
@@ -147,13 +149,23 @@ within
 [Vehicle audio and avatar-sound runtime](vehicle-audio-and-avatar-sound-runtime.md),
 <!-- markdownlint-disable-next-line MD013 -->
 [Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md),
+<!-- markdownlint-disable-next-line MD013 -->
+[Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md),
 and
 <!-- markdownlint-disable-next-line MD013 -->
-[Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md).
+[Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md).
 
-It cannot remove required dialogue, change deterministic line selection, alter
-subtitles, reassign listener ownership, leak local-player audio, reinterpret
-vehicle gear or damage, or change gameplay results.
+Quality policy may also change optional generic effects, residency and stream-
+cache budgets, Sound Class loading behavior, mix implementation, submix effect
+cost, Audio Volume processing, reverb quality, and development diagnostics
+within
+validated target limits.
+
+It cannot remove required dialogue, music, sequence audio, or gameplay cues;
+change deterministic selection; alter subtitles; reassign listener ownership;
+leak local-player audio; reinterpret vehicle gear, collision, or damage;
+silently
+evict protected audio; change environment identity; or change gameplay results.
 
 A lower graphics preset may deliberately select lower visual settings. Outside
 that explicit preset selection, a performance change must not delete content,
