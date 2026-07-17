@@ -280,6 +280,44 @@ When capacity is exhausted, the definition chooses reject, reuse an eligible
 oldest cosmetic lease, select a fallback, or allocate within a bounded budget.
 The outcome is typed and observable.
 
+## Sparkle and pickup effects
+
+Sparkles for coins, gags, landing, dash, shock, leaves, paint chips, stars,
+smoke,
+and other accepted causes are ordinary typed VFX requests. A request contains:
+
+- effect definition and cause identities;
+- owner and source revisions;
+- world transform or attachment;
+- optional local-player and HUD projection;
+- surface, velocity, direction, size, lifetime, and parameter data;
+- deterministic variation seed;
+- world, feature, camera, and presentation revisions; and
+- cancellation policy.
+
+A sparkle definition selects a Niagara System, material, decal, instanced
+sprite,
+or other approved native representation. Source texture-array positions, one
+process-global random state, active-array indexes, and a singleton sparkle
+manager
+are provenance only.
+
+Pickup glints and collection sparkles consume the accepted coin state from
+<!-- markdownlint-disable-next-line MD013 -->
+[Progression, collectibles, cheats, and credits](progression-collectibles-and-cheats.md).
+They cannot spawn currency, change collection eligibility, move a coin, commit a
+ledger transaction, or advance a HUD counter.
+
+Random orientation, velocity, scale, texture variant, and timing use the
+request's
+stable declared seed. Same-frame update order or pool selection cannot change
+persistent or gameplay results.
+
+A pooled sparkle resets every transform, material, parameter, age, attachment,
+HUD projection, local-player filter, delegate, world, feature, and owner field.
+Capacity exhaustion drops or replaces only cosmetic presentation according to
+priority and records one typed result.
+
 ## Native scalability
 
 Every effect references a validated scalability policy covering:

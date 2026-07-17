@@ -1,7 +1,7 @@
 # Race route and opponent runtime
 
 - Status: Active
-- Last reviewed: 2026-07-15
+- Last reviewed: 2026-07-16
 
 ## Governing decisions
 
@@ -21,6 +21,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Local split-screen minigame session UI runtime](local-split-screen-minigame-session-ui-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Local supersprint race session runtime](local-supersprint-race-session-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [HUD, radar, camera, and navigation parity](../../adr/unreal/ui/hud-radar-camera-and-navigation.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Event-driven music and ambience](../../adr/unreal/runtime/event-driven-music-and-ambience.md)
@@ -35,6 +37,14 @@ mod overlays, validation, and verification.
 The mission runtime owns mission-session state and completion transactions. This
 specification owns the immutable race definition and the world-side observations
 consumed by that mission state.
+
+The built-in local supersprint mode consumes the same route, checkpoint, lap,
+position, timer, and finish semantics through
+<!-- markdownlint-disable-next-line MD013 -->
+[Local supersprint race session runtime](local-supersprint-race-session-runtime.md),
+which additionally owns local-player slots, controller assignments, vehicles,
+artificial intelligence, countdown, finish windows, results, replay, and
+cleanup.
 
 ## Ownership
 

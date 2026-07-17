@@ -1,7 +1,7 @@
 # Native asset load request and streaming runtime
 
 - Status: Active
-- Last reviewed: 2026-07-15
+- Last reviewed: 2026-07-16
 
 ## Governing decisions and specifications
 
@@ -15,6 +15,9 @@
 - [Native cooked-asset construction and registration runtime](native-cooked-asset-construction-and-registration-runtime.md)
 - [Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md)
 - [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
+- [Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md)
+- [Local supersprint race session runtime](local-supersprint-race-session-runtime.md)
+- [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
 - [Platform audio cooking and streaming](platform-audio-cooking-and-streaming.md)
 - [Platform cinematic media packaging](platform-cinematic-media-packaging.md)
 <!-- markdownlint-enable MD013 -->

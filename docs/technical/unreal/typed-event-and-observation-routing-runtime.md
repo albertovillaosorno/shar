@@ -27,6 +27,12 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Local supersprint race session runtime](local-supersprint-race-session-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [HUD feedback cue and presentation-primitives runtime](hud-feedback-cue-and-presentation-primitives-runtime.md)
 
 ## Purpose
@@ -319,6 +325,33 @@ positional policy, and music-state identities through the content catalog.
 Audio playback, subtitles, mouth animation, residency, mix state, environmental
 effects, virtualization, or completion cannot publish a domain success or roll
 back an accepted gameplay fact.
+
+State-prop requests and observations carry definition, placement, instance,
+state, transition, event, marker, callback, listener, world, feature, and
+persistence revisions to
+<!-- markdownlint-disable-next-line MD013 -->
+[Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md).
+They never route frame-controller pointers, state-array positions, raw event
+names, callback integers, or listener slots.
+
+Supersprint observations carry session, participant, local-player, controller,
+track, route, checkpoint, lap, position, clock, vehicle,
+artificial-intelligence,
+camera, result, world, and feature revisions to
+<!-- markdownlint-disable-next-line MD013 -->
+[Local supersprint race session runtime](local-supersprint-race-session-runtime.md).
+Rendered countdown text, camera completion, vehicle pointers, or
+controller-array
+order cannot publish race start or results.
+
+Avatar and character observations carry local-player, controller, avatar,
+character, movement, input, vehicle handoff, collision, support, artificial-
+intelligence, camera-target, prop, interaction, footprint, world, and feature
+revisions to
+<!-- markdownlint-disable-next-line MD013 -->
+[Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md).
+They never expose fixed manager slots, raw button callbacks, model-name buffers,
+object pointers, collision arrays, or footprint-pool positions.
 
 ## Lifecycle integration
 

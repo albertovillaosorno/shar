@@ -77,6 +77,28 @@ authority. Unreal's Audio Mixer, Audio Components, stream cache, Sound Classes,
 mixes, modulation, submixes, and native device lifecycle remain engine
 authority.
 
+State-prop import publishes canonical definitions, closed states, transitions,
+component-role visibility, native animation ranges, cycle and hold policy, event
+bindings, timing markers, callback schemas, persistence, and teardown. Parallel
+state arrays, frame-controller indexes, integer event and callback identifiers,
+object factories, and fixed listener slots remain provenance only.
+
+Character import publishes canonical character definitions, native mesh,
+skeleton, animation, movement, collision, material and variant references,
+Enhanced Input contexts, vehicle-handoff policy, artificial-intelligence and
+non-player-character definitions, camera targets, props, interactions, and
+footprint definitions. Raw model and animation name construction, fixed manager
+slots, controller integers, custom renderables, and footprint arrays are
+excluded.
+
+Supersprint import publishes canonical tracks, routes, checkpoints, directions,
+starting grids, lap and turbo policy, participant ranges, eligible character and
+vehicle identities, artificial-intelligence policy, cameras, traps, HUD and
+audio
+bindings, high-score schemas, and retained bundles. Static selection tables,
+controller arrays, platform button names, waypoint indexes, and direct renderer
+text objects are provenance only.
+
 Prepared renderables register through native Actor and component lifecycle and
 accepted render scopes. Import does not publish ordinal render layers, custom
 manager loops, manual pass lists, or a second runtime renderer.

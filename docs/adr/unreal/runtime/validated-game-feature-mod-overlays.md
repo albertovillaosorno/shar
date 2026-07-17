@@ -45,25 +45,35 @@ bundles, approved Sound Class branches, mixes, Control Buses, modulation,
 submix sends, source and submix effects, environment definitions, reverb
 effects,
 collision-audio profiles, dialogue lines, conversations, event bindings,
-selection groups, listener and positional-source definitions, subtitles, and
-diagnostic views.
+selection groups, listener and positional-source definitions, subtitles,
+state-prop definitions, states, transitions and markers, character definitions,
+movement profiles, input contexts, material variants, attached props, footprint
+definitions, supersprint tracks, routes, grids, rulesets,
+artificial-intelligence
+policies, camera and HUD definitions, high-score schemas, and diagnostic views.
 
 It cannot replace the engine frame loop, renderer, Audio Mixer, native audio
 device, master Sound Class or submix graph, platform backend, stream cache,
 protected residency scopes, platform mix or output policy, base VFX or audio
 definitions, base road graph, traffic authority, listener policy, dialogue usage
-outside its namespace, or unrelated route and event queries.
+outside its namespace, local-player identity, native input globally, Character
+Movement, base character or state-prop definitions, race clocks, checkpoint and
+result authority, persistent currency, or unrelated route and event queries.
 
 Feature removal cancels owned construction, render-scope, VFX, route, traffic,
 vehicle-audio, generic-audio, residency, mix, modulation, environment, dialogue,
-listener, and positional-source requests; tears down owned runtime objects,
-effects, Audio Components, playback, subtitles, mouth and ducking leases; clears
-submix, bus, and environment overrides; releases retained handles; unregisters
-namespaced constructors, assets, policies, audio definitions, event bindings,
-dialogue content, listeners, and graph overlays; rejects stale device, loading,
-fade, playback, and callback results; restores scoped base state; and proves
+listener, positional-source, state-prop transition, character construction,
+vehicle handoff, input, camera, prop, interaction, footprint, supersprint,
+checkpoint, result, coin-presentation, and sparkle requests; tears down owned
+runtime objects, effects, Audio Components, playback, subtitles, mouth, ducking,
+Actor, component, controller, vehicle, camera, HUD, route, and presentation
+leases; clears submix, bus, environment, input, and state projections; releases
+retained handles; unregisters namespaced constructors, assets, policies,
+definitions, bindings, dialogue content, listeners, tracks, and graph overlays;
+rejects stale device, loading, animation, marker, fade, playback, controller,
+movement, race, and callback results; restores scoped base state; and proves
 zero
-owned native and project audio resources as one transaction.
+owned native and project resources as one transaction.
 
 Native executable packages are not loaded by this decision. They remain inactive
 unless a separate accepted native-extension trust, ABI, signing, loading, and

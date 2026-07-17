@@ -29,6 +29,12 @@
 - [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Local supersprint race session runtime](local-supersprint-race-session-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
 
 ## Purpose
 
@@ -174,6 +180,33 @@ leak local-player audio; reinterpret vehicle gear, collision, or damage;
 silently
 evict protected audio; substitute a custom first-free player pool; change
 semantic environment identity; or change gameplay results.
+
+State-prop quality may reduce optional particles, secondary audio, distant
+animation evaluation, material cost, or decorative update frequency within
+<!-- markdownlint-disable-next-line MD013 -->
+[Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md).
+It cannot change state identity, transition order, marker semantics, component
+visibility required for interaction, collision, persistence, or required
+feedback.
+
+Playable-character quality may change level of detail, shadows, secondary
+materials, animation-budget participation, footprint density, footprint
+lifetime,
+optional VFX, and distant ambient representation within
+<!-- markdownlint-disable-next-line MD013 -->
+[Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md).
+It cannot change input meaning, movement physics, collision, vehicle handoff,
+local-player isolation, interaction eligibility, camera ownership, mission
+state,
+or required contact feedback.
+
+Supersprint quality may reduce optional crowd, particles, reflections, camera
+flourish, distant audio, and HUD decoration within
+<!-- markdownlint-disable-next-line MD013 -->
+[Local supersprint race session runtime](local-supersprint-race-session-runtime.md).
+It cannot change participant capacity, controller assignment, vehicle physics,
+route or checkpoint reachability, lap and clock semantics, artificial-
+intelligence rules, finish windows, high-score eligibility, or results.
 
 A lower graphics preset may deliberately select lower visual settings. Outside
 that explicit preset selection, a performance change must not delete content,

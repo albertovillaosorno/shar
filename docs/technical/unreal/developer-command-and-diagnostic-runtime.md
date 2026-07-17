@@ -16,6 +16,12 @@
 - [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Local supersprint race session runtime](local-supersprint-race-session-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
 
 ## Purpose
 
@@ -420,9 +426,33 @@ Visible line count, screen position, text color, nearby-object radius, and dump
 format are development presentation settings.
 
 Audio diagnostics cannot force a source, alter a player, retain an asset, change
-a
-mix, move a listener, select an environment, clear a queue, or mutate gameplay.
+a mix, move a listener, select an environment, clear a queue, or mutate
+gameplay.
 Shipping builds exclude or permanently disable mutable audio-debug controls.
+
+## State-prop, character, and supersprint diagnostics
+
+Registered read-only views may consume immutable snapshots from the authored
+state-prop, playable-character, and local supersprint contracts. They may show:
+
+- state-prop definitions, instances, active state, transitions, markers,
+  callbacks, listeners, component projection, persistence, and streaming;
+- avatar, local-player, controller, character, input-context, movement,
+  collision,
+  support, vehicle-handoff, camera-target, prop, interaction, and footprint
+  state;
+- supersprint session, participants, controller assignments, selections,
+  loading,
+  vehicles, artificial intelligence, route progress, checkpoints, laps, clocks,
+  positions, finish windows, results, high scores, and cleanup; and
+- coin and sparkle presentation capacity, ownership, and stale-callback
+  findings.
+
+These views cannot force state transitions, inject shipping input, possess or
+teleport characters, commit vehicle handoffs, advance checkpoints, consume
+turbo,
+finish races, write high scores, grant currency, create persistence, or retain
+presentation resources.
 
 ## Screenshot and frame capture
 

@@ -21,11 +21,16 @@ examples, or documentation.
   Sound Attenuation, MetaSounds, Sound Concurrency and voice-management policy,
   Sound Classes and Sound Mixes, Audio Modulation, submix graphs and effect
   chains, Audio Volumes, native audio stream caching, audio project settings and
-  quality controls, Chaos physics, collision and traces, native physics
-  components, ISM and HISM behavior, Chaos Visual Debugger, and Unreal Engine
-  5.8
-  Media Framework and Electra boundaries were verified. Accepted regional
-  agreement, bundled
+  quality controls, Enhanced Input actions, mapping contexts, modifiers,
+  triggers,
+  and per-local-player subsystems, `ACharacter` and
+  `UCharacterMovementComponent`, native movement modes and network movement
+  support, StateTree states, tasks, and transitions, Chaos physics, collision
+  and
+  traces, native physics components, ISM and HISM behavior, Chaos Visual
+  Debugger,
+  and Unreal Engine 5.8 Media Framework and Electra boundaries were verified.
+  Accepted regional agreement, bundled
   notices, decoder availability, and external-service retention remain
   environment- or service-specific.
 - Counsel review: Not performed.
@@ -220,6 +225,25 @@ royalty or seat analysis.
   Available at:
   <!-- markdownlint-disable-next-line MD013 -->
   <https://dev.epicgames.com/documentation/en-us/unreal-engine/an-overview-of-audio-stream-caching-in-unreal-engine>
+  (Accessed: 16 July 2026).
+- Epic Games (2026) *Enhanced Input in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/enhanced-input-in-unreal-engine>
+  (Accessed: 16 July 2026).
+- Epic Games (2026) *Networked Movement in the Character Movement Component for
+  Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/understanding-networked-movement-in-the-character-movement-component-for-unreal-engine>
+  (Accessed: 16 July 2026).
+- Epic Games (2026) *UCharacterMovementComponent in Unreal Engine 5.8*.
+  Available
+  at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Runtime/Engine/UCharacterMovementComponent>
+  (Accessed: 16 July 2026).
+- Epic Games (2026) *Overview of StateTree in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/overview-of-state-tree-in-unreal-engine>
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Physics in Unreal Engine 5.8*. Available at:
   <!-- markdownlint-disable-next-line MD013 -->

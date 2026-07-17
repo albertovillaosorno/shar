@@ -563,6 +563,7 @@ nonesttables
 nonshppict
 noprint
 nosound
+npc
 ntsc
 ntscf
 nul
@@ -684,6 +685,7 @@ submix
 submixes
 subvolume
 subvolumes
+supersprint
 svb
 tak
 testpaths

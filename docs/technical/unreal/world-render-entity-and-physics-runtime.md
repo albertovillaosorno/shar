@@ -20,6 +20,10 @@
 - [Persistent world-object state
   runtime](persistent-world-object-state-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Mission world-entity and respawn runtime](mission-world-entity-and-respawn-runtime.md)
 - [Native asset load request and streaming
   runtime](native-asset-load-request-and-streaming-runtime.md)
@@ -439,6 +443,12 @@ Visibility, collision-body enablement, physical simulation, and animation are
 committed together or compensated together. A late animation, collision, event,
 or save callback cannot apply an older state to a replacement prop.
 
+Authored state definitions, animation ranges, finite cycles, marker callbacks,
+event bindings, listener leases, automatic transition proposals, persistence,
+and streaming teardown follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md).
+
 Stateful prop presentation cannot generate coins, rewards, progression, mission
 completion, or persistent destruction directly. Those effects require typed
 application transactions and exactly-once result identities.
@@ -710,8 +720,26 @@ A support snapshot contains:
 - confidence and fallback policy.
 
 Losing support may affect a typed gameplay or presentation state only through
-its
-own owner. It does not directly force the body into or out of simulation.
+its own owner. It does not directly force the body into or out of simulation.
+
+When a compatibility adapter genuinely requires a synthetic support plane, it
+uses a bounded `FSharSupportPlaneLease` rather than one manually owned object
+per
+entity. Each lease declares entity, body, support, world, feature, and query
+revisions; plane transform and extent; collision profile; enablement; lifetime;
+and cancellation.
+
+The pool returns an explicit capacity result, resets all native body and
+collision
+state before reuse, and rejects stale update, enable, disable, and free
+requests.
+`free_all` is permitted only for one owned world or adapter scope during
+teardown.
+Pool slots and generated numeric names are never support identity.
+
+Playable-character ground support and compatibility-plane use follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md).
 
 ## Forces and impulses
 

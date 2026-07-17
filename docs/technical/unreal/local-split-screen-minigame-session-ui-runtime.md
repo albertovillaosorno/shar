@@ -1,7 +1,7 @@
 # Local split-screen minigame session UI runtime
 
 - Status: Active
-- Last reviewed: 2026-07-15
+- Last reviewed: 2026-07-16
 
 ## Governing decisions and specifications
 
@@ -19,6 +19,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [In-game HUD, pause, and transition runtime](in-game-hud-pause-and-transition-runtime.md)
 - [Race route and opponent runtime](race-route-and-opponent-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Local supersprint race session runtime](local-supersprint-race-session-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Semantic input, device, and haptics runtime](semantic-input-device-and-haptics-runtime.md)
 - [Vehicle access and roster runtime](vehicle-access-and-roster-runtime.md)
@@ -387,6 +389,14 @@ or start race time.
 
 Participant ordering is deterministic by accepted local-player slot and stable
 participant identity, never by callback timing.
+
+The accepted request is the immutable handoff to
+<!-- markdownlint-disable-next-line MD013 -->
+[Local supersprint race session runtime](local-supersprint-race-session-runtime.md),
+which owns world preparation, vehicles, artificial intelligence, grid placement,
+gameplay countdown, checkpoints, laps, positions, finish windows, results,
+replay,
+and cleanup. UI widgets and rendered text remain presentation only.
 
 ## Loading transaction
 

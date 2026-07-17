@@ -73,6 +73,8 @@ proprietary external formats.
 <!-- markdownlint-disable-next-line MD013 -->
 - [Authored spatial placement and trigger runtime](unreal/authored-spatial-placement-and-trigger-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Authored state-prop animation and event runtime](unreal/authored-state-prop-animation-and-event-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Camera rig, preset, and arbitration runtime](unreal/camera-rig-preset-and-arbitration-runtime.md)
 - [Camera system runtime](unreal/camera-system-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -103,6 +105,8 @@ proprietary external formats.
 - [Legacy runtime identity normalization](unreal/legacy-runtime-identity-normalization.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Local split-screen minigame session UI runtime](unreal/local-split-screen-minigame-session-ui-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Local supersprint race session runtime](unreal/local-supersprint-race-session-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Memory ownership, budget, and diagnostics runtime](unreal/memory-ownership-budget-and-diagnostics-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -136,6 +140,8 @@ proprietary external formats.
 - [Pedestrian path runtime](unreal/pedestrian-path-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Persistent world-object state runtime](unreal/persistent-world-object-state-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Playable avatar, character controller, and footprint runtime](unreal/playable-avatar-character-controller-and-footprint-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Platform audio cooking and streaming](unreal/platform-audio-cooking-and-streaming.md)
 <!-- markdownlint-disable-next-line MD013 -->

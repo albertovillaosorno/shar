@@ -8,6 +8,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Mass Entity ambient population](../../adr/unreal/runtime/mass-entity-ambient-population.md)
 - [Pedestrian path runtime](pedestrian-path-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
 - [Presentation playback runtime](presentation-playback-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md)
@@ -335,8 +337,15 @@ placement row declaring one or more capabilities:
 - frontend idle presentation.
 
 A placement requiring stable interaction, mission, dialogue, cinematic, save, or
-driver ownership is actor-required. It is authored as an actor or promoted
-from a Mass entity before the owning transaction begins.
+driver ownership is actor-required. It is authored as an actor or promoted from
+a
+Mass entity before the owning transaction begins.
+
+Actor construction, character definitions, movement, artificial-intelligence and
+non-player-character controllers, collision, rendering, props, camera targets,
+and footprint presentation follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md).
 
 Promotion performs:
 

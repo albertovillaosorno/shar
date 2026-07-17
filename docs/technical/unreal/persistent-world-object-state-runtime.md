@@ -1,7 +1,7 @@
 # Persistent world-object state runtime
 
 - Status: Active
-- Last reviewed: 2026-07-15
+- Last reviewed: 2026-07-16
 
 ## Governing decisions
 
@@ -19,6 +19,8 @@
 - [Mission world-entity and respawn runtime](mission-world-entity-and-respawn-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md)
 
 ## Purpose
 
@@ -136,6 +138,13 @@ Presentation may have additional transient animation, debris, particle, sound,
 or physics state. Those values are rebuilt from the accepted persistent state
 and
 are not serialized unless a separate schema explicitly requires them.
+
+The native projection of accepted state into animation ranges, component
+visibility, collision, events, timing markers, callbacks, listeners, and
+automatic transition proposals follows
+[Authored state-prop animation and event
+runtime](authored-state-prop-animation-and-event-runtime.md). Persistent state
+remains authority over durable meaning.
 
 ## Mutation transaction
 

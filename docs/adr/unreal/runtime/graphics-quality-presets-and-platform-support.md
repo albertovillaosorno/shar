@@ -116,6 +116,18 @@ reassign listener ownership; leak local-player audio; silently evict protected
 audio; change semantic environment identity; or reinterpret vehicle, collision,
 damage, or gameplay state.
 
+State-prop quality may reduce decorative animation evaluation, materials,
+particles, or secondary audio but cannot alter state, transition, marker,
+collision, interaction, or persistence semantics. Character quality may reduce
+level of detail, shadows, secondary materials, animation-budget participation,
+footprints, or optional effects but cannot alter input, movement, collision,
+vehicle handoff, camera ownership, local-player isolation, or mission state.
+Supersprint quality may reduce optional crowd, effects, reflections, camera
+flourish, distant audio, and HUD decoration but cannot alter participant count,
+controller assignment, vehicle physics, route and checkpoint semantics, clocks,
+artificial-intelligence rules, finish windows, high-score eligibility, or
+results.
+
 Road meshes, ambient traffic density, and diagnostics may scale, but canonical
 road, lane, intersection, legal-movement, traffic-control, and
 route-connectivity

@@ -24,6 +24,12 @@
 - [Frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Local split-screen minigame session UI runtime](local-split-screen-minigame-session-ui-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Local supersprint race session runtime](local-supersprint-race-session-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md)
 
 ## Purpose
 
@@ -407,6 +413,15 @@ lifecycle lease set includes:
 - persistent-world state projection; and
 - save-boundary and checkpoint observations.
 
+Playable avatar, character construction, input contexts, movement, artificial-
+intelligence and non-player-character control, vehicle handoffs, camera targets,
+props, and footprints follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md).
+Authored state-prop projection and callback lifecycle follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md).
+
 Subsystem updates follow native engine tick groups and explicit dependencies.
 Application mode does not manually call every gameplay manager in one arbitrary
 order. Presentation may continue during selected partial-pause states, but it
@@ -518,9 +533,15 @@ Historical platform-specific context variants do not create different gameplay
 rules. Platform presentation and input adapters remain separate.
 
 The complete built-in lobby, join, controller, character, vehicle, readiness,
-countdown, per-player HUD, pause, summary, replay, and teardown behavior follows
+countdown, per-player HUD, pause, summary, replay, and teardown presentation
+follows
 <!-- markdownlint-disable-next-line MD013 -->
 [Local split-screen minigame session UI runtime](local-split-screen-minigame-session-ui-runtime.md).
+World preparation, vehicles, artificial intelligence, gameplay countdown,
+checkpoints, laps, positions, finish windows, results, high scores, replay, and
+cleanup follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Local supersprint race session runtime](local-supersprint-race-session-runtime.md).
 That same-device transient session remains separate from mod-owned network
 multiplayer and cannot become campaign progression authority implicitly.
 

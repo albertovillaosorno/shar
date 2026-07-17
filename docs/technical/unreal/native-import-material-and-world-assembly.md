@@ -35,6 +35,12 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Local supersprint race session runtime](local-supersprint-race-session-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native asset translation without copy-paste](../../adr/pipeline/unreal/native-asset-translation-and-no-copy-paste.md)
 
 ## Purpose
@@ -318,6 +324,33 @@ validated for
 [Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md).
 Packaged runtime consumes native assets and immutable definitions rather than a
 translated custom renderer.
+
+State-prop import converts source states, transitions, visibility, animation
+ranges, finite cycles, holds, event bindings, timing callbacks, component roles,
+and initial-state policy into immutable definitions for
+<!-- markdownlint-disable-next-line MD013 -->
+[Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md).
+Source parallel arrays, frame-controller positions, event integers, callback
+integers, object factories, and listener slots remain provenance only.
+
+Character import publishes canonical character definitions, native skeleton and
+animation references, movement profiles, collision, materials, variants, vehicle
+handoff policy, artificial-intelligence definitions, input contexts, attached
+props, camera targets, and footprint definitions for
+<!-- markdownlint-disable-next-line MD013 -->
+[Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md).
+Runtime does not construct model, animation, material, or texture paths from raw
+character-name prefixes and suffixes.
+
+Supersprint import publishes canonical tracks, route and checkpoint references,
+starting grids, directions, lap and turbo policy, eligible characters and
+vehicles, artificial-intelligence policy, cameras, traps, HUD definitions,
+audio,
+high-score schemas, and retained bundles for
+<!-- markdownlint-disable-next-line MD013 -->
+[Local supersprint race session runtime](local-supersprint-race-session-runtime.md).
+Static character, vehicle, color, waypoint, and high-score arrays are provenance
+only.
 
 JSON import creates typed data assets, tables, registries, StateTree bindings,
 or

@@ -1,7 +1,7 @@
 # Progression, collectibles, cheats, and credits
 
 - Status: Active
-- Last reviewed: 2026-07-15
+- Last reviewed: 2026-07-16
 
 ## Governing decisions
 
@@ -30,6 +30,12 @@
 - [Frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [HUD feedback cue and presentation-primitives runtime](hud-feedback-cue-and-presentation-primitives-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Mission briefing, result, and replay UI runtime](mission-briefing-result-and-replay-ui-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -169,6 +175,70 @@ streaming cannot reset damage merely to duplicate an already accepted payout.
 Preset world trails and gag-generated one-time sources remain consumed in the
 save after collection. Transient pickups emitted by damage may despawn, but
 their source transaction cannot be accepted twice.
+
+## World coin pickup runtime
+
+A visible coin is one presentation instance for a canonical currency-source
+batch.
+`FSharWorldCoinInstance` contains:
+
+- coin instance and revision;
+- source batch and transaction identities;
+- placement identity when authored;
+- accepted amount;
+- spawn, collection, decay, and HUD-flight policy;
+- world, mission, feature, and persistence revisions;
+- native Actor or component weak identity; and
+- terminal state.
+
+The closed states are `inactive`, `spawning`, `available`, `collecting`,
+`flying_to_hud`, `collected`, `decaying`, `expired`, and `cancelled`. Pool
+slots,
+active-array positions, drawable pointers, and HUD coordinates are presentation
+details rather than identity.
+
+Spawn requests may describe an authored pickup, staged destructible payout,
+vehicle-destruction payout, recoverable loss, cheat presentation, or other
+registered currency source. The accepted source batch fixes total value before
+individual coins are presented. Randomized initial velocity, bounce, spin,
+pitch,
+and sparkle parameters use a stable declared seed and cannot alter total payout.
+
+Collection validates the current avatar or vehicle, pickup radius, world and
+coin
+revisions, source eligibility, duplicate-suppression key, and currency
+transaction.
+The currency ledger commits exactly once before collection presentation begins.
+Audio, sparkle, pop-up, HUD flight, or object deactivation cannot grant
+currency.
+
+Coins use native collision or overlap observations, movement or projectile
+components where appropriate, and bounded pooling. Physics drag, gravity,
+bounce,
+ground hover, lifetime, decay, vehicle collection multiplier, visibility
+culling,
+and animation are authored policies with units and validation.
+
+A collected coin may animate toward one local player's HUD using a presentation
+lease. Split-screen projection, viewport coordinates, camera changes, pause,
+quality, and HUD teardown cannot change the accepted balance. If HUD
+presentation
+is unavailable, the ledger result remains valid and a terminal presentation
+finding is recorded.
+
+World unload, mission replacement, feature removal, source cancellation, or pool
+teardown cancels only presentation that has not committed a ledger result. A
+recoverable dropped-balance source retains its batch and expiration contract.
+Returning a pooled instance resets every transform, collision, movement,
+material,
+audio, sparkle, HUD, callback, and ownership field before reuse.
+
+Coin collection sounds follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md).
+Sparkles and collection effects follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md).
 
 ## Gag completion
 

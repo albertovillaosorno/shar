@@ -694,9 +694,51 @@ save-slot runtime. Settings include only supported project policy, such as:
 - platform-supported device preference.
 
 Settings are versioned, bounded, migrated, and recoverable. A raw property
-count,
-float-string table, or singleton config interface is not persistence
+count, float-string table, or singleton config interface is not persistence
 architecture.
+
+## Global tuning definitions
+
+`USharGlobalAudioTuningDefinition` contains stable, unit-labelled values for:
+
+- role defaults for master, effects, vehicle, music, dialogue, ambience, and
+  interface audio;
+- collision, footstep, skid, peel-out, and collection source bindings;
+- bounded pitch, trim, gain, filter, and variation ranges;
+- surface and physical-material routing;
+- ducking policies by semantic cause;
+- settings-preview definitions;
+- accessibility and dynamic-range policy;
+- target quality overrides; and
+- definition and migration revision.
+
+Source setter methods, mutable script-created global objects, raw clip-name
+strings, ordinal ducking matrices, and unlabelled scalar constants are import
+provenance only. Runtime consumes immutable validated definitions and current
+settings projections.
+
+Coin pitch or other repeated-pickup variation is derived from the canonical
+source definition, accepted collection sequence, and stable deterministic seed.
+It cannot use one process-global mutable pitch value whose update order changes
+audible results.
+
+## Game callback adapter
+
+A project callback adapter may translate a native ready or finished delegate
+into
+one typed game observation. It owns one correlation at a time and supports:
+
+- request cancellation before readiness;
+- owner cancellation before completion;
+- exactly-once ready delivery;
+- exactly-once terminal delivery;
+- release after terminal delivery; and
+- stale callback rejection after replacement or teardown.
+
+A completion check verifies request, playback, lease, owner, device, world,
+mode,
+feature, and callback revisions. Cancelling the game callback cannot leave the
+native delegate able to invoke released gameplay state.
 
 ## Mode and lifecycle integration
 
