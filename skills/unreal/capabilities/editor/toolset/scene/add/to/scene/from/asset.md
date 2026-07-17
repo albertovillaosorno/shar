@@ -47,42 +47,87 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to instantiate one reviewed SHAR asset as a scene actor for
+bounded placement, visual, collision, material, or import verification.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR editor world must be loaded and PIE must be stopped.
+- Resolve the exact asset path through the Asset Registry and confirm the
+  requested actor label is absent.
+- Capture the complete scene actor count and define the intended transform.
+- Decide explicitly whether parenting or ground snapping is required.
+- Retain the exact returned actor reference and define `remove_from_scene` as
+  cleanup before creating a disposable actor.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "asset_path": "/Engine/BasicShapes/Cube.Cube",
+  "name": "SHAR_MCP_ValidationCube",
+  "xform": {
+    "location": {
+      "x": 2468,
+      "y": 1357,
+      "z": 500
+    },
+    "rotation": {
+      "pitch": 0,
+      "yaw": 30,
+      "roll": 0
+    },
+    "scale": {
+      "x": 1.25,
+      "y": 1.25,
+      "z": 1.25
+    }
+  },
+  "snap_to_ground": false
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The pre-state contained 145 actors and no matching validation label. The call
+returned one exact `StaticMeshActor` reference. `find_actors` returned only that
+actor, the scene count became 146, and independent label and transform reads
+matched the request within floating-point normalization. The actor contained
+one `StaticMeshComponent`; a reflected property read returned
+`/Engine/BasicShapes/Cube.Cube` as its `staticMesh`. Removing the returned actor
+restored the count to 145 and left no matching label.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The validated case spawned an unparented static-mesh asset with ground
+  snapping disabled.
+- The returned actor class depends on the supplied asset type; do not assume
+  every asset produces a `StaticMeshActor`.
+- Parent-supplied transforms are parent-local, while unparented transforms are
+  world-space.
+- `snap_to_ground` can change the requested Z coordinate and requires a fresh
+  transform read.
+- Creation changes loaded level state and can persist if the level is saved.
+- Generated actor references in `/Temp` worlds are session-specific.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
