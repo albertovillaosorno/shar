@@ -54,7 +54,10 @@ A revision mismatch marks preserved guidance for human review.
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project and an active Content Browser must be available.
+- Resolve every package path through the Asset Registry before selection.
+- Capture both `GetSelectedAssets` and `GetContentBrowserPath` pre-state because
+  selection can change browser context even when completion is not reported.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
@@ -66,13 +69,28 @@ A revision mismatch marks preserved guidance for human review.
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Selecting the existing package
+`/BaseMaterial/Materials/Functions/MF_Rotate2D` timed out while waiting for the
+Content Browser to apply the selection. A fresh `GetSelectedAssets` call
+returned
+an empty array after cleanup, while `GetContentBrowserPath` showed that the
+browser had become active at `/BaseMaterial/Materials/Functions`. The attempted
+selection therefore did not provide a verified selected-asset postcondition and
+its validated argument placeholder remains intentionally unresolved.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- A timeout is ambiguous: the current call activated and navigated the Content
+  Browser even though it did not report selection completion.
+- Do not retry after timeout until `GetSelectedAssets` and
+  `GetContentBrowserPath` establish the current state.
+- Passing an empty array was used as cleanup and the final selected-assets read
+  was empty, but this session did not prove a successful non-empty selection.
+- The available toolset does not expose a capability that restores the absence
+  of an active Content Browser, so browser activation may remain transiently
+  visible after a failed call.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision

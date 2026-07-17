@@ -47,52 +47,63 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to place the active Content Browser at one canonical virtual
+folder before bounded SHAR asset discovery, inspection, selection, or visual
+capture.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-- An active Content Browser instance must already exist in the editor.
-- Capture its current virtual path with `GetContentBrowserPath`.
-- Use a virtual Content Browser folder, not a workstation filesystem path.
+- The canonical SHAR project must be open with an active Content Browser.
+- Capture the current virtual path with `GetContentBrowserPath` before changing
+  it.
+- Use an Unreal virtual folder such as `/Game`, not a workstation filesystem
+  path.
+- Define the exact restoration path before invocation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "path": "/Game"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-In the verified SHAR session, `GetContentBrowserPath` returned an empty
-string and navigation to `/BaseMaterial/Materials/Functions` failed closed.
-The native error reported that the browser remained at the empty path, so no
-editor state changed.
+Starting from `/BaseMaterial/Materials/Functions`, the call returned
+`returnValue: null` and a separate `GetContentBrowserPath` call returned
+`/Game`. A second mutation restored the captured path, and another independent
+read returned `/BaseMaterial/Materials/Functions`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-- The tool requires an active Content Browser; an open editor and ready MCP
-  endpoint are not sufficient.
-- When no active browser exists, the current implementation rejects the call
-  after confirming that the requested path was not applied.
-- Keep the validated argument placeholder until a session with an active
-  browser can navigate and then restore a captured pre-state.
+- The tool requires an active Content Browser; global editor and MCP readiness
+  alone are insufficient.
+- In a session without an active browser, navigation failed closed and reported
+  that the path remained empty.
+- The mutation changes transient editor navigation only; it does not create,
+  move, load, or save an asset.
+- The mutation response does not contain the applied path, so verify every call
+  with `GetContentBrowserPath`.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

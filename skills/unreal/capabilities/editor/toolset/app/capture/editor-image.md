@@ -47,42 +47,59 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to capture the complete SHAR Editor application for bounded
+visual verification when a viewport-only or asset-only image would omit
+required panels, dialogs, or other editor context.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project must be open in the intended interactive editor.
+- Arrange the editor windows and panels that must appear in the evidence image.
+- Use `CaptureViewport` or `CaptureAssetImage` when the whole application is
+  broader than the required evidence.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The call returned an object containing `mimeType: "image/png"` and base64
+`data`. Strict base64 decoding produced a 727,211-byte PNG with the canonical
+PNG signature and a valid IHDR declaring a 1280 by 688 image. A second capture
+also returned a non-empty PNG payload, proving that the result was not an empty
+transport envelope.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The image covers the entire editor application, not only the level viewport.
+- Dimensions and encoded size depend on the current window layout and visible
+  editor state; do not assert a stable byte hash across captures.
+- The returned base64 payload can be large, so summarize or decode it without
+  printing the full value into terminal logs.
+- A valid screenshot proves visible editor state only; use structured read tools
+  for asset identities, values, counts, and persistence.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
