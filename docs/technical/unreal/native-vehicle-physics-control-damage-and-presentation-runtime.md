@@ -29,6 +29,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Semantic input, device, and haptics runtime](semantic-input-device-and-haptics-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md)
@@ -706,6 +708,14 @@ Entering and exiting are atomic transactions across avatar, character, vehicle,
 controller, input, camera, collision, animation, and seat revisions. Vehicle
 physics cannot infer an occupant from a character pointer or seat transform, and
 occupant animation cannot commit possession.
+
+Vehicle height class, seat role, side, door capability, hardpoint transforms,
+occupancy, collision, motion, and world readiness are immutable inputs to
+<!-- markdownlint-disable-next-line MD013 -->
+[Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md).
+The vehicle accepts only revision-correlated phase observations and application
+commands; a door, seat, or attachment marker cannot mutate native vehicle state
+directly.
 
 Occupant displacement from collisions is derived from accepted vehicle movement
 and seat policy. It cannot directly edit a character pose or root transform from

@@ -27,6 +27,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Camera rig, preset, and arbitration runtime](camera-rig-preset-and-arbitration-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md)
@@ -524,6 +526,14 @@ and vehicle-side teardown follow
 <!-- markdownlint-disable-next-line MD013 -->
 [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
 Neither runtime may commit only its half of the handoff.
+
+Clip selection, seat and side variants, vehicle-height classes, door phases,
+composed and separate phase assets, root-motion or Motion Warping alignment,
+Montage Sections, typed markers, interruption, and animation teardown follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md).
+Animation may propose a correlated phase observation, but the avatar and vehicle
+application services commit seat attachment and control transfer atomically.
 
 ## Vehicle exit transaction
 

@@ -32,8 +32,10 @@ examples, or documentation.
   transmission, differential, asynchronous physics, vehicle animation, and
   vehicle setup boundaries, the experimental Chaos Modular Vehicles distinction,
   FBX animation import, Animation Sequence frame-range and Skeleton binding,
-  Animation Montage sections and slots, native physics components, ISM and HISM
-  behavior, Chaos Visual Debugger, and Unreal Engine 5.8 Media Framework and
+  Animation Blueprints, Animation Montage sections and slots, Sync Groups and
+  Sync Markers, root motion, Motion Warping, native physics components, ISM and
+  HISM behavior, Chaos Visual Debugger, and Unreal Engine 5.8 Media Framework
+  and
   Electra boundaries were verified.
   Accepted regional agreement, bundled
   notices, decoder availability, and external-service retention remain
@@ -268,6 +270,22 @@ royalty or seat analysis.
   <!-- markdownlint-disable-next-line MD013 -->
   <https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-montage-in-unreal-engine>
   (Accessed: 16 July 2026).
+- Epic Games (2026) *Animation Blueprints in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-blueprints-in-unreal-engine>
+  (Accessed: 17 July 2026).
+- Epic Games (2026) *Animation Sync Groups in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-sync-groups-in-unreal-engine>
+  (Accessed: 17 July 2026).
+- Epic Games (2026) *Root Motion in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/root-motion-in-unreal-engine>
+  (Accessed: 17 July 2026).
+- Epic Games (2026) *Motion Warping in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/motion-warping-in-unreal-engine>
+  (Accessed: 17 July 2026).
 - Epic Games (2026) *Chaos Vehicles in Unreal Engine 5.8*. Available at:
   <!-- markdownlint-disable-next-line MD013 -->
   <https://dev.epicgames.com/documentation/en-us/unreal-engine/chaos-vehicles>

@@ -12,6 +12,8 @@
 - [Native import, material rebuild, and world assembly](../../unreal/native-import-material-and-world-assembly.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Playable avatar, character controller, and footprint runtime](../../unreal/playable-avatar-character-controller-and-footprint-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Character animation clip catalog and vehicle-handoff choreography runtime](../../unreal/character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md)
 
 ## Purpose
 
@@ -164,6 +166,27 @@ entry and exit pose expectations. Validation may compare:
 
 A transition clip that cannot connect to its declared states fails validation or
 requires a separately authored blend policy.
+
+## Phased choreography timing
+
+Vehicle entry, vehicle exit, and other phased interactions may be represented by
+one composed clip or multiple phase clips. The canonical choreography records:
+
+- ordered semantic phases;
+- exact clip interval for every phase;
+- section and marker positions;
+- blend and overlap policy;
+- root-motion continuity;
+- door, hardpoint, threshold, seat, attachment, detachment, and control-transfer
+  marker timing;
+- interruption windows; and
+- composed-versus-phased equivalence tolerances.
+
+A source filename token such as all, driver, high, open, or close cannot define
+phase timing. The normalized catalog and native read-back own those semantics.
+Composed and phased variants must reach equivalent accepted gameplay state under
+<!-- markdownlint-disable-next-line MD013 -->
+[Character animation clip catalog and vehicle-handoff choreography runtime](../../unreal/character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md).
 
 ## Looping clips
 

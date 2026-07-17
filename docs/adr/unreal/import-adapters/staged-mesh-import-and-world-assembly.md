@@ -93,12 +93,20 @@ preferences, unreviewed names, source prose, hidden metadata, private paths,
 source scene text, or raw animation curves.
 
 Character import publishes canonical character definitions, native mesh,
-skeleton, animation, movement, collision, material and variant references,
-Enhanced Input contexts, vehicle-handoff policy, artificial-intelligence and
-non-player-character definitions, camera targets, props, interactions, and
-footprint definitions. Raw model and animation name construction, fixed manager
-slots, controller integers, custom renderables, and footprint arrays are
-excluded.
+Skeleton, Animation Sequences, Animation Blueprints, animation catalogs,
+Montages, Slots, Sections, sync groups, markers, curves, Pose Assets, track
+profiles, movement, collision, material and variant references, Enhanced Input
+contexts, typed vehicle-handoff choreographies, artificial-intelligence and non-
+player-character definitions, camera targets, props, interactions, and footprint
+definitions.
+
+Raw model and animation name construction, filename-selected variants, backup
+precedence, source curve arrays, embedded clip order, batch commands, animation-
+choice configuration syntax, fixed manager slots, controller integers, custom
+renderables, and footprint arrays are excluded. Animation-only scenes bind to
+one
+validated canonical rig and Skeleton; pose evidence and reduced-track variants
+require explicit catalog classifications.
 
 Vehicle import publishes fixed-topology Chaos vehicle definitions, native
 Skeletal Meshes, Physics Assets, Animation Blueprints, wheel definitions, engine

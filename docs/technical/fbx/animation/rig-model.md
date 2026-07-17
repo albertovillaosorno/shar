@@ -12,6 +12,8 @@
 - [Native import, material rebuild, and world assembly](../../unreal/native-import-material-and-world-assembly.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Playable avatar, character controller, and footprint runtime](../../unreal/playable-avatar-character-controller-and-footprint-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Character animation clip catalog and vehicle-handoff choreography runtime](../../unreal/character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md)
 - [Animation clip timing](clip-timing.md)
 
 ## Purpose
@@ -156,6 +158,31 @@ Track metadata records:
 
 Unknown, duplicate, orphan, or ambiguous tracks fail closed unless a versioned
 allowlist explicitly marks an optional source helper as ignored.
+
+## Track profiles and reduced variants
+
+A character animation catalog may declare multiple compatible track profiles:
+
+- full-body canonical animation;
+- verified constant-channel reduction;
+- additive or masked subset;
+- pose reference;
+- diagnostic comparison; or
+- another explicitly accepted profile.
+
+Each profile lists required, optional, intentionally omitted, and forbidden
+tracks plus expected root, motion, orientation, foot-plant, and approved curve
+roles. A scene with fewer channels is not accepted merely because it can be
+imported. Its reduced set must match one declared profile and preserve the
+target
+pose and motion within tolerance.
+
+Track-profile selection follows
+<!-- markdownlint-disable-next-line MD013 -->
+[Character animation clip catalog and vehicle-handoff choreography runtime](../../unreal/character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md).
+Filename tokens, scene size, source node count, or first-successful import
+cannot
+select a profile.
 
 ## Scale animation
 

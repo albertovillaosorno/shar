@@ -35,6 +35,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [HUD feedback cue and presentation-primitives runtime](hud-feedback-cue-and-presentation-primitives-runtime.md)
 
 ## Purpose
@@ -264,6 +266,32 @@ Initial families include:
 
 Each family owns its payload types. A vehicle collision payload is not reused as
 a camera-shake command merely because both contain a force value.
+
+## Character animation and handoff observations
+
+Character animation channels carry immutable catalog, clip, pose, montage,
+section, slot, sync-group, marker, curve, playback, character, controller,
+local-
+player, world, feature, and expected owner revisions from
+<!-- markdownlint-disable-next-line MD013 -->
+[Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md).
+
+Vehicle-handoff observations additionally carry transaction, phase, vehicle,
+seat, door, side, height class, occupant role, alignment, attachment,
+possession,
+input, camera, collision, and terminal-result identities.
+
+Animation Notifies and montage callbacks are normalized before publication. A
+marker is an observation such as foot contact, landing, action window, door
+contact, threshold traversal, occupant attachment readiness, seat pose, or
+section completion. It cannot attach an occupant, transfer control, apply
+damage,
+or complete a mission directly.
+
+Duplicate, stale, out-of-order, cancelled, or revision-mismatched markers are
+rejected by the owning adapter. Raw notify names, frame numbers, native montage
+pointers, source curve indexes, and untyped callback data never cross the domain
+boundary.
 
 ## Collision and force observations
 

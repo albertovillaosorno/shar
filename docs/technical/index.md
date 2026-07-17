@@ -75,6 +75,8 @@ proprietary external formats.
 <!-- markdownlint-disable-next-line MD013 -->
 - [Authored state-prop animation and event runtime](unreal/authored-state-prop-animation-and-event-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Character animation clip catalog and vehicle-handoff choreography runtime](unreal/character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Camera rig, preset, and arbitration runtime](unreal/camera-rig-preset-and-arbitration-runtime.md)
 - [Camera system runtime](unreal/camera-system-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->

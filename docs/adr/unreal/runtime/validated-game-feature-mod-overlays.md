@@ -48,9 +48,11 @@ collision-audio profiles, dialogue lines, conversations, event bindings,
 selection groups, listener and positional-source definitions, subtitles,
 state-prop definitions, states, transitions and markers, character definitions,
 movement profiles, input contexts, material variants, attached props, footprint
-definitions, supersprint tracks, routes, grids, rulesets,
-artificial-intelligence
-policies, vehicle definitions and variants, movement and wheel profiles,
+definitions, character animation catalogs, clips, poses, track profiles,
+Montages, Slots, Sections, sync groups, marker and curve schemas, dialogue
+gestures, vehicle-handoff choreographies, supersprint tracks, routes, grids,
+rulesets, artificial-intelligence policies, vehicle definitions and variants,
+movement and wheel profiles,
 powertrain, steering, brake, suspension, tire, damage, reset, parked, pursuit,
 husk, input, haptics, material, light, audio, VFX, camera and HUD definitions,
 high-score schemas, and diagnostic views.
@@ -61,13 +63,16 @@ protected residency scopes, platform mix or output policy, base VFX or audio
 definitions, base road graph, traffic authority, listener policy, dialogue usage
 outside its namespace, local-player identity, native input globally, Character
 Movement, Chaos, the native physics scene, protected base vehicles, base
-character or state-prop definitions, persistent vehicle roster, notoriety,
+character, character-animation catalog, rig, Skeleton, or state-prop
+definitions,
+persistent vehicle roster, notoriety,
 parking, pursuit, mission, race clocks, checkpoint and result authority,
 persistent currency, or unrelated route and event queries.
 
 Feature removal cancels owned construction, render-scope, VFX, route, traffic,
 vehicle-audio, generic-audio, residency, mix, modulation, environment, dialogue,
 listener, positional-source, state-prop transition, character construction,
+animation catalog, clip, pose, montage, marker, curve, playback, choreography,
 vehicle handoff, vehicle construction, control, artificial-intelligence,
 physics,
 route, parking, pursuit, husk, damage, reset, input, haptics, camera, prop,

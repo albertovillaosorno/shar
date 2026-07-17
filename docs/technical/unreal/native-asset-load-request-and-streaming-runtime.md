@@ -18,6 +18,7 @@
 - [Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md)
 - [Local supersprint race session runtime](local-supersprint-race-session-runtime.md)
 - [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
+- [Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md)
 - [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 - [Platform audio cooking and streaming](platform-audio-cooking-and-streaming.md)
 - [Platform cinematic media packaging](platform-cinematic-media-packaging.md)
@@ -376,9 +377,19 @@ Choreography source is parsed during import into typed native definitions. Every
 retained action resolves to a closed handler, asset identity, bounds, ownership,
 and verification rule.
 
+Character animation loading resolves one catalog revision and declared bundles
+for Skeleton, Animation Blueprint, Animation Sequences, Montages, Pose Assets,
+markers, curves, locomotion, actions, dialogue gestures, and vehicle-handoff
+variants under
+<!-- markdownlint-disable-next-line MD013 -->
+[Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md).
+A handoff cannot begin until its required character, vehicle, seat, door, phase,
+and fallback assets share one accepted request revision.
+
 Runtime loading of arbitrary text followed by console or choreography evaluation
-is forbidden. Development text scripts follow the restricted developer-command
-contract and cannot ship as implicit gameplay code.
+is forbidden. Historical batch commands and animation-choice configuration are
+import evidence only. Development text scripts follow the restricted developer-
+command contract and cannot ship as implicit gameplay code.
 
 ## User interface and icons
 

@@ -41,6 +41,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md)
@@ -352,11 +354,16 @@ through
 <!-- markdownlint-disable-next-line MD013 -->
 [Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md).
 Conversion records the exact character, Skeleton revision, source time unit,
-frame interval, animated track set, root policy, curves, clip category, and
-normalization recipe. It exports one bounded animation payload and imports one
-validated Animation Sequence against the declared native Skeleton. Source scene
-text, backup labels, editor metadata, private paths, unused nodes, and raw curve
-dumps never enter the public repository or packaged runtime.
+frame interval, animated track profile, root policy, curves, markers, clip role,
+pose purpose, variant predicates, choreography phases, and normalization recipe.
+It exports one bounded animation payload and imports one validated Animation
+Sequence against the declared native Skeleton. Catalog, Montage, Section, Slot,
+Sync Group, Pose Asset, and vehicle-handoff definitions are created only through
+<!-- markdownlint-disable-next-line MD013 -->
+[Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md).
+Source scene text, backup labels, editor metadata, private paths, unused nodes,
+raw curve dumps, historical batch commands, and animation-choice configuration
+syntax never enter the public repository or packaged runtime.
 
 Vehicle import publishes canonical fixed-topology Chaos vehicle definitions,
 Skeletal Meshes, Physics Assets, Animation Blueprints, wheel definitions, engine

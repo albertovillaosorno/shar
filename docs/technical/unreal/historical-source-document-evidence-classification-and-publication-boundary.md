@@ -25,6 +25,8 @@
 - [Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md)
 - [Animation clip timing](../fbx/animation/clip-timing.md)
 - [Animation rig model](../fbx/animation/rig-model.md)
 
@@ -244,6 +246,17 @@ Animation Blueprint, notify, curve, and metadata assets as required.
 The source scene text, source node names that are not canonical public
 identities, private paths, workspace metadata, editor preferences, unused nodes,
 backup labels, and comments are not published.
+
+Pose scenes, backup copies, reduced-track experiments, batch commands, and
+animation-choice or choreography configuration receive separate evidence
+classifications. They may establish pose purpose, chronological comparison,
+intentional channel reduction, conversion intent, rig roles, locomotion groups,
+blend policy, priorities, foot-plant intent, or vehicle-handoff variants only
+after normalization through
+<!-- markdownlint-disable-next-line MD013 -->
+[Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md).
+They are never executed, imported by line order, or treated as canonical merely
+because they accompanied animation scenes.
 
 ## Animation conversion contract
 
