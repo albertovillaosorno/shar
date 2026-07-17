@@ -60,42 +60,77 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to retarget one reviewed SHAR cast, call, event, or delegate
+node from an exact source class to an exact replacement class without deleting
+and rebuilding the node.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Resolve the exact Blueprint graph and node in the current editor session.
+- Confirm the node kind is supported by the live tool description.
+- Capture the original class as the exact inverse.
+- Verify class-dependent pins before mutation; do not rely only on the node type
+  ID.
+- Define strict compilation, reverse retargeting, and disposable-asset cleanup
+  before invocation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "new_class": {
+    "refPath": "/Script/Engine.Pawn"
+  },
+  "node": {
+    "refPath": "/Game/SHAR_MCP_Validation/BP_MCP_RetargetLifecycle.BP_MCP_RetargetLifecycle:EventGraph.K2Node_DynamicCast_0"
+  },
+  "old_class": {
+    "refPath": "/Script/Engine.Actor"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+A disposable `Utilities|Casting|CastToActor` node initially exposed an
+`AsActor` output with type `Actor Object Reference` and compiled strictly.
+Retargeting Actor to Pawn returned `null`; a fresh node read exposed `AsPawn`
+with type `Pawn Object Reference`, preserved position `(480, 240)`, and strict
+compilation passed. Reversing Pawn to Actor returned `null`; the `AsActor`
+output and Actor reference type were restored at the same position, and strict
+compilation passed again. Deleting the disposable validation folder removed all
+virtual and physical assets.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- `get_node_infos.type_id` remained `Utilities|Casting|CastToActor` after the
+  Actor-to-Pawn retarget and after compilation.
+- Verify the class-dependent pin name and type, not only the potentially stale
+  node type ID.
+- The supplied `old_class` must match the node's current underlying class.
+- Connected pins may become incompatible when source and replacement classes
+  expose different types or signatures.
+- Retarget all required nodes before compiling a duplicated Blueprint.
+- The operation has no structured return value and does not save automatically.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
