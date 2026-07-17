@@ -47,42 +47,66 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to remove one exact UI behavior component class from a reviewed
+SHAR widget after its properties and ordering dependencies are captured.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Resolve the exact component class from `GetWidgets`.
+- Capture the component instance, class, order, and any property dependencies.
+- Confirm the component is disposable or has an approved reconstruction path.
+- Define the expected remaining component order.
+- Compile and inspect the Widget Blueprint after removal.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "widgetBlueprint": {
+    "refPath": "/Game/SHAR_MCP_Validation/WBP_MCP_UIComponents.WBP_MCP_UIComponents"
+  },
+  "widgetName": "ActionButton",
+  "componentClass": {
+    "refPath": "/Script/UMG.ScaleBoxComponent"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Removing `ScaleBoxComponent` returned `true` and left only
+`MouseHoverComponent`. Removing `MouseHoverComponent` returned `true` and left
+an empty component array. Independent `GetWidgets` reads confirmed both states.
+The empty-component Widget Blueprint compiled successfully, and deleting the
+entire disposable asset left no registry, folder, or filesystem residue.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Removal is class-based and can affect all assumptions tied to that class.
+- The boolean result requires an independent absence and remaining-order check.
+- Missing-class and duplicate-class behavior need separate verification.
+- Component properties and external references are not returned by removal.
+- The operation changes unsaved state and needs separate compile and save
+  decisions.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

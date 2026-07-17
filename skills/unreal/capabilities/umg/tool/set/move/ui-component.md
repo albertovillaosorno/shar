@@ -47,42 +47,71 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to place one SHAR UI behavior component before or after another
+component on the same widget.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Resolve both exact component classes from the widget's `uIComponents` array.
+- Capture the complete current component order.
+- Confirm both classes are attached to the same widget.
+- Choose before or after placement explicitly with `bMoveAfter`.
+- Define the inverse move or complete disposable cleanup before mutation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "widgetBlueprint": {
+    "refPath": "/Game/SHAR_MCP_Validation/WBP_MCP_UIComponents.WBP_MCP_UIComponents"
+  },
+  "widgetName": "ActionButton",
+  "componentClassToMove": {
+    "refPath": "/Script/UMG.ScaleBoxComponent"
+  },
+  "relativeToComponentClass": {
+    "refPath": "/Script/UMG.MouseHoverComponent"
+  },
+  "bMoveAfter": false
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The initial order was `MouseHoverComponent`, `ScaleBoxComponent`. Moving the
+scale component before the mouse component returned `true`, and `GetWidgets`
+reported the reversed order. Moving it after the mouse component also returned
+`true` and restored the original order. Component identities remained stable,
+and the reordered Widget Blueprint compiled successfully.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Movement is class-based; both component classes must already be attached.
+- The boolean result requires an independent full-order check.
+- Moving one class relative to itself or missing classes needs separate testing.
+- Reordering can affect runtime behavior when components process in display
+  order.
+- The operation changes unsaved state and needs separate compile and save
+  decisions.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

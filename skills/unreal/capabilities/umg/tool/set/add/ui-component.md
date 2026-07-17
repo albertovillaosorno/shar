@@ -47,42 +47,68 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to attach one reviewed native UI behavior component to an exact
+SHAR widget in a Widget Blueprint.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Resolve a real `UIComponent` subclass with `ObjectTools.search_subclasses`.
+- Use an exact loaded Widget Blueprint and widget instance name.
+- Capture the widget's current `uIComponents` array through `GetWidgets`.
+- Define component removal and compilation before a disposable mutation.
+- Treat component properties as a separate inspection and mutation stage.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "widgetBlueprint": {
+    "refPath": "/Game/SHAR_MCP_Validation/WBP_MCP_UIComponents.WBP_MCP_UIComponents"
+  },
+  "widgetName": "ActionButton",
+  "componentClass": {
+    "refPath": "/Script/UMG.MouseHoverComponent"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Class discovery returned seven loaded `UIComponent` classes, including native
+`MouseHoverComponent` and `ScaleBoxComponent`. The button initially had no UI
+components. Adding `MouseHoverComponent` returned one exact component reference.
+Adding `ScaleBoxComponent` appended a second reference. Independent `GetWidgets`
+reads reproduced the same class order, and the Widget Blueprint compiled.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Do not guess component classes; discover loaded subclasses first.
+- Addition is keyed by widget name and component class, not a component name.
+- The return value contains the complete component array for the widget.
+- A component instance lives in the Widget Blueprint extension container.
+- Duplicate-class behavior and component-specific properties need separate
+  verification.
+- The operation changes unsaved state and needs separate compile and save
+  decisions.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
