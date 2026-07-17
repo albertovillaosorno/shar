@@ -50,42 +50,68 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool after bounded SHAR widget-tree, property, binding, animation, or
+graph changes to prove that the Widget Blueprint remains compilable.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Supply an exact Widget Blueprint reference from current editor state.
+- Complete all intended widget-tree, binding, and graph mutations first.
+- Define independent parent, class, widget-tree, binding, or log checks for
+  the requested UI outcome.
+- Treat compilation and saving as separate operations.
+- Keep the exact asset deletion path available for disposable validation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "widgetBlueprint": {
+    "refPath": "/Game/SHAR_MCP_Validation/WBP_MCP_Validation.WBP_MCP_Validation"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The call returned `returnValue: true`. Independent Blueprint inspection
+confirmed `/Script/UMG.UserWidget` as the parent, while asset-class inspection
+returned the generated `WBP_MCP_Validation_C` class. Compilation created no
+content directory or `.uasset` file. The unsaved Widget Blueprint and its
+virtual folder were deleted afterward, leaving no registry or filesystem
+residue.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- `true` proves compile completion, not UI behavior, layout correctness,
+  binding semantics, animation playback, accessibility, or runtime creation.
+- Missing `BindWidget` fields, type mismatches, and graph errors can reject the
+  call.
+- Compilation does not save the asset; use the reviewed save capability
+  separately when persistence is required.
+- Inspect widget structure and editor logs when the task needs stronger evidence
+  than the boolean compile result.
+- The validated Blueprint had an empty widget tree, so populated-tree behavior
+  remains separately reviewable.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

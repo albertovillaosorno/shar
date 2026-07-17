@@ -48,42 +48,72 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to create one typed SHAR Widget Blueprint for reviewed HUD,
+menu, overlay, prompt, debug UI, or disposable widget-tree validation.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Resolve the exact `UUserWidget` parent class required by the UI contract.
+- Verify that the destination folder and asset path are absent with AssetTools.
+- Choose one exact asset name and define parent, generated-class, compile, and
+  existence checks.
+- Define deletion of the asset and any newly introduced empty virtual folder
+  before a disposable validation call.
+- Determine separately whether the Widget Blueprint must be saved to disk.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "folderPath": "/Game/SHAR_MCP_Validation",
+  "assetName": "WBP_MCP_Validation",
+  "parentClass": {
+    "refPath": "/Script/UMG.UserWidget"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The destination asset was absent before creation. The call returned the Widget
+Blueprint object reference, while `find_assets` returned its package path.
+`exists` returned `true`, `get_asset_class` returned
+`WBP_MCP_Validation_C`, and Blueprint parent inspection returned exactly
+`/Script/UMG.UserWidget`. UMG compilation returned `true`. Deleting the Widget
+Blueprint and its remaining virtual folder restored all existence checks. No
+content directory or `.uasset` file appeared during the unsaved test.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The validated Widget Blueprint was empty and remained unsaved in memory.
+- The returned object reference includes the object suffix, while AssetTools
+  searches and deletion use the package path.
+- `get_asset_class` reports the generated Widget Blueprint class name.
+- Creating an asset in a new path also creates a virtual Content Browser folder
+  that can remain after asset deletion.
+- Widget-tree authoring, binding validation, animation, compilation, runtime
+  creation, and saving require separate verification stages.
+- Persistent project widgets must not be deleted as cleanup unless they were
+  created by the same bounded disposable operation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
