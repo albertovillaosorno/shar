@@ -49,42 +49,74 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to assign or reassign the function implemented by one exact
+SHAR Create Event node after its delegate signature has been fixed by a live
+connection.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Discover and create `EventDispatchers|CreateEvent` in the exact graph.
+- Connect its `OutputDelegate` pin to a compatible delegate input first.
+- Create or identify functions whose signatures match that connected delegate.
+- Read the current assignment with `get_create_event_function`.
+- Define strict compilation, reassignment verification, and disposable-asset
+  cleanup before mutation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "node": {
+    "refPath": "/Game/SHAR_MCP_Validation/BP_MCP_CreateEventLifecycle.BP_MCP_CreateEventLifecycle:EventGraph.K2Node_CreateDelegate_1"
+  },
+  "function_name": "MCP_CreateEventTarget"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The Create Event node initially returned an empty function name. An assignment
+attempt before connecting `OutputDelegate` was rejected and left that value
+unchanged. The output was then connected to the `Delegate` input of
+`Utilities|Time|SetTimerbyEvent`. Assigning `MCP_CreateEventTarget` returned
+`null`; the exact getter returned that name and strict compilation passed.
+Reassigning `MCP_CreateEventAlternate` produced the same verified result.
+Passing an empty string was rejected, and the alternate assignment remained
+unchanged. Reassigning the first valid function restored
+`MCP_CreateEventTarget`, and strict compilation passed again. Deleting the
+complete disposable validation folder removed all virtual and physical assets.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The Create Event output must be connected before Unreal can infer a delegate
+  signature and validate function compatibility.
+- The requested function must match that delegate signature.
+- An empty string did not clear the assignment; it was rejected as incompatible.
+- The tool has no structured return value; verify with
+  `get_create_event_function`.
+- A rejected assignment can enumerate compatible function names, but that error
+  text is diagnostic rather than a stable discovery API.
+- Node references and compatibility can change after graph or signature edits.
+- The operation does not save the Blueprint automatically.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
