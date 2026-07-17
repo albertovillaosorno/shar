@@ -172,17 +172,28 @@ fn line_has_machine_path(
                     .match_indices(prefix)
                     .any(
                         |(index, _)| {
-                            index == 0
-                                || is_path_boundary(
-                                    normalized.as_bytes()[index - 1],
-                                )
+                            has_path_boundary(
+                                normalized.as_bytes(),
+                                index,
+                            )
                         },
                     )
             },
         )
 }
 
-fn is_path_boundary(byte: u8) -> bool {
+fn has_path_boundary(
+    bytes: &[u8],
+    index: usize,
+) -> bool {
+    index == 0
+        || index
+            .checked_sub(1)
+            .and_then(|previous| bytes.get(previous))
+            .is_some_and(|byte| is_path_boundary(*byte))
+}
+
+const fn is_path_boundary(byte: u8) -> bool {
     byte.is_ascii_whitespace()
         || matches!(
             byte,
