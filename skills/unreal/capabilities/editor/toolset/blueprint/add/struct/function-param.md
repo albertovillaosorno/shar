@@ -53,42 +53,69 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to add one exact script-struct input or output to a reviewed SHAR
+Blueprint function graph.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Supply an exact function or dispatcher graph reference.
+- Resolve the exact `ScriptStruct` and confirm the parameter name is absent.
+- Set `input_param` explicitly; output parameters are invalid on dispatchers.
+- Choose an optional container type exactly from the live schema.
+- Define parameter removal and compile verification before mutation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "graph": {
+    "refPath": "/Game/SHAR_MCP_Validation/BP_MCP_FunctionLifecycle.BP_MCP_FunctionLifecycle:ValidatePayload"
+  },
+  "param_name": "Hit",
+  "struct_type": {
+    "refPath": "/Script/Engine.HitResult"
+  },
+  "input_param": false
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Adding `Hit` with exact struct `/Script/Engine.HitResult` returned result-node
+PinID index `2`, direction `EGPD_Input`. The result-node read independently
+reported `Hit` after output `Success`. Strict compilation succeeded. Removing
+`Hit` returned `null`; after all removals, the function DSL contained an empty
+input signature and the graph still compiled before exact graph deletion.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Function outputs appear as input pins on the result node.
+- The struct identity must resolve to an exact `ScriptStruct`.
+- Node-info and graph DSL did not independently surface the struct type in the
+  verified session; retain the validated call evidence.
+- Output parameters are unsupported on event dispatchers.
+- Custom structs, containers, and schema evolution need separate verification.
+- The operation changes unsaved state and needs separate compile and save
+  decisions.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

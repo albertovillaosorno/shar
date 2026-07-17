@@ -49,42 +49,69 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to add one exact UObject-reference input or output to a reviewed
+SHAR Blueprint function graph.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Supply an exact function or dispatcher graph reference.
+- Resolve the exact object UClass and confirm the parameter name is absent.
+- Set `input_param` explicitly; output parameters are invalid on dispatchers.
+- Choose an optional container type exactly from the live schema.
+- Define parameter removal and compile verification before mutation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "graph": {
+    "refPath": "/Game/SHAR_MCP_Validation/BP_MCP_FunctionLifecycle.BP_MCP_FunctionLifecycle:ValidatePayload"
+  },
+  "param_name": "Mesh",
+  "object_class": {
+    "refPath": "/Script/Engine.StaticMesh"
+  },
+  "input_param": true
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Adding `Mesh` with exact class `/Script/Engine.StaticMesh` returned entry-node
+PinID index `2`, direction `EGPD_Output`. The entry-node read independently
+reported `Mesh` after `Count`, and the graph DSL included both input names in
+that order. Strict compilation succeeded. Removing `Mesh` returned `null`; the
+empty-signature DSL and later graph deletion confirmed complete cleanup.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Function inputs appear as output pins on the entry node.
+- The object class must be an exact loaded UClass identity.
+- Node-info and graph DSL did not independently surface the object class in the
+  verified session; do not infer a class from the parameter name alone.
+- Output parameters are unsupported on event dispatchers.
+- Container and soft-reference semantics need separate verification.
+- The operation changes unsaved state and needs separate compile and save
+  decisions.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

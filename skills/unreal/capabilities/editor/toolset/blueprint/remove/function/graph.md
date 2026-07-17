@@ -49,42 +49,65 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to remove one exact disposable or explicitly approved SHAR
+function graph or event dispatcher from a Blueprint.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Confirm the exact implemented function or dispatcher with `list_functions`
+  and `list_graphs`.
+- Capture its full signature, graph DSL, local variables, nodes, and call sites.
+- Confirm it is disposable or has an approved reconstruction path.
+- Close or avoid opening the Blueprint editor because removal can close it.
+- Define graph absence, function absence, failed lookup, and compile checks.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "blueprint": {
+    "refPath": "/Game/SHAR_MCP_Validation/BP_MCP_FunctionLifecycle.BP_MCP_FunctionLifecycle"
+  },
+  "graph_name": "ValidatePayload"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Before removal, graph and function reads both identified the implemented
+`ValidatePayload` function. The call returned `null`. `list_graphs` then
+returned only construction and event graphs, and `list_functions` no longer
+contained `ValidatePayload`. Exact `get_graph` lookup failed with a not-found
+error, strict compilation succeeded, and deleting the disposable Blueprint left
+no registry, folder, or filesystem residue.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Success returns `null`; require graph, function, and lookup absence checks.
+- Removal is destructive and can break call sites, interfaces, or overrides.
+- The tool can close the Blueprint editor window when the asset is open.
+- The validated disposable Blueprint was not open in an asset editor.
+- Capture the complete graph because this tool returns no reconstruction data.
+- Saving is separate; unsaved removal can still affect the loaded editor state.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

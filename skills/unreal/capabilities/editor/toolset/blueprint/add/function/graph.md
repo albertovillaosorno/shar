@@ -51,42 +51,69 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to add one reviewed SHAR Blueprint function graph before
+parameter, local-variable, or graph-logic authoring.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Supply an exact loaded Blueprint reference.
+- Confirm the requested function name is absent from `list_functions` and
+  `list_graphs`, unless idempotent reuse is explicitly intended.
+- Check inherited functions before using a name that could create an override.
+- Define parameter removal, graph removal, and compile verification before a
+  disposable mutation.
+- Keep the Blueprint editor closed when later graph removal must not close it.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "blueprint": {
+    "refPath": "/Game/SHAR_MCP_Validation/BP_MCP_FunctionLifecycle.BP_MCP_FunctionLifecycle"
+  },
+  "graph_name": "ValidatePayload"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The disposable actor Blueprint initially had only its construction and event
+graphs and no `ValidatePayload` implementation. The call returned the exact
+nested function-graph reference. `list_graphs` included that reference, and
+`list_functions` reported `ValidatePayload` with `bIsImplemented: true`.
+`get_graph` independently returned the same reference. The graph accepted four
+parameters and compiled successfully before exact removal.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- A matching existing graph is returned idempotently; that branch was not
+  tested.
+- A matching inherited overridable name can create an override instead of a new
+  unrelated function.
+- The returned graph is a nested object reference, not an asset package.
+- Graph references can become stale after structural edits or recompilation.
+- Function signature and body authoring require separate capabilities.
+- The operation changes unsaved state and needs separate compile and save
+  decisions.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

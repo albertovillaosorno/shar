@@ -49,42 +49,69 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to remove one exact input or output parameter from a disposable or
+explicitly approved SHAR function or dispatcher signature.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Supply the current exact function or dispatcher graph reference.
+- Capture the parameter name, caller-facing direction, type, container, and all
+  graph or call-site references.
+- Set `input_param` to the original caller-facing direction.
+- Confirm the parameter is disposable or has an approved reconstruction path.
+- Define node, DSL, and compile checks for the resulting signature.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "graph": {
+    "refPath": "/Game/SHAR_MCP_Validation/BP_MCP_FunctionLifecycle.BP_MCP_FunctionLifecycle:ValidatePayload"
+  },
+  "param_name": "Hit",
+  "input_param": false
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The four parameters were removed in reverse order using their original
+caller-facing directions. Every removal returned `null`. After removal, strict
+compilation succeeded and graph DSL changed from `(fn ValidatePayload (Count
+Mesh))` to `(fn ValidatePayload ())`. Entry and result node reads from the
+populated state had previously proved the exact parameter names, positions, and
+directions.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Success returns `null`; verify the resulting signature independently.
+- `input_param` describes the caller-facing direction, not the entry or result
+  node pin direction.
+- Graph DSL omitted output parameters in the verified session, so result-node
+  reads are required before destructive removal.
+- Removal can break function call nodes, overrides, or interface contracts.
+- Output removal is unsupported for event dispatchers.
+- The operation is destructive in unsaved state and needs a separate save
+  decision.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

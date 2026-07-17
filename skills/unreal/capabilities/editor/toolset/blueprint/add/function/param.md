@@ -53,42 +53,69 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to add one primitive or built-in struct input or output to a
+reviewed SHAR Blueprint function graph.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Supply an exact function or dispatcher graph reference.
+- Confirm the parameter name is absent from the intended signature.
+- Choose a supported type string and optional container type exactly.
+- Set `input_param` explicitly; output parameters are invalid on dispatchers.
+- Define parameter removal and compile verification before mutation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "graph": {
+    "refPath": "/Game/SHAR_MCP_Validation/BP_MCP_FunctionLifecycle.BP_MCP_FunctionLifecycle:ValidatePayload"
+  },
+  "param_name": "Count",
+  "param_type": "int",
+  "input_param": true
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Adding input `Count` returned entry-node PinID index `1`, direction
+`EGPD_Output`; adding output `Success` returned result-node PinID index `1`,
+direction `EGPD_Input`. Node-info reads reported `Count` on the function entry
+and `Success` on the return node. The graph DSL serialized the input signature
+as `(fn ValidatePayload (Count Mesh))`. Strict compilation succeeded before and
+after all parameters were removed.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Function inputs appear as output pins on the entry node; function outputs
+  appear as input pins on the result node.
+- Pin direction therefore describes graph flow, not caller-facing direction.
+- The verified node-info read exposed names, indices, and directions but not the
+  reflected type metadata; the exact type came from the validated call.
+- Graph DSL included input names but omitted output names and all types.
+- Container and dispatcher behavior need separate verification.
+- The operation changes unsaved state and needs separate compile and save
+  decisions.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
