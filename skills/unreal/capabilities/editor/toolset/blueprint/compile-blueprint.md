@@ -49,42 +49,68 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool after bounded SHAR Blueprint graph, variable, component, parent,
+or metadata changes to prove that the resulting Blueprint remains compilable.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Supply an exact Blueprint object reference from current editor state.
+- Complete all intended graph and metadata mutations before compiling.
+- Decide whether warnings must fail the operation and set `warnings_as_errors`
+  explicitly.
+- Define independent generated-class, spawn, log, or other postcompile checks.
+- Determine separately whether the compiled Blueprint must be saved.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "blueprint": {
+    "refPath": "/Game/SHAR_MCP_Validation/BP_MCP_Validation.BP_MCP_Validation"
+  },
+  "warnings_as_errors": true
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The call completed with `returnValue: null` and no error while
+`warnings_as_errors` was enabled. Asset class inspection returned the generated
+`BP_MCP_Validation_C` class. An independent asset-backed scene spawn produced a
+valid actor with the requested label and transform, proving that the compiled
+class was usable. Compilation alone created no content directory or `.uasset`
+file. The spawned actor, Blueprint asset, and virtual folder were then removed
+without residue.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- A successful compile returns `null`; it does not return diagnostics or a
+  generated-class reference.
+- With `warnings_as_errors: true`, warnings or errors can reject the call.
+- Compilation does not prove gameplay semantics, graph reachability, runtime
+  initialization, serialization, or save success.
+- Compilation did not save the unsaved Blueprint in the verified case.
+- Inspect editor logs or perform targeted graph and spawn checks when the task
+  requires stronger evidence than compile completion.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

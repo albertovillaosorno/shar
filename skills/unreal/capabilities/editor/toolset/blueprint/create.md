@@ -47,42 +47,75 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to create one typed SHAR Blueprint for reviewed actor, component,
+UI, gameplay, or disposable graph-validation work.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Resolve the exact native parent class and confirm it matches the requested
+  Blueprint contract.
+- Verify that the destination folder and asset path are absent with AssetTools.
+- Choose one exact asset name and define registry, generated-class, compile, and
+  existence checks.
+- Define deletion of the asset and any newly introduced empty virtual folder
+  before a disposable validation call.
+- Determine separately whether the Blueprint must be saved to disk.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "folder_path": "/Game/SHAR_MCP_Validation",
+  "asset_name": "BP_MCP_Validation",
+  "asset_type": {
+    "refPath": "/Script/Engine.Actor"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The destination asset and validation actor label were absent before creation.
+The call returned the Blueprint object reference, while `find_assets` returned
+its package path. `exists` returned `true`, and `get_asset_class` returned the
+generated class name `BP_MCP_Validation_C`. Compilation with warnings treated as
+errors succeeded. Spawning the compiled Blueprint increased the scene count from
+145 to 146 and produced the requested actor label and transform. Removing that
+actor, deleting the Blueprint, and deleting its virtual folder restored all
+counts and existence checks. No content directory or `.uasset` file appeared.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The validated Blueprint was actor-based and remained unsaved in memory.
+- The returned object reference includes the object suffix, while AssetTools
+  searches and deletion use the package path.
+- `get_asset_class` reports the generated Blueprint class name rather than the
+  generic `Blueprint` asset type.
+- Creating an asset in a new path also creates a virtual Content Browser folder
+  that can remain after asset deletion.
+- Graph authoring, compilation, saving, generated-class behavior, and actor
+  spawning require separate verification stages.
+- Persistent project Blueprints must not be deleted as cleanup unless they were
+  created by the same bounded disposable operation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
