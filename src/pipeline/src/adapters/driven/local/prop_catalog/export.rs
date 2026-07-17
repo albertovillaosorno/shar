@@ -327,19 +327,11 @@ fn write_unique_prop(
     asset_id: &str,
     output_root: &Path,
 ) -> Result<ExportedProp, PipelineError> {
-    let relative_dir = format!(
-        "{}/{asset_id}",
-        candidate
-            .family
-            .as_str()
+    let relative_dir = asset_relative_dir(
+        candidate.family,
+        asset_id,
     );
-    let directory = output_root
-        .join(
-            candidate
-                .family
-                .as_str(),
-        )
-        .join(asset_id);
+    let directory = output_root.join(&relative_dir);
     let texture_dir = directory.join("textures");
     fs::create_dir_all(&texture_dir).map_err(
         |error| {
@@ -398,6 +390,17 @@ fn write_unique_prop(
     )
 }
 
+/// Build one family-scoped relative asset directory.
+fn asset_relative_dir(
+    family: PropFamily,
+    asset_id: &str,
+) -> String {
+    format!(
+        "{}/{asset_id}",
+        family.as_str()
+    )
+}
+
 /// Build one readable portable non-world prop name.
 ///
 /// # Errors
@@ -413,7 +416,26 @@ fn asset_name(owner_name: &str) -> Result<String, PipelineError> {
 
 #[cfg(test)]
 mod tests {
-    use super::asset_name;
+    use super::{asset_name, asset_relative_dir};
+    use crate::adapters::driven::local::prop_catalog::model::PropFamily;
+
+    #[test]
+    fn prop_families_publish_below_stable_directories() {
+        assert_eq!(
+            asset_relative_dir(
+                PropFamily::Cards,
+                "card-idle",
+            ),
+            "cards/card-idle"
+        );
+        assert_eq!(
+            asset_relative_dir(
+                PropFamily::Missions,
+                "bombbarrel",
+            ),
+            "missions/bombbarrel"
+        );
+    }
 
     #[test]
     fn asset_name_is_readable_without_a_hash_suffix() {

@@ -583,10 +583,17 @@ fn write_world_prop(
 ///
 /// Returns an error when the source identity has no portable characters.
 fn portable_name(value: &str) -> Result<String, PipelineError> {
-    portable_asset_name(
+    let name = portable_asset_name(
         value,
         64,
         "world prop identity has no portable name",
+    )?;
+    Ok(
+        name.strip_suffix("-phonestop")
+            .map_or_else(
+                || name.clone(),
+                |level| format!("{level}-phone-booth"),
+            ),
     )
 }
 
@@ -599,6 +606,14 @@ mod tests {
         assert_eq!(
             portable_name("Cypress Tree!"),
             Ok("cypress-tree".to_owned())
+        );
+    }
+
+    #[test]
+    fn phone_stops_publish_as_readable_phone_booths() {
+        assert_eq!(
+            portable_name("l1_phonestop"),
+            Ok("l1-phone-booth".to_owned())
         );
     }
 }

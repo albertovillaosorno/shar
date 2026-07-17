@@ -143,6 +143,12 @@ fn discover_package(
                 .iter()
                 .cloned(),
         );
+        if !is_publishable_composite(
+            family,
+            &composite.name,
+        ) {
+            continue;
+        }
         let skeleton = skeletons
             .get(&composite.skeleton_name)
             .cloned();
@@ -196,6 +202,14 @@ fn discover_package(
     Ok(())
 }
 
+/// Decide whether one composite belongs in the public family catalog.
+fn is_publishable_composite(
+    family: PropFamily,
+    name: &str,
+) -> bool {
+    family != PropFamily::Cards || name.starts_with("card_")
+}
+
 /// Add real non-world prop meshes that are not owned by a composite.
 fn append_standalone_meshes(
     package: &PhaseThreePackageRow,
@@ -234,6 +248,34 @@ fn append_standalone_meshes(
                 animation_id: None,
                 route: PropRoute::Static,
             },
+        );
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_publishable_composite;
+    use crate::adapters::driven::local::prop_catalog::model::PropFamily;
+
+    #[test]
+    fn cards_exclude_phone_interaction_presentation() {
+        assert!(
+            is_publishable_composite(
+                PropFamily::Cards,
+                "card_idle"
+            )
+        );
+        assert!(
+            !is_publishable_composite(
+                PropFamily::Cards,
+                "phone_icon"
+            )
+        );
+        assert!(
+            is_publishable_composite(
+                PropFamily::Missions,
+                "phone_icon"
+            )
         );
     }
 }
