@@ -47,42 +47,66 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to replace the serialized default value of one exact SHAR
+Blueprint input data pin after its current PinID and value have been read.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Obtain the current PinID from `get_node_infos`.
+- Confirm the pin is an input data pin that supports a default value.
+- Read and retain the current serialized value with `get_pin_value`.
+- Define the exact replacement string, strict compile check, and inverse value
+  before mutation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "pin": {
+    "direction": "EGPD_Input",
+    "index_id": 1,
+    "node": {
+      "refPath": "/Game/SHAR_MCP_Validation/BP_MCP_PinLifecycle.BP_MCP_PinLifecycle:EventGraph.K2Node_IfThenElse_0"
+    }
+  },
+  "value": "false"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+A live Branch `Condition` input initially returned the serialized string
+`true`. The mutation returned `null`; `get_pin_value` then returned `false`, and
+the Blueprint compiled with warnings treated as errors. A second mutation
+restored `true`, a fresh read returned `true`, and the restored graph compiled
+strictly again.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Values are passed as serialized strings, not typed JSON primitives.
+- The tool has no structured return value; verify with `get_pin_value`.
+- Execution pins and output pins do not provide meaningful editable defaults.
+- PinIDs can become stale after graph edits or recompilation.
+- Use the retained pre-state value as the exact inverse.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

@@ -51,42 +51,60 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to append one supported dynamic pin to a reviewed SHAR
+Blueprint node, such as an additional Sequence execution output.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Discover and create a node type that supports dynamic pins.
+- Capture the current pin inventory with `get_node_infos`.
+- Confirm the operation is bounded to one exact node.
+- Retain the returned PinID and define `remove_node_pin` as the inverse.
+- Compile and inspect the node after the addition.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "node": {
+    "refPath": "/Game/SHAR_MCP_Validation/BP_MCP_PinLifecycle.BP_MCP_PinLifecycle:EventGraph.K2Node_ExecutionSequence_0"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The live-discovered Sequence node initially exposed `then_0` and `then_1`.
+The call returned an `EGPD_Output` PinID at index `2` for the same node.
+`get_node_infos` then reported `then_2` with index `2`, and the Blueprint
+compiled with warnings treated as errors while the added output existed.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Only node classes with supported dynamic-pin behavior accept this mutation.
+- The tool chooses the new pin semantics; no name or type argument is exposed.
+- The returned PinID is session-sensitive and must be retained immediately.
+- Verify the resulting pin name, direction, index, and node ownership.
+- Remove disposable additions with `remove_node_pin` before deleting the node.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

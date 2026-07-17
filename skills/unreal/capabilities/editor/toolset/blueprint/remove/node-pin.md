@@ -51,42 +51,67 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to remove one known dynamic pin from a reviewed SHAR
+Blueprint node, normally as the exact inverse of `add_node_pin`.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass the current node reference and exact PinID returned or rediscovered for
+  the dynamic pin.
+- Confirm the pin belongs to the same node and is safe to remove.
+- Remove or preserve any pin connections first.
+- Capture the pre-removal inventory and define a strict compile check.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "node": {
+    "refPath": "/Game/SHAR_MCP_Validation/BP_MCP_PinLifecycle.BP_MCP_PinLifecycle:EventGraph.K2Node_ExecutionSequence_0"
+  },
+  "pin": {
+    "direction": "EGPD_Output",
+    "index_id": 2,
+    "node": {
+      "refPath": "/Game/SHAR_MCP_Validation/BP_MCP_PinLifecycle.BP_MCP_PinLifecycle:EventGraph.K2Node_ExecutionSequence_0"
+    }
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The Sequence node exposed `then_0`, `then_1`, and the newly added `then_2`.
+Removing the returned output PinID at index `2` returned `null`.
+`get_node_infos` then reported only `then_0` and `then_1`, with indices `0` and
+`1`, and the restored Blueprint compiled with warnings treated as errors.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The tool has no structured return value.
+- Only removable dynamic pins are valid targets.
+- The `node` argument and the PinID node reference must identify the same node.
+- Pin indices can shift after structural edits; rediscover stale identities.
+- Verify the complete remaining pin inventory and compile after removal.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
