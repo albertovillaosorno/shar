@@ -47,42 +47,78 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to add one cone-shaped SHAR scene component for bounded trigger,
+marker, collision-proxy, debug, or spatial-layout validation.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project must have the owner actor loaded and PIE stopped.
+- Resolve the exact actor and capture its complete component list.
+- Choose a unique component name and define exact removal through the returned
+  component reference before mutation.
+- Treat the supplied transform as actor-local and verify the resulting reflected
+  component properties independently.
+- Do not save the level for a disposable validation component.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "actor": {
+    "refPath": "/Temp/Untitled_1.Untitled_1:PersistentLevel.PlayerStart_UAID_F02F74551BF5599B01_1153002503"
+  },
+  "name": "SHAR_MCP_ValidationCone",
+  "radius": 40,
+  "height": 120,
+  "local_transform": {
+    "location": {"x": 100, "y": 0, "z": 0},
+    "rotation": {"pitch": 0, "yaw": 10, "roll": 0},
+    "scale": {"x": 1, "y": 1, "z": 1}
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The call returned the exact named component reference. A separate component
+list contained that reference. Reflected properties returned
+`/Engine/BasicShapes/Cone.Cone`, local location approximately `(100, 0, 0)`,
+yaw approximately `10`, and relative scale approximately `(0.8, 0.8, 1.2)`.
+Exact-reference removal returned `true`, and the actor's original four-component
+list was restored exactly.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The tool adds a `StaticMeshComponent`; it does not create a separate actor.
+- Primitive dimensions are represented through relative scale on an engine
+  basic-shape mesh.
+- Local transform scale can multiply the dimension-derived scale and should be
+  used deliberately.
+- Floating-point normalization is expected in reflected transforms.
+- Attachment hierarchy, collision, materials, and mobility require separate
+  verification when relevant.
+- Component creation changes loaded level state and can persist if the level is
+  saved.
+- The returned component reference is the cleanup authority.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
