@@ -47,42 +47,65 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to select one exact SHAR scene actor before bounded component,
+property, hierarchy, transform, or visual inspection, and to clear that
+selection after verification.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project must have an active loaded level.
+- Resolve each actor through a current scene read and preserve its full native
+  `refPath` object.
+- Capture the existing selection with `GetSelectedActors` before replacement.
+- Keep the ordered actor array within the approved target count.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "actors": [
+    {
+      "refPath": "/Temp/Untitled_1.Untitled_1:PersistentLevel.PlayerStart_UAID_F02F74551BF5599B01_1153002503"
+    }
+  ]
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The call returned `returnValue: null`. A separate `GetSelectedActors` call
+returned exactly the requested `PlayerStart` actor and no additional actor.
+Calling the tool with an empty array returned `returnValue: null`, and another
+independent read returned an empty selection. Final cleanup repeated the empty
+selection and confirmed that no actor remained selected.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The operation replaces the editor actor selection; it does not add to the
+  existing set.
+- An empty `actors` array clears the current actor selection.
+- Selection is transient editor state and does not save or modify an actor.
+- Actor references from `/Temp` worlds are session-specific; discover the
+  current `refPath` instead of reusing the verified fixture literally.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

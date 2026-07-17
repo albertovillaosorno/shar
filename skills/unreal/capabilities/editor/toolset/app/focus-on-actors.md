@@ -54,7 +54,11 @@ A revision mismatch marks preserved guidance for human review.
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project must have an active level viewport.
+- PIE must be stopped; the live tool description rejects focus during PIE.
+- Resolve every actor through a current scene read and capture the viewport
+  camera with `GetCameraTransform` before invocation.
+- Define `SetCameraTransform` recovery before testing focus.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
@@ -66,13 +70,25 @@ A revision mismatch marks preserved guidance for human review.
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two bounded calls returned `returnValue: null` but produced no observable
+camera change. The first targeted a visible `PlayerStart`; the second targeted
+an actor excluded from `GetVisibleActors`. Fresh `GetCameraTransform` calls were
+numerically unchanged after both calls, and `GetSelectedActors` remained empty.
+The captured camera was restored after each attempt. This does not establish a
+successful focus postcondition, so the validated argument placeholder remains.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- In the verified untitled-world session, transport and native success did not
+  imply that the level camera moved.
+- A target being outside `GetVisibleActors` was insufficient to make the current
+  focus operation observable.
+- Always compare a fresh camera transform with captured pre-state; do not treat
+  `returnValue: null` as proof of focus.
+- Keep this skill review-required until a bounded actor produces a separately
+  verified camera change.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
