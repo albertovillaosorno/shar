@@ -47,42 +47,68 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to add track to binding within a reviewed SHAR Level Sequence
+while preserving exact object identities and an explicit inverse.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live SequencerTools schema.
+- Open the exact disposable or recoverable Level Sequence and capture the
+  independent reader state before mutation.
+- Resolve every nested object from the same sequence and rediscover it after
+  structural edits that can stale references.
+- Define an exact inverse or whole disposable-asset cleanup before invocation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "binding": {
+    "bindingId": "1E2C1575-4979-01F9-A760-FE9778875794",
+    "sequence": {
+      "refPath": "/Game/SHAR_MCP_Validation_Batch50_555102d0/LS_MCP_Batch50_555102d0.LS_MCP_Batch50_555102d0"
+    }
+  },
+  "track_type": {
+    "refPath": "/Script/MovieSceneTracks.MovieScene3DTransformTrack"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+`get_tracks_on_binding` changed from 2 items to 3 items in the disposable SHAR
+sequence. The returned object identity was present in the resulting inventory
+when the operation created or selected an object.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Sequence, binding, folder, track, and section references are live editor
+  identities and can become stale after structural edits or closing Sequencer.
+- Creation can choose generated nested names; use the returned reference
+  rather than predicting object paths.
+- This validation used one disposable sequence and whole-folder cleanup after
+  the complete batch.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

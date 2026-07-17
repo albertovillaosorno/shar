@@ -47,42 +47,62 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to set clock source for a reviewed SHAR mission, dialogue,
+camera, or cinematic Level Sequence.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live SequencerTools schema.
+- Open the exact disposable or recoverable Level Sequence and capture the
+  independent reader state before mutation.
+- Define an exact inverse or whole disposable-asset cleanup before invocation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "clock_source": "AUDIO",
+  "sequence": {
+    "refPath": "/Game/SHAR_MCP_Validation_Batch50_555102d0/LS_MCP_Batch50_555102d0.LS_MCP_Batch50_555102d0"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+In the disposable SHAR sequence, `get_clock_source` changed from
+<UpdateClockSource.PLATFORM: 1> to <UpdateClockSource.AUDIO: 2> after the
+call. The result was read independently from the mutation response before
+cleanup.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Sequence, binding, folder, track, and section references are live editor
+  identities and can become stale after structural edits or closing Sequencer.
+- Enum strings are interpreted by the live plugin revision; always read the
+  resulting enum back instead of inferring it from the submitted text.
+- This validation used one disposable sequence and whole-folder cleanup after
+  the complete batch.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

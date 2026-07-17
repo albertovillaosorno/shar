@@ -49,42 +49,63 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to set section ease in within a reviewed SHAR Level Sequence
+while preserving exact object identities and an explicit inverse.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live SequencerTools schema.
+- Open the exact disposable or recoverable Level Sequence and capture the
+  independent reader state before mutation.
+- Resolve every nested object from the same sequence and rediscover it after
+  structural edits that can stale references.
+- Define an exact inverse or whole disposable-asset cleanup before invocation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "duration": 8,
+  "section": {
+    "refPath": "/Game/SHAR_MCP_Validation_Batch50_555102d0/LS_MCP_Batch50_555102d0.LS_MCP_Batch50_555102d0:MovieScene_0.MovieScene3DTransformTrack_3.MovieScene3DTransformSection_0"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+In the disposable SHAR sequence, `get_section_ease_in` changed from 0 to 8
+after the call. The result was read independently from the mutation response
+before cleanup.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Sequence, binding, folder, track, and section references are live editor
+  identities and can become stale after structural edits or closing Sequencer.
+- The operation changes unsaved editor state unless the surrounding workflow
+  explicitly saves the sequence.
+- This validation used one disposable sequence and whole-folder cleanup after
+  the complete batch.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

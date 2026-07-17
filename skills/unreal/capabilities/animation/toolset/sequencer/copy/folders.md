@@ -47,42 +47,69 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to copy folders reviewed folders, bindings, tracks, or sections
+while assembling SHAR mission, dialogue, camera, and cinematic sequences.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live SequencerTools schema.
+- Open the exact disposable or recoverable Level Sequence and capture the
+  independent reader state before mutation.
+- Resolve every nested object from the same sequence and rediscover it after
+  structural edits that can stale references.
+- Bound the copied object set explicitly; the returned token can contain a
+  large Unreal object-text payload.
+- Define an exact inverse or whole disposable-asset cleanup before invocation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "folders": [
+    {
+      "refPath": "/Game/SHAR_MCP_Validation_Batch50_555102d0/LS_MCP_Batch50_555102d0.LS_MCP_Batch50_555102d0:MovieScene_0.MovieSceneFolder_0"
+    }
+  ]
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The disposable SHAR sequence returned a non-empty opaque Unreal object-text
+token containing 451 characters. The copied object set was explicit, and the
+token was consumed successfully by the matching paste operation in the same
+editor session.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Sequence, binding, folder, track, and section references are live editor
+  identities and can become stale after structural edits or closing Sequencer.
+- Copy tokens are opaque Unreal object-text payloads, can be thousands of
+  characters long, and must not be stored as repository data.
+- Paste tokens are session-scoped; verify the returned objects and inventory
+  rather than assuming names remain unique.
+- This validation used one disposable sequence and whole-folder cleanup after
+  the complete batch.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

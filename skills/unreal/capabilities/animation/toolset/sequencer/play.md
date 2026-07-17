@@ -47,42 +47,58 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to play during a bounded SHAR mission, dialogue, camera, or
+cinematic Level Sequence lifecycle.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live SequencerTools schema.
+- Open the exact disposable or recoverable Level Sequence and capture the
+  matching independent reader before mutation.
+- Keep the intended sequence focused because this operation changes focused
+  Sequencer state.
+- Define the inverse operation or whole disposable-asset cleanup before
+  invocation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+`is_playing` changed from `False` to `True` after the call on the focused
+disposable SHAR sequence. The result was read independently from the mutation
+response.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Sequence and nested object references are live editor identities and can
+  become stale after structural edits or closing Sequencer.
+- Playback state is transient focused-editor state; verify it immediately with
+  `is_playing`.
+- This validation used a disposable sequence and exact whole-folder cleanup.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
