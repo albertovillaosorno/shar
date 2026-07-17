@@ -24,6 +24,17 @@ redistributable fixtures. Local research evidence remains outside Git.
 Unpublished unsafe history must be repaired before publication rather than
 relying on a later deletion.
 
+Historical administrative records, credits candidates, technical art guides,
+generated document companions, and digital-content-creation scenes follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Historical source-document evidence classification and publication boundary](../../technical/unreal/historical-source-document-evidence-classification-and-publication-boundary.md).
+The public repository may contain independently written normalized facts,
+schemas, tests, and native assets after review. It must not contain the
+historical
+files, converted copies, substantial source prose, source screenshots, personal
+schedules or preferences, unreviewed names, hidden metadata, source scene text,
+or private evidence locations.
+
 The following matrix applies the accepted [Lawful local input and publication
 boundary][lawful-input-boundary] to the current repository surface. It records
 the publication baseline, not a license grant for any particular artifact.

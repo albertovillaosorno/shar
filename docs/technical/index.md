@@ -104,6 +104,8 @@ proprietary external formats.
 <!-- markdownlint-disable-next-line MD013 -->
 - [Legacy runtime identity normalization](unreal/legacy-runtime-identity-normalization.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Historical source-document evidence classification and publication boundary](unreal/historical-source-document-evidence-classification-and-publication-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Local split-screen minigame session UI runtime](unreal/local-split-screen-minigame-session-ui-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Local supersprint race session runtime](unreal/local-supersprint-race-session-runtime.md)

@@ -83,6 +83,15 @@ bindings, timing markers, callback schemas, persistence, and teardown. Parallel
 state arrays, frame-controller indexes, integer event and callback identifiers,
 object factories, and fixed listener slots remain provenance only.
 
+Historical administrative records, credits candidates, gameplay notes, art
+manuals, generated document companions, and digital-content-creation scenes are
+private evidence classified through the historical source-document publication
+boundary. Import may consume only reviewed normalized facts, semantic schemas,
+deterministic conversion recipes, and approved intermediate assets. It does not
+publish source documents, converted copies, screenshots, personal schedules or
+preferences, unreviewed names, source prose, hidden metadata, private paths,
+source scene text, or raw animation curves.
+
 Character import publishes canonical character definitions, native mesh,
 skeleton, animation, movement, collision, material and variant references,
 Enhanced Input contexts, vehicle-handoff policy, artificial-intelligence and

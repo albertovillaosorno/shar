@@ -43,6 +43,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native asset translation without copy-paste](../../adr/pipeline/unreal/native-asset-translation-and-no-copy-paste.md)
 
 ## Purpose
@@ -344,6 +346,18 @@ props, camera targets, and footprint definitions for
 Runtime does not construct model, animation, material, or texture paths from raw
 character-name prefixes and suffixes.
 
+Historical digital-content-creation animation scenes are private evidence
+handled
+through
+<!-- markdownlint-disable-next-line MD013 -->
+[Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md).
+Conversion records the exact character, Skeleton revision, source time unit,
+frame interval, animated track set, root policy, curves, clip category, and
+normalization recipe. It exports one bounded animation payload and imports one
+validated Animation Sequence against the declared native Skeleton. Source scene
+text, backup labels, editor metadata, private paths, unused nodes, and raw curve
+dumps never enter the public repository or packaged runtime.
+
 Vehicle import publishes canonical fixed-topology Chaos vehicle definitions,
 Skeletal Meshes, Physics Assets, Animation Blueprints, wheel definitions, engine
 torque curves, transmission, differential, steering, brake, suspension, tire,
@@ -380,6 +394,17 @@ media-player,
 texture, audio, subtitle, and synchronization assets according to the cinematic
 packaging policy. Import never assumes one container or codec works on every
 claimed target.
+
+Historical level-building, world-building, and state-prop guides contribute only
+normalized technical facts under
+<!-- markdownlint-disable-next-line MD013 -->
+[Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md).
+Eligible facts include semantic component roles, world decomposition, tracks,
+terrain, landmarks, static, dynamic, animated, breakable, and stateful props,
+placement, pivots, collision, materials, animation intent, and naming evidence.
+Source prose, screenshots, embedded resources, schedules, estimates, employee
+assignments, obsolete exporters, source-control directions, and generated HTML,
+XML, CSS, or header companions are not packaged or copied into public docs.
 
 ## World source and decomposition
 

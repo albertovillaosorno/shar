@@ -691,6 +691,14 @@ applying the definition's kinematic, persistence, or teardown policy.
 No manual simulation list is authoritative. Chaos owns solver membership after
 component registration and simulation enablement.
 
+The world physics application service owns typed force queries, simulation
+admission, scoped suspension, interior transitions, world teardown, and
+immutable
+read-back. It does not manually submit static, dynamic, animated, or vehicle
+objects to a custom manager each frame, maintain process-global timers, or
+expose
+collision-area indexes as durable identity.
+
 ## Sleep, wake, and rest
 
 Chaos sleep and wake state is the physical authority. Project policy may tune
@@ -805,6 +813,20 @@ decals, animation, damage proposals, and breakage requests.
 
 A pre-contact or post-contact callback cannot directly grant rewards, complete a
 mission, delete an entity, change persistence, or mutate an unrelated body.
+
+The native Chaos solver owns broad phase, narrow phase, contact generation,
+impulse resolution, body activation, sleep, and solver iteration. Project
+adapters may classify participants, reject an unsupported gameplay proposal, or
+publish typed pre- and post-contact observations, but they cannot return a
+custom
+solver answer, maintain one process-global collision-agent array, cache raw body
+pointers across steps, or substitute a second collision pipeline.
+
+Per-step deduplication and response caches are keyed by stable body, shape,
+contact-pair, world, and solver-step identities. Every cache is cleared or
+invalidated at body replacement, world teardown, feature removal, or revision
+change. Fixed solver counts, collision flags stored on unrelated objects, and
+manual end-object callbacks are provenance only.
 
 ## Breakage and destruction
 

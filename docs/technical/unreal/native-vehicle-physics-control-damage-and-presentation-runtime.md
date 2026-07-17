@@ -328,6 +328,12 @@ definition,
 bone, Physics Asset body, or movement binding fails construction. An optional
 presentation wheel may use a declared fallback without changing simulation.
 
+Wheel presentation may project closed semantic states such as normal contact,
+slip, lightweight traffic slide, or presentation-only free spin. These states
+are
+derived from native wheel and vehicle snapshots. They cannot replace tire,
+suspension, brake, drivetrain, road, or rigid-body simulation.
+
 ## Suspension and ground support
 
 Suspension, wheel contact, spring force, damping, load transfer, and tire force
@@ -913,6 +919,21 @@ transform, velocity, wheel, damage, material, light, audio, VFX, occupant,
 route,
 mission, parking, pursuit, husk, world, feature, delegate, and diagnostic field
 before reuse.
+
+The world vehicle registry is revisioned and identity-based. It owns active,
+constructing, suspended, retired, and destroyed instance records plus
+controller,
+occupant, route, parking, pursuit, mission, retrieval, and world leases. It does
+not expose fixed active arrays, construction-ring positions, controller slots,
+raw name lookup, or process-global singleton ownership.
+
+Vehicle construction completion must correlate the exact request, definition,
+asset scope, world, feature, and target registry revision. Late completion
+cannot
+occupy a reused slot or publish a stale vehicle. Suspension and resume operate
+on
+scoped leases and native Actor lifecycle rather than manually iterating one
+global list.
 
 ## Concurrency and update order
 

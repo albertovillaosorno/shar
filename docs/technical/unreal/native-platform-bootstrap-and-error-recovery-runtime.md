@@ -212,6 +212,25 @@ shipping availability.
 A native numeric code is adapter evidence only. The adapter maps it to one
 canonical error identity and preserves the redacted native code for diagnostics.
 
+Historical platform optical-media and package-error catalogs are import
+provenance only. Conversion maps each validated platform row to one semantic
+error identity with severity, scope, localized title, body and action keys,
+retry,
+media reinsertion, storage, restart, system-UI, continue or exit policy, target
+support, fallback, and diagnostics behavior.
+
+Source CSV order, row index, numeric code, platform abbreviation, compiled text,
+and physical-media wording are not runtime identity. Separate platform catalogs
+may project different approved wording or available actions, but they cannot
+fork
+gameplay, save, mission, progression, or application-mode semantics.
+
+Import rejects duplicate native mappings, missing required semantic identities,
+unsupported actions, invalid encodings, unlocalized shipping text, and rows with
+no closed recovery result. Packaged runtime consumes validated native
+definitions
+and localization keys rather than opening a CSV file.
+
 ## Localized error presentation
 
 Error definitions refer to localization keys and presentation assets. They do

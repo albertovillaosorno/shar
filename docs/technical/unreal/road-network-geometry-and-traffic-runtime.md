@@ -499,6 +499,36 @@ participant proximity, memory, and performance.
 
 Density never allocates fixed lane arrays or guarantees a vehicle count.
 
+## Traffic admission, retention, and representation
+
+Traffic admission uses a revisioned candidate plan rather than a process-global
+spawn manager. Each candidate contains road, segment, lane, direction, vehicle
+definition, driver, transform, visibility, player-interest, world, feature,
+quality, and budget evidence.
+
+A candidate is accepted only when its cell and Data Layers are active, lane and
+intersection policy permit it, swept vehicle space is clear, route continuation
+exists, minimum and maximum interest distances are valid, and the traffic and
+native-vehicle budgets can admit the instance.
+
+Retention and removal evaluate visibility, distance, occupancy, player or
+mission
+ownership, damage, pursuit, reservation, recent interaction, streaming, and
+representation state. An occupied, mission-owned, reserved, pursued, or
+player-controlled vehicle cannot be silently removed.
+
+Traffic instances may move among lightweight road projection, full native Chaos
+simulation, parked presentation, destroyed husk presentation, or retirement only
+through typed revision-checked transitions. Resurrection after invalid placement
+requires a new safe transform, lane projection, collision clearance, world
+revision, and controller state; it cannot restore stale spline, intersection,
+color, horn, or occupant data.
+
+Spawn, remove, and update intervals are policy and budget inputs, not three
+virtual manager callbacks. Fixed traffic arrays, first-free slots, random model
+strings, global color mutation, player-zero assumptions, visibility timers, and
+raw vehicle pointers are provenance only.
+
 ## Shortcuts and difficulty
 
 Shortcut and difficulty values are typed authored policy. A shortcut edge

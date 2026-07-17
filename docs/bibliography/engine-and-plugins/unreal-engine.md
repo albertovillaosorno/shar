@@ -31,8 +31,10 @@ examples, or documentation.
   `UChaosWheeledVehicleMovementComponent`, native wheel, suspension, engine,
   transmission, differential, asynchronous physics, vehicle animation, and
   vehicle setup boundaries, the experimental Chaos Modular Vehicles distinction,
-  native physics components, ISM and HISM behavior, Chaos Visual Debugger, and
-  Unreal Engine 5.8 Media Framework and Electra boundaries were verified.
+  FBX animation import, Animation Sequence frame-range and Skeleton binding,
+  Animation Montage sections and slots, native physics components, ISM and HISM
+  behavior, Chaos Visual Debugger, and Unreal Engine 5.8 Media Framework and
+  Electra boundaries were verified.
   Accepted regional agreement, bundled
   notices, decoder availability, and external-service retention remain
   environment- or service-specific.
@@ -247,6 +249,24 @@ royalty or seat analysis.
 - Epic Games (2026) *Overview of StateTree in Unreal Engine 5.8*. Available at:
   <!-- markdownlint-disable-next-line MD013 -->
   <https://dev.epicgames.com/documentation/en-us/unreal-engine/overview-of-state-tree-in-unreal-engine>
+  (Accessed: 16 July 2026).
+- Epic Games (2026) *Importing Animations Using FBX in Unreal Engine 5.8*.
+  Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/importing-animations-using-fbx-in-unreal-engine>
+  (Accessed: 16 July 2026).
+- Epic Games (2026) *FBX Import Options Reference in Unreal Engine 5.8*.
+  Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/fbx-import-options-reference-in-unreal-engine>
+  (Accessed: 16 July 2026).
+- Epic Games (2026) *Animation Sequences in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-sequences-in-unreal-engine>
+  (Accessed: 16 July 2026).
+- Epic Games (2026) *Animation Montage in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-montage-in-unreal-engine>
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Chaos Vehicles in Unreal Engine 5.8*. Available at:
   <!-- markdownlint-disable-next-line MD013 -->

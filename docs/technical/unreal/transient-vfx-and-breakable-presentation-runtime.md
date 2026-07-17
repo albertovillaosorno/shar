@@ -363,6 +363,27 @@ damage, or other cosmetic systems from typed thresholds.
 An emitter cannot change traction, wheel contact, vehicle damage, speed, or
 physical surface. It consumes those accepted observations.
 
+### Skid-mark presentation
+
+A skid-mark request contains vehicle, wheel, contact, physical-surface,
+transform, forward direction, width, intensity, velocity, visibility, quality,
+world, and simulation revisions. The presentation selects a validated decal,
+ribbon, spline mesh, runtime virtual texture, or other native implementation by
+profile.
+
+A leased mark may extend while correlated contact remains valid, split when
+curvature or surface changes exceed policy, fade its leading or trailing region,
+stop after contact release, and expire after a bounded lifetime. Texture repeat,
+width, elevation offset, fade distance, segment budget, and intensity damping
+are
+unit-labelled definition data.
+
+Capacity is a presentation budget, not identity. Reuse resets geometry,
+materials, bounds, owner, continuation, fade, world, feature, and delegate
+state.
+Fixed segment arrays, first-free global marks, direct scene-graph submission,
+custom display calls, and manager-owned per-frame fading are provenance only.
+
 ## Wheel and part bindings
 
 Wheel, exhaust, engine, body, and damage emitter bindings use canonical part or

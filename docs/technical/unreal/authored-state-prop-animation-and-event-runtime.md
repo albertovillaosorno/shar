@@ -25,6 +25,8 @@
 - [Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md)
 
 ## Purpose
 
@@ -42,6 +44,15 @@ The target preserves authored behavior without importing source object
 factories,
 array positions, frame-controller pointers, callback IDs, event names, listener
 slots, or per-render mutation as runtime authority.
+
+Historical state-prop creation and level-art guidance is private technical
+evidence classified by
+<!-- markdownlint-disable-next-line MD013 -->
+[Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md).
+It may corroborate state roles, animation ranges, visibility, events, callbacks,
+component naming, and export intent, but source prose, screenshots, paths,
+obsolete tools, generated document companions, and production metadata are not
+copied into this contract or packaged runtime.
 
 ## Native Unreal foundation
 

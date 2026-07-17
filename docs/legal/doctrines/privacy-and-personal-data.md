@@ -24,6 +24,18 @@ Technical metadata can identify a person or device even when it is not labeled
 personal. Public availability does not eliminate privacy, publicity, security,
 or platform obligations.
 
+Historical production-administration records require the same review. Names
+combined with schedules, absences, meal preferences, team membership, dates,
+locations, employment context, comments, document metadata, or generated
+companion files may identify people even when the record contains no email
+address or account identifier.
+
+The technical handling contract is
+<!-- markdownlint-disable-next-line MD013 -->
+[Historical source-document evidence classification and publication boundary](../../technical/unreal/historical-source-document-evidence-classification-and-publication-boundary.md).
+Administrative and personal-data evidence is private by default and normally
+produces no public content.
+
 ## Not Established
 
 This record does not establish that hashes are anonymous, that usernames are

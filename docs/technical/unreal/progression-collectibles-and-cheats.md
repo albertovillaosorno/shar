@@ -40,6 +40,8 @@
 - [Mission briefing, result, and replay UI runtime](mission-briefing-result-and-replay-ui-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Reward browser, preview, and purchase UI runtime](reward-browser-preview-and-purchase-ui-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md)
 
 ## Purpose
 
@@ -919,6 +921,13 @@ Each local player owns one transient recognizer with `inactive`, `armed`,
 physical controls to four semantic cheat tokens plus one explicit activation
 chord or action. Platform button labels are presentation only.
 
+Historical cheat tables are private evidence normalized through
+<!-- markdownlint-disable-next-line MD013 -->
+[Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md).
+They may corroborate semantic effect identity and platform-era physical labels,
+but source numeric identifiers, file order, prose, spacing, and physical button
+codes do not become target identity or executable runtime data.
+
 Arming clears the previous sequence and records the local-player, controller,
 input-profile, and catalog revisions. Releasing the activation chord, changing
 controller ownership, changing application mode, opening an incompatible modal
@@ -1001,6 +1010,13 @@ Credits are deterministic presentation sequences with two entry modes:
 `FSharCreditsSequenceRow` contains ordered text identity, role category,
 presentation style, scroll timing, optional dialogue cue, optional music cue,
 optional sound-mix override, skippability, and minimum display policy.
+
+Historical credits lists are candidate attribution evidence handled through
+<!-- markdownlint-disable-next-line MD013 -->
+[Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md).
+Every public row requires exact name, spelling, role, organization, ordering,
+notice, rights, and source verification. Historical prose, formatting, special-
+thanks text, and unreviewed names are not imported automatically.
 
 Final progression commits before post-ending credits begin. Skipping,
 interrupting, or failing to load credits presentation cannot roll back mission

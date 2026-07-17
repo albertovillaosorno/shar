@@ -34,6 +34,8 @@
 - [Native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md)
 
 ## Purpose
 
@@ -288,6 +290,18 @@ transaction. Stale input from a removed context is ignored.
 
 Source model and animation name conventions are import provenance. Runtime does
 not construct asset paths by prefix, suffix, or character-name buffer.
+
+Historical character-animation scenes are private conversion evidence governed
+by
+<!-- markdownlint-disable-next-line MD013 -->
+[Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md).
+Fall, landing, flail, recovery, impact, idle, locomotion, dialogue, and other
+clip
+roles become canonical clip definitions only after Skeleton compatibility, exact
+frame rate and range, animated tracks, root policy, curves, events,
+deterministic
+conversion, and native Animation Sequence read-back pass. Source scene text,
+backup-directory labels, editor metadata, and raw curve data do not ship.
 
 ## Character asset scope
 
