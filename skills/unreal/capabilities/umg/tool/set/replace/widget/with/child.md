@@ -48,42 +48,64 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to remove one unnecessary single-child SHAR panel while keeping
+its child in the same outer hierarchy position.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Resolve the panel and its child through `GetWidgets`.
+- Confirm the panel has exactly one child.
+- Capture the panel outer slot and child properties.
+- Define the expected child parent and slot after replacement.
+- Compile and inspect the resulting tree before saving.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "widgetBlueprint": {
+    "refPath": "/Game/SHAR_MCP_Validation/WBP_MCP_WidgetStructure.WBP_MCP_WidgetStructure"
+  },
+  "widgetToReplace": {
+    "refPath": "/Game/SHAR_MCP_Validation/WBP_MCP_WidgetStructure.WBP_MCP_WidgetStructure:WidgetTree.VerticalBox_0"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The wrapper had exactly one child, `ActionButton`. The call returned `true`.
+`GetWidgets` changed from `RootCanvas`, `VerticalBox_0`, `ActionButton` to
+`RootCanvas`, `ActionButton`. The button became a direct child of `RootCanvas`
+and received `CanvasPanelSlot_0`. The resulting tree compiled successfully.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The addressed widget must be a panel with exactly one child.
+- The child receives a new slot in the panel parent.
+- Panel-specific layout properties can be lost and may need reapplication.
+- The boolean result requires an independent hierarchy and slot check.
+- The operation changes unsaved state and needs separate compile and save
+  decisions.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

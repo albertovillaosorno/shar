@@ -54,42 +54,70 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to place one or more reviewed SHAR widgets inside a new panel
+while preserving their internal subtrees.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Resolve every selected widget through `GetWidgets`.
+- Capture parent, slot, sibling order, and descendants.
+- Choose a valid `PanelWidget` wrapper class.
+- Select only intended root-most widgets.
+- Define wrapper removal or replacement and compile checks.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "widgetBlueprint": {
+    "refPath": "/Game/SHAR_MCP_Validation/WBP_MCP_WidgetStructure.WBP_MCP_WidgetStructure"
+  },
+  "widgets": [
+    {
+      "refPath": "/Game/SHAR_MCP_Validation/WBP_MCP_WidgetStructure.WBP_MCP_WidgetStructure:WidgetTree.ActionButton"
+    }
+  ],
+  "wrapperClass": {
+    "refPath": "/Script/UMG.VerticalBox"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Wrapping the button returned one `VerticalBox_0` wrapper. `GetWidgets` changed
+from `RootCanvas`, `ActionButton` to `RootCanvas`, `VerticalBox_0`,
+`ActionButton`. The wrapper occupied the original canvas slot, while the
+button moved into `VerticalBoxSlot_0`. The wrapped tree compiled successfully.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Only root-most selected widgets are wrapped.
+- The wrapper receives the original outer slot; children receive new panel
+  slots.
+- Slot-specific properties may require translation or reapplication.
+- Generated wrapper names must be read from the return value.
+- The operation changes unsaved state and needs separate compile and save
+  decisions.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
