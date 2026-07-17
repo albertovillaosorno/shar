@@ -1,7 +1,7 @@
 # Platform save storage and lifecycle
 
 - Status: Active
-- Last reviewed: 2026-07-14
+- Last reviewed: 2026-07-17
 
 ## Governing decisions
 
@@ -11,6 +11,8 @@
 - [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md)
 
 ## Purpose
 

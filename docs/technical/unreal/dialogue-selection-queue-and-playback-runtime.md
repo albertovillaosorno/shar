@@ -1,7 +1,7 @@
 # Dialogue selection, queue, and playback runtime
 
 - Status: Active
-- Last reviewed: 2026-07-16
+- Last reviewed: 2026-07-17
 
 ## Governing decisions and specifications
 
@@ -17,6 +17,8 @@
 - [Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md)
 
 ## Purpose
 
@@ -221,6 +223,21 @@ assets. Shipping runtime never:
 
 Unknown or ambiguous source metadata fails import or requires an explicit
 mapping.
+
+Historical conversation spreadsheets follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md).
+The importer treats non-empty rows as private semantic evidence for speaker,
+event, mission or location context, conversation membership, ordinal, role,
+variant, audio alias, and locale. Heading rows and empty rows create no line;
+zero-byte companion sheets are excluded before coverage. Dialogue text enters
+the
+localization pipeline under stable keys and is not copied into gameplay code or
+used as identity. Platform-specific tutorial lines bind one semantic input
+action
+to active localized device presentation instead of preserving obsolete button
+names. Approval, source, recording, delivery, and licensor-receipt columns can
+block publication but never select runtime content.
 
 ## Participant context
 

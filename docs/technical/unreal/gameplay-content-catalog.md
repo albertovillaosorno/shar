@@ -35,6 +35,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native art authoring, style, and asset validation contract](native-art-authoring-style-and-asset-validation-contract.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Progression, collectibles, cheats, and credits](progression-collectibles-and-cheats.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Flying hazard and projectile runtime](flying-hazard-and-projectile-runtime.md)
@@ -1640,6 +1642,15 @@ The music census resolves through
 The pedestrian census resolves through
 <!-- markdownlint-disable-next-line MD013 -->
 [Ambient population and named-character runtime](ambient-population-and-named-character-runtime.md).
+Historical pedestrian, ambient-gag, walker, driver, passenger, character-role,
+and vehicle-availability tables follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md).
+They create canonical definitions and typed availability or placement rows only
+after character, vehicle, mission, seat, dialogue, animation, collision, native
+asset, and loading dependencies resolve. Model-ready, animator, status,
+approval,
+voice-production, and matrix-position fields remain import-review metadata.
 The phone-booth census resolves through
 <!-- markdownlint-disable-next-line MD013 -->
 [Vehicle retrieval and phone-booth runtime](vehicle-retrieval-and-phone-booth-runtime.md).

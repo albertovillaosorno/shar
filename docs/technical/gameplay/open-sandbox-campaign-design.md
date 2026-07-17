@@ -1,13 +1,15 @@
 # Open sandbox campaign design
 
 - Status: Active
-- Last reviewed: 2026-07-15
+- Last reviewed: 2026-07-17
 
 <!-- markdownlint-disable MD013 -->
 
 ## Governing decision
 
 - [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Historical core-design and dialogue evidence normalization](../unreal/historical-core-design-and-dialogue-evidence-normalization.md)
 
 ## Purpose
 
@@ -376,6 +378,14 @@ The campaign reserves three boss slots. Two are confirmed:
 The third remains pending design approval. It has no invented location, chapter,
 mechanics, reward, or asset requirement yet.
 
+Historical boss and Truckasaurus documents are candidate encounter evidence under
+[Historical core-design and dialogue evidence normalization](../unreal/historical-core-design-and-dialogue-evidence-normalization.md).
+Claims such as one boss per level, infinite mass, fixed waypoint pursuit, or a
+specific count of encounters do not override these accepted slots. Each shipping
+boss requires one complete reviewed encounter definition with arena, phases,
+movement, damage, puzzle or capture conditions, failure, reward, persistence,
+streaming, presentation, and teardown.
+
 Boss creature models and presentation are original, repository-owned or
 appropriately licensed generic assets. The mechanical dinosaur and skeleton may
 be replaced through validated mods.
@@ -547,7 +557,7 @@ The design fails closed when:
 - a window transition lacks an interior or navigation path;
 - renewable currency duplicates a one-time transaction;
 - an achievement becomes permanently unobtainable;
-- a mod misdeclares base-achievement compatibility; or
+- a mod declares base-achievement compatibility incorrectly; or
 - a visual or performance setting changes gameplay meaning.
 
 ## Verification

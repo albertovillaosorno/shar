@@ -33,6 +33,8 @@ Detailed execution remains in the owning specifications:
 - [Contextual interaction runtime](contextual-interaction-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Flying-hazard and projectile runtime](flying-hazard-and-projectile-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md)
 
 ## Canonicalization
 
@@ -243,7 +245,7 @@ destruction.
 
 A repair pickup restores the current player vehicle. When the player is on foot,
 it restores the last valid player-controlled vehicle retained for the current
-level. It repairs driveability and all supported visible damage channels.
+level. It repairs drivability and all supported visible damage channels.
 
 Repair pickups are collectable on foot or in a vehicle and respawn after the
 approximately one-minute authored cooldown. Collection near a wasp camera emits
@@ -353,6 +355,15 @@ overlay contract, but the base catalog remains unchanged.
 
 Navigation indexes and duplicate overview pages create diagnostic coverage rows
 only. They never create aggregate runtime assets or duplicate campaign data.
+
+Historical core-design and conversation evidence follows
+<!-- markdownlint-disable-next-line MD013 -->
+[Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md).
+That contract routes product goals to the current owners, rejects obsolete
+platform and implementation assumptions, keeps the base campaign single-player,
+normalizes conversation rows without publishing source dialogue, and excludes
+approval, personal, production, and empty companion data from both the catalog
+and semantic ledger.
 
 ## Alias normalization
 

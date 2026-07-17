@@ -1,7 +1,7 @@
 # Multiplayer adapter and community-server extension
 
 - Status: Architecture support required; base implementation deferred
-- Last reviewed: 2026-07-15
+- Last reviewed: 2026-07-17
 
 <!-- markdownlint-disable MD013 -->
 
@@ -36,6 +36,15 @@ A multiplayer package creates a separate mod-owned mode. It may reference
 base-game content through canonical identities, but it cannot silently replace
 the ordinary campaign state machine or convert a single-player save into server
 authority.
+
+Historical head-to-head, flag-steal, split-screen chase, global bullet-time,
+speed-cap, or shared-meter proposals are superseded mode evidence under
+[Historical core-design and dialogue evidence normalization](../unreal/historical-core-design-and-dialogue-evidence-normalization.md).
+They do not create a first-party mode. A mod may reinterpret such an idea only
+through its own namespaced ruleset, protocol, authority, replication, scoped
+time-presentation, fairness, accessibility, cancellation, disconnect, and
+restoration policies. Global time dilation cannot leak into the base campaign or
+another server session.
 
 The base game remains fully playable, saveable, verifiable, and packageable with
 no network connection.

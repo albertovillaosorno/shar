@@ -31,6 +31,8 @@
 - [Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md)
 - [Animation clip timing](../fbx/animation/clip-timing.md)
 - [Animation rig model](../fbx/animation/rig-model.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md)
 
 ## Purpose
 
@@ -347,6 +349,18 @@ or supersedes them.
 
 A fact with no public owner remains private research and cannot be treated as a
 shipping requirement.
+
+Broad core-design documents, flow-chart exports, gameplay-event inventories,
+content lists, character-availability matrices, and conversation spreadsheets
+follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md).
+That contract separates product goals from source-era implementation, applies
+the
+current authority hierarchy, rejects superseded base-game modes, normalizes
+platform storage and input terminology, and prevents source dialogue, approval,
+authorship, production, and empty-sheet metadata from entering public or runtime
+assets.
 
 ## Administrative and personal-data minimization
 

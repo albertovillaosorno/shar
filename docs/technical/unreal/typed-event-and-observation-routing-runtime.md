@@ -1,7 +1,7 @@
 # Typed event and observation routing runtime
 
 - Status: Active
-- Last reviewed: 2026-07-16
+- Last reviewed: 2026-07-17
 
 ## Governing decisions
 
@@ -38,6 +38,8 @@
 - [Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [HUD feedback cue and presentation-primitives runtime](hud-feedback-cue-and-presentation-primitives-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md)
 
 ## Purpose
 
@@ -105,6 +107,15 @@ Channels use namespaced semantic identities such as:
 A source ordinal, array position, comment grouping, or integer range is import
 provenance only. Catalog generation maps each retained source signal to one
 canonical channel and schema.
+
+Historical gameplay-event inventories follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md).
+Each retained event receives one semantic channel, owning domain, payload
+schema,
+scope, delivery phase, replay policy, lifetime, diagnostics, and networking
+classification. Blank sheet companions, source headings, row order, free-form
+comments, and implied callback tables create no runtime channel.
 
 The catalog rejects:
 

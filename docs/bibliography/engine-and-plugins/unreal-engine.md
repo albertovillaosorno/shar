@@ -35,10 +35,11 @@ examples, or documentation.
   options, Animation Sequence frame-range and Skeleton binding, Animation
   Blueprints, Animation Montage sections and slots, Sync Groups and Sync
   Markers,
-  root motion, Motion Warping, native Data Validation, native physics
-  components,
-  ISM and HISM behavior, Chaos Visual Debugger, and Unreal Engine 5.8 Media
-  Framework and Electra boundaries were verified.
+  root motion, Motion Warping, native Data Validation, SaveGame and platform
+  save-system boundaries, Dialogue Wave and dialogue-localization facilities,
+  global time dilation, client-server networking, dedicated-server authority,
+  native physics components, ISM and HISM behavior, Chaos Visual Debugger, and
+  Unreal Engine 5.8 Media Framework and Electra boundaries were verified.
   Accepted regional agreement, bundled
   notices, decoder availability, and external-service retention remain
   environment- or service-specific.
@@ -142,6 +143,37 @@ royalty or seat analysis.
 - Epic Games (2026) *Data Validation in Unreal Engine 5.8*. Available at:
   <!-- markdownlint-disable-next-line MD013 -->
   <https://dev.epicgames.com/documentation/unreal-engine/data-validation-in-unreal-engine?lang=en-US>
+  (Accessed: 17 July 2026).
+- Epic Games (2026) *Saving and Loading Your Game in Unreal Engine 5.8*.
+  Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/unreal-engine/saving-and-loading-your-game-in-unreal-engine>
+  (Accessed: 17 July 2026).
+- Epic Games (2026) *ISaveGameSystem in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/unreal-engine/API/Runtime/Engine/ISaveGameSystem?lang=en-US>
+  (Accessed: 17 July 2026).
+- Epic Games (2026) *Asset Localization in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/asset-localization-in-unreal-engine>
+  (Accessed: 17 July 2026).
+- Epic Games (2026) *UDialogueWave in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Runtime/Engine/UDialogueWave>
+  (Accessed: 17 July 2026).
+- Epic Games (2026) *Networking Overview for Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/unreal-engine/networking-overview-for-unreal-engine?lang=en-US>
+  (Accessed: 17 July 2026).
+- Epic Games (2026) *Setting Up Dedicated Servers in Unreal Engine 5.8*.
+  Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/unreal-engine/setting-up-dedicated-servers-in-unreal-engine>
+  (Accessed: 17 July 2026).
+- Epic Games (2026) *Set Global Time Dilation in Unreal Engine 5.8*.
+  Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/BlueprintAPI/Utilities/Time/SetGlobalTimeDilation>
   (Accessed: 17 July 2026).
 - Epic Games (2026) *Asynchronous Asset Loading in Unreal Engine 5.8*.
   Available at:

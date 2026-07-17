@@ -1,7 +1,7 @@
 # Device configuration and save-slot runtime
 
 - Status: Active
-- Last reviewed: 2026-07-16
+- Last reviewed: 2026-07-17
 
 ## Governing decisions and specifications
 
@@ -20,6 +20,8 @@
 - [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md)
 
 ## Purpose
 
@@ -390,6 +392,16 @@ one typed remediation such as:
 Any platform UI that can initialize dedicated application storage remains
 outside
 the gameplay save transaction and requires explicit user control.
+
+Historical memory-card and platform flow charts are normalized through
+<!-- markdownlint-disable-next-line MD013 -->
+[Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md).
+Physical slot letters, market formatting, format-card actions, numeric row IDs,
+and console-specific button labels are evidence only. They map to semantic
+provider unavailable, slot unavailable, save missing, quota exceeded, corrupt,
+incompatible revision, cancelled, retryable failure, deletion or reset required,
+and continue-without-saving outcomes. Native platform storage and SaveGame APIs
+remain authoritative.
 
 ## Asynchronous operation model
 
