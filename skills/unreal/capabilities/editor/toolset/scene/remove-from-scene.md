@@ -47,42 +47,68 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to delete one exact disposable or explicitly approved SHAR scene
+actor after its identity, dependencies, persistence requirements, and recovery
+contract have been verified.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Resolve the exact actor from a current scene read or a creation return value.
+- Capture the complete scene count and any label, transform, component, parent,
+  reference, or dependent evidence required by the task.
+- Confirm the actor is disposable or that an approved reconstruction path
+  exists.
+- Restrict the call to one exact returned actor reference and define the
+  expected post-removal scene inventory.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "actor": {
+    "refPath": "/Temp/Untitled_1.Untitled_1:PersistentLevel.TargetPoint_UAID_00E04C680267E2EE02_1158365599"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The addressed actor was the exact disposable `TargetPoint` returned by
+`add_to_scene_from_class`. The call returned `returnValue: true`. A fresh
+`find_actors` query returned no actor with the validation label, and the full
+scene count returned from 146 to its captured value of 145. Final cleanup found
+no remaining validation actor.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Actor removal is destructive for the addressed loaded actor and its owned
+  runtime instance state.
+- A `true` response requires an independent absence check and scene-count or
+  identity comparison.
+- The validated deletion was safe because the actor was created during the same
+  bounded operation and its exact returned reference was retained.
+- Removing project actors can invalidate references, attachments, level logic,
+  or gameplay contracts and can persist when the level is saved.
+- Removal of a missing actor was not exercised.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

@@ -47,42 +47,89 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to instantiate one exact SHAR actor class at a reviewed
+transform for bounded scene assembly, placement validation, or disposable
+integration testing.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR editor world must be loaded and PIE must be stopped.
+- Resolve the native actor class and verify the requested instance name is
+  absent through `find_actors`.
+- Capture the complete scene actor count and define the intended transform.
+- Decide explicitly whether parenting or ground snapping is required.
+- Retain the exact returned actor reference and define `remove_from_scene` as
+  cleanup before creating a disposable actor.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "actor_type": {
+    "refPath": "/Script/Engine.TargetPoint"
+  },
+  "name": "SHAR_MCP_ValidationTarget",
+  "xform": {
+    "location": {
+      "x": 1234,
+      "y": 5678,
+      "z": 321
+    },
+    "rotation": {
+      "pitch": 0,
+      "yaw": 45,
+      "roll": 0
+    },
+    "scale": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    }
+  },
+  "snap_to_ground": false
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The pre-state contained 145 actors and no matching validation label. The call
+returned one exact `TargetPoint` actor reference. `find_actors` returned only
+that actor, the scene count became 146, `get_label` returned the requested name,
+and `get_actor_transform` matched the requested location, unit scale, and
+45-degree yaw within floating-point normalization. Removing the returned actor
+restored the count to 145 and the label query to an empty list.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The validated case created an unparented `TargetPoint` with ground snapping
+  disabled.
+- The returned native object name is generated independently of the requested
+  editor label; retain the returned reference.
+- Parent-supplied transforms are parent-local, while unparented transforms are
+  world-space.
+- `snap_to_ground` can change the requested Z coordinate and requires a fresh
+  transform read.
+- Creation changes loaded level state and can persist if the level is saved.
+- Generated actor references in `/Temp` worlds are session-specific.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
