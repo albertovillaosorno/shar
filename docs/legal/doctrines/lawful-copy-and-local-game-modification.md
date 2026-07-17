@@ -42,6 +42,14 @@ restricted transfer, and imposed notable use restrictions. Physical possession,
 a purchase receipt, payment, and the word `license` are therefore relevant but
 not independently conclusive.
 
+*Wall Data Inc. v. Los Angeles County Sheriff's Department* adds a copy-count
+boundary. Installing complete software copies on more computers than a
+per-device license authorized was infringement even though access controls
+allegedly limited simultaneous use. The Ninth Circuit distinguished efficient
+imaging within the authorized installation count from extra copies created for
+convenience and assignment flexibility. A concurrent-user license could present
+different facts, so the exact grant matters.
+
 Copyright and contract must then be assessed separately. *Vault Corp. v. Quaid
 Software Ltd.* invalidated a state-act-backed decompilation restriction that
 conflicted with § 117. *Bowers v. Baystate Technologies, Inc.* later enforced a
@@ -87,7 +95,8 @@ reverse engineering as machine maintenance.
 ## Conditions Supporting The Narrow Position
 
 - The operator lawfully acquired and retains the exact copy being used.
-- Installation and adaptation occur only on the operator's machines.
+- Installation and adaptation occur only on authorized machines and within the
+  applicable device, user, or concurrent-use count.
 - The modification does not defeat an access control or use unauthorized online
   services, credentials, or private endpoints.
 - No original executable, asset, extracted payload, key, or modified build is
@@ -123,6 +132,8 @@ reverse engineering as machine maintenance.
 <!-- markdownlint-disable-next-line MD013 -->
 - [Storage Technology Corp. v. Custom Hardware Engineering & Consulting, Inc.](../cases/storage-technology-v-custom-hardware.md).
 - [Vernor v. Autodesk, Inc](../cases/vernor-v-autodesk.md).
+<!-- markdownlint-disable-next-line MD013 -->
+- [Wall Data Inc. v. Los Angeles County Sheriff's Department](../cases/wall-data-v-los-angeles-county-sheriff.md).
 <!-- markdownlint-disable-next-line MD013 -->
 - [Lewis Galoob Toys, Inc. v. Nintendo of America, Inc](../cases/lewis-galoob-toys-v-nintendo.md).
 - [Micro Star v. FormGen, Inc](../cases/micro-star-v-formgen.md).

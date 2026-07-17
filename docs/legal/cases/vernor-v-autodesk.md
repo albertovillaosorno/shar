@@ -6,7 +6,7 @@
 - Court: United States Court of Appeals for the Ninth Circuit.
 - Authority: 621 F.3d 1102 (9th Cir. 2010); No. 09-35969.
 - Decision date: 2010-09-10.
-- As-of date: 2026-07-13.
+- As-of date: 2026-07-16.
 - Counsel review: Not performed.
 
 ## Question Presented
@@ -30,6 +30,14 @@ and its customers also could not invoke 17 U.S.C. § 117(a)(1) for installation
 copies because they had not obtained ownership of the relevant program copies.
 The court therefore vacated the copyright judgment for the downstream reseller
 and remanded the remaining issues.
+
+*Wall Data Inc. v. Los Angeles County Sheriff's Department* had earlier relied
+on *MAI Systems Corp. v. Peak Computer, Inc.* to treat a restricted software
+user as a licensee for § 117. *Wall Data* also held that its essential-step
+defense failed even if ownership were assumed because installing the software on
+more computers than the license count was convenient rather than necessary.
+*Vernor* supplies the Ninth Circuit's later ownership framework; *Wall Data*
+remains relevant to copy count and essentiality.
 
 The court distinguished [*Krause v. Titleserv, Inc.*](krause-v-titleserv.md)
 because that record had no written license agreement, the user had paid
@@ -65,6 +73,8 @@ Section 1201 analysis.
   <https://cdn.ca9.uscourts.gov/datastore/opinions/2010/09/10/09-35969.pdf>
   (Accessed: 13 July 2026).
 - [Krause v. Titleserv, Inc](krause-v-titleserv.md).
+<!-- markdownlint-disable-next-line MD013 -->
+- [Wall Data Inc. v. Los Angeles County Sheriff's Department](wall-data-v-los-angeles-county-sheriff.md).
 - [17 U.S.C. § 109](../statutes/17-usc-109.md).
 - [17 U.S.C. § 117](../statutes/17-usc-117.md).
 <!-- markdownlint-disable-next-line MD013 -->
