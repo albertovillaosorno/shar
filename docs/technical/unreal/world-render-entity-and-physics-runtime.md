@@ -24,6 +24,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Mission world-entity and respawn runtime](mission-world-entity-and-respawn-runtime.md)
 - [Native asset load request and streaming
   runtime](native-asset-load-request-and-streaming-runtime.md)
@@ -340,6 +342,14 @@ Its definition includes:
 Application code does not maintain a parallel position matrix or physics object
 pointer. The primitive component and Chaos body provide the current accepted
 physical state.
+
+Drivable vehicle chassis, wheels, suspension, powertrain, controllers, traffic
+handoff, damage, resets, husks, parked vehicles, pursuit vehicles, and vehicle
+presentation follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+This general world contract does not become a second vehicle solver or retain
+native vehicle physics objects across lifecycle boundaries.
 
 ## Animated and articulated physical props
 

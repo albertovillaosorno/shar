@@ -1,7 +1,7 @@
 # Mission, interaction, interior, and notoriety runtime
 
 - Status: Active
-- Last reviewed: 2026-07-15
+- Last reviewed: 2026-07-16
 
 ## Governing decisions
 
@@ -24,6 +24,8 @@
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 
 ## Purpose
 
@@ -797,6 +799,15 @@ Reaching the pursuit threshold enters `pursuit`, selects the level policy, and
 requests the configured wave. Replacement waves may spawn while pursuit remains
 active, but spawn limits and placement validation prevent unbounded simultaneous
 pursuers.
+
+Each accepted pursuer is represented by a revisioned pursuit-vehicle lease under
+<!-- markdownlint-disable-next-line MD013 -->
+[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+The lease owns vehicle construction, controller, target, route, visibility,
+active budget, destruction, withdrawal, and teardown. Fixed chase arrays,
+player-
+zero assumptions, first-free slots, raw target pointers, and out-of-sight timers
+cannot become notoriety or vehicle identity.
 
 During pursuit, decay follows the pursuit policy even when accepted offenses
 occur. Contact with active police vehicles is exempt from further notoriety.

@@ -50,30 +50,38 @@ state-prop definitions, states, transitions and markers, character definitions,
 movement profiles, input contexts, material variants, attached props, footprint
 definitions, supersprint tracks, routes, grids, rulesets,
 artificial-intelligence
-policies, camera and HUD definitions, high-score schemas, and diagnostic views.
+policies, vehicle definitions and variants, movement and wheel profiles,
+powertrain, steering, brake, suspension, tire, damage, reset, parked, pursuit,
+husk, input, haptics, material, light, audio, VFX, camera and HUD definitions,
+high-score schemas, and diagnostic views.
 
 It cannot replace the engine frame loop, renderer, Audio Mixer, native audio
 device, master Sound Class or submix graph, platform backend, stream cache,
 protected residency scopes, platform mix or output policy, base VFX or audio
 definitions, base road graph, traffic authority, listener policy, dialogue usage
 outside its namespace, local-player identity, native input globally, Character
-Movement, base character or state-prop definitions, race clocks, checkpoint and
-result authority, persistent currency, or unrelated route and event queries.
+Movement, Chaos, the native physics scene, protected base vehicles, base
+character or state-prop definitions, persistent vehicle roster, notoriety,
+parking, pursuit, mission, race clocks, checkpoint and result authority,
+persistent currency, or unrelated route and event queries.
 
 Feature removal cancels owned construction, render-scope, VFX, route, traffic,
 vehicle-audio, generic-audio, residency, mix, modulation, environment, dialogue,
 listener, positional-source, state-prop transition, character construction,
-vehicle handoff, input, camera, prop, interaction, footprint, supersprint,
-checkpoint, result, coin-presentation, and sparkle requests; tears down owned
-runtime objects, effects, Audio Components, playback, subtitles, mouth, ducking,
-Actor, component, controller, vehicle, camera, HUD, route, and presentation
-leases; clears submix, bus, environment, input, and state projections; releases
+vehicle handoff, vehicle construction, control, artificial-intelligence,
+physics,
+route, parking, pursuit, husk, damage, reset, input, haptics, camera, prop,
+interaction, footprint, supersprint, checkpoint, result, coin-presentation, and
+sparkle requests; tears down owned runtime objects, effects, Audio Components,
+playback, subtitles, mouth, ducking, Actor, component, controller, vehicle,
+native-physics, camera, HUD, route, and presentation leases; clears submix, bus,
+environment, input, vehicle, and state projections; releases
 retained handles; unregisters namespaced constructors, assets, policies,
 definitions, bindings, dialogue content, listeners, tracks, and graph overlays;
 rejects stale device, loading, animation, marker, fade, playback, controller,
-movement, race, and callback results; restores scoped base state; and proves
-zero
-owned native and project resources as one transaction.
+movement, physics, wheel, damage, parking, pursuit, husk, race, and callback
+results; restores scoped base state; and proves zero owned native and project
+resources, including vehicle resources, as one transaction.
 
 Native executable packages are not loaded by this decision. They remain inactive
 unless a separate accepted native-extension trust, ABI, signing, loading, and

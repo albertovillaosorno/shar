@@ -27,6 +27,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Local supersprint race session runtime](local-supersprint-race-session-runtime.md)
@@ -352,6 +354,16 @@ revisions to
 [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md).
 They never expose fixed manager slots, raw button callbacks, model-name buffers,
 object pointers, collision arrays, or footprint-pool positions.
+
+Vehicle commands and observations carry definition, instance, simulation, wheel,
+controller, input, artificial-intelligence, occupant, damage, presentation,
+reset, husk, parking, pursuit, road, world, feature, and physics-step revisions
+to
+<!-- markdownlint-disable-next-line MD013 -->
+[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+They never route native physics pointers, wheel-array positions, force
+accumulators, raw controller identifiers, model or joint strings, custom
+collision-solving answers, drawable pointers, or pool slots.
 
 ## Lifecycle integration
 

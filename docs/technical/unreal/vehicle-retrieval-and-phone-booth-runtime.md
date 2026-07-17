@@ -1,7 +1,7 @@
 # Vehicle retrieval and phone-booth runtime
 
 - Status: Active
-- Last reviewed: 2026-07-14
+- Last reviewed: 2026-07-16
 
 ## Governing decisions
 
@@ -15,6 +15,8 @@
 - [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Reward browser, preview, and purchase UI runtime](reward-browser-preview-and-purchase-ui-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 
 ## Purpose
 
@@ -140,8 +142,14 @@ If the current balance is below the charge, selection fails without a debit,
 health change, or world mutation.
 
 A damaged but non-destroyed vehicle retains its accepted health and does not
-incur
-the destroyed-vehicle repair charge.
+incur the destroyed-vehicle repair charge.
+
+Destroyed-vehicle simulation, terminal presentation, optional husk leases,
+source-to-husk correlation, pool reset, capacity fallback, and teardown follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+A husk is not an owned or retrievable vehicle and cannot satisfy the selected
+vehicle identity, repair itself, or preserve a stale active-instance slot.
 
 ## Delivery plan
 

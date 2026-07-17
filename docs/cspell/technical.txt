@@ -731,6 +731,15 @@ xmlnstbl
 xmlopen
 xmv
 xob
+capturable
+dmv
+enterability
+hardpoint
+hardpoints
+pov
+resimulation
+substeps
+suv
 zmij
 zwbo
 zwnbo

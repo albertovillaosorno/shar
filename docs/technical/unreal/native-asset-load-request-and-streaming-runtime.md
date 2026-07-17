@@ -18,6 +18,7 @@
 - [Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md)
 - [Local supersprint race session runtime](local-supersprint-race-session-runtime.md)
 - [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
+- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 - [Platform audio cooking and streaming](platform-audio-cooking-and-streaming.md)
 - [Platform cinematic media packaging](platform-cinematic-media-packaging.md)
 <!-- markdownlint-enable MD013 -->
@@ -289,6 +290,17 @@ object identities to
 [Native cooked-asset construction and registration runtime](native-cooked-asset-construction-and-registration-runtime.md).
 The construction subsystem revalidates definition, bundle, world, placement, and
 feature revisions before preparing native objects.
+
+For vehicles, loaded Skeletal Meshes, Physics Assets, Animation Blueprints,
+wheel
+definitions, movement profiles, materials, audio, VFX, and policy assets are
+only
+readiness evidence. Native physics-state construction, controller ownership,
+traffic or parking mode, damage, occupants, and world registration follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+Asset readiness alone cannot activate, possess, simulate, damage, or publish a
+vehicle.
 
 Load completion cannot:
 

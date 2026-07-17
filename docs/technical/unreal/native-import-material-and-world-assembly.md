@@ -41,6 +41,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Native asset translation without copy-paste](../../adr/pipeline/unreal/native-asset-translation-and-no-copy-paste.md)
 
 ## Purpose
@@ -341,6 +343,22 @@ props, camera targets, and footprint definitions for
 [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md).
 Runtime does not construct model, animation, material, or texture paths from raw
 character-name prefixes and suffixes.
+
+Vehicle import publishes canonical fixed-topology Chaos vehicle definitions,
+Skeletal Meshes, Physics Assets, Animation Blueprints, wheel definitions, engine
+torque curves, transmission, differential, steering, brake, suspension, tire,
+center-of-mass, collision, damage, seat, hardpoint, material, light, audio, VFX,
+parked, traffic, pursuit, husk, reset, quality, and network policy for
+<!-- markdownlint-disable-next-line MD013 -->
+[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+
+Hand-written tire and suspension force parameters, custom physics and traffic
+locomotion classes, wheel-array positions, pose drivers, raw controller
+mappings,
+model and joint name searches, custom drawables, damage texture pointers, fixed
+vehicle pools, and source event callbacks remain provenance only. Import does
+not
+translate them into a second packaged vehicle solver or renderer.
 
 Supersprint import publishes canonical tracks, route and checkpoint references,
 starting grids, directions, lap and turbo policy, eligible characters and

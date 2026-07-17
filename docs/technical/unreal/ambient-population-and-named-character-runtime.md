@@ -10,6 +10,8 @@
 - [Pedestrian path runtime](pedestrian-path-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 - [Presentation playback runtime](presentation-playback-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md)
@@ -196,6 +198,45 @@ conversation.
 Required named, mission, interaction, driver, race-host, cinematic, or gag
 placements are never reduced below the representation required by their active
 contract.
+
+## Actor-backed pedestrian lifecycle
+
+A promoted or near-field pedestrian uses one stable character instance and an
+explicit population lease. The lease contains population, archetype,
+model-group,
+character, path, zone, world, feature, representation, and controller revisions;
+activation state; visibility and distance policy; and teardown.
+
+Activation validates the character definition, model and animation readiness,
+path projection, floor, capsule clearance, minimum player distance, nearby-
+pedestrian spacing, and current population budget. Deactivation releases path,
+controller, dialogue, reaction, presentation, and retained-asset ownership
+before
+the Actor is hidden, pooled, or destroyed.
+
+Model groups are immutable weighted definitions selected by stable zone and
+session seeds. Switching a group changes future eligible representations and may
+replace disposable pedestrians through a revisioned transaction. It cannot swap
+a model under a named, mission, interaction, conversation, driver, or otherwise
+reserved character.
+
+Walking, brisk walking, running, backing away, path following, waypoint arrival,
+panic, avoidance, and recovery are typed movement intents consumed by the
+playable-character and pedestrian-path contracts. Speed, spacing, panic radius,
+out-of-sight lifetime, model capacity, and activation budgets are authored,
+unit-labelled policy rather than fixed manager constants.
+
+Vehicle contacts and threat observations consume immutable collision and vehicle
+state from
+<!-- markdownlint-disable-next-line MD013 -->
+[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+A pedestrian reaction cannot damage a vehicle, adjust notoriety, grant currency,
+or commit mission state without the owning typed transaction.
+
+Fixed seven-pedestrian arrays, first-free slots, generated names, mutable model-
+in-use counters, raw character pointers, and camera-poll activation are not
+target
+identity or lifetime authority.
 
 ## Spawn planning
 

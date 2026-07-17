@@ -17,6 +17,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Local supersprint race session runtime](local-supersprint-race-session-runtime.md)
@@ -430,17 +432,24 @@ a mix, move a listener, select an environment, clear a queue, or mutate
 gameplay.
 Shipping builds exclude or permanently disable mutable audio-debug controls.
 
-## State-prop, character, and supersprint diagnostics
+## State-prop, character, vehicle, and supersprint diagnostics
 
 Registered read-only views may consume immutable snapshots from the authored
-state-prop, playable-character, and local supersprint contracts. They may show:
+state-prop, playable-character, native-vehicle, and local supersprint contracts.
+They may show:
 
 - state-prop definitions, instances, active state, transitions, markers,
   callbacks, listeners, component projection, persistence, and streaming;
 - avatar, local-player, controller, character, input-context, movement,
-  collision,
-  support, vehicle-handoff, camera-target, prop, interaction, and footprint
-  state;
+  collision, support, vehicle-handoff, camera-target, prop, interaction, and
+  footprint state;
+- vehicle definition, instance, native-physics readiness, asynchronous step,
+  transform, velocity, acceleration, engine, gear, and control state;
+- per-wheel contact, load, suspension, slip, steering, rotation, brake, drive,
+  and physical-surface observations;
+- vehicle artificial-intelligence intent, road and traffic projection, parking,
+  pursuit, collisions, damage, destruction, husks, resets, recovery, input,
+  haptics, presentation, capacity, streaming, and teardown;
 - supersprint session, participants, controller assignments, selections,
   loading,
   vehicles, artificial intelligence, route progress, checkpoints, laps, clocks,
@@ -449,10 +458,11 @@ state-prop, playable-character, and local supersprint contracts. They may show:
   findings.
 
 These views cannot force state transitions, inject shipping input, possess or
-teleport characters, commit vehicle handoffs, advance checkpoints, consume
-turbo,
-finish races, write high scores, grant currency, create persistence, or retain
-presentation resources.
+teleport characters, commit vehicle handoffs, spawn, possess, move, accelerate,
+brake, damage, repair, reset, destroy, park, pursue, retrieve, or grant a
+vehicle,
+advance checkpoints, consume turbo, finish races, write high scores, grant
+currency, create persistence, or retain presentation resources.
 
 ## Screenshot and frame capture
 

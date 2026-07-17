@@ -17,6 +17,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
@@ -418,6 +420,11 @@ intelligence and non-player-character control, vehicle handoffs, camera targets,
 props, and footprints follow
 <!-- markdownlint-disable-next-line MD013 -->
 [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md).
+Vehicle construction, native physics state, controllers, traffic and parked
+mode,
+damage, resets, husks, pursuit leases, and presentation follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
 Authored state-prop projection and callback lifecycle follow
 <!-- markdownlint-disable-next-line MD013 -->
 [Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md).

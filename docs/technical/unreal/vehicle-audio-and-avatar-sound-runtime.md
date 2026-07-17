@@ -11,6 +11,8 @@
 - [Platform audio cooking and streaming](platform-audio-cooking-and-streaming.md)
 - [Vehicle AI and route runtime](vehicle-ai-and-route-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Physical material and impact-response runtime](physical-material-and-impact-response-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md)
@@ -182,8 +184,14 @@ role identities and lifecycle remain explicit.
 - simulation time, presentation time, and pause policy; and
 - correlation and deduplication keys.
 
-The audio subsystem does not query mutable vehicle internals after accepting the
-observation. A new revision replaces the old snapshot.
+The observation is projected from the accepted native simulation and
+presentation
+snapshots in
+<!-- markdownlint-disable-next-line MD013 -->
+[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+The audio subsystem does not query mutable vehicle internals, native solver
+objects, wheel arrays, or controller state after accepting it. A new revision
+replaces the old snapshot.
 
 ## Instance lifecycle
 

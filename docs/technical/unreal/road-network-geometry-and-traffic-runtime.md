@@ -16,6 +16,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Vehicle AI and route runtime](vehicle-ai-and-route-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Pedestrian path runtime](pedestrian-path-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Authored spatial placement and trigger runtime](authored-spatial-placement-and-trigger-runtime.md)
@@ -541,6 +543,13 @@ The traffic subsystem consumes the accepted graph and policy snapshot for:
 Traffic vehicles own their controllers and movement requests. The road graph
 does
 not tick vehicles or apply throttle, brake, or steering.
+
+Traffic projection, lane-change curves, intersection entry, and the verified
+handoff between lightweight road movement and dynamic Chaos simulation follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+A traffic instance cannot become player-controlled or physically simulated by
+swapping a raw locomotion pointer or retaining stale lane state.
 
 ## Vehicle-AI integration
 

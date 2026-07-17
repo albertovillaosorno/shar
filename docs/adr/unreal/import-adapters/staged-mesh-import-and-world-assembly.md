@@ -91,6 +91,17 @@ footprint definitions. Raw model and animation name construction, fixed manager
 slots, controller integers, custom renderables, and footprint arrays are
 excluded.
 
+Vehicle import publishes fixed-topology Chaos vehicle definitions, native
+Skeletal Meshes, Physics Assets, Animation Blueprints, wheel definitions, engine
+curves, transmission, differential, steering, brake, suspension, tire,
+center-of-mass, collision, damage, seat, hardpoint, material, light, audio, VFX,
+parking, traffic, pursuit, husk, reset, quality, and network policy.
+Hand-written
+tire and suspension forces, custom physics or traffic locomotion, pose drivers,
+raw controller mappings, model and joint name searches, custom drawables, damage
+texture pointers, fixed vehicle pools, and source callbacks remain provenance
+only and are not translated into a packaged vehicle solver or renderer.
+
 Supersprint import publishes canonical tracks, routes, checkpoints, directions,
 starting grids, lap and turbo policy, participant ranges, eligible character and
 vehicle identities, artificial-intelligence policy, cameras, traps, HUD and

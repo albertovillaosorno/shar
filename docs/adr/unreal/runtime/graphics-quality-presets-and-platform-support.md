@@ -116,6 +116,15 @@ reassign listener ownership; leak local-player audio; silently evict protected
 audio; change semantic environment identity; or reinterpret vehicle, collision,
 damage, or gameplay state.
 
+Vehicle quality may reduce mesh and material level of detail, shadows, lights,
+reflections, optional damage and debris presentation, wheel animation detail,
+skid and smoke density, distant traffic representation, optional audio layers,
+diagnostics, and native vehicle quality settings within validated parity
+tolerances. It cannot change vehicle identity, required wheel or collision
+topology, input meaning, access, ownership, mission, race, retrieval, parking,
+pursuit, notoriety, route, checkpoint, damage, repair, destruction, reset,
+local-player isolation, deterministic transactions, or gameplay outcomes.
+
 State-prop quality may reduce decorative animation evaluation, materials,
 particles, or secondary audio but cannot alter state, transition, marker,
 collision, interaction, or persistence semantics. Character quality may reduce

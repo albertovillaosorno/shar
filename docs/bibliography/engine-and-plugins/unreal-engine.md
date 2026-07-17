@@ -27,9 +27,12 @@ examples, or documentation.
   `UCharacterMovementComponent`, native movement modes and network movement
   support, StateTree states, tasks, and transitions, Chaos physics, collision
   and
-  traces, native physics components, ISM and HISM behavior, Chaos Visual
-  Debugger,
-  and Unreal Engine 5.8 Media Framework and Electra boundaries were verified.
+  traces, Chaos Vehicles, `UChaosVehicleMovementComponent`,
+  `UChaosWheeledVehicleMovementComponent`, native wheel, suspension, engine,
+  transmission, differential, asynchronous physics, vehicle animation, and
+  vehicle setup boundaries, the experimental Chaos Modular Vehicles distinction,
+  native physics components, ISM and HISM behavior, Chaos Visual Debugger, and
+  Unreal Engine 5.8 Media Framework and Electra boundaries were verified.
   Accepted regional agreement, bundled
   notices, decoder availability, and external-service retention remain
   environment- or service-specific.
@@ -244,6 +247,25 @@ royalty or seat analysis.
 - Epic Games (2026) *Overview of StateTree in Unreal Engine 5.8*. Available at:
   <!-- markdownlint-disable-next-line MD013 -->
   <https://dev.epicgames.com/documentation/en-us/unreal-engine/overview-of-state-tree-in-unreal-engine>
+  (Accessed: 16 July 2026).
+- Epic Games (2026) *Chaos Vehicles in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/chaos-vehicles>
+  (Accessed: 16 July 2026).
+- Epic Games (2026) *How to Set Up Vehicles in Unreal Engine 5.8*. Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/how-to-set-up-vehicles-in-unreal-engine>
+  (Accessed: 16 July 2026).
+- Epic Games (2026) *UChaosWheeledVehicleMovementComponent in Unreal Engine
+  5.8*.
+  Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Plugins/ChaosVehicles/UChaosWheeledVehicleMovementComp->
+  (Accessed: 16 July 2026).
+- Epic Games (2026) *Chaos Modular Vehicles Overview in Unreal Engine 5.8*.
+  Available at:
+  <!-- markdownlint-disable-next-line MD013 -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/chaos-modular-vehicles-overview>
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Physics in Unreal Engine 5.8*. Available at:
   <!-- markdownlint-disable-next-line MD013 -->

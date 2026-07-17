@@ -1,7 +1,7 @@
 # Semantic input, device, and haptics runtime
 
 - Status: Active
-- Last reviewed: 2026-07-15
+- Last reviewed: 2026-07-16
 
 ## Governing decisions and specifications
 
@@ -19,6 +19,8 @@
 - [Device configuration and save-slot runtime](device-configuration-and-save-slot-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 
 ## Purpose
 
@@ -295,9 +297,13 @@ A steering-wheel adapter declares:
 - independent-axis support; and
 - device-specific calibration profile.
 
-Wheel controls map to the same accelerate, brake, steer, handbrake, horn, menu,
-and camera actions used by other devices. Wheel-only presentation or tuning does
-not change vehicle physics authority.
+Wheel controls map to the same accelerate, brake, steer, handbrake, reverse,
+turbo, horn, reset, menu, and camera actions used by other devices. Semantic
+vehicle-command projection, controller leases, native movement, and accepted
+read-back follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+Wheel-only presentation or tuning does not change vehicle physics authority.
 
 ## Device sessions and action dispatch
 

@@ -30,6 +30,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Local supersprint race session runtime](local-supersprint-race-session-runtime.md)
@@ -180,6 +182,23 @@ leak local-player audio; reinterpret vehicle gear, collision, or damage;
 silently
 evict protected audio; substitute a custom first-free player pool; change
 semantic environment identity; or change gameplay results.
+
+Vehicle quality may reduce mesh and material level of detail, shadows, lights,
+reflections, optional damage and debris presentation, wheel animation detail,
+skid and smoke density, distant traffic representation, optional audio layers,
+diagnostic detail, and native vehicle quality settings within validated parity
+tolerances under
+<!-- markdownlint-disable-next-line MD013 -->
+[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+
+It cannot change canonical vehicle identity, required wheel or collision
+topology,
+input meaning, access or ownership, mission, race, retrieval, parking, pursuit,
+or
+notoriety policy, route and checkpoint semantics, required damage, repair,
+destruction, or reset results, local-player isolation, deterministic
+transactions,
+or gameplay outcomes.
 
 State-prop quality may reduce optional particles, secondary audio, distant
 animation evaluation, material cost, or decorative update frequency within

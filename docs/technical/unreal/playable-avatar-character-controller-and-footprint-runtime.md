@@ -25,6 +25,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Vehicle AI and route runtime](vehicle-ai-and-route-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Camera rig, preset, and arbitration runtime](camera-rig-preset-and-arbitration-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md)
@@ -501,6 +503,13 @@ The transaction states are:
 The avatar becomes in-vehicle only when seat ownership, vehicle control, input,
 camera target, character attachment or hiding, collision, and movement state are
 committed together.
+
+Vehicle construction, seat and hardpoint definitions, controller leases, native
+movement state, collision, damage, destruction, reset, parked and traffic mode,
+and vehicle-side teardown follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+Neither runtime may commit only its half of the handoff.
 
 ## Vehicle exit transaction
 

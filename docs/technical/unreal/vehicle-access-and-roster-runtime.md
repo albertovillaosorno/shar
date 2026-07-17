@@ -1,7 +1,7 @@
 # Vehicle access and roster runtime
 
 - Status: Active
-- Last reviewed: 2026-07-14
+- Last reviewed: 2026-07-16
 
 ## Governing decisions
 
@@ -16,6 +16,8 @@
 - [Driving, traffic, and vehicle behavior parity](../../adr/gameplay/vehicles/driving-traffic-and-vehicle-ai.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 
 ## Purpose
 
@@ -221,6 +223,24 @@ Traffic instances are disposable world state. Hijacking one permits immediate
 use but does not add it to the persistent 42-vehicle roster. A traffic vehicle
 used as a race opponent or mission target retains the same canonical definition
 and receives a placement-specific controller and tuning profile.
+
+## Parked vehicle placements
+
+Parked and free vehicles use stable authored placement identities or a validated
+zone-selection policy. Each placement declares vehicle definition, transform,
+floor and clearance requirements, access class, enterability, damage,
+persistence, respawn, mission, streaming, and removal behavior.
+
+Construction, native physics mode, occupancy, transition to player control,
+capacity, and teardown follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+Fixed vehicle-name arrays, locator-array positions, zone ordinals, first-free
+slots, and model lookup strings are provenance only.
+
+A parked vehicle cannot be removed while occupied, reserved, mission-owned, or
+protected by persistence. Entering one grants immediate use according to its
+access class but does not silently create persistent roster ownership.
 
 ## Completion override
 

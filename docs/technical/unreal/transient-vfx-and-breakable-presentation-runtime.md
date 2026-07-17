@@ -18,6 +18,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Persistent world-object state runtime](persistent-world-object-state-runtime.md)
 
 ## Purpose
@@ -337,9 +339,12 @@ missions, interactions, route state, and persistence continue unchanged.
 
 ## Vehicle particle and surface effects
 
-Vehicle effects consume immutable vehicle, wheel, movement, contact, and
-physical
-surface observations.
+Vehicle effects consume immutable vehicle, wheel, movement, contact, damage, and
+physical-surface observations projected by
+<!-- markdownlint-disable-next-line MD013 -->
+[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+They never query mutable native solver state, wheel arrays, damage pointers, or
+render objects after accepting a revision.
 
 `FSharVehicleVfxObservation` contains:
 

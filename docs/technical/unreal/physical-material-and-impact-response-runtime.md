@@ -13,6 +13,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
@@ -268,9 +270,19 @@ reinterpret the domain result.
 
 ## Vehicles and characters
 
-Vehicle impacts may select tire, body, glass, suspension, or destructible-part
-responses according to the collision class. Character impacts additionally obey
-ragdoll, reaction, mission, and accessibility policy.
+Vehicle impacts may select tire, body, glass, suspension, wheel, or
+destructible-
+part responses according to the collision class. Character impacts additionally
+obey ragdoll, reaction, mission, and accessibility policy.
+
+Native contact resolution, wheel and chassis observations, damage-zone
+classification, vehicle damage transactions, reset, destruction, husk
+presentation, and controller consequences follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+The impact subsystem cannot return a custom collision-solving answer or write
+the
+native contact manifold.
 
 A surface response cannot force vehicle or character state when the owning
 movement or gameplay service rejects the request.

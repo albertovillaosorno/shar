@@ -15,6 +15,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Road-network geometry and traffic runtime](road-network-geometry-and-traffic-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Vehicle audio and avatar-sound runtime](vehicle-audio-and-avatar-sound-runtime.md)
 
 ## Purpose
@@ -319,8 +321,15 @@ policy explicitly permits it.
 ## Physics and update order
 
 AI decisions consume one immutable observation snapshot. The controller emits a
-drive request before the vehicle physics step. Physics applies the request and
-publishes read-back for the next decision step.
+semantic drive intent before the vehicle physics step. Command projection,
+standard Chaos vehicle simulation, wheels, suspension, powertrain, steering,
+brakes, damage, reset, and immutable read-back follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+
+The AI controller cannot write native wheel forces, suspension offsets, engine,
+transmission, tire, rigid-body, or render-transform state. Human and artificial-
+intelligence control converge on the same semantic vehicle command boundary.
 
 Render frame rate cannot change route progress, timers, catch-up, steering
 candidate order, or recovery thresholds. Presentation interpolation is separate
