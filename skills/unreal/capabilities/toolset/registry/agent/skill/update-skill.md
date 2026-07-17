@@ -47,42 +47,70 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to replace the routing description and instruction body of
+one existing SHAR runtime AgentSkill after its exact generated class path and
+current registry values have been captured.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Obtain the exact generated class path from `CreateSkill` or `ListSkills`.
+- Capture the current description with `ListSkills` and instructions with
+  `GetSkills` before mutation.
+- Provide both required replacement values: `description` and
+  `details.instructions`.
+- Plan an explicit `AssetTools.save_assets` call and an independent registry
+  round-trip after the update.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "description": "Routes updated disposable SHAR AgentSkill lifecycle validation.",
+  "details": {
+    "instructions": "Use this updated disposable skill to verify that AgentSkill descriptions and instruction bodies round-trip through UpdateSkill, ListSkills, GetSkills, explicit save, and bounded cleanup."
+  },
+  "skillPath": "/Game/SHAR_MCP_Validation/AgentSkills/MCP_AgentSkillLifecycle.MCP_AgentSkillLifecycle_C"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The update returned true. A fresh `ListSkills` call returned the replacement
+routing description, and `GetSkills` returned the replacement instruction body
+under the same generated class path. `save_assets` then returned true, and the
+persisted `.uasset` SHA-256 changed from its post-create value. Deleting the
+bounded validation folder removed the asset, unregistered the skill, made
+`AssetTools.exists` return false, and caused `GetSkills` for the removed path to
+return an empty dictionary.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- `skillPath` must be the full generated class object path ending in `_C`.
+- `description` and `details.instructions` are both required on every call.
+- Registry reads reflect the update before the package is saved; call
+  `AssetTools.save_assets` to persist it to disk.
+- A true boolean response is insufficient verification. Re-read both the
+  description and instruction body independently.
+- The AgentSkill toolset has no delete operation; cleanup requires AssetTools.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

@@ -47,42 +47,77 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to create a bounded runtime AgentSkill asset when SHAR needs
+editor-loaded project guidance whose routing description and instruction body
+must be discoverable through the native AgentSkill registry.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Confirm the target folder and asset path are absent with `AssetTools.exists`.
+- Confirm `ListSkills` does not already contain the intended generated class
+  path.
+- Provide a short routing description and put the complete instruction body in
+  `details.instructions`.
+- Define explicit `AssetTools.save_assets` persistence and `AssetTools.delete`
+  cleanup before creating a disposable fixture.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "assetName": "MCP_AgentSkillLifecycle",
+  "description": "Routes disposable SHAR AgentSkill lifecycle validation.",
+  "details": {
+    "instructions": "Use this disposable skill only to verify AgentSkill creation, discovery, detail retrieval, update, persistence, and cleanup in the canonical SHAR editor project."
+  },
+  "folderPath": "/Game/SHAR_MCP_Validation/AgentSkills"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The tool returned this generated class path:
+
+```text
+/Game/SHAR_MCP_Validation/AgentSkills/MCP_AgentSkillLifecycle.MCP_AgentSkillLifecycle_C
+```
+
+`AssetTools.exists` then returned true for the underlying asset.
+`get_asset_class` returned `MCP_AgentSkillLifecycle_C`. `ListSkills` returned
+the exact routing description under the generated class path, while `GetSkills`
+returned the exact `details.instructions` value. Creation did not write a
+`.uasset` automatically; an explicit `save_assets` call returned true and
+created the package on disk.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- `details` must contain the required `instructions` string.
+- The return value is the generated class object path ending in `_C`; the
+  underlying asset path omits the object suffix.
+- The tool can create missing content folders, but it does not save the new
+  package automatically.
+- The AgentSkill toolset has no delete operation. Use the reviewed AssetTools
+  delete capability and verify both registry removal and filesystem cleanup.
+- `ListSkills` exposes descriptions; use `GetSkills` for instruction bodies.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
