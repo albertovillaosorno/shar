@@ -49,42 +49,67 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to reparent one reviewed SHAR Blueprint to an exact native or
+Blueprint class after direct-parent pre-state and a restoration path have been
+captured.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Read the current direct parent with `get_parent`.
+- Confirm the target class is compatible with the Blueprint's intended role.
+- Capture the original parent class as the exact inverse.
+- Use one disposable or explicitly approved Blueprint.
+- Define strict compilation and fresh parent reads after both mutation and
+  restoration.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "blueprint": {
+    "refPath": "/Game/SHAR_MCP_Validation/BP_MCP_EventParentLifecycle.BP_MCP_EventParentLifecycle"
+  },
+  "parent_class": {
+    "refPath": "/Script/Engine.Pawn"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The disposable Blueprint initially reported `/Script/Engine.Actor`. Reparenting
+to `/Script/Engine.Pawn` returned `null`; `get_parent` returned the Pawn class,
+and strict compilation succeeded. Reparenting back to `/Script/Engine.Actor`
+returned `null`; the original direct parent was restored and strict compilation
+succeeded again. A final parent read still returned Actor before asset cleanup.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The tool has no structured return value; use `get_parent` independently.
+- Reparenting can change inherited functions, events, defaults, and components.
+- A class path can be valid yet semantically incompatible with the Blueprint.
+- Structural references may become stale after reparenting and compilation.
+- Always retain the original parent class and verify restoration explicitly.
+- The operation does not save the Blueprint automatically.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

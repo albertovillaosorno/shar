@@ -52,42 +52,71 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this mutation to add one inherited override or uniquely named custom event
+to a reviewed SHAR Blueprint EventGraph when the exact event identity and
+cleanup path are known.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use an exact loaded Blueprint asset reference.
+- Check `list_events` for the intended name before mutation.
+- Choose an explicit graph position and a unique custom event name when not
+  overriding an inherited event.
+- Define node inspection, strict compilation, exact node deletion, and event
+  inventory verification before invocation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "blueprint": {
+    "refPath": "/Game/SHAR_MCP_Validation/BP_MCP_EventParentLifecycle.BP_MCP_EventParentLifecycle"
+  },
+  "event_name": "MCP_EventLifecycle",
+  "position": {
+    "x": 640,
+    "y": 320
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+`list_events` contained no `MCP_EventLifecycle` entry before mutation. The
+call returned an `EventGraph.K2Node_CustomEvent_0` reference. `get_node_infos`
+reported type ID `AddEvent|Custom|MCP_EventLifecycle`, position `(640, 320)`,
+and `OutputDelegate` plus `then` outputs. `list_events` then returned one
+implemented event with that name, and strict compilation succeeded. Deleting
+the returned node removed the event from `list_events`, and strict compilation
+succeeded again.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- A name that does not resolve to an inherited event creates a custom event.
+- The returned nested node reference is session-sensitive.
+- The operation does not save the Blueprint automatically.
+- Event inventory and node metadata are separate verification surfaces.
+- Use the exact returned node with `delete_node` for disposable cleanup.
+- Recompilation or structural graph edits can invalidate cached node refs.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
