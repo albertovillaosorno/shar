@@ -798,6 +798,16 @@ One source row does not automatically create one runtime object. Repeated rows,
 review variants, chapter placements, and completion-tracking copies may collapse
 into one definition plus several typed placement or availability rows.
 
+External mission and story proposal sets follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md).
+Candidate chapter, character, vehicle, landmark, location, interior, mission,
+boss, race, collectible, dialogue, camera, audio, and presentation facts are
+reconciled individually against current canonical definitions. Conflicting draft
+counts, fixed per-level ownership, proposal ordering, questions, comments, legal
+requests, and stakeholder workflow state cannot create or replace catalog rows.
+Unresolved proposals publish no partial content family or placement graph.
+
 ## Production metadata boundary
 
 The following fields remain import-review metadata unless a separate public

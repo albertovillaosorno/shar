@@ -324,6 +324,47 @@ runtime output.
 
 No broad document can override a newer focused specification.
 
+### External mission and story proposal sets
+
+A non-empty external partner, licensor, publisher, or writer-facing mission and
+story framework is semantic proposal evidence. It may contribute candidate:
+
+- chapter themes and narrative beats;
+- mission families, objectives, stages, failures, rewards, and presentation;
+- playable, forced, supporting, ambient, and cinematic character roles;
+- vehicle classes, handling roles, chase or escape use, and mission bindings;
+- landmarks, locations, interiors, routes, time-of-day, and streaming scope;
+- boss, race, tutorial, collectible, dialogue, camera, audio, and FMV intent;
+  and
+- explicit technical or content constraints that remain compatible with current
+  accepted architecture.
+
+Each source document belongs to one versioned proposal set. Intake records its
+safe private identity, revision relation, section or table identity, candidate
+fact identities, cross-document conflicts, and terminal decision. Repeated or
+combined drafts may collapse into one proposal set; a longer or later-looking
+source does not automatically supersede another source or an accepted public
+contract.
+
+Conflicting proposals such as seven versus nine levels, five versus eight
+controllable characters, different mission-type counts, one boss per level,
+fixed character-per-level ownership, or incompatible landmark, interior, and
+vehicle allocations remain unresolved until the authority hierarchy selects one
+accepted result. They do not change the current seven-chapter open sandbox,
+playable roster, canonical content catalog, progression, achievements, or save
+schema.
+
+Questions, brainstorming, review comments, legal or approval requests, staffing,
+authorship, dates, delivery status, source references, and production notes are
+private workflow metadata. A legal-approval working document is excluded from
+semantic coverage rather than converted into gameplay content.
+
+Every retained proposal fact ends as accepted, adapted, superseded, rejected, or
+unresolved. Only accepted or explicitly adapted facts may generate typed
+mission,
+chapter, character, vehicle, location, interior, presentation, or catalog
+definitions. Unresolved proposal sets publish no partial runtime graph.
+
 ### Frontend and platform error flows
 
 Frontend evidence normalizes into Common UI routes, screens, actions, focus,
@@ -665,6 +706,10 @@ Validation proves:
   is absent from the ledger;
 - every extracted fact has one class and terminal owner;
 - conflicts follow the authority hierarchy;
+- every external proposal fact belongs to one versioned proposal set and has one
+  terminal accepted, adapted, superseded, rejected, or unresolved result;
+- conflicting level, character, mission, boss, landmark, interior, vehicle, and
+  story allocations cannot alter accepted campaign or catalog state implicitly;
 - superseded modes cannot enter base-game catalogs;
 - content identities and aliases are unique;
 - campaign, mission, boss, character, vehicle, pedestrian, gag, hazard, event,
@@ -705,6 +750,9 @@ Automated tests cover:
 - deterministic pruning and idempotence;
 - product-goal versus implementation-proposal classification;
 - authority conflict and supersession;
+- external mission/story proposal-set grouping, duplicate-draft collapse,
+  cross-document conflict, accepted adaptation, rejection, unresolved isolation,
+  and zero partial publication;
 - rejected head-to-head and bullet-time base modes;
 - mod-owned multiplayer namespace isolation;
 - card-count conflict reconciliation;
@@ -726,6 +774,9 @@ Automated tests cover:
 - Source documents never execute or ship.
 - Product goals do not preserve obsolete implementation automatically.
 - Newer accepted decisions supersede historical counts and modes.
+- External proposal sets never override accepted campaign or catalog state by
+  document length, apparent recency, repetition, or stakeholder origin.
+- Unresolved external proposals publish no partial runtime definitions.
 - The base campaign remains single-player.
 - Multiplayer capability remains a mod-owned extension boundary.
 - Historical bullet time is not a base-game feature.

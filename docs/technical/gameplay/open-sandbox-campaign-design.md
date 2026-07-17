@@ -61,6 +61,13 @@ Chapter completion occurs only after the final required story mission commits.
 Optional content contributes to completion and achievements but does not block the
 next chapter unless its own definition explicitly says otherwise.
 
+Historical external mission and story frameworks are proposal evidence under
+[Historical core-design and dialogue evidence normalization](../unreal/historical-core-design-and-dialogue-evidence-normalization.md).
+Their draft level counts, playable-character tables, mission inventories, boss
+counts, landmark and interior allocations, vehicle groups, and story ordering do
+not override this seven-chapter open sandbox. A proposal affects the campaign only
+after its individual facts are accepted or adapted into current public contracts.
+
 ## New game
 
 A new game commits these initial conditions:

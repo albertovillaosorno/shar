@@ -1,7 +1,7 @@
 # Mission definition, stage, and objective runtime
 
 - Status: Active
-- Last reviewed: 2026-07-15
+- Last reviewed: 2026-07-17
 
 ## Governing decisions and specifications
 
@@ -30,6 +30,8 @@
 - [Race route and opponent runtime](race-route-and-opponent-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md)
 
 ## Purpose
 
@@ -156,6 +158,31 @@ Unknown commands, extra positional arguments, missing close operations,
 out-of-order commands, unresolved references, and context leaks fail
 conversion. The compiler never guesses the active mission, stage,
 objective, or condition.
+
+## External proposal conversion boundary
+
+External partner, licensor, publisher, or writer-facing mission frameworks
+follow
+<!-- markdownlint-disable-next-line MD013 -->
+[Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md).
+They are proposal sets, not source mission scripts and not runtime definitions.
+
+A proposal fact can contribute only after conversion resolves:
+
+- one canonical chapter, mission, stage, objective, participant, vehicle, route,
+  location, interior, reward, dialogue, camera, audio, or presentation identity;
+- one accepted mission family and typed objective adapter;
+- explicit prerequisites, readiness dependencies, failure, recovery, completion,
+  persistence, and teardown behavior;
+- conflicts with other proposal drafts and current public contracts; and
+- one terminal accepted, adapted, superseded, rejected, or unresolved result.
+
+Draft mission-type lists do not create new objective adapters automatically.
+Prose mission pitches, questions, brainstorming, fixed level ownership,
+one-boss-
+per-level assumptions, source ordering, and stakeholder notes cannot enter the
+mission graph. An unresolved proposal publishes no partial mission, stage,
+participant, placement, or progression definition.
 
 ## Mission definition envelope
 
@@ -921,6 +948,10 @@ dependency into success.
 Definition validation proves:
 
 - every source command maps uniquely or is explicitly unavailable;
+- every external proposal fact has one terminal accepted, adapted, superseded,
+  rejected, or unresolved result;
+- unresolved proposal facts generate no mission, stage, objective, participant,
+  placement, or progression definition;
 - every mission and stage identity is unique;
 - stage ordinals are dense and transitions resolve;
 - every stage owns exactly one root objective;
@@ -939,6 +970,8 @@ Definition validation proves:
 Required automated tests include:
 
 - deterministic conversion from equivalent mission evidence;
+- external proposal-set merge, conflict, accepted adaptation, supersession,
+  rejection, unresolved-state isolation, and zero partial publication;
 - unknown, duplicate, malformed, out-of-order, and
   unclosed command rejection;
 - invalid argument count, units, enums, and references;
@@ -989,3 +1022,5 @@ Required automated tests include:
 - Abort releases mission state without decrementing a mission ordinal.
 - Completion commits once before the session becomes completed.
 - Runtime packages never execute source mission commands.
+- External proposal documents never become runtime mission graphs directly.
+- Unresolved proposal facts publish no partial mission state.
