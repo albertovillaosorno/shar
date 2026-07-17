@@ -47,42 +47,75 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to create one typed SHAR DataAsset for reviewed configuration,
+registry, gameplay-data, or disposable integration validation.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Resolve the exact concrete DataAsset class and confirm it is appropriate
+  for the requested project contract.
+- Verify that the destination folder and asset path are absent with AssetTools.
+- Choose one exact asset name and define class, registry, and existence checks.
+- Define deletion of both the created asset and any newly introduced empty
+  folder before a disposable validation call.
+- Determine separately whether the asset must be saved to disk.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "folder_path": "/Game/SHAR_MCP_Validation",
+  "asset_name": "DA_MCP_Validation",
+  "asset_type": {
+    "refPath": "/Script/Engine.PrimaryDataAsset"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The destination folder and asset were absent before creation. The call
+returned `/Game/SHAR_MCP_Validation/DA_MCP_Validation.DA_MCP_Validation`.
+`find_assets` returned the package path, `exists` returned `true`, and
+`get_asset_class` returned `PrimaryDataAsset`. No `.uasset` or content directory
+appeared on disk during the unsaved test. Deleting the asset returned `true` and
+removed it from the registry. The virtual folder remained until a separate
+folder delete, after which both existence checks were false and no filesystem
+residue existed.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Creation registered an in-memory unsaved asset in the verified case; it did
+  not by itself create a `.uasset` file.
+- The returned object reference includes the object suffix, while AssetTools
+  searches and deletion use the package path.
+- Creating an asset in a new path also creates a virtual Content Browser folder
+  that can remain after the asset is deleted.
+- Saving, editing properties, compilation, and source-control behavior require
+  separate tools and verification.
+- Use only a concrete DataAsset subclass; abstract or incompatible classes may
+  be rejected.
+- Persistent project assets must not be deleted as cleanup unless they were
+  created by the same bounded disposable operation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
