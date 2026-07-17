@@ -94,12 +94,13 @@ requires the first factor to examine the specific challenged use, its purpose,
 and commercial context. A claimed new purpose does not replace analysis of all
 four factors.
 
-*Hachette Book Group, Inc. v. Internet Archive* later distinguished Google
-Books. The Second Circuit rejected fair use where complete digital books were
-made available for users to read for free. That service served the same purpose
-as the original books and substituted for authorized print and electronic-book
-markets,
-even when lending was ordinarily limited by a one-copy-to-one-user ratio.
+<!-- markdownlint-disable-next-line MD013 -->
+[*Hachette Book Group, Inc. v. Internet Archive*](hachette-book-group-v-internet-archive.md)
+later distinguished Google Books. The Second Circuit rejected fair use where
+complete digital books were made available for users to read for free. That
+service served the same purpose as the original books and substituted for
+authorized print and electronic-book markets, even when lending was ordinarily
+limited by a one-copy-to-one-user ratio.
 
 ## Limits And Unresolved Questions
 

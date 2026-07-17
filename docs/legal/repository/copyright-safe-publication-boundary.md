@@ -70,6 +70,13 @@ reports, and previews must omit reconstructable expression and must not provide
 a substitute for the original files. Complete local input remains outside public
 history unless separate distribution authority exists.
 
+*Hachette Book Group, Inc. v. Internet Archive* confirms the opposite boundary
+for complete public substitutes. Nonprofit status, encryption, time-limited
+access, withholding a physical copy, and a one-to-one loan ratio did not make
+full digital-book distribution fair. Equivalent
+controls do not authorize public game files, converted assets, or complete
+protected payloads.
+
 *Metro-Goldwyn-Mayer Studios Inc. v. Grokster, Ltd.* requires review of the
 repository's public purpose evidence. Feature descriptions, examples, tutorials,
 demonstrations, support messages, and release wording must not promote
@@ -90,6 +97,8 @@ establish inducement.
 - [Interoperability and user responsibility][interoperability-boundary]
 - [Authors Guild v. Google, Inc](../cases/authors-guild-v-google.md)
 - [Capitol Records, LLC v. ReDigi Inc.](../cases/capitol-records-v-redigi.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Hachette Book Group, Inc. v. Internet Archive](../cases/hachette-book-group-v-internet-archive.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Metro-Goldwyn-Mayer Studios Inc. v. Grokster, Ltd.](../cases/mgm-studios-v-grokster.md)
 - [Universal City Studios, Inc. v. Corley](../cases/universal-v-corley.md)
