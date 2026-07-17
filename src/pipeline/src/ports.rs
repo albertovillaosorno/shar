@@ -179,6 +179,18 @@ pub trait PipelineOperations {
         base_root: &Path,
     ) -> PipelineOutcome<StageReport>;
 
+    /// Exports one canonical standalone Wasp Camera FBX artifact.
+    ///
+    /// # Errors
+    ///
+    /// Returns a validated pipeline failure.
+    fn export_wasp_camera(
+        &self,
+        index_path: &Path,
+        output_dir: &Path,
+        base_root: &Path,
+    ) -> PipelineOutcome<StageReport>;
+
     /// Exports one selected phase-three package as an FBX artifact.
     ///
     /// # Errors

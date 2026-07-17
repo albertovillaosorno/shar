@@ -562,11 +562,13 @@ Relevant decisions:
 
 **Status:** In progress.
 
-**Executive result:** The complete character lane is finished and published
-locally. All 110 skinned character presentations produce verified binary FBX 7.7
-artifacts with external textures, preserved topology and rigging, and non-empty
-animation sets. Vehicle, prop, terrain, world, and geographic FBX coverage remain
-in progress.
+**Executive result:** The complete character lane and the first standalone
+animated-prop lane are finished and published locally. All 110 skinned character
+presentations produce verified binary FBX 7.7 artifacts with external textures,
+preserved topology and rigging, and non-empty animation sets. One canonical Wasp
+Camera now publishes its body, pruned rig, vertex colors, materials, and authored
+animation without shield, attack, effects, placement, or gameplay state. Vehicle,
+remaining prop, terrain, world, and geographic FBX coverage remain in progress.
 
 Completed boundary work:
 
@@ -587,6 +589,12 @@ Completed boundary work:
   native animation curves, and source-rate timing.
 - [x] Protect the binary writer and character scene contract with
   repository-owned structural, semantic, determinism, and malformed-input tests.
+- [x] Publish one canonical standalone Wasp Camera FBX containing only its body,
+  pruned rig, vertex colors, materials, and the authored `PTRN_beecamera` clip.
+- [x] Exclude the Wasp Camera shield, attack ray, particles, collision, placement,
+  state machine, explosion geometry, and gameplay logic from the FBX artifact.
+- [x] Preserve PDDI packed vertex colors and fixed-width shader and texture
+  identities through deterministic decoded-component and binary-FBX contracts.
 
 The character writer boundary is verified through repository-owned fixtures,
 malformed-input tests, and two complete independent catalog generations. The two
@@ -604,6 +612,20 @@ texture storage, zero packed images, preserved topology, non-empty skin clusters
 and non-empty animation sets. Across the catalog it records 7,243 animation
 clips, 3,657 bones, 469 geometries, 5,140 clusters, 280 materials, and 274 texture
 bindings. Animation behavior itself is unchanged in this phase.
+
+The first ignored standalone animated-prop artifact is
+`fbx-assets/props/wasp-camera/`. It publishes one 717,596-byte binary FBX 7.7 and
+four unique external PNG files, totaling 725,498 bytes. The FBX contains fourteen
+selected body meshes represented by 19 geometry groups, a pruned 16-bone rig, 19
+rigid clusters, seven materials, seven texture bindings, five vertex-color layers,
+and one 436-frame `PTRN_beecamera` clip. Two independent generations produced
+identical paths, sizes, and SHA-256 values; the canonical FBX SHA-256 is
+`e4f7c4e575f28f836384cd8e5ae2e5599717438def3db52ea94ed48e97720da0`.
+The seven level copies were verified as duplicate body, rig, and animation
+evidence, so level one is the canonical source. Cross-consumer review additionally
+confirmed the model, external textures, rig, and complete animation in Blender and
+Maya. Shield, ray, particles, collision, placement, state, explosion geometry, and
+gameplay logic remain outside this FBX boundary.
 
 Phase 4 proceeds sequentially:
 

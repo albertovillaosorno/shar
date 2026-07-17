@@ -62,6 +62,7 @@ mod filesystem;
 mod one;
 mod progress;
 mod two;
+mod wasp_camera;
 
 pub(in crate::adapters) use progress::{
     Verbosity as ProgressVerbosity, install as install_progress,
@@ -150,6 +151,17 @@ impl PipelineOperations for LocalPipeline {
         base_root: &Path,
     ) -> PipelineOutcome<StageReport> {
         character_catalog::export_character_catalog(
+            index_path, output_dir, base_root,
+        )
+    }
+
+    fn export_wasp_camera(
+        &self,
+        index_path: &Path,
+        output_dir: &Path,
+        base_root: &Path,
+    ) -> PipelineOutcome<StageReport> {
+        wasp_camera::export_wasp_camera(
             index_path, output_dir, base_root,
         )
     }

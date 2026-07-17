@@ -215,6 +215,23 @@ where
             )
     }
 
+    /// Exports one canonical standalone Wasp Camera FBX artifact.
+    ///
+    /// # Errors
+    ///
+    /// Returns the provider's validated pipeline failure.
+    pub fn export_wasp_camera(
+        &self,
+        index_path: &Path,
+        output_dir: &Path,
+        base_root: &Path,
+    ) -> PipelineOutcome<StageReport> {
+        self.provider
+            .export_wasp_camera(
+                index_path, output_dir, base_root,
+            )
+    }
+
     /// Exports one selected phase-three package as an FBX artifact.
     ///
     /// # Errors
