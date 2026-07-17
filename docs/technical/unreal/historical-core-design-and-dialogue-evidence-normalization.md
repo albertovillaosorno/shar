@@ -433,6 +433,63 @@ remain private, rights-sensitive, superseded, or rejected evidence. Semantic
 controls map to current input actions; old storage and platform wording maps to
 current provider outcomes only when an active contract accepts it.
 
+### Research and design meeting notes
+
+A research or design meeting note is eligible only when it contains directly
+interpretable product or technical findings. Candidate facts may describe goals,
+player behavior, mission flow, artificial intelligence, collision, navigation,
+world structure, presentation, camera, audio, dialogue, animation, traversal,
+collectibles, hazards, or content relationships. Each retained fact maps to one
+active domain owner and one terminal accepted, adapted, superseded, rejected, or
+unresolved result.
+
+Meeting title, date, attendees, assignments, follow-ups, deadlines, apparent
+consensus, source paths, URLs, historical tools, and workstation instructions
+are
+provenance only. A dated note does not outrank an accepted specification, and
+several notes repeating one idea do not increase its authority. Conflicting
+notes
+remain unresolved until the authority hierarchy selects one result.
+
+A process-only meeting guide, post-mortem method, scheduling record, attendance
+record, or issue-status tracker is production administration and receives no
+semantic coverage row. The existence of product examples inside a process guide
+does not convert the guide into a gameplay specification.
+
+### Legacy authored copy and reference lists
+
+Legacy loading headlines, bylines, interior text, generic signage, billboard
+copy,
+collectible references, and prior-product reference lists may establish
+candidate
+text roles, content identities, contexts, aliases, and presentation ownership.
+They do not publish historical wording or source formatting into public
+specifications.
+
+Raw authored copy, episode or tape references, source ordering, approval state,
+completion state, and legal-review notes remain private localization,
+rights-sensitive, or production evidence. Accepted text uses repository-owned
+localization identities, current content policy, accessibility metadata, and one
+validated presentation owner. A source text row cannot create a chapter,
+interior,
+placement, collectible, cheat, or reward merely because the wording names it.
+
+### Authored dialogue scripts and performer sheets
+
+An authored dialogue script or performer-oriented event sheet may contribute
+candidate canonical speaker or archetype, semantic event, mission or world
+context, conversation membership, ordinal, role, variant, locale, audio alias,
+subtitle, positional policy, and fallback data.
+
+Raw dialogue remains private localization evidence. Performer names, casting,
+recording, delivery, approval, dates, line totals, source filenames, and
+worksheet
+names do not define speaker identity, credits, priority, or runtime eligibility.
+Headings, stage directions, replacement notes, and placeholders create no line
+or
+binding. Message, answering-machine, radio, or other mediated dialogue also
+requires one explicit presentation owner and interaction context.
+
 ### Frontend and platform error flows
 
 Frontend evidence normalizes into Common UI routes, screens, actions, focus,
@@ -854,6 +911,20 @@ Validation proves:
 - high-level and sequel concepts remain proposal sets unless explicitly adopted;
 - manual-derived facts exclude old hardware, installation, platform, layout,
   publisher-placeholder, biography, legal, marketing, and unfinished content;
+- research-note findings resolve to active owners while dates, attendees,
+  assignments, follow-ups, paths, tools, and apparent consensus remain
+  provenance;
+- rights-clearance, media-inventory, acquisition, process-guide, and
+  issue-status
+  records are absent from semantic per-file coverage;
+- authored loading, interior, signage, billboard, and reference copy resolves to
+  stable localization and presentation owners without public source-text
+  copying;
+- authored dialogue scripts resolve speaker, event, context, conversation,
+  locale,
+  audio, subtitle, presentation, and fallback data without performer or
+  production
+  metadata becoming runtime identity;
 - superseded modes cannot enter base-game catalogs;
 - content identities and aliases are unique;
 - campaign, mission, boss, character, vehicle, pedestrian, gag, hazard, event,
@@ -911,6 +982,15 @@ Automated tests cover:
 - high-level, sequel, and future-concept adoption and supersession;
 - instruction-manual semantic extraction, platform translation, placeholder
   rejection, and current-specification reconciliation;
+- research-note owner routing, provenance exclusion, conflict handling, and
+  process-only record rejection;
+- rights-clearance, media-inventory, acquisition, process-guide, and duplicate
+  enhancement-tracker pruning;
+- loading, interior, signage, billboard, collectible-reference, and
+  prior-product
+  reference normalization without public source-text copying;
+- authored dialogue-script and performer-sheet speaker, event, context, locale,
+  audio, subtitle, presentation, and fallback normalization;
 - rejected head-to-head and bullet-time base modes;
 - mod-owned multiplayer namespace isolation;
 - card-count conflict reconciliation;
@@ -930,6 +1010,15 @@ Automated tests cover:
 
 - Raw and empty artifacts do not receive semantic coverage rows.
 - Source documents never execute or ship.
+- Rights-clearance, media-inventory, acquisition, process-only, and issue-status
+  records do not receive semantic coverage rows.
+- Meeting date, attendees, assignments, follow-ups, paths, tools, and apparent
+  consensus never determine fact authority.
+- Raw authored copy and dialogue remain private localization or rights-sensitive
+  evidence rather than public specification prose.
+- Performer names and production metadata never define speaker, credits,
+  priority,
+  or runtime eligibility.
 - Pagination/title-only export shells do not receive semantic coverage.
 - Exact duplicate documents collapse to one fact set without gaining authority.
 - Old/new folder labels and apparent revision age never select accepted facts.

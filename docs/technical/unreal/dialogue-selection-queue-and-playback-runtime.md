@@ -264,6 +264,25 @@ identity.
 A changed revision is compared line by line and cannot silently replace an
 accepted localized line or conversation member.
 
+Historical authored dialogue scripts and performer-oriented event sheets use the
+same import boundary. A retained row may contribute canonical speaker or
+archetype, semantic event, mission or world context, conversation membership,
+ordinal, role, variant, locale, audio alias, subtitle, positional policy, and
+fallback data.
+
+A document or worksheet named for a performer does not define speaker identity
+or
+public credits. Performer names, casting, recording, delivery, approval, dates,
+line totals, source filenames, and worksheet names remain private production or
+attribution evidence. Raw dialogue enters localization under stable keys and is
+not copied into public specifications or gameplay code.
+
+Headings, stage directions, replacement notes, and placeholders create no line
+or
+binding. Answering-machine, voicemail, radio, television, and other mediated
+messages require one explicit presentation owner, interaction context, listener
+policy, and positional or non-positional playback rule.
+
 ## Participant context
 
 `FSharDialogueParticipantSnapshot` contains:
@@ -814,6 +833,14 @@ Cook and content validation proves:
   conversation member or records an explicit conflict, omission, or rejection;
 - exact duplicate dialogue summaries collapse and changed revisions cannot
   silently replace accepted localization, audio, participant, or condition data;
+- every authored script or performer-sheet row resolves canonical speaker or
+  archetype, event, context, conversation, ordinal, role, locale, audio,
+  subtitle,
+  positional, presentation, and fallback data or is explicitly rejected;
+- performer, casting, recording, delivery, approval, date, line-total, filename,
+  and worksheet metadata creates no speaker, credit, priority, or eligibility;
+- mediated messages declare presentation owner, interaction context, listener,
+  and positional or non-positional playback policy;
 - every line has positional, listener, concurrency, ducking, lifetime, and
   completion policy;
 - every mouth and subtitle binding correlates to the exact line revision;
@@ -832,6 +859,13 @@ Required automated tests include:
 - raw prose, performance direction, replacement note, audio-alias, heading, and
   source-order exclusion;
 - exact duplicate collapse and changed-revision line comparison;
+- authored script and performer-sheet speaker/archetype, event, context,
+  conversation, locale, audio, subtitle, positional, presentation, and fallback
+  normalization;
+- performer, casting, recording, delivery, approval, date, filename, worksheet,
+  and line-total metadata exclusion;
+- answering-machine, voicemail, radio, television, and mediated-message owner,
+  listener, interaction, and playback-policy validation;
 - sound-event alias normalization, placeholder rejection, speaker and archetype
   ownership, closed priority-token mapping, malformed priority rejection, source
   and reuse provenance, and coverage-matrix generation;
@@ -862,6 +896,11 @@ Required automated tests include:
 ## Invariants
 
 - Shipping runtime never parses dialogue identity from filenames.
+- Raw authored dialogue never becomes public specification prose or gameplay
+  code.
+- Performer and production metadata never defines speaker identity, credits,
+  priority, or runtime eligibility.
+- Mediated dialogue always has an explicit presentation and listener policy.
 - Matching and variation are deterministic and revisioned.
 - Selection success, queue admission, playback start, and playback completion
   are

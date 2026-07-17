@@ -811,6 +811,26 @@ remain production metadata. Historical counts, row membership, ordering, and
 status flags cannot create visibility, ownership, unlock, placement, or runtime
 availability.
 
+### Authored copy and environmental text
+
+Historical loading headlines and bylines, interior text, generic signage,
+billboard copy, and similar authored rows normalize into repository-owned
+localization and presentation data. Every accepted row declares:
+
+- one stable text identity and content family;
+- one loading, interior, sign, billboard, UI, or world-presentation owner;
+- locale, accessibility, content-filter, and fallback policy;
+- optional chapter, location, interior, placement, or presentation references;
+- source-review and rights state in private provenance only; and
+- one accepted revision with native localization and presentation read-back.
+
+Raw historical wording, source row order, episode or tape references, approval,
+completion, review, and replacement fields do not become public specification
+text or runtime identity. A loading-text row cannot define chapter progression;
+an
+interior-text row cannot create an interior; and a signage row cannot create a
+world placement. Those relationships require existing canonical owners.
+
 External mission and story proposal sets follow
 <!-- markdownlint-disable-next-line MD013 -->
 [Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md).
@@ -1088,6 +1108,11 @@ streaming source or the step fails before activation.
 - Old/new folder labels, apparent revision age, historical counts, and
   production
   status flags never determine catalog authority.
+- Authored copy uses stable localization identities and registered presentation
+  owners; raw historical wording and review metadata never define runtime
+  identity.
+- Loading copy cannot define chapter progression, interior copy cannot define an
+  interior, and signage copy cannot define a placement.
 - Every catalog-reachable primary asset is included in cook rules.
 - Canonical identities, aliases, progression keys, table rows, and gameplay
   bundles remain logically identical across platforms, architectures, and
@@ -1141,6 +1166,11 @@ Catalog generation fails closed on:
   placements;
 - production approval, completion, assignment, milestone, or review metadata
   entering runtime definitions;
+- authored loading, interior, signage, billboard, or reference copy without one
+  stable localization identity, presentation owner, locale, accessibility,
+  content-filter, fallback, and rights-review result;
+- raw historical wording, episode or tape references, or replacement notes
+  entering public specifications or runtime identity;
 - a level placement without a valid geographic-world, coordinate, placement,
   and data-layer composition;
 - platform or preset cooking that removes, duplicates, or rekeys a required
@@ -1168,6 +1198,10 @@ Engine-independent tests verify:
 - card-set ordinals, durable keys, placement reachability, and gallery
   references;
 - production-metadata exclusion and family reconciliation;
+- authored loading, interior, signage, billboard, and reference-copy
+  localization,
+  presentation ownership, rights-review isolation, and raw-source-text
+  exclusion;
 - exact duplicate collapse and fact-level old/new revision reconciliation;
 - legacy character, vehicle, reward, costume, billboard, gag, placement, role,
   and availability-list conversion without status-field authority;

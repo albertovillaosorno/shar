@@ -163,6 +163,43 @@ and explicit supersession decisions may enter the public repository. Source
 prose,
 artwork, page layout, screenshots, and rights-sensitive text remain private.
 
+### Research-note evidence
+
+A research or design meeting note belongs to product-design evidence only when
+it
+contains directly interpretable product or technical findings. The review
+extracts
+candidate facts by domain and separates them from meeting title, date,
+attendees,
+assignments, follow-ups, deadlines, URLs, source paths, historical tool names,
+and
+apparent consensus.
+
+A dated or repeated note does not gain authority. Every retained finding
+requires
+one current public owner and one explicit accepted, adapted, superseded,
+rejected,
+or unresolved result. Process-only meeting guides, post-mortem methods,
+scheduling,
+attendance, and issue-status records remain production administration even when
+they contain illustrative product examples.
+
+### Rights-clearance, media-inventory, and acquisition records
+
+Rights-clearance lists, legal replacement matrices, tape or episode inventories,
+and requests for source media are private rights-sensitive or production
+records.
+They may trigger a private review, but they do not receive semantic per-file
+coverage and cannot independently create content identities, localized copy,
+credits, availability, placement, or runtime behavior.
+
+A candidate object, episode reference, quotation, trademark, performer, or media
+item requires corroborating eligible design evidence and the separate legal,
+attribution, localization, or content-review process. Approval, rejection,
+replacement, acquisition, inventory, tape, episode, delivery, and reviewer
+fields
+never become public runtime data.
+
 ### Attribution and credits candidates
 
 Historical credits lists are candidate attribution evidence, not an automatic
@@ -636,6 +673,13 @@ Validation proves:
 - feature specifications, visual requirements, high-level or sequel concepts,
   and
   manuals produced only normalized facts owned by active public contracts;
+- research-note findings have one active owner while meeting dates, attendees,
+  assignments, follow-ups, paths, tools, and apparent consensus remain private
+  provenance;
+- rights-clearance, legal replacement, media inventory, acquisition,
+  process-only,
+  and issue-status records produced no semantic per-file coverage or public
+  output;
 - manual-specific hardware, installation, platform, layout, publisher,
   biography, legal, marketing, screenshot, and unfinished content remained
   private, superseded, rights-sensitive, or rejected;
@@ -667,6 +711,12 @@ Required automated or review tests include:
   isolation;
 - manual semantic extraction, platform translation, placeholder rejection, and
   rights-sensitive-content exclusion;
+- research-note product-fact extraction, provenance separation, conflict
+  handling,
+  and process-only rejection;
+- rights-clearance, legal replacement, media inventory, source-media
+  acquisition,
+  and issue-status zero-public-output classification;
 - source animation time-unit and frame-range extraction;
 - skeleton-track compatibility;
 - deterministic animation export and import read-back;
@@ -689,6 +739,10 @@ Required automated or review tests include:
   adoption.
 - Historical manuals never define current hardware, platform, installation, or
   architecture requirements.
+- Research-note dates, attendees, assignments, follow-ups, tools, and apparent
+  consensus never establish public authority.
+- Rights-clearance, media-inventory, acquisition, process-only, and issue-status
+  records remain private and non-runtime.
 - Companion files inherit the strictest applicable classification.
 - Source animation scenes never ship and never become public documentation.
 - Native animation assets must pass skeleton, timing, curve, and root-policy
