@@ -47,42 +47,66 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to remove one exact disposable or explicitly approved SHAR actor
+component after its identity, ownership, dependencies, and replacement or
+cleanup contract have been verified.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Resolve the exact component from `get_components` or the return value of
+  `add_component`.
+- Capture the owner's complete component list before removal.
+- Confirm that the component is disposable or that its reconstruction contract
+  is complete; do not remove an unknown project component for testing.
+- Restrict the call to one exact component reference and define the expected
+  post-removal component list.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "component": {
+    "refPath": "/Temp/Untitled_1.Untitled_1:PersistentLevel.PlayerStart_UAID_F02F74551BF5599B01_1153002503.SHAR_MCP_ValidationComponent"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The tested component was the exact disposable `SceneComponent` returned by
+`add_component`. The removal call returned `returnValue: true`. A separate
+`get_components` call returned the actor's original four component references
+in their original order, and a final cleanup read matched that same list.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Removal is destructive for the addressed loaded component; it is not a
+  discovery operation.
+- A `true` response requires an independent owner component-list read.
+- The tested inverse was safe only because the component was created during the
+  same bounded operation and its exact returned reference was retained.
+- Removing project-owned components can break attachment, construction, or
+  gameplay contracts and can persist when the level or Blueprint is saved.
+- Removal of a missing or inherited component was not exercised.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

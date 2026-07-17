@@ -47,42 +47,73 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to add one explicitly typed component to a bounded SHAR scene
+actor for disposable integration checks or for a reviewed actor-instance
+extension whose persistence and ownership are already defined.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project must have the owner actor loaded.
+- Resolve the exact owner and capture its complete component list with
+  `get_components`.
+- Confirm the component class is valid for the owner and choose a unique native
+  component name.
+- Define cleanup with `remove_component` using the exact reference returned by
+  this call.
+- Do not save the level for a disposable validation component.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "owner": {
+    "refPath": "/Temp/Untitled_1.Untitled_1:PersistentLevel.PlayerStart_UAID_F02F74551BF5599B01_1153002503"
+  },
+  "component_type": {
+    "refPath": "/Script/Engine.SceneComponent"
+  },
+  "name": "SHAR_MCP_ValidationComponent"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The call returned an exact component reference ending in
+`SHAR_MCP_ValidationComponent`. A separate `get_components` call returned that
+same reference in addition to the actor's four original components. Removing
+the returned component restored the original component list exactly, which a
+final read confirmed.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The validated case added a component to a loaded actor instance, not a
+  Blueprint asset.
+- The returned component reference is the cleanup authority; do not reconstruct
+  it from naming assumptions when the returned value is available.
+- Adding a component changes loaded level state and can become persistent if the
+  level is saved.
+- Component registration, attachment, transforms, and runtime behavior require
+  separate verification when they matter to the requested outcome.
+- Actor and component references from `/Temp` worlds are session-specific.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
