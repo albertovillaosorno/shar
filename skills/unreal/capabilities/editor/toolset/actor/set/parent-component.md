@@ -51,42 +51,76 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to place one SHAR scene component under an exact attachment
+parent after the actor hierarchy, relative-transform consequences, and recovery
+contract have been reviewed.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project must have the owner actor and both scene
+  components loaded.
+- Resolve the exact child and parent through current component reads.
+- Capture the child's current parent with `get_parent_component` and its
+  transform before reparenting.
+- Reject cycles, cross-owner assumptions, and root replacement unless those
+  effects are explicitly intended.
+- Define restoration to the captured parent or complete disposable-component
+  removal before mutation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "component": {
+    "refPath": "/Temp/Untitled_1.Untitled_1:PersistentLevel.PlayerStart_UAID_F02F74551BF5599B01_1153002503.SHAR_MCP_ValidationChild"
+  },
+  "parent": {
+    "refPath": "/Temp/Untitled_1.Untitled_1:PersistentLevel.PlayerStart_UAID_F02F74551BF5599B01_1153002503.SHAR_MCP_ValidationParent"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two disposable `SceneComponent` instances initially reported the actor's
+`CollisionCapsule` root as their parent. The call returned `returnValue: true`.
+A separate `get_parent_component` call then returned the exact disposable parent
+for the child. Calling the setter again without `parent` returned `true` and a
+fresh parent read returned `null`. Removing both disposable components restored
+the actor's original four-component list exactly.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- New scene components added to the tested actor were automatically attached to
+  its existing root component.
+- Omitting `parent` detaches the component; it does not restore the previous
+  parent automatically.
+- Reparenting can change relative-transform interpretation even when world
+  placement appears unchanged, so transforms require separate verification.
+- Reparenting a Blueprint root can promote the supplied parent and may remove a
+  `DefaultSceneRoot`; that behavior was not exercised.
+- Attachment changes affect loaded level or Blueprint state and can persist when
+  saved.
+- Actor and component references from `/Temp` worlds are session-specific.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
