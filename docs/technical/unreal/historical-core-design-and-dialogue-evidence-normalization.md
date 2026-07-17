@@ -365,6 +365,74 @@ mission,
 chapter, character, vehicle, location, interior, presentation, or catalog
 definitions. Unresolved proposal sets publish no partial runtime graph.
 
+### Feature-specific design records
+
+A focused game-feature record may contribute product goals, semantic identities,
+state transitions, failure and recovery rules, timing, rewards, presentation,
+accessibility, content dependencies, and candidate implementation constraints.
+Each retained fact maps to the active campaign, mission, character, vehicle,
+artificial-intelligence, economy, collectible, traversal, traffic, navigation,
+hazard, save, UI, audio, or presentation owner.
+
+Feature documents do not become a parallel design authority. Repeated integrated
+summaries collapse into existing definitions, while hard-coded counts,
+source-era
+algorithms, platform controls, fixed memory budgets, source commands, and direct
+asset filenames remain proposals or provenance. A focused historical record
+cannot override a newer domain specification merely because it contains more
+detail.
+
+### Visual and art-requirement records
+
+Textual art-requirement evidence may establish semantic icon roles, meter
+states,
+screen composition, transition purpose, readability, visibility, damage states,
+mission-flow presentation, camera intent, and accessibility requirements. It may
+also identify required content families and state channels that existing native
+assets must represent.
+
+It does not publish source artwork, screenshots, dimensions copied without
+current
+justification, digital-content-creation instructions, employee assignments,
+approval state, asset filenames as identity, or production schedules. Runtime
+presentation remains owned by repository-authored UI, camera, VFX, material,
+animation, and content definitions.
+
+### High-level, sequel, and future concepts
+
+High-concept, high-level-design, sequel, and future-feature records are
+versioned
+proposal sets. They may supply candidate themes, player goals, world structure,
+combat, traversal, vehicle, mission, multiplayer, progression, presentation, and
+accessibility ideas, but they do not expand current product scope automatically.
+
+A revision label, apparent recency, sequel title, repeated idea, or broader
+feature
+list does not supersede the accepted campaign, single-player base mode,
+mod-owned
+multiplayer boundary, canonical catalogs, platform policy, or native Unreal
+architecture. Every adopted idea requires an explicit current owner and terminal
+accepted or adapted decision; all others remain superseded, rejected, or
+unresolved proposal evidence.
+
+### Instruction manuals and player-facing documentation
+
+A historical instruction manual may establish low-authority evidence about
+player-visible terminology, actions, controls, menus, save behavior, mission and
+progression concepts, collectibles, vehicles, characters, hazards, camera,
+audio,
+UI flow, and expected user feedback. Each fact must be reconciled with active
+technical specifications and native read-back before acceptance.
+
+Manual wording never defines target architecture or current platform support.
+Source-era hardware requirements, installation steps, platform button labels,
+certification wording, publisher placeholders, print-layout instructions, draft
+biographies, legal notices, marketing claims, screenshots, and unfinished
+markers
+remain private, rights-sensitive, superseded, or rejected evidence. Semantic
+controls map to current input actions; old storage and platform wording maps to
+current provider outcomes only when an active contract accepts it.
+
 ### Frontend and platform error flows
 
 Frontend evidence normalizes into Common UI routes, screens, actions, focus,
@@ -710,6 +778,13 @@ Validation proves:
   terminal accepted, adapted, superseded, rejected, or unresolved result;
 - conflicting level, character, mission, boss, landmark, interior, vehicle, and
   story allocations cannot alter accepted campaign or catalog state implicitly;
+- feature-specific facts resolve to active domain owners without creating a
+  parallel authority graph;
+- visual requirements resolve to semantic presentation states without publishing
+  source artwork or production metadata;
+- high-level and sequel concepts remain proposal sets unless explicitly adopted;
+- manual-derived facts exclude old hardware, installation, platform, layout,
+  publisher-placeholder, biography, legal, marketing, and unfinished content;
 - superseded modes cannot enter base-game catalogs;
 - content identities and aliases are unique;
 - campaign, mission, boss, character, vehicle, pedestrian, gag, hazard, event,
@@ -753,6 +828,12 @@ Automated tests cover:
 - external mission/story proposal-set grouping, duplicate-draft collapse,
   cross-document conflict, accepted adaptation, rejection, unresolved isolation,
   and zero partial publication;
+- feature-specific owner routing and duplicate integrated-summary collapse;
+- visual-requirement state extraction with source-art and production-data
+  exclusion;
+- high-level, sequel, and future-concept adoption and supersession;
+- instruction-manual semantic extraction, platform translation, placeholder
+  rejection, and current-specification reconciliation;
 - rejected head-to-head and bullet-time base modes;
 - mod-owned multiplayer namespace isolation;
 - card-count conflict reconciliation;

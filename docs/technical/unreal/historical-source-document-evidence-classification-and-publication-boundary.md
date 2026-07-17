@@ -129,6 +129,40 @@ Production-administration evidence cannot:
 A companion stylesheet, frame document, image, script, or generated index used
 only to present an administrative record inherits the same private exclusion.
 
+### Product design and player-documentation evidence
+
+Historical feature specifications, visual requirement sheets, high-level design
+records, future or sequel concepts, and instruction manuals are reviewable
+product
+evidence only when they contain directly interpretable semantic text. They
+remain
+lower authority than accepted ADRs, active technical specifications, normalized
+catalogs, and native read-back.
+
+Review separates:
+
+- player-facing goals, terminology, actions, states, feedback, and
+  accessibility;
+- candidate gameplay, content, mission, progression, UI, audio, camera, vehicle,
+  world, and presentation semantics;
+- semantic visual roles such as icons, meters, layouts, transitions, and damage
+  states;
+- implementation proposals, historical platform assumptions, and obsolete
+  architecture;
+- high-level or sequel ideas that require explicit current adoption;
+- manual-specific hardware, installation, controls, certification, and platform
+  wording requiring translation or rejection; and
+- publisher placeholders, print-layout instructions, draft biographies, legal
+  notices, marketing claims, screenshots, production comments, and unfinished
+  markers that cannot become runtime or public specification content.
+
+A feature document or manual never ships, executes, or becomes a parallel source
+of truth. Only independently authored normalized facts, schemas, validation
+rules,
+and explicit supersession decisions may enter the public repository. Source
+prose,
+artwork, page layout, screenshots, and rights-sensitive text remain private.
+
 ### Attribution and credits candidates
 
 Historical credits lists are candidate attribution evidence, not an automatic
@@ -599,6 +633,12 @@ Validation proves:
 - credits rows are verified and source-attributed;
 - cheat rows use semantic tokens and typed effects;
 - art facts are normalized and supersession-aware;
+- feature specifications, visual requirements, high-level or sequel concepts,
+  and
+  manuals produced only normalized facts owned by active public contracts;
+- manual-specific hardware, installation, platform, layout, publisher,
+  biography, legal, marketing, screenshot, and unfinished content remained
+  private, superseded, rights-sensitive, or rejected;
 - source animation scenes produced deterministic bounded outputs;
 - animation tracks match the target Skeleton;
 - clip frame rate, range, duration, curves, and root policy read back correctly;
@@ -621,6 +661,12 @@ Required automated or review tests include:
 - credits candidate versus verified-row separation;
 - semantic cheat-token normalization;
 - art-fact owner and supersession validation;
+- feature-record owner routing and duplicate-summary collapse;
+- visual-requirement semantic-state extraction with source-art exclusion;
+- high-level and sequel proposal adoption, supersession, and unresolved
+  isolation;
+- manual semantic extraction, platform translation, placeholder rejection, and
+  rights-sensitive-content exclusion;
 - source animation time-unit and frame-range extraction;
 - skeleton-track compatibility;
 - deterministic animation export and import read-back;
@@ -637,6 +683,12 @@ Required automated or review tests include:
 - Credits require row-level verification before publication.
 - Cheat evidence becomes semantic data, not executable source text.
 - Art guidance becomes normalized facts, not copied prose or screenshots.
+- Feature records and manuals remain lower authority than active public
+  contracts.
+- High-level and sequel concepts do not expand product scope without explicit
+  adoption.
+- Historical manuals never define current hardware, platform, installation, or
+  architecture requirements.
 - Companion files inherit the strictest applicable classification.
 - Source animation scenes never ship and never become public documentation.
 - Native animation assets must pass skeleton, timing, curve, and root-policy
