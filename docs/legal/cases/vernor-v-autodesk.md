@@ -39,6 +39,13 @@ more computers than the license count was convenient rather than necessary.
 *Vernor* supplies the Ninth Circuit's later ownership framework; *Wall Data*
 remains relevant to copy count and essentiality.
 
+[*Adobe Systems, Inc. v. Christenson*](adobe-systems-v-christenson.md) later
+applied *Vernor* to the evidentiary burden. After a downstream reseller produced
+sufficient evidence of lawful acquisition of genuine copies, the copyright owner
+had to prove the asserted original license or absence of a sale. General
+licensing testimony and generic templates did not substitute for admissible
+transaction-specific agreements on that record.
+
 The court distinguished [*Krause v. Titleserv, Inc.*](krause-v-titleserv.md)
 because that record had no written license agreement, the user had paid
 substantial consideration for programs developed for its sole benefit, and the

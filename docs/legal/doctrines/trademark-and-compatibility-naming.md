@@ -40,6 +40,13 @@ plain-text factual compatibility wording, keep SHAR's own identity prominent,
 omit third-party logos and trade dress, and do not imply affiliation,
 sponsorship, endorsement, approval, or current official support.
 
+*Adobe Systems, Inc. v. Christenson* affirmed a Ninth Circuit nominative-use
+result where a reseller used marks to identify the genuine products themselves
+rather than to suggest sponsorship or endorsement. The result depended on the
+reviewed presentation and pleaded trademark claim. It does not authorize logos,
+confusing branding, false compatibility claims, passing off, or materially
+different products.
+
 ## Not Established
 
 This record does not establish that nominative use is automatically lawful, that
@@ -74,6 +81,8 @@ repository name may reproduce third-party branding without review.
 - FOX, *The Simpsons* consumer page:
   <https://www.fox.com/detail/series/SER000852IRHK/the-simpsons> (Accessed: 14
   July 2026).
+- [Adobe Systems, Inc. v. Christenson](../cases/adobe-systems-v-christenson.md),
+  for one Ninth Circuit nominative-use application involving genuine products.
 <!-- markdownlint-disable-next-line MD013 -->
 - [Lawful local input and publication boundary](../../adr/legal/lawful-local-input-and-publication-boundary.md).
 

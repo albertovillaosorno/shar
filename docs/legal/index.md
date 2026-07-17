@@ -49,6 +49,7 @@ may cite ADRs for technical facts, but ADRs are not legal authority.
 
 ## Cases
 
+- [Adobe Systems, Inc. v. Christenson](cases/adobe-systems-v-christenson.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [American Broadcasting Companies, Inc. v. Aereo, Inc](cases/american-broadcasting-v-aereo.md)
 <!-- markdownlint-disable-next-line MD013 -->
@@ -154,7 +155,7 @@ fact-specific result is not determined. Hosting, public access, noncommercial
 purpose, independent implementation, interoperability intent, or an accepted ADR
 does not determine a legal outcome by itself.
 
-- Active legal records: 68.
+- Active legal records: 69.
 - Review date: 2026-07-16.
 - Statutory currentness: the Office of the Law Revision Counsel classification
   tables were checked on 2026-07-14. The published 119th Congress tables cover
