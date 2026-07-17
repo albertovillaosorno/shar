@@ -757,3 +757,4 @@ loadout
 packageable
 speedrun
 speedrunning
+mpi

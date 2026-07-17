@@ -112,10 +112,18 @@ Historical gameplay-event inventories follow
 <!-- markdownlint-disable-next-line MD013 -->
 [Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md).
 Each retained event receives one semantic channel, owning domain, payload
-schema,
-scope, delivery phase, replay policy, lifetime, diagnostics, and networking
-classification. Blank sheet companions, source headings, row order, free-form
-comments, and implied callback tables create no runtime channel.
+schema, scope, delivery phase, replay policy, lifetime, diagnostics, and
+networking classification. Blank sheet companions, source headings, row order,
+free-form comments, and implied callback tables create no runtime channel.
+
+Historical sound-event sheets reuse this same channel catalog. Their raw event
+labels are aliases for already owned domain or presentation events; they do not
+create dialogue-owned gameplay channels. Placeholders, prose instructions,
+category notes, typographical variants without an accepted alias, and combined
+implementation commentary create no channel. A retained alias must resolve to
+one
+canonical event before the dialogue catalog may attach a line, priority, or
+speaker/archetype binding.
 
 The catalog rejects:
 
@@ -511,6 +519,9 @@ Catalog validation proves:
 
 - every channel has one owner and one compatible schema;
 - source aliases map uniquely;
+- historical sound-event aliases resolve to existing owned channels rather than
+  creating dialogue-owned gameplay events;
+- placeholders, prose labels, and ambiguous typographical variants are rejected;
 - scope and delivery phase are declared;
 - durable schemas contain no transient object authority;
 - required payload bounds are finite;
@@ -523,6 +534,8 @@ Catalog validation proves:
 Required tests include:
 
 - deterministic channel and schema lookup;
+- sound-event alias reuse, placeholder rejection, typographical-variant mapping,
+  and dialogue-binding attachment to existing owned channels;
 - payload type and bound rejection;
 - world, session, and local-player isolation;
 - immediate and queued delivery phases;

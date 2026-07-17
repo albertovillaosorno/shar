@@ -537,6 +537,97 @@ Zero-byte sheets and generated empty companions are excluded from semantic
 coverage. The ledger policy audits and prunes them deterministically so they
 cannot reappear as pending work.
 
+## Sound-event spreadsheet normalization
+
+A non-empty sound-event sheet is semantic dialogue-selection evidence for one
+canonical character, generic population archetype, vehicle archetype, location,
+or presentation owner. It does not execute as a runtime table.
+
+### Sound-event source-column mapping
+
+Source columns may contribute:
+
+- candidate event label;
+- candidate line or selection-member label;
+- private dialogue text for comparison and localization intake;
+- source or reuse classification;
+- candidate priority token;
+- current and legacy audio aliases; and
+- private approval, receipt, recording, or delivery state.
+
+The owning sheet name is provenance only. Import resolves it through the
+canonical character, archetype, vehicle, location, or presentation catalog
+before
+publishing any line or event binding.
+
+### Event alias normalization
+
+Raw labels are compared case-insensitively after whitespace, punctuation, and
+known spelling normalization. Variants such as `doorbell dialog` and `doorbell
+dialogue`, or corrected forms of historical typographical errors, may map to one
+registered semantic event alias.
+
+Labels such as `none`, `(none)`, `none yet`, prose instructions, category notes,
+or combined implementation commentary do not create runtime events. They are
+rejected, classified as review notes, or split only through an explicit reviewed
+mapping. A source label cannot silently create a new channel because it appears
+in several sheets.
+
+Every retained event mapping declares:
+
+- canonical event and alias identities;
+- owning gameplay or presentation domain;
+- required speaker or archetype role;
+- participant and world-context requirements;
+- positional or non-positional policy;
+- candidate line or selection-group membership;
+- priority, interruption, lifetime, concurrency, and repeat policy;
+- locale, subtitle, audio, and fallback requirements;
+- diagnostic coverage state; and
+- definition and source-mapping revisions.
+
+### Priority normalization
+
+The historical priority tokens map through one closed import table:
+
+| Source token | Semantic priority |
+| :--- | :--- |
+| `MPI` | `must_play_immediately` |
+| `MPL` | `must_play` |
+| `SPL` | `high` or another explicitly reviewed bounded must-consider class |
+| `OPL` | `occasional` or another explicitly reviewed optional class |
+
+The exact `SPL` and `OPL` targets are versioned mapping decisions because source
+sheets used them inconsistently across event families. A source token never
+becomes a numeric queue priority directly.
+
+Blank priority is accepted only when the event binding supplies an explicit
+default. Prose legends, audio identifiers, misspelled instructions, mixed
+tokens,
+or unknown values in the priority column fail import or require an explicit
+mapping. `MPI` does not bypass gameplay authority; it changes queue and
+interruption policy only after the semantic event has already been accepted.
+
+### Source and reuse classification
+
+Historical source tokens such as new, reused, prior-title, written, or another
+short code remain provenance and rights-review evidence. They may select a
+private review path or audio-reuse check but cannot change event identity,
+priority, probability, gameplay outcome, or participant eligibility.
+
+### Coverage matrix
+
+Import publishes a development-only coverage matrix by canonical speaker or
+archetype and canonical event. It records required, optional, mapped, missing,
+rejected, duplicate, fallback, and approved states without packaging source text
+or production metadata.
+
+Coverage does not force playback, mark a line as used, change probability,
+upgrade priority, or make an optional event required. Generic population sheets
+bind to archetypes rather than creating named characters. Vehicle and location
+sheets bind to their registered presentation owners rather than inventing a
+speaker identity.
+
 ## Public outputs
 
 Allowed public outputs include:
@@ -579,8 +670,14 @@ Validation proves:
 - campaign, mission, boss, character, vehicle, pedestrian, gag, hazard, event,
   dialogue, save, input, camera, audio, UI, and presentation references resolve;
 - dialogue participants, context, ordinals, audio, locale, subtitles, and
-  fallback
-  are complete;
+  fallback are complete;
+- every retained sound-event alias resolves uniquely to one canonical event and
+  owner;
+- every source priority token maps through the closed versioned priority table;
+- placeholders, prose cells, malformed priorities, and ambiguous speaker owners
+  produce no runtime binding;
+- sound-event coverage matrices agree with the accepted line, event, archetype,
+  audio, locale, and fallback catalogs;
 - approval and production metadata is absent from runtime assets;
 - platform-specific actions map to semantic input and storage outcomes;
 - generated output is deterministic; and
@@ -590,9 +687,10 @@ Validation proves:
 
 Normalization fails closed on ambiguous identity, unresolved conflict, missing
 owner, unsupported feature revival, malformed source structure, duplicate or
-missing dialogue context, unresolved audio, invalid locale, personal or approval
-metadata leakage, stale catalog revision, nondeterministic output, or native
-read-back mismatch.
+missing dialogue context, unresolved audio, invalid locale, unknown event alias,
+placeholder event, malformed or unknown priority token, ambiguous archetype
+binding, personal or approval metadata leakage, stale catalog revision,
+nondeterministic output, or native read-back mismatch.
 
 Failure publishes no partial catalog, dialogue set, event schema, mode,
 save-flow,
@@ -615,8 +713,10 @@ Automated tests cover:
 - pedestrian, gag, role, hazard, character, and vehicle catalog conversion;
 - gameplay-event schema generation;
 - dialogue row, heading, duplicate, context, participant, ordinal, audio,
-  locale,
-  and approval-column handling;
+  locale, and approval-column handling;
+- sound-event alias normalization, placeholder rejection, speaker and archetype
+  ownership, source-priority mapping, malformed priority rejection, source and
+  reuse provenance, and coverage-matrix generation;
 - native asset and localization read-back; and
 - repeated import with zero semantic diff.
 
@@ -631,6 +731,10 @@ Automated tests cover:
 - Historical bullet time is not a base-game feature.
 - Platform storage and input wording normalize to semantic outcomes and actions.
 - Conversation identity is independent of row number and source filename.
+- Sound-event identity is independent of sheet name, raw label spelling, source
+  token, and row position.
+- Raw priority tokens map only through the closed versioned import table.
+- Coverage diagnostics never change queue selection or playback state.
 - Approval, staffing, revision, and personal metadata never become runtime
   state.
 - Every accepted fact has one public owner and one validation method.

@@ -224,20 +224,26 @@ assets. Shipping runtime never:
 Unknown or ambiguous source metadata fails import or requires an explicit
 mapping.
 
-Historical conversation spreadsheets follow
+Historical conversation and sound-event spreadsheets follow
 <!-- markdownlint-disable-next-line MD013 -->
 [Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md).
-The importer treats non-empty rows as private semantic evidence for speaker,
-event, mission or location context, conversation membership, ordinal, role,
-variant, audio alias, and locale. Heading rows and empty rows create no line;
-zero-byte companion sheets are excluded before coverage. Dialogue text enters
-the
-localization pipeline under stable keys and is not copied into gameplay code or
-used as identity. Platform-specific tutorial lines bind one semantic input
-action
-to active localized device presentation instead of preserving obsolete button
-names. Approval, source, recording, delivery, and licensor-receipt columns can
-block publication but never select runtime content.
+The importer treats non-empty conversation rows as private semantic evidence for
+speaker, event, mission or location context, conversation membership, ordinal,
+role, variant, audio alias, and locale. Sound-event rows add candidate event
+alias, selection-member label, source priority token, archetype or presentation
+owner, and coverage expectation. Heading rows, placeholder events, prose notes,
+and empty rows create no line or binding; zero-byte companion sheets are
+excluded
+before coverage.
+
+Dialogue text enters the localization pipeline under stable keys and is not
+copied into gameplay code or used as identity. Platform-specific tutorial lines
+bind one semantic input action to active localized device presentation instead
+of
+preserving obsolete button names. Approval, source, recording, delivery,
+licensor-receipt, and audio-reuse columns can block publication or select a
+private review path but never select runtime content, change priority, or alter
+participant eligibility.
 
 ## Participant context
 
@@ -380,6 +386,22 @@ The initial semantic classes are:
 
 Definitions map these classes to bounded numeric ordering only inside the queue
 adapter. Raw source priority ordinals do not survive as public identity.
+
+Historical sound-event tokens use one versioned import table:
+
+- `MPI` maps to `must_play_immediately`;
+- `MPL` maps to `must_play`;
+- `SPL` maps to `high` or another explicitly reviewed bounded must-consider
+  class; and
+- `OPL` maps to `occasional` or another explicitly reviewed optional class.
+
+Blank priority requires an explicit event-binding default. Unknown tokens, mixed
+legends, prose, audio identifiers, or typographical corruption in the priority
+column fail import or require an explicit mapping. `must_play_immediately`
+affects
+queue and interruption behavior only; it cannot make an unaccepted gameplay
+event
+occur or mutate domain state.
 
 ## Queue entry
 
@@ -720,7 +742,10 @@ Development diagnostics expose:
   state;
 - native concurrency and virtualization outcome;
 - stale callback and duplicate-result counts;
-- per-line development coverage; and
+- per-line development coverage;
+- per-speaker or archetype sound-event coverage with mapped, missing, rejected,
+  duplicate, fallback, and optional states;
+- source-event alias and priority-mapping revision; and
 - last failure, fallback, cancellation, or teardown evidence.
 
 Coverage is observational. It cannot mark runtime usage, force a line, alter
@@ -739,6 +764,9 @@ The subsystem fails closed on:
 - stale event, request, participant, usage, locale, world, or feature revision;
 - global random selection or callback-order arbitration;
 - invalid probability, priority, lifetime, interruption, or concurrency policy;
+- unknown or ambiguous sound-event alias, placeholder event, malformed priority
+  token, or unresolved speaker, archetype, vehicle, location, or presentation
+  owner;
 - queue entry with raw mutable pointers;
 - required positional source with no valid attachment or fallback;
 - duplicate active line or terminal result outside declared policy;
@@ -759,6 +787,10 @@ Cook and content validation proves:
 - every locale has required audio and subtitle coverage or explicit fallback;
 - every probability uses stable declared seed inputs;
 - every priority class has bounded queue and interruption policy;
+- every historical sound-event token maps through the closed versioned priority
+  table or is rejected;
+- every retained source-event alias resolves uniquely to one canonical event,
+  speaker or archetype owner, and event binding;
 - every line has positional, listener, concurrency, ducking, lifetime, and
   completion policy;
 - every mouth and subtitle binding correlates to the exact line revision;
@@ -772,6 +804,9 @@ Required automated tests include:
 
 - import conversion of line, speaker, role, event, order, level, mission, and
   conversation metadata;
+- sound-event alias normalization, placeholder rejection, speaker and archetype
+  ownership, closed priority-token mapping, malformed priority rejection, source
+  and reuse provenance, and coverage-matrix generation;
 - ambiguous and unknown source-field rejection;
 - complete and incomplete conversation assembly;
 - participant and role matching;
