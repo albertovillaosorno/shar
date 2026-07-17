@@ -47,42 +47,74 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to place one reviewed SHAR widget class into an exposed named
+slot on a Widget Blueprint host.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Resolve the exact Widget Blueprint and host widget.
+- Prove the host exposes the requested slot through its compiled widget class.
+- Capture current named-slot bindings with `GetNamedSlots`.
+- Choose a unique content name and exact widget class.
+- Define host replacement or complete disposable asset cleanup before mutation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "widgetBlueprint": {
+    "refPath": "/Game/SHAR_MCP_Validation/WBP_MCP_NamedContainer.WBP_MCP_NamedContainer"
+  },
+  "hostWidget": {
+    "refPath": "/Game/SHAR_MCP_Validation/WBP_MCP_NamedContainer.WBP_MCP_NamedContainer:WidgetTree.NamedHostInstance"
+  },
+  "slotName": "Content",
+  "widgetClass": {
+    "refPath": "/Script/UMG.Button"
+  },
+  "widgetName": "SlotAction"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+A compiled disposable host Widget Blueprint exposed a `NamedSlot` named
+`Content`. The call returned a `Button` named `SlotAction`. Its ordinary parent
+and slot were `None`, `bIsVariable` was `true`, and `GetWidgets` identified
+`NamedHostInstance` as its named-slot host. `GetNamedSlots` returned exactly one
+binding connecting host, slot name, and content widget. The bound container
+compiled successfully before host replacement.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Named-slot content is not represented by an ordinary panel parent or slot.
+- `GetNamedSlots` is the authoritative binding check; `GetWidgets` supplies the
+  content widget and named-slot host identity.
+- The validated content was automatically exposed as a Blueprint variable.
+- The host class must implement `INamedSlotInterface` and expose the exact slot.
+- Replacing existing slot content, invalid slot names, and inherited hosts need
+  separate verification.
+- The operation changes unsaved state and needs separate compile and save
+  decisions.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

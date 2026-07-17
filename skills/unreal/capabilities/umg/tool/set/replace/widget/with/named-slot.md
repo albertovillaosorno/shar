@@ -49,42 +49,73 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to remove one SHAR named-slot host while promoting the selected
+slot content into the host's outer hierarchy position.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Resolve the exact host, slot name, and bound content through
+  `GetNamedSlots`.
+- Capture the host parent, outer slot, and complete binding list.
+- Confirm the selected content can replace the host semantically.
+- Define the expected promoted parent, slot, and remaining bindings.
+- Compile and inspect the resulting tree before saving.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "widgetBlueprint": {
+    "refPath": "/Game/SHAR_MCP_Validation/WBP_MCP_NamedContainer.WBP_MCP_NamedContainer"
+  },
+  "widgetToReplace": {
+    "refPath": "/Game/SHAR_MCP_Validation/WBP_MCP_NamedContainer.WBP_MCP_NamedContainer:WidgetTree.NamedHostInstance"
+  },
+  "namedSlot": "Content"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Before replacement, `GetNamedSlots` reported one `Content` binding from
+`NamedHostInstance` to `SlotAction`. The call returned `true`. `GetWidgets` then
+removed the host and promoted the button directly under `ContainerRoot` using
+`CanvasPanelSlot_0`, the host's former outer slot. A new named-slot read
+returned
+an empty array, and the resulting container compiled successfully. Both
+temporary Widget Blueprints and their virtual folder were deleted without disk
+residue.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The host must implement `INamedSlotInterface` and have content in the named
+  slot.
+- Replacement removes the host widget and promotes only the selected content.
+- The promoted widget receives a normal slot in the host's former parent.
+- Host-specific properties, layout, bindings, and behavior do not transfer
+  automatically.
+- The boolean result requires independent hierarchy, slot, and binding checks.
+- The operation changes unsaved state and needs separate compile and save
+  decisions.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
