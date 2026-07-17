@@ -47,42 +47,71 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to remove invalid bindings while authoring reviewed SHAR
+mission, dialogue, camera, or cinematic actor bindings in Sequencer.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live SequencerTools schema.
+- Open the exact disposable or recoverable Level Sequence and capture the
+  matching independent reader before mutation.
+- Use temporary level actors with exact SceneTools creation and removal
+  inverses; do not bind unrelated map actors.
+- Resolve the exact MovieScene binding from the current sequence and
+  rediscover it after structural edits.
+- Create the invalid reference deliberately in a disposable binding and
+  capture serialization immediately before the cleanup call.
+- Define whole-sequence and temporary-actor cleanup before invocation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "binding": {
+    "bindingId": "CB9F14EE-4256-EF3E-06E1-0890EC4F139F",
+    "sequence": {
+      "refPath": "/Game/SHAR_MCP_Validation_Next_03777181/LS_MCP_Next_03777181.LS_MCP_Next_03777181"
+    }
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+After deleting the temporary level actor, same-session `copy_bindings`
+serialization changed from 493 to 410 characters at the cleanup call boundary,
+proving that the broken actor reference was removed.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Level Sequence, binding, track, and actor references are live editor
+  identities and can become stale after structural edits or closing Sequencer.
+- The validation used transient same-session serialization only; the
+  object-text token was not stored in the repository.
+- Create invalid references only inside disposable fixtures because deleting
+  real actors to test cleanup is destructive.
+- The reproduced lifecycle used a disposable sequence, temporary level actors,
+  exact actor removal, and whole-folder asset cleanup.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

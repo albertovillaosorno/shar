@@ -47,42 +47,62 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to set work range for a reviewed SHAR mission, dialogue, camera,
+or cinematic Level Sequence.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live SequencerTools schema.
+- Open the exact disposable or recoverable Level Sequence and capture the
+  matching independent reader before mutation.
+- Define whole-sequence and temporary-actor cleanup before invocation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "end_seconds": 10.0,
+  "sequence": {
+    "refPath": "/Game/SHAR_MCP_Validation_Next_03777181/LS_MCP_Next_03777181.LS_MCP_Next_03777181"
+  },
+  "start_seconds": -2.0
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+`get_work_range` changed from `{"start": -1.5, "end": 8.5}` to `{"start":
+-2.0, "end": 10.0}` after the call. The returned values were parsed as seconds
+and read independently before cleanup.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Level Sequence, binding, track, and actor references are live editor
+  identities and can become stale after structural edits or closing Sequencer.
+- The ranges use seconds, can be negative, and are independent of the playback
+  frame range.
+- The reproduced lifecycle used a disposable sequence, temporary level actors,
+  exact actor removal, and whole-folder asset cleanup.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

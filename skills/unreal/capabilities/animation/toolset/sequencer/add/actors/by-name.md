@@ -50,42 +50,63 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to add actors by name while authoring reviewed SHAR mission,
+dialogue, camera, or cinematic actor bindings in Sequencer.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live SequencerTools schema.
+- Open the exact disposable or recoverable Level Sequence and capture the
+  matching independent reader before mutation.
+- Use temporary level actors with exact SceneTools creation and removal
+  inverses; do not bind unrelated map actors.
+- Define whole-sequence and temporary-actor cleanup before invocation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "actor_names": [
+    "MCP_SeqActor_B_03777181"
+  ]
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The sequence binding inventory grew by one binding, and `get_bound_objects`
+resolved the exact temporary actor whose unique editor name was supplied.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Level Sequence, binding, track, and actor references are live editor
+  identities and can become stale after structural edits or closing Sequencer.
+- Actor references come from the currently loaded level; use unique temporary
+  names and remove the actors after validation.
+- Name lookup can match unintended actors when names are not globally unique
+  in the loaded editor world.
+- The reproduced lifecycle used a disposable sequence, temporary level actors,
+  exact actor removal, and whole-folder asset cleanup.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
