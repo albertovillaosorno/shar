@@ -76,8 +76,8 @@ use super::binary_identity::{
     BinaryIdentityError, GeometryIds, bone_ids, cluster_id, geometry_ids,
 };
 use crate::domain::animation::AnimationClip;
-use crate::domain::character::CharacterAsset;
-use crate::domain::mesh::PrimitiveGroup;
+use crate::domain::character::{CharacterAsset, SkinnedPart};
+use crate::domain::mesh::{MeshAsset, PrimitiveGroup};
 use crate::domain::texture::MaterialBinding;
 use crate::domain::transform::affine_inverse::{InverseError, invert_affine};
 use crate::domain::transform::matrix::{TrsParts, compose, multiply};
@@ -134,6 +134,25 @@ pub struct CharacterBinaryFbxSummary {
     pub textures: usize,
     /// Skeletal animation stacks written to the document.
     pub animations: usize,
+}
+
+/// Scene families sharing the deterministic binary geometry writer.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum BinarySceneKind {
+    /// Geometry is bound to an exported skeleton and optional animation clips.
+    Skinned,
+    /// Geometry is connected directly to the export root without deformers.
+    Static,
+}
+
+impl BinarySceneKind {
+    /// Return whether the scene owns skeleton, skin, pose, and animation data.
+    const fn is_skinned(self) -> bool {
+        matches!(
+            self,
+            Self::Skinned
+        )
+    }
 }
 
 /// Texture-storage policy and optional payload lookup for one document.
@@ -359,6 +378,95 @@ pub fn write_binary_character_fbx_embedded(
     )
 }
 
+/// Write one validated static model as an external-texture binary FBX 7.7 file.
+///
+/// # Errors
+///
+/// Returns an error when the model identity, mesh collection, material
+/// bindings, binary encoding, or create-new artifact write violates the static
+/// contract.
+pub fn write_binary_model_fbx(
+    asset_name: &str,
+    meshes: &[MeshAsset],
+    materials: &[MaterialBinding],
+    path: &Path,
+) -> Result<CharacterBinaryFbxSummary, CharacterBinaryFbxError> {
+    validate_static_model(
+        asset_name, meshes,
+    )?;
+    let parts = meshes
+        .iter()
+        .cloned()
+        .map(
+            |mesh| SkinnedPart {
+                group_influences: vec![
+                    Vec::new();
+                    mesh.groups
+                        .len()
+                ],
+                mesh,
+            },
+        )
+        .collect();
+    let model = CharacterAsset {
+        name: asset_name.to_owned(),
+        bones: Vec::new(),
+        parts,
+    };
+    let document = build_character_document(
+        &model,
+        materials,
+        &[],
+        CharacterTextureStorage::External,
+        &[],
+        BinarySceneKind::Static,
+    )?;
+    let bytes = encode_binary_document(&document.nodes).map_err(
+        |error| CharacterBinaryFbxError::Encoding {
+            reason: format!("{error:?}"),
+        },
+    )?;
+    persist(
+        path, &bytes,
+    )?;
+    Ok(document.summary)
+}
+
+/// Validate one static model aggregate before adapting it to shared geometry
+/// IO.
+fn validate_static_model(
+    asset_name: &str,
+    meshes: &[MeshAsset],
+) -> Result<(), CharacterBinaryFbxError> {
+    if asset_name.is_empty()
+        || asset_name != asset_name.trim()
+        || asset_name
+            .chars()
+            .any(char::is_control)
+    {
+        return Err(CharacterBinaryFbxError::InvalidModelName);
+    }
+    if meshes.is_empty() {
+        return Err(CharacterBinaryFbxError::MissingModelMeshes);
+    }
+    let mut names = BTreeSet::new();
+    for mesh in meshes {
+        if !names.insert(
+            mesh.name
+                .as_str(),
+        ) {
+            return Err(
+                CharacterBinaryFbxError::DuplicateModelMeshName {
+                    mesh: mesh
+                        .name
+                        .clone(),
+                },
+            );
+        }
+    }
+    Ok(())
+}
+
 /// Serialize one character with an explicit texture-storage policy.
 fn write_binary_character_fbx_with_storage(
     character: &CharacterAsset,
@@ -374,6 +482,7 @@ fn write_binary_character_fbx_with_storage(
         embedded_textures,
         texture_storage,
         animations,
+        BinarySceneKind::Skinned,
     )?;
     let bytes = encode_binary_document(&document.nodes).map_err(
         |error| CharacterBinaryFbxError::Encoding {
@@ -393,6 +502,7 @@ fn build_character_document(
     embedded_textures: &[EmbeddedTexture],
     texture_storage: CharacterTextureStorage,
     animations: &[AnimationClip],
+    scene_kind: BinarySceneKind,
 ) -> Result<CharacterFbxDocument, CharacterBinaryFbxError> {
     let material_slots = material_slots(
         character, materials,
@@ -405,8 +515,11 @@ fn build_character_document(
             embedded_textures,
         )?,
     };
-    let bone_transforms =
-        bone_transforms(character).map_err(CharacterBinaryFbxError::from)?;
+    let bone_transforms = if scene_kind.is_skinned() {
+        bone_transforms(character).map_err(CharacterBinaryFbxError::from)?
+    } else {
+        Vec::new()
+    };
     let groups =
         binary_groups(character).map_err(CharacterBinaryFbxError::from)?;
     let bone_ordinals: BTreeMap<&str, usize> = character
@@ -444,13 +557,18 @@ fn build_character_document(
         &bone_transforms,
         &bone_ordinals,
         &animation_plan,
+        scene_kind,
     )?;
     let summary = CharacterBinaryFbxSummary {
         geometries: groups.len(),
         bones: character
             .bones
             .len(),
-        clusters: binary_cluster_count(&groups),
+        clusters: if scene_kind.is_skinned() {
+            binary_cluster_count(&groups)
+        } else {
+            0
+        },
         materials: material_slots.len(),
         textures: material_slots
             .values()
@@ -473,6 +591,11 @@ fn build_character_document(
 }
 
 /// Build the complete ordered top-level node list.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "One ordered document boundary keeps geometry, materials, rig, \
+              animation, and representation mode aligned"
+)]
 fn document_nodes(
     character: &CharacterAsset,
     groups: &[BinaryGroup<'_>],
@@ -481,6 +604,7 @@ fn document_nodes(
     bone_transforms: &[BoneTransform],
     bone_ordinals: &BTreeMap<&str, usize>,
     animation_plan: &BinaryAnimationPlan,
+    scene_kind: BinarySceneKind,
 ) -> Result<Vec<BinaryNode>, CharacterBinaryFbxError> {
     Ok(
         vec![
@@ -510,6 +634,7 @@ fn document_nodes(
                     .bones
                     .len(),
                 animation_plan.counts,
+                scene_kind,
             )?,
             objects(
                 character,
@@ -519,6 +644,7 @@ fn document_nodes(
                 bone_transforms,
                 bone_ordinals,
                 animation_plan,
+                scene_kind,
             )?,
             connections(
                 character,
@@ -526,6 +652,7 @@ fn document_nodes(
                 material_slots,
                 bone_ordinals,
                 animation_plan,
+                scene_kind,
             )?,
             animation_plan
                 .takes
@@ -746,6 +873,7 @@ fn definitions(
     material_slots: &BTreeMap<String, MaterialSlot<'_>>,
     bone_count: usize,
     animation_counts: BinaryAnimationCounts,
+    scene_kind: BinarySceneKind,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
     let texture_count = material_slots
         .values()
@@ -757,7 +885,11 @@ fn definitions(
             },
         )
         .count();
-    let cluster_total = binary_cluster_count(groups);
+    let cluster_total = if scene_kind.is_skinned() {
+        binary_cluster_count(groups)
+    } else {
+        0
+    };
     let model_count = groups
         .len()
         .checked_add(bone_count)
@@ -767,14 +899,17 @@ fn definitions(
                 context: "model definitions",
             },
         )?;
-    let deformer_count = groups
-        .len()
-        .checked_add(cluster_total)
-        .ok_or(
-            CharacterBinaryFbxError::CountOverflow {
-                context: "deformer definitions",
-            },
-        )?;
+    let deformer_count = if scene_kind.is_skinned() {
+        groups.len()
+    } else {
+        0
+    }
+    .checked_add(cluster_total)
+    .ok_or(
+        CharacterBinaryFbxError::CountOverflow {
+            context: "deformer definitions",
+        },
+    )?;
     let counts = [
         (
             "GlobalSettings",
@@ -805,11 +940,16 @@ fn definitions(
             deformer_count,
         ),
         (
-            "Pose", 1,
+            "Pose",
+            usize::from(scene_kind.is_skinned()),
         ),
         (
             "NodeAttribute",
-            bone_count,
+            if scene_kind.is_skinned() {
+                bone_count
+            } else {
+                0
+            },
         ),
         (
             "AnimationStack",
@@ -1130,9 +1270,10 @@ fn definition_property(
 /// Build every object in deterministic id order.
 // One ordered object pass keeps ids, bind matrices, and object types aligned.
 #[expect(
+    clippy::too_many_arguments,
     clippy::too_many_lines,
-    reason = "Ordered assembly preserves deterministic FBX object ids and \
-              links"
+    reason = "Ordered assembly preserves deterministic FBX object ids, links, \
+              rig context, and static representation mode"
 )]
 fn objects(
     character: &CharacterAsset,
@@ -1142,6 +1283,7 @@ fn objects(
     bone_transforms: &[BoneTransform],
     bone_ordinals: &BTreeMap<&str, usize>,
     animation_plan: &BinaryAnimationPlan,
+    scene_kind: BinarySceneKind,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
     let mut children = vec![export_root_node()?];
     for group in groups {
@@ -1154,14 +1296,16 @@ fn objects(
                 &group.object_name,
             )?,
         );
-        children.push(
-            skin_deformer_node(
-                group
-                    .ids
-                    .deformer,
-                &group.object_name,
-            )?,
-        );
+        if scene_kind.is_skinned() {
+            children.push(
+                skin_deformer_node(
+                    group
+                        .ids
+                        .deformer,
+                    &group.object_name,
+                )?,
+            );
+        }
     }
     for slot in material_slots.values() {
         children.push(material_node(slot)?);
@@ -1265,12 +1409,14 @@ fn objects(
             );
         }
     }
-    children.push(
-        bind_pose_node(
-            groups,
-            bone_transforms,
-        )?,
-    );
+    if scene_kind.is_skinned() {
+        children.push(
+            bind_pose_node(
+                groups,
+                bone_transforms,
+            )?,
+        );
+    }
     children.extend(
         animation_plan
             .objects
@@ -2243,6 +2389,7 @@ fn connections(
     material_slots: &BTreeMap<String, MaterialSlot<'_>>,
     bone_ordinals: &BTreeMap<&str, usize>,
     animation_plan: &BinaryAnimationPlan,
+    scene_kind: BinarySceneKind,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
     let mut children = vec![
         object_connection(
@@ -2292,16 +2439,18 @@ fn connections(
                     .model,
             )?,
         );
-        children.push(
-            object_connection(
-                group
-                    .ids
-                    .deformer,
-                group
-                    .ids
-                    .geometry,
-            )?,
-        );
+        if scene_kind.is_skinned() {
+            children.push(
+                object_connection(
+                    group
+                        .ids
+                        .deformer,
+                    group
+                        .ids
+                        .geometry,
+                )?,
+            );
+        }
     }
     for slot in material_slots.values() {
         if slot
@@ -2715,6 +2864,15 @@ fn persist(
 /// Binary character FBX serialization failure.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum CharacterBinaryFbxError {
+    /// Static model identity was empty, padded, or contained control data.
+    InvalidModelName,
+    /// Static model aggregate did not contain any mesh geometry.
+    MissingModelMeshes,
+    /// Two static model meshes shared one scene identity.
+    DuplicateModelMeshName {
+        /// Repeated mesh identity.
+        mesh: String,
+    },
     /// Character serializer preparation rejected the aggregate or identity.
     CharacterInput {
         /// Stable debug representation of the checked input failure.

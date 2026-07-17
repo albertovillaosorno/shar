@@ -203,6 +203,18 @@ pub trait PipelineOperations {
         base_root: &Path,
     ) -> PipelineOutcome<StageReport>;
 
+    /// Exports the complete original-game model prop catalog.
+    ///
+    /// # Errors
+    ///
+    /// Returns a validated pipeline failure.
+    fn export_prop_catalog(
+        &self,
+        index_path: &Path,
+        game_root: &Path,
+        output_dir: &Path,
+    ) -> PipelineOutcome<StageReport>;
+
     /// Exports one selected phase-three package as an FBX artifact.
     ///
     /// # Errors

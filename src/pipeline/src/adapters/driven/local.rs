@@ -61,6 +61,7 @@ mod fbx_manifest;
 mod filesystem;
 mod one;
 mod progress;
+mod prop_catalog;
 mod two;
 mod wasp_camera;
 mod wrench;
@@ -175,6 +176,17 @@ impl PipelineOperations for LocalPipeline {
     ) -> PipelineOutcome<StageReport> {
         wrench::export_wrench(
             index_path, output_dir, base_root,
+        )
+    }
+
+    fn export_prop_catalog(
+        &self,
+        index_path: &Path,
+        game_root: &Path,
+        output_dir: &Path,
+    ) -> PipelineOutcome<StageReport> {
+        prop_catalog::export_prop_catalog(
+            index_path, game_root, output_dir,
         )
     }
 

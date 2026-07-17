@@ -600,6 +600,8 @@ Completed boundary work:
   required joints, `wrench_m`, `wrench.png`, and the authored `PTRN_wrench` clip.
 - [x] Exclude `wrench_collect`, billboard quads, glow materials, lights, and
   particle systems from the Wrench FBX.
+- [x] Publish one deduplicated mission model-prop catalog with readable
+  hash-free asset directories, including race flags and finish-line geometry.
 - [x] Route camera-only and data-only packages to native Unreal conversion rather
   than manufacturing empty or misleading FBX files.
 
@@ -645,6 +647,42 @@ FBX SHA-256 is
 `9206a68e1c6237878df122f8aca38cbf159b4aa820d044ec44b9b508e45ae82f`.
 Blender 5.1 imported the final model, texture, rig, and complete animation without
 collection, glow, quad, or particle identities.
+
+The complete ignored mission model-prop catalog is published directly beneath
+`fbx-assets/props/`. Each asset uses one readable directory and matching FBX name,
+for example `fbx-assets/props/bombbarrel/bombbarrel.fbx`; semantic SHA-256 values
+remain in `fbx-assets/props/mission-props.catalog.json` rather than in public path
+names. The `fbx-export-props` batch re-extracts all 269 mission source packages
+and reduces 72 model-bearing occurrences to 71 unique assets. The catalog contains
+181 files and 9,465,622 bytes: 71 binary FBX 7.7 files, 109 external PNG textures,
+and one catalog. Two assets are static models with no synthetic skeleton, skin,
+bind pose, or animation; 69 retain an authored rigid skeleton and exactly one
+matching model `PTRN` clip.
+
+The mission catalog includes the head-to-head `flag` model and the animated
+`finish-line` presentation. Two independent complete generations produced
+identical relative paths, sizes, and SHA-256 values for every file. The canonical
+snapshot SHA-256 is
+`5492c7b0c71d0fff9a772ab66d2feb8745fdfdff2fedd5c0aabb081b0390b151`,
+and the mission catalog SHA-256 is
+`dd0d456868f097013c777bae5055fcb118e8e308a00580d821b9ee3f1e99d9a6`.
+Blender 5.1 imported representative static and animated outputs, including
+`bombbarrel`, `finish-line`, `flag`, and `triggersphere`, with all referenced
+textures present and the expected rig and action boundaries.
+
+Generate one fresh mission-prop catalog root with:
+
+```bash
+pipeline fbx-export-props extracted/minor-unit/index.jsonl game \
+  temp/mission-props
+```
+
+FBX output contains model geometry, diffuse materials and external textures,
+vertex colors, and proven rigid model animation. Physics, collision, placement,
+locators, cameras, lights, particles, sounds, scripts, gameplay logic, quad-only
+mission markers, and data-only packages remain normalized inputs for Phase 6
+native Unreal asset conversion. Terrain-world model export is deliberately
+deferred until the complete world is reconstructed as one coherent world lane.
 
 Phase 4 exports only packages that contain actual model geometry. The
 `phonecamera` package contains camera, controller, and animation evidence but no

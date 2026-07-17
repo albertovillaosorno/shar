@@ -513,11 +513,16 @@ fn resolve_material_from_source(
     };
     let texture_stem = texture_stem(&texture_reference)?;
     let expected_file_name = format!("{texture_stem}.png");
-    let local_source = package_root
+    let direct_source = package_root
         .join("components")
         .join("texture")
         .join(&expected_file_name);
-    let source = if local_source.is_file() {
+    let local_source = local_texture_source(
+        package_root,
+        &texture_reference,
+        &direct_source,
+    )?;
+    let source = if let Some(local_source) = local_source {
         local_source
     } else if let Some(external_source) = external_texture_source {
         let external_file_name = external_source
@@ -559,7 +564,7 @@ fn resolve_material_from_source(
             DecodedComponentError::MissingTexture {
                 shader: material_name,
                 texture: texture_reference,
-                searched: local_source
+                searched: direct_source
                     .display()
                     .to_string(),
             },
@@ -570,6 +575,112 @@ fn resolve_material_from_source(
         &material_name,
         &source,
     )
+}
+
+/// Resolve one local texture by direct file name or exact package-ledger name.
+fn local_texture_source(
+    package_root: &Path,
+    texture_reference: &str,
+    direct_source: &Path,
+) -> Result<Option<PathBuf>, DecodedComponentError> {
+    if direct_source.is_file() {
+        return Ok(Some(direct_source.to_path_buf()));
+    }
+    let manifest = package_root.join("components.jsonl");
+    if !manifest.is_file() {
+        return Ok(None);
+    }
+    let text = local::read_utf8(&manifest).map_err(
+        |source| DecodedComponentError::Read {
+            path: manifest
+                .display()
+                .to_string(),
+            source: source.to_string(),
+        },
+    )?;
+    let expected = texture_reference
+        .trim_end_matches('\u{0}')
+        .trim();
+    let mut candidates = Vec::new();
+    for line in text.lines() {
+        let value: Value = serde_json::from_str(line).map_err(
+            |source| DecodedComponentError::Parse {
+                path: manifest
+                    .display()
+                    .to_string(),
+                source: source.to_string(),
+            },
+        )?;
+        if value
+            .get("kind")
+            .and_then(Value::as_str)
+            != Some("texture")
+        {
+            continue;
+        }
+        let Some(name) = value
+            .get("name")
+            .and_then(Value::as_str)
+        else {
+            continue;
+        };
+        if name
+            .trim_end_matches('\u{0}')
+            .trim()
+            != expected
+        {
+            continue;
+        }
+        let path = value
+            .get("path")
+            .and_then(Value::as_str)
+            .ok_or_else(
+                || {
+                    DecodedComponentError::InvalidTextureReference(
+                        name.to_owned(),
+                    )
+                },
+            )?;
+        let file_name = path
+            .strip_prefix("texture/")
+            .filter(|member| is_single_path_segment(member))
+            .ok_or_else(
+                || {
+                    DecodedComponentError::InvalidTextureReference(
+                        path.to_owned(),
+                    )
+                },
+            )?;
+        candidates.push(
+            package_root
+                .join("components")
+                .join("texture")
+                .join(file_name),
+        );
+    }
+    candidates.sort();
+    candidates.dedup();
+    match candidates.as_slice() {
+        [] => Ok(None),
+        [candidate] if candidate.is_file() => Ok(Some(candidate.clone())),
+        [..] if candidates.len() > 1 => Err(
+            DecodedComponentError::AmbiguousTextureMember {
+                texture: expected.to_owned(),
+                candidates: candidates
+                    .iter()
+                    .map(
+                        |path| {
+                            path.file_name()
+                                .and_then(|value| value.to_str())
+                                .unwrap_or_default()
+                                .to_owned()
+                        },
+                    )
+                    .collect(),
+            },
+        ),
+        _ => Ok(None),
+    }
 }
 
 /// Copy one validated PNG into the FBX texture staging directory.
@@ -795,23 +906,27 @@ fn texture_name(
             },
         );
     }
-    texture_parameter
-        .map(
-            |param| {
-                param
-                    .value
-                    .as_str()
-                    .map(str::to_owned)
-                    .ok_or_else(
-                        || DecodedComponentError::InvalidTextureParameter {
-                            shader: shader
-                                .name
-                                .clone(),
-                        },
-                    )
+    let Some(parameter) = texture_parameter else {
+        return Ok(None);
+    };
+    let value = parameter
+        .value
+        .as_str()
+        .ok_or_else(
+            || DecodedComponentError::InvalidTextureParameter {
+                shader: shader
+                    .name
+                    .clone(),
             },
-        )
-        .transpose()
+        )?;
+    let normalized = value
+        .trim_end_matches('\u{0}')
+        .trim();
+    if normalized.is_empty() {
+        Ok(None)
+    } else {
+        Ok(Some(normalized.to_owned()))
+    }
 }
 
 /// Internal helper for the adapter implementation.
@@ -974,6 +1089,13 @@ pub enum DecodedComponentError {
         expected: String,
         /// File name supplied by package-index evidence.
         found: String,
+    },
+    /// More than one published texture member matched one logical identity.
+    AmbiguousTextureMember {
+        /// Logical texture identity requested by shader evidence.
+        texture: String,
+        /// Matching published PNG member file names.
+        candidates: Vec<String>,
     },
     /// Texture reference was not a single safe file identity.
     InvalidTextureReference(String),

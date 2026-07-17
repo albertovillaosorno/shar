@@ -107,6 +107,43 @@ fn accepts_utf8_bom_in_decoded_json() {
 }
 
 #[test]
+fn empty_texture_parameter_is_an_untextured_material() {
+    let root = temp_root("empty-texture-reference");
+    let shader_dir = root
+        .join("components")
+        .join("shader");
+    let setup_result = fs::create_dir_all(&shader_dir).and_then(
+        |()| {
+            fs::write(
+                shader_dir.join("lambert1.json"),
+                concat!(
+                    r#"{"name":"lambert1","params":[{"kind":"texture","#,
+                    r#""param":"TEX","value":""}]}"#
+                ),
+            )
+        },
+    );
+    assert!(setup_result.is_ok());
+    let source = DecodedComponentSource::new(
+        &root,
+        root.join("textures"),
+    );
+    let result = source.resolve_material("lambert1");
+    let cleanup_result = fs::remove_dir_all(&root);
+
+    assert_eq!(
+        result,
+        Ok(
+            fbx::domain::texture::MaterialBinding {
+                material_name: "lambert1".to_owned(),
+                texture_file_name: None,
+            }
+        )
+    );
+    assert!(cleanup_result.is_ok());
+}
+
+#[test]
 fn rejects_shader_identity_mismatches() {
     let root = temp_root("identity-mismatch");
     let shader_dir = root
@@ -223,6 +260,87 @@ fn accepts_trailing_nul_padding_in_numbered_texture_reference() {
                 texture_file_name: Some("shared.bmp.0.png".to_owned()),
             }
         )
+    );
+    assert!(cleanup_result.is_ok());
+}
+
+#[test]
+fn resolves_sanitized_local_texture_through_package_ledger() {
+    let root = temp_root("ledger-texture-identity");
+    let package = root.join("package");
+    let shader_dir = package
+        .join("components")
+        .join("shader");
+    let texture_dir = package
+        .join("components")
+        .join("texture");
+    let output_dir = root.join("output");
+    let setup_result = fs::create_dir_all(&shader_dir)
+        .and_then(|()| fs::create_dir_all(&texture_dir))
+        .and_then(
+            |()| {
+                fs::write(
+                    shader_dir.join("glass.json"),
+                    concat!(
+                        r#"{"name":"glass","params":[{"kind":"texture","#,
+                        r#""param":"TEX","value":"Krusty_ HumanCola.bmp"}]}"#
+                    ),
+                )
+            },
+        )
+        .and_then(
+            |()| {
+                fs::write(
+                    texture_dir.join("Krusty__HumanCola.png"),
+                    b"synthetic-png",
+                )
+            },
+        )
+        .and_then(
+            |()| {
+                fs::write(
+                    package.join("components.jsonl"),
+                    concat!(
+                        r#"{"schema":"p3d.package.v1"}"#,
+                        "\n",
+                        r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"#,
+                        r#""container_ordinal":1,"#,
+                        r#""name":"Krusty_ HumanCola.bmp","#,
+                        r#""path":"texture/Krusty__HumanCola.png","#,
+                        r#""kind":"texture","payload_format":"image/png","#,
+                        r#""schema_ref":"texture","#,
+                        r#""recovery_status":"#,
+                        r#""recovered_embedded_image_payload"}"#,
+                        "\n"
+                    ),
+                )
+            },
+        );
+    assert!(setup_result.is_ok());
+    let source = DecodedComponentSource::new(
+        &package,
+        &output_dir,
+    );
+    let result = source.resolve_material("glass");
+    let staged = fs::read(output_dir.join("Krusty__HumanCola.png"));
+    let cleanup_result = fs::remove_dir_all(&root);
+
+    assert_eq!(
+        result,
+        Ok(
+            fbx::domain::texture::MaterialBinding {
+                material_name: "glass".to_owned(),
+                texture_file_name: Some("Krusty__HumanCola.png".to_owned()),
+            }
+        )
+    );
+    assert!(
+        staged.is_ok(),
+        "staged ledger texture should be readable: {staged:?}"
+    );
+    assert_eq!(
+        staged.ok(),
+        Some(b"synthetic-png".to_vec())
     );
     assert!(cleanup_result.is_ok());
 }

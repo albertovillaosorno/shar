@@ -249,6 +249,23 @@ where
             )
     }
 
+    /// Exports the complete original-game model prop catalog.
+    ///
+    /// # Errors
+    ///
+    /// Returns the provider's validated pipeline failure.
+    pub fn export_prop_catalog(
+        &self,
+        index_path: &Path,
+        game_root: &Path,
+        output_dir: &Path,
+    ) -> PipelineOutcome<StageReport> {
+        self.provider
+            .export_prop_catalog(
+                index_path, game_root, output_dir,
+            )
+    }
+
     /// Exports one selected phase-three package as an FBX artifact.
     ///
     /// # Errors

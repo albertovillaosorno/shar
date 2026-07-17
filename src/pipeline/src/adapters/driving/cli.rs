@@ -80,6 +80,7 @@ const USAGE: &str = concat!(
     "fbx-export-characters [index-jsonl] [output-dir] [base-root] | ",
     "fbx-export-wasp-camera [index-jsonl] [output-dir] [base-root] | ",
     "fbx-export-wrench [index-jsonl] [output-dir] [base-root] | ",
+    "fbx-export-props [index-jsonl] [game-root] [output-dir] | ",
     "fbx-export [index-jsonl] [selector] [output-dir] [base-root] ",
     "[--embed-textures (legacy compatibility)] ",
     "[--verbosity detailed|minimal] ",
@@ -141,6 +142,9 @@ impl CliProgram for PipelineCli {
         if command == "fbx-export-wrench" {
             return run_wrench(&parsed.positionals);
         }
+        if command == "fbx-export-props" {
+            return run_prop_catalog(&parsed.positionals);
+        }
         if command == "fbx-export" {
             return run_fbx_export(
                 &parsed.positionals,
@@ -179,6 +183,7 @@ fn is_known_command(command: &str) -> bool {
             | "fbx-export-characters"
             | "fbx-export-wasp-camera"
             | "fbx-export-wrench"
+            | "fbx-export-props"
             | "fbx-export"
     )
 }
@@ -386,6 +391,37 @@ fn run_wrench(arguments: &[String]) -> CommandOutcome {
             Path::new(index_path),
             Path::new(output_dir),
             Path::new(base_root),
+        ),
+    );
+    render_result(
+        result,
+        Path::new(output_dir),
+    )
+}
+
+/// Runs the complete original-game model prop catalog export.
+fn run_prop_catalog(arguments: &[String]) -> CommandOutcome {
+    if let Some(outcome) = reject_extra_positionals(
+        arguments, 3,
+    ) {
+        return outcome;
+    }
+    let Some(index_path) = arguments.first() else {
+        return missing_argument("package index path");
+    };
+    let Some(game_root) = arguments.get(1) else {
+        return missing_argument("game root");
+    };
+    let Some(output_dir) = arguments.get(2) else {
+        return missing_argument("output directory");
+    };
+    let provider = LocalPipeline;
+    let application = PipelineService::new(&provider);
+    let result = one_stage(
+        application.export_prop_catalog(
+            Path::new(index_path),
+            Path::new(game_root),
+            Path::new(output_dir),
         ),
     );
     render_result(
