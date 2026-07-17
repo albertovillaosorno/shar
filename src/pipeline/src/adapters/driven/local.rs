@@ -63,6 +63,7 @@ mod one;
 mod progress;
 mod two;
 mod wasp_camera;
+mod wrench;
 
 pub(in crate::adapters) use progress::{
     Verbosity as ProgressVerbosity, install as install_progress,
@@ -162,6 +163,17 @@ impl PipelineOperations for LocalPipeline {
         base_root: &Path,
     ) -> PipelineOutcome<StageReport> {
         wasp_camera::export_wasp_camera(
+            index_path, output_dir, base_root,
+        )
+    }
+
+    fn export_wrench(
+        &self,
+        index_path: &Path,
+        output_dir: &Path,
+        base_root: &Path,
+    ) -> PipelineOutcome<StageReport> {
+        wrench::export_wrench(
             index_path, output_dir, base_root,
         )
     }

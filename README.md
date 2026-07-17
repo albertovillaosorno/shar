@@ -562,13 +562,14 @@ Relevant decisions:
 
 **Status:** In progress.
 
-**Executive result:** The complete character lane and the first standalone
-animated-prop lane are finished and published locally. All 110 skinned character
-presentations produce verified binary FBX 7.7 artifacts with external textures,
-preserved topology and rigging, and non-empty animation sets. One canonical Wasp
-Camera now publishes its body, pruned rig, vertex colors, materials, and authored
-animation without shield, attack, effects, placement, or gameplay state. Vehicle,
-remaining prop, terrain, world, and geographic FBX coverage remain in progress.
+**Executive result:** The complete character lane and the first two standalone
+model-bearing prop exports are finished and published locally. All 110 skinned
+character presentations produce verified binary FBX 7.7 artifacts with external
+textures, preserved topology and rigging, and non-empty animation sets. One
+canonical Wasp Camera publishes its model, pruned rig, materials, and authored
+animation; one canonical Wrench publishes only its polygon model and transform
+clip. Vehicle, remaining model prop, terrain, and world-model FBX coverage remain
+in progress.
 
 Completed boundary work:
 
@@ -578,7 +579,7 @@ Completed boundary work:
 - [x] Publish referenced PNG textures beside each FBX and prohibit embedded
   `Video.Content` payloads in the canonical character catalog.
 - [x] Implement typed scene, geometry, material, texture, skeleton, skin,
-  animation, timing, camera, and transform domains.
+  animation, timing, and transform domains for model export.
 - [x] Define package profiles for characters, vehicles, props, and terrain.
 - [x] Preserve authored mesh partitions instead of forcibly merging
   unrelated geometry islands.
@@ -595,6 +596,12 @@ Completed boundary work:
   state machine, explosion geometry, and gameplay logic from the FBX artifact.
 - [x] Preserve PDDI packed vertex colors and fixed-width shader and texture
   identities through deterministic decoded-component and binary-FBX contracts.
+- [x] Publish one canonical Wrench FBX containing only `wrench7Shape`, its two
+  required joints, `wrench_m`, `wrench.png`, and the authored `PTRN_wrench` clip.
+- [x] Exclude `wrench_collect`, billboard quads, glow materials, lights, and
+  particle systems from the Wrench FBX.
+- [x] Route camera-only and data-only packages to native Unreal conversion rather
+  than manufacturing empty or misleading FBX files.
 
 The character writer boundary is verified through repository-owned fixtures,
 malformed-input tests, and two complete independent catalog generations. The two
@@ -627,6 +634,24 @@ confirmed the model, external textures, rig, and complete animation in Blender a
 Maya. Shield, ray, particles, collision, placement, state, explosion geometry, and
 gameplay logic remain outside this FBX boundary.
 
+The second ignored standalone model-prop artifact is
+`fbx-assets/props/wrench/`. It publishes one 72,124-byte binary FBX 7.7 and one
+1,698-byte external PNG, totaling 73,822 bytes. The FBX contains one
+`wrench7Shape` geometry, the two retained joints `wrench` and `wrench7`, one
+rigid cluster, one `wrench_m` material and texture binding, and one cyclic
+61-frame `PTRN_wrench` clip at 30 frames per second. Three independent
+generations produced identical paths, sizes, and SHA-256 values; the canonical
+FBX SHA-256 is
+`9206a68e1c6237878df122f8aca38cbf159b4aa820d044ec44b9b508e45ae82f`.
+Blender 5.1 imported the final model, texture, rig, and complete animation without
+collection, glow, quad, or particle identities.
+
+Phase 4 exports only packages that contain actual model geometry. The
+`phonecamera` package contains camera, controller, and animation evidence but no
+model; the `atc` package contains a 64-row destructible-object attribute table but
+no model. Neither package receives an FBX placeholder. Both remain normalized
+non-FBX inputs for Phase 6 native Unreal asset conversion.
+
 Phase 4 proceeds sequentially:
 
 1. compare bounded local reference FBX evidence without adopting external
@@ -647,12 +672,14 @@ Phase 4 proceeds sequentially:
    with a donut into runtime garment or attachment layers;
 1. generate the complete character catalog twice and compare paths, structure,
    sizes, hashes, topology, texture manifests, rigs, skinning, and animation;
-1. export standalone props, animated hazards, wasps, cameras, and supported
-   effects;
+1. export standalone model props, model-bearing animated hazards, wasps, and
+   other packages whose polygon geometry belongs in FBX; route camera-only,
+   particle-only, light-only, placement-only, and data-only packages to Phase 6;
 1. decompose vehicle FBX into body, wheels, trunk, and any other
    evidence-supported moving components with stable pivots and transforms;
-1. decompose world FBX into terrain, houses, buildings, windows, doors, linked
-   interiors, landmarks, props, and geographic placement records; and
+1. decompose world-model FBX into terrain, houses, buildings, windows, doors,
+   linked interiors, landmarks, and model props while preserving geographic
+   placement records as non-FBX Phase 6 evidence; and
 1. reconstruct and verify the one complete geographic map from those components
    before native Unreal import.
 
@@ -708,10 +735,10 @@ Character lane completion and remaining model families:
   defer modular legacy clothing reconstruction.
 - [x] Generate the complete 110-package deterministic character catalog twice
   and prove identical paths, sizes, and SHA-256 values.
-- [ ] Complete prop, wasp, and animated-object FBX coverage.
+- [ ] Complete model-bearing prop, wasp, and animated-object FBX coverage.
 - [ ] Complete semantic vehicle FBX coverage.
-- [ ] Complete terrain, world-component, coordinate, and geographic-catalog FBX
-  coverage.
+- [ ] Complete terrain and model-bearing world-component FBX coverage while
+  preserving coordinates and geographic catalogs through explicit non-FBX routes.
 - [ ] Reject packages that claim support while omitting a required capability.
 - [x] Produce deterministic conformance records for every generated character
   FBX in the root catalog.
@@ -834,7 +861,13 @@ Planned work:
   package identifiers through the `src/unreal` conversion boundary.
 - [ ] Apply conversion plans through tested native MCP commands from Phase 5.
 - [ ] Import FBX files as Static Meshes, Skeletal Meshes, Skeletons, Physics
-  Assets, Animation Sequences, materials, textures, and cameras.
+  Assets, Animation Sequences, materials, and textures.
+- [ ] Convert camera-only packages such as `phonecamera` directly from normalized
+  camera, controller, and animation evidence into native Unreal Camera Actors and
+  Level Sequences without an intermediate FBX.
+- [ ] Convert the 64-row `atc` destructible-object attribute table into a native
+  Data Table or Data Asset preserving class name, sound, particle, animation,
+  friction, mass, and elasticity fields without an intermediate FBX.
 - [ ] Require real canonical texture evidence for every textured material slot
   and bind optional normal, specular, and related maps only when detection and
   native read-back validate their semantic role.

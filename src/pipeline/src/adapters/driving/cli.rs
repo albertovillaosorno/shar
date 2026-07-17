@@ -79,6 +79,7 @@ const USAGE: &str = concat!(
     "plan-fbx-package [index-jsonl] [selector] [output-dir] | ",
     "fbx-export-characters [index-jsonl] [output-dir] [base-root] | ",
     "fbx-export-wasp-camera [index-jsonl] [output-dir] [base-root] | ",
+    "fbx-export-wrench [index-jsonl] [output-dir] [base-root] | ",
     "fbx-export [index-jsonl] [selector] [output-dir] [base-root] ",
     "[--embed-textures (legacy compatibility)] ",
     "[--verbosity detailed|minimal] ",
@@ -137,6 +138,9 @@ impl CliProgram for PipelineCli {
         if command == "fbx-export-wasp-camera" {
             return run_wasp_camera(&parsed.positionals);
         }
+        if command == "fbx-export-wrench" {
+            return run_wrench(&parsed.positionals);
+        }
         if command == "fbx-export" {
             return run_fbx_export(
                 &parsed.positionals,
@@ -174,6 +178,7 @@ fn is_known_command(command: &str) -> bool {
             | "plan-fbx-package"
             | "fbx-export-characters"
             | "fbx-export-wasp-camera"
+            | "fbx-export-wrench"
             | "fbx-export"
     )
 }
@@ -344,6 +349,40 @@ fn run_wasp_camera(arguments: &[String]) -> CommandOutcome {
     let application = PipelineService::new(&provider);
     let result = one_stage(
         application.export_wasp_camera(
+            Path::new(index_path),
+            Path::new(output_dir),
+            Path::new(base_root),
+        ),
+    );
+    render_result(
+        result,
+        Path::new(output_dir),
+    )
+}
+
+/// Runs the canonical standalone Wrench model FBX export.
+fn run_wrench(arguments: &[String]) -> CommandOutcome {
+    if let Some(outcome) = reject_extra_positionals(
+        arguments, 3,
+    ) {
+        return outcome;
+    }
+    let Some(index_path) = arguments.first() else {
+        return missing_argument("package index path");
+    };
+    let Some(output_dir) = arguments.get(1) else {
+        return missing_argument("output directory");
+    };
+    let base_root = arguments
+        .get(2)
+        .map_or(
+            ".",
+            String::as_str,
+        );
+    let provider = LocalPipeline;
+    let application = PipelineService::new(&provider);
+    let result = one_stage(
+        application.export_wrench(
             Path::new(index_path),
             Path::new(output_dir),
             Path::new(base_root),

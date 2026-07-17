@@ -232,6 +232,23 @@ where
             )
     }
 
+    /// Exports one canonical standalone Wrench model FBX artifact.
+    ///
+    /// # Errors
+    ///
+    /// Returns the provider's validated pipeline failure.
+    pub fn export_wrench(
+        &self,
+        index_path: &Path,
+        output_dir: &Path,
+        base_root: &Path,
+    ) -> PipelineOutcome<StageReport> {
+        self.provider
+            .export_wrench(
+                index_path, output_dir, base_root,
+            )
+    }
+
     /// Exports one selected phase-three package as an FBX artifact.
     ///
     /// # Errors
