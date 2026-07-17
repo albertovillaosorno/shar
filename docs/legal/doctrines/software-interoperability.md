@@ -2,6 +2,8 @@
 
 > [Legal Research Disclaimer](../disclaimer.md) applies to this record.
 
+<!-- cspell:ignore MGE -->
+
 - Status: Governing authorities verified; workflow-specific result requires
   exact facts.
 - Jurisdiction: United States baseline; other jurisdictions unresolved.
@@ -37,6 +39,10 @@ The verified authorities support these bounded propositions:
 - *MDY* separates copyright-license conditions from contractual covenants,
   rejects the *Chamberlain* nexus in the Ninth Circuit, and treats § 1201(a)
   access-control analysis as distinct from infringement.
+- *MGE UPS Systems* requires actor-specific circumvention proof in the Fifth
+  Circuit. Using an already altered copy did not itself prove that the accused
+  employees disabled or bypassed the measure. Its earlier 612 F.3d 760 opinion
+  was withdrawn and is not controlling.
 - *Davidson* enforced accepted reverse-engineering restrictions, sustained DMCA
   claims involving a game-service authentication bypass, and rejected § 1201(f)
   where the emulator omitted product-key validation and enabled unauthorized

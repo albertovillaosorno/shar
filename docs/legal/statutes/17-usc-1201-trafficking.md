@@ -2,6 +2,8 @@
 
 > [Legal Research Disclaimer](../disclaimer.md) applies to this record.
 
+<!-- cspell:ignore MGE -->
+
 - Status: Current statutory structure verified; fact-specific application not
   determined.
 - Jurisdiction: United States federal law.
@@ -41,6 +43,19 @@ sustained regulation of its functional circumvention capability. Potential fair
 uses of the decrypted works did not create a right to distribute the access-
 circumvention tool.
 
+*MGE UPS Systems, Inc. v. GE Consumer and Industrial, Inc.* addresses the
+related § 1201(a)(1) act of circumvention. The Fifth Circuit found no DMCA
+liability where an unknown source had already altered the software and the
+accused employees merely used that altered copy. The claimant did not connect
+the defendants to the act that disabled, removed, avoided, or bypassed the
+hardware-key control. The court withdrew an earlier opinion with materially
+different reasoning; only the substituted 622 F.3d 361 opinion controls.
+
+That actor-specific result does not legalize later use and does not decide
+§ 1201(a)(2) or § 1201(b) liability for creating, providing, or distributing a
+circumvention tool. Copyright, contract, trade-secret, authorization, and
+injunctive-relief questions remain separate.
+
 *Chamberlain Group, Inc. v. Skylink Technologies, Inc.* required the claimant to
 prove unauthorized access and, in the Federal Circuit, a connection between that
 access and infringement of a copyright right. It rejected liability where
@@ -73,6 +88,7 @@ For every challenged item, identify:
 1. The protected work and exact technological measure.
 1. Whether the measure controls access, protects an exclusive right, or both.
 1. The ordinary authorized process required to gain access.
+1. The person or component that performed each alleged bypass or alteration.
 1. Every function of the item and the evidence of actual use.
 1. The primary design and production purpose.
 1. Commercially significant uses unrelated to circumvention.
@@ -111,6 +127,10 @@ For every challenged item, identify:
   (Accessed: 16 July 2026).
 - [Universal City Studios, Inc. v. Corley](../cases/universal-v-corley.md), for
   the Second Circuit's decryption-tool, linking, fair-use, and speech analysis.
+<!-- markdownlint-disable-next-line MD013 -->
+- [MGE UPS Systems, Inc. v. GE Consumer and Industrial, Inc.](../cases/mge-ups-systems-v-ge-consumer-and-industrial.md),
+  for the Fifth Circuit's actor-specific circumvention and withdrawn-opinion
+  boundaries.
 <!-- markdownlint-disable-next-line MD013 -->
 - [Chamberlain Group, Inc. v. Skylink Technologies, Inc.](../cases/chamberlain-v-skylink.md),
   for the Federal Circuit's authorization, claimant-burden, and nexus analysis.

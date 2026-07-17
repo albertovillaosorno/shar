@@ -2,6 +2,8 @@
 
 > [Legal Research Disclaimer](../disclaimer.md) applies to this record.
 
+<!-- cspell:ignore MGE -->
+
 - Status: Reported Second Circuit opinion text verified from a public-domain
   reporter duplicate; an official archival court copy was not located.
 - Court: United States Court of Appeals for the Second Circuit.
@@ -60,9 +62,13 @@ that this exact test is required in every linking case.
   general Linux-compatibility or research objective did not establish an
   exception on the reviewed record.
 - Later cases including *Chamberlain Group, Inc. v. Skylink Technologies, Inc.*,
-  *Lexmark International, Inc. v. Static Control Components, Inc.*, and *MDY
-  Industries, LLC v. Blizzard Entertainment, Inc.* apply materially different
-  access-control facts and circuit rules.
+  *Lexmark International, Inc. v. Static Control Components, Inc.*, *MGE UPS
+  Systems, Inc. v. GE Consumer and Industrial, Inc.*, and *MDY Industries, LLC
+  v. Blizzard Entertainment, Inc.* apply materially different access-control
+  facts and circuit rules.
+- *MGE UPS Systems* applied *Corley*'s distinction between circumvention and
+  later use: employees who merely executed an already altered copy were not
+  shown to have performed the circumvention act.
 - The decision does not determine the legality of a particular SHAR parser,
   publication, hyperlink, or independently created compatible implementation.
 
@@ -106,5 +112,7 @@ or prohibited circumvention material remain outside the repository boundary.
 - [Copyright-safe publication boundary](../repository/copyright-safe-publication-boundary.md).
 <!-- markdownlint-disable-next-line MD013 -->
 - [Chamberlain Group, Inc. v. Skylink Technologies, Inc.](chamberlain-v-skylink.md).
+<!-- markdownlint-disable-next-line MD013 -->
+- [MGE UPS Systems, Inc. v. GE Consumer and Industrial, Inc.](mge-ups-systems-v-ge-consumer-and-industrial.md).
 <!-- markdownlint-disable-next-line MD013 -->
 - [MDY Industries, LLC v. Blizzard Entertainment, Inc.](mdy-v-blizzard.md).
