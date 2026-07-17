@@ -1,7 +1,9 @@
 # Safe mutations
 
-Read [`../index.md`](../index.md), the exact per-tool skill, and the schema
-workflow before any persistent or state-removing operation.
+Read the [central Unreal MCP index](../../index.md), the
+[workflow map](../README.md), the exact per-tool skill, and
+[schema and arguments](../planning/schema-and-arguments.md) before any
+persistent or state-removing operation.
 
 ## Goal
 

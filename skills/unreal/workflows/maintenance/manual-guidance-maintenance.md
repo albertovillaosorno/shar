@@ -1,8 +1,8 @@
 # Manual guidance maintenance
 
-Read [`../index.md`](../index.md) and the exact per-tool skill before editing
-any
-protected field.
+Read the [central Unreal MCP index](../../index.md), the
+[workflow map](../README.md), and the exact per-tool skill before
+editing any protected field.
 
 ## Goal
 

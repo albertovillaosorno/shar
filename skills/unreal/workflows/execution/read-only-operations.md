@@ -1,7 +1,8 @@
 # Read-only operations
 
-Read [`../index.md`](../index.md), then open the exact read-oriented per-tool
-skill.
+Read the [central Unreal MCP index](../../index.md), the
+[workflow map](../README.md), and the exact read-oriented per-tool
+skill before using this workflow.
 
 ## Goal
 

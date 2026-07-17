@@ -1,6 +1,7 @@
 # Capability selection
 
-Read [`../index.md`](../index.md) before using this workflow.
+Read the [central Unreal MCP index](../../index.md) and the
+[workflow map](../README.md) before using this workflow.
 
 ## Goal
 
@@ -20,6 +21,41 @@ Before selecting a tool, state:
 - declared change boundary for persistent state.
 
 When any of these are unknown, perform discovery before selection.
+
+## Native discovery and dispatch model
+
+The top-level MCP surface normally contains only `list_toolsets`,
+`describe_toolset`, and `call_tool`. Native leaf tools remain inside the
+Toolset Registry and are dispatched through `call_tool`.
+
+Use this routing model:
+
+1. use the generated central index to find the likely domain;
+1. list live toolsets when the owner is not already known;
+1. describe only plausible toolsets;
+1. compare exact native tool identities and schemas;
+1. select one tool;
+1. dispatch through the translator.
+
+Do not treat absence from top-level `tools/list` as absence from Unreal. Do not
+load the complete native catalog into one request when a domain can be selected
+first.
+
+## Runtime guidance discovery
+
+For unfamiliar project or plugin workflows, inspect runtime Unreal AgentSkills
+separately from native capability discovery.
+
+1. use `ToolsetRegistry.AgentSkillToolset.ListSkills` to obtain exact paths and
+   routing descriptions;
+1. select only guidance relevant to the requested outcome;
+1. load exact paths through `GetSkills`;
+1. apply project-specific instructions without replacing live schema checks;
+1. continue native capability selection through the central index.
+
+Runtime guidance can refine project sequence and prerequisites. It does not make
+an unavailable native capability exist, broaden mutation scope, or replace
+independent verification.
 
 ## Selection procedure
 

@@ -42,17 +42,45 @@ shar-unreal-mcp skills
 
 ## Workflow skills
 
-- [Editor readiness](workflows/editor-readiness.md)
-- [Capability selection](workflows/capability-selection.md)
-- [Schema and arguments](workflows/schema-and-arguments.md)
-- [Read-only operations](workflows/read-only-operations.md)
-- [Safe mutations](workflows/safe-mutations.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Long-running and batch operations](workflows/long-running-and-batch-operations.md)
-- [Programmatic tool scripts](workflows/programmatic-tool-scripts.md)
-- [Verification and recovery](workflows/verification-and-recovery.md)
-- [Manual guidance maintenance](workflows/manual-guidance-maintenance.md)
-- [Regeneration and taxonomy](workflows/regeneration-and-taxonomy.md)
+[Open the workflow map](workflows/README.md) before selecting an operating stage.
+
+### Connection and session
+
+- [Project connection setup](workflows/connection/project-connection-setup.md)
+- [Editor readiness](workflows/connection/editor-readiness.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Server and registry operations](workflows/connection/server-and-registry-operations.md)
+
+### Planning
+
+- [Capability selection](workflows/planning/capability-selection.md)
+- [Schema and arguments](workflows/planning/schema-and-arguments.md)
+
+### Execution
+
+- [Read-only operations](workflows/execution/read-only-operations.md)
+- [Safe mutations](workflows/execution/safe-mutations.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Long-running and batch operations](workflows/execution/long-running-and-batch-operations.md)
+- [Programmatic tool scripts](workflows/execution/programmatic-tool-scripts.md)
+
+### Assurance
+
+- [Verification and recovery](workflows/assurance/verification-and-recovery.md)
+
+### Maintenance
+
+<!-- markdownlint-disable-next-line MD013 -->
+- [Manual guidance maintenance](workflows/maintenance/manual-guidance-maintenance.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Regeneration and taxonomy](workflows/maintenance/regeneration-and-taxonomy.md)
+
+### Extension
+
+<!-- markdownlint-disable-next-line MD013 -->
+- [Toolset design and extension](workflows/extension/toolset-design-and-extension.md)
+- [Agent guidance authoring](workflows/extension/agent-guidance-authoring.md)
 
 ## Capability taxonomy
 

@@ -83,7 +83,10 @@ by Unreal's `call_tool` meta-tool.
 
 The `skills` command discovers every live toolset and schema, verifies explicit
 taxonomy ownership, and safely replaces only `skills/unreal/index.md` and
-`skills/unreal/capabilities/**`. Manual workflow skills are preserved. Each
+`skills/unreal/capabilities/**`. Manual workflow skills are preserved under a
+lifecycle taxonomy for connection, planning, execution, assurance, maintenance,
+and extension. `skills/unreal/workflows/README.md` is the only manual workflow
+map, while the generated central index renders the same grouped routing. Each
 per-tool file contains five project-evidence fields plus one protected reviewed-
 revision token. Regeneration updates the generated shell while preserving exact
 text between valid field markers. It derives review status from the installed

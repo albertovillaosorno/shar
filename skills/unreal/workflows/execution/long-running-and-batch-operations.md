@@ -1,7 +1,8 @@
 # Long-running and batch operations
 
-Read [`../index.md`](../index.md) and every participating per-tool skill before
-using this workflow.
+Read the [central Unreal MCP index](../../index.md), the
+[workflow map](../README.md), and every participating per-tool skill
+before using this workflow.
 
 ## Goal
 

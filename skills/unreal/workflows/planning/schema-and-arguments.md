@@ -1,7 +1,8 @@
 # Schema and arguments
 
-Read [`../index.md`](../index.md) and the selected per-tool skill before using
-this workflow.
+Read the [central Unreal MCP index](../../index.md), the
+[workflow map](../README.md), and the selected per-tool skill before
+using this workflow.
 
 ## Goal
 

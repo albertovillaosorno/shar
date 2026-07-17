@@ -1,6 +1,8 @@
 # Regeneration and taxonomy
 
-Read [`../index.md`](../index.md) before changing generated Unreal MCP skills.
+Read the [central Unreal MCP index](../../index.md) and the
+[workflow map](../README.md) before changing generated Unreal MCP
+skills or manual workflow routing.
 
 ## Goal
 
@@ -107,6 +109,33 @@ SetPlaybackRange    -> set/playback-range.md
 A single `DiscoverTests` tool remains `discover-tests.md` because no sibling
 shares its prefix.
 
+## Manual workflow taxonomy
+
+Manual workflows use lifecycle ownership rather than native-name tokenization.
+The only workflow map is `skills/unreal/workflows/README.md`.
+
+The controlled folders are:
+
+- `connection`: project, editor, server, session, and registry readiness;
+- `planning`: capability routing and live-schema argument construction;
+- `execution`: reads, mutations, batches, and programmatic orchestration;
+- `assurance`: postcondition verification, ambiguity, and recovery;
+- `maintenance`: protected guidance and generated catalog upkeep;
+- `extension`: callable-surface and reusable-guidance authoring.
+
+A workflow move must update:
+
+1. the root workflow map;
+1. the generated central-index renderer;
+1. workflow regression tests;
+1. all local links;
+1. recursive manual-document link validation;
+1. the checked-in generated central index.
+
+Do not create nested `index.md` files, a flat duplicate of a moved runbook, or a
+second workflow map. Folder selection follows stable responsibility, not file
+count or source-document origin.
+
 ## Identity-based manual-field migration
 
 Manual fields belong to the complete native tool identity, not to the current
@@ -185,7 +214,8 @@ Workflow files are never part of generated cleanup.
 - input or output schema change;
 - generated interface-digest mismatch;
 - Unreal MCP plugin `VersionName` change;
-- taxonomy policy change;
+- generated capability taxonomy policy change;
+- manual workflow path or lifecycle-routing change;
 - protected-field contract change.
 
 ## Review procedure
@@ -194,7 +224,9 @@ Workflow files are never part of generated cleanup.
 1. Generate the skills.
 1. Confirm toolset, tool, and document counts.
 1. Review any taxonomy ownership failure.
-1. Confirm exactly one `index.md` exists.
+1. Confirm exactly one generated `index.md` exists.
+1. Confirm the workflow map links every manual runbook.
+1. Confirm central-index workflow groups match the lifecycle folders.
 1. Confirm one skill exists per live tool.
 1. Confirm all six protected marker pairs exist exactly once.
 1. Confirm the index Unreal MCP version and manual review revision are current.

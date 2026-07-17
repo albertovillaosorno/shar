@@ -1,7 +1,8 @@
 # Programmatic tool scripts
 
-Read [`../index.md`](../index.md), the programmatic execution skill, and every
-per-tool skill referenced by the proposed script.
+Read the [central Unreal MCP index](../../index.md), the
+[workflow map](../README.md), the programmatic execution capability,
+and every per-tool skill referenced by the script.
 
 ## Goal
 

@@ -66,23 +66,91 @@ if TYPE_CHECKING:
 _GENERATED_NOTICE = (
     "Generated from the live MCP interface; edit only protected fields."
 )
-_WORKFLOWS = (
-    ("Editor readiness", "workflows/editor-readiness.md"),
-    ("Capability selection", "workflows/capability-selection.md"),
-    ("Schema and arguments", "workflows/schema-and-arguments.md"),
-    ("Read-only operations", "workflows/read-only-operations.md"),
-    ("Safe mutations", "workflows/safe-mutations.md"),
+_WORKFLOW_MAP_PROMPT_PREFIX = (
+    "[Open the workflow map](workflows/README.md) before selecting an"
+)
+_WORKFLOW_MAP_PROMPT = f"{_WORKFLOW_MAP_PROMPT_PREFIX} operating stage."
+_WORKFLOW_GROUPS = (
     (
-        "Long-running and batch operations",
-        "workflows/long-running-and-batch-operations.md",
+        "Connection and session",
+        (
+            (
+                "Project connection setup",
+                "workflows/connection/project-connection-setup.md",
+            ),
+            ("Editor readiness", "workflows/connection/editor-readiness.md"),
+            (
+                "Server and registry operations",
+                "workflows/connection/server-and-registry-operations.md",
+            ),
+        ),
     ),
-    ("Programmatic tool scripts", "workflows/programmatic-tool-scripts.md"),
-    ("Verification and recovery", "workflows/verification-and-recovery.md"),
     (
-        "Manual guidance maintenance",
-        "workflows/manual-guidance-maintenance.md",
+        "Planning",
+        (
+            (
+                "Capability selection",
+                "workflows/planning/capability-selection.md",
+            ),
+            (
+                "Schema and arguments",
+                "workflows/planning/schema-and-arguments.md",
+            ),
+        ),
     ),
-    ("Regeneration and taxonomy", "workflows/regeneration-and-taxonomy.md"),
+    (
+        "Execution",
+        (
+            (
+                "Read-only operations",
+                "workflows/execution/read-only-operations.md",
+            ),
+            ("Safe mutations", "workflows/execution/safe-mutations.md"),
+            (
+                "Long-running and batch operations",
+                "workflows/execution/long-running-and-batch-operations.md",
+            ),
+            (
+                "Programmatic tool scripts",
+                "workflows/execution/programmatic-tool-scripts.md",
+            ),
+        ),
+    ),
+    (
+        "Assurance",
+        (
+            (
+                "Verification and recovery",
+                "workflows/assurance/verification-and-recovery.md",
+            ),
+        ),
+    ),
+    (
+        "Maintenance",
+        (
+            (
+                "Manual guidance maintenance",
+                "workflows/maintenance/manual-guidance-maintenance.md",
+            ),
+            (
+                "Regeneration and taxonomy",
+                "workflows/maintenance/regeneration-and-taxonomy.md",
+            ),
+        ),
+    ),
+    (
+        "Extension",
+        (
+            (
+                "Toolset design and extension",
+                "workflows/extension/toolset-design-and-extension.md",
+            ),
+            (
+                "Agent guidance authoring",
+                "workflows/extension/agent-guidance-authoring.md",
+            ),
+        ),
+    ),
 )
 
 _MANUAL_CURRENT_PREFIX = "- Manual guidance current: **"
@@ -149,10 +217,15 @@ def render_root_index(
         "",
         "## Workflow skills",
         "",
+        *render_unbreakable_line(_WORKFLOW_MAP_PROMPT),
+        "",
     ]
-    for title, path in _WORKFLOWS:
-        lines.extend(render_unbreakable_line(f"- [{title}]({path})"))
-    lines.extend(["", "## Capability taxonomy", ""])
+    for group_title, workflows in _WORKFLOW_GROUPS:
+        lines.extend([f"### {group_title}", ""])
+        for title, path in workflows:
+            lines.extend(render_unbreakable_line(f"- [{title}]({path})"))
+        lines.append("")
+    lines.extend(["## Capability taxonomy", ""])
     for category in CATEGORIES:
         lines.extend(_category_lines(category, grouped[category.slug]))
     return "\n".join(lines).rstrip() + "\n"

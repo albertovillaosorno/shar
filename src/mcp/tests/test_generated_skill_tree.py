@@ -231,7 +231,7 @@ def _capability_documents() -> tuple[Path, ...]:
 
 
 def _manual_documents() -> tuple[Path, ...]:
-    return tuple(sorted((_SKILL_ROOT / "workflows").glob("*.md")))
+    return tuple(sorted((_SKILL_ROOT / "workflows").rglob("*.md")))
 
 
 def _capability_names() -> tuple[str, ...]:

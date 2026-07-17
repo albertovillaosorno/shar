@@ -32,7 +32,7 @@
 # - Usage:
 #   - Executed by pytest through the canonical validator workflow.
 # - Defaults:
-#   - Requires ten workflows with at least 120 lines and 600 words each.
+#   - Requires fourteen lifecycle runbooks with 120 lines and 600 words.
 #
 # ADRs:
 # - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
@@ -63,6 +63,7 @@ from tests.skill_catalog_fixture import (
 
 _REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 _WORKFLOW_ROOT = _REPOSITORY_ROOT / "skills" / "unreal" / "workflows"
+_WORKFLOW_MAP = _WORKFLOW_ROOT / "README.md"
 _MINIMUM_LINES = 120
 _MINIMUM_WORDS = 600
 _GENERAL_POLICY_TERMS = (
@@ -79,106 +80,157 @@ _GENERAL_POLICY_TERMS = (
     "confidential",
 )
 _REQUIRED = {
-    "capability-selection.md": (
+    "connection/project-connection-setup.md": (
         "## Goal",
-        "## Inputs",
-        "## Selection procedure",
-        "## Capability preference order",
+        "## Repository authorities",
+        "## Bootstrap sequence",
+        "## Drift detection",
         "## Stop conditions",
     ),
-    "editor-readiness.md": (
+    "connection/editor-readiness.md": (
         "## Goal",
         "## Required project configuration",
         "## Phase 1: identify the intended editor",
         "## Connection failure decision tree",
         "## Stop conditions",
     ),
-    "long-running-and-batch-operations.md": (
+    "connection/server-and-registry-operations.md": (
         "## Goal",
-        "## Batch admission checklist",
-        "## Timeout handling",
-        "## Partial failure",
+        "## Operational states",
+        "## Registry refresh boundary",
+        "## Timeout and cancellation",
         "## Stop conditions",
     ),
-    "manual-guidance-maintenance.md": (
+    "planning/capability-selection.md": (
         "## Goal",
-        "## Ownership boundary",
-        "## Field responsibilities",
-        "## Evidence threshold",
+        "## Inputs",
+        "## Native discovery and dispatch model",
+        "## Selection procedure",
         "## Stop conditions",
     ),
-    "programmatic-tool-scripts.md": (
-        "## Goal",
-        "## Admission criteria",
-        "## Required environment discovery",
-        "## Script design",
-        "## Change boundary",
-        "## Stop conditions",
-    ),
-    "read-only-operations.md": (
-        "## Goal",
-        "## Preparation",
-        "## Query procedure",
-        "## Evidence quality",
-        "## Stop conditions",
-    ),
-    "regeneration-and-taxonomy.md": (
-        "## Goal",
-        "## Name-derived taxonomy",
-        "## Identity-based manual-field migration",
-        "## Atomic replacement sequence",
-        "## Stop conditions",
-    ),
-    "safe-mutations.md": (
-        "## Goal",
-        "## Change boundary",
-        "## Pre-state capture",
-        "## Mutation procedure",
-        "## Stop conditions",
-    ),
-    "schema-and-arguments.md": (
+    "planning/schema-and-arguments.md": (
         "## Goal",
         "## Authority order",
         "## Refresh the schema",
         "## Pre-invocation review",
         "## Stop conditions",
     ),
-    "verification-and-recovery.md": (
+    "execution/read-only-operations.md": (
+        "## Goal",
+        "## Preparation",
+        "## Query procedure",
+        "## Evidence quality",
+        "## Stop conditions",
+    ),
+    "execution/safe-mutations.md": (
+        "## Goal",
+        "## Change boundary",
+        "## Pre-state capture",
+        "## Mutation procedure",
+        "## Stop conditions",
+    ),
+    "execution/long-running-and-batch-operations.md": (
+        "## Goal",
+        "## Batch admission checklist",
+        "## Timeout handling",
+        "## Partial failure",
+        "## Stop conditions",
+    ),
+    "execution/programmatic-tool-scripts.md": (
+        "## Goal",
+        "## Admission criteria",
+        "## Required environment discovery",
+        "## Script design",
+        "## Stop conditions",
+    ),
+    "assurance/verification-and-recovery.md": (
         "## Goal",
         "## Verification plan",
         "## Ambiguous outcomes",
         "## Recovery procedure",
         "## Stop conditions",
     ),
+    "maintenance/manual-guidance-maintenance.md": (
+        "## Goal",
+        "## Ownership boundary",
+        "## Field responsibilities",
+        "## Evidence threshold",
+        "## Stop conditions",
+    ),
+    "maintenance/regeneration-and-taxonomy.md": (
+        "## Goal",
+        "## Name-derived taxonomy",
+        "## Manual workflow taxonomy",
+        "## Atomic replacement sequence",
+        "## Stop conditions",
+    ),
+    "extension/toolset-design-and-extension.md": (
+        "## Goal",
+        "## Discovery before design",
+        "## API design principles",
+        "## Test design",
+        "## Stop conditions",
+    ),
+    "extension/agent-guidance-authoring.md": (
+        "## Goal",
+        "## Three distinct guidance surfaces",
+        "## Routing decision",
+        "## Testing and verification",
+        "## Stop conditions",
+    ),
 }
+_EXPECTED_FOLDERS = {
+    "assurance",
+    "connection",
+    "execution",
+    "extension",
+    "maintenance",
+    "planning",
+}
+
+
+def _relative_workflow_path(path: Path) -> str:
+    return path.relative_to(_WORKFLOW_ROOT).as_posix()
+
+
+def _read_workflow(relative_path: str) -> str:
+    return (_WORKFLOW_ROOT / relative_path).read_text(encoding="utf-8")
 
 
 def test_workflow_taxonomy_and_depth_are_complete() -> None:
     """Every workflow remains a detailed SRP operational runbook."""
-    paths = tuple(sorted(_WORKFLOW_ROOT.glob("*.md")))
+    documents = tuple(sorted(_WORKFLOW_ROOT.rglob("*.md")))
+    relative = {_relative_workflow_path(path) for path in documents}
 
-    assert {path.name for path in paths} == set(_REQUIRED)
-    for path in paths:
+    assert relative == {"README.md", *_REQUIRED}
+    assert {
+        path.parent.name for path in documents if path != _WORKFLOW_MAP
+    } == _EXPECTED_FOLDERS
+    assert not tuple(_WORKFLOW_ROOT.rglob("index.md"))
+    assert tuple(_WORKFLOW_ROOT.rglob("README.md")) == (_WORKFLOW_MAP,)
+
+    workflow_map = _WORKFLOW_MAP.read_text(encoding="utf-8")
+    assert "# Unreal MCP workflow map" in workflow_map
+    assert "## Taxonomy" in workflow_map
+    assert "## Default operating route" in workflow_map
+    for relative_path, headings in _REQUIRED.items():
+        path = _WORKFLOW_ROOT / relative_path
         text = path.read_text(encoding="utf-8")
-        assert "[`../index.md`](../index.md)" in text
+        assert "(../../index.md)" in text
+        assert "(../README.md)" in text
         assert len(text.splitlines()) >= _MINIMUM_LINES
         assert len(text.split()) >= _MINIMUM_WORDS
-        assert all(heading in text for heading in _REQUIRED[path.name])
+        assert all(heading in text for heading in headings)
+        assert f"({relative_path})" in workflow_map
         normalized = f" {text.casefold()} "
         assert all(term not in normalized for term in _GENERAL_POLICY_TERMS)
 
 
 def test_workflows_define_the_versioned_manual_review_contract() -> None:
     """Manual review status remains fail-safe across workflow guidance."""
-    manual = (_WORKFLOW_ROOT / "manual-guidance-maintenance.md").read_text(
-        encoding="utf-8"
-    )
-    regeneration = (_WORKFLOW_ROOT / "regeneration-and-taxonomy.md").read_text(
-        encoding="utf-8"
-    )
-    verification = (_WORKFLOW_ROOT / "verification-and-recovery.md").read_text(
-        encoding="utf-8"
-    )
+    manual = _read_workflow("maintenance/manual-guidance-maintenance.md")
+    regeneration = _read_workflow("maintenance/regeneration-and-taxonomy.md")
+    verification = _read_workflow("assurance/verification-and-recovery.md")
 
     for phrase in (
         "manual-review-revision",
@@ -207,5 +259,15 @@ def test_generated_index_routes_every_manual_workflow() -> None:
         if document.relative_path == "index.md"
     )
 
-    for filename in _REQUIRED:
-        assert f"(workflows/{filename})" in index
+    assert "(workflows/README.md)" in index
+    for relative_path in _REQUIRED:
+        assert f"(workflows/{relative_path})" in index
+    for group in (
+        "### Connection and session",
+        "### Planning",
+        "### Execution",
+        "### Assurance",
+        "### Maintenance",
+        "### Extension",
+    ):
+        assert group in index

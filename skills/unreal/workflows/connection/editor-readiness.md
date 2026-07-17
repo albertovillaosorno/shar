@@ -1,6 +1,7 @@
 # Editor readiness
 
-Read [`../index.md`](../index.md) before using this workflow.
+Read the [central Unreal MCP index](../../index.md) and the
+[workflow map](../README.md) before using this workflow.
 
 ## Goal
 

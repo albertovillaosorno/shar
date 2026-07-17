@@ -140,6 +140,21 @@ ownership follows the complete native tool identity. A native identity rename is
 still treated as removal plus creation; the new identity starts with
 placeholders unless a separate technical migration proves semantic equivalence.
 
+## Manual workflow taxonomy
+
+Manual Unreal MCP workflows are maintained separately from generated capability
+pages. They use one root workflow map and lifecycle folders for connection,
+planning, execution, assurance, maintenance, and extension.
+
+The generated central index links the root map and every workflow under grouped
+lifecycle headings. Workflow paths are owned by the index renderer and guarded
+by recursive link and structure tests. Workflow moves must update the map,
+renderer, tests, local links, and checked-in generated index together.
+
+No nested workflow indexes or flat compatibility copies are retained. Generated
+capability taxonomy remains native-name-derived; manual workflow taxonomy is
+responsibility-derived.
+
 ## Technical metadata boundary
 
 Generated metadata is limited to interoperability information exposed by the
