@@ -47,42 +47,70 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to declare one reviewed SHAR Blueprint multicast event dispatcher
+before signature authoring, binding, or invocation graph work.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Supply an exact loaded Blueprint reference.
+- Confirm the dispatcher name is absent with `list_event_dispatchers`.
+- Define only caller inputs; dispatcher output parameters are unsupported.
+- Define parameter removal, dispatcher removal, and strict compilation before a
+  disposable mutation.
+- Keep the Blueprint editor closed when later graph removal must not close it.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "blueprint": {
+    "refPath": "/Game/SHAR_MCP_Validation/BP_MCP_DispatcherLifecycle.BP_MCP_DispatcherLifecycle"
+  },
+  "name": "OnValidationChanged"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The disposable Blueprint initially had no declared dispatchers. The call
+returned the exact nested `OnValidationChanged` graph reference, and
+`list_event_dispatchers` returned that single reference. Primitive
+`Count`,
+object `Mesh`, and struct `Hit` inputs produced entry-node output pins at
+indices
+`1`, `2`, and `3`; node inspection reported them in that order. The dispatcher
+compiled with and without parameters before exact graph removal.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- A dispatcher is a multicast delegate declaration, not an implemented event.
+- Dispatcher signatures support inputs; output parameters are rejected.
+- Input parameters appear as output pins on the dispatcher entry node.
+- Parameter type metadata was supplied by the validated calls; node inspection
+  independently confirmed names, positions, and directions.
+- Binding, invocation, duplicate-name behavior, and runtime delivery require
+  separate verification.
+- The operation changes unsaved state and needs separate compile and save
+  decisions.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
