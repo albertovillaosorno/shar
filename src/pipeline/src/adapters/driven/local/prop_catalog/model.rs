@@ -16,7 +16,7 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Typed mission prop candidate, source, and exported-asset records.
+//   - Typed non-world prop candidate, source, and exported-asset records.
 // - Must-Not:
 //   - Read files, serialize FBX, or publish directories.
 // - Allows:
@@ -26,7 +26,7 @@
 // - Merge-When:
 //   - Another prop-catalog module owns the same data without distinct policy.
 // - Summary:
-//   - Keeps mission prop export records explicit.
+//   - Keeps non-world prop export records explicit.
 // - Description:
 //   - Represents model-only sources and justified static or rigid-animation
 //     routes.
@@ -44,25 +44,31 @@
 //   - false
 //
 
-//! Typed mission prop catalog records.
+//! Typed non-world prop catalog records.
 
 use std::cmp::Ordering;
 use std::path::PathBuf;
 
 use fbx::adapters::driven::binary_character_writer::CharacterBinaryFbxSummary;
 
-/// Catalog family that owns one mission source occurrence.
+/// Catalog family that owns one prop source occurrence.
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub(super) enum PropFamily {
+    /// Collectible-card and related model geometry from the cards package.
+    Cards,
     /// Mission-specific models, including race flags and finish-line geometry.
     Missions,
+    /// Dynamic, animated, and breakable models embedded in world packages.
+    TerrainWorld,
 }
 
 impl PropFamily {
     /// Stable directory and JSON label.
     pub(super) const fn as_str(self) -> &'static str {
         match self {
+            Self::Cards => "cards",
             Self::Missions => "missions",
+            Self::TerrainWorld => "terrain-world",
         }
     }
 }
@@ -89,7 +95,7 @@ impl PropRoute {
 /// One normalized source occurrence before semantic deduplication.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct PropCandidate {
-    /// Mission catalog family.
+    /// Prop catalog family.
     pub(super) family: PropFamily,
     /// Generated package-index identity.
     pub(super) package_id: String,
@@ -199,7 +205,7 @@ pub(super) struct TextureRecord {
 pub(super) struct ExportedProp {
     /// Stable content-derived asset id.
     pub(super) asset_id: String,
-    /// Mission catalog family.
+    /// Prop catalog family.
     pub(super) family: PropFamily,
     /// Static or rigid-animation representation.
     pub(super) route: PropRoute,
@@ -228,6 +234,8 @@ pub(super) struct PropCatalogCounts {
     pub(super) occurrences: usize,
     /// Unique FBX assets after semantic deduplication.
     pub(super) assets: usize,
+    /// Unique card-package FBX assets.
+    pub(super) card_assets: usize,
     /// Unique mission FBX assets.
     pub(super) mission_assets: usize,
     /// Static unique assets.

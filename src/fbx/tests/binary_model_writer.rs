@@ -46,7 +46,7 @@
 //! Deterministic static-model binary FBX regression coverage.
 
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use fbx::adapters::driven::binary_character_writer::{
     CharacterBinaryFbxError, CharacterBinaryFbxSummary, write_binary_model_fbx,
@@ -140,6 +140,19 @@ fn material() -> Result<MaterialBinding, String> {
     .map_err(|error| format!("static material failed: {error:?}"))
 }
 
+fn remove_if_present(path: &Path) -> Result<(), String> {
+    match fs::remove_file(path) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(
+            format!(
+                "temporary FBX cleanup failed for {}: {error}",
+                path.display()
+            ),
+        ),
+    }
+}
+
 fn output_path(label: &str) -> PathBuf {
     std::env::temp_dir().join(
         format!(
@@ -163,8 +176,8 @@ fn static_model_is_deterministic_and_has_no_rig_objects() -> Result<(), String>
 {
     let first = output_path("first");
     let second = output_path("second");
-    let _ = fs::remove_file(&first);
-    let _ = fs::remove_file(&second);
+    remove_if_present(&first)?;
+    remove_if_present(&second)?;
     let mesh = model_mesh()?;
     let material = material()?;
 
@@ -182,42 +195,47 @@ fn static_model_is_deterministic_and_has_no_rig_objects() -> Result<(), String>
         &second,
     )
     .map_err(|error| format!("second static write failed: {error:?}"))?;
-    assert_eq!(
-        first_summary,
-        CharacterBinaryFbxSummary {
-            geometries: 1,
-            bones: 0,
-            clusters: 0,
-            materials: 1,
-            textures: 0,
-            animations: 0,
-        }
-    );
-    assert_eq!(
-        first_summary,
-        second_summary
-    );
+    let expected = CharacterBinaryFbxSummary {
+        geometries: 1,
+        bones: 0,
+        clusters: 0,
+        materials: 1,
+        textures: 0,
+        animations: 0,
+    };
+    if first_summary != expected {
+        return Err(format!("unexpected static summary: {first_summary:?}"));
+    }
+    if first_summary != second_summary {
+        return Err(
+            format!(
+                "static summaries differ: {first_summary:?} != \
+                 {second_summary:?}"
+            ),
+        );
+    }
     let first_bytes = fs::read(&first)
         .map_err(|error| format!("first static read failed: {error}"))?;
     let second_bytes = fs::read(&second)
         .map_err(|error| format!("second static read failed: {error}"))?;
-    assert_eq!(
-        first_bytes,
-        second_bytes
-    );
-    assert!(first_bytes.starts_with(BINARY_MAGIC));
+    if first_bytes != second_bytes {
+        return Err("static FBX bytes are not deterministic".to_owned());
+    }
+    if !first_bytes.starts_with(BINARY_MAGIC) {
+        return Err("static FBX binary magic is missing".to_owned());
+    }
     for required in [
         "Geometry",
         "Model",
         "Material",
         "ColorSet_1",
     ] {
-        assert!(
-            contains_token(
-                &first_bytes,
-                required
-            )
-        );
+        if !contains_token(
+            &first_bytes,
+            required,
+        ) {
+            return Err(format!("static FBX is missing {required}"));
+        }
     }
     for forbidden in [
         "Deformer",
@@ -227,15 +245,15 @@ fn static_model_is_deterministic_and_has_no_rig_objects() -> Result<(), String>
         "AnimationStack",
         "AnimationCurve",
     ] {
-        assert!(
-            !contains_token(
-                &first_bytes,
-                forbidden
-            )
-        );
+        if contains_token(
+            &first_bytes,
+            forbidden,
+        ) {
+            return Err(format!("static FBX contains forbidden {forbidden}"));
+        }
     }
-    let _ = fs::remove_file(first);
-    let _ = fs::remove_file(second);
+    remove_if_present(&first)?;
+    remove_if_present(&second)?;
     Ok(())
 }
 
@@ -251,10 +269,11 @@ fn static_model_rejects_invalid_aggregate_identity() -> Result<(), String> {
         &path,
     );
 
-    assert_eq!(
-        result,
-        Err(CharacterBinaryFbxError::InvalidModelName)
-    );
-    assert!(!path.exists());
+    if result != Err(CharacterBinaryFbxError::InvalidModelName) {
+        return Err(format!("unexpected invalid-name result: {result:?}"));
+    }
+    if path.exists() {
+        return Err("invalid static model created an artifact".to_owned());
+    }
     Ok(())
 }

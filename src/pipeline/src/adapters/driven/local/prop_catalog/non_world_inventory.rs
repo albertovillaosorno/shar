@@ -1,7 +1,8 @@
 // File:
-//   - mission_inventory.rs
+//   - non_world_inventory.rs
 // Path:
-//   - src/pipeline/src/adapters/driven/local/prop_catalog/mission_inventory.rs
+//   - src/pipeline/src/adapters/driven/local/prop_catalog/non_world_inventory.
+//     rs
 //
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
@@ -16,17 +17,17 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Mission model-prop candidate discovery.
+//   - Non-world model-prop candidate discovery.
 // - Must-Not:
 //   - Export quad-only markers, shadows, cameras, particles, or level geometry.
 // - Allows:
 //   - Exact mesh-to-composite, skeleton, and PTRN association.
 // - Split-When:
-//   - Standalone and composite mission models need independent policy.
+//   - Standalone and composite non-world models need independent policy.
 // - Merge-When:
 //   - World and mission inventories share identical container semantics.
 // - Summary:
-//   - Finds race flags, finish lines, pickups, and other real mission models.
+//   - Finds cards, race flags, finish lines, pickups, and other real models.
 // - Description:
 //   - Selects only composite props that resolve to decoded mesh components.
 // - Usage:
@@ -42,7 +43,7 @@
 //   - false
 //
 
-//! Mission model-prop candidate discovery.
+//! Non-world model-prop candidate discovery.
 
 use std::collections::BTreeSet;
 use std::path::Path;
@@ -55,12 +56,12 @@ use super::model::{PropCandidate, PropFamily, PropRoute};
 use crate::domain::PipelineError;
 use crate::domain::package::{PhaseThreePackageIndex, PhaseThreePackageRow};
 
-/// Discover every model-bearing mission occurrence.
+/// Discover every model-bearing card or mission occurrence.
 ///
 /// # Errors
 ///
 /// Returns an error when component identities are ambiguous or malformed.
-pub(super) fn discover_mission_candidates(
+pub(super) fn discover_non_world_candidates(
     index: &PhaseThreePackageIndex,
     normalized_root: &Path,
 ) -> Result<Vec<PropCandidate>, PipelineError> {
@@ -68,15 +69,13 @@ pub(super) fn discover_mission_candidates(
     for package in index
         .packages()
         .iter()
-        .filter(
-            |package| {
-                is_selected_package(package) && package.category == "missions"
-            },
-        )
+        .filter(|package| is_selected_package(package))
     {
         let relative = relative_art_root(package)?;
+        let family = package_family(package)?;
         discover_package(
             package,
+            family,
             &relative,
             &normalized_root.join(&relative),
             &mut candidates,
@@ -86,9 +85,28 @@ pub(super) fn discover_mission_candidates(
     Ok(candidates)
 }
 
-/// Discover one normalized mission package.
+/// Resolve one selected package to its publication family.
+fn package_family(
+    package: &PhaseThreePackageRow
+) -> Result<PropFamily, PipelineError> {
+    match package
+        .category
+        .as_str()
+    {
+        "cards" => Ok(PropFamily::Cards),
+        "missions" => Ok(PropFamily::Missions),
+        category => Err(
+            PipelineError::new(
+                format!("unsupported non-world prop category: {category}"),
+            ),
+        ),
+    }
+}
+
+/// Discover one normalized card or mission package.
 fn discover_package(
     package: &PhaseThreePackageRow,
+    family: PropFamily,
     relative_root: &Path,
     root: &Path,
     output: &mut Vec<PropCandidate>,
@@ -138,7 +156,7 @@ fn discover_package(
         let animated = skeleton.is_some() && animation.is_some();
         output.push(
             PropCandidate {
-                family: PropFamily::Missions,
+                family,
                 package_id: package
                     .package_id
                     .clone(),
@@ -169,6 +187,7 @@ fn discover_package(
     }
     append_standalone_meshes(
         package,
+        family,
         relative_root,
         meshes,
         &referenced,
@@ -177,9 +196,10 @@ fn discover_package(
     Ok(())
 }
 
-/// Add real mission meshes that are not owned by a composite.
+/// Add real non-world prop meshes that are not owned by a composite.
 fn append_standalone_meshes(
     package: &PhaseThreePackageRow,
+    family: PropFamily,
     relative_root: &Path,
     meshes: std::collections::BTreeMap<String, String>,
     referenced: &BTreeSet<String>,
@@ -197,7 +217,7 @@ fn append_standalone_meshes(
         }
         output.push(
             PropCandidate {
-                family: PropFamily::Missions,
+                family,
                 package_id: package
                     .package_id
                     .clone(),

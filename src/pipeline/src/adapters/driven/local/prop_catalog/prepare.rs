@@ -51,6 +51,7 @@ use std::path::{Path, PathBuf};
 use fbx::adapters::driven::decoded_animation_source::load_animation_clips;
 use fbx::adapters::driven::decoded_component_source::DecodedComponentSource;
 use fbx::adapters::driven::decoded_rigid_prop_source;
+use fbx::domain::animation::AnimationClip;
 use fbx::ports::component_source::ComponentSource as _;
 use shar_sha256::digest_hex;
 
@@ -59,9 +60,11 @@ use super::canonical::{
 };
 use super::material::{
     canonicalize_animated_materials, canonicalize_static_materials,
+    canonicalize_world_animated_materials, canonicalize_world_static_materials,
 };
 use super::model::{PropCandidate, PropRoute};
 use super::prepared::{PreparedGeometry, PreparedProp};
+use super::texture_authority::SharedTextureAuthority;
 use crate::domain::PipelineError;
 
 /// Load and canonicalize one model-bearing source occurrence.
@@ -74,6 +77,48 @@ pub(super) fn prepare_candidate(
     candidate: &PropCandidate,
     normalized_root: &Path,
     scratch_root: &Path,
+    ordinal: usize,
+) -> Result<PreparedProp, PipelineError> {
+    prepare_candidate_internal(
+        candidate,
+        normalized_root,
+        scratch_root,
+        None,
+        ordinal,
+    )
+}
+
+/// Load and canonicalize one world-prop source occurrence.
+///
+/// # Errors
+///
+/// Returns an error when components, shared textures, or signatures fail.
+pub(super) fn prepare_world_candidate(
+    candidate: &PropCandidate,
+    normalized_root: &Path,
+    scratch_root: &Path,
+    authority: &SharedTextureAuthority,
+    ordinal: usize,
+) -> Result<PreparedProp, PipelineError> {
+    prepare_candidate_internal(
+        candidate,
+        normalized_root,
+        scratch_root,
+        Some(authority),
+        ordinal,
+    )
+}
+
+/// Prepare one source occurrence with optional shared texture authority.
+///
+/// # Errors
+///
+/// Returns an error when scratch creation or route-specific preparation fails.
+fn prepare_candidate_internal(
+    candidate: &PropCandidate,
+    normalized_root: &Path,
+    scratch_root: &Path,
+    authority: Option<&SharedTextureAuthority>,
     ordinal: usize,
 ) -> Result<PreparedProp, PipelineError> {
     let package_root = normalized_root.join(&candidate.relative_root);
@@ -90,11 +135,13 @@ pub(super) fn prepare_candidate(
             candidate,
             &package_root,
             &scratch,
+            authority,
         ),
         PropRoute::RigidAnimated => prepare_animated(
             candidate,
             &package_root,
             &scratch,
+            authority,
         ),
     }
 }
@@ -104,6 +151,7 @@ fn prepare_static(
     candidate: &PropCandidate,
     package_root: &Path,
     scratch: &Path,
+    authority: Option<&SharedTextureAuthority>,
 ) -> Result<PreparedProp, PipelineError> {
     let source = DecodedComponentSource::new(
         package_root,
@@ -129,11 +177,20 @@ fn prepare_static(
             },
         )
         .collect::<Result<Vec<_>, _>>()?;
-    let (materials, textures) = canonicalize_static_materials(
-        &mut meshes,
-        package_root,
-        scratch,
-    )?;
+    let (materials, textures) = match authority {
+        Some(value) => canonicalize_world_static_materials(
+            &mut meshes,
+            package_root,
+            scratch,
+            value,
+            &candidate.subcategory,
+        ),
+        None => canonicalize_static_materials(
+            &mut meshes,
+            package_root,
+            scratch,
+        ),
+    }?;
     canonicalize_static_meshes(&mut meshes);
     let geometry = PreparedGeometry::Static(meshes);
     let signature = prepared_signature(
@@ -158,6 +215,7 @@ fn prepare_animated(
     candidate: &PropCandidate,
     package_root: &Path,
     scratch: &Path,
+    authority: Option<&SharedTextureAuthority>,
 ) -> Result<PreparedProp, PipelineError> {
     let skeleton = required_component(
         candidate
@@ -216,18 +274,21 @@ fn prepare_animated(
             )
         },
     )?;
-    if animations.len() != 1 {
-        return Err(
-            PipelineError::new(
-                "rigid prop must publish exactly one exact PTRN clip",
-            ),
-        );
-    }
-    let (materials, textures) = canonicalize_animated_materials(
-        &mut asset,
-        package_root,
-        scratch,
-    )?;
+    ensure_single_animation(&animations)?;
+    let (materials, textures) = match authority {
+        Some(value) => canonicalize_world_animated_materials(
+            &mut asset,
+            package_root,
+            scratch,
+            value,
+            &candidate.subcategory,
+        ),
+        None => canonicalize_animated_materials(
+            &mut asset,
+            package_root,
+            scratch,
+        ),
+    }?;
     canonicalize_animated_asset(
         &mut asset,
         &mut animations,
@@ -253,6 +314,24 @@ fn prepare_animated(
     )
 }
 
+/// Require exactly one authored model-transform animation.
+///
+/// # Errors
+///
+/// Returns an error when the candidate has zero or multiple exact clips.
+fn ensure_single_animation(
+    animations: &[AnimationClip]
+) -> Result<(), PipelineError> {
+    if animations.len() == 1 {
+        return Ok(());
+    }
+    Err(
+        PipelineError::new(
+            "rigid prop must publish exactly one exact PTRN clip",
+        ),
+    )
+}
+
 /// Build one exact normalized component path.
 fn component_path(
     root: &Path,
@@ -270,7 +349,7 @@ fn required_component(
     root: &Path,
     family: &str,
 ) -> Result<PathBuf, PipelineError> {
-    let member = member.ok_or_else(
+    let required_member = member.ok_or_else(
         || {
             PipelineError::new(
                 format!("rigid prop is missing required {family} member"),
@@ -279,13 +358,15 @@ fn required_component(
     )?;
     Ok(
         component_path(
-            root, family, member,
+            root,
+            family,
+            required_member,
         ),
     )
 }
 
 /// Hash canonical domain values and texture digests for semantic deduplication.
-fn prepared_signature(
+pub(super) fn prepared_signature(
     route: PropRoute,
     geometry: &PreparedGeometry,
     materials: &[fbx::domain::texture::MaterialBinding],
@@ -304,4 +385,94 @@ fn prepared_signature(
             .collect::<Vec<_>>()
     );
     digest_hex(evidence.as_bytes())
+}
+
+/// Hash model geometry independently of textures, rig, and animation.
+pub(super) fn visual_signature(prepared: &PreparedProp) -> String {
+    let mut meshes = match &prepared.geometry {
+        PreparedGeometry::Static(value) => value.clone(),
+        PreparedGeometry::RigidAnimated {
+            asset,
+            ..
+        } => asset
+            .parts
+            .iter()
+            .map(
+                |part| {
+                    part.mesh
+                        .clone()
+                },
+            )
+            .collect(),
+    };
+    for group in meshes
+        .iter_mut()
+        .flat_map(
+            |mesh| {
+                mesh.groups
+                    .iter_mut()
+            },
+        )
+    {
+        "material".clone_into(&mut group.shader);
+    }
+    digest_hex(format!("{meshes:?}").as_bytes())
+}
+
+/// Hash positions and topology independently of presentation channels.
+pub(super) fn structural_signature(prepared: &PreparedProp) -> String {
+    let meshes = match &prepared.geometry {
+        PreparedGeometry::Static(value) => value
+            .iter()
+            .collect::<Vec<_>>(),
+        PreparedGeometry::RigidAnimated {
+            asset,
+            ..
+        } => asset
+            .parts
+            .iter()
+            .map(|part| &part.mesh)
+            .collect::<Vec<_>>(),
+    };
+    let evidence = meshes
+        .iter()
+        .map(
+            |mesh| {
+                mesh.groups
+                    .iter()
+                    .map(
+                        |group| {
+                            (
+                                group.index,
+                                &group.positions,
+                                &group.triangles,
+                            )
+                        },
+                    )
+                    .collect::<Vec<_>>()
+            },
+        )
+        .collect::<Vec<_>>();
+    digest_hex(format!("{evidence:?}").as_bytes())
+}
+
+/// Hash the canonical rigid binding independently of animation samples.
+pub(super) fn rig_signature(prepared: &PreparedProp) -> Option<String> {
+    match &prepared.geometry {
+        PreparedGeometry::Static(_) => None,
+        PreparedGeometry::RigidAnimated {
+            asset,
+            ..
+        } => {
+            let evidence = (
+                &asset.bones,
+                asset
+                    .parts
+                    .iter()
+                    .map(|part| &part.group_influences)
+                    .collect::<Vec<_>>(),
+            );
+            Some(digest_hex(format!("{evidence:?}").as_bytes()))
+        }
+    }
 }

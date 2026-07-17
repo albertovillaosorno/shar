@@ -155,7 +155,7 @@ pub(super) fn canonicalize_animated_asset(
             )?;
         }
     }
-    asset.name = "model".to_owned();
+    "model".clone_into(&mut asset.name);
     for (clip_ordinal, clip) in animations
         .iter_mut()
         .enumerate()

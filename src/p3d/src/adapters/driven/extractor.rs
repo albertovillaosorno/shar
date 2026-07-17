@@ -126,22 +126,21 @@ impl LosslessPackageExporter {
             true,
         )
         .map_err(|error| P3dError::invalid_source(error.to_string()))?;
-        let components_dir = output_dir.join("components");
-        if local::path_kind(&components_dir)
-            .map_err(|error| P3dError::invalid_source(error.to_string()))?
-            != PathKind::Missing
-        {
-            fs::remove_dir_all(&components_dir)
-                .map_err(|error| P3dError::invalid_source(error.to_string()))?;
-        }
-        local::create_dir_all(&components_dir)
-            .map_err(|error| P3dError::invalid_source(error.to_string()))?;
+        let components_dir = reset_components_directory(output_dir)?;
         let mut kind_counts = BTreeMap::<&'static str, usize>::new();
+        let mut published_paths = BTreeMap::<PathBuf, Vec<u8>>::new();
         let mut outputs = Vec::new();
         for component in document
             .chunks
             .iter()
-            .filter(|chunk| chunk.parent_ordinal == Some(0))
+            .filter(
+                |chunk| {
+                    should_publish_component(
+                        chunk,
+                        &document.chunks,
+                    )
+                },
+            )
         {
             let kind = component
                 .kind
@@ -155,9 +154,28 @@ impl LosslessPackageExporter {
                 &bytes,
                 *next_index,
             )?;
+            if component.parent_ordinal != Some(0)
+                && published_paths.contains_key(&recovered.relative_path)
+            {
+                continue;
+            }
+            drop(
+                published_paths.insert(
+                    recovered
+                        .relative_path
+                        .clone(),
+                    recovered
+                        .bytes
+                        .clone(),
+                ),
+            );
             outputs.push(
                 publish_recovered_component(
                     component,
+                    top_level_ancestor_ordinal(
+                        component,
+                        &document.chunks,
+                    )?,
                     kind,
                     recovered,
                     &bytes,
@@ -192,9 +210,113 @@ impl LosslessPackageExporter {
     }
 }
 
+/// Recreate the normalized component directory for one package export.
+fn reset_components_directory(output_dir: &Path) -> Result<PathBuf, P3dError> {
+    let components_dir = output_dir.join("components");
+    if local::path_kind(&components_dir)
+        .map_err(|error| P3dError::invalid_source(error.to_string()))?
+        != PathKind::Missing
+    {
+        fs::remove_dir_all(&components_dir)
+            .map_err(|error| P3dError::invalid_source(error.to_string()))?;
+    }
+    local::create_dir_all(&components_dir)
+        .map_err(|error| P3dError::invalid_source(error.to_string()))?;
+    Ok(components_dir)
+}
+
+/// Return whether one parsed chunk belongs in the normalized component set.
+fn should_publish_component(
+    component: &ChunkRecord,
+    chunks: &[ChunkRecord],
+) -> bool {
+    if component.parent_ordinal == Some(0) {
+        return true;
+    }
+    if !is_nested_model_support(
+        component
+            .kind
+            .label(),
+    ) {
+        return false;
+    }
+    let mut parent = component.parent_ordinal;
+    while let Some(ordinal) = parent {
+        let Some(ancestor) = chunks.get(ordinal) else {
+            return false;
+        };
+        if is_model_container(
+            ancestor
+                .kind
+                .label(),
+        ) {
+            return true;
+        }
+        parent = ancestor.parent_ordinal;
+    }
+    false
+}
+
+/// Return whether one nested family carries model or model-animation evidence.
+fn is_nested_model_support(kind: &str) -> bool {
+    matches!(
+        kind,
+        "mesh"
+            | "skin"
+            | "animation"
+            | "skeleton"
+            | "composite_drawable"
+            | "quad_group"
+            | "multi_controller"
+            | "frame_controller"
+            | "frame_controller_variant_a"
+            | "frame_controller_variant_b"
+    )
+}
+
+/// Return whether one ancestor owns an embedded world or prop presentation.
+fn is_model_container(kind: &str) -> bool {
+    matches!(
+        kind,
+        "srr_dyna_phys_dsg"
+            | "srr_insta_anim_dyna_phys_dsg"
+            | "srr_anim_dsg"
+            | "srr_anim_coll_dsg"
+            | "srr_breakable_object"
+            | "state_prop"
+            | "animated_object_factory"
+    )
+}
+
+/// Resolve the direct root child that owns one recovered component.
+fn top_level_ancestor_ordinal(
+    component: &ChunkRecord,
+    chunks: &[ChunkRecord],
+) -> Result<usize, P3dError> {
+    let mut current = component;
+    loop {
+        match current.parent_ordinal {
+            Some(0) | None => return Ok(current.ordinal),
+            Some(parent) => {
+                current = chunks
+                    .get(parent)
+                    .ok_or_else(
+                        || {
+                            P3dError::invalid_source(
+                                "component ancestry references an invalid \
+                                 ordinal",
+                            )
+                        },
+                    )?;
+            }
+        }
+    }
+}
+
 /// Validate and publish one recovered component plus optional metadata.
 fn publish_recovered_component(
     component: &ChunkRecord,
+    container_ordinal: usize,
     kind: &str,
     recovered: RecoveredComponent,
     source: &[u8],
@@ -240,6 +362,7 @@ fn publish_recovered_component(
     Ok(
         ComponentOutput {
             chunk: *component,
+            container_ordinal,
             name: recovered.name,
             // Record a portable path so provenance is stable on every OS.
             path: recovered
@@ -4318,4 +4441,169 @@ fn pascal_component_name_preserves_edge_spaces() -> Result<(), String> {
         );
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod nested_model_component_tests {
+    use super::{should_publish_component, top_level_ancestor_ordinal};
+    use crate::{ChunkKind, ChunkRecord};
+
+    fn chunk(
+        ordinal: usize,
+        parent_ordinal: Option<usize>,
+        kind: ChunkKind,
+    ) -> ChunkRecord {
+        ChunkRecord {
+            ordinal,
+            depth: ordinal,
+            parent_ordinal,
+            id: 0,
+            kind,
+            offset: 0,
+            header_size: 12,
+            total_size: 12,
+            payload_offset: 12,
+            payload_size: 0,
+            child_count: 0,
+        }
+    }
+
+    #[test]
+    fn nested_mesh_under_dynamic_world_container_is_published() {
+        let chunks = [
+            chunk(
+                0,
+                None,
+                ChunkKind::Root,
+            ),
+            chunk(
+                1,
+                Some(0),
+                ChunkKind::SrrDynaPhysDsg,
+            ),
+            chunk(
+                2,
+                Some(1),
+                ChunkKind::Mesh,
+            ),
+        ];
+
+        assert!(
+            should_publish_component(
+                &chunks[1], &chunks
+            )
+        );
+        assert!(
+            should_publish_component(
+                &chunks[2], &chunks
+            )
+        );
+    }
+
+    #[test]
+    fn nested_model_support_may_pass_through_mesh_ancestors() {
+        let chunks = [
+            chunk(
+                0,
+                None,
+                ChunkKind::Root,
+            ),
+            chunk(
+                1,
+                Some(0),
+                ChunkKind::SrrBreakableObject,
+            ),
+            chunk(
+                2,
+                Some(1),
+                ChunkKind::Mesh,
+            ),
+            chunk(
+                3,
+                Some(2),
+                ChunkKind::Skeleton,
+            ),
+        ];
+
+        assert!(
+            should_publish_component(
+                &chunks[3], &chunks
+            )
+        );
+    }
+
+    #[test]
+    fn nested_component_records_owning_root_child() -> Result<(), String> {
+        let chunks = [
+            chunk(
+                0,
+                None,
+                ChunkKind::Root,
+            ),
+            chunk(
+                1,
+                Some(0),
+                ChunkKind::SrrDynaPhysDsg,
+            ),
+            chunk(
+                2,
+                Some(1),
+                ChunkKind::Mesh,
+            ),
+            chunk(
+                3,
+                Some(2),
+                ChunkKind::Skeleton,
+            ),
+        ];
+
+        let container = top_level_ancestor_ordinal(
+            &chunks[3], &chunks,
+        )
+        .map_err(|error| error.to_string())?;
+
+        if container != 1 {
+            return Err(
+                format!("expected owning root child 1, received {container}"),
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn unrelated_nested_components_remain_inside_parent_evidence() {
+        let chunks = [
+            chunk(
+                0,
+                None,
+                ChunkKind::Root,
+            ),
+            chunk(
+                1,
+                Some(0),
+                ChunkKind::SrrDynaPhysDsg,
+            ),
+            chunk(
+                2,
+                Some(1),
+                ChunkKind::ParticleSystem,
+            ),
+            chunk(
+                3,
+                Some(2),
+                ChunkKind::Mesh,
+            ),
+        ];
+
+        assert!(
+            !should_publish_component(
+                &chunks[2], &chunks
+            )
+        );
+        assert!(
+            should_publish_component(
+                &chunks[3], &chunks
+            )
+        );
+    }
 }

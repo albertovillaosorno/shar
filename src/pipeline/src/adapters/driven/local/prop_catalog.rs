@@ -16,7 +16,7 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Complete mission model-prop batch.
+//   - Complete non-world model-prop batch.
 // - Must-Not:
 //   - Export non-model evidence to FBX or publish partial catalog directories.
 // - Allows:
@@ -28,7 +28,7 @@
 // - Merge-When:
 //   - A generic complete model catalog owns the same staging lifecycle.
 // - Summary:
-//   - Publishes mission model props in one deterministic run.
+//   - Publishes card and mission model props in one deterministic run.
 // - Description:
 //   - Leaves physics, placement, cameras, effects, and gameplay for Phase 6.
 // - Usage:
@@ -44,7 +44,7 @@
 //   - false
 //
 
-//! Complete mission model-prop batch.
+//! Complete non-world model-prop batch.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -61,16 +61,23 @@ mod export;
 mod extraction;
 mod inventory_common;
 mod material;
-mod mission_inventory;
 mod model;
+mod non_world_inventory;
 mod prepare;
 mod prepared;
 mod source;
+mod texture_authority;
+mod world;
+mod world_catalog;
+mod world_export;
+mod world_inventory;
+mod world_ledger;
+mod world_model;
 
 /// Stable complete prop batch stage name.
 const STAGE: &str = "fbx-export-props";
 
-/// Export every model-bearing mission prop in one batch.
+/// Export every model-bearing card and mission prop in one batch.
 ///
 /// # Errors
 ///
@@ -117,14 +124,15 @@ pub(super) fn export_prop_catalog(
                     bytes,
                     note: format!(
                         concat!(
-                            "published {} unique mission model props from {} ",
-                            "occurrences across {} source packages: {} \
-                             static, ",
-                            "{} rigid animated"
+                            "published {} unique non-world model props from ",
+                            "{} occurrences across {} source packages: {} ",
+                            "cards, {} missions, {} static, {} rigid animated"
                         ),
                         counts.assets,
                         counts.occurrences,
                         counts.source_packages,
+                        counts.card_assets,
+                        counts.mission_assets,
                         counts.static_assets,
                         counts.animated_assets
                     ),
@@ -194,6 +202,8 @@ fn build_catalog(
         ),
     )
 }
+
+pub(super) use world::export_world_prop_catalog;
 
 /// Require one output or staging path not to exist.
 fn ensure_missing(

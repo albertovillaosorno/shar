@@ -562,14 +562,13 @@ Relevant decisions:
 
 **Status:** In progress.
 
-**Executive result:** The complete character lane and the first two standalone
-model-bearing prop exports are finished and published locally. All 110 skinned
-character presentations produce verified binary FBX 7.7 artifacts with external
-textures, preserved topology and rigging, and non-empty animation sets. One
-canonical Wasp Camera publishes its model, pruned rig, materials, and authored
-animation; one canonical Wrench publishes only its polygon model and transform
-clip. Vehicle, remaining model prop, terrain, and world-model FBX coverage remain
-in progress.
+**Executive result:** The complete character, non-world prop, and standalone
+world-prop lanes are finished and published locally. All 110 skinned character
+presentations produce verified binary FBX 7.7 artifacts with external textures,
+preserved topology and rigging, and non-empty animation sets. The prop catalog
+publishes Wasp Camera, Wrench, 71 mission models, two card-package models, and 285
+readable standalone world props. Vehicle export and assembled level terrain,
+interiors, placements, and final world presentation remain in progress.
 
 Completed boundary work:
 
@@ -600,8 +599,13 @@ Completed boundary work:
   required joints, `wrench_m`, `wrench.png`, and the authored `PTRN_wrench` clip.
 - [x] Exclude `wrench_collect`, billboard quads, glow materials, lights, and
   particle systems from the Wrench FBX.
-- [x] Publish one deduplicated mission model-prop catalog with readable
-  hash-free asset directories, including race flags and finish-line geometry.
+- [x] Publish one deduplicated non-world prop catalog beneath separate
+  `cards/` and `missions/` directories, including card, phone-icon, race-flag,
+  and finish-line model geometry.
+- [x] Publish terrain-world model props beneath `fbx-assets/props/world/`
+  with one hash-free directory per readable prop name.
+- [x] Consolidate same-name world variants by positions, topology, and rig;
+  merge distinct compatible clips and retain incompatible variant evidence.
 - [x] Route camera-only and data-only packages to native Unreal conversion rather
   than manufacturing empty or misleading FBX files.
 
@@ -648,41 +652,98 @@ FBX SHA-256 is
 Blender 5.1 imported the final model, texture, rig, and complete animation without
 collection, glow, quad, or particle identities.
 
-The complete ignored mission model-prop catalog is published directly beneath
-`fbx-assets/props/`. Each asset uses one readable directory and matching FBX name,
-for example `fbx-assets/props/bombbarrel/bombbarrel.fbx`; semantic SHA-256 values
-remain in `fbx-assets/props/mission-props.catalog.json` rather than in public path
-names. The `fbx-export-props` batch re-extracts all 269 mission source packages
-and reduces 72 model-bearing occurrences to 71 unique assets. The catalog contains
-181 files and 9,465,622 bytes: 71 binary FBX 7.7 files, 109 external PNG textures,
-and one catalog. Two assets are static models with no synthetic skeleton, skin,
-bind pose, or animation; 69 retain an authored rigid skeleton and exactly one
-matching model `PTRN` clip.
+The complete ignored non-world model-prop catalog is published beneath
+`fbx-assets/props/`. Mission assets live below `fbx-assets/props/missions/`, and
+card-package models live below `fbx-assets/props/cards/`. Each asset uses one
+readable directory and matching FBX name, for example
+`fbx-assets/props/missions/bombbarrel/bombbarrel.fbx` and
+`fbx-assets/props/cards/card-idle/card-idle.fbx`. Semantic SHA-256 values remain
+in `fbx-assets/props/non-world-props.catalog.json` rather than in public path
+names.
 
-The mission catalog includes the head-to-head `flag` model and the animated
-`finish-line` presentation. Two independent complete generations produced
-identical relative paths, sizes, and SHA-256 values for every file. The canonical
-snapshot SHA-256 is
-`5492c7b0c71d0fff9a772ab66d2feb8745fdfdff2fedd5c0aabb081b0390b151`,
-and the mission catalog SHA-256 is
-`dd0d456868f097013c777bae5055fcb118e8e308a00580d821b9ee3f1e99d9a6`.
-Blender 5.1 imported representative static and animated outputs, including
-`bombbarrel`, `finish-line`, `flag`, and `triggersphere`, with all referenced
-textures present and the expected rig and action boundaries.
+The `fbx-export-props` batch re-extracts 269 mission packages and the one cards
+package. It reduces 74 model-bearing occurrences to 73 unique assets: 71 mission
+models and two card-package models. The final catalog contains 185 files and
+9,708,453 bytes: 73 binary FBX 7.7 files, 111 external PNG textures, and one
+catalog. Two mission assets are static models with no synthetic skeleton, skin,
+bind pose, or animation; the remaining 69 mission assets and both card models
+retain an authored rigid skeleton and exactly one matching model `PTRN` clip.
 
-Generate one fresh mission-prop catalog root with:
+The mission lane includes the head-to-head `flag` model and the animated
+`finish-line` presentation. The cards lane includes `card-idle` and `phone-icon`.
+Blender 5.1 imported both card models with one mesh, one texture, one armature,
+and one 121-frame action each. Representative `missions/flag` and
+`missions/blend` imports also preserved the expected static and animated
+boundaries. Quad-only markers, card and phone shadows, billboard effects,
+particles, cameras, collision, placement, and gameplay data remain normalized
+inputs for Phase 6 native Unreal asset conversion rather than misleading FBX
+objects.
+
+Three independent complete generations produced identical relative paths,
+sizes, and SHA-256 values for every file. The canonical non-world snapshot
+SHA-256 is
+`f9c35831c9b3ad93b58af7183a09cfad5c10a924b66f49a8ecf3e2c8b8b71194`,
+and the catalog SHA-256 is
+`19a0779668f78cf893b244cc4d5055508afcaac2a7d96a1cfdafce80143876bd`.
+
+Generate one fresh non-world prop catalog root with:
 
 ```bash
-pipeline fbx-export-props extracted/minor-unit/index.jsonl game \
-  temp/mission-props
+pipeline fbx-export-props extracted/minor-unit/index.jsonl game   temp/non-world-props
 ```
 
 FBX output contains model geometry, diffuse materials and external textures,
 vertex colors, and proven rigid model animation. Physics, collision, placement,
 locators, cameras, lights, particles, sounds, scripts, gameplay logic, quad-only
-mission markers, and data-only packages remain normalized inputs for Phase 6
-native Unreal asset conversion. Terrain-world model export is deliberately
-deferred until the complete world is reconstructed as one coherent world lane.
+markers, and data-only packages remain normalized inputs for Phase 6 native
+Unreal asset conversion.
+
+The ignored world-prop catalog is `fbx-assets/props/world/`. Every asset uses one
+readable directory and matching FBX name, for example
+`fbx-assets/props/world/cypress-tree/cypress-tree.fbx`; no public directory uses a
+content-hash suffix. The `fbx-export-world-props` batch re-extracts 149
+terrain-world packages and reduces 840 model-bearing occurrences to 285 readable
+prop names. The final catalog contains 875 files and 27,674,360 bytes: 285 binary
+FBX 7.7 files, 589 external PNG textures, and one
+`world-props.catalog.json`. It publishes 190 static assets and 95 rigid animated
+assets.
+
+Same-name variants are compatible only when their canonical positions, triangle
+topology, and rigid binding agree. Compatible variants contribute distinct
+texture payloads and authored clips to one directory. Seven variants were merged;
+ten genuinely different visual variants remain cataloged as omitted evidence
+behind the richest canonical model rather than creating duplicate hash-named
+folders. For example, the three `cypress-tree` sources have identical geometry,
+rig, and 31-frame clip, so one FBX retains all seven source occurrences and three
+presentation textures. The level-one and level-four `fx-evergreen` variants also
+merge, while the level-seven variant remains separate evidence because its
+geometry and 61-frame behavior differ from the 49-frame canonical structure.
+`oaktree-s-fx` retains two distinct compatible clips in one FBX.
+
+Two independent complete generations produced identical relative paths, sizes,
+and SHA-256 values for every file. The canonical world-prop snapshot SHA-256 is
+`ee3f627a4597ec6ed0c15591db0e2ea15f6f8e67bb2bdb63de40944d710377c9`,
+and the catalog SHA-256 is
+`4b3bb20b4fe1fb45570d23dc7eea36cb7bc0511e2f1bde9060b259d10e4e092d`.
+Blender 5.1 imported representative outputs including `cypress-tree`,
+`fx-evergreen`, `oaktree-s-fx`, `l1-firehydrant-shape`, and
+`l3-globelight-shape`; geometry, materials, external textures, vertex colors,
+rigs, and all declared actions were present.
+
+Generate one fresh world-prop catalog root with:
+
+```bash
+pipeline fbx-export-world-props extracted/minor-unit/index.jsonl game \
+  temp/world-props
+```
+
+Breakable tree FBX files contain only the model geometry owned by their selected
+composite. For `cypress-tree`, that evidence is the four `cyp_trunks` meshes.
+Leaf shaders and textures such as `cypressleaf_m` and `cypressleaf.png` exist in
+separate world-presentation evidence rather than in the trunk composite. The
+leafless trunk FBX is therefore expected and lossless for this boundary; foliage,
+leaf-drop effects, particles, and final tree assembly remain native Unreal/world
+presentation work rather than invented FBX geometry.
 
 Phase 4 exports only packages that contain actual model geometry. The
 `phonecamera` package contains camera, controller, and animation evidence but no

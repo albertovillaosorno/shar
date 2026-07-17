@@ -55,9 +55,13 @@ use crate::domain::PipelineError;
 /// Composite identity, skeleton, and rigid prop references.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct CompositeEvidence {
+    /// Normalized composite member id without family or extension.
     pub(super) member_id: String,
+    /// Cleaned composite identity.
     pub(super) name: String,
+    /// Cleaned referenced skeleton identity.
     pub(super) skeleton_name: String,
+    /// Cleaned rigid prop identities owned by the composite.
     pub(super) prop_names: BTreeSet<String>,
 }
 
@@ -228,6 +232,49 @@ pub(super) fn read_json(path: &Path) -> Result<Value, PipelineError> {
     )
 }
 
+/// Build one lowercase portable asset name with a deterministic limit.
+///
+/// # Errors
+///
+/// Returns the supplied error when the identity has no portable characters.
+pub(super) fn portable_asset_name(
+    value: &str,
+    maximum: usize,
+    empty_error: &str,
+) -> Result<String, PipelineError> {
+    let mut output = String::new();
+    let mut previous_dash = false;
+    for character in value
+        .chars()
+        .flat_map(char::to_lowercase)
+    {
+        let normalized = if character.is_ascii_alphanumeric() {
+            character
+        } else {
+            '-'
+        };
+        if normalized == '-' {
+            if previous_dash || output.is_empty() {
+                continue;
+            }
+            previous_dash = true;
+        } else {
+            previous_dash = false;
+        }
+        output.push(normalized);
+        if output.len() == maximum {
+            break;
+        }
+    }
+    while output.ends_with('-') {
+        let _removed_character = output.pop();
+    }
+    if output.is_empty() {
+        return Err(PipelineError::new(empty_error));
+    }
+    Ok(output)
+}
+
 /// Read one required JSON string field.
 pub(super) fn required_string(
     value: &Value,
@@ -244,6 +291,50 @@ pub(super) fn required_string(
                 )
             },
         )
+}
+
+/// Read one required non-negative integer field.
+pub(super) fn required_usize(
+    value: &Value,
+    field: &str,
+) -> Result<usize, PipelineError> {
+    value
+        .get(field)
+        .and_then(Value::as_u64)
+        .and_then(|number| usize::try_from(number).ok())
+        .ok_or_else(
+            || {
+                PipelineError::new(
+                    format!("prop JSON field is not a usize: {field}"),
+                )
+            },
+        )
+}
+
+/// Convert one ledger path into a member id for the required family.
+pub(super) fn ledger_member_id(
+    path: &str,
+    family: &str,
+) -> Result<String, PipelineError> {
+    let prefix = format!("{family}/");
+    let member = path
+        .strip_prefix(&prefix)
+        .and_then(|value| value.strip_suffix(".json"))
+        .ok_or_else(
+            || {
+                PipelineError::new(
+                    format!("prop ledger path does not match {family}: {path}"),
+                )
+            },
+        )?;
+    if member.is_empty() || member.contains('/') || member.contains('\\') {
+        return Err(
+            PipelineError::new(
+                format!("prop member id is not one path segment: {member}"),
+            ),
+        );
+    }
+    Ok(member.to_owned())
 }
 
 /// Return one component member id from its JSON path.

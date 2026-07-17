@@ -69,6 +69,7 @@ fn component(name: &str) -> ComponentOutput {
             payload_size: 0,
             child_count: 0,
         },
+        container_ordinal: 0,
         name: String::from(name),
         path: String::from("components/value.json"),
         payload_format: String::from("json"),
@@ -105,6 +106,35 @@ fn component_json_preserves_escaped_name_characters() {
     expected.push(quote);
 
     assert!(json.contains(&expected));
+}
+
+#[test]
+fn component_json_preserves_chunk_ancestry() {
+    let mut value = component("value");
+    value
+        .chunk
+        .ordinal = 7;
+    value
+        .chunk
+        .depth = 3;
+    value
+        .chunk
+        .parent_ordinal = Some(4);
+    value.container_ordinal = 1;
+
+    let json = component_line(&value);
+
+    assert!(json.contains(r#""ordinal":7"#));
+    assert!(json.contains(r#""depth":3"#));
+    assert!(json.contains(r#""parent_ordinal":4"#));
+    assert!(json.contains(r#""container_ordinal":1"#));
+}
+
+#[test]
+fn root_component_json_uses_null_parent_ordinal() {
+    let json = component_line(&component("value"));
+
+    assert!(json.contains(r#""parent_ordinal":null"#));
 }
 
 #[test]

@@ -63,6 +63,8 @@ use crate::{ChunkRecord, P3dDocument, P3dError};
 pub struct ComponentOutput {
     /// Chunk.
     pub chunk: ChunkRecord,
+    /// Direct child of the root that owns this recovered component.
+    pub container_ordinal: usize,
     /// Name.
     pub name: String,
     /// Path.
@@ -124,6 +126,23 @@ pub fn component_line(component: &ComponentOutput) -> String {
     json.push_str(
         &chunk
             .ordinal
+            .to_string(),
+    );
+    json.push_str(",\"depth\":");
+    json.push_str(
+        &chunk
+            .depth
+            .to_string(),
+    );
+    json.push_str(",\"parent_ordinal\":");
+    match chunk.parent_ordinal {
+        Some(parent) => json.push_str(&parent.to_string()),
+        None => json.push_str("null"),
+    }
+    json.push_str(",\"container_ordinal\":");
+    json.push_str(
+        &component
+            .container_ordinal
             .to_string(),
     );
     json.push_str(",\"name\":\"");

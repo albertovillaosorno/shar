@@ -522,8 +522,8 @@ fn resolve_material_from_source(
         &texture_reference,
         &direct_source,
     )?;
-    let source = if let Some(local_source) = local_source {
-        local_source
+    let source = if let Some(resolved_local_source) = local_source {
+        resolved_local_source
     } else if let Some(external_source) = external_texture_source {
         let external_file_name = external_source
             .file_name()

@@ -16,7 +16,7 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Re-extraction of mission P3D packages for prop discovery.
+//   - Re-extraction of card and mission P3D packages for prop discovery.
 // - Must-Not:
 //   - Select model members, write FBX, or publish normalized staging.
 // - Allows:
@@ -26,14 +26,14 @@
 // - Merge-When:
 //   - A shared batch extraction stage owns the same selected-package contract.
 // - Summary:
-//   - Materializes mission model components from the original game tree.
+//   - Materializes non-world prop components from the original game tree.
 // - Description:
 //   - Derives each P3D source from the generated package root without
 //     hardcoding.
 // - Usage:
-//   - Called before mission prop inventory.
+//   - Called before non-world prop inventory.
 // - Defaults:
-//   - Only the `missions` package category is selected.
+//   - The `cards` and `missions` package categories are selected.
 //
 // ADRs:
 // - docs/adr/fbx/extraction/source-discovery-boundary.md
@@ -43,16 +43,26 @@
 //   - false
 //
 
-//! Re-extraction of mission P3D packages for prop discovery.
+//! Re-extraction of non-world prop P3D packages for discovery.
 
 use std::path::{Component, Path, PathBuf};
 
 use crate::domain::PipelineError;
 use crate::domain::package::{PhaseThreePackageIndex, PhaseThreePackageRow};
 
-/// Return whether one package belongs to the mission prop scan.
+/// Return whether one package belongs to the non-world prop scan.
 pub(super) fn is_selected_package(package: &PhaseThreePackageRow) -> bool {
-    package.category == "missions"
+    matches!(
+        package
+            .category
+            .as_str(),
+        "cards" | "missions"
+    )
+}
+
+/// Return whether one package belongs to the world-prop scan.
+pub(super) fn is_world_package(package: &PhaseThreePackageRow) -> bool {
+    package.category == "terrain-world"
 }
 
 /// Return one package root relative to `extracted/art` and `game/art`.
@@ -111,11 +121,44 @@ pub(super) fn extract_selected_packages(
     game_root: &Path,
     normalized_root: &Path,
 ) -> Result<usize, PipelineError> {
+    extract_packages(
+        index,
+        game_root,
+        normalized_root,
+        is_selected_package,
+    )
+}
+
+/// Re-extract every terrain-world source package.
+pub(super) fn extract_world_packages(
+    index: &PhaseThreePackageIndex,
+    game_root: &Path,
+    normalized_root: &Path,
+) -> Result<usize, PipelineError> {
+    extract_packages(
+        index,
+        game_root,
+        normalized_root,
+        is_world_package,
+    )
+}
+
+/// Re-extract every package accepted by one category predicate.
+///
+/// # Errors
+///
+/// Returns an error when a source package is missing or extraction fails.
+fn extract_packages(
+    index: &PhaseThreePackageIndex,
+    game_root: &Path,
+    normalized_root: &Path,
+    selected: fn(&PhaseThreePackageRow) -> bool,
+) -> Result<usize, PipelineError> {
     let mut count = 0_usize;
     for package in index
         .packages()
         .iter()
-        .filter(|package| is_selected_package(package))
+        .filter(|package| selected(package))
     {
         let relative = relative_art_root(package)?;
         let source = game_root

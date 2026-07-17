@@ -52,10 +52,196 @@ use fbx::adapters::driven::binary_character_writer::{
 };
 use shar_sha256::digest_hex;
 
-use super::model::{ExportedProp, PropAlias, PropCandidate, TextureRecord};
+use super::inventory_common::portable_asset_name;
+use super::model::{
+    ExportedProp, PropAlias, PropCandidate, PropFamily, TextureRecord,
+};
 use super::prepare::prepare_candidate;
 use super::prepared::{PreparedGeometry, PreparedProp};
 use crate::domain::PipelineError;
+
+/// Mutable publication indexes for one complete non-world prop batch.
+#[derive(Debug, Default)]
+struct ExportState {
+    /// Published assets in discovery order.
+    assets: Vec<ExportedProp>,
+    /// Semantic identity to published asset index.
+    identities: BTreeMap<
+        (
+            PropFamily,
+            String,
+        ),
+        usize,
+    >,
+    /// Family-local public name to semantic signature.
+    public_names: BTreeMap<
+        (
+            PropFamily,
+            String,
+        ),
+        String,
+    >,
+}
+
+impl ExportState {
+    /// Prepare and account for one discovered source occurrence.
+    fn publish_candidate(
+        &mut self,
+        candidate: &PropCandidate,
+        normalized_root: &Path,
+        scratch_root: &Path,
+        output_root: &Path,
+        ordinal: usize,
+    ) -> Result<(), PipelineError> {
+        let prepared = prepare_candidate(
+            candidate,
+            normalized_root,
+            scratch_root,
+            ordinal,
+        )?;
+        let key = (
+            candidate.family,
+            prepared
+                .signature
+                .clone(),
+        );
+        if let Some(existing) = self
+            .identities
+            .get(&key)
+            .copied()
+        {
+            let asset = self
+                .assets
+                .get_mut(existing)
+                .ok_or_else(
+                    || {
+                        PipelineError::new(
+                            "prop duplicate index escaped asset list",
+                        )
+                    },
+                )?;
+            asset
+                .aliases
+                .push(PropAlias::from(candidate));
+        } else {
+            self.publish_unique(
+                candidate,
+                prepared,
+                key,
+                output_root,
+            )?;
+        }
+        fs::remove_dir_all(scratch_root.join(format!("candidate-{ordinal:06}")))
+            .map_err(
+                |error| {
+                    PipelineError::new(
+                        format!(
+                            "prop material scratch cleanup failed: {error}"
+                        ),
+                    )
+                },
+            )
+    }
+
+    /// Publish one semantic identity and register its family-local name.
+    fn publish_unique(
+        &mut self,
+        candidate: &PropCandidate,
+        prepared: PreparedProp,
+        identity: (
+            PropFamily,
+            String,
+        ),
+        output_root: &Path,
+    ) -> Result<(), PipelineError> {
+        let public_name = asset_name(&candidate.owner_name)?;
+        let public_key = (
+            candidate.family,
+            public_name.clone(),
+        );
+        if let Some(existing_signature) = self
+            .public_names
+            .get(&public_key)
+            && existing_signature != &prepared.signature
+        {
+            return Err(
+                PipelineError::new(
+                    format!(
+                        "non-world prop name collision for {public_name} in {}",
+                        candidate
+                            .family
+                            .as_str()
+                    ),
+                ),
+            );
+        }
+        let index = self
+            .assets
+            .len();
+        let exported = write_unique_prop(
+            candidate,
+            prepared,
+            &public_name,
+            output_root,
+        )?;
+        let _previous_public_name = self
+            .public_names
+            .insert(
+                public_key,
+                exported
+                    .signature
+                    .clone(),
+            );
+        let _previous_identity = self
+            .identities
+            .insert(
+                identity, index,
+            );
+        self.assets
+            .push(exported);
+        Ok(())
+    }
+
+    /// Sort aliases and assets into canonical catalog order.
+    fn finish(mut self) -> Vec<ExportedProp> {
+        for asset in &mut self.assets {
+            asset
+                .aliases
+                .sort_by(
+                    |left, right| {
+                        (
+                            &left.package_id,
+                            &left.owner_name,
+                            &left.container_key,
+                        )
+                            .cmp(
+                                &(
+                                    &right.package_id,
+                                    &right.owner_name,
+                                    &right.container_key,
+                                ),
+                            )
+                    },
+                );
+        }
+        self.assets
+            .sort_by(
+                |left, right| {
+                    (
+                        left.family,
+                        &left.asset_id,
+                    )
+                        .cmp(
+                            &(
+                                right.family,
+                                &right.asset_id,
+                            ),
+                        )
+                },
+            );
+        self.assets
+    }
+}
 
 /// Prepare, deduplicate, and publish every discovered prop occurrence.
 ///
@@ -69,129 +255,28 @@ pub(super) fn export_unique_props(
     scratch_root: &Path,
     output_root: &Path,
 ) -> Result<Vec<ExportedProp>, PipelineError> {
-    let mut assets = Vec::new();
-    let mut identities = BTreeMap::new();
-    let mut public_names = BTreeMap::new();
+    let mut state = ExportState::default();
     for (ordinal, candidate) in candidates
         .iter()
         .enumerate()
     {
-        let prepared = prepare_candidate(
+        state.publish_candidate(
             candidate,
             normalized_root,
             scratch_root,
+            output_root,
             ordinal,
         )?;
-        let key = (
-            candidate.family,
-            prepared
-                .signature
-                .clone(),
-        );
-        if let Some(existing) = identities
-            .get(&key)
-            .copied()
-        {
-            let asset: &mut ExportedProp = assets
-                .get_mut(existing)
-                .ok_or_else(
-                    || {
-                        PipelineError::new(
-                            "prop duplicate index escaped asset list",
-                        )
-                    },
-                )?;
-            asset
-                .aliases
-                .push(PropAlias::from(candidate));
-        } else {
-            let public_name = asset_name(&candidate.owner_name)?;
-            if let Some(existing_signature) = public_names.get(&public_name)
-                && existing_signature != &prepared.signature
-            {
-                return Err(
-                    PipelineError::new(
-                        format!(
-                            "mission prop name collision for {public_name}"
-                        ),
-                    ),
-                );
-            }
-            let index = assets.len();
-            let exported = write_unique_prop(
-                candidate,
-                prepared,
-                &public_name,
-                output_root,
-            )?;
-            public_names.insert(
-                public_name,
-                exported
-                    .signature
-                    .clone(),
-            );
-            identities.insert(
-                key, index,
-            );
-            assets.push(exported);
-        }
-        let _cleanup_result = fs::remove_dir_all(
-            scratch_root.join(format!("candidate-{ordinal:06}")),
-        );
     }
-    for asset in &mut assets {
-        asset
-            .aliases
-            .sort_by(
-                |left, right| {
-                    (
-                        &left.package_id,
-                        &left.owner_name,
-                        &left.container_key,
-                    )
-                        .cmp(
-                            &(
-                                &right.package_id,
-                                &right.owner_name,
-                                &right.container_key,
-                            ),
-                        )
-                },
-            );
-    }
-    assets.sort_by(
-        |left, right| {
-            (
-                left.family,
-                &left.asset_id,
-            )
-                .cmp(
-                    &(
-                        right.family,
-                        &right.asset_id,
-                    ),
-                )
-        },
-    );
-    Ok(assets)
+    Ok(state.finish())
 }
 
-/// Write one unique prepared model and construct its catalog record.
-fn write_unique_prop(
-    candidate: &PropCandidate,
-    prepared: PreparedProp,
-    asset_id: &str,
-    output_root: &Path,
-) -> Result<ExportedProp, PipelineError> {
-    let relative_dir = asset_id.to_owned();
-    let directory = output_root.join(&relative_dir);
-    let texture_dir = directory.join("textures");
-    fs::create_dir_all(&texture_dir).map_err(
-        |error| {
-            PipelineError::new(format!("prop asset directory failed: {error}"))
-        },
-    )?;
-    let mut texture_records = Vec::new();
+/// Publish every external texture referenced by one prepared asset.
+fn publish_textures(
+    prepared: &PreparedProp,
+    texture_dir: &Path,
+) -> Result<Vec<TextureRecord>, PipelineError> {
+    let mut records = Vec::new();
     for texture in &prepared.textures {
         fs::write(
             texture_dir.join(&texture.file_name),
@@ -207,7 +292,7 @@ fn write_unique_prop(
                 )
             },
         )?;
-        texture_records.push(
+        records.push(
             TextureRecord {
                 file_name: texture
                     .file_name
@@ -218,8 +303,12 @@ fn write_unique_prop(
                         .len(),
                 )
                 .map_err(
-                    |_| {
-                        PipelineError::new("prop texture byte count overflowed")
+                    |error| {
+                        PipelineError::new(
+                            format!(
+                                "prop texture byte count overflowed: {error}"
+                            ),
+                        )
                     },
                 )?,
                 sha256: texture
@@ -228,6 +317,39 @@ fn write_unique_prop(
             },
         );
     }
+    Ok(records)
+}
+
+/// Write one unique prepared model and construct its catalog record.
+fn write_unique_prop(
+    candidate: &PropCandidate,
+    prepared: PreparedProp,
+    asset_id: &str,
+    output_root: &Path,
+) -> Result<ExportedProp, PipelineError> {
+    let relative_dir = format!(
+        "{}/{asset_id}",
+        candidate
+            .family
+            .as_str()
+    );
+    let directory = output_root
+        .join(
+            candidate
+                .family
+                .as_str(),
+        )
+        .join(asset_id);
+    let texture_dir = directory.join("textures");
+    fs::create_dir_all(&texture_dir).map_err(
+        |error| {
+            PipelineError::new(format!("prop asset directory failed: {error}"))
+        },
+    )?;
+    let texture_records = publish_textures(
+        &prepared,
+        &texture_dir,
+    )?;
     let fbx_path = directory.join(format!("{asset_id}.fbx"));
     let summary = match &prepared.geometry {
         PreparedGeometry::Static(meshes) => write_binary_model_fbx(
@@ -262,7 +384,11 @@ fn write_unique_prop(
             signature: prepared.signature,
             fbx_path: format!("{relative_dir}/{asset_id}.fbx"),
             fbx_bytes: u64::try_from(fbx_bytes.len()).map_err(
-                |_| PipelineError::new("prop FBX byte count overflowed"),
+                |error| {
+                    PipelineError::new(
+                        format!("prop FBX byte count overflowed: {error}"),
+                    )
+                },
             )?,
             fbx_sha256: digest_hex(&fbx_bytes),
             summary,
@@ -272,45 +398,17 @@ fn write_unique_prop(
     )
 }
 
-/// Build one readable portable mission prop name.
+/// Build one readable portable non-world prop name.
 ///
 /// # Errors
 ///
 /// Returns an error when the source identity has no portable characters.
 fn asset_name(owner_name: &str) -> Result<String, PipelineError> {
-    let mut slug = String::new();
-    let mut previous_dash = false;
-    for character in owner_name
-        .chars()
-        .flat_map(char::to_lowercase)
-    {
-        let normalized = if character.is_ascii_alphanumeric() {
-            character
-        } else {
-            '-'
-        };
-        if normalized == '-' {
-            if previous_dash || slug.is_empty() {
-                continue;
-            }
-            previous_dash = true;
-        } else {
-            previous_dash = false;
-        }
-        slug.push(normalized);
-        if slug.len() == 48 {
-            break;
-        }
-    }
-    while slug.ends_with('-') {
-        slug.pop();
-    }
-    if slug.is_empty() {
-        return Err(
-            PipelineError::new("mission prop identity has no portable name"),
-        );
-    }
-    Ok(slug)
+    portable_asset_name(
+        owner_name,
+        48,
+        "non-world prop identity has no portable name",
+    )
 }
 
 #[cfg(test)]

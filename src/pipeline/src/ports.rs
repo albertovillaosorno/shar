@@ -203,12 +203,24 @@ pub trait PipelineOperations {
         base_root: &Path,
     ) -> PipelineOutcome<StageReport>;
 
-    /// Exports the complete original-game model prop catalog.
+    /// Exports the complete non-world card and mission prop catalog.
     ///
     /// # Errors
     ///
     /// Returns a validated pipeline failure.
     fn export_prop_catalog(
+        &self,
+        index_path: &Path,
+        game_root: &Path,
+        output_dir: &Path,
+    ) -> PipelineOutcome<StageReport>;
+
+    /// Exports every terrain-world model prop under hash-free names.
+    ///
+    /// # Errors
+    ///
+    /// Returns a validated pipeline failure.
+    fn export_world_prop_catalog(
         &self,
         index_path: &Path,
         game_root: &Path,

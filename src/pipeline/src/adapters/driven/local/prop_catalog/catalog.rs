@@ -26,7 +26,8 @@
 // - Merge-When:
 //   - Publication owns the same final root transaction without duplication.
 // - Summary:
-//   - Records every unique model and all duplicate mission/world occurrences.
+//   - Records every unique model and all duplicate card, mission, and world
+//     occurrences.
 // - Description:
 //   - Explicitly routes non-model evidence to Phase 6 Unreal Assets.
 // - Usage:
@@ -62,6 +63,10 @@ pub(super) fn catalog_counts(
         source_packages,
         occurrences,
         assets: assets.len(),
+        card_assets: assets
+            .iter()
+            .filter(|asset| asset.family == PropFamily::Cards)
+            .count(),
         mission_assets: assets
             .iter()
             .filter(|asset| asset.family == PropFamily::Missions)
@@ -77,7 +82,7 @@ pub(super) fn catalog_counts(
     }
 }
 
-/// Write the deterministic mission-prop catalog.
+/// Write the deterministic non-world prop catalog.
 ///
 /// # Errors
 ///
@@ -88,7 +93,7 @@ pub(super) fn write_catalog(
     assets: &[ExportedProp],
 ) -> Result<(), PipelineError> {
     let payload = json!({
-        "schema": "shar.mission-model-props.v1",
+        "schema": "shar.non-world-model-props.v1",
         "boundary": {
             "fbx_includes": [
                 "model geometry",
@@ -102,13 +107,15 @@ pub(super) fn write_catalog(
                 "cameras and lights",
                 "particles and sounds",
                 "scripts and gameplay logic",
-                "quad-only mission markers and data-only packages"
+                "quad-only markers and data-only packages",
+                "card and phone pickup particles and billboard effects"
             ]
         },
         "counts": {
             "source_packages": counts.source_packages,
             "model_occurrences": counts.occurrences,
             "unique_assets": counts.assets,
+            "card_assets": counts.card_assets,
             "mission_assets": counts.mission_assets,
             "static_assets": counts.static_assets,
             "rigid_animated_assets": counts.animated_assets
@@ -118,19 +125,19 @@ pub(super) fn write_catalog(
     let mut bytes = serde_json::to_vec_pretty(&payload).map_err(
         |error| {
             PipelineError::new(
-                format!("mission prop catalog JSON failed: {error}"),
+                format!("non-world prop catalog JSON failed: {error}"),
             )
         },
     )?;
     bytes.push(b'\n');
     fs::write(
-        root.join("mission-props.catalog.json"),
+        root.join("non-world-props.catalog.json"),
         bytes,
     )
     .map_err(
         |error| {
             PipelineError::new(
-                format!("mission prop catalog write failed: {error}"),
+                format!("non-world prop catalog write failed: {error}"),
             )
         },
     )

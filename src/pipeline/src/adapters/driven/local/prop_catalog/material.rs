@@ -49,7 +49,9 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::Path;
 
-use fbx::adapters::driven::decoded_component_source::DecodedComponentSource;
+use fbx::adapters::driven::decoded_component_source::{
+    DecodedComponentError, DecodedComponentSource,
+};
 use fbx::domain::character::CharacterAsset;
 use fbx::domain::mesh::MeshAsset;
 use fbx::domain::texture::MaterialBinding;
@@ -57,6 +59,7 @@ use fbx::ports::component_source::ComponentSource as _;
 use shar_sha256::digest_hex;
 
 use super::prepared::PreparedTexture;
+use super::texture_authority::SharedTextureAuthority;
 use crate::domain::PipelineError;
 
 /// Canonicalize static mesh shaders and return deduplicated bindings/payloads.
@@ -64,6 +67,60 @@ pub(super) fn canonicalize_static_materials(
     meshes: &mut [MeshAsset],
     package_root: &Path,
     scratch: &Path,
+) -> Result<
+    (
+        Vec<MaterialBinding>,
+        Vec<PreparedTexture>,
+    ),
+    PipelineError,
+> {
+    canonicalize_static_materials_with_authority(
+        meshes,
+        package_root,
+        scratch,
+        None,
+        "",
+    )
+}
+
+/// Canonicalize world static materials with shared texture authority.
+///
+/// # Errors
+///
+/// Returns an error when local or shared material evidence is malformed.
+pub(super) fn canonicalize_world_static_materials(
+    meshes: &mut [MeshAsset],
+    package_root: &Path,
+    scratch: &Path,
+    authority: &SharedTextureAuthority,
+    source_subcategory: &str,
+) -> Result<
+    (
+        Vec<MaterialBinding>,
+        Vec<PreparedTexture>,
+    ),
+    PipelineError,
+> {
+    canonicalize_static_materials_with_authority(
+        meshes,
+        package_root,
+        scratch,
+        Some(authority),
+        source_subcategory,
+    )
+}
+
+/// Canonicalize static materials with optional shared texture fallback.
+///
+/// # Errors
+///
+/// Returns an error when shader resolution or canonical renaming fails.
+fn canonicalize_static_materials_with_authority(
+    meshes: &mut [MeshAsset],
+    package_root: &Path,
+    scratch: &Path,
+    authority: Option<&SharedTextureAuthority>,
+    source_subcategory: &str,
 ) -> Result<
     (
         Vec<MaterialBinding>,
@@ -91,6 +148,8 @@ pub(super) fn canonicalize_static_materials(
         shaders,
         package_root,
         scratch,
+        authority,
+        source_subcategory,
     )?;
     for group in meshes
         .iter_mut()
@@ -134,6 +193,60 @@ pub(super) fn canonicalize_animated_materials(
     ),
     PipelineError,
 > {
+    canonicalize_animated_materials_with_authority(
+        asset,
+        package_root,
+        scratch,
+        None,
+        "",
+    )
+}
+
+/// Canonicalize world animated materials with shared texture authority.
+///
+/// # Errors
+///
+/// Returns an error when local or shared material evidence is malformed.
+pub(super) fn canonicalize_world_animated_materials(
+    asset: &mut CharacterAsset,
+    package_root: &Path,
+    scratch: &Path,
+    authority: &SharedTextureAuthority,
+    source_subcategory: &str,
+) -> Result<
+    (
+        Vec<MaterialBinding>,
+        Vec<PreparedTexture>,
+    ),
+    PipelineError,
+> {
+    canonicalize_animated_materials_with_authority(
+        asset,
+        package_root,
+        scratch,
+        Some(authority),
+        source_subcategory,
+    )
+}
+
+/// Canonicalize animated materials with optional shared texture fallback.
+///
+/// # Errors
+///
+/// Returns an error when shader resolution or canonical renaming fails.
+fn canonicalize_animated_materials_with_authority(
+    asset: &mut CharacterAsset,
+    package_root: &Path,
+    scratch: &Path,
+    authority: Option<&SharedTextureAuthority>,
+    source_subcategory: &str,
+) -> Result<
+    (
+        Vec<MaterialBinding>,
+        Vec<PreparedTexture>,
+    ),
+    PipelineError,
+> {
     let shaders = asset
         .parts
         .iter()
@@ -156,6 +269,8 @@ pub(super) fn canonicalize_animated_materials(
         shaders,
         package_root,
         scratch,
+        authority,
+        source_subcategory,
     )?;
     for group in asset
         .parts
@@ -189,6 +304,100 @@ pub(super) fn canonicalize_animated_materials(
     )
 }
 
+/// Resolve one shader locally or through the scoped shared authority.
+///
+/// # Errors
+///
+/// Returns an error when shader evidence or fallback texture scope is invalid.
+fn resolve_source_material(
+    source: &DecodedComponentSource,
+    shader: &str,
+    scratch: &Path,
+    authority: Option<&SharedTextureAuthority>,
+    source_subcategory: &str,
+) -> Result<MaterialBinding, PipelineError> {
+    match source.resolve_material(shader) {
+        Ok(binding) => Ok(binding),
+        Err(DecodedComponentError::MissingTexture {
+            shader: material_name,
+            texture,
+            searched,
+        }) if authority.is_some() => {
+            let external = authority
+                .ok_or_else(
+                    || {
+                        PipelineError::new(
+                            "shared texture authority is missing",
+                        )
+                    },
+                )?
+                .resolve(
+                    &texture,
+                    source_subcategory,
+                )?
+                .ok_or_else(
+                    || {
+                        PipelineError::new(
+                            format!(
+                                concat!(
+                                    "prop material {} has no scoped texture ",
+                                    "authority for {}; local search was {}"
+                                ),
+                                shader, texture, searched
+                            ),
+                        )
+                    },
+                )?;
+            let file_name = external
+                .file_name()
+                .and_then(|value| value.to_str())
+                .ok_or_else(
+                    || {
+                        PipelineError::new(
+                            format!(
+                                "shared prop texture has no UTF-8 file name: \
+                                 {}",
+                                external.display()
+                            ),
+                        )
+                    },
+                )?
+                .to_owned();
+            let _copied_bytes = fs::copy(
+                external,
+                scratch.join(&file_name),
+            )
+            .map_err(
+                |error| {
+                    PipelineError::new(
+                        format!(
+                            "shared prop texture staging failed for {}: \
+                             {error}",
+                            external.display()
+                        ),
+                    )
+                },
+            )?;
+            MaterialBinding::new(
+                material_name,
+                Some(file_name),
+            )
+            .map_err(
+                |error| {
+                    PipelineError::new(
+                        format!("shared prop material failed: {error:?}"),
+                    )
+                },
+            )
+        }
+        Err(error) => Err(
+            PipelineError::new(
+                format!("prop material {shader} failed: {error:?}"),
+            ),
+        ),
+    }
+}
+
 /// Resolve source shaders and replace source names with content-derived names.
 type MaterialPlan = (
     BTreeMap<String, String>,
@@ -196,10 +405,17 @@ type MaterialPlan = (
     Vec<PreparedTexture>,
 );
 
+/// Resolve and content-canonicalize one complete shader identity set.
+///
+/// # Errors
+///
+/// Returns an error when material, texture, hashing, or staging work fails.
 fn resolve_materials(
     shaders: BTreeSet<String>,
     package_root: &Path,
     scratch: &Path,
+    authority: Option<&SharedTextureAuthority>,
+    source_subcategory: &str,
 ) -> Result<MaterialPlan, PipelineError> {
     fs::create_dir_all(scratch).map_err(
         |error| {
@@ -216,15 +432,13 @@ fn resolve_materials(
     let mut bindings = BTreeMap::new();
     let mut textures = BTreeMap::new();
     for shader in shaders {
-        let binding = source
-            .resolve_material(&shader)
-            .map_err(
-                |error| {
-                    PipelineError::new(
-                        format!("prop material {shader} failed: {error:?}"),
-                    )
-                },
-            )?;
+        let binding = resolve_source_material(
+            &source,
+            &shader,
+            scratch,
+            authority,
+            source_subcategory,
+        )?;
         let (canonical_material, canonical_texture) =
             match binding.texture_file_name {
                 Some(source_name) => {
@@ -240,10 +454,10 @@ fn resolve_materials(
                     )?;
                     let digest = digest_hex(&bytes);
                     let file_name = format!("texture-{digest}.png");
-                    textures
+                    let _published_texture = textures
                         .entry(file_name.clone())
-                        .or_insert(
-                            PreparedTexture {
+                        .or_insert_with(
+                            || PreparedTexture {
                                 file_name: file_name.clone(),
                                 bytes,
                                 sha256: digest.clone(),
@@ -259,7 +473,7 @@ fn resolve_materials(
                     None,
                 ),
             };
-        renames.insert(
+        let _previous_rename = renames.insert(
             shader,
             canonical_material.clone(),
         );
@@ -274,7 +488,7 @@ fn resolve_materials(
                 )
             },
         )?;
-        bindings
+        let _published_material = bindings
             .entry(canonical_material)
             .or_insert(material);
     }

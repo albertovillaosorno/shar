@@ -190,6 +190,17 @@ impl PipelineOperations for LocalPipeline {
         )
     }
 
+    fn export_world_prop_catalog(
+        &self,
+        index_path: &Path,
+        game_root: &Path,
+        output_dir: &Path,
+    ) -> PipelineOutcome<StageReport> {
+        prop_catalog::export_world_prop_catalog(
+            index_path, game_root, output_dir,
+        )
+    }
+
     fn export_fbx_package(
         &self,
         index_path: &Path,

@@ -249,7 +249,7 @@ where
             )
     }
 
-    /// Exports the complete original-game model prop catalog.
+    /// Exports the complete non-world card and mission prop catalog.
     ///
     /// # Errors
     ///
@@ -262,6 +262,23 @@ where
     ) -> PipelineOutcome<StageReport> {
         self.provider
             .export_prop_catalog(
+                index_path, game_root, output_dir,
+            )
+    }
+
+    /// Exports every terrain-world model prop under hash-free names.
+    ///
+    /// # Errors
+    ///
+    /// Returns the provider's validated pipeline failure.
+    pub fn export_world_prop_catalog(
+        &self,
+        index_path: &Path,
+        game_root: &Path,
+        output_dir: &Path,
+    ) -> PipelineOutcome<StageReport> {
+        self.provider
+            .export_world_prop_catalog(
                 index_path, game_root, output_dir,
             )
     }
