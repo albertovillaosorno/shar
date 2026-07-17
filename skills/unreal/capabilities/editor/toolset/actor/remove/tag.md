@@ -47,42 +47,65 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to remove one known actor tag after a bounded SHAR scene query,
+role inspection, or disposable editor-validation operation.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project must have the target level loaded.
+- Resolve the exact actor and confirm the exact tag through `get_tags` before
+  removal.
+- Capture the complete pre-state so the tag can be restored with `add_tag` if
+  removal was not the intended final project state.
+- Restrict the operation to one actor and one exact tag.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "actor": {
+    "refPath": "/Temp/Untitled_1.Untitled_1:PersistentLevel.PlayerStart_UAID_F02F74551BF5599B01_1153002503"
+  },
+  "tag": "SHAR_MCP_Validation"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+After the disposable tag was independently observed, the call returned
+`returnValue: null`. A fresh `get_tags` call returned the actor's original empty
+list. Final cleanup read the same empty list, proving that the tested tag was no
+longer present.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The response does not identify whether a matching tag existed; verify the
+  pre-state and post-state explicitly.
+- Removing a project-owned tag can change scene queries or gameplay behavior if
+  the level is later saved.
+- Actor references from `/Temp` worlds are session-specific and must be
+  rediscovered.
+- Removal of a missing tag was not tested and must not be assumed to fail or
+  succeed silently.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

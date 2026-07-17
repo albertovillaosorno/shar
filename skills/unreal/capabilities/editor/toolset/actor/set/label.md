@@ -47,42 +47,64 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to assign one deterministic actor label for SHAR editor
+organization, review, or subsequent label-based discovery, while preserving the
+actor's native object identity.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project must have the target level loaded.
+- Resolve the actor through a native scene read and capture its current label
+  with `get_label`.
+- Confirm the requested label is unambiguous within the intended editor scope.
+- Define restoration to the captured label before testing a temporary value.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "actor": {
+    "refPath": "/Temp/Untitled_1.Untitled_1:PersistentLevel.PlayerStart_UAID_F02F74551BF5599B01_1153002503"
+  },
+  "label": "SHAR MCP Validation PlayerStart"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The call returned `returnValue: true`. A separate `get_label` call returned
+`SHAR MCP Validation PlayerStart`. Restoring the captured `PlayerStart` label
+also returned `true`, and a final independent read confirmed the original label
+exactly.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The label is editor-facing and does not replace the actor's native object path
+  or identity.
+- Label changes affect loaded level state and can become persistent if the level
+  is saved.
+- A `true` return value still requires a fresh `get_label` check.
+- Actor references from `/Temp` worlds and generated suffixes are
+  session-specific.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

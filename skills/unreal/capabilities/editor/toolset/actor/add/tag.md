@@ -47,42 +47,66 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to attach one explicit actor tag before bounded SHAR scene
+queries, runtime-role inspection, or editor automation that relies on a native
+actor tag.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR project must have the target level loaded.
+- Resolve the exact actor through a current scene read and capture its existing
+  tags with `get_tags`.
+- Choose a tag that is absent from the captured list and define `remove_tag` as
+  the inverse operation before mutation.
+- Do not save the level when the tag exists only for disposable validation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "actor": {
+    "refPath": "/Temp/Untitled_1.Untitled_1:PersistentLevel.PlayerStart_UAID_F02F74551BF5599B01_1153002503"
+  },
+  "tag": "SHAR_MCP_Validation"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The call returned `returnValue: null`. A separate `get_tags` call returned
+exactly `SHAR_MCP_Validation` on the previously untagged `PlayerStart` actor.
+The inverse `remove_tag` call then restored the original empty tag list, which
+was independently confirmed twice.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The response does not echo the resulting tag set; always verify with
+  `get_tags`.
+- Actor tags belong to loaded level state and can become persistent if the level
+  is saved.
+- Actor references from `/Temp` worlds are session-specific and must be
+  rediscovered.
+- This validation covered adding one previously absent tag; duplicate-add
+  behavior was not exercised.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
