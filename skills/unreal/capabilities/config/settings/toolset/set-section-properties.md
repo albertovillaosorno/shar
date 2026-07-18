@@ -51,42 +51,64 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to change explicitly reviewed values in one Unreal settings
+section.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  exact live toolset schema before mutation.
+- Choose a narrow settings section, read its complete schema, and capture
+  every current property before mutation.
+- Use `GetSectionPropertyValues` as the independent postcondition and restore
+  the complete original section state.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "categoryName": "General",
+  "containerName": "Editor",
+  "propertiesJson": "{\"bCopyAsSpreadsheetCells\":true}",
+  "sectionName": "DataTableEditorSettings"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The sole `DataTableEditorSettings` property changed from
+`bCopyAsSpreadsheetCells: false` to `true` through an independent
+property-values read.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Settings keys use reflected lower-camel names and `propertiesJson` is JSON
+  text rather than a nested request object.
+- Choose a section whose complete state can be restored; resetting a broad
+  section can overwrite unrelated user preferences.
+- The mutation changes the live settings object immediately but does not prove
+  that `SaveSection` persisted it.
+- The original `false` value was restored and no repository config file
+  remained changed.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

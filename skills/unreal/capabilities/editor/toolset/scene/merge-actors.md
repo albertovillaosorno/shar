@@ -47,42 +47,72 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to merge reviewed StaticMeshActors into one generated mesh asset
+and scene actor.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  exact live toolset schema before mutation.
+- Use only disposable actors in the unsaved validation level and capture
+  current-level and actor inventories before mutation.
+- Define actor removal and generated-asset deletion before invocation.
+- Keep source actors when validating and include the base asset name in
+  `output_path`.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "actors": [
+    {
+      "refPath": "/Temp/Untitled_1.Untitled_1:PersistentLevel.StaticMeshActor_UAID_00E04C68026738EF02_1135974735"
+    },
+    {
+      "refPath": "/Temp/Untitled_1.Untitled_1:PersistentLevel.StaticMeshActor_UAID_00E04C68026738EF02_1137303736"
+    }
+  ],
+  "destroy_source_actors": false,
+  "name": "MCP_Merged_6e1b507e",
+  "output_path": "/Game/SHAR_MCP_Validation_Static_6e1b507e/MCP_Merged_6e1b507e"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The exact generated mesh package changed from absent to present. The returned
+actor referenced that mesh, actor discovery found the same identity, and mesh
+readers reported non-zero vertices, triangles, and valid bounds.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Scene actor references are transient level identities and become invalid
+  after actor removal or level replacement.
+- The reproduced lifecycle ran in unsaved `/Temp/Untitled_1` and removed every
+  validation actor afterward.
+- `output_path` is a package base, not only a destination folder; Unreal
+  prefixes its final segment with `SM_`.
+- The operation creates both an asset and an actor. Delete both, and keep
+  source actors unless destruction is explicitly intended.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

@@ -47,42 +47,66 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to import one bounded static mesh source into a reviewed SHAR
+content folder.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  exact live toolset schema before mutation.
+- Use a disposable imported or duplicated mesh and capture the matching
+  Nanite, LOD, material, or BodySetup reader before mutation.
+- Define whole-folder asset cleanup and retain the source file only until
+  import verification finishes.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "asset_name": "SM_MCP_Imported_6e1b507e",
+  "combine_meshes": true,
+  "folder_path": "/Game/SHAR_MCP_Validation_Static_6e1b507e",
+  "import_materials": false,
+  "import_textures": false,
+  "source_file": "C:/<workspace>/temp/static-mesh-validation.obj"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The import returned the exact static-mesh object. Independent readers reported
+one LOD, five vertices, six triangles, valid bounds from -50 to 100 units, and
+material slot `defaultMat`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Static-mesh mutations are persistent editor changes; use disposable assets
+  and verify every structural reader after mutation.
+- The source path must be absolute for the Unreal process; repository guidance
+  sanitizes the private workspace prefix.
+- Import settings, source format, and engine version influence generated
+  slots, normals, tangents, collision, and LOD zero.
+- The imported source, duplicated cube, merged mesh, and complete validation
+  folder were removed after verification.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

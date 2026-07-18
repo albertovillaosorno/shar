@@ -48,42 +48,75 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to create one Level Instance actor that references an existing
+reviewed level asset.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  exact live toolset schema before mutation.
+- Use only disposable actors in the unsaved validation level and capture
+  current-level and actor inventories before mutation.
+- Define actor removal and generated-asset deletion before invocation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "level_path": "/Engine/Maps/Templates/Template_Default",
+  "name": "MCP_LevelInstance_6e1b507e",
+  "xform": {
+    "location": {
+      "x": 25000,
+      "y": 0,
+      "z": 0
+    },
+    "rotation": {
+      "pitch": 0,
+      "roll": 0,
+      "yaw": 0
+    },
+    "scale": {
+      "x": 1,
+      "y": 1,
+      "z": 1
+    }
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Actor discovery changed from absent to the exact returned Level Instance
+reference while the current level remained `/Temp/Untitled_1`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Scene actor references are transient level identities and become invalid
+  after actor removal or level replacement.
+- The reproduced lifecycle ran in unsaved `/Temp/Untitled_1` and removed every
+  validation actor afterward.
+- The referenced level must already exist. Creation does not enter edit mode
+  automatically.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

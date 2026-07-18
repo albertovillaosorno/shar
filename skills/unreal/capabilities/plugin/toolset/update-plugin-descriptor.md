@@ -49,42 +49,76 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to update the complete editable descriptor of one task-owned
+SHAR plugin.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  exact live toolset schema before mutation.
+- Require plugin creation or modification permission and capture the project
+  descriptor plus target plugin directory before mutation.
+- Use a unique disposable project-plugin name and define exact
+  plugin-directory and `.uproject` restoration before invocation.
+- Read the complete editable descriptor and supply every required descriptor
+  field.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "newDescriptor": {
+    "bCanContainContent": true,
+    "bIsBetaVersion": false,
+    "bIsExperimentalVersion": false,
+    "bIsSealed": false,
+    "category": "SHAR Validation",
+    "createdBy": "",
+    "createdByURL": "",
+    "description": "Updated disposable SHAR MCP plugin validation.",
+    "docsURL": "",
+    "friendlyName": "MCP Validation Plugin",
+    "marketplaceURL": "",
+    "supportURL": "",
+    "version": 2,
+    "versionName": "2.0"
+  },
+  "pluginName": "MCPValidationf079e33d"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+`GetPluginDescriptor` changed every requested field exactly, including
+friendly name, description, category, version `2`, and version name `2.0`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Plugin operations persist descriptor or project state and can require an
+  editor restart before the live registry reflects every change.
+- The setter requires the complete descriptor object, not a partial patch;
+  preserve every field not intentionally changed.
+- The validation plugin directory was deleted and the original `.uproject`
+  SHA-256 was restored exactly.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

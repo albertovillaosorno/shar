@@ -48,42 +48,72 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to create one temporary project plugin from an approved Unreal
+template before validating descriptor and dependency workflows.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  exact live toolset schema before mutation.
+- Require plugin creation or modification permission and capture the project
+  descriptor plus target plugin directory before mutation.
+- Use a unique disposable project-plugin name and define exact
+  plugin-directory and `.uproject` restoration before invocation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "bPlaceInEngine": false,
+  "description": "Disposable SHAR MCP plugin validation.",
+  "pluginName": "MCPValidationf079e33d",
+  "relativePluginLocation": "",
+  "templateInfo": {
+    "bCanBePlacedInEngine": true,
+    "defaultTemplateName": "",
+    "description": "Create a blank plugin that can only contain content.",
+    "name": "Content Only",
+    "onDiskPath": "../../../Engine/Plugins/Editor/PluginBrowser/Templates/ContentOnly"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The unique plugin directory changed from absent to present. Plugin discovery,
+metadata, descriptor, mounted asset path, and enabled state all matched the
+returned Content Only plugin identity.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Plugin operations persist descriptor or project state and can require an
+  editor restart before the live registry reflects every change.
+- The returned descriptor and metadata paths can expose private local
+  filesystem prefixes; repository guidance must retain only portable
+  identities.
+- A created plugin remains discoverable in the current editor process after
+  physical deletion until plugin discovery refreshes or the editor restarts.
+- The validation plugin directory was deleted and the original `.uproject`
+  SHA-256 was restored exactly.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
