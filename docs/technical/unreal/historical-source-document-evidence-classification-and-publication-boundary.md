@@ -33,6 +33,8 @@
 - [Animation rig model](../fbx/animation/rig-model.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Historical technical-design, QA, performance, and production evidence normalization](historical-technical-design-qa-performance-and-production-evidence-normalization.md)
 
 ## Purpose
 
