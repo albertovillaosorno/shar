@@ -89,6 +89,8 @@ proprietary external formats.
 - [Device configuration and save-slot runtime](unreal/device-configuration-and-save-slot-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Dialogue selection, queue, and playback runtime](unreal/dialogue-selection-queue-and-playback-runtime.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Dialogue authoring evidence import and native asset projection](unreal/dialogue-authoring-evidence-import-and-native-asset-projection.md)
 - [Frontend shell and menu runtime](unreal/frontend-shell-and-menu-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Frontend screen flow and settings runtime](unreal/frontend-screen-flow-and-settings-runtime.md)
@@ -201,9 +203,9 @@ proprietary external formats.
 
 ## Current coverage
 
-- Technical specifications: 70.
+- Technical specifications: 71.
 - Template records: 1.
-- Review date: 2026-07-15.
+- Review date: 2026-07-17.
 - Status boundary: this catalog describes current repository behavior and does
   not create or replace architectural decisions.
 

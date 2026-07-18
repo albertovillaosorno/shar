@@ -19,6 +19,8 @@
 - [Typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Dialogue authoring evidence import and native asset projection](dialogue-authoring-evidence-import-and-native-asset-projection.md)
 
 ## Purpose
 

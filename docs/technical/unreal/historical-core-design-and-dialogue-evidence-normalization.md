@@ -17,6 +17,8 @@
 <!-- markdownlint-disable-next-line MD013 -->
 - [Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
+- [Dialogue authoring evidence import and native asset projection](dialogue-authoring-evidence-import-and-native-asset-projection.md)
+<!-- markdownlint-disable-next-line MD013 -->
 - [Device configuration and save-slot runtime](device-configuration-and-save-slot-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Platform save storage and lifecycle](platform-save-storage-and-lifecycle.md)
