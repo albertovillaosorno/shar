@@ -457,6 +457,180 @@ Native Chaos vehicle definitions own simulation. Historical vehicle counts,
 examples, category names, platform controls, and direct source tuning values are
 candidate data only.
 
+### Vehicle dossiers and revision families
+
+A historical vehicle dossier may combine roster and access proposals,
+performance ratings, numeric tuning tables, variable descriptions, tuning plans,
+damage reviews, audio reviews, crash-event notes, traffic groupings, dialogue
+rules, and dated progress records. The dossier is reconciled by canonical
+vehicle identity before any fact enters a runtime definition or content catalog.
+
+One vehicle reconciliation set records:
+
+- canonical vehicle, archetype, presentation, and profile identities;
+- every eligible member and its opaque evidence revision;
+- semantic field mappings with units, bounds, and conversion provenance;
+- access, progression, mission, traffic, driver, passenger, and availability
+  relationships;
+- physics, control, damage, audio, camera, collision, and presentation facts;
+- equivalent, changed, superseded, rejected, and unresolved facts; and
+- one terminal result for the complete declared member set.
+
+Source level numbers, list positions, category labels, dates, authors, task
+owners, completion colors, review status, filenames, worksheet names, and
+apparent chronology are provenance only. A newer-looking review does not
+silently replace an accepted profile.
+
+#### Vehicle tuning and ratings
+
+Numeric tuning evidence requires a canonical field mapping, declared unit,
+finite range, target vehicle and profile revision, applicability conditions,
+and native read-back. Unmapped columns, duplicate labels, ambiguous units,
+spreadsheet formulas, and source-era constants fail closed.
+
+Player-facing ratings are localized presentation projections. They may be
+derived from accepted measured behavior or explicitly curated rating data, but
+they cannot become physics inputs or substitute for native handling tests.
+Qualitative labels such as speed, control, mass, toughness, or difficulty are
+candidate taxonomy until the current catalog accepts their exact semantics.
+
+Handling goals and competitor comparisons may establish desired response,
+accessibility, skill range, differentiation, feedback, and test scenarios.
+Product names, comparative prose, platform assumptions, and historical scoring
+remain review context rather than target behavior.
+
+#### Damage, audio, and traffic review
+
+Damage-review observations may establish candidate body regions, breakable or
+flapping parts, material damage states, smoke or fire anchors, thresholds, and
+presentation defects. Review words such as good, missing, weak, or complete are
+not runtime values. Native mesh, material, collision, damage, VFX, and read-back
+validation decide acceptance.
+
+Audio-review members may establish engine, idle, start, stop, RPM, throttle,
+gear, redline, reverse, horn, skid, surface, collision, damage, door, spatial,
+volume, pitch, concurrency, and lifecycle requirements. Dated issue lists are
+regression evidence, not audio-profile revisions by themselves. The current
+vehicle-audio catalog and native playback verification remain authoritative.
+
+Traffic-group evidence may establish candidate vehicle archetypes, regional or
+chapter eligibility, density, variation, replacement, and quality intent.
+Historical fixed model counts and memory limits are source-platform evidence.
+Current population, streaming, platform-budget, and deterministic-spawn
+contracts own target limits.
+
+Vehicle-specific dialogue routes through the dialogue importer and runtime. A
+vehicle dossier cannot define raw dialogue identity, priority, queue behavior,
+localization, or audio aliases independently.
+
+#### Vehicle-dossier publication
+
+The complete declared dossier is loaded and compared fact by fact. Equivalent
+facts collapse by semantic identity. Conflicting values remain unresolved until
+one accepted mapping or supersession decision exists. Missing members, stale
+revisions, partial tables, or native read-back mismatch preserve the previous
+accepted vehicle and catalog revisions.
+
+Automated verification covers member-order permutations, unit conversion,
+display-rating separation, duplicate and conflicting tuning rows, dated audio
+review reconciliation, damage-region mapping, traffic eligibility, dialogue
+routing, production-metadata exclusion, and atomic publication.
+
+### World-building bundles and revision families
+
+A historical world-building bundle may contain a region description, qualities,
+zones, routes, landmarks, interiors, extras, variant overlays, jumping puzzles,
+collectible placements, prop inventories, animation intent, texture guidance,
+dynamic-loading instructions, design reviews, mission dependencies, and old or
+alternate copies. These members are reviewed as one world-region evidence set.
+
+The set reconciles facts through canonical identities for:
+
+- persistent world, region, neighborhood, zone, route, and traversal graph;
+- landmark, location, interior, structure, shortcut, and interaction;
+- prop, world entity, state, animation, breakable, movable, and collision
+  profile;
+- material, texture role, lighting, time-of-day, weather, seasonal, and chapter
+  presentation variant;
+- mission, collectible, race, dialogue, camera, audio, and streaming dependency;
+- placement, anchor, transform, data layer, level instance, and asset bundle;
+- accepted, adapted, superseded, rejected, and unresolved facts; and
+- one terminal result for every member and extracted fact.
+
+Source level numbers, folder names, zone and rail tokens, row order, document
+order, `old` labels, dates, employee assignments, source paths, media-reference
+columns, tape or episode references, and source-tool instructions are provenance
+only. They cannot create runtime identity or establish precedence.
+
+#### Persistent geography and chapter variants
+
+Repeated source levels that describe the same geography normalize to one
+persistent world region plus explicit chapter, time-of-day, weather, seasonal,
+mission, or feature overlays. They do not create duplicate maps merely because
+the source production stored separate level copies.
+
+A variant may add or replace approved landmarks, props, materials, lighting,
+population, hazards, interactions, audio, or presentation. Every override uses a
+namespaced identity, declared base revision, activation policy, dependency set,
+and deterministic restoration behavior. An extras list or thematic note cannot
+implicitly replace base-world content.
+
+Region descriptions and qualities may establish visual, navigational, pacing,
+landmark, traversal, and accessibility goals. Prose descriptions do not create
+placements, transforms, streaming cells, or final chapter allocation.
+
+#### Zones, landmarks, props, and dependencies
+
+Zone and route lists may establish candidate topology, adjacency, traversal,
+streaming, and mission relationships. The target uses native world partitioning,
+data layers, level instances, streaming sources, and asset-management policy;
+source load and unload commands, filename suffixes, exporter buttons, and custom
+loader objects do not ship.
+
+Landmark inventories may establish candidate semantic locations and regional
+membership. A landmark requires canonical identity, accepted rights and content
+status, world ownership, placement evidence, streaming policy, collision,
+navigation, presentation, and native read-back before publication. Repeated,
+possible, alternate, and old-list entries do not increase authority.
+
+Prop inventories classify candidate entities by semantic behavior rather than
+source filename or worksheet marker. Static, movable, breakable, animated,
+stateful, decorative, and interaction roles map to current world-entity,
+physics, authored-state, material, animation, persistence, and teardown
+contracts only after the actual asset and placement validate.
+
+Mission, collectible, jumping-puzzle, shortcut, and interaction dependencies
+must resolve existing canonical identities on both sides. A dependency record
+cannot create a mission, collectible, prop, interior, landmark, or placement by
+itself. Unresolved dependencies block the affected world revision.
+
+Texture and material guidance may establish reuse, tiling, semantic surface,
+material-role, palette, quality, and optimization intent. Embedded images,
+source layouts, naming examples, historical dimensions, and source-era material
+assembly are not target assets. Current material import, instance, virtual
+texture, quality, and validation policies remain authoritative.
+
+#### World-bundle publication
+
+The complete declared world bundle is loaded before publishing catalog,
+placement, data-layer, level-instance, streaming, material, prop, or dependency
+changes. Facts are reconciled by semantic identity across descriptions, tables,
+reviews, and old or alternate copies. Document length, newer-looking dates, and
+folder labels never resolve conflicts.
+
+Publication fails closed on missing bundle members, incompatible topology,
+ambiguous region ownership, duplicate placement identity, unresolved old/new
+conflicts, invalid variant inheritance, source-only asset references, dangling
+mission dependencies, nondeterministic streaming composition, or native
+read-back mismatch. The previous accepted world and catalog revisions remain
+active.
+
+Automated verification covers member-order permutations, persistent-region
+collapse, chapter and seasonal overlays, zone and route topology, landmark and
+prop identity, behavior classification, old-copy reconciliation, source-loader
+supersession, material-guidance translation, dependency integrity, complete
+fact accounting, and atomic native publication.
+
 ### Integrated core design
 
 A broad integrated design document is decomposed by domain. Its product goals
