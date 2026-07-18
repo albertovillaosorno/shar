@@ -48,60 +48,72 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to select one or more known assets in an active SHAR Content
+Browser before an asset-editor, inspection, or batch operation.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-- The canonical SHAR project and an active Content Browser must be available.
-- Resolve every package path through the Asset Registry before selection.
-- Capture both `GetSelectedAssets` and `GetContentBrowserPath` pre-state because
-  selection can change browser context even when completion is not reported.
+- Resolve each target through the Asset Registry and keep an active Content
+  Browser visible while selection is applied.
+- Capture `GetSelectedAssets` and `GetContentBrowserPath` before invocation.
+- For the current UE 5.8 implementation, use a full object path when a package
+  path times out, and require an independent package-selection read afterward.
+- Define cleanup that navigates away from the selected asset and closes any
+  Content Browser tab opened by the task.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "assetPaths": [
+    "/Engine/BasicShapes/Cube.Cube"
+  ]
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-Selecting the existing package
-`/BaseMaterial/Materials/Functions/MF_Rotate2D` timed out while waiting for the
-Content Browser to apply the selection. A fresh `GetSelectedAssets` call
-returned
-an empty array after cleanup, while `GetContentBrowserPath` showed that the
-browser had become active at `/BaseMaterial/Materials/Functions`. The attempted
-selection therefore did not provide a verified selected-asset postcondition and
-its validated argument placeholder remains intentionally unresolved.
+Pre-state had no active Content Browser path and no selected assets. After
+opening and docking the Content Browser at `/Engine/BasicShapes`, the full
+object-path call returned `null` without timing out. An independent
+`GetSelectedAssets` read returned the package
+`/Engine/BasicShapes/Cube`. Cleanup navigated to `/Game`, which cleared the
+selection, then closed the task-opened Content Browser tab. Final reads returned
+an empty selection and an empty active-browser path.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-- A timeout is ambiguous: the current call activated and navigated the Content
-  Browser even though it did not report selection completion.
-- Do not retry after timeout until `GetSelectedAssets` and
-  `GetContentBrowserPath` establish the current state.
-- Passing an empty array was used as cleanup and the final selected-assets read
-  was empty, but this session did not prove a successful non-empty selection.
-- The available toolset does not expose a capability that restores the absence
-  of an active Content Browser, so browser activation may remain transiently
-  visible after a failed call.
+- The live schema describes package paths, but the UE 5.8 implementation also
+  passes each string directly to `SyncBrowserToObjects`. The package path
+  `/Engine/BasicShapes/Cube` timed out and left selection empty; the full object
+  path `/Engine/BasicShapes/Cube.Cube` selected the asset successfully.
+- A full object path produces no `ExpectedPackages` entry in the implementation,
+  so the async result can complete before selection settles. Always verify with
+  `GetSelectedAssets`; never trust the `null` return alone.
+- `SelectAssets([])` completes immediately but does not clear an existing
+  selection. Navigating the browser to another folder cleared the tested
+  selection.
+- Content Browser refs and layout state are transient. Refresh Slate refs after
+  opening, docking, navigating, or closing the browser.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
