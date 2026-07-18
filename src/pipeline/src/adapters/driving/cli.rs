@@ -83,6 +83,8 @@ const USAGE: &str = concat!(
     "fbx-export-props [index-jsonl] [game-root] [output-dir] | ",
     "fbx-export-vehicles [index-jsonl] [game-root] [output-dir] | ",
     "fbx-export-world-props [index-jsonl] [game-root] [output-dir] | ",
+    "fbx-export-world [index-jsonl] [game-root] ",
+    "[coordinate-p3d-root] [output-dir] | ",
     "fbx-export [index-jsonl] [selector] [output-dir] [base-root] ",
     "[--embed-textures (legacy compatibility)] ",
     "[--verbosity detailed|minimal] ",
@@ -153,6 +155,9 @@ impl CliProgram for PipelineCli {
         if command == "fbx-export-world-props" {
             return run_world_prop_catalog(&parsed.positionals);
         }
+        if command == "fbx-export-world" {
+            return run_world_master(&parsed.positionals);
+        }
         if command == "fbx-export" {
             return run_fbx_export(
                 &parsed.positionals,
@@ -194,6 +199,7 @@ fn is_known_command(command: &str) -> bool {
             | "fbx-export-props"
             | "fbx-export-vehicles"
             | "fbx-export-world-props"
+            | "fbx-export-world"
             | "fbx-export"
     )
 }
@@ -473,7 +479,9 @@ fn run_world_prop_catalog(arguments: &[String]) -> CommandOutcome {
 
 /// Run the complete semantically separated vehicle FBX catalog export.
 fn run_vehicle_catalog(arguments: &[String]) -> CommandOutcome {
-    if let Some(outcome) = reject_extra_positionals(arguments, 3) {
+    if let Some(outcome) = reject_extra_positionals(
+        arguments, 3,
+    ) {
         return outcome;
     }
     let Some(index_path) = arguments.first() else {
@@ -494,7 +502,45 @@ fn run_vehicle_catalog(arguments: &[String]) -> CommandOutcome {
             Path::new(output_dir),
         ),
     );
-    render_result(result, Path::new(output_dir))
+    render_result(
+        result,
+        Path::new(output_dir),
+    )
+}
+
+/// Run the complete separated master-world analysis export.
+fn run_world_master(arguments: &[String]) -> CommandOutcome {
+    if let Some(outcome) = reject_extra_positionals(
+        arguments, 4,
+    ) {
+        return outcome;
+    }
+    let Some(index_path) = arguments.first() else {
+        return missing_argument("package index path");
+    };
+    let Some(game_root) = arguments.get(1) else {
+        return missing_argument("game root");
+    };
+    let Some(coordinate_root) = arguments.get(2) else {
+        return missing_argument("coordinate P3D root");
+    };
+    let Some(output_dir) = arguments.get(3) else {
+        return missing_argument("output directory");
+    };
+    let provider = LocalPipeline;
+    let application = PipelineService::new(&provider);
+    let result = one_stage(
+        application.export_world_master(
+            Path::new(index_path),
+            Path::new(game_root),
+            Path::new(coordinate_root),
+            Path::new(output_dir),
+        ),
+    );
+    render_result(
+        result,
+        Path::new(output_dir),
+    )
 }
 
 /// Runs the phase-three package-driven FBX export command.

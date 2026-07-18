@@ -239,6 +239,19 @@ pub trait PipelineOperations {
         output_dir: &Path,
     ) -> PipelineOutcome<StageReport>;
 
+    /// Exports one separated static master-world FBX for all main game levels.
+    ///
+    /// # Errors
+    ///
+    /// Returns a validated pipeline failure.
+    fn export_world_master(
+        &self,
+        index_path: &Path,
+        game_root: &Path,
+        coordinate_root: &Path,
+        output_dir: &Path,
+    ) -> PipelineOutcome<StageReport>;
+
     /// Exports one selected phase-three package as an FBX artifact.
     ///
     /// # Errors

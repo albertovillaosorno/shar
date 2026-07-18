@@ -72,6 +72,7 @@ mod world_catalog;
 mod world_export;
 mod world_inventory;
 mod world_ledger;
+mod world_level;
 mod world_model;
 
 /// Stable complete prop batch stage name.
@@ -204,6 +205,7 @@ fn build_catalog(
 }
 
 pub(super) use world::export_world_prop_catalog;
+pub(super) use world_level::export_world_master;
 
 /// Require one output or staging path not to exist.
 fn ensure_missing(

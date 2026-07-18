@@ -390,12 +390,42 @@ fn resolve_source_material(
                 },
             )
         }
+        Err(DecodedComponentError::Read {
+            path,
+            source: _source,
+        }) if authority.is_some()
+            && is_world_analysis_default_shader(shader)
+            && !Path::new(&path).is_file() =>
+        {
+            MaterialBinding::new(
+                shader, None,
+            )
+            .map_err(
+                |error| {
+                    PipelineError::new(
+                        format!(
+                            "world default material fallback failed: {error:?}"
+                        ),
+                    )
+                },
+            )
+        }
         Err(error) => Err(
             PipelineError::new(
                 format!("prop material {shader} failed: {error:?}"),
             ),
         ),
     }
+}
+
+/// Return whether one missing shader has proven neutral analysis evidence.
+fn is_world_analysis_default_shader(shader: &str) -> bool {
+    matches!(
+        shader
+            .to_ascii_lowercase()
+            .as_str(),
+        "lambert1" | "pure3dsimpleshader15"
+    )
 }
 
 /// Resolve source shaders and replace source names with content-derived names.
@@ -503,4 +533,18 @@ fn resolve_materials(
                 .collect(),
         ),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_world_analysis_default_shader;
+
+    #[test]
+    fn recognizes_only_evidence_backed_neutral_defaults() {
+        assert!(is_world_analysis_default_shader("lambert1"));
+        assert!(is_world_analysis_default_shader("Pure3DSimpleShader15"));
+        assert!(!is_world_analysis_default_shader("lambert"));
+        assert!(!is_world_analysis_default_shader("pure3dSimpleShader14"));
+        assert!(!is_world_analysis_default_shader("world_button_m"));
+    }
 }

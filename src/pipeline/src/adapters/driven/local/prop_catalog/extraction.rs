@@ -45,6 +45,8 @@
 
 //! Re-extraction of non-world prop P3D packages for discovery.
 
+use std::collections::{BTreeMap, BTreeSet};
+use std::fs;
 use std::path::{Component, Path, PathBuf};
 
 use crate::domain::PipelineError;
@@ -63,6 +65,14 @@ pub(super) fn is_selected_package(package: &PhaseThreePackageRow) -> bool {
 /// Return whether one package belongs to the world-prop scan.
 pub(super) fn is_world_package(package: &PhaseThreePackageRow) -> bool {
     package.category == "terrain-world"
+}
+
+/// Return whether one package belongs to one of the seven main game levels.
+pub(super) fn is_world_level_package(package: &PhaseThreePackageRow) -> bool {
+    package.category == "terrain-world"
+        && package
+            .subcategory
+            .starts_with("terrain-world/level-")
 }
 
 /// Return one package root relative to `extracted/art` and `game/art`.
@@ -140,6 +150,123 @@ pub(super) fn extract_world_packages(
         game_root,
         normalized_root,
         is_world_package,
+    )
+}
+
+/// Re-extract coordinate-reference P3D packages available for the seven levels.
+///
+/// Missing reference packages are accepted because the canonical game package
+/// remains the lossless fallback for those exact package identities.
+///
+/// # Errors
+///
+/// Returns an error when the reference directory is unreadable or contains
+/// ambiguous case-insensitive P3D names. Individual undecodable references are
+/// cleaned up and left to canonical coordinate fallback.
+pub(super) fn extract_world_level_coordinate_packages(
+    index: &PhaseThreePackageIndex,
+    coordinate_root: &Path,
+    normalized_root: &Path,
+) -> Result<BTreeSet<String>, PipelineError> {
+    let sources = coordinate_sources(coordinate_root)?;
+    let mut referenced = BTreeSet::new();
+    for package in index
+        .packages()
+        .iter()
+        .filter(|package| is_world_level_package(package))
+    {
+        let relative = relative_art_root(package)?;
+        let file_name = relative
+            .file_name()
+            .and_then(|value| value.to_str())
+            .ok_or_else(
+                || {
+                    PipelineError::new(
+                        "world coordinate package has no file name",
+                    )
+                },
+            )?;
+        let Some(source) = sources.get(&file_name.to_ascii_lowercase()) else {
+            continue;
+        };
+        let destination = normalized_root.join(&relative);
+        match p3d::write_lossless_package(
+            source,
+            &destination,
+        ) {
+            Ok(_summary) => {
+                let _inserted = referenced.insert(
+                    package
+                        .package_id
+                        .clone(),
+                );
+            }
+            Err(_error) => {
+                drop(fs::remove_dir_all(&destination));
+            }
+        }
+    }
+    Ok(referenced)
+}
+
+/// Index direct child P3D files by portable case-insensitive stem.
+fn coordinate_sources(
+    root: &Path
+) -> Result<BTreeMap<String, PathBuf>, PipelineError> {
+    let mut sources = BTreeMap::new();
+    for entry in fs::read_dir(root).map_err(
+        |error| {
+            PipelineError::new(
+                format!("world coordinate directory read failed: {error}"),
+            )
+        },
+    )? {
+        let path = entry
+            .map_err(|error| PipelineError::new(error.to_string()))?
+            .path();
+        if !path.is_file()
+            || path
+                .extension()
+                .and_then(|value| value.to_str())
+                .is_none_or(|value| !value.eq_ignore_ascii_case("p3d"))
+        {
+            continue;
+        }
+        let stem = path
+            .file_stem()
+            .and_then(|value| value.to_str())
+            .ok_or_else(
+                || PipelineError::new("world coordinate P3D has no file stem"),
+            )?
+            .to_ascii_lowercase();
+        if sources
+            .insert(
+                stem.clone(),
+                path,
+            )
+            .is_some()
+        {
+            return Err(
+                PipelineError::new(
+                    format!("world coordinate P3D stem is ambiguous: {stem}"),
+                ),
+            );
+        }
+    }
+    Ok(sources)
+}
+
+/// Re-extract every package owned by one of the seven main game levels.
+pub(super) fn extract_world_level_packages(
+    index: &PhaseThreePackageIndex,
+    game_root: &Path,
+    normalized_root: &Path,
+) -> Result<usize, PipelineError> {
+    extract_packages(
+        index,
+        game_root,
+        normalized_root,
+        is_world_level_package,
     )
 }
 
