@@ -48,58 +48,73 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to frame one or more resolved SHAR level actors in the active
+editor viewport before visual inspection, coordinate conversion, or a bounded
+viewport capture.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
 - The canonical SHAR project must have an active level viewport.
-- PIE must be stopped; the live tool description rejects focus during PIE.
+- PIE must be stopped; the live tool rejects focus during PIE.
 - Resolve every actor through a current scene read and capture the viewport
   camera with `GetCameraTransform` before invocation.
-- Define `SetCameraTransform` recovery before testing focus.
+- Prefer actors with real component bounds, and define `SetCameraTransform`
+  recovery before testing focus.
+- Poll fresh camera reads because viewport framing settles asynchronously.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "actors": [
+    {
+      "refPath": "/Game/Untitled.Untitled:PersistentLevel.StaticMeshActor_UAID_00E04C68026767EF02_1945126057"
+    }
+  ]
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-Two bounded calls returned `returnValue: null` but produced no observable
-camera change. The first targeted a visible `PlayerStart`; the second targeted
-an actor excluded from `GetVisibleActors`. Fresh `GetCameraTransform` calls were
-numerically unchanged after both calls, and `GetSelectedActors` remained empty.
-The captured camera was restored after each attempt. This does not establish a
-successful focus postcondition, so the validated argument placeholder remains.
+A disposable Engine cube was placed at `(250000, -175000, 42000)` with
+scale `(4, 6, 8)`. The call returned no structured value. The first two camera
+polls remained at the captured origin; the third poll moved the viewport to
+approximately `(248799.719, -175000, 42000)`, independently proving that the
+camera framed the target. `GetSelectedActors` stayed empty, so focusing did not
+select the actor. Cleanup restored the exact captured camera, removed the cube,
+and a fresh scene search returned no task actor.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-- In the verified untitled-world session, transport and native success did not
-  imply that the level camera moved.
-- A target being outside `GetVisibleActors` was insufficient to make the current
-  focus operation observable.
-- Always compare a fresh camera transform with captured pre-state; do not treat
-  `returnValue: null` as proof of focus.
-- Keep this skill review-required until a bounded actor produces a separately
-  verified camera change.
+- The mutation is asynchronous editor state. Poll `GetCameraTransform` rather
+  than reading it only once after the call.
+- `returnValue: null` is not proof of focus; require a fresh camera transform or
+  another independent viewport postcondition.
+- `GetVisibleActors` already included the far test cube before focus in this
+  session, so visibility membership alone was not a reliable success oracle.
+- Actor references contain transient level-instance identifiers. Resolve a fresh
+  actor reference for every session instead of reusing the example literally.
+- The tool changes camera framing but does not select the target actor.
+- Always restore the captured camera when focus is used only for validation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
