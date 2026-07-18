@@ -48,42 +48,80 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to change the text, color, or membership of one PCG editor
+comment box.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  exact live toolset schema before mutation.
+- Use a unique disposable graph and define whole-folder cleanup before
+  invocation.
+- Use `GetGraphStructure`, `GetGraphSchema`, `GetNodeInfo`, or the matching
+  instance reader as the independent postcondition.
+- Open the exact PCG graph editor and use a Slate snapshot to verify unique
+  visible comment text.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "color": {
+    "a": 1.0,
+    "b": 0.2,
+    "g": 0.3,
+    "r": 0.8
+  },
+  "comment": "MCP Comment Updated c297c180",
+  "commentId": "C8E9EB8A4C84053D86CE88B89860CE47",
+  "graph": {
+    "refPath": "/Game/SHAR_MCP_Validation_PCG_c297c180/PCG_MCP_Main_c297c180.PCG_MCP_Main_c297c180"
+  },
+  "nodes": [
+    {
+      "refPath": "/Game/SHAR_MCP_Validation_PCG_c297c180/PCG_MCP_Main_c297c180.PCG_MCP_Main_c297c180:CreatePoint_c297c180"
+    },
+    {
+      "refPath": "/Game/SHAR_MCP_Validation_PCG_c297c180/PCG_MCP_Main_c297c180.PCG_MCP_Main_c297c180:Transform_c297c180"
+    }
+  ]
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+A Slate snapshot changed from the original unique comment text to the updated
+text, with the old text absent.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- PCG graph, node, comment, and volume references are transient editor
+  identities and become stale after deletion.
+- The reproduced lifecycle used one disposable folder and removed both graphs,
+  the Dataflow companion graph, and the PCG Volume afterward.
+- Comment identifiers are opaque editor GUID strings and are not exposed by
+  `GetGraphStructure`.
+- The reproduced postcondition used unique visible text in a Slate snapshot of
+  the open PCG editor.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

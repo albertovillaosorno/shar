@@ -48,42 +48,66 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to execute one exact PCG Volume and inspect generated node data.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  exact live toolset schema before mutation.
+- Use a unique disposable graph and define whole-folder cleanup before
+  invocation.
+- Use `GetGraphStructure`, `GetGraphSchema`, `GetNodeInfo`, or the matching
+  instance reader as the independent postcondition.
+- Use a uniquely named PCG Volume in an unsaved validation level and define
+  exact actor removal.
+- Require zero execution messages and a non-empty `GetNodeDataView` result
+  before accepting success.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "pCGVolume": {
+    "refPath": "/Temp/Untitled_1.Untitled_1:PersistentLevel.PCG_MCP_Volume_c297c180_hrxrsc188znr1_1555303606"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Execution returned zero messages. `GetNodeDataView` independently returned one
+transformed point at world translation X `30025`, density `1`, and the
+authored bounds and color.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- PCG graph, node, comment, and volume references are transient editor
+  identities and become stale after deletion.
+- The reproduced lifecycle used one disposable folder and removed both graphs,
+  the Dataflow companion graph, and the PCG Volume afterward.
+- A point `metadataEntry` of `0` produced warnings and no data; the
+  generated-point sentinel `-1` was required.
+- Treat an empty message list as insufficient by itself. Require a non-empty
+  node data view or another content-level result.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

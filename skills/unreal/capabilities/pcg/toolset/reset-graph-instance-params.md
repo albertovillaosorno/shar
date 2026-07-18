@@ -48,42 +48,66 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to return selected PCG instance parameters to graph defaults.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  exact live toolset schema before mutation.
+- Use a unique disposable graph and define whole-folder cleanup before
+  invocation.
+- Use `GetGraphStructure`, `GetGraphSchema`, `GetNodeInfo`, or the matching
+  instance reader as the independent postcondition.
+- Capture the complete parameter schema or instance property bag and account
+  for lower-camel serialization.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "pCGVolume": {
+    "refPath": "/Temp/Untitled_1.Untitled_1:PersistentLevel.PCG_MCP_Volume_c297c180_hrxrsc188znr1_1555303606"
+  },
+  "paramNames": [
+    "DensityScale"
+  ]
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+`GetGraphInstanceParams` changed again after reset, proving that
+`DensityScale` returned to the graph-provided state.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- PCG graph, node, comment, and volume references are transient editor
+  identities and become stale after deletion.
+- The reproduced lifecycle used one disposable folder and removed both graphs,
+  the Dataflow companion graph, and the PCG Volume afterward.
+- Submitted parameter names are exposed through readers in lower camel case,
+  while reset accepted the authored display name.
+- Instance parameters are stored on a transient PCG Volume; remove the exact
+  actor before deleting its graph.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

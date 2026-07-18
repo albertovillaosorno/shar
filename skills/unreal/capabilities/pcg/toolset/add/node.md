@@ -47,42 +47,69 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to add exact live-discovered node types to a reviewed procedural
+graph.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  exact live toolset schema before mutation.
+- Use a unique disposable graph and define whole-folder cleanup before
+  invocation.
+- Use `GetGraphStructure`, `GetGraphSchema`, `GetNodeInfo`, or the matching
+  instance reader as the independent postcondition.
+- Discover native node property and pin schemas before supplying names or JSON
+  overrides.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "graph": {
+    "refPath": "/Game/SHAR_MCP_Validation_PCG_c297c180/PCG_MCP_Main_c297c180.PCG_MCP_Main_c297c180"
+  },
+  "jsonParams": "{\"pointsToCreate\":[{\"transform\":{\"location\":{\"x\":0,\"y\":0,\"z\":0},\"rotation\":{\"pitch\":0,\"yaw\":0,\"roll\":0},\"scale\":{\"x\":1,\"y\":1,\"z\":1}},\"density\":1.0,\"boundsMin\":{\"x\":-10,\"y\":-10,\"z\":-10},\"boundsMax\":{\"x\":10,\"y\":10,\"z\":10},\"color\":{\"x\":1,\"y\":0.25,\"z\":0.1,\"w\":1},\"steepness\":0.0,\"seed\":42,\"metadataEntry\":0}],\"coordinateSpace\":\"LocalComponent\",\"bCullPointsOutsideVolume\":false}",
+  "nativeNodeType": "Create Points",
+  "nodeComment": "Initial source",
+  "nodeName": "CreatePoint_c297c180",
+  "nodeTitle": "MCP Point Source",
+  "xPositionIdx": 300,
+  "yPositionIdx": 100
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+`GetGraphStructure` added exact Create Points and Transform Points node names,
+types, titles, comments, positions, and reflected parameter overrides.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- PCG graph, node, comment, and volume references are transient editor
+  identities and become stale after deletion.
+- The reproduced lifecycle used one disposable folder and removed both graphs,
+  the Dataflow companion graph, and the PCG Volume afterward.
+- Property overrides are JSON text and must match the live native-node schema
+  exactly. Unspecified defaults may be omitted from read-back.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
