@@ -144,8 +144,150 @@ An implementation proposal describes one possible historical mechanism such as:
 - a head-to-head mode coupled to global slow motion.
 
 The target may preserve the goal while replacing the mechanism with native
-Unreal
-systems and current repository architecture.
+Unreal systems and current repository architecture.
+
+## Integrated design-proposal dossiers
+
+A broad design dossier may contain a high-concept system design, a gameplay
+feature and benchmark plan, and a narrative outline. The members are reviewed
+as one versioned proposal set before any fact enters a public catalog or native
+asset.
+
+The proposal set records, in private review state:
+
+- one opaque proposal-set identity and revision;
+- the complete eligible member set;
+- one stable fact identity for every extracted claim;
+- duplicate and conflict relationships between members;
+- the current public owner for each candidate fact;
+- an accepted, adapted, superseded, rejected, or unresolved outcome; and
+- one terminal result for the complete set.
+
+Member filenames, document titles, authors, dates, revision tables, page
+numbers, schedules, priorities, deliverables, benchmark products, and working
+notes do not become public identities or runtime data.
+
+### Proposal-set transaction
+
+The dossier follows one atomic reconciliation transaction:
+
+1. load every declared eligible member before publishing any result;
+1. classify product goals, runtime behavior, content proposals, narrative,
+   implementation mechanisms, platform assumptions, and production metadata;
+1. normalize duplicate facts to stable semantic identities;
+1. preserve contradictory facts as explicit conflicts rather than choosing by
+   document order;
+1. compare every candidate against accepted ADRs, specifications, catalogs,
+   and native read-back;
+1. route accepted or adapted facts to exactly one owning domain;
+1. record superseded, rejected, and unresolved facts without creating runtime
+   definitions;
+1. verify that every member and extracted fact has one terminal result; and
+1. publish all accepted projections atomically or publish none.
+
+Input order, source row order, page order, document age, and repeated wording
+cannot change the result. A later source document is not automatically more
+authoritative than an accepted public contract.
+
+### Domain routing
+
+Candidate facts route to the current owners for:
+
+- campaign, chapter, narrative, mission, objective, and checkpoint behavior;
+- vehicle control, physics, damage, collision, and switching;
+- chase, escape, traffic, pedestrian, and boss artificial intelligence;
+- on-foot control, contextual interaction, traversal, and world state;
+- races, collectibles, rewards, side activities, and progression;
+- camera, HUD, frontend, dialogue, music, sound effects, and accessibility;
+- save, loading, platform, quality, and input policy; and
+- mod-owned multiplayer adapters and community-server extensions.
+
+One dossier cannot become a second campaign catalog, mission database, vehicle
+tuning table, story authority, or module map. Every accepted fact enters the
+existing owner through its normal revisioned contract.
+
+### Current-authority reconciliation
+
+Historical level counts, chapter allocations, boss counts, vehicle totals,
+character assignments, mission sequences, and encounter placements remain
+candidate evidence. They cannot replace the accepted seven-chapter sandbox or
+its current catalogs without a new accepted decision and complete migration.
+
+A draft narrative arc may establish themes, participants, locations, stakes,
+and candidate chapter relationships. It does not create missions, progression,
+localized dialogue, cinematics, world placements, or final story order by
+itself.
+
+Historical first-party multiplayer, head-to-head rules, global slow motion,
+and related competitive meters remain superseded for the base game. Only the
+accepted mod adapter may expose namespaced community-server modes, and those
+modes cannot mutate base campaign authority.
+
+Product goals such as readable missions, satisfying driving, expressive
+characters, understandable interaction, and useful collision feedback may be
+retained as quality requirements. Qualitative goals require measurable tests in
+their owning specification before they can pass acceptance.
+
+Source-era tools, editor workflows, platform button names, fixed arrays,
+hard-coded counts, competitor comparisons, feature priorities, schedules, and
+deliverable dependencies remain implementation or production evidence. Native
+Unreal systems and repository-owned contracts decide the target mechanism.
+
+Unused or alternate content proposals may enter the development-content catalog
+only after identity, ownership, rights, replacement, modding, and presentation
+requirements pass their current review boundaries. Presence in a historical
+dossier is not adoption.
+
+### Native Unreal projection
+
+Proposal-set reconciliation is an editor and build-pipeline operation. The
+historical dossier and its private review state are never cooked or opened by a
+shipping runtime.
+
+Accepted facts project only into the existing native definitions and catalogs.
+Primary Data Assets, the Asset Manager, the Asset Registry, Data Validation,
+commandlets, and package read-back verify ownership, identity, dependencies,
+cook policy, and deterministic projection. They do not decide whether a
+historical proposal is accepted.
+
+Development diagnostics may expose public-safe counts by domain and outcome.
+They cannot expose source prose, private routes, personal metadata, revision
+history, benchmark names, or rejected narrative text.
+
+### Proposal-set failure behavior
+
+The complete proposal set fails closed on:
+
+- a missing declared member or incomplete token inventory;
+- duplicate fact identities with incompatible semantics;
+- an unresolved cross-document contradiction;
+- a fact with no current public owner;
+- attempted revival of a superseded mode or rejected mechanism;
+- implicit replacement of the accepted campaign or catalog revision;
+- production metadata entering a runtime definition;
+- partial publication from only one dossier member;
+- stale authority or mapping revisions;
+- nondeterministic ordering or outcomes; or
+- native validation or read-back mismatch.
+
+The previous accepted public revisions remain active after failure.
+
+### Proposal-set verification
+
+Automated tests cover:
+
+- member-order permutations producing identical results;
+- repeated facts collapsing to one semantic identity;
+- contradictory facts blocking the complete proposal set;
+- accepted seven-chapter authority defeating conflicting historical counts;
+- draft narrative unable to create missions or localized copy directly;
+- first-party multiplayer and global slow motion remaining superseded;
+- product goals requiring measurable owner-specific verification;
+- production, schedule, benchmark, and revision metadata exclusion;
+- unused-content proposals requiring explicit catalog adoption;
+- every accepted fact routing to one owner exactly once;
+- zero partial publication after a late conflict; and
+- repeated native projection producing identical assets and diagnostics.
 
 ## Content catalogs
 
