@@ -47,42 +47,64 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to switch the editor into one exact saved SHAR map before
+map-scoped inspection, scene mutation, or World Partition validation, then
+return to the previously captured level.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `doctor` readiness and refresh the live SceneTools schema.
+- Save the current level before invocation; the native operation refuses to
+  replace a level that has unsaved changes.
+- Verify the target map asset exists and record the current level as the exact
+  return target before loading.
+- Treat actors, bindings, and Slate refs from the prior world as stale after
+  the switch.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "level_path": "/Game/SHAR_MCP_Validation_Final_WP/Map_MCP_Final_WP"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The native call returned no structured value. Independent
+`get_current_level` reads changed from `/Game/Untitled` to the exact disposable
+map path, and a later load restored `/Game/Untitled` before deleting the
+fixture.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- A `null` return value does not prove that the map changed; compare exact
+  `get_current_level` values before and after every call.
+- The tool raises when the current level has unsaved changes instead of opening
+  an interactive save prompt.
+- A successful load invalidates world-owned actor, component, binding, and
+  widget refs from the previous level.
+- Return to a different level before deleting or replacing the loaded map
+  package.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
