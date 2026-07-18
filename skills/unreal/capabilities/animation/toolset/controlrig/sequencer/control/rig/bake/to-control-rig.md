@@ -47,42 +47,82 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to convert an existing SHAR skeletal-animation binding into a
+keyed Control Rig track for animation inspection, correction, or migration.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- The canonical SHAR editor world and target Level Sequence must be open.
+- Resolve one skeletal binding with a real `SkeletalMeshComponent` and confirm
+  that its source animation section references the intended AnimSequence.
+- Use a Control Rig that is compatible with the same skeleton and contains an
+  animation control plus a working backward-solve graph.
+- Capture the binding's tracks before mutation and define removal of the
+  disposable binding and actor as recovery.
+- Decide whether dense keys are required; `reduce_keys: false` creates a key at
+  every evaluated frame.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "sequence": {
+    "refPath": "/Game/SHAR_MCP_Validation_CR53/LS_CR53.LS_CR53"
+  },
+  "binding": {
+    "bindingId": "807BF359-4575-BE47-D436-7581091F055F",
+    "sequence": {
+      "refPath": "/Game/SHAR_MCP_Validation_CR53/LS_CR53.LS_CR53"
+    }
+  },
+  "control_rig_asset_path": "/Game/SHAR_MCP_Validation_CustomRig53/CR_NedRoot53",
+  "reduce_keys": false,
+  "tolerance": 0.001,
+  "reset_controls": true
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The source binding contained the imported Ned wave AnimSequence and no Control
+Rig track. The call returned `true`. A separate track inspection found a new
+`MovieSceneControlRigParameterTrack` with one section, nine `Root_CTRL`
+transform channels, and 151 keys per channel covering frames 0 through 150.
+The rotation channels independently read 90 degrees on X and 180 degrees on Z,
+and the three scale channels remained approximately one. Removing the binding
+returned `true`, and a fresh scene search confirmed that the disposable actor
+was absent.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- A compatible backward-solve graph is mandatory. Four AnimatorKit utility
+  rigs returned `false`; the Control Rig root module returned `true` but
+  produced a section with zero channels and therefore was not a valid bake.
+- A `true` result alone is insufficient. Verify the new track, section, control
+  names, channel count, frame range, and non-empty key arrays.
+- Binding identifiers and generated track references are session-specific.
+- `reduce_keys: false` can produce large dense key sets.
+- A stationary source root can yield constant root-control values even though
+  the bake is valid and every frame is keyed.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
