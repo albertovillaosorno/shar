@@ -50,42 +50,59 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool as the canonical ordered node read for SHAR BehaviorTree
+inspection, depth pairing, node selection, and later node-specific calls.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Resolve a current BehaviorTree asset reference.
+- Keep the tree unchanged while consuming returned refs or index-based results.
+- Pair this result with `get_node_depths` when hierarchy depth is required.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "behavior_tree": {
+    "refPath": "/Game/SHAR_MCP_Validation_Behavior56/BT_Empty56.BT_Empty56"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two complete cycles returned the root sequence followed by its RunBehavior
+task with exact UObject refs. The corresponding depths were `[0, 1]`; direct
+child inspection returned the task, and subtree inspection resolved its nested
+tree.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Ordering is root decorators first, followed by a depth-first walk of the root
+  composite, services, per-child decorators, and child nodes.
+- The flat result does not describe direct relationships; use `get_children`
+  for those.
+- An empty tree validly returns `[]`.
+- Structural mutation can invalidate returned refs and every derived index.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

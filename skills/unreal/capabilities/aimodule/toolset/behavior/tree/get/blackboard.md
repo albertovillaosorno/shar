@@ -47,42 +47,61 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to resolve the BlackboardData asset assigned to a SHAR
+BehaviorTree before inspecting keys, validating AI configuration, or comparing
+behavior assets.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Resolve a current BehaviorTree object path from the Asset Registry.
+- Use a tree with an assigned BlackboardData asset when a positive object result
+  is required.
+- Verify the returned object path independently before using it in another tool.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "behavior_tree": {
+    "refPath": "/Game/SHAR_MCP_Validation_Behavior56/BT_Empty56.BT_Empty56"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+A disposable tree with an assigned BlackboardData asset was queried in two
+complete inspection cycles. Both calls returned exactly
+`/Game/SHAR_MCP_Validation_Behavior56/BB_Empty56.BB_Empty56`. The same fixture
+also produced stable node, depth, child, decorator, and subtree results.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- A tree with no blackboard returned the string `"None"` in the verified UE 5.8
+  session even though the live output schema declares an object.
+- Treat `"None"` as an absent assignment, not as a reusable object reference.
+- Asset paths are fixture-specific; resolve current SHAR assets instead of
+  reusing the example literally.
+- Reassigning or deleting the blackboard invalidates previously returned refs.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

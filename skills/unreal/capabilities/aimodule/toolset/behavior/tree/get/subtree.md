@@ -47,42 +47,57 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to resolve the BehaviorTree referenced by a RunBehavior-style
+SHAR task before recursively inspecting or validating the nested tree.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Resolve a current BTNode reference from `list_nodes`.
+- Confirm the node has `behavior_asset` or `default_behavior_asset` assigned.
+- Verify the returned BehaviorTree asset independently before traversing it.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "node": {
+    "refPath": "/Game/SHAR_MCP_Validation_Behavior56/BT_Empty56.BT_Empty56:MCP_RunBehavior56"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The disposable RunBehavior task referenced
+`/Game/SHAR_MCP_Validation_Behavior56/BT_Subtree56.BT_Subtree56`. Two complete
+cycles returned that exact path. Direct-child inspection placed the task under
+the root sequence, and the depth readers placed it at depth `1`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- A node without `behavior_asset` or `default_behavior_asset` raises an error.
+- The broad BTNode input type does not mean every node has a subtree.
+- The returned subtree can be empty and still be a valid asset.
+- Refresh task and subtree refs after structural or assignment edits.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

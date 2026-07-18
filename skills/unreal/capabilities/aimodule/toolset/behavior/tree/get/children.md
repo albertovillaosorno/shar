@@ -47,42 +47,58 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to enumerate the direct task or composite children of a SHAR
+BehaviorTree composite while validating branch structure.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Obtain a current composite-node reference from `list_nodes`.
+- Confirm the target is a `BTCompositeNode`; an arbitrary task or decorator does
+  not satisfy the live input type.
+- Do not mutate the tree between resolving and querying the composite.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "composite": {
+    "refPath": "/Game/SHAR_MCP_Validation_Behavior56/BT_Empty56.BT_Empty56:MCP_RootSequence56"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The disposable root sequence contained one RunBehavior task. Two complete
+cycles returned exactly one direct child,
+`/Game/SHAR_MCP_Validation_Behavior56/BT_Empty56.BT_Empty56:MCP_RunBehavior56`.
+The flat node list contained the same root and task at depths `[0, 1]`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- An empty array is valid for a composite with no direct children.
+- The result contains direct children only; it is not a recursive subtree walk.
+- Services and decorators are not returned as child nodes by this tool.
+- Structural edits can invalidate refs; refresh `list_nodes` after mutation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
