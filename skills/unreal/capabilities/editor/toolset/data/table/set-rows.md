@@ -47,42 +47,69 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to update selected fields on existing SHAR DataTable rows
+without replacing unspecified fields.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live DataTableTools schema.
+- Discover the exact ScriptStruct with `search_row_structs` and inspect the
+  resulting table with `get_schema`.
+- Resolve the exact DataTable reference and capture `list_rows` or `get_rows`
+  before mutation.
+- Encode `values` as JSON text keyed by row name and use the camelCase
+  property names reported by `get_schema`.
+- Define whole-folder asset cleanup before invocation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "data_table": {
+    "refPath": "/Game/SHAR_MCP_Validation_DataTable_43004322/DT_MCP_43004322.DT_MCP_43004322"
+  },
+  "values": "{\"Alpha\":{\"devComment\":\"Primary SHAR validation row\"},\"Beta\":{\"devComment\":\"Secondary SHAR validation row\"}}"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+`get_rows` showed both empty comments before the call and the exact primary
+and secondary SHAR validation comments afterward. The existing `tag` values
+remained `None`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- DataTable references and row schemas are live editor identities; rediscover
+  them after deletion, import, or schema replacement.
+- The tested schema was `/Script/GameplayTags.GameplayTagTableRow`, whose
+  writable fields are `tag` and `devComment`.
+- Only specified properties are updated; misspelled row names or property
+  names can fail or leave state unchanged.
+- The validation changed comments only and did not invent unregistered
+  gameplay tags.
+- This validation used one disposable content folder and removed the imported
+  CSV after verification.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

@@ -50,42 +50,70 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to import a typed SHAR DataTable from a bounded CSV source whose
+header matches the discovered row schema.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live DataTableTools schema.
+- Discover the exact ScriptStruct with `search_row_structs` and inspect the
+  resulting table with `get_schema`.
+- Use an absolute source-file path visible to the Unreal Editor process and
+  keep the source file disposable.
+- Match the CSV header to `Name,Tag,DevComment` for `GameplayTagTableRow`.
+- Define whole-folder asset cleanup before invocation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "asset_name": "DT_MCP_Imported_43004322",
+  "folder_path": "/Game/SHAR_MCP_Validation_DataTable_43004322",
+  "schema": {
+    "refPath": "/Script/GameplayTags.GameplayTagTableRow"
+  },
+  "source_file": "C:/<workspace>/temp/data-table-validation.csv"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The import returned one exact DataTable asset. `list_rows` returned
+`Imported`, `get_rows` returned tag `None` and the imported developer comment,
+and `get_schema` matched the source table schema.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- DataTable references and row schemas are live editor identities; rediscover
+  them after deletion, import, or schema replacement.
+- The tested schema was `/Script/GameplayTags.GameplayTagTableRow`, whose
+  writable fields are `tag` and `devComment`.
+- The source path must be absolute for the Unreal process; repository guidance
+  sanitizes the private workspace prefix.
+- CSV column names and value encoding must match the selected ScriptStruct
+  exactly.
+- This validation used one disposable content folder and removed the imported
+  CSV after verification.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

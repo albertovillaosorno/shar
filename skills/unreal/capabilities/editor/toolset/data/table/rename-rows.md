@@ -47,42 +47,66 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to rename reviewed SHAR DataTable row identities while
+preserving their typed row values.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live DataTableTools schema.
+- Discover the exact ScriptStruct with `search_row_structs` and inspect the
+  resulting table with `get_schema`.
+- Resolve the exact DataTable reference and capture `list_rows` or `get_rows`
+  before mutation.
+- Define whole-folder asset cleanup before invocation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "data_table": {
+    "refPath": "/Game/SHAR_MCP_Validation_DataTable_43004322/DT_MCP_43004322.DT_MCP_43004322"
+  },
+  "renames": {
+    "Alpha": "Gamma"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+`list_rows` changed from `Alpha, Beta` to `Gamma, Beta`. Reading `Gamma`
+proved that the primary developer comment survived the identity change.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- DataTable references and row schemas are live editor identities; rediscover
+  them after deletion, import, or schema replacement.
+- The tested schema was `/Script/GameplayTags.GameplayTagTableRow`, whose
+  writable fields are `tag` and `devComment`.
+- Row names are identities used by references and callers; rename maps must be
+  reviewed for downstream breakage.
+- This validation used one disposable content folder and removed the imported
+  CSV after verification.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

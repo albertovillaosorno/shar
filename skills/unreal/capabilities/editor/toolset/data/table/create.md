@@ -47,42 +47,64 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to create a typed SHAR DataTable after discovering and reviewing
+the exact reflected row struct.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live DataTableTools schema.
+- Discover the exact ScriptStruct with `search_row_structs` and inspect the
+  resulting table with `get_schema`.
+- Define whole-folder asset cleanup before invocation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "asset_name": "DT_MCP_43004322",
+  "folder_path": "/Game/SHAR_MCP_Validation_DataTable_43004322",
+  "schema": {
+    "refPath": "/Script/GameplayTags.GameplayTagTableRow"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Asset existence changed from false to true. `get_schema` returned the `tag`
+and `devComment` fields of `GameplayTagTableRow`, and `list_rows`
+independently returned an empty table.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- DataTable references and row schemas are live editor identities; rediscover
+  them after deletion, import, or schema replacement.
+- The tested schema was `/Script/GameplayTags.GameplayTagTableRow`, whose
+  writable fields are `tag` and `devComment`.
+- Creation returns an unsaved editor asset; verify its schema and initial row
+  inventory before population.
+- This validation used one disposable content folder and removed the imported
+  CSV after verification.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
