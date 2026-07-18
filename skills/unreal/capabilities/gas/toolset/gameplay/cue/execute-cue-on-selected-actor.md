@@ -49,42 +49,72 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to dispatch one disposable Gameplay Cue against the exact
+selected validation actor.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use a disposable selected actor, a unique temporary Gameplay Cue tag, and an
+  actor-based cue-notify asset.
+- Capture project Gameplay Tag config before mutation and require exact
+  restoration after removing the tag.
+- Use scene actor discovery for the generated notify class as the independent
+  execution postcondition.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "cueTag": "GameplayCue.MCP.Round50",
+  "location": {
+    "x": 3600,
+    "y": 400,
+    "z": 150
+  },
+  "normal": {
+    "x": 0,
+    "y": 0,
+    "z": 1
+  },
+  "normalizedMagnitude": 0.75
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The selected actor was read back exactly. Execution returned true, and scene
+discovery changed from zero cue-notify actors to one `GCN_MCP_Round50_C`
+actor.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Execution depends on active editor actor selection and persistent Gameplay
+  Tag state.
+- The notify actor is a world side effect and must be removed before deleting
+  its Blueprint asset.
+- Cue-notify registry readers lagged immediately after asset creation even
+  though execution spawned the actor. Verify the world side effect directly.
+- Gameplay-tag config is persistent project state; remove the disposable tag
+  and restore its config byte-for-byte.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

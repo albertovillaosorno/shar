@@ -47,42 +47,61 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to create a Sequencer spawnable from one exact live actor
+instance.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Open the exact disposable Level Sequence and derive every binding, track,
+  section, and sub-sequence reference from live returns.
+- Capture focused-sequence, hierarchy, section parameters, or bound-object
+  state before mutation.
+- Re-read all returned replacement identities after structural edits and
+  define whole-folder cleanup.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "obj": {
+    "refPath": "/Game/Untitled.Untitled:PersistentLevel.Actor_UAID_00E04C6802674EEF02_1470620616"
+  },
+  "sequence": {
+    "refPath": "/Game/SHAR_MCP_Validation_Round50_260718/LS_MCP_Round50.LS_MCP_Round50"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The returned binding reported native spawnable-actor custom type and resolved
+both its template and live actor objects.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Sequence focus, binding proxies, sections, and nested object paths are live
+  editor identities and can change after structural edits.
+- Boolean success does not replace focused-sequence, hierarchy, parameter, or
+  bound-object readback.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

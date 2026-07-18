@@ -48,42 +48,59 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to create a Dataflow-compatible Geometry Collection from one
+exact template.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live Dataflow Agent schema.
+- Use one unique disposable graph or compatible asset and confirm every class,
+  node, or template identity before mutation.
+- Capture graph structure, embedded graph properties, asset class, and
+  whole-folder cleanup as the postcondition plan.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "className": "GeometryCollection",
+  "name": "GC_MCP_Round50_Template",
+  "path": "/Game/SHAR_MCP_Validation_Round50_260718",
+  "templateId": "/GeometryCollectionPlugin/DataflowTemplates/DF_GC_Template_StaticMesh.DF_GC_Template_StaticMesh"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The returned asset existed as a Geometry Collection and exposed the expected
+embedded template graph.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Dataflow graph, node, comment, embedded graph, and compatible-asset
+  references become stale after deletion.
+- Only live-listed compatible classes and template IDs are valid; do not infer
+  identifiers from display text.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

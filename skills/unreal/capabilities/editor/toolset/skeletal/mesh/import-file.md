@@ -49,42 +49,65 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to import one reviewed FBX as a skeletal asset using an exact
+matching skeleton.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use a task-owned skeletal-mesh copy and verify skeleton or Physics Asset
+  compatibility before mutation.
+- Capture the matching asset, class, existence, or assignment reader and
+  define whole-folder cleanup.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "asset_name": "SK_MCP_Round50_Imported",
+  "create_physics_asset": false,
+  "folder_path": "/Game/SHAR_MCP_Validation_Round50_260718",
+  "import_animations": true,
+  "import_materials": false,
+  "import_textures": false,
+  "skeleton": {
+    "refPath": "/Engine/Tutorial/SubEditors/TutorialAssets/Character/TutorialTPP_Skeleton.TutorialTPP_Skeleton"
+  },
+  "source_file": "C:/SHAR_MCP_Validation/round50_sequence.fbx"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The importer returned one existing object and ObjectTools identified it as
+`/Script/Engine.SkeletalMesh`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Skeletal import and Physics Asset assignment are compatibility-sensitive; a
+  true return alone is insufficient.
+- Skeletal mesh, skeleton, Physics Asset, and imported UObject references
+  become stale after cleanup.
+- The source FBX and supplied skeleton must be compatible. The return may
+  contain more than one imported UObject for richer files.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

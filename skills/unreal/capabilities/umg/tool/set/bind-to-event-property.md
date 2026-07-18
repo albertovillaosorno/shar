@@ -55,42 +55,63 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to bind one named Widget Blueprint variable delegate to a
+generated event node.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use a disposable Widget Blueprint with a Canvas root and a named child
+  widget marked as a Blueprint variable.
+- Refresh the UMG and Blueprint schemas, then require successful widget
+  compilation and exact event-node discovery.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "eventName": "OnClicked",
+  "propertyClass": {
+    "refPath": "/Script/UMG.Button"
+  },
+  "propertyName": "MCP_Button",
+  "widgetBlueprint": {
+    "refPath": "/Game/SHAR_MCP_Validation_Round50_260718/WBP_MCP_Round50.WBP_MCP_Round50"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Widget compilation succeeded, `MCP_Button` remained a variable, and Blueprint
+node discovery returned `K2Node_ComponentBoundEvent_0` in the Event Graph.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Widget, slot, graph, and generated-node references are Blueprint subobjects
+  and become stale after reconstruction or deletion.
+- Compile after structural changes and rediscover the generated event node
+  instead of predicting its object path.
+- `propertyName` is the Widget Blueprint variable name, while `eventName` is
+  the delegate name. The widget must be marked as a variable first.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

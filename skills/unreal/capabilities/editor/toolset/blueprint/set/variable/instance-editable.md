@@ -48,42 +48,59 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to make one Blueprint member variable editable per placed actor
+instance.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use a saved disposable Blueprint with one exact member variable and a clean
+  package before mutation.
+- Require successful compilation, variable discovery, dirty-state proof,
+  restoration, and a final clean package.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "blueprint": {
+    "refPath": "/Game/SHAR_MCP_Validation_Round50_260718/BP_MCP_Round50_Editable.BP_MCP_Round50_Editable"
+  },
+  "instance_editable": true,
+  "variable_name": "MCPValue"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+A saved clean Blueprint became dirty after the mutation, compiled with
+`MCPValue` present, then returned clean after restoring false and saving.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Blueprint compilation or reconstruction can invalidate graph and
+  generated-class subobject references.
+- Always restore temporary metadata changes before saving reusable fixtures.
+- The live tool has no dedicated flag getter; clean-to-dirty package state
+  plus successful compilation was the independent proof.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

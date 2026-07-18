@@ -47,42 +47,66 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to remove exact actors from one possessable binding and verify
+it resolves empty.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Open the exact disposable Level Sequence and derive every binding, track,
+  section, and sub-sequence reference from live returns.
+- Capture focused-sequence, hierarchy, section parameters, or bound-object
+  state before mutation.
+- Re-read all returned replacement identities after structural edits and
+  define whole-folder cleanup.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "actors": [
+    {
+      "refPath": "/Game/Untitled.Untitled:PersistentLevel.Actor_UAID_00E04C6802674FEF02_1082924797"
+    }
+  ],
+  "binding": {
+    "bindingId": "64B8CEBC-42B5-D978-A714-7099B6FDCDD9",
+    "sequence": {
+      "refPath": "/Game/SHAR_MCP_Validation_Round50_260718/LS_MCP_Round50.LS_MCP_Round50"
+    }
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The call returned true and `get_bound_objects` changed from the replacement
+actor to an empty array.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Sequence focus, binding proxies, sections, and nested object paths are live
+  editor identities and can change after structural edits.
+- Boolean success does not replace focused-sequence, hierarchy, parameter, or
+  bound-object readback.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

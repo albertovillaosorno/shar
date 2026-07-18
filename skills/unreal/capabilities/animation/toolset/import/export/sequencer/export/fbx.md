@@ -47,42 +47,70 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to export exact Sequencer bindings to one disposable binary FBX
+file.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use a disposable sequence, world, matching skeletal binding, and writable
+  task-owned destination.
+- Capture file metadata or destination AnimSequence metadata before invocation
+  and delete all output afterward.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "bindings": [
+    {
+      "bindingId": "5F6BCAB5-4277-73A7-F101-82B3FD263512",
+      "sequence": {
+        "refPath": "/Game/SHAR_MCP_Validation_Round50_260718/LS_MCP_Round50.LS_MCP_Round50"
+      }
+    }
+  ],
+  "fbx_file_path": "C:/SHAR_MCP_Validation/round50_sequence.fbx",
+  "sequence": {
+    "refPath": "/Game/SHAR_MCP_Validation_Round50_260718/LS_MCP_Round50.LS_MCP_Round50"
+  },
+  "world": {
+    "refPath": "/Game/Untitled.Untitled"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The call returned true and produced a 1,724,944-byte binary FBX with the
+expected FBX binary header.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Export mutates external files or task-owned assets and can overwrite
+  existing destinations.
+- Binding, world, sequence, skeleton, and destination identities must remain
+  compatible for the complete operation.
+- The destination must be an absolute writable filesystem path. Verify file
+  size and FBX header independently.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

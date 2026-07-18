@@ -50,42 +50,61 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to assign one exact AnimSequence to a skeletal-animation
+section.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Open the exact disposable Level Sequence and derive every binding, track,
+  section, and sub-sequence reference from live returns.
+- Capture focused-sequence, hierarchy, section parameters, or bound-object
+  state before mutation.
+- Re-read all returned replacement identities after structural edits and
+  define whole-folder cleanup.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "anim_sequence_path": "/Engine/Tutorial/SubEditors/TutorialAssets/Character/Tutorial_Idle.Tutorial_Idle",
+  "section": {
+    "refPath": "/Game/SHAR_MCP_Validation_Round50_260718/LS_MCP_Round50.LS_MCP_Round50:MovieScene_0.MovieSceneSkeletalAnimationTrack_2.MovieSceneSkeletalAnimationSection_0"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The call returned true and reflected section parameters referenced exact
+`Tutorial_Idle`, slot `DefaultSlot`, and play rate 1.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Sequence focus, binding proxies, sections, and nested object paths are live
+  editor identities and can change after structural edits.
+- Boolean success does not replace focused-sequence, hierarchy, parameter, or
+  bound-object readback.
+- The path must identify an AnimSequence compatible with the skeletal binding.
+  Reflect the section parameters after assignment.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
