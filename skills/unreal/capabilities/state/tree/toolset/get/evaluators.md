@@ -47,42 +47,59 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to enumerate global StateTree evaluator editor nodes before
+validating shared data production and node descriptions.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require a StateTree with valid StateTreeEditorData.
+- Call `get_editor_data` first and keep the asset unchanged while consuming
+  nodes.
+- Treat an empty evaluator array as valid only after editor data is confirmed.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "state_tree": {
+    "refPath": "/Game/AI/ST_Example.ST_Example"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The exact StateTree class could be created through DataAssetTools, but the
+disposable asset had no editor data. This reader failed closed with `StateTree
+has no editor data` and the fixture was removed.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Missing editor data is an error, not evidence that the evaluator list is
+  empty.
+- Evaluator nodes are global editor nodes, not state-local tasks or conditions.
+- Returned node structs are tied to the current editor-data object.
+- Re-resolve evaluators after any graph edit, compile, reload, or undo
+  operation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

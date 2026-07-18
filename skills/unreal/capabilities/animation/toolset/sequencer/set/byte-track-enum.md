@@ -50,42 +50,59 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to assign a UEnum to a MovieSceneByteTrack only after the
+installed UE object-loading call is compatible with UE 5.8.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Resolve a real MovieSceneByteTrack from the intended sequence.
+- Resolve the exact UEnum object path and capture the track property
+  configuration.
+- Use a disposable track until the wrapper object-loading signature is fixed.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "track": {
+    "refPath": "/Game/Cinematics/LS_Example.LS_Example:MovieScene_0.MovieSceneByteTrack_0"
+  },
+  "enum_class_path": "/Script/Engine.EAnimationMode"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+A disposable byte track reached this wrapper. UE 5.8 reported `load_object()
+missing required argument outer (pos 1)` because the wrapper calls
+`unreal.load_object(name=...)` without the required outer.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The installed wrapper cannot load the enum object under the UE 5.8 signature.
+- The enum must be compatible with the property animated by the byte track.
+- Verify the assigned enum and property path independently after any future
+  successful call.
+- Do not continue to key authoring when enum assignment failed.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

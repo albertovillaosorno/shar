@@ -47,42 +47,58 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to inspect the row schema exposed by one active registry before
+SHAR gameplay systems consume registry-backed data.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Call `ListRegistries` first and use an exact returned registry name.
+- Require the registry subsystem to be initialized in the current editor
+  session.
+- Treat an empty registry inventory as a hard prerequisite failure.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "registryName": "MCPValidationMissingRegistry"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The live project returned `[]` from `ListRegistries`. The synthetic name
+`MCPValidationMissingRegistry` failed closed with `Registry not found.
+Available: (none)`. Generic DataAsset creation also rejected
+`/Script/DataRegistry.DataRegistry` because the class cannot be stored through
+that constructor.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The example is a validated negative diagnostic, not a registry name to reuse.
+- These tools query registered runtime state; an asset path is not a substitute
+  for `registryName`.
+- Do not accept an empty or failed response when no registry was listed.
+- Schema output exists only after the registry is active.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

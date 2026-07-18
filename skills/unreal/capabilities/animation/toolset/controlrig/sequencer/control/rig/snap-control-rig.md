@@ -47,42 +47,69 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to snap selected Control Rig controls to one level actor only
+after the installed UE wrapper matches the current snap API.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Open the sequence and resolve the exact Control Rig and control names.
+- Use a uniquely labeled target actor and capture its transform plus all target
+  control transforms.
+- Use a disposable frame range until the UE 5.8 wrapper defect is fixed.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "sequence": {
+    "refPath": "/Game/Cinematics/LS_Example.LS_Example"
+  },
+  "control_rig_asset_path": "/Game/ControlRigs/CR_Example.CR_Example",
+  "control_names": [
+    "Root_CTRL"
+  ],
+  "target_actor_name": "MCP_SnapTarget",
+  "start_frame": 0,
+  "end_frame": 30,
+  "keep_offset": false,
+  "snap_position": true,
+  "snap_rotation": true,
+  "snap_scale": false
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two disposable fixtures reached the snap wrapper, but UE 5.8 reported that
+`ControlRigSnapperSelection` has no `control_rig` attribute. Independent
+control-transform reads confirmed no accepted snap.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The installed wrapper targets a selection field absent from UE 5.8.
+- Target matching uses actor label or name substring and can select the wrong
+  actor when labels overlap.
+- Verify position, rotation, scale, key counts, and frame bounds independently.
+- Retry only after the upstream selection construction is updated for UE 5.8.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

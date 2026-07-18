@@ -47,42 +47,57 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to resolve one compiled conversation node from a GUID returned by
+the same ConversationDatabase.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass a valid ConversationDatabase asset.
+- Call `get_node_guids` first and use one exact returned GUID.
+- Do not synthesize a GUID when the database node inventory is empty.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "conversation": {
+    "refPath": "/Game/Conversations/DA_ConversationExample.DA_ConversationExample"
+  },
+  "guid": "00000000-0000-0000-0000-000000000000"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+A disposable empty ConversationDatabase accepted the asset argument. The
+all-zero GUID failed closed with `Node with GUID ... not found`, confirming
+exact lookup rather than fallback or node fabrication.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The example is a validated missing-node diagnostic, not a GUID to reuse.
+- GUIDs are meaningful only for the current compiled ConversationDatabase.
+- Recompile or graph edits can invalidate previously returned node identities.
+- Use the returned node subtype to select later connection or sub-node readers.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

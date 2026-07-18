@@ -47,42 +47,75 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to import FBX animation into explicitly selected Level Sequence
+bindings when FBX node names match Sequencer binding names.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Open the destination sequence and resolve the current editor world.
+- Use bindings from that same sequence and a live import-settings object.
+- Inspect FBX node names and capture destination tracks, sections, channels, and
+  keys before import.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "world": {
+    "refPath": "/Game/Untitled.Untitled"
+  },
+  "sequence": {
+    "refPath": "/Game/Cinematics/LS_Example.LS_Example"
+  },
+  "bindings": [
+    {
+      "bindingId": "11111111-2222-3333-4444-555555555555",
+      "sequence": {
+        "refPath": "/Game/Cinematics/LS_Example.LS_Example"
+      }
+    }
+  ],
+  "import_settings": {
+    "refPath": "/Engine/Transient.MovieSceneUserImportFBXSettings_0"
+  },
+  "fbx_file_path": "D:/SHAR-Validation/sequence-import.fbx"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+A valid FBX file loaded successfully through this route, but UE reported that no
+imported nodes matched the tested binding or skeleton names, including
+`RootNode`, the actor label, `Root`, and bone names. No independent track or key
+postcondition was accepted.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- FBX parsing success is not Sequencer import success.
+- Binding names and FBX node names must match the import settings and intended
+  targets.
+- Verify changed tracks, sections, channels, and key values independently.
+- Use disposable files and bindings because partial imports can mutate the
+  sequence.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

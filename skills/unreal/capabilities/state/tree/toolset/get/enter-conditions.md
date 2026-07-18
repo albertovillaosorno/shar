@@ -47,42 +47,60 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to enumerate enter-condition editor nodes for a StateTreeState
+returned by the same editor-authored StateTree.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Resolve the state from `get_root_states` or `get_children` on a StateTree with
+  editor data.
+- Keep the StateTree unchanged while using the returned StateTreeState
+  reference.
+- Do not pass the StateTree asset itself where a StateTreeState is required.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "state": {
+    "refPath": "/Game/AI/ST_Example.ST_Example:StateTreeState_0"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+A disposable StateTree asset was intentionally supplied as the `state` argument.
+Parameter translation failed closed with `not valid StateTreeState for property
+state`, confirming strict state-object typing.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The example shows the required object-reference shape; resolve a real state
+  before use.
+- A StateTree asset and a StateTreeState object are not interchangeable.
+- Condition nodes are editor structs and require the same StateTree editor-data
+  context.
+- Re-resolve state refs after graph mutation, compilation, reload, or undo.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

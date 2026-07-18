@@ -47,42 +47,66 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to change the pinned state of live Outliner nodes only when the
+caller holds the native live view-model object inside the same Unreal invocation
+boundary.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Open the intended Level Sequence and obtain a live Sequencer view-model node.
+- Do not reconstruct a node from the public JSON `type` field.
+- Require a same-process identity-preserving route before reading or mutating
+  node state.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "nodes": [
+    {
+      "type": "FPossessableModel"
+    }
+  ],
+  "pinned": true
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+A real camera binding was selected in Sequencer. The MCP response retained only
+`{"type": "FPossessableModel"}`. Passing that value to node readers produced an
+empty label or `View Model is no longer valid`; the programmatic executor
+serialized the node identically. The example therefore reproduces the
+identity-loss boundary rather than a reusable node reference.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- `SequencerViewModelScriptingStruct` identity is not represented by the public
+  schema.
+- A serialized `{type: ...}` object cannot target the original native node.
+- Do not retry through the programmatic executor; it uses the same serialization
+  boundary.
+- Mutation must remain blocked until a stable node identity or a same-call
+  native composition route exists.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

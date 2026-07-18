@@ -49,42 +49,65 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to find vector-nearest assets after the Semantic Search index has
+been populated and the source asset is registered.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass a full object path such as `/Game/X/Foo.Foo` or an existing engine object
+  path.
+- Require a non-empty Semantic Search vector index before invocation.
+- Bound `k`, class filters, and path regular expressions to the intended asset
+  scope.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "assetPath": {
+    "refPath": "/Engine/BasicShapes/Cube.Cube"
+  },
+  "classFilter": [],
+  "pathRegexes": [
+    "^/Engine/BasicShapes/"
+  ],
+  "k": 5
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+`/Engine/BasicShapes/Cube.Cube` resolved as a valid source asset, but the call
+failed closed with `The SemanticSearch index is empty — nothing to compare
+against.` The text-search indexing route also reported HTTP 401 without an
+embedding provider credential.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- A valid source asset is insufficient when the vector index count is zero.
+- The source asset is excluded from its own result set.
+- An empty candidate set can validly return an empty array after filters are
+  applied.
+- Do not place provider credentials in repository files or capability examples.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

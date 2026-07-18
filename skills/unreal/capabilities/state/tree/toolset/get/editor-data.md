@@ -47,42 +47,57 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to resolve the StateTreeEditorData object before any editor-state,
+node, task, evaluator, or transition inspection.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Pass a valid StateTree asset authored or initialized with editor data.
+- Do not assume a newly constructed StateTree contains StateTreeEditorData.
+- Treat missing editor data as a hard boundary for every editor-only reader.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "state_tree": {
+    "refPath": "/Game/AI/ST_Example.ST_Example"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+`DataAssetTools.create` successfully created a disposable StateTree with the
+exact `/Script/StateTreeModule.StateTree` class. This reader then failed closed
+with `StateTree has no editor data`, and the fixture was deleted.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- A valid StateTree UObject can still lack editor data.
+- Runtime-compiled data is not a substitute for StateTreeEditorData.
+- Do not call dependent editor readers after this prerequisite fails.
+- Use an editor-authored or correctly factory-initialized StateTree for positive
+  inspection.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

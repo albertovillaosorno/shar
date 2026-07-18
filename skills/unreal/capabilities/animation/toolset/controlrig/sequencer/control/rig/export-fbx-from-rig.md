@@ -47,42 +47,63 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to export one Control Rig section to a review FBX only after
+confirming the installed export-settings wrapper is compatible.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Resolve a Control Rig track with at least one section in the open sequence.
+- Use an approved temporary output path outside committed repository content.
+- Capture the expected file format, size, and independent import check before
+  export.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "sequence": {
+    "refPath": "/Game/Cinematics/LS_Example.LS_Example"
+  },
+  "control_rig_asset_path": "/Game/ControlRigs/CR_Example.CR_Example",
+  "export_file_path": "D:/SHAR-Validation/control-rig-export.fbx",
+  "ascii": false
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+A disposable Control Rig sequence reached export setup, but UE 5.8 reported that
+`MovieSceneUserExportFBXControlRigSettings` has no `export_file_path` attribute.
+No FBX was accepted as output.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The installed wrapper targets an export-settings field absent from UE 5.8.
+- A returned file must be checked for existence, non-zero size, FBX format, and
+  successful reimport.
+- The wrapper exports the first Control Rig section; resolve multiple-section
+  intent first.
+- Remove disposable output after verification and never commit local evidence
+  files.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

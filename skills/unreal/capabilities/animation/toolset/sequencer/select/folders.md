@@ -47,42 +47,60 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to select existing folders in the open Sequencer only when the
+selection can be confirmed through an independent folder-selection read.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Open the Level Sequence containing the supplied MovieSceneFolder objects.
+- Resolve folder objects from that same sequence and capture current selected
+  folders.
+- Use a disposable sequence when validating editor-selection behavior.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "folders": [
+    {
+      "refPath": "/Game/Cinematics/LS_Example.LS_Example:MovieSceneFolder_0"
+    }
+  ]
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+A real root MovieSceneFolder was created in a disposable open sequence.
+`select_folders` returned `true`, but thirty `get_selected_folders` polls
+remained empty. The folder and sequence were removed after rejecting the false
+positive.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The wrapper returns `true` without checking the resulting editor selection.
+- Folders must belong to the currently open sequence.
+- Always compare `get_selected_folders` with the requested folder object paths.
+- Do not infer selection from Outliner highlighting or transport success alone.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

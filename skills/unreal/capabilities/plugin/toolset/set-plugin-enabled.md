@@ -48,42 +48,60 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool for an explicitly approved project-plugin enablement change after
+inspecting the descriptor and restart impact.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Confirm plugin modification is allowed by `bCanModifyPluginsFromBrowser`.
+- Resolve the exact installed plugin name and capture project descriptor
+  pre-state.
+- Obtain explicit change authorization for the persistent `.uproject` change and
+  any restart.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "pluginName": "MCPValidationMissingPlugin42",
+  "bEnabled": true
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The negative call used `MCPValidationMissingPlugin42` and failed before mutation
+with `Plugin could not be found`. Source review confirmed that valid calls
+delegate to `IProjectManager::SetPluginEnabled` and change project configuration
+rather than live module state.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The example is a fail-closed diagnostic and must not be replaced with a real
+  plugin without explicit change authorization.
+- Reread the project descriptor and plugin status after mutation.
+- A restart can be required before runtime availability changes.
+- Never disable the active MCP or required toolset plugins during a live
+  session.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

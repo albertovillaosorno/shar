@@ -50,42 +50,69 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to associate an AnimSequence with one Level Sequence binding only
+after the installed Unreal function signature is compatible.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use a Level Sequence, AnimSequence, and binding that belong to the intended
+  skeleton and sequence.
+- Capture existing linked-animation metadata before mutation.
+- Use disposable assets until the UE 5.8 signature mismatch is fixed.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "sequence": {
+    "refPath": "/Game/Cinematics/LS_Example.LS_Example"
+  },
+  "anim_sequence": {
+    "refPath": "/Game/Animations/A_Example.A_Example"
+  },
+  "binding": {
+    "bindingId": "11111111-2222-3333-4444-555555555555",
+    "sequence": {
+      "refPath": "/Game/Cinematics/LS_Example.LS_Example"
+    }
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+A real duplicated AnimSequence and valid sequence binding reached this wrapper.
+UE 5.8 then reported `link_anim_sequence() required argument binding (pos 4) not
+found`, showing that the native signature expects an argument not supplied by
+the three-argument wrapper.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The installed wrapper does not match the UE 5.8 native function signature.
+- A successful future call creates persistent linkage metadata and requires
+  explicit change authorization.
+- Verify the link through `get_linked_anim_sequences` and reverse lookup.
+- Do not retry on production assets until the wrapper passes the required native
+  arguments.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

@@ -47,42 +47,59 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to enumerate editor nodes for tasks that run across all states in
+an editor-authored StateTree.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require a StateTree with valid StateTreeEditorData.
+- Call `get_editor_data` first and preserve the asset unchanged during
+  inspection.
+- Treat returned nodes as editor structs whose identity belongs to the current
+  asset state.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "state_tree": {
+    "refPath": "/Game/AI/ST_Example.ST_Example"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The disposable StateTree constructor produced a valid asset without
+StateTreeEditorData. This reader failed closed with `StateTree has no editor
+data`, so no empty global-task result was fabricated.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Missing editor data is distinct from a valid empty global-task array.
+- Global tasks are not tasks attached to one specific state.
+- Returned editor-node structs can become stale after graph mutation or
+  compilation.
+- Use `get_node_description` only with nodes from the same unchanged StateTree.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

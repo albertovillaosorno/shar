@@ -48,42 +48,63 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool only when an operator can complete the native PCG interactive
+spline mode and independently verify the created actor.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Open the intended level and capture actor selection, camera, and active editor
+  mode.
+- Provide real viewport hit locations and a native Accept or Cancel path.
+- Use a unique actor label and tag, and define cleanup before starting the
+  asynchronous call.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "actorLabel": "MCP_SplineValidation",
+  "actorTag": "MCPValidation",
+  "bRedraw": false,
+  "bClosedSpline": false
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The call entered native DrawSpline mode with disabled Accept and enabled Cancel
+controls. Slate accessibility clicks resolved the viewport splitter instead of
+raw viewport coordinates, so no valid points were placed and the call timed out.
+Reloading the saved level canceled the mode, and no spline fixture remained.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- This is an interactive editor tool, not a headless spline-construction API.
+- Tool startup is not completion; require the final actor, tag, and spline
+  state.
+- The call can remain pending until native Accept or Cancel completes the tool.
+- The registered Slate surface cannot supply arbitrary viewport coordinates in
+  UE 5.8.
+- After timeout, cancel or reload and verify temporary actors are absent.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

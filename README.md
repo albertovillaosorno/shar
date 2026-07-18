@@ -117,7 +117,7 @@ The primary delivery sequence is fixed by decision record. Current status is:
 | 2 | Generate the minor-unit manifest | Complete |
 | 3 | Classify deterministic packages | Complete |
 | 4 | Generate semantically prepared first-principles binary FBX | Complete |
-| 5 | Establish native Unreal MCP terminal control | In progress |
+| 5 | Establish native Unreal MCP terminal control | Complete |
 | 6 | Create native Unreal assets | Planned |
 | 7 | Implement the complete native runtime | Planned |
 | 8 | Verify Low through Ultra graphics presets | Planned |
@@ -404,7 +404,7 @@ inside the crate that owns the behavior.
 | 2 | Generate the minor-unit manifest | Complete |
 | 3 | Classify minor units into deterministic packages | Complete |
 | 4 | Convert model packages to binary FBX 7.7 | Complete |
-| 5 | Establish native Unreal MCP terminal control | In progress |
+| 5 | Establish native Unreal MCP terminal control | Complete |
 | 6 | Convert normalized data into native Unreal assets | Planned |
 | 7 | Implement the complete Unreal runtime | Planned |
 | 8 | Verify Low through Ultra graphics presets | Planned |
@@ -679,9 +679,11 @@ Relevant decisions:
 
 ### Phase 5 — Establish native Unreal MCP terminal control
 
-**Status:** In progress. The repository-owned terminal MCP client and the
-generated per-tool Unreal skill catalog exist; catalog documentation and
-verification coverage are still being completed.
+**Status:** Complete. The repository-owned terminal MCP client and the
+deterministic per-tool Unreal skill catalog cover all 52 discovered toolsets and
+830 tools. Every capability page has current manual guidance, including verified
+success paths, fail-closed diagnostics, upstream UE 5.8 incompatibilities,
+identity boundaries, interactive requirements, and cleanup procedures.
 
 **Executive result:** A terminal-capable agent can discover, inspect, test, and
 invoke every tool exposed by the unchanged Unreal Engine 5.8 native MCP server
@@ -692,31 +694,36 @@ This phase uses the experimental `ModelContextProtocol`, `ToolsetRegistry`, and
 upstream dependency and is not copied, modified, repackaged, or published by
 this repository.
 
-Planned work:
+Completion evidence is deterministic: the live catalog contains 52 toolsets and
+830 tools, the generated skill tree contains 830 current capability pages and
+zero review-required pages, protocol negotiation uses `2025-11-25`, and native
+engine or installed plugin source remains unchanged.
 
-- [ ] Enable the native Unreal MCP and required toolset plugins in the local
+Completed work:
+
+- [x] Enable the native Unreal MCP and required toolset plugins in the local
   project configuration without committing proprietary plugin source.
-- [ ] Implement a repository-owned terminal MCP client outside `src/unreal`.
-- [ ] Support initialization, capability and protocol-version negotiation,
+- [x] Implement a repository-owned terminal MCP client outside `src/unreal`.
+- [x] Support initialization, capability and protocol-version negotiation,
   Streamable HTTP, structured errors, progress, pagination, cancellation, and
   bounded timeouts.
-- [ ] Connect only through the loopback endpoint and reject remote, tunneled, or
+- [x] Connect only through the loopback endpoint and reject remote, tunneled, or
   overlapping tool execution.
-- [ ] Discover the live catalog through `list_toolsets`, `describe_toolset`, and
+- [x] Discover the live catalog through `list_toolsets`, `describe_toolset`, and
   `call_tool`, plus eager `tools/list` mode when enabled.
-- [ ] Generate a deterministic machine-readable snapshot of every discovered
+- [x] Generate a deterministic machine-readable snapshot of every discovered
   toolset, tool, input schema, output schema, default, enum, and side effect.
-- [ ] Map every discovered tool to a generic lossless JSON terminal call.
-- [ ] Add typed CLI commands for the complete catalog without silently omitting
+- [x] Map every discovered tool to a generic lossless JSON terminal call.
+- [x] Add typed CLI commands for the complete catalog without silently omitting
   difficult, experimental, destructive, or niche tools.
-- [ ] Populate `skills/unreal/` with complete command syntax, parameters,
+- [x] Populate `skills/unreal/` with complete command syntax, parameters,
   examples, required editor state, approval rules, errors, and troubleshooting.
-- [ ] Add catalog drift checks that fail when the selected engine adds, removes,
+- [x] Add catalog drift checks that fail when the selected engine adds, removes,
   renames, or changes a tool without a reviewed CLI and documentation update.
-- [ ] Black-box test server lifecycle, discovery, schemas, valid and invalid
+- [x] Black-box test server lifecycle, discovery, schemas, valid and invalid
   calls, errors, refresh, reconnection, serial execution, and automation tests.
-- [ ] Use the MCP Inspector as an independent UI and CLI reference client.
-- [ ] Preserve known editor safety failures as observable regressions instead of
+- [x] Use the MCP Inspector as an independent UI and CLI reference client.
+- [x] Preserve known editor safety failures as observable regressions instead of
   custom bridge implementation details.
 
 When a severe native defect blocks a required workflow, the project may add a

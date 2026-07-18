@@ -47,42 +47,66 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to redirect existing component possessable bindings to a named
+component only with independent bound-object verification.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Open the target Level Sequence and obtain child component bindings from an
+  actor binding.
+- Confirm the target actor owns exactly one component with the requested name.
+- Capture `get_bound_objects` for every component binding before mutation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "component_bindings": [
+    {
+      "bindingId": "11111111-2222-3333-4444-555555555555",
+      "sequence": {
+        "refPath": "/Game/Cinematics/LS_Example.LS_Example"
+      }
+    }
+  ],
+  "component_name": "CameraComponent"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+A disposable camera binding resolved its original `CameraComponent`. A second
+camera component named `MCP_RebindTarget56` was added, and the wrapper returned
+`true`; thirty independent `get_bound_objects` polls still resolved the original
+component. The call was rejected as a false positive.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The wrapper always returns `true` after delegating to the editor subsystem.
+- A successful transport does not prove the component binding changed.
+- Verify exact resolved object paths and restore the original component binding
+  on failure.
+- Component names are actor-local and can be ambiguous across different bound
+  actors.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

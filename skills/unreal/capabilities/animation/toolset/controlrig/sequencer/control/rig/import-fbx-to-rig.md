@@ -47,42 +47,62 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool for a Control Rig FBX import only in a disposable sequence with
+independent channel-level verification.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Use a valid FBX whose hierarchy and mapping match the target rig.
+- Resolve the exact Control Rig track, section, and intended controls.
+- Snapshot all target channels and keys before import and define rollback.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "sequence": {
+    "refPath": "/Game/Cinematics/LS_Example.LS_Example"
+  },
+  "control_rig_asset_path": "/Game/ControlRigs/CR_Example.CR_Example",
+  "import_file_path": "D:/SHAR-Validation/control-rig-import.fbx",
+  "selected_controls": [
+    "Root_CTRL"
+  ]
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+With selected controls, UE 5.8 reported that the import settings object has no
+`import_onto_selected_controls` attribute. With an empty selection the wrapper
+returned `true`, but nine independently read `Root_CTRL` channels remained
+empty, so the result was rejected.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The selected-controls branch targets a settings field absent from UE 5.8.
+- An empty control list can return `true` without importing channel data.
+- Verify controls, channels, key counts, and values after every import.
+- Remove the disposable FBX and sequence after validation.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

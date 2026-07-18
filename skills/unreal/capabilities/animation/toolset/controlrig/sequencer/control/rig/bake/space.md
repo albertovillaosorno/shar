@@ -47,42 +47,69 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to bake Control Rig space switching only after the installed UE
+wrapper is compatible with the current bake-settings API.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Open a sequence containing the identified Control Rig track and section.
+- Resolve control names and capture all existing space and transform keys in the
+  frame range.
+- Use a disposable sequence until the UE 5.8 settings compatibility defect is
+  fixed.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "sequence": {
+    "refPath": "/Game/Cinematics/LS_Example.LS_Example"
+  },
+  "control_rig_asset_path": "/Game/ControlRigs/CR_Example.CR_Example",
+  "control_names": [
+    "Root_CTRL"
+  ],
+  "start_frame": 0,
+  "end_frame": 30,
+  "reduce_keys": false,
+  "tolerance": 0.001
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+A real disposable Control Rig fixture reached this wrapper, then UE 5.8 rejected
+`RigSpacePickerBakeSettings.start_frame` as deprecated and required
+`Settings.StartFrame`. No accepted bake postcondition was observed.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The installed wrapper writes deprecated top-level bake-setting fields in UE
+  5.8.
+- Do not interpret wrapper dispatch as baked keys; compare space and transform
+  keys before and after.
+- Key reduction is destructive and requires an approved tolerance plus a
+  reversible fixture.
+- Retry only after the upstream wrapper changes to the nested settings layout.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

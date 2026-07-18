@@ -47,42 +47,59 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to assign a camera binding to a camera-cut section only after the
+installed GUID construction is compatible with UE 5.8.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Resolve a real MovieSceneCameraCutSection and camera binding from the same
+  sequence.
+- Capture the current camera binding ID before mutation.
+- Use a disposable section until the UE 5.8 GUID-construction defect is fixed.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "section": {
+    "refPath": "/Game/Cinematics/LS_Example.LS_Example:MovieScene_0.MovieSceneCameraCutSection_0"
+  },
+  "camera_binding_id": "11111111-2222-3333-4444-555555555555"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Two disposable camera-cut fixtures reached this wrapper. UE 5.8 reported `call()
+takes at most 0 arguments (1 given)` when the wrapper constructed
+`unreal.Guid(camera_binding_id)`, so no binding change was accepted.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The installed wrapper uses a GUID constructor form rejected by UE 5.8.
+- The section and camera binding must belong to the same sequence hierarchy.
+- Verify the section camera-binding ID independently after any future successful
+  call.
+- Restore the original binding when validating on a disposable section.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
