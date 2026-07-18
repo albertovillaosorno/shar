@@ -422,154 +422,16 @@ or when stricter validation invalidates previously accepted evidence.
 
 **Status:** Complete.
 
-**Executive result:** The local installation is converted from opaque legacy
-containers into typed, auditable, deterministic source evidence. Downstream
-systems no longer need to understand undocumented binary layouts.
-
-Completed work:
-
-- [x] Create the simple `game/manifest.jsonl` completeness contract without
-  publishing original file names.
-- [x] Decode RTF documentation into normalized Markdown.
-- [x] Extract LMLM/LSPA archives with payload-size verification.
-- [x] Extract RCF archives with validated headers, names, offsets, alignment,
-  and deterministic output paths.
-- [x] Convert RSD audio into native PCM WAV while preserving channels, sample
-  rate, and bit depth.
-- [x] Convert RMV cinematics into HAP video packages with numbered WAV tracks,
-  probe metadata, decode reports, manifests, and timing ledgers.
-- [x] Decode P3D geometry, primitive groups, indices, positions, normals,
-  tangents, binormals, UV channels, colors, matrix palettes, weights, bounds,
-  and render metadata.
-- [x] Decode P3D textures and preserve typed texture metadata and image output.
-- [x] Decode scene graphs, composite drawables, instance graphs, render
-  references, transforms, visibility, attachments, cameras, and sort order.
-- [x] Decode collision, physics, terrain, world-chunk membership, primitives,
-  mass properties, inertia, ownership, and joint metadata.
-- [x] Decode skeletons, joints, parent relationships, rest transforms, skins,
-  controllers, animation groups, channels, keyframes, and vertex animation.
-- [x] Decode supported UI, font, particle, and summary families into typed
-  representations instead of generic byte summaries.
-- [x] Parse MFK mission and gameplay scripts into structured JSON.
-- [x] Parse CON vehicle and gameplay configuration into structured JSON.
-- [x] Parse Scrooby PAG, SCR, and PRJ files into structured UI records.
-- [x] Parse CHO choreography and rig-bank text into structured records.
-- [x] Parse TextBible and language-channel files into normalized localization
-  records.
-- [x] Parse TYP sound-resource metadata into structured JSON.
-- [x] Decode RADMusic RMS metadata and SPT text structures into deterministic
-  intermediate records.
-- [x] Mark logs, unsupported metadata, and non-runtime artifacts as explicit
-  do-not-import inputs instead of pretending they are game assets.
-
-Completion criteria:
-
-- accepted arrays match their declared counts;
-- geometry, rigging, collision, and animation have no silent header-only
-  success path;
-- malformed data fails closed;
-- the game completeness manifest remains deterministic and public-safe; and
-- extracted assets remain local and ignored by Git.
-
-Relevant decisions:
-
-- [Lossless extraction contract](docs/adr/pipeline/extraction/lossless-extraction-contract.md)
-- [Extraction provenance and manifest linkage](docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md)
-- [Game manifest ledger](docs/adr/pipeline/game-manifest-ledger.md)
-
-### Phase 2 — Generate the minor-unit manifest
-
-**Status:** Complete.
-
-**Executive result:** Every normalized output becomes one typed, independently
-auditable minor unit. The manifest is the structural source of truth for
-classification and packaging.
-
-Completed work:
-
-- [x] Stage decoded package components and normalized loose files into one
-  coherent structural view.
-- [x] Assign deterministic, opaque, name-free identifiers.
-- [x] Record obfuscated routes that preserve useful structure without exposing
-  source names.
-- [x] Record source chunk kind, source chunk ordinal, extension, provenance,
-  and recovery status.
-- [x] Define controlled taxonomy values with `snake_case` JSON fields and
-  `kebab-case` domain values.
-- [x] Classify supported units by type, subtype, kind, function, origin,
-  schema, and intended normalization target.
-- [x] Reject raw, metadata-only, unsupported, or error recovery rows as
-  successful runtime units.
-- [x] Audit the generated manifest until no accepted unit remains classified by
-  the error sentinel.
-- [x] Keep content hashes and real game names out of the public classification
-  ledger.
-
-Completion criteria:
-
-- every accepted minor unit is fully decoded;
-- every record conforms to the versioned taxonomy;
-- manifest order is stable;
-- source names remain undisclosed; and
-- no later converter needs to rediscover extraction internals.
-
-### Phase 3 — Organize minor units into packages
-
-**Status:** Complete.
-
-**Executive result:** The package-index path composes every accepted minor unit
-into deterministic entity packages for downstream planning. Fresh generated
-evidence proves complete classification, source linkage, one-time physical
-coverage, and repeatability across all 119,361 manifest units and 2,964 package
-rows.
-
-Implemented boundary work:
-
-- [x] Build the generated package index from minor-unit records.
-- [x] Preserve members, member roles, source kinds, chunk kinds, and stable
-  package identifiers.
-- [x] Resolve packages by exact identifier, category, or subcategory prefix.
-- [x] Define typed plans for FBX models, Unreal-native data, media, UI, audio,
-  worlds, and do-not-import metadata.
-- [x] Reject successful placeholder labels and error package identifiers.
-
-Completed acceptance work:
-
-- [x] Regenerate the complete package index from the current manifest.
-- [x] Prove that every successful row has a concrete category and subcategory,
-  complete source linkage, and no successful `unknown` or error classification.
-- [x] Repeat generation and compare package identities, ordering, membership,
-  member roles, category counts, subcategory counts, and rendered rows.
-- [x] Record current totals only from validated generated evidence: 119,361
-  manifest units and 2,964 deterministic package rows.
-
-Completion criteria:
-
-- every accepted minor unit belongs to the correct package or an explicit
-  do-not-import package;
-- every successful package has a concrete category and subcategory;
-- package identity, membership, roles, and ordering are deterministic;
-- repeated generation produces the same logical package set and rendered rows;
-- package readers do not depend on original paths; and
-- planners consume typed package records rather than ad hoc JSON.
-
-Relevant decisions:
-
-- [Unreal manifest and package taxonomy](docs/adr/pipeline/unreal/unreal-manifest-and-package-taxonomy.md)
-- [Native asset translation](docs/adr/pipeline/unreal/native-asset-translation-and-no-copy-paste.md)
-
-### Phase 4 — Convert model packages to binary FBX 7.7
-
-**Status:** In progress.
-
-**Executive result:** The complete character, non-world prop, and standalone
-world-prop lanes are finished and published locally. All 110 skinned character
+**Executive result:** The character, non-world prop, standalone world-prop,
+and vehicle lanes are complete and published locally. All 110 skinned character
 presentations produce verified binary FBX 7.7 artifacts with external textures,
 preserved topology and rigging, and non-empty animation sets. The prop catalog
 publishes Wasp Camera, Wrench, 71 mission models, one collectible-card model,
-one phone-interaction model, and 285 readable standalone world props. Vehicle
-export and assembled level terrain,
-interiors, placements, and final world presentation remain in progress.
+one root `phone-icon` interaction model, and 285 readable standalone world props.
+The vehicle catalog publishes 88 semantically separated vehicles with authored
+pivots, four independent wheel instances where required, external textures,
+shader sidecars, damage-state evidence, and supported animation. Only the final
+master world/map block remains in progress.
 
 Completed boundary work:
 
@@ -766,42 +628,101 @@ leafless trunk FBX is therefore expected and lossless for this boundary; foliage
 leaf-drop effects, particles, and final tree assembly remain native Unreal/world
 presentation work rather than invented FBX geometry.
 
+### Vehicle FBX catalog
+
+The complete ignored vehicle catalog is published beneath
+`fbx-assets/vehicles/`. Each of the 88 standalone vehicle packages receives one
+readable directory and matching binary FBX 7.7 file, for example
+`fbx-assets/vehicles/homer-v/homer-v.fbx` and
+`fbx-assets/vehicles/cpolice/cpolice.fbx`. The shared car runtime package remains
+source authority and does not become a misleading standalone vehicle.
+
+Generate one fresh vehicle catalog root with:
+
+```bash
+pipeline fbx-export-vehicles extracted/minor-unit/index.jsonl game \
+  temp/vehicles
+```
+
+The batch freshly extracts all 89 car-family P3D packages and publishes 88
+vehicles, 1,502 semantically named geometry objects, 35 skeletal `PTRN` animation
+stacks, 70 named `BQG` or `TEX` effect-animation sidecars, 1,056 PNG textures,
+597 decoded shader sidecars, and one explicitly deferred invalid geometry record.
+The final publication contains 1,901 files and 41,230,312 bytes. Two independent
+generations produced identical relative paths, sizes, and SHA-256 values for
+every file. The canonical vehicle snapshot SHA-256 is
+`664fbb242caffc21a8e94ceb4564e6b22b22b8e87595a4cf6b431e9a68d8d3fb`,
+and the root catalog SHA-256 is
+`53b4bc9afdbe952dadf75ea3bb60b16f3f4a9ddd7d909db65d864a24a48e0bd0`.
+
+Vehicle geometry is split by source mesh, primitive group, semantic role, and
+composite-drawable instance. Body surfaces, glass, wheels, driver and passenger
+doors, hood, trunk, interior, lights, drivers, and evidence-supported accessories
+remain independently named. Reused wheel geometry is instantiated once for every
+authored wheel pivot rather than collapsed by mesh name. Normal-state textures
+remain externally referenced by FBX; unused damage and alternate-state textures
+are preserved in named sidecar directories. Shader JSON retains source material
+parameters rather than reducing the catalog to texture names alone.
+
+One `comic-v` steering mesh contains 72 positions whose decoded values are all
+invalid. The exporter does not manufacture replacement vertices: it preserves the
+normalized source record beneath `geometry/deferred/` and exports the remaining
+valid vehicle geometry. Partially invalid meshes remain hard failures.
+
+Blender 5.1.2 independently imported representative `homer-v`, `cpolice`,
+`ccola`, and `comic-v` outputs with one armature each, four independently named
+wheel objects, separated glass and moving parts, supported actions, and zero
+missing external images. Repository-owned structural tests and two complete
+binary generations remain the production acceptance evidence; Blender is an
+inspection consumer.
+
 Phase 4 exports only packages that contain actual model geometry. The
 `phonecamera` package contains camera, controller, and animation evidence but no
 model; the `atc` package contains a 64-row destructible-object attribute table but
 no model. Neither package receives an FBX placeholder. Both remain normalized
 non-FBX inputs for Phase 6 native Unreal asset conversion.
 
-Phase 4 proceeds sequentially:
+Phase 4 has exactly two final completion blocks:
 
-1. compare bounded local reference FBX evidence without adopting external
-   topology, names, paths, materials, or textures as authority;
-1. discover stable character semantic regions and generate a modern deterministic
-   UV atlas from source UV, triangle, material, and texture evidence;
-1. preserve source polygon and vertex counts while normalizing neutral base color
-   and moving authored patterns into the atlas region owned by their clothing or
-   body surface;
-1. expose sclera, pupil, upper-lid, and lower-lid ownership for both eyes while
-   leaving animation behavior unchanged; identical eye layers share a
-   content-hashed profile, and any character may declare a local override;
-1. attempt skeleton display cleanup only through cross-consumer, non-deforming
-   metadata; defer it when a representation change would alter bind state,
-   transforms, skinning, animation, or importer behavior;
-1. publish every outfit or prop-bearing presentation as a complete model; the
-   current pipeline does not separate legacy clothing, handheld props, or Homer
-   with a donut into runtime garment or attachment layers;
-1. generate the complete character catalog twice and compare paths, structure,
-   sizes, hashes, topology, texture manifests, rigs, skinning, and animation;
-1. export standalone model props, model-bearing animated hazards, wasps, and
-   other packages whose polygon geometry belongs in FBX; route camera-only,
-   particle-only, light-only, placement-only, and data-only packages to Phase 6;
-1. decompose vehicle FBX into body, wheels, trunk, and any other
-   evidence-supported moving components with stable pivots and transforms;
-1. decompose world-model FBX into terrain, houses, buildings, windows, doors,
-   linked interiors, landmarks, and model props while preserving geographic
-   placement records as non-FBX Phase 6 evidence; and
-1. reconstruct and verify the one complete geographic map from those components
-   before native Unreal import.
+- [x] **Vehicles:** publish the complete semantically separated vehicle catalog,
+  including authored pivots, independently instanced wheels, moving body parts,
+  skeletal animation, effect-animation sidecars, external textures, damage-state
+  evidence, and decoded shader parameters.
+- [ ] **Master world/map:** publish one separated master-world FBX and its
+  geographic evidence so the complete map can be edited, named, compared, and
+  transformed without distributing source game assets.
+
+#### Master world/map authoring workflow
+
+The generated world baseline must use only the user's original game packages as
+model, topology, material, texture, and identity authority. An operator-supplied
+private connected-map package set may be extracted with the existing production
+P3D extractor, without changing extractor behavior, and used only as coordinate
+and assembly comparison evidence. That private evidence is never tracked,
+published, copied into generated assets, or treated as source geometry.
+
+The repository first generates one deterministic separated baseline FBX beneath
+`fbx-assets/world/`. Terrain, buildings, houses, landmarks, bridges, doors,
+windows, linked interiors, and other model-bearing components retain semantic
+object names, source provenance, and authored placement. Geometry judged at least
+50 percent structurally equivalent may be co-located at the same comparison
+coordinate as separate review layers; it is never automatically merged or used
+to replace original-game evidence. Missing private-reference-only geometry does
+not enter the public baseline.
+
+The baseline is intentionally suitable for manual Blender authoring. The operator
+may reorganize and repair the complete map, separate every building or interior,
+create a unified terrain surface, rebuild bridges, and return a master FBX whose
+layers use stable semantic names such as `terrain`, building identities, interior
+identities, roads, and route components. This manual master is an authored design
+input, not a substitute for deterministic extraction or repository validation.
+
+A later repository-owned transformation stage compares the deterministic
+original-game baseline with the operator-authored master and emits a
+source-dependent transformation recipe. Applying that recipe requires the user's
+original source packages; the recipe alone cannot reconstruct or redistribute the
+game models. The same semantically mapped master supports both the playable map
+and a Google-Maps-style geographic representation.
 
 The runtime uses that one connected map for all seven narrative chapters. Chapter
 progression adds cumulative terrain, collectible, structure, mission, population,
@@ -836,45 +757,36 @@ and ambient-occlusion maps require authored evidence or a versioned deterministi
 recipe.
 
 All semantic separation described here belongs to the canonical scene and FBX
-phase, not to UAsset import. Native Unreal import consumes already prepared
+phase, not to UAsset import. Phase 4 has no Unreal-import acceptance gate. Native
+Unreal conversion and import occur later in Phase 6 and consume already prepared
 character regions, vehicle parts, world components, pivots, coordinates, and
-assembly manifests. Blender and Maya remain outside generation, repair,
-validation, and acceptance; optional inspection in either application cannot
-replace repository-owned mathematical tests.
+assembly manifests. Optional Blender or Maya inspection cannot replace
+repository-owned mathematical tests. The manually authored master-world FBX is a
+deliberate world-design input and is distinct from using Blender as a generation
+or validation dependency.
 
-Character lane completion and remaining model families:
+Remaining Phase 4 completion blocks:
 
-- [x] Implement deterministic character semantic-region and atlas generation.
-- [x] Prove the same preparation contract on Krusty, Lisa, Principal Skinner,
-  and Chief Wiggum without character-specific algorithm branches.
-- [x] Publish separately addressable eye, pupil, and lid artifacts with
-  deterministic content hashes and package-local references.
-- [x] Keep skeleton display cleanup deferred because the canonical output
-  preserves bind state, transforms, skinning, and animation unchanged.
-- [x] Define one outfit or prop-bearing presentation as one complete model and
-  defer modular legacy clothing reconstruction.
-- [x] Generate the complete 110-package deterministic character catalog twice
-  and prove identical paths, sizes, and SHA-256 values.
-- [ ] Complete model-bearing prop, wasp, and animated-object FBX coverage.
-- [ ] Complete semantic vehicle FBX coverage.
-- [ ] Complete terrain and model-bearing world-component FBX coverage while
-  preserving coordinates and geographic catalogs through explicit non-FBX routes.
-- [ ] Reject packages that claim support while omitting a required capability.
-- [x] Produce deterministic conformance records for every generated character
-  FBX in the root catalog.
-- [ ] Verify clean Unreal import without undocumented scene repair or semantic
-  rediscovery.
+- [x] **Vehicles:** complete deterministic semantic vehicle FBX coverage with
+  independently instanced wheels, moving components, pivots, animation, textures,
+  damage-state evidence, shader sidecars, conformance catalogs, two identical
+  generations, and representative Blender inspection.
+- [ ] **Master world/map:** complete the one-FBX separated world baseline,
+  coordinate-reference comparison, manual master-authoring contract, semantic
+  map layers, and source-dependent transformation recipe.
 
 Completion criteria:
 
 - every model-like package has a semantically prepared binary FBX 7.7 artifact
-  or an explicit justified non-FBX route;
+  or an explicit justified non-FBX route;
 - every character preserves topology, skinning, deformation, and animation while
-  publishing deterministic semantic textures and supported outfit identities;
+  publishing deterministic semantic textures and supported outfit identities;
 - every moving vehicle part and independently addressable world component has a
-  stable identity, pivot, transform, and placement contract;
-- the complete map can be reconstructed from terrain, component FBX, and
-  geographic placement evidence without manual assembly;
+  stable identity, pivot, transform, and placement contract;
+- the repository can regenerate the deterministic original-game world baseline,
+  while the intentionally manual master-world authoring stage remains explicit;
+- the source-dependent master transformation cannot reconstruct model data
+  without the user's original source packages;
 - no package depends on hardcoded local paths;
 - no ASCII FBX, DAE, MA, or MB output becomes canonical; and
 - repeated conversion remains deterministic within the format boundary.

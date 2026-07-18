@@ -266,6 +266,23 @@ where
             )
     }
 
+    /// Exports the complete semantically separated vehicle FBX catalog.
+    ///
+    /// # Errors
+    ///
+    /// Returns the provider's validated pipeline failure.
+    pub fn export_vehicle_catalog(
+        &self,
+        index_path: &Path,
+        game_root: &Path,
+        output_dir: &Path,
+    ) -> PipelineOutcome<StageReport> {
+        self.provider
+            .export_vehicle_catalog(
+                index_path, game_root, output_dir,
+            )
+    }
+
     /// Exports every terrain-world model prop under hash-free names.
     ///
     /// # Errors

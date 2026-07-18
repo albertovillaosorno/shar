@@ -102,6 +102,112 @@ pub fn load_selected_rigid_prop_asset(
     .map_err(SkinSourceError::Character)
 }
 
+/// Load selected rigid meshes once for every authored composite binding.
+///
+/// Repeated prop names remain distinct instances bound to their exact authored
+/// joints. This is required for vehicles that reuse one wheel mesh at four
+/// independent pivots.
+///
+/// # Errors
+///
+/// Returns an error when skeleton, composite, mesh, binding, or resulting
+/// character-compatible asset evidence is invalid.
+pub fn load_instanced_rigid_prop_asset(
+    name: &str,
+    skeleton_path: &Path,
+    mesh_paths: &[&Path],
+    composite_path: &Path,
+) -> Result<CharacterAsset, SkinSourceError> {
+    let (skeleton_name, bones) = load_skeleton(skeleton_path)?;
+    let bindings = composite_prop_bindings(
+        composite_path,
+        &skeleton_name,
+        &[],
+        bones.len(),
+    )?;
+    let meshes = load_rigid_mesh_map(mesh_paths)?;
+    let mut occurrences = BTreeMap::<String, usize>::new();
+    let mut bound_names = BTreeSet::new();
+    let mut selected_joints = BTreeSet::new();
+    let mut parts = Vec::new();
+    for (mesh_name, joint) in bindings {
+        let Some(source_mesh) = meshes.get(&mesh_name) else {
+            continue;
+        };
+        let ordinal = occurrences.entry(mesh_name.clone()).or_insert(0);
+        let mut mesh = source_mesh.clone();
+        mesh.name = format!(
+            "{}__joint_{joint:02}__instance_{:02}",
+            mesh.name,
+            *ordinal,
+        );
+        *ordinal = ordinal.saturating_add(1);
+        let bone_id = bones
+            .get(joint)
+            .map(|bone| bone.id.clone())
+            .ok_or_else(
+                || {
+                    SkinSourceError::Prop(format!(
+                        "instanced rigid prop {mesh_name} references missing joint {joint}"
+                    ))
+                },
+            )?;
+        selected_joints.insert(joint);
+        bound_names.insert(mesh_name);
+        let group_influences = rigid_group_influences(&mesh, &bone_id)?;
+        parts.push(SkinnedPart {
+            mesh,
+            group_influences,
+        });
+    }
+    let unbound = meshes
+        .keys()
+        .filter(|mesh_name| !bound_names.contains(*mesh_name))
+        .cloned()
+        .collect::<Vec<_>>();
+    if !unbound.is_empty() {
+        return Err(SkinSourceError::Prop(format!(
+            "selected instanced rigid props have no composite binding: {}",
+            unbound.join(", ")
+        )));
+    }
+    let retained_indices = retained_bone_indices(&bones, &selected_joints)?;
+    let retained_bones = bones
+        .into_iter()
+        .enumerate()
+        .filter_map(
+            |(index, bone)| retained_indices.contains(&index).then_some(bone),
+        )
+        .collect();
+    CharacterAsset::new(name, retained_bones, parts)
+        .map_err(SkinSourceError::Character)
+}
+
+/// Load one unique source mesh map for authored composite instancing.
+fn load_rigid_mesh_map(
+    mesh_paths: &[&Path],
+) -> Result<BTreeMap<String, crate::domain::mesh::MeshAsset>, SkinSourceError> {
+    let mut meshes = BTreeMap::new();
+    for mesh_path in mesh_paths {
+        let requested_id = mesh_member_id(mesh_path)?;
+        let mesh = read_mesh(mesh_path, requested_id).map_err(
+            |error| {
+                SkinSourceError::Prop(format!(
+                    "instanced rigid prop mesh decode failed for {}: {error:?}",
+                    mesh_path.display()
+                ))
+            },
+        )?;
+        let mesh_name = mesh.name.clone();
+        if meshes.insert(mesh_name.clone(), mesh).is_some() {
+            return Err(SkinSourceError::Prop(format!(
+                "duplicate instanced rigid prop source mesh: {mesh_name}"
+            )));
+        }
+    }
+    Ok(meshes)
+}
+
 /// Load selected meshes and collect their bound skeleton joints.
 fn load_selected_parts(
     bones: &[Bone],

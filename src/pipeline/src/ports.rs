@@ -215,6 +215,18 @@ pub trait PipelineOperations {
         output_dir: &Path,
     ) -> PipelineOutcome<StageReport>;
 
+    /// Exports the complete semantically separated vehicle FBX catalog.
+    ///
+    /// # Errors
+    ///
+    /// Returns a validated pipeline failure.
+    fn export_vehicle_catalog(
+        &self,
+        index_path: &Path,
+        game_root: &Path,
+        output_dir: &Path,
+    ) -> PipelineOutcome<StageReport>;
+
     /// Exports every terrain-world model prop under hash-free names.
     ///
     /// # Errors

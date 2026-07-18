@@ -63,6 +63,7 @@ mod one;
 mod progress;
 mod prop_catalog;
 mod two;
+mod vehicle_catalog;
 mod wasp_camera;
 mod wrench;
 
@@ -186,6 +187,17 @@ impl PipelineOperations for LocalPipeline {
         output_dir: &Path,
     ) -> PipelineOutcome<StageReport> {
         prop_catalog::export_prop_catalog(
+            index_path, game_root, output_dir,
+        )
+    }
+
+    fn export_vehicle_catalog(
+        &self,
+        index_path: &Path,
+        game_root: &Path,
+        output_dir: &Path,
+    ) -> PipelineOutcome<StageReport> {
+        vehicle_catalog::export_vehicle_catalog(
             index_path, game_root, output_dir,
         )
     }
