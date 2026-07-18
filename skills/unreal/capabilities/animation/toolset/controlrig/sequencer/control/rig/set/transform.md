@@ -49,42 +49,69 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to set and optionally key one Euler-transform Control Rig
+control at an exact frame.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Open the exact disposable Level Sequence and derive the live Control Rig
+  track and control name.
+- Use a compatible bound skeletal actor and confirm the control type before
+  mutation.
+- Read the transform before and after the call and delete the whole disposable
+  sequence fixture afterward.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "control_name": "Locator",
+  "control_rig_asset_path": "/AnimatorKit/UtilityRigs/CRU_AddLocator",
+  "frame": 20,
+  "location_x": 120.0,
+  "location_y": -35.0,
+  "location_z": 55.0,
+  "rotation_pitch": 10.0,
+  "rotation_roll": -5.0,
+  "rotation_yaw": 25.0,
+  "sequence": {
+    "refPath": "/Game/SHAR_MCP_Validation_RoundNext/LS_MCP_RoundNext_CR.LS_MCP_RoundNext_CR"
+  },
+  "set_key": true
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The call returned true. `get_transform` changed from zero location and
+rotation to location 120/-35/55 and rotation 10/25/-5 at frame 20.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Sequence, track, section, binding, and control identities become stale after
+  reconstruction or deletion.
+- `set_key: true` mutates channels as well as the evaluated control value.
+- This validation covered the `Locator` Euler-transform control on
+  `CRU_AddLocator`; rediscover controls for every other rig.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

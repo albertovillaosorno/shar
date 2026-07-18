@@ -51,42 +51,58 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to activate one reviewed Game Feature and wait for its Active
+state.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require doctor readiness and refresh the live Game Features schema.
+- Use a uniquely named content-only Game Feature with a matching root
+  GameFeatureData asset.
+- Confirm discovery, enabled status, feature identity, state, and active
+  status before mutation.
+- Define deactivation and complete plugin/content cleanup before activation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "pluginName": "MCPRoundNextFeature260718"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The call returned true and polling changed the feature from `Unknown`/inactive
+to `Active`/active.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Lifecycle requests are asynchronous; poll both state and active status
+  instead of trusting the Boolean alone.
+- A newly discovered feature may report `Unknown`; successful deactivation of
+  the tested feature settled at `Loaded`, not unloaded.
+- Deactivate the feature before deleting its GameFeatureData asset or plugin
+  directory.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

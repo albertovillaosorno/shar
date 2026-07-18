@@ -47,42 +47,59 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to invoke one exact visible Slate control after snapshot-based
+discovery.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require doctor readiness and observe the exact visible window at sufficient
+  depth.
+- Resolve every widget ref from a fresh Snapshot; never reuse refs after
+  docking, closing, or layout reconstruction.
+- Capture a separate visual or accessibility postcondition and restore
+  transient focus, filters, or layout when practical.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "ref": "b130"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Clicking the exact Save Current Level button returned true, and the main
+editor unsaved counter changed from `2 Unsaved` to `1 Unsaved`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Slate refs are observer- and layout-specific transient identities.
+- Boolean success is insufficient; verify visible content, window topology,
+  counters, or screenshot output independently.
+- Accessibility names may remain placeholders such as `Search` while the
+  underlying text filter changes.
+- A click can open blocking native dialogs; use only reviewed controls with a
+  bounded recovery plan.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
