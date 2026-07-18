@@ -49,42 +49,67 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to add an exact reflected expression class to a reviewed SHAR
+material or material function.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live MaterialTools or MaterialInstanceTools schema.
+- Use disposable or explicitly task-owned assets and capture the matching
+  asset, graph, parameter, or property reader before mutation.
+- Resolve expression classes, pin names, output names, and nested expression
+  references from current MaterialTools readers.
+- Define whole-folder asset cleanup before invocation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "expression_class": {
+    "refPath": "/Script/Engine.MaterialExpressionConstant3Vector"
+  },
+  "material_or_function": {
+    "refPath": "/Game/SHAR_MCP_Validation_Material_07b38dea/M_MCP_07b38dea.M_MCP_07b38dea"
+  },
+  "x": 0,
+  "y": 0
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+`get_expressions` changed from an empty list to seven exact nested references:
+two Constant3Vector nodes, Add, scalar, vector, texture, and static-switch
+parameter expressions.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Material, function, collection, expression, and instance references are live
+  editor identities and become stale after deletion or whole-folder cleanup.
+- Discover classes with `list_expression_classes`; class names alone do not
+  prove compatibility with the target material or function.
+- The reproduced lifecycle used one disposable content folder and removed
+  every created asset after verification.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

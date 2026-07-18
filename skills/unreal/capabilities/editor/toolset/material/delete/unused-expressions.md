@@ -52,42 +52,64 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to remove every material expression not contributing to a
+material output.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live MaterialTools or MaterialInstanceTools schema.
+- Use disposable or explicitly task-owned assets and capture the matching
+  asset, graph, parameter, or property reader before mutation.
+- Resolve expression classes, pin names, output names, and nested expression
+  references from current MaterialTools readers.
+- Confirm every intended expression is disconnected from all material outputs
+  before bulk deletion.
+- Define whole-folder asset cleanup before invocation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "material": {
+    "refPath": "/Game/SHAR_MCP_Validation_Material_07b38dea/M_MCP_07b38dea.M_MCP_07b38dea"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The material had no output connection. `get_expressions` changed from seven
+disconnected expressions to an empty list after bulk unused-expression
+deletion.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Material, function, collection, expression, and instance references are live
+  editor identities and become stale after deletion or whole-folder cleanup.
+- This is a destructive whole-graph cleanup. Expressions not connected to a
+  material output are removed even when they are named parameters.
+- The reproduced lifecycle used one disposable content folder and removed
+  every created asset after verification.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
