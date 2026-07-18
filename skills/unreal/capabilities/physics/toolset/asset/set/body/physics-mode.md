@@ -47,42 +47,58 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to set one body to Default, Kinematic, or Simulated mode.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  exact live toolset schema before mutation.
+- Use only task-owned disposable assets and define whole-folder deletion
+  before invocation.
+- Duplicate the source skeletal mesh into the disposable folder and use body,
+  shape, constraint, mass, and mode readers after mutation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "boneName": "Bone02",
+  "mode": "Kinematic",
+  "physicsAsset": {
+    "refPath": "/Game/SHAR_MCP_Validation_ControlRig/SK_MCP_Physics_PhysicsAsset.SK_MCP_Physics_PhysicsAsset"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+`GetBodyPhysicsMode` changed from `Default` to `Kinematic` for `Bone02`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Physics Asset mutations are persistent and destructive; use a duplicated
+  skeletal mesh and exact body, shape, and constraint inventories.
+- The duplicated mesh, generated Physics Asset, Control Rigs, and complete
+  validation folder were deleted afterward.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

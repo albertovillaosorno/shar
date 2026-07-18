@@ -47,42 +47,71 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to connect one compatible RigVM output pin to one exact input
+pin.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  exact live toolset schema before mutation.
+- Use only task-owned disposable assets and define whole-folder deletion
+  before invocation.
+- Use hierarchy, graph, node, pin, variable, or transform readers as the
+  independent postcondition.
+- Resolve exact graph, node, and pin object paths from `list_graphs`,
+  `list_nodes`, and `list_pins`.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "control_rig": {
+    "refPath": "/Game/SHAR_MCP_Validation_ControlRig/CR_MCP.CR_MCP"
+  },
+  "graph": {
+    "refPath": "/Game/SHAR_MCP_Validation_ControlRig/CR_MCP.CR_MCP:RigVMModel MCPGraph"
+  },
+  "source_pin": {
+    "refPath": "/Game/SHAR_MCP_Validation_ControlRig/CR_MCP.CR_MCP:RigVMModel MCPGraph.MCPAddA.Result"
+  },
+  "target_pin": {
+    "refPath": "/Game/SHAR_MCP_Validation_ControlRig/CR_MCP.CR_MCP:RigVMModel MCPGraph.MCPAddB.A"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+`get_connected_pins` changed from empty to the exact target input `MCPAddB.A`
+for source `MCPAddA.Result`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Control Rig hierarchy, graph, node, and pin references are asset-local
+  identities and become stale after deletion.
+- The complete disposable Control Rig folder, including the secondary event
+  rig, was deleted after verification.
+- Pin paths are case-sensitive graph-local object paths; only unconnected
+  compatible pins accept literal or link mutations.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

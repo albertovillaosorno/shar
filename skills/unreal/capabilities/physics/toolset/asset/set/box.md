@@ -48,42 +48,76 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to create or update one named box shape on an existing physics
+body.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  exact live toolset schema before mutation.
+- Use only task-owned disposable assets and define whole-folder deletion
+  before invocation.
+- Duplicate the source skeletal mesh into the disposable folder and use body,
+  shape, constraint, mass, and mode readers after mutation.
+- Use a unique shape name and read the complete body-shape inventory.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "boneName": "Bone02",
+  "center": {
+    "x": 4,
+    "y": 5,
+    "z": 6
+  },
+  "extentX": 20,
+  "extentY": 30,
+  "extentZ": 40,
+  "physicsAsset": {
+    "refPath": "/Game/SHAR_MCP_Validation_ControlRig/SK_MCP_Physics_PhysicsAsset.SK_MCP_Physics_PhysicsAsset"
+  },
+  "rotation": {
+    "pitch": 10,
+    "roll": 30,
+    "yaw": 20
+  },
+  "shapeName": "MCP_Box"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+`GetBodyShapes` added named box `MCP_Box` with exact center, rotation, and
+extents `20`, `30`, and `40`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Physics Asset mutations are persistent and destructive; use a duplicated
+  skeletal mesh and exact body, shape, and constraint inventories.
+- The duplicated mesh, generated Physics Asset, Control Rigs, and complete
+  validation folder were deleted afterward.
+- The setters use upsert semantics: a missing unique shape name creates that
+  primitive, while an existing matching shape is updated.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
