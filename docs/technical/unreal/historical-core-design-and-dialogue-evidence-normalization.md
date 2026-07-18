@@ -631,6 +631,187 @@ prop identity, behavior classification, old-copy reconciliation, source-loader
 supersession, material-guidance translation, dependency integrity, complete
 fact accounting, and atomic native publication.
 
+### Difficulty, usability, and play-test evidence families
+
+Historical balancing and play-test evidence may include perceived-difficulty
+arcs, per-mission tuning records, continue counts, completion observations,
+enjoyment and audio ratings, hindrance reports, vehicle evaluations, survey
+forms, focus-test notes, aggregate charts, and build-specific defect lists.
+These members form an evidence family; none is a runtime tuning table by itself.
+
+One reviewed study or tuning family records:
+
+- an opaque study, session, cohort, and evidence revision identity;
+- the tested build, platform profile, content revision, and configuration when
+  safely established;
+- canonical chapter, mission, stage, objective, vehicle, audio, UI, world, or
+  presentation identities;
+- the question, metric, scale, unit, direction, target range, and aggregation
+  method;
+- sample size, missing-value policy, confidence limitations, and known test
+  constraints;
+- normalized observations, issue candidates, accepted changes, and unresolved
+  conflicts; and
+- one terminal result for every consumed row, response, note, and linked chart.
+
+Participant names, contact details, demographic combinations, schedules,
+attendance, assignments, workstation paths, build-distribution instructions,
+and other identifying or employment data are private review metadata. They do
+not enter public diagnostics, runtime assets, telemetry schemas, credits, or
+content identity. Free-form responses are retained privately only when allowed;
+public evidence uses redacted categories and aggregate findings.
+
+#### Measurement normalization
+
+Every numeric observation declares its scale and interpretation. A rating must
+state whether a larger value means harder, easier, better, worse, more frequent,
+or more enjoyable. Counts, durations, percentages, ranks, and target bands keep
+explicit units. Blank, unavailable, not-applicable, skipped, malformed, and
+out-of-range values remain distinct terminal states.
+
+A linked or embedded chart is not evidence without its underlying normalized
+records, series identity, aggregation method, and sample count. A survey form is
+a schema, not a result set. A results table cannot silently infer unanswered
+questions from blank cells or treat a participant ordinal as a player identity.
+
+Historical level and mission numbers are mapped to canonical chapter, mission,
+stage, race, and bonus identities before comparison. Source row order, chart
+position, color, worksheet name, filename, build number, and date are provenance
+only.
+
+#### Tuning and issue reconciliation
+
+Observed difficulty, enjoyment, continues, completion, audio quality, vehicle
+feel, or frustration may establish a candidate balancing requirement or
+regression test. It does not directly change mission timers, artificial
+intelligence, catch-up behavior, rewards, economy, vehicle physics, audio, UI,
+world placement, or progression.
+
+Each candidate issue resolves to one current domain owner and records:
+
+- semantic content and tested-revision identity;
+- expected and observed behavior;
+- category, severity, frequency, and reproducibility when supported;
+- affected platform, input, mission state, vehicle, location, or presentation
+  context;
+- proposed adaptation separated from the observation itself;
+- accepted, adapted, superseded, rejected, duplicate, or unresolved status; and
+- the validating native test, measurement, or read-back requirement.
+
+A request, reviewer comment, or historical fix note is not proof that a change
+was implemented or remains desirable. Accepted tuning requires current units,
+bounds, deterministic tests, representative measurements, accessibility review
+where applicable, and native read-back through the owning runtime contract.
+
+Equivalent findings collapse by semantic identity and tested revision. Conflicts
+between aggregate reports, per-level data, focus notes, and tuning requests
+remain explicit. The importer does not choose the harshest rating, newest date,
+largest sample, or longest comment automatically.
+
+#### Study-family publication
+
+The complete declared family is loaded before publishing a normalized balancing
+finding, test fixture, accepted tuning decision, or public aggregate. Missing
+companion data, unknown scale direction, insufficient identity mapping,
+participant-data leakage, dangling chart references, conflicting accepted
+changes, or unverifiable build context fail closed and preserve the previous
+accepted domain revisions.
+
+Automated verification covers scale direction, unit preservation, missing-value
+states, cohort aggregation, chart-to-record linkage, mission identity mapping,
+participant-data exclusion, duplicate findings, contradictory recommendations,
+accepted-change read-back, member-order permutations, and atomic publication.
+
+### Localization, text-bible, and platform-copy revision families
+
+Historical localization evidence may contain multilingual phrase tables,
+platform-specific copy, built-in error text, tutorial and controller overrides,
+whole text-bible revisions, translator notes, approval markers, statistics, and
+companion metadata. These members form one revision family around stable
+semantic text identities; a file labeled final or a later-looking worksheet is
+not authority.
+
+One localization reconciliation set records:
+
+- canonical namespace, screen, semantic entry, locale, variant, and platform
+  identities;
+- every eligible base table, revision, override, note, and statistics member;
+- source and target locale mappings with explicit fallback policy;
+- placeholder, formatting, line-break, plural, gender, markup, and input-glyph
+  schemas;
+- do-not-translate, legal, certification, accessibility, and approval state;
+- equivalent, changed, superseded, rejected, missing, and unresolved entries;
+  and
+- one terminal family result before repository-owned localization is updated.
+
+Source filenames, worksheet labels, row order, screen grouping, color, comments,
+translator names, revision dates, platform nicknames, and raw source-product
+terminology are provenance only. They cannot create a localization key, locale,
+platform target, fallback, or approval state.
+
+#### Entry and schema normalization
+
+Durable entry identity comes from the accepted semantic key and namespace, not
+from source text. Locale identity uses the repository's canonical locale model.
+Platform or input variants are explicit overlays on one semantic entry; copied
+rows do not become unrelated keys merely because wording differs.
+
+The importer preserves placeholders, escape sequences, intended line breaks,
+button and axis tokens, numeric formatting, markup, and other protected symbols
+as typed schema elements. Placeholder parity and token compatibility are
+validated across locales and variants. Unknown symbols, malformed quoting,
+invalid encoding, duplicate keys, conflicting locale columns, or lossy
+normalization reject the affected family.
+
+Missing, intentionally untranslated, pending approval, platform-provided,
+not-applicable, and fallback-to-source states remain distinct. Placeholder text,
+question marks, review comments, and blank cells cannot silently become shipped
+copy.
+
+#### Revision and override reconciliation
+
+Base and revised tables are compared entry by entry. Equivalent definitions
+collapse; changed text, locale coverage, token schemas, approval state, or
+platform applicability require an explicit accepted revision or supersession
+relationship. Notes and statistics may validate completeness or explain policy,
+but they never publish strings independently.
+
+A platform-specific override is eligible only when a current target and semantic
+platform condition exist. Historical optical-media, memory-device, controller,
+or certification wording does not create modern platform support. Current
+platform error, input, frontend, storage, legal, and accessibility contracts own
+the condition and presentation behavior.
+
+Game-title, credits, license, trademark, and legal-screen proposals remain
+separate rights-sensitive evidence. A proposal sheet cannot rename the product,
+create credits, or approve legal text without the current publication and legal
+authorities.
+
+#### Native localization publication
+
+Only reviewed, rights-cleared, repository-owned text or authorized localization
+resources may enter public source and cooked packages. Raw historical copy,
+translator correspondence, approval notes, personal data, and source-document
+layout remain private evidence.
+
+Native projection uses the current localization interchange, presentation
+catalog, semantic input actions, and platform-error catalog. Shipping runtime
+reads validated localized resources and stable semantic keys; it has no source
+spreadsheet parser, revision-note reader, filename fallback, or platform-string
+array.
+
+The complete declared revision family is validated and read back before atomic
+publication. Missing required locales, unresolved key conflicts, placeholder or
+input-token mismatch, invalid fallback cycles, stale overrides, unapproved legal
+copy, or cooked read-back differences preserve the previous accepted
+localization revision.
+
+Automated verification covers locale-column mapping, key stability, encoding,
+protected-token parity, line-break preservation, explicit missing states,
+base-and-override precedence, note and statistics exclusion, platform fallback,
+rights-state enforcement, member-order permutations, deterministic output, and
+cooked read-back.
+
 ### Integrated core design
 
 A broad integrated design document is decomposed by domain. Its product goals
