@@ -50,42 +50,66 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to generate bounded convex collision geometry for a reviewed
+SHAR static mesh.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live StaticMeshTools schema.
+- Use a task-owned duplicate of `/Engine/BasicShapes/Cube` and remove existing
+  collision primitives before measuring generation.
+- Read the exact BodySetup aggregate geometry before and after, then delete
+  the complete disposable folder.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "hull_count": 2,
+  "hull_precision": 10000,
+  "max_hull_verts": 8,
+  "mesh": {
+    "refPath": "/Game/SHAR_MCP_Validation_ControlRig_Large_260718/SM_MCP_Large_260718.SM_MCP_Large_260718"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+After reviewed collision removal, reflected `BodySetup.aggGeom` contained zero
+convex elements. The call returned true and the same reader reported one
+convex element and zero box elements.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Static-mesh and BodySetup references become stale after asset deletion or
+  whole-folder cleanup.
+- Collision generation can be computationally expensive on production meshes;
+  keep hull count, vertex limits, and precision bounded.
+- `hull_count` is a generation request, not a guaranteed output count:
+  requesting two hulls on the cube produced one convex element.
+- Inspect the reflected BodySetup aggregate geometry rather than relying only
+  on the Boolean return.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

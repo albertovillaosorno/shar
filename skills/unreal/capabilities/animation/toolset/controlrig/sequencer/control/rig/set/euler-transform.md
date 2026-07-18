@@ -47,42 +47,76 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to set one typed Euler-transform Control Rig value at an exact
+SHAR sequence frame.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live SequencerControlRigTools schema.
+- Open the disposable Level Sequence, derive the track and section from live
+  returns, and validate the control through `get_controls_info`.
+- Capture the matching getter and define whole-folder deletion.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "control_name": "EulerControl",
+  "control_rig_asset_path": "/Game/SHAR_MCP_Validation_ControlRig_Large_260718/CR_MCP_Large_260718",
+  "frame": 24,
+  "location_x": 4.0,
+  "location_y": 5.0,
+  "location_z": 6.0,
+  "rotation_pitch": 10.0,
+  "rotation_roll": 30.0,
+  "rotation_yaw": 20.0,
+  "scale_x": 1.1,
+  "scale_y": 1.2,
+  "scale_z": 1.3,
+  "sequence": {
+    "refPath": "/Game/SHAR_MCP_Validation_ControlRig_Large_260718/LS_MCP_Large_260718.LS_MCP_Large_260718"
+  },
+  "set_key": true
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The dedicated getter returned location 4/5/6, rotation 10/20/30, and scale
+approximately 1.1/1.2/1.3 at frame 24.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Sequence, Control Rig track, section, binding, and control identities are
+  live editor references and become stale after structural edits, closing
+  Sequencer, or deleting the asset.
+- Validate every control name and type through `get_controls_info`; a Boolean
+  return or numeric value alone does not prove type compatibility.
+- Dedicated getters proved evaluated values. Ordinary channel readers did not
+  reliably prove that `set_key: true` inserted a durable key; use explicit
+  keying tools when key creation is required.
+- Scale and rotation values use engine floating-point representations; compare
+  with tolerance.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

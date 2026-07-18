@@ -49,42 +49,64 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to merge exact Control Rig animation-layer indices after
+independently reading the current layer inventory.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live SequencerControlRigTools schema.
+- Open the exact disposable Level Sequence, discover the Control Rig track and
+  section from live returns, and validate every control name and type with
+  `get_controls_info`.
+- Capture the matching value, mask, selection, key, layer, or space reader
+  before mutation and define whole-folder deletion.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "indices": [
+    1,
+    2
+  ]
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Merging indices 1 and 2 returned true and `get_anim_layers` replaced both
+inputs with one `Anim Layer 1_Duplicate_Merged` layer.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Sequence, Control Rig track, section, binding, and control identities are
+  live editor references and become stale after structural edits, closing
+  Sequencer, or deleting the asset.
+- Validate every control name and type through `get_controls_info`; a Boolean
+  return or numeric value alone does not prove type compatibility.
+- Animation-layer indices are active-editor identities and change after
+  duplicate, reorder, merge, or delete operations.
+- `get_anim_layers` returns JSON text and requires a second parse.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

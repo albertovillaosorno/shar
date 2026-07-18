@@ -50,42 +50,63 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to add one named skeletal-mesh socket to an exact reviewed bone
+for SHAR attachment authoring.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live SkeletalMeshTools schema.
+- Use a task-owned duplicate of `/Engine/EngineMeshes/SkeletalCube`; confirm
+  bones `Bone01` and `Bone02`, slot `MaterialSlot`, and the current socket
+  inventory before mutation.
+- Capture the matching socket, material, or bone reader and define
+  whole-folder deletion before invocation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "bone_name": "Bone01",
+  "mesh": {
+    "refPath": "/Game/SHAR_MCP_Validation_ControlRig_Large_260718/SK_MCP_Large_260718.SK_MCP_Large_260718"
+  },
+  "socket_name": "MCP_Socket"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+`get_socket_names` returned only `MCP_Socket`, and `get_socket_bone` returned
+`Bone01` for the returned socket reference.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Skeletal mesh, socket, and nested socket references become stale after asset
+  deletion or whole-folder cleanup.
+- Bone names and material-slot names are exact asset contracts; discover them
+  from the target mesh before mutation.
+- This validation used a disposable duplicate of the engine SkeletalCube and
+  does not authorize changes to engine-owned assets.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

@@ -62,42 +62,77 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to compose multiple bounded read-only Unreal MCP calls into one
+SHAR programmatic script.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Call `get_execution_environment` in the current conversation and read its
+  instructions completely.
+- Refresh the live schema and output schema for every registered tool the
+  script calls.
+- Keep the script read-only or fully disposable, and independently repeat its
+  returned reads through direct tool calls.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "script": "import json
+
+def get_priority():
+    return execute_tool(
+        \"animation_toolset.toolsets.controlrig_sequencer.SequencerControlRigTools.get_priority_order\",
+        json.dumps({\"sequence\": {\"refPath\": \"/Game/SHAR_MCP_Validation_ControlRig_Large_260718/LS_MCP_Large_260718.LS_MCP_Large_260718\"}, \"control_rig_asset_path\": \"/Game/SHAR_MCP_Validation_ControlRig_Large_260718/CR_MCP_Large_260718\"})
+    )[\"returnValue\"]
+
+def get_visible():
+    return execute_tool(
+        \"animation_toolset.toolsets.controlrig_sequencer.SequencerControlRigTools.get_controls_mask\",
+        json.dumps({\"section\": {\"refPath\": \"/Game/SHAR_MCP_Validation_ControlRig_Large_260718/LS_MCP_Large_260718.LS_MCP_Large_260718:MovieScene_0.MovieSceneControlRigParameterTrack_0.MovieSceneControlRigParameterSection_0\"}, \"control_name\": \"TransformControl\"})
+    )[\"returnValue\"]
+
+def run():
+    return {\"priority\": get_priority(), \"visible\": get_visible()}
+"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The script returned JSON with priority 17 and visibility true. Independent
+direct calls to the same two native getters returned the same values.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The programmatic environment is runtime authority and may change with the
+  live toolset revision.
+- Registered tool calls remain subject to their own editor-state, mutation,
+  and verification contracts.
+- The return is a JSON-encoded string and requires a second parse.
+- Only modules listed by `get_execution_environment` are allowed; raw Unreal
+  Python and filesystem access are not implied.
+- Inspect every called tool output schema before parsing its result inside the
+  script.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

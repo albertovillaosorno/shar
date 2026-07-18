@@ -47,42 +47,71 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to set one Scale Control Rig value at an exact SHAR sequence
+frame.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live SequencerControlRigTools schema.
+- Open the exact disposable Level Sequence, discover the Control Rig track and
+  section from live returns, and validate every control name and type with
+  `get_controls_info`.
+- Capture the matching value, mask, selection, key, layer, or space reader
+  before mutation and define whole-folder deletion.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "control_name": "ScaleControl",
+  "control_rig_asset_path": "/Game/SHAR_MCP_Validation_ControlRig_Large_260718/CR_MCP_Large_260718",
+  "frame": 24,
+  "sequence": {
+    "refPath": "/Game/SHAR_MCP_Validation_ControlRig_Large_260718/LS_MCP_Large_260718.LS_MCP_Large_260718"
+  },
+  "set_key": true,
+  "x": 1.1,
+  "y": 1.2,
+  "z": 1.3
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The dedicated getter returned approximately 1.1/1.2/1.3 for `ScaleControl` at
+frame 24.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Sequence, Control Rig track, section, binding, and control identities are
+  live editor references and become stale after structural edits, closing
+  Sequencer, or deleting the asset.
+- Validate every control name and type through `get_controls_info`; a Boolean
+  return or numeric value alone does not prove type compatibility.
+- Dedicated getters proved evaluated values. Ordinary channel readers did not
+  reliably prove that `set_key: true` inserted a durable key; use explicit
+  keying tools when key creation is required.
+- The getter showed normal float32 noise; compare with tolerance.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

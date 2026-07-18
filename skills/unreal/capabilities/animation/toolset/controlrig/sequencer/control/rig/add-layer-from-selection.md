@@ -47,42 +47,64 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to create a bounded Control Rig animation layer from an
+explicitly selected SHAR Sequencer binding.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live SequencerControlRigTools schema.
+- Open the exact disposable Level Sequence, discover the Control Rig track and
+  section from live returns, and validate every control name and type with
+  `get_controls_info`.
+- Capture the matching value, mask, selection, key, layer, or space reader
+  before mutation and define whole-folder deletion.
+- Select the exact intended Sequencer binding and verify the selection before
+  adding a layer.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The exact skeletal binding was independently selected first. The call returned
+index 1, and `get_anim_layers` changed from an empty list to `Base Layer` plus
+`Anim Layer 1`.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Sequence, Control Rig track, section, binding, and control identities are
+  live editor references and become stale after structural edits, closing
+  Sequencer, or deleting the asset.
+- Validate every control name and type through `get_controls_info`; a Boolean
+  return or numeric value alone does not prove type compatibility.
+- Animation-layer indices are active-editor identities and change after
+  duplicate, reorder, merge, or delete operations.
+- `get_anim_layers` returns JSON text and requires a second parse.
+- The active Sequencer binding selection is implicit input; transport success
+  without a before/after layer inventory is insufficient.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
