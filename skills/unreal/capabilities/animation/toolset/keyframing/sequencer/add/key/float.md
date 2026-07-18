@@ -47,42 +47,65 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to author an exact numeric transform key in a reviewed SHAR
+mission, camera, dialogue, or cinematic sequence.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live toolset schema.
+- Open the exact disposable or recoverable Level Sequence and resolve the
+  section and channel from current Sequencer readers.
+- Capture the matching key or curve-visibility reader before mutation.
+- Define whole-sequence and temporary-actor cleanup before invocation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "channel_name": "Location.X",
+  "frame": 24,
+  "interpolation": "linear",
+  "section": {
+    "refPath": "/Game/SHAR_MCP_Validation_KF_23991520/LS_MCP_KF_23991520.LS_MCP_KF_23991520:MovieScene_0.MovieScene3DTransformTrack_1.MovieScene3DTransformSection_0"
+  },
+  "value": 123.5
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+`get_keys` changed from `[]` to one key at frame 24 with value 123.5 on
+`Location.X`. The key used linear interpolation and was read independently
+from the mutation response.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Section and channel names are live Sequencer identities; discover them with
+  `get_channel_names` and never assume every channel has a descriptive name.
+- Key frames use the sequence frame domain, while values must match the
+  underlying channel type.
+- This validation used a disposable sequence, a temporary actor, and
+  whole-folder cleanup.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

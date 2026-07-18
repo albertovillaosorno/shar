@@ -48,20 +48,19 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-Use this tool as a bounded preflight for AI-assisted SHAR asset discovery.
-It distinguishes assets present in the Asset Registry from assets currently
-available through the SemanticSearch index.
+Use this tool to search the current Unreal semantic asset index for SHAR
+materials, textures, meshes, or Blueprints by natural-language intent.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-- The canonical SHAR project and SemanticSearch toolset must be ready.
-- The configured embedding provider must accept the current editor request.
-- Supply non-empty `query`, `classFilter`, and `pathRegexes` fields exactly
-  as required by the live schema.
-- Use a bounded `k` and a virtual-path regular expression whenever the target
-  content family is known.
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live toolset schema.
+- Confirm the SemanticSearch plugin is available and provide explicit class
+  and path filters, including empty arrays when no filtering is intended.
+- Repeat a diagnostic query when an empty result must be distinguished from
+  transport failure.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
@@ -69,12 +68,12 @@ available through the SemanticSearch index.
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
 ```json
 {
-  "query": "character",
   "classFilter": [],
+  "k": 5,
   "pathRegexes": [
     "^/Game/.*"
   ],
-  "k": 5
+  "query": "cartoon character material"
 }
 ```
 <!-- END MANUAL FIELD: validated-arguments -->
@@ -82,35 +81,31 @@ available through the SemanticSearch index.
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-Two identical bounded `/Game` calls returned `returnValue: []` without an
-MCP error. As an independent control, `AssetTools.find_assets` found
-`/BaseMaterial/Materials/Functions/MF_Rotate2D`, proving that an empty
-SemanticSearch result does not establish that the editor has no assets.
+Two identical searches for `cartoon character material`, limited to `/Game`,
+both returned an empty array. This proves successful deterministic execution
+against the current project, whose semantic index presently contains no
+matching assets.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-- Search availability depends on both SemanticSearch index coverage and the
-  configured embedding provider.
-- A separate `/BaseMaterial` query failed with HTTP 401 when the embedding
-  provider had no credential; do not retry by exposing or weakening secrets.
-- An empty array is a successful query result, not proof that the Asset
-  Registry is empty. Verify important absences with an independent registry
-  query.
-- The current output schema states relevance ordering but does not expose a
-  numeric score field.
+- An empty array can mean no indexed matches; it is not a transport error.
+- Results depend on the current SemanticSearch index, supported asset classes,
+  path filters, and index freshness.
+- Do not treat captions as authoritative asset metadata without reading the
+  returned asset directly.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

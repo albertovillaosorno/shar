@@ -47,42 +47,58 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to open one exact SHAR asset in its native Unreal editor when a
+later reviewed operation requires that editor context.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live toolset schema.
+- Use an exact package path returned by asset creation or discovery.
+- Capture `GetOpenAssets` before invocation and define how the opened editor
+  will be closed before deleting disposable content.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "assetPath": "/Game/SHAR_MCP_Validation_App_3363b678/LS_MCP_App_3363b678"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+`GetOpenAssets` changed from an empty list to the exact disposable Level
+Sequence package, and `get_current_sequence` independently returned its object
+reference. The sequence editor was then closed before asset deletion.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Opening an asset changes editor UI state and may focus a different asset
+  editor.
+- Use `GetOpenAssets` and an asset-specific close operation as the
+  postcondition and inverse.
+- A separate `SelectAssets` attempt timed out and produced no selection
+  change; asset opening does not imply Content Browser selection.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

@@ -47,42 +47,63 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to show or hide one exact Sequencer channel in the Curve Editor
+during reviewed SHAR animation work.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live toolset schema.
+- Open the exact disposable or recoverable Level Sequence and resolve the
+  section and channel from current Sequencer readers.
+- Capture the matching key or curve-visibility reader before mutation.
+- Define whole-sequence and temporary-actor cleanup before invocation.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "channel": {
+    "channelName": "Location.X",
+    "section": {
+      "refPath": "/Game/SHAR_MCP_Validation_KF_23991520/LS_MCP_KF_23991520.LS_MCP_KF_23991520:MovieScene_0.MovieScene3DTransformTrack_1.MovieScene3DTransformSection_0"
+    }
+  },
+  "show": true
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+`is_curve_shown` changed from `false` to `true` for the exact `Location.X`
+channel. The original hidden state was restored before fixture cleanup.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Curve visibility is transient editor presentation state and does not save
+  animation data.
+- The channel proxy becomes stale after closing the sequence or replacing its
+  section.
+- Capture and restore the previous visibility value.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
