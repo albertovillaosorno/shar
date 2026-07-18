@@ -54,42 +54,61 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to recompile a SHAR material after graph or parameter edits
+before instance validation.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live MaterialTools or MaterialInstanceTools schema.
+- Use a task-owned material graph and instance whose scalar, vector, texture,
+  and static-switch parameters were independently listed.
+- Capture the matching graph or parameter reader and define whole-folder
+  cleanup.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "material_or_function": {
+    "refPath": "/Game/SHAR_MCP_Validation_SeqRound_260718/M_MCP_SeqRound_260718.M_MCP_SeqRound_260718"
+  }
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The call returned null without error; the child material instance then listed
+the exact scalar, vector, texture, and static-switch parameters.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Material and expression references become stale after deletion or
+  whole-folder cleanup.
+- These mutation tools return null; use parameter getters, expression readers,
+  and inherited parameter discovery as postconditions.
+- Linear-color values may round to normal single-precision representations.
+- The operation returns null. Verify downstream parameter discovery or another
+  compiled consumer rather than treating transport completion as proof.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
