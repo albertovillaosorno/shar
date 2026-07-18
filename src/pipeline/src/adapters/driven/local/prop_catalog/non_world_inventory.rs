@@ -207,7 +207,9 @@ fn is_publishable_composite(
     family: PropFamily,
     name: &str,
 ) -> bool {
-    family != PropFamily::Cards || name.starts_with("card_")
+    family != PropFamily::Cards
+        || name.starts_with("card_")
+        || name == "phone_icon"
 }
 
 /// Add real non-world prop meshes that are not owned by a composite.
@@ -258,7 +260,7 @@ mod tests {
     use crate::adapters::driven::local::prop_catalog::model::PropFamily;
 
     #[test]
-    fn cards_exclude_phone_interaction_presentation() {
+    fn cards_publish_phone_icon_model_evidence() {
         assert!(
             is_publishable_composite(
                 PropFamily::Cards,
@@ -266,7 +268,7 @@ mod tests {
             )
         );
         assert!(
-            !is_publishable_composite(
+            is_publishable_composite(
                 PropFamily::Cards,
                 "phone_icon"
             )

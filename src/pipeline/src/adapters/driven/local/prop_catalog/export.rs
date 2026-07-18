@@ -390,11 +390,14 @@ fn write_unique_prop(
     )
 }
 
-/// Build one family-scoped relative asset directory.
+/// Build one stable relative asset directory.
 fn asset_relative_dir(
     family: PropFamily,
     asset_id: &str,
 ) -> String {
+    if family == PropFamily::Cards && asset_id == "phone-icon" {
+        return asset_id.to_owned();
+    }
     format!(
         "{}/{asset_id}",
         family.as_str()
@@ -427,6 +430,13 @@ mod tests {
                 "card-idle",
             ),
             "cards/card-idle"
+        );
+        assert_eq!(
+            asset_relative_dir(
+                PropFamily::Cards,
+                "phone-icon",
+            ),
+            "phone-icon"
         );
         assert_eq!(
             asset_relative_dir(

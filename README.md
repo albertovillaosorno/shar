@@ -566,8 +566,9 @@ Relevant decisions:
 world-prop lanes are finished and published locally. All 110 skinned character
 presentations produce verified binary FBX 7.7 artifacts with external textures,
 preserved topology and rigging, and non-empty animation sets. The prop catalog
-publishes Wasp Camera, Wrench, 71 mission models, one collectible-card model, and
-285 readable standalone world props. Vehicle export and assembled level terrain,
+publishes Wasp Camera, Wrench, 71 mission models, one collectible-card model,
+one phone-interaction model, and 285 readable standalone world props. Vehicle
+export and assembled level terrain,
 interiors, placements, and final world presentation remain in progress.
 
 Completed boundary work:
@@ -600,8 +601,8 @@ Completed boundary work:
 - [x] Exclude `wrench_collect`, billboard quads, glow materials, lights, and
   particle systems from the Wrench FBX.
 - [x] Publish one deduplicated non-world prop catalog beneath separate
-  `cards/` and `missions/` directories, including card, race-flag, and
-  finish-line model geometry while excluding interaction-only phone presentation.
+  `cards/` and `missions/` directories plus the root `phone-icon/` prop,
+  including card, phone-icon, race-flag, and finish-line model geometry.
 - [x] Publish terrain-world model props beneath `fbx-assets/props/world/`
   with one hash-free directory per readable prop name.
 - [x] Consolidate same-name world variants by positions, topology, and rig;
@@ -653,53 +654,57 @@ Blender 5.1 imported the final model, texture, rig, and complete animation witho
 collection, glow, quad, or particle identities.
 
 The complete ignored non-world model-prop catalog is published beneath
-`fbx-assets/props/`. Mission assets live below `fbx-assets/props/missions/`, and
-card-package models live below `fbx-assets/props/cards/`. Each asset uses one
+`fbx-assets/props/`. Mission assets live below `fbx-assets/props/missions/`,
+card-package models live below `fbx-assets/props/cards/`, and the phone
+interaction model lives below `fbx-assets/props/phone-icon/`. Each asset uses one
 readable directory and matching FBX name, for example
-`fbx-assets/props/missions/bombbarrel/bombbarrel.fbx` and
-`fbx-assets/props/cards/card-idle/card-idle.fbx`. Semantic SHA-256 values remain
-in `fbx-assets/props/non-world-props.catalog.json` rather than in public path
-names.
+`fbx-assets/props/missions/bombbarrel/bombbarrel.fbx`,
+`fbx-assets/props/cards/card-idle/card-idle.fbx`, and
+`fbx-assets/props/phone-icon/phone-icon.fbx`. Semantic SHA-256 values remain in
+`fbx-assets/props/non-world-props.catalog.json` rather than in public path names.
 
 The `fbx-export-props` batch re-extracts 269 mission packages and the one cards
-package. It reduces 73 model-bearing occurrences to 72 unique assets: 71 mission
-models and one collectible-card model. The final catalog contains 183 files and
-9,559,056 bytes: 72 binary FBX 7.7 files, 110 external PNG textures, and one
-catalog. Two mission assets are static models with no synthetic skeleton, skin,
-bind pose, or animation; the remaining 69 mission assets and `card-idle` retain
-an authored rigid skeleton and exactly one matching model `PTRN` clip.
+package. It reduces 74 model-bearing occurrences to 73 unique assets: 71 mission
+models, one collectible-card model, and one phone-interaction model. The final
+catalog contains 185 files and 9,708,447 bytes: 73 binary FBX 7.7 files, 111
+external PNG textures, and one catalog. Two mission assets are static models with
+no synthetic skeleton, skin, bind pose, or animation; the remaining 69 mission
+assets, `card-idle`, and `phone-icon` retain authored rigid skeletons and exactly
+one matching model `PTRN` clip each.
 
 The mission lane includes the head-to-head `flag` model and the animated
-`finish-line` presentation. The cards lane contains only `card-idle`.
-`phone-icon` belongs to phone-interaction presentation and is deliberately
-excluded instead of being mislabeled as a collectible card or republished as a
-standalone mesh. The `card-idle` mesh uses `question_card_m`, whose authored
+`finish-line` presentation. The cards lane contains only `card-idle`, while
+`phone-icon` publishes as a root prop instead of being mislabeled as a
+collectible card. The `card-idle` mesh uses `question_card_m`, whose authored
 texture reference is `Buzz Card Texture_June.bmp`; the other textures in the
 cards package belong to glow, scratch, shadow, particle, or phone effects rather
 than missing card-surface bindings.
 
 Blender 5.1 imported `card-idle` with one 72-vertex mesh, one material and
-external texture, one two-bone armature, and one authored action. Representative
-`missions/flag` and `missions/blend` imports also preserved the expected static
-and animated boundaries. Quad-only markers, shadows, billboard effects,
-particles, cameras, collision, placement, and gameplay data remain normalized
-inputs for Phase 6 native Unreal asset conversion rather than misleading FBX
-objects.
+external texture, one two-bone armature, and one authored action. Blender 5.1.2
+imported `phone-icon` with one mesh, one material and external texture, one
+three-bone armature, vertex colors, and one 121-frame action with no missing
+images. Representative `missions/flag` and `missions/blend` imports also
+preserved the expected static and animated boundaries. Quad-only markers,
+shadows, billboard effects, particles, cameras, collision, placement, and
+gameplay data remain normalized inputs for Phase 6 native Unreal asset conversion
+rather than misleading FBX objects.
 
 Two independent complete generations produced identical relative paths, sizes,
 and SHA-256 values for every file. The canonical non-world snapshot SHA-256 is
-`60519649e2c5ff697fa172df44fffdca36d39931a0a94fdb93b9a13986a9cbc6`,
+`1df2a69d9056b32b3edc6905a2514eadf59ede6a0353876d0b8f8fded163ecfb`,
 and the catalog SHA-256 is
-`aaa2f13b5e94e1267293c0668e72a79b496e51357a5bde856aa050163f87de03`.
+`58c355ca310a2f8135a0a72c52db6a6441d069340e1f6a1f48aa56aa3160accc`.
 
 Generate one fresh non-world prop catalog root with:
 
 ```bash
-pipeline fbx-export-props extracted/minor-unit/index.jsonl game   temp/non-world-props
+pipeline fbx-export-props extracted/minor-unit/index.jsonl game \
+  temp/non-world-props
 ```
 
-Every fresh output root contains exactly `cards/`, `missions/`, and
-`non-world-props.catalog.json`. Standalone world props use the separate
+Every fresh output root contains exactly `cards/`, `missions/`, `phone-icon/`,
+and `non-world-props.catalog.json`. Standalone world props use the separate
 `fbx-export-world-props` command and are never mixed into this batch.
 
 FBX output contains model geometry, diffuse materials and external textures,
