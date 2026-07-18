@@ -54,7 +54,7 @@ use fbx::adapters::driven::decoded_component_source::{
 };
 use fbx::domain::character::CharacterAsset;
 use fbx::domain::mesh::MeshAsset;
-use fbx::domain::texture::MaterialBinding;
+use fbx::domain::texture::{MaterialBinding, MaterialSemantics};
 use fbx::ports::component_source::ComponentSource as _;
 use shar_sha256::digest_hex;
 
@@ -469,6 +469,7 @@ fn resolve_materials(
             authority,
             source_subcategory,
         )?;
+        let source_semantics = binding.semantics;
         let (canonical_material, canonical_texture) =
             match binding.texture_file_name {
                 Some(source_name) => {
@@ -494,12 +495,18 @@ fn resolve_materials(
                             },
                         );
                     (
-                        format!("material-{digest}"),
+                        canonical_material_identity(
+                            Some(&digest),
+                            source_semantics,
+                        ),
                         Some(file_name),
                     )
                 }
                 None => (
-                    "material-none".to_owned(),
+                    canonical_material_identity(
+                        None,
+                        source_semantics,
+                    ),
                     None,
                 ),
             };
@@ -511,6 +518,7 @@ fn resolve_materials(
             canonical_material.clone(),
             canonical_texture,
         )
+        .map(|material| material.with_semantics(source_semantics))
         .map_err(
             |error| {
                 PipelineError::new(
@@ -535,9 +543,31 @@ fn resolve_materials(
     )
 }
 
+/// Build one content-derived material identity without merging semantic
+/// classes.
+fn canonical_material_identity(
+    texture_digest: Option<&str>,
+    semantics: MaterialSemantics,
+) -> String {
+    let base = texture_digest.map_or_else(
+        || "material-none".to_owned(),
+        |digest| format!("material-{digest}"),
+    );
+    semantics
+        .suffix()
+        .map_or_else(
+            || base.clone(),
+            |suffix| format!("{base}-{suffix}"),
+        )
+}
+
 #[cfg(test)]
 mod tests {
-    use super::is_world_analysis_default_shader;
+    use fbx::domain::texture::MaterialSemantics;
+
+    use super::{
+        canonical_material_identity, is_world_analysis_default_shader,
+    };
 
     #[test]
     fn recognizes_only_evidence_backed_neutral_defaults() {
@@ -546,5 +576,43 @@ mod tests {
         assert!(!is_world_analysis_default_shader("lambert"));
         assert!(!is_world_analysis_default_shader("pure3dSimpleShader14"));
         assert!(!is_world_analysis_default_shader("world_button_m"));
+    }
+
+    #[test]
+    fn canonical_material_identity_separates_surface_semantics() {
+        let opaque = canonical_material_identity(
+            Some("abc123"),
+            MaterialSemantics::default(),
+        );
+        let glass = canonical_material_identity(
+            Some("abc123"),
+            MaterialSemantics::default().with_glass(true),
+        );
+        let emitter = canonical_material_identity(
+            Some("abc123"),
+            MaterialSemantics::default()
+                .with_transparent(true)
+                .with_light_emitter(true),
+        );
+        assert_eq!(
+            opaque,
+            "material-abc123"
+        );
+        assert_eq!(
+            glass,
+            "material-abc123-glass"
+        );
+        assert_eq!(
+            emitter,
+            "material-abc123-transparent-light-emitter"
+        );
+        assert_ne!(
+            opaque,
+            glass
+        );
+        assert_ne!(
+            glass,
+            emitter
+        );
     }
 }

@@ -37,7 +37,7 @@
 use std::collections::BTreeMap;
 use std::path::Path;
 
-use super::super::extraction::is_world_level_package;
+use super::super::extraction::is_world_package;
 use super::super::inventory_common::clean_identity;
 use super::super::world_ledger::read_world_ledger;
 use super::transform::Matrix;
@@ -59,69 +59,75 @@ pub(super) struct LevelMeshSource {
     pub(super) owner_kind: String,
 }
 
-/// Deterministic main-level package grouping.
-pub(super) fn packages_by_level(
+/// Return every terrain-world package in deterministic import order.
+pub(super) fn world_packages(
     index: &PhaseThreePackageIndex
-) -> Result<BTreeMap<String, Vec<&PhaseThreePackageRow>>, PipelineError> {
-    let mut levels = BTreeMap::<String, Vec<&PhaseThreePackageRow>>::new();
-    for package in index
+) -> Vec<&PhaseThreePackageRow> {
+    let mut packages = index
         .packages()
         .iter()
-        .filter(|package| is_world_level_package(package))
-    {
-        let level = package_level(package)?;
-        levels
-            .entry(level)
-            .or_default()
-            .push(package);
-    }
-    if levels.len() != 7
-        || levels
-            .keys()
-            .map(String::as_str)
-            .ne(
-                [
-                    "01", "02", "03", "04", "05", "06", "07",
-                ],
+        .filter(|package| is_world_package(package))
+        .collect::<Vec<_>>();
+    packages.sort_by(
+        |left, right| {
+            (
+                &left.subcategory,
+                &left.package_id,
             )
-    {
-        return Err(
-            PipelineError::new(
-                "world level package index does not contain levels 01 through \
-                 07",
-            ),
-        );
-    }
-    Ok(levels)
-}
-
-/// Return one package's explicit two-digit main-level identity.
-/// Parse one package main-level identity.
-fn package_level(
-    package: &PhaseThreePackageRow
-) -> Result<String, PipelineError> {
-    let value = package
-        .subcategory
-        .strip_prefix("terrain-world/level-")
-        .and_then(|rest| rest.get(0..2))
-        .filter(
-            |level| {
-                level
-                    .chars()
-                    .all(|character| character.is_ascii_digit())
-            },
-        )
-        .ok_or_else(
-            || {
-                PipelineError::new(
-                    format!(
-                        "world package has no main-level identity: {}",
-                        package.subcategory
+                .cmp(
+                    &(
+                        &right.subcategory,
+                        &right.package_id,
                     ),
                 )
-            },
-        )?;
-    Ok(value.to_owned())
+        },
+    );
+    packages
+}
+
+/// Return the independent source scope owning one world package.
+pub(super) fn package_scope(
+    package: &PhaseThreePackageRow
+) -> Result<String, PipelineError> {
+    if let Some(rest) = package
+        .subcategory
+        .strip_prefix("terrain-world/level-")
+    {
+        let level = rest
+            .get(0..2)
+            .filter(
+                |value| {
+                    value
+                        .chars()
+                        .all(|character| character.is_ascii_digit())
+                },
+            )
+            .ok_or_else(
+                || {
+                    PipelineError::new(
+                        format!(
+                            "world package has no two-digit level scope: {}",
+                            package.subcategory
+                        ),
+                    )
+                },
+            )?;
+        return Ok(format!("level-{level}"));
+    }
+    if package
+        .subcategory
+        .starts_with("terrain-world/bonus-area/")
+    {
+        return Ok("bonus-area".to_owned());
+    }
+    Err(
+        PipelineError::new(
+            format!(
+                "world package has no supported import scope: {}",
+                package.subcategory
+            ),
+        ),
+    )
 }
 
 /// Return whether one package is an explicitly owned interior.

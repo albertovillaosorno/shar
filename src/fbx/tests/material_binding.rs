@@ -92,6 +92,24 @@ fn classifies_shared_glass_mirror_and_light_identities() -> Result<(), String> {
     {
         return Err(format!("glass semantics were incomplete: {glass:?}"));
     }
+    let police_lights = MaterialBinding::new(
+        "cPoliceLights_m",
+        Some("police_lightbar.png".to_owned()),
+    )
+    .map_err(|error| format!("police lights failed: {error:?}"))?;
+    if !police_lights
+        .semantics
+        .is_light_emitter()
+        || police_lights
+            .semantics
+            .is_glass()
+    {
+        return Err(
+            format!(
+                "plural light semantics were incomplete: {police_lights:?}"
+            ),
+        );
+    }
     let mirror = MaterialBinding::new(
         "rearview_mirror_m",
         Some("rearview.png".to_owned()),
@@ -100,6 +118,9 @@ fn classifies_shared_glass_mirror_and_light_identities() -> Result<(), String> {
     if !mirror
         .semantics
         .is_mirror()
+        || !mirror
+            .semantics
+            .is_reflective()
         || mirror
             .semantics
             .is_glass()
@@ -108,6 +129,47 @@ fn classifies_shared_glass_mirror_and_light_identities() -> Result<(), String> {
             .is_light_emitter()
     {
         return Err(format!("mirror semantics were incomplete: {mirror:?}"));
+    }
+    let chrome = MaterialBinding::new(
+        "vehicle_chrome_m",
+        Some("vehicle_chrome.png".to_owned()),
+    )
+    .map_err(|error| format!("reflective material failed: {error:?}"))?;
+    if !chrome
+        .semantics
+        .is_reflective()
+        || chrome
+            .semantics
+            .is_light_emitter()
+    {
+        return Err(
+            format!("reflective semantics were incomplete: {chrome:?}"),
+        );
+    }
+    let fire_truck = MaterialBinding::new(
+        "cFire_vBackNorm_m",
+        Some("cFire_vBackNorm.png".to_owned()),
+    )
+    .map_err(|error| format!("fire-truck material failed: {error:?}"))?;
+    if fire_truck
+        .semantics
+        .is_visual_effect()
+    {
+        return Err(format!("vehicle identity became VFX: {fire_truck:?}"));
+    }
+    let flame = MaterialBinding::new(
+        "flame_m",
+        Some("fireseq.png".to_owned()),
+    )
+    .map_err(|error| format!("VFX material failed: {error:?}"))?;
+    if !flame
+        .semantics
+        .is_visual_effect()
+        || flame
+            .semantics
+            .is_light_emitter()
+    {
+        return Err(format!("VFX semantics were incomplete: {flame:?}"));
     }
     Ok(())
 }

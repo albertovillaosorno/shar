@@ -16,13 +16,15 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Master-world mesh preparation, review-layer assembly, and FBX write.
+//   - Per-package world mesh preparation, review isolation, and FBX writes.
 // - Must-Not:
-//   - Select source packages or serialize the root catalog.
+//   - Select source packages, merge incompatible variants, or serialize the
+//   - root catalog.
 // - Allows:
-//   - Static analysis freezing and a separated definition-only gallery.
+//   - Baked shared-origin geometry, collision inspection, and isolated
+//   - definition-only review galleries.
 // - Summary:
-//   - Publishes one separated static master-world FBX for all seven levels.
+//   - Publishes independently importable world-package FBX files.
 //
 // ADRs:
 // - docs/adr/pipeline/unreal/world-assembly-from-normalized-chunks.md
@@ -30,11 +32,15 @@
 //
 // Large file:
 //   - true
-//   - Reason: one master assembly transaction keeps mesh, collision, material,
-//     gallery, and artifact counts atomic until a second consumer exists.
+//   - Reason: one package-collection transaction keeps coordinate joins,
+//     collision recovery, material variants, review isolation, and writes
+//     consistent.
+//   - Split: extract package publication when another world consumer exists.
+//   - Validation: canonical pipeline validation plus world-level tests.
+//   - Review: required whenever another assembly responsibility is added.
 //
 
-//! Separated master-world static analysis FBX assembly.
+//! Globally aligned world-package static analysis FBX assembly.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
@@ -56,14 +62,18 @@ use super::collision::{COLLISION_MATERIAL, load_intersect_meshes};
 use super::coordinate::PackageCoordinates;
 use super::inventory::{
     LevelMeshSource, is_direct_world_mesh, is_interior, package_meshes,
+    package_scope,
 };
-use super::model::{ExportedWorldMaster, LevelPackageRecord};
+use super::model::{
+    ExportedWorldCollection, WorldFbxRecord, WorldPackageRecord,
+    WorldSurfaceSemanticCounts,
+};
 use super::transform::{bake_mesh, identity, mesh_bounds, translation};
 use crate::domain::PipelineError;
 use crate::domain::package::PhaseThreePackageRow;
 
 /// Mutable content maps shared by all packages in one level.
-#[derive(Default)]
+#[derive(Clone, Default)]
 struct MasterContent {
     /// Fully baked authored scene and collision meshes.
     meshes: Vec<MeshAsset>,
@@ -74,7 +84,7 @@ struct MasterContent {
     /// Content-derived texture payloads.
     textures: BTreeMap<String, PreparedTexture>,
     /// Canonical package records.
-    packages: Vec<LevelPackageRecord>,
+    packages: Vec<WorldPackageRecord>,
 }
 
 /// Immutable source paths and authorities used while appending packages.
@@ -92,45 +102,23 @@ struct PackageAppendContext<'sources> {
 }
 
 /// One definition-only mesh awaiting review-layer placement.
+#[derive(Clone)]
 struct ReviewMesh {
+    /// Canonical definition-only mesh preserved as a separate review object.
     mesh: MeshAsset,
+    /// Coarse shape profile used only for review co-location.
     profile: ShapeProfile,
 }
 
 /// Coarse normalized shape evidence used only for review co-location.
 #[derive(Clone, Copy)]
 struct ShapeProfile {
+    /// Total source vertex count.
     vertices: usize,
+    /// Total source triangle count.
     triangles: usize,
+    /// Positive axis extents in source units.
     extents: [f32; 3],
-}
-
-/// Aggregate package counters for the completed master scene.
-struct MasterTotals {
-    /// Recovered source mesh count.
-    source_meshes: usize,
-    /// Repeated-index degenerate triangle count discarded for analysis.
-    discarded_degenerate_triangles: usize,
-    /// Authored world placement count.
-    authored_placements: usize,
-    /// Placements supplied by connected-map references.
-    reference_placements: usize,
-    /// Placements retaining canonical matrices as fallback.
-    canonical_placement_fallbacks: usize,
-    /// Direct meshes using topology-verified reference coordinates.
-    reference_coordinate_meshes: usize,
-    /// Direct meshes retaining canonical coordinates as fallback.
-    canonical_coordinate_meshes: usize,
-    /// Definition-only meshes placed in similarity-overlaid review groups.
-    review_definitions: usize,
-    /// Collision review mesh count.
-    collision_meshes: usize,
-    /// Collision meshes using topology-verified reference coordinates.
-    reference_collision_meshes: usize,
-    /// Repeated-index collision triangles discarded.
-    discarded_collision_triangles: usize,
-    /// Explicit interior package count.
-    interior_packages: usize,
 }
 
 /// Package counter selected for checked assembly accounting.
@@ -148,31 +136,169 @@ enum PackageCounter {
     ReviewDefinition,
 }
 
-/// Export one separated master-world scene in canonical level order.
+/// Export independently importable world-package scenes at one shared origin.
+///
+/// Main scene files are written directly below the output root so selecting all
+/// root `*.fbx` files in Blender preserves their authored global coordinates.
+/// Definition-only review galleries are isolated below `review/` and are not
+/// part of the normal world import set.
 ///
 /// # Errors
 ///
 /// Returns an error when package loading, coordinate joins, collision recovery,
-/// review placement, material planning, texture publication, or FBX writing
-/// fails.
-pub(super) fn export_master_scene(
-    packages: &BTreeMap<String, Vec<&PhaseThreePackageRow>>,
+/// material planning, texture publication, or any FBX write fails.
+#[expect(
+    clippy::too_many_lines,
+    reason = "Collection publication keeps package and review FBXs atomic."
+)]
+pub(super) fn export_world_collection(
+    packages: &[&PhaseThreePackageRow],
     canonical_root: &Path,
     coordinate_root: &Path,
     reference_packages: &BTreeSet<String>,
     scratch_root: &Path,
     output_root: &Path,
     authority: &SharedTextureAuthority,
-) -> Result<ExportedWorldMaster, PipelineError> {
+) -> Result<ExportedWorldCollection, PipelineError> {
     let texture_root = output_root.join("textures");
-    fs::create_dir_all(&texture_root).map_err(
-        |error| {
-            PipelineError::new(
-                format!("world master texture directory failed: {error}"),
-            )
-        },
+    let review_root = output_root.join("review");
+    let review_texture_root = review_root.join("textures");
+    for directory in [
+        &texture_root,
+        &review_root,
+    ] {
+        fs::create_dir_all(directory).map_err(
+            |error| {
+                PipelineError::new(
+                    format!("world package output directory failed: {error}"),
+                )
+            },
+        )?;
+    }
+
+    let mut records = Vec::with_capacity(packages.len());
+    let mut all_textures = BTreeMap::<String, PreparedTexture>::new();
+    let mut aggregate_semantics = WorldSurfaceSemanticCounts::default();
+    let mut has_review_fbx = false;
+    let mut used_file_names = BTreeSet::new();
+
+    for package in packages {
+        let scope = package_scope(package)?;
+        let mut package_content = MasterContent::default();
+        insert_collision_material(&mut package_content)?;
+        let append_context = PackageAppendContext {
+            canonical_root,
+            coordinate_root,
+            reference_packages,
+            scratch_root: scratch_root.to_path_buf(),
+            authority,
+        };
+        append_package(
+            &scope,
+            package,
+            &append_context,
+            &mut package_content,
+        )?;
+        merge_textures(
+            &mut all_textures,
+            package_content
+                .textures
+                .values()
+                .cloned()
+                .collect(),
+        )?;
+        let mut record = package_content
+            .packages
+            .pop()
+            .ok_or_else(
+                || PipelineError::new("world package record is missing"),
+            )?;
+        let stem = package_file_stem(package)?;
+        if !used_file_names.insert(stem.clone()) {
+            return Err(
+                PipelineError::new(
+                    format!("world package FBX identity repeats: {stem}"),
+                ),
+            );
+        }
+
+        let review = std::mem::take(&mut package_content.review);
+        let review_materials = package_content
+            .materials
+            .clone();
+        let review_textures = package_content
+            .textures
+            .clone();
+        record.world_fbx = write_content_fbx(
+            &stem,
+            &format!("{stem}.fbx"),
+            &mut package_content,
+            output_root,
+        )?;
+        if let Some(artifact) = record
+            .world_fbx
+            .as_ref()
+        {
+            aggregate_semantics.add(artifact.surface_semantics);
+        }
+
+        if !review.is_empty() {
+            let mut review_content = MasterContent {
+                meshes: Vec::new(),
+                review,
+                materials: review_materials,
+                textures: review_textures,
+                packages: Vec::new(),
+            };
+            record.review_similarity_groups =
+                place_review_gallery(&mut review_content)?;
+            record.review_fbx = write_content_fbx(
+                &format!("{stem}-review"),
+                &format!("review/{stem}.review.fbx"),
+                &mut review_content,
+                output_root,
+            )?;
+            if let Some(artifact) = record
+                .review_fbx
+                .as_ref()
+            {
+                aggregate_semantics.add(artifact.surface_semantics);
+                has_review_fbx = true;
+            }
+        }
+        records.push(record);
+    }
+
+    let textures = publish_textures(
+        &all_textures,
+        &texture_root,
     )?;
-    let mut content = MasterContent::default();
+    if has_review_fbx {
+        fs::create_dir_all(&review_texture_root).map_err(
+            |error| {
+                PipelineError::new(
+                    format!("world review texture directory failed: {error}"),
+                )
+            },
+        )?;
+        let _review_records = publish_textures(
+            &all_textures,
+            &review_texture_root,
+        )?;
+    }
+    Ok(
+        ExportedWorldCollection {
+            packages: records,
+            textures,
+            surface_semantics: aggregate_semantics,
+        },
+    )
+}
+
+/// Insert the shared collision inspection material into one package scene.
+fn insert_collision_material(
+    content: &mut MasterContent
+) -> Result<(), PipelineError> {
     let collision_material = MaterialBinding::new(
         COLLISION_MATERIAL,
         None,
@@ -180,7 +306,7 @@ pub(super) fn export_master_scene(
     .map_err(
         |error| {
             PipelineError::new(
-                format!("world master collision material failed: {error:?}"),
+                format!("world collision material failed: {error:?}"),
             )
         },
     )?;
@@ -190,24 +316,22 @@ pub(super) fn export_master_scene(
             COLLISION_MATERIAL.to_owned(),
             collision_material,
         );
-    for (level, rows) in packages {
-        let context = PackageAppendContext {
-            canonical_root,
-            coordinate_root,
-            reference_packages,
-            scratch_root: scratch_root.join(format!("level-{level}")),
-            authority,
-        };
-        for package in rows {
-            append_package(
-                level,
-                package,
-                &context,
-                &mut content,
-            )?;
-        }
+    Ok(())
+}
+
+/// Write one non-empty package scene and return its stable artifact record.
+fn write_content_fbx(
+    scene_name: &str,
+    relative_path: &str,
+    content: &mut MasterContent,
+    output_root: &Path,
+) -> Result<Option<WorldFbxRecord>, PipelineError> {
+    if content
+        .meshes
+        .is_empty()
+    {
+        return Ok(None);
     }
-    let review_similarity_groups = place_review_gallery(&mut content)?;
     content
         .meshes
         .sort_by(
@@ -217,99 +341,120 @@ pub(super) fn export_master_scene(
             },
         );
     ensure_unique_names(&content.meshes)?;
-    retain_used_presentation(&mut content);
-    let texture_records = publish_textures(
-        &content.textures,
-        &texture_root,
+    retain_used_presentation(content);
+    let surface_semantics = world_surface_semantics(
+        &content.meshes,
+        &content.materials,
     )?;
-    let fbx_path = output_root.join("world-master.fbx");
+    let path = output_root.join(relative_path);
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).map_err(
+            |error| {
+                PipelineError::new(
+                    format!("world FBX parent directory failed: {error}"),
+                )
+            },
+        )?;
+    }
     let summary = write_binary_model_fbx(
-        "world-master",
+        scene_name,
         &content.meshes,
         &content
             .materials
-            .into_values()
+            .values()
+            .cloned()
             .collect::<Vec<_>>(),
-        &fbx_path,
+        &path,
     )
     .map_err(
         |error| {
             PipelineError::new(
-                format!("world master FBX write failed: {error:?}"),
+                format!("world package FBX write failed: {error:?}"),
             )
         },
     )?;
-    let fbx_bytes = fs::read(&fbx_path).map_err(
+    let bytes = fs::read(&path).map_err(
         |error| {
-            PipelineError::new(format!("world master FBX read failed: {error}"))
+            PipelineError::new(
+                format!("world package FBX read failed: {error}"),
+            )
         },
     )?;
-    let totals = master_totals(&content.packages);
     Ok(
-        ExportedWorldMaster {
-            fbx_path: "world-master.fbx".to_owned(),
-            fbx_bytes: u64::try_from(fbx_bytes.len()).map_err(
-                |error| {
-                    PipelineError::new(
-                        format!(
-                            "world master FBX byte count overflowed: {error}"
-                        ),
-                    )
-                },
-            )?,
-            fbx_sha256: digest_hex(&fbx_bytes),
-            summary,
-            textures: texture_records,
-            packages: content.packages,
-            source_levels: packages.len(),
-            source_meshes: totals.source_meshes,
-            discarded_degenerate_triangles: totals
-                .discarded_degenerate_triangles,
-            authored_placements: totals.authored_placements,
-            reference_placements: totals.reference_placements,
-            canonical_placement_fallbacks: totals.canonical_placement_fallbacks,
-            reference_coordinate_meshes: totals.reference_coordinate_meshes,
-            canonical_coordinate_meshes: totals.canonical_coordinate_meshes,
-            review_definitions: totals.review_definitions,
-            review_similarity_groups,
-            collision_meshes: totals.collision_meshes,
-            reference_collision_meshes: totals.reference_collision_meshes,
-            discarded_collision_triangles: totals.discarded_collision_triangles,
-            interior_packages: totals.interior_packages,
-        },
+        Some(
+            WorldFbxRecord {
+                path: relative_path.to_owned(),
+                bytes: u64::try_from(bytes.len()).map_err(
+                    |error| {
+                        PipelineError::new(
+                            format!(
+                                "world package byte count overflowed: {error}"
+                            ),
+                        )
+                    },
+                )?,
+                sha256: digest_hex(&bytes),
+                summary,
+                surface_semantics,
+            },
+        ),
+    )
+}
+
+/// Build one unique portable file stem from the source package subcategory.
+fn package_file_stem(
+    package: &PhaseThreePackageRow
+) -> Result<String, PipelineError> {
+    let relative = package
+        .subcategory
+        .strip_prefix("terrain-world/")
+        .unwrap_or(&package.subcategory)
+        .replace(
+            '/', "--",
+        );
+    portable_asset_name(
+        &relative,
+        110,
+        "world package has no portable FBX identity",
     )
 }
 
 /// Load and append every recovered mesh from one normalized package.
+#[expect(
+    clippy::too_many_lines,
+    reason = "Canonical geometry, coordinate joins, collision records, \
+              material               authority, and package counters must \
+              remain one append invariant."
+)]
 fn append_package(
     level: &str,
     package: &PhaseThreePackageRow,
-    context: &PackageAppendContext<'_>,
-    content: &mut MasterContent,
+    append_context: &PackageAppendContext<'_>,
+    package_content: &mut MasterContent,
 ) -> Result<(), PipelineError> {
     let relative = relative_art_root(package)?;
-    let package_root = context
+    let package_root = append_context
         .canonical_root
         .join(&relative);
-    let reference_root = context
+    let reference_root = append_context
         .reference_packages
         .contains(&package.package_id)
         .then(
             || {
-                context
+                append_context
                     .coordinate_root
                     .join(&relative)
             },
         );
     let sources = package_meshes(&package_root)?;
-    let package_index = content
+    let package_index = package_content
         .packages
         .len();
-    content
+    package_content
         .packages
         .push(
-            LevelPackageRecord {
-                level: level.to_owned(),
+            WorldPackageRecord {
+                scope: level.to_owned(),
                 package_id: package
                     .package_id
                     .clone(),
@@ -328,7 +473,10 @@ fn append_package(
                 collision_meshes: 0,
                 reference_collision_meshes: 0,
                 discarded_collision_triangles: 0,
-                interior_packages: usize::from(is_interior(package)),
+                interior: is_interior(package),
+                review_similarity_groups: 0,
+                world_fbx: None,
+                review_fbx: None,
             },
         );
     let collisions = load_intersect_meshes(
@@ -337,11 +485,11 @@ fn append_package(
         &package.package_id,
     )?;
     {
-        let package_record = content
+        let package_record = package_content
             .packages
             .get_mut(package_index)
             .ok_or_else(
-                || PipelineError::new("world master package record is missing"),
+                || PipelineError::new("world package record is missing"),
             )?;
         package_record.collision_meshes = collisions
             .meshes
@@ -351,13 +499,13 @@ fn append_package(
         package_record.discarded_collision_triangles =
             collisions.discarded_triangles;
     }
-    content
+    package_content
         .meshes
         .extend(collisions.meshes);
     if sources.is_empty() {
         return Ok(());
     }
-    let package_scratch = context
+    let package_scratch = append_context
         .scratch_root
         .join(&package.package_id);
     let (mut meshes, discarded_degenerate_triangles) = load_analysis_meshes(
@@ -370,12 +518,10 @@ fn append_package(
         &package_root,
         reference_root.as_deref(),
     )?;
-    let package_record = content
+    let package_record = package_content
         .packages
         .get_mut(package_index)
-        .ok_or_else(
-            || PipelineError::new("world master package record is missing"),
-        )?;
+        .ok_or_else(|| PipelineError::new("world package record is missing"))?;
     package_record.coordinate_reference = coordinates.uses_reference;
     package_record.discarded_degenerate_triangles =
         discarded_degenerate_triangles;
@@ -383,15 +529,15 @@ fn append_package(
         &mut meshes,
         &package_root,
         &package_scratch,
-        context.authority,
+        append_context.authority,
         &package.subcategory,
     )?;
     merge_materials(
-        &mut content.materials,
+        &mut package_content.materials,
         materials,
     )?;
     merge_textures(
-        &mut content.textures,
+        &mut package_content.textures,
         textures,
     )?;
     for (source, mesh) in sources
@@ -404,14 +550,14 @@ fn append_package(
             &source,
             mesh,
             &coordinates,
-            content,
+            package_content,
         )?;
     }
     if package_scratch.is_dir() {
         fs::remove_dir_all(&package_scratch).map_err(
             |error| {
                 PipelineError::new(
-                    format!("world master material cleanup failed: {error}"),
+                    format!("world package material cleanup failed: {error}"),
                 )
             },
         )?;
@@ -442,7 +588,7 @@ fn load_analysis_meshes(
                     |error| {
                         PipelineError::new(
                             format!(
-                                "world master mesh {} failed: {error:?}",
+                                "world package mesh {} failed: {error:?}",
                                 source.member_id
                             ),
                         )
@@ -462,7 +608,7 @@ fn load_analysis_meshes(
                         || {
                             PipelineError::new(
                                 concat!(
-                                    "world master discarded triangle ",
+                                    "world package discarded triangle ",
                                     "count overflowed"
                                 ),
                             )
@@ -599,15 +745,13 @@ fn append_direct_or_omit(
 
 /// Increment one package assembly counter without indexing or overflow.
 fn increment_package_count(
-    packages: &mut [LevelPackageRecord],
+    packages: &mut [WorldPackageRecord],
     package_index: usize,
     counter: PackageCounter,
 ) -> Result<(), PipelineError> {
     let package = packages
         .get_mut(package_index)
-        .ok_or_else(
-            || PipelineError::new("world master package record is missing"),
-        )?;
+        .ok_or_else(|| PipelineError::new("world package record is missing"))?;
     match counter {
         PackageCounter::ReferencePlacement => {
             increment_value(&mut package.authored_placements)?;
@@ -633,67 +777,17 @@ fn increment_package_count(
 fn increment_value(value: &mut usize) -> Result<(), PipelineError> {
     *value = value
         .checked_add(1)
-        .ok_or_else(
-            || PipelineError::new("world master package count overflowed"),
-        )?;
+        .ok_or_else(|| PipelineError::new("world package count overflowed"))?;
     Ok(())
 }
 
-/// Aggregate package counters for one level result.
-fn master_totals(packages: &[LevelPackageRecord]) -> MasterTotals {
-    MasterTotals {
-        source_meshes: packages
-            .iter()
-            .map(|package| package.source_meshes)
-            .sum(),
-        discarded_degenerate_triangles: packages
-            .iter()
-            .map(|package| package.discarded_degenerate_triangles)
-            .sum(),
-        authored_placements: packages
-            .iter()
-            .map(|package| package.authored_placements)
-            .sum(),
-        reference_placements: packages
-            .iter()
-            .map(|package| package.reference_placements)
-            .sum(),
-        canonical_placement_fallbacks: packages
-            .iter()
-            .map(|package| package.canonical_placement_fallbacks)
-            .sum(),
-        reference_coordinate_meshes: packages
-            .iter()
-            .map(|package| package.reference_coordinate_meshes)
-            .sum(),
-        canonical_coordinate_meshes: packages
-            .iter()
-            .map(|package| package.canonical_coordinate_meshes)
-            .sum(),
-        review_definitions: packages
-            .iter()
-            .map(|package| package.review_definitions)
-            .sum(),
-        collision_meshes: packages
-            .iter()
-            .map(|package| package.collision_meshes)
-            .sum(),
-        reference_collision_meshes: packages
-            .iter()
-            .map(|package| package.reference_collision_meshes)
-            .sum(),
-        discarded_collision_triangles: packages
-            .iter()
-            .map(|package| package.discarded_collision_triangles)
-            .sum(),
-        interior_packages: packages
-            .iter()
-            .map(|package| package.interior_packages)
-            .sum(),
-    }
-}
-
 /// Place definition-only meshes in deterministic similarity-overlaid groups.
+#[expect(
+    clippy::too_many_lines,
+    reason = "Similarity assignment, deterministic grid placement, naming, \
+              and baked review geometry are one reproducible gallery \
+              operation."
+)]
 fn place_review_gallery(
     content: &mut MasterContent
 ) -> Result<usize, PipelineError> {
@@ -723,22 +817,26 @@ fn place_review_gallery(
             .len(),
     );
     for item in &content.review {
-        let group = representatives
+        let group = if let Some(group) = representatives
             .iter()
             .position(
                 |representative| {
                     shape_similarity(
                         item.profile,
                         *representative,
-                    ) >= 0.5
+                    ) >= 0.5_f32
                 },
-            )
-            .unwrap_or_else(
-                || {
-                    representatives.push(item.profile);
-                    representatives.len() - 1
-                },
-            );
+            ) {
+            group
+        } else {
+            representatives.push(item.profile);
+            representatives
+                .len()
+                .checked_sub(1)
+                .ok_or_else(
+                    || PipelineError::new("world review group underflowed"),
+                )?
+        };
         assignments.push(group);
     }
     let world_high = content
@@ -746,47 +844,96 @@ fn place_review_gallery(
         .iter()
         .map(mesh_bounds)
         .fold(
-            [0.0_f32; 3],
-            |mut high, (_low, item_high)| {
-                for axis in 0..3 {
-                    high[axis] = high[axis].max(item_high[axis]);
-                }
-                high
+            [
+                0.0_f32, 0.0_f32, 0.0_f32,
+            ],
+            |high, (_low, item_high)| {
+                let [
+                    high_x,
+                    high_y,
+                    high_z,
+                ] = high;
+                let [
+                    item_x,
+                    item_y,
+                    item_z,
+                ] = item_high;
+                [
+                    high_x.max(item_x),
+                    high_y.max(item_y),
+                    high_z.max(item_z),
+                ]
             },
         );
-    let cell = representatives
+    let maximum_extent = representatives
         .iter()
         .flat_map(
             |profile| {
+                let [
+                    x,
+                    _y,
+                    z,
+                ] = profile.extents;
                 [
-                    profile.extents[0],
-                    profile.extents[2],
+                    x, z,
                 ]
             },
         )
         .fold(
             10.0_f32,
             f32::max,
-        )
-        + 20.0;
+        );
+    let cell = maximum_extent.mul_add(
+        1.0_f32, 20.0_f32,
+    );
     let columns = square_columns(representatives.len());
     let review = std::mem::take(&mut content.review);
     for (mut item, group) in review
         .into_iter()
         .zip(assignments)
     {
-        let column = group % columns;
-        let row = group / columns;
+        let column = group
+            .checked_rem(columns)
+            .ok_or_else(|| PipelineError::new("world review column failed"))?;
+        let row = group
+            .checked_div(columns)
+            .ok_or_else(|| PipelineError::new("world review row failed"))?;
+        let column_offset = review_grid_index(column)?.mul_add(
+            1.0_f32, 1.0_f32,
+        );
+        let row_offset = review_grid_index(row)?.mul_add(
+            1.0_f32, 1.0_f32,
+        );
+        let [
+            world_x,
+            _world_y,
+            world_z,
+        ] = world_high;
         let target = [
-            world_high[0] + cell * (column as f32 + 1.0),
-            0.0,
-            world_high[2] + cell * (row as f32 + 1.0),
+            cell.mul_add(
+                column_offset,
+                world_x,
+            ),
+            0.0_f32,
+            cell.mul_add(
+                row_offset, world_z,
+            ),
         ];
         let (low, high) = mesh_bounds(&item.mesh);
+        let [
+            low_x,
+            low_y,
+            low_z,
+        ] = low;
+        let [
+            high_x,
+            _high_y,
+            high_z,
+        ] = high;
         let centre = [
-            (low[0] + high[0]) * 0.5,
-            low[1],
-            (low[2] + high[2]) * 0.5,
+            low_x.midpoint(high_x),
+            low_y,
+            low_z.midpoint(high_z),
         ];
         let final_name = portable_asset_name(
             &format!(
@@ -797,13 +944,23 @@ fn place_review_gallery(
             120,
             "world review mesh has no portable identity",
         )?;
+        let [
+            target_x,
+            target_y,
+            target_z,
+        ] = target;
+        let [
+            centre_x,
+            centre_y,
+            centre_z,
+        ] = centre;
         bake_mesh(
             &mut item.mesh,
             &translation(
                 [
-                    target[0] - centre[0],
-                    target[1] - centre[1],
-                    target[2] - centre[2],
+                    target_x - centre_x,
+                    target_y - centre_y,
+                    target_z - centre_z,
                 ],
             ),
             final_name,
@@ -813,6 +970,19 @@ fn place_review_gallery(
             .push(item.mesh);
     }
     Ok(representatives.len())
+}
+
+/// Convert one small review-grid index without precision loss.
+fn review_grid_index(value: usize) -> Result<f32, PipelineError> {
+    u16::try_from(value)
+        .map(f32::from)
+        .map_err(
+            |error| {
+                PipelineError::new(
+                    format!("world review grid index overflowed: {error}"),
+                )
+            },
+        )
 }
 
 /// Build one coarse normalized shape profile for review-only co-location.
@@ -850,20 +1020,30 @@ fn shape_profile(mesh: &MeshAsset) -> Result<ShapeProfile, PipelineError> {
         );
     }
     let (low, high) = mesh_bounds(mesh);
+    let [
+        low_x,
+        low_y,
+        low_z,
+    ] = low;
+    let [
+        high_x,
+        high_y,
+        high_z,
+    ] = high;
     Ok(
         ShapeProfile {
             vertices,
             triangles,
             extents: [
-                (high[0] - low[0])
+                (high_x - low_x)
                     .abs()
-                    .max(0.001),
-                (high[1] - low[1])
+                    .max(0.001_f32),
+                (high_y - low_y)
                     .abs()
-                    .max(0.001),
-                (high[2] - low[2])
+                    .max(0.001_f32),
+                (high_z - low_z)
                     .abs()
-                    .max(0.001),
+                    .max(0.001_f32),
             ],
         },
     )
@@ -899,7 +1079,7 @@ fn shape_similarity(
     components
         .into_iter()
         .sum::<f32>()
-        / components.len() as f32
+        / 5.0_f32
 }
 
 /// Return one symmetric ratio in the inclusive zero-to-one range.
@@ -908,9 +1088,19 @@ fn count_ratio(
     right: usize,
 ) -> f32 {
     value_ratio(
-        left as f32,
-        right as f32,
+        review_count_f32(left),
+        review_count_f32(right),
     )
+}
+
+/// Convert one review-only count to coarse floating-point shape evidence.
+#[expect(
+    clippy::as_conversions,
+    clippy::cast_precision_loss,
+    reason = "Review conversion never changes source geometry."
+)]
+const fn review_count_f32(value: usize) -> f32 {
+    value as f32
 }
 
 /// Return one symmetric positive-value ratio.
@@ -925,7 +1115,7 @@ fn value_ratio(
 }
 
 /// Return the smallest positive square width containing every review group.
-fn square_columns(groups: usize) -> usize {
+const fn square_columns(groups: usize) -> usize {
     let mut columns = 1_usize;
     while columns.saturating_mul(columns) < groups {
         columns = columns.saturating_add(1);
@@ -947,8 +1137,74 @@ fn scene_name(
                 .unwrap_or(package_id)
         ),
         120,
-        "world master scene mesh has no portable identity",
+        "world package scene mesh has no portable identity",
     )
+}
+
+/// Count overlapping semantic materials and primitive-group geometries.
+fn world_surface_semantics(
+    meshes: &[MeshAsset],
+    materials: &BTreeMap<String, MaterialBinding>,
+) -> Result<WorldSurfaceSemanticCounts, PipelineError> {
+    let mut counts = WorldSurfaceSemanticCounts::default();
+    for material in materials.values() {
+        let semantics = material.semantics;
+        counts.transparent_materials = counts
+            .transparent_materials
+            .saturating_add(usize::from(semantics.is_transparent()));
+        counts.glass_materials = counts
+            .glass_materials
+            .saturating_add(usize::from(semantics.is_glass()));
+        counts.mirror_materials = counts
+            .mirror_materials
+            .saturating_add(usize::from(semantics.is_mirror()));
+        counts.reflective_materials = counts
+            .reflective_materials
+            .saturating_add(usize::from(semantics.is_reflective()));
+        counts.light_emitter_materials = counts
+            .light_emitter_materials
+            .saturating_add(usize::from(semantics.is_light_emitter()));
+        counts.visual_effect_materials = counts
+            .visual_effect_materials
+            .saturating_add(usize::from(semantics.is_visual_effect()));
+    }
+    for group in meshes
+        .iter()
+        .flat_map(|mesh| &mesh.groups)
+    {
+        let semantics = materials
+            .get(&group.shader)
+            .ok_or_else(
+                || {
+                    PipelineError::new(
+                        format!(
+                            "world semantic material is missing: {}",
+                            group.shader
+                        ),
+                    )
+                },
+            )?
+            .semantics;
+        counts.transparent_geometries = counts
+            .transparent_geometries
+            .saturating_add(usize::from(semantics.is_transparent()));
+        counts.glass_geometries = counts
+            .glass_geometries
+            .saturating_add(usize::from(semantics.is_glass()));
+        counts.mirror_geometries = counts
+            .mirror_geometries
+            .saturating_add(usize::from(semantics.is_mirror()));
+        counts.reflective_geometries = counts
+            .reflective_geometries
+            .saturating_add(usize::from(semantics.is_reflective()));
+        counts.light_emitter_geometries = counts
+            .light_emitter_geometries
+            .saturating_add(usize::from(semantics.is_light_emitter()));
+        counts.visual_effect_geometries = counts
+            .visual_effect_geometries
+            .saturating_add(usize::from(semantics.is_visual_effect()));
+    }
+    Ok(counts)
 }
 
 /// Retain only materials and textures referenced by published geometry.
@@ -995,7 +1251,7 @@ fn merge_materials(
                 return Err(
                     PipelineError::new(
                         format!(
-                            "world master material identity conflicts: {}",
+                            "world package material identity conflicts: {}",
                             material.material_name
                         ),
                     ),
@@ -1026,7 +1282,7 @@ fn merge_textures(
                 return Err(
                     PipelineError::new(
                         format!(
-                            "world master texture identity conflicts: {}",
+                            "world package texture identity conflicts: {}",
                             texture.file_name
                         ),
                     ),
@@ -1057,7 +1313,7 @@ fn ensure_unique_names(meshes: &[MeshAsset]) -> Result<(), PipelineError> {
             return Err(
                 PipelineError::new(
                     format!(
-                        "world master repeats mesh name {}",
+                        "world package repeats mesh name {}",
                         mesh.name
                     ),
                 ),
@@ -1065,7 +1321,7 @@ fn ensure_unique_names(meshes: &[MeshAsset]) -> Result<(), PipelineError> {
         }
     }
     if meshes.is_empty() {
-        return Err(PipelineError::new("world master has no render meshes"));
+        return Err(PipelineError::new("world package has no render meshes"));
     }
     Ok(())
 }
@@ -1084,7 +1340,7 @@ fn publish_textures(
         .map_err(
             |error| {
                 PipelineError::new(
-                    format!("world master texture write failed: {error}"),
+                    format!("world package texture write failed: {error}"),
                 )
             },
         )?;

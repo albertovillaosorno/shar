@@ -44,6 +44,12 @@
 //
 
 //! Selected rigid-prop assembly from decoded composite evidence.
+#![expect(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    reason = "Finite f64 transform results are range-checked immediately \
+              after               the required FBX f32 narrowing."
+)]
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
@@ -125,6 +131,19 @@ pub struct SupplementalRigidPropBinding {
     pub joint_id: String,
 }
 
+/// Mutable assembly state for instanced rigid component bindings.
+#[derive(Default)]
+struct InstancedRigidState {
+    /// Per-source occurrence counts used in stable instance names.
+    occurrences: BTreeMap<String, usize>,
+    /// Source component identities with at least one authored binding.
+    bound_names: BTreeSet<String>,
+    /// Skeleton joint ordinals required by selected components.
+    selected_joints: BTreeSet<usize>,
+    /// Fully baked character-compatible rigid parts.
+    parts: Vec<SkinnedPart>,
+}
+
 /// Load selected rigid meshes once for every authored composite binding.
 ///
 /// # Errors
@@ -170,6 +189,59 @@ pub fn load_instanced_rigid_prop_asset_with_billboards(
         bones.len(),
     )?
     .props;
+    append_supplemental_bindings(
+        &mut bindings,
+        supplemental,
+        &bones,
+    );
+    let (meshes, required_meshes) = load_rigid_component_map(
+        mesh_paths,
+        billboard_paths,
+    )?;
+    let global_rest = global_rest_matrices(&bones)?;
+    let mut state = InstancedRigidState::default();
+    for binding in bindings {
+        append_instanced_binding(
+            binding,
+            &meshes,
+            &bones,
+            &global_rest,
+            &mut state,
+        )?;
+    }
+    ensure_required_bindings(
+        &required_meshes,
+        &state.bound_names,
+    )?;
+    let retained_indices = retained_bone_indices(
+        &bones,
+        &state.selected_joints,
+    )?;
+    let retained_bones = bones
+        .into_iter()
+        .enumerate()
+        .filter_map(
+            |(index, bone)| {
+                retained_indices
+                    .contains(&index)
+                    .then_some(bone)
+            },
+        )
+        .collect();
+    CharacterAsset::new(
+        name,
+        retained_bones,
+        state.parts,
+    )
+    .map_err(SkinSourceError::Character)
+}
+
+/// Append valid supplemental source-to-joint bindings in authored order.
+fn append_supplemental_bindings(
+    bindings: &mut Vec<CompositePropBinding>,
+    supplemental: &[SupplementalRigidPropBinding],
+    bones: &[Bone],
+) {
     let bone_indices = bones
         .iter()
         .enumerate()
@@ -203,115 +275,109 @@ pub fn load_instanced_rigid_prop_asset_with_billboards(
             );
         }
     }
-    let (meshes, required_meshes) = load_rigid_component_map(
-        mesh_paths,
-        billboard_paths,
+}
+
+/// Append one available authored component binding to mutable assembly state.
+fn append_instanced_binding(
+    binding: CompositePropBinding,
+    meshes: &BTreeMap<String, MeshAsset>,
+    bones: &[Bone],
+    global_rest: &[[f64; 16]],
+    state: &mut InstancedRigidState,
+) -> Result<(), SkinSourceError> {
+    let mesh_name = binding.name;
+    let joint = binding.joint;
+    let Some(source_mesh) = meshes.get(&mesh_name) else {
+        return Ok(());
+    };
+    let ordinal = state
+        .occurrences
+        .entry(mesh_name.clone())
+        .or_insert(0);
+    let mut mesh = source_mesh.clone();
+    if binding.translucent {
+        mark_transparent_mesh(&mut mesh);
+    }
+    let joint_matrix = global_rest
+        .get(joint)
+        .ok_or_else(
+            || {
+                SkinSourceError::Prop(
+                    format!(
+                        "instanced rigid prop {mesh_name} has no global rest \
+                         matrix for joint {joint}"
+                    ),
+                )
+            },
+        )?;
+    bake_rigid_mesh(
+        &mut mesh,
+        joint_matrix,
     )?;
-    let global_rest = global_rest_matrices(&bones)?;
-    let mut occurrences = BTreeMap::<String, usize>::new();
-    let mut bound_names = BTreeSet::new();
-    let mut selected_joints = BTreeSet::new();
-    let mut parts = Vec::new();
-    for binding in bindings {
-        let mesh_name = binding.name;
-        let joint = binding.joint;
-        let Some(source_mesh) = meshes.get(&mesh_name) else {
-            continue;
-        };
-        let ordinal = occurrences
-            .entry(mesh_name.clone())
-            .or_insert(0);
-        let mut mesh = source_mesh.clone();
-        if binding.translucent {
-            mark_transparent_mesh(&mut mesh);
-        }
-        let joint_matrix = global_rest
-            .get(joint)
-            .ok_or_else(
-                || {
-                    SkinSourceError::Prop(
-                        format!(
-                            "instanced rigid prop {mesh_name} has no global \
-                             rest matrix for joint {joint}"
-                        ),
-                    )
-                },
-            )?;
-        bake_rigid_mesh(
-            &mut mesh,
-            joint_matrix,
+    mesh.name = format!(
+        "{}__joint_{joint:02}__instance_{:02}",
+        mesh.name, *ordinal,
+    );
+    *ordinal = ordinal.saturating_add(1);
+    let bone_id = bones
+        .get(joint)
+        .map(
+            |bone| {
+                bone.id
+                    .clone()
+            },
+        )
+        .ok_or_else(
+            || {
+                SkinSourceError::Prop(
+                    format!(
+                        "instanced rigid prop {mesh_name} references missing \
+                         joint {joint}"
+                    ),
+                )
+            },
         )?;
-        mesh.name = format!(
-            "{}__joint_{joint:02}__instance_{:02}",
-            mesh.name, *ordinal,
-        );
-        *ordinal = ordinal.saturating_add(1);
-        let bone_id = bones
-            .get(joint)
-            .map(
-                |bone| {
-                    bone.id
-                        .clone()
-                },
-            )
-            .ok_or_else(
-                || {
-                    SkinSourceError::Prop(
-                        format!(
-                            "instanced rigid prop {mesh_name} references \
-                             missing joint {joint}"
-                        ),
-                    )
-                },
-            )?;
-        selected_joints.insert(joint);
-        bound_names.insert(mesh_name);
-        let group_influences = rigid_group_influences(
-            &mesh, &bone_id,
-        )?;
-        parts.push(
+    let _selected = state
+        .selected_joints
+        .insert(joint);
+    let _bound = state
+        .bound_names
+        .insert(mesh_name);
+    state
+        .parts
+        .push(
             SkinnedPart {
+                group_influences: rigid_group_influences(
+                    &mesh, &bone_id,
+                )?,
                 mesh,
-                group_influences,
             },
         );
-    }
+    Ok(())
+}
+
+/// Reject selected source meshes that have no composite or supplemental
+/// binding.
+fn ensure_required_bindings(
+    required_meshes: &BTreeSet<String>,
+    bound_names: &BTreeSet<String>,
+) -> Result<(), SkinSourceError> {
     let unbound = required_meshes
         .iter()
         .filter(|mesh_name| !bound_names.contains(*mesh_name))
         .cloned()
         .collect::<Vec<_>>();
-    if !unbound.is_empty() {
-        return Err(
-            SkinSourceError::Prop(
-                format!(
-                    "selected instanced rigid props have no binding: {}",
-                    unbound.join(", ")
-                ),
-            ),
-        );
+    if unbound.is_empty() {
+        return Ok(());
     }
-    let retained_indices = retained_bone_indices(
-        &bones,
-        &selected_joints,
-    )?;
-    let retained_bones = bones
-        .into_iter()
-        .enumerate()
-        .filter_map(
-            |(index, bone)| {
-                retained_indices
-                    .contains(&index)
-                    .then_some(bone)
-            },
-        )
-        .collect();
-    CharacterAsset::new(
-        name,
-        retained_bones,
-        parts,
+    Err(
+        SkinSourceError::Prop(
+            format!(
+                "selected instanced rigid props have no binding: {}",
+                unbound.join(", ")
+            ),
+        ),
     )
-    .map_err(SkinSourceError::Character)
 }
 
 /// Load one unique source map across mesh and billboard component families.
@@ -375,7 +441,7 @@ fn load_rigid_component_map(
 /// Load one unique source mesh map for authored composite instancing.
 fn load_rigid_mesh_map(
     mesh_paths: &[&Path]
-) -> Result<BTreeMap<String, crate::domain::mesh::MeshAsset>, SkinSourceError> {
+) -> Result<BTreeMap<String, MeshAsset>, SkinSourceError> {
     let mut meshes = BTreeMap::new();
     for mesh_path in mesh_paths {
         let requested_id = mesh_member_id(mesh_path)?;
@@ -434,21 +500,7 @@ fn load_selected_parts(
     let mut selected_joints = BTreeSet::new();
     let mut parts = Vec::with_capacity(mesh_paths.len());
     for mesh_path in mesh_paths {
-        let requested_id = mesh_member_id(mesh_path)?;
-        let mut mesh = read_mesh(
-            mesh_path,
-            requested_id,
-        )
-        .map_err(
-            |error| {
-                SkinSourceError::Prop(
-                    format!(
-                        "rigid prop mesh decode failed for {}: {error:?}",
-                        mesh_path.display()
-                    ),
-                )
-            },
-        )?;
+        let mut mesh = read_selected_rigid_mesh(mesh_path)?;
         if !selected_names.insert(
             mesh.name
                 .clone(),
@@ -629,9 +681,33 @@ fn transform_position(
     ] = value.map(f64::from);
     narrow_vector(
         [
-            x * matrix[0] + y * matrix[4] + z * matrix[8] + matrix[12],
-            x * matrix[1] + y * matrix[5] + z * matrix[9] + matrix[13],
-            x * matrix[2] + y * matrix[6] + z * matrix[10] + matrix[14],
+            z.mul_add(
+                matrix[8],
+                y.mul_add(
+                    matrix[4],
+                    x.mul_add(
+                        matrix[0], matrix[12],
+                    ),
+                ),
+            ),
+            z.mul_add(
+                matrix[9],
+                y.mul_add(
+                    matrix[5],
+                    x.mul_add(
+                        matrix[1], matrix[13],
+                    ),
+                ),
+            ),
+            z.mul_add(
+                matrix[10],
+                y.mul_add(
+                    matrix[6],
+                    x.mul_add(
+                        matrix[2], matrix[14],
+                    ),
+                ),
+            ),
         ],
         mesh,
         "position",
@@ -649,14 +725,40 @@ fn transform_normal(
         y,
         z,
     ] = value.map(f64::from);
-    let source_length = (x * x + y * y + z * z).sqrt();
+    let source_length = z
+        .mul_add(
+            z,
+            y.mul_add(
+                y,
+                x * x,
+            ),
+        )
+        .sqrt();
     if source_length <= f64::EPSILON {
         return Ok(value);
     }
     let mut transformed = [
-        x * matrix[0] + y * matrix[4] + z * matrix[8],
-        x * matrix[1] + y * matrix[5] + z * matrix[9],
-        x * matrix[2] + y * matrix[6] + z * matrix[10],
+        z.mul_add(
+            matrix[8],
+            y.mul_add(
+                matrix[4],
+                x * matrix[0],
+            ),
+        ),
+        z.mul_add(
+            matrix[9],
+            y.mul_add(
+                matrix[5],
+                x * matrix[1],
+            ),
+        ),
+        z.mul_add(
+            matrix[10],
+            y.mul_add(
+                matrix[6],
+                x * matrix[2],
+            ),
+        ),
     ];
     let length = transformed
         .iter()
@@ -731,6 +833,25 @@ fn mesh_member_id(path: &Path) -> Result<&str, SkinSourceError> {
                 )
             },
         )
+}
+
+/// Decode one selected rigid mesh with source-path diagnostics.
+fn read_selected_rigid_mesh(path: &Path) -> Result<MeshAsset, SkinSourceError> {
+    let requested_id = mesh_member_id(path)?;
+    read_mesh(
+        path,
+        requested_id,
+    )
+    .map_err(
+        |error| {
+            SkinSourceError::Prop(
+                format!(
+                    "rigid prop mesh decode failed for {}: {error:?}",
+                    path.display()
+                ),
+            )
+        },
+    )
 }
 
 /// Retain every selected joint and its complete ancestor chain.

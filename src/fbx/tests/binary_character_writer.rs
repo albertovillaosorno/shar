@@ -779,22 +779,28 @@ fn writes_deterministic_binary_fbx_7700_with_standard_footer() {
 #[test]
 fn writes_shared_glass_and_emitter_automation_evidence() -> Result<(), String> {
     let mut character = synthetic_character()?;
-    character.parts[0]
+    let part = character
+        .parts
+        .first_mut()
+        .ok_or_else(|| "synthetic character has no part".to_owned())?;
+    let group = part
         .mesh
-        .groups[0]
-        .shader = "windshield_glass_m".to_owned();
+        .groups
+        .first_mut()
+        .ok_or_else(|| "synthetic character part has no group".to_owned())?;
+    group.shader = "windshield_glass_m".to_owned();
     let material = MaterialBinding::new(
         "windshield_glass_m",
         Some("headlight_lens.png".to_owned()),
     )
     .map_err(|error| format!("semantic material failed: {error:?}"))?
     .with_semantics(
-        MaterialSemantics::new(
-            true, true, false, true,
-        ),
+        MaterialSemantics::default()
+            .with_glass(true)
+            .with_light_emitter(true),
     );
     let path = output_path("semantic-surface");
-    write_binary_character_fbx(
+    let _summary = write_binary_character_fbx(
         &character,
         &[material],
         &[],
@@ -825,8 +831,11 @@ fn writes_shared_glass_and_emitter_automation_evidence() -> Result<(), String> {
 fn merges_composite_transparency_from_geometry_identity() -> Result<(), String>
 {
     let mut character = synthetic_character()?;
-    character.parts[0]
-        .mesh
+    let part = character
+        .parts
+        .first_mut()
+        .ok_or_else(|| "synthetic character has no part".to_owned())?;
+    part.mesh
         .name = "body__transparent-source".to_owned();
     let material = MaterialBinding::new(
         "skin",
@@ -834,7 +843,7 @@ fn merges_composite_transparency_from_geometry_identity() -> Result<(), String>
     )
     .map_err(|error| format!("opaque source material failed: {error:?}"))?;
     let path = output_path("composite-transparent-surface");
-    write_binary_character_fbx(
+    let _summary = write_binary_character_fbx(
         &character,
         &[material],
         &[],

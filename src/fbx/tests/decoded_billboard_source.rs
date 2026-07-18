@@ -13,11 +13,33 @@
 //   - LICENSE
 // Path-Rule:
 //   - All paths in this header are repository-root relative.
+//
+// Boundary-Contract:
+// - Owns:
+//   - Regression coverage for decoded billboard inspection geometry.
+// - Must-Not:
+//   - Depend on private assets or installed DCC applications.
+// - Allows:
+//   - Synthetic decoded JSON and exact geometry assertions.
+// - Summary:
+//   - Proves billboard dimensions, transforms, UVs, colors, and shader
+//     identity.
+//
+// Large file:
+//   - false
+//
+
+//! Decoded billboard inspection geometry regression coverage.
 
 use std::fs;
 use std::path::PathBuf;
 
 use fbx::adapters::driven::decoded_billboard_source::read_billboard_quad_group;
+use png as _;
+use schoenwald_filesystem as _;
+use serde as _;
+use serde_json as _;
+use shar_sha256 as _;
 
 fn fixture_path() -> PathBuf {
     std::env::temp_dir().join(
@@ -61,7 +83,10 @@ fn decodes_authored_billboard_quad_geometry() -> Result<(), String> {
     {
         return Err(format!("unexpected billboard mesh: {mesh:?}"));
     }
-    let group = &mesh.groups[0];
+    let group = mesh
+        .groups
+        .first()
+        .ok_or_else(|| "billboard mesh has no primitive group".to_owned())?;
     if group.positions
         != vec![
             [

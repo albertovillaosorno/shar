@@ -265,13 +265,49 @@ fn rotate(
         vy,
         vz,
     ] = vector;
-    let tx = 2.0 * (y * vz - z * vy);
-    let ty = 2.0 * (z * vx - x * vz);
-    let tz = 2.0 * (x * vy - y * vx);
+    let tx = 2.0_f32
+        * z.mul_add(
+            -vy,
+            y * vz,
+        );
+    let ty = 2.0_f32
+        * x.mul_add(
+            -vz,
+            z * vx,
+        );
+    let tz = 2.0_f32
+        * y.mul_add(
+            -vx,
+            x * vy,
+        );
     [
-        vx + w * tx + (y * tz - z * ty),
-        vy + w * ty + (z * tx - x * tz),
-        vz + w * tz + (x * ty - y * tx),
+        z.mul_add(
+            -ty,
+            y.mul_add(
+                tz,
+                w.mul_add(
+                    tx, vx,
+                ),
+            ),
+        ),
+        x.mul_add(
+            -tz,
+            z.mul_add(
+                tx,
+                w.mul_add(
+                    ty, vy,
+                ),
+            ),
+        ),
+        y.mul_add(
+            -tx,
+            x.mul_add(
+                ty,
+                w.mul_add(
+                    tz, vz,
+                ),
+            ),
+        ),
     ]
 }
 
@@ -289,11 +325,17 @@ fn add(
 
 /// Decode one PDDI AARRGGBB color into normalized RGBA channels.
 fn decode_argb(value: u32) -> [f32; 4] {
+    let [
+        alpha,
+        red,
+        green,
+        blue,
+    ] = value.to_be_bytes();
     [
-        ((value >> 16) & 0xff) as f32 / 255.0,
-        ((value >> 8) & 0xff) as f32 / 255.0,
-        (value & 0xff) as f32 / 255.0,
-        ((value >> 24) & 0xff) as f32 / 255.0,
+        f32::from(red) / 255.0_f32,
+        f32::from(green) / 255.0_f32,
+        f32::from(blue) / 255.0_f32,
+        f32::from(alpha) / 255.0_f32,
     ]
 }
 
@@ -312,47 +354,74 @@ fn clean_identity(value: &str) -> Result<String, DecodedBillboardError> {
     Ok(clean.to_owned())
 }
 
+/// Decoded billboard-quad-group JSON document.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct QuadGroupDocument {
+    /// Stable decoded schema identity.
     schema: String,
+    /// Supported group schema version.
     version: u32,
+    /// Authored group identity.
     name: String,
+    /// Authored shader identity shared by the group.
     shader: String,
+    /// Source depth-test flag retained for schema validation.
     #[serde(rename = "z_test")]
     _z_test: u32,
+    /// Source depth-write flag retained for schema validation.
     #[serde(rename = "z_write")]
     _z_write: u32,
+    /// Source fog flag retained for schema validation.
     #[serde(rename = "fog")]
     _fog: u32,
+    /// Declared number of child quads.
     num_quads: usize,
+    /// Decoded child quad records.
     quads: Vec<QuadDocument>,
 }
 
+/// Decoded billboard-quad JSON record.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct QuadDocument {
+    /// Authored quad identity.
     name: String,
+    /// Supported quad schema version.
     version: u32,
+    /// Source billboard mode retained for schema validation.
     #[serde(rename = "billboard_mode")]
     _billboard_mode: String,
+    /// Authored translation in source coordinates.
     translation: [f32; 3],
+    /// Packed source AARRGGBB color.
     colour: u32,
+    /// Four authored UV corners.
     uvs: [[f32; 2]; 4],
+    /// Authored quad width.
     width: f32,
+    /// Authored quad height.
     height: f32,
+    /// Source distance retained for schema validation.
     #[serde(rename = "distance")]
     _distance: f32,
+    /// Authored UV translation.
     uv_offset: [f32; 2],
+    /// Authored display rotation in WXYZ order.
     rotation_wxyz: [f32; 4],
+    /// Source cutoff mode retained for schema validation.
     #[serde(rename = "cutoff_mode")]
     _cutoff_mode: String,
+    /// Source UV range retained for schema validation.
     #[serde(rename = "uv_offset_range")]
     _uv_offset_range: [f32; 2],
+    /// Source display range retained for schema validation.
     #[serde(rename = "source_range")]
     _source_range: f32,
+    /// Source edge range retained for schema validation.
     #[serde(rename = "edge_range")]
     _edge_range: f32,
+    /// Source perspective flag retained for schema validation.
     #[serde(rename = "perspective")]
     _perspective: bool,
 }
@@ -360,26 +429,43 @@ struct QuadDocument {
 /// Decoded billboard source failure.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum DecodedBillboardError {
+    /// Source JSON file could not be read.
     Read {
+        /// Portable source path shown in diagnostics.
         path: String,
+        /// Underlying filesystem failure.
         source: String,
     },
+    /// Source JSON file could not be decoded.
     Parse {
+        /// Portable source path shown in diagnostics.
         path: String,
+        /// Underlying JSON failure.
         source: String,
     },
+    /// Document schema or version is unsupported.
     UnsupportedDocument,
+    /// One authored identity is empty or contains control characters.
     InvalidIdentity(String),
+    /// Requested and decoded group identities disagree.
     IdentityMismatch {
+        /// Requested component identity.
         requested: String,
+        /// Decoded component identity.
         decoded: String,
     },
+    /// Declared and decoded child counts disagree.
     QuadCountMismatch {
+        /// Declared child count.
         declared: usize,
+        /// Decoded child count.
         actual: usize,
     },
+    /// One quad contains invalid geometry or transform evidence.
     InvalidQuad {
+        /// Best available authored quad identity.
         name: String,
     },
+    /// Domain mesh construction rejected decoded geometry.
     Mesh(String),
 }

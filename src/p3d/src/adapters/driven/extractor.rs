@@ -3312,14 +3312,75 @@ fn billboard_quads_json(
     (cursor == end).then(|| quads.join(","))
 }
 
+/// Core billboard-quad values decoded from one chunk header.
+struct BillboardQuadFields {
+    /// Authored quad identity.
+    name: String,
+    /// Source chunk schema version.
+    version: u32,
+    /// Authored billboard orientation mode.
+    billboard_mode: String,
+    /// Quad translation in source coordinates.
+    translation: [f32; 3],
+    /// Packed source vertex colour.
+    colour: u32,
+    /// Four authored UV corners in winding order.
+    uvs: [[f32; 2]; 4],
+    /// Authored quad width.
+    width: f32,
+    /// Authored quad height.
+    height: f32,
+    /// Authored camera-distance parameter.
+    distance: f32,
+    /// Authored UV offset.
+    uv_offset: [f32; 2],
+}
+
+/// Optional display and perspective values decoded from child chunks.
+struct BillboardQuadDisplay {
+    /// Authored display rotation quaternion in WXYZ order.
+    rotation: [f32; 4],
+    /// Authored display cutoff mode.
+    cutoff_mode: String,
+    /// Authored animated UV offset range.
+    uv_offset_range: [f32; 2],
+    /// Source-side display range.
+    source_range: f32,
+    /// Edge-fade display range.
+    edge_range: f32,
+    /// Whether perspective scaling remains enabled.
+    perspective: bool,
+}
+
 /// Decode one billboard quad plus optional display and perspective evidence.
 fn billboard_quad_json(
     quad: &[u8],
     header_size: usize,
     total_size: usize,
 ) -> Option<String> {
-    const DISPLAY_INFO: u32 = 0x0001_7003;
-    const PERSPECTIVE_INFO: u32 = 0x0001_7004;
+    let fields = billboard_quad_fields(
+        quad,
+        header_size,
+        total_size,
+    )?;
+    let display = billboard_quad_display(
+        quad,
+        header_size,
+        total_size,
+    )?;
+    Some(
+        render_billboard_quad_json(
+            &fields, &display,
+        ),
+    )
+}
+
+/// Decode the fixed billboard-quad header without reading child chunks.
+fn billboard_quad_fields(
+    quad: &[u8],
+    header_size: usize,
+    total_size: usize,
+) -> Option<BillboardQuadFields> {
     let mut cursor = 12_usize;
     let version = read_u32(
         quad, cursor,
@@ -3341,22 +3402,24 @@ fn billboard_quad_json(
         quad, cursor,
     )?;
     cursor += 4;
-    let uv0 = read_f32_array::<2>(
-        quad,
-        &mut cursor,
-    )?;
-    let uv1 = read_f32_array::<2>(
-        quad,
-        &mut cursor,
-    )?;
-    let uv2 = read_f32_array::<2>(
-        quad,
-        &mut cursor,
-    )?;
-    let uv3 = read_f32_array::<2>(
-        quad,
-        &mut cursor,
-    )?;
+    let uvs = [
+        read_f32_array::<2>(
+            quad,
+            &mut cursor,
+        )?,
+        read_f32_array::<2>(
+            quad,
+            &mut cursor,
+        )?,
+        read_f32_array::<2>(
+            quad,
+            &mut cursor,
+        )?,
+        read_f32_array::<2>(
+            quad,
+            &mut cursor,
+        )?,
+    ];
     let width = read_f32(
         quad, cursor,
     )?;
@@ -3376,14 +3439,40 @@ fn billboard_quad_json(
     if cursor != header_size || total_size != quad.len() {
         return None;
     }
-    let mut rotation = [
-        0.0_f32, 0.0, 0.0, 1.0,
-    ];
-    let mut cutoff_mode = String::new();
-    let mut uv_offset_range = [0.0_f32; 2];
-    let mut source_range = 0.0_f32;
-    let mut edge_range = 0.0_f32;
-    let mut perspective = true;
+    Some(
+        BillboardQuadFields {
+            name,
+            version,
+            billboard_mode,
+            translation,
+            colour,
+            uvs,
+            width,
+            height,
+            distance,
+            uv_offset,
+        },
+    )
+}
+
+/// Decode optional display and perspective child chunks.
+fn billboard_quad_display(
+    quad: &[u8],
+    header_size: usize,
+    total_size: usize,
+) -> Option<BillboardQuadDisplay> {
+    const DISPLAY_INFO: u32 = 0x0001_7003;
+    const PERSPECTIVE_INFO: u32 = 0x0001_7004;
+    let mut display = BillboardQuadDisplay {
+        rotation: [
+            0.0_f32, 0.0, 0.0, 1.0,
+        ],
+        cutoff_mode: String::new(),
+        uv_offset_range: [0.0_f32; 2],
+        source_range: 0.0_f32,
+        edge_range: 0.0_f32,
+        perspective: true,
+    };
     let mut child = header_size;
     while child + 12 <= total_size {
         let (id, child_header, child_total) = read_chunk_header(
@@ -3396,97 +3485,140 @@ fn billboard_quad_json(
         let mut field = child + 12;
         match id {
             DISPLAY_INFO => {
-                let _version = read_u32(
-                    quad, field,
+                read_billboard_display_info(
+                    quad,
+                    child,
+                    child_header,
+                    &mut field,
+                    &mut display,
                 )?;
-                field += 4;
-                rotation = read_f32_array::<4>(
-                    quad, &mut field,
-                )?;
-                cutoff_mode = read_fourcc(
-                    quad, field,
-                )?;
-                field += 4;
-                uv_offset_range = read_f32_array::<2>(
-                    quad, &mut field,
-                )?;
-                source_range = read_f32(
-                    quad, field,
-                )?;
-                field += 4;
-                edge_range = read_f32(
-                    quad, field,
-                )?;
-                field += 4;
-                if field != child + child_header {
-                    return None;
-                }
             }
             PERSPECTIVE_INFO => {
-                let _version = read_u32(
-                    quad, field,
+                read_billboard_perspective_info(
+                    quad,
+                    child,
+                    child_header,
+                    &mut field,
+                    &mut display,
                 )?;
-                field += 4;
-                perspective = read_u32(
-                    quad, field,
-                )? != 0;
-                field += 4;
-                if field != child + child_header {
-                    return None;
-                }
             }
             _ => return None,
         }
         child = next;
     }
-    if child != total_size {
-        return None;
-    }
-    Some(
-        format!(
-            concat!(
-                r#"{{"name":"{}","version":{},"billboard_mode":"{}","#,
-                r#""translation":{},"colour":{},"uvs":[{},{},{},{}],"#,
-                r#""width":{},"height":{},"distance":{},"uv_offset":{},"#,
-                r#""rotation_wxyz":{},"cutoff_mode":"{}","#,
-                r#""uv_offset_range":{},"source_range":{},"edge_range":{},"#,
-                r#""perspective":{}}}"#,
-            ),
-            escape_json(&name),
-            version,
-            escape_json(&billboard_mode),
-            f32_array_json(&translation),
-            colour,
-            f32_array_json(&uv0),
-            f32_array_json(&uv1),
-            f32_array_json(&uv2),
-            f32_array_json(&uv3),
-            render_f32(
-                width,
-                width.to_string()
-            ),
-            render_f32(
-                height,
-                height.to_string()
-            ),
-            render_f32(
-                distance,
-                distance.to_string()
-            ),
-            f32_array_json(&uv_offset),
-            f32_array_json(&rotation),
-            escape_json(&cutoff_mode),
-            f32_array_json(&uv_offset_range),
-            render_f32(
-                source_range,
-                source_range.to_string()
-            ),
-            render_f32(
-                edge_range,
-                edge_range.to_string()
-            ),
-            perspective,
+    (child == total_size).then_some(display)
+}
+
+/// Decode one display-info child into the accumulated billboard evidence.
+fn read_billboard_display_info(
+    quad: &[u8],
+    child: usize,
+    child_header: usize,
+    field: &mut usize,
+    display: &mut BillboardQuadDisplay,
+) -> Option<()> {
+    let _version = read_u32(
+        quad, *field,
+    )?;
+    *field += 4;
+    display.rotation = read_f32_array::<4>(
+        quad, field,
+    )?;
+    display.cutoff_mode = read_fourcc(
+        quad, *field,
+    )?;
+    *field += 4;
+    display.uv_offset_range = read_f32_array::<2>(
+        quad, field,
+    )?;
+    display.source_range = read_f32(
+        quad, *field,
+    )?;
+    *field += 4;
+    display.edge_range = read_f32(
+        quad, *field,
+    )?;
+    *field += 4;
+    (*field == child + child_header).then_some(())
+}
+
+/// Decode one perspective-info child into the accumulated billboard evidence.
+fn read_billboard_perspective_info(
+    quad: &[u8],
+    child: usize,
+    child_header: usize,
+    field: &mut usize,
+    display: &mut BillboardQuadDisplay,
+) -> Option<()> {
+    let _version = read_u32(
+        quad, *field,
+    )?;
+    *field += 4;
+    display.perspective = read_u32(
+        quad, *field,
+    )? != 0;
+    *field += 4;
+    (*field == child + child_header).then_some(())
+}
+
+/// Render one decoded billboard quad to the canonical JSON schema.
+fn render_billboard_quad_json(
+    fields: &BillboardQuadFields,
+    display: &BillboardQuadDisplay,
+) -> String {
+    format!(
+        concat!(
+            r#"{{"name":"{}","version":{},"billboard_mode":"{}","#,
+            r#""translation":{},"colour":{},"uvs":[{},{},{},{}],"#,
+            r#""width":{},"height":{},"distance":{},"uv_offset":{},"#,
+            r#""rotation_wxyz":{},"cutoff_mode":"{}","#,
+            r#""uv_offset_range":{},"source_range":{},"edge_range":{},"#,
+            r#""perspective":{}}}"#,
         ),
+        escape_json(&fields.name),
+        fields.version,
+        escape_json(&fields.billboard_mode),
+        f32_array_json(&fields.translation),
+        fields.colour,
+        f32_array_json(&fields.uvs[0]),
+        f32_array_json(&fields.uvs[1]),
+        f32_array_json(&fields.uvs[2]),
+        f32_array_json(&fields.uvs[3]),
+        render_f32(
+            fields.width,
+            fields
+                .width
+                .to_string()
+        ),
+        render_f32(
+            fields.height,
+            fields
+                .height
+                .to_string()
+        ),
+        render_f32(
+            fields.distance,
+            fields
+                .distance
+                .to_string()
+        ),
+        f32_array_json(&fields.uv_offset),
+        f32_array_json(&display.rotation),
+        escape_json(&display.cutoff_mode),
+        f32_array_json(&display.uv_offset_range),
+        render_f32(
+            display.source_range,
+            display
+                .source_range
+                .to_string()
+        ),
+        render_f32(
+            display.edge_range,
+            display
+                .edge_range
+                .to_string()
+        ),
+        display.perspective,
     )
 }
 

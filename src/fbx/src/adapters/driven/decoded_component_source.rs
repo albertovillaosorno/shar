@@ -1137,12 +1137,25 @@ fn decoded_shader_semantics(shader: &DecodedShader) -> MaterialSemantics {
             0,
             |colour| colour & 0x00ff_ffff,
         );
-    MaterialSemantics::new(
-        shader.translucency == Some(1) || blend_mode != 0,
-        false,
-        false,
-        blend_mode == 2 || emissive_rgb != 0,
-    )
+    let shader_family = shader
+        .platform_shader_name
+        .as_deref()
+        .unwrap_or("")
+        .trim_end_matches(' ')
+        .to_ascii_lowercase();
+    let reflective = shader_family.contains("spheremap")
+        || shader
+            .params
+            .iter()
+            .any(
+                |parameter| {
+                    parameter.kind == "texture" && parameter.param == "REFL"
+                },
+            );
+    MaterialSemantics::default()
+        .with_transparent(shader.translucency == Some(1) || blend_mode != 0)
+        .with_light_emitter(blend_mode == 2 || emissive_rgb != 0)
+        .with_reflective(reflective)
 }
 
 /// Resolve the canonical texture parameter without order-dependent selection.

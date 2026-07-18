@@ -54,6 +54,8 @@ pub mod binary_character_writer;
 mod binary_fbx;
 /// Deterministic object identity inside one binary FBX document.
 mod binary_identity;
+/// Conservative horizontal UV correction policy.
+mod binary_uv_policy;
 /// Decoded skeletal animation source adapter.
 pub mod decoded_animation_source;
 /// Decoded billboard quad-group source adapter.

@@ -49,7 +49,7 @@ use fbx::adapters::driven::decoded_rigid_prop_source::{
 use fbx::domain::animation::AnimationClip;
 use fbx::domain::character::{CharacterAsset, SkinnedPart};
 use fbx::domain::mesh::MeshAsset;
-use fbx::domain::texture::MaterialBinding;
+use fbx::domain::texture::{MaterialBinding, MaterialSemantics};
 use fbx::ports::component_source::ComponentSource as _;
 use serde_json::Value;
 use shar_sha256::digest_hex;
@@ -65,6 +65,10 @@ use crate::domain::PipelineError;
 use crate::domain::package::PhaseThreePackageRow;
 
 /// Export one vehicle while preserving every authored render component.
+#[expect(
+    clippy::too_many_lines,
+    reason = "Vehicle assembly and catalog publication must remain atomic."
+)]
 pub(super) fn export_vehicle(
     package: &PhaseThreePackageRow,
     normalized_root: &Path,
@@ -97,25 +101,26 @@ pub(super) fn export_vehicle(
         &package_root,
         &vehicle,
     )?;
-    let mesh_paths = vehicle_mesh_paths(
+    let source_mesh_paths = vehicle_mesh_paths(
         package,
         &package_root,
     )?;
-    let (mesh_paths, mut deferred_geometry) = partition_vehicle_meshes(
-        &mesh_paths,
-        &vehicle_dir,
-    )?;
-    let mesh_refs = mesh_paths
+    let (retained_mesh_paths, mut deferred_geometry) =
+        partition_vehicle_meshes(
+            &source_mesh_paths,
+            &vehicle_dir,
+        )?;
+    let mesh_refs = retained_mesh_paths
         .iter()
         .map(PathBuf::as_path)
         .collect::<Vec<_>>();
-    let billboard_paths = vehicle_quad_group_paths(
+    let source_billboard_paths = vehicle_quad_group_paths(
         package,
         &package_root,
     )?;
-    let (mut billboard_paths, deferred_billboards) =
+    let (mut retained_billboard_paths, deferred_billboards) =
         partition_vehicle_billboards(
-            &billboard_paths,
+            &source_billboard_paths,
             &vehicle_dir,
         )?;
     deferred_geometry.extend(deferred_billboards);
@@ -136,14 +141,14 @@ pub(super) fn export_vehicle(
             );
         }
     }
-    billboard_paths.extend(common_headlights);
-    billboard_paths.sort();
-    billboard_paths.dedup();
-    let billboard_refs = billboard_paths
+    retained_billboard_paths.extend(common_headlights);
+    retained_billboard_paths.sort();
+    retained_billboard_paths.dedup();
+    let billboard_refs = retained_billboard_paths
         .iter()
         .map(PathBuf::as_path)
         .collect::<Vec<_>>();
-    let asset = load_instanced_rigid_prop_asset_with_billboards(
+    let assembled_asset = load_instanced_rigid_prop_asset_with_billboards(
         &vehicle,
         &skeleton,
         &mesh_refs,
@@ -161,8 +166,26 @@ pub(super) fn export_vehicle(
             )
         },
     )?;
-    let (asset, ground_offset, root_bone) = ground_vehicle_asset(asset)?;
-    let (mut separated, parts) = separate_vehicle_parts(asset)?;
+    let hidden_proxy_indices = hidden_wheel_proxy_indices(
+        &assembled_asset,
+        &vehicle,
+    );
+    let (grounded_asset, ground_offset, root_bone) = if vehicle == "mono-v" {
+        ground_monorail_asset(
+            assembled_asset,
+            &hidden_proxy_indices,
+        )?
+    } else {
+        ground_vehicle_asset(assembled_asset)?
+    };
+    let (mut prepared_asset, wheel_proxy_sidecars, hidden_wheel_proxies) =
+        mark_hidden_wheel_proxies(
+            grounded_asset,
+            &vehicle_dir,
+            &hidden_proxy_indices,
+        )?;
+    deferred_geometry.extend(wheel_proxy_sidecars);
+    deferred_geometry.sort();
     let (materials, shaders) = resolve_vehicle_materials(
         package,
         &package_root,
@@ -170,7 +193,11 @@ pub(super) fn export_vehicle(
         &texture_dir,
         &shader_dir,
         authority,
-        &mut separated,
+        &mut prepared_asset,
+    )?;
+    let (separated, parts) = separate_vehicle_parts(
+        prepared_asset,
+        &materials,
     )?;
     let (mut animations, effect_animation_sidecars) = load_vehicle_animations(
         package,
@@ -218,12 +245,18 @@ pub(super) fn export_vehicle(
             .subcategory
             .clone(),
         fbx_path: format!("{vehicle}/{vehicle}.fbx"),
-        fbx_bytes: u64::try_from(fbx_payload.len())
-            .map_err(|_| PipelineError::new("vehicle FBX size overflowed"))?,
+        fbx_bytes: u64::try_from(fbx_payload.len()).map_err(
+            |error| {
+                PipelineError::new(
+                    format!("vehicle FBX size overflowed: {error}"),
+                )
+            },
+        )?,
         fbx_sha256: digest_hex(&fbx_payload),
         summary,
         parts,
         deferred_geometry,
+        hidden_wheel_proxies,
         animations: animations
             .iter()
             .map(
@@ -401,7 +434,7 @@ fn partition_vehicle_billboards(
                         },
                     )?;
                 let destination = directory.join(file_name);
-                fs::copy(
+                let _copied_bytes = fs::copy(
                     path,
                     &destination,
                 )
@@ -420,7 +453,37 @@ fn partition_vehicle_billboards(
     )
 }
 
+/// Return the one authored skeleton root identity.
+fn skeleton_root_id(asset: &CharacterAsset) -> Result<String, PipelineError> {
+    let roots = asset
+        .bones
+        .iter()
+        .filter(
+            |bone| {
+                bone.parent_id
+                    .is_none()
+            },
+        )
+        .map(
+            |bone| {
+                bone.id
+                    .clone()
+            },
+        )
+        .collect::<Vec<_>>();
+    let [root] = roots.as_slice() else {
+        return Err(
+            PipelineError::new("vehicle requires exactly one skeleton root"),
+        );
+    };
+    Ok(root.clone())
+}
+
 /// Ground one fully assembled vehicle by its four authored road-wheel surfaces.
+#[expect(
+    clippy::too_many_lines,
+    reason = "Grounding updates all geometry and the sole root atomically."
+)]
 fn ground_vehicle_asset(
     mut asset: CharacterAsset
 ) -> Result<
@@ -544,6 +607,448 @@ fn ground_vehicle_asset(
     )
 }
 
+/// Select exactly four source-backed non-visual road-wheel proxies.
+fn hidden_wheel_proxy_indices(
+    asset: &CharacterAsset,
+    vehicle: &str,
+) -> BTreeSet<usize> {
+    let candidates = asset
+        .parts
+        .iter()
+        .enumerate()
+        .filter_map(
+            |(index, part)| {
+                let bones = part_bone_ids(part);
+                (bones.len() == 1
+                    && bones
+                        .iter()
+                        .all(|bone| is_road_wheel_bone(bone)))
+                .then_some(index)
+            },
+        )
+        .collect::<BTreeSet<_>>();
+    let candidate_bones = candidates
+        .iter()
+        .filter_map(
+            |index| {
+                asset
+                    .parts
+                    .get(*index)
+            },
+        )
+        .flat_map(part_bone_ids)
+        .collect::<BTreeSet<_>>();
+    let expected_bones = [
+        "w0".to_owned(),
+        "w1".to_owned(),
+        "w2".to_owned(),
+        "w3".to_owned(),
+    ]
+    .into_iter()
+    .collect::<BTreeSet<_>>();
+    if candidates.len() != 4 || candidate_bones != expected_bones {
+        return BTreeSet::new();
+    }
+
+    if matches!(
+        vehicle,
+        "hbike-v" | "frink-v" | "mono-v"
+    ) {
+        return candidates;
+    }
+
+    let has_visual_wheel_geometry = asset
+        .parts
+        .iter()
+        .flat_map(
+            |part| {
+                &part
+                    .mesh
+                    .groups
+            },
+        )
+        .any(|group| is_visual_wheel_material(&group.shader));
+    let all_box_proxies = candidates
+        .iter()
+        .all(
+            |index| {
+                asset
+                    .parts
+                    .get(*index)
+                    .is_some_and(
+                        |part| {
+                            part.mesh
+                                .groups
+                                .iter()
+                                .all(
+                                    |group| {
+                                        !is_visual_wheel_material(&group.shader)
+                                    },
+                                )
+                                && is_axis_aligned_box_proxy(&part.mesh)
+                        },
+                    )
+            },
+        );
+    if has_visual_wheel_geometry && all_box_proxies {
+        candidates
+    } else {
+        BTreeSet::new()
+    }
+}
+
+/// Ground the monorail body while preserving wheel-proxy rest placement.
+fn ground_monorail_asset(
+    mut asset: CharacterAsset,
+    hidden_proxies: &BTreeSet<usize>,
+) -> Result<
+    (
+        CharacterAsset,
+        f64,
+        String,
+    ),
+    PipelineError,
+> {
+    if hidden_proxies.len() != 4 {
+        return Err(
+            PipelineError::new(
+                "monorail grounding requires four hidden wheel proxies",
+            ),
+        );
+    }
+    let mut lowest = f32::INFINITY;
+    for (index, part) in asset
+        .parts
+        .iter()
+        .enumerate()
+    {
+        if hidden_proxies.contains(&index) {
+            continue;
+        }
+        for position in part
+            .mesh
+            .groups
+            .iter()
+            .flat_map(|group| &group.positions)
+        {
+            lowest = lowest.min(position[1]);
+        }
+    }
+    if !lowest.is_finite() {
+        return Err(
+            PipelineError::new(
+                "monorail visible geometry has no finite ground surface",
+            ),
+        );
+    }
+    let offset = -lowest;
+    for (index, part) in asset
+        .parts
+        .iter_mut()
+        .enumerate()
+    {
+        for position in part
+            .mesh
+            .groups
+            .iter_mut()
+            .flat_map(|group| &mut group.positions)
+        {
+            position[1] += offset;
+            if hidden_proxies.contains(&index) {
+                position[1] -= offset;
+            }
+        }
+    }
+    let root_id = skeleton_root_id(&asset)?;
+    for bone in &mut asset.bones {
+        if bone.id == root_id {
+            bone.rest_matrix[13] += offset;
+        } else if is_road_wheel_bone(&bone.id) {
+            bone.rest_matrix[13] -= offset;
+        }
+        if !bone.rest_matrix[13].is_finite() {
+            return Err(
+                PipelineError::new(
+                    "monorail grounding produced a non-finite bind translation",
+                ),
+            );
+        }
+    }
+    Ok(
+        (
+            asset,
+            f64::from(offset),
+            root_id,
+        ),
+    )
+}
+
+/// Mark non-visual road-wheel proxies invisible while retaining exact evidence.
+fn mark_hidden_wheel_proxies(
+    mut asset: CharacterAsset,
+    vehicle_dir: &Path,
+    candidate_indices: &BTreeSet<usize>,
+) -> Result<
+    (
+        CharacterAsset,
+        Vec<String>,
+        usize,
+    ),
+    PipelineError,
+> {
+    if candidate_indices.is_empty() {
+        return Ok(
+            (
+                asset,
+                Vec::new(),
+                0,
+            ),
+        );
+    }
+    let mut proxies = Vec::new();
+    for (index, part) in asset
+        .parts
+        .iter_mut()
+        .enumerate()
+    {
+        if !candidate_indices.contains(&index) {
+            continue;
+        }
+        let (minimum, maximum) = mesh_bounds(&part.mesh)?;
+        let groups = part
+            .mesh
+            .groups
+            .iter()
+            .map(
+                |group| {
+                    serde_json::json!({
+                        "shader": group.shader,
+                        "positions": group.positions,
+                        "normals": group.normals,
+                        "uvs": group.uvs,
+                        "triangles": group.triangles
+                    })
+                },
+            )
+            .collect::<Vec<_>>();
+        proxies.push(
+            serde_json::json!({
+                "source_mesh": part.mesh.name,
+                "bones": part_bone_ids(part),
+                "bounds": {
+                    "minimum": minimum,
+                    "maximum": maximum
+                },
+                "groups": groups
+            }),
+        );
+        if !part
+            .mesh
+            .name
+            .contains("__hidden-wheel-proxy")
+        {
+            part.mesh
+                .name
+                .push_str("__hidden-wheel-proxy");
+        }
+    }
+    proxies.sort_by(
+        |left, right| {
+            left.to_string()
+                .cmp(&right.to_string())
+        },
+    );
+    let directory = vehicle_dir.join("geometry");
+    fs::create_dir_all(&directory)
+        .map_err(|error| PipelineError::new(error.to_string()))?;
+    let file_name = "hidden-wheel-proxies.json";
+    let payload = serde_json::to_vec_pretty(
+        &serde_json::json!({
+            "schema": "vehicle-wheel-proxies",
+            "policy": concat!(
+                "present in FBX with Visibility=0; retained for pivots, ",
+                "animation, grounding evidence, and later physics work"
+            ),
+            "proxy_count": proxies.len(),
+            "proxies": proxies
+        }),
+    )
+    .map_err(|error| PipelineError::new(error.to_string()))?;
+    write_new(
+        &directory.join(file_name),
+        &payload,
+    )?;
+    Ok(
+        (
+            asset,
+            vec![format!("geometry/{file_name}")],
+            candidate_indices.len(),
+        ),
+    )
+}
+
+/// Collect distinct bone identities referenced by one rigid part.
+fn part_bone_ids(part: &SkinnedPart) -> BTreeSet<String> {
+    part.group_influences
+        .iter()
+        .flatten()
+        .map(
+            |influence| {
+                influence
+                    .bone_id
+                    .clone()
+            },
+        )
+        .collect()
+}
+
+/// Return whether one material identity represents authored visible wheel art.
+fn is_visual_wheel_material(value: &str) -> bool {
+    let identity = value.to_ascii_lowercase();
+    identity.contains("wheel")
+        || identity.contains("tire")
+        || identity.contains("tyre")
+}
+
+/// Recognize one axis-aligned eight-corner box used as a physics wheel proxy.
+fn is_axis_aligned_box_proxy(mesh: &MeshAsset) -> bool {
+    let positions = mesh
+        .groups
+        .iter()
+        .flat_map(|group| &group.positions)
+        .collect::<Vec<_>>();
+    if positions.len() < 8 {
+        return false;
+    }
+    let corner_result = positions
+        .iter()
+        .map(
+            |position| {
+                let [
+                    x,
+                    y,
+                    z,
+                ] = **position;
+                Some(
+                    [
+                        quantized_proxy_axis(x)?,
+                        quantized_proxy_axis(y)?,
+                        quantized_proxy_axis(z)?,
+                    ],
+                )
+            },
+        )
+        .collect::<Option<BTreeSet<_>>>();
+    let Some(corners) = corner_result else {
+        return false;
+    };
+    if corners.len() != 8 {
+        return false;
+    }
+    let x_values = corners
+        .iter()
+        .map(
+            |[
+                x,
+                _y,
+                _z,
+            ]| *x,
+        )
+        .collect::<BTreeSet<_>>();
+    let y_values = corners
+        .iter()
+        .map(
+            |[
+                _x,
+                y,
+                _z,
+            ]| *y,
+        )
+        .collect::<BTreeSet<_>>();
+    let z_values = corners
+        .iter()
+        .map(
+            |[
+                _x,
+                _y,
+                z,
+            ]| *z,
+        )
+        .collect::<BTreeSet<_>>();
+    x_values.len() == 2 && y_values.len() == 2 && z_values.len() == 2
+}
+
+/// Quantize one finite proxy coordinate after checking the target integer
+/// range.
+#[expect(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss,
+    reason = "The rounded value is checked against the exact i64 range before \
+              conversion."
+)]
+fn quantized_proxy_axis(value: f32) -> Option<i64> {
+    let rounded = f64::from(value)
+        .mul_add(
+            100_000.0_f64,
+            0.0_f64,
+        )
+        .round();
+    if !rounded.is_finite()
+        || rounded < i64::MIN as f64
+        || rounded > i64::MAX as f64
+    {
+        return None;
+    }
+    Some(rounded as i64)
+}
+
+/// Calculate finite mesh bounds for deferred proxy evidence.
+fn mesh_bounds(
+    mesh: &MeshAsset
+) -> Result<
+    (
+        [f32; 3],
+        [f32; 3],
+    ),
+    PipelineError,
+> {
+    let mut minimum = [f32::INFINITY; 3];
+    let mut maximum = [f32::NEG_INFINITY; 3];
+    for position in mesh
+        .groups
+        .iter()
+        .flat_map(|group| &group.positions)
+    {
+        for ((minimum_axis, maximum_axis), value) in minimum
+            .iter_mut()
+            .zip(maximum.iter_mut())
+            .zip(
+                position
+                    .iter()
+                    .copied(),
+            )
+        {
+            *minimum_axis = minimum_axis.min(value);
+            *maximum_axis = maximum_axis.max(value);
+        }
+    }
+    if minimum
+        .iter()
+        .chain(maximum.iter())
+        .any(|value| !value.is_finite())
+    {
+        return Err(
+            PipelineError::new("vehicle wheel proxy has non-finite bounds"),
+        );
+    }
+    Ok(
+        (
+            minimum, maximum,
+        ),
+    )
+}
+
 /// Return whether one skeleton identity is one of the four road-wheel pivots.
 fn is_road_wheel_bone(value: &str) -> bool {
     matches!(
@@ -586,8 +1091,13 @@ fn ground_vehicle_animations(
 }
 
 /// Split every primitive group into a named semantic vehicle object.
+#[expect(
+    clippy::too_many_lines,
+    reason = "Part separation keeps geometry, influences, and records aligned."
+)]
 fn separate_vehicle_parts(
-    asset: CharacterAsset
+    asset: CharacterAsset,
+    materials: &[MaterialBinding],
 ) -> Result<
     (
         CharacterAsset,
@@ -595,6 +1105,19 @@ fn separate_vehicle_parts(
     ),
     PipelineError,
 > {
+    let semantics_by_material = materials
+        .iter()
+        .map(
+            |material| {
+                (
+                    material
+                        .material_name
+                        .as_str(),
+                    material.semantics,
+                )
+            },
+        )
+        .collect::<BTreeMap<_, _>>();
     let mut parts = Vec::new();
     let mut records = Vec::new();
     let mut used_names = BTreeMap::<String, usize>::new();
@@ -605,11 +1128,36 @@ fn separate_vehicle_parts(
             .into_iter()
             .zip(part.group_influences)
         {
+            let material_semantics = semantics_by_material
+                .get(
+                    group
+                        .shader
+                        .as_str(),
+                )
+                .copied()
+                .ok_or_else(
+                    || {
+                        PipelineError::new(
+                            format!(
+                                "vehicle semantic material is missing: {}",
+                                group.shader
+                            ),
+                        )
+                    },
+                )?;
+            let semantics = vehicle_part_semantics(
+                &part
+                    .mesh
+                    .name,
+                &group.shader,
+                material_semantics,
+            );
             let role = vehicle_part_role(
                 &part
                     .mesh
                     .name,
                 &group.shader,
+                semantics,
             );
             let base = format!(
                 "{}__{role}",
@@ -675,6 +1223,7 @@ fn separate_vehicle_parts(
                     source_mesh,
                     role,
                     shader,
+                    semantics,
                     bones,
                 },
             );
@@ -705,23 +1254,45 @@ fn separate_vehicle_parts(
     )
 }
 
+/// Merge shared material, source-mesh, and exact runtime light evidence.
+fn vehicle_part_semantics(
+    mesh_name: &str,
+    shader_name: &str,
+    material_semantics: MaterialSemantics,
+) -> MaterialSemantics {
+    let identity_semantics = MaterialSemantics::from_identities(
+        mesh_name,
+        Some(shader_name),
+    );
+    let runtime_semantics = MaterialSemantics::default()
+        .with_light_emitter(runtime_light_shape(mesh_name));
+    material_semantics
+        .merge(identity_semantics)
+        .merge(runtime_semantics)
+}
+
 /// Classify one vehicle geometry group without inventing unsupported parts.
 fn vehicle_part_role(
     mesh_name: &str,
     shader_name: &str,
+    semantics: MaterialSemantics,
 ) -> &'static str {
+    let hidden_wheel_proxy = mesh_name.contains("hidden-wheel-proxy");
     let mesh = mesh_name
         .split("__joint_")
         .next()
         .unwrap_or(mesh_name)
         .to_ascii_lowercase();
     let shader = shader_name.to_ascii_lowercase();
-    let evidence = format!("{mesh} {shader}");
-    if is_mirror_identity(&evidence) {
+    if hidden_wheel_proxy {
+        "hidden-wheel-proxy"
+    } else if semantics.is_mirror() {
         "mirror"
-    } else if is_glass_identity(&evidence) {
+    } else if semantics.is_glass() {
         "glass"
-    } else if is_light_emitter_identity(&evidence) {
+    } else if semantics.is_visual_effect() {
+        "vfx"
+    } else if semantics.is_light_emitter() {
         "light-emitter"
     } else if mesh.contains("trunk") {
         "trunk"
@@ -746,75 +1317,22 @@ fn vehicle_part_role(
         "accessory"
     } else if shader.contains("int") || shader.contains("engine") {
         "interior"
+    } else if semantics.is_reflective() {
+        "reflective"
+    } else if semantics.is_transparent() {
+        "transparent"
     } else {
         "body"
     }
-}
-
-/// Return whether one identity represents glass or an optical lens.
-fn is_glass_identity(value: &str) -> bool {
-    [
-        "glass",
-        "window",
-        "windsh",
-        "windscreen",
-        "visor",
-        "goggle",
-        "spectacle",
-        "eyeglass",
-        "lens",
-    ]
-    .iter()
-    .any(|needle| value.contains(needle))
-}
-
-/// Return whether one identity represents a rear-view or side-view mirror.
-fn is_mirror_identity(value: &str) -> bool {
-    [
-        "mirror",
-        "rearview",
-        "rear-view",
-        "sideview",
-        "side-view",
-    ]
-    .iter()
-    .any(|needle| value.contains(needle))
-}
-
-/// Return whether runtime naming or material evidence marks a light source.
-fn is_light_emitter_identity(value: &str) -> bool {
-    [
-        "headlight",
-        "head-light",
-        "taillight",
-        "tail-light",
-        "brakelight",
-        "brake-light",
-        "brakeflare",
-        "reverse-light",
-        "reverselight",
-        "siren",
-        "lamp",
-        "bulb",
-        "flare",
-        "glow",
-        "emiss",
-        "neon",
-        "backfire",
-        "fireseq",
-        "frinkarc",
-    ]
-    .iter()
-    .any(|needle| value.contains(needle))
-        || runtime_light_shape(value)
 }
 
 /// Recognize exact vehicle light prop identities used by the original runtime.
 fn runtime_light_shape(value: &str) -> bool {
     let compact = value
         .chars()
-        .filter(|character| character.is_ascii_alphanumeric())
-        .collect::<String>();
+        .filter(char::is_ascii_alphanumeric)
+        .collect::<String>()
+        .to_ascii_lowercase();
     [
         "brake1shape",
         "brake2shape",
@@ -844,6 +1362,12 @@ fn is_wheel_identity(mesh: &str) -> bool {
 
 /// Resolve used shaders, preserve authored identities, and publish JSON
 /// sidecars.
+#[expect(
+    clippy::too_many_lines,
+    reason = "Material authority, texture publication, semantic merging, \
+              shader               sidecars, and group rebinding form one \
+              consistency transaction."
+)]
 fn resolve_vehicle_materials(
     package: &PhaseThreePackageRow,
     package_root: &Path,
@@ -949,7 +1473,7 @@ fn resolve_vehicle_materials(
                 ),
             );
         }
-        by_source.insert(
+        let _previous_source = by_source.insert(
             shader.clone(),
             material_name,
         );
@@ -1023,6 +1547,12 @@ fn shader_material_root(
 }
 
 /// Export skeletal clips and preserve texture/effect animations as sidecars.
+#[expect(
+    clippy::too_many_lines,
+    reason = "Animation discovery, skeleton compatibility, deterministic \
+              naming,               effect sidecars, and rejection accounting \
+              stay in one pass."
+)]
 fn load_vehicle_animations(
     package: &PhaseThreePackageRow,
     package_root: &Path,
@@ -1163,7 +1693,7 @@ fn publish_unreferenced_textures(
                     .as_deref()
             },
         )
-        .map(|name| name.to_ascii_lowercase())
+        .map(str::to_ascii_lowercase)
         .collect::<BTreeSet<_>>();
     let source_dir = package_root
         .join("components")
@@ -1182,7 +1712,7 @@ fn publish_unreferenced_textures(
         let destination_dir = texture_dir.join(role);
         fs::create_dir_all(&destination_dir)
             .map_err(|error| PipelineError::new(error.to_string()))?;
-        fs::copy(
+        let _copied_bytes = fs::copy(
             &source,
             destination_dir.join(file_name),
         )
@@ -1314,7 +1844,11 @@ fn texture_records(
                 path: relative,
                 role,
                 bytes: u64::try_from(bytes.len()).map_err(
-                    |_| PipelineError::new("vehicle texture size overflowed"),
+                    |error| {
+                        PipelineError::new(
+                            format!("vehicle texture size overflowed: {error}"),
+                        )
+                    },
                 )?,
                 sha256: digest_hex(&bytes),
             },
@@ -1379,33 +1913,52 @@ fn portable_name(value: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{is_wheel_identity, texture_state_role, vehicle_part_role};
+    use fbx::domain::texture::MaterialSemantics;
+
+    use super::{
+        is_wheel_identity, texture_state_role, vehicle_part_role,
+        vehicle_part_semantics,
+    };
+
+    fn role(
+        mesh: &str,
+        shader: &str,
+    ) -> &'static str {
+        let semantics = vehicle_part_semantics(
+            mesh,
+            shader,
+            MaterialSemantics::default(),
+        );
+        vehicle_part_role(
+            mesh, shader, semantics,
+        )
+    }
 
     #[test]
     fn semantic_roles_keep_moving_and_glass_parts_separate() {
         assert_eq!(
-            vehicle_part_role(
+            role(
                 "TrunkRotShape",
                 "trunk_m"
             ),
             "trunk"
         );
         assert_eq!(
-            vehicle_part_role(
+            role(
                 "DoorDRotShape",
                 "door_m"
             ),
             "driver-door"
         );
         assert_eq!(
-            vehicle_part_role(
+            role(
                 "homer_vShape",
                 "WindsheildT_m"
             ),
             "glass"
         );
         assert_eq!(
-            vehicle_part_role(
+            role(
                 "w0Shape", "wheel_m"
             ),
             "wheel"
@@ -1442,6 +1995,20 @@ mod grounding_tests {
     use fbx::domain::skin::SkinInfluence;
 
     use super::*;
+
+    fn role(
+        mesh: &str,
+        shader: &str,
+    ) -> &'static str {
+        let semantics = vehicle_part_semantics(
+            mesh,
+            shader,
+            MaterialSemantics::default(),
+        );
+        vehicle_part_role(
+            mesh, shader, semantics,
+        )
+    }
 
     fn wheel_part(
         name: &str,
@@ -1542,6 +2109,106 @@ mod grounding_tests {
     }
 
     #[test]
+    fn selects_only_explicit_nonvisual_wheel_proxy_vehicles()
+    -> Result<(), String> {
+        let asset = grounded_fixture()?;
+        let frink_count = hidden_wheel_proxy_indices(
+            &asset, "frink-v",
+        )
+        .len();
+        let monorail_count = hidden_wheel_proxy_indices(
+            &asset, "mono-v",
+        )
+        .len();
+        let ordinary = hidden_wheel_proxy_indices(
+            &asset, "snake-v",
+        );
+        if frink_count != 4 || monorail_count != 4 || !ordinary.is_empty() {
+            return Err(
+                format!(
+                    concat!(
+                        "wheel proxy counts differ: frink={} ",
+                        "mono={} ordinary={}"
+                    ),
+                    frink_count,
+                    monorail_count,
+                    ordinary.len()
+                ),
+            );
+        }
+        Ok(())
+    }
+
+    /// Return the minimum Y coordinate across selected parts.
+    fn minimum_y(parts: &[SkinnedPart]) -> f32 {
+        parts
+            .iter()
+            .flat_map(
+                |part| {
+                    &part
+                        .mesh
+                        .groups
+                },
+            )
+            .flat_map(|group| &group.positions)
+            .map(|position| position[1])
+            .fold(
+                f32::INFINITY,
+                f32::min,
+            )
+    }
+
+    #[test]
+    fn monorail_body_grounding_preserves_proxy_surfaces() -> Result<(), String>
+    {
+        let mut asset = grounded_fixture()?;
+        asset
+            .parts
+            .push(
+                wheel_part(
+                    "monorail-body",
+                    "root",
+                    2.0,
+                )?,
+            );
+        let proxies = hidden_wheel_proxy_indices(
+            &asset, "mono-v",
+        );
+        let (grounded, offset, root) = ground_monorail_asset(
+            asset, &proxies,
+        )
+        .map_err(|error| format!("monorail grounding failed: {error:?}"))?;
+        if root != "root" || (offset + 2.0_f64).abs() > f64::EPSILON {
+            return Err(
+                format!("unexpected monorail root result: {root} {offset}"),
+            );
+        }
+        let proxy_parts = grounded
+            .parts
+            .get(..4)
+            .ok_or_else(
+                || "monorail fixture has fewer than four proxies".to_owned(),
+            )?;
+        let body = grounded
+            .parts
+            .get(4)
+            .ok_or_else(|| "monorail fixture has no body part".to_owned())?;
+        let proxy_minimum = minimum_y(proxy_parts);
+        let body_minimum = minimum_y(std::slice::from_ref(body));
+        if (proxy_minimum + 0.75_f32).abs() > f32::EPSILON
+            || body_minimum.abs() > f32::EPSILON
+        {
+            return Err(
+                format!(
+                    "monorail grounding changed surfaces: \
+                     proxies={proxy_minimum} body={body_minimum}"
+                ),
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
     fn grounds_all_vehicle_parts_and_root_from_road_wheels()
     -> Result<(), String> {
         let asset = grounded_fixture()?;
@@ -1577,7 +2244,20 @@ mod grounding_tests {
         if minimum.abs() > f32::EPSILON {
             return Err(format!("vehicle wheels are not grounded: {minimum}"));
         }
-        if (grounded.bones[0].rest_matrix[13] - 0.75).abs() > f32::EPSILON {
+        let root_translation = grounded
+            .bones
+            .first()
+            .and_then(
+                |bone| {
+                    bone.rest_matrix
+                        .get(13)
+                },
+            )
+            .copied()
+            .ok_or_else(
+                || "grounded fixture has no root translation".to_owned(),
+            )?;
+        if (root_translation - 0.75_f32).abs() > f32::EPSILON {
             return Err(
                 "vehicle root did not receive grounding offset".to_owned(),
             );
@@ -1599,10 +2279,10 @@ mod grounding_tests {
                         samples: vec![
                             LocalTransformSample {
                                 translation: [
-                                    0.0, 0.0, 0.0,
+                                    0.0_f64, 0.0_f64, 0.0_f64,
                                 ],
                                 rotation_wxyz: [
-                                    1.0, 0.0, 0.0, 0.0,
+                                    1.0_f64, 0.0_f64, 0.0_f64, 0.0_f64,
                                 ],
                             },
                         ],
@@ -1616,9 +2296,33 @@ mod grounding_tests {
             &mut clips, "root", 0.75,
         )
         .map_err(|error| format!("animation grounding failed: {error:?}"))?;
-        if (clips[0].tracks[0].samples[0].translation[1] - 0.75).abs()
-            > f64::EPSILON
-        {
+        let grounded_y = clips
+            .first()
+            .and_then(
+                |clip| {
+                    clip.tracks
+                        .first()
+                },
+            )
+            .and_then(
+                |track| {
+                    track
+                        .samples
+                        .first()
+                },
+            )
+            .and_then(
+                |sample| {
+                    sample
+                        .translation
+                        .get(1)
+                },
+            )
+            .copied()
+            .ok_or_else(
+                || "grounded animation fixture has no Y sample".to_owned(),
+            )?;
+        if (grounded_y - 0.75_f64).abs() > f64::EPSILON {
             return Err(
                 "root animation did not receive grounding offset".to_owned(),
             );
@@ -1629,28 +2333,56 @@ mod grounding_tests {
     #[test]
     fn classifies_vehicle_shader_automation_roles() {
         assert_eq!(
-            vehicle_part_role(
+            role(
                 "DoorDRotShape",
                 "window_glass_m"
             ),
             "glass"
         );
         assert_eq!(
-            vehicle_part_role(
+            role(
                 "mirrorShape",
                 "body_m"
             ),
             "mirror"
         );
         assert_eq!(
-            vehicle_part_role(
+            role(
                 "brake1Shape",
                 "brakeFlareA_m"
             ),
             "light-emitter"
         );
+        assert_eq!(
+            role(
+                "lightsShape",
+                "cPoliceLights_m"
+            ),
+            "light-emitter"
+        );
+        assert_eq!(
+            role(
+                "smokeShape__transparent-source",
+                "smoke_m"
+            ),
+            "vfx"
+        );
+        assert_eq!(
+            role(
+                "cFire_vShape",
+                "cFire_vBackNorm_m"
+            ),
+            "body"
+        );
+        assert_eq!(
+            role(
+                "chromeShape",
+                "vehicle_chrome_m"
+            ),
+            "reflective"
+        );
         assert_ne!(
-            vehicle_part_role(
+            role(
                 "steeringwheelShape",
                 "interior_m"
             ),

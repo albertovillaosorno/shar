@@ -39,7 +39,13 @@
 // - docs/adr/pipeline/fbx/hexagonal-scene-export.md
 //
 // Large file:
-//   - false
+//   - true
+//   - Reason: one serializer-input boundary keeps source-binding validation,
+//     semantic material variants, bind transforms, and shared errors aligned.
+//   - Split: separate material and skeleton plans when either gains a second
+//     serializer consumer.
+//   - Validation: canonical FBX validation and binary material variant tests.
+//   - Review: required whenever another input responsibility is added.
 //
 
 //! Serializer-local preparation for canonical binary character FBX output.
@@ -57,14 +63,25 @@ use crate::domain::transform::matrix::{
 /// Object id of the single bind pose.
 pub(super) const POSE_ID: u64 = 6_000_000_000;
 
-/// One deduplicated material slot with deterministic ids.
+/// One deduplicated semantic material variant with deterministic ids.
 pub(super) struct MaterialSlot<'materials> {
     /// Deterministic object ids for the material triple.
     pub(super) ids: MaterialIds,
-    /// Borrowed material binding.
+    /// Borrowed source material binding.
     pub(super) binding: &'materials MaterialBinding,
-    /// Effective semantics merged from material and source geometry evidence.
+    /// Effective semantics for this exact material variant.
     pub(super) semantics: MaterialSemantics,
+    /// Unique portable FBX object identity for this variant.
+    pub(super) object_name: String,
+}
+
+/// One complete source-binding and semantic-variant material plan.
+pub(super) struct MaterialPlan<'materials> {
+    /// Material variants keyed by source identity and semantic signature.
+    pub(super) slots: BTreeMap<String, MaterialSlot<'materials>>,
+    /// Original source bindings keyed by authored shader identity.
+    pub(super) source_bindings:
+        BTreeMap<&'materials str, &'materials MaterialBinding>,
 }
 
 /// Precomputed local and global bind transforms for one bone.
@@ -138,47 +155,113 @@ pub(super) fn bone_transforms(
     Ok(transforms)
 }
 
-/// Deduplicate material bindings by used shader in stable order.
+/// Return effective source and geometry semantics for one exact mesh group.
+#[must_use]
+pub(super) fn effective_material_semantics(
+    mesh_name: &str,
+    binding: &MaterialBinding,
+) -> MaterialSemantics {
+    binding
+        .semantics
+        .merge(
+            MaterialSemantics::from_identities(
+                mesh_name, None,
+            ),
+        )
+}
+
+/// Build one stable internal key for a source material semantic variant.
+#[must_use]
+pub(super) fn material_variant_key(
+    material_name: &str,
+    semantics: MaterialSemantics,
+) -> String {
+    let signature = semantics
+        .suffix()
+        .unwrap_or_else(|| "opaque".to_owned());
+    format!("{material_name}::{signature}")
+}
+
+/// Build one unique portable FBX object identity for a material variant.
+fn material_object_name(
+    material_name: &str,
+    semantics: MaterialSemantics,
+) -> String {
+    semantics
+        .suffix()
+        .map_or_else(
+            || material_name.to_owned(),
+            |suffix| format!("{material_name}__{suffix}"),
+        )
+}
+
+/// Deduplicate source bindings into exact semantic variants in stable order.
 pub(super) fn material_slots<'materials>(
     character: &CharacterAsset,
     materials: &'materials [MaterialBinding],
-) -> Result<BTreeMap<String, MaterialSlot<'materials>>, CharacterInputError> {
-    let mut used_shaders = BTreeSet::new();
-    let mut geometry_semantics = BTreeMap::<String, MaterialSemantics>::new();
-    for part in &character.parts {
-        let part_semantics = MaterialSemantics::from_identities(
-            &part
-                .mesh
-                .name,
-            None,
+) -> Result<MaterialPlan<'materials>, CharacterInputError> {
+    let source_bindings = validated_source_bindings(
+        character, materials,
+    )?;
+    let variants = material_variants(
+        character,
+        &source_bindings,
+    )?;
+    let mut slots = BTreeMap::new();
+    for (ordinal, (key, (binding, semantics))) in variants
+        .into_iter()
+        .enumerate()
+    {
+        let _previous = slots.insert(
+            key,
+            MaterialSlot {
+                ids: material_ids(ordinal)?,
+                binding,
+                semantics,
+                object_name: material_object_name(
+                    &binding.material_name,
+                    semantics,
+                ),
+            },
         );
-        for group in &part
-            .mesh
-            .groups
-        {
-            let _inserted = used_shaders.insert(
+    }
+    Ok(
+        MaterialPlan {
+            slots,
+            source_bindings,
+        },
+    )
+}
+
+/// Validate source material identities and index every used shader binding.
+fn validated_source_bindings<'materials>(
+    character: &CharacterAsset,
+    materials: &'materials [MaterialBinding],
+) -> Result<
+    BTreeMap<&'materials str, &'materials MaterialBinding>,
+    CharacterInputError,
+> {
+    let used_shaders = character
+        .parts
+        .iter()
+        .flat_map(
+            |part| {
+                part.mesh
+                    .groups
+                    .iter()
+            },
+        )
+        .map(
+            |group| {
                 group
                     .shader
-                    .clone(),
-            );
-            geometry_semantics
-                .entry(
-                    group
-                        .shader
-                        .clone(),
-                )
-                .and_modify(
-                    |current| {
-                        *current = current.merge(part_semantics);
-                    },
-                )
-                .or_insert(part_semantics);
-        }
-    }
-    let mut bindings_by_name: BTreeMap<&str, &MaterialBinding> =
-        BTreeMap::new();
+                    .as_str()
+            },
+        )
+        .collect::<BTreeSet<_>>();
+    let mut source_bindings = BTreeMap::new();
     for binding in materials {
-        if bindings_by_name
+        if source_bindings
             .insert(
                 binding
                     .material_name
@@ -204,9 +287,11 @@ pub(super) fn material_slots<'materials>(
                 },
             );
         }
-    }
-    for binding in materials {
-        if !used_shaders.contains(&binding.material_name) {
+        if !used_shaders.contains(
+            binding
+                .material_name
+                .as_str(),
+        ) {
             return Err(
                 CharacterInputError::UnusedMaterialBinding {
                     material: binding
@@ -216,35 +301,63 @@ pub(super) fn material_slots<'materials>(
             );
         }
     }
-    let mut slots = BTreeMap::new();
-    for (ordinal, shader) in used_shaders
-        .iter()
-        .enumerate()
-    {
-        let binding = bindings_by_name
-            .get(shader.as_str())
-            .ok_or_else(
-                || CharacterInputError::MissingMaterialBinding {
-                    shader: shader.clone(),
-                },
-            )?;
-        let _previous = slots.insert(
-            shader.clone(),
-            MaterialSlot {
-                ids: material_ids(ordinal)?,
+    Ok(source_bindings)
+}
+
+/// Collect exact source-shader and geometry-semantic material variants.
+fn material_variants<'materials>(
+    character: &CharacterAsset,
+    source_bindings: &BTreeMap<&'materials str, &'materials MaterialBinding>,
+) -> Result<
+    BTreeMap<
+        String,
+        (
+            &'materials MaterialBinding,
+            MaterialSemantics,
+        ),
+    >,
+    CharacterInputError,
+> {
+    let mut variants = BTreeMap::new();
+    for part in &character.parts {
+        for group in &part
+            .mesh
+            .groups
+        {
+            let binding = source_bindings
+                .get(
+                    group
+                        .shader
+                        .as_str(),
+                )
+                .copied()
+                .ok_or_else(
+                    || CharacterInputError::MissingMaterialBinding {
+                        shader: group
+                            .shader
+                            .clone(),
+                    },
+                )?;
+            let semantics = effective_material_semantics(
+                &part
+                    .mesh
+                    .name,
                 binding,
-                semantics: binding
-                    .semantics
-                    .merge(
-                        geometry_semantics
-                            .get(shader)
-                            .copied()
-                            .unwrap_or_default(),
+            );
+            let key = material_variant_key(
+                &group.shader,
+                semantics,
+            );
+            let _entry = variants
+                .entry(key)
+                .or_insert(
+                    (
+                        binding, semantics,
                     ),
-            },
-        );
+                );
+        }
     }
-    Ok(slots)
+    Ok(variants)
 }
 
 /// Return whether one texture identity is one portable file name.

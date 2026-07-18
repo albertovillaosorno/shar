@@ -16,15 +16,14 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Transactional separated master-world FBX publication.
+//   - Transactional globally aligned world-package FBX publication.
 // - Must-Not:
-//   - Publish private reference geometry or replace later runtime world
-//     assembly.
+//   - Publish private reference geometry or merge incompatible level variants.
 // - Allows:
-//   - Fresh original extraction, coordinate-only joins, collision review,
-//   - similarity-overlaid definitions, catalogs, and atomic output.
+//   - Fresh original extraction, coordinate-only joins, package FBX files,
+//   - collision inspection, isolated review galleries, and transform manifests.
 // - Summary:
-//   - Builds one separated connected-coordinate master-world FBX.
+//   - Builds independently importable world FBX files at one shared origin.
 //
 // ADRs:
 // - docs/adr/pipeline/unreal/world-assembly-from-normalized-chunks.md
@@ -34,17 +33,17 @@
 //   - false
 //
 
-//! Transactional separated master-world FBX publication.
+//! Transactional globally aligned world-package FBX publication.
 
 use std::fs;
 use std::path::Path;
 
-use self::catalog::{counts, write_catalog};
-use self::export::export_master_scene;
-use self::inventory::packages_by_level;
+use self::catalog::{counts, write_catalogs};
+use self::export::export_world_collection;
+use self::inventory::world_packages;
 use super::catalog::inventory;
 use super::extraction::{
-    extract_world_level_coordinate_packages, extract_world_level_packages,
+    extract_world_level_coordinate_packages, extract_world_packages,
 };
 use super::texture_authority::SharedTextureAuthority;
 use super::{ensure_missing, staging_path};
@@ -60,15 +59,15 @@ mod model;
 mod scenegraph;
 mod transform;
 
-/// Stable master-world stage identity.
+/// Stable world-package stage identity.
 const STAGE: &str = "fbx-export-world";
 
-/// Export one separated static master FBX for all seven main game levels.
+/// Export globally aligned package FBX files for every terrain-world source.
 ///
 /// # Errors
 ///
-/// Returns an error when extraction, coordinate joining, assembly, review-layer
-/// placement, verification, cleanup, or atomic publication fails.
+/// Returns an error when extraction, coordinate joining, package assembly,
+/// verification, cleanup, or atomic publication fails.
 pub(in crate::adapters::driven::local) fn export_world_master(
     index_path: &Path,
     game_root: &Path,
@@ -77,16 +76,16 @@ pub(in crate::adapters::driven::local) fn export_world_master(
 ) -> Result<StageReport, PipelineError> {
     ensure_missing(
         output_dir,
-        "world master output",
+        "world package output",
     )?;
     let staging = staging_path(output_dir)?;
     ensure_missing(
         &staging,
-        "world master staging",
+        "world package staging",
     )?;
     fs::create_dir_all(&staging).map_err(
         |error| {
-            PipelineError::new(format!("world master staging failed: {error}"))
+            PipelineError::new(format!("world package staging failed: {error}"))
         },
     )?;
     let result = build(
@@ -103,7 +102,7 @@ pub(in crate::adapters::driven::local) fn export_world_master(
             .map_err(
                 |error| {
                     PipelineError::new(
-                        format!("world master publication failed: {error}"),
+                        format!("world package publication failed: {error}"),
                     )
                 },
             )?;
@@ -114,28 +113,21 @@ pub(in crate::adapters::driven::local) fn export_world_master(
                     bytes,
                     note: format!(
                         concat!(
-                            "published one separated master-world FBX from {} \
-                             levels ",
-                            "and {} packages: {} coordinate references, {} \
-                             fallbacks, ",
-                            "{} interiors, {} source meshes, {} authored \
-                             placements, ",
-                            "{} review definitions in {} similarity groups, \
-                             {} ",
-                            "collision meshes, and {} reference-position \
-                             collisions"
+                            "published {} globally aligned world FBX files ",
+                            "and {} isolated review FBX files from {} \
+                             packages ",
+                            "across {} independent scopes; {} interiors, {} ",
+                            "bonus-area packages, {} authored placements, and ",
+                            "{} collision meshes"
                         ),
-                        counts.source_levels,
+                        counts.world_fbx_files,
+                        counts.review_fbx_files,
                         counts.source_packages,
-                        counts.coordinate_reference_packages,
-                        counts.coordinate_fallback_packages,
+                        counts.source_scopes,
                         counts.interior_packages,
-                        counts.source_meshes,
+                        counts.bonus_area_packages,
                         counts.authored_placements,
-                        counts.review_definitions,
-                        counts.review_similarity_groups,
                         counts.collision_meshes,
-                        counts.reference_collision_meshes,
                     ),
                 },
             )
@@ -157,7 +149,7 @@ fn build(
     (
         usize,
         u64,
-        model::WorldMasterCounts,
+        model::WorldCollectionCounts,
     ),
     PipelineError,
 > {
@@ -174,12 +166,12 @@ fn build(
         fs::create_dir_all(directory).map_err(
             |error| {
                 PipelineError::new(
-                    format!("world master normalized staging failed: {error}"),
+                    format!("world package normalized staging failed: {error}"),
                 )
             },
         )?;
     }
-    let source_packages = extract_world_level_packages(
+    let source_packages = extract_world_packages(
         &index, game_root, &canonical,
     )?;
     let reference_packages = extract_world_level_coordinate_packages(
@@ -187,11 +179,11 @@ fn build(
         coordinate_root,
         &coordinates,
     )?;
-    let packages = packages_by_level(&index)?;
+    let packages = world_packages(&index);
     let authority = SharedTextureAuthority::build(
         &index, &canonical,
     )?;
-    let master = export_master_scene(
+    let collection = export_world_collection(
         &packages,
         &canonical,
         &coordinates,
@@ -202,14 +194,16 @@ fn build(
     )?;
     let counts = counts(
         source_packages,
-        &master,
+        &collection,
     );
-    write_catalog(
-        staging, counts, &master,
+    write_catalogs(
+        staging,
+        counts,
+        &collection,
     )?;
     fs::remove_dir_all(&work).map_err(
         |error| {
-            PipelineError::new(format!("world master cleanup failed: {error}"))
+            PipelineError::new(format!("world package cleanup failed: {error}"))
         },
     )?;
     let (files, bytes) = inventory(staging)?;

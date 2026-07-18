@@ -45,14 +45,18 @@ use crate::domain::package::{PhaseThreePackageIndex, PhaseThreePackageRow};
 /// packages.
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct VehicleTextureSource {
+    /// Extracted package subcategory owning this texture occurrence.
     subcategory: String,
+    /// Freshly extracted texture path.
     path: PathBuf,
+    /// Exact source texture digest.
     sha256: String,
 }
 
 /// Cross-package texture lookup restricted to the generated car package family.
 #[derive(Debug)]
 pub(super) struct VehicleTextureAuthority {
+    /// Logical texture keys mapped to all freshly extracted occurrences.
     sources: BTreeMap<String, Vec<VehicleTextureSource>>,
 }
 
@@ -501,7 +505,7 @@ fn is_collision_volume_identity(value: &str) -> bool {
 fn identity_key(value: &str) -> String {
     value
         .chars()
-        .filter(|character| character.is_ascii_alphanumeric())
+        .filter(char::is_ascii_alphanumeric)
         .flat_map(char::to_lowercase)
         .collect()
 }
@@ -513,7 +517,7 @@ fn texture_key(value: &str) -> String {
         .trim();
     let stem = Path::new(clean)
         .file_stem()
-        .and_then(|value| value.to_str())
+        .and_then(|component| component.to_str())
         .unwrap_or(clean);
     stem.trim_end_matches('_')
         .to_ascii_lowercase()

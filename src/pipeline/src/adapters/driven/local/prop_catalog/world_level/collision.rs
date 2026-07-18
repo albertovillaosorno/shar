@@ -53,18 +53,26 @@ pub(super) const COLLISION_MATERIAL: &str = "material-collision";
 
 /// One package's collision surfaces and sanitation accounting.
 pub(super) struct CollisionBatch {
+    /// Canonical collision meshes prepared for FBX publication.
     pub(super) meshes: Vec<MeshAsset>,
+    /// Meshes using topology-verified coordinate-reference positions.
     pub(super) reference_coordinate_meshes: usize,
+    /// Repeated-index triangles discarded from canonical topology.
     pub(super) discarded_triangles: usize,
 }
 
 /// Decoded intersect DSG document needed for safe coordinate transplantation.
 #[derive(Clone)]
 struct IntersectDocument {
+    /// Decoded source schema identity.
     schema: String,
+    /// Declared source index count.
     num_indices: usize,
+    /// Canonical collision triangle indices.
     indices: Vec<u32>,
+    /// Declared source position count.
     num_positions: usize,
+    /// Canonical or coordinate-reference positions.
     positions: Vec<[f32; 3]>,
 }
 
@@ -198,7 +206,7 @@ fn intersect_documents(
         )?;
         let stem = path
             .file_stem()
-            .and_then(|value| value.to_str())
+            .and_then(|component| component.to_str())
             .ok_or_else(
                 || PipelineError::new("world collision file has no UTF-8 stem"),
             )?
@@ -367,32 +375,59 @@ fn json_position(
         .iter()
         .enumerate()
     {
-        let number = component
+        let source_number = component
             .as_f64()
             .ok_or_else(
                 || {
                     PipelineError::new(
                         format!(
-                            "world collision position component is invalid \
-                             for {}",
+                            "invalid world collision position component for {}",
                             path.display()
                         ),
                     )
                 },
-            )? as f32;
-        if !number.is_finite() {
-            return Err(
-                PipelineError::new(
-                    format!(
-                        "world collision position is non-finite for {}",
-                        path.display()
-                    ),
-                ),
-            );
-        }
-        position[axis] = number;
+            )?;
+        let number = checked_position_component(
+            source_number,
+            path,
+        )?;
+        let target = position
+            .get_mut(axis)
+            .ok_or_else(
+                || {
+                    PipelineError::new(
+                        "world collision position axis overflowed",
+                    )
+                },
+            )?;
+        *target = number;
     }
     Ok(position)
+}
+
+/// Narrow one finite JSON number to the collision mesh scalar contract.
+#[expect(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    reason = "The result is immediately checked for finite f32 range before \
+              use."
+)]
+fn checked_position_component(
+    value: f64,
+    path: &Path,
+) -> Result<f32, PipelineError> {
+    let narrowed = value as f32;
+    if !narrowed.is_finite() {
+        return Err(
+            PipelineError::new(
+                format!(
+                    "world collision position exceeds f32 range for {}",
+                    path.display()
+                ),
+            ),
+        );
+    }
+    Ok(narrowed)
 }
 
 /// Return whether reference positions can be transplanted without topology

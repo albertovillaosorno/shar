@@ -256,20 +256,6 @@ fn coordinate_sources(
     Ok(sources)
 }
 
-/// Re-extract every package owned by one of the seven main game levels.
-pub(super) fn extract_world_level_packages(
-    index: &PhaseThreePackageIndex,
-    game_root: &Path,
-    normalized_root: &Path,
-) -> Result<usize, PipelineError> {
-    extract_packages(
-        index,
-        game_root,
-        normalized_root,
-        is_world_level_package,
-    )
-}
-
 /// Re-extract every package accepted by one category predicate.
 ///
 /// # Errors

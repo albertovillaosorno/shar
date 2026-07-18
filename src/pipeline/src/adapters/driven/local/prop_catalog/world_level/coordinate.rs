@@ -473,6 +473,27 @@ mod tests {
 
     type TestResult = Result<(), String>;
 
+    /// Return the first primitive group or a fixture error.
+    fn first_group(mesh: &MeshAsset) -> Result<&PrimitiveGroup, String> {
+        mesh.groups
+            .first()
+            .ok_or_else(|| "fixture mesh has no primitive group".to_owned())
+    }
+
+    /// Return the first mutable primitive group or a fixture error.
+    fn first_group_mut(
+        mesh: &mut MeshAsset
+    ) -> Result<&mut PrimitiveGroup, String> {
+        mesh.groups
+            .first_mut()
+            .ok_or_else(|| "fixture mesh has no primitive group".to_owned())
+    }
+
+    /// Compare exact deterministic float arrays by bit pattern.
+    fn position_bits(value: [f32; 3]) -> [u32; 3] {
+        value.map(f32::to_bits)
+    }
+
     #[test]
     fn coordinate_transplant_keeps_canonical_presentation() -> TestResult {
         let mut canonical = mesh(
@@ -493,35 +514,57 @@ mod tests {
             &reference,
         )
         .map_err(|error| error.to_string())?;
-        assert_eq!(
-            canonical.groups[0].shader,
-            "canonical-material"
-        );
-        assert_eq!(
-            canonical.groups[0].uvs,
-            vec![
-                [
-                    0.0, 0.0
-                ],
-                [
-                    1.0, 0.0
-                ],
-                [
-                    0.0, 1.0
-                ]
-            ]
-        );
-        assert_eq!(
-            canonical.groups[0].positions[0],
+        let group = first_group(&canonical)?;
+        if group.shader != "canonical-material" {
+            return Err(
+                format!(
+                    "canonical shader changed: {}",
+                    group.shader
+                ),
+            );
+        }
+        let expected_uvs = vec![
             [
-                100.0, 0.0, 0.0
-            ]
-        );
+                0.0_f32, 0.0_f32,
+            ],
+            [
+                1.0_f32, 0.0_f32,
+            ],
+            [
+                0.0_f32, 1.0_f32,
+            ],
+        ];
+        if group.uvs != expected_uvs {
+            return Err(
+                format!(
+                    "canonical UVs changed: {:?}",
+                    group.uvs
+                ),
+            );
+        }
+        let position = group
+            .positions
+            .first()
+            .copied()
+            .ok_or_else(|| "canonical group has no position".to_owned())?;
+        if position_bits(position)
+            != position_bits(
+                [
+                    100.0_f32, 0.0_f32, 0.0_f32,
+                ],
+            )
+        {
+            return Err(
+                format!(
+                    "reference position was not transplanted: {position:?}"
+                ),
+            );
+        }
         Ok(())
     }
 
     #[test]
-    fn topology_mismatch_blocks_coordinate_transplant() -> Result<(), String> {
+    fn topology_mismatch_blocks_coordinate_transplant() -> TestResult {
         let canonical = mesh(
             "canonical-material",
             0.0,
@@ -530,19 +573,23 @@ mod tests {
             "reference-material",
             10.0,
         )?;
-        reference.groups[0].triangles[0] = [
+        let triangle = first_group_mut(&mut reference)?
+            .triangles
+            .first_mut()
+            .ok_or_else(|| "reference group has no triangle".to_owned())?;
+        *triangle = [
             0, 2, 1,
         ];
-        assert!(
-            !topology_matches(
-                &canonical, &reference,
-            )
-        );
+        if topology_matches(
+            &canonical, &reference,
+        ) {
+            return Err("incompatible topology was accepted".to_owned());
+        }
         Ok(())
     }
+
     #[test]
-    fn unique_topology_match_handles_zero_reference_candidates()
-    -> Result<(), String> {
+    fn unique_topology_match_handles_zero_reference_candidates() -> TestResult {
         let canonical = mesh(
             "canonical-material",
             0.0,
@@ -554,16 +601,18 @@ mod tests {
             owner_name: "mesh".to_owned(),
             owner_kind: "srr_entity_dsg".to_owned(),
         };
-        assert_eq!(
-            unique_topology_match(
-                &canonical,
-                &[source],
-                std::slice::from_ref(&canonical),
-                &[],
-                &BTreeSet::new(),
-            ),
-            None
+        let matched = unique_topology_match(
+            &canonical,
+            &[source],
+            std::slice::from_ref(&canonical),
+            &[],
+            &BTreeSet::new(),
         );
+        if matched.is_some() {
+            return Err(
+                "zero reference candidates produced a match".to_owned(),
+            );
+        }
         Ok(())
     }
 }

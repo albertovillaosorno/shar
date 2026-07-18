@@ -219,7 +219,9 @@ fn loads_selected_prop_and_prunes_unselected_branches() -> Result<(), String> {
     }
     let positions = &part
         .mesh
-        .groups[0]
+        .groups
+        .first()
+        .ok_or_else(|| "selected rigid prop has no primitive group".to_owned())?
         .positions;
     if positions
         != &[

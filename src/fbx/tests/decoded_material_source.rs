@@ -335,9 +335,8 @@ fn resolves_sanitized_local_texture_through_package_ledger() {
             fbx::domain::texture::MaterialBinding {
                 material_name: "glass".to_owned(),
                 texture_file_name: Some("Krusty__HumanCola.png".to_owned()),
-                semantics: fbx::domain::texture::MaterialSemantics::new(
-                    true, true, false, false,
-                ),
+                semantics: fbx::domain::texture::MaterialSemantics::default()
+                    .with_glass(true),
             }
         )
     );

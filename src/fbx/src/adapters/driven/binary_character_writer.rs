@@ -65,8 +65,9 @@ use super::binary_animation::{
     BinaryAnimationCounts, BinaryAnimationPlan, build_animation_plan,
 };
 use super::binary_character_input::{
-    BoneTransform, CharacterInputError, MaterialSlot, POSE_ID, bone_transforms,
-    material_slots,
+    BoneTransform, CharacterInputError, MaterialPlan, MaterialSlot, POSE_ID,
+    bone_transforms, effective_material_semantics, material_slots,
+    material_variant_key,
 };
 use super::binary_fbx::{
     BinaryNode, BinaryProperty, CREATION_TIME, DETERMINISTIC_FILE_ID,
@@ -75,6 +76,7 @@ use super::binary_fbx::{
 use super::binary_identity::{
     BinaryIdentityError, GeometryIds, bone_ids, cluster_id, geometry_ids,
 };
+use super::binary_uv_policy::mirrors_u;
 use crate::domain::animation::AnimationClip;
 use crate::domain::character::{CharacterAsset, SkinnedPart};
 use crate::domain::mesh::{MeshAsset, PrimitiveGroup};
@@ -175,12 +177,16 @@ struct BinaryGroup<'character> {
     influences: &'character [crate::domain::skin::SkinInfluence],
     /// Bones influencing this group in stable ordinal order.
     used_bones: Vec<String>,
+    /// Stable key of the exact material semantic variant.
+    material_key: String,
+    /// Whether source-backed decal evidence requires horizontal UV correction.
+    mirror_u: bool,
 }
 
 /// Flatten aggregate parts into binary-writer geometry groups.
 fn binary_groups<'character>(
     character: &'character CharacterAsset,
-    material_slots: &BTreeMap<String, MaterialSlot<'_>>,
+    material_plan: &MaterialPlan<'_>,
 ) -> Result<Vec<BinaryGroup<'character>>, CharacterBinaryFbxError> {
     let mut groups = Vec::new();
     for part in &character.parts {
@@ -191,8 +197,34 @@ fn binary_groups<'character>(
             .zip(&part.group_influences)
         {
             let ids = geometry_ids(groups.len())?;
-            let material = material_slots
-                .get(&group.shader)
+            let source_binding = material_plan
+                .source_bindings
+                .get(
+                    group
+                        .shader
+                        .as_str(),
+                )
+                .copied()
+                .ok_or_else(
+                    || CharacterBinaryFbxError::MissingMaterialBinding {
+                        shader: group
+                            .shader
+                            .clone(),
+                    },
+                )?;
+            let semantics = effective_material_semantics(
+                &part
+                    .mesh
+                    .name,
+                source_binding,
+            );
+            let material_key = material_variant_key(
+                &group.shader,
+                semantics,
+            );
+            let material = material_plan
+                .slots
+                .get(&material_key)
                 .ok_or_else(
                     || CharacterBinaryFbxError::MissingMaterialBinding {
                         shader: group
@@ -227,6 +259,16 @@ fn binary_groups<'character>(
                     group,
                     influences,
                     used_bones,
+                    material_key,
+                    mirror_u: mirrors_u(
+                        &part
+                            .mesh
+                            .name,
+                        &source_binding.material_name,
+                        source_binding
+                            .texture_file_name
+                            .as_deref(),
+                    ),
                 },
             );
         }
@@ -517,7 +559,7 @@ fn build_character_document(
     animations: &[AnimationClip],
     scene_kind: BinarySceneKind,
 ) -> Result<CharacterFbxDocument, CharacterBinaryFbxError> {
-    let material_slots = material_slots(
+    let material_plan = material_slots(
         character, materials,
     )
     .map_err(CharacterBinaryFbxError::from)?;
@@ -535,7 +577,7 @@ fn build_character_document(
     };
     let groups = binary_groups(
         character,
-        &material_slots,
+        &material_plan,
     )?;
     let bone_ordinals: BTreeMap<&str, usize> = character
         .bones
@@ -567,7 +609,7 @@ fn build_character_document(
     let nodes = document_nodes(
         character,
         &groups,
-        &material_slots,
+        &material_plan.slots,
         &texture_payloads,
         &bone_transforms,
         &bone_ordinals,
@@ -584,8 +626,11 @@ fn build_character_document(
         } else {
             0
         },
-        materials: material_slots.len(),
-        textures: material_slots
+        materials: material_plan
+            .slots
+            .len(),
+        textures: material_plan
+            .slots
             .values()
             .filter(
                 |slot| {
@@ -1533,7 +1578,12 @@ fn geometry_node(
         children.push(normal_layer(group)?);
     }
     if group.has_uvs() {
-        children.push(uv_layer(group)?);
+        children.push(
+            uv_layer(
+                group,
+                flattened.mirror_u,
+            )?,
+        );
     }
     if group.has_colors() {
         children.push(color_layer(group)?);
@@ -1633,19 +1683,35 @@ fn normal_layer(
     )
 }
 
-/// Build one primary UV layer preserving source orientation.
+/// Convert one `Pure3D` UV under one source-backed horizontal policy.
+fn source_uv_to_fbx(
+    uv: [f32; 2],
+    mirror_u: bool,
+) -> [f64; 2] {
+    let u = f64::from(uv[0]);
+    [
+        if mirror_u {
+            1.0 - u
+        } else {
+            u
+        },
+        f64::from(uv[1]),
+    ]
+}
+
+/// Build one primary UV layer with conservative decal-only correction.
 fn uv_layer(
-    group: &PrimitiveGroup
+    group: &PrimitiveGroup,
+    mirror_u: bool,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
     let coordinates = group
         .uvs
         .iter()
         .flat_map(
             |uv| {
-                [
-                    f64::from(uv[0]),
-                    f64::from(uv[1]),
-                ]
+                source_uv_to_fbx(
+                    *uv, mirror_u,
+                )
             },
         )
         .collect();
@@ -1914,6 +1980,13 @@ fn model_node(
                             "Lcl Scaling",
                             parts.scale,
                         ),
+                        visibility_property(
+                            if name.contains("__hidden-wheel-proxy") {
+                                0.0
+                            } else {
+                                1.0
+                            },
+                        ),
                     ],
                 ),
                 BinaryNode::leaf(
@@ -1933,85 +2006,6 @@ fn model_node(
 fn material_node(
     slot: &MaterialSlot<'_>
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
-    let semantics = slot.semantics;
-    let mut properties = vec![
-        color_property(
-            "DiffuseColor",
-            [
-                0.8, 0.8, 0.8,
-            ],
-        ),
-        color_property(
-            "AmbientColor",
-            [
-                0.2, 0.2, 0.2,
-            ],
-        ),
-        color_property(
-            "SpecularColor",
-            [
-                0.0, 0.0, 0.0,
-            ],
-        ),
-        double_property(
-            "SpecularFactor",
-            0.0,
-        ),
-        double_property(
-            "Shininess",
-            0.0,
-        ),
-        color_property(
-            "ReflectionColor",
-            [
-                1.0, 1.0, 1.0,
-            ],
-        ),
-        double_property(
-            "ReflectionFactor",
-            if semantics.is_mirror() {
-                1.0
-            } else {
-                0.0
-            },
-        ),
-    ];
-    if semantics.is_transparent() {
-        properties.push(
-            color_property(
-                "TransparentColor",
-                [
-                    1.0, 1.0, 1.0,
-                ],
-            ),
-        );
-        properties.push(
-            double_property(
-                "TransparencyFactor",
-                if semantics.is_glass() {
-                    0.65
-                } else {
-                    0.35
-                },
-            ),
-        );
-    }
-    if semantics.is_light_emitter() {
-        properties.push(
-            color_property(
-                "EmissiveColor",
-                [
-                    1.0, 1.0, 1.0,
-                ],
-            ),
-        );
-        properties.push(
-            double_property(
-                "EmissiveFactor",
-                1.0,
-            ),
-        );
-    }
     Ok(
         BinaryNode::new(
             "Material",
@@ -2021,12 +2015,7 @@ fn material_node(
                         .material,
                 )?,
                 name_class(
-                    &semantic_object_name(
-                        &slot
-                            .binding
-                            .material_name,
-                        slot.semantics,
-                    ),
+                    &slot.object_name,
                     "Material",
                 ),
                 string(""),
@@ -2045,11 +2034,129 @@ fn material_node(
                 ),
                 BinaryNode::branch(
                     "Properties70",
-                    properties,
+                    material_properties(slot.semantics),
                 ),
             ],
         ),
     )
+}
+
+/// Build deterministic scalar and color properties for one semantic material.
+fn material_properties(
+    semantics: crate::domain::texture::MaterialSemantics
+) -> Vec<BinaryNode> {
+    let reflective_color = if semantics.is_reflective() {
+        [
+            1.0_f64, 1.0_f64, 1.0_f64,
+        ]
+    } else {
+        [
+            0.0_f64, 0.0_f64, 0.0_f64,
+        ]
+    };
+    let emissive_color = if semantics.is_light_emitter() {
+        [
+            1.0_f64, 1.0_f64, 1.0_f64,
+        ]
+    } else {
+        [
+            0.0_f64, 0.0_f64, 0.0_f64,
+        ]
+    };
+    let reflective_factor = if semantics.is_reflective() {
+        0.65_f64
+    } else {
+        0.0_f64
+    };
+    let mut properties = vec![
+        color_property(
+            "DiffuseColor",
+            [
+                0.8_f64, 0.8_f64, 0.8_f64,
+            ],
+        ),
+        color_property(
+            "AmbientColor",
+            [
+                0.2_f64, 0.2_f64, 0.2_f64,
+            ],
+        ),
+        color_property(
+            "SpecularColor",
+            reflective_color,
+        ),
+        double_property(
+            "SpecularFactor",
+            reflective_factor,
+        ),
+        double_property(
+            "Shininess",
+            if semantics.is_reflective() {
+                32.0_f64
+            } else {
+                0.0_f64
+            },
+        ),
+        color_property(
+            "ReflectionColor",
+            [
+                1.0_f64, 1.0_f64, 1.0_f64,
+            ],
+        ),
+        double_property(
+            "ReflectionFactor",
+            if semantics.is_mirror() {
+                1.0_f64
+            } else {
+                reflective_factor
+            },
+        ),
+        color_property(
+            "EmissiveColor",
+            emissive_color,
+        ),
+        double_property(
+            "EmissiveFactor",
+            if semantics.is_light_emitter() {
+                1.0_f64
+            } else {
+                0.0_f64
+            },
+        ),
+    ];
+    append_transparency_properties(
+        &mut properties,
+        semantics,
+    );
+    properties
+}
+
+/// Append standard FBX transparency properties when source evidence requires.
+fn append_transparency_properties(
+    properties: &mut Vec<BinaryNode>,
+    semantics: crate::domain::texture::MaterialSemantics,
+) {
+    if !semantics.is_transparent() {
+        return;
+    }
+    properties.push(
+        color_property(
+            "TransparentColor",
+            [
+                1.0_f64, 1.0_f64, 1.0_f64,
+            ],
+        ),
+    );
+    properties.push(
+        double_property(
+            "TransparencyFactor",
+            if semantics.is_glass() {
+                0.65_f64
+            } else {
+                0.35_f64
+            },
+        ),
+    );
 }
 
 /// Append deterministic semantic labels without changing binding identity.
@@ -2081,12 +2188,9 @@ fn texture_node(
     slot: &MaterialSlot<'_>,
     relative_path: &str,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
-    let name = semantic_object_name(
-        &slot
-            .binding
-            .material_name,
-        slot.semantics,
-    );
+    let name = slot
+        .object_name
+        .clone();
     Ok(
         BinaryNode::new(
             "Texture",
@@ -2135,12 +2239,9 @@ fn video_node(
     relative_path: &str,
     content: Option<&[u8]>,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
-    let name = semantic_object_name(
-        &slot
-            .binding
-            .material_name,
-        slot.semantics,
-    );
+    let name = slot
+        .object_name
+        .clone();
     let mut children = vec![
         string_node(
             "Type", "Clip",
@@ -2496,11 +2597,7 @@ fn connections(
             )?,
         );
         let slot = material_slots
-            .get(
-                &group
-                    .group
-                    .shader,
-            )
+            .get(&group.material_key)
             .ok_or_else(
                 || CharacterBinaryFbxError::MissingMaterialBinding {
                     shader: group
@@ -2769,6 +2866,20 @@ fn enum_property(
             string(""),
             string(""),
             BinaryProperty::I32(value),
+        ],
+    )
+}
+
+/// Build one FBX visibility property entry.
+fn visibility_property(value: f64) -> BinaryNode {
+    BinaryNode::leaf(
+        "P",
+        vec![
+            string("Visibility"),
+            string("Visibility"),
+            string(""),
+            string("A"),
+            BinaryProperty::F64(value),
         ],
     )
 }
@@ -3125,4 +3236,61 @@ fn near_standard_rate_uses_custom_time_mode() {
         frame_rate_time_mode(30.000_000_000_5_f64),
         14_i32
     );
+}
+
+#[cfg(test)]
+mod uv_conversion_tests {
+    use super::source_uv_to_fbx;
+
+    /// Assert exact deterministic UV components without float comparison.
+    fn assert_uv_bits(
+        actual: [f64; 2],
+        expected: [f64; 2],
+    ) {
+        assert_eq!(
+            actual.map(f64::to_bits),
+            expected.map(f64::to_bits)
+        );
+    }
+
+    #[test]
+    fn preserves_source_u_without_decal_evidence() {
+        assert_uv_bits(
+            source_uv_to_fbx(
+                [
+                    0.25_f32, 0.75_f32,
+                ],
+                false,
+            ),
+            [
+                0.25_f64, 0.75_f64,
+            ],
+        );
+    }
+
+    #[test]
+    fn mirrors_only_selected_decal_u_without_changing_v() {
+        assert_uv_bits(
+            source_uv_to_fbx(
+                [
+                    0.25_f32, 0.75_f32,
+                ],
+                true,
+            ),
+            [
+                0.75_f64, 0.75_f64,
+            ],
+        );
+        assert_uv_bits(
+            source_uv_to_fbx(
+                [
+                    2.0_f32, -1.0_f32,
+                ],
+                true,
+            ),
+            [
+                -1.0_f64, -1.0_f64,
+            ],
+        );
+    }
 }

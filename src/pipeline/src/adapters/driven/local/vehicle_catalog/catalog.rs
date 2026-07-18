@@ -36,7 +36,7 @@ use std::path::{Path, PathBuf};
 
 use serde_json::{Value, json};
 
-use super::model::VehicleRecord;
+use super::model::{PartRecord, VehicleRecord};
 use crate::domain::PipelineError;
 
 /// Write one deterministic vehicle-local catalog.
@@ -69,19 +69,22 @@ pub(super) fn write_root_catalog(
                 "render geometry split into semantic objects",
                 "authored render skeleton and component pivots",
                 "package-local skeletal animation clips",
-                "external normal-state texture bindings"
+                "external normal-state texture bindings",
+                "source billboard light and VFX surfaces",
+                "source-backed reflective and metallic material hints"
             ],
             "sidecars": [
                 "decoded shader parameters",
                 "damage textures",
                 "alternate appearance textures",
-                "semantic part roles and pivot bones"
+                "semantic part roles and pivot bones",
+                "hidden non-visual wheel proxies retained as physics evidence"
             ],
             "excluded": [
-                "collision and physics",
+                "runtime collision and physics behavior",
                 "cameras and follow-camera data",
                 "locators and triggers",
-                "quad-group flares and particles",
+                "camera-facing billboard execution",
                 "gameplay state and tuning"
             ]
         },
@@ -91,6 +94,40 @@ pub(super) fn write_root_catalog(
             "parts": records
                 .iter()
                 .map(|record| record.parts.len())
+                .sum::<usize>(),
+            "transparent_surfaces": records
+                .iter()
+                .flat_map(|record| &record.parts)
+                .filter(|part| part.semantics.is_transparent())
+                .count(),
+            "glass_surfaces": records
+                .iter()
+                .flat_map(|record| &record.parts)
+                .filter(|part| part.semantics.is_glass())
+                .count(),
+            "mirror_surfaces": records
+                .iter()
+                .flat_map(|record| &record.parts)
+                .filter(|part| part.semantics.is_mirror())
+                .count(),
+            "reflective_surfaces": records
+                .iter()
+                .flat_map(|record| &record.parts)
+                .filter(|part| part.semantics.is_reflective())
+                .count(),
+            "light_emitter_surfaces": records
+                .iter()
+                .flat_map(|record| &record.parts)
+                .filter(|part| part.semantics.is_light_emitter())
+                .count(),
+            "visual_effect_surfaces": records
+                .iter()
+                .flat_map(|record| &record.parts)
+                .filter(|part| part.semantics.is_visual_effect())
+                .count(),
+            "hidden_wheel_proxies": records
+                .iter()
+                .map(|record| record.hidden_wheel_proxies)
                 .sum::<usize>(),
             "deferred_geometry": records
                 .iter()
@@ -140,10 +177,44 @@ fn vehicle_json(record: &VehicleRecord) -> Value {
             "textures": record.summary.textures,
             "animations": record.summary.animations
         },
+        "surface_semantics": {
+            "transparent_surfaces": record
+                .parts
+                .iter()
+                .filter(|part| part.semantics.is_transparent())
+                .count(),
+            "glass_surfaces": record
+                .parts
+                .iter()
+                .filter(|part| part.semantics.is_glass())
+                .count(),
+            "mirror_surfaces": record
+                .parts
+                .iter()
+                .filter(|part| part.semantics.is_mirror())
+                .count(),
+            "reflective_surfaces": record
+                .parts
+                .iter()
+                .filter(|part| part.semantics.is_reflective())
+                .count(),
+            "light_emitter_surfaces": record
+                .parts
+                .iter()
+                .filter(|part| part.semantics.is_light_emitter())
+                .count(),
+            "visual_effect_surfaces": record
+                .parts
+                .iter()
+                .filter(|part| part.semantics.is_visual_effect())
+                .count()
+        },
+        "hidden_wheel_proxies": record.hidden_wheel_proxies,
         "parts": record.parts.iter().map(|part| json!({
             "name": part.name,
             "source_mesh": part.source_mesh,
             "role": part.role,
+            "surface_semantics": part_semantics(part),
             "shader": part.shader,
             "bones": part.bones
         })).collect::<Vec<_>>(),
@@ -158,6 +229,48 @@ fn vehicle_json(record: &VehicleRecord) -> Value {
         })).collect::<Vec<_>>(),
         "shaders": record.shaders
     })
+}
+
+/// Return deterministic overlapping semantic labels for one vehicle part.
+fn part_semantics(part: &PartRecord) -> Vec<&'static str> {
+    let mut semantics = Vec::new();
+    if part
+        .semantics
+        .is_transparent()
+    {
+        semantics.push("transparent");
+    }
+    if part
+        .semantics
+        .is_glass()
+    {
+        semantics.push("glass");
+    }
+    if part
+        .semantics
+        .is_mirror()
+    {
+        semantics.push("mirror");
+    }
+    if part
+        .semantics
+        .is_reflective()
+    {
+        semantics.push("reflective");
+    }
+    if part
+        .semantics
+        .is_light_emitter()
+    {
+        semantics.push("light-emitter");
+    }
+    if part
+        .semantics
+        .is_visual_effect()
+    {
+        semantics.push("vfx");
+    }
+    semantics
 }
 
 /// Return every file recursively below one optional root.

@@ -943,16 +943,28 @@ fn binary_flag(
     }
 }
 
-/// Mark geometry with shared semantic evidence without changing shader lookup.
+/// Preserve coarse composite translucency only for unambiguous geometry.
+///
+/// A composite flag applies to the referenced drawable as a whole, but legacy
+/// multi-material vehicle and prop meshes frequently mix opaque body, trim,
+/// wheel, interior, and glass groups. Marking the entire mesh would incorrectly
+/// override the decoded shader evidence for every group. Single-group meshes
+/// are the only lossless boundary where the composite flag can be projected
+/// directly.
 pub(super) fn mark_transparent_mesh(mesh: &mut MeshAsset) {
-    if !mesh
-        .name
-        .to_ascii_lowercase()
-        .contains("transparent")
+    if mesh
+        .groups
+        .len()
+        != 1
+        || mesh
+            .name
+            .to_ascii_lowercase()
+            .contains("transparent")
     {
-        mesh.name
-            .push_str("__transparent-source");
+        return;
     }
+    mesh.name
+        .push_str("__transparent-source");
 }
 
 /// Validate one composite and return its rigid prop-to-joint bindings.
@@ -1037,7 +1049,7 @@ pub(super) fn composite_bindings(
             &skin.is_translucent,
             "composite skin translucency",
         )? {
-            translucent_skins.insert(skin_name);
+            let _inserted = translucent_skins.insert(skin_name);
         }
     }
     let mut bindings = Vec::with_capacity(
@@ -1620,4 +1632,83 @@ struct DecodedCompositeSkin {
         rename = "sort_order"
     )]
     _sort_order: serde_json::Value,
+}
+
+#[cfg(test)]
+mod composite_transparency_tests {
+    use super::mark_transparent_mesh;
+    use crate::domain::mesh::{MeshAsset, PrimitiveGroup};
+
+    fn group(
+        index: usize,
+        shader: &str,
+    ) -> Result<PrimitiveGroup, String> {
+        PrimitiveGroup::new(
+            index,
+            shader,
+            vec![
+                [
+                    0.0, 0.0, 0.0,
+                ],
+                [
+                    1.0, 0.0, 0.0,
+                ],
+                [
+                    0.0, 1.0, 0.0,
+                ],
+            ],
+            Vec::new(),
+            &[
+                0, 1, 2,
+            ],
+        )
+        .map_err(|error| format!("synthetic primitive group failed: {error:?}"))
+    }
+
+    #[test]
+    fn composite_transparency_marks_only_single_group_meshes()
+    -> Result<(), String> {
+        let mut isolated = MeshAsset::new(
+            "window",
+            vec![
+                group(
+                    0, "window_m",
+                )?,
+            ],
+        )
+        .map_err(|error| format!("single-group fixture failed: {error:?}"))?;
+        mark_transparent_mesh(&mut isolated);
+        if isolated.name != "window__transparent-source" {
+            return Err(
+                format!(
+                    "single-group transparency marker changed: {}",
+                    isolated.name
+                ),
+            );
+        }
+
+        let mut mixed = MeshAsset::new(
+            "vehicle-body",
+            vec![
+                group(
+                    0, "body_m",
+                )?,
+                group(
+                    1,
+                    "windsheild_m",
+                )?,
+            ],
+        )
+        .map_err(|error| format!("multi-group fixture failed: {error:?}"))?;
+        mark_transparent_mesh(&mut mixed);
+        if mixed.name != "vehicle-body" {
+            return Err(
+                format!(
+                    "multi-group transparency marker changed: {}",
+                    mixed.name
+                ),
+            );
+        }
+        Ok(())
+    }
 }

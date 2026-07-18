@@ -116,7 +116,7 @@ The primary delivery sequence is fixed by decision record. Current status is:
 | 1 | Decode required source evidence | Complete |
 | 2 | Generate the minor-unit manifest | Complete |
 | 3 | Classify deterministic packages | Complete |
-| 4 | Generate semantically prepared first-principles binary FBX | In progress |
+| 4 | Generate semantically prepared first-principles binary FBX | Complete |
 | 5 | Establish native Unreal MCP terminal control | In progress |
 | 6 | Create native Unreal assets | Planned |
 | 7 | Implement the complete native runtime | Planned |
@@ -402,8 +402,8 @@ inside the crate that owns the behavior.
 | :--- | :--- | :--- |
 | 1 | Decode source formats and create the game manifest | Complete |
 | 2 | Generate the minor-unit manifest | Complete |
-| 3 | Classify minor units into deterministic packages | In progress |
-| 4 | Convert model packages to binary FBX 7.7 | In progress |
+| 3 | Classify minor units into deterministic packages | Complete |
+| 4 | Convert model packages to binary FBX 7.7 | Complete |
 | 5 | Establish native Unreal MCP terminal control | In progress |
 | 6 | Convert normalized data into native Unreal assets | Planned |
 | 7 | Implement the complete Unreal runtime | Planned |
@@ -418,378 +418,255 @@ or when stricter validation invalidates previously accepted evidence.
 
 ## Eleven-phase roadmap
 
-### Phase 1 — Decode every required source format
+### Phase 4 — Generate semantically prepared first-principles binary FBX
 
 **Status:** Complete.
 
-**Executive result:** The character, non-world prop, standalone world-prop,
-and vehicle lanes are complete and published locally. All 110 skinned character
-presentations produce verified binary FBX 7.7 artifacts with external textures,
-preserved topology and rigging, and non-empty animation sets. The prop catalog
-publishes Wasp Camera, Wrench, 71 mission models, one collectible-card model,
-one root `phone-icon` interaction model, and 285 readable standalone world props.
-The vehicle catalog publishes 88 semantically separated vehicles with authored
-pivots, four independent wheel instances where required, external textures,
-shader sidecars, damage-state evidence, and supported animation. Only the final
-master world/map block remains in progress.
+**Executive result:** Every model-bearing Phase 3 package now has either a
+validated binary FBX 7.7 artifact or an explicit non-FBX route. The final ignored
+local publication contains 110 character packages, 73 non-world model props, 285
+standalone world props, Wasp Camera, Wrench, 88 vehicles, and a separated world
+collection assembled from 149 terrain packages across eight independent scopes.
+The world publication contains 127 normally imported root FBXs and 89 isolated
+review FBXs rather than one monolithic file.
 
 Completed boundary work:
 
 - [x] Make binary FBX 7.7 the canonical production FBX representation.
-- [x] Select source packages from the generated package index.
-- [x] Generate deterministic output identities and capability reports.
-- [x] Publish referenced PNG textures beside each FBX and prohibit embedded
-  `Video.Content` payloads in the canonical character catalog.
-- [x] Implement typed scene, geometry, material, texture, skeleton, skin,
-  animation, timing, and transform domains for model export.
-- [x] Define package profiles for characters, vehicles, props, and terrain.
-- [x] Preserve authored mesh partitions instead of forcibly merging
-  unrelated geometry islands.
-- [x] Keep optional Blender review and Maya import scripts explicitly
-  experimental, non-authoritative, and outside production validation.
-- [x] Implement the character FBX writer for geometry, materials, external
-  textures, authored mesh partitions and rigid props, skeletons, skin clusters,
-  native animation curves, and source-rate timing.
-- [x] Protect the binary writer and character scene contract with
-  repository-owned structural, semantic, determinism, and malformed-input tests.
-- [x] Publish one canonical standalone Wasp Camera FBX containing only its body,
-  pruned rig, vertex colors, materials, and the authored `PTRN_beecamera` clip.
-- [x] Exclude the Wasp Camera shield, attack ray, particles, collision, placement,
-  state machine, explosion geometry, and gameplay logic from the FBX artifact.
-- [x] Preserve PDDI packed vertex colors and fixed-width shader and texture
-  identities through deterministic decoded-component and binary-FBX contracts.
-- [x] Publish one canonical Wrench FBX containing only `wrench7Shape`, its two
-  required joints, `wrench_m`, `wrench.png`, and the authored `PTRN_wrench` clip.
-- [x] Exclude `wrench_collect`, billboard quads, glow materials, lights, and
-  particle systems from the Wrench FBX.
-- [x] Publish one deduplicated non-world prop catalog beneath separate
-  `cards/` and `missions/` directories plus the root `phone-icon/` prop,
-  including card, phone-icon, race-flag, and finish-line model geometry.
-- [x] Publish terrain-world model props beneath `fbx-assets/props/world/`
-  with one hash-free directory per readable prop name.
-- [x] Consolidate same-name world variants by positions, topology, and rig;
-  merge distinct compatible clips and retain incompatible variant evidence.
-- [x] Route camera-only and data-only packages to native Unreal conversion rather
-  than manufacturing empty or misleading FBX files.
+- [x] Select source packages from the generated Phase 3 package index.
+- [x] Preserve authored topology, mesh partitions, pivots, rigid bindings,
+  skeletons, skin clusters, animation timing, and supported animation curves.
+- [x] Publish external PNG textures and prohibit packed image payloads in the
+  canonical character catalog.
+- [x] Classify transparent, glass, mirror, reflective, light-emitting, and visual
+  effect surfaces from decoded material and geometry evidence.
+- [x] Split shared source shaders into semantic FBX material variants when one
+  source shader serves ordinary and light-emitting geometry.
+- [x] Apply horizontal UV correction only to orientation-sensitive graphics such
+  as text, logos, photographs, signs, labels, screens, decals, and liveries.
+- [x] Preserve source UV orientation for ordinary paint, wheels, glass, terrain,
+  repeating materials, and visual effects.
+- [x] Assemble vehicle pieces at authored rest transforms and ground vehicles by
+  their four authored road-wheel surfaces.
+- [x] Publish malformed or unsupported source evidence as named sidecars instead
+  of manufacturing replacement geometry.
+- [x] Publish a globally aligned separated-world collection with collision
+  inspection geometry and definition-only review galleries kept distinct.
+- [x] Keep coordinate-comparison evidence transform-only: it may align canonical
+  source geometry but never supplies public model, material, or texture payloads.
+- [x] Route camera-only, controller-only, attribute-only, and gameplay-only
+  packages to Phase 6 native Unreal conversion instead of empty FBX placeholders.
 
-The character writer boundary is verified through repository-owned fixtures,
-malformed-input tests, and two complete independent catalog generations. The two
-runs produced identical paths, sizes, and SHA-256 values for all 705 files.
-Optional Blender or Maya scripts remain exploratory inspection aids only; they
-are not generation, repair, validation, or acceptance evidence. The detailed
-preparation boundary is defined by the
-[character semantic preparation specification](docs/technical/fbx/character-semantic-preparation.md).
+#### Character catalog
 
-The final ignored local catalog is `fbx-assets/characters/`. It contains 110
-package directories and one root `catalog.json`, totaling 705 files and
-3,096,478,283 bytes. Each package publishes one binary FBX 7.7, one deterministic
-texture plan, and its referenced PNG textures. The catalog verifies external
-texture storage, zero packed images, preserved topology, non-empty skin clusters,
-and non-empty animation sets. Across the catalog it records 7,243 animation
-clips, 3,657 bones, 469 geometries, 5,140 clusters, 280 materials, and 274 texture
-bindings. Animation behavior itself is unchanged in this phase.
+The final ignored character catalog is `fbx-assets/characters/`. It contains 110
+package directories and one root `catalog.json`, totaling 711 files and
+3,096,864,010 bytes. The complete publication snapshot SHA-256 is
+`ce28cc0e3e6fe081795668bf77fce9c50c96ffee77d65dcbbeb7b4026bca64e6`,
+and the root catalog SHA-256 is
+`756bf9ef29020c0df2b34d76f914ef92ca67d5e403347c883ad6605904b7d1e7`.
 
-The first ignored standalone animated-prop artifact is
-`fbx-assets/props/wasp-camera/`. It publishes one 717,596-byte binary FBX 7.7 and
-four unique external PNG files, totaling 725,498 bytes. The FBX contains fourteen
-selected body meshes represented by 19 geometry groups, a pruned 16-bone rig, 19
-rigid clusters, seven materials, seven texture bindings, five vertex-color layers,
-and one 436-frame `PTRN_beecamera` clip. Two independent generations produced
-identical paths, sizes, and SHA-256 values; the canonical FBX SHA-256 is
-`e4f7c4e575f28f836384cd8e5ae2e5599717438def3db52ea94ed48e97720da0`.
-The seven level copies were verified as duplicate body, rig, and animation
-evidence, so level one is the canonical source. Cross-consumer review additionally
-confirmed the model, external textures, rig, and complete animation in Blender and
-Maya. Shield, ray, particles, collision, placement, state, explosion geometry, and
-gameplay logic remain outside this FBX boundary.
+Each package publishes one binary FBX, one deterministic texture plan, and its
+referenced external PNG files. The catalog records zero packed images, preserved
+source/output topology, non-empty skin clusters, and non-empty animation sets.
+Across all packages it records 7,243 animation clips, 3,657 bones, 469 geometries,
+5,140 clusters, 280 materials, 280 FBX texture bindings, and 490 published PNG
+files. Character animation behavior is unchanged in this phase.
 
-The second ignored standalone model-prop artifact is
-`fbx-assets/props/wrench/`. It publishes one 72,124-byte binary FBX 7.7 and one
-1,698-byte external PNG, totaling 73,822 bytes. The FBX contains one
-`wrench7Shape` geometry, the two retained joints `wrench` and `wrench7`, one
-rigid cluster, one `wrench_m` material and texture binding, and one cyclic
-61-frame `PTRN_wrench` clip at 30 frames per second. Three independent
-generations produced identical paths, sizes, and SHA-256 values; the canonical
-FBX SHA-256 is
-`9206a68e1c6237878df122f8aca38cbf159b4aa820d044ec44b9b508e45ae82f`.
-Blender 5.1 imported the final model, texture, rig, and complete animation without
-collection, glow, quad, or particle identities.
+Semantic material classification is shared with the prop, vehicle, and world
+writers. Evidence-backed glasses, lenses, transparent surfaces, reflectors, and
+emitters remain independently addressable without converting unrelated materials
+into glass or emissive surfaces. Character modernization does not increase source
+polygon or vertex counts. It changes deterministic UV placement, texture
+resolution, semantic material organization, and proven mesh presentation only.
 
-The complete ignored non-world model-prop catalog is published beneath
-`fbx-assets/props/`. Mission assets live below `fbx-assets/props/missions/`,
-card-package models live below `fbx-assets/props/cards/`, and the phone
-interaction model lives below `fbx-assets/props/phone-icon/`. Each asset uses one
-readable directory and matching FBX name, for example
-`fbx-assets/props/missions/bombbarrel/bombbarrel.fbx`,
-`fbx-assets/props/cards/card-idle/card-idle.fbx`, and
-`fbx-assets/props/phone-icon/phone-icon.fbx`. Semantic SHA-256 values remain in
-`fbx-assets/props/non-world-props.catalog.json` rather than in public path names.
+Generate a fresh character catalog with:
 
-The `fbx-export-props` batch re-extracts 269 mission packages and the one cards
-package. It reduces 74 model-bearing occurrences to 73 unique assets: 71 mission
-models, one collectible-card model, and one phone-interaction model. The final
-catalog contains 185 files and 9,708,447 bytes: 73 binary FBX 7.7 files, 111
-external PNG textures, and one catalog. Two mission assets are static models with
-no synthetic skeleton, skin, bind pose, or animation; the remaining 69 mission
-assets, `card-idle`, and `phone-icon` retain authored rigid skeletons and exactly
-one matching model `PTRN` clip each.
+```bash
+pipeline fbx-export-characters extracted/minor-unit/index.jsonl \
+  temp/characters .
+```
 
-The mission lane includes the head-to-head `flag` model and the animated
-`finish-line` presentation. The cards lane contains only `card-idle`, while
-`phone-icon` publishes as a root prop instead of being mislabeled as a
-collectible card. The `card-idle` mesh uses `question_card_m`, whose authored
-texture reference is `Buzz Card Texture_June.bmp`; the other textures in the
-cards package belong to glow, scratch, shadow, particle, or phone effects rather
-than missing card-surface bindings.
+#### Standalone animated props
 
-Blender 5.1 imported `card-idle` with one 72-vertex mesh, one material and
-external texture, one two-bone armature, and one authored action. Blender 5.1.2
-imported `phone-icon` with one mesh, one material and external texture, one
-three-bone armature, vertex colors, and one 121-frame action with no missing
-images. Representative `missions/flag` and `missions/blend` imports also
-preserved the expected static and animated boundaries. Quad-only markers,
-shadows, billboard effects, particles, cameras, collision, placement, and
-gameplay data remain normalized inputs for Phase 6 native Unreal asset conversion
-rather than misleading FBX objects.
+`fbx-assets/props/wasp-camera/` contains five files totaling 732,554 bytes. Its
+724,652-byte FBX contains 19 geometry groups, a pruned 16-bone rig, 19 rigid
+clusters, preserved vertex colors, external textures, and the authored
+`PTRN_beecamera` animation. The final FBX SHA-256 is
+`ff123439b6dd169e211de2fe9928cdf936a539d9725ffa666efd5e0746ac4614`.
+Shield, ray, particle, collision, state, explosion, and gameplay evidence remains
+outside this model artifact.
 
-Two independent complete generations produced identical relative paths, sizes,
-and SHA-256 values for every file. The canonical non-world snapshot SHA-256 is
-`1df2a69d9056b32b3edc6905a2514eadf59ede6a0353876d0b8f8fded163ecfb`,
-and the catalog SHA-256 is
-`58c355ca310a2f8135a0a72c52db6a6441d069340e1f6a1f48aa56aa3160accc`.
+`fbx-assets/props/wrench/` contains two files totaling 74,302 bytes. Its
+72,604-byte FBX contains `wrench7Shape`, the required `wrench` and `wrench7`
+joints, one rigid cluster, one material and texture binding, and the authored
+cyclic `PTRN_wrench` animation. The final FBX SHA-256 is
+`d5cfd951bea29b95e23588157f7e948264c410b4f2f69fe8acccdc1147f05ee3`.
+Collection, glow, billboard, light, and particle evidence remains outside this
+model artifact.
 
-Generate one fresh non-world prop catalog root with:
+#### Non-world and standalone world props
+
+The complete ignored non-world prop catalog is published beneath
+`fbx-assets/props/`. Mission assets live under `missions/`, card-package models
+under `cards/`, and the phone interaction model at
+`phone-icon/phone-icon.fbx`. The batch reduces 74 model-bearing occurrences from
+270 source packages to 73 unique assets: 71 mission models, one collectible-card
+model, and one phone-interaction model.
+
+The non-world publication contains 185 files and 9,821,919 bytes: 73 binary FBX
+files, 111 external PNG files, and one catalog. It records two static assets and
+71 rigid animated assets. Its snapshot SHA-256 is
+`f10cdd45d0161003c89f711c81f0f078b5e3dad10b997925a0b40d881996cc47`,
+and its catalog SHA-256 is
+`86e4149c592952ba5b44344963076822240d4c9ebb331ef86e35f5e0673ae95c`.
+
+Generate a fresh non-world prop catalog with:
 
 ```bash
 pipeline fbx-export-props extracted/minor-unit/index.jsonl game \
   temp/non-world-props
 ```
 
-Every fresh output root contains exactly `cards/`, `missions/`, `phone-icon/`,
-and `non-world-props.catalog.json`. Standalone world props use the separate
-`fbx-export-world-props` command and are never mixed into this batch.
+The standalone world-prop catalog is `fbx-assets/props/world/`. It contains 875
+files and 27,985,651 bytes, representing 285 readable prop names from 840
+model-bearing occurrences across 149 terrain packages. It publishes 190 static
+assets and 95 rigid animated assets, merges eight compatible same-name variants,
+and retains ten incompatible visual variants as catalog evidence. Its snapshot
+SHA-256 is
+`108c5c57052175e332bb2bc754f4fe0f25370628ea54c3c7d89c925266f0504d`,
+and its catalog SHA-256 is
+`c2b66b85952cea0a99818d3f717a54405ad46ce871e4013056bb489951288452`.
 
-FBX output contains model geometry, diffuse materials and external textures,
-vertex colors, and proven rigid model animation. Physics, collision, placement,
-locators, cameras, lights, particles, sounds, scripts, gameplay logic, quad-only
-markers, and data-only packages remain normalized inputs for Phase 6 native
-Unreal asset conversion.
-
-The ignored world-prop catalog is `fbx-assets/props/world/`. Every asset uses one
-readable directory and matching FBX name, for example
-`fbx-assets/props/world/cypress-tree/cypress-tree.fbx` and
-`fbx-assets/props/world/l1-phone-booth/l1-phone-booth.fbx`; no public directory
-uses a content-hash suffix. The `fbx-export-world-props` batch re-extracts 149
-terrain-world packages and reduces 840 model-bearing occurrences to 285 readable
-prop names. The final catalog contains 875 files and 27,674,402 bytes: 285 binary
-FBX 7.7 files, 589 external PNG textures, and one
-`world-props.catalog.json`. It publishes 190 static assets and 95 rigid animated
-assets.
-
-Same-name variants are compatible only when their canonical positions, triangle
-topology, and rigid binding agree. Compatible variants contribute distinct
-texture payloads and authored clips to one directory. Seven variants were merged;
-ten genuinely different visual variants remain cataloged as omitted evidence
-behind the richest canonical model rather than creating duplicate hash-named
-folders. For example, the three `cypress-tree` sources have identical geometry,
-rig, and 31-frame clip, so one FBX retains all seven source occurrences and three
-presentation textures. The level-one and level-four `fx-evergreen` variants also
-merge, while the level-seven variant remains separate evidence because its
-geometry and 61-frame behavior differ from the 49-frame canonical structure.
-`oaktree-s-fx` retains two distinct compatible clips in one FBX. The seven
-source identities `l1_phonestop` through `l7_phonestop` publish under the readable
-names `l1-phone-booth` through `l7-phone-booth`; their original owner names remain
-in catalog provenance.
-
-Two independent complete generations produced identical relative paths, sizes,
-and SHA-256 values for every file. The canonical world-prop snapshot SHA-256 is
-`6541ee82eeb76a5dc9c706ca6a6b251a4b74fd92bf0ed3c4ddade25c56fe2fd1`,
-and the catalog SHA-256 is
-`8e637b0e4b7aae7ee626e5a4533d78a5be9d90f6650df1a7dd2a90a61fa9c1ad`.
-Blender 5.1 imported representative outputs including `cypress-tree`,
-`fx-evergreen`, `oaktree-s-fx`, `l1-firehydrant-shape`,
-`l3-globelight-shape`, and `l1-phone-booth`. The booth import contains seven
-mesh groups, five materials, one three-bone armature, one action, and no missing
-external textures; all other audited geometry, vertex colors, rigs, and declared
-actions were also present.
-
-Generate one fresh world-prop catalog root with:
+Generate a fresh standalone world-prop catalog with:
 
 ```bash
 pipeline fbx-export-world-props extracted/minor-unit/index.jsonl game \
   temp/world-props
 ```
 
-Breakable tree FBX files contain only the model geometry owned by their selected
-composite. For `cypress-tree`, that evidence is the four `cyp_trunks` meshes.
-Leaf shaders and textures such as `cypressleaf_m` and `cypressleaf.png` exist in
-separate world-presentation evidence rather than in the trunk composite. The
-leafless trunk FBX is therefore expected and lossless for this boundary; foliage,
-leaf-drop effects, particles, and final tree assembly remain native Unreal/world
-presentation work rather than invented FBX geometry.
+Breakable tree FBXs contain only geometry owned by their selected model
+composites. Foliage, leaf-drop effects, particles, collision, placement, cameras,
+lights, sounds, scripts, and gameplay logic remain normalized inputs for Phase 6
+rather than invented FBX objects.
 
-### Vehicle FBX catalog
+#### Vehicle catalog
 
-The complete ignored vehicle catalog is published beneath
-`fbx-assets/vehicles/`. Each of the 88 standalone vehicle packages receives one
-readable directory and matching binary FBX 7.7 file, for example
-`fbx-assets/vehicles/homer-v/homer-v.fbx` and
-`fbx-assets/vehicles/cpolice/cpolice.fbx`. The shared car runtime package remains
-source authority and does not become a misleading standalone vehicle.
+The complete ignored vehicle catalog is `fbx-assets/vehicles/`. Each of the 88
+standalone vehicle packages receives one readable directory and matching binary
+FBX file. The shared car runtime package remains source authority and does not
+become a misleading standalone vehicle.
 
-Generate one fresh vehicle catalog root with:
+The final publication contains 2,570 files and 64,114,009 bytes. Its snapshot
+SHA-256 is
+`d8c7a05f0cca87ace6ae13e730cf719e5dbea68275d96e671a09a9142ac63403`,
+and the root catalog SHA-256 is
+`749c84b98a54ed3bac9cef154d1aefdea32d3347c1c668fb801bbce9550188b0`.
+The catalog records 3,341 separated parts, 35 skeletal animations, 70 effect
+animation sidecars, 1,292 external textures, 1,025 decoded shader sidecars, six
+deferred geometry records, and 16 hidden wheel proxies.
+
+Vehicle parts are split by source mesh, primitive group, composite instance, and
+semantic role. The catalog records 324 glass, 319 reflective, 1,846
+light-emitting, 2,074 transparent, and 12 visual-effect surfaces. Shared shaders
+such as `pizza_vAll_m` and `cKlimo_vWheel_m` produce separate ordinary and
+light-emitting FBX materials instead of making every user emissive. Reused wheel
+geometry is instantiated at every authored wheel pivot.
+
+The four exceptional vehicles `honor-v`, `hbike-v`, `mono-v`, and `frink-v`
+retain four hidden source-backed wheel proxies each. The remaining deferred
+records preserve one malformed `cmilk` billboard and the fully invalid
+`comic-v` steering mesh without fabricating replacements. Partially invalid
+meshes remain hard failures.
+
+Blender 5.1 imported representative `pizza`, `cklimo`, `honor-v`, `hbike-v`,
+`mono-v`, and `frink-v` outputs with their expected armatures and actions, zero
+missing external images, separated glass and emitters, and distinct ordinary and
+emissive material variants for the two shared-shader cases.
+
+Generate a fresh vehicle catalog with:
 
 ```bash
 pipeline fbx-export-vehicles extracted/minor-unit/index.jsonl game \
   temp/vehicles
 ```
 
-The batch freshly extracts all 89 car-family P3D packages and publishes 88
-vehicles, 1,502 semantically named geometry objects, 35 skeletal `PTRN` animation
-stacks, 70 named `BQG` or `TEX` effect-animation sidecars, 1,056 PNG textures,
-597 decoded shader sidecars, and one explicitly deferred invalid geometry record.
-The final publication contains 1,901 files and 41,230,312 bytes. Two independent
-generations produced identical relative paths, sizes, and SHA-256 values for
-every file. The canonical vehicle snapshot SHA-256 is
-`664fbb242caffc21a8e94ceb4564e6b22b22b8e87595a4cf6b431e9a68d8d3fb`,
-and the root catalog SHA-256 is
-`53b4bc9afdbe952dadf75ea3bb60b16f3f4a9ddd7d909db65d864a24a48e0bd0`.
+#### Separated world baseline
 
-Vehicle geometry is split by source mesh, primitive group, semantic role, and
-composite-drawable instance. Body surfaces, glass, wheels, driver and passenger
-doors, hood, trunk, interior, lights, drivers, and evidence-supported accessories
-remain independently named. Reused wheel geometry is instantiated once for every
-authored wheel pivot rather than collapsed by mesh name. Normal-state textures
-remain externally referenced by FBX; unused damage and alternate-state textures
-are preserved in named sidecar directories. Shader JSON retains source material
-parameters rather than reducing the catalog to texture names alone.
+The final ignored world publication is `fbx-assets/world/`. It is a separated,
+globally aligned collection rather than one monolithic FBX. Import only the root
+`*.fbx` files for the normal world scene. Files under `review/` are isolated
+comparison galleries and must not be mixed into the normal import set.
 
-One `comic-v` steering mesh contains 72 positions whose decoded values are all
-invalid. The exporter does not manufacture replacement vertices: it preserves the
-normalized source record beneath `geometry/deferred/` and exports the remaining
-valid vehicle geometry. Partially invalid meshes remain hard failures.
+The collection contains 3,862 files and 499,064,386 bytes. Two independent final
+generations produced identical relative paths, byte lengths, and SHA-256 values
+for every file. The snapshot SHA-256 is
+`a82548178fa932abf41f7eb7281a0af2a9b5440ccc61b1e78499b68d492adc7f`,
+the world catalog SHA-256 is
+`8aada5728540dd453d9a4c7edb42b33bdc16e216757379da0417d25203bd3675`,
+and the transform manifest SHA-256 is
+`39f3c4a544069780b22b3265c8f8e9765353fe966199c18262e0dc2b525d28d1`.
 
-Blender 5.1.2 independently imported representative `homer-v`, `cpolice`,
-`ccola`, and `comic-v` outputs with one armature each, four independently named
-wheel objects, separated glass and moving parts, supported actions, and zero
-missing external images. Repository-owned structural tests and two complete
-binary generations remain the production acceptance evidence; Blender is an
-inspection consumer.
+The world catalog covers 149 source packages across eight scopes and publishes
+127 root world FBXs plus 89 isolated review FBXs. It records 19 interiors, 20
+bonus-area packages, 10,819 source meshes, 12,263 authored placements, 9,439
+reference-backed placements, 2,824 canonical placement fallbacks, 8,565 collision
+meshes, 2,556 definition-only review meshes, and 463 review similarity groups.
+Fourteen data-only packages correctly publish no geometry.
 
-Phase 4 exports only packages that contain actual model geometry. The
-`phonecamera` package contains camera, controller, and animation evidence but no
-model; the `atc` package contains a 64-row destructible-object attribute table but
-no model. Neither package receives an FBX placeholder. Both remain normalized
-non-FBX inputs for Phase 6 native Unreal asset conversion.
+Material semantics remain explicit across the collection. The catalog records
+1,179 glass, four mirror, 503 reflective, 1,924 light-emitting, 1,917 transparent,
+and 229 visual-effect geometries. Collision meshes use an inspection material;
+definition-only meshes are placed in similarity-overlaid review groups without
+being merged into or substituted for canonical source geometry.
 
-Phase 4 has exactly two final completion blocks:
+`world.transforms.json` uses the
+`shar.world-package-transforms.v2` contract. Every root file has baked coordinates
+and requires zero additional translation, rotation, or scale. Importers may
+create the shared `SHAR_Export_Root` axis-conversion transform; preserve that
+common imported transform instead of applying per-package placement offsets.
 
-- [x] **Vehicles:** publish the complete semantically separated vehicle catalog,
-  including authored pivots, independently instanced wheels, moving body parts,
-  skeletal animation, effect-animation sidecars, external textures, damage-state
-  evidence, and decoded shader parameters.
-- [ ] **Master world/map:** publish one separated master-world FBX and its
-  geographic evidence so the complete map can be edited, named, compared, and
-  transformed without distributing source game assets.
+Representative Blender 5.1 imports covered a bonus segment, an interior, a
+level-three zone, a level-seven region, and an isolated review gallery. All were
+static, contained zero armatures and actions, and resolved every external image.
+Importing four root world files together produced their expected combined global
+bounds without per-package offsets.
 
-#### Master world/map authoring workflow
+Generate a fresh separated world baseline with:
 
-The generated world baseline must use only the user's original game packages as
-model, topology, material, texture, and identity authority. An operator-supplied
-private connected-map package set may be extracted with the existing production
-P3D extractor, without changing extractor behavior, and used only as coordinate
-and assembly comparison evidence. That private evidence is never tracked,
-published, copied into generated assets, or treated as source geometry.
+```bash
+pipeline fbx-export-world extracted/minor-unit/index.jsonl game \
+  <coordinate-evidence-root> temp/world
+```
 
-The repository first generates one deterministic separated baseline FBX beneath
-`fbx-assets/world/`. Terrain, buildings, houses, landmarks, bridges, doors,
-windows, linked interiors, and other model-bearing components retain semantic
-object names, source provenance, and authored placement. Geometry judged at least
-50 percent structurally equivalent may be co-located at the same comparison
-coordinate as separate review layers; it is never automatically merged or used
-to replace original-game evidence. Missing private-reference-only geometry does
-not enter the public baseline.
+The optional coordinate-evidence root is local comparison authority only. It is
+never copied into the publication, named in public catalog paths, or treated as
+model, topology, material, texture, or identity authority.
 
-The baseline is intentionally suitable for manual Blender authoring. The operator
-may reorganize and repair the complete map, separate every building or interior,
-create a unified terrain surface, rebuild bridges, and return a master FBX whose
-layers use stable semantic names such as `terrain`, building identities, interior
-identities, roads, and route components. This manual master is an authored design
-input, not a substitute for deterministic extraction or repository validation.
+A manually reorganized master world may still be authored later in Blender or
+another DCC for design purposes. That manual artifact is a future world-design
+input, not a missing Phase 4 export deliverable and not a substitute for the
+deterministic separated baseline. Any later transformation recipe must remain
+source-dependent and incapable of reconstructing model data without the user's
+lawful original source packages.
 
-A later repository-owned transformation stage compares the deterministic
-original-game baseline with the operator-authored master and emits a
-source-dependent transformation recipe. Applying that recipe requires the user's
-original source packages; the recipe alone cannot reconstruct or redistribute the
-game models. The same semantically mapped master supports both the playable map
-and a Google-Maps-style geographic representation.
+Phase 4 exports only packages with actual model geometry. Camera-only,
+controller-only, attribute-only, and gameplay-only packages remain normalized
+inputs for Phase 6 native Unreal conversion. Phase 4 has no Unreal-import
+acceptance gate; Phase 6 consumes the already prepared semantic regions, parts,
+coordinates, pivots, and manifests.
 
-The runtime uses that one connected map for all seven narrative chapters. Chapter
-progression adds cumulative terrain, collectible, structure, mission, population,
-weather, and presentation unlocks over persistent geography. The mandatory
-24-minute sunrise, day, sunset, and night cycle runs in the base game; no Level 11
-or campaign-visible test state exists.
+Phase 4 completion evidence:
 
-Character modernization in this phase does **not** increase polygon or vertex
-counts. It changes only deterministic UV placement, texture resolution, semantic
-material organization, evidence-supported mesh partitions, and proven
-non-deforming review metadata. Clothing and presentation props remain integrated
-in every published character FBX. One outfit equals one complete model. Future
-modular garment, cloth, chest, and attachment systems may consume compatible
-models, but they are deliberately not reconstructed from the legacy characters
-because clipping, skin transfer, bind compatibility, and animation coupling add
-risk without improving the current canonical assets.
-
-The minimum non-eye semantic texture regions are skin, hair, shoes, legs, and
-torso. Evidence may add teeth, mouth, headwear, accessories, garment details, or
-integrated presentation props. Each eye has four independently addressable
-semantic layers: sclera, pupil, upper lid, and lower lid. Layer bytes and semantic
-metadata produce a content hash. Equivalent eyes may reference one shared profile,
-while a character-specific profile can override any layer without changing the
-other characters. This phase does not add gaze or blink animation behavior.
-
-Base-color atlases use neutral, linear-light color normalization and declared
-sRGB PNG encoding so runtime lighting and time of day can change appearance
-without baking a separate color identity into every level. Unused texels use
-stable neutral fill and edge dilation; transparency is reserved for materials
-that require alpha. Normal, specular, roughness, metallic, glossiness, emissive,
-and ambient-occlusion maps require authored evidence or a versioned deterministic
-recipe.
-
-All semantic separation described here belongs to the canonical scene and FBX
-phase, not to UAsset import. Phase 4 has no Unreal-import acceptance gate. Native
-Unreal conversion and import occur later in Phase 6 and consume already prepared
-character regions, vehicle parts, world components, pivots, coordinates, and
-assembly manifests. Optional Blender or Maya inspection cannot replace
-repository-owned mathematical tests. The manually authored master-world FBX is a
-deliberate world-design input and is distinct from using Blender as a generation
-or validation dependency.
-
-Remaining Phase 4 completion blocks:
-
-- [x] **Vehicles:** complete deterministic semantic vehicle FBX coverage with
-  independently instanced wheels, moving components, pivots, animation, textures,
-  damage-state evidence, shader sidecars, conformance catalogs, two identical
-  generations, and representative Blender inspection.
-- [ ] **Master world/map:** complete the one-FBX separated world baseline,
-  coordinate-reference comparison, manual master-authoring contract, semantic
-  map layers, and source-dependent transformation recipe.
-
-Completion criteria:
-
-- every model-like package has a semantically prepared binary FBX 7.7 artifact
-  or an explicit justified non-FBX route;
-- every character preserves topology, skinning, deformation, and animation while
-  publishing deterministic semantic textures and supported outfit identities;
-- every moving vehicle part and independently addressable world component has a
-  stable identity, pivot, transform, and placement contract;
-- the repository can regenerate the deterministic original-game world baseline,
-  while the intentionally manual master-world authoring stage remains explicit;
-- the source-dependent master transformation cannot reconstruct model data
-  without the user's original source packages;
-- no package depends on hardcoded local paths;
-- no ASCII FBX, DAE, MA, or MB output becomes canonical; and
-- repeated conversion remains deterministic within the format boundary.
+- [x] Characters, standalone animated props, non-world props, and standalone
+  world props are published under stable readable paths.
+- [x] Vehicles preserve authored assembly, grounded wheel surfaces, semantic
+  material variants, supported animation, and malformed-evidence sidecars.
+- [x] The separated world baseline is deterministic, globally aligned, importable
+  without per-package offsets, and published with collision, review, catalog, and
+  transform evidence.
+- [x] Canonical FBX, P3D, and pipeline formatting, compile, test, and strict
+  Clippy gates pass. Version-currency remains a non-blocking infrastructure check.
 
 Relevant decisions:
 
