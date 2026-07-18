@@ -168,6 +168,86 @@ records must equal the physical token count.
 The consumption ledger is private review evidence. Public diagnostics expose
 only safe aggregate counts and stable semantic identities.
 
+## Source-family and revision reconciliation
+
+One semantic owner may have several reviewed event-table members from different
+authoring passes. A source family may contain a base table, a character-owned
+copy, a template-derived copy, a corrected copy, or a table with an additional
+provenance-only column. Those physical members are evidence revisions, not
+independent runtime catalogs.
+
+Before native projection, the importer builds one owner-scoped reconciliation
+set containing:
+
+- the declared canonical owner or archetype;
+- every eligible evidence member and its opaque revision identity;
+- one parsed consumption ledger per member;
+- the accepted schema and mapping revision for each member;
+- normalized semantic identities produced by every member;
+- equivalent, conflicting, superseded, and rejected relationships; and
+- one terminal reconciliation result for the complete set.
+
+The complete declared member set is loaded before any line, localization key,
+audio binding, selection group, redirect, or asset revision is published.
+Missing members, stale member revisions, or incomplete token accounting fail the
+set and preserve the previously accepted public revision.
+
+### Cross-member equality
+
+Physical equality is never sufficient to decide semantic equality. Two members
+are equivalent only after owner, event, context, locale, role, variant,
+selection-group membership, definition revision, and mapping revision resolve.
+
+Equivalent semantic definitions collapse into one public definition with
+private duplicate evidence. A newer physical member may supersede an older
+member only through an explicit accepted relationship. File age, folder,
+filename, worksheet label, row order, byte equality, copied text, and repeated
+presence do not establish precedence.
+
+Two byte-identical tables assigned to different canonical owners remain distinct
+owner bindings. Conversely, two differently formatted tables that resolve to
+the same owner-scoped semantic definitions may collapse after complete
+consumption and validation.
+
+A semantic identity with incompatible text, context, priority, audio binding,
+locale, role, variant, eligibility, or interruption behavior is a conflict. The
+importer does not choose the fullest row, newest-looking file, or member with an
+audio alias. The complete reconciliation set fails until the owning domain
+accepts one definition or an explicit supersession mapping.
+
+### Template-derived members
+
+A template-derived table is parsed through the same closed schema and row
+taxonomy as every other event table. The word `template`, sparse audio aliases,
+placeholder text, repeated default events, or a compact row count cannot make a
+row optional, authoritative, or safe to skip.
+
+Template structure may establish expected event coverage for its declared owner.
+It cannot create a speaker, archetype, gameplay event, priority, localization
+key, recording requirement, or runtime line without accepted semantic fields and
+owner mappings.
+
+Placeholder and incomplete rows remain consumed evidence with explicit terminal
+states. They cannot overwrite a complete accepted definition, and they cannot
+silently remove an existing line merely because a later template omits text or
+an audio alias.
+
+### Reconciliation verification
+
+Automated tests cover:
+
+- member-order permutations producing the same public revision;
+- six- and seven-column members reconciling under one owner;
+- equivalent definitions collapsing across differently formatted members;
+- byte-identical members remaining distinct across different owners;
+- incomplete template rows unable to replace complete definitions;
+- conflicting priority, context, text, locale, or audio bindings failing the
+  complete set;
+- explicit supersession replacing one accepted member revision;
+- stale or missing declared members preserving the previous public revision;
+- every physical token remaining represented in its member ledger; and
+- public diagnostics exposing only safe aggregate reconciliation counts.
+
 ## Event-table shape
 
 ### Accepted column families
