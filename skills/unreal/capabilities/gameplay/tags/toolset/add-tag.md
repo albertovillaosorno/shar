@@ -47,42 +47,65 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to add one explicitly approved SHAR gameplay tag to a reviewed
+project tag source.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live tag or Gameplay Cue toolset schema.
+- Capture the complete matching tag or cue inventory before mutation and use a
+  unique fully qualified validation name.
+- Use `ListTags` and `GetTagInfo` as independent readers for presence,
+  comment, source, and child state.
+- Snapshot gameplay-tag configuration files before mutation and restore the
+  exact pre-state during cleanup.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "comment": "Disposable SHAR MCP gameplay tag validation.",
+  "tagName": "MCP.Validation.Round9e31d6a7.Entry",
+  "tagSource": ""
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+`ListTags` changed from absent to present, and `GetTagInfo` returned the exact
+validation comment, source `DefaultGameplayTags.ini`, and no children.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Gameplay tags are persistent project configuration, not transient
+  editor-only state; always capture and verify the exact configuration
+  boundary.
+- An empty `tagSource` selects the default source and can create
+  `DefaultGameplayTags.ini` when it does not already exist.
+- Adding a dotted tag also exposes implicit parent nodes in tag queries;
+  verify the exact leaf identity.
+- The reproduced lifecycle restored the original tag and cue inventories and
+  left no config or asset residue.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

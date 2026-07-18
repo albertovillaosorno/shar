@@ -47,42 +47,66 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to rename one explicitly reviewed SHAR gameplay tag while
+preserving its developer comment and source identity.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live tag or Gameplay Cue toolset schema.
+- Capture the complete matching tag or cue inventory before mutation and use a
+  unique fully qualified validation name.
+- Use `ListTags` and `GetTagInfo` as independent readers for presence,
+  comment, source, and child state.
+- Snapshot gameplay-tag configuration files before mutation and restore the
+  exact pre-state during cleanup.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "newTagName": "MCP.Validation.Rename9e31d6a7.New",
+  "oldTagName": "MCP.Validation.Rename9e31d6a7.Old"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+`ListTags` changed from the old identity to the new identity. `GetTagInfo` on
+the new tag preserved the exact comment, source `DefaultGameplayTags.ini`, and
+empty child list; removal then restored the original 31-tag inventory.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Gameplay tags are persistent project configuration, not transient
+  editor-only state; always capture and verify the exact configuration
+  boundary.
+- Renaming writes a persistent `GameplayTagRedirects` entry even after the
+  renamed tag is later removed.
+- The validation config file did not exist before the test, so deleting that
+  entire untracked validation-created file was the only exact cleanup. Never
+  delete a pre-existing project tag file this way.
+- The reproduced lifecycle restored the original tag and cue inventories and
+  left no config or asset residue.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

@@ -47,42 +47,64 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to remove one reviewed SHAR Gameplay Cue tag after deleting or
+migrating its notify assets.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live tag or Gameplay Cue toolset schema.
+- Capture the complete matching tag or cue inventory before mutation and use a
+  unique fully qualified validation name.
+- Use `ListCues`, `GetCueInfo`, and AssetTools inventory reads as independent
+  postconditions.
+- Delete associated disposable notify assets before removing the cue tag.
+- Snapshot gameplay-tag configuration files before mutation and restore the
+  exact pre-state during cleanup.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "cueTag": "GameplayCue.MCP.Validation.Round9e31d6a7"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+After deleting the disposable notify asset, `RemoveCueTag` returned true,
+`ListCues` no longer contained the validation cue, and the cue inventory
+returned to its original count of one.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Gameplay tags are persistent project configuration, not transient
+  editor-only state; always capture and verify the exact configuration
+  boundary.
+- Remove notify assets before the tag so no orphaned cue asset remains.
+- Removing the final validation cue can leave an empty validation-created
+  config file that must be cleaned only when it did not exist before the test.
+- The reproduced lifecycle restored the original tag and cue inventories and
+  left no config or asset residue.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

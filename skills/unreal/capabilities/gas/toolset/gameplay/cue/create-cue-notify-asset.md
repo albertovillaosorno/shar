@@ -48,42 +48,69 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to create a typed SHAR Gameplay Cue notify asset for an existing
+reviewed cue tag.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `shar-unreal-mcp doctor` to report `ready: true` and refresh the
+  live tag or Gameplay Cue toolset schema.
+- Capture the complete matching tag or cue inventory before mutation and use a
+  unique fully qualified validation name.
+- Use `ListCues`, `GetCueInfo`, and AssetTools inventory reads as independent
+  postconditions.
+- Create the cue tag first and define exact asset deletion before creating the
+  notify.
+- Snapshot gameplay-tag configuration files before mutation and restore the
+  exact pre-state during cleanup.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "assetName": "GCN_MCP_9e31d6a7",
+  "bIsActor": false,
+  "cueTag": "GameplayCue.MCP.Validation.Round9e31d6a7",
+  "packagePath": "/Game/SHAR_MCP_Validation_Cue_9e31d6a7"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+AssetTools inventory changed from no package to the exact requested notify
+package. The unsaved Static notify was created successfully, while
+`GetCueInfo` remained `None` until save or cue-registry rescan.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Gameplay tags are persistent project configuration, not transient
+  editor-only state; always capture and verify the exact configuration
+  boundary.
+- Creation returned an unsaved asset visible through AssetTools, but
+  `GetCueInfo` did not associate it before save or asset-registry rescan.
+- Verify asset creation separately from cue-registry association and delete
+  disposable unsaved assets by exact package path.
+- The reproduced lifecycle restored the original tag and cue inventories and
+  left no config or asset residue.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
