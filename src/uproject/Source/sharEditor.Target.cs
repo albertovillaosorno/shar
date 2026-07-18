@@ -21,8 +21,8 @@
 //   - Change runtime gameplay policy, redistribute engine code, or add
 //   - unrelated modules.
 // - Allows:
-//   - Editor target type, build settings, include order, and SHAR module
-//   - registration.
+//   - Editor target type, build settings, include order, compiler strictness,
+//   - and SHAR module registration.
 // - Split-When:
 //   - A separately built editor target requires independent rules or platform
 //   - policy.
@@ -32,14 +32,15 @@
 // - Summary:
 //   - Configures the SHAR Unreal Editor target.
 // - Description:
-//   - Selects Unreal 5.8 editor build defaults and adds the authored shar
-//   - runtime module.
+//   - Selects Unreal 5.8 editor build defaults, enforces strict compilation,
+//   - and adds the authored shar runtime module.
 // - Usage:
 //   - Loaded by UnrealBuildTool when generating or building the SHAR editor
 //   - target.
 // - Defaults:
-//   - Builds an editor target with BuildSettingsVersion.V7 and Unreal 5.8
-//   - include order.
+//   - Builds a non-unity editor target with warning failures, no globally
+//   - forced C++ exceptions, BuildSettingsVersion.V7, and Unreal 5.8 include
+//   - order.
 //
 // ADRs:
 // - docs/adr/unreal/project/cpp-primary-blueprint-compatible-project.md
@@ -60,6 +61,9 @@ public class sharEditorTarget : TargetRules
         Type = TargetType.Editor;
         DefaultBuildSettings = BuildSettingsVersion.V7;
         IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_8;
+        bWarningsAsErrors = true;
+        bUseUnityBuild = false;
+        bForceEnableExceptions = false;
         ExtraModuleNames.Add("shar");
     }
 }

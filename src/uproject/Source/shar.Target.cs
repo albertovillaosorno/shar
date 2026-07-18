@@ -21,8 +21,8 @@
 //   - Configure editor-only behavior, private engine code, or unrelated
 //   - modules.
 // - Allows:
-//   - Game target type, build settings, include order, and SHAR module
-//   - registration.
+//   - Game target type, build settings, include order, compiler strictness,
+//   - and SHAR module registration.
 // - Split-When:
 //   - A separately built game target requires independent rules or platform
 //   - policy.
@@ -32,14 +32,14 @@
 // - Summary:
 //   - Configures the standalone SHAR game target.
 // - Description:
-//   - Selects Unreal 5.8 build defaults and adds the authored shar runtime
-//   - module.
+//   - Selects Unreal 5.8 build defaults, enforces strict compilation, and
+//   - adds the authored shar runtime module.
 // - Usage:
 //   - Loaded by UnrealBuildTool when generating or building the SHAR game
 //   - target.
 // - Defaults:
-//   - Builds a game target with BuildSettingsVersion.V7 and Unreal 5.8 include
-//   - order.
+//   - Builds a non-unity game target with warning failures, no globally forced
+//   - C++ exceptions, BuildSettingsVersion.V7, and Unreal 5.8 include order.
 //
 // ADRs:
 // - docs/adr/unreal/project/cpp-primary-blueprint-compatible-project.md
@@ -60,6 +60,9 @@ public class sharTarget : TargetRules
         Type = TargetType.Game;
         DefaultBuildSettings = BuildSettingsVersion.V7;
         IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_8;
+        bWarningsAsErrors = true;
+        bUseUnityBuild = false;
+        bForceEnableExceptions = false;
         ExtraModuleNames.Add("shar");
     }
 }
