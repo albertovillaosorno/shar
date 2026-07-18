@@ -48,42 +48,67 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to persist one already reviewed SHAR editor-settings section
+after a bounded settings update, or to confirm that an unchanged user-scoped
+section can be saved without altering its values.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Require `doctor` readiness and refresh the live ConfigSettingsToolset
+  schema.
+- Resolve the exact container, category, and section through `ListContainers`,
+  `ListCategories`, and `ListSections`; do not guess display names.
+- Inspect the section with `GetSectionSchema` and capture every value whose
+  persistence matters with `GetSectionPropertyValues`.
+- Prefer a user-scoped editor section for validation. Saving a project section
+  can persist unrelated pending values in that same section.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "categoryName": "General",
+  "containerName": "Editor",
+  "sectionName": "Output Log"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+Before saving, `GetSectionPropertyValues` returned
+`{"logFontSize":9}` for `Editor / General / Output Log`. `SaveSection` returned
+`true`, and an independent read of the same property returned
+`{"logFontSize":9}` afterward.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- The operation saves the complete settings section, not one named property;
+  review other pending values in that section first.
+- A `true` result confirms that the native save path completed, but critical
+  values still require an independent post-save read.
+- Display names are exact and case-sensitive enough to require discovery from
+  the live settings registry.
+- Some settings take effect only after an editor restart even when the section
+  saves successfully.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 

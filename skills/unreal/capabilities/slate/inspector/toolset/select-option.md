@@ -48,42 +48,66 @@ A revision mismatch marks preserved guidance for human review.
 ### SHAR-specific use cases
 
 <!-- BEGIN MANUAL FIELD: project-use-cases -->
-[TODO]
+Use this tool to choose one exact Unreal editor combobox option for a bounded
+SHAR workflow, such as entering Landscape mode and returning to Selection mode
+after inspection.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites
 
 <!-- BEGIN MANUAL FIELD: project-prerequisites -->
-[TODO]
+- Capture a fresh Slate snapshot and resolve the exact visible combobox ref.
+- Record the current option text and define the exact restoration option before
+  changing editor mode or workflow state.
+- Use the option label exactly as presented by the live editor.
+- Expect refs to become stale after the selection changes the surrounding UI;
+  take a new snapshot before restoration or any dependent action.
 <!-- END MANUAL FIELD: project-prerequisites -->
 
 ### Validated argument example
 
 <!-- BEGIN MANUAL FIELD: validated-arguments -->
-[FILL_ME]
+```json
+{
+  "ref": "co132",
+  "value": "Landscape"
+}
+```
 <!-- END MANUAL FIELD: validated-arguments -->
 
 ### Project verification notes
 
 <!-- BEGIN MANUAL FIELD: project-verification -->
-[TODO]
+The initial snapshot showed `Selection Mode` on `co132`. Selecting
+`Landscape` returned `true`; a fresh deep snapshot independently showed
+`Landscape Mode`, `Manage`, `Sculpt`, `Paint`, and `Landscape Editor`. The
+updated combobox ref was `co164`. Selecting `Selection` on that fresh ref
+returned `true`, and the final snapshot showed `Selection Mode` with no
+Landscape mode or Landscape editor controls.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats
 
 <!-- BEGIN MANUAL FIELD: known-caveats -->
-[TODO]
+- Slate refs are session- and tree-state-specific. The validated combobox
+  changed from `co132` to `co164` after the first selection.
+- A `true` result requires a fresh snapshot that proves the visible option and
+  dependent UI actually changed.
+- The option text must match the dropdown label; unsupported or nonstandard
+  comboboxes may return `false`.
+- Selecting an editor mode can replace large widget subtrees and invalidate
+  unrelated refs captured before the change.
 <!-- END MANUAL FIELD: known-caveats -->
 
 ### Manual guidance reviewed revision
 
 <!-- BEGIN MANUAL FIELD: manual-review-revision -->
-[REVIEW_REQUIRED]
+1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
 - Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Review required**
+- Manual guidance status: **Current**
 
 ## Before invocation
 
