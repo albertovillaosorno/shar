@@ -102,6 +102,46 @@ fn resolves_padded_shader_member() -> Result<(), String> {
 }
 
 #[test]
+fn resolves_case_insensitive_padded_shader_member() -> Result<(), String> {
+    let root = temp_root().with_extension("case");
+    let shader_dir = root
+        .join("components")
+        .join("shader");
+    fs::create_dir_all(&shader_dir)
+        .and_then(
+            |()| {
+                fs::write(
+                    shader_dir.join("vent_m__.json"),
+                    concat!(
+                        r#"{"schema":"shader","name":"Vent_m\u0000\u0000","#,
+                        r#""version":0,"pddi_shader_name":"simple","#,
+                        r#""has_translucency":0,"num_params":0,"params":[]}"#,
+                    ),
+                )
+            },
+        )
+        .map_err(|error| error.to_string())?;
+    let source = DecodedComponentSource::new(
+        &root,
+        root.join("textures"),
+    );
+    let result = source.resolve_material("vEnT_m");
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let material = result.map_err(
+        |error| format!("case-insensitive padded shader failed: {error:?}"),
+    )?;
+    if material.material_name == "Vent_m"
+        && material
+            .texture_file_name
+            .is_none()
+    {
+        Ok(())
+    } else {
+        Err(format!("unexpected case-insensitive material: {material:?}"))
+    }
+}
+
+#[test]
 fn resolves_fixed_width_tga_reference_to_decoded_png() -> Result<(), String> {
     let root = temp_root().with_extension("tga");
     let shader_dir = root

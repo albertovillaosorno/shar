@@ -233,19 +233,38 @@ fn should_publish_component(
     if component.parent_ordinal == Some(0) {
         return true;
     }
-    if !is_nested_model_support(
-        component
-            .kind
-            .label(),
-    ) {
-        return false;
+    let kind = component
+        .kind
+        .label();
+    if is_nested_model_support(kind) {
+        return has_ancestor(
+            component,
+            chunks,
+            is_model_container,
+        );
     }
+    if kind == "texture" {
+        return has_ancestor(
+            component,
+            chunks,
+            |ancestor| ancestor == "srr_chunk_set",
+        );
+    }
+    false
+}
+
+/// Return whether one component has an ancestor accepted by one predicate.
+fn has_ancestor(
+    component: &ChunkRecord,
+    chunks: &[ChunkRecord],
+    accepts: impl Fn(&str) -> bool,
+) -> bool {
     let mut parent = component.parent_ordinal;
     while let Some(ordinal) = parent {
         let Some(ancestor) = chunks.get(ordinal) else {
             return false;
         };
-        if is_model_container(
+        if accepts(
             ancestor
                 .kind
                 .label(),
@@ -278,8 +297,12 @@ fn is_nested_model_support(kind: &str) -> bool {
 fn is_model_container(kind: &str) -> bool {
     matches!(
         kind,
-        "srr_dyna_phys_dsg"
+        "srr_entity_dsg"
+            | "srr_insta_entity_dsg"
+            | "srr_dyna_phys_dsg"
             | "srr_insta_anim_dyna_phys_dsg"
+            | "srr_static_phys_dsg"
+            | "srr_insta_static_phys_dsg"
             | "srr_anim_dsg"
             | "srr_anim_coll_dsg"
             | "srr_breakable_object"
@@ -3218,11 +3241,11 @@ fn recover_quad_group_json(
     let num_quads = read_u32(
         chunk, cursor,
     )?;
-    let children = child_chunks_json(
+    let quads = billboard_quads_json(
         chunk,
         component.header_size,
         component.total_size,
-    );
+    )?;
     let kind = component
         .kind
         .label();
@@ -3248,7 +3271,7 @@ fn recover_quad_group_json(
         z_write,
         fog,
         num_quads,
-        children
+        quads
     );
     Some(
         json_component(
@@ -3258,6 +3281,247 @@ fn recover_quad_group_json(
             json,
             "decoded_schema_payload",
         ),
+    )
+}
+
+/// Decode every billboard quad child in one authored group.
+fn billboard_quads_json(
+    chunk: &[u8],
+    mut cursor: usize,
+    end: usize,
+) -> Option<String> {
+    const QUAD: u32 = 0x0001_7001;
+    let mut quads = Vec::new();
+    while cursor + 12 <= end {
+        let (id, header_size, total_size) = read_chunk_header(
+            chunk, cursor,
+        )?;
+        let next = cursor.checked_add(total_size)?;
+        if id != QUAD || total_size < header_size || next > end {
+            return None;
+        }
+        quads.push(
+            billboard_quad_json(
+                chunk.get(cursor..next)?,
+                header_size,
+                total_size,
+            )?,
+        );
+        cursor = next;
+    }
+    (cursor == end).then(|| quads.join(","))
+}
+
+/// Decode one billboard quad plus optional display and perspective evidence.
+fn billboard_quad_json(
+    quad: &[u8],
+    header_size: usize,
+    total_size: usize,
+) -> Option<String> {
+    const DISPLAY_INFO: u32 = 0x0001_7003;
+    const PERSPECTIVE_INFO: u32 = 0x0001_7004;
+    let mut cursor = 12_usize;
+    let version = read_u32(
+        quad, cursor,
+    )?;
+    cursor += 4;
+    let name = read_pascal_at(
+        quad,
+        &mut cursor,
+    )?;
+    let billboard_mode = read_fourcc(
+        quad, cursor,
+    )?;
+    cursor += 4;
+    let translation = read_f32_array::<3>(
+        quad,
+        &mut cursor,
+    )?;
+    let colour = read_u32(
+        quad, cursor,
+    )?;
+    cursor += 4;
+    let uv0 = read_f32_array::<2>(
+        quad,
+        &mut cursor,
+    )?;
+    let uv1 = read_f32_array::<2>(
+        quad,
+        &mut cursor,
+    )?;
+    let uv2 = read_f32_array::<2>(
+        quad,
+        &mut cursor,
+    )?;
+    let uv3 = read_f32_array::<2>(
+        quad,
+        &mut cursor,
+    )?;
+    let width = read_f32(
+        quad, cursor,
+    )?;
+    cursor += 4;
+    let height = read_f32(
+        quad, cursor,
+    )?;
+    cursor += 4;
+    let distance = read_f32(
+        quad, cursor,
+    )?;
+    cursor += 4;
+    let uv_offset = read_f32_array::<2>(
+        quad,
+        &mut cursor,
+    )?;
+    if cursor != header_size || total_size != quad.len() {
+        return None;
+    }
+    let mut rotation = [
+        0.0_f32, 0.0, 0.0, 1.0,
+    ];
+    let mut cutoff_mode = String::new();
+    let mut uv_offset_range = [0.0_f32; 2];
+    let mut source_range = 0.0_f32;
+    let mut edge_range = 0.0_f32;
+    let mut perspective = true;
+    let mut child = header_size;
+    while child + 12 <= total_size {
+        let (id, child_header, child_total) = read_chunk_header(
+            quad, child,
+        )?;
+        let next = child.checked_add(child_total)?;
+        if child_total < child_header || next > total_size {
+            return None;
+        }
+        let mut field = child + 12;
+        match id {
+            DISPLAY_INFO => {
+                let _version = read_u32(
+                    quad, field,
+                )?;
+                field += 4;
+                rotation = read_f32_array::<4>(
+                    quad, &mut field,
+                )?;
+                cutoff_mode = read_fourcc(
+                    quad, field,
+                )?;
+                field += 4;
+                uv_offset_range = read_f32_array::<2>(
+                    quad, &mut field,
+                )?;
+                source_range = read_f32(
+                    quad, field,
+                )?;
+                field += 4;
+                edge_range = read_f32(
+                    quad, field,
+                )?;
+                field += 4;
+                if field != child + child_header {
+                    return None;
+                }
+            }
+            PERSPECTIVE_INFO => {
+                let _version = read_u32(
+                    quad, field,
+                )?;
+                field += 4;
+                perspective = read_u32(
+                    quad, field,
+                )? != 0;
+                field += 4;
+                if field != child + child_header {
+                    return None;
+                }
+            }
+            _ => return None,
+        }
+        child = next;
+    }
+    if child != total_size {
+        return None;
+    }
+    Some(
+        format!(
+            concat!(
+                r#"{{"name":"{}","version":{},"billboard_mode":"{}","#,
+                r#""translation":{},"colour":{},"uvs":[{},{},{},{}],"#,
+                r#""width":{},"height":{},"distance":{},"uv_offset":{},"#,
+                r#""rotation_wxyz":{},"cutoff_mode":"{}","#,
+                r#""uv_offset_range":{},"source_range":{},"edge_range":{},"#,
+                r#""perspective":{}}}"#,
+            ),
+            escape_json(&name),
+            version,
+            escape_json(&billboard_mode),
+            f32_array_json(&translation),
+            colour,
+            f32_array_json(&uv0),
+            f32_array_json(&uv1),
+            f32_array_json(&uv2),
+            f32_array_json(&uv3),
+            render_f32(
+                width,
+                width.to_string()
+            ),
+            render_f32(
+                height,
+                height.to_string()
+            ),
+            render_f32(
+                distance,
+                distance.to_string()
+            ),
+            f32_array_json(&uv_offset),
+            f32_array_json(&rotation),
+            escape_json(&cutoff_mode),
+            f32_array_json(&uv_offset_range),
+            render_f32(
+                source_range,
+                source_range.to_string()
+            ),
+            render_f32(
+                edge_range,
+                edge_range.to_string()
+            ),
+            perspective,
+        ),
+    )
+}
+
+/// Read a fixed-width finite float array while advancing one checked cursor.
+fn read_f32_array<const N: usize>(
+    bytes: &[u8],
+    cursor: &mut usize,
+) -> Option<[f32; N]> {
+    let mut output = [0.0_f32; N];
+    for value in &mut output {
+        *value = read_f32(
+            bytes, *cursor,
+        )?;
+        if !value.is_finite() {
+            return None;
+        }
+        *cursor = cursor.checked_add(4)?;
+    }
+    Some(output)
+}
+
+/// Render one fixed float array as compact deterministic JSON.
+fn f32_array_json<const N: usize>(values: &[f32; N]) -> String {
+    format!(
+        "[{}]",
+        values
+            .iter()
+            .map(
+                |value| render_f32(
+                    *value,
+                    value.to_string()
+                )
+            )
+            .collect::<Vec<_>>()
+            .join(",")
     )
 }
 
@@ -4495,6 +4759,91 @@ mod nested_model_component_tests {
         );
         assert!(
             should_publish_component(
+                &chunks[2], &chunks
+            )
+        );
+    }
+
+    #[test]
+    fn nested_mesh_under_static_world_containers_is_published() {
+        for kind in [
+            ChunkKind::SrrEntityDsg,
+            ChunkKind::SrrInstaEntityDsg,
+            ChunkKind::SrrStaticPhysDsg,
+            ChunkKind::SrrInstaStaticPhysDsg,
+        ] {
+            let chunks = [
+                chunk(
+                    0,
+                    None,
+                    ChunkKind::Root,
+                ),
+                chunk(
+                    1,
+                    Some(0),
+                    kind,
+                ),
+                chunk(
+                    2,
+                    Some(1),
+                    ChunkKind::Mesh,
+                ),
+            ];
+            assert!(
+                should_publish_component(
+                    &chunks[2], &chunks
+                )
+            );
+        }
+    }
+
+    #[test]
+    fn nested_chunk_set_texture_is_published() {
+        let chunks = [
+            chunk(
+                0,
+                None,
+                ChunkKind::Root,
+            ),
+            chunk(
+                1,
+                Some(0),
+                ChunkKind::SrrChunkSet,
+            ),
+            chunk(
+                2,
+                Some(1),
+                ChunkKind::Texture,
+            ),
+        ];
+        assert!(
+            should_publish_component(
+                &chunks[2], &chunks
+            )
+        );
+    }
+
+    #[test]
+    fn unrelated_nested_texture_is_not_published() {
+        let chunks = [
+            chunk(
+                0,
+                None,
+                ChunkKind::Root,
+            ),
+            chunk(
+                1,
+                Some(0),
+                ChunkKind::Mesh,
+            ),
+            chunk(
+                2,
+                Some(1),
+                ChunkKind::Texture,
+            ),
+        ];
+        assert!(
+            !should_publish_component(
                 &chunks[2], &chunks
             )
         );

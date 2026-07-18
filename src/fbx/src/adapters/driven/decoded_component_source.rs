@@ -58,10 +58,13 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use crate::domain::mesh::{
-    MeshAsset, MeshError, PrimitiveGroup, triangulate_strip,
+    MeshAsset, MeshError, PrimitiveGroup, triangulate_indices,
+    triangulate_strip,
 };
 use crate::domain::scene::identity::is_portable_path_segment;
-use crate::domain::texture::{MaterialBinding, MaterialBindingError};
+use crate::domain::texture::{
+    MaterialBinding, MaterialBindingError, MaterialSemantics,
+};
 use crate::ports::component_source::ComponentSource;
 
 /// Maximum integer value of one packed PDDI color channel.
@@ -230,13 +233,12 @@ fn shader_component_path(
             |path| {
                 path.file_stem()
                     .and_then(|value| value.to_str())
-                    .and_then(|stem| stem.strip_prefix(shader_name))
                     .is_some_and(
-                        |padding| {
-                            !padding.is_empty()
-                                && padding
-                                    .chars()
-                                    .all(|character| character == '_')
+                        |stem| {
+                            padded_shader_stem_matches(
+                                stem,
+                                shader_name,
+                            )
                         },
                     )
             },
@@ -265,26 +267,138 @@ fn shader_component_path(
     }
 }
 
+/// Match one fixed-width padded shader stem without changing name case.
+fn padded_shader_stem_matches(
+    stem: &str,
+    shader_name: &str,
+) -> bool {
+    let Some(base) = stem.get(..shader_name.len()) else {
+        return false;
+    };
+    let Some(padding) = stem.get(shader_name.len()..) else {
+        return false;
+    };
+    base.eq_ignore_ascii_case(shader_name)
+        && !padding.is_empty()
+        && padding
+            .chars()
+            .all(|character| character == '_')
+}
+
 /// Return whether a stable identity is exactly one normal path segment.
 fn is_single_path_segment(value: &str) -> bool {
     is_portable_path_segment(value)
 }
 
+/// Load one mesh for static whole-level analysis.
+///
+/// Repeated-index triangle-list records are discarded while every valid vertex,
+/// surface attribute, material binding, and triangle is preserved.
+///
+/// # Errors
+///
+/// Returns an error when identity, schema, remaining topology, or surface
+/// evidence violates the decoded mesh contract.
+pub fn read_mesh_for_analysis(
+    package_root: &Path,
+    mesh_member_id: &str,
+) -> Result<
+    (
+        MeshAsset,
+        usize,
+    ),
+    DecodedComponentError,
+> {
+    let path = component_path(
+        package_root,
+        "mesh",
+        mesh_member_id,
+        "json",
+    )?;
+    decode_mesh_document(
+        &path,
+        mesh_member_id,
+        true,
+    )
+}
+
 /// Read one decoded mesh from an explicit component path.
-#[expect(
-    clippy::too_many_lines,
-    reason = "Strict mesh schema validation remains one atomic decode \
-              boundary."
-)]
 pub(super) fn read_mesh(
     path: &Path,
     requested_id: &str,
 ) -> Result<MeshAsset, DecodedComponentError> {
+    decode_mesh_document(
+        path,
+        requested_id,
+        false,
+    )
+    .map(|(mesh, _discarded)| mesh)
+}
+
+/// Decode one mesh document with explicit topology sanitation behavior.
+fn decode_mesh_document(
+    path: &Path,
+    requested_id: &str,
+    discard_repeated_vertices: bool,
+) -> Result<
+    (
+        MeshAsset,
+        usize,
+    ),
+    DecodedComponentError,
+> {
     let decoded: DecodedMesh = read_json(path)?;
+    let decoded_name = validate_decoded_mesh(
+        &decoded,
+        requested_id,
+    )?;
+    let mut groups = Vec::with_capacity(
+        decoded
+            .prim_groups
+            .len(),
+    );
+    let mut discarded_degenerate_triangles = 0_usize;
+    for (index, group) in decoded
+        .prim_groups
+        .into_iter()
+        .enumerate()
+    {
+        let (primitive_group, discarded) = decode_primitive_group(
+            index,
+            group,
+            &decoded_name,
+            discard_repeated_vertices,
+        )?;
+        discarded_degenerate_triangles =
+            discarded_degenerate_triangles.saturating_add(discarded);
+        groups.push(primitive_group);
+    }
+    let mesh = MeshAsset::new(
+        decoded_name,
+        groups,
+    )
+    .map_err(DecodedComponentError::Mesh)?;
+    Ok(
+        (
+            mesh,
+            discarded_degenerate_triangles,
+        ),
+    )
+}
+
+/// Validate mesh schema, identity, and declared primitive-group count.
+fn validate_decoded_mesh(
+    decoded: &DecodedMesh,
+    requested_id: &str,
+) -> Result<String, DecodedComponentError> {
     if decoded.schema != "mesh" {
         return Err(
             DecodedComponentError::Mesh(
-                MeshError::UnsupportedSchema(decoded.schema),
+                MeshError::UnsupportedSchema(
+                    decoded
+                        .schema
+                        .clone(),
+                ),
             ),
         );
     }
@@ -293,7 +407,9 @@ pub(super) fn read_mesh(
         return Err(
             DecodedComponentError::MeshIdentityMismatch {
                 requested: requested_id.to_owned(),
-                decoded: decoded.name,
+                decoded: decoded
+                    .name
+                    .clone(),
             },
         );
     }
@@ -319,158 +435,256 @@ pub(super) fn read_mesh(
             ),
         );
     }
-    let groups = decoded
-        .prim_groups
+    Ok(decoded_name)
+}
+
+/// Decode one primitive group and report bounded analysis sanitation.
+fn decode_primitive_group(
+    index: usize,
+    group: DecodedPrimitiveGroup,
+    decoded_name: &str,
+    discard_repeated_vertices: bool,
+) -> Result<
+    (
+        PrimitiveGroup,
+        usize,
+    ),
+    DecodedComponentError,
+> {
+    validate_primitive_group_counts(
+        index,
+        &group,
+        decoded_name,
+    )?;
+    let uvs = decode_primary_uvs(
+        index, group.uvs,
+    )?;
+    let triangle_indices = decode_triangle_indices(
+        index,
+        group.prim_type,
+        group.indices,
+        decoded_name,
+    )?;
+    let (retained_indices, discarded) = if discard_repeated_vertices {
+        discard_repeated_triangle_indices(&triangle_indices)
+            .map_err(DecodedComponentError::Mesh)?
+    } else {
+        (
+            triangle_indices,
+            0,
+        )
+    };
+    let base_group = PrimitiveGroup::new(
+        index,
+        decoded_material_identity(&group.shader),
+        group.positions,
+        uvs,
+        &retained_indices,
+    )
+    .map_err(DecodedComponentError::Mesh)?;
+    let colors = group
+        .colours
         .into_iter()
-        .enumerate()
-        .map(
-            |(index, group)| {
-                if group
-                    .vertex_count
-                    .is_some_and(
-                        |declared| {
-                            usize::try_from(declared)
-                                != Ok(
-                                    group
-                                        .positions
-                                        .len(),
-                                )
-                        },
+        .map(decode_vertex_color)
+        .collect::<Vec<_>>();
+    let final_group = attach_surface_layers(
+        base_group,
+        group.normals,
+        colors,
+    )?;
+    Ok(
+        (
+            final_group,
+            discarded,
+        ),
+    )
+}
+
+/// Validate declared vertex and index counts for one primitive group.
+fn validate_primitive_group_counts(
+    index: usize,
+    group: &DecodedPrimitiveGroup,
+    decoded_name: &str,
+) -> Result<(), DecodedComponentError> {
+    if group
+        .vertex_count
+        .is_some_and(
+            |declared| {
+                usize::try_from(declared)
+                    != Ok(
+                        group
+                            .positions
+                            .len(),
                     )
-                {
-                    return Err(
-                        DecodedComponentError::MeshEvidence(
-                            format!(
-                                "mesh {decoded_name} group {index} vertex \
-                                 count mismatch"
-                            ),
-                        ),
-                    );
-                }
-                if group
-                    .index_count
-                    .is_some_and(
-                        |declared| {
-                            usize::try_from(declared)
-                                != Ok(
-                                    group
-                                        .indices
-                                        .len(),
-                                )
-                        },
-                    )
-                {
-                    return Err(
-                        DecodedComponentError::MeshEvidence(
-                            format!(
-                                "mesh {decoded_name} group {index} index \
-                                 count mismatch"
-                            ),
-                        ),
-                    );
-                }
-                if let Some(channel) = group
-                    .uvs
-                    .iter()
-                    .find(|channel| channel.channel != 0)
-                {
-                    return Err(
-                        DecodedComponentError::UnsupportedUvChannel {
-                            group: index,
-                            channel: channel.channel,
-                        },
-                    );
-                }
-                let mut channel_zero = group
-                    .uvs
-                    .into_iter()
-                    .filter(|channel| channel.channel == 0);
-                let first_channel = channel_zero.next();
-                if channel_zero
-                    .next()
-                    .is_some()
-                {
-                    return Err(
-                        DecodedComponentError::DuplicateUvChannel {
-                            group: index,
-                            channel: 0,
-                        },
-                    );
-                }
-                let uvs = match first_channel {
-                    Some(channel)
-                        if channel
-                            .coords
-                            .is_empty() =>
-                    {
-                        return Err(
-                            DecodedComponentError::EmptyUvChannel {
-                                group: index,
-                                channel: 0,
-                            },
-                        );
-                    }
-                    Some(channel) => channel.coords,
-                    None => Vec::new(),
-                };
-                let triangles = match group.prim_type {
-                    0 => group.indices,
-                    1 => triangulate_strip(&group.indices)
-                        .map_err(DecodedComponentError::Mesh)?
-                        .into_iter()
-                        .flatten()
-                        .collect(),
-                    other => {
-                        return Err(
-                            DecodedComponentError::MeshEvidence(
-                                format!(
-                                    "mesh {decoded_name} group {index} uses \
-                                     unsupported primitive type {other}"
-                                ),
-                            ),
-                        );
-                    }
-                };
-                let normals = group.normals;
-                let colors = group
-                    .colours
-                    .into_iter()
-                    .map(decode_vertex_color)
-                    .collect::<Vec<_>>();
-                PrimitiveGroup::new(
-                    index,
-                    decoded_material_identity(&group.shader),
-                    group.positions,
-                    uvs,
-                    &triangles,
-                )
-                .and_then(
-                    |primitive_group| {
-                        if normals.is_empty() {
-                            Ok(primitive_group)
-                        } else {
-                            primitive_group.with_normals(normals)
-                        }
-                    },
-                )
-                .and_then(
-                    |primitive_group| {
-                        if colors.is_empty() {
-                            Ok(primitive_group)
-                        } else {
-                            primitive_group.with_colors(colors)
-                        }
-                    },
-                )
-                .map_err(DecodedComponentError::Mesh)
             },
         )
-        .collect::<Result<Vec<_>, _>>()?;
-    MeshAsset::new(
-        decoded_name,
-        groups,
+    {
+        return Err(
+            DecodedComponentError::MeshEvidence(
+                format!(
+                    "mesh {decoded_name} group {index} vertex count mismatch"
+                ),
+            ),
+        );
+    }
+    if group
+        .index_count
+        .is_some_and(
+            |declared| {
+                usize::try_from(declared)
+                    != Ok(
+                        group
+                            .indices
+                            .len(),
+                    )
+            },
+        )
+    {
+        return Err(
+            DecodedComponentError::MeshEvidence(
+                format!(
+                    "mesh {decoded_name} group {index} index count mismatch"
+                ),
+            ),
+        );
+    }
+    Ok(())
+}
+
+/// Decode the single supported primary UV channel.
+fn decode_primary_uvs(
+    group_index: usize,
+    channels: Vec<DecodedUvChannel>,
+) -> Result<Vec<[f32; 2]>, DecodedComponentError> {
+    if let Some(channel) = channels
+        .iter()
+        .find(|channel| channel.channel != 0)
+    {
+        return Err(
+            DecodedComponentError::UnsupportedUvChannel {
+                group: group_index,
+                channel: channel.channel,
+            },
+        );
+    }
+    let mut channel_zero = channels
+        .into_iter()
+        .filter(|channel| channel.channel == 0);
+    let first_channel = channel_zero.next();
+    if channel_zero
+        .next()
+        .is_some()
+    {
+        return Err(
+            DecodedComponentError::DuplicateUvChannel {
+                group: group_index,
+                channel: 0,
+            },
+        );
+    }
+    match first_channel {
+        Some(channel)
+            if channel
+                .coords
+                .is_empty() =>
+        {
+            Err(
+                DecodedComponentError::EmptyUvChannel {
+                    group: group_index,
+                    channel: 0,
+                },
+            )
+        }
+        Some(channel) => Ok(channel.coords),
+        None => Ok(Vec::new()),
+    }
+}
+
+/// Decode one supported triangle-list or triangle-strip topology stream.
+fn decode_triangle_indices(
+    group_index: usize,
+    primitive_type: u32,
+    indices: Vec<u32>,
+    decoded_name: &str,
+) -> Result<Vec<u32>, DecodedComponentError> {
+    match primitive_type {
+        0 => Ok(indices),
+        1 => triangulate_strip(&indices)
+            .map_err(DecodedComponentError::Mesh)
+            .map(
+                |triangles| {
+                    triangles
+                        .into_iter()
+                        .flatten()
+                        .collect()
+                },
+            ),
+        other => Err(
+            DecodedComponentError::MeshEvidence(
+                format!(
+                    "mesh {decoded_name} group {group_index} uses unsupported \
+                     primitive type {other}"
+                ),
+            ),
+        ),
+    }
+}
+
+/// Attach optional normals and vertex colors to one validated group.
+fn attach_surface_layers(
+    base_group: PrimitiveGroup,
+    normals: Vec<[f32; 3]>,
+    colors: Vec<[f32; 4]>,
+) -> Result<PrimitiveGroup, DecodedComponentError> {
+    let normal_group = if normals.is_empty() {
+        base_group
+    } else {
+        base_group
+            .with_normals(normals)
+            .map_err(DecodedComponentError::Mesh)?
+    };
+    if colors.is_empty() {
+        Ok(normal_group)
+    } else {
+        normal_group
+            .with_colors(colors)
+            .map_err(DecodedComponentError::Mesh)
+    }
+}
+
+/// Discard repeated-index triangle records after canonical list normalization.
+fn discard_repeated_triangle_indices(
+    indices: &[u32]
+) -> Result<
+    (
+        Vec<u32>,
+        usize,
+    ),
+    MeshError,
+> {
+    let triangles = triangulate_indices(indices)?;
+    let mut retained = Vec::with_capacity(indices.len());
+    let mut discarded = 0_usize;
+    for triangle in triangles {
+        let [
+            first,
+            second,
+            third,
+        ] = triangle;
+        if first == second || first == third || second == third {
+            discarded = discarded.saturating_add(1);
+        } else {
+            retained.extend_from_slice(&triangle);
+        }
+    }
+    if retained.is_empty() {
+        return Err(MeshError::UnsupportedIndexCount(0));
+    }
+    Ok(
+        (
+            retained, discarded,
+        ),
     )
-    .map_err(DecodedComponentError::Mesh)
 }
 
 /// Internal helper for the adapter implementation.
@@ -504,11 +718,13 @@ fn resolve_material_from_source(
         shader_name,
     )?;
     let material_name = decoded_material_identity(&shader.name);
+    let semantics = decoded_shader_semantics(&shader);
     let Some(texture_reference) = texture_name(&shader)? else {
         return MaterialBinding::new(
             material_name,
             None,
         )
+        .map(|binding| binding.with_semantics(semantics))
         .map_err(DecodedComponentError::Material);
     };
     let texture_stem = texture_stem(&texture_reference)?;
@@ -574,6 +790,7 @@ fn resolve_material_from_source(
         output_texture_dir,
         &material_name,
         &source,
+        semantics,
     )
 }
 
@@ -688,6 +905,7 @@ fn stage_texture_binding(
     output_texture_dir: &Path,
     shader_name: &str,
     source: &Path,
+    semantics: MaterialSemantics,
 ) -> Result<MaterialBinding, DecodedComponentError> {
     local::create_dir_all(output_texture_dir).map_err(
         |error| DecodedComponentError::CreateDir {
@@ -731,6 +949,7 @@ fn stage_texture_binding(
         shader_name,
         Some(file_name),
     )
+    .map(|binding| binding.with_semantics(semantics))
     .map_err(DecodedComponentError::Material)
 }
 
@@ -820,7 +1039,9 @@ fn ensure_shader_evidence(
 ) -> Result<(), DecodedComponentError> {
     let logical_identity = decoded_material_identity(&shader.name);
     let member_identity = shader_member_identity(&shader.name);
-    if logical_identity != shader_name && member_identity != shader_name {
+    if !logical_identity.eq_ignore_ascii_case(shader_name)
+        && !member_identity.eq_ignore_ascii_case(shader_name)
+    {
         return Err(
             DecodedComponentError::ShaderIdentityMismatch {
                 requested: shader_name.to_owned(),
@@ -883,6 +1104,45 @@ fn ensure_shader_evidence(
         }
     }
     Ok(())
+}
+
+/// Classify transparency and light emission from decoded PDDI evidence.
+fn decoded_shader_semantics(shader: &DecodedShader) -> MaterialSemantics {
+    let blend_mode = shader
+        .params
+        .iter()
+        .find(|parameter| parameter.kind == "int" && parameter.param == "BLMD")
+        .and_then(
+            |parameter| {
+                parameter
+                    .value
+                    .as_u64()
+            },
+        )
+        .unwrap_or(0);
+    let emissive_rgb = shader
+        .params
+        .iter()
+        .find(
+            |parameter| parameter.kind == "colour" && parameter.param == "EMIS",
+        )
+        .and_then(
+            |parameter| {
+                parameter
+                    .value
+                    .as_u64()
+            },
+        )
+        .map_or(
+            0,
+            |colour| colour & 0x00ff_ffff,
+        );
+    MaterialSemantics::new(
+        shader.translucency == Some(1) || blend_mode != 0,
+        false,
+        false,
+        blend_mode == 2 || emissive_rgb != 0,
+    )
 }
 
 /// Resolve the canonical texture parameter without order-dependent selection.

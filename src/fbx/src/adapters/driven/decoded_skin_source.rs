@@ -54,7 +54,7 @@
 //! Every count, palette slot, and identity is checked before the character
 //! aggregate is built, so malformed extraction evidence fails closed instead
 //! of producing a silently wrong FBX document.
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
 use schoenwald_filesystem::adapters::driving::local;
@@ -122,17 +122,23 @@ pub fn load_character(
         parts.push(part);
     }
     let mut prop_bindings = BTreeMap::new();
+    let mut translucent_skins = BTreeSet::new();
     for composite_path in composite_paths {
-        for (prop_name, joint) in composite_prop_bindings(
+        let bindings = composite_bindings(
             composite_path,
             &skeleton_name,
             &part_names,
             bones.len(),
-        )? {
+        )?;
+        translucent_skins.extend(bindings.translucent_skins);
+        for binding in bindings.props {
+            let prop_name = binding
+                .name
+                .clone();
             if prop_bindings
                 .insert(
                     prop_name.clone(),
-                    joint,
+                    binding,
                 )
                 .is_some()
             {
@@ -144,6 +150,15 @@ pub fn load_character(
                     ),
                 );
             }
+        }
+    }
+    for part in &mut parts {
+        if translucent_skins.contains(
+            &part
+                .mesh
+                .name,
+        ) {
+            mark_transparent_mesh(&mut part.mesh);
         }
     }
     for mesh_path in mesh_paths {
@@ -160,7 +175,7 @@ pub fn load_character(
                     )
                 },
             )?;
-        let mesh = read_mesh(
+        let mut mesh = read_mesh(
             mesh_path,
             requested_id,
         )
@@ -174,7 +189,7 @@ pub fn load_character(
                 )
             },
         )?;
-        let joint = prop_bindings
+        let binding = prop_bindings
             .remove(&mesh.name)
             .ok_or_else(
                 || {
@@ -186,6 +201,10 @@ pub fn load_character(
                     )
                 },
             )?;
+        if binding.translucent {
+            mark_transparent_mesh(&mut mesh);
+        }
+        let joint = binding.joint;
         let bone_id = bones
             .get(joint)
             .map(
@@ -890,24 +909,64 @@ pub(super) fn rigid_group_influences(
         .collect()
 }
 
+/// One validated rigid prop binding from a decoded composite.
+pub(super) struct CompositePropBinding {
+    /// Referenced component identity.
+    pub(super) name: String,
+    /// Zero-based skeleton joint position.
+    pub(super) joint: usize,
+    /// Source composite marks the prop as translucent.
+    pub(super) translucent: bool,
+}
+
+/// Validated skin and rigid-prop semantics from one composite.
+pub(super) struct CompositeBindings {
+    /// Rigid prop bindings.
+    pub(super) props: Vec<CompositePropBinding>,
+    /// Skin identities explicitly marked translucent.
+    pub(super) translucent_skins: BTreeSet<String>,
+}
+
+/// Read one strict legacy zero-or-one flag.
+fn binary_flag(
+    value: &serde_json::Value,
+    label: &str,
+) -> Result<bool, SkinSourceError> {
+    match value.as_u64() {
+        Some(0) => Ok(false),
+        Some(1) => Ok(true),
+        _ => Err(
+            SkinSourceError::Prop(
+                format!("{label} is not an exact zero-or-one integer"),
+            ),
+        ),
+    }
+}
+
+/// Mark geometry with shared semantic evidence without changing shader lookup.
+pub(super) fn mark_transparent_mesh(mesh: &mut MeshAsset) {
+    if !mesh
+        .name
+        .to_ascii_lowercase()
+        .contains("transparent")
+    {
+        mesh.name
+            .push_str("__transparent-source");
+    }
+}
+
 /// Validate one composite and return its rigid prop-to-joint bindings.
 #[expect(
     clippy::too_many_lines,
     reason = "Composite count, skeleton, skin, prop, and joint checks form \
               one atomic validation."
 )]
-pub(super) fn composite_prop_bindings(
+pub(super) fn composite_bindings(
     path: &Path,
     skeleton_name: &str,
     part_names: &[String],
     bone_count: usize,
-) -> Result<
-    Vec<(
-        String,
-        usize,
-    )>,
-    SkinSourceError,
-> {
+) -> Result<CompositeBindings, SkinSourceError> {
     let decoded: DecodedComposite = read_json(path)?;
     if decoded.schema != "composite_drawable" {
         return Err(
@@ -963,6 +1022,7 @@ pub(super) fn composite_prop_bindings(
             },
         );
     }
+    let mut translucent_skins = BTreeSet::new();
     for skin in &decoded.skins {
         let skin_name = trim_decoded_identity(&skin.name);
         if !part_names.contains(&skin_name) {
@@ -972,6 +1032,12 @@ pub(super) fn composite_prop_bindings(
                     skin: skin_name,
                 },
             );
+        }
+        if binary_flag(
+            &skin.is_translucent,
+            "composite skin translucency",
+        )? {
+            translucent_skins.insert(skin_name);
         }
     }
     let mut bindings = Vec::with_capacity(
@@ -1014,13 +1080,22 @@ pub(super) fn composite_prop_bindings(
             );
         }
         bindings.push(
-            (
-                prop_name,
-                prop.skeleton_joint_id,
-            ),
+            CompositePropBinding {
+                name: prop_name,
+                joint: prop.skeleton_joint_id,
+                translucent: binary_flag(
+                    &prop.is_translucent,
+                    "composite prop translucency",
+                )?,
+            },
         );
     }
-    Ok(bindings)
+    Ok(
+        CompositeBindings {
+            props: bindings,
+            translucent_skins,
+        },
+    )
 }
 
 /// Trim decoded fixed-width identity padding without touching inner text.
@@ -1513,7 +1588,7 @@ struct DecodedCompositeProp {
     name: String,
     /// Translucency flag retained for schema compatibility.
     #[serde(rename = "is_translucent")]
-    _is_translucent: serde_json::Value,
+    is_translucent: serde_json::Value,
     /// Zero-based skeleton joint position owning the rigid prop.
     skeleton_joint_id: usize,
     /// Sort order retained for schema compatibility.
@@ -1538,7 +1613,7 @@ struct DecodedCompositeSkin {
         default,
         rename = "is_translucent"
     )]
-    _is_translucent: serde_json::Value,
+    is_translucent: serde_json::Value,
     /// Sort order retained for schema compatibility.
     #[serde(
         default,

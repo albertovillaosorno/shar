@@ -69,3 +69,45 @@ fn rejects_blank_material_binding_identities() {
         Err(MaterialBindingError::BlankTextureFileName)
     );
 }
+
+#[test]
+fn classifies_shared_glass_mirror_and_light_identities() -> Result<(), String> {
+    let glass = MaterialBinding::new(
+        "windsheild_glass_m",
+        Some("headlight_lens.png".to_owned()),
+    )
+    .map_err(|error| format!("glass material failed: {error:?}"))?;
+    if !glass
+        .semantics
+        .is_transparent()
+        || !glass
+            .semantics
+            .is_glass()
+        || !glass
+            .semantics
+            .is_light_emitter()
+        || glass
+            .semantics
+            .is_mirror()
+    {
+        return Err(format!("glass semantics were incomplete: {glass:?}"));
+    }
+    let mirror = MaterialBinding::new(
+        "rearview_mirror_m",
+        Some("rearview.png".to_owned()),
+    )
+    .map_err(|error| format!("mirror material failed: {error:?}"))?;
+    if !mirror
+        .semantics
+        .is_mirror()
+        || mirror
+            .semantics
+            .is_glass()
+        || mirror
+            .semantics
+            .is_light_emitter()
+    {
+        return Err(format!("mirror semantics were incomplete: {mirror:?}"));
+    }
+    Ok(())
+}

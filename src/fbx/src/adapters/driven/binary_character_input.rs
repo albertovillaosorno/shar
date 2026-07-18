@@ -49,7 +49,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use super::binary_identity::{BinaryIdentityError, MaterialIds, material_ids};
 use crate::domain::character::CharacterAsset;
 use crate::domain::scene::identity::is_portable_path_segment;
-use crate::domain::texture::MaterialBinding;
+use crate::domain::texture::{MaterialBinding, MaterialSemantics};
 use crate::domain::transform::matrix::{
     MatrixError, TrsParts, decompose, multiply, widen,
 };
@@ -63,6 +63,8 @@ pub(super) struct MaterialSlot<'materials> {
     pub(super) ids: MaterialIds,
     /// Borrowed material binding.
     pub(super) binding: &'materials MaterialBinding,
+    /// Effective semantics merged from material and source geometry evidence.
+    pub(super) semantics: MaterialSemantics,
 }
 
 /// Precomputed local and global bind transforms for one bone.
@@ -142,7 +144,14 @@ pub(super) fn material_slots<'materials>(
     materials: &'materials [MaterialBinding],
 ) -> Result<BTreeMap<String, MaterialSlot<'materials>>, CharacterInputError> {
     let mut used_shaders = BTreeSet::new();
+    let mut geometry_semantics = BTreeMap::<String, MaterialSemantics>::new();
     for part in &character.parts {
+        let part_semantics = MaterialSemantics::from_identities(
+            &part
+                .mesh
+                .name,
+            None,
+        );
         for group in &part
             .mesh
             .groups
@@ -152,6 +161,18 @@ pub(super) fn material_slots<'materials>(
                     .shader
                     .clone(),
             );
+            geometry_semantics
+                .entry(
+                    group
+                        .shader
+                        .clone(),
+                )
+                .and_modify(
+                    |current| {
+                        *current = current.merge(part_semantics);
+                    },
+                )
+                .or_insert(part_semantics);
         }
     }
     let mut bindings_by_name: BTreeMap<&str, &MaterialBinding> =
@@ -212,6 +233,14 @@ pub(super) fn material_slots<'materials>(
             MaterialSlot {
                 ids: material_ids(ordinal)?,
                 binding,
+                semantics: binding
+                    .semantics
+                    .merge(
+                        geometry_semantics
+                            .get(shader)
+                            .copied()
+                            .unwrap_or_default(),
+                    ),
             },
         );
     }

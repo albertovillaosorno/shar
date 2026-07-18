@@ -46,7 +46,10 @@ pub(super) fn write_vehicle_catalog(
 ) -> Result<(), PipelineError> {
     let bytes = serde_json::to_vec_pretty(&vehicle_json(record))
         .map_err(|error| PipelineError::new(error.to_string()))?;
-    write_new(&vehicle_dir.join("vehicle.catalog.json"), &bytes)
+    write_new(
+        &vehicle_dir.join("vehicle.catalog.json"),
+        &bytes,
+    )
 }
 
 /// Write the deterministic root vehicle catalog.
@@ -85,7 +88,10 @@ pub(super) fn write_root_catalog(
         "counts": {
             "vehicles": records.len(),
             "freshly_extracted_car_packages": extracted_packages,
-            "parts": records.iter().map(|record| record.parts.len()).sum::<usize>(),
+            "parts": records
+                .iter()
+                .map(|record| record.parts.len())
+                .sum::<usize>(),
             "deferred_geometry": records
                 .iter()
                 .map(|record| record.deferred_geometry.len())
@@ -111,7 +117,10 @@ pub(super) fn write_root_catalog(
     });
     let bytes = serde_json::to_vec_pretty(&value)
         .map_err(|error| PipelineError::new(error.to_string()))?;
-    write_new(&staging.join("vehicles.catalog.json"), &bytes)
+    write_new(
+        &staging.join("vehicles.catalog.json"),
+        &bytes,
+    )
 }
 
 /// Render one vehicle record to stable JSON.
@@ -153,7 +162,7 @@ fn vehicle_json(record: &VehicleRecord) -> Value {
 
 /// Return every file recursively below one optional root.
 pub(super) fn recursive_files(
-    root: &Path,
+    root: &Path
 ) -> Result<Vec<PathBuf>, PipelineError> {
     if !root.is_dir() {
         return Ok(Vec::new());
@@ -179,7 +188,15 @@ pub(super) fn recursive_files(
 }
 
 /// Return complete file and byte totals below one publication root.
-pub(super) fn tree_totals(root: &Path) -> Result<(usize, u64), PipelineError> {
+pub(super) fn tree_totals(
+    root: &Path
+) -> Result<
+    (
+        usize,
+        u64,
+    ),
+    PipelineError,
+> {
     let files = recursive_files(root)?;
     let mut bytes = 0_u64;
     for path in &files {
@@ -189,9 +206,16 @@ pub(super) fn tree_totals(root: &Path) -> Result<(usize, u64), PipelineError> {
                     .map_err(|error| PipelineError::new(error.to_string()))?
                     .len(),
             )
-            .ok_or_else(|| PipelineError::new("vehicle byte total overflowed"))?;
+            .ok_or_else(
+                || PipelineError::new("vehicle byte total overflowed"),
+            )?;
     }
-    Ok((files.len(), bytes))
+    Ok(
+        (
+            files.len(),
+            bytes,
+        ),
+    )
 }
 
 /// Write one create-new deterministic artifact.
@@ -205,10 +229,12 @@ pub(super) fn write_new(
         .open(path)
         .map_err(
             |error| {
-                PipelineError::new(format!(
-                    "write {} failed: {error}",
-                    path.display()
-                ))
+                PipelineError::new(
+                    format!(
+                        "write {} failed: {error}",
+                        path.display()
+                    ),
+                )
             },
         )?;
     file.write_all(bytes)

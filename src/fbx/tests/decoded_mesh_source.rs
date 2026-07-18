@@ -50,7 +50,7 @@ use std::fs;
 use std::path::PathBuf;
 
 use fbx::adapters::driven::decoded_component_source::{
-    DecodedComponentError, DecodedComponentSource,
+    DecodedComponentError, DecodedComponentSource, read_mesh_for_analysis,
 };
 use fbx::ports::component_source::ComponentSource;
 use png as _;
@@ -220,4 +220,60 @@ fn rejects_mesh_identity_mismatches() {
             }
         )
     );
+}
+
+#[test]
+fn analysis_loader_discards_repeated_index_triangles() -> Result<(), String> {
+    let root = temp_root("analysis-degenerate-triangle");
+    let mesh_dir = root
+        .join("components")
+        .join("mesh");
+    let mesh_json = concat!(
+        r#"{"schema":"mesh","name":"mesh","prim_groups":[{"#,
+        r#""shader":"shader","positions":[[0,0,0],[1,0,0],[0,1,0],"#,
+        r#"[1,1,0]],"indices":[0,1,2,2,2,3]}]}"#,
+    );
+    fs::create_dir_all(&mesh_dir)
+        .and_then(
+            |()| {
+                fs::write(
+                    mesh_dir.join("mesh.json"),
+                    mesh_json,
+                )
+            },
+        )
+        .map_err(|error| error.to_string())?;
+    let source = DecodedComponentSource::new(
+        &root,
+        root.join("textures"),
+    );
+    if source
+        .load_mesh("mesh")
+        .is_ok()
+    {
+        return Err("strict mesh loading accepted repeated indices".to_owned());
+    }
+    let recovery_result = read_mesh_for_analysis(
+        &root, "mesh",
+    )
+    .map_err(|error| format!("analysis mesh failed: {error:?}"));
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let (mesh, discarded) = recovery_result?;
+    if discarded != 1 {
+        return Err("analysis discarded triangle count differed".to_owned());
+    }
+    let group = mesh
+        .groups
+        .first()
+        .ok_or_else(|| "analysis mesh has no primitive group".to_owned())?;
+    if group.triangles
+        != vec![
+            [
+                0, 1, 2,
+            ],
+        ]
+    {
+        return Err("analysis mesh retained unexpected triangles".to_owned());
+    }
+    Ok(())
 }

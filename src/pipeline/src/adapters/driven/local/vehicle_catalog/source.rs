@@ -41,7 +41,8 @@ use super::{VEHICLE_CATEGORY, VEHICLE_COMMON_SUBCATEGORY};
 use crate::domain::PipelineError;
 use crate::domain::package::{PhaseThreePackageIndex, PhaseThreePackageRow};
 
-/// One exact texture occurrence available across freshly extracted car packages.
+/// One exact texture occurrence available across freshly extracted car
+/// packages.
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct VehicleTextureSource {
     subcategory: String,
@@ -73,10 +74,14 @@ pub(super) fn extract_vehicle_packages(
             .join(&relative)
             .with_extension("p3d");
         if !source.is_file() {
-            return Err(PipelineError::new(format!(
-                "vehicle source package is missing: {}",
-                source.display()
-            )));
+            return Err(
+                PipelineError::new(
+                    format!(
+                        "vehicle source package is missing: {}",
+                        source.display()
+                    ),
+                ),
+            );
         }
         p3d::write_lossless_package(
             &source,
@@ -84,15 +89,19 @@ pub(super) fn extract_vehicle_packages(
         )
         .map_err(
             |error| {
-                PipelineError::new(format!(
-                    "vehicle extraction failed for {}: {error}",
-                    package.package_id
-                ))
+                PipelineError::new(
+                    format!(
+                        "vehicle extraction failed for {}: {error}",
+                        package.package_id
+                    ),
+                )
             },
         )?;
         count = count
             .checked_add(1)
-            .ok_or_else(|| PipelineError::new("vehicle package count overflowed"))?;
+            .ok_or_else(
+                || PipelineError::new("vehicle package count overflowed"),
+            )?;
     }
     Ok(count)
 }
@@ -106,10 +115,12 @@ pub(super) fn relative_art_root(
         .strip_prefix("extracted/art/")
         .ok_or_else(
             || {
-                PipelineError::new(format!(
-                    "vehicle package root is outside extracted/art: {}",
-                    package.package_root
-                ))
+                PipelineError::new(
+                    format!(
+                        "vehicle package root is outside extracted/art: {}",
+                        package.package_root
+                    ),
+                )
             },
         )?;
     let path = Path::new(relative);
@@ -118,10 +129,14 @@ pub(super) fn relative_art_root(
             .components()
             .any(|component| component == Component::ParentDir)
     {
-        return Err(PipelineError::new(format!(
-            "vehicle package root is not portable: {}",
-            package.package_root
-        )));
+        return Err(
+            PipelineError::new(
+                format!(
+                    "vehicle package root is not portable: {}",
+                    package.package_root
+                ),
+            ),
+        );
     }
     Ok(path.to_path_buf())
 }
@@ -131,7 +146,9 @@ pub(super) fn select_vehicle_skeleton(
     package_root: &Path,
     vehicle: &str,
 ) -> Result<PathBuf, PipelineError> {
-    let directory = package_root.join("components").join("skeleton");
+    let directory = package_root
+        .join("components")
+        .join("skeleton");
     let mut candidates = json_files(&directory)?
         .into_iter()
         .filter_map(
@@ -139,13 +156,28 @@ pub(super) fn select_vehicle_skeleton(
                 decoded_name(&path)
                     .ok()
                     .filter(|name| !is_collision_volume_identity(name))
-                    .map(|name| (path, name))
+                    .map(
+                        |name| {
+                            (
+                                path, name,
+                            )
+                        },
+                    )
             },
         )
         .collect::<Vec<_>>();
-    candidates.sort_by(|left, right| left.0.cmp(&right.0));
+    candidates.sort_by(
+        |left, right| {
+            left.0
+                .cmp(&right.0)
+        },
+    );
     if candidates.len() == 1 {
-        return Ok(candidates.remove(0).0);
+        return Ok(
+            candidates
+                .remove(0)
+                .0,
+        );
     }
     let target = identity_key(vehicle);
     let matches = candidates
@@ -154,12 +186,16 @@ pub(super) fn select_vehicle_skeleton(
         .collect::<Vec<_>>();
     match matches.as_slice() {
         [(path, _name)] => Ok(path.clone()),
-        [] => Err(PipelineError::new(format!(
-            "vehicle {vehicle} has no unique render skeleton"
-        ))),
-        _ => Err(PipelineError::new(format!(
-            "vehicle {vehicle} has ambiguous render skeletons"
-        ))),
+        [] => Err(
+            PipelineError::new(
+                format!("vehicle {vehicle} has no unique render skeleton"),
+            ),
+        ),
+        _ => Err(
+            PipelineError::new(
+                format!("vehicle {vehicle} has ambiguous render skeletons"),
+            ),
+        ),
     }
 }
 
@@ -174,9 +210,11 @@ pub(super) fn select_vehicle_composite(
     let candidates = json_files(&directory)?;
     match candidates.as_slice() {
         [path] => Ok(path.clone()),
-        [] => Err(PipelineError::new(format!(
-            "vehicle {vehicle} has no composite drawable"
-        ))),
+        [] => Err(
+            PipelineError::new(
+                format!("vehicle {vehicle} has no composite drawable"),
+            ),
+        ),
         _ => {
             let target = identity_key(vehicle);
             let matches = candidates
@@ -190,9 +228,14 @@ pub(super) fn select_vehicle_composite(
                 .collect::<Vec<_>>();
             match matches.as_slice() {
                 [path] => Ok(path.clone()),
-                _ => Err(PipelineError::new(format!(
-                    "vehicle {vehicle} has ambiguous composite drawables"
-                ))),
+                _ => Err(
+                    PipelineError::new(
+                        format!(
+                            "vehicle {vehicle} has ambiguous composite \
+                             drawables"
+                        ),
+                    ),
+                ),
             }
         }
     }
@@ -216,40 +259,176 @@ pub(super) fn vehicle_mesh_paths(
                 let file_name = Path::new(&member.path)
                     .file_name()
                     .ok_or_else(
-                        || PipelineError::new("vehicle mesh member has no file name"),
+                        || {
+                            PipelineError::new(
+                                "vehicle mesh member has no file name",
+                            )
+                        },
                     )?;
-                Ok(package_root
-                    .join("components")
-                    .join("mesh")
-                    .join(file_name))
+                Ok(
+                    package_root
+                        .join("components")
+                        .join("mesh")
+                        .join(file_name),
+                )
             },
         )
         .collect::<Result<Vec<_>, PipelineError>>()?;
     paths.sort();
     paths.dedup();
     if paths.is_empty() {
-        return Err(PipelineError::new(format!(
-            "vehicle package {} has no render meshes",
-            package.package_id
-        )));
+        return Err(
+            PipelineError::new(
+                format!(
+                    "vehicle package {} has no render meshes",
+                    package.package_id
+                ),
+            ),
+        );
     }
-    if let Some(path) = paths.iter().find(|path| !path.is_file()) {
-        return Err(PipelineError::new(format!(
-            "vehicle render mesh is missing: {}",
-            path.display()
-        )));
+    if let Some(path) = paths
+        .iter()
+        .find(|path| !path.is_file())
+    {
+        return Err(
+            PipelineError::new(
+                format!(
+                    "vehicle render mesh is missing: {}",
+                    path.display()
+                ),
+            ),
+        );
     }
     Ok(paths)
 }
 
+/// Resolve every package-local billboard quad-group path.
+pub(super) fn vehicle_quad_group_paths(
+    package: &PhaseThreePackageRow,
+    package_root: &Path,
+) -> Result<Vec<PathBuf>, PipelineError> {
+    let mut paths = package
+        .members()
+        .iter()
+        .filter(|member| member.source_chunk_kind == "quad_group")
+        .map(
+            |member| {
+                let file_name = Path::new(&member.path)
+                    .file_name()
+                    .ok_or_else(
+                        || {
+                            PipelineError::new(
+                                "vehicle quad-group member has no file name",
+                            )
+                        },
+                    )?;
+                Ok(
+                    package_root
+                        .join("components")
+                        .join("quad_group")
+                        .join(file_name),
+                )
+            },
+        )
+        .collect::<Result<Vec<_>, PipelineError>>()?;
+    paths.sort();
+    paths.dedup();
+    if let Some(path) = paths
+        .iter()
+        .find(|path| !path.is_file())
+    {
+        return Err(
+            PipelineError::new(
+                format!(
+                    "vehicle quad-group source is missing: {}",
+                    path.display()
+                ),
+            ),
+        );
+    }
+    Ok(paths)
+}
+
+/// Return the three original runtime headlight groups from the common package.
+pub(super) fn common_headlight_quad_groups(
+    normalized_root: &Path
+) -> Result<
+    (
+        PathBuf,
+        Vec<PathBuf>,
+    ),
+    PipelineError,
+> {
+    let common_root = normalized_root
+        .join("cars")
+        .join("common");
+    let directory = common_root
+        .join("components")
+        .join("quad_group");
+    let required = [
+        "headlightShape8",
+        "headlight2Shape",
+        "glowGroupShape2",
+    ];
+    let candidates = json_files(&directory)?;
+    let mut selected = Vec::new();
+    for identity in required {
+        let matches = candidates
+            .iter()
+            .filter(
+                |path| {
+                    decoded_name(path)
+                        .is_ok_and(|name| name.eq_ignore_ascii_case(identity))
+                },
+            )
+            .cloned()
+            .collect::<Vec<_>>();
+        match matches.as_slice() {
+            [path] => selected.push(path.clone()),
+            [] => {
+                return Err(
+                    PipelineError::new(
+                        format!(
+                            "common vehicle headlight group is missing: \
+                             {identity}"
+                        ),
+                    ),
+                );
+            }
+            _ => {
+                return Err(
+                    PipelineError::new(
+                        format!(
+                            "common vehicle headlight group is ambiguous: \
+                             {identity}"
+                        ),
+                    ),
+                );
+            }
+        }
+    }
+    Ok(
+        (
+            common_root,
+            selected,
+        ),
+    )
+}
+
 /// Return sorted JSON files from one optional component directory.
 fn json_files(directory: &Path) -> Result<Vec<PathBuf>, PipelineError> {
-    files_with_extension(directory, "json")
+    files_with_extension(
+        directory, "json",
+    )
 }
 
 /// Return sorted PNG files from one optional component directory.
-pub(super) fn png_files(directory: &Path) -> Result<Vec<PathBuf>, PipelineError> {
-    files_with_extension(directory, "png")
+pub(super) fn png_files(
+    directory: &Path
+) -> Result<Vec<PathBuf>, PipelineError> {
+    files_with_extension(
+        directory, "png",
+    )
 }
 
 /// Return sorted files with one extension from an optional directory.
@@ -286,22 +465,34 @@ fn files_with_extension(
 /// Read one decoded component name and remove fixed-width null padding.
 pub(super) fn decoded_name(path: &Path) -> Result<String, PipelineError> {
     let value: Value = serde_json::from_slice(
-        &fs::read(path).map_err(|error| PipelineError::new(error.to_string()))?,
+        &fs::read(path)
+            .map_err(|error| PipelineError::new(error.to_string()))?,
     )
     .map_err(|error| PipelineError::new(error.to_string()))?;
     let name = value
         .get("name")
         .and_then(Value::as_str)
         .ok_or_else(
-            || PipelineError::new(format!("component has no name: {}", path.display())),
+            || {
+                PipelineError::new(
+                    format!(
+                        "component has no name: {}",
+                        path.display()
+                    ),
+                )
+            },
         )?;
-    Ok(name.trim_end_matches('\0').trim().to_owned())
+    Ok(
+        name.trim_end_matches('\0')
+            .trim()
+            .to_owned(),
+    )
 }
 
 /// Return whether one skeleton identity belongs only to collision-volume data.
 fn is_collision_volume_identity(value: &str) -> bool {
     value
-        .trim_end_matches(' ')
+        .trim_end_matches('\u{0}')
         .to_ascii_lowercase()
         .ends_with("bv")
 }
@@ -317,12 +508,15 @@ fn identity_key(value: &str) -> String {
 
 /// Normalize one texture reference for exact logical cross-package matching.
 fn texture_key(value: &str) -> String {
-    let clean = value.trim_end_matches('\0').trim();
+    let clean = value
+        .trim_end_matches('\0')
+        .trim();
     let stem = Path::new(clean)
         .file_stem()
         .and_then(|value| value.to_str())
         .unwrap_or(clean);
-    stem.trim_end_matches('_').to_ascii_lowercase()
+    stem.trim_end_matches('_')
+        .to_ascii_lowercase()
 }
 
 impl VehicleTextureAuthority {
@@ -338,35 +532,59 @@ impl VehicleTextureAuthority {
             .filter(|package| package.category == VEHICLE_CATEGORY)
         {
             let root = normalized_root.join(relative_art_root(package)?);
-            for path in png_files(&root.join("components").join("texture"))? {
+            for path in png_files(
+                &root
+                    .join("components")
+                    .join("texture"),
+            )? {
                 let file_name = path
                     .file_name()
                     .and_then(|value| value.to_str())
                     .ok_or_else(
-                        || PipelineError::new("vehicle texture has no file name"),
+                        || {
+                            PipelineError::new(
+                                "vehicle texture has no file name",
+                            )
+                        },
                     )?;
                 let bytes = fs::read(&path)
                     .map_err(|error| PipelineError::new(error.to_string()))?;
                 sources
                     .entry(texture_key(file_name))
                     .or_default()
-                    .push(VehicleTextureSource {
-                        subcategory: package.subcategory.clone(),
-                        path,
-                        sha256: digest_hex(&bytes),
-                    });
+                    .push(
+                        VehicleTextureSource {
+                            subcategory: package
+                                .subcategory
+                                .clone(),
+                            path,
+                            sha256: digest_hex(&bytes),
+                        },
+                    );
             }
         }
         for entries in sources.values_mut() {
             entries.sort_by(
                 |left, right| {
-                    (&left.subcategory, &left.path)
-                        .cmp(&(&right.subcategory, &right.path))
+                    (
+                        &left.subcategory,
+                        &left.path,
+                    )
+                        .cmp(
+                            &(
+                                &right.subcategory,
+                                &right.path,
+                            ),
+                        )
                 },
             );
             entries.dedup();
         }
-        Ok(Self { sources })
+        Ok(
+            Self {
+                sources,
+            },
+        )
     }
 
     /// Resolve one missing texture without choosing conflicting car variants.
@@ -375,7 +593,10 @@ impl VehicleTextureAuthority {
         reference: &str,
         source_subcategory: &str,
     ) -> Result<Option<&Path>, PipelineError> {
-        let Some(entries) = self.sources.get(&texture_key(reference)) else {
+        let Some(entries) = self
+            .sources
+            .get(&texture_key(reference))
+        else {
             return Ok(None);
         };
         let same_package = entries
@@ -392,28 +613,53 @@ impl VehicleTextureAuthority {
         if let Some(path) = unique_texture_path(&common)? {
             return Ok(Some(path));
         }
-        unique_texture_path(&entries.iter().collect::<Vec<_>>())
+        unique_texture_path(
+            &entries
+                .iter()
+                .collect::<Vec<_>>(),
+        )
     }
 }
 
 /// Select one texture path only when all candidates have identical bytes.
 fn unique_texture_path<'source>(
-    entries: &[&'source VehicleTextureSource],
+    entries: &[&'source VehicleTextureSource]
 ) -> Result<Option<&'source Path>, PipelineError> {
     if entries.is_empty() {
         return Ok(None);
     }
     let hashes = entries
         .iter()
-        .map(|entry| entry.sha256.as_str())
+        .map(
+            |entry| {
+                entry
+                    .sha256
+                    .as_str()
+            },
+        )
         .collect::<BTreeSet<_>>();
     if hashes.len() != 1 {
-        return Err(PipelineError::new(format!(
-            "vehicle shared texture authority is ambiguous across {} payloads",
-            entries.len()
-        )));
+        return Err(
+            PipelineError::new(
+                format!(
+                    "vehicle shared texture authority is ambiguous across {} \
+                     payloads",
+                    entries.len()
+                ),
+            ),
+        );
     }
-    Ok(entries.first().map(|entry| entry.path.as_path()))
+    Ok(
+        entries
+            .first()
+            .map(
+                |entry| {
+                    entry
+                        .path
+                        .as_path()
+                },
+            ),
+    )
 }
 
 #[cfg(test)]
@@ -422,7 +668,13 @@ mod tests {
 
     #[test]
     fn texture_key_removes_extension_case_and_fixed_width_padding() {
-        assert_eq!(texture_key("WindsheildT.bmp\0\0"), "windsheildt");
-        assert_eq!(texture_key("homer_vWheel.PNG"), "homer_vwheel");
+        assert_eq!(
+            texture_key("WindsheildT.bmp\0\0"),
+            "windsheildt"
+        );
+        assert_eq!(
+            texture_key("homer_vWheel.PNG"),
+            "homer_vwheel"
+        );
     }
 }

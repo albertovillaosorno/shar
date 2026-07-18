@@ -74,7 +74,7 @@ const fn skeleton_json() -> &'static str {
         r#""rest_pose":[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]},"#,
         r#"{"name":"body","parent":0,"dof":0,"free_axes":0,"#,
         r#""primary_axis":0,"secondary_axis":0,"twist_axis":0,"#,
-        r#""rest_pose":[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]},"#,
+        r#""rest_pose":[1,0,0,0,0,1,0,0,0,0,1,0,2,3,4,1]},"#,
         r#"{"name":"wing","parent":1,"dof":0,"free_axes":0,"#,
         r#""primary_axis":0,"secondary_axis":0,"twist_axis":0,"#,
         r#""rest_pose":[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]},"#,
@@ -89,7 +89,7 @@ const fn composite_json() -> &'static str {
         r#"{"schema":"composite_drawable","name":"rig","#,
         r#""skeleton_name":"rig","num_skins":0,"skins":[],"#,
         r#""num_props":2,"props":["#,
-        r#"{"kind":"prop","name":"BodyShape","is_translucent":0,"#,
+        r#"{"kind":"prop","name":"BodyShape","is_translucent":1,"#,
         r#""skeleton_joint_id":1,"sort_order":0},"#,
         r#"{"kind":"prop","name":"GlowShape","is_translucent":1,"#,
         r#""skeleton_joint_id":3,"sort_order":0}],"#,
@@ -211,10 +211,34 @@ fn loads_selected_prop_and_prunes_unselected_branches() -> Result<(), String> {
         || part
             .mesh
             .name
-            != "BodyShape"
+            != "BodyShape__transparent-source"
     {
         return Err(
             "selected rigid prop did not preserve one body mesh".to_owned(),
+        );
+    }
+    let positions = &part
+        .mesh
+        .groups[0]
+        .positions;
+    if positions
+        != &[
+            [
+                2.0, 3.0, 4.0,
+            ],
+            [
+                3.0, 3.0, 4.0,
+            ],
+            [
+                2.0, 4.0, 4.0,
+            ],
+        ]
+    {
+        return Err(
+            format!(
+                "selected rigid prop did not bake its authored rest \
+                 transform: {positions:?}"
+            ),
         );
     }
     if part

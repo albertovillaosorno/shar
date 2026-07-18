@@ -67,7 +67,7 @@ use fbx::domain::character::{CharacterAsset, SkinnedPart};
 use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 use fbx::domain::skeleton::Bone;
 use fbx::domain::skin::SkinInfluence;
-use fbx::domain::texture::MaterialBinding;
+use fbx::domain::texture::{MaterialBinding, MaterialSemantics};
 use fbx::domain::transform::affine_inverse::invert_affine;
 use fbx::domain::transform::matrix::{TrsParts, compose, multiply};
 use png as _;
@@ -774,4 +774,91 @@ fn writes_deterministic_binary_fbx_7700_with_standard_footer() {
         footer_version,
         Some(FBX_VERSION)
     );
+}
+
+#[test]
+fn writes_shared_glass_and_emitter_automation_evidence() -> Result<(), String> {
+    let mut character = synthetic_character()?;
+    character.parts[0]
+        .mesh
+        .groups[0]
+        .shader = "windshield_glass_m".to_owned();
+    let material = MaterialBinding::new(
+        "windshield_glass_m",
+        Some("headlight_lens.png".to_owned()),
+    )
+    .map_err(|error| format!("semantic material failed: {error:?}"))?
+    .with_semantics(
+        MaterialSemantics::new(
+            true, true, false, true,
+        ),
+    );
+    let path = output_path("semantic-surface");
+    write_binary_character_fbx(
+        &character,
+        &[material],
+        &[],
+        &path,
+    )
+    .map_err(|error| format!("semantic FBX write failed: {error:?}"))?;
+    let bytes = fs::read(&path).map_err(|error| error.to_string())?;
+    fs::remove_file(&path).map_err(|error| error.to_string())?;
+    for token in [
+        "body_0__glass-light-emitter",
+        "windshield_glass_m__glass-light-emitter",
+        "TransparentColor",
+        "TransparencyFactor",
+        "EmissiveColor",
+        "EmissiveFactor",
+    ] {
+        if !bytes
+            .windows(token.len())
+            .any(|window| window == token.as_bytes())
+        {
+            return Err(format!("semantic FBX token is missing: {token}"));
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn merges_composite_transparency_from_geometry_identity() -> Result<(), String>
+{
+    let mut character = synthetic_character()?;
+    character.parts[0]
+        .mesh
+        .name = "body__transparent-source".to_owned();
+    let material = MaterialBinding::new(
+        "skin",
+        Some("skin.png".to_owned()),
+    )
+    .map_err(|error| format!("opaque source material failed: {error:?}"))?;
+    let path = output_path("composite-transparent-surface");
+    write_binary_character_fbx(
+        &character,
+        &[material],
+        &[],
+        &path,
+    )
+    .map_err(
+        |error| format!("composite semantic FBX write failed: {error:?}"),
+    )?;
+    let bytes = fs::read(&path).map_err(|error| error.to_string())?;
+    fs::remove_file(&path).map_err(|error| error.to_string())?;
+    for token in [
+        "transparent-source",
+        "skin__transparent",
+        "TransparentColor",
+        "TransparencyFactor",
+    ] {
+        if !bytes
+            .windows(token.len())
+            .any(|window| window == token.as_bytes())
+        {
+            return Err(
+                format!("composite transparency token is missing: {token}"),
+            );
+        }
+    }
+    Ok(())
 }

@@ -116,6 +116,7 @@ fn resolves_already_normalized_png_texture_extensions() {
             fbx::domain::texture::MaterialBinding {
                 material_name: "shader".to_owned(),
                 texture_file_name: Some("ready.png".to_owned()),
+                semantics: fbx::domain::texture::MaterialSemantics::default(),
             }
         )
     );
@@ -215,6 +216,7 @@ fn accepts_textures_already_in_the_staging_directory() {
             fbx::domain::texture::MaterialBinding {
                 material_name: "shader".to_owned(),
                 texture_file_name: Some("ready.png".to_owned()),
+                semantics: fbx::domain::texture::MaterialSemantics::default(),
             }
         )
     );
@@ -269,6 +271,7 @@ fn resolves_mixed_case_bmp_texture_extensions() {
             fbx::domain::texture::MaterialBinding {
                 material_name: "shader".to_owned(),
                 texture_file_name: Some("mixed.png".to_owned()),
+                semantics: fbx::domain::texture::MaterialSemantics::default(),
             }
         )
     );

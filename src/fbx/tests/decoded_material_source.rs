@@ -101,6 +101,7 @@ fn accepts_utf8_bom_in_decoded_json() {
             fbx::domain::texture::MaterialBinding {
                 material_name: "shader".to_owned(),
                 texture_file_name: None,
+                semantics: fbx::domain::texture::MaterialSemantics::default(),
             }
         )
     );
@@ -137,6 +138,7 @@ fn empty_texture_parameter_is_an_untextured_material() {
             fbx::domain::texture::MaterialBinding {
                 material_name: "lambert1".to_owned(),
                 texture_file_name: None,
+                semantics: fbx::domain::texture::MaterialSemantics::default(),
             }
         )
     );
@@ -204,6 +206,7 @@ fn accepts_trailing_nul_padding_sanitized_in_shader_member_path() {
             fbx::domain::texture::MaterialBinding {
                 material_name: "char_swatches_lit_m".to_owned(),
                 texture_file_name: None,
+                semantics: fbx::domain::texture::MaterialSemantics::default(),
             }
         )
     );
@@ -258,6 +261,7 @@ fn accepts_trailing_nul_padding_in_numbered_texture_reference() {
             fbx::domain::texture::MaterialBinding {
                 material_name: "skin".to_owned(),
                 texture_file_name: Some("shared.bmp.0.png".to_owned()),
+                semantics: fbx::domain::texture::MaterialSemantics::default(),
             }
         )
     );
@@ -331,6 +335,9 @@ fn resolves_sanitized_local_texture_through_package_ledger() {
             fbx::domain::texture::MaterialBinding {
                 material_name: "glass".to_owned(),
                 texture_file_name: Some("Krusty__HumanCola.png".to_owned()),
+                semantics: fbx::domain::texture::MaterialSemantics::new(
+                    true, true, false, false,
+                ),
             }
         )
     );
@@ -403,6 +410,7 @@ fn stages_exact_index_published_external_texture() {
             fbx::domain::texture::MaterialBinding {
                 material_name: "skin".to_owned(),
                 texture_file_name: Some("shared.png".to_owned()),
+                semantics: fbx::domain::texture::MaterialSemantics::default(),
             }
         )
     );

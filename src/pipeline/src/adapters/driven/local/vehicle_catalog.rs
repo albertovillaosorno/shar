@@ -18,7 +18,8 @@
 // - Owns:
 //   - Atomic publication of one semantically separated FBX per vehicle package.
 // - Must-Not:
-//   - Export collision, physics, cameras, locators, particles, or gameplay state.
+//   - Export collision, physics, cameras, locators, particles, or gameplay
+//     state.
 // - Allows:
 //   - Fresh extraction, vehicle assembly, semantic separation, and catalogs.
 // - Split-When:
@@ -70,29 +71,44 @@ pub(super) fn export_vehicle_catalog(
     game_root: &Path,
     output_dir: &Path,
 ) -> Result<StageReport, PipelineError> {
-    ensure_missing(output_dir, "vehicle catalog output")?;
+    ensure_missing(
+        output_dir,
+        "vehicle catalog output",
+    )?;
     let staging = staging_path(output_dir)?;
-    ensure_missing(&staging, "vehicle catalog staging")?;
+    ensure_missing(
+        &staging,
+        "vehicle catalog staging",
+    )?;
     fs::create_dir_all(&staging).map_err(
         |error| PipelineError::new(format!("vehicle staging failed: {error}")),
     )?;
-    let result = build_catalog(index_path, game_root, &staging).and_then(
+    let result = build_catalog(
+        index_path, game_root, &staging,
+    )
+    .and_then(
         |(vehicles, files, bytes)| {
-            fs::rename(&staging, output_dir).map_err(
+            fs::rename(
+                &staging, output_dir,
+            )
+            .map_err(
                 |error| {
                     PipelineError::new(
                         format!("vehicle catalog publication failed: {error}"),
                     )
                 },
             )?;
-            Ok(StageReport {
-                name: STAGE,
-                files,
-                bytes,
-                note: format!(
-                    "published {vehicles} semantically separated vehicle FBX files"
-                ),
-            })
+            Ok(
+                StageReport {
+                    name: STAGE,
+                    files,
+                    bytes,
+                    note: format!(
+                        "published {vehicles} semantically separated vehicle \
+                         FBX files"
+                    ),
+                },
+            )
         },
     );
     if result.is_err() {
@@ -106,7 +122,14 @@ fn build_catalog(
     index_path: &Path,
     game_root: &Path,
     staging: &Path,
-) -> Result<(usize, usize, u64), PipelineError> {
+) -> Result<
+    (
+        usize,
+        usize,
+        u64,
+    ),
+    PipelineError,
+> {
     let index = PhaseThreePackageIndex::read(index_path)
         .map_err(|error| PipelineError::new(error.to_string()))?;
     let mut packages = index
@@ -114,62 +137,98 @@ fn build_catalog(
         .iter()
         .filter(|package| is_vehicle_package(package))
         .collect::<Vec<_>>();
-    packages.sort_by(|left, right| left.package_id.cmp(&right.package_id));
+    packages.sort_by(
+        |left, right| {
+            left.package_id
+                .cmp(&right.package_id)
+        },
+    );
     if packages.is_empty() {
         return Err(PipelineError::new("vehicle catalog selection is empty"));
     }
     let work = staging.join(".work");
     let normalized = work.join("normalized");
     fs::create_dir_all(&normalized).map_err(
-        |error| PipelineError::new(format!("vehicle work creation failed: {error}")),
+        |error| {
+            PipelineError::new(format!("vehicle work creation failed: {error}"))
+        },
     )?;
     let extracted = source::extract_vehicle_packages(
         &index,
         game_root,
         &normalized,
     )?;
-    let authority = VehicleTextureAuthority::build(&index, &normalized)?;
+    let authority = VehicleTextureAuthority::build(
+        &index,
+        &normalized,
+    )?;
     let mut records = Vec::<VehicleRecord>::with_capacity(packages.len());
     for package in packages {
-        records.push(prepare::export_vehicle(
-            package,
-            &normalized,
-            staging,
-            &authority,
-        )?);
+        records.push(
+            prepare::export_vehicle(
+                package,
+                &normalized,
+                staging,
+                &authority,
+            )?,
+        );
     }
-    catalog::write_root_catalog(staging, &records, extracted)?;
+    catalog::write_root_catalog(
+        staging, &records, extracted,
+    )?;
     fs::remove_dir_all(&work).map_err(
-        |error| PipelineError::new(format!("vehicle work cleanup failed: {error}")),
+        |error| {
+            PipelineError::new(format!("vehicle work cleanup failed: {error}"))
+        },
     )?;
     let (files, bytes) = catalog::tree_totals(staging)?;
-    Ok((records.len(), files, bytes))
+    Ok(
+        (
+            records.len(),
+            files,
+            bytes,
+        ),
+    )
 }
 
 /// Return whether one generated row represents a standalone vehicle artifact.
 fn is_vehicle_package(package: &PhaseThreePackageRow) -> bool {
     package.category == VEHICLE_CATEGORY
         && package.subcategory != VEHICLE_COMMON_SUBCATEGORY
-        && package.members().iter().any(
-            |member| {
-                member.kind == "p3d-composite-drawable"
-                    && member.source_chunk_kind == "composite_drawable"
-            },
-        )
-        && package.members().iter().any(
-            |member| {
-                member.kind == "p3d-mesh" && member.source_chunk_kind == "mesh"
-            },
-        )
+        && package
+            .members()
+            .iter()
+            .any(
+                |member| {
+                    member.kind == "p3d-composite-drawable"
+                        && member.source_chunk_kind == "composite_drawable"
+                },
+            )
+        && package
+            .members()
+            .iter()
+            .any(
+                |member| {
+                    member.kind == "p3d-mesh"
+                        && member.source_chunk_kind == "mesh"
+                },
+            )
 }
 
 /// Reject one pre-existing output or hidden staging path.
-fn ensure_missing(path: &Path, label: &str) -> Result<(), PipelineError> {
+fn ensure_missing(
+    path: &Path,
+    label: &str,
+) -> Result<(), PipelineError> {
     if path.exists() {
-        return Err(PipelineError::new(format!(
-            "{label} already exists: {}",
-            path.display()
-        )));
+        return Err(
+            PipelineError::new(
+                format!(
+                    "{label} already exists: {}",
+                    path.display()
+                ),
+            ),
+        );
     }
     Ok(())
 }
@@ -182,6 +241,8 @@ fn staging_path(output_dir: &Path) -> Result<PathBuf, PipelineError> {
     let name = output_dir
         .file_name()
         .and_then(|value| value.to_str())
-        .ok_or_else(|| PipelineError::new("vehicle output has no UTF-8 name"))?;
+        .ok_or_else(
+            || PipelineError::new("vehicle output has no UTF-8 name"),
+        )?;
     Ok(parent.join(format!(".{name}.staging")))
 }

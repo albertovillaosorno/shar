@@ -56,6 +56,8 @@ mod binary_fbx;
 mod binary_identity;
 /// Decoded skeletal animation source adapter.
 pub mod decoded_animation_source;
+/// Decoded billboard quad-group source adapter.
+pub mod decoded_billboard_source;
 /// Decoded component source adapter.
 pub mod decoded_component_source;
 /// Selected rigid-prop source adapter.

@@ -178,9 +178,10 @@ struct BinaryGroup<'character> {
 }
 
 /// Flatten aggregate parts into binary-writer geometry groups.
-fn binary_groups(
-    character: &CharacterAsset
-) -> Result<Vec<BinaryGroup<'_>>, BinaryIdentityError> {
+fn binary_groups<'character>(
+    character: &'character CharacterAsset,
+    material_slots: &BTreeMap<String, MaterialSlot<'_>>,
+) -> Result<Vec<BinaryGroup<'character>>, CharacterBinaryFbxError> {
     let mut groups = Vec::new();
     for part in &character.parts {
         for (group, influences) in part
@@ -190,6 +191,15 @@ fn binary_groups(
             .zip(&part.group_influences)
         {
             let ids = geometry_ids(groups.len())?;
+            let material = material_slots
+                .get(&group.shader)
+                .ok_or_else(
+                    || CharacterBinaryFbxError::MissingMaterialBinding {
+                        shader: group
+                            .shader
+                            .clone(),
+                    },
+                )?;
             let used_bones = influences
                 .iter()
                 .map(
@@ -205,11 +215,14 @@ fn binary_groups(
             groups.push(
                 BinaryGroup {
                     ids,
-                    object_name: format!(
-                        "{}_{}",
-                        part.mesh
-                            .name,
-                        group.index
+                    object_name: semantic_object_name(
+                        &format!(
+                            "{}_{}",
+                            part.mesh
+                                .name,
+                            group.index
+                        ),
+                        material.semantics,
                     ),
                     group,
                     influences,
@@ -520,8 +533,10 @@ fn build_character_document(
     } else {
         Vec::new()
     };
-    let groups =
-        binary_groups(character).map_err(CharacterBinaryFbxError::from)?;
+    let groups = binary_groups(
+        character,
+        &material_slots,
+    )?;
     let bone_ordinals: BTreeMap<&str, usize> = character
         .bones
         .iter()
@@ -1914,10 +1929,89 @@ fn model_node(
     )
 }
 
-/// Build one material object.
+/// Build one material object with shared semantic surface properties.
 fn material_node(
     slot: &MaterialSlot<'_>
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
+    let semantics = slot.semantics;
+    let mut properties = vec![
+        color_property(
+            "DiffuseColor",
+            [
+                0.8, 0.8, 0.8,
+            ],
+        ),
+        color_property(
+            "AmbientColor",
+            [
+                0.2, 0.2, 0.2,
+            ],
+        ),
+        color_property(
+            "SpecularColor",
+            [
+                0.0, 0.0, 0.0,
+            ],
+        ),
+        double_property(
+            "SpecularFactor",
+            0.0,
+        ),
+        double_property(
+            "Shininess",
+            0.0,
+        ),
+        color_property(
+            "ReflectionColor",
+            [
+                1.0, 1.0, 1.0,
+            ],
+        ),
+        double_property(
+            "ReflectionFactor",
+            if semantics.is_mirror() {
+                1.0
+            } else {
+                0.0
+            },
+        ),
+    ];
+    if semantics.is_transparent() {
+        properties.push(
+            color_property(
+                "TransparentColor",
+                [
+                    1.0, 1.0, 1.0,
+                ],
+            ),
+        );
+        properties.push(
+            double_property(
+                "TransparencyFactor",
+                if semantics.is_glass() {
+                    0.65
+                } else {
+                    0.35
+                },
+            ),
+        );
+    }
+    if semantics.is_light_emitter() {
+        properties.push(
+            color_property(
+                "EmissiveColor",
+                [
+                    1.0, 1.0, 1.0,
+                ],
+            ),
+        );
+        properties.push(
+            double_property(
+                "EmissiveFactor",
+                1.0,
+            ),
+        );
+    }
     Ok(
         BinaryNode::new(
             "Material",
@@ -1927,9 +2021,12 @@ fn material_node(
                         .material,
                 )?,
                 name_class(
-                    &slot
-                        .binding
-                        .material_name,
+                    &semantic_object_name(
+                        &slot
+                            .binding
+                            .material_name,
+                        slot.semantics,
+                    ),
                     "Material",
                 ),
                 string(""),
@@ -1948,48 +2045,24 @@ fn material_node(
                 ),
                 BinaryNode::branch(
                     "Properties70",
-                    vec![
-                        color_property(
-                            "DiffuseColor",
-                            [
-                                0.8, 0.8, 0.8,
-                            ],
-                        ),
-                        color_property(
-                            "AmbientColor",
-                            [
-                                0.2, 0.2, 0.2,
-                            ],
-                        ),
-                        color_property(
-                            "SpecularColor",
-                            [
-                                0.0, 0.0, 0.0,
-                            ],
-                        ),
-                        double_property(
-                            "SpecularFactor",
-                            0.0,
-                        ),
-                        double_property(
-                            "Shininess",
-                            0.0,
-                        ),
-                        color_property(
-                            "ReflectionColor",
-                            [
-                                0.0, 0.0, 0.0,
-                            ],
-                        ),
-                        double_property(
-                            "ReflectionFactor",
-                            0.0,
-                        ),
-                    ],
+                    properties,
                 ),
             ],
         ),
     )
+}
+
+/// Append deterministic semantic labels without changing binding identity.
+fn semantic_object_name(
+    base: &str,
+    semantics: crate::domain::texture::MaterialSemantics,
+) -> String {
+    semantics
+        .suffix()
+        .map_or_else(
+            || base.to_owned(),
+            |suffix| format!("{base}__{suffix}"),
+        )
 }
 
 /// Build the portable FBX path for one validated texture file name.
@@ -2008,9 +2081,12 @@ fn texture_node(
     slot: &MaterialSlot<'_>,
     relative_path: &str,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
-    let name = &slot
-        .binding
-        .material_name;
+    let name = semantic_object_name(
+        &slot
+            .binding
+            .material_name,
+        slot.semantics,
+    );
     Ok(
         BinaryNode::new(
             "Texture",
@@ -2020,7 +2096,7 @@ fn texture_node(
                         .texture,
                 )?,
                 name_class(
-                    name, "Texture",
+                    &name, "Texture",
                 ),
                 string(""),
             ],
@@ -2034,11 +2110,11 @@ fn texture_node(
                 ),
                 name_class_node(
                     "TextureName",
-                    name,
+                    &name,
                     "Texture",
                 ),
                 name_class_node(
-                    "Media", name, "Video",
+                    "Media", &name, "Video",
                 ),
                 string_node(
                     "FileName",
@@ -2059,9 +2135,12 @@ fn video_node(
     relative_path: &str,
     content: Option<&[u8]>,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
-    let name = &slot
-        .binding
-        .material_name;
+    let name = semantic_object_name(
+        &slot
+            .binding
+            .material_name,
+        slot.semantics,
+    );
     let mut children = vec![
         string_node(
             "Type", "Clip",
@@ -2109,7 +2188,7 @@ fn video_node(
                         .video,
                 )?,
                 name_class(
-                    name, "Video",
+                    &name, "Video",
                 ),
                 string("Clip"),
             ],
@@ -2475,6 +2554,34 @@ fn connections(
                     "DiffuseColor",
                 )?,
             );
+            if slot
+                .semantics
+                .is_transparent()
+            {
+                children.push(
+                    property_connection(
+                        slot.ids
+                            .texture,
+                        slot.ids
+                            .material,
+                        "TransparentColor",
+                    )?,
+                );
+            }
+            if slot
+                .semantics
+                .is_light_emitter()
+            {
+                children.push(
+                    property_connection(
+                        slot.ids
+                            .texture,
+                        slot.ids
+                            .material,
+                        "EmissiveColor",
+                    )?,
+                );
+            }
         }
     }
     for (ordinal, bone) in character
