@@ -1,5 +1,4 @@
-#ifndef SHAR_UPROJECT_SOURCE_SHAR_SHAR_H
-#define SHAR_UPROJECT_SOURCE_SHAR_SHAR_H
+#pragma once
 // File:
 //   - shar.h
 // Path:
@@ -47,7 +46,9 @@
 //   - false
 //
 
-// Provides the guarded public include surface for the SHAR runtime module and
-// intentionally exports no declarations until a shared contract is required.
+#include "Modules/ModuleManager.h"
 
-#endif // SHAR_UPROJECT_SOURCE_SHAR_SHAR_H
+/** Primary game module with an explicit extension point for startup policy. */
+class FSharGameModule final : public FDefaultGameModuleImpl
+{
+};

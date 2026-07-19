@@ -31,8 +31,8 @@
 // - Summary:
 //   - Registers the SHAR runtime module entry point.
 // - Description:
-//   - Connects FDefaultGameModuleImpl to the shar module through Unreal's
-//   - public module API.
+//   - Connects the explicit FSharGameModule extension point to the shar module
+//   - through Unreal's public module API.
 // - Usage:
 //   - Compiled into SHAR game and editor targets to publish module startup
 //   - identity.
@@ -49,6 +49,8 @@
 // Registers the single authored SHAR runtime module with Unreal Engine while
 // keeping all gameplay and editor behavior behind later module boundaries.
 
+#include "shar.h"
+
 #include "Modules/ModuleManager.h"
 
-IMPLEMENT_PRIMARY_GAME_MODULE(FDefaultGameModuleImpl, shar, "shar");
+IMPLEMENT_PRIMARY_GAME_MODULE(FSharGameModule, shar, "shar");
