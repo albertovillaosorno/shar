@@ -53,20 +53,25 @@
 
 using UnrealBuildTool;
 
+internal static class SharTargetDefaults
+{
+    public static void Apply(TargetRules rules)
+    {
+        rules.DefaultBuildSettings = BuildSettingsVersion.V7;
+        rules.IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_8;
+        rules.bOverrideBuildEnvironment = true;
+        rules.bWarningsAsErrors = true;
+        rules.bUseUnityBuild = false;
+        rules.bForceEnableExceptions = false;
+        rules.ExtraModuleNames.Add("shar");
+    }
+}
+
 public class sharTarget : TargetRules
 {
     public sharTarget(TargetInfo target) : base(target)
     {
         Type = TargetType.Game;
-        DefaultBuildSettings = BuildSettingsVersion.V7;
-        IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_8;
-        // Installed engines share precompiled game products. This explicit
-        // override applies SHAR compiler strictness without requiring an
-        // unsupported unique engine build environment.
-        bOverrideBuildEnvironment = true;
-        bWarningsAsErrors = true;
-        bUseUnityBuild = false;
-        bForceEnableExceptions = false;
-        ExtraModuleNames.Add("shar");
+        SharTargetDefaults.Apply(this);
     }
 }
