@@ -353,3 +353,14 @@ validate.sh
 SCHOENWALD.md
 src/uproject/Scripts/validate_python_source_headers.py
 src/uproject/tests/repository_policy/*
+Directory.Build.props
+
+# ==============================================================================
+# Missing Loose Folders and Artifacts
+# ==============================================================================
+.artifacts/
+artifacts/
+dist/
+build/
+Backup/
+/coverage/
