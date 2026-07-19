@@ -212,3 +212,35 @@ fn classifies_world_lamp_identities_without_false_light_matches()
     }
     Ok(())
 }
+
+#[test]
+fn classifies_kwik_e_mart_ceiling_fixture_as_emissive() -> Result<(), String> {
+    for (material_name, texture_name) in [
+        (
+            "int_kwik_light_m",
+            None,
+        ),
+        (
+            "material-content-addressed",
+            Some("int_kwik_light.png"),
+        ),
+    ] {
+        let material = MaterialBinding::new(
+            material_name,
+            texture_name.map(str::to_owned),
+        )
+        .map_err(|error| format!("Kwik-E-Mart light failed: {error:?}"))?;
+        if !material
+            .semantics
+            .is_light_emitter()
+        {
+            return Err(
+                format!(
+                    "Kwik-E-Mart ceiling fixture was not emissive: \
+                     {material_name}"
+                ),
+            );
+        }
+    }
+    Ok(())
+}

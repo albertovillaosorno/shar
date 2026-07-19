@@ -44,6 +44,7 @@
 //! Pure domain values for the extraction and planning pipeline.
 //!
 //! Filesystem and process behavior remain in adapters.
+pub mod coordinate_movement;
 mod json;
 mod output_summary;
 pub mod package;

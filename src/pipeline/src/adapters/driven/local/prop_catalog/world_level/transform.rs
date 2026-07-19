@@ -35,62 +35,21 @@
 //! Row-major row-vector transform helpers for static analysis scenes.
 
 #![expect(
-    clippy::arithmetic_side_effects,
     clippy::indexing_slicing,
-    clippy::suboptimal_flops,
-    reason = "Deterministic matrix math intentionally avoids fused rounding."
+    reason = "Fixed-size matrix and coordinate arrays use bounded indices."
 )]
 
 use fbx::domain::mesh::MeshAsset;
 
 use crate::domain::PipelineError;
+use crate::domain::coordinate_movement::CoordinateMatrix;
+pub(super) use crate::domain::coordinate_movement::{
+    identity_matrix as identity, matrix_key, multiply_matrices as multiply,
+    translation_matrix as translation,
+};
 
 /// Row-major row-vector affine transform.
-pub(super) type Matrix = [f32; 16];
-
-/// Return the affine identity transform.
-#[must_use]
-pub(super) const fn identity() -> Matrix {
-    [
-        1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0,
-        0.0, 1.0,
-    ]
-}
-
-/// Build one translation-only transform.
-#[must_use]
-pub(super) const fn translation(value: [f32; 3]) -> Matrix {
-    let mut matrix = identity();
-    matrix[12] = value[0];
-    matrix[13] = value[1];
-    matrix[14] = value[2];
-    matrix
-}
-
-/// Multiply row-vector matrices as `first` followed by `second`.
-#[must_use]
-pub(super) fn multiply(
-    first: &Matrix,
-    second: &Matrix,
-) -> Matrix {
-    let mut product = [0.0_f32; 16];
-    for row in 0..4 {
-        for column in 0..4 {
-            let mut sum = 0.0_f32;
-            for inner in 0..4 {
-                sum += first[row * 4 + inner] * second[inner * 4 + column];
-            }
-            product[row * 4 + column] = sum;
-        }
-    }
-    product
-}
-
-/// Stable matrix identity for placement deduplication.
-#[must_use]
-pub(super) fn matrix_key(matrix: &Matrix) -> [u32; 16] {
-    matrix.map(f32::to_bits)
-}
+pub(super) type Matrix = CoordinateMatrix;
 
 /// Transform one mesh in place and assign its final unique scene identity.
 ///
@@ -172,18 +131,33 @@ fn transform_position(
     matrix: &Matrix,
 ) -> Result<[f32; 3], PipelineError> {
     let transformed = [
-        value[0] * matrix[0]
-            + value[1] * matrix[4]
-            + value[2] * matrix[8]
-            + matrix[12],
-        value[0] * matrix[1]
-            + value[1] * matrix[5]
-            + value[2] * matrix[9]
-            + matrix[13],
-        value[0] * matrix[2]
-            + value[1] * matrix[6]
-            + value[2] * matrix[10]
-            + matrix[14],
+        value[0].mul_add(
+            matrix[0],
+            value[1].mul_add(
+                matrix[4],
+                value[2].mul_add(
+                    matrix[8], matrix[12],
+                ),
+            ),
+        ),
+        value[0].mul_add(
+            matrix[1],
+            value[1].mul_add(
+                matrix[5],
+                value[2].mul_add(
+                    matrix[9], matrix[13],
+                ),
+            ),
+        ),
+        value[0].mul_add(
+            matrix[2],
+            value[1].mul_add(
+                matrix[6],
+                value[2].mul_add(
+                    matrix[10], matrix[14],
+                ),
+            ),
+        ),
     ];
     if transformed
         .iter()
@@ -201,20 +175,36 @@ fn transform_normal(
     matrix: &[[f32; 3]; 3],
 ) -> Result<[f32; 3], PipelineError> {
     let transformed = [
-        value[0] * matrix[0][0]
-            + value[1] * matrix[1][0]
-            + value[2] * matrix[2][0],
-        value[0] * matrix[0][1]
-            + value[1] * matrix[1][1]
-            + value[2] * matrix[2][1],
-        value[0] * matrix[0][2]
-            + value[1] * matrix[1][2]
-            + value[2] * matrix[2][2],
+        value[0].mul_add(
+            matrix[0][0],
+            value[1].mul_add(
+                matrix[1][0],
+                value[2] * matrix[2][0],
+            ),
+        ),
+        value[0].mul_add(
+            matrix[0][1],
+            value[1].mul_add(
+                matrix[1][1],
+                value[2] * matrix[2][1],
+            ),
+        ),
+        value[0].mul_add(
+            matrix[0][2],
+            value[1].mul_add(
+                matrix[1][2],
+                value[2] * matrix[2][2],
+            ),
+        ),
     ];
-    let length = (transformed[0] * transformed[0]
-        + transformed[1] * transformed[1]
-        + transformed[2] * transformed[2])
-        .sqrt();
+    let length_squared = transformed[0].mul_add(
+        transformed[0],
+        transformed[1].mul_add(
+            transformed[1],
+            transformed[2] * transformed[2],
+        ),
+    );
+    let length = length_squared.sqrt();
     if !length.is_finite() || length <= f32::EPSILON {
         return Err(PipelineError::new("world level normal became degenerate"));
     }
@@ -229,9 +219,25 @@ fn transform_normal(
 
 /// Return the determinant of one affine basis.
 fn determinant(matrix: &Matrix) -> f32 {
-    matrix[0] * (matrix[5] * matrix[10] - matrix[6] * matrix[9])
-        - matrix[1] * (matrix[4] * matrix[10] - matrix[6] * matrix[8])
-        + matrix[2] * (matrix[4] * matrix[9] - matrix[5] * matrix[8])
+    let first_minor = matrix[5].mul_add(
+        matrix[10],
+        -(matrix[6] * matrix[9]),
+    );
+    let second_minor = matrix[4].mul_add(
+        matrix[10],
+        -(matrix[6] * matrix[8]),
+    );
+    let third_minor = matrix[4].mul_add(
+        matrix[9],
+        -(matrix[5] * matrix[8]),
+    );
+    matrix[0].mul_add(
+        first_minor,
+        (-matrix[1]).mul_add(
+            second_minor,
+            matrix[2] * third_minor,
+        ),
+    )
 }
 
 /// Build the inverse-transpose normal basis.
@@ -241,19 +247,46 @@ fn inverse_transpose(
 ) -> [[f32; 3]; 3] {
     let inverse = [
         [
-            (matrix[5] * matrix[10] - matrix[6] * matrix[9]) / determinant,
-            (matrix[2] * matrix[9] - matrix[1] * matrix[10]) / determinant,
-            (matrix[1] * matrix[6] - matrix[2] * matrix[5]) / determinant,
+            matrix[5].mul_add(
+                matrix[10],
+                -(matrix[6] * matrix[9]),
+            ) / determinant,
+            matrix[2].mul_add(
+                matrix[9],
+                -(matrix[1] * matrix[10]),
+            ) / determinant,
+            matrix[1].mul_add(
+                matrix[6],
+                -(matrix[2] * matrix[5]),
+            ) / determinant,
         ],
         [
-            (matrix[6] * matrix[8] - matrix[4] * matrix[10]) / determinant,
-            (matrix[0] * matrix[10] - matrix[2] * matrix[8]) / determinant,
-            (matrix[2] * matrix[4] - matrix[0] * matrix[6]) / determinant,
+            matrix[6].mul_add(
+                matrix[8],
+                -(matrix[4] * matrix[10]),
+            ) / determinant,
+            matrix[0].mul_add(
+                matrix[10],
+                -(matrix[2] * matrix[8]),
+            ) / determinant,
+            matrix[2].mul_add(
+                matrix[4],
+                -(matrix[0] * matrix[6]),
+            ) / determinant,
         ],
         [
-            (matrix[4] * matrix[9] - matrix[5] * matrix[8]) / determinant,
-            (matrix[1] * matrix[8] - matrix[0] * matrix[9]) / determinant,
-            (matrix[0] * matrix[5] - matrix[1] * matrix[4]) / determinant,
+            matrix[4].mul_add(
+                matrix[9],
+                -(matrix[5] * matrix[8]),
+            ) / determinant,
+            matrix[1].mul_add(
+                matrix[8],
+                -(matrix[0] * matrix[9]),
+            ) / determinant,
+            matrix[0].mul_add(
+                matrix[5],
+                -(matrix[1] * matrix[4]),
+            ) / determinant,
         ],
     ];
     [

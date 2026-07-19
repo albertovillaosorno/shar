@@ -38,6 +38,7 @@
 use fbx::adapters::driven::binary_character_writer::CharacterBinaryFbxSummary;
 
 use super::super::model::TextureRecord;
+use super::movement_model::WorldCoordinateMovementRecord;
 
 /// One written static FBX artifact at the shared world origin.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -73,6 +74,8 @@ pub(super) struct WorldPackageRecord {
     pub(super) map_offset: [i16; 3],
     /// Whether this artifact belongs in the normal root-FBX import set.
     pub(super) normal_import: bool,
+    /// Optional package-level coordinate movement identity.
+    pub(super) coordinate_movement: Option<String>,
     /// Number of canonical source meshes considered.
     pub(super) source_meshes: usize,
     /// Number of rejected degenerate render triangles.
@@ -110,10 +113,12 @@ pub(super) struct WorldPackageRecord {
 }
 
 /// One complete package collection sharing a zero origin and texture authority.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub(super) struct ExportedWorldCollection {
     /// Deterministically ordered package publication records.
     pub(super) packages: Vec<WorldPackageRecord>,
+    /// Package movements and transformed non-mesh coordinate evidence.
+    pub(super) coordinate_movements: Vec<WorldCoordinateMovementRecord>,
     /// Deduplicated shared texture authority.
     pub(super) textures: Vec<TextureRecord>,
     /// Overlapping semantic surface counts.

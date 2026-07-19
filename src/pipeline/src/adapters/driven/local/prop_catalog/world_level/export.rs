@@ -75,6 +75,8 @@ use super::model::{
     ExportedWorldCollection, WorldFbxRecord, WorldPackageRecord,
     WorldSurfaceSemanticCounts,
 };
+use super::movement::apply_package_movement;
+use super::movement_model::WorldCoordinateMovementRecord;
 use super::transform::{bake_mesh, identity, mesh_bounds, translation};
 use crate::domain::PipelineError;
 use crate::domain::package::PhaseThreePackageRow;
@@ -187,6 +189,7 @@ pub(super) fn export_world_collection(
     }
 
     let mut records = Vec::with_capacity(packages.len());
+    let mut coordinate_movements = Vec::<WorldCoordinateMovementRecord>::new();
     let mut all_textures = BTreeMap::<String, PreparedTexture>::new();
     let mut aggregate_semantics = WorldSurfaceSemanticCounts::default();
     let mut map_bounds = BTreeMap::<&'static str, MapBounds>::new();
@@ -204,12 +207,14 @@ pub(super) fn export_world_collection(
             scratch_root: scratch_root.to_path_buf(),
             authority,
         };
-        append_package(
+        if let Some(movement) = append_package(
             &scope,
             package,
             &append_context,
             &mut package_content,
-        )?;
+        )? {
+            coordinate_movements.push(movement);
+        }
         merge_textures(
             &mut all_textures,
             package_content
@@ -349,6 +354,7 @@ pub(super) fn export_world_collection(
     Ok(
         ExportedWorldCollection {
             packages: records,
+            coordinate_movements,
             textures,
             surface_semantics: aggregate_semantics,
         },
@@ -469,7 +475,7 @@ fn append_package(
     package: &PhaseThreePackageRow,
     append_context: &PackageAppendContext<'_>,
     package_content: &mut MasterContent,
-) -> Result<(), PipelineError> {
+) -> Result<Option<WorldCoordinateMovementRecord>, PipelineError> {
     let relative = relative_art_root(package)?;
     let package_root = append_context
         .canonical_root
@@ -520,12 +526,13 @@ fn append_package(
                     0, 0, 0,
                 ],
                 normal_import: false,
+                coordinate_movement: None,
                 review_similarity_groups: 0,
                 world_fbx: None,
                 review_fbx: None,
             },
         );
-    let collisions = load_intersect_meshes(
+    let mut collisions = load_intersect_meshes(
         &package_root,
         reference_root.as_deref(),
         &package.package_id,
@@ -546,7 +553,18 @@ fn append_package(
             collisions.discarded_triangles;
     }
     if sources.is_empty() {
-        return Ok(());
+        let movement = apply_package_movement(
+            &package.package_id,
+            &package_root,
+            &mut package_content.meshes,
+            &mut collisions.meshes,
+        )?;
+        record_movement_identity(
+            package_content,
+            package_index,
+            movement.as_ref(),
+        )?;
+        return Ok(movement);
     }
     let package_scratch = append_context
         .scratch_root
@@ -605,6 +623,37 @@ fn append_package(
             },
         )?;
     }
+    let movement = apply_package_movement(
+        &package.package_id,
+        &package_root,
+        &mut package_content.meshes,
+        &mut collisions.meshes,
+    )?;
+    record_movement_identity(
+        package_content,
+        package_index,
+        movement.as_ref(),
+    )?;
+    Ok(movement)
+}
+
+/// Preserve one package movement identity beside its transformed evidence.
+fn record_movement_identity(
+    content: &mut MasterContent,
+    package_index: usize,
+    movement: Option<&WorldCoordinateMovementRecord>,
+) -> Result<(), PipelineError> {
+    let package = content
+        .packages
+        .get_mut(package_index)
+        .ok_or_else(|| PipelineError::new("world package record is missing"))?;
+    package.coordinate_movement = movement.map(
+        |record| {
+            record
+                .id
+                .clone()
+        },
+    );
     Ok(())
 }
 

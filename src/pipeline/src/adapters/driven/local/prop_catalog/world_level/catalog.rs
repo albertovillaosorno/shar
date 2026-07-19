@@ -48,6 +48,7 @@ use super::model::{
     ExportedWorldCollection, WorldCollectionCounts, WorldFbxRecord,
     WorldPackageRecord, WorldSurfaceSemanticCounts,
 };
+use super::movement_catalog::coordinate_movements_value;
 use crate::domain::PipelineError;
 
 /// Aggregate complete publication counts from one world collection.
@@ -228,6 +229,7 @@ pub(super) fn write_catalogs(
         counts, collection,
     );
     let transforms = transforms_value(collection);
+    let movements = coordinate_movements_value(collection);
     write_json(
         &output_root.join("world.catalog.json"),
         &catalog,
@@ -235,6 +237,10 @@ pub(super) fn write_catalogs(
     write_json(
         &output_root.join("world.transforms.json"),
         &transforms,
+    )?;
+    write_json(
+        &output_root.join("world.coordinate-movements.json"),
+        &movements,
     )
 }
 
@@ -244,8 +250,8 @@ fn catalog_value(
     collection: &ExportedWorldCollection,
 ) -> Value {
     json!({
-        "schema": "shar.world-package-collection.v2",
-        "status": "complete-separated-baseline",
+        "schema": "shar.world-package-collection.v3",
+        "status": "authored-coordinate-movement-baseline",
         "boundary": {
             "canonical_model_authority": concat!(
                 "topology, materials, UVs, colors, identities, and textures ",
@@ -284,9 +290,14 @@ fn catalog_value(
                 "source-backed breakable and interactable owners plus ",
                 "spatially separated items remain selectable Blender objects"
             ),
-            "manual_authoring": concat!(
-                "this collection is the deterministic source baseline; manual ",
-                "interior and door authoring remains a later design input"
+            "coordinate_movement": concat!(
+                "named package movements are applied above geometry and ",
+                "published separately for collision, doors, objects, spawns, ",
+                "missions, triggers, cameras, locators, and lights"
+            ),
+            "manual_evidence": concat!(
+                "operator-authored FBX comparisons define reviewed movement ",
+                "constants but are never read or modified by production export"
             )
         },
         "map_groups": [
@@ -332,7 +343,7 @@ fn transforms_value(collection: &ExportedWorldCollection) -> Value {
         collection, false,
     );
     json!({
-        "schema": "shar.world-package-transforms.v3",
+        "schema": "shar.world-package-transforms.v4",
         "shared_origin": [0.0_f64, 0.0_f64, 0.0_f64],
         "normal_import": concat!(
             "import only root *.fbx files; add no per-file placement offsets; ",
@@ -390,6 +401,7 @@ fn transform_file_value(
         "interior": package.interior,
         "map_group": package.map_group,
         "baked_map_offset": package.map_offset,
+        "coordinate_movement": package.coordinate_movement,
         "coordinates_baked": true,
         "additional_translation": [0.0_f64, 0.0_f64, 0.0_f64],
         "additional_rotation_degrees": [0.0_f64, 0.0_f64, 0.0_f64],
@@ -454,6 +466,7 @@ fn package_value(package: &WorldPackageRecord) -> Value {
         "map_group": package.map_group,
         "map_offset": package.map_offset,
         "normal_import": package.normal_import,
+        "coordinate_movement": package.coordinate_movement,
         "source_meshes": package.source_meshes,
         "discarded_degenerate_triangles": package
             .discarded_degenerate_triangles,

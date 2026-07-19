@@ -58,6 +58,10 @@ mod inventory;
 mod islands;
 mod layout;
 mod model;
+mod movement;
+mod movement_catalog;
+mod movement_model;
+mod movement_records;
 mod scenegraph;
 mod transform;
 
