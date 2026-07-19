@@ -54,6 +54,7 @@ use std::time::{Duration, Instant};
 
 use self::log::{RunLog, optional_total_json};
 use self::render::{format_duration, progress_line, shorten_item};
+use super::run_registry::update_current_progress;
 use crate::domain::escape_json;
 
 mod log;
@@ -205,6 +206,14 @@ impl StageProgress {
                 ),
             );
         }
+        drop(
+            update_current_progress(
+                &stage,
+                Some(0),
+                total,
+                None,
+            ),
+        );
         Self {
             stage,
             total,
@@ -227,6 +236,14 @@ impl StageProgress {
         self.done = self
             .done
             .saturating_add(1);
+        drop(
+            update_current_progress(
+                &self.stage,
+                Some(self.done),
+                self.total,
+                Some(item),
+            ),
+        );
         let Some(state) = STATE.get() else {
             return;
         };
@@ -310,6 +327,14 @@ impl StageProgress {
                 );
             }
         }
+        drop(
+            update_current_progress(
+                &self.stage,
+                Some(self.done),
+                self.total,
+                None,
+            ),
+        );
         append_event(
             &format!(
                 concat!(

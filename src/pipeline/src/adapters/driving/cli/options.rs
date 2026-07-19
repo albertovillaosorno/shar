@@ -43,14 +43,14 @@
 //
 
 //! Parses portable progress and diagnostic-log options for pipeline commands.
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
-use schoenwald_filesystem::resolve_under;
-
+use self::log::{DEFAULT_LOG_FILE, parse_log_option, select_logging};
+use self::run::{RunOptions, parse_run_option};
 use crate::adapters::driven::ProgressVerbosity;
 
-/// Stable latest-run log relative to the pipeline working directory.
-const DEFAULT_LOG_FILE: &str = "logs/pipeline/latest.jsonl";
+mod log;
+mod run;
 
 /// Common process options separated from command-specific positionals.
 #[derive(Debug, Eq, PartialEq)]
@@ -61,8 +61,41 @@ pub(super) struct ParsedArguments {
     pub(super) verbosity: ProgressVerbosity,
     /// Selected latest-run log, or `None` when logging is disabled.
     pub(super) log_file: Option<PathBuf>,
+    /// Whether the caller explicitly selected the logging policy.
+    pub(super) logging_explicit: bool,
     /// Whether `fbx-export` should embed compatibility texture payloads.
     pub(super) embed_textures: bool,
+    /// Cooperative process-registry selectors.
+    run: RunOptions,
+}
+
+impl ParsedArguments {
+    /// Return the selected cooperative execution mode.
+    pub(super) const fn run_mode(&self) -> crate::adapters::driven::RunMode {
+        self.run
+            .mode
+    }
+
+    /// Return the optional caller-provided run label.
+    pub(super) fn run_label(&self) -> Option<String> {
+        self.run
+            .label
+            .clone()
+    }
+
+    /// Resolve the diagnostic log for one acquired run identity.
+    pub(super) fn log_file_for_run(
+        &self,
+        run_id: &str,
+    ) -> Option<PathBuf> {
+        self.run
+            .log_file_for_run(
+                self.log_file
+                    .as_deref(),
+                self.logging_explicit,
+                run_id,
+            )
+    }
 }
 
 impl Default for ParsedArguments {
@@ -71,7 +104,9 @@ impl Default for ParsedArguments {
             positionals: Vec::new(),
             verbosity: ProgressVerbosity::Detailed,
             log_file: Some(PathBuf::from(DEFAULT_LOG_FILE)),
+            logging_explicit: false,
             embed_textures: false,
+            run: RunOptions::default(),
         }
     }
 }
@@ -86,73 +121,6 @@ fn select_verbosity(
         return Err(String::from("verbosity may be specified only once"));
     }
     *verbosity = value;
-    *selected = true;
-    Ok(())
-}
-
-/// One parsed logging selector and its consumed argument count.
-struct ParsedLogOption {
-    /// Selected log destination, or `None` when logging is disabled.
-    log_file: Option<PathBuf>,
-    /// Number of command arguments consumed by this selector.
-    consumed: usize,
-}
-
-/// Parse one logging selector without applying order-dependent overrides.
-fn parse_log_option(
-    arguments: &[String],
-    index: usize,
-    argument: &str,
-) -> Result<Option<ParsedLogOption>, String> {
-    if argument == "--log" {
-        let value = arguments
-            .get(index.saturating_add(1))
-            .ok_or_else(|| String::from("--log requires a path"))?;
-        if value.starts_with('-') {
-            return Err(format!("--log requires a path before {value}"));
-        }
-        return Ok(
-            Some(
-                ParsedLogOption {
-                    log_file: Some(parse_log_path(value)?),
-                    consumed: 2,
-                },
-            ),
-        );
-    }
-    if argument == "--no-log" {
-        return Ok(
-            Some(
-                ParsedLogOption {
-                    log_file: None,
-                    consumed: 1,
-                },
-            ),
-        );
-    }
-    let Some(value) = argument.strip_prefix("--log=") else {
-        return Ok(None);
-    };
-    Ok(
-        Some(
-            ParsedLogOption {
-                log_file: Some(parse_log_path(value)?),
-                consumed: 1,
-            },
-        ),
-    )
-}
-
-/// Select one explicit logging mode without order-dependent overrides.
-fn select_logging(
-    log_file: &mut Option<PathBuf>,
-    selected: &mut bool,
-    value: Option<PathBuf>,
-) -> Result<(), String> {
-    if *selected {
-        return Err(String::from("logging may be specified only once"));
-    }
-    *log_file = value;
     *selected = true;
     Ok(())
 }
@@ -204,9 +172,21 @@ pub(super) fn parse_common_arguments(
                     &mut logging_selected,
                     log_option.log_file,
                 )?;
+                parsed.logging_explicit = true;
                 index = index.saturating_add(log_option.consumed);
                 continue;
             }
+        }
+        if parse_options
+            && let Some(consumed) = parse_run_option(
+                arguments,
+                index,
+                argument,
+                &mut parsed.run,
+            )?
+        {
+            index = index.saturating_add(consumed);
+            continue;
         }
         if parse_options && argument == "--minimal" {
             select_verbosity(
@@ -266,36 +246,9 @@ fn parse_verbosity(value: &str) -> Result<ProgressVerbosity, String> {
     }
 }
 
-/// Parse one nonempty portable log path.
-fn parse_log_path(value: &str) -> Result<PathBuf, String> {
-    if value.is_empty() {
-        return Err(String::from("--log path must not be empty"));
-    }
-    if value
-        .trim()
-        .is_empty()
-    {
-        return Err(String::from("--log path must not be blank"));
-    }
-    if value.ends_with('/') || value.ends_with(char::from(92)) {
-        return Err(String::from("--log path must identify a file"));
-    }
-    let validation = resolve_under(
-        Path::new("."),
-        Path::new(value),
-    );
-    let validated = match validation {
-        Ok(path) => path,
-        Err(error) => {
-            return Err(format!("invalid --log path {value:?}: {error}"));
-        }
-    };
-    let Ok(relative) = validated.strip_prefix(Path::new(".")) else {
-        return Err(String::from("failed to normalize --log path"));
-    };
-    Ok(relative.to_path_buf())
-}
-
+#[cfg(test)]
+#[path = "options_run_tests.rs"]
+mod run_tests;
 #[cfg(test)]
 #[path = "options_tests.rs"]
 mod tests;

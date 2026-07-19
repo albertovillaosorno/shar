@@ -74,6 +74,7 @@ use super::json_output::validate_generated_text_file;
 use super::lmlm_stage::extract_lmlm;
 use super::media_dependencies::{ensure_ffmpeg_dependency, media_tool_path};
 use super::{rms, spt};
+use crate::adapters::driven::check_cancellation;
 use crate::adapters::driven::local::filesystem::collect_files;
 use crate::adapters::driven::local::progress::StageProgress;
 use crate::domain::{
@@ -176,6 +177,7 @@ impl ExtractGameAssets {
         );
         let mut report = PipelineReport::default();
 
+        check_cancellation()?;
         progress.advance("verify game manifest");
         report
             .stages
@@ -185,6 +187,7 @@ impl ExtractGameAssets {
                     &config.extracted_root,
                 )?,
             );
+        check_cancellation()?;
         progress.advance("convert readme");
         report
             .stages
@@ -194,6 +197,7 @@ impl ExtractGameAssets {
                     &config.extracted_root,
                 )?,
             );
+        check_cancellation()?;
         progress.advance("extract rcf archives");
         report
             .stages
@@ -203,6 +207,7 @@ impl ExtractGameAssets {
                     &config.extracted_root,
                 )?,
             );
+        check_cancellation()?;
         progress.advance("convert rsd audio");
         report
             .stages
@@ -212,10 +217,12 @@ impl ExtractGameAssets {
                     &config.extracted_root,
                 )?,
             );
+        check_cancellation()?;
         progress.advance("normalize sound scripts");
         report
             .stages
             .push(normalize_sound_scripts(&config.extracted_root)?);
+        check_cancellation()?;
         progress.advance("export movies");
         report
             .stages
@@ -225,6 +232,7 @@ impl ExtractGameAssets {
                     &config.extracted_root,
                 )?,
             );
+        check_cancellation()?;
         progress.advance("extract optional language package");
         report
             .stages
@@ -234,6 +242,7 @@ impl ExtractGameAssets {
                     &config.extracted_root,
                 )?,
             );
+        check_cancellation()?;
         progress.advance("decode p3d packages");
         report
             .stages
@@ -243,10 +252,12 @@ impl ExtractGameAssets {
                     &config.extracted_root,
                 )?,
             );
+        check_cancellation()?;
         progress.advance("verify normalized outputs");
         report
             .stages
             .push(assert_normalized(&config.extracted_root)?);
+        check_cancellation()?;
         progress.advance("write minor-unit manifest");
         report
             .stages
@@ -379,6 +390,7 @@ fn verify_manifest(
         rules.len(),
     );
     for rule in &rules {
+        check_cancellation()?;
         progress.advance(
             &format!(
                 "{}/.{}",
@@ -504,6 +516,7 @@ fn extract_rcf(
         .enumerate()
     {
         let archive_ordinal = index.saturating_add(1);
+        check_cancellation()?;
         progress.advance(&format!("archive {archive_ordinal}"));
         let source = FileArchiveSource::new(&archive);
         let mut sink = FileEntrySink::new(extracted_root);
@@ -560,6 +573,7 @@ fn convert_rsd(
     let mut files = 0usize;
     let mut bytes = 0u64;
     for input in game_inputs {
+        check_cancellation()?;
         progress.advance(
             &progress_item(
                 game_root, &input,
@@ -580,6 +594,7 @@ fn convert_rsd(
         bytes = bytes.saturating_add(written);
     }
     for input in extracted_inputs {
+        check_cancellation()?;
         progress.advance(
             &progress_item(
                 extracted_root,
@@ -1151,6 +1166,7 @@ fn extract_movies(
     let mut files = 0usize;
     let mut bytes = 0u64;
     for (logical_relative, record) in selected {
+        check_cancellation()?;
         progress.advance(&logical_relative.to_string_lossy());
         let movie_stem = movie_package_stem(&logical_relative)?;
         let plan = UnrealHapPackagePlan::for_movie(
@@ -1482,6 +1498,7 @@ fn extract_p3d(
     let mut files = 0usize;
     let mut bytes = 0u64;
     for input in game_inputs {
+        check_cancellation()?;
         progress.advance(
             &progress_item(
                 game_root, &input,
@@ -1511,6 +1528,7 @@ fn extract_p3d(
         bytes = bytes.saturating_add(input_bytes);
     }
     for input in extracted_inputs {
+        check_cancellation()?;
         progress.advance(
             &progress_item(
                 extracted_root,
@@ -2083,6 +2101,7 @@ fn assert_normalized(extracted_root: &Path) -> PipelineOutcome<StageReport> {
     );
     let mut bad = Vec::new();
     for file in &extracted_files {
+        check_cancellation()?;
         progress.advance(
             &progress_item(
                 extracted_root,
@@ -2289,6 +2308,7 @@ fn normalize_sound_scripts(
     let mut files = 0usize;
     let mut bytes = 0u64;
     for input in spt_inputs {
+        check_cancellation()?;
         progress.advance(
             &progress_item(
                 extracted_root,
@@ -2310,6 +2330,7 @@ fn normalize_sound_scripts(
             bytes.saturating_add(u64::try_from(json.len()).unwrap_or(u64::MAX));
     }
     for input in rms_inputs {
+        check_cancellation()?;
         progress.advance(
             &progress_item(
                 extracted_root,

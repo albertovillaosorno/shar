@@ -63,6 +63,7 @@ use schoenwald_filesystem::adapters::driving::local::{
 
 use super::metadata_fill::read_string_field;
 use super::taxonomy::{self, UNKNOWN};
+use crate::adapters::driven::check_cancellation;
 use crate::adapters::driven::local::progress::StageProgress;
 use crate::adapters::driven::local::two::stragglers;
 use crate::domain::{PipelineError, StageReport, escape_json as json_escape};
@@ -190,6 +191,7 @@ fn collect_game_first_units(
             &config.game_root,
             &file,
         )?;
+        check_cancellation()?;
         progress.advance(&relative.to_string_lossy());
         let extension = file_extension(&file);
         if should_skip_local_game_file(
@@ -319,6 +321,7 @@ fn collect_extracted_overlay_units(
             extracted_root,
             &file,
         )?;
+        check_cancellation()?;
         progress.advance(&relative.to_string_lossy());
         if is_reserved_minor_unit_output(
             extracted_root,
@@ -580,6 +583,7 @@ pub(super) fn render_manifest_jsonl(
     );
     let mut output = String::new();
     for unit in &enriched {
+        check_cancellation()?;
         progress.advance(&unit.obfuscated_route);
         output.push_str(&render_manifest_row(unit));
         output.push('\n');
@@ -611,6 +615,7 @@ fn enrich_units(
     // count token is assigned deterministically regardless of enumeration
     // order.
     for (path, extension) in units {
+        check_cancellation()?;
         progress.advance(path);
         let route = obfuscated_route(
             path,

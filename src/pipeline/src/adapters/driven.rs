@@ -48,5 +48,8 @@ mod local;
 mod output_inventory;
 
 pub use local::LocalPipeline;
-pub(in crate::adapters) use local::{ProgressVerbosity, install_progress};
+pub(in crate::adapters) use local::{
+    ProgressVerbosity, RunMode, RunRegistry, RunStartError, check_cancellation,
+    install_progress,
+};
 pub use output_inventory::FilesystemOutputInventory;

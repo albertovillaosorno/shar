@@ -62,6 +62,7 @@ mod filesystem;
 mod one;
 mod progress;
 mod prop_catalog;
+mod run_registry;
 mod two;
 mod vehicle_catalog;
 mod wasp_camera;
@@ -69,6 +70,9 @@ mod wrench;
 
 pub(in crate::adapters) use progress::{
     Verbosity as ProgressVerbosity, install as install_progress,
+};
+pub(in crate::adapters) use run_registry::{
+    RunMode, RunRegistry, RunStartError, check_cancellation,
 };
 
 /// Stateless local provider for pipeline operations.

@@ -396,6 +396,51 @@ The codebase uses explicit domain, application, port, and adapter boundaries.
 Shared CLI and filesystem crates own stable mechanisms only; domain policy stays
 inside the crate that owns the behavior.
 
+### Pipeline process coordination
+
+Normal pipeline commands use a cooperative Rust run registry. By default, one
+active run blocks another pipeline process and reports the existing run instead
+of silently starting duplicate extraction or conversion work. Inspect active
+processes with:
+
+```bash
+pipeline active
+```
+
+`pipeline --active` is an equivalent inspection alias. Each line reports the
+stable run identifier, operating-system PID, command, optional label, execution
+mode, lifecycle state, current stage, completed and total work when known,
+elapsed time, evidence-backed ETA, and current item. Unknown progress remains
+`unknown` rather than being estimated without measurements.
+
+Request cancellation at the next safe work boundary with:
+
+```bash
+pipeline cancel <run-id>
+pipeline cancel all
+```
+
+`pipeline --cancel <run-id>` is an equivalent alias. Cancellation is cooperative:
+the current atomic archive, package, or output transaction may finish before the
+process exits, but the pipeline does not force termination halfway through one
+artifact.
+
+Intentional parallel execution requires explicit acknowledgement and should use
+portable labels:
+
+```bash
+pipeline fbx-export-world <index> <game> <coordinates> <output-a> \
+  --allow-concurrent --run-label world-a
+pipeline fbx-export-vehicles <index> <game> <output-b> \
+  --allow-concurrent --run-label vehicles-b
+```
+
+Every concurrent process still has an independent run identifier, heartbeat,
+active record, cancellation route, and default diagnostic log under
+`logs/pipeline/runs/<run-id>.jsonl`. An explicitly supplied `--log` path remains
+unchanged. Derived registry state lives under `temp/pipeline/runtime/`; stale
+crash residue is recoverable and is never repository or output authority.
+
 ## Current status
 
 | Phase | Scope | Status |

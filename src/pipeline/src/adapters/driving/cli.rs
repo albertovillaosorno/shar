@@ -56,9 +56,10 @@ use std::process::ExitCode;
 
 use schoenwald_cli::{CliProgram, CommandOutcome, run_process};
 
-use self::options::parse_common_arguments;
+use self::options::{ParsedArguments, parse_common_arguments};
 use crate::adapters::driven::{
-    FilesystemOutputInventory, LocalPipeline, install_progress,
+    FilesystemOutputInventory, LocalPipeline, RunRegistry, RunStartError,
+    check_cancellation, install_progress,
 };
 use crate::application::{PipelineService, SummarizeOutput};
 use crate::domain::{
@@ -71,7 +72,7 @@ mod options;
 
 /// Complete pipeline command usage text.
 const USAGE: &str = concat!(
-    "usage: pipeline ",
+    "usage: pipeline active | pipeline cancel <run-id|all> | pipeline ",
     "extract-game|extract-game-resume|export-movies|",
     "export-lmlm|manifest-minor-units|",
     "metadata-fill-minor-units|edit-minor-unit-metadata|",
@@ -88,7 +89,8 @@ const USAGE: &str = concat!(
     "fbx-export [index-jsonl] [selector] [output-dir] [base-root] ",
     "[--embed-textures (legacy compatibility)] ",
     "[--verbosity detailed|minimal] ",
-    "[--log <path>|--no-log]",
+    "[--log <path>|--no-log] ",
+    "[--run-label <portable-label>] [--allow-concurrent]",
 );
 
 /// Pipeline command-line program.
@@ -103,16 +105,27 @@ impl CliProgram for PipelineCli {
         let Some(command) = arguments.first() else {
             return CommandOutcome::failure().stderr_line(USAGE);
         };
+        let remaining = arguments
+            .get(1..)
+            .unwrap_or_default();
+        if matches!(
+            command.as_str(),
+            "active" | "--active"
+        ) {
+            return run_active_command(remaining);
+        }
+        if matches!(
+            command.as_str(),
+            "cancel" | "--cancel"
+        ) {
+            return run_cancel_command(remaining);
+        }
         if !is_known_command(command) {
             return CommandOutcome::failure()
                 .stderr_line(format!("unknown command: {command}"))
                 .stderr_line(USAGE);
         }
-        let parsed = match parse_common_arguments(
-            arguments
-                .get(1..)
-                .unwrap_or_default(),
-        ) {
+        let parsed = match parse_common_arguments(remaining) {
             Ok(parsed) => parsed,
             Err(error) => {
                 return CommandOutcome::failure()
@@ -125,51 +138,189 @@ impl CliProgram for PipelineCli {
                 "invalid arguments: --embed-textures requires fbx-export",
             );
         }
-        if let Err(error) = install_progress(
-            parsed.verbosity,
-            parsed
-                .log_file
-                .as_deref(),
-        ) {
-            return CommandOutcome::failure()
-                .stderr_line(format!("failed to configure progress: {error}"));
-        }
-        if command == "plan-fbx-package" {
-            return run_fbx_manifest(&parsed.positionals);
-        }
-        if command == "fbx-export-characters" {
-            return run_character_catalog(&parsed.positionals);
-        }
-        if command == "fbx-export-wasp-camera" {
-            return run_wasp_camera(&parsed.positionals);
-        }
-        if command == "fbx-export-wrench" {
-            return run_wrench(&parsed.positionals);
-        }
-        if command == "fbx-export-props" {
-            return run_prop_catalog(&parsed.positionals);
-        }
-        if command == "fbx-export-vehicles" {
-            return run_vehicle_catalog(&parsed.positionals);
-        }
-        if command == "fbx-export-world-props" {
-            return run_world_prop_catalog(&parsed.positionals);
-        }
-        if command == "fbx-export-world" {
-            return run_world_master(&parsed.positionals);
-        }
-        if command == "fbx-export" {
-            return run_fbx_export(
-                &parsed.positionals,
-                FbxExportOptions {
-                    embed_textures: parsed.embed_textures,
-                },
-            );
-        }
-        run_pipeline_command(
-            command,
-            &parsed.positionals,
+        run_registered_command(
+            command, &parsed,
         )
+    }
+}
+
+/// List every active pipeline process with progress and timing evidence.
+fn run_active_command(arguments: &[String]) -> CommandOutcome {
+    if let Some(outcome) = reject_extra_positionals(
+        arguments, 0,
+    ) {
+        return outcome;
+    }
+    match RunRegistry::current_workspace().active_lines() {
+        Ok(lines) if lines.is_empty() => {
+            CommandOutcome::success().stdout_line("no active pipeline runs")
+        }
+        Ok(lines) => lines
+            .into_iter()
+            .fold(
+                CommandOutcome::success(),
+                CommandOutcome::stdout_line,
+            ),
+        Err(error) => CommandOutcome::failure()
+            .stderr_line(format!("active-run inspection failed: {error}")),
+    }
+}
+
+/// Request cooperative cancellation for one run identity or every active run.
+fn run_cancel_command(arguments: &[String]) -> CommandOutcome {
+    if let Some(outcome) = reject_extra_positionals(
+        arguments, 1,
+    ) {
+        return outcome;
+    }
+    let Some(target) = arguments.first() else {
+        return missing_argument("run id or all");
+    };
+    match RunRegistry::current_workspace().request_cancel(target) {
+        Ok(requested) if requested.is_empty() => {
+            CommandOutcome::success().stdout_line("no active pipeline runs")
+        }
+        Ok(requested) => requested
+            .into_iter()
+            .fold(
+                CommandOutcome::success(),
+                |outcome, run_id| {
+                    outcome.stdout_line(
+                        format!("cancellation requested: {run_id}"),
+                    )
+                },
+            ),
+        Err(error) => CommandOutcome::failure()
+            .stderr_line(format!("cancellation request failed: {error}")),
+    }
+}
+
+/// Execute one normal command inside a cooperative active-run transaction.
+fn run_registered_command(
+    command: &str,
+    parsed: &ParsedArguments,
+) -> CommandOutcome {
+    let registry = RunRegistry::current_workspace();
+    let guard = match registry.start(
+        command,
+        parsed.run_label(),
+        parsed.run_mode(),
+    ) {
+        Ok(guard) => guard,
+        Err(error) => return render_run_start_error(&error),
+    };
+    let run_id = guard
+        .run_id()
+        .to_owned();
+    let log_file = parsed.log_file_for_run(&run_id);
+    if let Err(error) = install_progress(
+        parsed.verbosity,
+        log_file.as_deref(),
+    ) {
+        let cleanup = guard.finish();
+        return render_setup_failure(
+            &run_id,
+            format!("failed to configure progress: {error}"),
+            cleanup,
+        );
+    }
+    let outcome = match check_cancellation() {
+        Ok(()) => dispatch_known_command(
+            command, parsed,
+        ),
+        Err(error) => CommandOutcome::failure()
+            .stderr_line(format!("pipeline failed: {error}")),
+    };
+    match guard.finish() {
+        Ok(()) => outcome.stderr_line(format!("pipeline run: {run_id}")),
+        Err(error) => CommandOutcome::failure()
+            .stderr_line(format!("pipeline run cleanup failed: {error}"))
+            .stderr_line(format!("pipeline run: {run_id}")),
+    }
+}
+
+/// Dispatch one already validated normal command.
+fn dispatch_known_command(
+    command: &str,
+    parsed: &ParsedArguments,
+) -> CommandOutcome {
+    if command == "plan-fbx-package" {
+        return run_fbx_manifest(&parsed.positionals);
+    }
+    if command == "fbx-export-characters" {
+        return run_character_catalog(&parsed.positionals);
+    }
+    if command == "fbx-export-wasp-camera" {
+        return run_wasp_camera(&parsed.positionals);
+    }
+    if command == "fbx-export-wrench" {
+        return run_wrench(&parsed.positionals);
+    }
+    if command == "fbx-export-props" {
+        return run_prop_catalog(&parsed.positionals);
+    }
+    if command == "fbx-export-vehicles" {
+        return run_vehicle_catalog(&parsed.positionals);
+    }
+    if command == "fbx-export-world-props" {
+        return run_world_prop_catalog(&parsed.positionals);
+    }
+    if command == "fbx-export-world" {
+        return run_world_master(&parsed.positionals);
+    }
+    if command == "fbx-export" {
+        return run_fbx_export(
+            &parsed.positionals,
+            FbxExportOptions {
+                embed_textures: parsed.embed_textures,
+            },
+        );
+    }
+    run_pipeline_command(
+        command,
+        &parsed.positionals,
+    )
+}
+
+/// Render one blocked start with active-run evidence and safe next commands.
+fn render_run_start_error(error: &RunStartError) -> CommandOutcome {
+    let mut outcome = CommandOutcome::failure().stderr_line(
+        format!(
+            "pipeline start blocked: {}",
+            error.message()
+        ),
+    );
+    for line in error.active_lines() {
+        outcome = outcome.stderr_line(line);
+    }
+    if !error
+        .active_lines()
+        .is_empty()
+    {
+        outcome = outcome
+            .stderr_line("inspect active runs: pipeline active")
+            .stderr_line("request cancellation: pipeline cancel <run-id>")
+            .stderr_line(
+                "explicit concurrent execution: add --allow-concurrent",
+            );
+    }
+    outcome
+}
+
+/// Render setup failure while preserving any lease-cleanup evidence.
+fn render_setup_failure(
+    run_id: &str,
+    message: String,
+    cleanup: Result<(), String>,
+) -> CommandOutcome {
+    let outcome = CommandOutcome::failure()
+        .stderr_line(message)
+        .stderr_line(format!("pipeline run: {run_id}"));
+    match cleanup {
+        Ok(()) => outcome,
+        Err(error) => {
+            outcome.stderr_line(format!("pipeline run cleanup failed: {error}"))
+        }
     }
 }
 

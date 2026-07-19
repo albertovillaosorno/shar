@@ -49,7 +49,7 @@ mod cases {
     use std::path::PathBuf;
 
     use super::super::{
-        DEFAULT_LOG_FILE, ParsedArguments, parse_common_arguments,
+        DEFAULT_LOG_FILE, ParsedArguments, RunOptions, parse_common_arguments,
     };
     use crate::adapters::driven::ProgressVerbosity;
 
@@ -70,7 +70,9 @@ mod cases {
                     ],
                     verbosity: ProgressVerbosity::Detailed,
                     log_file: Some(PathBuf::from(DEFAULT_LOG_FILE)),
+                    logging_explicit: false,
                     embed_textures: false,
+                    run: RunOptions::default(),
                 },
             )
         );
@@ -91,7 +93,9 @@ mod cases {
                     positionals: vec![String::from("game")],
                     verbosity: ProgressVerbosity::Minimal,
                     log_file: None,
+                    logging_explicit: true,
                     embed_textures: false,
+                    run: RunOptions::default(),
                 },
             )
         );
@@ -111,7 +115,9 @@ mod cases {
                     positionals: Vec::new(),
                     verbosity: ProgressVerbosity::Minimal,
                     log_file: Some(PathBuf::from("logs/custom/run.jsonl")),
+                    logging_explicit: true,
                     embed_textures: false,
+                    run: RunOptions::default(),
                 },
             )
         );
@@ -131,7 +137,9 @@ mod cases {
                     positionals: vec![String::from("--minimal")],
                     verbosity: ProgressVerbosity::Detailed,
                     log_file: Some(PathBuf::from(DEFAULT_LOG_FILE)),
+                    logging_explicit: false,
                     embed_textures: false,
+                    run: RunOptions::default(),
                 },
             )
         );
