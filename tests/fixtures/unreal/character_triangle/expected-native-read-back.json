@@ -1,0 +1,14 @@
+{
+  "asset_class": "/Script/Engine.StaticMesh",
+  "bounds_extent_centimeters": [
+    50.0,
+    50.0,
+    0.0
+  ],
+  "material_slot_names": [
+    "fixture_material"
+  ],
+  "object_path": "/Game/SHAR/Tests/Generated/SM_unreal_fixture_triangle.SM_unreal_fixture_triangle",
+  "triangle_count_lod0": 1,
+  "uv_channel_count": 1
+}

@@ -1,0 +1,78 @@
+{
+  "artifacts": [
+    {
+      "artifact_id": "mesh",
+      "byte_length": 9772,
+      "media_type": "application/vnd.autodesk.fbx",
+      "metadata": {
+        "source_coordinate_system": "centimeter_positive_z_up",
+        "synthetic": true
+      },
+      "relative_path": "SM_unreal_fixture_triangle.fbx",
+      "required": true,
+      "role": "static_mesh",
+      "sha256": "77233971822a36a4e01ca42daa07e6a50574f7c7dc6a4a51c91b0928916eeb1e"
+    },
+    {
+      "artifact_id": "base_color",
+      "byte_length": 85,
+      "media_type": "image/png",
+      "metadata": {
+        "source_coordinate_system": "centimeter_positive_z_up",
+        "synthetic": true
+      },
+      "relative_path": "T_unreal_fixture_triangle_BC.png",
+      "required": true,
+      "role": "base_color",
+      "sha256": "0c1cdacf6d41ca1a607be2e2a41b18707cc531bcf64326a3dcfbe0dd3892170b"
+    }
+  ],
+  "asset_family": "synthetic_static_mesh_fixture",
+  "canonical_id": "unreal_fixture_triangle",
+  "dependencies": [],
+  "owning_feature": "base",
+  "package_id": "fixture.unreal.character_triangle",
+  "package_revision": "sha256:e23f38f0e1ec1ce4aafb3188764ad233a090486419fa8e35b7bd82841dd2b79c",
+  "schema": "shar.unreal.import-plan.v1",
+  "source_coordinate_system": {
+    "distance_unit": "centimeter",
+    "forward_axis": "+x",
+    "handedness": "right",
+    "up_axis": "+z"
+  },
+  "target_coordinate_system": {
+    "distance_unit": "centimeter",
+    "forward_axis": "+x",
+    "handedness": "unreal",
+    "up_axis": "+z"
+  },
+  "targets": [
+    {
+      "asset_bundles": [
+        "EditorReview"
+      ],
+      "native_class": "/Script/Engine.StaticMesh",
+      "object_path": "/Game/SHAR/Tests/Generated/SM_unreal_fixture_triangle.SM_unreal_fixture_triangle",
+      "primary_asset_id": null,
+      "promotion_group": "fixture_triangle",
+      "properties": {
+        "collision_profile": "fixture_query_only",
+        "material_slots": [
+          "fixture_material"
+        ],
+        "nanite_policy": "disabled_fixture"
+      },
+      "source_artifact_ids": [
+        "mesh",
+        "base_color"
+      ],
+      "verification": {
+        "expected_material_slot_count": 1,
+        "expected_triangle_count_lod0": 1,
+        "expected_uv_channel_count": 1
+      }
+    }
+  ],
+  "transaction_id": "sha256:c5d6b238fb21579f17914fa9b9009c15b1fa50f76937002cbd98c96686048882",
+  "validation_profile": "synthetic_static_mesh_fixture_v1"
+}

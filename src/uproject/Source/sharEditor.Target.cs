@@ -61,6 +61,10 @@ public class sharEditorTarget : TargetRules
         Type = TargetType.Editor;
         DefaultBuildSettings = BuildSettingsVersion.V7;
         IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_8;
+        // Installed engines share precompiled editor products. This explicit
+        // override applies SHAR compiler strictness without requiring an
+        // unsupported unique engine build environment.
+        bOverrideBuildEnvironment = true;
         bWarningsAsErrors = true;
         bUseUnityBuild = false;
         bForceEnableExceptions = false;

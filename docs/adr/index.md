@@ -157,6 +157,9 @@ repository reference must point to the current owning decision.
 
 - [Unreal asset-conversion boundary](unreal/architecture.md) — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
+- [AAA-native content and gameplay foundation](unreal/architecture/aaa-native-content-and-gameplay-foundation.md)
+  — Accepted
+<!-- markdownlint-disable-next-line MD013 -->
 - [Minimal hexagonal native runtime](unreal/architecture/hexagonal-runtime-and-no-technical-debt.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
@@ -190,6 +193,9 @@ repository reference must point to the current owning decision.
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
 - [Data-driven Unreal gameplay content catalog](unreal/runtime/data-driven-gameplay-content-catalog.md)
+  — Accepted
+<!-- markdownlint-disable-next-line MD013 -->
+- [Shared rig-family animation libraries](unreal/runtime/shared-rig-family-animation-libraries.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
 - [Contextual interaction query and transaction boundary](unreal/runtime/contextual-interaction-query-and-transaction.md)

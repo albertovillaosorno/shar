@@ -796,12 +796,23 @@ Relevant decisions:
 
 ### Phase 6 — Convert normalized data into native Unreal assets
 
-**Status:** Planned.
+**Status:** In progress. The native contract suite and character-first C++
+foundation are established; bulk asset import remains pending.
 
 **Executive result:** JSON, FBX, WAV, MOV, and normalized HAP cinematic evidence
 become native Unreal assets and target-verified media variants through
 deterministic conversion plans and the Phase 5 terminal MCP surface rather than
 manual editor work.
+
+The authoritative native asset, mission, world, vehicle, character, animation,
+mod, networking, rendering, naming, folder, format, and validation contract lives
+at [`docs/technical/pipeline/unreal/`](docs/technical/pipeline/unreal/index.md).
+Pipeline work must implement that contract exactly before introducing a new native
+asset family. The Unreal runtime is designed as a modern AAA game from first
+principles; legacy layouts are migration evidence, never runtime architecture.
+Characters are the first vertical slice because their normalized models are ready
+and they exercise identity, materials, rigs, shared animation libraries, physics,
+loading, selection, validation, and mod replacement.
 
 `src/unreal` is the pipeline-owned planning library for this phase. It validates
 normalized JSON, PCM WAV, MOV or HAP cinematic evidence, and binary FBX 7.7
@@ -823,6 +834,9 @@ Planned work:
 - [ ] Apply conversion plans through tested native MCP commands from Phase 5.
 - [ ] Import FBX files as Static Meshes, Skeletal Meshes, Skeletons, Physics
   Assets, Animation Sequences, materials, and textures.
+- [ ] Import each compatible character animation once into the central shared
+  rig-family library under `/Game/SHAR/Art/Characters/Animations`; never copy
+  common clips into per-character folders.
 - [ ] Convert camera-only packages such as `phonecamera` directly from normalized
   camera, controller, and animation evidence into native Unreal Camera Actors and
   Level Sequences without an intermediate FBX.

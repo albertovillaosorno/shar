@@ -32,17 +32,17 @@
 
 ## Purpose
 
-This specification defines the canonical character-animation catalog, source
-scene normalization, reference-pose handling, clip variants, runtime playback,
-locomotion synchronization, dialogue gestures, reactions, action clips, and
-phased vehicle enter and exit choreography used by the native Unreal runtime.
+This specification defines the canonical shared character-animation library,
+source scene normalization, reference-pose handling, clip variants, runtime
+playback, locomotion synchronization, dialogue gestures, reactions, action
+clips, and phased vehicle enter and exit choreography used by the native Unreal
+runtime.
 
 It replaces source-era animation filenames, backup-directory precedence,
 hand-authored batch commands, animation-choice text files, implicit rig aliases,
 raw animation-curve inventories, hard-coded clip arrays, direct animation-player
 calls, frame-number polling, vehicle-door timing guesses, and
-animation-completion
-callbacks that mutate gameplay state.
+animation-completion callbacks that mutate gameplay state.
 
 Historical scene, pose, batch, and configuration files are non-public evidence.
 They may establish normalized clip facts after review, but they do not become
@@ -82,8 +82,8 @@ notify dispatcher, or root-motion solver requires a separate accepted decision.
 
 | Authority | Responsibility |
 | :--- | :--- |
-| Character definition | Declares compatible Skeleton, Animation Blueprint, catalog, movement profile, interaction policy, and fallbacks. |
-| Animation catalog | Owns stable clip, pose, choreography, phase, marker, curve, variant, and compatibility identities. |
+| Character definition | Declares compatible Skeleton, animation library, movement profile, interaction policy, and fallbacks. |
+| Shared animation library | Owns stable clip, pose, choreography, phase, marker, curve, variant, and compatibility identities. |
 | Import pipeline | Converts reviewed evidence into deterministic normalized animation payloads and native assets. |
 | Character animation adapter | Projects accepted movement, action, dialogue, damage, interaction, and lifecycle state into native animation inputs. |
 | Character Movement | Owns authoritative ordinary movement integration and accepted root-motion consumption. |
@@ -106,7 +106,7 @@ The boundary uses stable typed identities for:
 
 - character definition;
 - rig and Skeleton revision;
-- animation catalog revision;
+- shared animation-library revision;
 - clip definition and clip asset;
 - pose definition;
 - choreography definition;
@@ -127,12 +127,14 @@ Source filenames, directory names, backup labels, numeric clip positions, curve
 array positions, node order, batch-line order, configuration-line order, and raw
 joint names are not runtime identity.
 
-## Character animation catalog
+## Shared rig-family animation library
 
-`USharCharacterAnimationCatalog` declares:
+`USharCharacterAnimationLibraryDefinition` is one Primary Asset per compatible
+rig family. It declares:
 
-- catalog identity and revision;
-- compatible character, rig, Skeleton, mesh, and Animation Blueprint families;
+- library identity and revision;
+- compatible rig, Skeleton, mesh, and Animation Blueprint families;
+- character or costume eligibility predicates only for clips that require them;
 - required locomotion, idle, turn, jump, fall, recovery, reaction, action,
   dialogue, and vehicle-handoff clip roles;
 - optional clip and pose roles;
@@ -148,10 +150,12 @@ joint names are not runtime identity.
 - fallback definitions; and
 - validation tolerances.
 
-The catalog maps semantic roles to native assets. Runtime never constructs an
-animation asset path by concatenating a character prefix, role suffix,
-direction,
-height, side, or seat label.
+The library maps semantic roles to native assets. Every compatible clip is
+stored once below
+`/Game/SHAR/Art/Characters/Animations/<rig_family>/`; no shipping clip is copied
+into a character folder. Runtime never constructs an animation asset path by
+concatenating a character prefix, role suffix, direction, height, side, or seat
+label.
 
 ## Clip definition
 
@@ -861,7 +865,7 @@ or nonessential gesture detail while preserving semantic timing and state.
 
 ## Game Feature and mod overlays
 
-A validated feature may add namespaced character animation catalogs, clips,
+A validated feature may add namespaced rig-family animation libraries, clips,
 poses, variants, montages, sections, marker schemas, dialogue gestures, and
 vehicle-handoff choreographies.
 

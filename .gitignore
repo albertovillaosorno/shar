@@ -285,6 +285,12 @@ fbx-assets/
 *.typ
 *.rsd
 
+# These two exact Unreal import fixtures are independently authored, tiny,
+# deterministic, and required to test the public native-import contract without
+# publishing extracted or third-party assets. Generated UAssets remain ignored.
+!tests/fixtures/unreal/character_triangle/SM_unreal_fixture_triangle.fbx
+!tests/fixtures/unreal/character_triangle/T_unreal_fixture_triangle_BC.png
+
 # Copyrighted local evidence, tool drops, and research
 /assets/
 /tools/
