@@ -688,30 +688,33 @@ The optional coordinate-evidence root is local comparison authority only. It is
 never copied into the publication, named in public catalog paths, or treated as
 model, topology, material, texture, or identity authority.
 
-A one-time local Blender analysis workspace may be generated at
-`fbx-assets/world/world.blend`. Git ignores this file, and it is never generation,
-validation, acceptance, publication, runtime, or production authority. The
-workspace creates one semantic collection per imported FBX, preserves separate
-objects and package identity, and lays interiors, zones, regions, doors, props,
-and auxiliary packages out for inspection. Duplicate isolated review galleries
-remain excluded because they are comparison derivatives rather than editable
-world sectors. The workspace applies a non-destructive horizontal X mirror to
-interior package roots without changing mesh data, UV coordinates, materials, or
-external textures.
+A one-time local Blender geometry-analysis workspace may be generated at
+`fbx-assets/world/world.blend` with an ignored
+`world.analysis-provenance.json` sidecar. Neither file is generation, validation,
+acceptance, publication, runtime, or production authority. The main workspace
+contains exactly three connected geometry-only meshes for the unique base world
+families represented by canonical Levels 1, 2, and 3. Repeated Levels 4-7 world
+variants, interiors, race props, mission doors, auxiliary bonus segments, manual
+references, review galleries, materials, and textures remain outside this main
+editing file so Blender stays responsive.
 
-The operator may then delete unwanted pieces, separate doors, add missing pieces,
-move vertices, reshape interiors, and correct placement while retaining source and
-collection identities wherever practical. After that single authoring pass, the
-edited scene is compared with the user's lawful original FBXs. Analysis-only
-layout and mirror transforms are normalized away, and the differences are encoded
-as deterministic source-dependent mathematical rules that operate on original
-vertices and decoded records. Those rules must not embed standalone proprietary
-model data or reconstruct it without the lawful source packages.
+Each canonical map joins its source zones and regions into one mesh and places the
+three maps close together with one reversible map-level layout offset. Individual
+packages are not scattered. Point- and face-domain `shar_*` attributes preserve
+source package, object, vertex, and polygon identities, while
+`shar_original_position` preserves the pre-layout source-world coordinate. The
+sidecar maps those identifiers to source FBXs and original object names. In Edit
+Mode, the operator may hover over a disconnected component and press `L` to select
+it before deleting, reshaping, moving, separating, or adding geometry.
 
-After the source-dependent algorithms are implemented and verified, the `.blend`
-and every disposable analysis sidecar must be deleted completely. The workspace
-must not become a recurring pipeline deliverable or a substitute for the
-first-principles separated-world generator.
+After the single authoring pass, the edited maps are compared with the user's
+lawful original FBXs, the three recorded layout offsets are normalized away, and
+the differences are encoded as deterministic source-dependent mathematical rules.
+Those rules must not embed standalone proprietary model data or reconstruct it
+without the lawful source packages. After the algorithms are implemented and
+verified, the `.blend` and every disposable analysis sidecar must be deleted
+completely; they must never become recurring pipeline deliverables or substitutes
+for the first-principles separated-world generator.
 
 Phase 4 exports only packages with actual model geometry. Camera-only,
 controller-only, attribute-only, and gameplay-only packages remain normalized
