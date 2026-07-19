@@ -688,12 +688,30 @@ The optional coordinate-evidence root is local comparison authority only. It is
 never copied into the publication, named in public catalog paths, or treated as
 model, topology, material, texture, or identity authority.
 
-A manually reorganized master world may still be authored later in Blender or
-another DCC for design purposes. That manual artifact is a future world-design
-input, not a missing Phase 4 export deliverable and not a substitute for the
-deterministic separated baseline. Any later transformation recipe must remain
-source-dependent and incapable of reconstructing model data without the user's
-lawful original source packages.
+A one-time local Blender analysis workspace may be generated at
+`fbx-assets/world/world.blend`. Git ignores this file, and it is never generation,
+validation, acceptance, publication, runtime, or production authority. The
+workspace creates one semantic collection per imported FBX, preserves separate
+objects and package identity, and lays interiors, zones, regions, doors, props,
+and auxiliary packages out for inspection. Duplicate isolated review galleries
+remain excluded because they are comparison derivatives rather than editable
+world sectors. The workspace applies a non-destructive horizontal X mirror to
+interior package roots without changing mesh data, UV coordinates, materials, or
+external textures.
+
+The operator may then delete unwanted pieces, separate doors, add missing pieces,
+move vertices, reshape interiors, and correct placement while retaining source and
+collection identities wherever practical. After that single authoring pass, the
+edited scene is compared with the user's lawful original FBXs. Analysis-only
+layout and mirror transforms are normalized away, and the differences are encoded
+as deterministic source-dependent mathematical rules that operate on original
+vertices and decoded records. Those rules must not embed standalone proprietary
+model data or reconstruct it without the lawful source packages.
+
+After the source-dependent algorithms are implemented and verified, the `.blend`
+and every disposable analysis sidecar must be deleted completely. The workspace
+must not become a recurring pipeline deliverable or a substitute for the
+first-principles separated-world generator.
 
 Phase 4 exports only packages with actual model geometry. Camera-only,
 controller-only, attribute-only, and gameplay-only packages remain normalized
