@@ -55,11 +55,7 @@
 //! alternate FBX encodings.
 
 use std::collections::{BTreeMap, BTreeSet};
-use std::fs::OpenOptions;
-use std::io::{ErrorKind, Write as _};
 use std::path::Path;
-
-use schoenwald_filesystem::adapters::driving::local;
 
 use super::binary_animation::{
     BinaryAnimationCounts, BinaryAnimationPlan, build_animation_plan,
@@ -73,6 +69,7 @@ use super::binary_fbx::{
     BinaryNode, BinaryProperty, CREATION_TIME, DETERMINISTIC_FILE_ID,
     encode_binary_document,
 };
+use super::binary_fbx_storage::persist_binary_fbx;
 use super::binary_identity::{
     BinaryIdentityError, GeometryIds, bone_ids, cluster_id, geometry_ids,
 };
@@ -147,6 +144,34 @@ enum BinarySceneKind {
     Static,
 }
 
+/// Horizontal UV correction policy for static-model FBX publication.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ModelUvPolicy {
+    /// Apply conservative identity-backed correction to oriented graphics.
+    Selective,
+    /// Preserve every authored U coordinate exactly.
+    Preserve,
+}
+
+impl ModelUvPolicy {
+    /// Return whether one geometry group should mirror its U coordinates.
+    fn mirrors_u(
+        self,
+        mesh_name: &str,
+        material_name: &str,
+        texture_file_name: Option<&str>,
+    ) -> bool {
+        matches!(
+            self,
+            Self::Selective
+        ) && mirrors_u(
+            mesh_name,
+            material_name,
+            texture_file_name,
+        )
+    }
+}
+
 impl BinarySceneKind {
     /// Return whether the scene owns skeleton, skin, pose, and animation data.
     const fn is_skinned(self) -> bool {
@@ -187,6 +212,7 @@ struct BinaryGroup<'character> {
 fn binary_groups<'character>(
     character: &'character CharacterAsset,
     material_plan: &MaterialPlan<'_>,
+    uv_policy: ModelUvPolicy,
 ) -> Result<Vec<BinaryGroup<'character>>, CharacterBinaryFbxError> {
     let mut groups = Vec::new();
     for part in &character.parts {
@@ -260,7 +286,7 @@ fn binary_groups<'character>(
                     influences,
                     used_bones,
                     material_key,
-                    mirror_u: mirrors_u(
+                    mirror_u: uv_policy.mirrors_u(
                         &part
                             .mesh
                             .name,
@@ -446,6 +472,27 @@ pub fn write_binary_model_fbx(
     materials: &[MaterialBinding],
     path: &Path,
 ) -> Result<CharacterBinaryFbxSummary, CharacterBinaryFbxError> {
+    write_binary_model_fbx_with_uv_policy(
+        asset_name,
+        meshes,
+        materials,
+        ModelUvPolicy::Selective,
+        path,
+    )
+}
+
+/// Write one static model with an explicit horizontal UV policy.
+///
+/// # Errors
+///
+/// Returns the same failures as [`write_binary_model_fbx`].
+pub fn write_binary_model_fbx_with_uv_policy(
+    asset_name: &str,
+    meshes: &[MeshAsset],
+    materials: &[MaterialBinding],
+    uv_policy: ModelUvPolicy,
+    path: &Path,
+) -> Result<CharacterBinaryFbxSummary, CharacterBinaryFbxError> {
     validate_static_model(
         asset_name, meshes,
     )?;
@@ -475,13 +522,14 @@ pub fn write_binary_model_fbx(
         CharacterTextureStorage::External,
         &[],
         BinarySceneKind::Static,
+        uv_policy,
     )?;
     let bytes = encode_binary_document(&document.nodes).map_err(
         |error| CharacterBinaryFbxError::Encoding {
             reason: format!("{error:?}"),
         },
     )?;
-    persist(
+    persist_binary_fbx(
         path, &bytes,
     )?;
     Ok(document.summary)
@@ -538,13 +586,14 @@ fn write_binary_character_fbx_with_storage(
         texture_storage,
         animations,
         BinarySceneKind::Skinned,
+        ModelUvPolicy::Selective,
     )?;
     let bytes = encode_binary_document(&document.nodes).map_err(
         |error| CharacterBinaryFbxError::Encoding {
             reason: format!("{error:?}"),
         },
     )?;
-    persist(
+    persist_binary_fbx(
         path, &bytes,
     )?;
     Ok(document.summary)
@@ -558,6 +607,7 @@ fn build_character_document(
     texture_storage: CharacterTextureStorage,
     animations: &[AnimationClip],
     scene_kind: BinarySceneKind,
+    uv_policy: ModelUvPolicy,
 ) -> Result<CharacterFbxDocument, CharacterBinaryFbxError> {
     let material_plan = material_slots(
         character, materials,
@@ -578,6 +628,7 @@ fn build_character_document(
     let groups = binary_groups(
         character,
         &material_plan,
+        uv_policy,
     )?;
     let bone_ordinals: BTreeMap<&str, usize> = character
         .bones
@@ -3026,59 +3077,6 @@ fn count_i32(
     )
 }
 
-/// Persist one complete binary document without overwriting existing output.
-fn persist(
-    path: &Path,
-    bytes: &[u8],
-) -> Result<(), CharacterBinaryFbxError> {
-    let Some(parent) = path.parent() else {
-        return Err(
-            CharacterBinaryFbxError::MissingParent(
-                path.display()
-                    .to_string(),
-            ),
-        );
-    };
-    local::create_dir_all(parent).map_err(
-        |source| CharacterBinaryFbxError::CreateDir {
-            path: parent
-                .display()
-                .to_string(),
-            source: source.to_string(),
-        },
-    )?;
-    let mut file = OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(path)
-        .map_err(
-            |source| {
-                if source.kind() == ErrorKind::AlreadyExists {
-                    CharacterBinaryFbxError::OutputExists(
-                        path.display()
-                            .to_string(),
-                    )
-                } else {
-                    CharacterBinaryFbxError::Write {
-                        path: path
-                            .display()
-                            .to_string(),
-                        source: source.to_string(),
-                    }
-                }
-            },
-        )?;
-    file.write_all(bytes)
-        .map_err(
-            |source| CharacterBinaryFbxError::Write {
-                path: path
-                    .display()
-                    .to_string(),
-                source: source.to_string(),
-            },
-        )
-}
-
 /// Binary character FBX serialization failure.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum CharacterBinaryFbxError {
@@ -3240,7 +3238,7 @@ fn near_standard_rate_uses_custom_time_mode() {
 
 #[cfg(test)]
 mod uv_conversion_tests {
-    use super::source_uv_to_fbx;
+    use super::{ModelUvPolicy, source_uv_to_fbx};
 
     /// Assert exact deterministic UV components without float comparison.
     fn assert_uv_bits(
@@ -3291,6 +3289,24 @@ mod uv_conversion_tests {
             [
                 -1.0_f64, -1.0_f64,
             ],
+        );
+    }
+
+    #[test]
+    fn preserve_policy_disables_even_evidence_backed_graphic_mirroring() {
+        assert!(
+            ModelUvPolicy::Selective.mirrors_u(
+                "kwik-e-mart-sign",
+                "kwik-e-mart-sign_m",
+                Some("kwik-e-mart-sign.png"),
+            )
+        );
+        assert!(
+            !ModelUvPolicy::Preserve.mirrors_u(
+                "kwik-e-mart-sign",
+                "kwik-e-mart-sign_m",
+                Some("kwik-e-mart-sign.png"),
+            )
         );
     }
 }

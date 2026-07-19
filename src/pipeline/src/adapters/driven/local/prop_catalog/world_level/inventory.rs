@@ -59,6 +59,60 @@ pub(super) struct LevelMeshSource {
     pub(super) owner_kind: String,
 }
 
+/// Source-backed downstream interaction role for one world model owner.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(super) enum WorldObjectRole {
+    /// Ordinary static presentation with no proven interaction role.
+    Static,
+    /// Breakable object or authored tree owner.
+    Breakable,
+    /// Dynamic-physics or animated-collision object.
+    Interactable,
+}
+
+impl WorldObjectRole {
+    /// Stable suffix added to exported Blender object identities.
+    #[must_use]
+    pub(super) const fn suffix(self) -> Option<&'static str> {
+        match self {
+            Self::Static => None,
+            Self::Breakable => Some("breakable"),
+            Self::Interactable => Some("interactable"),
+        }
+    }
+}
+
+/// Resolve one mesh owner's interaction role from its exact container kind.
+#[must_use]
+pub(super) fn object_role(source: &LevelMeshSource) -> WorldObjectRole {
+    let identity = format!(
+        "{} {}",
+        source
+            .owner_name
+            .to_ascii_lowercase(),
+        source
+            .mesh_name
+            .to_ascii_lowercase(),
+    );
+    match source
+        .owner_kind
+        .as_str()
+    {
+        "srr_breakable_object" | "srr_tree_dsg" => WorldObjectRole::Breakable,
+        "srr_dyna_phys_dsg" | "srr_insta_static_phys_dsg"
+            if identity.contains("tree") =>
+        {
+            WorldObjectRole::Breakable
+        }
+        "srr_static_phys_dsg"
+        | "srr_dyna_phys_dsg"
+        | "srr_insta_anim_dyna_phys_dsg"
+        | "srr_anim_coll_dsg"
+        | "srr_insta_static_phys_dsg" => WorldObjectRole::Interactable,
+        _ => WorldObjectRole::Static,
+    }
+}
+
 /// Return every terrain-world package in deterministic import order.
 pub(super) fn world_packages(
     index: &PhaseThreePackageIndex
@@ -239,7 +293,10 @@ mod tests {
     use std::collections::BTreeMap;
 
     use super::super::transform::identity;
-    use super::{LevelMeshSource, explicit_placements, is_direct_world_mesh};
+    use super::{
+        LevelMeshSource, WorldObjectRole, explicit_placements,
+        is_direct_world_mesh, object_role,
+    };
 
     fn source(kind: &str) -> LevelMeshSource {
         LevelMeshSource {
@@ -284,5 +341,27 @@ mod tests {
     #[test]
     fn definition_only_meshes_are_not_direct_world_geometry() {
         assert!(!is_direct_world_mesh(&source("srr_breakable_object")));
+    }
+
+    #[test]
+    fn source_owner_kinds_preserve_world_interaction_roles() {
+        let mut tree = source("srr_dyna_phys_dsg");
+        tree.mesh_name = "l1_treesm_shape".to_owned();
+        assert_eq!(
+            object_role(&tree),
+            WorldObjectRole::Breakable
+        );
+        assert_eq!(
+            object_role(&source("srr_static_phys_dsg")),
+            WorldObjectRole::Interactable
+        );
+        assert_eq!(
+            object_role(&source("srr_insta_anim_dyna_phys_dsg")),
+            WorldObjectRole::Interactable
+        );
+        assert_eq!(
+            object_role(&source("srr_entity_dsg")),
+            WorldObjectRole::Static
+        );
     }
 }

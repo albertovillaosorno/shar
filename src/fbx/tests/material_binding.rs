@@ -173,3 +173,42 @@ fn classifies_shared_glass_mirror_and_light_identities() -> Result<(), String> {
     }
     Ok(())
 }
+
+#[test]
+fn classifies_world_lamp_identities_without_false_light_matches()
+-> Result<(), String> {
+    for name in [
+        "l1-parkinglight-shape",
+        "l3-globelight-shape",
+        "l4-light-shape",
+        "downtown-streetlight",
+    ] {
+        let material = MaterialBinding::new(
+            name, None,
+        )
+        .map_err(|error| format!("world light failed: {error:?}"))?;
+        if !material
+            .semantics
+            .is_light_emitter()
+        {
+            return Err(format!("world light was not emissive: {name}"));
+        }
+    }
+    for name in [
+        "dontlight-trackshape",
+        "gens-relight-dayshape",
+        "lighthouse-wall",
+    ] {
+        let material = MaterialBinding::new(
+            name, None,
+        )
+        .map_err(|error| format!("non-light identity failed: {error:?}"))?;
+        if material
+            .semantics
+            .is_light_emitter()
+        {
+            return Err(format!("non-light identity became emissive: {name}"));
+        }
+    }
+    Ok(())
+}

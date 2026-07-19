@@ -46,7 +46,9 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use fbx::adapters::driven::binary_character_writer::write_binary_model_fbx;
+use fbx::adapters::driven::binary_character_writer::{
+    ModelUvPolicy, write_binary_model_fbx_with_uv_policy,
+};
 use fbx::adapters::driven::decoded_component_source::read_mesh_for_analysis;
 use fbx::domain::mesh::MeshAsset;
 use fbx::domain::texture::MaterialBinding;
@@ -58,11 +60,16 @@ use super::super::material::canonicalize_world_static_materials;
 use super::super::model::TextureRecord;
 use super::super::prepared::PreparedTexture;
 use super::super::texture_authority::SharedTextureAuthority;
-use super::collision::{COLLISION_MATERIAL, load_intersect_meshes};
+use super::collision::load_intersect_meshes;
 use super::coordinate::PackageCoordinates;
 use super::inventory::{
-    LevelMeshSource, is_direct_world_mesh, is_interior, package_meshes,
-    package_scope,
+    LevelMeshSource, is_direct_world_mesh, is_interior, object_role,
+    package_meshes, package_scope,
+};
+use super::islands::split_distant_islands;
+use super::layout::{
+    MapBounds, apply_placement, collection_bounds, placement_for_scope,
+    record_group_bounds, validate_disjoint_groups,
 };
 use super::model::{
     ExportedWorldCollection, WorldFbxRecord, WorldPackageRecord,
@@ -75,7 +82,7 @@ use crate::domain::package::PhaseThreePackageRow;
 /// Mutable content maps shared by all packages in one level.
 #[derive(Clone, Default)]
 struct MasterContent {
-    /// Fully baked authored scene and collision meshes.
+    /// Fully baked authored scene meshes; collision evidence is excluded.
     meshes: Vec<MeshAsset>,
     /// Definition-only meshes awaiting similarity-overlaid review placement.
     review: Vec<ReviewMesh>,
@@ -145,8 +152,8 @@ enum PackageCounter {
 ///
 /// # Errors
 ///
-/// Returns an error when package loading, coordinate joins, collision recovery,
-/// material planning, texture publication, or any FBX write fails.
+/// Returns an error when package loading, coordinate joins, collision
+/// exclusion, material planning, texture publication, or any FBX write fails.
 #[expect(
     clippy::too_many_lines,
     reason = "Collection publication keeps package and review FBXs atomic."
@@ -163,9 +170,12 @@ pub(super) fn export_world_collection(
     let texture_root = output_root.join("textures");
     let review_root = output_root.join("review");
     let review_texture_root = review_root.join("textures");
+    let auxiliary_root = output_root.join("auxiliary");
+    let auxiliary_texture_root = auxiliary_root.join("textures");
     for directory in [
         &texture_root,
         &review_root,
+        &auxiliary_root,
     ] {
         fs::create_dir_all(directory).map_err(
             |error| {
@@ -179,13 +189,14 @@ pub(super) fn export_world_collection(
     let mut records = Vec::with_capacity(packages.len());
     let mut all_textures = BTreeMap::<String, PreparedTexture>::new();
     let mut aggregate_semantics = WorldSurfaceSemanticCounts::default();
+    let mut map_bounds = BTreeMap::<&'static str, MapBounds>::new();
     let mut has_review_fbx = false;
+    let mut has_auxiliary_fbx = false;
     let mut used_file_names = BTreeSet::new();
 
     for package in packages {
         let scope = package_scope(package)?;
         let mut package_content = MasterContent::default();
-        insert_collision_material(&mut package_content)?;
         let append_context = PackageAppendContext {
             canonical_root,
             coordinate_root,
@@ -213,7 +224,32 @@ pub(super) fn export_world_collection(
             .ok_or_else(
                 || PipelineError::new("world package record is missing"),
             )?;
+        let placement = placement_for_scope(&scope)?;
+        apply_placement(
+            &mut package_content.meshes,
+            placement,
+        )?;
+        record_group_bounds(
+            &mut map_bounds,
+            placement,
+            collection_bounds(&package_content.meshes),
+        );
+        record.map_group = placement
+            .group
+            .map(str::to_owned);
+        record.map_offset = placement.offset;
+        record.normal_import = placement.normal_import;
+        let (independent, breakable, interactable) =
+            world_object_semantic_counts(&package_content.meshes);
+        record.independent_item_geometries = independent;
+        record.breakable_geometries = breakable;
+        record.interactable_geometries = interactable;
         let stem = package_file_stem(package)?;
+        let uv_policy = if record.interior {
+            ModelUvPolicy::Preserve
+        } else {
+            ModelUvPolicy::Selective
+        };
         if !used_file_names.insert(stem.clone()) {
             return Err(
                 PipelineError::new(
@@ -229,17 +265,24 @@ pub(super) fn export_world_collection(
         let review_textures = package_content
             .textures
             .clone();
+        let world_relative_path = if placement.normal_import {
+            format!("{stem}.fbx")
+        } else {
+            format!("auxiliary/{stem}.fbx")
+        };
         record.world_fbx = write_content_fbx(
             &stem,
-            &format!("{stem}.fbx"),
+            &world_relative_path,
             &mut package_content,
             output_root,
+            uv_policy,
         )?;
         if let Some(artifact) = record
             .world_fbx
             .as_ref()
         {
             aggregate_semantics.add(artifact.surface_semantics);
+            has_auxiliary_fbx |= !placement.normal_import;
         }
 
         if !review.is_empty() {
@@ -257,6 +300,7 @@ pub(super) fn export_world_collection(
                 &format!("review/{stem}.review.fbx"),
                 &mut review_content,
                 output_root,
+                uv_policy,
             )?;
             if let Some(artifact) = record
                 .review_fbx
@@ -268,6 +312,7 @@ pub(super) fn export_world_collection(
         }
         records.push(record);
     }
+    validate_disjoint_groups(&map_bounds)?;
 
     let textures = publish_textures(
         &all_textures,
@@ -286,6 +331,21 @@ pub(super) fn export_world_collection(
             &review_texture_root,
         )?;
     }
+    if has_auxiliary_fbx {
+        fs::create_dir_all(&auxiliary_texture_root).map_err(
+            |error| {
+                PipelineError::new(
+                    format!(
+                        "world auxiliary texture directory failed: {error}"
+                    ),
+                )
+            },
+        )?;
+        let _auxiliary_records = publish_textures(
+            &all_textures,
+            &auxiliary_texture_root,
+        )?;
+    }
     Ok(
         ExportedWorldCollection {
             packages: records,
@@ -295,36 +355,13 @@ pub(super) fn export_world_collection(
     )
 }
 
-/// Insert the shared collision inspection material into one package scene.
-fn insert_collision_material(
-    content: &mut MasterContent
-) -> Result<(), PipelineError> {
-    let collision_material = MaterialBinding::new(
-        COLLISION_MATERIAL,
-        None,
-    )
-    .map_err(
-        |error| {
-            PipelineError::new(
-                format!("world collision material failed: {error:?}"),
-            )
-        },
-    )?;
-    let _previous = content
-        .materials
-        .insert(
-            COLLISION_MATERIAL.to_owned(),
-            collision_material,
-        );
-    Ok(())
-}
-
 /// Write one non-empty package scene and return its stable artifact record.
 fn write_content_fbx(
     scene_name: &str,
     relative_path: &str,
     content: &mut MasterContent,
     output_root: &Path,
+    uv_policy: ModelUvPolicy,
 ) -> Result<Option<WorldFbxRecord>, PipelineError> {
     if content
         .meshes
@@ -356,7 +393,7 @@ fn write_content_fbx(
             },
         )?;
     }
-    let summary = write_binary_model_fbx(
+    let summary = write_binary_model_fbx_with_uv_policy(
         scene_name,
         &content.meshes,
         &content
@@ -364,6 +401,7 @@ fn write_content_fbx(
             .values()
             .cloned()
             .collect::<Vec<_>>(),
+        uv_policy,
         &path,
     )
     .map_err(
@@ -470,10 +508,18 @@ fn append_package(
                 reference_coordinate_meshes: 0,
                 canonical_coordinate_meshes: 0,
                 review_definitions: 0,
-                collision_meshes: 0,
-                reference_collision_meshes: 0,
+                independent_item_geometries: 0,
+                breakable_geometries: 0,
+                interactable_geometries: 0,
+                excluded_collision_meshes: 0,
+                reference_excluded_collision_meshes: 0,
                 discarded_collision_triangles: 0,
                 interior: is_interior(package),
+                map_group: None,
+                map_offset: [
+                    0, 0, 0,
+                ],
+                normal_import: false,
                 review_similarity_groups: 0,
                 world_fbx: None,
                 review_fbx: None,
@@ -491,17 +537,14 @@ fn append_package(
             .ok_or_else(
                 || PipelineError::new("world package record is missing"),
             )?;
-        package_record.collision_meshes = collisions
+        package_record.excluded_collision_meshes = collisions
             .meshes
             .len();
-        package_record.reference_collision_meshes =
+        package_record.reference_excluded_collision_meshes =
             collisions.reference_coordinate_meshes;
         package_record.discarded_collision_triangles =
             collisions.discarded_triangles;
     }
-    package_content
-        .meshes
-        .extend(collisions.meshes);
     if sources.is_empty() {
         return Ok(());
     }
@@ -658,12 +701,16 @@ fn append_source_mesh(
             scene_name(
                 &package.package_id,
                 &source.member_id,
-                &format!("placed-{ordinal:04}"),
+                &role_marked_suffix(
+                    &format!("placed-{ordinal:04}"),
+                    source,
+                    true,
+                ),
             )?,
         )?;
         content
             .meshes
-            .push(placed);
+            .extend(split_distant_islands(placed)?);
         increment_package_count(
             &mut content.packages,
             package_index,
@@ -693,7 +740,11 @@ fn append_direct_or_omit(
             scene_name(
                 &package.package_id,
                 &source.member_id,
-                "review-definition",
+                &role_marked_suffix(
+                    "review-definition",
+                    source,
+                    false,
+                ),
             )?,
         )?;
         let profile = shape_profile(&mesh)?;
@@ -726,12 +777,14 @@ fn append_direct_or_omit(
         scene_name(
             &package.package_id,
             &source.member_id,
-            suffix,
+            &role_marked_suffix(
+                suffix, source, false,
+            ),
         )?,
     )?;
     content
         .meshes
-        .push(mesh);
+        .extend(split_distant_islands(mesh)?);
     increment_package_count(
         &mut content.packages,
         package_index,
@@ -1121,6 +1174,70 @@ const fn square_columns(groups: usize) -> usize {
         columns = columns.saturating_add(1);
     }
     columns
+}
+
+/// Count overlapping independently selectable and interaction geometry groups.
+fn world_object_semantic_counts(
+    meshes: &[MeshAsset]
+) -> (
+    usize,
+    usize,
+    usize,
+) {
+    let mut independent = 0_usize;
+    let mut breakable = 0_usize;
+    let mut interactable = 0_usize;
+    for mesh in meshes {
+        let geometries = mesh
+            .groups
+            .len();
+        if mesh
+            .name
+            .contains("__independent-item")
+            || mesh
+                .name
+                .contains("__independent-object")
+        {
+            independent = independent.saturating_add(geometries);
+        }
+        if mesh
+            .name
+            .contains("__breakable")
+        {
+            breakable = breakable.saturating_add(geometries);
+        }
+        if mesh
+            .name
+            .contains("__interactable")
+        {
+            interactable = interactable.saturating_add(geometries);
+        }
+    }
+    (
+        independent,
+        breakable,
+        interactable,
+    )
+}
+
+/// Add one source-backed interaction marker to a scene-name suffix.
+fn role_marked_suffix(
+    base: &str,
+    source: &LevelMeshSource,
+    independent_placement: bool,
+) -> String {
+    object_role(source)
+        .suffix()
+        .map_or_else(
+            || {
+                if independent_placement {
+                    format!("{base}__independent-item")
+                } else {
+                    base.to_owned()
+                }
+            },
+            |role| format!("{base}__{role}"),
+        )
 }
 
 /// Build one unique portable mesh identity for the final master scene.

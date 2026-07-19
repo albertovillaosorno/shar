@@ -83,6 +83,39 @@ pub(super) fn counts(
                 },
             )
             .count(),
+        normal_world_fbx_files: packages
+            .iter()
+            .filter(
+                |package| {
+                    package.normal_import
+                        && package
+                            .world_fbx
+                            .is_some()
+                },
+            )
+            .count(),
+        auxiliary_world_fbx_files: packages
+            .iter()
+            .filter(
+                |package| {
+                    !package.normal_import
+                        && package
+                            .world_fbx
+                            .is_some()
+                },
+            )
+            .count(),
+        narrative_map_groups: packages
+            .iter()
+            .filter_map(
+                |package| {
+                    package
+                        .map_group
+                        .as_deref()
+                },
+            )
+            .collect::<BTreeSet<_>>()
+            .len(),
         review_fbx_files: packages
             .iter()
             .filter(
@@ -154,17 +187,29 @@ pub(super) fn counts(
             packages,
             |package| package.review_definitions,
         ),
+        independent_item_geometries: sum(
+            packages,
+            |package| package.independent_item_geometries,
+        ),
+        breakable_geometries: sum(
+            packages,
+            |package| package.breakable_geometries,
+        ),
+        interactable_geometries: sum(
+            packages,
+            |package| package.interactable_geometries,
+        ),
         review_similarity_groups: sum(
             packages,
             |package| package.review_similarity_groups,
         ),
-        collision_meshes: sum(
+        excluded_collision_meshes: sum(
             packages,
-            |package| package.collision_meshes,
+            |package| package.excluded_collision_meshes,
         ),
-        reference_collision_meshes: sum(
+        reference_excluded_collision_meshes: sum(
             packages,
-            |package| package.reference_collision_meshes,
+            |package| package.reference_excluded_collision_meshes,
         ),
         discarded_collision_triangles: sum(
             packages,
@@ -193,41 +238,74 @@ pub(super) fn write_catalogs(
     )
 }
 
-/// Render the complete WIP collection catalog.
+/// Render the complete separated world collection catalog.
 fn catalog_value(
     counts: WorldCollectionCounts,
     collection: &ExportedWorldCollection,
 ) -> Value {
     json!({
-        "schema": "shar.world-package-collection.v1",
-        "status": "wip-inspection-checkpoint",
+        "schema": "shar.world-package-collection.v2",
+        "status": "complete-separated-baseline",
         "boundary": {
             "canonical_model_authority": concat!(
-                "topology, materials, UVs, colors, identities, textures, ",
-                "and collision indices come from original game P3D packages"
+                "topology, materials, UVs, colors, identities, and textures ",
+                "come from original game P3D packages"
+            ),
+            "collision_exclusion": concat!(
+                "source collision indices are counted for audit but no ",
+                "collision geometry or collision material enters any FBX"
             ),
             "private_coordinate_reference": concat!(
                 "an operator-supplied untracked package set may contribute ",
                 "only scene matrices and topology-verified coordinates"
             ),
-            "shared_origin": [0.0_f64, 0.0_f64, 0.0_f64],
-            "root_import_contract": concat!(
-                "every FBX directly below this directory has baked global ",
-                "coordinates and an identity object transform"
+            "three_map_layout": concat!(
+                "levels 1, 4, and 7 share map-01-04-07; levels 2 and 5 share ",
+                "map-02-05; levels 3 and 6 share map-03-06; independent map ",
+                "bounds must remain disjoint"
             ),
-            "variant_isolation": concat!(
-                "bonus, day, night, Halloween, and level variants remain ",
-                "independent files and are never merged into one scene"
+            "root_import_contract": concat!(
+                "only narrative-level FBXs live at the root; coordinates and ",
+                "map-group separation are baked, so no per-file offset is added"
+            ),
+            "auxiliary_isolation": concat!(
+                "bonus-area FBXs live below auxiliary/ and are excluded from ",
+                "the normal three-map bulk import"
             ),
             "review_isolation": concat!(
-                "definition-only galleries live below review/ and must not be ",
-                "included in the normal root-FBX bulk import"
+                "definition-only galleries live below review/ and ",
+                "are excluded from normal and auxiliary world imports"
+            ),
+            "interior_uv_policy": concat!(
+                "interior packages preserve authored U coordinates; selective ",
+                "orientation correction applies only to non-interior graphics"
+            ),
+            "object_semantics": concat!(
+                "source-backed breakable and interactable owners plus ",
+                "spatially separated items remain selectable Blender objects"
             ),
             "manual_authoring": concat!(
-                "this collection is an inspection and manual reconstruction ",
-                "baseline, not a finished runtime world"
+                "this collection is the deterministic source baseline; manual ",
+                "interior and door authoring remains a later design input"
             )
         },
+        "map_groups": [
+            {
+                "id": "map-01-04-07",
+                "levels": [1, 4, 7],
+                "baked_offset": [0, 0, 0]
+            },
+            {
+                "id": "map-02-05",
+                "levels": [2, 5],
+                "baked_offset": [8192, 0, 0]
+            },
+            {
+                "id": "map-03-06",
+                "levels": [3, 6],
+                "baked_offset": [16384, 0, 0]
+            }
+        ],
         "counts": counts_value(counts),
         "surface_semantics": semantics_value(collection.surface_semantics),
         "textures": collection.textures.iter().map(
@@ -247,45 +325,75 @@ fn catalog_value(
 
 /// Render the root-FBX identity transform manifest.
 fn transforms_value(collection: &ExportedWorldCollection) -> Value {
+    let normal_files = transform_files(
+        collection, true,
+    );
+    let auxiliary_files = transform_files(
+        collection, false,
+    );
     json!({
-        "schema": "shar.world-package-transforms.v2",
+        "schema": "shar.world-package-transforms.v3",
         "shared_origin": [0.0_f64, 0.0_f64, 0.0_f64],
-        "import": concat!(
-            "select only the root *.fbx files; add no per-file placement ",
-            "offsets; preserve the importer-created SHAR_Export_Root axis ",
-            "conversion transform"
+        "normal_import": concat!(
+            "import only root *.fbx files; add no per-file placement offsets; ",
+            "preserve each importer-created SHAR_Export_Root axis conversion"
+        ),
+        "auxiliary_import": concat!(
+            "files below auxiliary/ are optional bonus-area evidence and are ",
+            "not part of the three narrative map groups"
         ),
         "authored_root": {
             "name": "SHAR_Export_Root",
             "preserve_imported_transform": true
         },
-        "files": collection
-            .packages
-            .iter()
-            .filter_map(
-                |package| {
-                    package.world_fbx.as_ref().map(
-                        |artifact| json!({
-                            "path": artifact.path,
-                            "scope": package.scope,
-                            "package_id": package.package_id,
-                            "subcategory": package.subcategory,
-                            "interior": package.interior,
-                            "coordinates_baked": true,
-                            "additional_translation": [
-                                0.0_f64, 0.0_f64, 0.0_f64
-                            ],
-                            "additional_rotation_degrees": [
-                                0.0_f64, 0.0_f64, 0.0_f64
-                            ],
-                            "additional_scale": [
-                                1.0_f64, 1.0_f64, 1.0_f64
-                            ]
-                        }),
+        "files": normal_files,
+        "auxiliary_files": auxiliary_files
+    })
+}
+
+/// Render one normal or auxiliary transform-manifest file list.
+fn transform_files(
+    collection: &ExportedWorldCollection,
+    normal_import: bool,
+) -> Vec<Value> {
+    collection
+        .packages
+        .iter()
+        .filter(|package| package.normal_import == normal_import)
+        .filter_map(
+            |package| {
+                package
+                    .world_fbx
+                    .as_ref()
+                    .map(
+                        |artifact| {
+                            transform_file_value(
+                                package, artifact,
+                            )
+                        },
                     )
-                },
-            )
-            .collect::<Vec<_>>()
+            },
+        )
+        .collect()
+}
+
+/// Render one world FBX import-transform record.
+fn transform_file_value(
+    package: &WorldPackageRecord,
+    artifact: &WorldFbxRecord,
+) -> Value {
+    json!({
+        "path": artifact.path,
+        "scope": package.scope,
+        "package_id": package.package_id,
+        "subcategory": package.subcategory,
+        "interior": package.interior,
+        "map_group": package.map_group,
+        "baked_map_offset": package.map_offset,
+        "coordinates_baked": true,
+        "additional_translation": [0.0_f64, 0.0_f64, 0.0_f64],
+        "additional_rotation_degrees": [0.0_f64, 0.0_f64, 0.0_f64],
+        "additional_scale": [1.0_f64, 1.0_f64, 1.0_f64]
     })
 }
 
@@ -302,10 +410,14 @@ fn sum(
 
 /// Render aggregate counts to stable JSON keys.
 fn counts_value(counts: WorldCollectionCounts) -> Value {
+    let reference_excluded = counts.reference_excluded_collision_meshes;
     json!({
         "source_scopes": counts.source_scopes,
         "source_packages": counts.source_packages,
         "world_fbx_files": counts.world_fbx_files,
+        "normal_world_fbx_files": counts.normal_world_fbx_files,
+        "auxiliary_world_fbx_files": counts.auxiliary_world_fbx_files,
+        "narrative_map_groups": counts.narrative_map_groups,
         "review_fbx_files": counts.review_fbx_files,
         "packages_without_geometry": counts.packages_without_geometry,
         "coordinate_reference_packages": counts.coordinate_reference_packages,
@@ -320,21 +432,28 @@ fn counts_value(counts: WorldCollectionCounts) -> Value {
         "reference_coordinate_meshes": counts.reference_coordinate_meshes,
         "canonical_coordinate_meshes": counts.canonical_coordinate_meshes,
         "review_definitions": counts.review_definitions,
+        "independent_item_geometries": counts.independent_item_geometries,
+        "breakable_geometries": counts.breakable_geometries,
+        "interactable_geometries": counts.interactable_geometries,
         "review_similarity_groups": counts.review_similarity_groups,
-        "collision_meshes": counts.collision_meshes,
-        "reference_collision_meshes": counts.reference_collision_meshes,
+        "excluded_collision_meshes": counts.excluded_collision_meshes,
+        "reference_excluded_collision_meshes": reference_excluded,
         "discarded_collision_triangles": counts.discarded_collision_triangles
     })
 }
 
 /// Render one package plus its normal-import and isolated-review artifacts.
 fn package_value(package: &WorldPackageRecord) -> Value {
+    let reference_excluded = package.reference_excluded_collision_meshes;
     json!({
         "scope": package.scope,
         "package_id": package.package_id,
         "subcategory": package.subcategory,
         "coordinate_reference": package.coordinate_reference,
         "interior": package.interior,
+        "map_group": package.map_group,
+        "map_offset": package.map_offset,
+        "normal_import": package.normal_import,
         "source_meshes": package.source_meshes,
         "discarded_degenerate_triangles": package
             .discarded_degenerate_triangles,
@@ -344,9 +463,12 @@ fn package_value(package: &WorldPackageRecord) -> Value {
         "reference_coordinate_meshes": package.reference_coordinate_meshes,
         "canonical_coordinate_meshes": package.canonical_coordinate_meshes,
         "review_definitions": package.review_definitions,
+        "independent_item_geometries": package.independent_item_geometries,
+        "breakable_geometries": package.breakable_geometries,
+        "interactable_geometries": package.interactable_geometries,
         "review_similarity_groups": package.review_similarity_groups,
-        "collision_meshes": package.collision_meshes,
-        "reference_collision_meshes": package.reference_collision_meshes,
+        "excluded_collision_meshes": package.excluded_collision_meshes,
+        "reference_excluded_collision_meshes": reference_excluded,
         "discarded_collision_triangles": package.discarded_collision_triangles,
         "world_fbx": package.world_fbx.as_ref().map(artifact_value),
         "review_fbx": package.review_fbx.as_ref().map(artifact_value)

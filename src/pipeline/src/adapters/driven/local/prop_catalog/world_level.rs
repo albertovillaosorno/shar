@@ -55,6 +55,8 @@ mod collision;
 mod coordinate;
 mod export;
 mod inventory;
+mod islands;
+mod layout;
 mod model;
 mod scenegraph;
 mod transform;
@@ -113,21 +115,23 @@ pub(in crate::adapters::driven::local) fn export_world_master(
                     bytes,
                     note: format!(
                         concat!(
-                            "published {} globally aligned world FBX files ",
-                            "and {} isolated review FBX files from {} \
-                             packages ",
-                            "across {} independent scopes; {} interiors, {} ",
-                            "bonus-area packages, {} authored placements, and ",
-                            "{} collision meshes"
+                            "published {} normal FBX files across {} disjoint ",
+                            "narrative maps, {} auxiliary bonus FBX files, \
+                             and ",
+                            "{} isolated review FBX files from {} packages; \
+                             {} ",
+                            "interiors, {} authored placements, and {} \
+                             excluded ",
+                            "collision meshes"
                         ),
-                        counts.world_fbx_files,
+                        counts.normal_world_fbx_files,
+                        counts.narrative_map_groups,
+                        counts.auxiliary_world_fbx_files,
                         counts.review_fbx_files,
                         counts.source_packages,
-                        counts.source_scopes,
                         counts.interior_packages,
-                        counts.bonus_area_packages,
                         counts.authored_placements,
-                        counts.collision_meshes,
+                        counts.excluded_collision_meshes,
                     ),
                 },
             )

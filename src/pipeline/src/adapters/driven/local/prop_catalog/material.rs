@@ -52,8 +52,12 @@ use std::path::Path;
 use fbx::adapters::driven::decoded_component_source::{
     DecodedComponentError, DecodedComponentSource,
 };
+use fbx::adapters::driven::semantic_texture_png::{
+    decode_png_bytes, encode_png_bytes,
+};
 use fbx::domain::character::CharacterAsset;
 use fbx::domain::mesh::MeshAsset;
+use fbx::domain::texture::semantic::{Rgba8, RgbaImage};
 use fbx::domain::texture::{MaterialBinding, MaterialSemantics};
 use fbx::ports::component_source::ComponentSource as _;
 use shar_sha256::digest_hex;
@@ -473,15 +477,21 @@ fn resolve_materials(
         let (canonical_material, canonical_texture) =
             match binding.texture_file_name {
                 Some(source_name) => {
-                    let bytes = fs::read(scratch.join(&source_name)).map_err(
-                        |error| {
-                            PipelineError::new(
-                                format!(
-                                    "prop staged texture read failed for \
-                                     {source_name}: {error}"
-                                ),
-                            )
-                        },
+                    let source_bytes = fs::read(scratch.join(&source_name))
+                        .map_err(
+                            |error| {
+                                PipelineError::new(
+                                    format!(
+                                        "prop staged texture read failed for \
+                                         {source_name}: {error}"
+                                    ),
+                                )
+                            },
+                        )?;
+                    let bytes = corrected_texture_bytes(
+                        &shader,
+                        &source_name,
+                        source_bytes,
                     )?;
                     let digest = digest_hex(&bytes);
                     let file_name = format!("texture-{digest}.png");
@@ -543,6 +553,57 @@ fn resolve_materials(
     )
 }
 
+/// Apply one exact world-texture repair before content hashing.
+fn corrected_texture_bytes(
+    shader: &str,
+    source_name: &str,
+    bytes: Vec<u8>,
+) -> Result<Vec<u8>, PipelineError> {
+    if !shader.eq_ignore_ascii_case("lard_lad_m__")
+        || !source_name.eq_ignore_ascii_case("lard_lad.png")
+    {
+        return Ok(bytes);
+    }
+    let source = decode_png_bytes(&bytes).map_err(
+        |error| {
+            PipelineError::new(
+                format!("Lard Lad texture decode failed: {error:?}"),
+            )
+        },
+    )?;
+    let pixels = source
+        .pixels()
+        .iter()
+        .map(
+            |pixel| {
+                Rgba8::new(
+                    u8::MAX.saturating_sub(pixel.red),
+                    u8::MAX.saturating_sub(pixel.green),
+                    u8::MAX.saturating_sub(pixel.blue),
+                    pixel.alpha,
+                )
+            },
+        )
+        .collect();
+    let corrected = RgbaImage::new(
+        source.width(),
+        source.height(),
+        pixels,
+    )
+    .map_err(
+        |error| {
+            PipelineError::new(
+                format!("Lard Lad texture correction failed: {error:?}"),
+            )
+        },
+    )?;
+    encode_png_bytes(&corrected).map_err(
+        |error| {
+            PipelineError::new(format!("Lard Lad PNG encode failed: {error:?}"))
+        },
+    )
+}
+
 /// Build one content-derived material identity without merging semantic
 /// classes.
 fn canonical_material_identity(
@@ -563,10 +624,15 @@ fn canonical_material_identity(
 
 #[cfg(test)]
 mod tests {
+    use fbx::adapters::driven::semantic_texture_png::{
+        decode_png_bytes, encode_png_bytes,
+    };
     use fbx::domain::texture::MaterialSemantics;
+    use fbx::domain::texture::semantic::{Rgba8, RgbaImage};
 
     use super::{
-        canonical_material_identity, is_world_analysis_default_shader,
+        canonical_material_identity, corrected_texture_bytes,
+        is_world_analysis_default_shader,
     };
 
     #[test]
@@ -614,5 +680,62 @@ mod tests {
             glass,
             emitter
         );
+    }
+
+    #[test]
+    fn lard_lad_texture_is_complemented_without_changing_alpha()
+    -> Result<(), String> {
+        let source = RgbaImage::new(
+            1,
+            1,
+            vec![
+                Rgba8::new(
+                    10, 20, 30, 40,
+                ),
+            ],
+        )
+        .map_err(|error| format!("source image failed: {error:?}"))?;
+        let encoded = encode_png_bytes(&source)
+            .map_err(|error| format!("source PNG failed: {error:?}"))?;
+        let corrected = corrected_texture_bytes(
+            "lard_lad_m__",
+            "lard_lad.png",
+            encoded,
+        )
+        .map_err(|error| error.to_string())?;
+        let decoded = decode_png_bytes(&corrected)
+            .map_err(|error| format!("corrected PNG failed: {error:?}"))?;
+        let expected = [
+            Rgba8::new(
+                245, 235, 225, 40,
+            ),
+        ];
+        if decoded.pixels() != expected {
+            return Err(
+                format!(
+                    "unexpected corrected Lard Lad pixel: {:?}",
+                    decoded.pixels()
+                ),
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn texture_complement_recipe_is_exact_identity_only() -> Result<(), String>
+    {
+        let bytes = vec![
+            1_u8, 2, 3,
+        ];
+        let unchanged = corrected_texture_bytes(
+            "other_m",
+            "lard_lad.png",
+            bytes.clone(),
+        )
+        .map_err(|error| error.to_string())?;
+        if unchanged != bytes {
+            return Err("nonmatching texture bytes changed".to_owned());
+        }
+        Ok(())
     }
 }

@@ -52,6 +52,8 @@ mod binary_character_input;
 pub mod binary_character_writer;
 /// Typed FBX 7.7 binary container encoder.
 mod binary_fbx;
+/// Create-new binary FBX filesystem persistence adapter.
+mod binary_fbx_storage;
 /// Deterministic object identity inside one binary FBX document.
 mod binary_identity;
 /// Conservative horizontal UV correction policy.

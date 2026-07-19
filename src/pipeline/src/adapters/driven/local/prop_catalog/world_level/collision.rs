@@ -53,7 +53,7 @@ pub(super) const COLLISION_MATERIAL: &str = "material-collision";
 
 /// One package's collision surfaces and sanitation accounting.
 pub(super) struct CollisionBatch {
-    /// Canonical collision meshes prepared for FBX publication.
+    /// Canonical collision meshes decoded only for exclusion audit counts.
     pub(super) meshes: Vec<MeshAsset>,
     /// Meshes using topology-verified coordinate-reference positions.
     pub(super) reference_coordinate_meshes: usize,

@@ -67,6 +67,12 @@ pub(super) struct WorldPackageRecord {
     pub(super) coordinate_reference: bool,
     /// Whether this package belongs to an interior world scope.
     pub(super) interior: bool,
+    /// Stable narrative map identity, absent for auxiliary bonus areas.
+    pub(super) map_group: Option<String>,
+    /// Baked source-space map translation in whole source units.
+    pub(super) map_offset: [i16; 3],
+    /// Whether this artifact belongs in the normal root-FBX import set.
+    pub(super) normal_import: bool,
     /// Number of canonical source meshes considered.
     pub(super) source_meshes: usize,
     /// Number of rejected degenerate render triangles.
@@ -83,12 +89,18 @@ pub(super) struct WorldPackageRecord {
     pub(super) canonical_coordinate_meshes: usize,
     /// Number of definition-only meshes isolated for review.
     pub(super) review_definitions: usize,
+    /// Number of independently selectable geometry groups.
+    pub(super) independent_item_geometries: usize,
+    /// Number of source-backed breakable geometry groups.
+    pub(super) breakable_geometries: usize,
+    /// Number of source-backed interactable geometry groups.
+    pub(super) interactable_geometries: usize,
     /// Number of deterministic review similarity groups.
     pub(super) review_similarity_groups: usize,
-    /// Number of exported collision meshes.
-    pub(super) collision_meshes: usize,
-    /// Number of collision meshes using verified coordinates.
-    pub(super) reference_collision_meshes: usize,
+    /// Number of source collision meshes excluded from FBX publication.
+    pub(super) excluded_collision_meshes: usize,
+    /// Number of excluded collision meshes with verified coordinates.
+    pub(super) reference_excluded_collision_meshes: usize,
     /// Number of rejected degenerate collision triangles.
     pub(super) discarded_collision_triangles: usize,
     /// Optional independently importable world-geometry artifact.
@@ -189,8 +201,15 @@ pub(super) struct WorldCollectionCounts {
     pub(super) source_scopes: usize,
     /// Number of normalized source packages.
     pub(super) source_packages: usize,
-    /// Number of world-geometry FBX artifacts.
+    /// Number of world-geometry FBX artifacts across normal and auxiliary
+    /// sets.
     pub(super) world_fbx_files: usize,
+    /// Number of root FBXs in the normal three-map import set.
+    pub(super) normal_world_fbx_files: usize,
+    /// Number of auxiliary FBXs excluded from normal import.
+    pub(super) auxiliary_world_fbx_files: usize,
+    /// Number of disjoint narrative map groups.
+    pub(super) narrative_map_groups: usize,
     /// Number of review-gallery FBX artifacts.
     pub(super) review_fbx_files: usize,
     /// Number of packages without publishable geometry.
@@ -219,12 +238,18 @@ pub(super) struct WorldCollectionCounts {
     pub(super) canonical_coordinate_meshes: usize,
     /// Number of definition-only meshes isolated for review.
     pub(super) review_definitions: usize,
+    /// Number of independently selectable geometry groups.
+    pub(super) independent_item_geometries: usize,
+    /// Number of source-backed breakable geometry groups.
+    pub(super) breakable_geometries: usize,
+    /// Number of source-backed interactable geometry groups.
+    pub(super) interactable_geometries: usize,
     /// Number of deterministic review similarity groups.
     pub(super) review_similarity_groups: usize,
-    /// Number of exported collision meshes.
-    pub(super) collision_meshes: usize,
-    /// Number of collision meshes using verified coordinates.
-    pub(super) reference_collision_meshes: usize,
+    /// Number of source collision meshes excluded from FBX publication.
+    pub(super) excluded_collision_meshes: usize,
+    /// Number of excluded collision meshes with verified coordinates.
+    pub(super) reference_excluded_collision_meshes: usize,
     /// Number of rejected degenerate collision triangles.
     pub(super) discarded_collision_triangles: usize,
 }

@@ -382,6 +382,17 @@ fn visual_effect_evidence(evidence: &str) -> bool {
 
 /// Return whether identity evidence names an emissive or luminous surface.
 fn light_emitter_evidence(evidence: &str) -> bool {
+    if contains_any(
+        evidence,
+        &[
+            "dontlight",
+            "do-not-light",
+            "relight",
+            "lighthouse",
+        ],
+    ) {
+        return false;
+    }
     contains_any(
         evidence,
         &[
@@ -396,6 +407,17 @@ fn light_emitter_evidence(evidence: &str) -> bool {
             "lights",
             "lightbar",
             "light-bar",
+            "parkinglight",
+            "parking-light",
+            "globelight",
+            "globe-light",
+            "streetlight",
+            "street-light",
+            "trafficlight",
+            "traffic-light",
+            "lightshape",
+            "light-shape",
+            "light_shape",
             "siren",
             "lamp",
             "bulb",
