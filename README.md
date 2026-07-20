@@ -688,33 +688,30 @@ The optional coordinate-evidence root is local comparison authority only. It is
 never copied into the publication, named in public catalog paths, or treated as
 model, topology, material, texture, or identity authority.
 
-A one-time local Blender geometry-analysis workspace may be generated at
+A one-time local world-overlay audit may be generated at
 `fbx-assets/world/world.blend` with an ignored
-`world.analysis-provenance.json` sidecar. Neither file is generation, validation,
-acceptance, publication, runtime, or production authority. The main workspace
-contains exactly three connected geometry-only meshes for the unique base world
-families represented by canonical Levels 1, 2, and 3. Repeated Levels 4-7 world
-variants, interiors, race props, mission doors, auxiliary bonus segments, manual
-references, review galleries, materials, and textures remain outside this main
-editing file so Blender stays responsive.
+`world.overlay-catalog.json` sidecar and ignored FBXs under
+`fbx-assets/world/audit/`. These files are visual-review aids only; they are never
+generation, validation, acceptance, publication, runtime, editing, or production
+authority.
 
-Each canonical map joins its source zones and regions into one mesh and places the
-three maps close together with one reversible map-level layout offset. Individual
-packages are not scattered. Point- and face-domain `shar_*` attributes preserve
-source package, object, vertex, and polygon identities, while
-`shar_original_position` preserves the pre-layout source-world coordinate. The
-sidecar maps those identifiers to source FBXs and original object names. In Edit
-Mode, the operator may hover over a disconnected component and press `L` to select
-it before deleting, reshaping, moving, separating, or adding geometry.
+The audit compares the recurring world families `1/4/7`, `2/5`, and `3/6` at
+their original designed coordinates. For each family, the exact-coordinate
+multiset intersection of zone and region objects becomes a common family FBX
+under `audit/general/`. Geometry not present in every family member is emitted
+only under `audit/variations/` for the level that owns it. The combined
+`world-general-common.fbx` and `world.blend` fuse only the three common family
+baselines; no level variation is included in the `.blend`.
 
-After the single authoring pass, the edited maps are compared with the user's
-lawful original FBXs, the three recorded layout offsets are normalized away, and
-the differences are encoded as deterministic source-dependent mathematical rules.
-Those rules must not embed standalone proprietary model data or reconstruct it
-without the lawful source packages. After the algorithms are implemented and
-verified, the `.blend` and every disposable analysis sidecar must be deleted
-completely; they must never become recurring pipeline deliverables or substitutes
-for the first-principles separated-world generator.
+Interiors follow the same exact-coordinate common-versus-variation split by
+interior identifier under `audit/interiors/`. Translation-normalized similarity
+is recorded for diagnosis but never moves emitted geometry, and empty variation
+files are omitted. The operator reviews `world.blend` only to report missing,
+misplaced, overlapping, or otherwise incorrect world assembly. After that audit
+converges, manual edits happen on the original separated FBXs, whose source
+coordinates remain unchanged. The audit `.blend`, derived FBXs, and sidecars are
+then deleted completely and must never replace the first-principles separated
+world outputs.
 
 Phase 4 exports only packages with actual model geometry. Camera-only,
 controller-only, attribute-only, and gameplay-only packages remain normalized
