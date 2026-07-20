@@ -20,6 +20,16 @@
 			"LoadingPhase": "Default"
 		},
 		{
+			"Name": "SharVehicles",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "SharWorld",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
 			"Name": "SharMissions",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"

@@ -1,15 +1,15 @@
-// File: SharMissions.Build.cs
-// Path: src/uproject/Source/SharMissions/SharMissions.Build.cs
+// File: SharVehicles.Build.cs
+// Path: src/uproject/Source/SharVehicles/SharVehicles.Build.cs
 // Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier: MIT
-// Boundary: mission, progression, and save dependencies only; no sideways implementation dependencies.
+// Boundary: vehicle definition and runtime-state dependencies only.
 // ADR: docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
 
 using UnrealBuildTool;
 
-public class SharMissions : ModuleRules
+public class SharVehicles : ModuleRules
 {
-    public SharMissions(ReadOnlyTargetRules target) : base(target)
+    public SharVehicles(ReadOnlyTargetRules target) : base(target)
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
         PublicDependencyModuleNames.AddRange(
@@ -18,7 +18,6 @@ public class SharMissions : ModuleRules
                 "Core",
                 "CoreUObject",
                 "Engine",
-                "GameplayTags",
                 "SharContent",
             }
         );

@@ -28,6 +28,7 @@ Examples:
 | Family | Primary Asset type | Object name |
 | :--- | :--- | :--- |
 | Gameplay catalog | `SharCatalog` | `DA_SHAR_GameplayCatalog` |
+| Platform profile | `SharPlatformProfile` | `DA_PlatformProfile_<id>` |
 | Character | `SharCharacter` | `DA_Character_<id>` |
 | Character presentation | `SharCharacterPresentation` | `DA_CharacterPresentation_<id>_<variant>` |
 | Rig profile | `SharRigProfile` | `DA_Rig_<id>` |

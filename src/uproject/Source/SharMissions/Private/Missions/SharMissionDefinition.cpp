@@ -10,6 +10,7 @@
 #include "Algo/AnyOf.h"
 #include "Content/SharPrimaryContentDefinition.h"
 #include "Engine/DataAsset.h"
+#include "Progression/SharProgressionState.h"
 
 static void AddMissionError(
     TArray<FText>& OutErrors,
@@ -305,19 +306,7 @@ bool USharMissionDefinition::IsSupportedRewardOperation(
     const FName& OperationKind
 )
 {
-    const TArray<FName> SupportedOperations = {
-        FName(TEXT("grant_currency")),
-        FName(TEXT("unlock_character")),
-        FName(TEXT("unlock_vehicle")),
-        FName(TEXT("unlock_costume")),
-        FName(TEXT("unlock_ability")),
-        FName(TEXT("unlock_world_region")),
-        FName(TEXT("unlock_activity")),
-        FName(TEXT("grant_collectible")),
-        FName(TEXT("set_progression_flag")),
-        FName(TEXT("grant_achievement_progress")),
-    };
-    return ContainsName(SupportedOperations, OperationKind);
+    return USharProgressionState::IsSupportedOperation(OperationKind);
 }
 
 void USharMissionDefinition::GatherValidationErrors(

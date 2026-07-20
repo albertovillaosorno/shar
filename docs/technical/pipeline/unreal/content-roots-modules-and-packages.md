@@ -15,6 +15,7 @@ test roots are never referenced by shipping base definitions.
 /Game/SHAR
 ├── Data
 │   ├── Catalog
+│   ├── PlatformProfiles/<profile_id>
 │   ├── Characters/<character_id>
 │   ├── Characters/AnimationLibraries
 │   ├── Vehicles/<vehicle_id>
@@ -71,6 +72,7 @@ folders.
 
 <!-- markdownlint-disable MD013 -->
 ```text
+/Game/SHAR/Data/PlatformProfiles/DA_PlatformProfile_windows_x8664
 /Game/SHAR/Data/Characters/homer/DA_Character_homer
 /Game/SHAR/Data/Characters/homer/DA_CharacterPresentation_homer_default
 /Game/SHAR/Art/Characters/homer/Meshes/SK_Character_homer_default

@@ -29,7 +29,7 @@ bool FSharStartupFlowTest::RunTest(const FString& Parameters)
     (void)Parameters;
     auto* GameInstance = NewObject<USharGameInstance>();
     const FPrimaryAssetId ExperienceId(
-        FPrimaryAssetType(TEXT("SharExperience")),
+        FPrimaryAssetType(TEXT("SharGameMode")),
         FName(TEXT("open_world_campaign"))
     );
 
