@@ -1,9 +1,9 @@
-// File: SharProgressionTests.cpp
-// Path: src/uproject/Source/SharMissions/Private/Tests/SharProgressionTests.cpp
+// File: SharProgressionStateTests.cpp
+// Path: src/uproject/Source/SharProgression/Private/Tests/SharProgressionStateTests.cpp
 // Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier: MIT
 // Boundary: transient progression and idempotent reward tests only.
-// ADR: docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
+// Specification: docs/technical/unreal/progression-collectibles-and-cheats.md
 
 #if WITH_DEV_AUTOMATION_TESTS
 
@@ -18,7 +18,7 @@ namespace
 {
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FSharProgressionIdempotencyTest,
-    "SHAR.Missions.Progression.Idempotency",
+    "SHAR.Progression.State.Idempotency",
     EAutomationTestFlags::EditorContext
         | EAutomationTestFlags::ClientContext
         | EAutomationTestFlags::CommandletContext

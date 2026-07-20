@@ -1,12 +1,12 @@
 // File: SharProgressionState.cpp
-// Path: src/uproject/Source/SharMissions/Private/Progression/SharProgressionState.cpp
+// Path: src/uproject/Source/SharProgression/Private/Progression/SharProgressionState.cpp
 // Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier: MIT
 // Boundary: deterministic idempotent progression mutation; no save serialization or gameplay side effects.
-// ADR: docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
-// LARGE-FILE owner=SharMissions; reason=cohesive idempotent progression behavior;
+// Specification: docs/technical/unreal/progression-collectibles-and-cheats.md
+// LARGE-FILE owner=SharProgression; reason=cohesive idempotent progression behavior;
 // split=extract operation registry if reward families become independently extensible;
-// validation=validate.sh SharMissions plus Unreal automation; review=2027-01.
+// validation=validate.sh SharProgression plus Unreal automation; review=2027-01.
 
 #include "Progression/SharProgressionState.h"
 
@@ -21,6 +21,85 @@ static bool NamesMatch(
 )
 {
     return Value.OperationId == OperationId && Value.TargetId == TargetId;
+}
+
+static bool IsValidSnapshotValue(const FSharProgressionValue& Value)
+{
+    return USharPrimaryContentDefinition::IsCanonicalIdentifier(
+        Value.OperationId
+    )
+        && USharPrimaryContentDefinition::IsCanonicalIdentifier(Value.TargetId)
+        && USharProgressionState::IsSupportedOperation(Value.OperationId)
+        && Value.Quantity > 0;
+}
+
+static bool HasDuplicateSnapshotValues(
+    const TArray<FSharProgressionValue>& Values
+)
+{
+    return Algo::AnyOf(
+        Values,
+        [&Values](const FSharProgressionValue& Candidate)
+        {
+            int32 MatchCount = 0;
+            for (const FSharProgressionValue& Value : Values)
+            {
+                MatchCount += NamesMatch(
+                    Value,
+                    Candidate.OperationId,
+                    Candidate.TargetId
+                )
+                    ? 1
+                    : 0;
+            }
+            return MatchCount > 1;
+        }
+    );
+}
+
+static bool HasInvalidOrDuplicateTransactionIds(
+    const TArray<FName>& TransactionIds
+)
+{
+    return Algo::AnyOf(
+        TransactionIds,
+        [&TransactionIds](const FName& Candidate)
+        {
+            if (!USharPrimaryContentDefinition::IsCanonicalIdentifier(Candidate))
+            {
+                return true;
+            }
+            int32 MatchCount = 0;
+            for (const FName& TransactionId : TransactionIds)
+            {
+                MatchCount += TransactionId == Candidate ? 1 : 0;
+            }
+            return MatchCount > 1;
+        }
+    );
+}
+
+bool USharProgressionState::InitializeSnapshot(
+    const TArray<FSharProgressionValue>& InValues,
+    const TArray<FName>& InAppliedPermanentTransactions
+)
+{
+    const bool bInvalidValues = HasDuplicateSnapshotValues(InValues)
+        || Algo::AnyOf(
+            InValues,
+            [](const FSharProgressionValue& Value)
+            {
+                return !IsValidSnapshotValue(Value);
+            }
+        );
+    if (bInvalidValues
+        || HasInvalidOrDuplicateTransactionIds(InAppliedPermanentTransactions))
+    {
+        return false;
+    }
+    Values = InValues;
+    AppliedPermanentTransactions = InAppliedPermanentTransactions;
+    return true;
 }
 
 bool USharProgressionState::IsSupportedOperation(
@@ -48,7 +127,7 @@ bool USharProgressionState::IsSupportedOperation(
     );
 }
 
-bool USharProgressionState::IsSetOperation(const FName& OperationId)
+bool USharProgressionState::UsesSetSemantics(const FName& OperationId)
 {
     return OperationId == FName(TEXT("unlock_character"))
         || OperationId == FName(TEXT("unlock_vehicle"))
@@ -137,7 +216,7 @@ void USharProgressionState::ApplyRewardValue(
         Request.OperationId,
         Request.TargetId
     );
-    const bool bSetOperation = IsSetOperation(Request.OperationId);
+    const bool bSetOperation = UsesSetSemantics(Request.OperationId);
     const int32 AppliedQuantity = bSetOperation ? 1 : Request.Quantity;
     if (Value == nullptr)
     {

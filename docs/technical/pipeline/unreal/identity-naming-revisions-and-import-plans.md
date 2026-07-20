@@ -41,6 +41,7 @@ Examples:
 | Interaction | `SharInteraction` | `DA_Interaction_<id>` |
 | Application mode | `SharApplicationMode` | `DA_ApplicationMode_<id>` |
 | Save schema | `SharSaveSchema` | `DA_SaveSchema_<id>` |
+| Progression catalog | `SharProgressionCatalog` | `DA_ProgressionCatalog_<id>` |
 | Presentation | `SharPresentation` | `DA_Presentation_<id>` |
 | Location | `SharLocation` | `DA_Location_<id>` |
 | Mission | `SharMission` | `DA_Mission_<chapter>_<id>` |

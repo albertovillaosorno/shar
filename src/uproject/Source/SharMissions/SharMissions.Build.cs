@@ -2,7 +2,7 @@
 // Path: src/uproject/Source/SharMissions/SharMissions.Build.cs
 // Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier: MIT
-// Boundary: mission, progression, and save dependencies only; no sideways implementation dependencies.
+// Boundary: mission and save composition only; shared progression authority comes from SharProgression.
 // ADR: docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
 
 using UnrealBuildTool;
@@ -20,6 +20,7 @@ public class SharMissions : ModuleRules
                 "Engine",
                 "GameplayTags",
                 "SharContent",
+                "SharProgression",
             }
         );
     }

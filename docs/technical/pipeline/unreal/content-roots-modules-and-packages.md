@@ -27,6 +27,7 @@ test roots are never referenced by shipping base definitions.
 │   ├── Interactions/<interaction_id>
 │   ├── ApplicationModes/<mode_id>
 │   ├── SaveSchemas/<schema_id>
+│   ├── Progression/<catalog_id>
 │   ├── Presentations/<presentation_id>
 │   ├── Rewards/<reward_id>
 │   ├── Abilities/<ability_id>
@@ -94,6 +95,7 @@ folders.
 /Game/SHAR/Data/Interactions/enter_family_sedan/DA_Interaction_enter_family_sedan
 /Game/SHAR/Data/ApplicationModes/front_end/DA_ApplicationMode_front_end
 /Game/SHAR/Data/SaveSchemas/portable_v1/DA_SaveSchema_portable_v1
+/Game/SHAR/Data/Progression/base/DA_ProgressionCatalog_base
 /Game/SHAR/Data/Presentations/kwik_e_mart_intro/DA_Presentation_kwik_e_mart_intro
 /Game/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld
 ```

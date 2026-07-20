@@ -1,12 +1,12 @@
 // File: SharProgressionState.h
-// Path: src/uproject/Source/SharMissions/Public/Progression/SharProgressionState.h
+// Path: src/uproject/Source/SharProgression/Public/Progression/SharProgressionState.h
 // Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier: MIT
 // Boundary: idempotent reward application and compact progression values; no persistence I/O or mission execution.
-// ADR: docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
-// LARGE-FILE owner=SharMissions; reason=cohesive reflected progression contract;
+// Specification: docs/technical/unreal/progression-collectibles-and-cheats.md
+// LARGE-FILE owner=SharProgression; reason=cohesive reflected progression contract;
 // split=extract reward request types if another progression authority appears;
-// validation=validate.sh SharMissions plus Unreal automation; review=2027-01.
+// validation=validate.sh SharProgression plus Unreal automation; review=2027-01.
 
 #pragma once
 
@@ -24,7 +24,7 @@ enum class ESharRewardApplyResult : uint8
 };
 
 USTRUCT(BlueprintType)
-struct SHARMISSIONS_API FSharRewardRequest
+struct SHARPROGRESSION_API FSharRewardRequest
 {
     GENERATED_BODY()
 
@@ -45,7 +45,7 @@ struct SHARMISSIONS_API FSharRewardRequest
 };
 
 USTRUCT(BlueprintType)
-struct SHARMISSIONS_API FSharProgressionValue
+struct SHARPROGRESSION_API FSharProgressionValue
 {
     GENERATED_BODY()
 
@@ -60,11 +60,16 @@ struct SHARMISSIONS_API FSharProgressionValue
 };
 
 UCLASS(BlueprintType)
-class SHARMISSIONS_API USharProgressionState final : public UObject
+class SHARPROGRESSION_API USharProgressionState final : public UObject
 {
     GENERATED_BODY()
 
 public:
+    bool InitializeSnapshot(
+        const TArray<FSharProgressionValue>& InValues,
+        const TArray<FName>& InAppliedPermanentTransactions
+    );
+
     UFUNCTION(BlueprintCallable, Category = "SHAR|Progression")
     ESharRewardApplyResult ApplyReward(const FSharRewardRequest& Request);
 
@@ -89,6 +94,8 @@ public:
         const FName& OperationId
     );
 
+    [[nodiscard]] static bool UsesSetSemantics(const FName& OperationId);
+
 private:
     UPROPERTY(Transient)
     TArray<FSharProgressionValue> Values;
@@ -104,7 +111,6 @@ private:
         const FName& OperationId,
         const FName& TargetId
     ) const;
-    [[nodiscard]] static bool IsSetOperation(const FName& OperationId);
     [[nodiscard]] ESharRewardApplyResult ValidateRewardRequest(
         const FSharRewardRequest& Request
     ) const;
