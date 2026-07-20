@@ -35,6 +35,21 @@
 			"LoadingPhase": "Default"
 		},
 		{
+			"Name": "SharCamera",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "SharAudio",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "SharNetworking",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
 			"Name": "SharModding",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
