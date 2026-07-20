@@ -36,6 +36,8 @@ Examples:
 | Vehicle | `SharVehicle` | `DA_Vehicle_<id>` |
 | Vehicle presentation | `SharVehiclePresentation` | `DA_VehiclePresentation_<id>_<variant>` |
 | World | `SharWorld` | `DA_World_<id>` |
+| Action | `SharAction` | `DA_Action_<id>` |
+| Action sequence | `SharActionSequence` | `DA_ActionSequence_<id>` |
 | Interaction | `SharInteraction` | `DA_Interaction_<id>` |
 | Location | `SharLocation` | `DA_Location_<id>` |
 | Mission | `SharMission` | `DA_Mission_<chapter>_<id>` |

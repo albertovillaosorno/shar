@@ -30,6 +30,11 @@
 			"LoadingPhase": "Default"
 		},
 		{
+			"Name": "SharAction",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
 			"Name": "SharInteraction",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
