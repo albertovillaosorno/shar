@@ -68,12 +68,10 @@ pub(super) struct WorldPackageRecord {
     pub(super) coordinate_reference: bool,
     /// Whether this package belongs to an interior world scope.
     pub(super) interior: bool,
-    /// Stable narrative map identity, absent for auxiliary bonus areas.
+    /// Stable connected zone-family identity.
     pub(super) map_group: Option<String>,
     /// Baked source-space map translation in whole source units.
     pub(super) map_offset: [i16; 3],
-    /// Whether this artifact belongs in the normal root-FBX import set.
-    pub(super) normal_import: bool,
     /// Optional package-level coordinate movement identity.
     pub(super) coordinate_movement: Option<String>,
     /// Number of canonical source meshes considered.
@@ -156,10 +154,7 @@ pub(super) struct WorldSurfaceSemanticCounts {
 
 impl WorldSurfaceSemanticCounts {
     /// Add one package artifact's overlapping semantic counts.
-    pub(super) const fn add(
-        &mut self,
-        additional: Self,
-    ) {
+    pub(super) const fn add(&mut self, additional: Self) {
         self.transparent_materials = self
             .transparent_materials
             .saturating_add(additional.transparent_materials);
@@ -206,14 +201,11 @@ pub(super) struct WorldCollectionCounts {
     pub(super) source_scopes: usize,
     /// Number of normalized source packages.
     pub(super) source_packages: usize,
-    /// Number of world-geometry FBX artifacts across normal and auxiliary
-    /// sets.
+    /// Number of generated world-geometry FBX artifacts.
     pub(super) world_fbx_files: usize,
-    /// Number of root FBXs in the normal three-map import set.
+    /// Number of generated seven-level world FBXs.
     pub(super) normal_world_fbx_files: usize,
-    /// Number of auxiliary FBXs excluded from normal import.
-    pub(super) auxiliary_world_fbx_files: usize,
-    /// Number of disjoint narrative map groups.
+    /// Number of connected recurring zone families.
     pub(super) narrative_map_groups: usize,
     /// Number of review-gallery FBX artifacts.
     pub(super) review_fbx_files: usize,
@@ -225,8 +217,6 @@ pub(super) struct WorldCollectionCounts {
     pub(super) coordinate_fallback_packages: usize,
     /// Number of interior packages.
     pub(super) interior_packages: usize,
-    /// Number of bonus-area packages.
-    pub(super) bonus_area_packages: usize,
     /// Number of canonical source meshes considered.
     pub(super) source_meshes: usize,
     /// Number of rejected degenerate render triangles.

@@ -88,21 +88,9 @@ pub(super) fn counts(
             .iter()
             .filter(
                 |package| {
-                    package.normal_import
-                        && package
-                            .world_fbx
-                            .is_some()
-                },
-            )
-            .count(),
-        auxiliary_world_fbx_files: packages
-            .iter()
-            .filter(
-                |package| {
-                    !package.normal_import
-                        && package
-                            .world_fbx
-                            .is_some()
+                    package
+                        .world_fbx
+                        .is_some()
                 },
             )
             .count(),
@@ -151,10 +139,6 @@ pub(super) fn counts(
         interior_packages: packages
             .iter()
             .filter(|package| package.interior)
-            .count(),
-        bonus_area_packages: packages
-            .iter()
-            .filter(|package| package.scope == "bonus-area")
             .count(),
         source_meshes: sum(
             packages,
@@ -265,26 +249,24 @@ fn catalog_value(
                 "an operator-supplied untracked package set may contribute ",
                 "only scene matrices and topology-verified coordinates"
             ),
-            "three_map_layout": concat!(
+            "three_zone_layout": concat!(
                 "levels 1, 4, and 7 share map-01-04-07; levels 2 and 5 share ",
-                "map-02-05; levels 3 and 6 share map-03-06; independent map ",
-                "bounds must remain disjoint"
+                "map-02-05; levels 3 and 6 share map-03-06; operator-reviewed ",
+                "horizontal movements replace artificial spacing; connected ",
+                "zone bounds may overlap at authored seams"
             ),
             "root_import_contract": concat!(
-                "only narrative-level FBXs live at the root; coordinates and ",
-                "map-group separation are baked, so no per-file offset is added"
-            ),
-            "auxiliary_isolation": concat!(
-                "bonus-area FBXs live below auxiliary/ and are excluded from ",
-                "the normal three-map bulk import"
+                "only seven-level world FBXs enter the stage; reviewed ",
+                "coordinates are baked and no per-file offset is added"
             ),
             "review_isolation": concat!(
-                "definition-only galleries live below review/ and ",
-                "are excluded from normal and auxiliary world imports"
+                "definition-only galleries live below review/ and remain ",
+                "excluded from normal world imports"
             ),
-            "interior_uv_policy": concat!(
-                "interior packages preserve authored U coordinates; selective ",
-                "orientation correction applies only to non-interior graphics"
+            "interior_transform_policy": concat!(
+                "interior packages preserve authored UVs, exclude collision, ",
+                "mirror horizontally around their own aggregate center, and ",
+                "remain independent from exterior family placement"
             ),
             "object_semantics": concat!(
                 "source-backed breakable and interactable owners plus ",
@@ -304,17 +286,20 @@ fn catalog_value(
             {
                 "id": "map-01-04-07",
                 "levels": [1, 4, 7],
-                "baked_offset": [0, 0, 0]
+                "movement": null,
+                "height_policy": "preserve-source-height"
             },
             {
                 "id": "map-02-05",
                 "levels": [2, 5],
-                "baked_offset": [8192, 0, 0]
+                "movement": "zone-02-levels-02-05-operator-placement",
+                "height_policy": "preserve-source-height"
             },
             {
                 "id": "map-03-06",
                 "levels": [3, 6],
-                "baked_offset": [16384, 0, 0]
+                "movement": "zone-03-levels-03-06-operator-placement",
+                "height_policy": "preserve-source-height"
             }
         ],
         "counts": counts_value(counts),
@@ -336,41 +321,28 @@ fn catalog_value(
 
 /// Render the root-FBX identity transform manifest.
 fn transforms_value(collection: &ExportedWorldCollection) -> Value {
-    let normal_files = transform_files(
-        collection, true,
-    );
-    let auxiliary_files = transform_files(
-        collection, false,
-    );
+    let files = transform_files(collection);
     json!({
-        "schema": "shar.world-package-transforms.v4",
+        "schema": "shar.world-package-transforms.v5",
         "shared_origin": [0.0_f64, 0.0_f64, 0.0_f64],
-        "normal_import": concat!(
-            "import only root *.fbx files; add no per-file placement offsets; ",
-            "preserve each importer-created SHAR_Export_Root axis conversion"
-        ),
-        "auxiliary_import": concat!(
-            "files below auxiliary/ are optional bonus-area evidence and are ",
-            "not part of the three narrative map groups"
+        "import_contract": concat!(
+            "import generated seven-level FBXs with no per-file placement ",
+            "offsets; preserve each importer-created SHAR_Export_Root axis ",
+            "conversion"
         ),
         "authored_root": {
             "name": "SHAR_Export_Root",
             "preserve_imported_transform": true
         },
-        "files": normal_files,
-        "auxiliary_files": auxiliary_files
+        "files": files
     })
 }
 
-/// Render one normal or auxiliary transform-manifest file list.
-fn transform_files(
-    collection: &ExportedWorldCollection,
-    normal_import: bool,
-) -> Vec<Value> {
+/// Render the generated transform-manifest file list.
+fn transform_files(collection: &ExportedWorldCollection) -> Vec<Value> {
     collection
         .packages
         .iter()
-        .filter(|package| package.normal_import == normal_import)
         .filter_map(
             |package| {
                 package
@@ -428,14 +400,12 @@ fn counts_value(counts: WorldCollectionCounts) -> Value {
         "source_packages": counts.source_packages,
         "world_fbx_files": counts.world_fbx_files,
         "normal_world_fbx_files": counts.normal_world_fbx_files,
-        "auxiliary_world_fbx_files": counts.auxiliary_world_fbx_files,
         "narrative_map_groups": counts.narrative_map_groups,
         "review_fbx_files": counts.review_fbx_files,
         "packages_without_geometry": counts.packages_without_geometry,
         "coordinate_reference_packages": counts.coordinate_reference_packages,
         "coordinate_fallback_packages": counts.coordinate_fallback_packages,
         "interior_packages": counts.interior_packages,
-        "bonus_area_packages": counts.bonus_area_packages,
         "source_meshes": counts.source_meshes,
         "discarded_degenerate_triangles": counts.discarded_degenerate_triangles,
         "authored_placements": counts.authored_placements,
@@ -465,7 +435,6 @@ fn package_value(package: &WorldPackageRecord) -> Value {
         "interior": package.interior,
         "map_group": package.map_group,
         "map_offset": package.map_offset,
-        "normal_import": package.normal_import,
         "coordinate_movement": package.coordinate_movement,
         "source_meshes": package.source_meshes,
         "discarded_degenerate_triangles": package
@@ -527,10 +496,7 @@ fn semantics_value(counts: WorldSurfaceSemanticCounts) -> Value {
 }
 
 /// Create one deterministic pretty JSON file without replacement.
-fn write_json(
-    path: &Path,
-    value: &Value,
-) -> Result<(), PipelineError> {
+fn write_json(path: &Path, value: &Value) -> Result<(), PipelineError> {
     let bytes = serde_json::to_vec_pretty(value)
         .map_err(|error| PipelineError::new(error.to_string()))?;
     let mut file = fs::OpenOptions::new()

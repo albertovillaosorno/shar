@@ -68,8 +68,8 @@ use super::inventory::{
 };
 use super::islands::split_distant_islands;
 use super::layout::{
-    MapBounds, apply_placement, collection_bounds, placement_for_scope,
-    record_group_bounds, validate_disjoint_groups,
+    MapBounds, apply_placement, collection_bounds, mirror_interior_horizontal,
+    placement_for_scope, record_group_bounds, validate_group_bounds,
 };
 use super::model::{
     ExportedWorldCollection, WorldFbxRecord, WorldPackageRecord,
@@ -172,12 +172,9 @@ pub(super) fn export_world_collection(
     let texture_root = output_root.join("textures");
     let review_root = output_root.join("review");
     let review_texture_root = review_root.join("textures");
-    let auxiliary_root = output_root.join("auxiliary");
-    let auxiliary_texture_root = auxiliary_root.join("textures");
     for directory in [
         &texture_root,
         &review_root,
-        &auxiliary_root,
     ] {
         fs::create_dir_all(directory).map_err(
             |error| {
@@ -194,7 +191,6 @@ pub(super) fn export_world_collection(
     let mut aggregate_semantics = WorldSurfaceSemanticCounts::default();
     let mut map_bounds = BTreeMap::<&'static str, MapBounds>::new();
     let mut has_review_fbx = false;
-    let mut has_auxiliary_fbx = false;
     let mut used_file_names = BTreeSet::new();
 
     for package in packages {
@@ -229,6 +225,9 @@ pub(super) fn export_world_collection(
             .ok_or_else(
                 || PipelineError::new("world package record is missing"),
             )?;
+        if record.interior {
+            mirror_interior_horizontal(&mut package_content.meshes)?;
+        }
         let placement = placement_for_scope(&scope)?;
         apply_placement(
             &mut package_content.meshes,
@@ -243,7 +242,6 @@ pub(super) fn export_world_collection(
             .group
             .map(str::to_owned);
         record.map_offset = placement.offset;
-        record.normal_import = placement.normal_import;
         let (independent, breakable, interactable) =
             world_object_semantic_counts(&package_content.meshes);
         record.independent_item_geometries = independent;
@@ -270,11 +268,7 @@ pub(super) fn export_world_collection(
         let review_textures = package_content
             .textures
             .clone();
-        let world_relative_path = if placement.normal_import {
-            format!("{stem}.fbx")
-        } else {
-            format!("auxiliary/{stem}.fbx")
-        };
+        let world_relative_path = format!("{stem}.fbx");
         record.world_fbx = write_content_fbx(
             &stem,
             &world_relative_path,
@@ -287,7 +281,6 @@ pub(super) fn export_world_collection(
             .as_ref()
         {
             aggregate_semantics.add(artifact.surface_semantics);
-            has_auxiliary_fbx |= !placement.normal_import;
         }
 
         if !review.is_empty() {
@@ -317,7 +310,7 @@ pub(super) fn export_world_collection(
         }
         records.push(record);
     }
-    validate_disjoint_groups(&map_bounds)?;
+    validate_group_bounds(&map_bounds)?;
 
     let textures = publish_textures(
         &all_textures,
@@ -334,21 +327,6 @@ pub(super) fn export_world_collection(
         let _review_records = publish_textures(
             &all_textures,
             &review_texture_root,
-        )?;
-    }
-    if has_auxiliary_fbx {
-        fs::create_dir_all(&auxiliary_texture_root).map_err(
-            |error| {
-                PipelineError::new(
-                    format!(
-                        "world auxiliary texture directory failed: {error}"
-                    ),
-                )
-            },
-        )?;
-        let _auxiliary_records = publish_textures(
-            &all_textures,
-            &auxiliary_texture_root,
         )?;
     }
     Ok(
@@ -447,7 +425,7 @@ fn write_content_fbx(
 
 /// Build one unique portable file stem from the source package subcategory.
 fn package_file_stem(
-    package: &PhaseThreePackageRow
+    package: &PhaseThreePackageRow,
 ) -> Result<String, PipelineError> {
     let relative = package
         .subcategory
@@ -525,7 +503,6 @@ fn append_package(
                 map_offset: [
                     0, 0, 0,
                 ],
-                normal_import: false,
                 coordinate_movement: None,
                 review_similarity_groups: 0,
                 world_fbx: None,
@@ -554,6 +531,8 @@ fn append_package(
     }
     if sources.is_empty() {
         let movement = apply_package_movement(
+            level,
+            is_interior(package),
             &package.package_id,
             &package_root,
             &mut package_content.meshes,
@@ -624,6 +603,8 @@ fn append_package(
         )?;
     }
     let movement = apply_package_movement(
+        level,
+        is_interior(package),
         &package.package_id,
         &package_root,
         &mut package_content.meshes,
@@ -891,7 +872,7 @@ fn increment_value(value: &mut usize) -> Result<(), PipelineError> {
               operation."
 )]
 fn place_review_gallery(
-    content: &mut MasterContent
+    content: &mut MasterContent,
 ) -> Result<usize, PipelineError> {
     if content
         .review
@@ -1152,10 +1133,7 @@ fn shape_profile(mesh: &MeshAsset) -> Result<ShapeProfile, PipelineError> {
 }
 
 /// Score coarse shape equivalence without merging or replacing source geometry.
-fn shape_similarity(
-    left: ShapeProfile,
-    right: ShapeProfile,
-) -> f32 {
+fn shape_similarity(left: ShapeProfile, right: ShapeProfile) -> f32 {
     let components = [
         count_ratio(
             left.vertices,
@@ -1185,10 +1163,7 @@ fn shape_similarity(
 }
 
 /// Return one symmetric ratio in the inclusive zero-to-one range.
-fn count_ratio(
-    left: usize,
-    right: usize,
-) -> f32 {
+fn count_ratio(left: usize, right: usize) -> f32 {
     value_ratio(
         review_count_f32(left),
         review_count_f32(right),
@@ -1206,10 +1181,7 @@ const fn review_count_f32(value: usize) -> f32 {
 }
 
 /// Return one symmetric positive-value ratio.
-fn value_ratio(
-    left: f32,
-    right: f32,
-) -> f32 {
+fn value_ratio(left: f32, right: f32) -> f32 {
     left.min(right)
         / left
             .max(right)
@@ -1227,7 +1199,7 @@ const fn square_columns(groups: usize) -> usize {
 
 /// Count overlapping independently selectable and interaction geometry groups.
 fn world_object_semantic_counts(
-    meshes: &[MeshAsset]
+    meshes: &[MeshAsset],
 ) -> (
     usize,
     usize,

@@ -17,13 +17,15 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Package selection and adapter application for authored world movement.
+//   - Family-level world movement selected from reviewed operator placement.
 // - Must-Not:
-//   - Infer transforms at runtime, mutate source files, or serialize catalogs.
+//   - Infer transforms at runtime, move interiors, mutate source files, or
+//     serialize catalogs.
 // - Allows:
-//   - Apply one domain movement to render, collision, and decoded coordinates.
+//   - Apply one reviewed affine movement to render, collision, and decoded
+//     coordinates for every exterior package in one recurring map family.
 // - Summary:
-//   - First authored coordinate movement: Kwik-E-Mart interior into Level 1.
+//   - Applies the reviewed Zone 2 and Zone 3 horizontal placements.
 //
 // ADRs:
 // - docs/adr/pipeline/unreal/world-assembly-from-normalized-chunks.md
@@ -32,7 +34,7 @@
 //   - false
 //
 
-//! Applies authored package movement above geometry-specific conversion.
+//! Applies reviewed family-level exterior movement above geometry conversion.
 
 use std::path::Path;
 
@@ -47,12 +49,12 @@ use crate::domain::coordinate_movement::{
     CoordinateMovement, CoordinateSubject,
 };
 
-/// Canonical package containing the Kwik-E-Mart interior.
-const KWIK_E_MART_PACKAGE: &str = "extracted-art-l1i01";
-/// Stable movement identity preserved in generated catalogs.
-const KWIK_E_MART_MOVEMENT_ID: &str = "level-01-kwik-e-mart-interior-to-world";
-/// Coordinate families that must move together when runtime translation lands.
-const KWIK_E_MART_SUBJECTS: &[CoordinateSubject] = &[
+/// Stable movement identity for the Levels 2 and 5 map family.
+const ZONE_2_MOVEMENT_ID: &str = "zone-02-levels-02-05-operator-placement";
+/// Stable movement identity for the Levels 3 and 6 map family.
+const ZONE_3_MOVEMENT_ID: &str = "zone-03-levels-03-06-operator-placement";
+/// Coordinate families that must move with one exterior zone placement.
+const ZONE_SUBJECTS: &[CoordinateSubject] = &[
     CoordinateSubject::Geometry,
     CoordinateSubject::Collision,
     CoordinateSubject::Door,
@@ -65,34 +67,70 @@ const KWIK_E_MART_SUBJECTS: &[CoordinateSubject] = &[
     CoordinateSubject::Locator,
     CoordinateSubject::Light,
 ];
-/// Source-space transform derived from the operator-authored FBX alignment.
+
+/// Source-space transform derived from the reviewed Zone 2 placement.
 ///
-/// The FBX root maps source `(x, y, z)` to Blender `(-x, z, y)`. The authored
-/// Blender movement preserves X and Z, reflects Blender Y, and translates by
-/// approximately `(285.4401, -609.0188, 25.1905)`. Conjugating that movement
-/// through the root conversion yields this source-space matrix.
-const KWIK_E_MART_MOVEMENT: CoordinateMovement = CoordinateMovement::new(
-    KWIK_E_MART_MOVEMENT_ID,
+/// The solved horizontal transform is composed after the former
+/// `[8192, 0, 0]` audit spacing. Source height remains unchanged.
+const ZONE_2_MOVEMENT: CoordinateMovement = CoordinateMovement::new(
+    ZONE_2_MOVEMENT_ID,
     [
-        1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0,
-        -285.440_1, 25.190_514, -609.018_8, 1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        989.247_3,
+        0.0,
+        -360.133_76,
+        1.0,
     ],
-    KWIK_E_MART_SUBJECTS,
+    ZONE_SUBJECTS,
 );
 
-/// Apply one package movement to every currently decoded coordinate family.
+/// Source-space transform derived from vertex-matched Zone 3 placement.
+///
+/// The reviewed object changed its local origin, so the rigid transform was
+/// solved by matching stable vertex indices against the untouched Level 3
+/// general FBX. The maximum residual was below 0.00016 Blender units. The
+/// solved movement is composed after the former `[16384, 0, 0]` audit spacing,
+/// while source height remains unchanged.
+const ZONE_3_MOVEMENT: CoordinateMovement = CoordinateMovement::new(
+    ZONE_3_MOVEMENT_ID,
+    [
+        0.0, 0.0, -1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0,
+        745.360_84, 0.0, 296.963_32, 1.0,
+    ],
+    ZONE_SUBJECTS,
+);
+
+/// Apply one reviewed exterior-family movement to every decoded coordinate
+/// family owned by a package.
+///
+/// Interiors remain separate until the next operator-authored placement pass.
 ///
 /// # Errors
 ///
 /// Returns an error when movement validation, mesh transformation, or decoded
 /// coordinate evidence fails.
 pub(super) fn apply_package_movement(
+    scope: &str,
+    interior: bool,
     package_id: &str,
     package_root: &Path,
     render_meshes: &mut [MeshAsset],
     collision_meshes: &mut [MeshAsset],
 ) -> Result<Option<WorldCoordinateMovementRecord>, PipelineError> {
-    let Some(movement) = movement_for_package(package_id) else {
+    let Some(movement) = movement_for_scope(
+        scope, interior,
+    ) else {
         return Ok(None);
     };
     movement
@@ -234,11 +272,7 @@ fn validate_moved_bounds(
 }
 
 /// Return whether every coordinate component is within one tolerance.
-fn coordinates_close(
-    left: [f32; 3],
-    right: [f32; 3],
-    tolerance: f32,
-) -> bool {
+fn coordinates_close(left: [f32; 3], right: [f32; 3], tolerance: f32) -> bool {
     left.into_iter()
         .zip(right)
         .all(
@@ -248,9 +282,19 @@ fn coordinates_close(
         )
 }
 
-/// Return the statically reviewed movement for one package.
-fn movement_for_package(package_id: &str) -> Option<CoordinateMovement> {
-    (package_id == KWIK_E_MART_PACKAGE).then_some(KWIK_E_MART_MOVEMENT)
+/// Return the reviewed movement for one exterior package scope.
+fn movement_for_scope(
+    scope: &str,
+    interior: bool,
+) -> Option<CoordinateMovement> {
+    if interior {
+        return None;
+    }
+    match scope {
+        "level-02" | "level-05" => Some(ZONE_2_MOVEMENT),
+        "level-03" | "level-06" => Some(ZONE_3_MOVEMENT),
+        _ => None,
+    }
 }
 
 /// Bake one movement into every mesh while preserving stable mesh identities.
@@ -272,43 +316,93 @@ fn apply_to_meshes(
 
 #[cfg(test)]
 mod tests {
-    use super::{coordinates_close, movement_for_package};
+    use super::{coordinates_close, movement_for_scope};
 
     #[test]
-    fn kwik_movement_matches_authored_basis() -> Result<(), String> {
-        let movement = movement_for_package("extracted-art-l1i01")
-            .ok_or_else(|| String::from("Kwik-E-Mart movement is missing"))?;
-        if movement.id() != "level-01-kwik-e-mart-interior-to-world" {
-            return Err(String::from("Kwik-E-Mart movement identity changed"));
+    fn zone_two_movement_matches_reviewed_horizontal_placement()
+    -> Result<(), String> {
+        let movement = movement_for_scope(
+            "level-02", false,
+        )
+        .ok_or_else(|| String::from("Zone 2 movement is missing"))?;
+        if movement.id() != "zone-02-levels-02-05-operator-placement" {
+            return Err(String::from("Zone 2 movement identity changed"));
         }
         let moved = movement
             .transform_point(
                 [
-                    500.0, -20.0, -300.0,
+                    100.0, 20.0, 300.0,
                 ],
             )
             .map_err(|error| error.to_string())?;
-        let expected = [
-            214.559_9,
-            5.190_513_6,
-            -309.018_8,
-        ];
         if !coordinates_close(
-            moved, expected, 0.000_2,
+            moved,
+            [
+                689.247_3,
+                20.0,
+                -260.133_76,
+            ],
+            0.001,
         ) {
-            return Err(
-                format!(
-                    "Kwik-E-Mart InteriorOrigin moved incorrectly: {moved:?}"
-                ),
-            );
+            return Err(format!("Zone 2 placement changed: {moved:?}"));
         }
         Ok(())
     }
 
     #[test]
-    fn movement_is_package_specific() {
-        assert!(movement_for_package("extracted-art-l1i01").is_some());
-        assert!(movement_for_package("extracted-art-l1i00").is_none());
-        assert!(movement_for_package("extracted-art-l1z2").is_none());
+    fn zone_three_movement_matches_vertex_solved_placement()
+    -> Result<(), String> {
+        let movement = movement_for_scope(
+            "level-03", false,
+        )
+        .ok_or_else(|| String::from("Zone 3 movement is missing"))?;
+        if movement.id() != "zone-03-levels-03-06-operator-placement" {
+            return Err(String::from("Zone 3 movement identity changed"));
+        }
+        let moved = movement
+            .transform_point(
+                [
+                    100.0, 20.0, 300.0,
+                ],
+            )
+            .map_err(|error| error.to_string())?;
+        if !coordinates_close(
+            moved,
+            [
+                1_045.360_8,
+                20.0,
+                196.963_32,
+            ],
+            0.001,
+        ) {
+            return Err(format!("Zone 3 placement changed: {moved:?}"));
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn zone_one_and_interiors_remain_unmoved() {
+        for scope in [
+            "level-01", "level-04", "level-07",
+        ] {
+            assert!(
+                movement_for_scope(
+                    scope, false
+                )
+                .is_none()
+            );
+        }
+        assert!(
+            movement_for_scope(
+                "level-02", true
+            )
+            .is_none()
+        );
+        assert!(
+            movement_for_scope(
+                "level-03", true
+            )
+            .is_none()
+        );
     }
 }

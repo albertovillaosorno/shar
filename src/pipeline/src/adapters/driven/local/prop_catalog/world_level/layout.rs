@@ -16,13 +16,15 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Three-map variant grouping, baked map offsets, and overlap rejection.
+//   - Three-zone family grouping, aggregate bounds, and interior mirroring.
 // - Must-Not:
-//   - Read packages, select geometry, serialize catalogs, or write FBX files.
+//   - Read packages, infer operator placement, serialize catalogs, or write FBX
+//     files.
 // - Allows:
-//   - Scope classification, static geometry translation, and AABB validation.
+//   - Scope classification, source-space horizontal reflection, and finite AABB
+//     validation.
 // - Summary:
-//   - Aligns level variants while separating independent narrative maps.
+//   - Classifies recurring zones and mirrors independently movable interiors.
 //
 // ADRs:
 // - docs/adr/pipeline/unreal/world-assembly-from-normalized-chunks.md
@@ -31,7 +33,7 @@
 //   - false
 //
 
-//! Three-map layout and disjoint-bound validation.
+//! Three-zone grouping, interior mirroring, and aggregate-bound validation.
 
 use std::collections::BTreeMap;
 
@@ -40,18 +42,13 @@ use fbx::domain::mesh::MeshAsset;
 use super::transform::{bake_mesh, mesh_bounds, translation};
 use crate::domain::PipelineError;
 
-/// Horizontal distance between independent map origins.
-const MAP_GROUP_SPACING: i16 = 8_192;
-
-/// One scope's baked map placement and import classification.
+/// One scope's baked placement within a recurring exterior family.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(super) struct MapPlacement {
-    /// Stable narrative map identity, absent for auxiliary bonus areas.
+    /// Stable connected zone-family identity.
     pub(super) group: Option<&'static str>,
     /// Baked source-space translation in whole source units.
     pub(super) offset: [i16; 3],
-    /// Whether the artifact belongs in the normal root-FBX import set.
-    pub(super) normal_import: bool,
 }
 
 /// One post-placement map-group axis-aligned bound.
@@ -69,7 +66,7 @@ pub(super) struct MapBounds {
 ///
 /// Returns an error when a narrative level has no declared map group.
 pub(super) fn placement_for_scope(
-    scope: &str
+    scope: &str,
 ) -> Result<MapPlacement, PipelineError> {
     let placement = match scope {
         "level-01" | "level-04" | "level-07" => MapPlacement {
@@ -77,32 +74,18 @@ pub(super) fn placement_for_scope(
             offset: [
                 0, 0, 0,
             ],
-            normal_import: true,
         },
         "level-02" | "level-05" => MapPlacement {
             group: Some("map-02-05"),
             offset: [
-                MAP_GROUP_SPACING,
-                0,
-                0,
+                0, 0, 0,
             ],
-            normal_import: true,
         },
         "level-03" | "level-06" => MapPlacement {
             group: Some("map-03-06"),
             offset: [
-                MAP_GROUP_SPACING.saturating_mul(2),
-                0,
-                0,
-            ],
-            normal_import: true,
-        },
-        "bonus-area" => MapPlacement {
-            group: None,
-            offset: [
                 0, 0, 0,
             ],
-            normal_import: false,
         },
         _ => {
             return Err(
@@ -136,6 +119,52 @@ pub(super) fn apply_placement(
             .offset
             .map(f32::from),
     );
+    for mesh in meshes {
+        let name = mesh
+            .name
+            .clone();
+        bake_mesh(
+            mesh, &matrix, name,
+        )?;
+    }
+    Ok(())
+}
+
+/// Mirror one independently movable interior horizontally around its aggregate
+/// source-space X center.
+///
+/// Source X maps to Blender horizontal X, so this reflection produces the
+/// operator-requested horizontal mirror without changing source height or the
+/// interior's aggregate center.
+///
+/// # Errors
+///
+/// Returns an error when one reflected mesh becomes invalid.
+pub(super) fn mirror_interior_horizontal(
+    meshes: &mut [MeshAsset],
+) -> Result<(), PipelineError> {
+    let Some(bounds) = collection_bounds(meshes) else {
+        return Ok(());
+    };
+    let center_x = (bounds.low[0] + bounds.high[0]) * 0.5;
+    let matrix = [
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        center_x + center_x,
+        0.0,
+        0.0,
+        1.0,
+    ];
     for mesh in meshes {
         let name = mesh
             .name
@@ -198,34 +227,25 @@ pub(super) fn record_group_bounds(
         .or_insert(package);
 }
 
-/// Reject any overlap between independent narrative-map bounds.
+/// Validate that every recorded zone-family bound is finite and ordered.
+///
+/// Connected zone families may overlap at authored seams, so overlap is no
+/// longer rejected. Only malformed aggregate bounds fail.
 ///
 /// # Errors
 ///
-/// Returns an error when two different map groups overlap on all three axes.
-pub(super) fn validate_disjoint_groups(
-    bounds: &BTreeMap<&'static str, MapBounds>
+/// Returns an error when one group bound is non-finite or inverted.
+pub(super) fn validate_group_bounds(
+    bounds: &BTreeMap<&'static str, MapBounds>,
 ) -> Result<(), PipelineError> {
-    let entries = bounds
-        .iter()
-        .collect::<Vec<_>>();
-    for (index, (left_name, left)) in entries
-        .iter()
-        .enumerate()
-    {
-        for (right_name, right) in entries
-            .iter()
-            .skip(index.saturating_add(1))
-        {
-            if overlaps(
-                **left, **right,
-            ) {
+    for (name, bound) in bounds {
+        for axis in 0..3 {
+            let low = bound.low[axis];
+            let high = bound.high[axis];
+            if !low.is_finite() || !high.is_finite() || low > high {
                 return Err(
                     PipelineError::new(
-                        format!(
-                            "independent world map groups overlap: \
-                             {left_name} and {right_name}"
-                        ),
+                        format!("world map group has invalid bounds: {name}"),
                     ),
                 );
             }
@@ -235,10 +255,7 @@ pub(super) fn validate_disjoint_groups(
 }
 
 /// Merge two axis-aligned bounds.
-const fn merge_bounds(
-    left: MapBounds,
-    right: MapBounds,
-) -> MapBounds {
+const fn merge_bounds(left: MapBounds, right: MapBounds) -> MapBounds {
     let [
         left_low_x,
         left_low_y,
@@ -292,10 +309,7 @@ const fn merge_bounds(
 }
 
 /// Return the lower of two finite source-space coordinates.
-const fn minimum(
-    left: f32,
-    right: f32,
-) -> f32 {
+const fn minimum(left: f32, right: f32) -> f32 {
     if left < right {
         left
     } else {
@@ -304,10 +318,7 @@ const fn minimum(
 }
 
 /// Return the higher of two finite source-space coordinates.
-const fn maximum(
-    left: f32,
-    right: f32,
-) -> f32 {
+const fn maximum(left: f32, right: f32) -> f32 {
     if left > right {
         left
     } else {
@@ -315,90 +326,61 @@ const fn maximum(
     }
 }
 
-/// Return whether two closed bounds overlap with positive volume.
-fn overlaps(
-    left: MapBounds,
-    right: MapBounds,
-) -> bool {
-    let [
-        left_low_x,
-        left_low_y,
-        left_low_z,
-    ] = left.low;
-    let [
-        left_high_x,
-        left_high_y,
-        left_high_z,
-    ] = left.high;
-    let [
-        right_low_x,
-        right_low_y,
-        right_low_z,
-    ] = right.low;
-    let [
-        right_high_x,
-        right_high_y,
-        right_high_z,
-    ] = right.high;
-    left_low_x < right_high_x
-        && left_high_x > right_low_x
-        && left_low_y < right_high_y
-        && left_high_y > right_low_y
-        && left_low_z < right_high_z
-        && left_high_z > right_low_z
-}
-
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;
 
+    use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
+
     use super::{
-        MAP_GROUP_SPACING, MapBounds, placement_for_scope,
-        validate_disjoint_groups,
+        MapBounds, mirror_interior_horizontal, placement_for_scope,
+        validate_group_bounds,
     };
 
     #[test]
-    fn variants_share_one_map_offset_and_independent_maps_do_not()
+    fn recurring_levels_share_groups_without_artificial_offsets()
     -> Result<(), String> {
-        let level_one = placement_for_scope("level-01")
-            .map_err(|error| error.to_string())?;
-        let level_four = placement_for_scope("level-04")
-            .map_err(|error| error.to_string())?;
-        let level_seven = placement_for_scope("level-07")
-            .map_err(|error| error.to_string())?;
-        if level_one != level_four || level_one != level_seven {
-            return Err(
-                "levels 1, 4, and 7 did not share one placement".to_owned(),
-            );
-        }
-        let level_two = placement_for_scope("level-02")
-            .map_err(|error| error.to_string())?;
-        let level_three = placement_for_scope("level-03")
-            .map_err(|error| error.to_string())?;
-        if level_two.offset
-            != [
-                MAP_GROUP_SPACING,
-                0,
-                0,
-            ]
-            || level_three.offset
-                != [
-                    MAP_GROUP_SPACING.saturating_mul(2),
-                    0,
-                    0,
-                ]
-        {
-            return Err(
-                "independent map offsets were not deterministic".to_owned(),
-            );
+        for (levels, group) in [
+            (
+                &[
+                    "level-01", "level-04", "level-07",
+                ][..],
+                "map-01-04-07",
+            ),
+            (
+                &[
+                    "level-02", "level-05",
+                ][..],
+                "map-02-05",
+            ),
+            (
+                &[
+                    "level-03", "level-06",
+                ][..],
+                "map-03-06",
+            ),
+        ] {
+            for level in levels {
+                let placement = placement_for_scope(level)
+                    .map_err(|error| error.to_string())?;
+                if placement.group != Some(group)
+                    || placement.offset
+                        != [
+                            0, 0, 0,
+                        ]
+                {
+                    return Err(format!("invalid zone grouping for {level}"));
+                }
+            }
         }
         Ok(())
     }
 
     #[test]
-    fn independent_group_overlap_is_a_hard_error() {
+    fn connected_overlap_is_allowed_but_invalid_bounds_fail()
+    -> Result<(), String> {
         let mut bounds = BTreeMap::new();
-        let _first = bounds.insert(
+        let _ = bounds.insert(
             "map-01-04-07",
             MapBounds {
                 low: [
@@ -409,7 +391,7 @@ mod tests {
                 ],
             },
         );
-        let _second = bounds.insert(
+        let _ = bounds.insert(
             "map-02-05",
             MapBounds {
                 low: [
@@ -420,22 +402,67 @@ mod tests {
                 ],
             },
         );
-        assert!(validate_disjoint_groups(&bounds).is_err());
+        validate_group_bounds(&bounds).map_err(|error| error.to_string())?;
+        let _ = bounds.insert(
+            "map-03-06",
+            MapBounds {
+                low: [
+                    5.0, 0.0, 0.0,
+                ],
+                high: [
+                    4.0, 10.0, 10.0,
+                ],
+            },
+        );
+        assert!(validate_group_bounds(&bounds).is_err());
+        Ok(())
     }
 
     #[test]
-    fn bonus_areas_are_auxiliary_not_a_fourth_normal_map() -> Result<(), String>
-    {
-        let bonus = placement_for_scope("bonus-area")
+    fn interior_mirror_preserves_center() -> Result<(), String> {
+        let group = PrimitiveGroup::new(
+            0,
+            "interior-material",
+            vec![
+                [
+                    2.0, 1.0, 3.0,
+                ],
+                [
+                    6.0, 1.0, 3.0,
+                ],
+                [
+                    2.0, 1.0, 7.0,
+                ],
+            ],
+            Vec::new(),
+            &[
+                0, 1, 2,
+            ],
+        )
+        .map_err(|error| format!("group failed: {error:?}"))?;
+        let mut meshes = vec![
+            MeshAsset::new(
+                "interior",
+                vec![group],
+            )
+            .map_err(|error| format!("mesh failed: {error:?}"))?,
+        ];
+        mirror_interior_horizontal(&mut meshes)
             .map_err(|error| error.to_string())?;
-        if bonus
-            .group
-            .is_some()
-            || bonus.normal_import
+        if meshes[0].groups[0].positions
+            != [
+                [
+                    6.0, 1.0, 3.0,
+                ],
+                [
+                    2.0, 1.0, 3.0,
+                ],
+                [
+                    6.0, 1.0, 7.0,
+                ],
+            ]
         {
-            return Err(
-                "bonus area entered the normal three-map import set".to_owned(),
-            );
+            return Err(String::from("interior mirror changed"));
         }
         Ok(())
     }

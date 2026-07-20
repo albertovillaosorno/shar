@@ -643,39 +643,39 @@ globally aligned collection rather than one monolithic FBX. Import only the root
 `*.fbx` files for the normal world scene. Files under `review/` are isolated
 comparison galleries and must not be mixed into the normal import set.
 
-The collection contains 3,862 files and 499,064,386 bytes. Two independent final
-generations produced identical relative paths, byte lengths, and SHA-256 values
-for every file. The snapshot SHA-256 is
-`a82548178fa932abf41f7eb7281a0af2a9b5440ccc61b1e78499b68d492adc7f`,
-the world catalog SHA-256 is
-`8aada5728540dd453d9a4c7edb42b33bdc16e216757379da0417d25203bd3675`,
+The current source-generated verification publication contains 3,710 files and
+631,844,655 bytes. The world catalog SHA-256 is
+`cb915ff025e91d80e18bbe502ad414348295a2cb22be6fabde96bedc3a2eeda9`,
+the coordinate-movement manifest SHA-256 is
+`d4c5dba64114f67f34349d1e21f60b08892bedf2c15e4bad7629e1ceeb4179d4`,
 and the transform manifest SHA-256 is
-`39f3c4a544069780b22b3265c8f8e9765353fe966199c18262e0dc2b525d28d1`.
+`41937efe710ee6d86f29becb9ca5cc3c8dc2b81dfb08c5be2bd232ec9ae8c76a`.
 
-The world catalog covers 149 source packages across eight scopes and publishes
-127 root world FBXs plus 89 isolated review FBXs. It records 19 interiors, 20
-bonus-area packages, 10,819 source meshes, 12,263 authored placements, 9,439
-reference-backed placements, 2,824 canonical placement fallbacks, 8,565 collision
-meshes, 2,556 definition-only review meshes, and 463 review similarity groups.
-Fourteen data-only packages correctly publish no geometry.
+The world catalog covers 129 source packages across the seven main-level scopes
+and publishes 115 root world FBXs plus 82 isolated review FBXs. It records 19
+interiors, 9,744 source meshes, 12,216 authored and reference-backed placements,
+zero canonical placement fallbacks, 7,934 excluded collision meshes, 2,384
+definition-only review meshes, and 442 review similarity groups. Six data-only
+packages correctly publish no geometry. No auxiliary or bonus-area package enters
+this stage.
 
 Material semantics remain explicit across the collection. The catalog records
-1,179 glass, four mirror, 503 reflective, 1,924 light-emitting, 1,917 transparent,
-and 229 visual-effect geometries. Collision meshes use an inspection material;
-definition-only meshes are placed in similarity-overlaid review groups without
-being merged into or substituted for canonical source geometry.
+5,734 glass, eight mirror, 1,963 reflective, 4,536 light-emitting, 7,388
+transparent, and 527 visual-effect geometries. Collision meshes are excluded;
+definition-only review geometry remains isolated in similarity-overlaid inspection
+galleries without being merged into or substituted for canonical source geometry.
 
 `world.transforms.json` uses the
-`shar.world-package-transforms.v2` contract. Every root file has baked coordinates
+`shar.world-package-transforms.v5` contract. Every root file has baked coordinates
 and requires zero additional translation, rotation, or scale. Importers may
 create the shared `SHAR_Export_Root` axis-conversion transform; preserve that
 common imported transform instead of applying per-package placement offsets.
 
-Representative Blender 5.1 imports covered a bonus segment, an interior, a
-level-three zone, a level-seven region, and an isolated review gallery. All were
-static, contained zero armatures and actions, and resolved every external image.
-Importing four root world files together produced their expected combined global
-bounds without per-package offsets.
+The final Blender 5.1 verification loaded all 26 strict editing FBXs, including
+three zone generals, seven level variations, seven race variations, one mission
+door set, and eight interior unions. The scene resolved all 1,602 external images,
+contained no packed images or linked libraries, and reproduced the reviewed Zone
+1, Zone 2, and Zone 3 horizontal bounds while preserving source height.
 
 Generate a fresh separated world baseline with:
 
@@ -688,33 +688,83 @@ The optional coordinate-evidence root is local comparison authority only. It is
 never copied into the publication, named in public catalog paths, or treated as
 model, topology, material, texture, or identity authority.
 
-A one-time local textured world audit may be generated at
-`fbx-assets/world/world.blend` with ignored layer FBXs and the ignored
-`fbx-assets/world/audit/textured-level-catalog.json` catalog. These artifacts are
-visual-review aids only; they are never generation, validation, acceptance,
-publication, runtime, editing, or production authority.
+The ignored `fbx-assets/world/world.blend` file is a temporary coordinate-review
+workspace. It is not model, topology, material, texture, validation, publication,
+runtime, or production authority. During a placement pass the operator may move
+only the designated zone or interior objects. Vertex edits, topology edits,
+material edits, and arbitrary object transforms remain outside that pass.
 
-The Blender file provides `LEVEL_01` through `LEVEL_07` view layers. Every level
-contains four independently switchable collections and matching FBXs under
-`fbx-assets/world/audit/levels/`: `Lx_GENERAL` contains the exact-coordinate
-geometry common to its recurring world family, while `Lx_VAR` contains that
-level's static differences, race props, and mission doors. Together they
-reconstruct the complete audited exterior for that level.
+The first reviewed placement pass established three recurring exterior families:
 
-`Lx_INTERIORS_GENERAL` contains exact-coordinate geometry shared by matching
-interior identifiers, and `Lx_INTERIORS_VAR` contains the remaining geometry for
-that level. Together they reconstruct the audited interiors. Auxiliary geometry
-is available through its own FBX and Blender view layer. Empty layers are omitted
-only when no source geometry exists.
+- Zone 1 contains Levels 1, 4, and 7 and remains at its original coordinates.
+- Zone 2 contains Levels 2 and 5. Its reviewed horizontal placement rotates the
+  family by minus 90 degrees and replaces the temporary map spacing with the
+  operator-authored connected position.
+- Zone 3 contains Levels 3 and 6. Its reviewed horizontal placement rotates the
+  family by plus 90 degrees and replaces the temporary map spacing with the
+  operator-authored connected position.
 
-All layer FBXs preserve original source coordinates, UV coordinates, materials,
-and external texture references. Repeated family baselines share mesh data inside
-the `.blend` to reduce memory without changing their geometry. The operator uses
-this file only to report missing, misplaced, overlapping, disconnected,
-incorrectly textured, or otherwise incorrect world assembly. Manual edits happen
-later in the original separated FBXs, whose coordinates remain unchanged. The
-audit `.blend`, derived FBXs, and catalog are deleted after review and must never
-replace the first-principles separated world outputs.
+The resulting source-space row-vector formulas are stable generation authority:
+
+```text
+Zone 2: X' = -Z + 989.247314453125; Y' = Y; Z' = X - 360.1337585449219
+Zone 3: X' =  Z + 745.36083984375;  Y' = Y; Z' = -X + 296.96331787109375
+```
+
+The Zone 3 transform was solved by matching stable vertex indices against the
+untouched Level 3 general FBX; the maximum residual was below `0.00016` Blender
+units. Blender height translation is ignored. The pipeline preserves source
+height while applying each reviewed horizontal movement to geometry, collision
+evidence, doors, object placements, character and object spawns, mission
+positions,
+triggers, cameras, locators, and lights. Interiors are excluded from exterior
+family movement and remain independently placeable.
+
+The strict local editing tree is organized by ownership rather than by a complete
+copy of every level. Each recurring family has exactly one common baseline:
+
+```text
+fbx-assets/world/zone/1/general/
+fbx-assets/world/zone/2/general/
+fbx-assets/world/zone/3/general/
+```
+
+Only true level-specific zone and region differences live below the corresponding
+`zone/<number>/level-<number>/` directory. Family-general geometry must not be
+repeated in a level variation. Race props and mission doors are excluded from
+zone FBXs and live below `race/` and `doors/`. A shared race-general file is
+created only when exact shared geometry actually exists; an empty or misleading
+common layer is never invented.
+
+Interiors are separate from zones and are unioned by stable source-backed
+identity: elementary school (`i00`), Kwik-E-Mart (`i01`), Simpsons house (`i02`),
+DMV (`i03`), Moe's Tavern (`i04`), Android's Dungeon (`i05`), observatory (`i06`),
+and Bart's room (`i07`). Each interior lives below
+`fbx-assets/world/interiors/<id>-<name>/`. Repeated level copies are aligned to a
+local origin and deduplicated, source collision geometry is excluded, and the
+result is mirrored horizontally around its own center. Every interior remains a
+separate movable object in the next Blender review pass.
+
+After the operator places those eight interiors, the edited `.blend` is compared
+with its preserved pre-edit snapshot. Only reviewed object transforms are
+captured, and the same source-dependent movement rules are propagated to every
+coordinate-bearing runtime record. The `.blend` itself never becomes runtime or
+generation authority.
+
+A later manual mesh-correction pass uses a mirror directory with the same strict
+FBX identities. Original and edited FBXs are compared to derive deterministic,
+source-dependent algorithms for approved vertex movement, topology changes,
+semantic separation, and material assignment. No standalone proprietary model
+payload is embedded in those algorithms. Terrain and water that are better
+represented by native Unreal systems may be replaced rather than retained inside
+mixed static meshes.
+
+Phase 6 owns the deferred presentation repairs: selective UV orientation, color
+semantics, opaque window-frame separation from transparent glass, interior
+material behavior, and lamps or emissive surfaces that react correctly to the
+environment and time of day. The disposable `.blend`, strict editing FBXs,
+comparison mirrors, and review catalogs are deleted after their corresponding
+algorithms are implemented and verified.
 
 Phase 4 exports only packages with actual model geometry. Camera-only,
 controller-only, attribute-only, and gameplay-only packages remain normalized

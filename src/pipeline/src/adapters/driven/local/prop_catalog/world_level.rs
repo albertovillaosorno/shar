@@ -43,7 +43,7 @@ use self::export::export_world_collection;
 use self::inventory::world_packages;
 use super::catalog::inventory;
 use super::extraction::{
-    extract_world_level_coordinate_packages, extract_world_packages,
+    extract_world_level_coordinate_packages, extract_world_level_packages,
 };
 use super::texture_authority::SharedTextureAuthority;
 use super::{ensure_missing, staging_path};
@@ -119,18 +119,16 @@ pub(in crate::adapters::driven::local) fn export_world_master(
                     bytes,
                     note: format!(
                         concat!(
-                            "published {} normal FBX files across {} disjoint ",
-                            "narrative maps, {} auxiliary bonus FBX files, \
-                             and ",
-                            "{} isolated review FBX files from {} packages; \
+                            "published {} FBX files across {} connected zone ",
+                            "families and {} isolated review FBX files from \
                              {} ",
+                            "main-level packages; {} horizontally mirrored ",
                             "interiors, {} authored placements, and {} \
                              excluded ",
                             "collision meshes"
                         ),
                         counts.normal_world_fbx_files,
                         counts.narrative_map_groups,
-                        counts.auxiliary_world_fbx_files,
                         counts.review_fbx_files,
                         counts.source_packages,
                         counts.interior_packages,
@@ -179,7 +177,7 @@ fn build(
             },
         )?;
     }
-    let source_packages = extract_world_packages(
+    let source_packages = extract_world_level_packages(
         &index, game_root, &canonical,
     )?;
     let reference_packages = extract_world_level_coordinate_packages(
