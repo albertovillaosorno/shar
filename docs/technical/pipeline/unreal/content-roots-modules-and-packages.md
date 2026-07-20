@@ -22,6 +22,7 @@ test roots are never referenced by shipping base definitions.
 │   ├── Worlds/<world_id>
 │   ├── Locations/<location_id>
 │   ├── Missions/<chapter_id>/<mission_id>
+│   ├── Interactions/<interaction_id>
 │   ├── Rewards/<reward_id>
 │   ├── Abilities/<ability_id>
 │   ├── Cameras/<camera_profile_id>
@@ -83,6 +84,7 @@ folders.
 /Game/SHAR/Data/Vehicles/family_sedan/DA_Vehicle_family_sedan
 /Game/SHAR/Art/Vehicles/family_sedan/Meshes/SK_Vehicle_family_sedan
 /Game/SHAR/Data/Missions/chapter_01/mission_01/DA_Mission_chapter_01_mission_01
+/Game/SHAR/Data/Interactions/enter_family_sedan/DA_Interaction_enter_family_sedan
 /Game/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld
 ```
 <!-- markdownlint-enable MD013 -->
