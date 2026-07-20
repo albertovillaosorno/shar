@@ -40,6 +40,7 @@ Examples:
 | Action sequence | `SharActionSequence` | `DA_ActionSequence_<id>` |
 | Interaction | `SharInteraction` | `DA_Interaction_<id>` |
 | Application mode | `SharApplicationMode` | `DA_ApplicationMode_<id>` |
+| Save schema | `SharSaveSchema` | `DA_SaveSchema_<id>` |
 | Presentation | `SharPresentation` | `DA_Presentation_<id>` |
 | Location | `SharLocation` | `DA_Location_<id>` |
 | Mission | `SharMission` | `DA_Mission_<chapter>_<id>` |
