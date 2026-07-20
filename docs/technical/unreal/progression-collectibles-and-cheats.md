@@ -1,7 +1,7 @@
 # Progression, collectibles, cheats, and credits
 
 - Status: Active
-- Last reviewed: 2026-07-17
+- Last reviewed: 2026-07-20
 
 ## Governing decisions
 
@@ -61,13 +61,22 @@ consumes canonical definitions from the gameplay catalog and reads or writes
 portable state only through the save port. It does not discover world actors,
 inspect asset paths, or infer completion from presentation.
 
-`USharCheatSubsystem` owns logical cheat-input recognition and effect lifetime.
-It publishes typed effect requests to the owning gameplay systems. It does not
-reach into arbitrary actors or serialize an opaque global bit mask.
+`USharCheatSubsystem` owns controller-scoped logical cheat-input recognition.
+`USharCheatEffectSubsystem` owns deterministic effect-request arbitration,
+correlated postcondition evidence, and session, chapter, or mission lifetime
+state. Both publish typed requests and observations; neither reaches into
+arbitrary actors, mutates progression directly, or serializes an opaque global
+bit mask.
 
 `USharCreditsSubsystem` owns credits-sequence selection, playback state, audio
 cues, skip policy, and return destination. It does not decide whether the final
 mission completed or write progression directly.
+
+`SharMeta` owns immutable `SharMetaCatalog` definitions and activation. The
+catalog currently exposes semantic cheat definitions; credits rows and calendar
+rows remain reserved for their bounded runtimes. `SharCheats` depends on
+`SharMeta`, but not on progression, missions, UI, presentation, input devices,
+or gameplay actor modules.
 
 The root gameplay catalog references the following generated assets:
 
@@ -81,7 +90,7 @@ The root gameplay catalog references the following generated assets:
 | Collectible table | `FSharCollectibleRow` | Card and other collectible identities. |
 | Collectible placement table | `FSharCollectiblePlacementRow` | Level-scoped placement and consumption state. |
 | Collectible-set table | `FSharCollectibleSetRow` | Deck membership and completion rewards. |
-| Cheat table | `FSharCheatDefinitionRow` | Logical sequence, prerequisites, lifetime, and effect. |
+| Cheat definitions | `FSharCheatDefinition` | Logical sequence, prerequisites, lifetime, typed effect, and feedback identities. |
 | Credits table | `FSharCreditsSequenceRow` | Ordered rows, cues, playback mode, and return state. |
 | Calendar-theme table | `FSharCalendarThemeRow` | Date predicate and presentation-only overrides. |
 
@@ -952,7 +961,7 @@ A cheat sequence contains exactly four logical input tokens. Logical tokens are
 mapped to physical buttons or keys through the active platform input profile.
 The cheat definition never stores a platform-specific key code as its identity.
 
-`FSharCheatDefinitionRow` contains:
+`FSharCheatDefinition` contains:
 
 <!-- markdownlint-disable MD013 -->
 
@@ -965,7 +974,7 @@ The cheat definition never stores a platform-specific key code as its identity.
 | `Lifetime` | Session, current chapter boundary, current mission, or persistent transaction. |
 | `EffectKind` | Controlled effect taxonomy. |
 | `EffectParameters` | Typed parameters owned by the receiving subsystem. |
-| `FeedbackEvent` | Success, unavailable, disabled, or invalid-sequence feedback. |
+| `SuccessFeedbackEvent`, `UnavailableFeedbackEvent`, `DisabledFeedbackEvent`, `InvalidSequenceFeedbackEvent` | Typed local-player feedback identities. |
 
 <!-- markdownlint-enable MD013 -->
 
@@ -976,8 +985,9 @@ prefix ambiguity are invalid catalog data.
 ### Recognition and activation
 
 Each local player owns one transient recognizer with `inactive`, `armed`,
-`collecting`, `accepted`, and `rejected` states. The active input profile maps
-physical controls to four semantic cheat tokens plus one explicit activation
+`collecting`, `accepted`, `rejected`, and explicitly `released` states. The
+active input profile maps physical controls to four semantic cheat tokens plus
+one explicit activation
 chord or action. Platform button labels are presentation only.
 
 Historical cheat tables are private evidence normalized through
@@ -1003,19 +1013,31 @@ cheat identity. It does not convert the tuple into an array index, depend on
 cheat
 enum order, or broadcast through a fixed callback list.
 
-A matched definition is sent to `USharCheatEffectSubsystem`, which validates the
-prerequisite and delegates the typed effect request to its owning application
-port. Subscribers receive immutable result observations after the effect reaches
-its declared postcondition. Listener order cannot change activation.
+`USharCheatSubsystem` validates availability and the definition prerequisite
+before publishing one `FSharCheatActivationRequest` to
+`USharCheatEffectSubsystem`. The effect subsystem fences catalog, context, and
+activation revisions; rejects duplicate or conflicting requests; and orders
+accepted work by explicit priority and lexical activation identity.
+
+The receiving gameplay or application owner performs the effect through its own
+port. Enabled cheat state changes only after correlated
+`FSharCheatPostconditionEvidence` proves the declared postcondition. Stale
+evidence is rejected, failure or cancellation preserves the prior enabled set,
+exactly one terminal result is published, and release is explicit. Listener
+order cannot change activation.
 
 The success or failure presentation is local-player scoped and cannot reveal
 unavailable developer-only cheats in an ordinary player build.
 
 ## Cheat state and effects
 
-Session cheat state is a typed set of enabled cheat identities. It resets when
-the gameplay session resets. Runtime systems subscribe to typed effect-change
-events rather than polling an unstructured global flag.
+Cheat state is an immutable projection of enabled cheat identities and their
+accepted activation revisions. Mission effects expire when the mission revision
+changes, chapter effects expire when the chapter revision changes, and session
+effects expire when the gameplay-session revision changes. Persistent
+transactions are immediate commands and never become enabled flags. Runtime
+systems consume typed observations rather than polling an unstructured global
+bit mask.
 
 The verified effect taxonomy includes:
 
