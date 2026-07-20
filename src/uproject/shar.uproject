@@ -40,6 +40,11 @@
 			"LoadingPhase": "Default"
 		},
 		{
+			"Name": "SharPresentation",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
 			"Name": "SharMissions",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
