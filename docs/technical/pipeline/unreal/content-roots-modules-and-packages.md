@@ -1,7 +1,7 @@
 # Content roots, modules, and package layout
 
 - Status: Active
-- Last reviewed: 2026-07-18
+- Last reviewed: 2026-07-20
 
 ## Root ownership
 
@@ -29,6 +29,7 @@ test roots are never referenced by shipping base definitions.
 │   ├── SaveSchemas/<schema_id>
 │   ├── Progression/<catalog_id>
 │   ├── Meta/<catalog_id>
+│   ├── Frontend/<catalog_id>
 │   ├── Presentations/<presentation_id>
 │   ├── Rewards/<reward_id>
 │   ├── Abilities/<ability_id>
@@ -98,6 +99,7 @@ folders.
 /Game/SHAR/Data/SaveSchemas/portable_v1/DA_SaveSchema_portable_v1
 /Game/SHAR/Data/Progression/base/DA_ProgressionCatalog_base
 /Game/SHAR/Data/Meta/base/DA_MetaCatalog_base
+/Game/SHAR/Data/Frontend/base/DA_FrontendCatalog_base
 /Game/SHAR/Data/Presentations/kwik_e_mart_intro/DA_Presentation_kwik_e_mart_intro
 /Game/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld
 ```

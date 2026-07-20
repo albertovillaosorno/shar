@@ -1,7 +1,7 @@
 # Frontend screen flow and settings runtime
 
 - Status: Active
-- Last reviewed: 2026-07-15
+- Last reviewed: 2026-07-20
 
 ## Governing decisions and specifications
 
@@ -57,6 +57,29 @@ error prompts.
 A Common UI widget, animation, loading indicator, media player, platform dialog,
 or storage adapter is a projection. It cannot select application mode, mutate
 progression, own a save slot, assign a controller, or commit configuration.
+
+## Implemented control-plane slice
+
+`SharUI` now provides the native, renderer-independent control plane through:
+
+- `USharFrontendCatalogDefinition`, an immutable screen and readiness catalog;
+- `USharFrontendCatalogSubsystem`, revisioned registration, cross-catalog screen
+  uniqueness, root-catalog activation, and lookup;
+- `USharFrontendFlowSubsystem`, deterministic request arbitration, primary
+  history, modal state, revision fencing, two-phase readiness, rollback,
+  exactly-one terminal result, and explicit release; and
+- typed navigation, readiness-evidence, observation, and transition contracts.
+
+The pre-commit barrier accepts correlated domain-snapshot, asset-bundle,
+view-model, and layer-reservation evidence. The post-commit barrier accepts
+correlated widget-activation, focus, and semantic-action-routing evidence. A
+post-commit failure restores the prior accepted observation before publishing a
+terminal failure.
+
+This slice does not instantiate Common UI widgets, construct domain snapshots,
+load bundles, mutate saves or settings, execute application-mode transitions,
+or call platform APIs. Those services remain adapters that publish typed,
+revision-correlated evidence into the flow authority.
 
 ## Runtime topology
 

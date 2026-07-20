@@ -1,7 +1,7 @@
 # Identity, naming, revisions, and import plans
 
 - Status: Active
-- Last reviewed: 2026-07-18
+- Last reviewed: 2026-07-20
 
 ## Canonical identifiers
 
@@ -43,6 +43,7 @@ Examples:
 | Save schema | `SharSaveSchema` | `DA_SaveSchema_<id>` |
 | Progression catalog | `SharProgressionCatalog` | `DA_ProgressionCatalog_<id>` |
 | Meta catalog | `SharMetaCatalog` | `DA_MetaCatalog_<id>` |
+| Frontend catalog | `SharFrontendCatalog` | `DA_FrontendCatalog_<id>` |
 | Presentation | `SharPresentation` | `DA_Presentation_<id>` |
 | Location | `SharLocation` | `DA_Location_<id>` |
 | Mission | `SharMission` | `DA_Mission_<chapter>_<id>` |

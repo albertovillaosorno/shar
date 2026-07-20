@@ -1,7 +1,7 @@
 # Frontend shell and menu runtime
 
 - Status: Active
-- Last reviewed: 2026-07-15
+- Last reviewed: 2026-07-20
 
 ## Governing decisions
 
@@ -42,7 +42,8 @@ The owning services are:
 
 | Service | Lifetime | Authority |
 | :--- | :--- | :--- |
-| `USharFrontendSubsystem` | Game instance | Frontend state, commands, navigation intent, slot selection, and gameplay transition requests. |
+| `USharFrontendCatalogSubsystem` | Game instance | Immutable screen definitions, root-catalog activation, and cross-catalog identity validation. |
+| `USharFrontendFlowSubsystem` | Game instance | Revisioned frontend observations, deterministic navigation, history, modal state, readiness evidence, rollback, and terminal results. |
 | `USharFrontendInputSubsystem` | Local player | Semantic menu actions, active input method, focus restoration, and glyph context. |
 | `USharFrontendViewModelSubsystem` | Game instance | Immutable view-model construction from accepted domain snapshots. |
 
@@ -51,6 +52,11 @@ The owning services are:
 The frontend subsystem never serializes saves, calculates progression, applies
 options directly to engine objects, grants rewards, or opens a world without an
 accepted campaign transition.
+
+The current native slice is intentionally renderer-independent. Common UI
+activation, view-model construction, bundle loading, save and settings
+operations, and application transitions are external services that return
+correlated evidence; they do not mutate the accepted flow observation directly.
 
 ## Common UI layer stack
 
