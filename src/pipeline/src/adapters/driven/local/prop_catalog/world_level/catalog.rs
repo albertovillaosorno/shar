@@ -251,9 +251,9 @@ fn catalog_value(
             ),
             "three_zone_layout": concat!(
                 "levels 1, 4, and 7 share map-01-04-07; levels 2 and 5 share ",
-                "map-02-05; levels 3 and 6 share map-03-06; operator-reviewed ",
-                "horizontal movements replace artificial spacing; connected ",
-                "zone bounds may overlap at authored seams"
+                "map-02-05; levels 3 and 6 share map-03-06; reviewed family ",
+                "placement is followed by one global exterior X reflection; ",
+                "connected zone bounds may overlap at authored seams"
             ),
             "root_import_contract": concat!(
                 "only seven-level world FBXs enter the stage; reviewed ",
@@ -286,19 +286,19 @@ fn catalog_value(
             {
                 "id": "map-01-04-07",
                 "levels": [1, 4, 7],
-                "movement": null,
+                "movement": "zone-01-levels-01-04-07-global-horizontal-mirror",
                 "height_policy": "preserve-source-height"
             },
             {
                 "id": "map-02-05",
                 "levels": [2, 5],
-                "movement": "zone-02-levels-02-05-operator-placement",
+                "movement": "zone-02-levels-02-05-placement-and-global-mirror",
                 "height_policy": "preserve-source-height"
             },
             {
                 "id": "map-03-06",
                 "levels": [3, 6],
-                "movement": "zone-03-levels-03-06-operator-placement",
+                "movement": "zone-03-levels-03-06-placement-and-global-mirror",
                 "height_policy": "preserve-source-height"
             }
         ],

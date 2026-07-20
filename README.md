@@ -644,12 +644,12 @@ globally aligned collection rather than one monolithic FBX. Import only the root
 comparison galleries and must not be mixed into the normal import set.
 
 The current source-generated verification publication contains 3,710 files and
-631,844,655 bytes. The world catalog SHA-256 is
-`cb915ff025e91d80e18bbe502ad414348295a2cb22be6fabde96bedc3a2eeda9`,
+644,449,224 bytes. The world catalog SHA-256 is
+`00cf4788311682aed1810090f0b14a83a897bc848ee00324e1defa0cfb2cfa13`,
 the coordinate-movement manifest SHA-256 is
-`d4c5dba64114f67f34349d1e21f60b08892bedf2c15e4bad7629e1ceeb4179d4`,
+`b52a57e71a90f3317a6f97763619136e058a04ccba2e68ca0f04762b0c3b001e`,
 and the transform manifest SHA-256 is
-`41937efe710ee6d86f29becb9ca5cc3c8dc2b81dfb08c5be2bd232ec9ae8c76a`.
+`2bb47dcbda39afc2a7de6ef4f49e6bd5b86f901d4d081f98a699b53078129a31`.
 
 The world catalog covers 129 source packages across the seven main-level scopes
 and publishes 115 root world FBXs plus 82 isolated review FBXs. It records 19
@@ -671,11 +671,13 @@ and requires zero additional translation, rotation, or scale. Importers may
 create the shared `SHAR_Export_Root` axis-conversion transform; preserve that
 common imported transform instead of applying per-package placement offsets.
 
-The final Blender 5.1 verification loaded all 26 strict editing FBXs, including
-three zone generals, seven level variations, seven race variations, one mission
-door set, and eight interior unions. The scene resolved all 1,602 external images,
-contained no packed images or linked libraries, and reproduced the reviewed Zone
-1, Zone 2, and Zone 3 horizontal bounds while preserving source height.
+The strict Blender 5.1 review scene loads 36 editing FBXs: three zone generals,
+seven level variations, seven race variations, one mission-door set, and 18
+interior variants. Those variants cover all 19 source interior packages because
+the exact Levels 2 and 5 Moe's Tavern duplicate is represented once. All three
+Kwik-E-Mart variants remain separate. The scene keeps every image external,
+contains no linked libraries, and verifies the global non-interior mirror while
+preserving source height and interior orientation.
 
 Generate a fresh separated world baseline with:
 
@@ -690,35 +692,34 @@ model, topology, material, texture, or identity authority.
 
 The ignored `fbx-assets/world/world.blend` file is a temporary coordinate-review
 workspace. It is not model, topology, material, texture, validation, publication,
-runtime, or production authority. During a placement pass the operator may move
-only the designated zone or interior objects. Vertex edits, topology edits,
-material edits, and arbitrary object transforms remain outside that pass.
+runtime, or production authority. Non-interior world objects are transform-locked.
+Only the 18 interior variants are movable during this review pass. Variants must
+not be deleted in Blender; the operator reports which variants should be merged,
+discarded, or retained so those decisions can become deterministic source rules.
+Vertex, topology, and material edits remain outside this pass.
 
-The first reviewed placement pass established three recurring exterior families:
-
-- Zone 1 contains Levels 1, 4, and 7 and remains at its original coordinates.
-- Zone 2 contains Levels 2 and 5. Its reviewed horizontal placement rotates the
-  family by minus 90 degrees and replaces the temporary map spacing with the
-  operator-authored connected position.
-- Zone 3 contains Levels 3 and 6. Its reviewed horizontal placement rotates the
-  family by plus 90 degrees and replaces the temporary map spacing with the
-  operator-authored connected position.
+The reviewed world uses three recurring exterior families. Zone 1 contains
+Levels 1, 4, and 7; Zone 2 contains Levels 2 and 5; Zone 3 contains Levels 3 and
+6. Zone 2 and Zone 3 retain their reviewed connected placements. A final global
+source-X reflection then applies to every non-interior family, race prop, door,
+and coordinate-bearing runtime record. This reflection cancels the horizontal
+reversal introduced by the shared FBX export root. Interiors do not receive it.
 
 The resulting source-space row-vector formulas are stable generation authority:
 
 ```text
-Zone 2: X' = -Z + 989.247314453125; Y' = Y; Z' = X - 360.1337585449219
-Zone 3: X' =  Z + 745.36083984375;  Y' = Y; Z' = -X + 296.96331787109375
+Zone 1: X' = -X;                    Y' = Y; Z' = Z
+Zone 2: X' =  Z - 989.247314453125; Y' = Y; Z' =  X - 360.1337585449219
+Zone 3: X' = -Z - 745.36083984375;  Y' = Y; Z' = -X + 296.96331787109375
 ```
 
-The Zone 3 transform was solved by matching stable vertex indices against the
+The Zone 3 placement was solved by matching stable vertex indices against the
 untouched Level 3 general FBX; the maximum residual was below `0.00016` Blender
 units. Blender height translation is ignored. The pipeline preserves source
-height while applying each reviewed horizontal movement to geometry, collision
+height while applying placement and the final reflection to geometry, collision
 evidence, doors, object placements, character and object spawns, mission
-positions,
-triggers, cameras, locators, and lights. Interiors are excluded from exterior
-family movement and remain independently placeable.
+positions, triggers, cameras, locators, and lights. Interiors retain their
+existing own-center horizontal reflection and remain independently placeable.
 
 The strict local editing tree is organized by ownership rather than by a complete
 copy of every level. Each recurring family has exactly one common baseline:
@@ -736,20 +737,22 @@ zone FBXs and live below `race/` and `doors/`. A shared race-general file is
 created only when exact shared geometry actually exists; an empty or misleading
 common layer is never invented.
 
-Interiors are separate from zones and are unioned by stable source-backed
-identity: elementary school (`i00`), Kwik-E-Mart (`i01`), Simpsons house (`i02`),
-DMV (`i03`), Moe's Tavern (`i04`), Android's Dungeon (`i05`), observatory (`i06`),
-and Bart's room (`i07`). Each interior lives below
-`fbx-assets/world/interiors/<id>-<name>/`. Repeated level copies are aligned to a
-local origin and deduplicated, source collision geometry is excluded, and the
-result is mirrored horizontally around its own center. Every interior remains a
-separate movable object in the next Blender review pass.
+Interiors are separate from zones and grouped by stable source-backed identity:
+elementary school (`i00`), Kwik-E-Mart (`i01`), Simpsons house (`i02`), DMV
+(`i03`), Moe's Tavern (`i04`), Android's Dungeon (`i05`), observatory (`i06`), and
+Bart's room (`i07`). Each non-identical source-level copy is exported below
+`fbx-assets/world/interiors/<id>-<name>/level-<number>/`. Package-local geometry
+is aligned to a local origin, source collision is excluded, and each variant keeps
+the existing own-center horizontal reflection. Exact normalized package
+duplicates collapse to one representative with every source level recorded.
 
-After the operator places those eight interiors, the edited `.blend` is compared
-with its preserved pre-edit snapshot. Only reviewed object transforms are
-captured, and the same source-dependent movement rules are propagated to every
-coordinate-bearing runtime record. The `.blend` itself never becomes runtime or
-generation authority.
+The current evidence produces 18 variants from 19 packages. Moe's Tavern Levels
+2 and 5 are the only exact duplicate pair. Elementary School, Kwik-E-Mart, and
+the Simpsons house each retain distinct Levels 1, 4, and 7 variants; the remaining
+identities retain each distinct recurring-family copy. The operator reviews these
+objects side by side and reports which variants to merge, discard, or keep. Those
+decisions, not scene deletion, become the next deterministic source-dependent
+rules. The `.blend` itself never becomes runtime or generation authority.
 
 A later manual mesh-correction pass uses a mirror directory with the same strict
 FBX identities. Original and edited FBXs are compared to derive deterministic,

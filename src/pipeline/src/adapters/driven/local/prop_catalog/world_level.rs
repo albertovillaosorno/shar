@@ -119,13 +119,14 @@ pub(in crate::adapters::driven::local) fn export_world_master(
                     bytes,
                     note: format!(
                         concat!(
-                            "published {} FBX files across {} connected zone ",
-                            "families and {} isolated review FBX files from \
-                             {} ",
-                            "main-level packages; {} horizontally mirrored ",
-                            "interiors, {} authored placements, and {} \
-                             excluded ",
-                            "collision meshes"
+                            "published {} FBX files across {} globally \
+                             mirrored ",
+                            "connected zone families and {} isolated review \
+                             FBX ",
+                            "files from {} main-level packages; {} own-center ",
+                            "mirrored interior packages, {} authored \
+                             placements, ",
+                            "and {} excluded collision meshes"
                         ),
                         counts.normal_world_fbx_files,
                         counts.narrative_map_groups,
