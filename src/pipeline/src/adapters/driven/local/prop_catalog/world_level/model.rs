@@ -110,11 +110,34 @@ pub(super) struct WorldPackageRecord {
     pub(super) review_fbx: Option<WorldFbxRecord>,
 }
 
+/// One fused interior family and its optional additive Halloween overlay.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct WorldInteriorRecord {
+    /// Stable source-backed identity such as `i01`.
+    pub(super) identity: String,
+    /// Portable semantic interior name.
+    pub(super) name: String,
+    /// Every normalized package contributing provenance to this interior.
+    pub(super) source_package_ids: Vec<String>,
+    /// Source packages contributing to the canonical base union.
+    pub(super) base_source_package_ids: Vec<String>,
+    /// Source packages contributing only additive Halloween geometry.
+    pub(super) halloween_source_package_ids: Vec<String>,
+    /// Number of already-owned triangles removed from publication.
+    pub(super) removed_duplicate_triangles: usize,
+    /// Canonical fused interior artifact.
+    pub(super) base_fbx: WorldFbxRecord,
+    /// Optional additive Halloween-only artifact.
+    pub(super) halloween_fbx: Option<WorldFbxRecord>,
+}
+
 /// One complete package collection sharing a zero origin and texture authority.
 #[derive(Clone, Debug, PartialEq)]
 pub(super) struct ExportedWorldCollection {
     /// Deterministically ordered package publication records.
     pub(super) packages: Vec<WorldPackageRecord>,
+    /// Fused canonical interiors plus additive Halloween overlays.
+    pub(super) interiors: Vec<WorldInteriorRecord>,
     /// Package movements and transformed non-mesh coordinate evidence.
     pub(super) coordinate_movements: Vec<WorldCoordinateMovementRecord>,
     /// Deduplicated shared texture authority.
@@ -154,7 +177,10 @@ pub(super) struct WorldSurfaceSemanticCounts {
 
 impl WorldSurfaceSemanticCounts {
     /// Add one package artifact's overlapping semantic counts.
-    pub(super) const fn add(&mut self, additional: Self) {
+    pub(super) const fn add(
+        &mut self,
+        additional: Self,
+    ) {
         self.transparent_materials = self
             .transparent_materials
             .saturating_add(additional.transparent_materials);
@@ -215,8 +241,12 @@ pub(super) struct WorldCollectionCounts {
     pub(super) coordinate_reference_packages: usize,
     /// Number of packages retaining canonical coordinates.
     pub(super) coordinate_fallback_packages: usize,
-    /// Number of interior packages.
+    /// Number of interior source packages.
     pub(super) interior_packages: usize,
+    /// Number of fused canonical interior FBX artifacts.
+    pub(super) interior_base_fbx_files: usize,
+    /// Number of additive Halloween-only interior FBX artifacts.
+    pub(super) interior_halloween_fbx_files: usize,
     /// Number of canonical source meshes considered.
     pub(super) source_meshes: usize,
     /// Number of rejected degenerate render triangles.

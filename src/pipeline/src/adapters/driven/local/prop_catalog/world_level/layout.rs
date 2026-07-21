@@ -16,15 +16,15 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Three-zone family grouping, aggregate bounds, and interior mirroring.
+//   - Three-zone family grouping and aggregate-bound validation.
 // - Must-Not:
-//   - Read packages, infer operator placement, serialize catalogs, or write FBX
-//     files.
+//   - Read packages, infer operator placement, own reviewed movements,
+//     serialize catalogs, or write FBX files.
 // - Allows:
-//   - Scope classification, source-space horizontal reflection, and finite AABB
-//     validation.
+//   - Scope classification, zero-offset recurring-family placement, and finite
+//     AABB validation.
 // - Summary:
-//   - Classifies recurring zones and mirrors independently movable interiors.
+//   - Classifies recurring zones and validates connected world bounds.
 //
 // ADRs:
 // - docs/adr/pipeline/unreal/world-assembly-from-normalized-chunks.md
@@ -33,7 +33,7 @@
 //   - false
 //
 
-//! Three-zone grouping, interior mirroring, and aggregate-bound validation.
+//! Three-zone grouping and aggregate-bound validation.
 
 use std::collections::BTreeMap;
 
@@ -66,7 +66,7 @@ pub(super) struct MapBounds {
 ///
 /// Returns an error when a narrative level has no declared map group.
 pub(super) fn placement_for_scope(
-    scope: &str,
+    scope: &str
 ) -> Result<MapPlacement, PipelineError> {
     let placement = match scope {
         "level-01" | "level-04" | "level-07" => MapPlacement {
@@ -119,52 +119,6 @@ pub(super) fn apply_placement(
             .offset
             .map(f32::from),
     );
-    for mesh in meshes {
-        let name = mesh
-            .name
-            .clone();
-        bake_mesh(
-            mesh, &matrix, name,
-        )?;
-    }
-    Ok(())
-}
-
-/// Mirror one independently movable interior horizontally around its aggregate
-/// source-space X center.
-///
-/// Source X maps to Blender horizontal X, so this reflection produces the
-/// operator-requested horizontal mirror without changing source height or the
-/// interior's aggregate center.
-///
-/// # Errors
-///
-/// Returns an error when one reflected mesh becomes invalid.
-pub(super) fn mirror_interior_horizontal(
-    meshes: &mut [MeshAsset],
-) -> Result<(), PipelineError> {
-    let Some(bounds) = collection_bounds(meshes) else {
-        return Ok(());
-    };
-    let center_x = (bounds.low[0] + bounds.high[0]) * 0.5;
-    let matrix = [
-        -1.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-        0.0,
-        center_x + center_x,
-        0.0,
-        0.0,
-        1.0,
-    ];
     for mesh in meshes {
         let name = mesh
             .name
@@ -236,12 +190,14 @@ pub(super) fn record_group_bounds(
 ///
 /// Returns an error when one group bound is non-finite or inverted.
 pub(super) fn validate_group_bounds(
-    bounds: &BTreeMap<&'static str, MapBounds>,
+    bounds: &BTreeMap<&'static str, MapBounds>
 ) -> Result<(), PipelineError> {
     for (name, bound) in bounds {
-        for axis in 0..3 {
-            let low = bound.low[axis];
-            let high = bound.high[axis];
+        for (low, high) in bound
+            .low
+            .iter()
+            .zip(&bound.high)
+        {
             if !low.is_finite() || !high.is_finite() || low > high {
                 return Err(
                     PipelineError::new(
@@ -255,7 +211,10 @@ pub(super) fn validate_group_bounds(
 }
 
 /// Merge two axis-aligned bounds.
-const fn merge_bounds(left: MapBounds, right: MapBounds) -> MapBounds {
+const fn merge_bounds(
+    left: MapBounds,
+    right: MapBounds,
+) -> MapBounds {
     let [
         left_low_x,
         left_low_y,
@@ -309,7 +268,10 @@ const fn merge_bounds(left: MapBounds, right: MapBounds) -> MapBounds {
 }
 
 /// Return the lower of two finite source-space coordinates.
-const fn minimum(left: f32, right: f32) -> f32 {
+const fn minimum(
+    left: f32,
+    right: f32,
+) -> f32 {
     if left < right {
         left
     } else {
@@ -318,7 +280,10 @@ const fn minimum(left: f32, right: f32) -> f32 {
 }
 
 /// Return the higher of two finite source-space coordinates.
-const fn maximum(left: f32, right: f32) -> f32 {
+const fn maximum(
+    left: f32,
+    right: f32,
+) -> f32 {
     if left > right {
         left
     } else {
@@ -330,12 +295,7 @@ const fn maximum(left: f32, right: f32) -> f32 {
 mod tests {
     use std::collections::BTreeMap;
 
-    use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
-
-    use super::{
-        MapBounds, mirror_interior_horizontal, placement_for_scope,
-        validate_group_bounds,
-    };
+    use super::{MapBounds, placement_for_scope, validate_group_bounds};
 
     #[test]
     fn recurring_levels_share_groups_without_artificial_offsets()
@@ -414,55 +374,8 @@ mod tests {
                 ],
             },
         );
-        assert!(validate_group_bounds(&bounds).is_err());
-        Ok(())
-    }
-
-    #[test]
-    fn interior_mirror_preserves_center() -> Result<(), String> {
-        let group = PrimitiveGroup::new(
-            0,
-            "interior-material",
-            vec![
-                [
-                    2.0, 1.0, 3.0,
-                ],
-                [
-                    6.0, 1.0, 3.0,
-                ],
-                [
-                    2.0, 1.0, 7.0,
-                ],
-            ],
-            Vec::new(),
-            &[
-                0, 1, 2,
-            ],
-        )
-        .map_err(|error| format!("group failed: {error:?}"))?;
-        let mut meshes = vec![
-            MeshAsset::new(
-                "interior",
-                vec![group],
-            )
-            .map_err(|error| format!("mesh failed: {error:?}"))?,
-        ];
-        mirror_interior_horizontal(&mut meshes)
-            .map_err(|error| error.to_string())?;
-        if meshes[0].groups[0].positions
-            != [
-                [
-                    6.0, 1.0, 3.0,
-                ],
-                [
-                    2.0, 1.0, 3.0,
-                ],
-                [
-                    6.0, 1.0, 7.0,
-                ],
-            ]
-        {
-            return Err(String::from("interior mirror changed"));
+        if validate_group_bounds(&bounds).is_ok() {
+            return Err(String::from("inverted bounds were accepted"));
         }
         Ok(())
     }

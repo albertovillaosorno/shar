@@ -643,21 +643,22 @@ globally aligned collection rather than one monolithic FBX. Import only the root
 `*.fbx` files for the normal world scene. Files under `review/` are isolated
 comparison galleries and must not be mixed into the normal import set.
 
-The current source-generated verification publication contains 3,710 files and
-644,449,224 bytes. The world catalog SHA-256 is
-`00cf4788311682aed1810090f0b14a83a897bc848ee00324e1defa0cfb2cfa13`,
+The current source-generated verification publication contains 3,703 files and
+624,278,693 bytes. The world catalog SHA-256 is
+`5334cb619a0402ad53813ea393d1b17a4f9a54dcc738ecc2c03bddb24a2e6d16`,
 the coordinate-movement manifest SHA-256 is
-`b52a57e71a90f3317a6f97763619136e058a04ccba2e68ca0f04762b0c3b001e`,
+`7e8d534472d718ab1fad0b5a42f5c775e884a75ea055324aff33253a138d6e8b`,
 and the transform manifest SHA-256 is
-`2bb47dcbda39afc2a7de6ef4f49e6bd5b86f901d4d081f98a699b53078129a31`.
+`9020fcb3c3de0b38c4252f81441d67d253a21970ecdcedb5fee9e293b02e7405`.
 
 The world catalog covers 129 source packages across the seven main-level scopes
-and publishes 115 root world FBXs plus 82 isolated review FBXs. It records 19
-interiors, 9,744 source meshes, 12,216 authored and reference-backed placements,
-zero canonical placement fallbacks, 7,934 excluded collision meshes, 2,384
-definition-only review meshes, and 442 review similarity groups. Six data-only
-packages correctly publish no geometry. No auxiliary or bonus-area package enters
-this stage.
+and publishes 108 normal-import FBXs plus 82 isolated review FBXs. The normal set
+includes eight fused interior bases and four additive Halloween overlays derived
+from all 19 source interior packages. It records 9,744 source meshes, 12,216
+authored and reference-backed placements, zero canonical placement fallbacks,
+7,934 excluded collision meshes, 2,384 definition-only review meshes, and 442
+review similarity groups. Six data-only packages correctly publish no geometry.
+No auxiliary or bonus-area package enters this stage.
 
 Material semantics remain explicit across the collection. The catalog records
 5,734 glass, eight mirror, 1,963 reflective, 4,536 light-emitting, 7,388
@@ -671,13 +672,15 @@ and requires zero additional translation, rotation, or scale. Importers may
 create the shared `SHAR_Export_Root` axis-conversion transform; preserve that
 common imported transform instead of applying per-package placement offsets.
 
-The strict Blender 5.1 review scene loads 36 editing FBXs: three zone generals,
-seven level variations, seven race variations, one mission-door set, and 18
-interior variants. Those variants cover all 19 source interior packages because
-the exact Levels 2 and 5 Moe's Tavern duplicate is represented once. All three
-Kwik-E-Mart variants remain separate. The scene keeps every image external,
-contains no linked libraries, and verifies the global non-interior mirror while
-preserving source height and interior orientation.
+The Blender 5.1 review scene keeps 18 locked exterior review objects and replaces
+19 source interior packages with eight movable fused bases. Elementary School,
+Kwik-E-Mart, the Simpsons house, and Bart's room additionally expose four movable
+Level 7 Halloween-only overlays. Every external image remains relative and
+unpacked, and the scene verifies both the reviewed interior placement and the
+exact global height translation. The current `world.blend` SHA-256 is
+`a6febb64d64043d9ec4cbbcd10aefe69dbaa1d8410e44af2f1d518bedc94e699`;
+its `world.analysis-provenance.json` sidecar SHA-256 is
+`145a693fe1d18b9b39bf54b3530b82d00be1999cd43377d8428f0fd8044be2ab`.
 
 Generate a fresh separated world baseline with:
 
@@ -692,11 +695,10 @@ model, topology, material, texture, or identity authority.
 
 The ignored `fbx-assets/world/world.blend` file is a temporary coordinate-review
 workspace. It is not model, topology, material, texture, validation, publication,
-runtime, or production authority. Non-interior world objects are transform-locked.
-Only the 18 interior variants are movable during this review pass. Variants must
-not be deleted in Blender; the operator reports which variants should be merged,
-discarded, or retained so those decisions can become deterministic source rules.
-Vertex, topology, and material edits remain outside this pass.
+runtime, or production authority. The 18 exterior objects are transform-locked;
+the eight fused interiors and four Halloween overlays remain movable so the
+operator can report any final placement correction. Vertex, topology, and
+material edits remain outside this review pass.
 
 The reviewed world uses three recurring exterior families. Zone 1 contains
 Levels 1, 4, and 7; Zone 2 contains Levels 2 and 5; Zone 3 contains Levels 3 and
@@ -708,18 +710,25 @@ reversal introduced by the shared FBX export root. Interiors do not receive it.
 The resulting source-space row-vector formulas are stable generation authority:
 
 ```text
-Zone 1: X' = -X;                    Y' = Y; Z' = Z
-Zone 2: X' =  Z - 989.247314453125; Y' = Y; Z' =  X - 360.1337585449219
-Zone 3: X' = -Z - 745.36083984375;  Y' = Y; Z' = -X + 296.96331787109375
+Zone 1: X' = -X;                    Y' = Y + 43.396; Z' = Z
+Zone 2: X' =  Z - 989.247314453125; Y' = Y + 43.396; Z' =  X - 360.1337585449219
+Zone 3: X' = -Z - 745.36083984375;  Y' = Y + 43.396; Z' = -X + 296.96331787109375
 ```
 
 The Zone 3 placement was solved by matching stable vertex indices against the
 untouched Level 3 general FBX; the maximum residual was below `0.00016` Blender
-units. Blender height translation is ignored. The pipeline preserves source
-height while applying placement and the final reflection to geometry, collision
-evidence, doors, object placements, character and object spawns, mission
-positions, triggers, cameras, locators, and lights. Interiors retain their
-existing own-center horizontal reflection and remain independently placeable.
+units. The exact `43.396` meter source-height translation applies after every
+exterior and interior placement. Geometry, collision evidence, doors, object
+placements, character and object spawns, mission positions, triggers, cameras,
+locators, and lights all receive the same translation without exception.
+
+This value is an additive height offset, not a command to ground the world's
+lowest point at zero. Source Y becomes Blender Z, and measured review bounds move
+from `-173.977081`–`289.812042` to `-130.581085`–`333.208038` on Blender Z: both
+limits increase by `43.395996` after `f32` storage. The world can therefore remain
+below Blender's green zero plane even though the requested height is correctly
+baked. Any future lowest-point-to-zero normalization is a separate algorithm and
+must not be confused with, added to, or substituted for this global offset.
 
 The strict local editing tree is organized by ownership rather than by a complete
 copy of every level. Each recurring family has exactly one common baseline:
@@ -740,19 +749,24 @@ common layer is never invented.
 Interiors are separate from zones and grouped by stable source-backed identity:
 elementary school (`i00`), Kwik-E-Mart (`i01`), Simpsons house (`i02`), DMV
 (`i03`), Moe's Tavern (`i04`), Android's Dungeon (`i05`), observatory (`i06`), and
-Bart's room (`i07`). Each non-identical source-level copy is exported below
-`fbx-assets/world/interiors/<id>-<name>/level-<number>/`. Package-local geometry
-is aligned to a local origin, source collision is excluded, and each variant keeps
-the existing own-center horizontal reflection. Exact normalized package
-duplicates collapse to one representative with every source level recorded.
+Bart's room (`i07`). All ordinary recurring copies are transformed into reviewed
+world space and fused into one base FBX below
+`fbx-assets/world/interiors/<id>-<name>/`. The reviewed matrices remain placement
+authority, but the source's artificial 8,192-meter Zone 2 and 16,384-meter Zone 3
+family displacements are cancelled before the shared FBX basis conversion because
+the connected native world already owns family placement. Source collision
+remains excluded.
 
-The current evidence produces 18 variants from 19 packages. Moe's Tavern Levels
-2 and 5 are the only exact duplicate pair. Elementary School, Kwik-E-Mart, and
-the Simpsons house each retain distinct Levels 1, 4, and 7 variants; the remaining
-identities retain each distinct recurring-family copy. The operator reviews these
-objects side by side and reports which variants to merge, discard, or keep. Those
-decisions, not scene deletion, become the next deterministic source-dependent
-rules. The `.blend` itself never becomes runtime or generation authority.
+Elementary School, Kwik-E-Mart, the Simpsons house, and Bart's room additionally
+publish one `*-halloween.fbx` Level 7 overlay. Spatial centroid, vertex, and surface
+buckets apply a bounded five-millimeter comparison. Alternate diagonals are
+removed only when all candidate vertices are already owned and the candidate
+centroid plus all three edge midpoints remain covered by owned coplanar triangles;
+uncovered planar spans remain new geometry. Retained triangles preserve their
+material, UV, normal, color, and source mesh authority. The overlays therefore add
+only genuine Halloween differences such as webs, pumpkins, and skeletons rather
+than repeating floors, walls, furniture, or fixtures. The `.blend` itself never
+becomes runtime or generation authority.
 
 A later manual mesh-correction pass uses a mirror directory with the same strict
 FBX identities. Original and edited FBXs are compared to derive deterministic,
