@@ -1,7 +1,7 @@
 # World, props, roads, interiors, and streaming
 
 - Status: Active
-- Last reviewed: 2026-07-18
+- Last reviewed: 2026-07-20
 
 ## World model
 
@@ -15,6 +15,51 @@ Narrative chapters are progression and content-activation states, not seven
 isolated runtime levels. Geography, roads, landmarks, interiors, mission layers,
 population layers, collectibles, and chapter presentation use stable definitions
 and Runtime Data Layers.
+
+## Authored base world
+
+`W_SHAR_OpenWorld` is the official manually authored base map. Its `.umap`, HLOD
+configuration asset, and World Partition External Actor/Object packages are
+published through Git LFS. Other generated native assets remain ignored unless a
+separate publication decision names them explicitly.
+
+The initial map shell contains World Partition, sky and atmosphere actors, one
+player start, and one `WaterBodyOcean` at world `Z = 0 cm`. It intentionally has
+no Landscape yet. The island Landscape is authored manually before imported
+world models are placed over it.
+
+The temporary island reference belongs inside the Unreal project at:
+
+```text
+/Game/SHAR/EditorOnly/StructuralGuide
+src/uproject/Content/SHAR/EditorOnly/StructuralGuide/
+```
+
+The raw FBX goes in `Source/`; its imported Static Mesh goes in `Imported/`.
+Both are local editor-only evidence, excluded from Git and cooking. Import the
+guide without materials, textures, generated collision, or Nanite, preserve the
+canonical origin and centimeter scale, and delete it after the Landscape shape
+has been verified.
+
+A Landscape is a heightfield surface, not a volumetric block. The island and
+seabed therefore use one continuous Landscape surface; geometry below that
+surface is implicitly solid for collision. Do not add a second flat ocean-floor
+mesh. Use these authoring elevations as the initial convention:
+
+- ocean surface: `Z = 0 cm`;
+- ordinary seabed target: approximately `Z = -5,000 cm`;
+- practical lower seabed limit: `Z = -9,000 cm` while the current water
+  collision depth remains `10,000 cm`;
+- shoreline sand band: approximately `Z = -100 cm` through `Z = +150 cm`;
+- grass begins around `Z = +150 cm` to `+200 cm`, subject to slope and authored
+  biome intent;
+- soil is used for exposed cuts, cliffs, paths, and transitions rather than an
+  elevation-only band.
+
+Landscape paint identities are stable: `Soil`, `Grass`, and `Sand`. Their Layer
+Info assets and master material are created only after the Landscape exists, so
+Unreal can bind them to a real target landscape instead of leaving orphan native
+assets.
 
 ## Coordinates
 

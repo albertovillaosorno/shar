@@ -46,10 +46,12 @@ Editor automation imports fixture inputs into:
 /Game/SHAR/Maps/Tests
 ```
 
-Generated `.uasset` and `.umap` files remain ignored. A clean editor test
+Generated test `.uasset` and `.umap` files remain ignored. A clean editor test
 deletes the generated root, reimports, reads back native state, runs Data
 Validation and Automation tests, and compares logical results. This proves
-reproducibility without committing machine-generated binary packages.
+fixture reproducibility without committing machine-generated test packages.
+The separately governed canonical authored open world is not a test fixture and
+is published through its narrow Git LFS exception.
 
 ## Validation layers
 

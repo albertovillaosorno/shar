@@ -123,6 +123,18 @@
 			]
 		},
 		{
+			"Name": "PythonScriptPlugin",
+			"Enabled": false
+		},
+		{
+			"Name": "Water",
+			"Enabled": true
+		},
+		{
+			"Name": "Landmass",
+			"Enabled": true
+		},
+		{
 			"Name": "MCPClientToolset",
 			"Enabled": false
 		},

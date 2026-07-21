@@ -68,11 +68,26 @@ Plugins/*/Binaries/*
 Plugins/*/Intermediate/*
 
 # Unreal project plugins are installed locally and are never vendored.
+src/uproject/Plugins/VisualStudioTools/
 src/uproject/Plugins/
 
-# Unreal binary assets (stay local unless deliberately force-added via LFS)
+# Unreal binary assets stay local unless a narrow publication exception below
+# deliberately routes them through Git LFS.
 *.uasset
 *.umap
+
+# Local editor-only structural guide. The source FBX and imported Static Mesh
+# exist inside the Unreal project for manual Landscape tracing but never ship or
+# enter version control.
+src/uproject/Content/SHAR/EditorOnly/StructuralGuide/
+
+# The canonical authored base world is an explicit publication exception. Its
+# World Partition actor/object packages must travel with the map as the island is
+# sculpted; unrelated generated Unreal packages remain ignored.
+!src/uproject/Content/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld.umap
+!src/uproject/Content/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld_HLOD0_Instancing.uasset
+!src/uproject/Content/__ExternalActors__/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld/**/*.uasset
+!src/uproject/Content/__ExternalObjects__/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld/**/*.uasset
 
 # ==============================================================================
 # Visual Studio, Rider, & .NET Environment
