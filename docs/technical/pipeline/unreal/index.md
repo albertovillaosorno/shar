@@ -69,10 +69,12 @@ Read and implement these documents in order:
   matchmaking, or a first-party server fleet.
 - Rendering correctness never depends on a vendor plugin. TSR is the guaranteed
   Unreal-native baseline; vendor upscalers are optional capability adapters.
-- Generated `.uasset` and `.umap` files are reproducible outputs and remain
-  untracked until an explicit generated-asset publication policy is accepted.
-  Tiny synthetic normalized inputs may be tracked only in the declared fixture
-  directory.
+- Generated `.uasset` and `.umap` files remain untracked by default. The
+  canonical authored World Partition map
+  `/Game/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld`, its HLOD configuration asset,
+  and its External Actor/Object packages are the accepted publication
+  exception and use Git LFS. Tiny synthetic normalized inputs may be tracked
+  only in the declared fixture directory.
 
 ## Change control
 
