@@ -20,26 +20,51 @@ editor projects or preserving source-engine runtime structures.
 
 The seven main levels form three recurring exterior families: Levels 1, 4, and 7
 share Zone 1; Levels 2 and 5 share Zone 2; Levels 3 and 6 share Zone 3. Reviewed
-horizontal affine movements connect Zones 2 and 3 to Zone 1 while preserving
-source height. A final source-X reflection applies to all three exterior
-families and every associated coordinate record so the shared FBX export-root
-conversion does not reverse the assembled world's left and right sides. The
-reflection covers render geometry, collision evidence, doors, object placement,
-character and object spawns, mission placement, triggers, cameras, locators, and
-lights.
+horizontal affine movements connect Zones 2 and 3 to Zone 1. A final source-X
+reflection applies to all three exterior families and every associated
+coordinate record so the shared FBX export-root conversion does not reverse the
+assembled world's left and right sides.
+
+An exact `43.396` meter source-height translation applies after every exterior
+and interior placement without exception. The complete movement boundary covers
+render geometry, collision evidence, doors, object placement, character and
+object spawns, mission placement, triggers, cameras, locators, and lights. In
+source coordinates height is Y; generated Blender evidence projects that same
+translation onto Blender Z. This translation is additive and does not normalize
+the world's minimum elevation to zero. Measured Blender bounds increase by
+`43.395996` on both Z limits after `f32` storage while still crossing the zero
+plane; any later ground-to-zero operation is a distinct transformation.
 
 The operator may use an ignored Blender scene to review placement, but that
 scene is comparison evidence rather than production authority. The pipeline
-records only the solved source-dependent transform and must verify it against
-unchanged source geometry. Bonus and auxiliary packages do not enter the
-seven-level world stage.
+records only solved source-dependent affine matrices and verifies regenerated
+geometry against the reviewed scene. Bonus and auxiliary packages do not enter
+the seven-level world stage.
 
-Interiors remain independent from exterior family movement and do not receive
-the global reflection. Repeated level copies are identified by stable interior
-identity and compared as complete package-local variants. Only exact normalized
-local package duplicates collapse to one representative; every non-identical
-source-level variant remains separate for operator review. Source collision is
-excluded, and each variant keeps the existing own-center horizontal reflection.
+Interiors do not inherit the exterior-family reflection. Each of the 19 source
+packages has one reviewed full-XYZ source-space movement, including height, and
+is grouped into one of eight stable interior identities. The reviewed matrices
+remain placement authority, but the source's artificial 8,192-meter Zone 2 and
+16,384-meter Zone 3 family displacements are cancelled before the shared FBX
+basis conversion because the connected native world already owns family
+placement. Ordinary recurring copies are then transformed into the same reviewed
+world space and fused into one canonical base FBX per identity. Source collision
+remains excluded.
+
+Elementary School (`i00`), Kwik-E-Mart (`i01`), Simpsons House (`i02`), and
+Bart's Room (`i07`) additionally publish one Level 7 Halloween overlay. The
+overlay contains only world-space triangles absent from the canonical base.
+Triangle ownership uses spatial centroid, vertex, and surface buckets with a
+bounded five-millimeter comparison derived from measured review-placement noise.
+Exact triangles are duplicates. An alternate diagonal is a duplicate only when
+all candidate vertices are already owned and its centroid plus all three edge
+midpoints remain covered by owned coplanar triangles; an uncovered planar span
+is retained as new geometry. Source names, materials, UVs, normals, vertex
+indices,
+and triangle ordering are not ownership authority; retained triangles preserve
+their original presentation. This prevents a mixed Halloween mesh from repeating
+ordinary walls, floors, furniture, or fixtures without collapsing genuinely
+different geometry.
 Buildings, houses, windows, doors, linked interiors, landmarks, roads, props,
 and mission anchors retain stable identities and coordinates. Campaign levels
 project state over the assembled geography rather than owning alternate copies
@@ -55,8 +80,8 @@ of the same physical location.
 - Three family-level exterior transforms replace artificial map spacing and
   apply one final global X reflection without flattening height or moving
   interiors.
-- Interior identity, exact-duplicate collapse, source-level variant
-  preservation, own-center mirroring, and collision exclusion remain
+- Interior identity, reviewed placement, tolerant duplicate collapse, additive
+  Halloween ownership, exact global height, and collision exclusion remain
   independently testable from exterior world assembly.
 - Ignored review scenes and derived editing FBXs may be deleted without changing
   production regeneration authority.

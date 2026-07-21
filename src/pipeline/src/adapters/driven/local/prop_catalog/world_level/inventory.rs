@@ -115,7 +115,7 @@ pub(super) fn object_role(source: &LevelMeshSource) -> WorldObjectRole {
 
 /// Return every terrain-world package in deterministic import order.
 pub(super) fn world_packages(
-    index: &PhaseThreePackageIndex,
+    index: &PhaseThreePackageIndex
 ) -> Vec<&PhaseThreePackageRow> {
     let mut packages = index
         .packages()
@@ -141,7 +141,7 @@ pub(super) fn world_packages(
 
 /// Return the independent source scope owning one world package.
 pub(super) fn package_scope(
-    package: &PhaseThreePackageRow,
+    package: &PhaseThreePackageRow
 ) -> Result<String, PipelineError> {
     if let Some(rest) = package
         .subcategory
@@ -192,7 +192,7 @@ pub(super) fn is_interior(package: &PhaseThreePackageRow) -> bool {
 ///
 /// Returns an error when ledger ownership or component paths are malformed.
 pub(super) fn package_meshes(
-    root: &Path,
+    root: &Path
 ) -> Result<Vec<LevelMeshSource>, PipelineError> {
     let manifest = root.join("components.jsonl");
     if !manifest.is_file() {

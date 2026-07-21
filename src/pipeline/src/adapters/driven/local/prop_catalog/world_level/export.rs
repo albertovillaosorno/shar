@@ -16,15 +16,16 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Per-package world mesh preparation, review isolation, and FBX writes.
+//   - Per-package world preparation, fused-interior ownership, review
+//     isolation, and FBX writes.
 // - Must-Not:
-//   - Select source packages, merge incompatible variants, or serialize the
-//   - root catalog.
+//   - Select source packages, infer transforms, merge non-Halloween level
+//     ownership, or serialize the root catalog.
 // - Allows:
-//   - Baked shared-origin geometry, collision inspection, and isolated
-//   - definition-only review galleries.
+//   - Baked shared-origin geometry, geometry-key deduplication, additive
+//     Halloween overlays, collision inspection, and isolated review galleries.
 // - Summary:
-//   - Publishes independently importable world-package FBX files.
+//   - Publishes exterior packages and fused interior FBX artifacts.
 //
 // ADRs:
 // - docs/adr/pipeline/unreal/world-assembly-from-normalized-chunks.md
@@ -62,18 +63,22 @@ use super::super::prepared::PreparedTexture;
 use super::super::texture_authority::SharedTextureAuthority;
 use super::collision::load_intersect_meshes;
 use super::coordinate::PackageCoordinates;
+use super::interior::{
+    InteriorGeometryOwnership, InteriorIdentity, identity_for_package,
+    is_halloween_package, package_level, retain_unowned_triangles,
+};
 use super::inventory::{
     LevelMeshSource, is_direct_world_mesh, is_interior, object_role,
     package_meshes, package_scope,
 };
 use super::islands::split_distant_islands;
 use super::layout::{
-    MapBounds, apply_placement, collection_bounds, mirror_interior_horizontal,
-    placement_for_scope, record_group_bounds, validate_group_bounds,
+    MapBounds, apply_placement, collection_bounds, placement_for_scope,
+    record_group_bounds, validate_group_bounds,
 };
 use super::model::{
-    ExportedWorldCollection, WorldFbxRecord, WorldPackageRecord,
-    WorldSurfaceSemanticCounts,
+    ExportedWorldCollection, WorldFbxRecord, WorldInteriorRecord,
+    WorldPackageRecord, WorldSurfaceSemanticCounts,
 };
 use super::movement::apply_package_movement;
 use super::movement_model::WorldCoordinateMovementRecord;
@@ -117,6 +122,20 @@ struct ReviewMesh {
     mesh: MeshAsset,
     /// Coarse shape profile used only for review co-location.
     profile: ShapeProfile,
+}
+
+/// One transformed interior package awaiting fused publication.
+struct PendingInterior {
+    /// Stable semantic interior family.
+    identity: InteriorIdentity,
+    /// Narrative source level.
+    level: u8,
+    /// Whether this package contributes only Halloween additions.
+    halloween: bool,
+    /// Package provenance and counters.
+    record: WorldPackageRecord,
+    /// Transformed render content and presentation authority.
+    content: MasterContent,
 }
 
 /// Coarse normalized shape evidence used only for review co-location.
@@ -186,6 +205,7 @@ pub(super) fn export_world_collection(
     }
 
     let mut records = Vec::with_capacity(packages.len());
+    let mut pending_interiors = Vec::<PendingInterior>::new();
     let mut coordinate_movements = Vec::<WorldCoordinateMovementRecord>::new();
     let mut all_textures = BTreeMap::<String, PreparedTexture>::new();
     let mut aggregate_semantics = WorldSurfaceSemanticCounts::default();
@@ -225,34 +245,28 @@ pub(super) fn export_world_collection(
             .ok_or_else(
                 || PipelineError::new("world package record is missing"),
             )?;
-        if record.interior {
-            mirror_interior_horizontal(&mut package_content.meshes)?;
-        }
         let placement = placement_for_scope(&scope)?;
         apply_placement(
             &mut package_content.meshes,
             placement,
         )?;
-        record_group_bounds(
-            &mut map_bounds,
-            placement,
-            collection_bounds(&package_content.meshes),
-        );
-        record.map_group = placement
-            .group
-            .map(str::to_owned);
-        record.map_offset = placement.offset;
+        if !record.interior {
+            record_group_bounds(
+                &mut map_bounds,
+                placement,
+                collection_bounds(&package_content.meshes),
+            );
+            record.map_group = placement
+                .group
+                .map(str::to_owned);
+            record.map_offset = placement.offset;
+        }
         let (independent, breakable, interactable) =
             world_object_semantic_counts(&package_content.meshes);
         record.independent_item_geometries = independent;
         record.breakable_geometries = breakable;
         record.interactable_geometries = interactable;
         let stem = package_file_stem(package)?;
-        let uv_policy = if record.interior {
-            ModelUvPolicy::Preserve
-        } else {
-            ModelUvPolicy::Selective
-        };
         if !used_file_names.insert(stem.clone()) {
             return Err(
                 PipelineError::new(
@@ -268,21 +282,6 @@ pub(super) fn export_world_collection(
         let review_textures = package_content
             .textures
             .clone();
-        let world_relative_path = format!("{stem}.fbx");
-        record.world_fbx = write_content_fbx(
-            &stem,
-            &world_relative_path,
-            &mut package_content,
-            output_root,
-            uv_policy,
-        )?;
-        if let Some(artifact) = record
-            .world_fbx
-            .as_ref()
-        {
-            aggregate_semantics.add(artifact.surface_semantics);
-        }
-
         if !review.is_empty() {
             let mut review_content = MasterContent {
                 meshes: Vec::new(),
@@ -298,7 +297,11 @@ pub(super) fn export_world_collection(
                 &format!("review/{stem}.review.fbx"),
                 &mut review_content,
                 output_root,
-                uv_policy,
+                if record.interior {
+                    ModelUvPolicy::Preserve
+                } else {
+                    ModelUvPolicy::Selective
+                },
             )?;
             if let Some(artifact) = record
                 .review_fbx
@@ -308,9 +311,72 @@ pub(super) fn export_world_collection(
                 has_review_fbx = true;
             }
         }
+
+        if record.interior {
+            let identity = identity_for_package(&record.package_id)
+                .ok_or_else(
+                    || {
+                        PipelineError::new(
+                            format!(
+                                "world interior identity is missing: {}",
+                                record.package_id
+                            ),
+                        )
+                    },
+                )?;
+            let level = package_level(&record.package_id).ok_or_else(
+                || {
+                    PipelineError::new(
+                        format!(
+                            "world interior level is missing: {}",
+                            record.package_id
+                        ),
+                    )
+                },
+            )?;
+            pending_interiors.push(
+                PendingInterior {
+                    identity,
+                    level,
+                    halloween: is_halloween_package(&record.package_id),
+                    record,
+                    content: package_content,
+                },
+            );
+            continue;
+        }
+
+        let world_relative_path = format!("{stem}.fbx");
+        record.world_fbx = write_content_fbx(
+            &stem,
+            &world_relative_path,
+            &mut package_content,
+            output_root,
+            ModelUvPolicy::Selective,
+        )?;
+        if let Some(artifact) = record
+            .world_fbx
+            .as_ref()
+        {
+            aggregate_semantics.add(artifact.surface_semantics);
+        }
         records.push(record);
     }
     validate_group_bounds(&map_bounds)?;
+
+    let (interiors, interior_records, interior_semantics) =
+        publish_fused_interiors(
+            pending_interiors,
+            output_root,
+        )?;
+    aggregate_semantics.add(interior_semantics);
+    records.extend(interior_records);
+    records.sort_by(
+        |left, right| {
+            left.package_id
+                .cmp(&right.package_id)
+        },
+    );
 
     let textures = publish_textures(
         &all_textures,
@@ -332,6 +398,7 @@ pub(super) fn export_world_collection(
     Ok(
         ExportedWorldCollection {
             packages: records,
+            interiors,
             coordinate_movements,
             textures,
             surface_semantics: aggregate_semantics,
@@ -339,6 +406,309 @@ pub(super) fn export_world_collection(
     )
 }
 
+/// Publish eight fused base interiors and four additive Halloween overlays.
+#[expect(
+    clippy::too_many_lines,
+    reason = "one atomic transaction owns fused geometry, presentation, and \
+              writes"
+)]
+fn publish_fused_interiors(
+    pending: Vec<PendingInterior>,
+    output_root: &Path,
+) -> Result<
+    (
+        Vec<WorldInteriorRecord>,
+        Vec<WorldPackageRecord>,
+        WorldSurfaceSemanticCounts,
+    ),
+    PipelineError,
+> {
+    let mut groups = BTreeMap::<InteriorIdentity, Vec<PendingInterior>>::new();
+    for package in pending {
+        groups
+            .entry(package.identity)
+            .or_default()
+            .push(package);
+    }
+    let mut interiors = Vec::with_capacity(groups.len());
+    let mut records = Vec::new();
+    let mut semantics = WorldSurfaceSemanticCounts::default();
+    for (identity, mut packages) in groups {
+        packages.sort_by(
+            |left, right| {
+                left.level
+                    .cmp(&right.level)
+                    .then_with(
+                        || {
+                            left.record
+                                .package_id
+                                .cmp(
+                                    &right
+                                        .record
+                                        .package_id,
+                                )
+                        },
+                    )
+            },
+        );
+        let source_package_ids = packages
+            .iter()
+            .map(
+                |package| {
+                    package
+                        .record
+                        .package_id
+                        .clone()
+                },
+            )
+            .collect::<Vec<_>>();
+        let base_source_package_ids = packages
+            .iter()
+            .filter(|package| !package.halloween)
+            .map(
+                |package| {
+                    package
+                        .record
+                        .package_id
+                        .clone()
+                },
+            )
+            .collect::<Vec<_>>();
+        let halloween_source_package_ids = packages
+            .iter()
+            .filter(|package| package.halloween)
+            .map(
+                |package| {
+                    package
+                        .record
+                        .package_id
+                        .clone()
+                },
+            )
+            .collect::<Vec<_>>();
+        if base_source_package_ids.is_empty() {
+            return Err(
+                PipelineError::new(
+                    format!(
+                        "interior base packages are missing: {}",
+                        identity.id
+                    ),
+                ),
+            );
+        }
+        if identity.halloween_overlay == halloween_source_package_ids.is_empty()
+        {
+            return Err(
+                PipelineError::new(
+                    format!(
+                        "interior Halloween ownership changed: {}",
+                        identity.id
+                    ),
+                ),
+            );
+        }
+
+        let mut base = MasterContent::default();
+        let mut overlay = MasterContent::default();
+        let mut owned_geometry = InteriorGeometryOwnership::default();
+        let mut removed_duplicate_triangles = 0_usize;
+        for package in packages
+            .iter_mut()
+            .filter(|package| !package.halloween)
+        {
+            merge_content_presentation(
+                &mut base,
+                &package.content,
+            )?;
+            package
+                .content
+                .meshes
+                .sort_by(
+                    |left, right| {
+                        left.name
+                            .cmp(&right.name)
+                    },
+                );
+            for mesh in package
+                .content
+                .meshes
+                .drain(..)
+            {
+                let (retained, removed) = retain_unowned_triangles(
+                    mesh,
+                    &mut owned_geometry,
+                )?;
+                removed_duplicate_triangles = removed_duplicate_triangles
+                    .checked_add(removed)
+                    .ok_or_else(
+                        || {
+                            PipelineError::new(
+                                "interior duplicate triangle count overflowed",
+                            )
+                        },
+                    )?;
+                if let Some(retained_mesh) = retained {
+                    base.meshes
+                        .push(retained_mesh);
+                }
+            }
+        }
+        for package in packages
+            .iter_mut()
+            .filter(|package| package.halloween)
+        {
+            merge_content_presentation(
+                &mut overlay,
+                &package.content,
+            )?;
+            package
+                .content
+                .meshes
+                .sort_by(
+                    |left, right| {
+                        left.name
+                            .cmp(&right.name)
+                    },
+                );
+            for mesh in package
+                .content
+                .meshes
+                .drain(..)
+            {
+                let (retained, removed) = retain_unowned_triangles(
+                    mesh,
+                    &mut owned_geometry,
+                )?;
+                removed_duplicate_triangles = removed_duplicate_triangles
+                    .checked_add(removed)
+                    .ok_or_else(
+                        || {
+                            PipelineError::new(
+                                "interior duplicate triangle count overflowed",
+                            )
+                        },
+                    )?;
+                if let Some(retained_mesh) = retained {
+                    overlay
+                        .meshes
+                        .push(retained_mesh);
+                }
+            }
+        }
+        let folder = format!(
+            "interiors/{}-{}",
+            identity.id, identity.name
+        );
+        let base_name = format!(
+            "{}-{}",
+            identity.id, identity.name
+        );
+        let base_fbx = write_content_fbx(
+            &base_name,
+            &format!("{folder}/{base_name}.fbx"),
+            &mut base,
+            output_root,
+            ModelUvPolicy::Preserve,
+        )?
+        .ok_or_else(
+            || {
+                PipelineError::new(
+                    format!(
+                        "fused interior base is empty: {}",
+                        identity.id
+                    ),
+                )
+            },
+        )?;
+        semantics.add(base_fbx.surface_semantics);
+        let halloween_fbx = if identity.halloween_overlay {
+            let overlay_name = format!("{base_name}-halloween");
+            let artifact = write_content_fbx(
+                &overlay_name,
+                &format!("{folder}/{overlay_name}.fbx"),
+                &mut overlay,
+                output_root,
+                ModelUvPolicy::Preserve,
+            )?
+            .ok_or_else(
+                || {
+                    PipelineError::new(
+                        format!(
+                            "Halloween interior overlay is empty: {}",
+                            identity.id
+                        ),
+                    )
+                },
+            )?;
+            semantics.add(artifact.surface_semantics);
+            Some(artifact)
+        } else {
+            if !overlay
+                .meshes
+                .is_empty()
+            {
+                return Err(
+                    PipelineError::new(
+                        format!(
+                            "ordinary interior produced an overlay: {}",
+                            identity.id
+                        ),
+                    ),
+                );
+            }
+            None
+        };
+        interiors.push(
+            WorldInteriorRecord {
+                identity: identity
+                    .id
+                    .to_owned(),
+                name: identity
+                    .name
+                    .to_owned(),
+                source_package_ids,
+                base_source_package_ids,
+                halloween_source_package_ids,
+                removed_duplicate_triangles,
+                base_fbx,
+                halloween_fbx,
+            },
+        );
+        records.extend(
+            packages
+                .into_iter()
+                .map(|package| package.record),
+        );
+    }
+    Ok(
+        (
+            interiors, records, semantics,
+        ),
+    )
+}
+
+/// Merge one package's presentation authority into one fused interior artifact.
+fn merge_content_presentation(
+    target: &mut MasterContent,
+    source: &MasterContent,
+) -> Result<(), PipelineError> {
+    merge_materials(
+        &mut target.materials,
+        source
+            .materials
+            .values()
+            .cloned()
+            .collect(),
+    )?;
+    merge_textures(
+        &mut target.textures,
+        source
+            .textures
+            .values()
+            .cloned()
+            .collect(),
+    )
+}
 /// Write one non-empty package scene and return its stable artifact record.
 fn write_content_fbx(
     scene_name: &str,
@@ -425,7 +795,7 @@ fn write_content_fbx(
 
 /// Build one unique portable file stem from the source package subcategory.
 fn package_file_stem(
-    package: &PhaseThreePackageRow,
+    package: &PhaseThreePackageRow
 ) -> Result<String, PipelineError> {
     let relative = package
         .subcategory
@@ -872,7 +1242,7 @@ fn increment_value(value: &mut usize) -> Result<(), PipelineError> {
               operation."
 )]
 fn place_review_gallery(
-    content: &mut MasterContent,
+    content: &mut MasterContent
 ) -> Result<usize, PipelineError> {
     if content
         .review
@@ -1133,7 +1503,10 @@ fn shape_profile(mesh: &MeshAsset) -> Result<ShapeProfile, PipelineError> {
 }
 
 /// Score coarse shape equivalence without merging or replacing source geometry.
-fn shape_similarity(left: ShapeProfile, right: ShapeProfile) -> f32 {
+fn shape_similarity(
+    left: ShapeProfile,
+    right: ShapeProfile,
+) -> f32 {
     let components = [
         count_ratio(
             left.vertices,
@@ -1163,7 +1536,10 @@ fn shape_similarity(left: ShapeProfile, right: ShapeProfile) -> f32 {
 }
 
 /// Return one symmetric ratio in the inclusive zero-to-one range.
-fn count_ratio(left: usize, right: usize) -> f32 {
+fn count_ratio(
+    left: usize,
+    right: usize,
+) -> f32 {
     value_ratio(
         review_count_f32(left),
         review_count_f32(right),
@@ -1181,7 +1557,10 @@ const fn review_count_f32(value: usize) -> f32 {
 }
 
 /// Return one symmetric positive-value ratio.
-fn value_ratio(left: f32, right: f32) -> f32 {
+fn value_ratio(
+    left: f32,
+    right: f32,
+) -> f32 {
     left.min(right)
         / left
             .max(right)
@@ -1199,7 +1578,7 @@ const fn square_columns(groups: usize) -> usize {
 
 /// Count overlapping independently selectable and interaction geometry groups.
 fn world_object_semantic_counts(
-    meshes: &[MeshAsset],
+    meshes: &[MeshAsset]
 ) -> (
     usize,
     usize,

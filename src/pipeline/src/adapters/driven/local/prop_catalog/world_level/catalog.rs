@@ -46,7 +46,7 @@ use serde_json::{Value, json};
 
 use super::model::{
     ExportedWorldCollection, WorldCollectionCounts, WorldFbxRecord,
-    WorldPackageRecord, WorldSurfaceSemanticCounts,
+    WorldInteriorRecord, WorldPackageRecord, WorldSurfaceSemanticCounts,
 };
 use super::movement_catalog::coordinate_movements_value;
 use crate::domain::PipelineError;
@@ -83,7 +83,25 @@ pub(super) fn counts(
                         .is_some()
                 },
             )
-            .count(),
+            .count()
+            .saturating_add(
+                collection
+                    .interiors
+                    .len(),
+            )
+            .saturating_add(
+                collection
+                    .interiors
+                    .iter()
+                    .filter(
+                        |interior| {
+                            interior
+                                .halloween_fbx
+                                .is_some()
+                        },
+                    )
+                    .count(),
+            ),
         normal_world_fbx_files: packages
             .iter()
             .filter(
@@ -93,7 +111,25 @@ pub(super) fn counts(
                         .is_some()
                 },
             )
-            .count(),
+            .count()
+            .saturating_add(
+                collection
+                    .interiors
+                    .len(),
+            )
+            .saturating_add(
+                collection
+                    .interiors
+                    .iter()
+                    .filter(
+                        |interior| {
+                            interior
+                                .halloween_fbx
+                                .is_some()
+                        },
+                    )
+                    .count(),
+            ),
         narrative_map_groups: packages
             .iter()
             .filter_map(
@@ -119,9 +155,10 @@ pub(super) fn counts(
             .iter()
             .filter(
                 |package| {
-                    package
-                        .world_fbx
-                        .is_none()
+                    !package.interior
+                        && package
+                            .world_fbx
+                            .is_none()
                         && package
                             .review_fbx
                             .is_none()
@@ -139,6 +176,20 @@ pub(super) fn counts(
         interior_packages: packages
             .iter()
             .filter(|package| package.interior)
+            .count(),
+        interior_base_fbx_files: collection
+            .interiors
+            .len(),
+        interior_halloween_fbx_files: collection
+            .interiors
+            .iter()
+            .filter(
+                |interior| {
+                    interior
+                        .halloween_fbx
+                        .is_some()
+                },
+            )
             .count(),
         source_meshes: sum(
             packages,
@@ -229,13 +280,18 @@ pub(super) fn write_catalogs(
 }
 
 /// Render the complete separated world collection catalog.
+#[expect(
+    clippy::too_many_lines,
+    reason = "one catalog payload keeps its public boundary contract \
+              contiguous"
+)]
 fn catalog_value(
     counts: WorldCollectionCounts,
     collection: &ExportedWorldCollection,
 ) -> Value {
     json!({
-        "schema": "shar.world-package-collection.v3",
-        "status": "authored-coordinate-movement-baseline",
+        "schema": "shar.world-package-collection.v4",
+        "status": "reviewed-world-and-fused-interior-baseline",
         "boundary": {
             "canonical_model_authority": concat!(
                 "topology, materials, UVs, colors, identities, and textures ",
@@ -252,8 +308,9 @@ fn catalog_value(
             "three_zone_layout": concat!(
                 "levels 1, 4, and 7 share map-01-04-07; levels 2 and 5 share ",
                 "map-02-05; levels 3 and 6 share map-03-06; reviewed family ",
-                "placement is followed by one global exterior X reflection; ",
-                "connected zone bounds may overlap at authored seams"
+                "placement is followed by one global exterior X reflection ",
+                "and an exact 43.396 meter global height offset; connected ",
+                "zone bounds may overlap at authored seams"
             ),
             "root_import_contract": concat!(
                 "only seven-level world FBXs enter the stage; reviewed ",
@@ -265,17 +322,20 @@ fn catalog_value(
             ),
             "interior_transform_policy": concat!(
                 "interior packages preserve authored UVs, exclude collision, ",
-                "mirror horizontally around their own aggregate center, and ",
-                "remain independent from exterior family placement"
+                "use reviewed package-specific world placement including ",
+                "height, fuse by stable identity, and publish Level 7 ",
+                "Halloween geometry only when it is absent from the canonical ",
+                "base"
             ),
             "object_semantics": concat!(
                 "source-backed breakable and interactable owners plus ",
                 "spatially separated items remain selectable Blender objects"
             ),
             "coordinate_movement": concat!(
-                "named package movements are applied above geometry and ",
-                "published separately for collision, doors, objects, spawns, ",
-                "missions, triggers, cameras, locators, and lights"
+                "named package movements apply reviewed placement and the ",
+                "global 43.396 meter height offset to geometry, collision, ",
+                "doors, objects, spawns, missions, triggers, cameras, ",
+                "locators, and lights"
             ),
             "manual_evidence": concat!(
                 "operator-authored FBX comparisons define reviewed movement ",
@@ -286,20 +346,29 @@ fn catalog_value(
             {
                 "id": "map-01-04-07",
                 "levels": [1, 4, 7],
-                "movement": "zone-01-levels-01-04-07-global-horizontal-mirror",
-                "height_policy": "preserve-source-height"
+                "movement": concat!(
+                    "zone-01-levels-01-04-07-global-horizontal-",
+                    "mirror-and-height"
+                ),
+                "height_policy": "add-43.396-meters"
             },
             {
                 "id": "map-02-05",
                 "levels": [2, 5],
-                "movement": "zone-02-levels-02-05-placement-and-global-mirror",
-                "height_policy": "preserve-source-height"
+                "movement": concat!(
+                    "zone-02-levels-02-05-placement-global-",
+                    "mirror-and-height"
+                ),
+                "height_policy": "add-43.396-meters"
             },
             {
                 "id": "map-03-06",
                 "levels": [3, 6],
-                "movement": "zone-03-levels-03-06-placement-and-global-mirror",
-                "height_policy": "preserve-source-height"
+                "movement": concat!(
+                    "zone-03-levels-03-06-placement-global-",
+                    "mirror-and-height"
+                ),
+                "height_policy": "add-43.396-meters"
             }
         ],
         "counts": counts_value(counts),
@@ -315,6 +384,11 @@ fn catalog_value(
             .packages
             .iter()
             .map(package_value)
+            .collect::<Vec<_>>(),
+        "interiors": collection
+            .interiors
+            .iter()
+            .map(interior_value)
             .collect::<Vec<_>>()
     })
 }
@@ -323,7 +397,7 @@ fn catalog_value(
 fn transforms_value(collection: &ExportedWorldCollection) -> Value {
     let files = transform_files(collection);
     json!({
-        "schema": "shar.world-package-transforms.v5",
+        "schema": "shar.world-package-transforms.v6",
         "shared_origin": [0.0_f64, 0.0_f64, 0.0_f64],
         "import_contract": concat!(
             "import generated seven-level FBXs with no per-file placement ",
@@ -340,7 +414,7 @@ fn transforms_value(collection: &ExportedWorldCollection) -> Value {
 
 /// Render the generated transform-manifest file list.
 fn transform_files(collection: &ExportedWorldCollection) -> Vec<Value> {
-    collection
+    let mut files = collection
         .packages
         .iter()
         .filter_map(
@@ -357,7 +431,36 @@ fn transform_files(collection: &ExportedWorldCollection) -> Vec<Value> {
                     )
             },
         )
-        .collect()
+        .collect::<Vec<_>>();
+    for interior in &collection.interiors {
+        files.push(
+            interior_transform_file_value(
+                interior,
+                &interior.base_fbx,
+                "base",
+            ),
+        );
+        if let Some(artifact) = interior
+            .halloween_fbx
+            .as_ref()
+        {
+            files.push(
+                interior_transform_file_value(
+                    interior,
+                    artifact,
+                    "halloween-additions",
+                ),
+            );
+        }
+    }
+    files.sort_by(
+        |left, right| {
+            left["path"]
+                .as_str()
+                .cmp(&right["path"].as_str())
+        },
+    );
+    files
 }
 
 /// Render one world FBX import-transform record.
@@ -375,6 +478,27 @@ fn transform_file_value(
         "baked_map_offset": package.map_offset,
         "coordinate_movement": package.coordinate_movement,
         "coordinates_baked": true,
+        "additional_translation": [0.0_f64, 0.0_f64, 0.0_f64],
+        "additional_rotation_degrees": [0.0_f64, 0.0_f64, 0.0_f64],
+        "additional_scale": [1.0_f64, 1.0_f64, 1.0_f64]
+    })
+}
+
+/// Render one fused interior FBX import-transform record.
+fn interior_transform_file_value(
+    interior: &WorldInteriorRecord,
+    artifact: &WorldFbxRecord,
+    role: &str,
+) -> Value {
+    json!({
+        "path": artifact.path,
+        "scope": "fused-interior",
+        "interior_id": interior.identity,
+        "interior_name": interior.name,
+        "interior_role": role,
+        "source_package_ids": interior.source_package_ids,
+        "coordinates_baked": true,
+        "global_height_meters": 43.396_f64,
         "additional_translation": [0.0_f64, 0.0_f64, 0.0_f64],
         "additional_rotation_degrees": [0.0_f64, 0.0_f64, 0.0_f64],
         "additional_scale": [1.0_f64, 1.0_f64, 1.0_f64]
@@ -406,6 +530,8 @@ fn counts_value(counts: WorldCollectionCounts) -> Value {
         "coordinate_reference_packages": counts.coordinate_reference_packages,
         "coordinate_fallback_packages": counts.coordinate_fallback_packages,
         "interior_packages": counts.interior_packages,
+        "interior_base_fbx_files": counts.interior_base_fbx_files,
+        "interior_halloween_fbx_files": counts.interior_halloween_fbx_files,
         "source_meshes": counts.source_meshes,
         "discarded_degenerate_triangles": counts.discarded_degenerate_triangles,
         "authored_placements": counts.authored_placements,
@@ -421,6 +547,20 @@ fn counts_value(counts: WorldCollectionCounts) -> Value {
         "excluded_collision_meshes": counts.excluded_collision_meshes,
         "reference_excluded_collision_meshes": reference_excluded,
         "discarded_collision_triangles": counts.discarded_collision_triangles
+    })
+}
+
+/// Render one fused interior and its optional additive Halloween artifact.
+fn interior_value(interior: &WorldInteriorRecord) -> Value {
+    json!({
+        "identity": interior.identity,
+        "name": interior.name,
+        "source_package_ids": interior.source_package_ids,
+        "base_source_package_ids": interior.base_source_package_ids,
+        "halloween_source_package_ids": interior.halloween_source_package_ids,
+        "removed_duplicate_triangles": interior.removed_duplicate_triangles,
+        "base_fbx": artifact_value(&interior.base_fbx),
+        "halloween_fbx": interior.halloween_fbx.as_ref().map(artifact_value)
     })
 }
 
@@ -496,7 +636,10 @@ fn semantics_value(counts: WorldSurfaceSemanticCounts) -> Value {
 }
 
 /// Create one deterministic pretty JSON file without replacement.
-fn write_json(path: &Path, value: &Value) -> Result<(), PipelineError> {
+fn write_json(
+    path: &Path,
+    value: &Value,
+) -> Result<(), PipelineError> {
     let bytes = serde_json::to_vec_pretty(value)
         .map_err(|error| PipelineError::new(error.to_string()))?;
     let mut file = fs::OpenOptions::new()

@@ -81,7 +81,7 @@ pub(super) fn is_world_level_package(package: &PhaseThreePackageRow) -> bool {
 ///
 /// Returns an error when the generated root leaves the canonical asset tree.
 pub(super) fn relative_art_root(
-    package: &PhaseThreePackageRow,
+    package: &PhaseThreePackageRow
 ) -> Result<PathBuf, PipelineError> {
     relative_art_root_value(&package.package_root)
 }
@@ -225,7 +225,7 @@ pub(super) fn extract_world_level_coordinate_packages(
 
 /// Index direct child P3D files by portable case-insensitive stem.
 fn coordinate_sources(
-    root: &Path,
+    root: &Path
 ) -> Result<BTreeMap<String, PathBuf>, PipelineError> {
     let mut sources = BTreeMap::new();
     for entry in fs::read_dir(root).map_err(

@@ -54,6 +54,7 @@ mod catalog;
 mod collision;
 mod coordinate;
 mod export;
+mod interior;
 mod inventory;
 mod islands;
 mod layout;
@@ -119,20 +120,23 @@ pub(in crate::adapters::driven::local) fn export_world_master(
                     bytes,
                     note: format!(
                         concat!(
-                            "published {} FBX files across {} globally \
-                             mirrored ",
-                            "connected zone families and {} isolated review \
-                             FBX ",
-                            "files from {} main-level packages; {} own-center ",
-                            "mirrored interior packages, {} authored \
-                             placements, ",
-                            "and {} excluded collision meshes"
+                            "published {} normal-import FBX files across {} ",
+                            "globally mirrored connected zone families, {} ",
+                            "fused interior bases, {} Halloween-only \
+                             overlays, ",
+                            "and {} isolated review FBX files from {} ",
+                            "main-level packages; every coordinate includes \
+                             the ",
+                            "43.396 meter global height offset, with {} \
+                             authored ",
+                            "placements and {} excluded collision meshes"
                         ),
                         counts.normal_world_fbx_files,
                         counts.narrative_map_groups,
+                        counts.interior_base_fbx_files,
+                        counts.interior_halloween_fbx_files,
                         counts.review_fbx_files,
                         counts.source_packages,
-                        counts.interior_packages,
                         counts.authored_placements,
                         counts.excluded_collision_meshes,
                     ),
