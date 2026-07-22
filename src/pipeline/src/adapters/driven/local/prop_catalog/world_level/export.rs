@@ -61,6 +61,7 @@ use super::super::material::canonicalize_world_static_materials;
 use super::super::model::TextureRecord;
 use super::super::prepared::PreparedTexture;
 use super::super::texture_authority::SharedTextureAuthority;
+use super::algorithms::apply_registered_algorithm;
 use super::collision::load_intersect_meshes;
 use super::coordinate::PackageCoordinates;
 use super::interior::{
@@ -723,6 +724,10 @@ fn write_content_fbx(
     {
         return Ok(None);
     }
+    apply_registered_algorithm(
+        relative_path,
+        &mut content.meshes,
+    )?;
     content
         .meshes
         .sort_by(
