@@ -280,11 +280,6 @@ pub(super) fn write_catalogs(
 }
 
 /// Render the complete separated world collection catalog.
-#[expect(
-    clippy::too_many_lines,
-    reason = "one catalog payload keeps its public boundary contract \
-              contiguous"
-)]
 fn catalog_value(
     counts: WorldCollectionCounts,
     collection: &ExportedWorldCollection,
@@ -308,9 +303,9 @@ fn catalog_value(
             "three_zone_layout": concat!(
                 "levels 1, 4, and 7 share map-01-04-07; levels 2 and 5 share ",
                 "map-02-05; levels 3 and 6 share map-03-06; reviewed family ",
-                "placement is followed by one global exterior X reflection ",
-                "and an exact 41.046 meter global height offset; connected ",
-                "zone bounds may overlap at authored seams"
+                "placement preserves exterior handedness and adds an exact ",
+                "41.046 meter global height offset; connected zone bounds may ",
+                "overlap at authored seams"
             ),
             "root_import_contract": concat!(
                 "only seven-level world FBXs enter the stage; reviewed ",
@@ -346,28 +341,19 @@ fn catalog_value(
             {
                 "id": "map-01-04-07",
                 "levels": [1, 4, 7],
-                "movement": concat!(
-                    "zone-01-levels-01-04-07-global-horizontal-",
-                    "mirror-and-height"
-                ),
+                "movement": "zone-01-levels-01-04-07-height",
                 "height_policy": "add-41.046-meters"
             },
             {
                 "id": "map-02-05",
                 "levels": [2, 5],
-                "movement": concat!(
-                    "zone-02-levels-02-05-placement-global-",
-                    "mirror-and-height"
-                ),
+                "movement": "zone-02-levels-02-05-placement-and-height",
                 "height_policy": "add-41.046-meters"
             },
             {
                 "id": "map-03-06",
                 "levels": [3, 6],
-                "movement": concat!(
-                    "zone-03-levels-03-06-placement-global-",
-                    "mirror-and-height"
-                ),
+                "movement": "zone-03-levels-03-06-placement-and-height",
                 "height_policy": "add-41.046-meters"
             }
         ],

@@ -20,10 +20,10 @@ editor projects or preserving source-engine runtime structures.
 
 The seven main levels form three recurring exterior families: Levels 1, 4, and 7
 share Zone 1; Levels 2 and 5 share Zone 2; Levels 3 and 6 share Zone 3. Reviewed
-horizontal affine movements connect Zones 2 and 3 to Zone 1. A final source-X
-reflection applies to all three exterior families and every associated
-coordinate record so the shared FBX export-root conversion does not reverse the
-assembled world's left and right sides.
+horizontal affine movements connect Zones 2 and 3 to Zone 1. Every exterior
+family and associated coordinate record preserves handedness; no source-X
+reflection is baked into the ordinary world. Interior package matrices alone
+retain their explicit source-to-FBX X-basis correction.
 
 A final `41.046` meter source-height translation applies after every exterior
 and interior placement without exception. It is the sole canonical Unreal
@@ -51,15 +51,15 @@ Exact identity matches still require the registered source fingerprint.
 Ambiguous or stale matches block publication. Blender ordering and
 serialization drift are not authored changes.
 
-Interiors do not inherit the exterior-family reflection. Each of the 19 source
-packages has one reviewed full-XYZ source-space movement, including height, and
-is grouped into one of eight stable interior identities. The reviewed matrices
-remain placement authority, but the source's artificial 8,192-meter Zone 2 and
-16,384-meter Zone 3 family displacements are cancelled before the shared FBX
-basis conversion because the connected native world already owns family
-placement. Ordinary recurring copies are then transformed into the same reviewed
-world space and fused into one canonical base FBX per identity. Source collision
-remains excluded.
+Interiors alone retain the explicit source-to-FBX X-basis correction. Each of
+the 19 source packages has one reviewed full-XYZ source-space movement,
+including height, and is grouped into one of eight stable interior identities.
+The reviewed matrices remain placement authority, but the source's artificial
+8,192-meter Zone 2 and 16,384-meter Zone 3 family displacements are cancelled
+before the interior basis conversion because the connected native world already
+owns family placement. Ordinary recurring copies are then transformed into the
+same reviewed world space and fused into one canonical base FBX per identity.
+Source collision remains excluded.
 
 Elementary School (`i00`), Kwik-E-Mart (`i01`), Simpsons House (`i02`), and
 Bart's Room (`i07`) additionally publish one Level 7 Halloween overlay. The
@@ -87,9 +87,9 @@ of the same physical location.
 - The resulting world is independently authored and can be regenerated from one
   terrain and component assembly without proprietary editor projects or
   source-engine runtime structures.
-- Three family-level exterior transforms replace artificial map spacing and
-  apply one final global X reflection without flattening height or moving
-  interiors.
+- Three family-level exterior transforms replace artificial map spacing,
+  preserve handedness, and apply the canonical height without altering the
+  interior-only basis correction.
 - Interior identity, reviewed placement, tolerant duplicate collapse, additive
   Halloween ownership, exact global height, and collision exclusion remain
   independently testable from exterior world assembly.

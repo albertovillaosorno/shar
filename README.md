@@ -802,17 +802,17 @@ regression evidence become durable authority.
 
 The reviewed world uses three recurring exterior families. Zone 1 contains
 Levels 1, 4, and 7; Zone 2 contains Levels 2 and 5; Zone 3 contains Levels 3 and
-6. Zone 2 and Zone 3 retain their reviewed connected placements. A final global
-source-X reflection then applies to every non-interior family, race prop, door,
-and coordinate-bearing runtime record. This reflection cancels the horizontal
-reversal introduced by the shared FBX export root. Interiors do not receive it.
+6. Zone 2 and Zone 3 retain their reviewed connected placements. Exterior
+families, race props, doors, and coordinate-bearing runtime records preserve
+handedness: no horizontal reflection is baked into the ordinary world. Only
+interior package matrices keep their explicit source-to-FBX X-basis correction.
 
 The resulting source-space row-vector formulas are stable generation authority:
 
 ```text
-Zone 1: X' = -X;                    Y' = Y + 41.046; Z' = Z
-Zone 2: X' =  Z - 989.247314453125; Y' = Y + 41.046; Z' =  X - 360.1337585449219
-Zone 3: X' = -Z - 745.36083984375;  Y' = Y + 41.046; Z' = -X + 296.96331787109375
+Zone 1: X' =  X;                    Y' = Y + 41.046; Z' = Z
+Zone 2: X' =  Z - 989.247314453125; Y' = Y + 41.046; Z' = -X - 360.1337585449219
+Zone 3: X' = -Z - 745.36083984375;  Y' = Y + 41.046; Z' =  X + 296.96331787109375
 ```
 
 The Zone 3 placement was solved by matching stable vertex indices against the

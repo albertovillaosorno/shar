@@ -26,7 +26,7 @@
 //   - Apply one reviewed affine movement to render, collision, and decoded
 //     coordinates for every world package.
 // - Summary:
-//   - Applies reviewed world placement, reflection, and global height.
+//   - Routes reviewed placement, interior-only basis correction, and height.
 //
 // ADRs:
 // - docs/adr/pipeline/unreal/world-assembly-from-normalized-chunks.md
@@ -35,7 +35,7 @@
 //   - false
 //
 
-//! Applies reviewed family placement plus one global exterior X reflection.
+//! Applies reviewed orientation-preserving family placement and global height.
 
 use std::path::Path;
 
@@ -55,14 +55,11 @@ use crate::domain::coordinate_movement::{
 };
 
 /// Stable movement identity for the Levels 1, 4, and 7 map family.
-const ZONE_1_MOVEMENT_ID: &str =
-    "zone-01-levels-01-04-07-global-horizontal-mirror-and-height";
+const ZONE_1_MOVEMENT_ID: &str = "zone-01-levels-01-04-07-height";
 /// Stable movement identity for the Levels 2 and 5 map family.
-const ZONE_2_MOVEMENT_ID: &str =
-    "zone-02-levels-02-05-placement-global-mirror-and-height";
+const ZONE_2_MOVEMENT_ID: &str = "zone-02-levels-02-05-placement-and-height";
 /// Stable movement identity for the Levels 3 and 6 map family.
-const ZONE_3_MOVEMENT_ID: &str =
-    "zone-03-levels-03-06-placement-global-mirror-and-height";
+const ZONE_3_MOVEMENT_ID: &str = "zone-03-levels-03-06-placement-and-height";
 /// Coordinate families that must move with one exterior zone placement.
 const ZONE_SUBJECTS: &[CoordinateSubject] = &[
     CoordinateSubject::Geometry,
@@ -83,11 +80,11 @@ pub(super) const LEGACY_REVIEWED_HEIGHT_OFFSET_METERS: f32 = 43.396;
 /// Canonical portable height baked into every generated FBX and coordinate.
 pub(super) const WORLD_HEIGHT_OFFSET_METERS: f32 = 41.046;
 
-/// Source-space transform canceling the shared FBX horizontal X reversal.
+/// Orientation-preserving Zone 1 placement with the canonical height.
 const ZONE_1_MOVEMENT: CoordinateMovement = CoordinateMovement::new(
     ZONE_1_MOVEMENT_ID,
     [
-        -1.0,
+        1.0,
         0.0,
         0.0,
         0.0,
@@ -107,17 +104,16 @@ const ZONE_1_MOVEMENT: CoordinateMovement = CoordinateMovement::new(
     ZONE_SUBJECTS,
 );
 
-/// Reviewed Zone 2 placement followed by the global exterior X reflection.
+/// Reviewed orientation-preserving Zone 2 placement.
 ///
-/// The family retains the operator-authored connection, mirrors source X so the
-/// shared FBX export-root reversal no longer swaps the world's left and right
-/// sides, and adds the exact global source-height translation.
+/// The family retains the operator-authored connection and exact global height
+/// without applying a horizontal reflection to exterior geometry or records.
 const ZONE_2_MOVEMENT: CoordinateMovement = CoordinateMovement::new(
     ZONE_2_MOVEMENT_ID,
     [
         0.0,
         0.0,
-        1.0,
+        -1.0,
         0.0,
         0.0,
         1.0,
@@ -135,19 +131,18 @@ const ZONE_2_MOVEMENT: CoordinateMovement = CoordinateMovement::new(
     ZONE_SUBJECTS,
 );
 
-/// Vertex-solved Zone 3 placement followed by the global X reflection.
+/// Vertex-solved orientation-preserving Zone 3 placement.
 ///
 /// The reviewed object changed its local origin, so the rigid transform was
 /// solved by matching stable vertex indices against the untouched Level 3
-/// general FBX. The maximum residual was below 0.00016 Blender units. The final
-/// source X reflection cancels the shared FBX export-root reversal, and the
-/// source-height row adds the exact canonical 41.046-meter world datum.
+/// general FBX. The maximum residual was below 0.00016 Blender units. The basis
+/// preserves handedness and adds the exact canonical 41.046-meter world datum.
 const ZONE_3_MOVEMENT: CoordinateMovement = CoordinateMovement::new(
     ZONE_3_MOVEMENT_ID,
     [
         0.0,
         0.0,
-        -1.0,
+        1.0,
         0.0,
         0.0,
         1.0,
@@ -449,6 +444,7 @@ mod tests {
     use super::{
         LEGACY_REVIEWED_HEIGHT_OFFSET_METERS, WORLD_HEIGHT_OFFSET_METERS,
         coordinates_close, movement_for_package,
+        reviewed_interior_movement_for_package,
     };
 
     fn moved_point(scope: &str) -> Result<[f32; 3], String> {
@@ -466,6 +462,75 @@ mod tests {
         .map_err(|error| error.to_string())
     }
 
+    fn basis_determinant(matrix: [f32; 16]) -> f32 {
+        matrix[0]
+            * matrix[5].mul_add(
+                matrix[10],
+                -matrix[6] * matrix[9],
+            )
+            - matrix[1]
+                * matrix[4].mul_add(
+                    matrix[10],
+                    -matrix[6] * matrix[8],
+                )
+            + matrix[2]
+                * matrix[4].mul_add(
+                    matrix[9],
+                    -matrix[5] * matrix[8],
+                )
+    }
+
+    #[test]
+    fn exterior_movements_preserve_handedness() -> Result<(), String> {
+        for scope in [
+            "level-01", "level-02", "level-03",
+        ] {
+            let movement = movement_for_package(
+                scope,
+                false,
+                "exterior-test",
+            )
+            .ok_or_else(|| format!("movement is missing for {scope}"))?;
+            let determinant = basis_determinant(movement.matrix());
+            if determinant <= 0.0 {
+                return Err(
+                    format!(
+                        "exterior movement changed handedness for {scope}: \
+                         {determinant}"
+                    ),
+                );
+            }
+            if movement
+                .id()
+                .contains("mirror")
+            {
+                return Err(
+                    format!(
+                        "exterior movement still declares a mirror: {scope}"
+                    ),
+                );
+            }
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn interior_movement_keeps_its_explicit_x_basis_correction()
+    -> Result<(), String> {
+        let (_, matrix) =
+            reviewed_interior_movement_for_package("extracted-art-l1i00")
+                .ok_or_else(|| String::from("interior movement is missing"))?;
+        if matrix[0] != -1.0 {
+            return Err(
+                format!(
+                    "interior X-basis correction changed: {}",
+                    matrix[0]
+                ),
+            );
+        }
+        Ok(())
+    }
+
     #[test]
     fn canonical_world_height_excludes_the_legacy_reference_offset() {
         assert_eq!(
@@ -479,42 +544,38 @@ mod tests {
     }
 
     #[test]
-    fn zone_one_cancels_the_global_horizontal_reversal() -> Result<(), String> {
+    fn zone_one_preserves_exterior_orientation() -> Result<(), String> {
         let movement = movement_for_package(
             "level-01",
             false,
             "exterior-test",
         )
         .ok_or_else(|| String::from("Zone 1 movement is missing"))?;
-        if movement.id()
-            != "zone-01-levels-01-04-07-global-horizontal-mirror-and-height"
-        {
+        if movement.id() != "zone-01-levels-01-04-07-height" {
             return Err(String::from("Zone 1 movement identity changed"));
         }
         let moved = moved_point("level-01")?;
         if !coordinates_close(
             moved,
             [
-                -100.0, 61.046, 300.0,
+                100.0, 61.046, 300.0,
             ],
             0.001,
         ) {
-            return Err(format!("Zone 1 mirror changed: {moved:?}"));
+            return Err(format!("Zone 1 orientation changed: {moved:?}"));
         }
         Ok(())
     }
 
     #[test]
-    fn zone_two_places_then_mirrors_the_exterior() -> Result<(), String> {
+    fn zone_two_places_without_mirroring_exterior() -> Result<(), String> {
         let movement = movement_for_package(
             "level-02",
             false,
             "exterior-test",
         )
         .ok_or_else(|| String::from("Zone 2 movement is missing"))?;
-        if movement.id()
-            != "zone-02-levels-02-05-placement-global-mirror-and-height"
-        {
+        if movement.id() != "zone-02-levels-02-05-placement-and-height" {
             return Err(String::from("Zone 2 movement identity changed"));
         }
         let moved = moved_point("level-02")?;
@@ -523,7 +584,7 @@ mod tests {
             [
                 -689.247_3,
                 61.046,
-                -260.133_76,
+                -460.133_76,
             ],
             0.001,
         ) {
@@ -533,16 +594,14 @@ mod tests {
     }
 
     #[test]
-    fn zone_three_places_then_mirrors_the_exterior() -> Result<(), String> {
+    fn zone_three_places_without_mirroring_exterior() -> Result<(), String> {
         let movement = movement_for_package(
             "level-03",
             false,
             "exterior-test",
         )
         .ok_or_else(|| String::from("Zone 3 movement is missing"))?;
-        if movement.id()
-            != "zone-03-levels-03-06-placement-global-mirror-and-height"
-        {
+        if movement.id() != "zone-03-levels-03-06-placement-and-height" {
             return Err(String::from("Zone 3 movement identity changed"));
         }
         let moved = moved_point("level-03")?;
@@ -551,7 +610,7 @@ mod tests {
             [
                 -1_045.360_8,
                 61.046,
-                196.963_32,
+                396.963_32,
             ],
             0.001,
         ) {
