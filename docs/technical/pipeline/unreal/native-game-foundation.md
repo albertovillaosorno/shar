@@ -26,8 +26,8 @@ The game uses domain modules with explicit inward dependencies:
 - `SharContent` owns shared Primary Asset identity and loading contracts;
 - `SharCharacters` owns character definitions and character construction ports;
 - `SharVehicles` owns vehicle definitions and vehicle construction ports;
-- `SharWorld` owns world definitions, placement, streaming, roads, and
-  interiors;
+- `SharWorld` owns world definitions, canonical cardinal orientation,
+  north-up map projection, placement, streaming, roads, and interiors;
 - `SharMissions` owns mission definitions, execution policy, and progression;
 - `SharCamera` owns camera intent, rigs, blending, and accessibility;
 - `SharAudio` owns audio definitions, routing, and playback policy;
@@ -41,6 +41,11 @@ A module may depend on `SharContent` and narrower shared domain contracts. It
 may not reach sideways into another implementation to obtain state. Cross-domain
 behavior uses typed interfaces, messages, observations, commands, and Primary
 Asset identities.
+
+The connected world uses the cardinal and projection contract documented in
+<../../unreal/world-cardinal-orientation-and-map-projection.md>. North is
+Unreal `+X`, east is `+Y`, sea level is `Z = 0`, and the map center is the
+world origin.
 
 ## Native Unreal systems
 
