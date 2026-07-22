@@ -46,6 +46,8 @@
 //
 
 //! Staged canonical Wasp Camera assembly.
+use std::collections::BTreeSet;
+use std::fs;
 use std::path::{Path, PathBuf};
 
 use fbx::adapters::driven::binary_character_writer::{
@@ -53,14 +55,17 @@ use fbx::adapters::driven::binary_character_writer::{
 };
 use fbx::adapters::driven::decoded_animation_source::load_animation_clips;
 use fbx::adapters::driven::decoded_rigid_prop_source;
+use fbx::domain::character::CharacterAsset;
 use schoenwald_filesystem::adapters::driving::local::create_dir_all;
+use shar_sha256::digest_hex;
 
 use super::artifact::{
     inventory, resolve_materials, verify_body_scope, verify_summary,
 };
 use super::{
     ANIMATION_MEMBER, ASSET_NAME, BODY_MESH_MEMBERS, COMPOSITE_MEMBER,
-    SKELETON_MEMBER, SOURCE_PACKAGE_ID, SOURCE_PACKAGE_ROOT,
+    SKELETON_MEMBER, SOURCE_PACKAGE_ID, SOURCE_PACKAGE_ROOT, WaspGuideSource,
+    WaspGuideTexture,
 };
 use crate::domain::PipelineError;
 use crate::domain::package::{PhaseThreePackageIndex, PhaseThreePackageRow};
@@ -78,6 +83,148 @@ pub(super) fn build_wasp_camera(
     ),
     PipelineError,
 > {
+    let LoadedWaspBody {
+        asset,
+        package_root,
+        animation_path,
+    } = load_wasp_body(
+        index_path, base_root,
+    )?;
+    let animations = load_animation_clips(
+        &[animation_path.as_path()],
+        &asset.bones,
+    )
+    .map_err(
+        |error| {
+            PipelineError::new(
+                format!("Wasp Camera animation failed: {error:?}"),
+            )
+        },
+    )?;
+    verify_animation(&animations)?;
+    let texture_dir = staging.join("textures");
+    create_dir_all(&texture_dir).map_err(
+        |error| {
+            PipelineError::new(
+                format!("Wasp Camera texture staging failed: {error}"),
+            )
+        },
+    )?;
+    let materials = resolve_materials(
+        &asset,
+        &package_root,
+        &texture_dir,
+    )?;
+    let fbx_path = staging.join("wasp-camera.fbx");
+    let summary = write_binary_character_fbx(
+        &asset,
+        &materials,
+        &animations,
+        &fbx_path,
+    )
+    .map_err(
+        |error| {
+            PipelineError::new(format!("Wasp Camera FBX failed: {error:?}"))
+        },
+    )?;
+    verify_summary(&summary)?;
+    let (files, bytes) = inventory(
+        &fbx_path,
+        &texture_dir,
+        &materials,
+    )?;
+    Ok(
+        (
+            files, bytes, summary,
+        ),
+    )
+}
+
+/// Canonical selected body plus the exact package paths it owns.
+struct LoadedWaspBody {
+    /// Rest-pose-baked selected body asset.
+    asset: CharacterAsset,
+    /// Decoded package root used for material resolution.
+    package_root: PathBuf,
+    /// Exact canonical animation path used only by the standalone exporter.
+    animation_path: PathBuf,
+}
+
+/// Collect one static Wasp body and exact texture payloads for guide placement.
+pub(super) fn build_wasp_guide_source(
+    index_path: &Path,
+    base_root: &Path,
+    texture_dir: &Path,
+) -> Result<WaspGuideSource, PipelineError> {
+    let LoadedWaspBody {
+        asset,
+        package_root,
+        animation_path: _animation_path,
+    } = load_wasp_body(
+        index_path, base_root,
+    )?;
+    create_dir_all(texture_dir).map_err(
+        |error| {
+            PipelineError::new(
+                format!("Wasp guide texture staging failed: {error}"),
+            )
+        },
+    )?;
+    let materials = resolve_materials(
+        &asset,
+        &package_root,
+        texture_dir,
+    )?;
+    let texture_names = materials
+        .iter()
+        .filter_map(
+            |material| {
+                material
+                    .texture_file_name
+                    .as_deref()
+            },
+        )
+        .collect::<BTreeSet<_>>();
+    let mut textures = Vec::with_capacity(texture_names.len());
+    for file_name in texture_names {
+        let path = texture_dir.join(file_name);
+        let bytes = fs::read(&path).map_err(
+            |error| {
+                PipelineError::new(
+                    format!(
+                        "Wasp guide texture read failed: {}:{error}",
+                        path.display()
+                    ),
+                )
+            },
+        )?;
+        textures.push(
+            WaspGuideTexture {
+                file_name: file_name.to_owned(),
+                sha256: digest_hex(&bytes),
+                bytes,
+            },
+        );
+    }
+    let meshes = asset
+        .parts
+        .into_iter()
+        .map(|part| part.mesh)
+        .collect();
+    Ok(
+        WaspGuideSource {
+            meshes,
+            materials,
+            textures,
+        },
+    )
+}
+
+/// Load and verify the one canonical selected Wasp body.
+fn load_wasp_body(
+    index_path: &Path,
+    base_root: &Path,
+) -> Result<LoadedWaspBody, PipelineError> {
     let index = PhaseThreePackageIndex::read(index_path)
         .map_err(|error| PipelineError::new(error.to_string()))?;
     let package = canonical_package(&index)?;
@@ -124,54 +271,12 @@ pub(super) fn build_wasp_camera(
         },
     )?;
     verify_body_scope(&asset)?;
-    let animations = load_animation_clips(
-        &[animation_path.as_path()],
-        &asset.bones,
-    )
-    .map_err(
-        |error| {
-            PipelineError::new(
-                format!("Wasp Camera animation failed: {error:?}"),
-            )
-        },
-    )?;
-    verify_animation(&animations)?;
-    let texture_dir = staging.join("textures");
-    create_dir_all(&texture_dir).map_err(
-        |error| {
-            PipelineError::new(
-                format!("Wasp Camera texture staging failed: {error}"),
-            )
-        },
-    )?;
-    let package_root = base_root.join(SOURCE_PACKAGE_ROOT);
-    let materials = resolve_materials(
-        &asset,
-        &package_root,
-        &texture_dir,
-    )?;
-    let fbx_path = staging.join("wasp-camera.fbx");
-    let summary = write_binary_character_fbx(
-        &asset,
-        &materials,
-        &animations,
-        &fbx_path,
-    )
-    .map_err(
-        |error| {
-            PipelineError::new(format!("Wasp Camera FBX failed: {error:?}"))
-        },
-    )?;
-    verify_summary(&summary)?;
-    let (files, bytes) = inventory(
-        &fbx_path,
-        &texture_dir,
-        &materials,
-    )?;
     Ok(
-        (
-            files, bytes, summary,
-        ),
+        LoadedWaspBody {
+            asset,
+            package_root: base_root.join(SOURCE_PACKAGE_ROOT),
+            animation_path,
+        },
     )
 }
 

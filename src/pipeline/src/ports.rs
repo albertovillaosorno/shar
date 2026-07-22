@@ -252,6 +252,19 @@ pub trait PipelineOperations {
         output_dir: &Path,
     ) -> PipelineOutcome<StageReport>;
 
+    /// Exports one canonical one-mesh Unreal structural guide.
+    ///
+    /// # Errors
+    ///
+    /// Returns a validated pipeline failure.
+    fn export_structural_guide(
+        &self,
+        index_path: &Path,
+        game_root: &Path,
+        coordinate_root: &Path,
+        output_dir: &Path,
+    ) -> PipelineOutcome<StageReport>;
+
     /// Exports one selected phase-three package as an FBX artifact.
     ///
     /// # Errors

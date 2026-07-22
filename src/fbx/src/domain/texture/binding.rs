@@ -493,6 +493,8 @@ pub struct MaterialBinding {
     pub texture_file_name: Option<String>,
     /// Shared transparency, glass, reflection, emitter, and VFX semantics.
     pub semantics: MaterialSemantics,
+    /// Decoded diffuse material tint in canonical RGBA8 order.
+    pub base_color_rgba8: [u8; 4],
 }
 
 /// Return whether a texture identity is exactly one normal file component.
@@ -563,8 +565,19 @@ impl MaterialBinding {
                 material_name: normalized_material_name,
                 texture_file_name,
                 semantics,
+                base_color_rgba8: [u8::MAX; 4],
             },
         )
+    }
+
+    /// Attach one decoded diffuse material tint.
+    #[must_use]
+    pub const fn with_base_color_rgba8(
+        mut self,
+        color: [u8; 4],
+    ) -> Self {
+        self.base_color_rgba8 = color;
+        self
     }
 
     /// Merge decoded shader or runtime semantics into this binding.

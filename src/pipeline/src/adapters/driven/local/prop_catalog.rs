@@ -205,7 +205,7 @@ fn build_catalog(
 }
 
 pub(super) use world::export_world_prop_catalog;
-pub(super) use world_level::export_world_master;
+pub(super) use world_level::{export_structural_guide, export_world_master};
 
 /// Require one output or staging path not to exist.
 fn ensure_missing(

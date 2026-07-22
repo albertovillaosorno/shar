@@ -86,12 +86,18 @@ const USAGE: &str = concat!(
     "fbx-export-world-props [index-jsonl] [game-root] [output-dir] | ",
     "fbx-export-world [index-jsonl] [game-root] ",
     "[coordinate-p3d-root] [output-dir] | ",
+    "fbx-export-structural-guide [index-jsonl] [game-root] ",
+    "[coordinate-p3d-root] [output-dir?] | ",
     "fbx-export [index-jsonl] [selector] [output-dir] [base-root] ",
     "[--embed-textures (legacy compatibility)] ",
     "[--verbosity detailed|minimal] ",
     "[--log <path>|--no-log] ",
     "[--run-label <portable-label>] [--allow-concurrent]",
 );
+
+/// Default final Unreal Editor-only structural-guide source directory.
+const STRUCTURAL_GUIDE_DEFAULT_OUTPUT: &str =
+    "src/uproject/Content/SHAR/EditorOnly/StructuralGuide/Source";
 
 /// Pipeline command-line program.
 #[derive(Debug, Default, Clone, Copy)]
@@ -268,6 +274,9 @@ fn dispatch_known_command(
     if command == "fbx-export-world" {
         return run_world_master(&parsed.positionals);
     }
+    if command == "fbx-export-structural-guide" {
+        return run_structural_guide(&parsed.positionals);
+    }
     if command == "fbx-export" {
         return run_fbx_export(
             &parsed.positionals,
@@ -351,6 +360,7 @@ fn is_known_command(command: &str) -> bool {
             | "fbx-export-vehicles"
             | "fbx-export-world-props"
             | "fbx-export-world"
+            | "fbx-export-structural-guide"
             | "fbx-export"
     )
 }
@@ -682,6 +692,44 @@ fn run_world_master(arguments: &[String]) -> CommandOutcome {
     let application = PipelineService::new(&provider);
     let result = one_stage(
         application.export_world_master(
+            Path::new(index_path),
+            Path::new(game_root),
+            Path::new(coordinate_root),
+            Path::new(output_dir),
+        ),
+    );
+    render_result(
+        result,
+        Path::new(output_dir),
+    )
+}
+
+/// Run the canonical one-mesh Unreal structural-guide export.
+fn run_structural_guide(arguments: &[String]) -> CommandOutcome {
+    if let Some(outcome) = reject_extra_positionals(
+        arguments, 4,
+    ) {
+        return outcome;
+    }
+    let Some(index_path) = arguments.first() else {
+        return missing_argument("package index path");
+    };
+    let Some(game_root) = arguments.get(1) else {
+        return missing_argument("game root");
+    };
+    let Some(coordinate_root) = arguments.get(2) else {
+        return missing_argument("coordinate P3D root");
+    };
+    let output_dir = arguments
+        .get(3)
+        .map_or(
+            STRUCTURAL_GUIDE_DEFAULT_OUTPUT,
+            String::as_str,
+        );
+    let provider = LocalPipeline;
+    let application = PipelineService::new(&provider);
+    let result = one_stage(
+        application.export_structural_guide(
             Path::new(index_path),
             Path::new(game_root),
             Path::new(coordinate_root),

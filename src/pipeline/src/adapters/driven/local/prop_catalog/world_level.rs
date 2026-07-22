@@ -39,7 +39,7 @@ use std::fs;
 use std::path::Path;
 
 use self::catalog::{counts, write_catalogs};
-use self::export::export_world_collection;
+use self::export::{MasterContent, export_world_collection};
 use self::inventory::world_packages;
 use super::catalog::inventory;
 use super::extraction::{
@@ -65,6 +65,7 @@ mod movement_catalog;
 mod movement_model;
 mod movement_records;
 mod scenegraph;
+mod structural_guide;
 mod transform;
 
 /// Stable world-package stage identity.
@@ -151,6 +152,104 @@ pub(in crate::adapters::driven::local) fn export_world_master(
     result
 }
 
+/// Collect the canonical visible world for one structural-guide build.
+///
+/// The intermediate normal-world publication exists only so the canonical
+/// package writer, repair registry, and fused-interior transaction remain the
+/// single source of geometry and presentation authority.
+///
+/// # Errors
+///
+/// Returns an error when extraction, placement, repair, fusion, or temporary
+/// publication cleanup fails.
+fn collect_structural_guide_source(
+    index_path: &Path,
+    game_root: &Path,
+    coordinate_root: &Path,
+    temporary_publication: &Path,
+) -> Result<MasterContent, PipelineError> {
+    ensure_missing(
+        temporary_publication,
+        "structural-guide temporary world publication",
+    )?;
+    fs::create_dir_all(temporary_publication).map_err(
+        |error| {
+            PipelineError::new(
+                format!(
+                    "structural-guide temporary publication failed: {error}"
+                ),
+            )
+        },
+    )?;
+    let work = temporary_publication.join(".work");
+    let canonical = work.join("canonical");
+    let coordinates = work.join("coordinates");
+    let scratch = work.join("materials");
+    for directory in [
+        &canonical,
+        &coordinates,
+    ] {
+        fs::create_dir_all(directory).map_err(
+            |error| {
+                PipelineError::new(
+                    format!(
+                        "structural-guide normalized staging failed: {error}"
+                    ),
+                )
+            },
+        )?;
+    }
+    let result = (|| {
+        let index = PhaseThreePackageIndex::read(index_path)
+            .map_err(|error| PipelineError::new(error.to_string()))?;
+        let _source_packages = extract_world_level_packages(
+            &index, game_root, &canonical,
+        )?;
+        let reference_packages = extract_world_level_coordinate_packages(
+            &index,
+            coordinate_root,
+            &coordinates,
+        )?;
+        let packages = world_packages(&index);
+        let authority = SharedTextureAuthority::build(
+            &index, &canonical,
+        )?;
+        let (_collection, guide_content) = export_world_collection(
+            &packages,
+            &canonical,
+            &coordinates,
+            &reference_packages,
+            &scratch,
+            temporary_publication,
+            &authority,
+        )?;
+        Ok(guide_content)
+    })();
+    fs::remove_dir_all(temporary_publication).map_err(
+        |error| {
+            PipelineError::new(
+                format!("structural-guide temporary cleanup failed: {error}"),
+            )
+        },
+    )?;
+    result
+}
+
+/// Export the canonical Unreal structural guide.
+pub(in crate::adapters::driven::local) fn export_structural_guide(
+    index_path: &Path,
+    game_root: &Path,
+    coordinate_root: &Path,
+    output_dir: &Path,
+) -> Result<StageReport, PipelineError> {
+    structural_guide::export(
+        index_path,
+        game_root,
+        coordinate_root,
+        output_dir,
+    )
+}
+
 /// Build and verify the complete staging publication.
 fn build(
     index_path: &Path,
@@ -195,7 +294,7 @@ fn build(
     let authority = SharedTextureAuthority::build(
         &index, &canonical,
     )?;
-    let collection = export_world_collection(
+    let (collection, _guide_content) = export_world_collection(
         &packages,
         &canonical,
         &coordinates,
