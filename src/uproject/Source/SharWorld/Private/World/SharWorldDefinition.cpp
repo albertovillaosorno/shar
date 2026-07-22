@@ -192,6 +192,7 @@ void USharWorldDefinition::GatherValidationErrors(
 ) const
 {
     USharPrimaryContentDefinition::GatherValidationErrors(OutErrors);
+    Orientation.GatherValidationErrors(OutErrors);
     if (Regions.IsEmpty())
     {
         AddWorldError(

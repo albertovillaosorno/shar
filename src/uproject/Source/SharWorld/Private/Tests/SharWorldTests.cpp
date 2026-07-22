@@ -77,6 +77,12 @@ bool FSharWorldDefinitionValidationTest::RunTest(const FString& Parameters)
     World->GatherValidationErrors(Errors);
     TestTrue(TEXT("Valid connected world passes"), Errors.IsEmpty());
 
+    World->Orientation.EastAxis = FVector(0.0, -1.0, 0.0);
+    Errors.Reset();
+    World->GatherValidationErrors(Errors);
+    TestFalse(TEXT("Mirrored world orientation is rejected"), Errors.IsEmpty());
+    World->Orientation = {};
+
     World->DataLayers.Last().RequiredLayerIds.Add(
         FName(TEXT("chapter_01_content"))
     );
