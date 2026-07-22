@@ -150,6 +150,13 @@ entry and exit portals, visibility, audio, lighting, navigation, save policy,
 and world-state bindings are explicit. An exterior mesh never implies an
 interior.
 
+Fused interior FBXs keep external texture references in the portable
+`textures/<file>` form. Because each fused artifact is nested below
+`interiors/<identity>/`, the exporter publishes the exact used texture set in an
+adjacent `textures/` directory. A regression test writes a textured nested FBX
+and rejects any publication where its referenced texture cannot be resolved
+from the FBX directory; missing media must never degrade to magenta materials.
+
 ## Data Layers
 
 Data Layer identities are semantic and stable, for example:
