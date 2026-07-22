@@ -700,6 +700,52 @@ the eight fused interiors and four Halloween overlays remain movable so the
 operator can report any final placement correction. Vertex, topology, and
 material edits remain outside this review pass.
 
+#### Canonical Unreal structural guide
+
+The editor-only Landscape and placement guide is generated directly by the
+repository-owned FBX pipeline. It is not assembled in Blender and is not runtime,
+collision, gameplay, or shipping-render authority. Its fixed publication root is:
+
+```text
+src/uproject/Content/SHAR/EditorOnly/StructuralGuide/Source/
+```
+
+The publication contains exactly four files: one binary FBX 7.7 mesh, one
+manifest, one external RGB8 atlas, and one deterministic atlas layout. The FBX
+contains the single object `SM_SHAR_StructuralGuide_Canonical`, the single
+material `M_SHAR_StructuralGuide_Atlas`, no helper root, no collision, no LOD
+beyond LOD0, no rig, no animation, and exactly the four per-loop UV channels
+`UV0_Source`, `UV1_AtlasOffset`, `UV2_AtlasScale`, and `UV3_AtlasFlags`.
+
+Generate into an empty explicit staging directory with:
+
+```bash
+pipeline fbx-export-structural-guide extracted/minor-unit/index.jsonl game game   temp/structural-guide
+```
+
+Omitting the final positional selects the fixed Unreal `Source/` directory. The
+command uses create-new atomic publication and fails when the destination already
+exists or violates the four-file contract. Validate a temporary publication
+before copying it into the Unreal source directory during editor cleanup.
+
+The atlas is one 4096-square sRGB PNG with RGB8 pixels, no alpha, no rotation,
+and two-pixel edge dilation. Source UV tiling remains unchanged in `UV0`; the
+other channels carry atlas offset, scale, and repeat/clamp policy. Texture alpha
+is flattened into opaque RGB. Material base color is baked exactly. When all
+source vertex colors for one material/wrap identity agree, that tint is baked
+exactly; when they differ, the guide uses one deterministic source-texture-wide average
+and records the affected triangle count in `sourceCoverage`. This approximation
+is intentional because the artifact exists only for visual world reference.
+Lighting, animated emissive behavior, time-of-day shaders, cutout transparency,
+and other dynamic presentation are known omissions documented in the manifest.
+
+The mesh bakes the reviewed mirror and world placement into vertices, converts to
+X-forward, Y-right, Z-up centimeters, centers horizontal bounds at zero, and maps
+the reviewed sea plane to `Z = 0`. The object transform remains identity with a
+positive determinant. Visible placed world content, fused interiors, additive
+Halloween overlays, race content, mission doors, prop-like geometry, and all 140
+Wasp Camera placements participate before exact duplicate triangles are removed.
+
 #### Manual per-FBX repair dataset
 
 Manual mesh corrections use the ignored mirror `fbx-assets/world-edited/`.

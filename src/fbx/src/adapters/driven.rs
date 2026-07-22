@@ -56,6 +56,8 @@ mod binary_fbx;
 mod binary_fbx_storage;
 /// Deterministic object identity inside one binary FBX document.
 mod binary_identity;
+/// Canonical one-mesh FBX 7.7 structural-guide writer.
+pub mod binary_structural_guide_writer;
 /// Conservative horizontal UV correction policy.
 mod binary_uv_policy;
 /// Decoded skeletal animation source adapter.

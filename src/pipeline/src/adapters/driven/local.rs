@@ -232,6 +232,21 @@ impl PipelineOperations for LocalPipeline {
         )
     }
 
+    fn export_structural_guide(
+        &self,
+        index_path: &Path,
+        game_root: &Path,
+        coordinate_root: &Path,
+        output_dir: &Path,
+    ) -> PipelineOutcome<StageReport> {
+        prop_catalog::export_structural_guide(
+            index_path,
+            game_root,
+            coordinate_root,
+            output_dir,
+        )
+    }
+
     fn export_fbx_package(
         &self,
         index_path: &Path,

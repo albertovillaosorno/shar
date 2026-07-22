@@ -32,6 +32,8 @@ shar-json-text = { path = "../json-text" }
 # shar-sha256 provides deterministic artifact identities without duplicating cryptographic primitives across adapters.
 shar-sha256 = { path = "../sha256" }
 
+# serde derives typed deterministic structural-guide manifest and layout records.
+serde = { version = "1", features = ["derive"] }
 # serde_json enforces final extracted JSON and JSONL syntax before the pipeline publishes completion.
 serde_json = "1"
 

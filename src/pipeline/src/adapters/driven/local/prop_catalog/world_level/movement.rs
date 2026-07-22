@@ -87,8 +87,22 @@ pub(super) const WORLD_HEIGHT_OFFSET_METERS: f32 = 41.046;
 const ZONE_1_MOVEMENT: CoordinateMovement = CoordinateMovement::new(
     ZONE_1_MOVEMENT_ID,
     [
-        -1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
-        WORLD_HEIGHT_OFFSET_METERS, 0.0, 1.0,
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        WORLD_HEIGHT_OFFSET_METERS,
+        0.0,
+        1.0,
     ],
     ZONE_SUBJECTS,
 );
@@ -297,9 +311,7 @@ pub(super) fn apply_interior_ownership_movement(
         .map_err(
             |error| {
                 PipelineError::new(
-                    format!(
-                        "interior ownership movement is invalid: {error}"
-                    ),
+                    format!("interior ownership movement is invalid: {error}"),
                 )
             },
         )?;
@@ -390,10 +402,27 @@ fn movement_for_package(
             },
         );
     }
-    match scope {
-        "level-01" | "level-04" | "level-07" => Some(ZONE_1_MOVEMENT),
-        "level-02" | "level-05" => Some(ZONE_2_MOVEMENT),
-        "level-03" | "level-06" => Some(ZONE_3_MOVEMENT),
+    let level = scope
+        .strip_prefix("level-")
+        .and_then(
+            |value| {
+                value
+                    .parse::<u8>()
+                    .ok()
+            },
+        );
+    level.and_then(exterior_movement_for_level)
+}
+
+/// Return the reviewed exterior-family movement for one narrative level.
+#[must_use]
+pub(super) const fn exterior_movement_for_level(
+    level: u8
+) -> Option<CoordinateMovement> {
+    match level {
+        1 | 4 | 7 => Some(ZONE_1_MOVEMENT),
+        2 | 5 => Some(ZONE_2_MOVEMENT),
+        3 | 6 => Some(ZONE_3_MOVEMENT),
         _ => None,
     }
 }

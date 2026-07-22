@@ -31,6 +31,22 @@ behavior remains unchanged in this phase.
 Legacy helpers that invoke external content-authoring applications are outside
 the supported workflow and must be retired rather than used as evidence.
 
+### Editor-only structural-guide profile
+
+The structural guide is an opt-in FBX 7.7 profile of the same repository-owned
+binary writer. It emits one identity-transform mesh, one material, one external
+texture reference, and four named per-polygon-vertex UV layers. It must not
+change the ordinary character, vehicle, prop, or separated-world byte path.
+
+This profile optimizes Unreal editor inspection rather than shipping fidelity.
+Geometry, reviewed placement, explicit normals, winding, source UV tiling,
+atlas addressing, and artifact hashes remain strict. Alpha is flattened to
+opaque RGB and dynamic shader behavior is omitted. Source vertex colors are
+baked exactly when uniform for a material/wrap identity; otherwise one
+deterministic source-texture-wide average is used and counted in the manifest.
+The approximation is acceptable only because the guide is explicitly excluded
+from runtime, collision, gameplay, and shipping-render authority.
+
 ## Consequences
 
 - The repository owns serialization correctness.

@@ -23,9 +23,10 @@ Blueprints remain compatible for inspection and bounded authoring while C++ and
 validated data remain authoritative.
 
 Every normal pipeline command participates in a cooperative Rust run registry.
-The default execution mode is exclusive: a create-new local lease blocks a second
-pipeline command while any non-stale run is active. A blocked command reports the
-active run identifier, process identifier, command, optional label, lifecycle
+The default execution mode is exclusive: a create-new local lease blocks a
+second pipeline command while any non-stale run is active. A blocked command
+reports the active run identifier, process identifier, command, optional label,
+lifecycle
 state, current stage, item progress, elapsed time, and estimated remaining time
 when the stage exposes enough measured work. Unknown progress or ETA remains
 explicitly `unknown`; the registry does not invent timing evidence.
@@ -42,9 +43,9 @@ Operators may acknowledge intentional parallel work with `--allow-concurrent`.
 This is a scoped concurrency mode rather than a global mutex bypass: every
 process still receives its own run identifier, heartbeat, state record, and
 cancellation route. Unless the caller explicitly selects a log path, concurrent
-runs use independent logs under `logs/pipeline/runs/<run-id>.jsonl`. The optional
-`--run-label` value supplies a portable display identity without replacing the
-stable run identifier.
+runs use independent logs under `logs/pipeline/runs/<run-id>.jsonl`. The
+optional `--run-label` value supplies a portable display identity without
+replacing the stable run identifier.
 
 Registry state is derived and ignored under `temp/pipeline/runtime/`. Active
 processes refresh a heartbeat once per second. Records and abandoned exclusive

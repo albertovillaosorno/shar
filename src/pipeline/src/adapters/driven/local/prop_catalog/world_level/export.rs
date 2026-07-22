@@ -92,15 +92,15 @@ use crate::domain::package::PhaseThreePackageRow;
 
 /// Mutable content maps shared by all packages in one level.
 #[derive(Clone, Default)]
-struct MasterContent {
+pub(super) struct MasterContent {
     /// Fully baked authored scene meshes; collision evidence is excluded.
-    meshes: Vec<MeshAsset>,
+    pub(super) meshes: Vec<MeshAsset>,
     /// Definition-only meshes awaiting similarity-overlaid review placement.
     review: Vec<ReviewMesh>,
     /// Content-derived material bindings.
-    materials: BTreeMap<String, MaterialBinding>,
+    pub(super) materials: BTreeMap<String, MaterialBinding>,
     /// Content-derived texture payloads.
-    textures: BTreeMap<String, PreparedTexture>,
+    pub(super) textures: BTreeMap<String, PreparedTexture>,
     /// Canonical package records.
     packages: Vec<WorldPackageRecord>,
 }
@@ -173,20 +173,29 @@ enum PackageCounter {
 /// Drain final and ownership meshes in one verified deterministic order.
 fn take_aligned_interior_meshes(
     package: &mut PendingInterior
-) -> Result<Vec<(
-    MeshAsset,
-    MeshAsset,
-)>, PipelineError> {
+) -> Result<
+    Vec<(
+        MeshAsset,
+        MeshAsset,
+    )>,
+    PipelineError,
+> {
     package
         .content
         .meshes
         .sort_by(
-            |left, right| left.name.cmp(&right.name),
+            |left, right| {
+                left.name
+                    .cmp(&right.name)
+            },
         );
     package
         .ownership_meshes
         .sort_by(
-            |left, right| left.name.cmp(&right.name),
+            |left, right| {
+                left.name
+                    .cmp(&right.name)
+            },
         );
     if package
         .content
@@ -222,8 +231,7 @@ fn take_aligned_interior_meshes(
         }
         aligned.push(
             (
-                render,
-                ownership,
+                render, ownership,
             ),
         );
     }
@@ -253,7 +261,13 @@ pub(super) fn export_world_collection(
     scratch_root: &Path,
     output_root: &Path,
     authority: &SharedTextureAuthority,
-) -> Result<ExportedWorldCollection, PipelineError> {
+) -> Result<
+    (
+        ExportedWorldCollection,
+        MasterContent,
+    ),
+    PipelineError,
+> {
     let texture_root = output_root.join("textures");
     let review_root = output_root.join("review");
     let review_texture_root = review_root.join("textures");
@@ -278,6 +292,7 @@ pub(super) fn export_world_collection(
     let mut map_bounds = BTreeMap::<&'static str, MapBounds>::new();
     let mut has_review_fbx = false;
     let mut used_file_names = BTreeSet::new();
+    let mut guide_content = MasterContent::default();
 
     for package in packages {
         let scope = package_scope(package)?;
@@ -290,8 +305,8 @@ pub(super) fn export_world_collection(
             authority,
         };
         let mut ownership_meshes = Vec::new();
-        let ownership_target = is_interior(package)
-            .then_some(&mut ownership_meshes);
+        let ownership_target =
+            is_interior(package).then_some(&mut ownership_meshes);
         if let Some(movement) = append_package(
             &scope,
             package,
@@ -434,6 +449,17 @@ pub(super) fn export_world_collection(
             .as_ref()
         {
             aggregate_semantics.add(artifact.surface_semantics);
+            merge_content_presentation(
+                &mut guide_content,
+                &package_content,
+            )?;
+            guide_content
+                .meshes
+                .extend(
+                    package_content
+                        .meshes
+                        .clone(),
+                );
         }
         records.push(record);
     }
@@ -443,6 +469,7 @@ pub(super) fn export_world_collection(
         publish_fused_interiors(
             pending_interiors,
             output_root,
+            &mut guide_content,
         )?;
     aggregate_semantics.add(interior_semantics);
     records.extend(interior_records);
@@ -471,13 +498,16 @@ pub(super) fn export_world_collection(
         )?;
     }
     Ok(
-        ExportedWorldCollection {
-            packages: records,
-            interiors,
-            coordinate_movements,
-            textures,
-            surface_semantics: aggregate_semantics,
-        },
+        (
+            ExportedWorldCollection {
+                packages: records,
+                interiors,
+                coordinate_movements,
+                textures,
+                surface_semantics: aggregate_semantics,
+            },
+            guide_content,
+        ),
     )
 }
 
@@ -490,6 +520,7 @@ pub(super) fn export_world_collection(
 fn publish_fused_interiors(
     pending: Vec<PendingInterior>,
     output_root: &Path,
+    guide_content: &mut MasterContent,
 ) -> Result<
     (
         Vec<WorldInteriorRecord>,
@@ -595,8 +626,7 @@ fn publish_fused_interiors(
                 &mut base,
                 &package.content,
             )?;
-            for (mesh, ownership_mesh) in
-                take_aligned_interior_meshes(package)?
+            for (mesh, ownership_mesh) in take_aligned_interior_meshes(package)?
             {
                 let (retained, removed) =
                     retain_unowned_triangles_with_ownership(
@@ -627,8 +657,7 @@ fn publish_fused_interiors(
                 &mut overlay,
                 &package.content,
             )?;
-            for (mesh, ownership_mesh) in
-                take_aligned_interior_meshes(package)?
+            for (mesh, ownership_mesh) in take_aligned_interior_meshes(package)?
             {
                 let (retained, removed) =
                     retain_unowned_triangles_with_ownership(
@@ -678,6 +707,16 @@ fn publish_fused_interiors(
             },
         )?;
         semantics.add(base_fbx.surface_semantics);
+        merge_content_presentation(
+            guide_content,
+            &base,
+        )?;
+        guide_content
+            .meshes
+            .extend(
+                base.meshes
+                    .clone(),
+            );
         let halloween_fbx = if identity.halloween_overlay {
             let overlay_name = format!("{base_name}-halloween");
             let artifact = write_content_fbx(
@@ -698,6 +737,17 @@ fn publish_fused_interiors(
                 },
             )?;
             semantics.add(artifact.surface_semantics);
+            merge_content_presentation(
+                guide_content,
+                &overlay,
+            )?;
+            guide_content
+                .meshes
+                .extend(
+                    overlay
+                        .meshes
+                        .clone(),
+                );
             Some(artifact)
         } else {
             if !overlay
@@ -884,7 +934,7 @@ fn append_package(
     package: &PhaseThreePackageRow,
     append_context: &PackageAppendContext<'_>,
     package_content: &mut MasterContent,
-    mut ownership_meshes: Option<&mut Vec<MeshAsset>>,
+    ownership_meshes: Option<&mut Vec<MeshAsset>>,
 ) -> Result<Option<WorldCoordinateMovementRecord>, PipelineError> {
     let relative = relative_art_root(package)?;
     let package_root = append_context
@@ -965,7 +1015,7 @@ fn append_package(
         capture_interior_ownership_meshes(
             &package.package_id,
             package_content,
-            ownership_meshes.as_deref_mut(),
+            ownership_meshes,
         )?;
         let movement = apply_package_movement(
             level,
@@ -1042,7 +1092,7 @@ fn append_package(
     capture_interior_ownership_meshes(
         &package.package_id,
         package_content,
-        ownership_meshes.as_deref_mut(),
+        ownership_meshes,
     )?;
     let movement = apply_package_movement(
         level,

@@ -719,12 +719,19 @@ fn resolve_material_from_source(
     )?;
     let material_name = decoded_material_identity(&shader.name);
     let semantics = decoded_shader_semantics(&shader);
+    let base_color = decoded_shader_base_color(&shader);
     let Some(texture_reference) = texture_name(&shader)? else {
         return MaterialBinding::new(
             material_name,
             None,
         )
-        .map(|binding| binding.with_semantics(semantics))
+        .map(
+            |binding| {
+                binding
+                    .with_semantics(semantics)
+                    .with_base_color_rgba8(base_color)
+            },
+        )
         .map_err(DecodedComponentError::Material);
     };
     let texture_stem = texture_stem(&texture_reference)?;
@@ -791,6 +798,7 @@ fn resolve_material_from_source(
         &material_name,
         &source,
         semantics,
+        base_color,
     )
 }
 
@@ -906,6 +914,7 @@ fn stage_texture_binding(
     shader_name: &str,
     source: &Path,
     semantics: MaterialSemantics,
+    base_color: [u8; 4],
 ) -> Result<MaterialBinding, DecodedComponentError> {
     local::create_dir_all(output_texture_dir).map_err(
         |error| DecodedComponentError::CreateDir {
@@ -949,7 +958,13 @@ fn stage_texture_binding(
         shader_name,
         Some(file_name),
     )
-    .map(|binding| binding.with_semantics(semantics))
+    .map(
+        |binding| {
+            binding
+                .with_semantics(semantics)
+                .with_base_color_rgba8(base_color)
+        },
+    )
     .map_err(DecodedComponentError::Material)
 }
 
@@ -1104,6 +1119,35 @@ fn ensure_shader_evidence(
         }
     }
     Ok(())
+}
+
+/// Decode the canonical diffuse material tint from PDDI shader evidence.
+fn decoded_shader_base_color(shader: &DecodedShader) -> [u8; 4] {
+    let value = shader
+        .params
+        .iter()
+        .find(
+            |parameter| parameter.kind == "colour" && parameter.param == "DIFF",
+        )
+        .and_then(
+            |parameter| {
+                parameter
+                    .value
+                    .as_u64()
+            },
+        )
+        .unwrap_or(u64::from(u32::MAX));
+    let alpha = u8::try_from((value >> 24) & 0xff).unwrap_or(u8::MAX);
+    [
+        u8::try_from((value >> 16) & 0xff).unwrap_or(u8::MAX),
+        u8::try_from((value >> 8) & 0xff).unwrap_or(u8::MAX),
+        u8::try_from(value & 0xff).unwrap_or(u8::MAX),
+        if alpha == 0 {
+            u8::MAX
+        } else {
+            alpha
+        },
+    ]
 }
 
 /// Classify transparency and light emission from decoded PDDI evidence.

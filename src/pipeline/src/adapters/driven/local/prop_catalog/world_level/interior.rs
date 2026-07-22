@@ -151,7 +151,7 @@ pub(super) fn is_halloween_package(package_id: &str) -> bool {
 /// Resolve one reviewed source-space movement, including the final height.
 #[must_use]
 pub(super) fn movement_for_package(
-    package_id: &str,
+    package_id: &str
 ) -> Option<(
     &'static str,
     CoordinateMatrix,
@@ -176,7 +176,7 @@ pub(super) fn movement_for_package(
 )]
 #[must_use]
 pub(super) fn reviewed_movement_for_package(
-    package_id: &str,
+    package_id: &str
 ) -> Option<(
     &'static str,
     CoordinateMatrix,
@@ -681,7 +681,7 @@ fn correct_source_x_basis(mut matrix: CoordinateMatrix) -> CoordinateMatrix {
 /// subtracts their embedded 43.396-meter reference and bakes exactly 41.046
 /// meters into geometry and every decoded coordinate family.
 fn apply_canonical_world_height(
-    mut matrix: CoordinateMatrix,
+    mut matrix: CoordinateMatrix
 ) -> CoordinateMatrix {
     matrix[13] += super::movement::WORLD_HEIGHT_OFFSET_METERS
         - super::movement::LEGACY_REVIEWED_HEIGHT_OFFSET_METERS;
@@ -894,7 +894,12 @@ pub(super) fn retain_unowned_triangles_with_ownership(
     PipelineError,
 > {
     if mesh.name != ownership_mesh.name
-        || mesh.groups.len() != ownership_mesh.groups.len()
+        || mesh
+            .groups
+            .len()
+            != ownership_mesh
+                .groups
+                .len()
     {
         return Err(
             PipelineError::new(
@@ -911,13 +916,16 @@ pub(super) fn retain_unowned_triangles_with_ownership(
     {
         if group.index != ownership_group.index
             || group.shader != ownership_group.shader
-            || group.positions.len() != ownership_group.positions.len()
+            || group
+                .positions
+                .len()
+                != ownership_group
+                    .positions
+                    .len()
             || group.triangles != ownership_group.triangles
         {
             return Err(
-                PipelineError::new(
-                    "interior ownership mesh topology changed",
-                ),
+                PipelineError::new("interior ownership mesh topology changed"),
             );
         }
         let source_triangles = std::mem::take(&mut group.triangles);
@@ -1586,8 +1594,11 @@ mod tests {
 
     use super::{
         InteriorGeometryOwnership, geometry_key, identity_for_package,
-        is_halloween_package, movement_for_package,
-        retain_unowned_triangles, reviewed_movement_for_package,
+        is_halloween_package, movement_for_package, retain_unowned_triangles,
+        reviewed_movement_for_package,
+    };
+    use crate::adapters::driven::local::prop_catalog::world_level::movement::{
+        LEGACY_REVIEWED_HEIGHT_OFFSET_METERS, WORLD_HEIGHT_OFFSET_METERS,
     };
 
     #[test]
@@ -1881,34 +1892,28 @@ mod tests {
     }
 
     #[test]
-    fn final_movement_uses_only_the_canonical_world_height() -> Result<(), String>
-    {
-        let (_, reviewed) = reviewed_movement_for_package(
-            "extracted-art-l1i00",
-        )
-        .ok_or_else(|| String::from("reviewed movement is missing"))?;
-        let (_, final_matrix) = movement_for_package(
-            "extracted-art-l1i00",
-        )
-        .ok_or_else(|| String::from("final movement is missing"))?;
+    fn final_movement_uses_only_the_canonical_world_height()
+    -> Result<(), String> {
+        let (_, reviewed) =
+            reviewed_movement_for_package("extracted-art-l1i00")
+                .ok_or_else(|| String::from("reviewed movement is missing"))?;
+        let (_, final_matrix) = movement_for_package("extracted-art-l1i00")
+            .ok_or_else(|| String::from("final movement is missing"))?;
         for (index, (reviewed_value, final_value)) in reviewed
             .into_iter()
             .zip(final_matrix)
             .enumerate()
         {
             let expected_delta = if index == 13 {
-                super::super::movement::WORLD_HEIGHT_OFFSET_METERS
-                    - super::super::movement::LEGACY_REVIEWED_HEIGHT_OFFSET_METERS
+                WORLD_HEIGHT_OFFSET_METERS
+                    - LEGACY_REVIEWED_HEIGHT_OFFSET_METERS
             } else {
                 0.0
             };
-            if (final_value - reviewed_value - expected_delta).abs()
-                > 0.000_01
+            if (final_value - reviewed_value - expected_delta).abs() > 0.000_01
             {
                 return Err(
-                    format!(
-                        "movement component {index} changed unexpectedly"
-                    ),
+                    format!("movement component {index} changed unexpectedly"),
                 );
             }
         }

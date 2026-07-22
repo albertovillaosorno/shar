@@ -156,6 +156,55 @@ pub fn encode_png_bytes(
     Ok(output)
 }
 
+/// Encode exact RGB pixels into a deterministic eight-bit sRGB PNG.
+///
+/// # Errors
+///
+/// Returns an error when dimensions overflow, the RGB pixel count is invalid,
+/// or PNG header/image-data encoding fails.
+pub fn encode_rgb_png_bytes(
+    width: u32,
+    height: u32,
+    pixels: &[[u8; 3]],
+) -> Result<Vec<u8>, SemanticPngError> {
+    let expected = u64::from(width)
+        .checked_mul(u64::from(height))
+        .and_then(|value| usize::try_from(value).ok())
+        .ok_or(SemanticPngError::MalformedPixelBuffer)?;
+    if width == 0 || height == 0 || pixels.len() != expected {
+        return Err(SemanticPngError::MalformedPixelBuffer);
+    }
+    let bytes = pixels
+        .iter()
+        .flat_map(
+            |pixel| {
+                pixel
+                    .iter()
+                    .copied()
+            },
+        )
+        .collect::<Vec<_>>();
+    let mut output = Vec::new();
+    {
+        let mut encoder = png::Encoder::new(
+            &mut output,
+            width,
+            height,
+        );
+        encoder.set_color(png::ColorType::Rgb);
+        encoder.set_depth(png::BitDepth::Eight);
+        encoder.set_compression(png::Compression::Balanced);
+        encoder.set_source_srgb(png::SrgbRenderingIntent::Perceptual);
+        let mut writer = encoder
+            .write_header()
+            .map_err(|error| SemanticPngError::Encode(error.to_string()))?;
+        writer
+            .write_image_data(&bytes)
+            .map_err(|error| SemanticPngError::Encode(error.to_string()))?;
+    }
+    Ok(output)
+}
+
 /// Expand normalized decoder output into exact RGBA pixels.
 fn rgba_pixels(
     color_type: png::ColorType,

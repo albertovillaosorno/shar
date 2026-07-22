@@ -117,6 +117,7 @@ fn resolves_already_normalized_png_texture_extensions() {
                 material_name: "shader".to_owned(),
                 texture_file_name: Some("ready.png".to_owned()),
                 semantics: fbx::domain::texture::MaterialSemantics::default(),
+                base_color_rgba8: [u8::MAX; 4],
             }
         )
     );
@@ -217,6 +218,7 @@ fn accepts_textures_already_in_the_staging_directory() {
                 material_name: "shader".to_owned(),
                 texture_file_name: Some("ready.png".to_owned()),
                 semantics: fbx::domain::texture::MaterialSemantics::default(),
+                base_color_rgba8: [u8::MAX; 4],
             }
         )
     );
@@ -272,6 +274,7 @@ fn resolves_mixed_case_bmp_texture_extensions() {
                 material_name: "shader".to_owned(),
                 texture_file_name: Some("mixed.png".to_owned()),
                 semantics: fbx::domain::texture::MaterialSemantics::default(),
+                base_color_rgba8: [u8::MAX; 4],
             }
         )
     );

@@ -121,6 +121,7 @@ dependencies = [
  "rtf",
  "schoenwald-cli",
  "schoenwald-filesystem",
+ "serde",
  "serde_json",
  "shar-json-text",
  "shar-sha256",

@@ -48,16 +48,56 @@
 use std::path::{Path, PathBuf};
 
 use fbx::adapters::driven::binary_character_writer::CharacterBinaryFbxSummary;
+use fbx::domain::mesh::MeshAsset;
+use fbx::domain::texture::MaterialBinding;
 use schoenwald_filesystem::adapters::driving::local::{
     create_dir_all, path_kind,
 };
 use schoenwald_filesystem::domain::PathKind;
 
-use self::assembly::build_wasp_camera;
+use self::assembly::{build_wasp_camera, build_wasp_guide_source};
 use crate::domain::{PipelineError, StageReport};
 
 mod artifact;
 mod assembly;
+
+/// One exact canonical Wasp texture payload for structural-guide assembly.
+pub(in crate::adapters::driven::local) struct WaspGuideTexture {
+    /// Portable texture file identity.
+    pub(in crate::adapters::driven::local) file_name: String,
+    /// Exact PNG payload bytes.
+    pub(in crate::adapters::driven::local) bytes: Vec<u8>,
+    /// Exact lowercase SHA-256.
+    pub(in crate::adapters::driven::local) sha256: String,
+}
+
+/// Canonical static Wasp body and presentation authority for guide placement.
+pub(in crate::adapters::driven::local) struct WaspGuideSource {
+    /// Fourteen rest-pose-baked body meshes.
+    pub(in crate::adapters::driven::local) meshes: Vec<MeshAsset>,
+    /// Seven canonical body material bindings.
+    pub(in crate::adapters::driven::local) materials: Vec<MaterialBinding>,
+    /// Exact referenced external texture payloads.
+    pub(in crate::adapters::driven::local) textures: Vec<WaspGuideTexture>,
+}
+
+/// Collect the canonical static Wasp body for source-backed guide placements.
+///
+/// # Errors
+///
+/// Returns an error when exact source selection, bind-pose baking, material
+/// resolution, or texture hashing fails.
+pub(in crate::adapters::driven::local) fn collect_wasp_guide_source(
+    index_path: &Path,
+    base_root: &Path,
+    texture_dir: &Path,
+) -> Result<WaspGuideSource, PipelineError> {
+    build_wasp_guide_source(
+        index_path,
+        base_root,
+        texture_dir,
+    )
+}
 
 /// Stable pipeline stage name.
 const STAGE: &str = "fbx-export-wasp-camera";

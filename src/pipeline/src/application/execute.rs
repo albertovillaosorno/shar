@@ -321,6 +321,27 @@ where
             )
     }
 
+    /// Exports one canonical one-mesh Unreal structural guide.
+    ///
+    /// # Errors
+    ///
+    /// Returns the provider's validated pipeline failure.
+    pub fn export_structural_guide(
+        &self,
+        index_path: &Path,
+        game_root: &Path,
+        coordinate_root: &Path,
+        output_dir: &Path,
+    ) -> PipelineOutcome<StageReport> {
+        self.provider
+            .export_structural_guide(
+                index_path,
+                game_root,
+                coordinate_root,
+                output_dir,
+            )
+    }
+
     /// Exports one selected phase-three package as an FBX artifact.
     ///
     /// # Errors

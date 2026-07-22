@@ -1,7 +1,7 @@
 # World, props, roads, interiors, and streaming
 
 - Status: Active
-- Last reviewed: 2026-07-20
+- Last reviewed: 2026-07-22
 
 ## World model
 
@@ -35,11 +35,22 @@ The temporary island reference belongs inside the Unreal project at:
 src/uproject/Content/SHAR/EditorOnly/StructuralGuide/
 ```
 
-The raw FBX goes in `Source/`; its imported Static Mesh goes in `Imported/`.
-Both are local editor-only evidence, excluded from Git and cooking. Import the
-guide without materials, textures, generated collision, or Nanite, preserve the
-canonical origin and centimeter scale, and delete it after the Landscape shape
-has been verified.
+The canonical four-file source publication goes in `Source/`; its imported
+Static Mesh, atlas texture, and unlit material go in `Imported/`. Both
+directories are local editor-only evidence, excluded from Git and cooking. The
+source uses one binary FBX 7.7 mesh, one material slot, one external RGB8 atlas,
+and four per-loop UV channels. Import with `Force Front XAxis` disabled, no
+generated collision, no Nanite, no lightmap UV generation, identity rotation,
+and identity scale. Preserve the canonical origin and centimeter scale, then
+delete the guide after the Landscape shape has been verified.
+
+The guide intentionally prioritizes stable visual placement over
+shipping-render fidelity. Source alpha is flattened into opaque RGB; lighting,
+animated emissive behavior, time-of-day shaders, and other dynamic material
+behavior are omitted. Varying vertex colors use one deterministic
+source-texture-wide average, and the manifest records the affected triangle
+count. These limitations are acceptable only because the guide is not gameplay,
+collision, runtime, or shipping-render authority.
 
 A Landscape is a heightfield surface, not a volumetric block. The island and
 seabed therefore use one continuous Landscape surface; geometry below that
