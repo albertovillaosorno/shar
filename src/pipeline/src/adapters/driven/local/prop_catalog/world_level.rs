@@ -123,7 +123,8 @@ pub(in crate::adapters::driven::local) fn export_world_master(
                     note: format!(
                         concat!(
                             "published {} normal-import FBX files across {} ",
-                            "globally mirrored connected zone families, {} ",
+                            "orientation-preserving connected zone families, \
+                             {} ",
                             "fused interior bases, {} Halloween-only \
                              overlays, ",
                             "and {} isolated review FBX files from {} ",
