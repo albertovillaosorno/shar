@@ -816,6 +816,49 @@ fn merge_content_presentation(
             .collect(),
     )
 }
+
+/// Publish used textures beside one deeply nested FBX.
+///
+/// Static-model FBXs reference external media as `textures/<file>`, relative to
+/// the FBX directory. Root world scenes already resolve against the shared root
+/// texture directory, and review scenes resolve against `review/textures/`.
+/// Fused interiors are one directory deeper and therefore require their own
+/// adjacent texture directory to remain portable in Blender and Unreal.
+fn publish_nested_content_textures(
+    relative_path: &str,
+    content: &MasterContent,
+    output_root: &Path,
+) -> Result<(), PipelineError> {
+    let Some(parent) = Path::new(relative_path).parent() else {
+        return Ok(());
+    };
+    if parent
+        .components()
+        .count()
+        < 2
+        || content
+            .textures
+            .is_empty()
+    {
+        return Ok(());
+    }
+    let texture_root = output_root
+        .join(parent)
+        .join("textures");
+    fs::create_dir_all(&texture_root).map_err(
+        |error| {
+            PipelineError::new(
+                format!("nested world texture directory failed: {error}"),
+            )
+        },
+    )?;
+    let _records = publish_textures(
+        &content.textures,
+        &texture_root,
+    )?;
+    Ok(())
+}
+
 /// Write one non-empty package scene and return its stable artifact record.
 fn write_content_fbx(
     scene_name: &str,
@@ -875,6 +918,11 @@ fn write_content_fbx(
                 format!("world package FBX write failed: {error:?}"),
             )
         },
+    )?;
+    publish_nested_content_textures(
+        relative_path,
+        content,
+        output_root,
     )?;
     let bytes = fs::read(&path).map_err(
         |error| {
@@ -2029,3 +2077,6 @@ fn publish_textures(
     }
     Ok(records)
 }
+
+#[cfg(test)]
+mod tests;
