@@ -66,7 +66,8 @@ use super::collision::load_intersect_meshes;
 use super::coordinate::PackageCoordinates;
 use super::interior::{
     InteriorGeometryOwnership, InteriorIdentity, identity_for_package,
-    is_halloween_package, package_level, retain_unowned_triangles,
+    is_halloween_package, package_level,
+    retain_unowned_triangles_with_ownership,
 };
 use super::inventory::{
     LevelMeshSource, is_direct_world_mesh, is_interior, object_role,
@@ -81,7 +82,9 @@ use super::model::{
     ExportedWorldCollection, WorldFbxRecord, WorldInteriorRecord,
     WorldPackageRecord, WorldSurfaceSemanticCounts,
 };
-use super::movement::apply_package_movement;
+use super::movement::{
+    apply_interior_ownership_movement, apply_package_movement,
+};
 use super::movement_model::WorldCoordinateMovementRecord;
 use super::transform::{bake_mesh, identity, mesh_bounds, translation};
 use crate::domain::PipelineError;
@@ -137,6 +140,8 @@ struct PendingInterior {
     record: WorldPackageRecord,
     /// Transformed render content and presentation authority.
     content: MasterContent,
+    /// Exact pre-Unreal-datum geometry used only for fusion ownership.
+    ownership_meshes: Vec<MeshAsset>,
 }
 
 /// Coarse normalized shape evidence used only for review co-location.
@@ -163,6 +168,66 @@ enum PackageCounter {
     CanonicalCoordinate,
     /// Definition-only mesh routed to the separated review gallery.
     ReviewDefinition,
+}
+
+/// Drain final and ownership meshes in one verified deterministic order.
+fn take_aligned_interior_meshes(
+    package: &mut PendingInterior
+) -> Result<Vec<(
+    MeshAsset,
+    MeshAsset,
+)>, PipelineError> {
+    package
+        .content
+        .meshes
+        .sort_by(
+            |left, right| left.name.cmp(&right.name),
+        );
+    package
+        .ownership_meshes
+        .sort_by(
+            |left, right| left.name.cmp(&right.name),
+        );
+    if package
+        .content
+        .meshes
+        .len()
+        != package
+            .ownership_meshes
+            .len()
+    {
+        return Err(
+            PipelineError::new(
+                "interior final and ownership mesh counts changed",
+            ),
+        );
+    }
+    let render_meshes = std::mem::take(
+        &mut package
+            .content
+            .meshes,
+    );
+    let ownership_meshes = std::mem::take(&mut package.ownership_meshes);
+    let mut aligned = Vec::with_capacity(render_meshes.len());
+    for (render, ownership) in render_meshes
+        .into_iter()
+        .zip(ownership_meshes)
+    {
+        if render.name != ownership.name {
+            return Err(
+                PipelineError::new(
+                    "interior final and ownership mesh identities changed",
+                ),
+            );
+        }
+        aligned.push(
+            (
+                render,
+                ownership,
+            ),
+        );
+    }
+    Ok(aligned)
 }
 
 /// Export independently importable world-package scenes at one shared origin.
@@ -224,11 +289,15 @@ pub(super) fn export_world_collection(
             scratch_root: scratch_root.to_path_buf(),
             authority,
         };
+        let mut ownership_meshes = Vec::new();
+        let ownership_target = is_interior(package)
+            .then_some(&mut ownership_meshes);
         if let Some(movement) = append_package(
             &scope,
             package,
             &append_context,
             &mut package_content,
+            ownership_target,
         )? {
             coordinate_movements.push(movement);
         }
@@ -249,6 +318,10 @@ pub(super) fn export_world_collection(
         let placement = placement_for_scope(&scope)?;
         apply_placement(
             &mut package_content.meshes,
+            placement,
+        )?;
+        apply_placement(
+            &mut ownership_meshes,
             placement,
         )?;
         if !record.interior {
@@ -342,6 +415,7 @@ pub(super) fn export_world_collection(
                     halloween: is_halloween_package(&record.package_id),
                     record,
                     content: package_content,
+                    ownership_meshes,
                 },
             );
             continue;
@@ -521,24 +595,15 @@ fn publish_fused_interiors(
                 &mut base,
                 &package.content,
             )?;
-            package
-                .content
-                .meshes
-                .sort_by(
-                    |left, right| {
-                        left.name
-                            .cmp(&right.name)
-                    },
-                );
-            for mesh in package
-                .content
-                .meshes
-                .drain(..)
+            for (mesh, ownership_mesh) in
+                take_aligned_interior_meshes(package)?
             {
-                let (retained, removed) = retain_unowned_triangles(
-                    mesh,
-                    &mut owned_geometry,
-                )?;
+                let (retained, removed) =
+                    retain_unowned_triangles_with_ownership(
+                        mesh,
+                        &ownership_mesh,
+                        &mut owned_geometry,
+                    )?;
                 removed_duplicate_triangles = removed_duplicate_triangles
                     .checked_add(removed)
                     .ok_or_else(
@@ -562,24 +627,15 @@ fn publish_fused_interiors(
                 &mut overlay,
                 &package.content,
             )?;
-            package
-                .content
-                .meshes
-                .sort_by(
-                    |left, right| {
-                        left.name
-                            .cmp(&right.name)
-                    },
-                );
-            for mesh in package
-                .content
-                .meshes
-                .drain(..)
+            for (mesh, ownership_mesh) in
+                take_aligned_interior_meshes(package)?
             {
-                let (retained, removed) = retain_unowned_triangles(
-                    mesh,
-                    &mut owned_geometry,
-                )?;
+                let (retained, removed) =
+                    retain_unowned_triangles_with_ownership(
+                        mesh,
+                        &ownership_mesh,
+                        &mut owned_geometry,
+                    )?;
                 removed_duplicate_triangles = removed_duplicate_triangles
                     .checked_add(removed)
                     .ok_or_else(
@@ -828,6 +884,7 @@ fn append_package(
     package: &PhaseThreePackageRow,
     append_context: &PackageAppendContext<'_>,
     package_content: &mut MasterContent,
+    mut ownership_meshes: Option<&mut Vec<MeshAsset>>,
 ) -> Result<Option<WorldCoordinateMovementRecord>, PipelineError> {
     let relative = relative_art_root(package)?;
     let package_root = append_context
@@ -905,6 +962,11 @@ fn append_package(
             collisions.discarded_triangles;
     }
     if sources.is_empty() {
+        capture_interior_ownership_meshes(
+            &package.package_id,
+            package_content,
+            ownership_meshes.as_deref_mut(),
+        )?;
         let movement = apply_package_movement(
             level,
             is_interior(package),
@@ -977,6 +1039,11 @@ fn append_package(
             },
         )?;
     }
+    capture_interior_ownership_meshes(
+        &package.package_id,
+        package_content,
+        ownership_meshes.as_deref_mut(),
+    )?;
     let movement = apply_package_movement(
         level,
         is_interior(package),
@@ -991,6 +1058,24 @@ fn append_package(
         movement.as_ref(),
     )?;
     Ok(movement)
+}
+
+/// Capture exact reviewed interior geometry before the final Unreal raise.
+fn capture_interior_ownership_meshes(
+    package_id: &str,
+    package_content: &MasterContent,
+    ownership_meshes: Option<&mut Vec<MeshAsset>>,
+) -> Result<(), PipelineError> {
+    let Some(ownership_meshes) = ownership_meshes else {
+        return Ok(());
+    };
+    *ownership_meshes = package_content
+        .meshes
+        .clone();
+    apply_interior_ownership_movement(
+        package_id,
+        ownership_meshes,
+    )
 }
 
 /// Preserve one package movement identity beside its transformed evidence.

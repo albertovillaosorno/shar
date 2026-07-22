@@ -41,7 +41,10 @@ use std::path::Path;
 
 use fbx::domain::mesh::MeshAsset;
 
-use super::interior::movement_for_package as interior_movement_for_package;
+use super::interior::{
+    movement_for_package as interior_movement_for_package,
+    reviewed_movement_for_package as reviewed_interior_movement_for_package,
+};
 use super::layout::collection_bounds;
 use super::movement_model::WorldCoordinateMovementRecord;
 use super::movement_records::collect_moved_records;
@@ -75,12 +78,17 @@ const ZONE_SUBJECTS: &[CoordinateSubject] = &[
     CoordinateSubject::Light,
 ];
 
+/// Superseded reference height retained only to normalize reviewed interiors.
+pub(super) const LEGACY_REVIEWED_HEIGHT_OFFSET_METERS: f32 = 43.396;
+/// Canonical portable height baked into every generated FBX and coordinate.
+pub(super) const WORLD_HEIGHT_OFFSET_METERS: f32 = 41.046;
+
 /// Source-space transform canceling the shared FBX horizontal X reversal.
 const ZONE_1_MOVEMENT: CoordinateMovement = CoordinateMovement::new(
     ZONE_1_MOVEMENT_ID,
     [
         -1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
-        43.396, 0.0, 1.0,
+        WORLD_HEIGHT_OFFSET_METERS, 0.0, 1.0,
     ],
     ZONE_SUBJECTS,
 );
@@ -106,7 +114,7 @@ const ZONE_2_MOVEMENT: CoordinateMovement = CoordinateMovement::new(
         0.0,
         0.0,
         -989.247_3,
-        43.396,
+        WORLD_HEIGHT_OFFSET_METERS,
         -360.133_76,
         1.0,
     ],
@@ -119,7 +127,7 @@ const ZONE_2_MOVEMENT: CoordinateMovement = CoordinateMovement::new(
 /// solved by matching stable vertex indices against the untouched Level 3
 /// general FBX. The maximum residual was below 0.00016 Blender units. The final
 /// source X reflection cancels the shared FBX export-root reversal, and the
-/// source-height row adds exactly 43.396 meters.
+/// source-height row adds the exact canonical 41.046-meter world datum.
 const ZONE_3_MOVEMENT: CoordinateMovement = CoordinateMovement::new(
     ZONE_3_MOVEMENT_ID,
     [
@@ -136,7 +144,7 @@ const ZONE_3_MOVEMENT: CoordinateMovement = CoordinateMovement::new(
         0.0,
         0.0,
         -745.360_84,
-        43.396,
+        WORLD_HEIGHT_OFFSET_METERS,
         296.963_32,
         1.0,
     ],
@@ -255,6 +263,52 @@ pub(super) fn apply_package_movement(
     )
 }
 
+/// Transform one interior ownership snapshot in the exact reviewed datum.
+///
+/// The snapshot exists only for fused-interior duplicate decisions. Final mesh,
+/// collision, and decoded-coordinate evidence still receive the complete
+/// 41.046-meter movement through [`apply_package_movement`].
+///
+/// # Errors
+///
+/// Returns an error when the package has no reviewed movement or the ownership
+/// mesh cannot be transformed.
+pub(super) fn apply_interior_ownership_movement(
+    package_id: &str,
+    render_meshes: &mut [MeshAsset],
+) -> Result<(), PipelineError> {
+    let (id, matrix) = reviewed_interior_movement_for_package(package_id)
+        .ok_or_else(
+            || {
+                PipelineError::new(
+                    format!(
+                        "interior ownership movement is missing: {package_id}"
+                    ),
+                )
+            },
+        )?;
+    let movement = CoordinateMovement::new(
+        id,
+        matrix,
+        ZONE_SUBJECTS,
+    );
+    movement
+        .validate()
+        .map_err(
+            |error| {
+                PipelineError::new(
+                    format!(
+                        "interior ownership movement is invalid: {error}"
+                    ),
+                )
+            },
+        )?;
+    apply_to_meshes(
+        render_meshes,
+        movement,
+    )
+}
+
 /// Verify actual mesh movement against the pure bound projection.
 fn validate_moved_bounds(
     expected_bounds: Option<(
@@ -363,7 +417,10 @@ fn apply_to_meshes(
 
 #[cfg(test)]
 mod tests {
-    use super::{coordinates_close, movement_for_package};
+    use super::{
+        LEGACY_REVIEWED_HEIGHT_OFFSET_METERS, WORLD_HEIGHT_OFFSET_METERS,
+        coordinates_close, movement_for_package,
+    };
 
     fn moved_point(scope: &str) -> Result<[f32; 3], String> {
         movement_for_package(
@@ -378,6 +435,18 @@ mod tests {
             ],
         )
         .map_err(|error| error.to_string())
+    }
+
+    #[test]
+    fn canonical_world_height_excludes_the_legacy_reference_offset() {
+        assert_eq!(
+            LEGACY_REVIEWED_HEIGHT_OFFSET_METERS,
+            43.396,
+        );
+        assert_eq!(
+            WORLD_HEIGHT_OFFSET_METERS,
+            41.046,
+        );
     }
 
     #[test]
@@ -397,7 +466,7 @@ mod tests {
         if !coordinates_close(
             moved,
             [
-                -100.0, 63.396, 300.0,
+                -100.0, 61.046, 300.0,
             ],
             0.001,
         ) {
@@ -424,7 +493,7 @@ mod tests {
             moved,
             [
                 -689.247_3,
-                63.396,
+                61.046,
                 -260.133_76,
             ],
             0.001,
@@ -452,7 +521,7 @@ mod tests {
             moved,
             [
                 -1_045.360_8,
-                63.396,
+                61.046,
                 196.963_32,
             ],
             0.001,
@@ -513,7 +582,7 @@ mod tests {
                 height,
                 _,
             ] = moved;
-            if height < 43.396 {
+            if height < WORLD_HEIGHT_OFFSET_METERS {
                 return Err(
                     format!("interior height is missing: {package}:{height}"),
                 );

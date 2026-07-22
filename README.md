@@ -764,23 +764,26 @@ reversal introduced by the shared FBX export root. Interiors do not receive it.
 The resulting source-space row-vector formulas are stable generation authority:
 
 ```text
-Zone 1: X' = -X;                    Y' = Y + 43.396; Z' = Z
-Zone 2: X' =  Z - 989.247314453125; Y' = Y + 43.396; Z' =  X - 360.1337585449219
-Zone 3: X' = -Z - 745.36083984375;  Y' = Y + 43.396; Z' = -X + 296.96331787109375
+Zone 1: X' = -X;                    Y' = Y + 41.046; Z' = Z
+Zone 2: X' =  Z - 989.247314453125; Y' = Y + 41.046; Z' =  X - 360.1337585449219
+Zone 3: X' = -Z - 745.36083984375;  Y' = Y + 41.046; Z' = -X + 296.96331787109375
 ```
 
 The Zone 3 placement was solved by matching stable vertex indices against the
 untouched Level 3 general FBX; the maximum residual was below `0.00016` Blender
-units. The exact `43.396` meter source-height translation applies after every
-exterior and interior placement. Geometry, collision evidence, doors, object
+units. The final `41.046` meter source-height translation applies after every
+exterior and interior placement. It is the sole canonical Unreal world datum
+and is baked directly into every generated FBX and coordinate record. Geometry,
+collision evidence, doors, object
 placements, character and object spawns, mission positions, triggers, cameras,
 locators, and lights all receive the same translation without exception.
 
 This value is an additive height offset, not a command to ground the world's
 lowest point at zero. Source Y becomes Blender Z, and measured review bounds move
-from `-173.977081`–`289.812042` to `-130.581085`–`333.208038` on Blender Z: both
-limits increase by `43.395996` after `f32` storage. The world can therefore remain
-below Blender's green zero plane even though the requested height is correctly
+from `-173.977081`–`289.812042` to approximately
+`-132.931076`–`330.858032` on Blender Z: both limits increase by the final
+`41.046` after `f32` storage. The world can therefore remain below Blender's
+green zero plane even though the requested height is correctly
 baked. Any future lowest-point-to-zero normalization is a separate algorithm and
 must not be confused with, added to, or substituted for this global offset.
 

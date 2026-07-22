@@ -309,7 +309,7 @@ fn catalog_value(
                 "levels 1, 4, and 7 share map-01-04-07; levels 2 and 5 share ",
                 "map-02-05; levels 3 and 6 share map-03-06; reviewed family ",
                 "placement is followed by one global exterior X reflection ",
-                "and an exact 43.396 meter global height offset; connected ",
+                "and an exact 41.046 meter global height offset; connected ",
                 "zone bounds may overlap at authored seams"
             ),
             "root_import_contract": concat!(
@@ -333,7 +333,7 @@ fn catalog_value(
             ),
             "coordinate_movement": concat!(
                 "named package movements apply reviewed placement and the ",
-                "global 43.396 meter height offset to geometry, collision, ",
+                "global 41.046 meter height offset to geometry, collision, ",
                 "doors, objects, spawns, missions, triggers, cameras, ",
                 "locators, and lights"
             ),
@@ -350,7 +350,7 @@ fn catalog_value(
                     "zone-01-levels-01-04-07-global-horizontal-",
                     "mirror-and-height"
                 ),
-                "height_policy": "add-43.396-meters"
+                "height_policy": "add-41.046-meters"
             },
             {
                 "id": "map-02-05",
@@ -359,7 +359,7 @@ fn catalog_value(
                     "zone-02-levels-02-05-placement-global-",
                     "mirror-and-height"
                 ),
-                "height_policy": "add-43.396-meters"
+                "height_policy": "add-41.046-meters"
             },
             {
                 "id": "map-03-06",
@@ -368,7 +368,7 @@ fn catalog_value(
                     "zone-03-levels-03-06-placement-global-",
                     "mirror-and-height"
                 ),
-                "height_policy": "add-43.396-meters"
+                "height_policy": "add-41.046-meters"
             }
         ],
         "counts": counts_value(counts),
@@ -498,7 +498,7 @@ fn interior_transform_file_value(
         "interior_role": role,
         "source_package_ids": interior.source_package_ids,
         "coordinates_baked": true,
-        "global_height_meters": 43.396_f64,
+        "global_height_meters": 41.046_f64,
         "additional_translation": [0.0_f64, 0.0_f64, 0.0_f64],
         "additional_rotation_degrees": [0.0_f64, 0.0_f64, 0.0_f64],
         "additional_scale": [1.0_f64, 1.0_f64, 1.0_f64]
