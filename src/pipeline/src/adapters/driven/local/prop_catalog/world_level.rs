@@ -50,6 +50,7 @@ use super::{ensure_missing, staging_path};
 use crate::domain::package::PhaseThreePackageIndex;
 use crate::domain::{PipelineError, StageReport};
 
+mod algorithms;
 mod catalog;
 mod collision;
 mod coordinate;

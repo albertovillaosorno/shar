@@ -278,6 +278,8 @@ target/
 no-git/
 extracted/
 fbx-assets/
+# Local Blender re-exports used only to derive per-FBX Rust repairs.
+fbx-assets/world-edited/
 
 # Extracted legacy/game assets (local evidence, not public repository content)
 *.bin

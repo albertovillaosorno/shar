@@ -700,6 +700,60 @@ the eight fused interiors and four Halloween overlays remain movable so the
 operator can report any final placement correction. Vertex, topology, and
 material edits remain outside this review pass.
 
+#### Manual per-FBX repair dataset
+
+Manual mesh corrections use the ignored mirror `fbx-assets/world-edited/`.
+Preserve the complete relative path from `fbx-assets/world/`; for example:
+
+```text
+fbx-assets/world/level-01-zones-l1z1.fbx
+fbx-assets/world-edited/level-01-zones-l1z1.fbx
+```
+
+The edited mirror is local, disposable evidence. It is never copied into a
+publication, loaded by runtime code, or committed as reconstruction authority.
+
+A Blender import-and-export cycle may reorder objects, primitive groups,
+vertices, polygons, materials, metadata, normals, tangents, or floating-point
+serialization even when the operator made no corresponding semantic edit.
+Binary hashes, array order, generated object names, and Blender-only metadata are
+therefore not change authority. Comparison must first align original and edited
+content by stable relative path and semantic mesh structure, then classify only
+verified differences in positions, UVs, normals, colors, triangle ownership,
+material bindings, or object transforms. Unrelated Blender serialization noise
+is discarded.
+
+Each accepted comparison becomes one source-dependent Rust module below:
+
+```text
+src/pipeline/src/adapters/driven/local/prop_catalog/world_level/
+  algorithms/dataset/<normalized-relative-fbx>.rs
+```
+
+For example, `level-01-zones-l1z1.fbx` becomes
+`level_01_zones_l1z1.rs` and contributes one registry entry through
+`algorithms/dataset.rs`. The algorithm transforms the lawful original generated
+mesh; it must not embed a standalone replacement mesh or depend on the edited
+FBX after verification.
+
+Repair selection is deterministic and fail-closed. The pipeline tries exact
+relative path, exact normalized filename stem, and one unique normalized prefix
+in that order. Only when those identities do not resolve may it use the
+order-independent structural fingerprint: mesh, primitive-group, position,
+triangle, UV, normal, and color counts. Every structural dimension must score at
+least `9,900` of `10,000` basis points—99 percent—and the weakest-dimension score
+must lead the runner-up by at least 25 basis points. Every selected repair,
+including an exact identity match, must also satisfy its registered source
+fingerprint. Weak, duplicate, stale, or ambiguous matches stop publication
+instead of applying a plausible-looking repair to the wrong FBX.
+
+The registry is intentionally empty until the first edited FBX has been compared
+and reproduced by a deterministic algorithm. Registered repairs run immediately
+before FBX serialization, so regeneration always starts from original extracted
+content. After one repair reproduces the reviewed result and canonical validation
+passes, its edited comparison FBX may be deleted; the Rust transformation and its
+regression evidence become durable authority.
+
 The reviewed world uses three recurring exterior families. Zone 1 contains
 Levels 1, 4, and 7; Zone 2 contains Levels 2 and 5; Zone 3 contains Levels 3 and
 6. Zone 2 and Zone 3 retain their reviewed connected placements. A final global

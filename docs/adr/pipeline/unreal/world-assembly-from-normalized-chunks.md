@@ -41,6 +41,14 @@ records only solved source-dependent affine matrices and verifies regenerated
 geometry against the reviewed scene. Bonus and auxiliary packages do not enter
 the seven-level world stage.
 
+Later manual FBX corrections use an ignored relative-path mirror and become
+committed source-dependent Rust algorithms, never replacement FBX authority.
+Selection prefers exact path, exact stem, and a unique prefix before accepting a
+structural fingerprint whose weakest dimension is at or above 99 percent.
+Exact identity matches still require the registered source fingerprint.
+Ambiguous or stale matches block publication. Blender ordering and
+serialization drift are not authored changes.
+
 Interiors do not inherit the exterior-family reflection. Each of the 19 source
 packages has one reviewed full-XYZ source-space movement, including height, and
 is grouped into one of eight stable interior identities. The reviewed matrices
