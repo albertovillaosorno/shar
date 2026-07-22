@@ -148,7 +148,25 @@ pub(super) fn is_halloween_package(package_id: &str) -> bool {
     )
 }
 
-/// Resolve one reviewed source-space movement, including the global height.
+/// Resolve one reviewed source-space movement, including the final height.
+#[must_use]
+pub(super) fn movement_for_package(
+    package_id: &str,
+) -> Option<(
+    &'static str,
+    CoordinateMatrix,
+)> {
+    reviewed_movement_for_package(package_id).map(
+        |(id, matrix)| {
+            (
+                id,
+                apply_canonical_world_height(matrix),
+            )
+        },
+    )
+}
+
+/// Resolve the reviewed movement before the Unreal datum presentation raise.
 #[expect(
     clippy::excessive_precision,
     clippy::too_many_lines,
@@ -157,8 +175,8 @@ pub(super) fn is_halloween_package(package_id: &str) -> bool {
               exactly"
 )]
 #[must_use]
-pub(super) fn movement_for_package(
-    package_id: &str
+pub(super) fn reviewed_movement_for_package(
+    package_id: &str,
 ) -> Option<(
     &'static str,
     CoordinateMatrix,
@@ -657,6 +675,19 @@ fn correct_source_x_basis(mut matrix: CoordinateMatrix) -> CoordinateMatrix {
     matrix
 }
 
+/// Replace the superseded reviewed reference height with the canonical datum.
+///
+/// The historical matrices remain unchanged as placement evidence. Publication
+/// subtracts their embedded 43.396-meter reference and bakes exactly 41.046
+/// meters into geometry and every decoded coordinate family.
+fn apply_canonical_world_height(
+    mut matrix: CoordinateMatrix,
+) -> CoordinateMatrix {
+    matrix[13] += super::movement::WORLD_HEIGHT_OFFSET_METERS
+        - super::movement::LEGACY_REVIEWED_HEIGHT_OFFSET_METERS;
+    matrix
+}
+
 /// Quantized orientation-independent world-space triangle identity.
 #[cfg(test)]
 pub(super) type InteriorTriangleKey = [[i64; 3]; 3];
@@ -821,8 +852,9 @@ impl InteriorGeometryOwnership {
 ///
 /// Returns an error when one triangle references a missing vertex or the
 /// duplicate-triangle counter overflows.
+#[cfg(test)]
 pub(super) fn retain_unowned_triangles(
-    mut mesh: MeshAsset,
+    mesh: MeshAsset,
     owned: &mut InteriorGeometryOwnership,
 ) -> Result<
     (
@@ -831,14 +863,68 @@ pub(super) fn retain_unowned_triangles(
     ),
     PipelineError,
 > {
+    let ownership_mesh = mesh.clone();
+    retain_unowned_triangles_with_ownership(
+        mesh,
+        &ownership_mesh,
+        owned,
+    )
+}
+
+/// Retain final-datum triangles using an exact pre-datum ownership mesh.
+///
+/// The ownership mesh is cloned before the 41.046-meter Unreal alignment raise
+/// and transformed with the previously reviewed matrix. This preserves every
+/// established fusion decision while the retained mesh keeps its final raised
+/// coordinates.
+///
+/// # Errors
+///
+/// Returns an error when render and ownership topology diverge or one triangle
+/// references a missing ownership vertex.
+pub(super) fn retain_unowned_triangles_with_ownership(
+    mut mesh: MeshAsset,
+    ownership_mesh: &MeshAsset,
+    owned: &mut InteriorGeometryOwnership,
+) -> Result<
+    (
+        Option<MeshAsset>,
+        usize,
+    ),
+    PipelineError,
+> {
+    if mesh.name != ownership_mesh.name
+        || mesh.groups.len() != ownership_mesh.groups.len()
+    {
+        return Err(
+            PipelineError::new(
+                "interior ownership mesh identity or group count changed",
+            ),
+        );
+    }
     let mut retained_groups = Vec::new();
     let mut removed_triangles = 0_usize;
-    for mut group in mesh.groups {
+    for (mut group, ownership_group) in mesh
+        .groups
+        .into_iter()
+        .zip(&ownership_mesh.groups)
+    {
+        if group.index != ownership_group.index
+            || group.shader != ownership_group.shader
+            || group.positions.len() != ownership_group.positions.len()
+            || group.triangles != ownership_group.triangles
+        {
+            return Err(
+                PipelineError::new(
+                    "interior ownership mesh topology changed",
+                ),
+            );
+        }
         let source_triangles = std::mem::take(&mut group.triangles);
         let mut retained_triangles = Vec::with_capacity(source_triangles.len());
         for triangle in source_triangles {
             if owned.claim(
-                &group.positions,
+                &ownership_group.positions,
                 &triangle,
             )? {
                 retained_triangles.push(triangle);
@@ -876,7 +962,7 @@ pub(super) fn retain_unowned_triangles(
     )
 }
 
-/// Resolve one triangle into final world-space points.
+/// Resolve one triangle from the exact reviewed ownership positions.
 fn triangle_points(
     positions: &[[f32; 3]],
     triangle: &[u32; 3],
@@ -1500,7 +1586,8 @@ mod tests {
 
     use super::{
         InteriorGeometryOwnership, geometry_key, identity_for_package,
-        is_halloween_package, movement_for_package, retain_unowned_triangles,
+        is_halloween_package, movement_for_package,
+        retain_unowned_triangles, reviewed_movement_for_package,
     };
 
     #[test]
@@ -1599,7 +1686,7 @@ mod tests {
         let expected = [
             203.703_92_f32,
             -301.955_6_f32,
-            48.569_32_f32,
+            46.219_32_f32,
         ];
         if blender_import
             .iter()
@@ -1789,6 +1876,41 @@ mod tests {
             return Err(
                 String::from("world placement did not change the geometry key"),
             );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn final_movement_uses_only_the_canonical_world_height() -> Result<(), String>
+    {
+        let (_, reviewed) = reviewed_movement_for_package(
+            "extracted-art-l1i00",
+        )
+        .ok_or_else(|| String::from("reviewed movement is missing"))?;
+        let (_, final_matrix) = movement_for_package(
+            "extracted-art-l1i00",
+        )
+        .ok_or_else(|| String::from("final movement is missing"))?;
+        for (index, (reviewed_value, final_value)) in reviewed
+            .into_iter()
+            .zip(final_matrix)
+            .enumerate()
+        {
+            let expected_delta = if index == 13 {
+                super::super::movement::WORLD_HEIGHT_OFFSET_METERS
+                    - super::super::movement::LEGACY_REVIEWED_HEIGHT_OFFSET_METERS
+            } else {
+                0.0
+            };
+            if (final_value - reviewed_value - expected_delta).abs()
+                > 0.000_01
+            {
+                return Err(
+                    format!(
+                        "movement component {index} changed unexpectedly"
+                    ),
+                );
+            }
         }
         Ok(())
     }

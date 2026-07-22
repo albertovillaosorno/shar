@@ -25,15 +25,17 @@ reflection applies to all three exterior families and every associated
 coordinate record so the shared FBX export-root conversion does not reverse the
 assembled world's left and right sides.
 
-An exact `43.396` meter source-height translation applies after every exterior
-and interior placement without exception. The complete movement boundary covers
+A final `41.046` meter source-height translation applies after every exterior
+and interior placement without exception. It is the sole canonical Unreal
+world datum and is baked directly into every generated FBX and coordinate
+record. The complete movement boundary covers
 render geometry, collision evidence, doors, object placement, character and
 object spawns, mission placement, triggers, cameras, locators, and lights. In
 source coordinates height is Y; generated Blender evidence projects that same
 translation onto Blender Z. This translation is additive and does not normalize
 the world's minimum elevation to zero. Measured Blender bounds increase by
-`43.395996` on both Z limits after `f32` storage while still crossing the zero
-plane; any later ground-to-zero operation is a distinct transformation.
+approximately `41.046` on both Z limits after `f32` storage; any later
+ground-to-zero operation is a distinct transformation.
 
 The operator may use an ignored Blender scene to review placement, but that
 scene is comparison evidence rather than production authority. The pipeline

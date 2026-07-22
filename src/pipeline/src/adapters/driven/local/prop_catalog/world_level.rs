@@ -128,8 +128,8 @@ pub(in crate::adapters::driven::local) fn export_world_master(
                             "and {} isolated review FBX files from {} ",
                             "main-level packages; every coordinate includes \
                              the ",
-                            "43.396 meter global height offset, with {} \
-                             authored ",
+                            "41.046 meter canonical global height offset, \
+                             with {} authored ",
                             "placements and {} excluded collision meshes"
                         ),
                         counts.normal_world_fbx_files,
