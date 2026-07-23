@@ -35,12 +35,17 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use fbx::adapters::driven::binary_character_writer::ModelUvPolicy;
+use fbx::adapters::driven::binary_character_writer::{
+    ModelExportRootPolicy, ModelUvPolicy,
+};
 use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 use fbx::domain::texture::MaterialBinding;
 use shar_sha256::digest_hex;
 
-use super::{MasterContent, PreparedTexture, write_content_fbx};
+use super::{
+    MasterContent, PreparedTexture, WORLD_ROOT_POLICY, WORLD_UV_POLICY,
+    append_world_fbx_to_guide, write_content_fbx,
+};
 
 const TEXTURE_FILE_NAME: &str = "interior-test.png";
 const TEXTURE_BYTES: &[u8] = b"canonical-interior-texture-payload";
@@ -149,10 +154,7 @@ fn temporary_root() -> PathBuf {
     )
 }
 
-fn contains_bytes(
-    haystack: &[u8],
-    needle: &[u8],
-) -> bool {
+fn contains_bytes(haystack: &[u8], needle: &[u8]) -> bool {
     haystack
         .windows(needle.len())
         .any(|window| window == needle)
@@ -187,6 +189,7 @@ fn nested_fbx_publishes_adjacent_external_textures() -> Result<(), String> {
             &mut content,
             &root,
             ModelUvPolicy::Preserve,
+            ModelExportRootPolicy::ReflectX,
         )
         .map_err(|error| error.to_string())?
         .ok_or_else(|| String::from("interior fixture FBX was not written"))?;
@@ -232,4 +235,165 @@ fn nested_fbx_publishes_adjacent_external_textures() -> Result<(), String> {
     })();
     let cleanup = remove_if_present(&root);
     result.and(cleanup)
+}
+
+#[test]
+fn guide_append_preserves_exterior_world_fbx_geometry_exactly()
+-> Result<(), String> {
+    let source = textured_content()?;
+    let source_mesh = source
+        .meshes
+        .first()
+        .ok_or_else(|| "world FBX fixture mesh is missing".to_owned())?;
+    let source_group = source_mesh
+        .groups
+        .first()
+        .ok_or_else(|| "world FBX fixture group is missing".to_owned())?;
+    let expected_positions = source_group
+        .positions
+        .clone();
+    let expected_normals = source_group
+        .normals
+        .clone();
+    let expected_uvs = source_group
+        .uvs
+        .clone();
+    let expected_triangles = source_group
+        .triangles
+        .clone();
+    let mut guide = MasterContent::default();
+    append_world_fbx_to_guide(
+        &source, &mut guide,
+    )
+    .map_err(|error| error.to_string())?;
+    let combined_mesh = guide
+        .meshes
+        .first()
+        .ok_or_else(|| "combined guide mesh is missing".to_owned())?;
+    let combined_group = combined_mesh
+        .groups
+        .first()
+        .ok_or_else(|| "combined guide group is missing".to_owned())?;
+    assert_eq!(
+        combined_group.positions,
+        expected_positions,
+    );
+    assert_eq!(
+        combined_group.normals,
+        expected_normals,
+    );
+    assert_eq!(
+        combined_group.uvs,
+        expected_uvs,
+    );
+    assert_eq!(
+        combined_group.triangles,
+        expected_triangles,
+    );
+    assert_eq!(
+        guide
+            .materials
+            .len(),
+        source
+            .materials
+            .len(),
+    );
+    assert_eq!(
+        guide
+            .textures
+            .len(),
+        source
+            .textures
+            .len(),
+    );
+    Ok(())
+}
+
+#[test]
+fn guide_append_preserves_interior_world_fbx_geometry_exactly()
+-> Result<(), String> {
+    let mut source = textured_content()?;
+    let group = source
+        .meshes
+        .first_mut()
+        .and_then(
+            |mesh| {
+                mesh.groups
+                    .first_mut()
+            },
+        )
+        .ok_or_else(|| "interior FBX fixture group is missing".to_owned())?;
+    group.positions = vec![
+        [
+            1.0, 2.0, 3.0,
+        ],
+        [
+            4.0, 5.0, 6.0,
+        ],
+        [
+            7.0, 8.0, 9.0,
+        ],
+    ];
+    group.normals = vec![
+        [
+            1.0, 0.0, 0.0,
+        ];
+        3
+    ];
+    let expected_positions = group
+        .positions
+        .clone();
+    let expected_normals = group
+        .normals
+        .clone();
+    let expected_uvs = group
+        .uvs
+        .clone();
+    let expected_triangles = group
+        .triangles
+        .clone();
+    let mut guide = MasterContent::default();
+    append_world_fbx_to_guide(
+        &source, &mut guide,
+    )
+    .map_err(|error| error.to_string())?;
+    let combined = guide
+        .meshes
+        .first()
+        .and_then(
+            |mesh| {
+                mesh.groups
+                    .first()
+            },
+        )
+        .ok_or_else(|| "combined interior guide group is missing".to_owned())?;
+    assert_eq!(
+        combined.positions,
+        expected_positions
+    );
+    assert_eq!(
+        combined.normals,
+        expected_normals
+    );
+    assert_eq!(
+        combined.uvs,
+        expected_uvs
+    );
+    assert_eq!(
+        combined.triangles,
+        expected_triangles
+    );
+    Ok(())
+}
+
+#[test]
+fn world_fbx_policy_reflects_x_once_and_preserves_authored_uvs() {
+    assert_eq!(
+        WORLD_ROOT_POLICY,
+        ModelExportRootPolicy::ReflectX
+    );
+    assert_eq!(
+        WORLD_UV_POLICY,
+        ModelUvPolicy::Preserve
+    );
 }

@@ -667,10 +667,11 @@ definition-only review geometry remains isolated in similarity-overlaid inspecti
 galleries without being merged into or substituted for canonical source geometry.
 
 `world.transforms.json` uses the
-`shar.world-package-transforms.v5` contract. Every root file has baked coordinates
-and requires zero additional translation, rotation, or scale. Importers may
-create the shared `SHAR_Export_Root` axis-conversion transform; preserve that
-common imported transform instead of applying per-package placement offsets.
+`shar.world-package-transforms.v5` contract. Every normal world FBX has the exact
+`80.0` meter height translation in its geometry. Exterior, region, zone, race,
+door, fused-interior, and interior-overlay FBXs all use the same source-to-FBX
+X-axis `ReflectX` export root and preserve authored UVs. Import each asset without
+additional per-package translation, rotation, scale, or UV mirroring.
 
 The Blender 5.1 review scene keeps 18 locked exterior review objects and replaces
 19 source interior packages with eight movable fused bases. Elementary School,
@@ -712,10 +713,11 @@ src/uproject/Content/SHAR/EditorOnly/StructuralGuide/Source/
 
 The publication contains exactly four files: one binary FBX 7.7 mesh, one
 manifest, one external RGB8 atlas, and one deterministic atlas layout. The FBX
-contains the single object `SM_SHAR_StructuralGuide_Canonical`, the single
-material `M_SHAR_StructuralGuide_Atlas`, no helper root, no collision, no LOD
-beyond LOD0, no rig, no animation, and exactly the four per-loop UV channels
-`UV0_Source`, `UV1_AtlasOffset`, `UV2_AtlasScale`, and `UV3_AtlasFlags`.
+contains the single mesh model `SM_SHAR_StructuralGuide_Canonical`, the shared
+world `ReflectX` `SHAR_Export_Root`, the single material
+`M_SHAR_StructuralGuide_Atlas`, no collision, no LOD beyond LOD0, no rig, no
+animation, and exactly the four per-loop UV channels
+`UV0_Atlas`, `UV1_Source`, `UV2_AtlasOffset`, and `UV3_AtlasScale`.
 
 Generate into an empty explicit staging directory with:
 
@@ -729,22 +731,36 @@ exists or violates the four-file contract. Validate a temporary publication
 before copying it into the Unreal source directory during editor cleanup.
 
 The atlas is one 4096-square sRGB PNG with RGB8 pixels, no alpha, no rotation,
-and two-pixel edge dilation. Source UV tiling remains unchanged in `UV0`; the
-other channels carry atlas offset, scale, and repeat/clamp policy. Texture alpha
-is flattened into opaque RGB. Material base color is baked exactly. When all
-source vertex colors for one material/wrap identity agree, that tint is baked
-exactly; when they differ, the guide uses one deterministic source-texture-wide average
-and records the affected triangle count in `sourceCoverage`. This approximation
-is intentional because the artifact exists only for visual world reference.
-Lighting, animated emissive behavior, time-of-day shaders, cutout transparency,
-and other dynamic presentation are known omissions documented in the manifest.
+and two-pixel edge dilation. `UV0_Atlas` is the final atlas coordinate consumed
+by Unreal's imported one-texture material, so no custom offset, scale, or wrap
+shader is required. `UV1_Source`, `UV2_AtlasOffset`, and `UV3_AtlasScale`
+preserve audit evidence. Repeat or clamp behavior is baked into `UV0_Atlas`.
+Texture alpha is flattened into opaque RGB. Material base color is baked exactly.
+When all source vertex colors for one material/wrap identity agree, that tint is
+baked exactly; when they differ, the guide uses one deterministic
+source-texture-wide average and records the affected triangle count in
+`sourceCoverage`. This approximation is intentional because the artifact exists
+only for visual world reference. Lighting, animated emissive behavior,
+time-of-day shaders, cutout transparency, and other dynamic presentation are
+known omissions documented in the manifest.
 
-The mesh bakes the reviewed mirror and world placement into vertices, converts to
-X-forward, Y-right, Z-up centimeters, centers horizontal bounds at zero, and maps
-the reviewed sea plane to `Z = 0`. The object transform remains identity with a
-positive determinant. Visible placed world content, fused interiors, additive
-Halloween overlays, race content, mission doors, prop-like geometry, and all 140
-Wasp Camera placements participate before exact duplicate triangles are removed.
+The structural guide has no independent spatial policy. It concatenates the
+mesh content of every normal-import world FBX after canonical movement and repair,
+including all seven exterior levels, fused interior bases, additive Halloween
+interior overlays, mission doors, race content, and other geometry already owned
+by those FBXs. Isolated `review/` comparison galleries are not part of the normal
+world set and are not combined.
+
+The guide does not invent a spatial correction, height, or content filter. Every
+normal world FBX and the guide use the same `ReflectX` root, so guide assembly
+only merges presentation data and clones positions, normals, source UVs, and
+triangle winding. It cannot evaluate, flatten, mirror, or otherwise re-express a
+source mesh. Loop duplication for the one-mesh representation and atlas UV
+projection are the only guide-specific representation changes. When any source
+FBX group has no normal layer, the one-mesh guide omits its normal layer globally
+instead of generating or repairing normals; the manifest records the affected
+source-group count. Import the resulting FBX at identity with `Force Front XAxis`
+disabled.
 
 #### Manual per-FBX repair dataset
 
@@ -803,21 +819,23 @@ regression evidence become durable authority.
 The reviewed world uses three recurring exterior families. Zone 1 contains
 Levels 1, 4, and 7; Zone 2 contains Levels 2 and 5; Zone 3 contains Levels 3 and
 6. Zone 2 and Zone 3 retain their reviewed connected placements. Exterior
-families, race props, doors, and coordinate-bearing runtime records preserve
-handedness: no horizontal reflection is baked into the ordinary world. Only
-interior package matrices keep their explicit source-to-FBX X-basis correction.
+families, race props, doors, interiors, and coordinate-bearing runtime records
+retain their reviewed source-space movements. Every generated world FBX then
+uses the same source-to-FBX X-axis `ReflectX` root and preserves authored UVs;
+interior package matrices remain placement authority rather than a unique FBX
+basis policy.
 
 The resulting source-space row-vector formulas are stable generation authority:
 
 ```text
-Zone 1: X' =  X;                    Y' = Y + 41.046; Z' = Z
-Zone 2: X' =  Z - 989.247314453125; Y' = Y + 41.046; Z' = -X - 360.1337585449219
-Zone 3: X' = -Z - 745.36083984375;  Y' = Y + 41.046; Z' =  X + 296.96331787109375
+Zone 1: X' =  X;                    Y' = Y + 80.0; Z' = Z
+Zone 2: X' =  Z - 989.247314453125; Y' = Y + 80.0; Z' = -X - 360.1337585449219
+Zone 3: X' = -Z - 745.36083984375;  Y' = Y + 80.0; Z' =  X + 296.96331787109375
 ```
 
 The Zone 3 placement was solved by matching stable vertex indices against the
 untouched Level 3 general FBX; the maximum residual was below `0.00016` Blender
-units. The final `41.046` meter source-height translation applies after every
+units. The final `80.0` meter source-height translation applies after every
 exterior and interior placement. It is the sole canonical Unreal world datum
 and is baked directly into every generated FBX and coordinate record. Geometry,
 collision evidence, doors, object
@@ -828,7 +846,7 @@ This value is an additive height offset, not a command to ground the world's
 lowest point at zero. Source Y becomes Blender Z, and measured review bounds move
 from `-173.977081`–`289.812042` to approximately
 `-132.931076`–`330.858032` on Blender Z: both limits increase by the final
-`41.046` after `f32` storage. The world can therefore remain below Blender's
+`80.0` after `f32` storage. The world can therefore remain below Blender's
 green zero plane even though the requested height is correctly
 baked. Any future lowest-point-to-zero normalization is a separate algorithm and
 must not be confused with, added to, or substituted for this global offset.

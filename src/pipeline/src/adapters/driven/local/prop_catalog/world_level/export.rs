@@ -48,7 +48,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use fbx::adapters::driven::binary_character_writer::{
-    ModelUvPolicy, write_binary_model_fbx_with_uv_policy,
+    ModelExportRootPolicy, ModelUvPolicy, write_binary_model_fbx_with_policies,
 };
 use fbx::adapters::driven::decoded_component_source::read_mesh_for_analysis;
 use fbx::domain::mesh::MeshAsset;
@@ -88,6 +88,13 @@ use super::movement::{
 use super::movement_model::WorldCoordinateMovementRecord;
 use super::transform::{bake_mesh, identity, mesh_bounds, translation};
 use crate::domain::PipelineError;
+
+/// Source-to-FBX X reflection shared by every world and review FBX.
+const WORLD_ROOT_POLICY: ModelExportRootPolicy =
+    ModelExportRootPolicy::ReflectX;
+/// Preserve authored UVs because the shared root owns the horizontal basis
+/// conversion. Additional U mirroring would reverse signs and displays twice.
+const WORLD_UV_POLICY: ModelUvPolicy = ModelUvPolicy::Preserve;
 use crate::domain::package::PhaseThreePackageRow;
 
 /// Mutable content maps shared by all packages in one level.
@@ -172,7 +179,7 @@ enum PackageCounter {
 
 /// Drain final and ownership meshes in one verified deterministic order.
 fn take_aligned_interior_meshes(
-    package: &mut PendingInterior
+    package: &mut PendingInterior,
 ) -> Result<
     Vec<(
         MeshAsset,
@@ -386,11 +393,8 @@ pub(super) fn export_world_collection(
                 &format!("review/{stem}.review.fbx"),
                 &mut review_content,
                 output_root,
-                if record.interior {
-                    ModelUvPolicy::Preserve
-                } else {
-                    ModelUvPolicy::Selective
-                },
+                WORLD_UV_POLICY,
+                WORLD_ROOT_POLICY,
             )?;
             if let Some(artifact) = record
                 .review_fbx
@@ -442,24 +446,18 @@ pub(super) fn export_world_collection(
             &world_relative_path,
             &mut package_content,
             output_root,
-            ModelUvPolicy::Selective,
+            WORLD_UV_POLICY,
+            WORLD_ROOT_POLICY,
         )?;
         if let Some(artifact) = record
             .world_fbx
             .as_ref()
         {
             aggregate_semantics.add(artifact.surface_semantics);
-            merge_content_presentation(
-                &mut guide_content,
+            append_world_fbx_to_guide(
                 &package_content,
+                &mut guide_content,
             )?;
-            guide_content
-                .meshes
-                .extend(
-                    package_content
-                        .meshes
-                        .clone(),
-                );
         }
         records.push(record);
     }
@@ -509,6 +507,28 @@ pub(super) fn export_world_collection(
             guide_content,
         ),
     )
+}
+
+/// Append one already-written normal world FBX to the combined guide source.
+///
+/// Every world FBX and the guide share the same `ReflectX` root. The guide may
+/// therefore merge presentation data and clone mesh channels only; it must not
+/// re-express positions, normals, UVs, or triangle winding.
+fn append_world_fbx_to_guide(
+    source: &MasterContent,
+    guide: &mut MasterContent,
+) -> Result<(), PipelineError> {
+    merge_content_presentation(
+        guide, source,
+    )?;
+    guide
+        .meshes
+        .extend(
+            source
+                .meshes
+                .clone(),
+        );
+    Ok(())
 }
 
 /// Publish eight fused base interiors and four additive Halloween overlays.
@@ -694,7 +714,8 @@ fn publish_fused_interiors(
             &format!("{folder}/{base_name}.fbx"),
             &mut base,
             output_root,
-            ModelUvPolicy::Preserve,
+            WORLD_UV_POLICY,
+            WORLD_ROOT_POLICY,
         )?
         .ok_or_else(
             || {
@@ -707,16 +728,10 @@ fn publish_fused_interiors(
             },
         )?;
         semantics.add(base_fbx.surface_semantics);
-        merge_content_presentation(
-            guide_content,
+        append_world_fbx_to_guide(
             &base,
+            guide_content,
         )?;
-        guide_content
-            .meshes
-            .extend(
-                base.meshes
-                    .clone(),
-            );
         let halloween_fbx = if identity.halloween_overlay {
             let overlay_name = format!("{base_name}-halloween");
             let artifact = write_content_fbx(
@@ -724,7 +739,8 @@ fn publish_fused_interiors(
                 &format!("{folder}/{overlay_name}.fbx"),
                 &mut overlay,
                 output_root,
-                ModelUvPolicy::Preserve,
+                WORLD_UV_POLICY,
+                WORLD_ROOT_POLICY,
             )?
             .ok_or_else(
                 || {
@@ -737,17 +753,10 @@ fn publish_fused_interiors(
                 },
             )?;
             semantics.add(artifact.surface_semantics);
-            merge_content_presentation(
-                guide_content,
+            append_world_fbx_to_guide(
                 &overlay,
+                guide_content,
             )?;
-            guide_content
-                .meshes
-                .extend(
-                    overlay
-                        .meshes
-                        .clone(),
-                );
             Some(artifact)
         } else {
             if !overlay
@@ -866,6 +875,7 @@ fn write_content_fbx(
     content: &mut MasterContent,
     output_root: &Path,
     uv_policy: ModelUvPolicy,
+    root_policy: ModelExportRootPolicy,
 ) -> Result<Option<WorldFbxRecord>, PipelineError> {
     if content
         .meshes
@@ -901,7 +911,7 @@ fn write_content_fbx(
             },
         )?;
     }
-    let summary = write_binary_model_fbx_with_uv_policy(
+    let summary = write_binary_model_fbx_with_policies(
         scene_name,
         &content.meshes,
         &content
@@ -910,6 +920,7 @@ fn write_content_fbx(
             .cloned()
             .collect::<Vec<_>>(),
         uv_policy,
+        root_policy,
         &path,
     )
     .map_err(
@@ -954,7 +965,7 @@ fn write_content_fbx(
 
 /// Build one unique portable file stem from the source package subcategory.
 fn package_file_stem(
-    package: &PhaseThreePackageRow
+    package: &PhaseThreePackageRow,
 ) -> Result<String, PipelineError> {
     let relative = package
         .subcategory
@@ -1430,7 +1441,7 @@ fn increment_value(value: &mut usize) -> Result<(), PipelineError> {
               operation."
 )]
 fn place_review_gallery(
-    content: &mut MasterContent
+    content: &mut MasterContent,
 ) -> Result<usize, PipelineError> {
     if content
         .review
@@ -1691,10 +1702,7 @@ fn shape_profile(mesh: &MeshAsset) -> Result<ShapeProfile, PipelineError> {
 }
 
 /// Score coarse shape equivalence without merging or replacing source geometry.
-fn shape_similarity(
-    left: ShapeProfile,
-    right: ShapeProfile,
-) -> f32 {
+fn shape_similarity(left: ShapeProfile, right: ShapeProfile) -> f32 {
     let components = [
         count_ratio(
             left.vertices,
@@ -1724,10 +1732,7 @@ fn shape_similarity(
 }
 
 /// Return one symmetric ratio in the inclusive zero-to-one range.
-fn count_ratio(
-    left: usize,
-    right: usize,
-) -> f32 {
+fn count_ratio(left: usize, right: usize) -> f32 {
     value_ratio(
         review_count_f32(left),
         review_count_f32(right),
@@ -1745,10 +1750,7 @@ const fn review_count_f32(value: usize) -> f32 {
 }
 
 /// Return one symmetric positive-value ratio.
-fn value_ratio(
-    left: f32,
-    right: f32,
-) -> f32 {
+fn value_ratio(left: f32, right: f32) -> f32 {
     left.min(right)
         / left
             .max(right)
@@ -1766,7 +1768,7 @@ const fn square_columns(groups: usize) -> usize {
 
 /// Count overlapping independently selectable and interaction geometry groups.
 fn world_object_semantic_counts(
-    meshes: &[MeshAsset]
+    meshes: &[MeshAsset],
 ) -> (
     usize,
     usize,

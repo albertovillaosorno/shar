@@ -21,8 +21,9 @@
 //   - Modify geometry, add helpers, animations, cameras, lights, or embedded
 //     content.
 // - Allows:
-//   - Z-up centimeter settings, one geometry/model/material/texture/video, and
-//     direct root connections.
+//   - The canonical world FBX Y-up meter settings, one shared ReflectX export
+//     root, one geometry/model/material/texture/video, and deterministic
+//     connections.
 // - Summary:
 //   - Builds the exact canonical structural-guide FBX scene graph.
 //
@@ -42,15 +43,15 @@ use super::super::binary_fbx::{
 };
 use super::geometry::geometry_node;
 use super::nodes::{
-    GEOMETRY_ID, MATERIAL_ID, MODEL_ID, TEXTURE_ID, VIDEO_ID, color_property,
-    i32_node, integer_property, material_node, model_node, object_connection,
-    property, property_connection, string, string_node, texture_node,
-    video_node,
+    EXPORT_ROOT_ID, GEOMETRY_ID, MATERIAL_ID, MODEL_ID, TEXTURE_ID, VIDEO_ID,
+    color_property, export_root_node, i32_node, integer_property,
+    material_node, model_node, object_connection, property,
+    property_connection, string, string_node, texture_node, video_node,
 };
 use super::{StructuralGuideFbxError, StructuralGuideMesh};
 
 pub(super) fn build_document(
-    mesh: &StructuralGuideMesh
+    mesh: &StructuralGuideMesh,
 ) -> Result<Vec<BinaryNode>, StructuralGuideFbxError> {
     Ok(
         vec![
@@ -148,7 +149,7 @@ fn global_settings() -> BinaryNode {
                 "Properties70",
                 vec![
                     integer_property(
-                        "UpAxis", 2,
+                        "UpAxis", 1,
                     ),
                     integer_property(
                         "UpAxisSign",
@@ -156,7 +157,7 @@ fn global_settings() -> BinaryNode {
                     ),
                     integer_property(
                         "FrontAxis",
-                        0,
+                        2,
                     ),
                     integer_property(
                         "FrontAxisSign",
@@ -164,7 +165,7 @@ fn global_settings() -> BinaryNode {
                     ),
                     integer_property(
                         "CoordAxis",
-                        1,
+                        0,
                     ),
                     integer_property(
                         "CoordAxisSign",
@@ -172,7 +173,7 @@ fn global_settings() -> BinaryNode {
                     ),
                     integer_property(
                         "OriginalUpAxis",
-                        2,
+                        1,
                     ),
                     integer_property(
                         "OriginalUpAxisSign",
@@ -182,13 +183,13 @@ fn global_settings() -> BinaryNode {
                         "UnitScaleFactor",
                         "double",
                         "Number",
-                        vec![BinaryProperty::F64(1.0)],
+                        vec![BinaryProperty::F64(100.0)],
                     ),
                     property(
                         "OriginalUnitScaleFactor",
                         "double",
                         "Number",
-                        vec![BinaryProperty::F64(1.0)],
+                        vec![BinaryProperty::F64(100.0)],
                     ),
                     color_property(
                         "AmbientColor",
@@ -281,7 +282,7 @@ fn definitions() -> BinaryNode {
             "Geometry", 1_i32,
         ),
         (
-            "Model", 1_i32,
+            "Model", 2_i32,
         ),
         (
             "Material", 1_i32,
@@ -325,12 +326,13 @@ fn definitions() -> BinaryNode {
 }
 
 fn objects(
-    mesh: &StructuralGuideMesh
+    mesh: &StructuralGuideMesh,
 ) -> Result<BinaryNode, StructuralGuideFbxError> {
     Ok(
         BinaryNode::branch(
             "Objects",
             vec![
+                export_root_node()?,
                 geometry_node(mesh)?,
                 model_node()?,
                 material_node()?,
@@ -351,7 +353,12 @@ fn connections() -> Result<BinaryNode, StructuralGuideFbxError> {
                     MODEL_ID,
                 )?,
                 object_connection(
-                    MODEL_ID, 0,
+                    MODEL_ID,
+                    EXPORT_ROOT_ID,
+                )?,
+                object_connection(
+                    EXPORT_ROOT_ID,
+                    0,
                 )?,
                 object_connection(
                     MATERIAL_ID,

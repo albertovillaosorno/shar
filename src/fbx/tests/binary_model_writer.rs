@@ -49,7 +49,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use fbx::adapters::driven::binary_character_writer::{
-    CharacterBinaryFbxError, CharacterBinaryFbxSummary, write_binary_model_fbx,
+    CharacterBinaryFbxError, CharacterBinaryFbxSummary, ModelExportRootPolicy,
+    ModelUvPolicy, write_binary_model_fbx,
+    write_binary_model_fbx_with_policies,
 };
 use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 use fbx::domain::texture::MaterialBinding;
@@ -162,13 +164,42 @@ fn output_path(label: &str) -> PathBuf {
     )
 }
 
-fn contains_token(
-    bytes: &[u8],
-    token: &str,
-) -> bool {
+fn find_token(bytes: &[u8], token: &str) -> Option<usize> {
     bytes
         .windows(token.len())
-        .any(|window| window == token.as_bytes())
+        .position(|window| window == token.as_bytes())
+}
+
+fn contains_token(bytes: &[u8], token: &str) -> bool {
+    find_token(
+        bytes, token,
+    )
+    .is_some()
+}
+
+fn encoded_vector(value: [f64; 3]) -> Vec<u8> {
+    value
+        .into_iter()
+        .flat_map(
+            |component| std::iter::once(b'D').chain(component.to_le_bytes()),
+        )
+        .collect()
+}
+
+fn export_root_bytes(bytes: &[u8]) -> Result<&[u8], String> {
+    let start = find_token(
+        bytes,
+        "SHAR_Export_Root",
+    )
+    .ok_or_else(|| "static FBX export root is missing".to_owned())?;
+    let end = bytes[start..]
+        .windows("Geometry".len())
+        .position(|window| window == b"Geometry")
+        .map(|relative| start + relative)
+        .ok_or_else(
+            || "static FBX geometry after export root is missing".to_owned(),
+        )?;
+    Ok(&bytes[start..end])
 }
 
 #[test]
@@ -254,6 +285,147 @@ fn static_model_is_deterministic_and_has_no_rig_objects() -> Result<(), String>
     }
     remove_if_present(&first)?;
     remove_if_present(&second)?;
+    Ok(())
+}
+
+#[test]
+fn world_reflection_is_shared_by_exterior_and_interior() -> Result<(), String> {
+    let legacy_path = output_path("legacy-root");
+    let exterior_path = output_path("exterior-root");
+    let interior_path = output_path("interior-root");
+    for path in [
+        &legacy_path,
+        &exterior_path,
+        &interior_path,
+    ] {
+        remove_if_present(path)?;
+    }
+    let mesh = model_mesh()?;
+    let material = material()?;
+    write_binary_model_fbx(
+        "legacy-root-model",
+        std::slice::from_ref(&mesh),
+        std::slice::from_ref(&material),
+        &legacy_path,
+    )
+    .map_err(|error| format!("legacy-root write failed: {error:?}"))?;
+    write_binary_model_fbx_with_policies(
+        "exterior-root-model",
+        std::slice::from_ref(&mesh),
+        std::slice::from_ref(&material),
+        ModelUvPolicy::Preserve,
+        ModelExportRootPolicy::ReflectX,
+        &exterior_path,
+    )
+    .map_err(|error| format!("exterior-root write failed: {error:?}"))?;
+    write_binary_model_fbx_with_policies(
+        "interior-root-model",
+        &[mesh],
+        &[material],
+        ModelUvPolicy::Preserve,
+        ModelExportRootPolicy::ReflectX,
+        &interior_path,
+    )
+    .map_err(|error| format!("interior-root write failed: {error:?}"))?;
+
+    let legacy_bytes = fs::read(&legacy_path)
+        .map_err(|error| format!("legacy-root read failed: {error}"))?;
+    let exterior_bytes = fs::read(&exterior_path)
+        .map_err(|error| format!("exterior-root read failed: {error}"))?;
+    let interior_bytes = fs::read(&interior_path)
+        .map_err(|error| format!("interior-root read failed: {error}"))?;
+    let legacy_root = export_root_bytes(&legacy_bytes)?;
+    let exterior_root = export_root_bytes(&exterior_bytes)?;
+    let interior_root = export_root_bytes(&interior_bytes)?;
+
+    let identity_scale = encoded_vector(
+        [
+            1.0, 1.0, 1.0,
+        ],
+    );
+    let zero_rotation = encoded_vector(
+        [
+            0.0, 0.0, 0.0,
+        ],
+    );
+    let legacy_rotation = encoded_vector(
+        [
+            0.0, 180.0, 0.0,
+        ],
+    );
+    let reflected_scale = encoded_vector(
+        [
+            -1.0, 1.0, 1.0,
+        ],
+    );
+
+    if !legacy_root
+        .windows(legacy_rotation.len())
+        .any(|window| window == legacy_rotation)
+        || !legacy_root
+            .windows(identity_scale.len())
+            .any(|window| window == identity_scale)
+    {
+        return Err(
+            "legacy static root no longer preserves character orientation"
+                .to_owned(),
+        );
+    }
+    if !exterior_root
+        .windows(zero_rotation.len())
+        .any(|window| window == zero_rotation)
+        || !exterior_root
+            .windows(reflected_scale.len())
+            .any(|window| window == reflected_scale)
+    {
+        return Err("exterior world root lacks the X reflection".to_owned());
+    }
+    if exterior_root
+        .windows(legacy_rotation.len())
+        .any(|window| window == legacy_rotation)
+    {
+        return Err(
+            "exterior world root inherited the character rotation".to_owned(),
+        );
+    }
+    if !interior_root
+        .windows(zero_rotation.len())
+        .any(|window| window == zero_rotation)
+        || !interior_root
+            .windows(reflected_scale.len())
+            .any(|window| window == reflected_scale)
+    {
+        return Err("interior static root lacks the X reflection".to_owned());
+    }
+    if interior_root
+        .windows(legacy_rotation.len())
+        .any(|window| window == legacy_rotation)
+    {
+        return Err(
+            "interior static root inherited the character rotation".to_owned(),
+        );
+    }
+
+    if exterior_root != interior_root {
+        return Err("exterior and interior world roots diverged".to_owned());
+    }
+
+    assert_eq!(
+        ModelExportRootPolicy::ReflectX
+            .relative_matrix_to(ModelExportRootPolicy::ReflectX),
+        [
+            1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0,
+        ],
+    );
+
+    for path in [
+        &legacy_path,
+        &exterior_path,
+        &interior_path,
+    ] {
+        remove_if_present(path)?;
+    }
     Ok(())
 }
 

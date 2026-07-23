@@ -84,9 +84,20 @@ use crate::domain::transform::matrix::{TrsParts, compose, multiply};
 /// Deterministic parent rotating the completed character around the FBX up
 /// axis.
 const EXPORT_ROOT_ID: u64 = 1_000_001;
-/// Export-root transform shared by the scene hierarchy and every global bind
-/// record.
-const EXPORT_ROOT_TRANSFORM: TrsParts = TrsParts {
+/// Identity export root for world geometry already authored in FBX scene space.
+const IDENTITY_EXPORT_ROOT_TRANSFORM: TrsParts = TrsParts {
+    translation: [
+        0.0_f64, 0.0_f64, 0.0_f64,
+    ],
+    rotation_degrees: [
+        0.0_f64, 0.0_f64, 0.0_f64,
+    ],
+    scale: [
+        1.0_f64, 1.0_f64, 1.0_f64,
+    ],
+};
+/// Character export root that reverses the authored forward direction.
+const CHARACTER_EXPORT_ROOT_TRANSFORM: TrsParts = TrsParts {
     translation: [
         0.0_f64, 0.0_f64, 0.0_f64,
     ],
@@ -95,6 +106,18 @@ const EXPORT_ROOT_TRANSFORM: TrsParts = TrsParts {
     ],
     scale: [
         1.0_f64, 1.0_f64, 1.0_f64,
+    ],
+};
+/// World export root that performs the required source-to-FBX X reflection.
+const WORLD_X_REFLECTION_ROOT_TRANSFORM: TrsParts = TrsParts {
+    translation: [
+        0.0_f64, 0.0_f64, 0.0_f64,
+    ],
+    rotation_degrees: [
+        0.0_f64, 0.0_f64, 0.0_f64,
+    ],
+    scale: [
+        -1.0_f64, 1.0_f64, 1.0_f64,
     ],
 };
 /// PNG signature required by the current decoded texture pipeline.
@@ -151,6 +174,63 @@ pub enum ModelUvPolicy {
     Selective,
     /// Preserve every authored U coordinate exactly.
     Preserve,
+}
+
+/// Export-root orientation policy for static-model FBX publication.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ModelExportRootPolicy {
+    /// Preserve geometry exactly under an identity export root.
+    Identity,
+    /// Preserve the 180-degree Y rotation required by characters and legacy
+    /// non-world static assets.
+    RotateY180,
+    /// Reflect source X for canonical world FBXs.
+    ReflectX,
+}
+
+impl ModelExportRootPolicy {
+    pub(crate) const fn transform(self) -> TrsParts {
+        match self {
+            Self::Identity => IDENTITY_EXPORT_ROOT_TRANSFORM,
+            Self::RotateY180 => CHARACTER_EXPORT_ROOT_TRANSFORM,
+            Self::ReflectX => WORLD_X_REFLECTION_ROOT_TRANSFORM,
+        }
+    }
+
+    /// Return the row-vector matrix that evaluates this published root under a
+    /// target root. All supported roots are self-inverse orthogonal transforms.
+    #[must_use]
+    pub const fn relative_matrix_to(self, target: Self) -> [f32; 16] {
+        const IDENTITY: [f32; 16] = [
+            1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0,
+        ];
+        const ROTATE_Y_180: [f32; 16] = [
+            -1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0,
+        ];
+        const REFLECT_X: [f32; 16] = [
+            -1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0,
+        ];
+        const REFLECT_Z: [f32; 16] = [
+            1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0,
+        ];
+        match (
+            self, target,
+        ) {
+            (Self::Identity, Self::Identity)
+            | (Self::RotateY180, Self::RotateY180)
+            | (Self::ReflectX, Self::ReflectX) => IDENTITY,
+            (Self::Identity, Self::RotateY180)
+            | (Self::RotateY180, Self::Identity) => ROTATE_Y_180,
+            (Self::Identity, Self::ReflectX)
+            | (Self::ReflectX, Self::Identity) => REFLECT_X,
+            (Self::RotateY180, Self::ReflectX)
+            | (Self::ReflectX, Self::RotateY180) => REFLECT_Z,
+        }
+    }
 }
 
 impl ModelUvPolicy {
@@ -493,6 +573,29 @@ pub fn write_binary_model_fbx_with_uv_policy(
     uv_policy: ModelUvPolicy,
     path: &Path,
 ) -> Result<CharacterBinaryFbxSummary, CharacterBinaryFbxError> {
+    write_binary_model_fbx_with_policies(
+        asset_name,
+        meshes,
+        materials,
+        uv_policy,
+        ModelExportRootPolicy::RotateY180,
+        path,
+    )
+}
+
+/// Write one static model with explicit UV and export-root policies.
+///
+/// # Errors
+///
+/// Returns the same failures as [`write_binary_model_fbx`].
+pub fn write_binary_model_fbx_with_policies(
+    asset_name: &str,
+    meshes: &[MeshAsset],
+    materials: &[MaterialBinding],
+    uv_policy: ModelUvPolicy,
+    root_policy: ModelExportRootPolicy,
+    path: &Path,
+) -> Result<CharacterBinaryFbxSummary, CharacterBinaryFbxError> {
     validate_static_model(
         asset_name, meshes,
     )?;
@@ -523,6 +626,7 @@ pub fn write_binary_model_fbx_with_uv_policy(
         &[],
         BinarySceneKind::Static,
         uv_policy,
+        root_policy,
     )?;
     let bytes = encode_binary_document(&document.nodes).map_err(
         |error| CharacterBinaryFbxError::Encoding {
@@ -587,6 +691,7 @@ fn write_binary_character_fbx_with_storage(
         animations,
         BinarySceneKind::Skinned,
         ModelUvPolicy::Selective,
+        ModelExportRootPolicy::RotateY180,
     )?;
     let bytes = encode_binary_document(&document.nodes).map_err(
         |error| CharacterBinaryFbxError::Encoding {
@@ -600,6 +705,11 @@ fn write_binary_character_fbx_with_storage(
 }
 
 /// Build one internal typed character FBX document.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "One typed document boundary keeps texture, animation, scene, \
+              UV,               and export-root policies aligned"
+)]
 fn build_character_document(
     character: &CharacterAsset,
     materials: &[MaterialBinding],
@@ -608,6 +718,7 @@ fn build_character_document(
     animations: &[AnimationClip],
     scene_kind: BinarySceneKind,
     uv_policy: ModelUvPolicy,
+    root_policy: ModelExportRootPolicy,
 ) -> Result<CharacterFbxDocument, CharacterBinaryFbxError> {
     let material_plan = material_slots(
         character, materials,
@@ -666,6 +777,7 @@ fn build_character_document(
         &bone_ordinals,
         &animation_plan,
         scene_kind,
+        root_policy,
     )?;
     let summary = CharacterBinaryFbxSummary {
         geometries: groups.len(),
@@ -716,6 +828,7 @@ fn document_nodes(
     bone_ordinals: &BTreeMap<&str, usize>,
     animation_plan: &BinaryAnimationPlan,
     scene_kind: BinarySceneKind,
+    root_policy: ModelExportRootPolicy,
 ) -> Result<Vec<BinaryNode>, CharacterBinaryFbxError> {
     Ok(
         vec![
@@ -756,6 +869,7 @@ fn document_nodes(
                 bone_ordinals,
                 animation_plan,
                 scene_kind,
+                root_policy,
             )?,
             connections(
                 character,
@@ -1395,8 +1509,14 @@ fn objects(
     bone_ordinals: &BTreeMap<&str, usize>,
     animation_plan: &BinaryAnimationPlan,
     scene_kind: BinarySceneKind,
+    root_policy: ModelExportRootPolicy,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
-    let mut children = vec![export_root_node()?];
+    let root_transform = if scene_kind.is_skinned() {
+        CHARACTER_EXPORT_ROOT_TRANSFORM
+    } else {
+        root_policy.transform()
+    };
+    let mut children = vec![export_root_node(&root_transform)?];
     for group in groups {
         children.push(geometry_node(group)?);
         children.push(
@@ -1581,7 +1701,7 @@ fn uv_indices(group: &PrimitiveGroup) -> Vec<u32> {
 
 /// Build one mesh geometry object with normals, UVs, and material mapping.
 fn geometry_node(
-    flattened: &BinaryGroup<'_>
+    flattened: &BinaryGroup<'_>,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
     let group = flattened.group;
     let positions = group
@@ -1663,7 +1783,7 @@ fn geometry_node(
 
 /// Build one per-polygon-corner normal layer.
 fn normal_layer(
-    group: &PrimitiveGroup
+    group: &PrimitiveGroup,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
     let mut normals = Vec::with_capacity(
         group
@@ -1735,10 +1855,7 @@ fn normal_layer(
 }
 
 /// Convert one `Pure3D` UV under one source-backed horizontal policy.
-fn source_uv_to_fbx(
-    uv: [f32; 2],
-    mirror_u: bool,
-) -> [f64; 2] {
+fn source_uv_to_fbx(uv: [f32; 2], mirror_u: bool) -> [f64; 2] {
     let u = f64::from(uv[0]);
     [
         if mirror_u {
@@ -1816,7 +1933,7 @@ fn uv_layer(
 
 /// Build one primary per-vertex color layer in normalized RGBA order.
 fn color_layer(
-    group: &PrimitiveGroup
+    group: &PrimitiveGroup,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
     let colors = group
         .colors
@@ -1948,12 +2065,14 @@ fn layer_element(element_type: &str) -> BinaryNode {
 }
 
 /// Build the export-space parent that reverses the authored forward direction.
-fn export_root_node() -> Result<BinaryNode, CharacterBinaryFbxError> {
+fn export_root_node(
+    transform: &TrsParts,
+) -> Result<BinaryNode, CharacterBinaryFbxError> {
     model_node(
         EXPORT_ROOT_ID,
         "SHAR_Export_Root",
         "Null",
-        &EXPORT_ROOT_TRANSFORM,
+        transform,
     )
 }
 
@@ -2055,7 +2174,7 @@ fn model_node(
 
 /// Build one material object with shared semantic surface properties.
 fn material_node(
-    slot: &MaterialSlot<'_>
+    slot: &MaterialSlot<'_>,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
     Ok(
         BinaryNode::new(
@@ -2094,7 +2213,7 @@ fn material_node(
 
 /// Build deterministic scalar and color properties for one semantic material.
 fn material_properties(
-    semantics: crate::domain::texture::MaterialSemantics
+    semantics: crate::domain::texture::MaterialSemantics,
 ) -> Vec<BinaryNode> {
     let reflective_color = if semantics.is_reflective() {
         [
@@ -2449,7 +2568,7 @@ fn cluster_node(
             error,
         },
     )?;
-    let export_root_bind = compose(&EXPORT_ROOT_TRANSFORM);
+    let export_root_bind = compose(&CHARACTER_EXPORT_ROOT_TRANSFORM);
     let export_space_global_bind = multiply(
         global_bind,
         &export_root_bind,
@@ -2525,7 +2644,7 @@ fn bind_pose_node(
                 context: "bind pose nodes",
             },
         )?;
-    let export_root_bind = compose(&EXPORT_ROOT_TRANSFORM);
+    let export_root_bind = compose(&CHARACTER_EXPORT_ROOT_TRANSFORM);
     let mut children = vec![
         string_node(
             "Type", "BindPose",
@@ -2850,10 +2969,7 @@ fn property_connection(
 }
 
 /// Build one vector property entry.
-fn vector_property(
-    name: &str,
-    value: [f64; 3],
-) -> BinaryNode {
+fn vector_property(name: &str, value: [f64; 3]) -> BinaryNode {
     BinaryNode::leaf(
         "P",
         vec![
@@ -2869,10 +2985,7 @@ fn vector_property(
 }
 
 /// Build one RGB color property entry.
-fn color_property(
-    name: &str,
-    value: [f64; 3],
-) -> BinaryNode {
+fn color_property(name: &str, value: [f64; 3]) -> BinaryNode {
     BinaryNode::leaf(
         "P",
         vec![
@@ -2888,10 +3001,7 @@ fn color_property(
 }
 
 /// Build one integer property entry.
-fn integer_property(
-    name: &str,
-    value: i32,
-) -> BinaryNode {
+fn integer_property(name: &str, value: i32) -> BinaryNode {
     BinaryNode::leaf(
         "P",
         vec![
@@ -2905,10 +3015,7 @@ fn integer_property(
 }
 
 /// Build one enum property entry.
-fn enum_property(
-    name: &str,
-    value: i32,
-) -> BinaryNode {
+fn enum_property(name: &str, value: i32) -> BinaryNode {
     BinaryNode::leaf(
         "P",
         vec![
@@ -2936,10 +3043,7 @@ fn visibility_property(value: f64) -> BinaryNode {
 }
 
 /// Build one double property entry.
-fn double_property(
-    name: &str,
-    value: f64,
-) -> BinaryNode {
+fn double_property(name: &str, value: f64) -> BinaryNode {
     BinaryNode::leaf(
         "P",
         vec![
@@ -2953,10 +3057,7 @@ fn double_property(
 }
 
 /// Build one time property entry.
-fn time_property(
-    name: &str,
-    value: i64,
-) -> BinaryNode {
+fn time_property(name: &str, value: i64) -> BinaryNode {
     BinaryNode::leaf(
         "P",
         vec![
@@ -2970,10 +3071,7 @@ fn time_property(
 }
 
 /// Build one external-reference string property entry.
-fn xref_string_property(
-    name: &str,
-    value: &str,
-) -> BinaryNode {
+fn xref_string_property(name: &str, value: &str) -> BinaryNode {
     BinaryNode::leaf(
         "P",
         vec![
@@ -2987,10 +3085,7 @@ fn xref_string_property(
 }
 
 /// Build one string property entry.
-fn string_property(
-    name: &str,
-    value: &str,
-) -> BinaryNode {
+fn string_property(name: &str, value: &str) -> BinaryNode {
     BinaryNode::leaf(
         "P",
         vec![
@@ -3004,10 +3099,7 @@ fn string_property(
 }
 
 /// Build one scalar i32 node.
-fn i32_node(
-    name: &str,
-    value: i32,
-) -> BinaryNode {
+fn i32_node(name: &str, value: i32) -> BinaryNode {
     BinaryNode::leaf(
         name,
         vec![BinaryProperty::I32(value)],
@@ -3015,10 +3107,7 @@ fn i32_node(
 }
 
 /// Build one scalar string node.
-fn string_node(
-    name: &str,
-    value: &str,
-) -> BinaryNode {
+fn string_node(name: &str, value: &str) -> BinaryNode {
     BinaryNode::leaf(
         name,
         vec![string(value)],
@@ -3031,19 +3120,12 @@ fn string(value: &str) -> BinaryProperty {
 }
 
 /// Build one binary FBX object name with its class separator.
-fn name_class(
-    name: &str,
-    class: &str,
-) -> BinaryProperty {
+fn name_class(name: &str, class: &str) -> BinaryProperty {
     BinaryProperty::String(format!("{name}\0\x01{class}"))
 }
 
 /// Build one scalar binary FBX name-and-class node.
-fn name_class_node(
-    name: &str,
-    value: &str,
-    class: &str,
-) -> BinaryNode {
+fn name_class_node(name: &str, value: &str, class: &str) -> BinaryNode {
     BinaryNode::leaf(
         name,
         vec![
@@ -3241,10 +3323,7 @@ mod uv_conversion_tests {
     use super::{ModelUvPolicy, source_uv_to_fbx};
 
     /// Assert exact deterministic UV components without float comparison.
-    fn assert_uv_bits(
-        actual: [f64; 2],
-        expected: [f64; 2],
-    ) {
+    fn assert_uv_bits(actual: [f64; 2], expected: [f64; 2]) {
         assert_eq!(
             actual.map(f64::to_bits),
             expected.map(f64::to_bits)

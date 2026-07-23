@@ -128,13 +128,16 @@ Rotation = (0, 0, 0)
 Scale    = (1, 1, 1)
 ```
 
-The northern harbor in the source must appear toward Unreal `+X`. The exporter
-must not leave a negative scale, mirrored parent transform, or runtime yaw
-correction. Sea-level geometry must align with world `Z = 0`.
+The northern harbor in the source must appear toward Unreal `+X`. Every world
+FBX owns the same source-to-FBX X-axis `ReflectX` root, preserves authored UVs,
+and owns the exact 80-meter height in geometry. Importers must not add another
+actor mirror, runtime yaw correction, UV mirror, or height offset.
 
-The Landscape itself is not rotated or mirrored to compensate for source-data
-errors. A corrected guide is imported at identity, and authored terrain is
-sculpted against that canonical reference.
+The structural guide uses that same world root and concatenates mesh channels
+without evaluating or re-expressing source roots. It does not invent another
+orientation or height rule. Import the guide at identity with `Force Front XAxis`
+disabled. The authored Unreal ocean and Landscape convention remains
+independently anchored at world `Z = 0 cm`.
 
 ## Consumer rules
 
