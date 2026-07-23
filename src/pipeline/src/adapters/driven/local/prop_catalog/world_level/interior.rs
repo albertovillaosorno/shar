@@ -59,7 +59,7 @@ pub(super) struct InteriorIdentity {
 /// Resolve one source package into its stable interior identity.
 #[must_use]
 pub(super) fn identity_for_package(
-    package_id: &str
+    package_id: &str,
 ) -> Option<InteriorIdentity> {
     let identity = match package_id {
         "extracted-art-l1i00"
@@ -151,7 +151,7 @@ pub(super) fn is_halloween_package(package_id: &str) -> bool {
 /// Resolve one reviewed source-space movement, including the final height.
 #[must_use]
 pub(super) fn movement_for_package(
-    package_id: &str
+    package_id: &str,
 ) -> Option<(
     &'static str,
     CoordinateMatrix,
@@ -176,7 +176,7 @@ pub(super) fn movement_for_package(
 )]
 #[must_use]
 pub(super) fn reviewed_movement_for_package(
-    package_id: &str
+    package_id: &str,
 ) -> Option<(
     &'static str,
     CoordinateMatrix,
@@ -678,10 +678,10 @@ fn correct_source_x_basis(mut matrix: CoordinateMatrix) -> CoordinateMatrix {
 /// Replace the superseded reviewed reference height with the canonical datum.
 ///
 /// The historical matrices remain unchanged as placement evidence. Publication
-/// subtracts their embedded 43.396-meter reference and bakes exactly 41.046
+/// subtracts their embedded 43.396-meter reference and bakes exactly 80.0
 /// meters into geometry and every decoded coordinate family.
 fn apply_canonical_world_height(
-    mut matrix: CoordinateMatrix
+    mut matrix: CoordinateMatrix,
 ) -> CoordinateMatrix {
     matrix[13] += super::movement::WORLD_HEIGHT_OFFSET_METERS
         - super::movement::LEGACY_REVIEWED_HEIGHT_OFFSET_METERS;
@@ -751,10 +751,7 @@ impl InteriorGeometryOwnership {
     }
 
     /// Return whether one orientation-independent triangle is already owned.
-    fn has_matching_triangle(
-        &self,
-        candidate: &InteriorTriangle,
-    ) -> bool {
+    fn has_matching_triangle(&self, candidate: &InteriorTriangle) -> bool {
         neighboring_buckets(triangle_bucket(candidate)).any(
             |nearby| {
                 self.triangles
@@ -813,10 +810,7 @@ impl InteriorGeometryOwnership {
     }
 
     /// Return whether one reviewed point already belongs to owned geometry.
-    fn contains_owned_point(
-        &self,
-        candidate: [f32; 3],
-    ) -> bool {
+    fn contains_owned_point(&self, candidate: [f32; 3]) -> bool {
         neighboring_buckets(point_bucket(candidate))
             .filter_map(
                 |nearby| {
@@ -873,7 +867,7 @@ pub(super) fn retain_unowned_triangles(
 
 /// Retain final-datum triangles using an exact pre-datum ownership mesh.
 ///
-/// The ownership mesh is cloned before the 41.046-meter Unreal alignment raise
+/// The ownership mesh is cloned before the 80-meter Unreal alignment raise
 /// and transformed with the previously reviewed matrix. This preserves every
 /// established fusion decision while the retained mesh keeps its final raised
 /// coordinates.
@@ -1041,10 +1035,7 @@ fn triangle_surface_samples(triangle: &InteriorTriangle) -> [[f32; 3]; 4] {
 }
 
 /// Return the midpoint between two reviewed world-space points.
-const fn midpoint(
-    left: [f32; 3],
-    right: [f32; 3],
-) -> [f32; 3] {
+const fn midpoint(left: [f32; 3], right: [f32; 3]) -> [f32; 3] {
     let [
         left_x,
         left_y,
@@ -1098,7 +1089,7 @@ fn surface_bucket(point: [f32; 3]) -> InteriorSurfaceBucket {
 
 /// Return every coarse cell touched by one triangle's world-space bounds.
 fn triangle_surfaces(
-    triangle: &InteriorTriangle
+    triangle: &InteriorTriangle,
 ) -> Vec<InteriorSurfaceBucket> {
     let [
         first,
@@ -1332,10 +1323,7 @@ fn point_is_inside_triangle(
 }
 
 /// Subtract one reviewed world-space point from another.
-fn subtract(
-    left: [f32; 3],
-    right: [f32; 3],
-) -> [f32; 3] {
+fn subtract(left: [f32; 3], right: [f32; 3]) -> [f32; 3] {
     let [
         left_x,
         left_y,
@@ -1354,10 +1342,7 @@ fn subtract(
 }
 
 /// Return one three-dimensional cross product.
-fn cross(
-    left: [f32; 3],
-    right: [f32; 3],
-) -> [f32; 3] {
+fn cross(left: [f32; 3], right: [f32; 3]) -> [f32; 3] {
     let [
         left_x,
         left_y,
@@ -1385,10 +1370,7 @@ fn cross(
 }
 
 /// Return one three-dimensional dot product.
-fn dot(
-    left: [f32; 3],
-    right: [f32; 3],
-) -> f32 {
+fn dot(left: [f32; 3], right: [f32; 3]) -> f32 {
     let [
         left_x,
         left_y,
@@ -1492,10 +1474,7 @@ fn triangles_within_tolerance(
 }
 
 /// Compare two points within the measured reviewed-placement tolerance.
-fn points_within_tolerance(
-    left: [f32; 3],
-    right: [f32; 3],
-) -> bool {
+fn points_within_tolerance(left: [f32; 3], right: [f32; 3]) -> bool {
     let delta = subtract(
         left, right,
     );
@@ -1697,7 +1676,7 @@ mod tests {
         let expected = [
             203.703_92_f32,
             -301.955_6_f32,
-            46.219_32_f32,
+            5.173_32_f32 + WORLD_HEIGHT_OFFSET_METERS,
         ];
         if blender_import
             .iter()

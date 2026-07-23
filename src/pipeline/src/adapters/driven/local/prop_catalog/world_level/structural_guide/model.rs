@@ -159,10 +159,7 @@ impl VertexColorBake {
     }
 
     /// Append a stable identity used for atlas variant hashing.
-    pub(super) fn append_identity(
-        &self,
-        output: &mut Vec<u8>,
-    ) {
+    pub(super) fn append_identity(&self, output: &mut Vec<u8>) {
         match self {
             Self::Uniform {
                 rgba8,
@@ -184,19 +181,13 @@ impl VertexColorBake {
     }
 }
 
-/// Exact affine evidence baked from source coordinates into Unreal space.
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub(super) struct GuidePlacement {
-    /// Row-major row-vector matrix including axis, scale, centering, and sea
-    /// level.
-    pub(super) source_to_unreal_matrix_row_major: [f32; 16],
-}
-
 /// Geometry and source-coverage evidence used by the final manifest.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub(super) struct GuideSourceCounts {
     pub(super) input_meshes: usize,
     pub(super) input_groups: usize,
+    /// Source groups that legitimately publish no FBX normal layer.
+    pub(super) groups_without_normals: usize,
     pub(super) input_triangles: usize,
     pub(super) removed_duplicate_triangles: usize,
     /// Zero-area source triangles omitted from the visual guide.

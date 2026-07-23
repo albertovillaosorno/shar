@@ -20,12 +20,13 @@ editor projects or preserving source-engine runtime structures.
 
 The seven main levels form three recurring exterior families: Levels 1, 4, and 7
 share Zone 1; Levels 2 and 5 share Zone 2; Levels 3 and 6 share Zone 3. Reviewed
-horizontal affine movements connect Zones 2 and 3 to Zone 1. Every exterior
-family and associated coordinate record preserves handedness; no source-X
-reflection is baked into the ordinary world. Interior package matrices alone
-retain their explicit source-to-FBX X-basis correction.
+horizontal affine movements connect Zones 2 and 3 to Zone 1. Exterior, region,
+zone, race, door, and interior FBXs all emit the same source-to-FBX X-axis
+`ReflectX` root and preserve authored UVs. Coordinate records continue to
+describe canonical source-space movement; reviewed interior matrices remain
+placement authority rather than a separate FBX-root policy.
 
-A final `41.046` meter source-height translation applies after every exterior
+A final `80.0` meter source-height translation applies after every exterior
 and interior placement without exception. It is the sole canonical Unreal
 world datum and is baked directly into every generated FBX and coordinate
 record. The complete movement boundary covers
@@ -34,7 +35,7 @@ object spawns, mission placement, triggers, cameras, locators, and lights. In
 source coordinates height is Y; generated Blender evidence projects that same
 translation onto Blender Z. This translation is additive and does not normalize
 the world's minimum elevation to zero. Measured Blender bounds increase by
-approximately `41.046` on both Z limits after `f32` storage; any later
+exactly `80.0` on both Z limits after `f32` storage; any later
 ground-to-zero operation is a distinct transformation.
 
 The operator may use an ignored Blender scene to review placement, but that
@@ -51,15 +52,14 @@ Exact identity matches still require the registered source fingerprint.
 Ambiguous or stale matches block publication. Blender ordering and
 serialization drift are not authored changes.
 
-Interiors alone retain the explicit source-to-FBX X-basis correction. Each of
-the 19 source packages has one reviewed full-XYZ source-space movement,
-including height, and is grouped into one of eight stable interior identities.
-The reviewed matrices remain placement authority, but the source's artificial
-8,192-meter Zone 2 and 16,384-meter Zone 3 family displacements are cancelled
-before the interior basis conversion because the connected native world already
-owns family placement. Ordinary recurring copies are then transformed into the
-same reviewed world space and fused into one canonical base FBX per identity.
-Source collision remains excluded.
+Each of the 19 interior source packages has one reviewed full-XYZ source-space
+movement, including height, and is grouped into one of eight stable interior
+identities. The reviewed matrices remain placement authority, but the source's
+artificial 8,192-meter Zone 2 and 16,384-meter Zone 3 family displacements are
+cancelled before the shared world FBX basis conversion because the connected
+native world already owns family placement. Ordinary recurring copies are then
+transformed into the same reviewed world space and fused into one canonical base
+FBX per identity. Source collision remains excluded.
 
 Elementary School (`i00`), Kwik-E-Mart (`i01`), Simpsons House (`i02`), and
 Bart's Room (`i07`) additionally publish one Level 7 Halloween overlay. The
@@ -88,8 +88,8 @@ of the same physical location.
   terrain and component assembly without proprietary editor projects or
   source-engine runtime structures.
 - Three family-level exterior transforms replace artificial map spacing,
-  preserve handedness, and apply the canonical height without altering the
-  interior-only basis correction.
+  preserve handedness, and apply the canonical height before the shared world
+  source-to-FBX X reflection.
 - Interior identity, reviewed placement, tolerant duplicate collapse, additive
   Halloween ownership, exact global height, and collision exclusion remain
   independently testable from exterior world assembly.

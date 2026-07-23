@@ -17,51 +17,44 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Exact-triangle deduplication and final Unreal-space guide mesh assembly.
+//   - Lossless concatenation of evaluated world-FBX geometry already expressed
+//     under the shared world ReflectX root, plus final atlas UV channels.
 // - Must-Not:
-//   - Pack atlas pixels, alter source UV values, or serialize files.
+//   - Move, center, mirror, scale, deduplicate, repair, or otherwise
+//     reinterpret source world-FBX geometry.
 // - Allows:
-//   - Positive-determinant axis conversion, centimeter scaling, XY centering,
-//     sea-level normalization, explicit normals, and loop duplication.
+//   - Deterministic mesh/group ordering and per-loop duplication required by
+//     the one-mesh structural-guide writer.
 // - Summary:
-//   - Builds one triangulated four-UV structural-guide mesh.
+//   - Combines the exact post-world-export mesh set into one atlas-backed mesh.
 //
 // LARGE-FILE:
-// - owner: Structural-guide mesh assembly
-// - reason: Triangle ownership, coordinate conversion, channel projection, and
-//   coverage evidence must remain one auditable transformation.
+// - owner: Structural-guide mesh concatenation
+// - reason: Geometry preservation and atlas-channel projection must remain one
+//   auditable pass.
 // - split: Atlas and manifest publication remain separate modules.
-// - validation: Geometry count, bounds, winding, UV, and Wasp coverage tests.
-// - review: Split when a second guide coordinate policy appears.
+// - validation: Position, winding, UV, bounds, and source-count tests.
+// - review: Split when another combined-FBX profile appears.
 //
 
-//! Canonical structural-guide mesh assembly.
-
-use std::collections::BTreeSet;
+//! Lossless structural-guide mesh concatenation.
 
 use fbx::adapters::driven::binary_structural_guide_writer::StructuralGuideMesh;
 use fbx::domain::mesh::PrimitiveGroup;
 
 use super::super::export::MasterContent;
 use super::atlas::surface_key;
-use super::model::{AtlasBuild, GuidePlacement, GuideSourceCounts};
+use super::model::{AtlasBuild, GuideSourceCounts};
 use crate::domain::PipelineError;
 
-/// Final source-space sea plane after the shared world-height algorithm.
-const SEA_LEVEL_SOURCE_Y_METERS: f32 =
+/// Canonical source-space world-height datum already owned by normal FBXs.
+const WORLD_HEIGHT_METERS: f32 =
     super::super::movement::WORLD_HEIGHT_OFFSET_METERS;
-/// Source world units are meters; Unreal guide coordinates are centimeters.
-const CENTIMETERS_PER_METER: f32 = 100.0;
-/// Landscape half-extent requested by the Unreal structural-guide contract.
-const LANDSCAPE_HALF_EXTENT_CM: f32 = 201_600.0;
+/// World half-extent represented by the 4,032-meter Landscape contract.
+const WORLD_HALF_EXTENT_METERS: f32 = 2_016.0;
 
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
-struct PositionKey([u32; 3]);
-
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
-struct TriangleKey([PositionKey; 3]);
-
-/// Build one fully baked, centered, triangulated guide mesh.
+/// Concatenate the evaluated source-FBX geometry without further spatial
+/// changes.
 pub(super) fn build(
     content: &MasterContent,
     atlas: &AtlasBuild,
@@ -69,7 +62,6 @@ pub(super) fn build(
     (
         StructuralGuideMesh,
         GuideSourceCounts,
-        GuidePlacement,
     ),
     PipelineError,
 > {
@@ -82,9 +74,36 @@ pub(super) fn build(
                 .cmp(&right.name)
         },
     );
+    let groups_without_normals = meshes
+        .iter()
+        .flat_map(
+            |mesh| {
+                mesh.groups
+                    .iter()
+            },
+        )
+        .filter(
+            |group| {
+                group
+                    .normals
+                    .is_empty()
+            },
+        )
+        .count();
+    let include_normals = groups_without_normals == 0;
     let mut counts = GuideSourceCounts {
         input_meshes: meshes.len(),
+        groups_without_normals,
         ..GuideSourceCounts::default()
+    };
+    let mut result = StructuralGuideMesh {
+        positions: Vec::new(),
+        normals: Vec::new(),
+        triangles: Vec::new(),
+        atlas_uvs: Vec::new(),
+        source_uvs: Vec::new(),
+        atlas_offsets: Vec::new(),
+        atlas_scales: Vec::new(),
     };
     for mesh in &meshes {
         let normalized = mesh
@@ -100,25 +119,6 @@ pub(super) fn build(
                 .prop_like_meshes
                 .saturating_add(1);
         }
-    }
-    if counts.wasp_meshes == 0 {
-        return Err(
-            PipelineError::new(
-                "structural-guide source omitted all Wasp Camera geometry",
-            ),
-        );
-    }
-    let mut result = StructuralGuideMesh {
-        positions: Vec::new(),
-        normals: Vec::new(),
-        triangles: Vec::new(),
-        source_uvs: Vec::new(),
-        atlas_offsets: Vec::new(),
-        atlas_scales: Vec::new(),
-        atlas_flags: Vec::new(),
-    };
-    let mut owned = BTreeSet::<TriangleKey>::new();
-    for mesh in &meshes {
         let mut groups = mesh
             .groups
             .iter()
@@ -141,7 +141,7 @@ pub(super) fn build(
             append_group(
                 group,
                 atlas,
-                &mut owned,
+                include_normals,
                 &mut result,
                 &mut counts,
             )?;
@@ -153,16 +153,10 @@ pub(super) fn build(
     {
         return Err(PipelineError::new("structural-guide mesh is empty"));
     }
-    let horizontal_center = center_horizontal(&mut result.positions)?;
-    validate_bounds(&result.positions)?;
-    let placement = GuidePlacement {
-        source_to_unreal_matrix_row_major: source_to_unreal_matrix(
-            horizontal_center,
-        ),
-    };
+    validate_world_fbx_bounds(&result.positions)?;
     Ok(
         (
-            result, counts, placement,
+            result, counts,
         ),
     )
 }
@@ -170,70 +164,41 @@ pub(super) fn build(
 fn append_group(
     group: &PrimitiveGroup,
     atlas: &AtlasBuild,
-    owned: &mut BTreeSet<TriangleKey>,
+    include_normals: bool,
     result: &mut StructuralGuideMesh,
     counts: &mut GuideSourceCounts,
 ) -> Result<(), PipelineError> {
+    let assignment = atlas
+        .assignments
+        .get(&surface_key(group))
+        .copied()
+        .ok_or_else(
+            || {
+                PipelineError::new(
+                    format!(
+                        "structural-guide atlas assignment is missing: {}",
+                        group.shader
+                    ),
+                )
+            },
+        )?;
     for triangle in &group.triangles {
-        let key = surface_key(group);
-        let assignment = atlas
-            .assignments
-            .get(&key)
-            .copied()
-            .ok_or_else(
-                || {
-                    PipelineError::new(
-                        format!(
-                            "structural-guide atlas assignment is missing: {}",
-                            group.shader
-                        ),
-                    )
-                },
-            )?;
-        let source_positions = triangle_values3(
+        let positions = triangle_values3(
             &group.positions,
             *triangle,
             "position",
         )?;
-        let transformed = source_positions.map(to_unreal_centimeters);
-        let fallback_normal = match face_normal(transformed) {
-            Ok(normal) => normal,
-            Err(_) => {
-                counts.removed_degenerate_triangles = counts
-                    .removed_degenerate_triangles
-                    .checked_add(1)
-                    .ok_or_else(
-                        || {
-                            PipelineError::new(
-                                "guide degenerate triangle count overflowed",
-                            )
-                        },
-                    )?;
-                continue;
-            }
+        let normals = if include_normals {
+            Some(
+                triangle_values3(
+                    &group.normals,
+                    *triangle,
+                    "normal",
+                )?,
+            )
+        } else {
+            None
         };
-        let triangle_key = TriangleKey::new(transformed);
-        if !owned.insert(triangle_key) {
-            counts.removed_duplicate_triangles = counts
-                .removed_duplicate_triangles
-                .checked_add(1)
-                .ok_or_else(
-                    || PipelineError::new("guide duplicate count overflowed"),
-                )?;
-            continue;
-        }
-        if assignment.approximated_vertex_color {
-            counts.approximated_vertex_color_triangles = counts
-                .approximated_vertex_color_triangles
-                .checked_add(1)
-                .ok_or_else(
-                    || {
-                        PipelineError::new(
-                            "guide approximated vertex-color count overflowed",
-                        )
-                    },
-                )?;
-        }
         let source_uvs = if group
             .uvs
             .is_empty()
@@ -244,36 +209,14 @@ fn append_group(
                 &group.uvs, *triangle, "UV",
             )?
         };
-        let mut repaired_normal = false;
-        let normals = if group
-            .normals
-            .is_empty()
-        {
-            [fallback_normal; 3]
-        } else {
-            let values = triangle_values3(
-                &group.normals,
-                *triangle,
-                "normal",
-            )?;
-            values.map(
-                |value| match normalize(to_unreal_normal(value)) {
-                    Ok(normal) => normal,
-                    Err(_) => {
-                        repaired_normal = true;
-                        fallback_normal
-                    }
-                },
-            )
-        };
-        if repaired_normal {
-            counts.repaired_normal_triangles = counts
-                .repaired_normal_triangles
+        if assignment.approximated_vertex_color {
+            counts.approximated_vertex_color_triangles = counts
+                .approximated_vertex_color_triangles
                 .checked_add(1)
                 .ok_or_else(
                     || {
                         PipelineError::new(
-                            "guide repaired normal count overflowed",
+                            "guide approximated vertex-color count overflowed",
                         )
                     },
                 )?;
@@ -287,10 +230,20 @@ fn append_group(
         for corner in 0..3 {
             result
                 .positions
-                .push(transformed[corner]);
+                .push(positions[corner]);
+            if let Some(normals) = normals {
+                result
+                    .normals
+                    .push(normals[corner]);
+            }
             result
-                .normals
-                .push(normals[corner]);
+                .atlas_uvs
+                .push(
+                    atlas_uv(
+                        source_uvs[corner],
+                        assignment,
+                    ),
+                );
             result
                 .source_uvs
                 .push(source_uvs[corner]);
@@ -300,14 +253,6 @@ fn append_group(
             result
                 .atlas_scales
                 .push(assignment.scale);
-            result
-                .atlas_flags
-                .push(
-                    [
-                        assignment.repeat,
-                        0.0,
-                    ],
-                );
         }
         result
             .triangles
@@ -330,100 +275,30 @@ fn append_group(
     Ok(())
 }
 
-impl TriangleKey {
-    fn new(positions: [[f32; 3]; 3]) -> Self {
-        let mut vertices = positions.map(PositionKey::new);
-        vertices.sort_unstable();
-        Self(vertices)
-    }
-}
-
-impl PositionKey {
-    fn new(position: [f32; 3]) -> Self {
-        Self(position.map(normalized_bits))
-    }
-}
-
-fn normalized_bits(value: f32) -> u32 {
-    if value == 0.0 {
-        0
+fn atlas_uv(
+    source: [f32; 2],
+    assignment: super::model::AtlasAssignment,
+) -> [f32; 2] {
+    let normalized = if assignment.repeat >= 0.5 {
+        source.map(|component| component.rem_euclid(1.0))
     } else {
-        value.to_bits()
-    }
-}
-
-fn to_unreal_centimeters(position: [f32; 3]) -> [f32; 3] {
+        source.map(
+            |component| {
+                component.clamp(
+                    0.0, 1.0,
+                )
+            },
+        )
+    };
     [
-        -position[2] * CENTIMETERS_PER_METER,
-        -position[0] * CENTIMETERS_PER_METER,
-        (position[1] - SEA_LEVEL_SOURCE_Y_METERS) * CENTIMETERS_PER_METER,
-    ]
-}
-
-fn to_unreal_normal(normal: [f32; 3]) -> [f32; 3] {
-    [
-        -normal[2], -normal[0], normal[1],
-    ]
-}
-
-fn normalize(value: [f32; 3]) -> Result<[f32; 3], PipelineError> {
-    let length_squared = value[0].mul_add(
-        value[0],
-        value[1].mul_add(
-            value[1],
-            value[2] * value[2],
+        normalized[0].mul_add(
+            assignment.scale[0],
+            assignment.offset[0],
         ),
-    );
-    let length = length_squared.sqrt();
-    if !length.is_finite() || length <= f32::EPSILON {
-        return Err(
-            PipelineError::new("structural-guide normal is degenerate"),
-        );
-    }
-    Ok(
-        [
-            value[0] / length,
-            value[1] / length,
-            value[2] / length,
-        ],
-    )
-}
-
-fn face_normal(positions: [[f32; 3]; 3]) -> Result<[f32; 3], PipelineError> {
-    let first = subtract(
-        positions[1],
-        positions[0],
-    );
-    let second = subtract(
-        positions[2],
-        positions[0],
-    );
-    normalize(
-        [
-            first[1].mul_add(
-                second[2],
-                -(first[2] * second[1]),
-            ),
-            first[2].mul_add(
-                second[0],
-                -(first[0] * second[2]),
-            ),
-            first[0].mul_add(
-                second[1],
-                -(first[1] * second[0]),
-            ),
-        ],
-    )
-}
-
-fn subtract(
-    left: [f32; 3],
-    right: [f32; 3],
-) -> [f32; 3] {
-    [
-        left[0] - right[0],
-        left[1] - right[1],
-        left[2] - right[2],
+        normalized[1].mul_add(
+            assignment.scale[1],
+            assignment.offset[1],
+        ),
     ]
 }
 
@@ -519,82 +394,32 @@ fn value2(
         )
 }
 
-fn center_horizontal(
-    positions: &mut [[f32; 3]]
-) -> Result<[f32; 2], PipelineError> {
+fn validate_world_fbx_bounds(
+    positions: &[[f32; 3]],
+) -> Result<(), PipelineError> {
     let (low, high) = bounds(positions)?;
-    let center = [
-        (low[0] + high[0]) * 0.5,
-        (low[1] + high[1]) * 0.5,
-    ];
-    for position in positions {
-        position[0] -= center[0];
-        position[1] -= center[1];
-    }
-    Ok(center)
-}
-
-fn source_to_unreal_matrix(horizontal_center: [f32; 2]) -> [f32; 16] {
-    [
-        0.0,
-        -CENTIMETERS_PER_METER,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        CENTIMETERS_PER_METER,
-        0.0,
-        -CENTIMETERS_PER_METER,
-        0.0,
-        0.0,
-        0.0,
-        -horizontal_center[0],
-        -horizontal_center[1],
-        -SEA_LEVEL_SOURCE_Y_METERS * CENTIMETERS_PER_METER,
-        1.0,
-    ]
-}
-
-fn validate_bounds(positions: &[[f32; 3]]) -> Result<(), PipelineError> {
-    let (low, high) = bounds(positions)?;
-    let center = [
-        (low[0] + high[0]) * 0.5,
-        (low[1] + high[1]) * 0.5,
-    ];
-    if center
-        .iter()
-        .any(|value| value.abs() > 0.01)
+    if low[0] < -WORLD_HALF_EXTENT_METERS
+        || high[0] > WORLD_HALF_EXTENT_METERS
+        || low[2] < -WORLD_HALF_EXTENT_METERS
+        || high[2] > WORLD_HALF_EXTENT_METERS
     {
         return Err(
             PipelineError::new(
                 format!(
-                    "structural-guide horizontal center is not zero: {},{}",
-                    center[0], center[1]
-                ),
-            ),
-        );
-    }
-    if low[0] < -LANDSCAPE_HALF_EXTENT_CM
-        || high[0] > LANDSCAPE_HALF_EXTENT_CM
-        || low[1] < -LANDSCAPE_HALF_EXTENT_CM
-        || high[1] > LANDSCAPE_HALF_EXTENT_CM
-    {
-        return Err(
-            PipelineError::new(
-                format!(
-                    "structural-guide exceeds Landscape bounds: \
+                    "combined world FBX exceeds Landscape bounds: \
                      [{},{}]-[{},{}]",
-                    low[0], low[1], high[0], high[1]
+                    low[0], low[2], high[0], high[2]
                 ),
             ),
         );
     }
-    if !(low[2] <= 0.0 && high[2] >= 0.0) {
+    if !(low[1] <= WORLD_HEIGHT_METERS && high[1] >= WORLD_HEIGHT_METERS) {
         return Err(
             PipelineError::new(
                 format!(
-                    "structural-guide sea plane does not cross Z=0: {}..{}",
-                    low[2], high[2]
+                    "combined world FBX does not retain the 80-meter datum: \
+                     {}..{}",
+                    low[1], high[1]
                 ),
             ),
         );
@@ -603,7 +428,7 @@ fn validate_bounds(positions: &[[f32; 3]]) -> Result<(), PipelineError> {
 }
 
 fn bounds(
-    positions: &[[f32; 3]]
+    positions: &[[f32; 3]],
 ) -> Result<
     (
         [f32; 3],
@@ -624,6 +449,13 @@ fn bounds(
         .skip(1)
     {
         for axis in 0..3 {
+            if !position[axis].is_finite() {
+                return Err(
+                    PipelineError::new(
+                        "combined world FBX position is non-finite",
+                    ),
+                );
+            }
             low[axis] = low[axis].min(position[axis]);
             high[axis] = high[axis].max(position[axis]);
         }
@@ -642,4 +474,74 @@ fn is_prop_like(name: &str) -> bool {
     ]
     .iter()
     .any(|token| name.contains(token))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::super::model::AtlasAssignment;
+    use super::{WORLD_HEIGHT_METERS, atlas_uv, validate_world_fbx_bounds};
+
+    fn assignment(repeat: f32) -> AtlasAssignment {
+        AtlasAssignment {
+            offset: [
+                0.1, 0.2,
+            ],
+            scale: [
+                0.3, 0.4,
+            ],
+            repeat,
+            approximated_vertex_color: false,
+        }
+    }
+
+    #[test]
+    fn imported_uv_zero_bakes_repeating_atlas_mapping() {
+        let mapped = atlas_uv(
+            [
+                -0.25, 1.25,
+            ],
+            assignment(1.0),
+        );
+        assert!((mapped[0] - 0.325).abs() <= f32::EPSILON);
+        assert!((mapped[1] - 0.3).abs() <= f32::EPSILON);
+    }
+
+    #[test]
+    fn imported_uv_zero_clamps_to_its_atlas_tile() {
+        let mapped = atlas_uv(
+            [
+                -0.5, 1.5,
+            ],
+            assignment(0.0),
+        );
+        assert!((mapped[0] - 0.1).abs() <= f32::EPSILON);
+        assert!((mapped[1] - 0.6).abs() <= f32::EPSILON);
+    }
+
+    #[test]
+    fn world_height_is_validated_without_being_modified() -> Result<(), String>
+    {
+        let positions = [
+            [
+                -10.0, 79.0, -20.0,
+            ],
+            [
+                10.0,
+                WORLD_HEIGHT_METERS,
+                20.0,
+            ],
+            [
+                0.0, 81.0, 0.0,
+            ],
+        ];
+        validate_world_fbx_bounds(&positions)
+            .map_err(|error| error.to_string())?;
+        assert_eq!(
+            positions[1],
+            [
+                10.0, 80.0, 20.0,
+            ]
+        );
+        Ok(())
+    }
 }

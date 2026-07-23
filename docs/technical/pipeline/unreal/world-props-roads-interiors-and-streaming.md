@@ -39,10 +39,16 @@ The canonical four-file source publication goes in `Source/`; its imported
 Static Mesh, atlas texture, and unlit material go in `Imported/`. Both
 directories are local editor-only evidence, excluded from Git and cooking. The
 source uses one binary FBX 7.7 mesh, one material slot, one external RGB8 atlas,
-and four per-loop UV channels. Import with `Force Front XAxis` disabled, no
-generated collision, no Nanite, no lightmap UV generation, identity rotation,
-and identity scale. Preserve the canonical origin and centimeter scale, then
-delete the guide after the Landscape shape has been verified.
+and four per-loop UV channels. Imported UV0 is already the final atlas mapping;
+the generated unlit material must sample the atlas through UV0 without custom
+atlas arithmetic. Import with `Force Front XAxis` disabled, no generated
+collision, no Nanite, no lightmap UV generation, identity location, identity
+rotation, and identity scale. The guide and every normal world FBX use the same
+source-to-FBX X-axis `ReflectX` root and the exact 80-meter geometry height. The
+guide clones source mesh channels without evaluating or re-expressing roots. It
+combines every normal-import world FBX, including recurring narrative levels and
+Halloween interior overlays, while excluding isolated review galleries. Delete
+the guide after the Landscape shape has been verified.
 
 The guide intentionally prioritizes stable visual placement over
 shipping-render fidelity. Source alpha is flattened into opaque RGB; lighting,

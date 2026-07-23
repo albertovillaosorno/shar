@@ -304,7 +304,7 @@ fn catalog_value(
                 "levels 1, 4, and 7 share map-01-04-07; levels 2 and 5 share ",
                 "map-02-05; levels 3 and 6 share map-03-06; reviewed family ",
                 "placement preserves exterior handedness and adds an exact ",
-                "41.046 meter global height offset; connected zone bounds may ",
+                "80 meter global height offset; connected zone bounds may ",
                 "overlap at authored seams"
             ),
             "root_import_contract": concat!(
@@ -328,7 +328,7 @@ fn catalog_value(
             ),
             "coordinate_movement": concat!(
                 "named package movements apply reviewed placement and the ",
-                "global 41.046 meter height offset to geometry, collision, ",
+                "global 80 meter height offset to geometry, collision, ",
                 "doors, objects, spawns, missions, triggers, cameras, ",
                 "locators, and lights"
             ),
@@ -342,19 +342,19 @@ fn catalog_value(
                 "id": "map-01-04-07",
                 "levels": [1, 4, 7],
                 "movement": "zone-01-levels-01-04-07-height",
-                "height_policy": "add-41.046-meters"
+                "height_policy": "add-80-meters"
             },
             {
                 "id": "map-02-05",
                 "levels": [2, 5],
                 "movement": "zone-02-levels-02-05-placement-and-height",
-                "height_policy": "add-41.046-meters"
+                "height_policy": "add-80-meters"
             },
             {
                 "id": "map-03-06",
                 "levels": [3, 6],
                 "movement": "zone-03-levels-03-06-placement-and-height",
-                "height_policy": "add-41.046-meters"
+                "height_policy": "add-80-meters"
             }
         ],
         "counts": counts_value(counts),
@@ -484,7 +484,7 @@ fn interior_transform_file_value(
         "interior_role": role,
         "source_package_ids": interior.source_package_ids,
         "coordinates_baked": true,
-        "global_height_meters": 41.046_f64,
+        "global_height_meters": 80.0_f64,
         "additional_translation": [0.0_f64, 0.0_f64, 0.0_f64],
         "additional_rotation_degrees": [0.0_f64, 0.0_f64, 0.0_f64],
         "additional_scale": [1.0_f64, 1.0_f64, 1.0_f64]
@@ -622,10 +622,7 @@ fn semantics_value(counts: WorldSurfaceSemanticCounts) -> Value {
 }
 
 /// Create one deterministic pretty JSON file without replacement.
-fn write_json(
-    path: &Path,
-    value: &Value,
-) -> Result<(), PipelineError> {
+fn write_json(path: &Path, value: &Value) -> Result<(), PipelineError> {
     let bytes = serde_json::to_vec_pretty(value)
         .map_err(|error| PipelineError::new(error.to_string()))?;
     let mut file = fs::OpenOptions::new()

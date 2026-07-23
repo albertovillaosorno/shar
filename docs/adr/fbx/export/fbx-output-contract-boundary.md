@@ -34,18 +34,29 @@ the supported workflow and must be retired rather than used as evidence.
 ### Editor-only structural-guide profile
 
 The structural guide is an opt-in FBX 7.7 profile of the same repository-owned
-binary writer. It emits one identity-transform mesh, one material, one external
-texture reference, and four named per-polygon-vertex UV layers. It must not
-change the ordinary character, vehicle, prop, or separated-world byte path.
+binary writer. It emits one combined mesh under the shared world `ReflectX`
+export root, one material, one external texture reference, and four named
+per-polygon-vertex UV layers. It must not change the ordinary character, vehicle,
+prop, or separated-world byte path.
 
 This profile optimizes Unreal editor inspection rather than shipping fidelity.
-Geometry, reviewed placement, explicit normals, winding, source UV tiling,
-atlas addressing, and artifact hashes remain strict. Alpha is flattened to
-opaque RGB and dynamic shader behavior is omitted. Source vertex colors are
-baked exactly when uniform for a material/wrap identity; otherwise one
-deterministic source-texture-wide average is used and counted in the manifest.
-The approximation is acceptable only because the guide is explicitly excluded
-from runtime, collision, gameplay, and shipping-render authority.
+The guide concatenates every normal-import world FBX mesh after ordinary world
+movement, repair, height, and export policy have been applied. Exterior and
+interior FBXs share the same `ReflectX` root and preserve authored UVs, so the
+guide clones positions, normals, UVs, and triangle winding without evaluating,
+flattening, or re-expressing source roots. The guide must not center, raise,
+filter narrative or Halloween content, or add guide-only geometry. Isolated
+review FBXs remain excluded because they are not part of the normal import set.
+Final atlas coordinates in imported UV0, source-UV audit evidence, and artifact
+hashes remain strict. UV0 must sample the assigned atlas rectangle directly in
+Unreal; it must never expose the entire atlas to every surface. The exact
+80-meter datum belongs to every normal world FBX, and the source-to-FBX X
+reflection belongs to every world FBX. Alpha is flattened to opaque RGB and
+dynamic shader behavior is omitted. Source vertex colors are baked
+exactly when uniform for a material/wrap identity; otherwise one deterministic
+source-texture-wide average is used and counted in the manifest. The
+approximation is acceptable only because the guide is explicitly excluded from
+runtime, collision, gameplay, and shipping-render authority.
 
 ## Consequences
 

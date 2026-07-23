@@ -21,7 +21,8 @@
 //   - Change coordinates, normals, winding, atlas assignments, or material
 //     ownership.
 // - Allows:
-//   - Per-polygon-vertex normal/UV serialization and one all-same material.
+//   - Optional per-polygon-vertex source normals, four UV layers, and one
+//     all-same material.
 // - Summary:
 //   - Encodes the already validated single structural-guide mesh.
 //
@@ -47,7 +48,7 @@ use super::{
 };
 
 pub(super) fn geometry_node(
-    mesh: &StructuralGuideMesh
+    mesh: &StructuralGuideMesh,
 ) -> Result<BinaryNode, StructuralGuideFbxError> {
     let positions = mesh
         .positions
@@ -98,19 +99,24 @@ pub(super) fn geometry_node(
             "GeometryVersion",
             124,
         ),
-        normal_layer(mesh)?,
     ];
+    if !mesh
+        .normals
+        .is_empty()
+    {
+        children.push(normal_layer(mesh)?);
+    }
     for (typed_index, (name, values)) in STRUCTURAL_GUIDE_UV_NAMES
         .into_iter()
         .zip(
             [
+                mesh.atlas_uvs
+                    .as_slice(),
                 mesh.source_uvs
                     .as_slice(),
                 mesh.atlas_offsets
                     .as_slice(),
                 mesh.atlas_scales
-                    .as_slice(),
-                mesh.atlas_flags
                     .as_slice(),
             ],
         )
@@ -126,7 +132,13 @@ pub(super) fn geometry_node(
         );
     }
     children.push(material_layer());
-    children.extend(layer_nodes());
+    children.extend(
+        layer_nodes(
+            !mesh
+                .normals
+                .is_empty(),
+        ),
+    );
     Ok(
         BinaryNode::new(
             "Geometry",
@@ -144,7 +156,7 @@ pub(super) fn geometry_node(
 }
 
 fn normal_layer(
-    mesh: &StructuralGuideMesh
+    mesh: &StructuralGuideMesh,
 ) -> Result<BinaryNode, StructuralGuideFbxError> {
     let normals = corner_values3(
         &mesh.normals,
@@ -267,29 +279,37 @@ fn material_layer() -> BinaryNode {
     )
 }
 
-fn layer_nodes() -> Vec<BinaryNode> {
+fn layer_nodes(include_normals: bool) -> Vec<BinaryNode> {
     let mut primary = vec![
         i32_node(
             "Version", 100,
         ),
-        layer_element(
-            "LayerElementNormal",
-            0,
-        ),
-        layer_element(
-            "LayerElementUV",
-            0,
-        ),
-        layer_element(
-            "LayerElementMaterial",
-            0,
-        ),
     ];
+    if include_normals {
+        primary.push(
+            layer_element(
+                "LayerElementNormal",
+                0,
+            ),
+        );
+    }
+    primary.extend(
+        [
+            layer_element(
+                "LayerElementUV",
+                0,
+            ),
+            layer_element(
+                "LayerElementMaterial",
+                0,
+            ),
+        ],
+    );
     let mut result = vec![
         BinaryNode::new(
             "Layer",
             vec![BinaryProperty::I32(0)],
-            std::mem::take(&mut primary),
+            primary,
         ),
     ];
     for index in 1_i32..4_i32 {

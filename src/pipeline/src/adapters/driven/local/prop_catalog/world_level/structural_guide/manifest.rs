@@ -19,11 +19,12 @@
 // - Owns:
 //   - The exact structural-guide manifest projection.
 // - Must-Not:
-//   - Read files, calculate geometry, or write artifacts.
+//   - Claim guide-owned spatial corrections or inspect generated files.
 // - Allows:
-//   - Real counts, bounds, hashes, coordinate identity, and source coverage.
+//   - World-FBX scene identity, lossless-combination evidence, atlas metadata,
+//     source counts, bounds, and hashes.
 // - Summary:
-//   - Renders deterministic manifest bytes after all other artifacts exist.
+//   - Proves that the guide only combines normal world-FBX geometry.
 //
 // Large file:
 //   - false
@@ -38,8 +39,13 @@ use fbx::adapters::driven::binary_structural_guide_writer::{
 use serde::Serialize;
 
 use super::atlas::{ATLAS_PADDING, ATLAS_SIZE};
-use super::model::{GuidePlacement, GuideSourceCounts};
+use super::model::GuideSourceCounts;
 use crate::domain::PipelineError;
+
+pub(super) const SOURCE_GEOMETRY_POLICY: &str = concat!(
+    "concatenate evaluated normal-world FBX mesh channels under one ",
+    "shared ReflectX root without root re-expression",
+);
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -48,44 +54,62 @@ struct Manifest<'hashes> {
     asset_name: &'static str,
     fbx_version: &'static str,
     source_canonical: bool,
-    reference_artifact: ReferenceArtifact,
-    mirror_correction_applied: bool,
-    final_transform_determinant_positive: bool,
-    winding_corrected: bool,
-    coordinate_system: CoordinateSystem,
-    placement: Placement,
+    purpose: &'static str,
+    source_geometry_policy: &'static str,
+    spatial_changes: SpatialChanges,
+    world_fbx_scene: WorldFbxScene,
+    unreal_import: UnrealImport,
+    world_height: WorldHeight,
     mesh: Mesh,
     uv_channels: UvChannels,
     atlas: Atlas,
-    source_to_unreal_matrix_row_major: [f32; 16],
     source_coverage: SourceCoverage,
     hashes: Hashes<'hashes>,
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct ReferenceArtifact {
-    purpose: &'static str,
-    fidelity_policy: &'static str,
-    known_limitations: [&'static str; 4],
-}
-
-#[derive(Serialize)]
-struct CoordinateSystem {
-    units: &'static str,
-    forward: &'static str,
-    right: &'static str,
-    up: &'static str,
+struct SpatialChanges {
+    centered: bool,
+    mirrored_by_guide: bool,
+    scaled_by_guide: bool,
+    height_adjusted_by_guide: bool,
+    triangle_deduplication: bool,
+    normals_repaired: bool,
+    guide_only_geometry_added: bool,
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct Placement {
-    location_cm: [f32; 3],
-    rotation_degrees: [f32; 3],
+struct WorldFbxScene {
+    units: &'static str,
+    unit_scale_factor: f32,
+    up_axis: &'static str,
+    front_axis: &'static str,
+    coordinate_axis: &'static str,
+    guide_export_root_policy: &'static str,
+    guide_export_root_rotation_degrees: [f32; 3],
+    guide_export_root_scale: [f32; 3],
+    exterior_export_root_policy: &'static str,
+    interior_export_root_policy: &'static str,
+    world_reflection_axis: &'static str,
+    source_roots_flattened_into_guide_mesh: bool,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct UnrealImport {
+    force_front_x_axis: bool,
+    location: [f32; 3],
+    rotation: [f32; 3],
     scale: [f32; 3],
-    sea_level_z_cm: f32,
-    horizontal_center_cm: [f32; 2],
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct WorldHeight {
+    meters: f32,
+    owned_by_normal_world_fbx: bool,
 }
 
 #[derive(Serialize)]
@@ -95,12 +119,13 @@ struct Mesh {
     material_slot_count: u32,
     material_name: &'static str,
     triangulated: bool,
+    normal_layer_included: bool,
     collision_included: bool,
     lod_count: u32,
     vertex_count: usize,
     triangle_count: usize,
-    bounds_min_cm: [f32; 3],
-    bounds_max_cm: [f32; 3],
+    bounds_min_meters: [f32; 3],
+    bounds_max_meters: [f32; 3],
 }
 
 #[derive(Serialize)]
@@ -132,12 +157,9 @@ struct Atlas {
 struct SourceCoverage {
     input_meshes: usize,
     input_groups: usize,
+    groups_without_normals: usize,
     input_triangles: usize,
-    removed_duplicate_triangles: usize,
-    removed_degenerate_triangles: usize,
-    repaired_normal_triangles: usize,
-    wasp_meshes: usize,
-    wasp_placements: usize,
+    wasp_meshes_from_world_fbx: usize,
     prop_like_meshes: usize,
     approximated_vertex_color_triangles: usize,
 }
@@ -153,76 +175,78 @@ struct Hashes<'hashes> {
 pub(super) fn render(
     summary: StructuralGuideFbxSummary,
     counts: GuideSourceCounts,
-    placement: GuidePlacement,
-    wasp_placements: usize,
     fbx_sha256: &str,
     atlas_sha256: &str,
     layout_sha256: &str,
 ) -> Result<Vec<u8>, PipelineError> {
     let manifest = Manifest {
-        schema_version: 1,
+        schema_version: 4,
         asset_name: STRUCTURAL_GUIDE_ASSET_NAME,
         fbx_version: "7.7",
         source_canonical: true,
-        reference_artifact: ReferenceArtifact {
-            purpose: "Editor-only visual placement and Landscape sculpting \
-                      guide",
-            fidelity_policy: "Geometry, placement, UV tiling, and atlas \
-                              identity are strict; dynamic presentation is \
-                              intentionally approximate",
-            known_limitations: [
-                "Source alpha is flattened into opaque RGB and cannot \
-                 reproduce cutout transparency",
-                "Lighting, emissive animation, shader parameters, and \
-                 time-of-day response are not represented",
-                "Varying vertex colors are quantized to RGBA8 and replaced by \
-                 one deterministic source-texture-wide average",
-                "Zero-area triangles are omitted and unusable source normals \
-                 use face normals; the artifact is not shipping content or \
-                 gameplay collision authority",
-            ],
+        purpose: "Editor-only combined view of generated world FBXs",
+        source_geometry_policy: SOURCE_GEOMETRY_POLICY,
+        spatial_changes: SpatialChanges {
+            centered: false,
+            mirrored_by_guide: false,
+            scaled_by_guide: false,
+            height_adjusted_by_guide: false,
+            triangle_deduplication: false,
+            normals_repaired: false,
+            guide_only_geometry_added: false,
         },
-        mirror_correction_applied: true,
-        final_transform_determinant_positive: true,
-        winding_corrected: true,
-        coordinate_system: CoordinateSystem {
-            units: "centimeters",
-            forward: "X",
-            right: "Y",
-            up: "Z",
-        },
-        placement: Placement {
-            location_cm: [
+        world_fbx_scene: WorldFbxScene {
+            units: "meters",
+            unit_scale_factor: 100.0,
+            up_axis: "Y",
+            front_axis: "Z",
+            coordinate_axis: "X",
+            guide_export_root_policy: "ReflectX",
+            guide_export_root_rotation_degrees: [
                 0.0, 0.0, 0.0,
             ],
-            rotation_degrees: [
+            guide_export_root_scale: [
+                -1.0, 1.0, 1.0,
+            ],
+            exterior_export_root_policy: "ReflectX",
+            interior_export_root_policy: "ReflectX",
+            world_reflection_axis: "X",
+            source_roots_flattened_into_guide_mesh: false,
+        },
+        unreal_import: UnrealImport {
+            force_front_x_axis: false,
+            location: [
+                0.0, 0.0, 0.0,
+            ],
+            rotation: [
                 0.0, 0.0, 0.0,
             ],
             scale: [
                 1.0, 1.0, 1.0,
             ],
-            sea_level_z_cm: 0.0,
-            horizontal_center_cm: [
-                0.0, 0.0,
-            ],
+        },
+        world_height: WorldHeight {
+            meters: super::super::movement::WORLD_HEIGHT_OFFSET_METERS,
+            owned_by_normal_world_fbx: true,
         },
         mesh: Mesh {
             object_count: 1,
             material_slot_count: 1,
             material_name: STRUCTURAL_GUIDE_MATERIAL_NAME,
             triangulated: true,
+            normal_layer_included: counts.groups_without_normals == 0,
             collision_included: false,
             lod_count: 1,
             vertex_count: summary.vertices,
             triangle_count: summary.triangles,
-            bounds_min_cm: summary.bounds_min_cm,
-            bounds_max_cm: summary.bounds_max_cm,
+            bounds_min_meters: summary.bounds_min_meters,
+            bounds_max_meters: summary.bounds_max_meters,
         },
         uv_channels: UvChannels {
-            zero: "sourceUV",
-            one: "atlasOffset",
-            two: "atlasScale",
-            three: "atlasFlags",
+            zero: "finalAtlasUV",
+            one: "sourceUV",
+            two: "atlasOffset",
+            three: "atlasScale",
         },
         atlas: Atlas {
             path: STRUCTURAL_GUIDE_TEXTURE_PATH,
@@ -233,17 +257,12 @@ pub(super) fn render(
             alpha: false,
             color_space: "sRGB",
         },
-        source_to_unreal_matrix_row_major: placement
-            .source_to_unreal_matrix_row_major,
         source_coverage: SourceCoverage {
             input_meshes: counts.input_meshes,
             input_groups: counts.input_groups,
+            groups_without_normals: counts.groups_without_normals,
             input_triangles: counts.input_triangles,
-            removed_duplicate_triangles: counts.removed_duplicate_triangles,
-            removed_degenerate_triangles: counts.removed_degenerate_triangles,
-            repaired_normal_triangles: counts.repaired_normal_triangles,
-            wasp_meshes: counts.wasp_meshes,
-            wasp_placements,
+            wasp_meshes_from_world_fbx: counts.wasp_meshes,
             prop_like_meshes: counts.prop_like_meshes,
             approximated_vertex_color_triangles: counts
                 .approximated_vertex_color_triangles,

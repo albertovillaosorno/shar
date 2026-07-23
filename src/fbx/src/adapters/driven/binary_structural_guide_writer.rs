@@ -20,8 +20,8 @@
 // - Must-Not:
 //   - Pack atlas pixels, read source assets, add helpers, or infer placement.
 // - Allows:
-//   - Four fixed UV channels, explicit normals, FBX 7.7 encoding, and atomic
-//     create-new persistence.
+//   - Four fixed UV channels, an optional source-owned normal layer, FBX 7.7
+//     encoding, and atomic create-new persistence.
 // - Summary:
 //   - Writes the canonical Unreal structural-guide interchange mesh.
 //
@@ -61,29 +61,31 @@ pub const STRUCTURAL_GUIDE_TEXTURE_PATH: &str =
     "textures/T_SHAR_StructuralGuide_Atlas.png";
 /// Exact UV channel names in import order.
 pub const STRUCTURAL_GUIDE_UV_NAMES: [&str; 4] = [
-    "UV0_Source",
-    "UV1_AtlasOffset",
-    "UV2_AtlasScale",
-    "UV3_AtlasFlags",
+    "UV0_Atlas",
+    "UV1_Source",
+    "UV2_AtlasOffset",
+    "UV3_AtlasScale",
 ];
 
 /// One fully baked structural-guide mesh.
 #[derive(Clone, Debug, PartialEq)]
 pub struct StructuralGuideMesh {
-    /// Identity-space positions in Unreal centimeters.
+    /// Post-world-FBX positions in source meters.
     pub positions: Vec<[f32; 3]>,
-    /// Explicit normalized normals aligned with positions.
+    /// Source-owned normalized normals aligned with positions. Empty omits
+    /// the FBX normal layer when any combined source group lacks normals.
     pub normals: Vec<[f32; 3]>,
     /// Triangles using 32-bit indices.
     pub triangles: Vec<[u32; 3]>,
-    /// Original source UV values aligned with positions.
+    /// Final atlas UV values aligned with positions and usable as imported
+    /// UV0.
+    pub atlas_uvs: Vec<[f32; 2]>,
+    /// Original source UV values aligned with positions for audit only.
     pub source_uvs: Vec<[f32; 2]>,
-    /// Atlas useful-texel offsets aligned with positions.
+    /// Atlas useful-texel offsets aligned with positions for audit only.
     pub atlas_offsets: Vec<[f32; 2]>,
-    /// Atlas useful-texel scales aligned with positions.
+    /// Atlas useful-texel scales aligned with positions for audit only.
     pub atlas_scales: Vec<[f32; 2]>,
-    /// Atlas repeat/clamp flags aligned with positions.
-    pub atlas_flags: Vec<[f32; 2]>,
 }
 
 /// Verified result of one structural-guide write.
@@ -93,10 +95,10 @@ pub struct StructuralGuideFbxSummary {
     pub vertices: usize,
     /// Triangles written to the single geometry object.
     pub triangles: usize,
-    /// Final minimum bounds in Unreal centimeters.
-    pub bounds_min_cm: [f32; 3],
-    /// Final maximum bounds in Unreal centimeters.
-    pub bounds_max_cm: [f32; 3],
+    /// Minimum bounds in post-world-FBX source meters.
+    pub bounds_min_meters: [f32; 3],
+    /// Maximum bounds in post-world-FBX source meters.
+    pub bounds_max_meters: [f32; 3],
 }
 
 /// Structural-guide validation, encoding, or persistence failure.
@@ -177,7 +179,7 @@ pub fn write_binary_structural_guide_fbx(
 
 /// Validate one complete mesh and calculate exact bounds.
 fn validate_mesh(
-    mesh: &StructuralGuideMesh
+    mesh: &StructuralGuideMesh,
 ) -> Result<StructuralGuideFbxSummary, StructuralGuideFbxError> {
     if mesh
         .positions
@@ -188,30 +190,47 @@ fn validate_mesh(
     {
         return Err(StructuralGuideFbxError::EmptyMesh);
     }
+    if !mesh
+        .normals
+        .is_empty()
+        && mesh
+            .normals
+            .len()
+            != mesh
+                .positions
+                .len()
+    {
+        return Err(
+            StructuralGuideFbxError::ChannelLengthMismatch {
+                channel: "normal",
+                positions: mesh
+                    .positions
+                    .len(),
+                values: mesh
+                    .normals
+                    .len(),
+            },
+        );
+    }
     for (name, values) in [
         (
-            "normal",
-            mesh.normals
-                .len(),
-        ),
-        (
             STRUCTURAL_GUIDE_UV_NAMES[0],
-            mesh.source_uvs
+            mesh.atlas_uvs
                 .len(),
         ),
         (
             STRUCTURAL_GUIDE_UV_NAMES[1],
-            mesh.atlas_offsets
+            mesh.source_uvs
                 .len(),
         ),
         (
             STRUCTURAL_GUIDE_UV_NAMES[2],
-            mesh.atlas_scales
+            mesh.atlas_offsets
                 .len(),
         ),
         (
             STRUCTURAL_GUIDE_UV_NAMES[3],
-            mesh.atlas_flags
+            mesh.atlas_scales
                 .len(),
         ),
     ] {
@@ -241,19 +260,19 @@ fn validate_mesh(
     )?;
     validate_finite2(
         STRUCTURAL_GUIDE_UV_NAMES[0],
-        &mesh.source_uvs,
+        &mesh.atlas_uvs,
     )?;
     validate_finite2(
         STRUCTURAL_GUIDE_UV_NAMES[1],
-        &mesh.atlas_offsets,
+        &mesh.source_uvs,
     )?;
     validate_finite2(
         STRUCTURAL_GUIDE_UV_NAMES[2],
-        &mesh.atlas_scales,
+        &mesh.atlas_offsets,
     )?;
     validate_finite2(
         STRUCTURAL_GUIDE_UV_NAMES[3],
-        &mesh.atlas_flags,
+        &mesh.atlas_scales,
     )?;
     for (vertex, normal) in mesh
         .normals
@@ -330,8 +349,8 @@ fn validate_mesh(
             triangles: mesh
                 .triangles
                 .len(),
-            bounds_min_cm: bounds_min,
-            bounds_max_cm: bounds_max,
+            bounds_min_meters: bounds_min,
+            bounds_max_meters: bounds_max,
         },
     )
 }
@@ -384,10 +403,7 @@ fn validate_finite2(
     Ok(())
 }
 
-fn persist(
-    path: &Path,
-    bytes: &[u8],
-) -> Result<(), StructuralGuideFbxError> {
+fn persist(path: &Path, bytes: &[u8]) -> Result<(), StructuralGuideFbxError> {
     let parent = path
         .parent()
         .ok_or_else(

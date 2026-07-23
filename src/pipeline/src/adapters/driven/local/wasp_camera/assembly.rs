@@ -46,8 +46,6 @@
 //
 
 //! Staged canonical Wasp Camera assembly.
-use std::collections::BTreeSet;
-use std::fs;
 use std::path::{Path, PathBuf};
 
 use fbx::adapters::driven::binary_character_writer::{
@@ -57,15 +55,13 @@ use fbx::adapters::driven::decoded_animation_source::load_animation_clips;
 use fbx::adapters::driven::decoded_rigid_prop_source;
 use fbx::domain::character::CharacterAsset;
 use schoenwald_filesystem::adapters::driving::local::create_dir_all;
-use shar_sha256::digest_hex;
 
 use super::artifact::{
     inventory, resolve_materials, verify_body_scope, verify_summary,
 };
 use super::{
     ANIMATION_MEMBER, ASSET_NAME, BODY_MESH_MEMBERS, COMPOSITE_MEMBER,
-    SKELETON_MEMBER, SOURCE_PACKAGE_ID, SOURCE_PACKAGE_ROOT, WaspGuideSource,
-    WaspGuideTexture,
+    SKELETON_MEMBER, SOURCE_PACKAGE_ID, SOURCE_PACKAGE_ROOT,
 };
 use crate::domain::PipelineError;
 use crate::domain::package::{PhaseThreePackageIndex, PhaseThreePackageRow};
@@ -150,76 +146,6 @@ struct LoadedWaspBody {
     animation_path: PathBuf,
 }
 
-/// Collect one static Wasp body and exact texture payloads for guide placement.
-pub(super) fn build_wasp_guide_source(
-    index_path: &Path,
-    base_root: &Path,
-    texture_dir: &Path,
-) -> Result<WaspGuideSource, PipelineError> {
-    let LoadedWaspBody {
-        asset,
-        package_root,
-        animation_path: _animation_path,
-    } = load_wasp_body(
-        index_path, base_root,
-    )?;
-    create_dir_all(texture_dir).map_err(
-        |error| {
-            PipelineError::new(
-                format!("Wasp guide texture staging failed: {error}"),
-            )
-        },
-    )?;
-    let materials = resolve_materials(
-        &asset,
-        &package_root,
-        texture_dir,
-    )?;
-    let texture_names = materials
-        .iter()
-        .filter_map(
-            |material| {
-                material
-                    .texture_file_name
-                    .as_deref()
-            },
-        )
-        .collect::<BTreeSet<_>>();
-    let mut textures = Vec::with_capacity(texture_names.len());
-    for file_name in texture_names {
-        let path = texture_dir.join(file_name);
-        let bytes = fs::read(&path).map_err(
-            |error| {
-                PipelineError::new(
-                    format!(
-                        "Wasp guide texture read failed: {}:{error}",
-                        path.display()
-                    ),
-                )
-            },
-        )?;
-        textures.push(
-            WaspGuideTexture {
-                file_name: file_name.to_owned(),
-                sha256: digest_hex(&bytes),
-                bytes,
-            },
-        );
-    }
-    let meshes = asset
-        .parts
-        .into_iter()
-        .map(|part| part.mesh)
-        .collect();
-    Ok(
-        WaspGuideSource {
-            meshes,
-            materials,
-            textures,
-        },
-    )
-}
-
 /// Load and verify the one canonical selected Wasp body.
 fn load_wasp_body(
     index_path: &Path,
@@ -282,7 +208,7 @@ fn load_wasp_body(
 
 /// Return the exact canonical level FX package.
 fn canonical_package(
-    index: &PhaseThreePackageIndex
+    index: &PhaseThreePackageIndex,
 ) -> Result<&PhaseThreePackageRow, PipelineError> {
     let package = index
         .find_package(SOURCE_PACKAGE_ID)
@@ -337,7 +263,7 @@ fn member_path(
 
 /// Require one canonical PTRN clip and no inferred state splits.
 fn verify_animation(
-    animations: &[fbx::domain::animation::AnimationClip]
+    animations: &[fbx::domain::animation::AnimationClip],
 ) -> Result<(), PipelineError> {
     if animations.len() != 1
         || animations

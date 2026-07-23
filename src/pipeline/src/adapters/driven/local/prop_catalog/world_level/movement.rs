@@ -26,7 +26,7 @@
 //   - Apply one reviewed affine movement to render, collision, and decoded
 //     coordinates for every world package.
 // - Summary:
-//   - Routes reviewed placement, interior-only basis correction, and height.
+//   - Routes reviewed exterior/interior placement and canonical world height.
 //
 // ADRs:
 // - docs/adr/pipeline/unreal/world-assembly-from-normalized-chunks.md
@@ -78,7 +78,7 @@ const ZONE_SUBJECTS: &[CoordinateSubject] = &[
 /// Superseded reference height retained only to normalize reviewed interiors.
 pub(super) const LEGACY_REVIEWED_HEIGHT_OFFSET_METERS: f32 = 43.396;
 /// Canonical portable height baked into every generated FBX and coordinate.
-pub(super) const WORLD_HEIGHT_OFFSET_METERS: f32 = 41.046;
+pub(super) const WORLD_HEIGHT_OFFSET_METERS: f32 = 80.0;
 
 /// Orientation-preserving Zone 1 placement with the canonical height.
 const ZONE_1_MOVEMENT: CoordinateMovement = CoordinateMovement::new(
@@ -136,7 +136,7 @@ const ZONE_2_MOVEMENT: CoordinateMovement = CoordinateMovement::new(
 /// The reviewed object changed its local origin, so the rigid transform was
 /// solved by matching stable vertex indices against the untouched Level 3
 /// general FBX. The maximum residual was below 0.00016 Blender units. The basis
-/// preserves handedness and adds the exact canonical 41.046-meter world datum.
+/// preserves handedness and adds the exact canonical 80-meter world datum.
 const ZONE_3_MOVEMENT: CoordinateMovement = CoordinateMovement::new(
     ZONE_3_MOVEMENT_ID,
     [
@@ -276,7 +276,7 @@ pub(super) fn apply_package_movement(
 ///
 /// The snapshot exists only for fused-interior duplicate decisions. Final mesh,
 /// collision, and decoded-coordinate evidence still receive the complete
-/// 41.046-meter movement through [`apply_package_movement`].
+/// 80-meter movement through [`apply_package_movement`].
 ///
 /// # Errors
 ///
@@ -366,11 +366,7 @@ fn validate_moved_bounds(
 }
 
 /// Return whether every coordinate component is within one tolerance.
-fn coordinates_close(
-    left: [f32; 3],
-    right: [f32; 3],
-    tolerance: f32,
-) -> bool {
+fn coordinates_close(left: [f32; 3], right: [f32; 3], tolerance: f32) -> bool {
     left.into_iter()
         .zip(right)
         .all(
@@ -412,7 +408,7 @@ fn movement_for_package(
 /// Return the reviewed exterior-family movement for one narrative level.
 #[must_use]
 pub(super) const fn exterior_movement_for_level(
-    level: u8
+    level: u8,
 ) -> Option<CoordinateMovement> {
     match level {
         1 | 4 | 7 => Some(ZONE_1_MOVEMENT),
@@ -539,7 +535,7 @@ mod tests {
         );
         assert_eq!(
             WORLD_HEIGHT_OFFSET_METERS,
-            41.046,
+            80.0,
         );
     }
 
@@ -558,7 +554,9 @@ mod tests {
         if !coordinates_close(
             moved,
             [
-                100.0, 61.046, 300.0,
+                100.0,
+                20.0 + WORLD_HEIGHT_OFFSET_METERS,
+                300.0,
             ],
             0.001,
         ) {
@@ -583,7 +581,7 @@ mod tests {
             moved,
             [
                 -689.247_3,
-                61.046,
+                20.0 + WORLD_HEIGHT_OFFSET_METERS,
                 -460.133_76,
             ],
             0.001,
@@ -609,7 +607,7 @@ mod tests {
             moved,
             [
                 -1_045.360_8,
-                61.046,
+                20.0 + WORLD_HEIGHT_OFFSET_METERS,
                 396.963_32,
             ],
             0.001,

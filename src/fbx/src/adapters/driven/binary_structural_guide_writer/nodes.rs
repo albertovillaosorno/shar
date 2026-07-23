@@ -34,32 +34,28 @@
 
 //! Serializer-local structural-guide FBX node constructors.
 
+use super::super::binary_character_writer::ModelExportRootPolicy;
 use super::super::binary_fbx::{BinaryNode, BinaryProperty};
 use super::{
     STRUCTURAL_GUIDE_ASSET_NAME, STRUCTURAL_GUIDE_MATERIAL_NAME,
     STRUCTURAL_GUIDE_TEXTURE_PATH, StructuralGuideFbxError,
 };
 
+pub(super) const EXPORT_ROOT_ID: u64 = 1_100_000;
 pub(super) const GEOMETRY_ID: u64 = 1_100_001;
 pub(super) const MODEL_ID: u64 = 1_100_002;
 pub(super) const MATERIAL_ID: u64 = 1_100_003;
 pub(super) const TEXTURE_ID: u64 = 1_100_004;
 pub(super) const VIDEO_ID: u64 = 1_100_005;
 
-pub(super) fn i32_node(
-    name: &str,
-    value: i32,
-) -> BinaryNode {
+pub(super) fn i32_node(name: &str, value: i32) -> BinaryNode {
     BinaryNode::leaf(
         name,
         vec![BinaryProperty::I32(value)],
     )
 }
 
-pub(super) fn string_node(
-    name: &str,
-    value: &str,
-) -> BinaryNode {
+pub(super) fn string_node(name: &str, value: &str) -> BinaryNode {
     BinaryNode::leaf(
         name,
         vec![string(value)],
@@ -71,17 +67,14 @@ pub(super) fn string(value: &str) -> BinaryProperty {
 }
 
 pub(super) fn id_property(
-    id: u64
+    id: u64,
 ) -> Result<BinaryProperty, StructuralGuideFbxError> {
     i64::try_from(id)
         .map(BinaryProperty::I64)
         .map_err(|error| StructuralGuideFbxError::Encoding(error.to_string()))
 }
 
-pub(super) fn name_class(
-    name: &str,
-    class: &str,
-) -> BinaryProperty {
+pub(super) fn name_class(name: &str, class: &str) -> BinaryProperty {
     string(&format!("{name}\u{0}\u{1}{class}"))
 }
 
@@ -118,10 +111,7 @@ pub(super) fn property(
     )
 }
 
-pub(super) fn integer_property(
-    name: &str,
-    value: i32,
-) -> BinaryNode {
+pub(super) fn integer_property(name: &str, value: i32) -> BinaryNode {
     property(
         name,
         "int",
@@ -130,10 +120,7 @@ pub(super) fn integer_property(
     )
 }
 
-pub(super) fn double_property(
-    name: &str,
-    value: f64,
-) -> BinaryNode {
+pub(super) fn double_property(name: &str, value: f64) -> BinaryNode {
     property(
         name,
         "double",
@@ -142,10 +129,7 @@ pub(super) fn double_property(
     )
 }
 
-pub(super) fn vector_property(
-    name: &str,
-    value: [f64; 3],
-) -> BinaryNode {
+pub(super) fn vector_property(name: &str, value: [f64; 3]) -> BinaryNode {
     property(
         name,
         name,
@@ -157,10 +141,7 @@ pub(super) fn vector_property(
     )
 }
 
-pub(super) fn color_property(
-    name: &str,
-    value: [f64; 3],
-) -> BinaryNode {
+pub(super) fn color_property(name: &str, value: [f64; 3]) -> BinaryNode {
     property(
         name,
         "Color",
@@ -172,10 +153,7 @@ pub(super) fn color_property(
     )
 }
 
-pub(super) fn xref_string_property(
-    name: &str,
-    value: &str,
-) -> BinaryNode {
+pub(super) fn xref_string_property(name: &str, value: &str) -> BinaryNode {
     property(
         name,
         "KString",
@@ -200,6 +178,64 @@ pub(super) fn layer_element(
                 typed_index,
             ),
         ],
+    )
+}
+
+pub(super) fn export_root_node() -> Result<BinaryNode, StructuralGuideFbxError>
+{
+    let transform = ModelExportRootPolicy::ReflectX.transform();
+    Ok(
+        BinaryNode::new(
+            "Model",
+            vec![
+                id_property(EXPORT_ROOT_ID)?,
+                name_class(
+                    "SHAR_Export_Root",
+                    "Model",
+                ),
+                string("Null"),
+            ],
+            vec![
+                i32_node(
+                    "Version", 232,
+                ),
+                BinaryNode::branch(
+                    "Properties70",
+                    vec![
+                        integer_property(
+                            "DefaultAttributeIndex",
+                            0,
+                        ),
+                        vector_property(
+                            "Lcl Translation",
+                            transform.translation,
+                        ),
+                        vector_property(
+                            "Lcl Rotation",
+                            transform.rotation_degrees,
+                        ),
+                        vector_property(
+                            "Lcl Scaling",
+                            transform.scale,
+                        ),
+                        property(
+                            "Visibility",
+                            "Visibility",
+                            "A",
+                            vec![BinaryProperty::F64(1.0)],
+                        ),
+                    ],
+                ),
+                BinaryNode::leaf(
+                    "Shading",
+                    vec![BinaryProperty::Bool(true)],
+                ),
+                string_node(
+                    "Culling",
+                    "CullingOff",
+                ),
+            ],
+        ),
     )
 }
 

@@ -19,10 +19,11 @@
 // - Owns:
 //   - Canonical structural-guide atlas, mesh, manifest, and atomic publication.
 // - Must-Not:
-//   - Change normal world publication, invoke Blender, or publish partial
-//     files.
+//   - Change, reposition, repair, or augment normal world-FBX geometry; invoke
+//     Blender; or publish partial files.
 // - Allows:
-//   - A disposable canonical-world collection and one four-file guide output.
+//   - A disposable normal-world FBX transaction and one four-file combined
+//     guide output.
 // - Summary:
 //   - Orchestrates the Unreal Editor-only structural-guide export.
 //
@@ -35,7 +36,6 @@
 mod atlas;
 mod mesh;
 mod model;
-mod wasp;
 
 use std::fs::{self, OpenOptions};
 use std::io::Write as _;
@@ -43,7 +43,8 @@ use std::path::{Path, PathBuf};
 
 use fbx::adapters::driven::binary_structural_guide_writer::{
     STRUCTURAL_GUIDE_ASSET_NAME, STRUCTURAL_GUIDE_MATERIAL_NAME,
-    STRUCTURAL_GUIDE_TEXTURE_PATH, write_binary_structural_guide_fbx,
+    STRUCTURAL_GUIDE_TEXTURE_PATH, STRUCTURAL_GUIDE_UV_NAMES,
+    write_binary_structural_guide_fbx,
 };
 use shar_sha256::digest_hex;
 
@@ -58,7 +59,6 @@ const FBX_FILE: &str = "SM_SHAR_StructuralGuide_Canonical.fbx";
 const MANIFEST_FILE: &str = "SM_SHAR_StructuralGuide_Canonical.manifest.json";
 const ATLAS_FILE: &str = "textures/T_SHAR_StructuralGuide_Atlas.png";
 const LAYOUT_FILE: &str = "textures/T_SHAR_StructuralGuide_Atlas.layout.json";
-
 /// Export one canonical, opaque, one-section Unreal structural guide.
 ///
 /// # Errors
@@ -121,30 +121,15 @@ fn build(
     staging: &Path,
 ) -> Result<StageReport, PipelineError> {
     let temporary_world = staging.join(".canonical-world");
-    let mut content = collect_structural_guide_source(
+    let content = collect_structural_guide_source(
         index_path,
         game_root,
         coordinate_root,
         &temporary_world,
     )?;
-    let wasp_texture_staging = staging.join(".wasp-textures");
-    let wasp_placements = wasp::append(
-        index_path,
-        game_root,
-        &wasp_texture_staging,
-        &mut content,
-    )?;
-    fs::remove_dir_all(&wasp_texture_staging).map_err(
-        |error| {
-            PipelineError::new(
-                format!(
-                    "structural-guide Wasp texture cleanup failed: {error}"
-                ),
-            )
-        },
-    )?;
+    // The guide consumes only geometry already owned by generated world FBXs.
     let atlas = atlas::build(&content)?;
-    let (guide_mesh, counts, placement) = mesh::build(
+    let (guide_mesh, counts) = mesh::build(
         &content, &atlas,
     )?;
     let texture_dir = staging.join("textures");
@@ -189,8 +174,6 @@ fn build(
     let manifest_bytes = manifest::render(
         summary,
         counts,
-        placement,
-        wasp_placements,
         &fbx_sha256,
         &atlas_sha256,
         &layout_sha256,
@@ -215,25 +198,22 @@ fn build(
             bytes,
             note: format!(
                 concat!(
-                    "published one mesh, one material, one RGB atlas, four ",
-                    "UV channels, {} vertices, {} triangles, {} Wasp meshes, ",
-                    "{} prop-like meshes, and {} documented vertex-color ",
-                    "approximations"
+                    "combined post-world-FBX geometry without spatial \
+                     changes: ",
+                    "one mesh, one material, one RGB atlas, four UV channels, ",
+                    "{} vertices, {} triangles, {} source meshes, and {} ",
+                    "documented vertex-color approximations"
                 ),
                 summary.vertices,
                 summary.triangles,
-                counts.wasp_meshes,
-                counts.prop_like_meshes,
+                counts.input_meshes,
                 counts.approximated_vertex_color_triangles,
             ),
         },
     )
 }
 
-fn write_new(
-    path: &Path,
-    bytes: &[u8],
-) -> Result<(), PipelineError> {
+fn write_new(path: &Path, bytes: &[u8]) -> Result<(), PipelineError> {
     let mut file = OpenOptions::new()
         .write(true)
         .create_new(true)
@@ -329,10 +309,11 @@ fn validate_fbx(bytes: &[u8]) -> Result<(), PipelineError> {
         STRUCTURAL_GUIDE_ASSET_NAME,
         STRUCTURAL_GUIDE_MATERIAL_NAME,
         STRUCTURAL_GUIDE_TEXTURE_PATH,
-        "UV0_Source",
-        "UV1_AtlasOffset",
-        "UV2_AtlasScale",
-        "UV3_AtlasFlags",
+        "SHAR_Export_Root",
+        STRUCTURAL_GUIDE_UV_NAMES[0],
+        STRUCTURAL_GUIDE_UV_NAMES[1],
+        STRUCTURAL_GUIDE_UV_NAMES[2],
+        STRUCTURAL_GUIDE_UV_NAMES[3],
     ] {
         if !contains_bytes(
             bytes,
@@ -346,9 +327,6 @@ fn validate_fbx(bytes: &[u8]) -> Result<(), PipelineError> {
         }
     }
     if contains_bytes(
-        bytes,
-        b"SHAR_Export_Root",
-    ) || contains_bytes(
         bytes,
         b"AnimationStack",
     ) || contains_bytes(
@@ -492,22 +470,114 @@ fn validate_layout(value: &serde_json::Value) -> Result<(), PipelineError> {
 }
 
 fn validate_manifest(value: &serde_json::Value) -> Result<(), PipelineError> {
-    if value
-        .get("assetName")
-        .and_then(serde_json::Value::as_str)
-        != Some(STRUCTURAL_GUIDE_ASSET_NAME)
+    let groups_without_normals = value
+        .pointer("/sourceCoverage/groupsWithoutNormals")
+        .and_then(serde_json::Value::as_u64);
+    let normal_layer_included = value
+        .pointer("/mesh/normalLayerIncluded")
+        .and_then(serde_json::Value::as_bool);
+    let normal_contract_changed = match (
+        groups_without_normals,
+        normal_layer_included,
+    ) {
+        (Some(groups), Some(included)) => included != (groups == 0),
+        _ => true,
+    };
+    let contract_changed = normal_contract_changed
+        || value
+            .get("schemaVersion")
+            .and_then(serde_json::Value::as_u64)
+            != Some(4)
+        || value
+            .get("assetName")
+            .and_then(serde_json::Value::as_str)
+            != Some(STRUCTURAL_GUIDE_ASSET_NAME)
         || value
             .get("fbxVersion")
             .and_then(serde_json::Value::as_str)
             != Some("7.7")
         || value
-            .pointer("/referenceArtifact/knownLimitations")
-            .and_then(serde_json::Value::as_array)
-            .is_none_or(Vec::is_empty)
+            .get("sourceGeometryPolicy")
+            .and_then(serde_json::Value::as_str)
+            != Some(manifest::SOURCE_GEOMETRY_POLICY)
+        || [
+            "/spatialChanges/centered",
+            "/spatialChanges/mirroredByGuide",
+            "/spatialChanges/scaledByGuide",
+            "/spatialChanges/heightAdjustedByGuide",
+            "/spatialChanges/triangleDeduplication",
+            "/spatialChanges/normalsRepaired",
+            "/spatialChanges/guideOnlyGeometryAdded",
+        ]
+        .iter()
+        .any(
+            |pointer| {
+                value
+                    .pointer(pointer)
+                    .and_then(serde_json::Value::as_bool)
+                    != Some(false)
+            },
+        )
         || value
-            .pointer("/sourceCoverage/approximatedVertexColorTriangles")
-            .and_then(serde_json::Value::as_u64)
-            .is_none()
+            .pointer("/worldFbxScene/units")
+            .and_then(serde_json::Value::as_str)
+            != Some("meters")
+        || value
+            .pointer("/worldFbxScene/unitScaleFactor")
+            .and_then(serde_json::Value::as_f64)
+            != Some(100.0)
+        || value
+            .pointer("/worldFbxScene/upAxis")
+            .and_then(serde_json::Value::as_str)
+            != Some("Y")
+        || value
+            .pointer("/worldFbxScene/frontAxis")
+            .and_then(serde_json::Value::as_str)
+            != Some("Z")
+        || value
+            .pointer("/worldFbxScene/coordinateAxis")
+            .and_then(serde_json::Value::as_str)
+            != Some("X")
+        || value
+            .pointer("/worldFbxScene/guideExportRootPolicy")
+            .and_then(serde_json::Value::as_str)
+            != Some("ReflectX")
+        || value
+            .pointer("/worldFbxScene/guideExportRootRotationDegrees/1")
+            .and_then(serde_json::Value::as_f64)
+            != Some(0.0)
+        || value
+            .pointer("/worldFbxScene/guideExportRootScale/0")
+            .and_then(serde_json::Value::as_f64)
+            != Some(-1.0)
+        || value
+            .pointer("/worldFbxScene/exteriorExportRootPolicy")
+            .and_then(serde_json::Value::as_str)
+            != Some("ReflectX")
+        || value
+            .pointer("/worldFbxScene/interiorExportRootPolicy")
+            .and_then(serde_json::Value::as_str)
+            != Some("ReflectX")
+        || value
+            .pointer("/worldFbxScene/worldReflectionAxis")
+            .and_then(serde_json::Value::as_str)
+            != Some("X")
+        || value
+            .pointer("/worldFbxScene/sourceRootsFlattenedIntoGuideMesh")
+            .and_then(serde_json::Value::as_bool)
+            != Some(false)
+        || value
+            .pointer("/unrealImport/forceFrontXAxis")
+            .and_then(serde_json::Value::as_bool)
+            != Some(false)
+        || value
+            .pointer("/worldHeight/meters")
+            .and_then(serde_json::Value::as_f64)
+            != Some(80.0)
+        || value
+            .pointer("/worldHeight/ownedByNormalWorldFbx")
+            .and_then(serde_json::Value::as_bool)
+            != Some(true)
         || value
             .pointer("/mesh/objectCount")
             .and_then(serde_json::Value::as_u64)
@@ -529,14 +599,22 @@ fn validate_manifest(value: &serde_json::Value) -> Result<(), PipelineError> {
             .and_then(serde_json::Value::as_bool)
             != Some(false)
         || value
-            .pointer("/sourceCoverage/waspMeshes")
-            .and_then(serde_json::Value::as_u64)
-            == Some(0)
+            .pointer("/uvChannels/0")
+            .and_then(serde_json::Value::as_str)
+            != Some("finalAtlasUV")
         || value
-            .pointer("/sourceCoverage/waspPlacements")
-            .and_then(serde_json::Value::as_u64)
-            != Some(140)
-    {
+            .pointer("/uvChannels/1")
+            .and_then(serde_json::Value::as_str)
+            != Some("sourceUV")
+        || value
+            .pointer("/uvChannels/2")
+            .and_then(serde_json::Value::as_str)
+            != Some("atlasOffset")
+        || value
+            .pointer("/uvChannels/3")
+            .and_then(serde_json::Value::as_str)
+            != Some("atlasScale");
+    if contract_changed {
         return Err(
             PipelineError::new("structural-guide manifest contract changed"),
         );
@@ -574,7 +652,7 @@ fn validate_manifest(value: &serde_json::Value) -> Result<(), PipelineError> {
 }
 
 fn publication_inventory(
-    staging: &Path
+    staging: &Path,
 ) -> Result<
     (
         usize,
@@ -631,12 +709,89 @@ fn publication_inventory(
     )
 }
 
-fn contains_bytes(
-    haystack: &[u8],
-    needle: &[u8],
-) -> bool {
+fn contains_bytes(haystack: &[u8], needle: &[u8]) -> bool {
     !needle.is_empty()
         && haystack
             .windows(needle.len())
             .any(|window| window == needle)
+}
+
+#[cfg(test)]
+mod tests {
+    use fbx::adapters::driven::binary_structural_guide_writer as fbx_guide;
+
+    use super::model::GuideSourceCounts;
+    use super::{manifest, validate_manifest};
+
+    #[test]
+    fn rendered_manifest_satisfies_publication_validator() -> Result<(), String>
+    {
+        let bytes = manifest::render(
+            fbx_guide::StructuralGuideFbxSummary {
+                vertices: 3,
+                triangles: 1,
+                bounds_min_meters: [
+                    -1.0, 79.0, -2.0,
+                ],
+                bounds_max_meters: [
+                    1.0, 81.0, 2.0,
+                ],
+            },
+            GuideSourceCounts {
+                input_meshes: 2,
+                input_groups: 2,
+                groups_without_normals: 0,
+                input_triangles: 1,
+                removed_duplicate_triangles: 0,
+                removed_degenerate_triangles: 0,
+                repaired_normal_triangles: 0,
+                wasp_meshes: 0,
+                prop_like_meshes: 0,
+                approximated_vertex_color_triangles: 0,
+            },
+            &"a".repeat(64),
+            &"b".repeat(64),
+            &"c".repeat(64),
+        )
+        .map_err(|error| error.to_string())?;
+        let value: serde_json::Value = serde_json::from_slice(&bytes)
+            .map_err(|error| error.to_string())?;
+        assert_eq!(
+            value
+                .pointer("/worldFbxScene/guideExportRootPolicy")
+                .and_then(serde_json::Value::as_str),
+            Some("ReflectX"),
+        );
+        assert_eq!(
+            value
+                .pointer("/worldFbxScene/guideExportRootScale/0")
+                .and_then(serde_json::Value::as_f64),
+            Some(-1.0),
+        );
+        assert_eq!(
+            value
+                .pointer("/worldFbxScene/exteriorExportRootPolicy")
+                .and_then(serde_json::Value::as_str),
+            Some("ReflectX"),
+        );
+        assert_eq!(
+            value
+                .pointer("/worldFbxScene/interiorExportRootPolicy")
+                .and_then(serde_json::Value::as_str),
+            Some("ReflectX"),
+        );
+        assert_eq!(
+            value
+                .pointer("/worldFbxScene/worldReflectionAxis")
+                .and_then(serde_json::Value::as_str),
+            Some("X"),
+        );
+        assert_eq!(
+            value
+                .pointer("/worldFbxScene/sourceRootsFlattenedIntoGuideMesh")
+                .and_then(serde_json::Value::as_bool),
+            Some(false),
+        );
+        validate_manifest(&value).map_err(|error| error.to_string())
+    }
 }
