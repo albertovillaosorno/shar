@@ -2,6 +2,82 @@
 
 <!-- markdownlint-disable MD013 -->
 
+## Project status: Archived
+
+**This repository is archived and is no longer under active development.** It is
+preserved for reference, study, scraping and forking. No further commits/phases will be delivered
+by the original author, and the project is marked as archived on GitHub.
+
+**Why it stopped.** The intellectually hard groundwork is done: a from-scratch,
+pure-Rust decoder and extractor for the original game's proprietary package and
+model formats, a deterministic evidence-driven migration pipeline, a complete
+native-tooling control surface, and an extensive decision and specification
+record. What remains — chiefly the faithful reconstruction and correction of
+decades-old source geometry — is a long tail of low-signal work. For me,
+continuing it is now noise rather than clarity.
+
+Roughly half of the intended scope reached a working state. The remaining source
+models are the layered work of many original contributors, and reproducing every
+last correction faithfully is time-consuming. Stopping here is a deliberate
+priorities decision, not a matter of difficulty:
+
+- A straightforward port is feasible but would inherit the original's structural
+  limitations — the same underlying problems in a newer engine.
+- A faithful remake would require time, and even with
+  that time it would not be a chosen investment: the project produces
+  no financial return.
+- I cannot accept donations or financial contributions for this project
+  for legal reasons, and is therefore directing effort toward independent work
+  that is lawful to monetize and of greater personal interest.
+
+This was a one-month learning project built for enjoyment and to prove the
+approach, and it is published as an artifact.
+
+**Corrected phase status (authoritative).** The per-phase "Complete" labels later
+in this document predate this decision; where they conflict with the table below
+— notably Phase 4 — this table governs.
+
+| Phase | Scope | Actual status |
+| :--- | :--- | :--- |
+| 1 | Decode source formats and build the game manifest | Complete |
+| 2 | Generate the minor-unit manifest | Complete |
+| 3 | Classify minor units into deterministic packages | Complete |
+| 4 | Convert model packages to binary FBX | **Not completed** — usable output exists but carries unresolved geometry, UV, mirroring, height, and material-state defects |
+| 5 | Establish native Unreal MCP terminal control | Complete |
+| 6 | Convert normalized data into native Unreal assets | In progress (partial) — contracts and a character-first C++ foundation only |
+| 7 | Implement the complete native runtime | Not started |
+| 8 | Verify graphics presets | Not started |
+| 9 | Local mods and AI-agent skills | Not started |
+| 10 | Package native platform builds | Not started |
+| 11 | Optimize, verify, document, and close | Not started |
+
+**How to continue (for a fork).** The most valuable next step is not more manual
+geometry editing; it is removing the architecture's central source of
+regressions. Manual corrections are currently scattered across the `pipeline`,
+`p3d`, and `fbx` crates (the per-FBX repair registry, the structural-guide
+output, `world_level` corrections, and handedness/mirror/height/emissive fixes),
+so each fix can silently break another. A fork should:
+
+1. Preserve the manual world movement and rotation coordinates as durable data.
+2. Extract every manual patch out of `pipeline`/`p3d`/`fbx` into a single
+   isolated, documented defect boundary — one entry per known defect of the
+   24-year-old source data — leaving the three crates patch-free.
+3. Add regression tests as a correctness contract (UV orientation, handedness,
+   height, texture and material identity) so one fix can no longer regress another.
+4. Only then choose between a straight port and a faithful remake, from a clean base.
+
+**Other notes**: I'll add are: for the textures, I planned to create agnostic textures using a Python/Rust pipeline to normalize the colors.
+
+The game code is missing, although there's already quite a bit.
+
+Since I can't distribute copyrighted content (and no one would for legal trademark reasons), manually editing artifacts should create an algorithm for the encrypted models of the original game.
+
+Editing hundreds of FBX files by hand is a tedious task, but it's the only way to make a truly worthwhile remake. If any expert modeler wanted to extract the FBX files and create perfect, expected models, perfectly ready to generate the algorithms, I could consider finishing it, but I don't recommend anyone waste their time on it.
+
+And there's also a viunary exporter to fbx 7.7, in case anyone needs to export fbx without Blender or Maya.
+
+---
+
 SHAR is an AI-first deterministic migration pipeline and Unreal Engine 5
 reimplementation workspace. Its bounded goal is to rebuild a lawful local copy
 of the original game as a clean, native, playable, and moddable project.
@@ -116,7 +192,7 @@ The primary delivery sequence is fixed by decision record. Current status is:
 | 1 | Decode required source evidence | Complete |
 | 2 | Generate the minor-unit manifest | Complete |
 | 3 | Classify deterministic packages | Complete |
-| 4 | Generate semantically prepared first-principles binary FBX | Complete |
+| 4 | Generate semantically prepared first-principles binary FBX | Not completed (archived) |
 | 5 | Establish native Unreal MCP terminal control | Complete |
 | 6 | Create native Unreal assets | Planned |
 | 7 | Implement the complete native runtime | Planned |
@@ -448,7 +524,7 @@ crash residue is recoverable and is never repository or output authority.
 | 1 | Decode source formats and create the game manifest | Complete |
 | 2 | Generate the minor-unit manifest | Complete |
 | 3 | Classify minor units into deterministic packages | Complete |
-| 4 | Convert model packages to binary FBX 7.7 | Complete |
+| 4 | Convert model packages to binary FBX 7.7 | Not completed (archived) |
 | 5 | Establish native Unreal MCP terminal control | Complete |
 | 6 | Convert normalized data into native Unreal assets | Planned |
 | 7 | Implement the complete Unreal runtime | Planned |
@@ -465,7 +541,10 @@ or when stricter validation invalidates previously accepted evidence.
 
 ### Phase 4 — Generate semantically prepared first-principles binary FBX
 
-**Status:** Complete.
+**Status:** Not completed (archived). Usable FBX output exists, but unresolved
+geometry, UV, mirroring, height, and material-state defects were never closed.
+The "Complete" evidence below is retained as a historical record of what the
+phase reached before the project was archived.
 
 **Executive result:** Every model-bearing Phase 3 package now has either a
 validated binary FBX 7.7 artifact or an explicit non-FBX route. The final ignored
