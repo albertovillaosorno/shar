@@ -1,5 +1,7 @@
 # SHAR
 
+> Project started: June 2026.
+
 <!-- markdownlint-disable MD013 -->
 
 ## Project status: Archived
