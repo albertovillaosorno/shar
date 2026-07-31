@@ -17,7 +17,7 @@ media.
 
 ## Covered Material
 
-RIFF WAVE files emitted by `src/rsd/` and the pipeline, including the `RIFF` and
+RIFF WAVE files emitted by `rsd/` and the pipeline, including the `RIFF` and
 `WAVE` identifiers, `fmt` and `data` chunks, channel count, sample rate, byte
 rate, block alignment, sample width, PCM frames, padding, and file-size limits.
 
@@ -107,8 +107,8 @@ matrix, and decide whether multichannel output requires
 - Microsoft, *WAVEFORMATEXTENSIBLE structure*.
   <!-- markdownlint-disable-next-line MD013 -->
   <https://learn.microsoft.com/en-us/windows/win32/api/mmreg/ns-mmreg-waveformatextensible>
-- SHAR repository evidence: `src/rsd/src/domain/wav.rs` and
-  `src/rsd/tests/wav_validation.rs`.
+- SHAR repository evidence: `rsd/src/domain/wav.rs` and
+  `rsd/tests/wav_validation.rs`.
 
 ## Source References
 
@@ -119,4 +119,4 @@ matrix, and decide whether multichannel output requires
 - Library of Congress (n.d.) *WAVE Audio File Format with LPCM Audio*. Available
   at: <https://www.loc.gov/preservation/digital/formats/fdd/fdd000001.shtml>
   (Accessed: 12 July 2026).
-- SHAR repository (2026) `src/rsd/`, WAVE validation tests, and media pipeline.
+- SHAR repository (2026) `rsd/`, WAVE validation tests, and media pipeline.

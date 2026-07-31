@@ -1,20 +1,20 @@
 [workspace]
 resolver = "3"
 members = [
-  "src/cli",
-  "src/filesystem",
-  "src/pipeline",
-  "src/game-manifest",
-  "src/json-text",
-  "src/sha256",
-  "src/fbx",
-  "src/lmlm",
-  "src/p3d",
-  "src/rcf",
-  "src/rsd",
-  "src/rmv",
-  "src/rtf",
-  "src/unreal",
+  "cli",
+  "filesystem",
+  "pipeline",
+  "game-manifest",
+  "json-text",
+  "sha256",
+  "fbx",
+  "lmlm",
+  "p3d",
+  "rcf",
+  "rsd",
+  "rmv",
+  "rtf",
+  "uasset",
 ]
 
 [workspace.package]

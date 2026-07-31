@@ -19,7 +19,7 @@ documents, names, or marks.
 
 Rich Text Format control words, groups, destinations, character sets, Unicode
 escapes, font tables, metadata, paragraph and line controls, and other
-constructs interpreted by `src/rtf/`.
+constructs interpreted by `rtf/`.
 
 ## Repository Use And Scope
 
@@ -76,7 +76,7 @@ Microsoft application extension is documented or supported.
 ### SHAR profile
 
 The repository contains an independently authored RTF parser and regression
-suite under `src/rtf/`. The parser converts user-supplied RTF documents into
+suite under `rtf/`. The parser converts user-supplied RTF documents into
 normalized output while preserving an explicit unsupported-behavior boundary.
 The public specification does not determine which control words occur in the
 operator's source corpus.
@@ -108,4 +108,4 @@ input behavior.
   <https://web.archive.org/web/20190708132914/http://www.kleinlercher.at/tools/Windows_Protocols/Word2007RTFSpec9.pdf>
   (Accessed: 13 July 2026). The former Microsoft archive endpoint was
   unavailable during this review.
-- SHAR repository (2026) `src/rtf/` and RTF regression tests.
+- SHAR repository (2026) `rtf/` and RTF regression tests.

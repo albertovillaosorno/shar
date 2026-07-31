@@ -25,7 +25,7 @@ skinning, animation, and metadata.
 
 ## Repository Use And Scope
 
-The `src/fbx/` crate independently serializes canonical binary FBX 7.7 without
+The `fbx/` crate independently serializes canonical binary FBX 7.7 without
 using the Autodesk FBX SDK. Optional Blender and Maya scripts are experimental
 inspection aids, not production validators. The repository rejects ASCII FBX as
 canonical output.
@@ -114,7 +114,7 @@ compatibility.
 ### Verified sources
 
 - Autodesk, *FBX SDK documentation*. <https://help.autodesk.com/>
-- SHAR repository evidence: `src/fbx/src/adapters/driven/binary_fbx.rs` and the
+- SHAR repository evidence: `fbx/src/adapters/driven/binary_fbx.rs` and the
   binary writer tests.
 
 ## Source References
@@ -123,4 +123,4 @@ compatibility.
   <https://www.autodesk.com/products/fbx/overview> (Accessed: 12 July 2026).
 - Autodesk (n.d.) *FBX SDK documentation*. Available at:
   <https://help.autodesk.com/view/FBX/2020/ENU/> (Accessed: 12 July 2026).
-- SHAR repository (2026) `src/fbx/` and FBX architecture records.
+- SHAR repository (2026) `fbx/` and FBX architecture records.

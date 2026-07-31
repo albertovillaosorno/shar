@@ -97,5 +97,5 @@ selected binary.
 - curl project (n.d.) *Official GitHub repository*. Available at:
   <https://github.com/curl/curl> (Accessed: 14 July 2026).
 - SHAR repository and operator environment (2026),
-  `src/pipeline/src/adapters/driven/local/one/media_dependencies.rs` and
+  `pipeline/src/adapters/driven/local/one/media_dependencies.rs` and
   observed curl 8.19.0 Windows x64 version and component output.

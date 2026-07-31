@@ -70,7 +70,7 @@ the SHAR project Saved root or another explicitly allowed content root.
 ```json
 {
   "file_path": (
-    "C:/workspace/shar/src/uproject/Saved/"
+    "C:/workspace/shar/uproject/Saved/"
     "SHAR_MCP_FileProbe_1.txt"
   ),
   "content": "Hello, Springfield!

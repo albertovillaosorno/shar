@@ -97,7 +97,7 @@ unknown-field, duplicate-field, and misplaced-field behavior.
   <https://doc.rust-lang.org/cargo/reference/manifest.html>
 - Python Packaging Authority, *pyproject.toml specification*.
   <https://packaging.python.org/en/latest/specifications/pyproject-toml/>
-- SHAR repository manifests and `src/mcp/pyproject.toml`.
+- SHAR repository manifests and `mcp/pyproject.toml`.
 
 ## Source References
 

@@ -26,7 +26,7 @@ metadata, and archive extraction behavior.
 
 ## Repository Use And Scope
 
-The src/rcf crate independently validates archive structure, paths, ranges,
+The rcf crate independently validates archive structure, paths, ranges,
 collisions, and output publication. It extracts user-supplied local archives
 without distributing the historical cementing tool or original payloads.
 
@@ -79,4 +79,4 @@ require separate fact-specific analysis in docs/legal.
   record](radical-entertainment-toolchain-and-formats.md).
 - Historical Radical source notices reviewed locally; source material not
   distributed.
-- SHAR repository (2026) src/rcf and archive-boundary tests.
+- SHAR repository (2026) rcf and archive-boundary tests.

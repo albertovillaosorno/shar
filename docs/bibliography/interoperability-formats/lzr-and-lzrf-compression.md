@@ -17,7 +17,7 @@ documentation, compressed content, or decompressed assets.
 
 ## Covered Material
 
-The `LZR` and `LZRF` stream identities recognized by `src/p3d/`, including
+The `LZR` and `LZRF` stream identities recognized by `p3d/`, including
 literal commands, match commands, length extensions, offsets, output-size
 validation, stream termination, and P3DZ wrapper evidence.
 
@@ -73,7 +73,7 @@ require separate fact-specific review.
 
 ## Source References
 
-- SHAR repository (2026) `src/p3d/src/domain/extract.rs` and compression tests.
+- SHAR repository (2026) `p3d/src/domain/extract.rs` and compression tests.
 - Historical local Radical material reviewed for interoperability; source code
   and private routes not distributed.
 - [Pure3D P3D](pure3d-p3d.md).

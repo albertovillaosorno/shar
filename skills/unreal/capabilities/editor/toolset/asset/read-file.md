@@ -69,7 +69,7 @@ Content or Saved roots, or an enabled plugin Content root.
 ```json
 {
   "file_path": (
-    "C:/workspace/shar/src/uproject/Saved/"
+    "C:/workspace/shar/uproject/Saved/"
     "SHAR_MCP_FileProbe_1.txt"
   )
 }

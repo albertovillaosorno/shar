@@ -789,7 +789,7 @@ repository-owned FBX pipeline. It is not assembled in Blender and is not runtime
 collision, gameplay, or shipping-render authority. Its fixed publication root is:
 
 ```text
-src/uproject/Content/SHAR/EditorOnly/StructuralGuide/Source/
+uproject/Content/SHAR/EditorOnly/StructuralGuide/Source/
 ```
 
 The publication contains exactly four files: one binary FBX 7.7 mesh, one
@@ -869,7 +869,7 @@ is discarded.
 Each accepted comparison becomes one source-dependent Rust module below:
 
 ```text
-src/pipeline/src/adapters/driven/local/prop_catalog/world_level/
+pipeline/src/adapters/driven/local/prop_catalog/world_level/
   algorithms/dataset/<normalized-relative-fbx>.rs
 ```
 
@@ -1038,7 +1038,7 @@ Completed work:
 
 - [x] Enable the native Unreal MCP and required toolset plugins in the local
   project configuration without committing proprietary plugin source.
-- [x] Implement a repository-owned terminal MCP client outside `src/unreal`.
+- [x] Implement a repository-owned terminal MCP client outside `uasset`.
 - [x] Support initialization, capability and protocol-version negotiation,
   Streamable HTTP, structured errors, progress, pagination, cancellation, and
   bounded timeouts.
@@ -1104,7 +1104,7 @@ Characters are the first vertical slice because their normalized models are read
 and they exercise identity, materials, rigs, shared animation libraries, physics,
 loading, selection, validation, and mod replacement.
 
-`src/unreal` is the pipeline-owned planning library for this phase. It validates
+`uasset` is the pipeline-owned planning library for this phase. It validates
 normalized JSON, PCM WAV, MOV or HAP cinematic evidence, and binary FBX 7.7
 artifacts and produces stable native target identities, dependencies, import
 plans, and provenance. It never opens an MCP connection or controls an Unreal
@@ -1120,7 +1120,7 @@ change Phase 4 FBX generation.
 Planned work:
 
 - [ ] Generate a committed, public-safe Unreal import manifest from opaque
-  package identifiers through the `src/unreal` conversion boundary.
+  package identifiers through the `uasset` conversion boundary.
 - [ ] Apply conversion plans through tested native MCP commands from Phase 5.
 - [ ] Import FBX files as Static Meshes, Skeletal Meshes, Skeletons, Physics
   Assets, Animation Sequences, materials, and textures.
@@ -1587,7 +1587,7 @@ formatter, compiler, linter, or test commands for final evidence.
 bash validate.sh
 
 # Validate one path and every child below it.
-bash validate.sh src/fbx/
+bash validate.sh fbx/
 
 # Force deterministic diagnostic ordering.
 bash validate.sh --deterministic
@@ -1596,7 +1596,7 @@ bash validate.sh --deterministic
 bash validate.sh --no-cache
 
 # Replace successful cache records for one scope.
-bash validate.sh --refresh-cache src/pipeline/
+bash validate.sh --refresh-cache pipeline/
 ```
 
 Successful gate records are content-addressed and stored under ignored local
