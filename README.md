@@ -1556,7 +1556,9 @@ Example obfuscated manifest row:
 ```
 
 The row means that an obfuscated folder path requires at least two `.mfk` files.
-It does not publish the original directory or file names.
+It does not publish the original directory or file names. A row with `"min":0`
+records optional edition- or language-specific content and does not fail
+validation when that content is absent.
 
 The completeness commands are:
 

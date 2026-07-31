@@ -186,22 +186,6 @@ fn validate_record(
             ),
         );
     }
-    let optional_zero = record
-        .dir
-        .is_empty()
-        && matches!(
-            record
-                .extension
-                .as_str(),
-            "lmlm" | "png"
-        );
-    if record.min_count == 0 && !optional_zero {
-        return Err(
-            format!(
-                "zero minimum for required coordinate at line {line_number}"
-            ),
-        );
-    }
     let key = (
         record
             .dir

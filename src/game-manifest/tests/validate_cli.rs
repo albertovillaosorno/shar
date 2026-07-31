@@ -186,11 +186,15 @@ fn validator_rejects_unsorted_coordinates() {
 }
 
 #[test]
-fn validator_rejects_zero_required_minimums() {
-    let row =
+fn validator_accepts_zero_minimum_as_optional() {
+    let language_mod =
+        "{\"dir\":\"\",\"ext\":\"lmlm\",\"min\":0,\"kind\":\"language_mod\"}";
+    let generated_image = "{\"dir\":\"\",\"ext\":\"png\",\"min\":0,\"kind\":\"\
+                           generated_artifact\"}";
+    let optional =
         "{\"dir\":\"aa\",\"ext\":\"p3d\",\"min\":0,\"kind\":\"p3d_container\"}";
     let manifest = format!(
-        "{}\n{row}\n",
+        "{}\n{language_mod}\n{generated_image}\n{optional}\n",
         kind_taxonomy_jsonl()
     );
     let result = validate_manifest(&manifest);
@@ -199,9 +203,11 @@ fn validator_rejects_zero_required_minimums() {
         return;
     };
     assert!(
-        !output
+        output
             .status
-            .success()
+            .success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
     );
 }
 

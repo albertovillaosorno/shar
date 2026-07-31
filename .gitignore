@@ -126,6 +126,9 @@ x86/
 [Aa][Rr][Mm]64/
 bld/
 [Bb]in/
+# Source entrypoints for the game-manifest crate are Rust code, not build output.
+!src/game-manifest/src/bin/
+!src/game-manifest/src/bin/*.rs
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
