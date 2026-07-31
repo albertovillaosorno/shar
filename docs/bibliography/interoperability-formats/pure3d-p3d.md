@@ -26,7 +26,7 @@ scene, and related asset records needed by SHAR.
 
 ## Repository Use And Scope
 
-The src/p3d crate owns bounded binary parsing. The src/fbx and pipeline surfaces
+The p3d crate owns bounded binary parsing. The fbx and pipeline surfaces
 consume normalized results and produce independently authored JSON, PNG, and FBX
 artifacts. The repository does not distribute original P3D files.
 
@@ -80,4 +80,4 @@ require separate fact-specific analysis in docs/legal.
   record](radical-entertainment-toolchain-and-formats.md).
 - Historical Radical source notices reviewed locally; source material not
   distributed.
-- SHAR repository (2026) src/p3d, src/fbx, and P3D architecture records.
+- SHAR repository (2026) p3d, fbx, and P3D architecture records.

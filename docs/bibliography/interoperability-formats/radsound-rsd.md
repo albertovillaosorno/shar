@@ -24,7 +24,7 @@ other variants that SHAR can identify or reject.
 
 ## Repository Use And Scope
 
-The src/rsd crate validates supported RSD metadata and emits deterministic PCM
+The rsd crate validates supported RSD metadata and emits deterministic PCM
 WAVE output. Unsupported codecs and malformed frame shapes fail closed. The
 repository does not publish source RSD audio.
 
@@ -77,5 +77,5 @@ require separate fact-specific analysis in docs/legal.
   record](radical-entertainment-toolchain-and-formats.md).
 - Historical Radical source notices reviewed locally; source material not
   distributed.
-- SHAR repository (2026) src/rsd, WAVE serialization tests, and pipeline audio
+- SHAR repository (2026) rsd, WAVE serialization tests, and pipeline audio
   adapters.

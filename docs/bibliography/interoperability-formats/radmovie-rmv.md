@@ -24,7 +24,7 @@ evidence, and conversion inputs needed to produce local HAP and WAVE packages.
 
 ## Repository Use And Scope
 
-The src/rmv crate and pipeline inspect user-supplied RMV files, preserve hash
+The rmv crate and pipeline inspect user-supplied RMV files, preserve hash
 and stream evidence, and invoke external media tooling for supported conversion.
 The repository does not distribute original cinematics.
 
@@ -77,4 +77,4 @@ require separate fact-specific analysis in docs/legal.
   record](radical-entertainment-toolchain-and-formats.md).
 - Historical Radical source notices reviewed locally; source material not
   distributed.
-- SHAR repository (2026) src/rmv and pipeline movie-conversion adapters.
+- SHAR repository (2026) rmv and pipeline movie-conversion adapters.

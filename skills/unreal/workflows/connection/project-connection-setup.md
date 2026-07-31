@@ -28,11 +28,11 @@ running but unhealthy server through
 
 Use these repository-owned sources in this order:
 
-1. `src/uproject/shar.uproject` for project and plugin posture.
-1. `src/uproject/Config/DefaultEditorPerProjectUserSettings.ini` for tracked
+1. `uproject/shar.uproject` for project and plugin posture.
+1. `uproject/Config/DefaultEditorPerProjectUserSettings.ini` for tracked
    server defaults.
-1. `src/mcp/README.md` for translator architecture and operator commands.
-1. `src/mcp/tests/test_project_configuration.py` for enforced integration
+1. `mcp/README.md` for translator architecture and operator commands.
+1. `mcp/tests/test_project_configuration.py` for enforced integration
    invariants.
 1. live `shar-unreal-mcp doctor` output for the running session.
 
@@ -44,7 +44,7 @@ source, remembered console command, or workstation-specific path.
 The project entry point is:
 
 ```text
-src/uproject/shar.uproject
+uproject/shar.uproject
 ```
 
 Before changing configuration:
@@ -98,7 +98,7 @@ search, or add secret material to tracked editor settings.
 
 ## Translator boundary
 
-`src/mcp` is a terminal translator, not a replacement MCP server. Its normal
+`mcp` is a terminal translator, not a replacement MCP server. Its normal
 operator surface is:
 
 ```text

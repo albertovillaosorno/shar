@@ -11,7 +11,7 @@
 *.jpg binary
 
 # Canonical authored World Partition map publication
-src/uproject/Content/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld.umap filter=lfs diff=lfs merge=lfs -text
-src/uproject/Content/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld_HLOD0_Instancing.uasset filter=lfs diff=lfs merge=lfs -text
-src/uproject/Content/__ExternalActors__/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld/** filter=lfs diff=lfs merge=lfs -text
-src/uproject/Content/__ExternalObjects__/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld/** filter=lfs diff=lfs merge=lfs -text
+uproject/Content/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld.umap filter=lfs diff=lfs merge=lfs -text
+uproject/Content/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld_HLOD0_Instancing.uasset filter=lfs diff=lfs merge=lfs -text
+uproject/Content/__ExternalActors__/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld/** filter=lfs diff=lfs merge=lfs -text
+uproject/Content/__ExternalObjects__/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld/** filter=lfs diff=lfs merge=lfs -text

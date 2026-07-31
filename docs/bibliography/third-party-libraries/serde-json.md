@@ -26,7 +26,7 @@ or factual data processed by those crates.
 
 ## Provenance And Version History
 
-The `src/fbx`, `src/p3d`, and `src/pipeline` manifests request major version 1.
+The `fbx`, `p3d`, and `pipeline` manifests request major version 1.
 `Cargo.lock` resolves `serde_json` to exactly 1.0.150 (published 2026-05-21).
 Its resolved transitive graph is `itoa` 1.0.18, `memchr` 2.8.3, `serde`
 1.0.228, `serde_core` 1.0.228, and `zmij` 1.0.21. The exact versions and
@@ -73,5 +73,5 @@ license files, and dependency notices for each release, including the
 - crates.io (2026) *memchr and zmij registry metadata*. Available at:
   <https://crates.io/api/v1/crates/memchr> and
   <https://crates.io/api/v1/crates/zmij> (Accessed: 13 July 2026).
-- SHAR repository (2026) `src/fbx/Cargo.toml`, `src/p3d/Cargo.toml`,
-  `src/pipeline/Cargo.toml`, and `Cargo.lock`.
+- SHAR repository (2026) `fbx/Cargo.toml`, `p3d/Cargo.toml`,
+  `pipeline/Cargo.toml`, and `Cargo.lock`.
