@@ -49,7 +49,7 @@ examples, or documentation.
 
 ## Covered Material
 
-Unreal Engine 5.8, as selected by `uproject/shar.uproject`, together with
+Unreal Engine 5.8, as selected by `src/unreal/project/composition/uproject/shar.uproject`, together with
 Epic-provided engine modules and project-generation tooling required by the SHAR
 Unreal target. Organization identity and general Epic source routing are
 recorded separately in [Epic Games](../organizations/epic-games.md).
@@ -411,6 +411,6 @@ royalty or seat analysis.
   is linked and authorized as Epic documents. Available at:
   <https://github.com/EpicGames/UnrealEngine> (Accessed: 14 July 2026).
 - SHAR repository and selected engine installation (2026),
-  `uproject/shar.uproject`, `README.md`, and Unreal Engine `Build.version`
+  `src/unreal/project/composition/uproject/shar.uproject`, `README.md`, and Unreal Engine `Build.version`
   identifying version 5.8.0, changelist 55116800, promoted-build status, and
   branch `++UE5+Release-5.8`.

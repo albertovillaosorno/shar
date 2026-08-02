@@ -128,8 +128,8 @@ signature recognition, structural validation, decoding, and encoding.
 - Epic Games, *Bink Video for Unreal Engine*.
   <!-- markdownlint-disable-next-line MD013 -->
   <https://dev.epicgames.com/documentation/unreal-engine/bink-video-for-unreal-engine>
-- SHAR repository evidence: `rmv/src/domain/format.rs`,
-  `rmv/src/domain/target.rs`, and `rmv/src/application/package_plan.rs`.
+- SHAR repository evidence: `src/formats/rmv/domain/format.rs`,
+  `src/formats/rmv/domain/target.rs`, and `src/formats/rmv/application/package_plan.rs`.
 
 ## Source References
 

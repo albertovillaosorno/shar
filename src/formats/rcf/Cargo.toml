@@ -1,0 +1,50 @@
+[package]
+name = "rcf"
+version.workspace = true
+edition = "2024"
+license = "MIT"
+description = "From-scratch RCF archive extractor for the pipeline."
+publish = false
+
+[dependencies]
+# schoenwald-cli centralizes process arguments, ordered streams, newline handling, and exit-code mapping for the RCF driving adapter.
+schoenwald-cli = { path = "../../foundation/command-line" }
+# schoenwald-filesystem centralizes complete contained writes after RCF-specific path validation; streaming range reads remain local.
+schoenwald-filesystem = { path = "../../foundation/filesystem" }
+
+[lib]
+name = "rcf"
+path = "lib.rs"
+
+[[bin]]
+name = "rcf"
+path = "composition/main.rs"
+# Canonical external integration tests.
+
+[[test]]
+name = "archive_parser"
+path = "../../../tests/formats/rcf/archive_parser.rs"
+
+[[test]]
+name = "declared_header_offset"
+path = "../../../tests/formats/rcf/declared_header_offset.rs"
+
+[[test]]
+name = "extraction_preflight"
+path = "../../../tests/formats/rcf/extraction_preflight.rs"
+
+[[test]]
+name = "extractor_reader"
+path = "../../../tests/formats/rcf/extractor_reader.rs"
+
+[[test]]
+name = "filesystem_reader"
+path = "../../../tests/formats/rcf/filesystem_reader.rs"
+
+[[test]]
+name = "filesystem_sink"
+path = "../../../tests/formats/rcf/filesystem_sink.rs"
+
+[[test]]
+name = "source_text_integrity"
+path = "../../../tests/formats/rcf/source_text_integrity.rs"

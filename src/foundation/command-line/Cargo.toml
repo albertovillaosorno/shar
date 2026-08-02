@@ -1,0 +1,78 @@
+[package]
+name = "schoenwald-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Hexagonal process CLI mechanisms shared by Schoenwald crates."
+publish = false
+[lib]
+path = "lib.rs"
+# Canonical external integration tests.
+
+[[test]]
+name = "argument_error_borrowed_index"
+path = "../../../tests/foundation/command-line/argument_error_borrowed_index.rs"
+
+[[test]]
+name = "argument_error_position"
+path = "../../../tests/foundation/command-line/argument_error_position.rs"
+
+[[test]]
+name = "failed_stream_empty_chunk"
+path = "../../../tests/foundation/command-line/failed_stream_empty_chunk.rs"
+
+[[test]]
+name = "line_termination"
+path = "../../../tests/foundation/command-line/line_termination.rs"
+
+[[test]]
+name = "mutable_argument_source"
+path = "../../../tests/foundation/command-line/mutable_argument_source.rs"
+
+[[test]]
+name = "mutable_output_sink"
+path = "../../../tests/foundation/command-line/mutable_output_sink.rs"
+
+[[test]]
+name = "output_error_argument_origin"
+path = "../../../tests/foundation/command-line/output_error_argument_origin.rs"
+
+[[test]]
+name = "output_error_context"
+path = "../../../tests/foundation/command-line/output_error_context.rs"
+
+[[test]]
+name = "output_error_cyclic_source"
+path = "../../../tests/foundation/command-line/output_error_cyclic_source.rs"
+
+[[test]]
+name = "output_error_delivery_display"
+path = "../../../tests/foundation/command-line/output_error_delivery_display.rs"
+
+[[test]]
+name = "output_error_kind_display"
+path = "../../../tests/foundation/command-line/output_error_kind_display.rs"
+
+[[test]]
+name = "output_error_status_display"
+path = "../../../tests/foundation/command-line/output_error_status_display.rs"
+
+[[test]]
+name = "public_facade"
+path = "../../../tests/foundation/command-line/public_facade.rs"
+
+[[test]]
+name = "run_invocation_interrupted_write"
+path = "../../../tests/foundation/command-line/run_invocation_interrupted_write.rs"
+
+[[test]]
+name = "run_invocation_trait_objects"
+path = "../../../tests/foundation/command-line/run_invocation_trait_objects.rs"
+
+[[test]]
+name = "run_invocation_write_failure"
+path = "../../../tests/foundation/command-line/run_invocation_write_failure.rs"
+
+[[test]]
+name = "run_process_trait_object"
+path = "../../../tests/foundation/command-line/run_process_trait_object.rs"

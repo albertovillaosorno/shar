@@ -73,5 +73,5 @@ license files, and dependency notices for each release, including the
 - crates.io (2026) *memchr and zmij registry metadata*. Available at:
   <https://crates.io/api/v1/crates/memchr> and
   <https://crates.io/api/v1/crates/zmij> (Accessed: 13 July 2026).
-- SHAR repository (2026) `fbx/Cargo.toml`, `p3d/Cargo.toml`,
-  `pipeline/Cargo.toml`, and `Cargo.lock`.
+- SHAR repository (2026) `src/formats/fbx/Cargo.toml`, `src/formats/p3d/Cargo.toml`,
+  `src/migration/pipeline/Cargo.toml`, and `Cargo.lock`.

@@ -50,7 +50,8 @@ A revision mismatch marks preserved guidance for human review.
 Use this tool to inspect bounded current-session diagnostics after SHAR editor
 startup or an automated MCP operation. The verified workflow used
 `LogToolsetRegistry` to confirm native toolset registration and used a global
-search to confirm that the editor opened `uproject/shar.uproject`.
+<!-- markdownlint-disable-next-line MD013 -->
+search to confirm that the editor opened `src/unreal/project/composition/uproject/shar.uproject`.
 <!-- END MANUAL FIELD: project-use-cases -->
 
 ### Project prerequisites

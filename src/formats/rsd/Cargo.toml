@@ -1,0 +1,58 @@
+[package]
+name = "rsd"
+version.workspace = true
+edition = "2024"
+license = "MIT"
+description = "Exports Radical RSD audio files to WAV for local SHAR migration evidence."
+publish = false
+
+[dependencies]
+# schoenwald-cli centralizes process arguments, ordered diagnostics, newline handling, and exit-code mapping for the RSD driving adapter.
+schoenwald-cli = { path = "../../foundation/command-line" }
+# schoenwald-filesystem centralizes deterministic discovery, path inspection, canonical identities, and complete source reads before transactional publication.
+schoenwald-filesystem = { path = "../../foundation/filesystem" }
+
+[lib]
+name = "rsd"
+path = "lib.rs"
+
+[[bin]]
+name = "rsd-export"
+path = "composition/main.rs"
+# Canonical external integration tests.
+
+[[test]]
+name = "compact_pcm"
+path = "../../../tests/formats/rsd/compact_pcm.rs"
+
+[[test]]
+name = "error_display"
+path = "../../../tests/formats/rsd/error_display.rs"
+
+[[test]]
+name = "export_report_validation"
+path = "../../../tests/formats/rsd/export_report_validation.rs"
+
+[[test]]
+name = "filesystem_export"
+path = "../../../tests/formats/rsd/filesystem_export.rs"
+
+[[test]]
+name = "hard_link_identity"
+path = "../../../tests/formats/rsd/hard_link_identity.rs"
+
+[[test]]
+name = "header_validation"
+path = "../../../tests/formats/rsd/header_validation.rs"
+
+[[test]]
+name = "payload_validation"
+path = "../../../tests/formats/rsd/payload_validation.rs"
+
+[[test]]
+name = "radp_state"
+path = "../../../tests/formats/rsd/radp_state.rs"
+
+[[test]]
+name = "wav_validation"
+path = "../../../tests/formats/rsd/wav_validation.rs"

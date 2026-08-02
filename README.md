@@ -242,7 +242,7 @@ response time, compatibility window, issue-triage guarantee, or permanent
 availability is promised. The repository may be archived at any time.
 
 Repository-owned authored material is available under the MIT License in
-[`LICENSE`](LICENSE). The license applies only to material the repository owner
+[`LICENSE-MIT`](LICENSE-MIT). The license applies only to material the repository owner
 has authority to license.
 
 ## Detailed project definition
@@ -428,7 +428,7 @@ publishers, developers, licensors, platform holders, Epic Games, NVIDIA, or any
 other third party named in documentation or compatibility targets.
 
 Repository-owned material is licensed under the MIT License in
-[`LICENSE`](LICENSE). The MIT License applies only to material the repository
+[`LICENSE-MIT`](LICENSE-MIT). The MIT License applies only to material the repository
 owner has the authority to license. It does not grant rights in the original
 game, third-party assets, trademarks, proprietary software, engine
 distributions, external plugins, or user-supplied mods.
@@ -789,7 +789,7 @@ repository-owned FBX pipeline. It is not assembled in Blender and is not runtime
 collision, gameplay, or shipping-render authority. Its fixed publication root is:
 
 ```text
-uproject/Content/SHAR/EditorOnly/StructuralGuide/Source/
+src/unreal/project/composition/uproject/Content/SHAR/EditorOnly/StructuralGuide/Source/
 ```
 
 The publication contains exactly four files: one binary FBX 7.7 mesh, one
@@ -869,7 +869,7 @@ is discarded.
 Each accepted comparison becomes one source-dependent Rust module below:
 
 ```text
-pipeline/src/adapters/driven/local/prop_catalog/world_level/
+src/migration/pipeline/adapter-outbound/local/prop_catalog/world_level/
   algorithms/dataset/<normalized-relative-fbx>.rs
 ```
 
@@ -1534,14 +1534,24 @@ docs/legal/       Academic legal research records and the scope disclaimer.
 docs/technical/   Repository-owned technical specifications.
 extracted/        Local decoded and classified output. Ignored where required.
 skills/           Planned practical instructions for mod authors and AI agents.
-src/              Rust crates, asset conversion, and the C++ Unreal project.
+src/              Canonical authored source taxonomy.
+tests/            Cross-boundary and integration verification outside source.
 temp/             Validation caches, reports, and review output. Ignored by Git.
 validate.sh       Canonical repository validation entry point.
 ```
 
-The root Rust workspace currently contains focused crates for shared CLI and
-filesystem mechanisms, the pipeline, game-manifest handling, FBX export, LMLM,
-P3D, RCF, RSD, RMV, RTF, and Unreal asset conversion.
+Authored source follows `src/<domain>/<function>/<kind>/<part>`. Current domains
+are `foundation`, `formats`, `migration`, and `unreal`. Hexagonal kinds include
+`domain`, `application`, `port-inbound`, `port-outbound`, `adapter-inbound`,
+`adapter-outbound`, `contract`, `composition`, and `math`. Function manifests
+and public facades remain at the function root; cross-boundary tests live under
+`tests/<domain>/<function>/`.
+
+The Rust workspace contains focused functions for shared CLI and filesystem
+mechanisms, the pipeline, game-manifest handling, FBX export, LMLM, P3D, RCF,
+RSD, RMV, RTF, and Unreal asset conversion. The Python MCP translator is split
+across the same kinds, while the engine-required Unreal project layout remains
+one composition part under `src/unreal/project/`.
 
 ## Game input
 
@@ -1587,7 +1597,7 @@ formatter, compiler, linter, or test commands for final evidence.
 bash validate.sh
 
 # Validate one path and every child below it.
-bash validate.sh fbx/
+bash validate.sh src/formats/fbx/
 
 # Force deterministic diagnostic ordering.
 bash validate.sh --deterministic
@@ -1596,7 +1606,7 @@ bash validate.sh --deterministic
 bash validate.sh --no-cache
 
 # Replace successful cache records for one scope.
-bash validate.sh --refresh-cache pipeline/
+bash validate.sh --refresh-cache src/migration/pipeline/
 ```
 
 Successful gate records are content-addressed and stored under ignored local
@@ -1622,7 +1632,7 @@ redistributable fixtures.
 ## License
 
 Repository-owned authored material is available under the MIT License in
-[`LICENSE`](LICENSE). Third-party names, software, game data, artwork, audio,
+[`LICENSE-MIT`](LICENSE-MIT). Third-party names, software, game data, artwork, audio,
 engine material, plugins, and documentation remain governed by their respective
 owners' terms and are not relicensed by this repository.
 

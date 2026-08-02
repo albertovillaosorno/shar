@@ -19,7 +19,7 @@ independently authored Python source.
 
 ## Covered Material
 
-Hatchling as the PEP 517 build backend declared by `mcp/pyproject.toml`,
+Hatchling as the PEP 517 build backend declared by `src/unreal/editor-control/composition/mcp/pyproject.toml`,
 including the wheel builder used to package the independently authored terminal
 MCP client. The full Hatch project manager is outside repository use unless it
 is separately invoked.
@@ -93,5 +93,5 @@ for Hatchling and every included dependency.
   <https://hatch.pypa.io/latest/history/hatchling/> (Accessed: 14 July 2026).
 - Hatch contributors (n.d.) *Official GitHub repository*. Available at:
   <https://github.com/pypa/hatch> (Accessed: 14 July 2026).
-- SHAR repository (2026) `mcp/pyproject.toml`, pinning
+- SHAR repository (2026) `src/unreal/editor-control/composition/mcp/pyproject.toml`, pinning
   `hatchling==1.31.0`.

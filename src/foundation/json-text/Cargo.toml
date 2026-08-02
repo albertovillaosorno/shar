@@ -1,0 +1,16 @@
+[package]
+name = "shar-json-text"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Portable JSON string-content escaping for SHAR crates."
+publish = false
+
+[lib]
+name = "shar_json_text"
+path = "lib.rs"
+# Canonical external integration tests.
+
+[[test]]
+name = "escape"
+path = "../../../tests/foundation/json-text/escape.rs"

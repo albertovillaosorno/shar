@@ -1,0 +1,290 @@
+# File:
+#   - test_unreal_mcp_version.py
+# Path: tests/unreal/editor-control/test_unreal_mcp_version.py
+#
+# Copyright:
+#   - Copyright (c) 2026 Alberto Villa Osorno.
+# SPDX-License-Identifier:
+#   - MIT
+# Confidential:
+#   - false
+# License-File:
+#   - LICENSE-MIT
+# Path-Rule:
+#   - All paths in this header are repository-root relative.
+#
+# Boundary-Contract:
+# - Owns:
+#   - Regression tests for installed Unreal MCP plugin version discovery.
+# - Must-Not:
+#   - Inspect the operator's real engine, connect to Unreal, or render skills.
+# - Allows:
+#   - Temporary project and engine descriptor fixtures.
+# - Split-When:
+#   - Engine resolution and version normalization need independent suites.
+# - Merge-When:
+#   - Another module owns the complete plugin version discovery contract.
+# - Summary:
+#   - Guards the single Unreal MCP version authority used by skill revisions.
+# - Description:
+#   - Proves descriptor `1.0` normalizes to public SemVer `1.0.0`.
+# - Usage:
+#   - Executed by pytest through the canonical validator workflow.
+# - Defaults:
+#   - Uses `UNREAL_ENGINE_ROOT` fixtures without external dependencies.
+#
+# ADRs:
+# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
+#
+# Large file:
+#   - false
+#
+"""Installed Unreal MCP plugin version discovery regression tests."""
+
+from __future__ import annotations
+
+import json
+import sys
+from typing import TYPE_CHECKING
+
+import pytest
+from mcp.adapter_outbound.unreal_mcp_version import (
+    FilesystemUnrealMcpVersionProvider,
+)
+from mcp.domain.errors import ConfigurationError
+from mcp.domain.skill_revision import (
+    build_skill_revision,
+    normalize_unreal_mcp_version,
+)
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+_PLUGIN_RELATIVE_PATH = (
+    "Engine/Plugins/Experimental/ModelContextProtocol/"
+    "ModelContextProtocol.uplugin"
+)
+_TEST_DIGEST = "a" * 64
+
+
+def test_two_part_plugin_version_normalizes_to_semver() -> None:
+    """Unreal's `1.0` VersionName becomes the public `1.0.0` version."""
+    assert normalize_unreal_mcp_version("1.0") == "1.0.0"
+    assert build_skill_revision("1.0", _TEST_DIGEST).token == (
+        f"1.0.0/{_TEST_DIGEST}"
+    )
+
+
+@pytest.mark.parametrize(
+    "invalid_version",
+    ["1.0\n", " 1.0"],
+)
+def test_plugin_version_rejects_surrounding_whitespace(
+    invalid_version: str,
+) -> None:
+    """Descriptor versions must not be silently trimmed before validation."""
+    with pytest.raises(ConfigurationError, match="one to three numeric parts"):
+        _ = normalize_unreal_mcp_version(invalid_version)
+
+
+@pytest.mark.parametrize(
+    "association",
+    ["5.8\n", " 5.8"],
+)
+def test_provider_rejects_padded_engine_association(
+    tmp_path: Path,
+    association: str,
+) -> None:
+    """Project engine identities must not be silently trimmed."""
+    project = tmp_path / "project" / "shar.uproject"
+    engine = tmp_path / "UE_5.8"
+    _write_json(project, {"EngineAssociation": association})
+    _write_json(
+        engine / _PLUGIN_RELATIVE_PATH,
+        {"VersionName": "1.0"},
+    )
+
+    with pytest.raises(
+        ConfigurationError,
+        match="EngineAssociation must be canonical text",
+    ):
+        _ = FilesystemUnrealMcpVersionProvider(
+            project,
+            environment={"UNREAL_ENGINE_ROOT": str(engine)},
+        ).read_version()
+
+
+def test_provider_reads_version_from_explicit_engine_root(
+    tmp_path: Path,
+) -> None:
+    """The project association resolves one installed plugin descriptor."""
+    project = tmp_path / "project" / "shar.uproject"
+    engine = tmp_path / "UE_5.8"
+    _write_json(project, {"EngineAssociation": "5.8"})
+    _write_json(
+        engine / _PLUGIN_RELATIVE_PATH,
+        {"VersionName": "1.0"},
+    )
+
+    version = FilesystemUnrealMcpVersionProvider(
+        project,
+        environment={"UNREAL_ENGINE_ROOT": str(engine)},
+    ).read_version()
+
+    assert version == "1.0.0"
+
+
+def test_provider_uses_program_files_association_fallback(
+    tmp_path: Path,
+) -> None:
+    """Launcher-style engine paths resolve without a duplicated version."""
+    project = tmp_path / "project" / "shar.uproject"
+    program_files = tmp_path / "Program Files"
+    engine = program_files / "Epic Games" / "UE_5.8"
+    _write_json(project, {"EngineAssociation": "5.8"})
+    _write_json(
+        engine / _PLUGIN_RELATIVE_PATH,
+        {"VersionName": "1.0.0"},
+    )
+
+    version = FilesystemUnrealMcpVersionProvider(
+        project,
+        environment={"PROGRAMFILES": str(program_files)},
+    ).read_version()
+
+    assert version == "1.0.0"
+
+
+def test_provider_rejects_duplicate_descriptor_keys(tmp_path: Path) -> None:
+    """Ambiguous plugin metadata cannot replace an earlier version value."""
+    project = tmp_path / "project" / "shar.uproject"
+    engine = tmp_path / "UE_5.8"
+    _write_json(project, {"EngineAssociation": "5.8"})
+    descriptor = engine / _PLUGIN_RELATIVE_PATH
+    descriptor.parent.mkdir(parents=True, exist_ok=True)
+    _ = descriptor.write_text(
+        '{"VersionName":"1.0","VersionName":"2.0"}\n',
+        encoding="utf-8",
+        newline="\n",
+    )
+
+    with pytest.raises(
+        ConfigurationError,
+        match="duplicate JSON key: VersionName",
+    ):
+        _ = FilesystemUnrealMcpVersionProvider(
+            project,
+            environment={"UNREAL_ENGINE_ROOT": str(engine)},
+        ).read_version()
+
+
+def test_provider_wraps_invalid_utf8_descriptor(
+    tmp_path: Path,
+) -> None:
+    """Unreadable descriptor text remains a typed configuration failure."""
+    project = tmp_path / "project" / "shar.uproject"
+    engine = tmp_path / "UE_5.8"
+    _write_json(project, {"EngineAssociation": "5.8"})
+    descriptor = engine / _PLUGIN_RELATIVE_PATH
+    descriptor.parent.mkdir(parents=True, exist_ok=True)
+    _ = descriptor.write_bytes(b'{"VersionName":"1.0"}\xff')
+
+    with pytest.raises(ConfigurationError, match="cannot read Unreal MCP"):
+        _ = FilesystemUnrealMcpVersionProvider(
+            project,
+            environment={"UNREAL_ENGINE_ROOT": str(engine)},
+        ).read_version()
+
+
+def test_provider_wraps_excessive_descriptor_integer_digits(
+    tmp_path: Path,
+) -> None:
+    """Descriptor decoder integer limits remain configuration failures."""
+    project = tmp_path / "project" / "shar.uproject"
+    engine = tmp_path / "UE_5.8"
+    _write_json(project, {"EngineAssociation": "5.8"})
+    descriptor = engine / _PLUGIN_RELATIVE_PATH
+    descriptor.parent.mkdir(parents=True, exist_ok=True)
+    previous_limit = sys.get_int_max_str_digits()
+    try:
+        sys.set_int_max_str_digits(640)
+        number = "1" * 641
+        _ = descriptor.write_text(
+            f'{{"VersionName":"1.0","value":{number}}}\n',
+            encoding="utf-8",
+            newline="\n",
+        )
+
+        with pytest.raises(
+            ConfigurationError,
+            match="cannot read Unreal MCP plugin descriptor",
+        ):
+            _ = FilesystemUnrealMcpVersionProvider(
+                project,
+                environment={"UNREAL_ENGINE_ROOT": str(engine)},
+            ).read_version()
+    finally:
+        sys.set_int_max_str_digits(previous_limit)
+
+
+def test_provider_classifies_non_finite_descriptor_json(
+    tmp_path: Path,
+) -> None:
+    """Invalid strict JSON remains a configuration failure."""
+    project = tmp_path / "project" / "shar.uproject"
+    engine = tmp_path / "UE_5.8"
+    _write_json(project, {"EngineAssociation": "5.8"})
+    descriptor = engine / _PLUGIN_RELATIVE_PATH
+    descriptor.parent.mkdir(parents=True, exist_ok=True)
+    _ = descriptor.write_text(
+        '{"VersionName":NaN}\n',
+        encoding="utf-8",
+        newline="\n",
+    )
+
+    with pytest.raises(
+        ConfigurationError,
+        match="JSON number must be finite",
+    ):
+        _ = FilesystemUnrealMcpVersionProvider(
+            project,
+            environment={"UNREAL_ENGINE_ROOT": str(engine)},
+        ).read_version()
+
+
+def test_provider_rejects_missing_plugin_descriptor(tmp_path: Path) -> None:
+    """Missing installed metadata cannot silently invent a version."""
+    project = tmp_path / "project" / "shar.uproject"
+    _write_json(project, {"EngineAssociation": "5.8"})
+
+    with pytest.raises(ConfigurationError, match="descriptor was not found"):
+        _ = FilesystemUnrealMcpVersionProvider(
+            project,
+            environment={"UNREAL_ENGINE_ROOT": str(tmp_path / "missing")},
+        ).read_version()
+
+
+def test_provider_rejects_non_numeric_version_name(tmp_path: Path) -> None:
+    """Unexpected plugin version syntax fails before skill generation."""
+    project = tmp_path / "project" / "shar.uproject"
+    engine = tmp_path / "UE_5.8"
+    _write_json(project, {"EngineAssociation": "5.8"})
+    _write_json(
+        engine / _PLUGIN_RELATIVE_PATH,
+        {"VersionName": "preview"},
+    )
+
+    with pytest.raises(ConfigurationError, match="one to three numeric parts"):
+        _ = FilesystemUnrealMcpVersionProvider(
+            project,
+            environment={"UNREAL_ENGINE_ROOT": str(engine)},
+        ).read_version()
+
+
+def _write_json(path: Path, value: object) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    _ = path.write_text(
+        json.dumps(value, indent=2) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )

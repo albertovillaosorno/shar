@@ -1,0 +1,156 @@
+[package]
+name = "fbx"
+version.workspace = true
+edition = "2024"
+license = "MIT"
+description = "Exports decoded assets to native FBX."
+publish = false
+
+[lib]
+name = "fbx"
+path = "lib.rs"
+
+[[bin]]
+name = "semantic-character-texture"
+path = "composition/semantic_character_texture_cli.rs"
+
+[dependencies]
+# shar-sha256 owns the dependency-free repository SHA-256 primitive.
+shar-sha256 = { path = "../../foundation/sha256" }
+# schoenwald-filesystem centralizes complete UTF-8 reads and directory creation while FBX create-new writes and texture copies remain adapter-specific.
+schoenwald-filesystem = { path = "../../foundation/filesystem" }
+# serde is retained because the exporter needs typed JSON decoding for
+# generated manifests, and a hand-rolled replacement would raise parser risk
+# without improving ownership or auditability.
+serde = { version = "1", features = ["derive"] }
+# serde_json is retained with serde because the input contracts are JSON and the
+# crate is a widely reviewed implementation for strict structured decoding.
+serde_json = "1"
+# png provides pure-Rust, bounded PNG decoding and encoding for deterministic
+# semantic texture preparation without external authoring applications.
+png = "0.18"
+# Canonical external integration tests.
+
+[[test]]
+name = "binary_animation_writer"
+path = "../../../tests/formats/fbx/binary_animation_writer.rs"
+
+[[test]]
+name = "binary_character_writer"
+path = "../../../tests/formats/fbx/binary_character_writer.rs"
+
+[[test]]
+name = "binary_material_variants"
+path = "../../../tests/formats/fbx/binary_material_variants.rs"
+
+[[test]]
+name = "binary_model_writer"
+path = "../../../tests/formats/fbx/binary_model_writer.rs"
+
+[[test]]
+name = "binary_only_contract"
+path = "../../../tests/formats/fbx/binary_only_contract.rs"
+
+[[test]]
+name = "binary_structural_guide_writer"
+path = "../../../tests/formats/fbx/binary_structural_guide_writer.rs"
+
+[[test]]
+name = "constructor_identity_validation"
+path = "../../../tests/formats/fbx/constructor_identity_validation.rs"
+
+[[test]]
+name = "decoded_animation_source"
+path = "../../../tests/formats/fbx/decoded_animation_source.rs"
+
+[[test]]
+name = "decoded_billboard_source"
+path = "../../../tests/formats/fbx/decoded_billboard_source.rs"
+
+[[test]]
+name = "decoded_component_source"
+path = "../../../tests/formats/fbx/decoded_component_source.rs"
+
+[[test]]
+name = "decoded_material_source"
+path = "../../../tests/formats/fbx/decoded_material_source.rs"
+
+[[test]]
+name = "decoded_mesh_source"
+path = "../../../tests/formats/fbx/decoded_mesh_source.rs"
+
+[[test]]
+name = "decoded_padded_shader"
+path = "../../../tests/formats/fbx/decoded_padded_shader.rs"
+
+[[test]]
+name = "decoded_rigid_prop_source"
+path = "../../../tests/formats/fbx/decoded_rigid_prop_source.rs"
+
+[[test]]
+name = "decoded_skin_source"
+path = "../../../tests/formats/fbx/decoded_skin_source.rs"
+
+[[test]]
+name = "decoded_texture_source"
+path = "../../../tests/formats/fbx/decoded_texture_source.rs"
+
+[[test]]
+name = "decoded_vertex_color"
+path = "../../../tests/formats/fbx/decoded_vertex_color.rs"
+
+[[test]]
+name = "deterministic_constructor_validation"
+path = "../../../tests/formats/fbx/deterministic_constructor_validation.rs"
+
+[[test]]
+name = "domain_validation"
+path = "../../../tests/formats/fbx/domain_validation.rs"
+
+[[test]]
+name = "generated_package_index"
+path = "../../../tests/formats/fbx/generated_package_index.rs"
+
+[[test]]
+name = "material_binding"
+path = "../../../tests/formats/fbx/material_binding.rs"
+
+[[test]]
+name = "matrix_inverse"
+path = "../../../tests/formats/fbx/matrix_inverse.rs"
+
+[[test]]
+name = "mesh_asset"
+path = "../../../tests/formats/fbx/mesh_asset.rs"
+
+[[test]]
+name = "package_evidence"
+path = "../../../tests/formats/fbx/package_evidence.rs"
+
+[[test]]
+name = "package_index"
+path = "../../../tests/formats/fbx/package_index.rs"
+
+[[test]]
+name = "port_identity_validation"
+path = "../../../tests/formats/fbx/port_identity_validation.rs"
+
+[[test]]
+name = "primitive_group"
+path = "../../../tests/formats/fbx/primitive_group.rs"
+
+[[test]]
+name = "semantic_body_texture"
+path = "../../../tests/formats/fbx/semantic_body_texture.rs"
+
+[[test]]
+name = "semantic_body_texture_patterned"
+path = "../../../tests/formats/fbx/semantic_body_texture_patterned.rs"
+
+[[test]]
+name = "semantic_body_texture_rejections"
+path = "../../../tests/formats/fbx/semantic_body_texture_rejections.rs"
+
+[[test]]
+name = "semantic_eye_texture_png"
+path = "../../../tests/formats/fbx/semantic_eye_texture_png.rs"

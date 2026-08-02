@@ -1,0 +1,35 @@
+[package]
+name = "lmlm"
+version.workspace = true
+edition = "2024"
+license = "MIT"
+description = "Extracts the Jebano Latino LSPA archive to a folder."
+publish = false
+
+[dependencies]
+# schoenwald-cli centralizes process arguments, ordered diagnostics, newline handling, and exit-code mapping for the LMLM driving adapter.
+schoenwald-cli = { path = "../../foundation/command-line" }
+# schoenwald-filesystem centralizes complete local archive reads while LMLM-specific collision and create-new publication remain local.
+schoenwald-filesystem = { path = "../../foundation/filesystem" }
+
+
+[lib]
+name = "lmlm"
+path = "lib.rs"
+
+[[bin]]
+name = "lmlm-extract"
+path = "composition/main.rs"
+# Canonical external integration tests.
+
+[[test]]
+name = "cli_run_error"
+path = "../../../tests/formats/lmlm/cli_run_error.rs"
+
+[[test]]
+name = "extract_archive_error"
+path = "../../../tests/formats/lmlm/extract_archive_error.rs"
+
+[[test]]
+name = "filesystem_entry_sink"
+path = "../../../tests/formats/lmlm/filesystem_entry_sink.rs"

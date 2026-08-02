@@ -1,0 +1,123 @@
+[package]
+name = "game-manifest"
+version.workspace = true
+edition = "2024"
+license = "MIT"
+description = "Generates and validates the game/ content manifest for the pipeline."
+publish = false
+
+[dependencies]
+# schoenwald-cli centralizes process arguments, ordered streams, newline handling, and exit-code mapping for manifest driving adapters.
+schoenwald-cli = { path = "../../foundation/command-line" }
+# schoenwald-filesystem centralizes deterministic traversal, path inspection, and complete UTF-8 artifact reads and writes.
+schoenwald-filesystem = { path = "../../foundation/filesystem" }
+
+
+[lib]
+name = "game_manifest"
+path = "lib.rs"
+
+[[bin]]
+name = "validate-game"
+path = "composition/bin/validate.rs"
+
+[[bin]]
+name = "generate-manifest"
+path = "composition/bin/generate.rs"
+
+[[bin]]
+name = "generate-expanded-manifest"
+path = "composition/bin/generate_expanded.rs"
+
+[[bin]]
+name = "ephemeral_structural_audit"
+path = "composition/bin/ephemeral_structural_audit.rs"
+# Canonical external integration tests.
+
+[[test]]
+name = "audit_cli_contract"
+path = "../../../tests/migration/manifest/audit_cli_contract.rs"
+
+[[test]]
+name = "count_by_dir_ext"
+path = "../../../tests/migration/manifest/count_by_dir_ext.rs"
+
+[[test]]
+name = "dir_count_jsonl"
+path = "../../../tests/migration/manifest/dir_count_jsonl.rs"
+
+[[test]]
+name = "dir_count_parse"
+path = "../../../tests/migration/manifest/dir_count_parse.rs"
+
+[[test]]
+name = "error_display"
+path = "../../../tests/migration/manifest/error_display.rs"
+
+[[test]]
+name = "expanded_backup_contract"
+path = "../../../tests/migration/manifest/expanded_backup_contract.rs"
+
+[[test]]
+name = "expanded_classification"
+path = "../../../tests/migration/manifest/expanded_classification.rs"
+
+[[test]]
+name = "expanded_cli_contract"
+path = "../../../tests/migration/manifest/expanded_cli_contract.rs"
+
+[[test]]
+name = "expanded_duplicate_evidence"
+path = "../../../tests/migration/manifest/expanded_duplicate_evidence.rs"
+
+[[test]]
+name = "expanded_existing_output"
+path = "../../../tests/migration/manifest/expanded_existing_output.rs"
+
+[[test]]
+name = "expanded_output_contract"
+path = "../../../tests/migration/manifest/expanded_output_contract.rs"
+
+[[test]]
+name = "expanded_output_location"
+path = "../../../tests/migration/manifest/expanded_output_location.rs"
+
+[[test]]
+name = "expanded_validation_order"
+path = "../../../tests/migration/manifest/expanded_validation_order.rs"
+
+[[test]]
+name = "generate_classification"
+path = "../../../tests/migration/manifest/generate_classification.rs"
+
+[[test]]
+name = "generate_classification_resources"
+path = "../../../tests/migration/manifest/generate_classification_resources.rs"
+
+[[test]]
+name = "generate_cli_contract"
+path = "../../../tests/migration/manifest/generate_cli_contract.rs"
+
+[[test]]
+name = "minimum_path_evidence"
+path = "../../../tests/migration/manifest/minimum_path_evidence.rs"
+
+[[test]]
+name = "path_helpers"
+path = "../../../tests/migration/manifest/path_helpers.rs"
+
+[[test]]
+name = "validate_cli"
+path = "../../../tests/migration/manifest/validate_cli.rs"
+
+[[test]]
+name = "validate_cli_contract"
+path = "../../../tests/migration/manifest/validate_cli_contract.rs"
+
+[[test]]
+name = "validation_order"
+path = "../../../tests/migration/manifest/validation_order.rs"
+
+[[test]]
+name = "validation_path_evidence"
+path = "../../../tests/migration/manifest/validation_path_evidence.rs"

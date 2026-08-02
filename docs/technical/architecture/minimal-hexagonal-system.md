@@ -1,7 +1,7 @@
 # Minimal hexagonal system
 
 - Status: Active
-- Last reviewed: 2026-07-13
+- Last reviewed: 2026-08-02
 
 ## Governing decision
 
@@ -16,11 +16,14 @@ effects.
 
 ## Repository model
 
-Domain components define identities and invariants without external effects.
-Application components coordinate domain behavior through ports. Driving
-adapters translate requests into application calls. Driven adapters implement
-storage, process, serialization, protocol, and engine effects. Ports exist only
-for real substitution or isolation boundaries.
+Every authored part is classified by domain, function, hexagonal kind, and
+part identity. Domain components define identities and invariants without
+external effects. Application components coordinate domain behavior through
+ports. Inbound adapters translate requests into application calls. Outbound
+adapters implement storage, process, serialization, protocol, and engine
+effects. Ports exist only for real substitution or isolation boundaries.
+Composition parts own executable assembly and engine-mandated project structure.
+Cross-boundary tests remain outside the authored-source taxonomy.
 
 ## Invariants
 

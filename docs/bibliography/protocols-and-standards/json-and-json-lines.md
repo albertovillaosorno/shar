@@ -105,9 +105,9 @@ JSON document in the repository.
   <!-- markdownlint-disable-next-line MD013 -->
   <https://ecma-international.org/publications-and-standards/standards/ecma-404/>
 - JSON Lines, *JSON Lines*. <https://jsonlines.org/>
-- SHAR repository evidence: `game-manifest/src/domain/json.rs`,
-  `game-manifest/src/domain/domain.rs`, and
-  `game-manifest/src/application/validate_manifest.rs`.
+- SHAR repository evidence: `src/migration/manifest/domain/json.rs`,
+  `src/migration/manifest/domain/mod.rs`, and
+  `src/migration/manifest/application/validate_manifest.rs`.
 
 ## Source References
 

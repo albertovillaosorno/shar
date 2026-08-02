@@ -73,7 +73,7 @@ require separate fact-specific review.
 
 ## Source References
 
-- SHAR repository (2026) `p3d/src/domain/extract.rs` and compression tests.
+- SHAR repository (2026) `src/formats/p3d/domain/extract.rs` and compression tests.
 - Historical local Radical material reviewed for interoperability; source code
   and private routes not distributed.
 - [Pure3D P3D](pure3d-p3d.md).

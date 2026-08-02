@@ -101,8 +101,8 @@ deterministic command evidence, and decoder-backed sample tests.
 
 - Vidvox, *HAP specification and reference source*.
   <https://github.com/Vidvox/hap>
-- SHAR repository evidence: `rmv/src/domain/target.rs` and
-  `rmv/src/application/package_plan.rs`.
+- SHAR repository evidence: `src/formats/rmv/domain/target.rs` and
+  `src/formats/rmv/application/package_plan.rs`.
 
 ## Source References
 

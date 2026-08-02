@@ -32,7 +32,7 @@ The temporary island reference belongs inside the Unreal project at:
 
 ```text
 /Game/SHAR/EditorOnly/StructuralGuide
-uproject/Content/SHAR/EditorOnly/StructuralGuide/
+src/unreal/project/composition/uproject/Content/SHAR/EditorOnly/StructuralGuide/
 ```
 
 The canonical four-file source publication goes in `Source/`; its imported
