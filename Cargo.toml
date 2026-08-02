@@ -1,20 +1,20 @@
 [workspace]
 resolver = "3"
 members = [
-  "cli",
-  "filesystem",
-  "pipeline",
-  "game-manifest",
-  "json-text",
-  "sha256",
-  "fbx",
-  "lmlm",
-  "p3d",
-  "rcf",
-  "rsd",
-  "rmv",
-  "rtf",
-  "uasset",
+  "src/foundation/command-line",
+  "src/foundation/filesystem",
+  "src/migration/pipeline",
+  "src/migration/manifest",
+  "src/foundation/json-text",
+  "src/foundation/sha256",
+  "src/formats/fbx",
+  "src/formats/lmlm",
+  "src/formats/p3d",
+  "src/formats/rcf",
+  "src/formats/rsd",
+  "src/formats/rmv",
+  "src/formats/rtf",
+  "src/unreal/asset-conversion",
 ]
 
 [workspace.package]

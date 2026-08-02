@@ -20,14 +20,14 @@ workspace dependency graph.
 
 ## Repository Use And Scope
 
-`fbx/Cargo.toml` declares Serde version 1 with the `derive` feature. SHAR
+`src/formats/fbx/Cargo.toml` declares Serde version 1 with the `derive` feature. SHAR
 uses Serde traits and derives to express typed serialization boundaries. Serde
 is a library dependency, not an author or owner of repository data, schemas, or
 independently authored Rust types.
 
 ## Provenance And Version History
 
-`fbx/Cargo.toml` requests major version 1 with the `derive` feature.
+`src/formats/fbx/Cargo.toml` requests major version 1 with the `derive` feature.
 `Cargo.lock` resolves the family to `serde` 1.0.228, `serde_core` 1.0.228, and
 `serde_derive` 1.0.228 (the 1.0.228 release was published 2025-09-27). The
 `derive` path pulls in `proc-macro2` 1.0.106, `quote` 1.0.46, `syn` 2.0.118,
@@ -74,4 +74,4 @@ required by `unicode-ident`.
   metadata* (license `(MIT OR Apache-2.0) AND Unicode-3.0`). Available at:
   <https://crates.io/api/v1/crates/serde/1.0.228> and
   <https://crates.io/api/v1/crates/unicode-ident> (Accessed: 13 July 2026).
-- SHAR repository (2026) `fbx/Cargo.toml` and `Cargo.lock`.
+- SHAR repository (2026) `src/formats/fbx/Cargo.toml` and `Cargo.lock`.

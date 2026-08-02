@@ -25,7 +25,7 @@ technical, factual, or legal correctness.
 | `cspell` | Spelling validation | Invoked by `validate.sh` |
 | CSpell libraries | Parsing and configuration | CLI dependencies |
 | Bundled dictionaries | Vocabulary | Enabled selectively |
-| Repository wordlists | Project-reviewed vocabulary | `docs/cspell` authority |
+| Repository wordlists | Project-reviewed vocabulary | `.jig/cspell` authority |
 | Node.js | Runtime | Executes the CLI |
 
 The repository wordlists are SHAR-authored configuration data. Their inclusion
@@ -35,7 +35,7 @@ to independently authored repository material.
 ## Repository Use And Scope
 
 `validate.sh` invokes the managed Node.js runtime and CSpell module with the
-repository-local `cspell.json`, disabled configuration search, an explicit file
+repository-local `.jig/cspell/cspell.json`, disabled configuration search, an explicit file
 list, directive validation, and no CSpell-owned cache. The repository validator
 separately enforces dictionary classification, sorted and unique entries, and
 exact line-scoped suppressions for intentional invalid sequences.
@@ -62,7 +62,7 @@ of every bundled dictionary notice, or make a dated version permanently current.
 
 CSpell and its upstream packages are authored by their respective upstream
 authors and contributors. Bundled or optional dictionaries may have separate
-authors and notices. SHAR owns its independently authored `cspell.json` and
+authors and notices. SHAR owns its independently authored `.jig/cspell/cspell.json` and
 curated wordlists; loading those files into CSpell does not transfer ownership
 or apply CSpell's license to unrelated repository material.
 
@@ -83,7 +83,7 @@ artifacts distributed.
 
 - SHAR does not bundle Node.js, CSpell, its package tree, or third-party add-on
   dictionaries in the repository or current distributed payload.
-- The repository distributes only its own `cspell.json` and curated wordlists.
+- The repository distributes only its own `.jig/cspell/cspell.json` and curated wordlists.
 - A CSpell package, transitive dependency, and bundled-dictionary notice
   inventory is outside the current SHAR distribution boundary and is required
   when executable or package contents are redistributed.
@@ -92,7 +92,7 @@ artifacts distributed.
 
 ## Compliance Posture
 
-- Keep `cspell.json` as the local configuration authority.
+- Keep `.jig/cspell/cspell.json` as the local configuration authority.
 - Keep genuine English, technical, and named-entity vocabulary separated.
 - Do not use broad ignore lists to hide spelling errors.
 - Use exact line-scoped suppressions for intentional invalid sequences.
@@ -115,6 +115,6 @@ artifacts distributed.
 - Street Side Software and contributors (n.d.) *CSpell official GitHub
   repository*. Available at: <https://github.com/streetsidesoftware/cspell>
   (Accessed: 14 July 2026).
-- SHAR managed command authority (2026), `cspell.json`, `docs/cspell`,
+- SHAR managed command authority (2026), `.jig/cspell/cspell.json` and its dictionaries,
   `validate.sh`, root package authority, lockfile, and managed `cspell` 10.0.1
   package metadata and executable output.

@@ -1,0 +1,82 @@
+[package]
+name = "schoenwald-filesystem"
+version.workspace = true
+edition = "2024"
+license = "MIT"
+description = "Hexagonal local filesystem mechanisms shared by Schoenwald crates."
+publish = false
+
+[dependencies]
+
+[lib]
+name = "schoenwald_filesystem"
+path = "lib.rs"
+# Canonical external integration tests.
+
+[[test]]
+name = "application_error_context"
+path = "../../../tests/foundation/filesystem/application_error_context.rs"
+
+[[test]]
+name = "current_directory_creation"
+path = "../../../tests/foundation/filesystem/current_directory_creation.rs"
+
+[[test]]
+name = "directory_creation"
+path = "../../../tests/foundation/filesystem/directory_creation.rs"
+
+[[test]]
+name = "explicit_paths"
+path = "../../../tests/foundation/filesystem/explicit_paths.rs"
+
+[[test]]
+name = "file_len_destination"
+path = "../../../tests/foundation/filesystem/file_len_destination.rs"
+
+[[test]]
+name = "io_error_context"
+path = "../../../tests/foundation/filesystem/io_error_context.rs"
+
+[[test]]
+name = "non_unicode_path"
+path = "../../../tests/foundation/filesystem/non_unicode_path.rs"
+
+[[test]]
+name = "path_inspection"
+path = "../../../tests/foundation/filesystem/path_inspection.rs"
+
+[[test]]
+name = "path_resolution"
+path = "../../../tests/foundation/filesystem/path_resolution.rs"
+
+[[test]]
+name = "read_destination"
+path = "../../../tests/foundation/filesystem/read_destination.rs"
+
+[[test]]
+name = "trait_object_ports"
+path = "../../../tests/foundation/filesystem/trait_object_ports.rs"
+
+[[test]]
+name = "tree_containment"
+path = "../../../tests/foundation/filesystem/tree_containment.rs"
+
+[[test]]
+name = "tree_ordering"
+path = "../../../tests/foundation/filesystem/tree_ordering.rs"
+
+[[test]]
+name = "tree_portable_collision"
+path = "../../../tests/foundation/filesystem/tree_portable_collision.rs"
+
+[[test]]
+name = "tree_root_validation"
+path = "../../../tests/foundation/filesystem/tree_root_validation.rs"
+
+[[test]]
+name = "tree_uniqueness"
+path = "../../../tests/foundation/filesystem/tree_uniqueness.rs"
+
+[[test]]
+name = "write_parent_creation"
+path = "../../../tests/foundation/filesystem/write_parent_creation.rs"

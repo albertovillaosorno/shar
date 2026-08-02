@@ -58,7 +58,7 @@ The Python translator package version is a separate release identity.
 From the SHAR repository root:
 
 ```text
-PYTHONPATH=src python -m mcp.src.adapters.driving.cli skills
+PYTHONPATH=src python -m mcp.adapter_inbound.cli skills
 ```
 
 The installed command is equivalent:

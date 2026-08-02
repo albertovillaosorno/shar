@@ -72,8 +72,8 @@ Plugins/*/Binaries/*
 Plugins/*/Intermediate/*
 
 # Unreal project plugins are installed locally and are never vendored.
-uproject/Plugins/VisualStudioTools/
-uproject/Plugins/
+src/unreal/project/composition/uproject/Plugins/VisualStudioTools/
+src/unreal/project/composition/uproject/Plugins/
 
 # Unreal binary assets stay local unless a narrow publication exception below
 # deliberately routes them through Git LFS.
@@ -83,15 +83,15 @@ uproject/Plugins/
 # Local editor-only structural guide. The source FBX and imported Static Mesh
 # exist inside the Unreal project for manual Landscape tracing but never ship or
 # enter version control.
-uproject/Content/SHAR/EditorOnly/StructuralGuide/
+src/unreal/project/composition/uproject/Content/SHAR/EditorOnly/StructuralGuide/
 
 # The canonical authored base world is an explicit publication exception. Its
 # World Partition actor/object packages must travel with the map as the island is
 # sculpted; unrelated generated Unreal packages remain ignored.
-!uproject/Content/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld.umap
-!uproject/Content/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld_HLOD0_Instancing.uasset
-!uproject/Content/__ExternalActors__/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld/**/*.uasset
-!uproject/Content/__ExternalObjects__/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld/**/*.uasset
+!src/unreal/project/composition/uproject/Content/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld.umap
+!src/unreal/project/composition/uproject/Content/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld_HLOD0_Instancing.uasset
+!src/unreal/project/composition/uproject/Content/__ExternalActors__/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld/**/*.uasset
+!src/unreal/project/composition/uproject/Content/__ExternalObjects__/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld/**/*.uasset
 
 # ==============================================================================
 # Visual Studio, Rider, & .NET Environment
@@ -130,9 +130,9 @@ x86/
 [Aa][Rr][Mm]64/
 bld/
 [Bb]in/
-# Root-level crate entrypoints are Rust source, not build output.
-!*/src/bin/
-!*/src/bin/*.rs
+# Canonical crate entrypoints are Rust source, not build output.
+!src/**/composition/bin/
+!src/**/composition/bin/*.rs
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
@@ -329,10 +329,10 @@ fbx-assets/world-edited/
 pipeline_output_tree.*
 
 # Generated pipeline staging and output (not canonical source)
-pipeline/staging/
-pipeline/evidence_samples/
-pipeline/import_jobs/
-pipeline/tmp/
+src/migration/pipeline/staging/
+src/migration/pipeline/evidence_samples/
+src/migration/pipeline/import_jobs/
+src/migration/pipeline/tmp/
 
 # Machine-specific editor exports (keep reusable guidance in adjacent READMEs)
 /docs/settings/unreal-engine/EditorSettings.ini
@@ -381,8 +381,8 @@ rust-toolchain.toml
 validate.ps1
 validate.sh
 SCHOENWALD.md
-uproject/Scripts/validate_python_source_headers.py
-uproject/tests/repository_policy/*
+src/unreal/project/composition/uproject/Scripts/validate_python_source_headers.py
+tests/unreal/project/repository_policy/*
 Directory.Build.props
 
 # ==============================================================================

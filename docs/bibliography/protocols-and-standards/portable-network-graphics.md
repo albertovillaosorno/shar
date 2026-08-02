@@ -88,7 +88,7 @@ of emitted-output compliance.
 
 - W3C (2025), *Portable Network Graphics (PNG) Specification (Third Edition)*.
   <https://www.w3.org/TR/png-3/>
-- SHAR repository evidence: `game-manifest/src/domain/domain.rs`.
+- SHAR repository evidence: `src/migration/manifest/domain/mod.rs`.
 
 ## Source References
 

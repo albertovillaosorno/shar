@@ -1,0 +1,51 @@
+[package]
+name = "rtf"
+version.workspace = true
+edition = "2024"
+license = "MIT"
+description = "From-scratch RTF to Markdown converter for the pipeline."
+publish = false
+
+[dependencies]
+# schoenwald-cli centralizes process arguments, ordered streams, exact stdout documents, newline handling, and exit-code mapping for the RTF driving adapter.
+schoenwald-cli = { path = "../../foundation/command-line" }
+# schoenwald-filesystem centralizes complete source snapshots and complete Markdown publication while timestamp provenance remains RTF-specific.
+schoenwald-filesystem = { path = "../../foundation/filesystem" }
+
+
+[lib]
+name = "rtf"
+path = "lib.rs"
+
+[[bin]]
+name = "rtf-to-md"
+path = "composition/main.rs"
+# Canonical external integration tests.
+
+[[test]]
+name = "document_break_controls"
+path = "../../../tests/formats/rtf/document_break_controls.rs"
+
+[[test]]
+name = "font_charsets"
+path = "../../../tests/formats/rtf/font_charsets.rs"
+
+[[test]]
+name = "malformed_binary_controls"
+path = "../../../tests/formats/rtf/malformed_binary_controls.rs"
+
+[[test]]
+name = "malformed_hex_controls"
+path = "../../../tests/formats/rtf/malformed_hex_controls.rs"
+
+[[test]]
+name = "metadata_destinations"
+path = "../../../tests/formats/rtf/metadata_destinations.rs"
+
+[[test]]
+name = "special_character_controls"
+path = "../../../tests/formats/rtf/special_character_controls.rs"
+
+[[test]]
+name = "unicode_character_controls"
+path = "../../../tests/formats/rtf/unicode_character_controls.rs"

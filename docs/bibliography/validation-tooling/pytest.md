@@ -105,4 +105,4 @@ compatibility must be verified against the actual pytest and Python releases.
 - pytest-dev contributors (n.d.) *Official GitHub repository*. Available at:
   <https://github.com/pytest-dev/pytest> (Accessed: 14 July 2026).
 - SHAR canonical Python authority (2026), pinning `pytest==9.1.1`, plus
-  repository configuration and tests under `mcp/tests/`.
+  repository configuration and tests under `tests/unreal/editor-control/`.

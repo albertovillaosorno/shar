@@ -114,7 +114,7 @@ compatibility.
 ### Verified sources
 
 - Autodesk, *FBX SDK documentation*. <https://help.autodesk.com/>
-- SHAR repository evidence: `fbx/src/adapters/driven/binary_fbx.rs` and the
+- SHAR repository evidence: `src/formats/fbx/adapter-outbound/binary_fbx.rs` and the
   binary writer tests.
 
 ## Source References

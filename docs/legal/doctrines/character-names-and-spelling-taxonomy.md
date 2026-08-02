@@ -44,7 +44,7 @@ publication or distribution metadata.
 ## Repository Application
 
 SHAR classifies a verified character name in
-`docs/cspell/named-entities.txt` as named-entity metadata when all of the
+`.jig/cspell/named-entities.txt` as named-entity metadata when all of the
 following are true:
 
 1. The spelling is independently verified from an identified reliable source.

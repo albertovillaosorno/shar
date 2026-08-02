@@ -28,11 +28,11 @@ running but unhealthy server through
 
 Use these repository-owned sources in this order:
 
-1. `uproject/shar.uproject` for project and plugin posture.
-1. `uproject/Config/DefaultEditorPerProjectUserSettings.ini` for tracked
+1. `src/unreal/project/composition/uproject/shar.uproject` for project and plugin posture.
+1. `src/unreal/project/composition/uproject/Config/DefaultEditorPerProjectUserSettings.ini` for tracked
    server defaults.
-1. `mcp/README.md` for translator architecture and operator commands.
-1. `mcp/tests/test_project_configuration.py` for enforced integration
+1. `src/unreal/editor-control/composition/mcp/README.md` for translator architecture and operator commands.
+1. `tests/unreal/editor-control/test_project_configuration.py` for enforced integration
    invariants.
 1. live `shar-unreal-mcp doctor` output for the running session.
 
@@ -44,7 +44,7 @@ source, remembered console command, or workstation-specific path.
 The project entry point is:
 
 ```text
-uproject/shar.uproject
+src/unreal/project/composition/uproject/shar.uproject
 ```
 
 Before changing configuration:

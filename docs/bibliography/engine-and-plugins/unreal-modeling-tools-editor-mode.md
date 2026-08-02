@@ -81,7 +81,7 @@ before publication or distribution.
   is linked and authorized as Epic documents. Available at:
   <https://github.com/EpicGames/UnrealEngine> (Accessed: 12 July 2026).
 - SHAR repository and selected engine installation (2026),
-  `uproject/shar.uproject`, Unreal Engine 5.8.0 build evidence, and
+  `src/unreal/project/composition/uproject/shar.uproject`, Unreal Engine 5.8.0 build evidence, and
   installed
   `ModelingToolsEditorMode.uplugin` version 0.1 with beta status, editor module,
   and dependent toolsets.

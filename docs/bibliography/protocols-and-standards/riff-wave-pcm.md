@@ -107,8 +107,8 @@ matrix, and decide whether multichannel output requires
 - Microsoft, *WAVEFORMATEXTENSIBLE structure*.
   <!-- markdownlint-disable-next-line MD013 -->
   <https://learn.microsoft.com/en-us/windows/win32/api/mmreg/ns-mmreg-waveformatextensible>
-- SHAR repository evidence: `rsd/src/domain/wav.rs` and
-  `rsd/tests/wav_validation.rs`.
+- SHAR repository evidence: `src/formats/rsd/domain/wav.rs` and
+  `tests/formats/rsd/wav_validation.rs`.
 
 ## Source References
 

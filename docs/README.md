@@ -152,14 +152,14 @@ public authority.
 
 ## Editorial And Spelling Support
 
-The files under `docs/cspell/` support repository spelling validation; they are
+The files under `.jig/cspell/` support repository spelling validation; they are
 not documentation authorities or substitutes for source review:
 
-- [`english.txt`](cspell/english.txt) contains genuine English words
+- [`english.txt`](../.jig/cspell/english.txt) contains genuine English words
   missing from the enabled standard dictionaries;
-- [`technical.txt`](cspell/technical.txt) contains reusable technical terms,
+- [`technical.txt`](../.jig/cspell/technical.txt) contains reusable technical terms,
   acronyms, formats, APIs, and repository-domain vocabulary;
-- [`named-entities.txt`](cspell/named-entities.txt) contains verified
+- [`named-entities.txt`](../.jig/cspell/named-entities.txt) contains verified
   people, organizations, products, characters, cases, and other proper names.
 
 Keep every wordlist sorted, unique, and case-appropriate. Do not add malformed

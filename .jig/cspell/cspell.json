@@ -1,0 +1,86 @@
+{
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+  "version": "0.2",
+  "language": "en-US,en-GB",
+  "readonly": false,
+  "useGitignore": true,
+  "enableGlobDot": true,
+  "validateDirectives": true,
+  "caseSensitive": true,
+  "allowCompoundWords": false,
+  "minWordLength": 3,
+  "usePnP": false,
+  "files": [
+    "../../AGENTS.md",
+    "../../Cargo.toml",
+    "../../LICENSE-MIT",
+    "../../README.md",
+    "../../.github/**/*.{json,md,yaml,yml}",
+    "../../.jig/**/*.{json,md,mdc,txt,yaml,yml}",
+    "../../docs/**/*.{json,md,mdc,yaml,yml}",
+    "../../skills/**/*.{json,md,mdc,yaml,yml}",
+    "../../src/**/*.{c,cc,cpp,cs,cxx,h,hh,hpp,hxx,ini,inl,json,md,py,rs,sh,toml,txt,yaml,yml}",
+    "../../tests/**/*.{c,cc,cpp,cs,cxx,h,hh,hpp,hxx,ini,inl,json,md,py,rs,sh,toml,txt,yaml,yml}"
+  ],
+  "ignoreRegExpList": [],
+  "ignoreWords": [],
+  "dictionaryDefinitions": [
+    {
+      "name": "custom-english",
+      "path": "./english.txt"
+    },
+    {
+      "name": "custom-named-entities",
+      "path": "./named-entities.txt"
+    },
+    {
+      "name": "custom-technical",
+      "path": "./technical.txt"
+    }
+  ],
+  "dictionaries": [
+    "aws",
+    "bash",
+    "companies",
+    "computing-acronyms",
+    "cpp",
+    "csharp",
+    "css",
+    "custom-english",
+    "custom-named-entities",
+    "custom-technical",
+    "data-science",
+    "data-science-tools",
+    "dotnet",
+    "en-gb",
+    "filetypes",
+    "fullstack",
+    "game-development",
+    "gaming-terms",
+    "git",
+    "html",
+    "networking-terms",
+    "node",
+    "npm",
+    "public-licenses",
+    "python",
+    "rust",
+    "rust-crates",
+    "shellscript",
+    "software-tools",
+    "softwareTerms",
+    "sql",
+    "typescript",
+    "web-services"
+  ],
+  "ignorePaths": [
+    "../../.cache/**",
+    "../../.dependencies/**",
+    "../../.git/**",
+    "../../.temp/**",
+    "../../Cargo.lock",
+    "../../game/**",
+    "../../target/**",
+    "../../tests/fixtures/**"
+  ]
+}

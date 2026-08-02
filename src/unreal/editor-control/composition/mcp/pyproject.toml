@@ -1,0 +1,30 @@
+# Package metadata only. Repository-wide Python validation is owned by the
+# repository `.jig/lang/python/pytest.ini`; package-local policy is forbidden.
+# ADR: docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
+
+[build-system]
+requires = ["hatchling==1.31.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "shar-unreal-mcp-cli"
+version = "26.7.0"
+description = "Terminal translator for Unreal Engine native MCP tools."
+readme = "README.md"
+requires-python = "==3.14.6"
+license = { text = "MIT" }
+dependencies = []
+
+[project.scripts]
+shar-unreal-mcp = "mcp.adapter_inbound.cli:main"
+
+[tool.hatch.build.targets.wheel]
+bypass-selection = true
+
+[tool.hatch.build.targets.wheel.force-include]
+"../../domain/mcp/domain" = "mcp/domain"
+"../../application/mcp/application" = "mcp/application"
+"../../port-outbound/mcp/port_outbound" = "mcp/port_outbound"
+"../../adapter-inbound/mcp/adapter_inbound" = "mcp/adapter_inbound"
+"../../adapter-outbound/mcp/adapter_outbound" = "mcp/adapter_outbound"
+"../../contract/mcp/py.typed" = "mcp/py.typed"

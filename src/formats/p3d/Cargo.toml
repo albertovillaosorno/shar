@@ -1,0 +1,47 @@
+[package]
+name = "p3d"
+version.workspace = true
+edition = "2024"
+license = "MIT"
+description = "Lossless Pure3D inspection and extraction for normalization."
+publish = false
+
+[dependencies]
+# schoenwald-cli centralizes process arguments, ordered streams, newline handling, and exit-code mapping for both P3D driving adapters.
+schoenwald-cli = { path = "../../foundation/command-line" }
+# schoenwald-filesystem centralizes complete package reads, deterministic traversal, path inspection, and complete report publication.
+schoenwald-filesystem = { path = "../../foundation/filesystem" }
+# shar-json-text owns lossless JSON string-content escaping shared across format boundaries.
+shar-json-text = { path = "../../foundation/json-text" }
+
+# serde_json validates every generated component and manifest document before any P3D package publication.
+serde_json = "1"
+
+[lib]
+name = "p3d"
+path = "lib.rs"
+
+[[bin]]
+name = "p3d-extract"
+path = "composition/main.rs"
+
+[[bin]]
+name = "p3d-batch-extract"
+path = "composition/bin/batch_extract.rs"
+# Canonical external integration tests.
+
+[[test]]
+name = "chunk"
+path = "../../../tests/formats/p3d/chunk.rs"
+
+[[test]]
+name = "extract"
+path = "../../../tests/formats/p3d/extract.rs"
+
+[[test]]
+name = "package"
+path = "../../../tests/formats/p3d/package.rs"
+
+[[test]]
+name = "reader"
+path = "../../../tests/formats/p3d/reader.rs"
