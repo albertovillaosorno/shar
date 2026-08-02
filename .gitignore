@@ -41,6 +41,10 @@ tmp/
 logs/
 dependencies/
 
+# Repository-local toolchains and disposable Jig state.
+.dependencies/
+.temp/
+
 # ==============================================================================
 # Unreal Engine
 # Compiled state, editor configurations, and derived data.
