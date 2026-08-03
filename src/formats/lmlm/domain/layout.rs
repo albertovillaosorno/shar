@@ -1,7 +1,3 @@
-// File:
-//   - layout.rs
-// Path: src/formats/lmlm/domain/layout.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,41 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Fixed constants for the supported LSPA container layout.
+//   - Layout domain module.
 // - Must-Not:
-//   - Write extracted files or bypass checked parser boundaries.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Operations required by this single LMLM responsibility.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - One contained invariant gains independent state or a distinct API.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another LMLM module proves the same invariant without distinction.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Owns fixed constants for the supported lspa container layout.
+//   - Layout domain module.
 // - Description:
-//   - Keeps this parser responsibility deterministic and fail closed.
+//   - Implements the declared domain module responsibility for lmlm.
 // - Usage:
-//   - Imported only by owned LMLM modules.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Malformed input never uses unchecked arithmetic.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Fixed layout constants for the supported LSPA container.
-//!
-//! Centralizes block sizes, offsets, header values, and package markers.
+//! Layout domain module.
 
-// Sibling parser modules share these contracts without exposing them publicly.
 #![expect(
     clippy::redundant_pub_crate,
     reason = "sibling parser modules require crate-visible contracts while \

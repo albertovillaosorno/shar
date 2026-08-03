@@ -1,7 +1,3 @@
-// File:
-//   - current_directory_creation.rs
-// Path: tests/foundation/filesystem/current_directory_creation.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for current-directory creation requests.
+//   - Current directory creation test module.
 // - Must-Not:
-//   - Depend on machine-specific paths or caller policy.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Assert that explicit directory creation performs meaningful work.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another malformed directory path needs separate fixtures.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test file owns the same current-directory contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Current-directory creation regression tests.
+//   - Current directory creation test module.
 // - Description:
-//   - Rejects no-op directory creation presented as successful work.
+//   - Implements the declared test module responsibility for filesystem.
 // - Usage:
-//   - Runs through the filesystem crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Current-directory markers alone are invalid creation targets.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for current-directory creation requests.
-//!
-//! A no-op marker must not be reported as newly created directory state.
+//! Current directory creation test module.
 
 #[cfg(windows)]
 #[path = "support/junction.rs"]
@@ -61,12 +47,10 @@ fn current_directory_creation_is_rejected() -> Result<(), String> {
     };
 
     if error.kind() != io::ErrorKind::InvalidInput {
-        return Err(
-            format!(
-                "unexpected current-directory error kind: {:?}",
-                error.kind()
-            ),
-        );
+        return Err(format!(
+            "unexpected current-directory error kind: {:?}",
+            error.kind()
+        ));
     }
     Ok(())
 }
@@ -74,18 +58,14 @@ fn current_directory_creation_is_rejected() -> Result<(), String> {
 #[cfg(windows)]
 #[test]
 fn linked_directory_creation_is_rejected() -> Result<(), String> {
-    let root = std::env::temp_dir().join(
-        format!(
-            "schoenwald-filesystem-linked-create-{}",
-            std::process::id()
-        ),
-    );
+    let root = std::env::temp_dir().join(format!(
+        "schoenwald-filesystem-linked-create-{}",
+        std::process::id()
+    ));
     let target = root.join("target");
     let link = root.join("link");
     fs::create_dir_all(&target).map_err(|error| error.to_string())?;
-    support::create_junction(
-        &link, &target,
-    )?;
+    support::create_junction(&link, &target)?;
 
     let result = local::create_dir_all(&link);
 
@@ -94,12 +74,10 @@ fn linked_directory_creation_is_rejected() -> Result<(), String> {
         return Err("linked directory reported creation success".to_owned());
     };
     if error.kind() != io::ErrorKind::InvalidInput {
-        return Err(
-            format!(
-                "unexpected linked-directory error kind: {:?}",
-                error.kind()
-            ),
-        );
+        return Err(format!(
+            "unexpected linked-directory error kind: {:?}",
+            error.kind()
+        ));
     }
     Ok(())
 }
@@ -107,18 +85,14 @@ fn linked_directory_creation_is_rejected() -> Result<(), String> {
 #[cfg(windows)]
 #[test]
 fn linked_parent_directory_creation_is_rejected() -> Result<(), String> {
-    let root = std::env::temp_dir().join(
-        format!(
-            "schoenwald-filesystem-linked-parent-create-{}",
-            std::process::id()
-        ),
-    );
+    let root = std::env::temp_dir().join(format!(
+        "schoenwald-filesystem-linked-parent-create-{}",
+        std::process::id()
+    ));
     let target = root.join("target");
     let link = root.join("link");
     fs::create_dir_all(&target).map_err(|error| error.to_string())?;
-    support::create_junction(
-        &link, &target,
-    )?;
+    support::create_junction(&link, &target)?;
 
     let escaped = target.join("created");
     let result = local::create_dir_all(&link.join("created"));
@@ -129,12 +103,10 @@ fn linked_parent_directory_creation_is_rejected() -> Result<(), String> {
         return Err("directory creation followed linked parent".to_owned());
     };
     if error.kind() != io::ErrorKind::InvalidInput {
-        return Err(
-            format!(
-                "unexpected linked-parent error kind: {:?}",
-                error.kind()
-            ),
-        );
+        return Err(format!(
+            "unexpected linked-parent error kind: {:?}",
+            error.kind()
+        ));
     }
     if escaped_exists {
         return Err("linked parent received created directory".to_owned());
@@ -145,12 +117,10 @@ fn linked_parent_directory_creation_is_rejected() -> Result<(), String> {
 #[test]
 fn parent_marker_destination_is_rejected_without_side_effects()
 -> Result<(), String> {
-    let root = std::env::temp_dir().join(
-        format!(
-            "schoenwald-filesystem-parent-marker-create-{}",
-            std::process::id()
-        ),
-    );
+    let root = std::env::temp_dir().join(format!(
+        "schoenwald-filesystem-parent-marker-create-{}",
+        std::process::id()
+    ));
     let intermediate = root.join("scratch");
     fs::create_dir_all(&root).map_err(|error| error.to_string())?;
 
@@ -160,20 +130,18 @@ fn parent_marker_destination_is_rejected_without_side_effects()
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     let Err(error) = result else {
         return Err(
-            "parent marker reported directory creation success".to_owned(),
+            "parent marker reported directory creation success".to_owned()
         );
     };
     if error.kind() != io::ErrorKind::InvalidInput {
-        return Err(
-            format!(
-                "unexpected parent-marker error kind: {:?}",
-                error.kind()
-            ),
-        );
+        return Err(format!(
+            "unexpected parent-marker error kind: {:?}",
+            error.kind()
+        ));
     }
     if intermediate_exists {
         return Err(
-            "parent marker created an intermediate directory".to_owned(),
+            "parent marker created an intermediate directory".to_owned()
         );
     }
     Ok(())
@@ -182,12 +150,10 @@ fn parent_marker_destination_is_rejected_without_side_effects()
 #[test]
 fn current_marker_destination_is_rejected_without_side_effects()
 -> Result<(), String> {
-    let root = std::env::temp_dir().join(
-        format!(
-            "schoenwald-filesystem-current-marker-create-{}",
-            std::process::id()
-        ),
-    );
+    let root = std::env::temp_dir().join(format!(
+        "schoenwald-filesystem-current-marker-create-{}",
+        std::process::id()
+    ));
     let intermediate = root.join("scratch");
     fs::create_dir_all(&root).map_err(|error| error.to_string())?;
 
@@ -197,20 +163,18 @@ fn current_marker_destination_is_rejected_without_side_effects()
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     let Err(error) = result else {
         return Err(
-            "current marker reported directory creation success".to_owned(),
+            "current marker reported directory creation success".to_owned()
         );
     };
     if error.kind() != io::ErrorKind::InvalidInput {
-        return Err(
-            format!(
-                "unexpected current-marker error kind: {:?}",
-                error.kind()
-            ),
-        );
+        return Err(format!(
+            "unexpected current-marker error kind: {:?}",
+            error.kind()
+        ));
     }
     if intermediate_exists {
         return Err(
-            "current marker created an intermediate directory".to_owned(),
+            "current marker created an intermediate directory".to_owned()
         );
     }
     Ok(())

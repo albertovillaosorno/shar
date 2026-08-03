@@ -1,5 +1,6 @@
 // File:
 //   - SharCharacters.Build.cs
+// jig-ignore-next-line: exact syntax is indivisible
 // Path: src/unreal/project/composition/uproject/Source/SharCharacters/SharCharacters.Build.cs
 //
 // Copyright:

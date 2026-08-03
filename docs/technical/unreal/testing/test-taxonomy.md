@@ -5,26 +5,36 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Open sandbox chapters and world progression](../../../adr/gameplay/open-sandbox-chapters-and-world-progression.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Common UI front end and progress projection](../../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Open sandbox chapters and world progression](../../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
+- [Event-driven music and
+  ambience](../../../adr/unreal/runtime/event-driven-music-and-ambience.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Common UI front end and progress projection](../../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
+- [Mass Entity ambient
+  population](../../../adr/unreal/runtime/mass-entity-ambient-population.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Event-driven music and ambience](../../../adr/unreal/runtime/event-driven-music-and-ambience.md)
+- [Runtime parity test
+  boundary](../../../adr/unreal/runtime/runtime-parity-test-boundary.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [State-driven missions, interactions, interiors, and notoriety](../../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Graphics quality presets and platform support](../../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Mass Entity ambient population](../../../adr/unreal/runtime/mass-entity-ambient-population.md)
+- [Portable save storage and
+  lifecycle](../../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Transactional phone-booth vehicle retrieval](../../../adr/unreal/runtime/transactional-phone-booth-vehicle-retrieval.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Runtime parity test boundary](../../../adr/unreal/runtime/runtime-parity-test-boundary.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [State-driven missions, interactions, interiors, and notoriety](../../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Graphics quality presets and platform support](../../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Portable save storage and lifecycle](../../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Transactional phone-booth vehicle retrieval](../../../adr/unreal/runtime/transactional-phone-booth-vehicle-retrieval.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Validated game-feature mod overlays](../../../adr/unreal/runtime/validated-game-feature-mod-overlays.md)
+- [Validated game-feature mod
+  overlays](../../../adr/unreal/runtime/validated-game-feature-mod-overlays.md)
 
 ## Purpose
 

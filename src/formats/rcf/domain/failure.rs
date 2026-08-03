@@ -1,7 +1,3 @@
-// File:
-//   - failure.rs
-// Path: src/formats/rcf/domain/failure.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,45 +6,65 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure rcf domain rules for domain failure.
+//   - Closed RCF parsing and extraction failure evidence.
 // - Must-Not:
-//   - Read files, parse generated indexes, invoke CLI code, or call writer
-//   - adapters.
+//   - Retain runtime-specific error types or perform filesystem access.
 // - Allows:
-//   - Value objects, invariant checks, and pure evidence-to-domain translation.
+//   - Stable copied failure text, native path identity, and format diagnostics.
 // - Split-When:
-//   - Split when failure contains two independently testable contracts.
+//   - Split when one failure family gains an independent consumer contract.
 // - Merge-When:
-//   - Another rcf module owns the same domain boundary with no distinct
-//   - invariant.
+//   - Merge when another domain module owns the identical error taxonomy.
 // - Summary:
-//   - Error values for RCF archive parsing and extraction.
+//   - Pure RCF failure evidence.
 // - Description:
-//   - Defines failure data and behavior for rcf domain.
+//   - Represents malformed archives, unsafe paths, and copied I/O failures.
 // - Usage:
-//   - Imported through crate domain facades or sibling domain modules.
+//   - Returned by RCF application services, ports, and adapters.
 // - Defaults:
-//   - No filesystem paths, no external process calls, and no implicit IO
-//   - defaults.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Untrusted diagnostic text and native path units are escaped reversibly.
 //
 
-//! Error values for RCF archive parsing and extraction.
+//! Pure RCF failure evidence.
+
 use std::fmt::{Display, Formatter, Write as _};
-use std::io;
 use std::path::PathBuf;
 
-use schoenwald_filesystem::DiagnosticPath;
+use super::escaped_path::EscapedPath;
+
+/// Stable domain evidence copied from one external I/O failure.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IoFailure {
+    /// Exact external failure text retained for diagnostics and inspection.
+    message: String,
+}
+
+impl IoFailure {
+    /// Captures one external failure without retaining its runtime type.
+    #[must_use]
+    pub fn new(source: impl Display) -> Self {
+        Self {
+            message: source.to_string(),
+        }
+    }
+
+    /// Returns the exact captured external failure text.
+    #[must_use]
+    pub fn message(&self) -> &str {
+        &self.message
+    }
+}
+
+impl Display for IoFailure {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        write_escaped_text(formatter, &self.message)
+    }
+}
+
+impl core::error::Error for IoFailure {}
 
 /// Closed error taxonomy for archive parsing and extraction.
 #[derive(Debug)]
@@ -61,8 +77,8 @@ pub enum ArchiveError {
     Io {
         /// Path involved in the failed operation.
         path: PathBuf,
-        /// Original IO error.
-        source: io::Error,
+        /// Stable copied evidence from the external failure.
+        source: IoFailure,
     },
 }
 
@@ -79,15 +95,21 @@ impl ArchiveError {
         Self::UnsafeEntryPath(path.into())
     }
 
-    /// Builds an IO error with path context.
+    /// Builds an I/O error with path context and copied failure evidence.
     #[must_use]
-    pub fn io(
-        path: impl Into<PathBuf>,
-        source: io::Error,
-    ) -> Self {
+    pub fn io(path: impl Into<PathBuf>, source: impl Display) -> Self {
         Self::Io {
             path: path.into(),
-            source,
+            source: IoFailure::new(source),
+        }
+    }
+
+    /// Returns copied I/O failure evidence when this is an I/O error.
+    #[must_use]
+    pub const fn io_failure(&self) -> Option<&IoFailure> {
+        match self {
+            Self::Io { source, .. } => Some(source),
+            Self::InvalidArchive(_) | Self::UnsafeEntryPath(_) => None,
         }
     }
 }
@@ -106,126 +128,28 @@ fn write_escaped_text(
 }
 
 impl Display for ArchiveError {
-    fn fmt(
-        &self,
-        formatter: &mut Formatter<'_>,
-    ) -> std::fmt::Result {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::InvalidArchive(message) => write!(
-                formatter,
-                "invalid RCF archive: {message}"
-            ),
+            Self::InvalidArchive(message) => {
+                write!(formatter, "invalid RCF archive: {message}")
+            },
             Self::UnsafeEntryPath(path) => {
                 formatter.write_str("unsafe RCF entry path: ")?;
-                write_escaped_text(
-                    formatter, path,
-                )
-            }
-            Self::Io {
-                path,
-                source,
-            } => {
+                write_escaped_text(formatter, path)
+            },
+            Self::Io { path, source } => {
                 write!(
                     formatter,
-                    "IO error at {}: ",
-                    DiagnosticPath::new(path)
-                )?;
-                let source_text = source.to_string();
-                write_escaped_text(
-                    formatter,
-                    &source_text,
+                    "IO error at {}: {source}",
+                    EscapedPath::new(path)
                 )
-            }
+            },
         }
     }
 }
 
-impl std::error::Error for ArchiveError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Self::Io {
-                source,
-                ..
-            } => Some(source),
-            Self::InvalidArchive(_) | Self::UnsafeEntryPath(_) => None,
-        }
-    }
-}
+impl core::error::Error for ArchiveError {}
 
 #[cfg(test)]
-mod tests {
-    use std::error::Error as _;
-    #[cfg(windows)]
-    use std::ffi::OsString;
-    use std::io;
-    #[cfg(windows)]
-    use std::os::windows::ffi::OsStringExt as _;
-    #[cfg(windows)]
-    use std::path::PathBuf;
-
-    use super::ArchiveError;
-
-    #[test]
-    fn io_error_escapes_source_control_characters() {
-        let error = ArchiveError::io(
-            "archive.rcf",
-            io::Error::other("read\nfailure"),
-        );
-
-        let rendered = error.to_string();
-
-        assert!(
-            !rendered
-                .chars()
-                .any(char::is_control),
-            "diagnostic contains a control character: {rendered:?}"
-        );
-        assert!(rendered.contains(r"read\nfailure"));
-        assert!(
-            error
-                .source()
-                .is_some()
-        );
-    }
-
-    #[test]
-    fn unsafe_entry_path_error_escapes_control_characters() {
-        let error = ArchiveError::unsafe_entry_path("bad\npath");
-
-        let rendered = error.to_string();
-
-        assert!(
-            !rendered
-                .chars()
-                .any(char::is_control),
-            "diagnostic contains a control character: {rendered:?}"
-        );
-        assert!(rendered.contains(r"bad\npath"));
-    }
-
-    #[cfg(windows)]
-    #[test]
-    fn io_error_preserves_unpaired_utf16_path_unit() {
-        let path = PathBuf::from(
-            OsString::from_wide(
-                &[
-                    u16::from(b'a'),
-                    0xd800,
-                    u16::from(b'b'),
-                ],
-            ),
-        );
-        let error = ArchiveError::io(
-            path,
-            io::Error::other("read failure"),
-        );
-
-        let rendered = error.to_string();
-
-        assert!(
-            rendered.contains(r"a\u{D800}b"),
-            "diagnostic lost the native path unit: {rendered:?}"
-        );
-        assert!(!rendered.contains('\u{fffd}'));
-    }
-}
+#[path = "../../../../tests/formats/rcf/unit/domain/failure/tests.rs"]
+mod tests;

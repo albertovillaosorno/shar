@@ -5,22 +5,28 @@
 
 ## Governing decisions and specifications
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md)
+- [Native import, material rebuild, and world
+  assembly](native-import-material-and-world-assembly.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Native import, material rebuild, and world assembly](native-import-material-and-world-assembly.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Native cooked-asset construction and registration runtime](native-cooked-asset-construction-and-registration-runtime.md)
+- [Native cooked-asset construction and registration
+  runtime](native-cooked-asset-construction-and-registration-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Vehicle AI and route runtime](vehicle-ai-and-route-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+- [Native vehicle physics, control, damage, and presentation
+  runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Pedestrian path runtime](pedestrian-path-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Authored spatial placement and trigger runtime](authored-spatial-placement-and-trigger-runtime.md)
+- [Authored spatial placement and trigger
+  runtime](authored-spatial-placement-and-trigger-runtime.md)
 
 ## Purpose
 
@@ -64,17 +70,33 @@ physics, or general navigation system.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Road catalog | Owns stable road, segment, lane, intersection, control, shortcut, and route identities. |
-| Import pipeline | Converts normalized road evidence into deterministic cooked graph assets and spline data. |
-| Road-network subsystem | Publishes immutable graph snapshots and bounded deterministic queries. |
-| Traffic subsystem | Owns lane occupancy, intersection reservations, density, spawn admission, and ambient lifecycle. |
-| Vehicle route follower | Consumes road projections, route paths, lane choices, and look-ahead results. |
-| Pedestrian and navigation services | Consume eligible crossing, sidewalk, path, and navigation projections. |
-| Mission and race services | Own route objectives, checkpoints, closures, completion, failure, and shortcut eligibility. |
-| World-composition service | Owns region readiness, overlays, streaming, and teardown. |
-| Scene-query service | Owns normalized physical traces and may correlate hits with road metadata. |
+- **Authority:** Road catalog
+  - **Responsibility:** Owns stable road, segment, lane, intersection, control,
+    shortcut, and route identities.
+- **Authority:** Import pipeline
+  - **Responsibility:** Converts normalized road evidence into deterministic
+    cooked graph assets and spline data.
+- **Authority:** Road-network subsystem
+  - **Responsibility:** Publishes immutable graph snapshots and bounded
+    deterministic queries.
+- **Authority:** Traffic subsystem
+  - **Responsibility:** Owns lane occupancy, intersection reservations, density,
+    spawn admission, and ambient lifecycle.
+- **Authority:** Vehicle route follower
+  - **Responsibility:** Consumes road projections, route paths, lane choices,
+    and look-ahead results.
+- **Authority:** Pedestrian and navigation services
+  - **Responsibility:** Consume eligible crossing, sidewalk, path, and
+    navigation projections.
+- **Authority:** Mission and race services
+  - **Responsibility:** Own route objectives, checkpoints, closures, completion,
+    failure, and shortcut eligibility.
+- **Authority:** World-composition service
+  - **Responsibility:** Owns region readiness, overlays, streaming, and
+    teardown.
+- **Authority:** Scene-query service
+  - **Responsibility:** Owns normalized physical traces and may correlate hits
+    with road metadata.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -112,20 +134,30 @@ identity.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `NetworkId` | Canonical world road-network identity. |
-| `WorldId` | Owning world identity. |
-| `CoordinateRevision` | Accepted coordinate-system and unit revision. |
-| `Roads` | Canonically ordered road definitions. |
-| `Segments` | Canonically ordered geometric and query segments. |
-| `Lanes` | Directional lane definitions and samples. |
-| `Intersections` | Intersection geometry, connectivity, and control definitions. |
-| `Connections` | Directed legal graph edges and costs. |
-| `TrafficPolicies` | Density, speed, control, occupancy, and admission definitions. |
-| `SpatialIndex` | Optional deterministic cooked acceleration data. |
-| `StreamingPolicy` | Region, bundle, overlay, and teardown behavior. |
-| `Digest` | Deterministic content digest. |
+- **Field:** `NetworkId`
+  - **Contract:** Canonical world road-network identity.
+- **Field:** `WorldId`
+  - **Contract:** Owning world identity.
+- **Field:** `CoordinateRevision`
+  - **Contract:** Accepted coordinate-system and unit revision.
+- **Field:** `Roads`
+  - **Contract:** Canonically ordered road definitions.
+- **Field:** `Segments`
+  - **Contract:** Canonically ordered geometric and query segments.
+- **Field:** `Lanes`
+  - **Contract:** Directional lane definitions and samples.
+- **Field:** `Intersections`
+  - **Contract:** Intersection geometry, connectivity, and control definitions.
+- **Field:** `Connections`
+  - **Contract:** Directed legal graph edges and costs.
+- **Field:** `TrafficPolicies`
+  - **Contract:** Density, speed, control, occupancy, and admission definitions.
+- **Field:** `SpatialIndex`
+  - **Contract:** Optional deterministic cooked acceleration data.
+- **Field:** `StreamingPolicy`
+  - **Contract:** Region, bundle, overlay, and teardown behavior.
+- **Field:** `Digest`
+  - **Contract:** Deterministic content digest.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -608,7 +640,8 @@ not tick vehicles or apply throttle, brake, or steering.
 Traffic projection, lane-change curves, intersection entry, and the verified
 handoff between lightweight road movement and dynamic Chaos simulation follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+[Native vehicle physics, control, damage, and presentation
+runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
 A traffic instance cannot become player-controlled or physically simulated by
 swapping a raw locomotion pointer or retaining stale lane state.
 

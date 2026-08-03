@@ -1,7 +1,3 @@
-// File:
-//   - layers.rs
-// Path: src/formats/fbx/domain/texture/semantic/eye/layers.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,37 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Deterministic construction of canonical sclera, pupil, and lid textures.
+//   - Layers domain module.
 // - Must-Not:
-//   - Change eye geometry, animation, frame order, or access files.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Exact-color masks and transparent RGBA layer construction.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - One eye layer gains an independent generation contract.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Frame analysis owns the same canonical layer construction.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Canonical three-texture eye layer generation.
+//   - Layers domain module.
 // - Description:
-//   - Derives editable eye SSOT layers while retaining compatibility frames.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Called after validated frame analysis and nearest-neighbor scaling.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - The lid texture is split evenly into upper and lower semantic halves.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Canonical three-texture eye layer generation.
+//! Layers domain module.
+
 use super::super::color::Rgba8;
 use super::super::image::RgbaImage;
 use super::types::{EyeTextureError, EyeTextureLayers};
@@ -53,42 +42,21 @@ pub(super) fn build(
 ) -> Result<EyeTextureLayers, EyeTextureError> {
     let width = open_frame.width();
     let height = open_frame.height();
-    let composite = RgbaImage::filled(
-        width,
-        height,
-        Rgba8::new(
-            255, 255, 255, 255,
-        ),
-    )?;
-    let transparent = Rgba8::new(
-        0, 0, 0, 0,
-    );
+    let composite =
+        RgbaImage::filled(width, height, Rgba8::new(255, 255, 255, 255))?;
+    let transparent = Rgba8::new(0, 0, 0, 0);
     let pupil_pixels = open_frame
         .pixels()
         .iter()
-        .map(
-            |color| {
-                if *color == pupil_color {
-                    pupil_color
-                } else {
-                    transparent
-                }
-            },
-        )
+        .map(|color| {
+            if *color == pupil_color {
+                pupil_color
+            } else {
+                transparent
+            }
+        })
         .collect();
-    let pupil = RgbaImage::new(
-        width,
-        height,
-        pupil_pixels,
-    )?;
-    let lids = RgbaImage::filled(
-        width, height, lid_color,
-    )?;
-    Ok(
-        EyeTextureLayers {
-            composite,
-            pupil,
-            lids,
-        },
-    )
+    let pupil = RgbaImage::new(width, height, pupil_pixels)?;
+    let lids = RgbaImage::filled(width, height, lid_color)?;
+    Ok(EyeTextureLayers { composite, pupil, lids })
 }

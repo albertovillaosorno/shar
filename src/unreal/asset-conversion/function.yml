@@ -1,0 +1,21 @@
+schema: shar-function/v1
+identity:
+  id: asset-conversion
+  path: src/unreal/asset-conversion
+  domain: unreal
+architecture:
+  route: src/<domain>/<function>/<kind>/<part>
+  kinds:
+    - domain
+    - port-outbound
+capabilities:
+  - math
+  - rust
+projects:
+  - Cargo.toml
+tests:
+  root: none
+ownership:
+  accountable: Alberto Villa Osorno
+validation:
+  mode: active

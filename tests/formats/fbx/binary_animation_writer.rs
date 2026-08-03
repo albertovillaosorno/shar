@@ -1,7 +1,3 @@
-// File:
-//   - binary_animation_writer.rs
-// Path: tests/formats/fbx/binary_animation_writer.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,46 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for deterministic skeletal animation FBX objects.
+//   - Binary animation writer test module.
 // - Must-Not:
-//   - Read game assets, invoke Blender, or rely on machine-local fixture paths.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic skinned geometry, sampled bone clips, and temporary artifacts.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Non-transform animation requires another FBX object family.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Binary character writer conformance owns animation-specific assertions.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects stacks, layers, curves, takes, timing, and byte determinism.
+//   - Binary animation writer test module.
 // - Description:
-//   - Writes one synthetic animated character twice and checks FBX contracts.
+//   - Implements the declared test module responsibility for fbx.
 // - Usage:
-//   - Run through the fbx crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Temporary artifacts are process-unique and removed after each test.
-//
-// ADRs:
-// - docs/adr/fbx/export/fbx-output-contract-boundary.md
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-//
-// Large file:
-//   - true
-//   - Reason: The synthetic character fixture, deterministic graph assertions,
-//   - and overflow rejection exercise one binary animation writer contract and
-//   - remain together so setup and artifact semantics stay directly auditable.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for deterministic skeletal animation FBX objects.
-//!
-//! A synthetic skinned character proves stack, layer, curve, take, timing,
-//! and repeated-write contracts without private assets or Blender.
+//! Binary animation writer test module.
 
-/// Shared paired-artifact test helper.
 #[path = "common/binary_artifact.rs"]
 pub mod binary_artifact;
 
@@ -95,67 +75,36 @@ fn character() -> Result<CharacterAsset, String> {
     let group = PrimitiveGroup::new(
         0,
         "skin",
-        vec![
-            [
-                0.0, 0.0, 0.0,
-            ],
-            [
-                1.0, 0.0, 0.0,
-            ],
-            [
-                0.0, 1.0, 0.0,
-            ],
-        ],
-        vec![
-            [
-                0.0, 0.0,
-            ],
-            [
-                1.0, 0.0,
-            ],
-            [
-                0.0, 1.0,
-            ],
-        ],
-        &[
-            0, 1, 2,
-        ],
+        vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
+        vec![[0., 0.], [1., 0.], [0., 1.]],
+        &[0, 1, 2],
     )
-    .map_err(
-        |error| format!("synthetic animation geometry failed: {error:?}"),
-    )?;
-    let mesh = MeshAsset::new(
-        "body",
-        vec![group],
-    )
-    .map_err(|error| format!("synthetic animation mesh failed: {error:?}"))?;
+    .map_err(|error| {
+        format!("synthetic animation geometry failed: {error:?}")
+    })?;
+    let mesh = MeshAsset::new("body", vec![group]).map_err(|error| {
+        format!("synthetic animation mesh failed: {error:?}")
+    })?;
     let influences = (0_u32..3)
-        .map(
-            |vertex_index| SkinInfluence {
-                vertex_index,
-                bone_id: "root".to_owned(),
-                weight: 1.0,
-            },
-        )
+        .map(|vertex_index| SkinInfluence {
+            vertex_index,
+            bone_id: "root".to_owned(),
+            weight: 1.,
+        })
         .collect();
     CharacterAsset::new(
         "animated",
-        vec![
-            Bone {
-                id: "root".to_owned(),
-                parent_id: None,
-                rest_matrix: [
-                    1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
-                    0.0, 0.0, 0.0, 1.0,
-                ],
-            },
-        ],
-        vec![
-            SkinnedPart {
-                mesh,
-                group_influences: vec![influences],
-            },
-        ],
+        vec![Bone {
+            id: "root".to_owned(),
+            parent_id: None,
+            rest_matrix: [
+                1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.,
+            ],
+        }],
+        vec![SkinnedPart {
+            mesh,
+            group_influences: vec![influences],
+        }],
     )
     .map_err(|error| format!("synthetic animated character failed: {error:?}"))
 }
@@ -164,40 +113,26 @@ fn animation() -> Result<AnimationClip, String> {
     let half_turn = std::f64::consts::FRAC_1_SQRT_2;
     AnimationClip::new(
         "walk",
-        30.0,
+        30.,
         true,
         3,
-        vec![
-            BoneAnimationTrack {
-                bone_id: "root".to_owned(),
-                samples: vec![
-                    LocalTransformSample {
-                        translation: [
-                            0.0, 0.0, 0.0,
-                        ],
-                        rotation_wxyz: [
-                            1.0, 0.0, 0.0, 0.0,
-                        ],
-                    },
-                    LocalTransformSample {
-                        translation: [
-                            1.0, 0.0, 0.0,
-                        ],
-                        rotation_wxyz: [
-                            half_turn, 0.0, 0.0, half_turn,
-                        ],
-                    },
-                    LocalTransformSample {
-                        translation: [
-                            2.0, 0.0, 0.0,
-                        ],
-                        rotation_wxyz: [
-                            0.0, 0.0, 0.0, 1.0,
-                        ],
-                    },
-                ],
-            },
-        ],
+        vec![BoneAnimationTrack {
+            bone_id: "root".to_owned(),
+            samples: vec![
+                LocalTransformSample {
+                    translation: [0., 0., 0.],
+                    rotation_wxyz: [1., 0., 0., 0.],
+                },
+                LocalTransformSample {
+                    translation: [1., 0., 0.],
+                    rotation_wxyz: [half_turn, 0., 0., half_turn],
+                },
+                LocalTransformSample {
+                    translation: [2., 0., 0.],
+                    rotation_wxyz: [0., 0., 0., 1.],
+                },
+            ],
+        }],
         vec!["IK_Helper".to_owned()],
     )
     .map_err(|error| format!("synthetic animation clip failed: {error:?}"))
@@ -209,20 +144,12 @@ fn two_frame_animation(
 ) -> Result<AnimationClip, String> {
     let samples = vec![
         LocalTransformSample {
-            translation: [
-                0.0_f64, 0.0_f64, 0.0_f64,
-            ],
-            rotation_wxyz: [
-                1.0_f64, 0.0_f64, 0.0_f64, 0.0_f64,
-            ],
+            translation: [0f64, 0f64, 0f64],
+            rotation_wxyz: [1f64, 0f64, 0f64, 0f64],
         },
         LocalTransformSample {
-            translation: [
-                0.0_f64, 0.0_f64, 0.0_f64,
-            ],
-            rotation_wxyz: [
-                1.0_f64, 0.0_f64, 0.0_f64, 0.0_f64,
-            ],
+            translation: [0f64, 0f64, 0f64],
+            rotation_wxyz: [1f64, 0f64, 0f64, 0f64],
         },
     ];
     AnimationClip::new(
@@ -230,50 +157,35 @@ fn two_frame_animation(
         frame_rate,
         false,
         samples.len(),
-        vec![
-            BoneAnimationTrack {
-                bone_id: "root".to_owned(),
-                samples,
-            },
-        ],
+        vec![BoneAnimationTrack {
+            bone_id: "root".to_owned(),
+            samples,
+        }],
         Vec::new(),
     )
     .map_err(|error| format!("two-frame animation clip failed: {error:?}"))
 }
 
 fn overflowing_animation() -> Result<AnimationClip, String> {
-    const KTIME_PER_SECOND: f64 = 46_186_158_000.0;
-    const I64_EXCLUSIVE_MAX: f64 = 9_223_372_036_854_775_808.0;
-    two_frame_animation(
-        "overflow",
-        KTIME_PER_SECOND / I64_EXCLUSIVE_MAX,
-    )
+    const KTIME_PER_SECOND: f64 = 46_186_158_000.;
+    const I64_EXCLUSIVE_MAX: f64 = 9.223_372_036_854_776e18;
+    two_frame_animation("overflow", KTIME_PER_SECOND / I64_EXCLUSIVE_MAX)
 }
 
 fn sub_tick_animation() -> Result<AnimationClip, String> {
-    const KTIME_PER_SECOND: f64 = 46_186_158_000.0;
-    two_frame_animation(
-        "sub-tick",
-        KTIME_PER_SECOND * 2.0_f64,
-    )
+    const KTIME_PER_SECOND: f64 = 46_186_158_000.;
+    two_frame_animation("sub-tick", KTIME_PER_SECOND * 2f64)
 }
 
 fn output_path(label: &str) -> PathBuf {
-    std::env::temp_dir().join(
-        format!(
-            "fbx-binary-animation-{label}-{}.fbx",
-            std::process::id()
-        ),
-    )
+    std::env::temp_dir().join(format!(
+        "fbx-binary-animation-{label}-{}.fbx",
+        std::process::id()
+    ))
 }
 
-fn contains(
-    bytes: &[u8],
-    needle: &[u8],
-) -> bool {
-    bytes
-        .windows(needle.len())
-        .any(|window| window == needle)
+fn contains(bytes: &[u8], needle: &[u8]) -> bool {
+    bytes.windows(needle.len()).any(|window| window == needle)
 }
 
 #[test]
@@ -288,9 +200,7 @@ fn writes_deterministic_animation_graph() {
     let Some(character) = character_result.ok() else {
         return;
     };
-    let material_result = MaterialBinding::new(
-        "skin", None,
-    );
+    let material_result = MaterialBinding::new("skin", None);
     assert!(
         material_result.is_ok(),
         "synthetic animation material should build: {material_result:?}"
@@ -309,53 +219,35 @@ fn writes_deterministic_animation_graph() {
     let materials = vec![material];
     let clips = vec![animation];
 
-    let first_summary = write_binary_character_fbx(
-        &character,
-        &materials,
-        &clips,
-        &first_path,
-    );
+    let first_summary =
+        write_binary_character_fbx(&character, &materials, &clips, &first_path);
     let second_summary = write_binary_character_fbx(
         &character,
         &materials,
         &clips,
         &second_path,
     );
-    let artifacts = read_binary_pair(
-        &first_path,
-        &second_path,
-        "animated FBX",
-    );
+    let artifacts = read_binary_pair(&first_path, &second_path, "animated FBX");
     let Some((first, second)) = artifacts else {
         return;
     };
 
     assert_eq!(
         first_summary,
-        Ok(
-            CharacterBinaryFbxSummary {
-                geometries: 1,
-                bones: 1,
-                clusters: 1,
-                materials: 1,
-                textures: 0,
-                animations: 1,
-            }
-        )
+        Ok(CharacterBinaryFbxSummary {
+            geometries: 1,
+            bones: 1,
+            clusters: 1,
+            materials: 1,
+            textures: 0,
+            animations: 1,
+        })
     );
-    assert_eq!(
-        second_summary,
-        first_summary
-    );
-    assert_eq!(
-        first,
-        second
-    );
+    assert_eq!(second_summary, first_summary);
+    assert_eq!(first, second);
     for token in ANIMATION_TOKENS {
         assert!(
-            contains(
-                &first, token
-            ),
+            contains(&first, token),
             "missing binary FBX token: {token:?}"
         );
     }
@@ -372,9 +264,7 @@ fn rejects_animation_time_above_signed_fbx_limit() {
     let Some(character) = character_result.ok() else {
         return;
     };
-    let material_result = MaterialBinding::new(
-        "skin", None,
-    );
+    let material_result = MaterialBinding::new("skin", None);
     assert!(
         material_result.is_ok(),
         "synthetic animation material should build: {material_result:?}"
@@ -400,11 +290,9 @@ fn rejects_animation_time_above_signed_fbx_limit() {
 
     assert_eq!(
         result,
-        Err(
-            CharacterBinaryFbxError::AnimationPlan {
-                reason: "TimeOverflow".to_owned(),
-            }
-        )
+        Err(CharacterBinaryFbxError::AnimationPlan {
+            reason: "TimeOverflow".to_owned(),
+        })
     );
     assert!(
         !path.exists(),
@@ -423,9 +311,7 @@ fn rejects_animation_frames_below_one_ktime_tick() {
     let Some(character) = character_result.ok() else {
         return;
     };
-    let material_result = MaterialBinding::new(
-        "skin", None,
-    );
+    let material_result = MaterialBinding::new("skin", None);
     assert!(
         material_result.is_ok(),
         "synthetic animation material should build: {material_result:?}"
@@ -460,11 +346,9 @@ fn rejects_animation_frames_below_one_ktime_tick() {
 
     assert_eq!(
         result,
-        Err(
-            CharacterBinaryFbxError::AnimationPlan {
-                reason: "TimeResolution".to_owned(),
-            }
-        )
+        Err(CharacterBinaryFbxError::AnimationPlan {
+            reason: "TimeResolution".to_owned(),
+        })
     );
     assert!(
         !artifact_created,

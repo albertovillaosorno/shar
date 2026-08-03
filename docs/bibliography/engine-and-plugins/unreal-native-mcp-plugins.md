@@ -132,7 +132,8 @@ automated control.
   Available at: <https://github.com/modelcontextprotocol/modelcontextprotocol>
   (Accessed: 12 July 2026).
 - SHAR repository, selected engine installation, and live editor (2026),
-  `src/unreal/project/composition/uproject/shar.uproject`, `README.md`, `docs/adr/unreal/mcp/`, Unreal
+  `src/unreal/project/composition/uproject/shar.uproject`, `README.md`,
+  `docs/adr/unreal/mcp/`, Unreal
   Engine
   5.8.0 build evidence, installed `ModelContextProtocol.uplugin`,
   `AllToolsets.uplugin`, and `MCPClientToolset.uplugin` descriptors, doctor

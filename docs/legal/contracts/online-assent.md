@@ -94,10 +94,13 @@ Even when formation is established, analyze separately:
 - [ProCD, Inc. v. Zeidenberg](../cases/procd-v-zeidenberg.md).
 - [Nguyen v. Barnes & Noble, Inc.](../cases/nguyen-v-barnes-and-noble.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Berman v. Freedom Financial Network, LLC](../cases/berman-v-freedom-financial.md).
+- [Berman v. Freedom Financial Network,
+  LLC](../cases/berman-v-freedom-financial.md).
 - [Specht v. Netscape Communications Corp.](../cases/specht-v-netscape.md).
 - [UMG Recordings, Inc. v. Augusto](../cases/umg-recordings-v-augusto.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [MDY Industries, LLC v. Blizzard Entertainment, Inc.](../cases/mdy-v-blizzard.md).
+- [MDY Industries, LLC v. Blizzard Entertainment,
+  Inc.](../cases/mdy-v-blizzard.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Software-license reverse-engineering clauses](software-license-reverse-engineering-clauses.md).
+- [Software-license reverse-engineering
+  clauses](software-license-reverse-engineering-clauses.md).

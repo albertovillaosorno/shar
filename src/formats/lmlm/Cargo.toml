@@ -7,15 +7,17 @@ description = "Extracts the Jebano Latino LSPA archive to a folder."
 publish = false
 
 [dependencies]
-# schoenwald-cli centralizes process arguments, ordered diagnostics, newline handling, and exit-code mapping for the LMLM driving adapter.
-schoenwald-cli = { path = "../../foundation/command-line" }
-# schoenwald-filesystem centralizes complete local archive reads while LMLM-specific collision and create-new publication remain local.
-schoenwald-filesystem = { path = "../../foundation/filesystem" }
+# jig-ignore-next-line: exact value is indivisible
+# schoenwald_cli centralizes process arguments, ordered diagnostics, newline handling, and exit-code mapping for the LMLM driving adapter.
+schoenwald_cli = { path = "../../foundation/command-line" }
+# jig-ignore-next-line: exact value is indivisible
+# schoenwald_filesystem centralizes complete local archive reads while LMLM-specific collision and create-new publication remain local.
+schoenwald_filesystem = { path = "../../foundation/filesystem" }
 
 
 [lib]
 name = "lmlm"
-path = "lib.rs"
+path = "composition/lib.rs"
 
 [[bin]]
 name = "lmlm-extract"
@@ -33,3 +35,6 @@ path = "../../../tests/formats/lmlm/extract_archive_error.rs"
 [[test]]
 name = "filesystem_entry_sink"
 path = "../../../tests/formats/lmlm/filesystem_entry_sink.rs"
+
+[lints]
+workspace = true

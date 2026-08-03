@@ -1,7 +1,3 @@
-// File:
-//   - asset.rs
-// Path: src/formats/fbx/domain/character/asset.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,44 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure fbx domain rules for domain character asset.
+//   - Asset domain module.
 // - Must-Not:
-//   - Read files, parse generated indexes, invoke CLI code, or call writer
-//   - adapters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Value objects, invariant checks, and pure evidence-to-domain translation.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when asset contains two independently testable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another fbx module owns the same domain boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Skinned character aggregate with skeleton and bound mesh parts.
+//   - Asset domain module.
 // - Description:
-//   - Defines the character asset invariants for fbx domain character.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Imported through crate domain facades or sibling domain modules.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No filesystem paths, no external process calls, and no implicit IO
-//   - defaults.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-//
-// Large file:
-//   - true
-//   - Reason: src/formats/fbx/domain/character/asset.rs keeps the character
-//   - aggregate, its skeleton ordering rules, and its influence coverage
-//   - validation together because they enforce one invariant set; split when
-//   - one rule family gains an independent contract.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Skinned character aggregate with skeleton and bound mesh parts.
+//! Asset domain module.
+
 use std::collections::BTreeSet;
 
 use crate::domain::mesh::MeshAsset;
@@ -96,16 +78,11 @@ impl CharacterAsset {
         parts: Vec<SkinnedPart>,
     ) -> Result<Self, CharacterError> {
         let character_name = name.into();
-        if character_name
-            .trim()
-            .is_empty()
-        {
+        if character_name.trim().is_empty() {
             return Err(CharacterError::MissingCharacterName);
         }
         if character_name != character_name.trim()
-            || character_name
-                .chars()
-                .any(char::is_control)
+            || character_name.chars().any(char::is_control)
         {
             return Err(CharacterError::NonCanonicalCharacterName);
         }
@@ -114,17 +91,13 @@ impl CharacterAsset {
             return Err(CharacterError::MissingParts);
         }
         for part in &parts {
-            validate_part(
-                part, &bone_ids,
-            )?;
+            validate_part(part, &bone_ids)?;
         }
-        Ok(
-            Self {
-                name: character_name,
-                bones,
-                parts,
-            },
-        )
+        Ok(Self {
+            name: character_name,
+            bones,
+            parts,
+        })
     }
 }
 
@@ -135,84 +108,43 @@ fn validate_bones(bones: &[Bone]) -> Result<BTreeSet<String>, CharacterError> {
     }
     let mut seen = BTreeSet::new();
     for bone in bones {
-        if bone
-            .id
-            .trim()
-            .is_empty()
-        {
+        if bone.id.trim().is_empty() {
             return Err(CharacterError::MissingBoneId);
         }
-        if bone.id
-            != bone
-                .id
-                .trim()
-            || bone
-                .id
-                .chars()
-                .any(char::is_control)
-        {
-            return Err(
-                CharacterError::NonCanonicalBoneId {
-                    bone: bone
-                        .id
-                        .clone(),
-                },
-            );
+        if bone.id != bone.id.trim() || bone.id.chars().any(char::is_control) {
+            return Err(CharacterError::NonCanonicalBoneId {
+                bone: bone.id.clone(),
+            });
         }
         if let Some(parent) = &bone.parent_id {
-            if parent
-                .trim()
-                .is_empty()
+            if parent.trim().is_empty()
                 || parent != parent.trim()
-                || parent
-                    .chars()
-                    .any(char::is_control)
+                || parent.chars().any(char::is_control)
             {
-                return Err(
-                    CharacterError::NonCanonicalParentId {
-                        bone: bone
-                            .id
-                            .clone(),
-                        parent: parent.clone(),
-                    },
-                );
+                return Err(CharacterError::NonCanonicalParentId {
+                    bone: bone.id.clone(),
+                    parent: parent.clone(),
+                });
             }
             if !seen.contains(parent) {
-                return Err(
-                    CharacterError::ParentNotBeforeChild {
-                        bone: bone
-                            .id
-                            .clone(),
-                        parent: parent.clone(),
-                    },
-                );
+                return Err(CharacterError::ParentNotBeforeChild {
+                    bone: bone.id.clone(),
+                    parent: parent.clone(),
+                });
             }
         }
-        if let Some(component) = bone
-            .rest_matrix
-            .iter()
-            .position(|value| !value.is_finite())
+        if let Some(component) =
+            bone.rest_matrix.iter().position(|value| !value.is_finite())
         {
-            return Err(
-                CharacterError::NonFiniteRestMatrix {
-                    bone: bone
-                        .id
-                        .clone(),
-                    component,
-                },
-            );
+            return Err(CharacterError::NonFiniteRestMatrix {
+                bone: bone.id.clone(),
+                component,
+            });
         }
-        if !seen.insert(
-            bone.id
-                .clone(),
-        ) {
-            return Err(
-                CharacterError::DuplicateBoneId {
-                    bone: bone
-                        .id
-                        .clone(),
-                },
-            );
+        if !seen.insert(bone.id.clone()) {
+            return Err(CharacterError::DuplicateBoneId {
+                bone: bone.id.clone(),
+            });
         }
     }
     Ok(seen)
@@ -223,44 +155,20 @@ fn validate_part(
     part: &SkinnedPart,
     bone_ids: &BTreeSet<String>,
 ) -> Result<(), CharacterError> {
-    if part
-        .group_influences
-        .len()
-        != part
-            .mesh
-            .groups
-            .len()
-    {
-        return Err(
-            CharacterError::InfluenceGroupCountMismatch {
-                mesh: part
-                    .mesh
-                    .name
-                    .clone(),
-                groups: part
-                    .mesh
-                    .groups
-                    .len(),
-                influence_groups: part
-                    .group_influences
-                    .len(),
-            },
-        );
+    if part.group_influences.len() != part.mesh.groups.len() {
+        return Err(CharacterError::InfluenceGroupCountMismatch {
+            mesh: part.mesh.name.clone(),
+            groups: part.mesh.groups.len(),
+            influence_groups: part.group_influences.len(),
+        });
     }
-    for (group, influences) in part
-        .mesh
-        .groups
-        .iter()
-        .zip(&part.group_influences)
+    for (group, influences) in
+        part.mesh.groups.iter().zip(&part.group_influences)
     {
         validate_group_influences(
-            &part
-                .mesh
-                .name,
+            &part.mesh.name,
             group.index,
-            group
-                .positions
-                .len(),
+            group.positions.len(),
             influences,
             bone_ids,
         )?;
@@ -276,70 +184,53 @@ fn validate_group_influences(
     influences: &[SkinInfluence],
     bone_ids: &BTreeSet<String>,
 ) -> Result<(), CharacterError> {
-    let mut weight_sums = vec![0.0_f32; vertex_count];
+    let mut weight_sums = vec![0f32; vertex_count];
     for influence in influences {
         if !bone_ids.contains(&influence.bone_id) {
-            return Err(
-                CharacterError::UnknownInfluenceBone {
-                    mesh: mesh_name.to_owned(),
-                    group: group_index,
-                    bone: influence
-                        .bone_id
-                        .clone(),
-                },
-            );
+            return Err(CharacterError::UnknownInfluenceBone {
+                mesh: mesh_name.to_owned(),
+                group: group_index,
+                bone: influence.bone_id.clone(),
+            });
         }
         let vertex = match usize::try_from(influence.vertex_index) {
             Ok(value) => value,
             Err(_conversion_error) => {
-                return Err(
-                    CharacterError::InfluenceVertexOutOfBounds {
-                        mesh: mesh_name.to_owned(),
-                        group: group_index,
-                        vertex: influence.vertex_index,
-                        vertices: vertex_count,
-                    },
-                );
-            }
-        };
-        let Some(sum) = weight_sums.get_mut(vertex) else {
-            return Err(
-                CharacterError::InfluenceVertexOutOfBounds {
+                return Err(CharacterError::InfluenceVertexOutOfBounds {
                     mesh: mesh_name.to_owned(),
                     group: group_index,
                     vertex: influence.vertex_index,
                     vertices: vertex_count,
-                },
-            );
+                });
+            },
         };
-        if !influence
-            .weight
-            .is_finite()
-            || influence.weight <= 0.0
-            || influence.weight > 1.0 + WEIGHT_SUM_TOLERANCE
+        let Some(sum) = weight_sums.get_mut(vertex) else {
+            return Err(CharacterError::InfluenceVertexOutOfBounds {
+                mesh: mesh_name.to_owned(),
+                group: group_index,
+                vertex: influence.vertex_index,
+                vertices: vertex_count,
+            });
+        };
+        if !influence.weight.is_finite()
+            || influence.weight <= 0.
+            || influence.weight > 1. + WEIGHT_SUM_TOLERANCE
         {
-            return Err(
-                CharacterError::InvalidInfluenceWeight {
-                    mesh: mesh_name.to_owned(),
-                    group: group_index,
-                    vertex: influence.vertex_index,
-                },
-            );
+            return Err(CharacterError::InvalidInfluenceWeight {
+                mesh: mesh_name.to_owned(),
+                group: group_index,
+                vertex: influence.vertex_index,
+            });
         }
         *sum += influence.weight;
     }
-    for (vertex, sum) in weight_sums
-        .iter()
-        .enumerate()
-    {
-        if (sum - 1.0).abs() > WEIGHT_SUM_TOLERANCE {
-            return Err(
-                CharacterError::UnnormalizedVertexWeights {
-                    mesh: mesh_name.to_owned(),
-                    group: group_index,
-                    vertex,
-                },
-            );
+    for (vertex, sum) in weight_sums.iter().enumerate() {
+        if (sum - 1.).abs() > WEIGHT_SUM_TOLERANCE {
+            return Err(CharacterError::UnnormalizedVertexWeights {
+                mesh: mesh_name.to_owned(),
+                group: group_index,
+                vertex,
+            });
         }
     }
     Ok(())
@@ -437,65 +328,7 @@ pub enum CharacterError {
         vertex: usize,
     },
 }
-
 #[cfg(test)]
-#[test]
-fn rejects_control_characters_in_character_identities() {
-    assert_eq!(
-        CharacterAsset::new(
-            "character\nalias",
-            Vec::new(),
-            Vec::new(),
-        ),
-        Err(CharacterError::NonCanonicalCharacterName)
-    );
-    assert_eq!(
-        CharacterAsset::new(
-            "character",
-            vec![
-                Bone {
-                    id: "root\nalias".to_owned(),
-                    parent_id: None,
-                    rest_matrix: [0.0_f32; 16],
-                },
-            ],
-            Vec::new(),
-        ),
-        Err(
-            CharacterError::NonCanonicalBoneId {
-                bone: "root\nalias".to_owned(),
-            }
-        )
-    );
-}
-
-#[cfg(test)]
-#[test]
-fn rejects_noncanonical_parent_identities() {
-    let bones = vec![
-        Bone {
-            id: "root".to_owned(),
-            parent_id: None,
-            rest_matrix: [0.0_f32; 16],
-        },
-        Bone {
-            id: "child".to_owned(),
-            parent_id: Some("root\nalias".to_owned()),
-            rest_matrix: [0.0_f32; 16],
-        },
-    ];
-
-    assert_eq!(
-        CharacterAsset::new(
-            "character",
-            bones,
-            Vec::new(),
-        ),
-        Err(
-            CharacterError::NonCanonicalParentId {
-                bone: "child".to_owned(),
-                parent: "root\nalias".to_owned(),
-            }
-        )
-    );
-}
+// jig-ignore-next-line: exact syntax is indivisible
+#[path = "../../../../../tests/formats/fbx/unit/domain/character/asset/loose_tests.rs"]
+mod loose_tests;

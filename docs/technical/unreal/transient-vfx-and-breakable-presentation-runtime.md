@@ -5,22 +5,30 @@
 
 ## Governing decisions and specifications
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md)
+- [Native cooked-asset construction and registration
+  runtime](native-cooked-asset-construction-and-registration-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
+- [Native render-frame, view, and layer
+  runtime](native-render-frame-view-and-layer-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native cooked-asset construction and registration runtime](native-cooked-asset-construction-and-registration-runtime.md)
+- [Physical material and impact-response
+  runtime](physical-material-and-impact-response-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native render-frame, view, and layer runtime](native-render-frame-view-and-layer-runtime.md)
+- [World render-entity and physics
+  runtime](world-render-entity-and-physics-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Physical material and impact-response runtime](physical-material-and-impact-response-runtime.md)
+- [Native vehicle physics, control, damage, and presentation
+  runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Persistent world-object state runtime](persistent-world-object-state-runtime.md)
+- [Persistent world-object state
+  runtime](persistent-world-object-state-runtime.md)
 
 ## Purpose
 
@@ -62,17 +70,32 @@ It does not implement a second particle engine.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Domain and application services | Own damage, destruction, rewards, mission state, persistence, and vehicle state. |
-| Impact-response service | Selects typed sound, Niagara, decal, camera, animation, and damage proposals. |
-| VFX definition catalog | Owns stable effect identities, parameter schemas, lifetime classes, and quality policy. |
-| Transient VFX subsystem | Validates requests, acquires assets, activates native components, and releases presentation leases. |
-| Niagara | Owns particle simulation, emitter execution, modules, parameters, renderers, and native scalability behavior. |
-| World render-entity runtime | Owns source Actor and component identity, transform, bounds, and streaming lifetime. |
-| Breakage service | Commits breakage, replacement, persistence, and exactly-once result identity. |
-| Presentation service | Projects accepted breakage through effects, debris, audio, camera feedback, and optional animation. |
-| Display and quality policy | Owns target-specific budgets and visual fallback. |
+- **Authority:** Domain and application services
+  - **Responsibility:** Own damage, destruction, rewards, mission state,
+    persistence, and vehicle state.
+- **Authority:** Impact-response service
+  - **Responsibility:** Selects typed sound, Niagara, decal, camera, animation,
+    and damage proposals.
+- **Authority:** VFX definition catalog
+  - **Responsibility:** Owns stable effect identities, parameter schemas,
+    lifetime classes, and quality policy.
+- **Authority:** Transient VFX subsystem
+  - **Responsibility:** Validates requests, acquires assets, activates native
+    components, and releases presentation leases.
+- **Authority:** Niagara
+  - **Responsibility:** Owns particle simulation, emitter execution, modules,
+    parameters, renderers, and native scalability behavior.
+- **Authority:** World render-entity runtime
+  - **Responsibility:** Owns source Actor and component identity, transform,
+    bounds, and streaming lifetime.
+- **Authority:** Breakage service
+  - **Responsibility:** Commits breakage, replacement, persistence, and
+    exactly-once result identity.
+- **Authority:** Presentation service
+  - **Responsibility:** Projects accepted breakage through effects, debris,
+    audio, camera feedback, and optional animation.
+- **Authority:** Display and quality policy
+  - **Responsibility:** Owns target-specific budgets and visual fallback.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -109,20 +132,36 @@ render-layer numbers are not durable identity.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `VfxId` | Canonical effect identity. |
-| `NiagaraSystem` | Class-validated cooked Niagara System reference. |
-| `ParameterSchemaId` | Typed user and system parameter contract. |
-| `LifetimeClass` | One-shot, finite loop, leased continuous, attached continuous, or definition-owned persistent presentation. |
-| `TransformPolicy` | World, actor, component, socket, bone, wheel, surface, or camera-relative placement. |
-| `TimePolicy` | Game time, real time, presentation time, pause behavior, and time dilation. |
-| `CompletionPolicy` | Native completion, declared duration, owner release, or accepted result. |
-| `PoolingPolicy` | Native pooling or measured project reuse policy. |
-| `ScalabilityPolicy` | Effect Type, distance, visibility, instance, significance, and quality behavior. |
-| `FallbackPolicy` | Reduced system, material, decal, audio-only, or no-visual fallback. |
-| `StreamingPolicy` | Bundle, prefetch, retention, and teardown behavior. |
-| `DiagnosticsPolicy` | Development capture and inspection permissions. |
+- **Field:** `VfxId`
+  - **Contract:** Canonical effect identity.
+- **Field:** `NiagaraSystem`
+  - **Contract:** Class-validated cooked Niagara System reference.
+- **Field:** `ParameterSchemaId`
+  - **Contract:** Typed user and system parameter contract.
+- **Field:** `LifetimeClass`
+  - **Contract:** One-shot, finite loop, leased continuous, attached continuous,
+    or definition-owned persistent presentation.
+- **Field:** `TransformPolicy`
+  - **Contract:** World, actor, component, socket, bone, wheel, surface, or
+    camera-relative placement.
+- **Field:** `TimePolicy`
+  - **Contract:** Game time, real time, presentation time, pause behavior, and
+    time dilation.
+- **Field:** `CompletionPolicy`
+  - **Contract:** Native completion, declared duration, owner release, or
+    accepted result.
+- **Field:** `PoolingPolicy`
+  - **Contract:** Native pooling or measured project reuse policy.
+- **Field:** `ScalabilityPolicy`
+  - **Contract:** Effect Type, distance, visibility, instance, significance, and
+    quality behavior.
+- **Field:** `FallbackPolicy`
+  - **Contract:** Reduced system, material, decal, audio-only, or no-visual
+    fallback.
+- **Field:** `StreamingPolicy`
+  - **Contract:** Bundle, prefetch, retention, and teardown behavior.
+- **Field:** `DiagnosticsPolicy`
+  - **Contract:** Development capture and inspection permissions.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -306,7 +345,8 @@ are provenance only.
 
 Pickup glints and collection sparkles consume the accepted coin state from
 <!-- markdownlint-disable-next-line MD013 -->
-[Progression, collectibles, cheats, and credits](progression-collectibles-and-cheats.md).
+[Progression, collectibles, cheats, and
+credits](progression-collectibles-and-cheats.md).
 They cannot spawn currency, change collection eligibility, move a coin, commit a
 ledger transaction, or advance a HUD counter.
 
@@ -342,7 +382,8 @@ missions, interactions, route state, and persistence continue unchanged.
 Vehicle effects consume immutable vehicle, wheel, movement, contact, damage, and
 physical-surface observations projected by
 <!-- markdownlint-disable-next-line MD013 -->
-[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+[Native vehicle physics, control, damage, and presentation
+runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
 They never query mutable native solver state, wheel arrays, damage pointers, or
 render objects after accepting a revision.
 
@@ -509,7 +550,8 @@ A global inventory section or source zone list is not runtime ownership.
 Cooked Niagara Systems, Geometry Collections, fragment meshes, materials, audio,
 and breakable definitions are loaded and prepared through
 <!-- markdownlint-disable-next-line MD013 -->
-[Native cooked-asset construction and registration runtime](native-cooked-asset-construction-and-registration-runtime.md).
+[Native cooked-asset construction and registration
+runtime](native-cooked-asset-construction-and-registration-runtime.md).
 
 Import publishes:
 

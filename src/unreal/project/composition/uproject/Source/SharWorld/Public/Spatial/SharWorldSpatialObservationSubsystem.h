@@ -1,12 +1,34 @@
-// File: SharWorldSpatialObservationSubsystem.h
-// Path: src/unreal/project/composition/uproject/Source/SharWorld/Public/Spatial/SharWorldSpatialObservationSubsystem.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: per-world spatial registration and accepted observation state only; no mission, camera, audio, or streaming mutation.
-// ADR: docs/adr/unreal/runtime/contextual-interaction-query-and-transaction.md
-// LARGE-FILE owner=SharWorld; reason=cohesive reflected registration and occupancy contract;
-// split=extract diagnostic observations if retention policy expands;
-// validation=validate.sh SharWorld plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar world spatial observation subsystem composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar world spatial observation subsystem composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar world spatial observation subsystem composition module.
 
 #pragma once
 

@@ -1,7 +1,3 @@
-# File:
-#   - test_map_policy.py
-# Path: tests/unreal/project/project_descriptor/test_map_policy.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,37 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Startup-map and editor-only cook-exclusion policy.
+#   - Test map policy test module.
 # - Must-Not:
-#   - Invoke Unreal, mutate native assets, or inspect local ignored content.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Deterministic assertions over tracked project configuration.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Another map family gains an independent startup or packaging policy.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module proves these exact configuration contracts.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Regression tests for the canonical open-world configuration.
+#   - Test map policy test module.
 # - Description:
-#   - Locks the official startup map and local structural-guide exclusion.
+#   - Implements the declared test module responsibility for project.
 # - Usage:
-#   - Run by pytest before Unreal project configuration is committed.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Tracked INI files are the fixtures.
-#
-# ADRs:
-# - docs/adr/pipeline/unreal/world-partition-and-data-layer-import.md
-#
-# Large file:
-#   - false
+#   - Invalid or missing inputs fail explicitly.
 #
 
-"""Canonical open-world startup and packaging policy."""
+"""Test map policy test module."""
 
 from pathlib import Path
 
@@ -51,20 +39,27 @@ PROJECT_ROOT = (
 REPOSITORY_ROOT = Path(__file__).resolve().parents[4]
 WORLD_NAME = "W_SHAR_OpenWorld"
 CANONICAL_MAP = f"/Game/SHAR/Maps/OpenWorld/{WORLD_NAME}"
-GUIDE_IGNORE_RULE = "src/unreal/project/composition/uproject/Content/SHAR/EditorOnly/StructuralGuide/"
+GUIDE_IGNORE_RULE = (
+    "src/unreal/project/composition/uproject/Content/SHAR/"
+    "EditorOnly/StructuralGuide/"
+)
 WORLD_MAP_IGNORE_RULE = (
+    # jig-ignore-next-line: exact value is indivisible
     f"!src/unreal/project/composition/uproject/Content/SHAR/Maps/OpenWorld/{WORLD_NAME}.umap"
 )
 WORLD_ACTORS_IGNORE_RULE = (
+    # jig-ignore-next-line: exact value is indivisible
     "!src/unreal/project/composition/uproject/Content/__ExternalActors__/SHAR/Maps/OpenWorld/"
     f"{WORLD_NAME}/**/*.uasset"
 )
 WORLD_OBJECTS_IGNORE_RULE = (
+    # jig-ignore-next-line: exact value is indivisible
     "!src/unreal/project/composition/uproject/Content/__ExternalObjects__/SHAR/Maps/OpenWorld/"
     f"{WORLD_NAME}/**/*.uasset"
 )
 WORLD_LFS_RULE = (
-    f"src/unreal/project/composition/uproject/Content/SHAR/Maps/OpenWorld/{WORLD_NAME}.umap "
+    "src/unreal/project/composition/uproject/Content/SHAR/Maps/OpenWorld/"
+    f"{WORLD_NAME}.umap "
     "filter=lfs diff=lfs merge=lfs -text"
 )
 

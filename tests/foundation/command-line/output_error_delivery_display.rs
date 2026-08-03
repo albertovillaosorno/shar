@@ -1,7 +1,3 @@
-// File:
-//   - output_error_delivery_display.rs
-// Path: tests/foundation/command-line/output_error_delivery_display.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for delivery counts in output-error diagnostics.
+//   - Output error delivery display test module.
 // - Must-Not:
-//   - Access operating-system arguments or streams.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Compare deterministic partial-delivery outcomes.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another output-error display field needs independent coverage.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Output errors no longer retain delivery counts.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Output-error delivery display regression.
+//   - Output error delivery display test module.
 // - Description:
-//   - Proves ordinary diagnostics distinguish final delivery outcomes.
+//   - Implements the declared test module responsibility for command line.
 // - Usage:
-//   - Executed by the schoenwald-cli integration test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - The first standard-output write fails permanently.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for delivery summaries in output-error text.
-//!
-//! Otherwise identical primary failures must preserve final delivery results.
+//! Output error delivery display test module.
 
 #[path = "support/failing_write_sink.rs"]
 pub mod failing_write_sink;
@@ -68,10 +54,7 @@ impl ArgumentSource for EmptyArguments {
 struct LaterDiagnosticProgram;
 
 impl CliProgram for LaterDiagnosticProgram {
-    fn execute(
-        &self,
-        _arguments: &[String],
-    ) -> CommandOutcome {
+    fn execute(&self, _arguments: &[String]) -> CommandOutcome {
         CommandOutcome::failure()
             .stdout("primary")
             .stderr("diagnostic")
@@ -81,10 +64,7 @@ impl CliProgram for LaterDiagnosticProgram {
 struct LaterPrimaryProgram;
 
 impl CliProgram for LaterPrimaryProgram {
-    fn execute(
-        &self,
-        _arguments: &[String],
-    ) -> CommandOutcome {
+    fn execute(&self, _arguments: &[String]) -> CommandOutcome {
         CommandOutcome::failure()
             .stdout("primary")
             .stdout("suppressed")
@@ -93,19 +73,10 @@ impl CliProgram for LaterPrimaryProgram {
 
 fn render_delivery(command: &dyn CliProgram) -> String {
     let mut arguments = EmptyArguments;
-    let mut output = FailingWriteSink::new(
-        0,
-        io::ErrorKind::BrokenPipe,
-        "blocked",
-    );
-    output_error(
-        RunInvocation::execute(
-            command,
-            &mut arguments,
-            &mut output,
-        ),
-    )
-    .to_string()
+    let mut output =
+        FailingWriteSink::new(0, io::ErrorKind::BrokenPipe, "blocked");
+    output_error(RunInvocation::execute(command, &mut arguments, &mut output))
+        .to_string()
 }
 
 #[test]

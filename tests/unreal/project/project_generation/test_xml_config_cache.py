@@ -1,7 +1,3 @@
-# File:
-#   - test_xml_config_cache.py
-# Path: tests/unreal/project/project_generation/test_xml_config_cache.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,38 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Path and deletion behavior for the project UBT XML cache.
+#   - Test xml config cache test module.
 # - Must-Not:
-#   - Invoke live Unreal processes or depend on network services.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Deterministic local fixtures and observable assertions.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Another behavior belongs to a different tooling boundary.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another test module proves the same behavior contract.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Unit tests for project-scoped UBT cache recovery.
+#   - Test xml config cache test module.
 # - Description:
-#   - Proves exact selection, no-op, and bounded deletion.
+#   - Implements the declared test module responsibility for project.
 # - Usage:
-#   - Run by pytest against isolated temporary directories.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Only XmlConfigCache.bin is eligible for deletion.
-#
-# ADRs:
-# - docs/adr/unreal/runtime/runtime-parity-test-boundary.md
-#
-# Large file:
-#   - false
+#   - Invalid or missing inputs fail explicitly.
 #
 
-
-"""Project-scoped UnrealBuildTool XML cache contracts."""
+"""Test xml config cache test module."""
 
 from __future__ import annotations
 

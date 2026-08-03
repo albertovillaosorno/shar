@@ -1,7 +1,3 @@
-// File:
-//   - application.rs
-// Path: src/migration/pipeline/application/mod.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pipeline extraction, normalization, planning, and summary use cases.
+//   - Application application service.
 // - Must-Not:
-//   - Parse process arguments or select concrete providers.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Coordinate domain values, ports, and ordered pipeline phases.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when one application family becomes independently versioned.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another facade owns the same pipeline use cases.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Pipeline application facade.
+//   - Application application service.
 // - Description:
-//   - Exposes phase workflows and process-neutral output orchestration.
+//   - Implements the declared application service responsibility for pipeline.
 // - Usage:
-//   - Called by driving adapters and public library callers.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Concrete adapter selection remains outside this layer.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Application use cases for the ordered extraction and planning pipeline.
-//!
-//! Process composition remains in adapters while phase behavior lives here.
+//! Application application service.
+
 mod execute;
 mod output_summary;
 

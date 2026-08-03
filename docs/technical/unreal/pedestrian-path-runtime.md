@@ -6,13 +6,17 @@
 ## Governing decisions and specifications
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Mass Entity ambient population](../../adr/unreal/runtime/mass-entity-ambient-population.md)
+- [Mass Entity ambient
+  population](../../adr/unreal/runtime/mass-entity-ambient-population.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
+- [Ambient population and named-character
+  runtime](ambient-population-and-named-character-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Ambient population and named-character runtime](ambient-population-and-named-character-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Authored spatial placement and trigger runtime](authored-spatial-placement-and-trigger-runtime.md)
+- [Authored spatial placement and trigger
+  runtime](authored-spatial-placement-and-trigger-runtime.md)
 
 ## Purpose
 
@@ -29,15 +33,24 @@ identity, mission state, or presentation.
 
 <!-- markdownlint-disable MD013 -->
 
-| Service | Authority |
-| :--- | :--- |
-| Content compiler | Converts validated path evidence into canonical path graph definitions. |
-| Pedestrian path registry | Owns path, node, segment, lane, and connectivity identities. |
-| Ambient population subsystem | Selects eligible paths and creates Mass movement assignments. |
-| ZoneGraph adapter | Projects eligible path topology into native traversal data. |
-| Named-character runtime | Reserves path use for promoted actor representations when required. |
-| World Partition adapters | Activate and release path projections with owning cells and Data Layers. |
-| Presentation and debug adapters | Render optional path, bounds, occupancy, and failure diagnostics. |
+- **Service:** Content compiler
+  - **Authority:** Converts validated path evidence into canonical path graph
+    definitions.
+- **Service:** Pedestrian path registry
+  - **Authority:** Owns path, node, segment, lane, and connectivity identities.
+- **Service:** Ambient population subsystem
+  - **Authority:** Selects eligible paths and creates Mass movement assignments.
+- **Service:** ZoneGraph adapter
+  - **Authority:** Projects eligible path topology into native traversal data.
+- **Service:** Named-character runtime
+  - **Authority:** Reserves path use for promoted actor representations when
+    required.
+- **Service:** World Partition adapters
+  - **Authority:** Activate and release path projections with owning cells and
+    Data Layers.
+- **Service:** Presentation and debug adapters
+  - **Authority:** Render optional path, bounds, occupancy, and failure
+    diagnostics.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -69,21 +82,32 @@ silently transfer an assignment to another path.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `PathId` | Canonical path identity. |
-| `WorldRegionId` | Owning geographic region. |
-| `SegmentRows` | Ordered directed path segments. |
-| `ClosedLoop` | Whether the final node connects to the first node. |
-| `TraversalPolicyId` | Direction, reversal, loop, endpoint, and reroute behavior. |
-| `CapacityPolicyId` | Maximum accepted occupancy and reservation rules. |
-| `PopulationTags` | Eligible ambient archetypes and population groups. |
-| `ChapterPredicate` | Chapter and cumulative-world availability. |
-| `GameplayStatePredicate` | Mission and non-mission availability. |
-| `WorldLayerSetId` | Required cell and Runtime Data Layer composition. |
-| `AvoidanceProfileId` | Native crowd and local-avoidance policy. |
-| `SmartObjectBindings` | Optional stops, conversations, benches, doors, and activities. |
-| `FailurePolicyId` | Reroute, wait, release, promote, or typed failure behavior. |
+- **Field:** `PathId`
+  - **Contract:** Canonical path identity.
+- **Field:** `WorldRegionId`
+  - **Contract:** Owning geographic region.
+- **Field:** `SegmentRows`
+  - **Contract:** Ordered directed path segments.
+- **Field:** `ClosedLoop`
+  - **Contract:** Whether the final node connects to the first node.
+- **Field:** `TraversalPolicyId`
+  - **Contract:** Direction, reversal, loop, endpoint, and reroute behavior.
+- **Field:** `CapacityPolicyId`
+  - **Contract:** Maximum accepted occupancy and reservation rules.
+- **Field:** `PopulationTags`
+  - **Contract:** Eligible ambient archetypes and population groups.
+- **Field:** `ChapterPredicate`
+  - **Contract:** Chapter and cumulative-world availability.
+- **Field:** `GameplayStatePredicate`
+  - **Contract:** Mission and non-mission availability.
+- **Field:** `WorldLayerSetId`
+  - **Contract:** Required cell and Runtime Data Layer composition.
+- **Field:** `AvoidanceProfileId`
+  - **Contract:** Native crowd and local-avoidance policy.
+- **Field:** `SmartObjectBindings`
+  - **Contract:** Optional stops, conversations, benches, doors, and activities.
+- **Field:** `FailurePolicyId`
+  - **Contract:** Reroute, wait, release, promote, or typed failure behavior.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -96,21 +120,32 @@ and start nodes. Open paths declare endpoint behavior explicitly.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `SegmentId` | Stable path-scoped segment identity. |
-| `SequenceOrdinal` | Dense zero-based order within the path. |
-| `StartNodeId` | Required start node. |
-| `EndNodeId` | Required end node. |
-| `StartPosition` | Authored world position after deterministic conversion. |
-| `EndPosition` | Authored world position after deterministic conversion. |
-| `Length` | Derived validated segment length. |
-| `Bounds` | Derived conservative bounds for queries and streaming. |
-| `TraversalWidth` | Valid movement width. |
-| `DirectionPolicy` | Forward, reverse, or bidirectional traversal. |
-| `SpeedProfileId` | Walking and contextual speed policy. |
-| `ConnectionIds` | Explicit adjacent segment identities. |
-| `HazardAndCrossingPolicyId` | Traffic, road crossing, threat, and wait behavior. |
+- **Field:** `SegmentId`
+  - **Contract:** Stable path-scoped segment identity.
+- **Field:** `SequenceOrdinal`
+  - **Contract:** Dense zero-based order within the path.
+- **Field:** `StartNodeId`
+  - **Contract:** Required start node.
+- **Field:** `EndNodeId`
+  - **Contract:** Required end node.
+- **Field:** `StartPosition`
+  - **Contract:** Authored world position after deterministic conversion.
+- **Field:** `EndPosition`
+  - **Contract:** Authored world position after deterministic conversion.
+- **Field:** `Length`
+  - **Contract:** Derived validated segment length.
+- **Field:** `Bounds`
+  - **Contract:** Derived conservative bounds for queries and streaming.
+- **Field:** `TraversalWidth`
+  - **Contract:** Valid movement width.
+- **Field:** `DirectionPolicy`
+  - **Contract:** Forward, reverse, or bidirectional traversal.
+- **Field:** `SpeedProfileId`
+  - **Contract:** Walking and contextual speed policy.
+- **Field:** `ConnectionIds`
+  - **Contract:** Explicit adjacent segment identities.
+- **Field:** `HazardAndCrossingPolicyId`
+  - **Contract:** Traffic, road crossing, threat, and wait behavior.
 
 <!-- markdownlint-enable MD013 -->
 

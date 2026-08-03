@@ -1,7 +1,3 @@
-# File:
-#   - unreal_mcp_version.py
-# Path: src/unreal/editor-control/adapter-outbound/mcp/adapter_outbound/unreal_mcp_version.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,50 +6,43 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Resolving and reading the installed Unreal MCP plugin descriptor version.
+#   - Unreal mcp version outbound adapter.
 # - Must-Not:
-#   - Define plugin versions, render skills, or invoke Unreal MCP tools.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Project association, environment override, and Program Files discovery.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Engine installation discovery becomes a shared repository service.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another adapter owns the same project-to-plugin resolution contract.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Reads the single authoritative Unreal MCP version from Unreal Engine.
+#   - Unreal mcp version outbound adapter.
 # - Description:
-#   - Normalizes the descriptor `VersionName` to three-part SemVer.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Composed by the `skills` CLI command before Markdown rendering.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Uses `UNREAL_ENGINE_ROOT`, then the associated launcher installation.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
-"""Filesystem adapter for the installed Unreal MCP plugin version."""
+
+"""Unreal mcp version outbound adapter."""
 
 from __future__ import annotations
 
 import json
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
+from typing import cast
 
-from mcp.domain.errors import ProtocolError, fail_configuration
-from mcp.domain.json_types import (
-    DuplicateJsonKeyError,
-    reject_duplicate_json_object,
-    require_json_object,
-)
+from mcp.domain.errors import ProtocolError
+from mcp.domain.errors import fail_configuration
+from mcp.domain.json_types import DuplicateJsonKeyError
+from mcp.domain.json_types import reject_duplicate_json_object
+from mcp.domain.json_types import require_json_object
 from mcp.domain.skill_revision import normalize_unreal_mcp_version
 
 if TYPE_CHECKING:
@@ -64,6 +53,7 @@ if TYPE_CHECKING:
 _MISSING_DESCRIPTOR = "installed Unreal MCP plugin descriptor was not found"
 _ENGINE_ROOT_HINT = "set UNREAL_ENGINE_ROOT to the associated engine root"
 _PLUGIN_DESCRIPTOR = Path(
+    # jig-ignore-next-line: exact value is indivisible
     "Engine/Plugins/Experimental/ModelContextProtocol/ModelContextProtocol.uplugin"
 )
 
@@ -86,6 +76,7 @@ class FilesystemUnrealMcpVersionProvider:
 
         Returns:
             Canonical `major.minor.patch` Unreal MCP plugin version.
+
         """
         project = _read_json_object(
             self._project_descriptor,

@@ -1,7 +1,3 @@
-# File:
-#   - test_plugin_policy.py
-# Path: tests/unreal/project/project_descriptor/test_plugin_policy.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,37 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Startup policy for optional and required Unreal project plugins.
+#   - Test plugin policy test module.
 # - Must-Not:
-#   - Invoke live Unreal processes or depend on network services.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Deterministic descriptor parsing and exact plugin assertions.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Another plugin family gains an independent policy boundary.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module proves the same project-descriptor contract.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Regression tests for editor safety and world plugin dependencies.
+#   - Test plugin policy test module.
 # - Description:
-#   - Locks disabled integration plugins and required native world plugins.
+#   - Implements the declared test module responsibility for project.
 # - Usage:
-#   - Run by pytest before project configuration is committed.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - The tracked project descriptor is the fixture.
-#
-# ADRs:
-# - docs/adr/unreal/runtime/runtime-parity-test-boundary.md
-#
-# Large file:
-#   - false
+#   - Invalid or missing inputs fail explicitly.
 #
 
-"""Plugin startup policy for the tracked Unreal project descriptor."""
+"""Test plugin policy test module."""
 
 from __future__ import annotations
 
@@ -59,6 +47,7 @@ def _project_plugins() -> list[dict[str, object]]:
 
     Returns:
         The plugin descriptor entries in declaration order.
+
     """
     project = cast(
         "dict[str, object]",
@@ -74,6 +63,7 @@ def _matching_plugins(name: str) -> list[dict[str, object]]:
 
     Returns:
         Matching plugin entries in declaration order.
+
     """
     return [
         plugin for plugin in _project_plugins() if plugin.get("Name") == name

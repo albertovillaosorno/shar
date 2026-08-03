@@ -1,7 +1,3 @@
-# File:
-#   - filesystem_skill_store.py
-# Path: src/unreal/editor-control/adapter-outbound/mcp/adapter_outbound/filesystem_skill_store.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,60 +6,44 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Safe generated replacement with protected manual-field preservation.
+#   - Filesystem skill store outbound adapter.
 # - Must-Not:
-#   - Modify workflows, invoke Unreal, or interpret live MCP metadata.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Removing stale tools and migrating human fields by native identity.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Atomic writes and stale-file cleanup need independent adapters.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another filesystem adapter owns the same generated skill surface.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Persists generated Unreal MCP skill documents safely.
+#   - Filesystem skill store outbound adapter.
 # - Description:
-#   - Restricts writes to generated indexes and capability files.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Injected into the Unreal skill export application use case.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Fails before mutation when a retained manual field is malformed.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: generated Unreal skill filesystem storage
-#   - reason: safe paths, atomic writes, and stale cleanup form one boundary
-#   - split: extract stale cleanup if generated ownership expands
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess after generated output ownership changes
-#
-"""Filesystem storage for generated native Unreal MCP skills."""
+
+"""Filesystem skill store outbound adapter."""
 
 from __future__ import annotations
 
 import ntpath
-from pathlib import Path, PurePosixPath
+from pathlib import Path
+from pathlib import PurePosixPath
 from typing import TYPE_CHECKING
 
 from mcp.adapter_outbound.skill_index_renderer import (
     replace_manual_review_summary,
 )
-from mcp.adapter_outbound.skill_manual_fields import (
-    extract_manual_fields,
-    merge_manual_fields,
-)
-from mcp.adapter_outbound.skill_manual_review import (
-    MANUAL_REVIEW_FIELD_KEY,
-    manual_review_state,
-)
+from mcp.adapter_outbound.skill_manual_fields import extract_manual_fields
+from mcp.adapter_outbound.skill_manual_fields import merge_manual_fields
+from mcp.adapter_outbound.skill_manual_review import MANUAL_REVIEW_FIELD_KEY
+from mcp.adapter_outbound.skill_manual_review import manual_review_state
 from mcp.adapter_outbound.skill_native_identity import (
     extract_native_tool_identity,
 )

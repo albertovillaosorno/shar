@@ -7,20 +7,27 @@
 
 - [UI parity boundary](../../adr/unreal/ui/ui-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [HUD, radar, camera, and navigation parity](../../adr/unreal/ui/hud-radar-camera-and-navigation.md)
+- [HUD, radar, camera, and navigation
+  parity](../../adr/unreal/ui/hud-radar-camera-and-navigation.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
+- [Common UI front end and progress
+  projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+- [Portable save storage and
+  lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
+- [Application lifecycle and mode
+  runtime](application-lifecycle-and-mode-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Device configuration and save-slot runtime](device-configuration-and-save-slot-runtime.md)
+- [Device configuration and save-slot
+  runtime](device-configuration-and-save-slot-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md)
+- [Frontend screen flow and settings
+  runtime](frontend-screen-flow-and-settings-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+- [Native vehicle physics, control, damage, and presentation
+  runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 
 ## Purpose
 
@@ -42,15 +49,26 @@ do not.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Enhanced Input | Action values, triggers, modifiers, mapping contexts, and devices. |
-| Common UI | Menu actions, active input method, glyphs, focus, and pointer use. |
-| Local-player input subsystem | Player-specific leases, profiles, rebinding, and observations. |
-| Platform input adapter | Device discovery, capabilities, hotplug, and text entry. |
-| Haptics subsystem | Pattern selection, blending, output, accessibility, and teardown. |
-| Gameplay systems | Consume semantic actions and publish non-authoritative cues. |
-| Device configuration | Requested bindings, sensitivity, inversion, and haptics preferences. |
+- **Authority:** Enhanced Input
+  - **Responsibility:** Action values, triggers, modifiers, mapping contexts,
+    and devices.
+- **Authority:** Common UI
+  - **Responsibility:** Menu actions, active input method, glyphs, focus, and
+    pointer use.
+- **Authority:** Local-player input subsystem
+  - **Responsibility:** Player-specific leases, profiles, rebinding, and
+    observations.
+- **Authority:** Platform input adapter
+  - **Responsibility:** Device discovery, capabilities, hotplug, and text entry.
+- **Authority:** Haptics subsystem
+  - **Responsibility:** Pattern selection, blending, output, accessibility, and
+    teardown.
+- **Authority:** Gameplay systems
+  - **Responsibility:** Consume semantic actions and publish non-authoritative
+    cues.
+- **Authority:** Device configuration
+  - **Responsibility:** Requested bindings, sensitivity, inversion, and haptics
+    preferences.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -83,16 +101,22 @@ Every action definition contains:
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `ActionId` | Stable namespaced semantic identity. |
-| `ValueType` | Boolean, scalar, axis pair, or bounded vector. |
-| `Owner` | Front end, gameplay, vehicle, camera, pause, or development. |
-| `TriggerPolicy` | Started, ongoing, triggered, completed, and cancelled rules. |
-| `ModifierPolicy` | Dead zone, scale, inversion, curve, and smoothing rules. |
-| `ConflictGroup` | Actions that cannot share one binding in the same profile. |
-| `Availability` | Platform, device, mode, and package capability predicate. |
-| `Presentation` | Localizable label, category, and glyph role. |
+- **Field:** `ActionId`
+  - **Contract:** Stable namespaced semantic identity.
+- **Field:** `ValueType`
+  - **Contract:** Boolean, scalar, axis pair, or bounded vector.
+- **Field:** `Owner`
+  - **Contract:** Front end, gameplay, vehicle, camera, pause, or development.
+- **Field:** `TriggerPolicy`
+  - **Contract:** Started, ongoing, triggered, completed, and cancelled rules.
+- **Field:** `ModifierPolicy`
+  - **Contract:** Dead zone, scale, inversion, curve, and smoothing rules.
+- **Field:** `ConflictGroup`
+  - **Contract:** Actions that cannot share one binding in the same profile.
+- **Field:** `Availability`
+  - **Contract:** Platform, device, mode, and package capability predicate.
+- **Field:** `Presentation`
+  - **Contract:** Localizable label, category, and glyph role.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -302,7 +326,8 @@ turbo, horn, reset, menu, and camera actions used by other devices. Semantic
 vehicle-command projection, controller leases, native movement, and accepted
 read-back follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+[Native vehicle physics, control, damage, and presentation
+runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
 Wheel-only presentation or tuning does not change vehicle physics authority.
 
 ## Device sessions and action dispatch
@@ -402,7 +427,8 @@ conflict resolution cancels the capture and restores the last accepted draft.
 Commit persists the complete validated profile through the device-configuration
 transaction defined by the
 <!-- markdownlint-disable-next-line MD013 -->
-[frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md).
+[frontend screen flow and settings
+runtime](frontend-screen-flow-and-settings-runtime.md).
 
 ## Haptic cue model
 

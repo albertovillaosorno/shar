@@ -1,7 +1,3 @@
-# File:
-#   - http_payload.py
-# Path: src/unreal/editor-control/adapter-outbound/mcp/adapter_outbound/http_payload.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,62 +6,47 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Bounded HTTP body, JSON, and Server-Sent Event decoding.
+#   - Http payload outbound adapter.
 # - Must-Not:
-#   - Open sockets, manage MCP sessions, or interpret tool semantics.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Content-length checks, streamed byte ceilings, and JSON validation.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - SSE reconnection or content-block streaming requires separate state.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another adapter module owns the same response-decoding invariants.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Decodes bounded native MCP HTTP payloads.
+#   - Http payload outbound adapter.
 # - Description:
-#   - Prevents unbounded JSON and SSE responses from exhausting memory.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Called by the loopback HTTP exchange adapter.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Limits each response body to 64 MiB.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: bounded MCP HTTP payload decoding
-#   - reason: JSON and SSE readers share one byte-limit contract
-#   - split: extract SSE state if reconnection or event replay is added
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess on responsibility or line-count growth
-#
-"""Bounded native MCP HTTP payload decoding."""
+
+"""Http payload outbound adapter."""
 
 from __future__ import annotations
 
 import json
-from typing import NoReturn, Protocol, TypeVar, cast, overload
+from typing import NoReturn
+from typing import Protocol
+from typing import TypeVar
+from typing import cast
+from typing import overload
 
-from mcp.adapter_outbound.response_validation import (
-    matches_integer_request_id,
-)
-from mcp.domain.errors import (
-    ProtocolError,
-    fail_configuration,
-    fail_protocol,
-)
-from mcp.domain.json_types import (
-    DuplicateJsonKeyError,
-    JsonObject,
-    reject_duplicate_json_object,
-    require_json_object,
-)
+from mcp.adapter_outbound.response_validation import matches_integer_request_id
+from mcp.domain.errors import ProtocolError
+from mcp.domain.errors import fail_configuration
+from mcp.domain.errors import fail_protocol
+from mcp.domain.json_types import DuplicateJsonKeyError
+from mcp.domain.json_types import JsonObject
+from mcp.domain.json_types import reject_duplicate_json_object
+from mcp.domain.json_types import require_json_object
 
 _HeaderDefault = TypeVar("_HeaderDefault")
 
@@ -101,6 +82,7 @@ def validate_max_response_bytes(value: int) -> int:
 
     Returns:
         The validated byte ceiling.
+
     """
     if value <= 0:
         fail_configuration("max_response_bytes must be positive")
@@ -122,6 +104,7 @@ def read_http_payload(
 
     Returns:
         A strict JSON object, or `None` for an empty body.
+
     """
     limit = validate_max_response_bytes(max_response_bytes)
     content_type, media_type = _response_content_type(response)
@@ -155,6 +138,7 @@ def read_http_error_payload(
 
     Returns:
         A strict JSON error object, or `None` when no valid object is available.
+
     """
     limit = validate_max_response_bytes(max_response_bytes)
     _, media_type = _response_content_type(response)
@@ -189,6 +173,7 @@ def read_bounded_body(
 
     Returns:
         The complete body when it fits within the configured limit.
+
     """
     limit = validate_max_response_bytes(max_response_bytes)
     declared_length = _validate_content_length(response, limit)

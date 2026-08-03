@@ -25,12 +25,22 @@ Every durable proposition has one owning documentation surface:
 
 <!-- markdownlint-disable MD013 -->
 
-| Surface | Owns | Does not own |
-| :------ | :--- | :----------- |
-| ADR | Repository-impacting decisions | Commands, tutorials, implementation detail, or legal conclusions |
-| Technical | Current repository-owned behavior | New decisions or proprietary external-format documentation |
-| Bibliography | External evidence, provenance, confidence, and unresolved source questions | Architecture, legal permission, or operational authorization |
-| Legal | Dated authority summaries, factual limits, and unresolved legal application | Technical architecture or permission to act |
+- **Surface:** ADR
+  - **Owns:** Repository-impacting decisions
+  - **Does not own:** Commands, tutorials, implementation detail, or legal
+    conclusions
+- **Surface:** Technical
+  - **Owns:** Current repository-owned behavior
+  - **Does not own:** New decisions or proprietary external-format documentation
+- **Surface:** Bibliography
+  - **Owns:** External evidence, provenance, confidence, and unresolved source
+    questions
+  - **Does not own:** Architecture, legal permission, or operational
+    authorization
+- **Surface:** Legal
+  - **Owns:** Dated authority summaries, factual limits, and unresolved legal
+    application
+  - **Does not own:** Technical architecture or permission to act
 
 <!-- markdownlint-enable MD013 -->
 
@@ -157,7 +167,8 @@ not documentation authorities or substitutes for source review:
 
 - [`english.txt`](../.jig/cspell/english.txt) contains genuine English words
   missing from the enabled standard dictionaries;
-- [`technical.txt`](../.jig/cspell/technical.txt) contains reusable technical terms,
+- [`technical.txt`](../.jig/cspell/technical.txt) contains reusable technical
+  terms,
   acronyms, formats, APIs, and repository-domain vocabulary;
 - [`named-entities.txt`](../.jig/cspell/named-entities.txt) contains verified
   people, organizations, products, characters, cases, and other proper names.

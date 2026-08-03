@@ -83,9 +83,13 @@ relevant platform contract set.
 
 - [GitHub Terms of Service][github-tos], effective 27 April 2026 (Accessed: 14
   July 2026).
-- [GitHub DMCA Takedown Policy][github-dmca] (Accessed: 14 July 2026).
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: external link target is indivisible -->
+- [GitHub DMCA Takedown Policy](<https://docs.github.com/en/site-policy/content-removal-policies/dmca-takedown-policy>) (Accessed: 14 July 2026). <!-- markdownlint-disable-line MD013 -->
 - The repository's `LICENSE` and contribution history.
-- [GitHub Terms for Additional Products and Features][github-additional],
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: external link target is indivisible -->
+- [GitHub Terms for Additional Products and Features](<https://docs.github.com/en/site-policy/github-terms/github-terms-for-additional-products-and-features>), <!-- markdownlint-disable-line MD013 -->
   version effective 27 April 2026 (Accessed: 14 July 2026).
 
 ## Verification Checklist
@@ -96,7 +100,3 @@ relevant platform contract set.
 
 [github-tos]:
   https://docs.github.com/en/site-policy/github-terms/github-terms-of-service
-[github-dmca]:
-  https://docs.github.com/en/site-policy/content-removal-policies/dmca-takedown-policy
-[github-additional]:
-  https://docs.github.com/en/site-policy/github-terms/github-terms-for-additional-products-and-features

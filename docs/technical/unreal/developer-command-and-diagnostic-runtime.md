@@ -7,23 +7,32 @@
 
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
+- [Runtime parity test
+  boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+- [Data-driven Unreal gameplay content
+  catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Validated game-feature mod overlays](../../adr/unreal/runtime/validated-game-feature-mod-overlays.md)
+- [Validated game-feature mod
+  overlays](../../adr/unreal/runtime/validated-game-feature-mod-overlays.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
+- [Gameplay audio source, residency, mix, and environment
+  runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
+- [Native audio device, resource, player, and tuning adapter
+  runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+- [Native vehicle physics, control, damage, and presentation
+  runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md)
+- [Authored state-prop animation and event
+  runtime](authored-state-prop-animation-and-event-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Local supersprint race session runtime](local-supersprint-race-session-runtime.md)
+- [Local supersprint race session
+  runtime](local-supersprint-race-session-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
+- [Playable avatar, character controller, and footprint
+  runtime](playable-avatar-character-controller-and-footprint-runtime.md)
 
 ## Purpose
 
@@ -42,14 +51,22 @@ is not an ordinary player feature.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Command catalog | Stable command identities, schemas, permissions, availability, help, and aliases. |
-| Command registry subsystem | Definition activation, lookup, completion, dispatch, and lifecycle. |
-| Command handlers | Typed application-port calls and structured results. |
-| Logging subsystem | Categories, severity, sinks, filtering, and redaction. |
-| Development UI | Entry, history, completion, output projection, and accessibility. |
-| Gameplay and domain services | Authoritative state transitions requested by permitted handlers. |
+- **Authority:** Command catalog
+  - **Responsibility:** Stable command identities, schemas, permissions,
+    availability, help, and aliases.
+- **Authority:** Command registry subsystem
+  - **Responsibility:** Definition activation, lookup, completion, dispatch, and
+    lifecycle.
+- **Authority:** Command handlers
+  - **Responsibility:** Typed application-port calls and structured results.
+- **Authority:** Logging subsystem
+  - **Responsibility:** Categories, severity, sinks, filtering, and redaction.
+- **Authority:** Development UI
+  - **Responsibility:** Entry, history, completion, output projection, and
+    accessibility.
+- **Authority:** Gameplay and domain services
+  - **Responsibility:** Authoritative state transitions requested by permitted
+    handlers.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -64,16 +81,28 @@ The development module owns these C++ types:
 
 <!-- markdownlint-disable MD013 -->
 
-| Type | Responsibility |
-| :--- | :--- |
-| `USharDeveloperCommandDefinition` | Immutable identity, argument schema, availability, permission, execution, and help contract. |
-| `USharDeveloperCommandAliasDefinition` | Validated alias and typed argument-template mapping. |
-| `USharDeveloperCommandRegistrySubsystem` | Catalog activation, normalized lookup, completion, dispatch, and revocation. |
-| `ISharDeveloperCommandHandler` | Native typed handler interface registered by canonical command identity. |
-| `FSharDeveloperCommandRequest` | Caller, command identity, typed arguments, world, local player, and request revision. |
-| `FSharDeveloperCommandResult` | Closed status, observations, diagnostics, and optional asynchronous handle. |
-| `FSharDeveloperCommandHandle` | Cancellation-safe handle for long-running work. |
-| `USharDeveloperConsoleViewModel` | Development-only entry, history, completion, and output projection. |
+- **Type:** `USharDeveloperCommandDefinition`
+  - **Responsibility:** Immutable identity, argument schema, availability,
+    permission, execution, and help contract.
+- **Type:** `USharDeveloperCommandAliasDefinition`
+  - **Responsibility:** Validated alias and typed argument-template mapping.
+- **Type:** `USharDeveloperCommandRegistrySubsystem`
+  - **Responsibility:** Catalog activation, normalized lookup, completion,
+    dispatch, and revocation.
+- **Type:** `ISharDeveloperCommandHandler`
+  - **Responsibility:** Native typed handler interface registered by canonical
+    command identity.
+- **Type:** `FSharDeveloperCommandRequest`
+  - **Responsibility:** Caller, command identity, typed arguments, world, local
+    player, and request revision.
+- **Type:** `FSharDeveloperCommandResult`
+  - **Responsibility:** Closed status, observations, diagnostics, and optional
+    asynchronous handle.
+- **Type:** `FSharDeveloperCommandHandle`
+  - **Responsibility:** Cancellation-safe handle for long-running work.
+- **Type:** `USharDeveloperConsoleViewModel`
+  - **Responsibility:** Development-only entry, history, completion, and output
+    projection.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -87,20 +116,35 @@ Every command definition contains:
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `CommandId` | Globally unique canonical identity. |
-| `DisplayName` | Human-readable development label, never runtime identity. |
-| `ArgumentSchema` | Ordered typed arguments with names, types, bounds, and defaults. |
-| `Availability` | Editor, automation, development build, authorized diagnostic build, or excluded. |
-| `Permission` | Read-only, presentation mutation, world mutation, domain transaction, or process control. |
-| `ExecutionKind` | Registered native handler identity. |
-| `WorldPolicy` | No world, editor world, preview world, game world, or explicit target world. |
-| `ConcurrencyPolicy` | Reject, replace, queue, or parallel under declared resource rules. |
-| `TimeoutPolicy` | Positive bound or explicit long-running permission. |
-| `ResultSchema` | Closed success and failure observation types. |
-| `Help` | Summary, argument descriptions, examples, and safety notes. |
-| `DefinitionRevision` | Immutable revision used to reject stale invocations. |
+- **Field:** `CommandId`
+  - **Contract:** Globally unique canonical identity.
+- **Field:** `DisplayName`
+  - **Contract:** Human-readable development label, never runtime identity.
+- **Field:** `ArgumentSchema`
+  - **Contract:** Ordered typed arguments with names, types, bounds, and
+    defaults.
+- **Field:** `Availability`
+  - **Contract:** Editor, automation, development build, authorized diagnostic
+    build, or excluded.
+- **Field:** `Permission`
+  - **Contract:** Read-only, presentation mutation, world mutation, domain
+    transaction, or process control.
+- **Field:** `ExecutionKind`
+  - **Contract:** Registered native handler identity.
+- **Field:** `WorldPolicy`
+  - **Contract:** No world, editor world, preview world, game world, or explicit
+    target world.
+- **Field:** `ConcurrencyPolicy`
+  - **Contract:** Reject, replace, queue, or parallel under declared resource
+    rules.
+- **Field:** `TimeoutPolicy`
+  - **Contract:** Positive bound or explicit long-running permission.
+- **Field:** `ResultSchema`
+  - **Contract:** Closed success and failure observation types.
+- **Field:** `Help`
+  - **Contract:** Summary, argument descriptions, examples, and safety notes.
+- **Field:** `DefinitionRevision`
+  - **Contract:** Immutable revision used to reject stale invocations.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -262,14 +306,21 @@ Every invocation returns one status:
 
 <!-- markdownlint-disable MD013 -->
 
-| Status | Meaning |
-| :--- | :--- |
-| `success` | The declared postcondition was observed. |
-| `rejected` | Availability, permission, schema, target, or precondition failed before mutation. |
-| `failed` | Execution began but did not reach the postcondition. |
-| `timed_out` | The authored bound elapsed and cleanup completed. |
-| `cancelled` | The caller or lifecycle cancelled the operation and cleanup completed. |
-| `queued` | The concurrency policy accepted the request for later execution. |
+- **Status:** `success`
+  - **Meaning:** The declared postcondition was observed.
+- **Status:** `rejected`
+  - **Meaning:** Availability, permission, schema, target, or precondition
+    failed before mutation.
+- **Status:** `failed`
+  - **Meaning:** Execution began but did not reach the postcondition.
+- **Status:** `timed_out`
+  - **Meaning:** The authored bound elapsed and cleanup completed.
+- **Status:** `cancelled`
+  - **Meaning:** The caller or lifecycle cancelled the operation and cleanup
+    completed.
+- **Status:** `queued`
+  - **Meaning:** The concurrency policy accepted the request for later
+    execution.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -407,10 +458,12 @@ one structured finding. It never corrupts gameplay memory or blocks simulation.
 
 Audio diagnostics consume immutable snapshots from
 <!-- markdownlint-disable-next-line MD013 -->
-[Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
+[Gameplay audio source, residency, mix, and environment
+runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
 and
 <!-- markdownlint-disable-next-line MD013 -->
-[Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md).
+[Native audio device, resource, player, and tuning adapter
+runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md).
 Registered views may show:
 
 - output-device and audio-engine revision;
@@ -468,7 +521,8 @@ currency, create persistence, or retain presentation resources.
 
 Screenshot and frame capture follow the
 <!-- markdownlint-disable-next-line MD013 -->
-[native platform bootstrap and error-recovery runtime](native-platform-bootstrap-and-error-recovery-runtime.md).
+[native platform bootstrap and error-recovery
+runtime](native-platform-bootstrap-and-error-recovery-runtime.md).
 Development commands may request a bounded capture by stable world, viewport,
 player, camera, frame, quality, locale, and presentation identity.
 
@@ -491,7 +545,8 @@ platform counters, and repository-owned measurement labels. Memory ownership,
 budgets, pressure, traces, leak verification, pools, and instance accounting
 follow the
 <!-- markdownlint-disable-next-line MD013 -->
-[memory ownership, budget, and diagnostics runtime](memory-ownership-budget-and-diagnostics-runtime.md).
+[memory ownership, budget, and diagnostics
+runtime](memory-ownership-budget-and-diagnostics-runtime.md).
 A profile scope contains:
 
 <!-- markdownlint-disable-next-line MD013 -->

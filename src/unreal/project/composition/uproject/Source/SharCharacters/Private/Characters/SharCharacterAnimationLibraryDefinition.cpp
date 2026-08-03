@@ -1,7 +1,3 @@
-// File:
-//   - SharCharacterAnimationLibraryDefinition.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharCharacters/Private/Characters/SharCharacterAnimationLibraryDefinition.cpp
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,36 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Load-free validation and Primary Asset identity for shared animation data.
+//   - Shar character animation library definition composition module.
 // - Must-Not:
-//   - Load clips, evaluate poses, retarget Skeletons, or mutate runtime state.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Structural validation of rig compatibility and semantic clip definitions.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - One clip family needs an independently loaded Primary Asset definition.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another implementation owns the same rig-family library invariants.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Implements shared character-animation library validation.
+//   - Shar character animation library definition composition module.
 // - Description:
-//   - Rejects duplicate or incomplete central animation definitions before use.
+//   - Implements the declared composition module responsibility for project.
 // - Usage:
-//   - Called by import validation, Data Validation, and automation tests.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Performs no synchronous loads and accepts explicit finite timing values.
+//   - Invalid or missing inputs fail explicitly.
 //
-// ADRs:
-// - docs/adr/unreal/runtime/shared-rig-family-animation-libraries.md
-// - docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
-//
-// Large file:
-//   - false
-//
+
+//! Shar character animation library definition composition module.
 
 #include "Characters/SharCharacterAnimationLibraryDefinition.h"
 

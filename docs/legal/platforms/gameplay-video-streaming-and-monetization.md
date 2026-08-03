@@ -164,10 +164,12 @@ conditions, and required notices are verified.
 
 ## Supporting Bibliography
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [YouTube Game Content And Monetization Policies](../../bibliography/platform-policies/youtube-game-content-and-monetization.md). <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [YouTube Game Content And Monetization Policies](../../bibliography/platform-policies/youtube-game-content-and-monetization.md).
-<!-- markdownlint-disable-next-line MD013 -->
-- [Xbox Game Content Usage Rules](../../bibliography/platform-policies/xbox-game-content-usage-rules.md).
+- [Xbox Game Content Usage
+  Rules](../../bibliography/platform-policies/xbox-game-content-usage-rules.md).
 
 ## Primary And Official Sources
 
@@ -181,13 +183,21 @@ conditions, and required notices are verified.
 - United States Court of Appeals for the Ninth Circuit, [*Lenz v. Universal
   Music Corp.*][lenz-opinion], 815 F.3d 1145 (9th Cir. 2016) (Accessed: 15 July
   2026).
-- Office of the Law Revision Counsel, [17 U.S.C. § 101][section-101]
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: external link target is indivisible -->
+- Office of the Law Revision Counsel, [17 U.S.C. § 101](<https://uscode.house.gov/view.xhtml?req=(title:17%20section:101%20edition:prelim)>) <!-- markdownlint-disable-line MD013 -->
   (Accessed: 14 July 2026).
-- Office of the Law Revision Counsel, [17 U.S.C. § 106][section-106]
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: external link target is indivisible -->
+- Office of the Law Revision Counsel, [17 U.S.C. § 106](<https://uscode.house.gov/view.xhtml?req=(title:17%20section:106%20edition:prelim)>) <!-- markdownlint-disable-line MD013 -->
   (Accessed: 13 July 2026).
-- Office of the Law Revision Counsel, [17 U.S.C. § 107][section-107]
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: external link target is indivisible -->
+- Office of the Law Revision Counsel, [17 U.S.C. § 107](<https://uscode.house.gov/view.xhtml?req=(title:17%20section:107%20edition:prelim)>) <!-- markdownlint-disable-line MD013 -->
   (Accessed: 15 July 2026).
-- Office of the Law Revision Counsel, [17 U.S.C. § 512][section-512]
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: external link target is indivisible -->
+- Office of the Law Revision Counsel, [17 U.S.C. § 512](<https://uscode.house.gov/view.xhtml?req=(title:17%20section:512%20edition:prelim)>) <!-- markdownlint-disable-line MD013 -->
   (Accessed: 15 July 2026).
 - U.S. Copyright Office, [More Information on Fair Use][copyright-office]
   (Accessed: 15 July 2026).
@@ -208,14 +218,6 @@ conditions, and required notices are verified.
   https://www.supremecourt.gov/opinions/22pdf/21-869_87ad.pdf
 [lenz-opinion]:
   https://cdn.ca9.uscourts.gov/datastore/opinions/2016/03/17/13-16106.pdf
-[section-101]:
-  https://uscode.house.gov/view.xhtml?req=(title:17%20section:101%20edition:prelim)
-[section-106]:
-  https://uscode.house.gov/view.xhtml?req=(title:17%20section:106%20edition:prelim)
-[section-107]:
-  https://uscode.house.gov/view.xhtml?req=(title:17%20section:107%20edition:prelim)
-[section-512]:
-  https://uscode.house.gov/view.xhtml?req=(title:17%20section:512%20edition:prelim)
 [copyright-office]: https://www.copyright.gov/fair-use/more-info.html
 [youtube-terms]: https://www.youtube.com/t/terms
 [youtube-fair-use]: https://support.google.com/youtube/answer/9783148?hl=en

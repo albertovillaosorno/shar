@@ -1,7 +1,3 @@
-// File:
-//   - records.rs
-// Path: src/formats/rcf/domain/records.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,44 +6,31 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure rcf domain rules for domain records.
+//   - Records domain module.
 // - Must-Not:
-//   - Read files, parse generated indexes, invoke CLI code, or call writer
-//   - adapters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Value objects, invariant checks, and pure evidence-to-domain translation.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when records contains two independently testable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another rcf module owns the same domain boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Pure RCF archive records.
+//   - Records domain module.
 // - Description:
-//   - Defines records data and behavior for rcf domain.
+//   - Implements the declared domain module responsibility for rcf.
 // - Usage:
-//   - Imported through crate domain facades or sibling domain modules.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No filesystem paths, no external process calls, and no implicit IO
-//   - defaults.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Pure RCF archive records.
-//!
-//! This boundary keeps pure rcf archive records explicit and returns
-//! deterministic results to rcf callers.
-/// Parsed archive header summary.
+//! Records domain module.
+
+/// Parsed archive header shared by RCF validation and extraction.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ArchiveHeader {
     /// Number of entries declared by the resource table.
@@ -101,10 +84,7 @@ impl Archive {
     /// Returns the sum of all extracted payload lengths.
     #[must_use]
     pub fn payload_bytes(&self) -> u64 {
-        self.entries
-            .iter()
-            .map(|entry| entry.length)
-            .sum()
+        self.entries.iter().map(|entry| entry.length).sum()
     }
 
     /// Returns the number of zero-length entries.

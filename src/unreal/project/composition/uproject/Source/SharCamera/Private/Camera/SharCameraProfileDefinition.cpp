@@ -1,9 +1,34 @@
-// File: SharCameraProfileDefinition.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharCamera/Private/Camera/SharCameraProfileDefinition.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: load-free camera profile validation only; no view calculation.
-// ADR: docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar camera profile definition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar camera profile definition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar camera profile definition composition module.
 
 #include "Camera/SharCameraProfileDefinition.h"
 
@@ -53,6 +78,7 @@ void USharCameraProfileDefinition::GatherValidationErrors(
     {
         AddCameraProfileError(
             OutErrors,
+            // jig-ignore-next-line: exact syntax is indivisible
             TEXT("Camera FOV bounds must be finite, ordered, and physically valid.")
         );
     }

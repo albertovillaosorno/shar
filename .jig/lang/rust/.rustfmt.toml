@@ -1,0 +1,86 @@
+# Exact rustfmt contract for Jig's pinned nightly construction toolchain.
+# The stable Rust compatibility gate is separate from this formatting gate.
+required_version = "1.9.0"
+unstable_features = true
+edition = "2024"
+style_edition = "2024"
+
+# Repository text is byte-normalized and never inherits host newline settings.
+newline_style = "Unix"
+hard_tabs = false
+tab_spaces = 4
+max_width = 80
+comment_width = 80
+doc_comment_code_block_width = 80
+
+# Formatting failures are validation failures, including comments and literals
+# that cannot be represented within the repository width contract.
+error_on_line_overflow = true
+error_on_unformatted = false
+show_parse_errors = true
+
+# Normalize authored explanatory surfaces. Runtime string contents are never
+# rewritten by the formatter; overlong strings must be split explicitly in code.
+wrap_comments = true
+normalize_comments = true
+format_code_in_doc_comments = true
+normalize_doc_attributes = true
+format_strings = false
+format_macro_matchers = true
+format_macro_bodies = true
+format_generated_files = true
+
+# Imports and implementation items have one canonical ordering independent of
+# author or generator emission order.
+imports_indent = "Block"
+imports_layout = "Mixed"
+imports_granularity = "Module"
+group_imports = "StdExternalCrate"
+reorder_imports = true
+reorder_modules = true
+reorder_impl_items = true
+
+# Preserve compact code when it fits, but make multiline forms byte-stable once
+# they cross a threshold. Avoid zero-width settings that manufacture syntax
+# noise such as gratuitous trailing commas in generic argument lists.
+use_small_heuristics = "Default"
+fn_call_width = 60
+attr_fn_like_width = 60
+struct_lit_width = 24
+struct_variant_width = 36
+array_width = 60
+chain_width = 60
+single_line_if_else_max_width = 0
+single_line_let_else_max_width = 0
+fn_single_line = false
+where_single_line = false
+fn_params_layout = "Tall"
+inline_attribute_width = 0
+
+# Canonical punctuation and structural layout.
+indent_style = "Block"
+brace_style = "SameLineWhere"
+control_brace_style = "AlwaysSameLine"
+trailing_semicolon = true
+trailing_comma = "Vertical"
+match_block_trailing_comma = true
+match_arm_blocks = true
+match_arm_leading_pipes = "Never"
+overflow_delimited_expr = true
+type_punctuation_density = "Wide"
+binop_separator = "Front"
+blank_lines_lower_bound = 0
+blank_lines_upper_bound = 1
+
+# Canonical literal and shorthand forms reduce representational variants.
+hex_literal_case = "Lower"
+float_literal_trailing_zero = "Never"
+use_field_init_shorthand = true
+use_try_shorthand = true
+force_explicit_abi = true
+remove_nested_parens = true
+merge_derives = true
+
+# Formatting is deterministic and non-destructive.
+make_backup = false
+skip_children = false

@@ -1,7 +1,3 @@
-// File:
-//   - pipeline_tests.rs
-// Path: tests/migration/pipeline/unit/domain/pipeline_tests.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for checked stage-report metrics.
+//   - Pipeline tests test module.
 // - Must-Not:
-//   - Perform IO, invoke adapters, or inspect repository data.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Exercise pure report arithmetic at representable limits.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another report invariant gains independent regression ownership.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Stage-report tests move beside a dedicated metrics value.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Stage-report arithmetic regressions.
+//   - Pipeline tests test module.
 // - Description:
-//   - Verifies file and byte totals fail closed instead of saturating.
+//   - Implements the declared test module responsibility for pipeline.
 // - Usage:
-//   - Included by pipeline.rs under cfg(test).
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Tests use deterministic scalar limits only.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression tests for checked stage-report metrics.
-//!
-//! Each case proves report arithmetic rejects values beyond its scalar range.
+//! Pipeline tests test module.
 
 use super::{PipelineError, StageReport};
 
@@ -50,21 +36,12 @@ use super::{PipelineError, StageReport};
 fn pipeline_error_escapes_control_characters() {
     let error = PipelineError::new("invalid\nsource\\evidence");
 
-    assert_eq!(
-        error.to_string(),
-        r"invalid\nsource\evidence"
-    );
+    assert_eq!(error.to_string(), r"invalid\nsource\evidence");
 }
 
 #[test]
 fn rejects_stage_file_count_overflow() -> Result<(), String> {
-    if StageReport::checked_file_total(
-        "test-stage",
-        usize::MAX,
-        1,
-    )
-    .is_err()
-    {
+    if StageReport::checked_file_total("test-stage", usize::MAX, 1).is_err() {
         Ok(())
     } else {
         Err(String::from("stage file overflow was accepted"))
@@ -73,13 +50,7 @@ fn rejects_stage_file_count_overflow() -> Result<(), String> {
 
 #[test]
 fn rejects_stage_byte_total_overflow() -> Result<(), String> {
-    if StageReport::checked_byte_total(
-        "test-stage",
-        u64::MAX,
-        1,
-    )
-    .is_err()
-    {
+    if StageReport::checked_byte_total("test-stage", u64::MAX, 1).is_err() {
         Ok(())
     } else {
         Err(String::from("stage byte overflow was accepted"))

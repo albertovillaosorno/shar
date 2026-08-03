@@ -1,0 +1,5 @@
+schema: shar-surface/v1
+path: src/formats/rtf/composition/lib.rs
+function: rtf
+kind: facade
+authority: composition/lib.rs

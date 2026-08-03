@@ -1,7 +1,3 @@
-# File:
-#   - skill_categories.py
-# Path: src/unreal/editor-control/domain/mcp/domain/skill_categories.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,42 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Ordered category identities and purposes for Unreal MCP skills.
+#   - Skill categories domain module.
 # - Must-Not:
-#   - Assign toolsets, render Markdown, access files, or invoke tools.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Defining the stable top-level navigation order.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Category metadata gains behavior beyond immutable values.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another domain module owns the same ordered categories.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Defines the Unreal MCP skill category order.
+#   - Skill categories domain module.
 # - Description:
-#   - Keeps navigation identity separate from toolset assignment.
+#   - Implements the declared domain module responsibility for editor control.
 # - Usage:
-#   - Imported by taxonomy and generated skill renderers.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Six categories ordered by stable semantic taxonomy.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: Unreal MCP skill category definitions
-#   - reason: category identity and purpose form one navigation contract
-#   - split: extract category prose if localization is introduced
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess when categories are added, removed, or reordered
-#
-"""Ordered categories for native Unreal MCP skills."""
+
+"""Skill categories domain module."""
 
 from __future__ import annotations
 

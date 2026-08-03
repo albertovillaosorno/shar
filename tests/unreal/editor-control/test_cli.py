@@ -1,7 +1,3 @@
-# File:
-#   - test_cli.py
-# Path: tests/unreal/editor-control/test_cli.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,53 +6,41 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - End-to-end tests for the terminal driving adapter.
+#   - Test cli test module.
 # - Must-Not:
-#   - Require Unreal binaries, plugin code, or external networks.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Synthetic CLI lifecycle, discovery, and invocation tests.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - The module gains two independently testable contracts.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module owns the same contract without a distinct invariant.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Guards terminal behavior and stable exit codes.
+#   - Test cli test module.
 # - Description:
-#   - Exercises validated commands against the fake MCP server.
+#   - Implements the declared test module responsibility for editor control.
 # - Usage:
-#   - Executed by pytest through the canonical validator workflow.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Each integration test uses an ephemeral loopback endpoint.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: terminal adapter regression tests
-#   - reason: exit-code and output assertions share one CLI fixture family
-#   - split: split by command family when additional commands are introduced
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess on responsibility or line-count growth
-#
+
+"""Test cli test module."""
+
 from __future__ import annotations
 
 import json
 import sys
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
+from typing import cast
 
+from fake_unreal_server import FakeUnrealServer
 from mcp.adapter_inbound.arguments import UsageError
 from mcp.adapter_inbound.cli import main
 from mcp.domain.json_types import require_json_object
-
-from fake_unreal_server import FakeUnrealServer
 
 if TYPE_CHECKING:
     import pytest

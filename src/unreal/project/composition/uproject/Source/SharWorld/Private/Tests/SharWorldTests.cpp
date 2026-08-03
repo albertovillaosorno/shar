@@ -1,12 +1,34 @@
-// File: SharWorldTests.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharWorld/Private/Tests/SharWorldTests.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: transient world-definition and clock tests; no map or actor loading.
-// ADR: docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
-// LARGE-FILE owner=SharWorld; reason=two cohesive world-contract scenarios;
-// split=separate clock tests when more time-of-day behaviors exist;
-// validation=validate.sh SharWorld plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar world tests composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar world tests composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar world tests composition module.
 
 #if WITH_DEV_AUTOMATION_TESTS
 
@@ -114,6 +136,7 @@ bool FSharWorldClockTest::RunTest(const FString& Parameters)
     );
 
     Clock->SetPaused(true);
+    // jig-ignore-next-line: exact syntax is indivisible
     TestTrue(TEXT("Paused clock accepts elapsed time"), Clock->AdvanceRealSeconds(PausedAdvanceSeconds));
     TestTrue(
         TEXT("Paused clock does not advance"),

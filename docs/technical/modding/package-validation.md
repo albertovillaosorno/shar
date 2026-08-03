@@ -6,11 +6,14 @@
 ## Governing decisions
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Local mod trust and distribution boundary](../../adr/modding/mod-safety-scanner-and-distribution.md)
+- [Local mod trust and distribution
+  boundary](../../adr/modding/mod-safety-scanner-and-distribution.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Local drop-in mod packages and AI skills](../../adr/modding/drop-in-mod-packages-and-ai-skills.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Mod-owned multiplayer adapters and community servers](../../adr/modding/mod-owned-multiplayer-adapters-and-community-servers.md)
+- [Local drop-in mod packages and AI
+  skills](../../adr/modding/drop-in-mod-packages-and-ai-skills.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Mod-owned multiplayer adapters and community servers](../../adr/modding/mod-owned-multiplayer-adapters-and-community-servers.md) <!-- markdownlint-disable-line MD013 -->
 
 ## Purpose
 

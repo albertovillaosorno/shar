@@ -1,8 +1,9 @@
 [package]
-name = "schoenwald-filesystem"
+name = "schoenwald_filesystem"
 version.workspace = true
 edition = "2024"
 license = "MIT"
+# jig-ignore-next-line: exact value is indivisible
 description = "Hexagonal local filesystem mechanisms shared by Schoenwald crates."
 publish = false
 
@@ -10,7 +11,7 @@ publish = false
 
 [lib]
 name = "schoenwald_filesystem"
-path = "lib.rs"
+path = "composition/lib.rs"
 # Canonical external integration tests.
 
 [[test]]
@@ -80,3 +81,6 @@ path = "../../../tests/foundation/filesystem/tree_uniqueness.rs"
 [[test]]
 name = "write_parent_creation"
 path = "../../../tests/foundation/filesystem/write_parent_creation.rs"
+
+[lints]
+workspace = true

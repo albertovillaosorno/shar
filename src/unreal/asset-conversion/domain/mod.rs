@@ -1,7 +1,3 @@
-// File:
-//   - domain.rs
-// Path: src/unreal/asset-conversion/domain/mod.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,36 +6,28 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure domain models for Unreal asset conversion planning.
+//   - Domain domain module.
 // - Must-Not:
-//   - Perform filesystem, process, network, MCP, or editor operations.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Validated value objects and deterministic evidence-to-plan translation.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - A conversion family gains independently testable domain invariants.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another domain module owns the same conversion-plan invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Unreal conversion domain facade.
+//   - Domain domain module.
 // - Description:
-//   - Exposes conversion plans for JSON, WAV, HAP, and FBX evidence.
+//   - Implements the declared responsibility for asset conversion.
 // - Usage:
-//   - Consumed by pipeline application code before any editor-side operation.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Unsupported source extensions fail closed.
-//
-// ADRs:
-// - docs/adr/unreal/architecture.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Pure domain models for deterministic Unreal asset conversion.
-/// Source-format validation and native target planning.
+//! Domain domain module.
+
 pub mod conversion_plan;

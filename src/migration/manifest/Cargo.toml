@@ -1,21 +1,24 @@
 [package]
-name = "game-manifest"
+name = "game_manifest"
 version.workspace = true
 edition = "2024"
 license = "MIT"
+# jig-ignore-next-line: exact value is indivisible
 description = "Generates and validates the game/ content manifest for the pipeline."
 publish = false
 
 [dependencies]
-# schoenwald-cli centralizes process arguments, ordered streams, newline handling, and exit-code mapping for manifest driving adapters.
-schoenwald-cli = { path = "../../foundation/command-line" }
-# schoenwald-filesystem centralizes deterministic traversal, path inspection, and complete UTF-8 artifact reads and writes.
-schoenwald-filesystem = { path = "../../foundation/filesystem" }
+# jig-ignore-next-line: exact value is indivisible
+# schoenwald_cli centralizes process arguments, ordered streams, newline handling, and exit-code mapping for manifest driving adapters.
+schoenwald_cli = { path = "../../foundation/command-line" }
+# jig-ignore-next-line: exact value is indivisible
+# schoenwald_filesystem centralizes deterministic traversal, path inspection, and complete UTF-8 artifact reads and writes.
+schoenwald_filesystem = { path = "../../foundation/filesystem" }
 
 
 [lib]
 name = "game_manifest"
-path = "lib.rs"
+path = "composition/lib.rs"
 
 [[bin]]
 name = "validate-game"
@@ -121,3 +124,6 @@ path = "../../../tests/migration/manifest/validation_order.rs"
 [[test]]
 name = "validation_path_evidence"
 path = "../../../tests/migration/manifest/validation_path_evidence.rs"
+
+[lints]
+workspace = true

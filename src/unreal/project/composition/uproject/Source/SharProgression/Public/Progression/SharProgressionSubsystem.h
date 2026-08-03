@@ -1,12 +1,34 @@
-// File: SharProgressionSubsystem.h
-// Path: src/unreal/project/composition/uproject/Source/SharProgression/Public/Progression/SharProgressionSubsystem.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: game-instance active profile, revisioned progression mutation, commit correlation, and immutable projection authority only; save I/O, platform accounts, UI, and gameplay execution remain external.
-// Specification: docs/technical/unreal/progression-collectibles-and-cheats.md
-// LARGE-FILE owner=SharProgression; reason=cohesive profile and progression control-plane API;
-// split=extract campaign projection queries when multiple domain snapshots are joined;
-// validation=validate.sh SharProgression plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar progression subsystem composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar progression subsystem composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar progression subsystem composition module.
 
 #pragma once
 

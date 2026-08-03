@@ -1,7 +1,3 @@
-// File:
-//   - non_unicode_path.rs
-// Path: tests/foundation/filesystem/non_unicode_path.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for non-Unicode Windows path components.
+//   - Non unicode path test module.
 // - Must-Not:
-//   - Perform filesystem IO or depend on locale-specific rendering.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Construct an unpaired UTF-16 component and assert portable rejection.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another native encoding has independent fixture policy.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test target owns the same non-Unicode path contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Non-Unicode path regression coverage.
+//   - Non unicode path test module.
 // - Description:
-//   - Prevents native path encodings from bypassing portable checks.
+//   - Implements the declared test module responsibility for filesystem.
 // - Usage:
-//   - Runs on Windows through the filesystem crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Unpaired UTF-16 units are rejected before path resolution.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for non-Unicode Windows path components.
-//!
-//! Ill-formed native text must not bypass portable identity validation.
+//! Non unicode path test module.
+
 #[cfg(windows)]
 mod windows {
     use std::ffi::OsString;
@@ -53,24 +40,17 @@ mod windows {
 
     #[test]
     fn non_unicode_component_is_rejected() -> Result<(), String> {
-        let component = PathBuf::from(
-            OsString::from_wide(
-                &[
-                    u16::from(b'b'),
-                    0xd800_u16,
-                    u16::from(b'x'),
-                ],
-            ),
-        );
-        let result = resolve_under(
-            Path::new("output"),
-            &component,
-        );
+        let component = PathBuf::from(OsString::from_wide(&[
+            u16::from(b'b'),
+            0xd800_u16,
+            u16::from(b'x'),
+        ]));
+        let result = resolve_under(Path::new("output"), &component);
 
         if result != Err(RootedPathError::NonUnicodeComponent) {
-            return Err(
-                format!("unexpected non-Unicode resolution: {result:?}"),
-            );
+            return Err(format!(
+                "unexpected non-Unicode resolution: {result:?}"
+            ));
         }
         Ok(())
     }

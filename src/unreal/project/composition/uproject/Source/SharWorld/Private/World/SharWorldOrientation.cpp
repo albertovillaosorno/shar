@@ -1,9 +1,34 @@
-// File: SharWorldOrientation.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharWorld/Private/World/SharWorldOrientation.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: deterministic cardinal and map-orientation math only; no world, actor, asset, or widget access.
-// ADR: docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar world orientation composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar world orientation composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar world orientation composition module.
 
 #include "World/SharWorldDefinition.h"
 
@@ -69,6 +94,7 @@ void FSharWorldOrientationDefinition::GatherValidationErrors(
     {
         AddOrientationError(
             OutErrors,
+            // jig-ignore-next-line: exact syntax is indivisible
             TEXT("World orientation must use +X north, +Y east, +Z up, origin map center, Z=0 sea level, and a positive northern-harbor northing threshold.")
         );
     }

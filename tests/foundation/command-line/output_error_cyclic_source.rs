@@ -1,7 +1,3 @@
-// File:
-//   - output_error_cyclic_source.rs
-// Path: tests/foundation/command-line/output_error_cyclic_source.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for cyclic provider source traversal.
+//   - Output error cyclic source test module.
 // - Must-Not:
-//   - Access operating-system arguments or streams.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Use one deterministic self-referential provider error.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another source-chain topology needs independent coverage.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Output diagnostics no longer inspect provider source chains.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Cyclic provider source regression.
+//   - Output error cyclic source test module.
 // - Description:
-//   - Proves output rendering stops after trait-object canonicalization.
+//   - Implements the declared test module responsibility for command line.
 // - Usage:
-//   - Executed by the schoenwald-cli integration test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - The provider error source points directly back to itself.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for cyclic provider source traversal.
-//!
-//! Custom error sources may form cycles and must not be revisited repeatedly.
+//! Output error cyclic source test module.
 
 #[path = "support/output_error.rs"]
 pub mod support;
@@ -69,10 +55,7 @@ impl ArgumentSource for EmptyArguments {
 struct DiagnosticProgram;
 
 impl CliProgram for DiagnosticProgram {
-    fn execute(
-        &self,
-        _arguments: &[String],
-    ) -> CommandOutcome {
+    fn execute(&self, _arguments: &[String]) -> CommandOutcome {
         CommandOutcome::failure().stderr("diagnostic")
     }
 }
@@ -94,12 +77,8 @@ impl core::fmt::Display for CyclicError {
 
 impl Error for CyclicError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
-        let _previous_call_count = self
-            .source_calls
-            .fetch_add(
-                1,
-                Ordering::SeqCst,
-            );
+        let _previous_call_count =
+            self.source_calls.fetch_add(1, Ordering::SeqCst);
         Some(self)
     }
 }
@@ -110,18 +89,10 @@ struct CyclicErrorSink {
 }
 
 impl OutputSink for CyclicErrorSink {
-    fn write(
-        &mut self,
-        _stream: OutputStream,
-        _text: &str,
-    ) -> io::Result<()> {
-        Err(
-            io::Error::other(
-                CyclicError {
-                    source_calls: Arc::clone(&self.source_calls),
-                },
-            ),
-        )
+    fn write(&mut self, _stream: OutputStream, _text: &str) -> io::Result<()> {
+        Err(io::Error::other(CyclicError {
+            source_calls: Arc::clone(&self.source_calls),
+        }))
     }
 }
 
@@ -133,18 +104,13 @@ fn cyclic_provider_source_stops_after_canonicalization() {
         source_calls: Arc::clone(&source_calls),
     };
 
-    let error = output_error(
-        RunInvocation::execute(
-            &DiagnosticProgram,
-            &mut arguments,
-            &mut output,
-        ),
-    );
+    let error = output_error(RunInvocation::execute(
+        &DiagnosticProgram,
+        &mut arguments,
+        &mut output,
+    ));
     let _diagnostic = error.to_string();
-    assert_eq!(
-        source_calls.load(Ordering::SeqCst),
-        2
-    );
+    assert_eq!(source_calls.load(Ordering::SeqCst), 2);
 }
 
 static FIRST_SOURCE_CALLS: AtomicUsize = AtomicUsize::new(0);
@@ -184,10 +150,8 @@ impl core::fmt::Display for FirstCycleError {
 
 impl Error for FirstCycleError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
-        let _previous_call_count = FIRST_SOURCE_CALLS.fetch_add(
-            1,
-            Ordering::SeqCst,
-        );
+        let _previous_call_count =
+            FIRST_SOURCE_CALLS.fetch_add(1, Ordering::SeqCst);
         Some(&SECOND_ERROR)
     }
 }
@@ -206,10 +170,8 @@ impl core::fmt::Display for SecondCycleError {
 
 impl Error for SecondCycleError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
-        let _previous_call_count = SECOND_SOURCE_CALLS.fetch_add(
-            1,
-            Ordering::SeqCst,
-        );
+        let _previous_call_count =
+            SECOND_SOURCE_CALLS.fetch_add(1, Ordering::SeqCst);
         Some(&FIRST_ERROR)
     }
 }
@@ -217,42 +179,24 @@ impl Error for SecondCycleError {
 struct MultiCycleSink;
 
 impl OutputSink for MultiCycleSink {
-    fn write(
-        &mut self,
-        _stream: OutputStream,
-        _text: &str,
-    ) -> io::Result<()> {
+    fn write(&mut self, _stream: OutputStream, _text: &str) -> io::Result<()> {
         Err(io::Error::other(MultiCycleRoot))
     }
 }
 
 #[test]
 fn multi_node_provider_cycle_visits_each_node_once() {
-    FIRST_SOURCE_CALLS.store(
-        0,
-        Ordering::SeqCst,
-    );
-    SECOND_SOURCE_CALLS.store(
-        0,
-        Ordering::SeqCst,
-    );
+    FIRST_SOURCE_CALLS.store(0, Ordering::SeqCst);
+    SECOND_SOURCE_CALLS.store(0, Ordering::SeqCst);
     let mut arguments = EmptyArguments;
     let mut output = MultiCycleSink;
 
-    let error = output_error(
-        RunInvocation::execute(
-            &DiagnosticProgram,
-            &mut arguments,
-            &mut output,
-        ),
-    );
+    let error = output_error(RunInvocation::execute(
+        &DiagnosticProgram,
+        &mut arguments,
+        &mut output,
+    ));
     let _diagnostic = error.to_string();
-    assert_eq!(
-        FIRST_SOURCE_CALLS.load(Ordering::SeqCst),
-        1
-    );
-    assert_eq!(
-        SECOND_SOURCE_CALLS.load(Ordering::SeqCst),
-        1
-    );
+    assert_eq!(FIRST_SOURCE_CALLS.load(Ordering::SeqCst), 1);
+    assert_eq!(SECOND_SOURCE_CALLS.load(Ordering::SeqCst), 1);
 }

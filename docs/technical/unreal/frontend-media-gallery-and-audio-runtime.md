@@ -6,20 +6,26 @@
 ## Governing decisions and specifications
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
+- [Common UI front end and progress
+  projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
 - [UI parity boundary](../../adr/unreal/ui/ui-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Common UI navigation, menu, and modal runtime](common-ui-navigation-menu-and-modal-runtime.md)
+- [Common UI navigation, menu, and modal
+  runtime](common-ui-navigation-menu-and-modal-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md)
+- [Frontend screen flow and settings
+  runtime](frontend-screen-flow-and-settings-runtime.md)
 - [Frontend shell and menu runtime](frontend-shell-and-menu-runtime.md)
 - [Presentation playback runtime](presentation-playback-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Progression, collectibles, cheats, and credits](progression-collectibles-and-cheats.md)
+- [Progression, collectibles, cheats, and
+  credits](progression-collectibles-and-cheats.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Device configuration and save-slot runtime](device-configuration-and-save-slot-runtime.md)
+- [Device configuration and save-slot
+  runtime](device-configuration-and-save-slot-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Platform audio cooking and streaming](platform-audio-cooking-and-streaming.md)
+- [Platform audio cooking and
+  streaming](platform-audio-cooking-and-streaming.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Platform cinematic media packaging](platform-cinematic-media-packaging.md)
 
@@ -40,17 +46,33 @@ or application-mode transitions.
 
 <!-- markdownlint-disable MD013 -->
 
-| Service | Authority |
-| :--- | :--- |
-| Frontend flow subsystem | Screen entry, navigation intent, history, and accepted frontend revision. |
-| Progression application service | Chapter completion, category counts, unlock state, and completion percentages. |
-| Content catalog | Canonical movie, outfit, vehicle, mission, card, and chapter identities. |
-| Presentation playback service | Media requests, loading, playback, skip, audio policy, completion, and teardown. |
-| Preview presentation service | Thumbnail and three-dimensional preview loading, scene leases, camera policy, and release. |
-| Device-configuration service | Audio settings draft, validation, preview, commit, and rollback. |
-| Audio runtime | Accepted category gains, output mode, preview samples, and movie-audio suspension leases. |
-| Application lifecycle service | Start acceptance, idle-demo entry, loading, gameplay, frontend restoration, and exit. |
-| Common UI kernel | Widget activation, focus, actions, menus, modals, transitions, and asset leases. |
+- **Service:** Frontend flow subsystem
+  - **Authority:** Screen entry, navigation intent, history, and accepted
+    frontend revision.
+- **Service:** Progression application service
+  - **Authority:** Chapter completion, category counts, unlock state, and
+    completion percentages.
+- **Service:** Content catalog
+  - **Authority:** Canonical movie, outfit, vehicle, mission, card, and chapter
+    identities.
+- **Service:** Presentation playback service
+  - **Authority:** Media requests, loading, playback, skip, audio policy,
+    completion, and teardown.
+- **Service:** Preview presentation service
+  - **Authority:** Thumbnail and three-dimensional preview loading, scene
+    leases, camera policy, and release.
+- **Service:** Device-configuration service
+  - **Authority:** Audio settings draft, validation, preview, commit, and
+    rollback.
+- **Service:** Audio runtime
+  - **Authority:** Accepted category gains, output mode, preview samples, and
+    movie-audio suspension leases.
+- **Service:** Application lifecycle service
+  - **Authority:** Start acceptance, idle-demo entry, loading, gameplay,
+    frontend restoration, and exit.
+- **Service:** Common UI kernel
+  - **Authority:** Widget activation, focus, actions, menus, modals,
+    transitions, and asset leases.
 
 <!-- markdownlint-enable MD013 -->
 

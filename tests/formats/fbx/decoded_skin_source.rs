@@ -1,7 +1,3 @@
-// File:
-//   - decoded_skin_source.rs
-// Path: tests/formats/fbx/decoded_skin_source.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,42 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for decoded skeleton and skin count contracts.
+//   - Decoded skin source test module.
 // - Must-Not:
-//   - Read private assets, discover packages, or invoke external applications.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic decoded JSON and process-unique temporary files.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Skin geometry fixtures gain an independent conformance boundary.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Decoded character regressions move into shared adapter tests.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects decoded skeleton declarations before character construction.
+//   - Decoded skin source test module.
 // - Description:
-//   - Exercises declared count validation with deterministic synthetic JSON.
+//   - Implements the declared test module responsibility for fbx.
 // - Usage:
-//   - Run through the fbx crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Temporary files are process-unique and removed by each regression.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-//
-// Large file:
-//   - true
-//   - Reason: Synthetic skeleton, skin, and composite count regressions share
-//   - one public decoded-source boundary and deterministic temporary fixtures.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for decoded skeleton and skin count contracts.
-//!
-//! Synthetic JSON proves contradictory extraction evidence fails before FBX
-//! character construction without reading private game assets.
+//! Decoded skin source test module.
 
 use std::fs;
 use std::path::PathBuf;
@@ -60,12 +43,8 @@ use serde_json as _;
 use shar_sha256 as _;
 
 fn temp_path(label: &str) -> PathBuf {
-    std::env::temp_dir().join(
-        format!(
-            "fbx-decoded-{label}-{}.json",
-            std::process::id()
-        ),
-    )
+    std::env::temp_dir()
+        .join(format!("fbx-decoded-{label}-{}.json", std::process::id()))
 }
 
 #[test]
@@ -77,23 +56,16 @@ fn rejects_declared_joint_count_mismatch() -> Result<(), String> {
         r#""dof":0,"free_axes":0,"primary_axis":0,"secondary_axis":0,"#,
         r#""twist_axis":0,"rest_pose":[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]}]}"#,
     );
-    fs::write(
-        &path, fixture,
-    )
-    .map_err(|write_error| write_error.to_string())?;
+    fs::write(&path, fixture).map_err(|write_error| write_error.to_string())?;
 
     let error = load_skeleton(&path).err();
 
     fs::remove_file(&path).map_err(|remove_error| remove_error.to_string())?;
-    let expected = Some(
-        SkinSourceError::JointCountMismatch {
-            path: path
-                .display()
-                .to_string(),
-            declared: 2,
-            actual: 1,
-        },
-    );
+    let expected = Some(SkinSourceError::JointCountMismatch {
+        path: path.display().to_string(),
+        declared: 2,
+        actual: 1,
+    });
     if error == expected {
         Ok(())
     } else {
@@ -109,16 +81,9 @@ fn rejects_declared_primitive_group_count_mismatch() -> Result<(), String> {
         r#""skeleton_name":"skeleton","num_prim_groups":1,"#,
         r#""prim_groups":[]}"#,
     );
-    fs::write(
-        &path, fixture,
-    )
-    .map_err(|write_error| write_error.to_string())?;
+    fs::write(&path, fixture).map_err(|write_error| write_error.to_string())?;
 
-    let error = load_skin_part(
-        &path,
-        &[],
-    )
-    .err();
+    let error = load_skin_part(&path, &[]).err();
 
     fs::remove_file(&path).map_err(|remove_error| remove_error.to_string())?;
     match error {
@@ -142,16 +107,9 @@ fn rejects_declared_vertex_count_mismatch() -> Result<(), String> {
         r#""index_count":0,"matrix_count":0,"positions":[],"normals":[],"#,
         r#""matrices":[],"matrix_palette":[],"indices":[],"uvs":[]}]}"#,
     );
-    fs::write(
-        &path, fixture,
-    )
-    .map_err(|write_error| write_error.to_string())?;
+    fs::write(&path, fixture).map_err(|write_error| write_error.to_string())?;
 
-    let error = load_skin_part(
-        &path,
-        &[],
-    )
-    .err();
+    let error = load_skin_part(&path, &[]).err();
 
     fs::remove_file(&path).map_err(|remove_error| remove_error.to_string())?;
     match error {
@@ -176,16 +134,9 @@ fn rejects_declared_index_count_mismatch() -> Result<(), String> {
         r#""index_count":1,"matrix_count":0,"positions":[],"normals":[],"#,
         r#""matrices":[],"matrix_palette":[],"indices":[],"uvs":[]}]}"#,
     );
-    fs::write(
-        &path, fixture,
-    )
-    .map_err(|write_error| write_error.to_string())?;
+    fs::write(&path, fixture).map_err(|write_error| write_error.to_string())?;
 
-    let error = load_skin_part(
-        &path,
-        &[],
-    )
-    .err();
+    let error = load_skin_part(&path, &[]).err();
 
     fs::remove_file(&path).map_err(|remove_error| remove_error.to_string())?;
     match error {
@@ -210,16 +161,9 @@ fn rejects_declared_matrix_palette_count_mismatch() -> Result<(), String> {
         r#""index_count":0,"matrix_count":1,"positions":[],"normals":[],"#,
         r#""matrices":[],"matrix_palette":[],"indices":[],"uvs":[]}]}"#,
     );
-    fs::write(
-        &path, fixture,
-    )
-    .map_err(|write_error| write_error.to_string())?;
+    fs::write(&path, fixture).map_err(|write_error| write_error.to_string())?;
 
-    let error = load_skin_part(
-        &path,
-        &[],
-    )
-    .err();
+    let error = load_skin_part(&path, &[]).err();
 
     fs::remove_file(&path).map_err(|remove_error| remove_error.to_string())?;
     match error {
@@ -247,26 +191,15 @@ fn rejects_declared_composite_skin_count_mismatch() -> Result<(), String> {
         r#"{"schema":"composite_drawable","name":"character","#,
         r#""skeleton_name":"skeleton","num_skins":1,"skins":[]}"#,
     );
-    fs::write(
-        &skeleton_path,
-        skeleton_fixture,
-    )
-    .map_err(|write_error| write_error.to_string())?;
-    fs::write(
-        &composite_path,
-        composite_fixture,
-    )
-    .map_err(|write_error| write_error.to_string())?;
+    fs::write(&skeleton_path, skeleton_fixture)
+        .map_err(|write_error| write_error.to_string())?;
+    fs::write(&composite_path, composite_fixture)
+        .map_err(|write_error| write_error.to_string())?;
 
     let composite_paths = [composite_path.as_path()];
-    let error = load_character(
-        "character",
-        &skeleton_path,
-        &[],
-        &[],
-        &composite_paths,
-    )
-    .err();
+    let error =
+        load_character("character", &skeleton_path, &[], &[], &composite_paths)
+            .err();
 
     fs::remove_file(&skeleton_path)
         .map_err(|remove_error| remove_error.to_string())?;
@@ -297,26 +230,15 @@ fn rejects_declared_composite_prop_count_mismatch() -> Result<(), String> {
         r#""skeleton_name":"skeleton","num_skins":0,"skins":[],"#,
         r#""num_props":1,"props":[]}"#,
     );
-    fs::write(
-        &skeleton_path,
-        skeleton_fixture,
-    )
-    .map_err(|write_error| write_error.to_string())?;
-    fs::write(
-        &composite_path,
-        composite_fixture,
-    )
-    .map_err(|write_error| write_error.to_string())?;
+    fs::write(&skeleton_path, skeleton_fixture)
+        .map_err(|write_error| write_error.to_string())?;
+    fs::write(&composite_path, composite_fixture)
+        .map_err(|write_error| write_error.to_string())?;
 
     let composite_paths = [composite_path.as_path()];
-    let error = load_character(
-        "character",
-        &skeleton_path,
-        &[],
-        &[],
-        &composite_paths,
-    )
-    .err();
+    let error =
+        load_character("character", &skeleton_path, &[], &[], &composite_paths)
+            .err();
 
     fs::remove_file(&skeleton_path)
         .map_err(|remove_error| remove_error.to_string())?;
@@ -347,26 +269,15 @@ fn rejects_declared_composite_effect_count_mismatch() -> Result<(), String> {
         r#""skeleton_name":"skeleton","num_skins":0,"skins":[],"#,
         r#""num_props":0,"props":[],"num_effects":1,"effects":[]}"#,
     );
-    fs::write(
-        &skeleton_path,
-        skeleton_fixture,
-    )
-    .map_err(|write_error| write_error.to_string())?;
-    fs::write(
-        &composite_path,
-        composite_fixture,
-    )
-    .map_err(|write_error| write_error.to_string())?;
+    fs::write(&skeleton_path, skeleton_fixture)
+        .map_err(|write_error| write_error.to_string())?;
+    fs::write(&composite_path, composite_fixture)
+        .map_err(|write_error| write_error.to_string())?;
 
     let composite_paths = [composite_path.as_path()];
-    let error = load_character(
-        "character",
-        &skeleton_path,
-        &[],
-        &[],
-        &composite_paths,
-    )
-    .err();
+    let error =
+        load_character("character", &skeleton_path, &[], &[], &composite_paths)
+            .err();
 
     fs::remove_file(&skeleton_path)
         .map_err(|remove_error| remove_error.to_string())?;
@@ -391,10 +302,7 @@ fn rejects_unsupported_skeleton_version() -> Result<(), String> {
         r#""dof":0,"free_axes":0,"primary_axis":0,"secondary_axis":0,"#,
         r#""twist_axis":0,"rest_pose":[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]}]}"#,
     );
-    fs::write(
-        &path, fixture,
-    )
-    .map_err(|write_error| write_error.to_string())?;
+    fs::write(&path, fixture).map_err(|write_error| write_error.to_string())?;
 
     let error = load_skeleton(&path).err();
 
@@ -416,22 +324,14 @@ fn rejects_unsupported_skin_version() -> Result<(), String> {
         r#""skeleton_name":"skeleton","num_prim_groups":0,"#,
         r#""prim_groups":[]}"#,
     );
-    fs::write(
-        &path, fixture,
-    )
-    .map_err(|write_error| write_error.to_string())?;
+    fs::write(&path, fixture).map_err(|write_error| write_error.to_string())?;
 
-    let error = load_skin_part(
-        &path,
-        &[],
-    )
-    .err();
+    let error = load_skin_part(&path, &[]).err();
 
     fs::remove_file(&path).map_err(|remove_error| remove_error.to_string())?;
     match error {
         Some(SkinSourceError::UnsupportedSkinVersion {
-            version: 2,
-            ..
+            version: 2, ..
         }) => Ok(()),
         _ => Err("unsupported skin version was accepted".to_owned()),
     }

@@ -5,18 +5,24 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Transactional phone-booth vehicle retrieval](../../adr/unreal/runtime/transactional-phone-booth-vehicle-retrieval.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Transactional phone-booth vehicle retrieval](../../adr/unreal/runtime/transactional-phone-booth-vehicle-retrieval.md)
+- [Data-driven Unreal gameplay content
+  catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+- [Common UI front end and progress
+  projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
+- [Reward browser, preview, and purchase UI
+  runtime](reward-browser-preview-and-purchase-ui-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Reward browser, preview, and purchase UI runtime](reward-browser-preview-and-purchase-ui-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+- [Native vehicle physics, control, damage, and presentation
+  runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 
 ## Purpose
 
@@ -54,21 +60,34 @@ canonical placement identity. Common UI presents the immutable query result.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `VehicleId` | Canonical vehicle identity. |
-| `DisplayName` | Localizable presentation. |
-| `PreviewAssets` | Soft icon, mesh, and material references. |
-| `OwnershipState` | Locked, owned, completion override, or unavailable. |
-| `DiscoveryState` | Hidden or visible in the reached campaign range. |
-| `AcquisitionKind` | Starting, purchase, reward, traffic, secret, mission, or override. |
-| `HealthPermille` | Accepted health from zero through one thousand. |
-| `DamageState` | Healthy, damaged, destroyed, or unavailable. |
-| `RepairCost` | Explicit charge when destroyed. |
-| `DriverPresentationId` | Optional level-scoped driver binding. |
-| `Selectable` | Derived from ownership, mission, repair, and content readiness. |
-| `UnavailableReason` | Typed reason when not selectable. |
-| `ProjectionRevision` | Catalog, progression, mission, currency, and world revision. |
+- **Field:** `VehicleId`
+  - **Contract:** Canonical vehicle identity.
+- **Field:** `DisplayName`
+  - **Contract:** Localizable presentation.
+- **Field:** `PreviewAssets`
+  - **Contract:** Soft icon, mesh, and material references.
+- **Field:** `OwnershipState`
+  - **Contract:** Locked, owned, completion override, or unavailable.
+- **Field:** `DiscoveryState`
+  - **Contract:** Hidden or visible in the reached campaign range.
+- **Field:** `AcquisitionKind`
+  - **Contract:** Starting, purchase, reward, traffic, secret, mission, or
+    override.
+- **Field:** `HealthPermille`
+  - **Contract:** Accepted health from zero through one thousand.
+- **Field:** `DamageState`
+  - **Contract:** Healthy, damaged, destroyed, or unavailable.
+- **Field:** `RepairCost`
+  - **Contract:** Explicit charge when destroyed.
+- **Field:** `DriverPresentationId`
+  - **Contract:** Optional level-scoped driver binding.
+- **Field:** `Selectable`
+  - **Contract:** Derived from ownership, mission, repair, and content
+    readiness.
+- **Field:** `UnavailableReason`
+  - **Contract:** Typed reason when not selectable.
+- **Field:** `ProjectionRevision`
+  - **Contract:** Catalog, progression, mission, currency, and world revision.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -147,7 +166,8 @@ incur the destroyed-vehicle repair charge.
 Destroyed-vehicle simulation, terminal presentation, optional husk leases,
 source-to-husk correlation, pool reset, capacity fallback, and teardown follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+[Native vehicle physics, control, damage, and presentation
+runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
 A husk is not an owned or retrievable vehicle and cannot satisfy the selected
 vehicle identity, repair itself, or preserve a stale active-instance slot.
 

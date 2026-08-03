@@ -1,7 +1,3 @@
-// File:
-//   - failing_write_sink.rs
-// Path: tests/foundation/command-line/support/failing_write_sink.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,37 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - A deterministic sink fixture that rejects one selected write.
+//   - Failing write sink test module.
 // - Must-Not:
-//   - Encode production retry, stream, or presentation policy.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Count writes and return one configured I/O error.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another sink behavior needs independent state or assertions.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - The fixture is used by only one integration test.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Configurable failed-write integration fixture.
+//   - Failing write sink test module.
 // - Description:
-//   - Removes repeated counted-write failure implementations from CLI tests.
+//   - Implements the declared test module responsibility for command line.
 // - Usage:
-//   - Loaded only by tests that require a selected failed write.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No defaults; callers provide the index, kind, and message.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Deterministic selected-write failure fixture.
+//! Failing write sink test module.
 
 use std::io;
 
@@ -73,22 +61,11 @@ impl FailingWriteSink {
 }
 
 impl OutputSink for FailingWriteSink {
-    fn write(
-        &mut self,
-        _stream: OutputStream,
-        _text: &str,
-    ) -> io::Result<()> {
+    fn write(&mut self, _stream: OutputStream, _text: &str) -> io::Result<()> {
         let call = self.calls;
-        self.calls = self
-            .calls
-            .saturating_add(1);
+        self.calls = self.calls.saturating_add(1);
         if call == self.failure_index {
-            return Err(
-                io::Error::new(
-                    self.kind,
-                    self.message,
-                ),
-            );
+            return Err(io::Error::new(self.kind, self.message));
         }
         Ok(())
     }

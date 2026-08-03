@@ -1,7 +1,3 @@
-// File:
-//   - package_evidence.rs
-// Path: tests/formats/fbx/package_evidence.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,37 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for FBX package evidence value invariants.
+//   - Package evidence test module.
 // - Must-Not:
-//   - Read files, parse indexes, or depend on concrete adapters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic package identities and public port construction.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - One evidence family requires independent fixtures or adapters.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Package value regressions move into shared port conformance tests.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects canonical package evidence before application planning.
+//   - Package evidence test module.
 // - Description:
-//   - Exercises package evidence construction with synthetic identities.
+//   - Implements the declared test module responsibility for fbx.
 // - Usage:
-//   - Run through the fbx crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No local files, generated assets, or external processes are required.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for FBX package evidence value invariants.
+//! Package evidence test module.
 
 use fbx::ports::package_index::{
     ModelPackageEvidence, PackageIndexError, PackageModelFamily,
@@ -56,48 +44,21 @@ fn canonicalizes_package_evidence_member_order() {
     let first = ModelPackageEvidence::new(
         "package",
         PackageModelFamily::Prop,
-        vec![
-            "model-b".to_owned(),
-            "model-a".to_owned(),
-        ],
-        vec![
-            "material-b".to_owned(),
-            "material-a".to_owned(),
-        ],
-        vec![
-            "texture-b".to_owned(),
-            "texture-a".to_owned(),
-        ],
-        vec![
-            "animation-b".to_owned(),
-            "animation-a".to_owned(),
-        ],
+        vec!["model-b".to_owned(), "model-a".to_owned()],
+        vec!["material-b".to_owned(), "material-a".to_owned()],
+        vec!["texture-b".to_owned(), "texture-a".to_owned()],
+        vec!["animation-b".to_owned(), "animation-a".to_owned()],
     );
     let second = ModelPackageEvidence::new(
         "package",
         PackageModelFamily::Prop,
-        vec![
-            "model-a".to_owned(),
-            "model-b".to_owned(),
-        ],
-        vec![
-            "material-a".to_owned(),
-            "material-b".to_owned(),
-        ],
-        vec![
-            "texture-a".to_owned(),
-            "texture-b".to_owned(),
-        ],
-        vec![
-            "animation-a".to_owned(),
-            "animation-b".to_owned(),
-        ],
+        vec!["model-a".to_owned(), "model-b".to_owned()],
+        vec!["material-a".to_owned(), "material-b".to_owned()],
+        vec!["texture-a".to_owned(), "texture-b".to_owned()],
+        vec!["animation-a".to_owned(), "animation-b".to_owned()],
     );
 
-    assert_eq!(
-        first,
-        second
-    );
+    assert_eq!(first, second);
 }
 
 #[test]
@@ -111,10 +72,7 @@ fn rejects_case_insensitive_member_aliases() {
         Vec::new(),
     );
 
-    assert_eq!(
-        result,
-        Err(PackageIndexError::DuplicateMemberId)
-    );
+    assert_eq!(result, Err(PackageIndexError::DuplicateMemberId));
 }
 
 #[test]
@@ -149,10 +107,8 @@ fn rejects_noncanonical_package_evidence_identities() {
     assert!(
         cases
             .iter()
-            .all(
-                |result| result
-                    == &Err(PackageIndexError::NonCanonicalIdentity)
-            )
+            .all(|result| result
+                == &Err(PackageIndexError::NonCanonicalIdentity))
     );
 }
 
@@ -180,9 +136,7 @@ fn rejects_nonportable_package_member_ids() {
     assert!(
         cases
             .iter()
-            .all(
-                |result| result
-                    == &Err(PackageIndexError::NonCanonicalIdentity)
-            )
+            .all(|result| result
+                == &Err(PackageIndexError::NonCanonicalIdentity))
     );
 }

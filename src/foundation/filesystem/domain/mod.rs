@@ -1,7 +1,3 @@
-// File:
-//   - domain.rs
-// Path: src/foundation/filesystem/domain/mod.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure path-kind values and lexical rooted-path invariants.
+//   - Domain domain module.
 // - Must-Not:
-//   - Perform IO, select adapters, or encode caller workflow policy.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Represent path states and reject unsafe relative components.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when one path invariant becomes independently versioned.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another domain module owns the same mechanism invariants.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Shared filesystem domain model.
+//   - Domain domain module.
 // - Description:
-//   - Defines storage-neutral values without touching local storage.
+//   - Implements the declared domain module responsibility for filesystem.
 // - Usage:
-//   - Used by ports, application use cases, adapters, and callers.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Missing paths are explicit; current-directory markers normalize away.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Pure domain values for shared filesystem mechanisms.
-//!
-//! Storage access remains outside this layer.
+//! Domain domain module.
+
 use std::path::{Component, Path, PathBuf};
 
 mod diagnostic_path;
@@ -104,43 +91,43 @@ impl core::fmt::Display for RootedPathError {
         match self {
             Self::EmptyRoot => {
                 formatter.write_str("path root must not be empty")
-            }
+            },
             Self::Empty => {
                 formatter.write_str("path must identify a descendant")
-            }
+            },
             Self::Absolute => {
                 formatter.write_str("path must be relative to its root")
-            }
+            },
             Self::ParentTraversal => {
                 formatter.write_str("path must not traverse above its root")
-            }
+            },
             Self::ReservedHostAlias => {
                 formatter.write_str("path must not target a host alias")
-            }
+            },
             Self::TrailingDot => {
                 formatter.write_str("path component must not end with a dot")
-            }
+            },
             Self::TrailingSpace => {
                 formatter.write_str("path component must not end with a space")
-            }
+            },
             Self::AlternateDataStream => {
                 formatter.write_str("path component must not select a stream")
-            }
+            },
             Self::ForbiddenCharacter => {
                 formatter.write_str("path component has reserved punctuation")
-            }
+            },
             Self::ControlCharacter => {
                 formatter.write_str("path component has a control character")
-            }
+            },
             Self::UnicodePathModifier => {
                 formatter.write_str("path component has a Unicode modifier")
-            }
+            },
             Self::ComponentTooLong => {
                 formatter.write_str("path component exceeds the host limit")
-            }
+            },
             Self::NonUnicodeComponent => {
                 formatter.write_str("path component must be valid Unicode")
-            }
+            },
         }
     }
 }
@@ -154,21 +141,18 @@ impl std::error::Error for RootedPathError {}
 /// Returns [`RootedPathError`] when the root is empty, traversing, or not
 /// portable.
 pub(crate) fn validate_root(root: &Path) -> Result<(), RootedPathError> {
-    if root
-        .as_os_str()
-        .is_empty()
-    {
+    if root.as_os_str().is_empty() {
         return Err(RootedPathError::EmptyRoot);
     }
     for component in root.components() {
         match component {
             Component::ParentDir => {
                 return Err(RootedPathError::ParentTraversal);
-            }
+            },
             Component::Prefix(_)
             | Component::RootDir
             | Component::CurDir
-            | Component::Normal(_) => {}
+            | Component::Normal(_) => {},
         }
     }
     validate_portable_path(root)
@@ -193,14 +177,14 @@ pub fn resolve_under(
             Component::Normal(value) => {
                 has_descendant = true;
                 resolved.push(value);
-            }
-            Component::CurDir => {}
+            },
+            Component::CurDir => {},
             Component::ParentDir => {
                 return Err(RootedPathError::ParentTraversal);
-            }
+            },
             Component::Prefix(_) | Component::RootDir => {
                 return Err(RootedPathError::Absolute);
-            }
+            },
         }
     }
     if !has_descendant {
@@ -210,49 +194,5 @@ pub fn resolve_under(
 }
 
 #[cfg(test)]
-mod tests {
-    use std::path::{Path, PathBuf};
-
-    use super::{RootedPathError, resolve_under};
-
-    #[test]
-    fn nested_relative_path_stays_beneath_root() {
-        let resolved = resolve_under(
-            Path::new("output"),
-            Path::new("audio/voice.wav"),
-        );
-        assert_eq!(
-            resolved,
-            Ok(PathBuf::from("output/audio/voice.wav"))
-        );
-    }
-
-    #[test]
-    fn parent_component_is_rejected() {
-        let result = resolve_under(
-            Path::new("output"),
-            Path::new("../escape.bin"),
-        );
-        assert_eq!(
-            result,
-            Err(RootedPathError::ParentTraversal)
-        );
-    }
-
-    #[test]
-    fn absolute_path_is_rejected() {
-        let absolute = if cfg!(windows) {
-            PathBuf::from(r"C:\escape.bin")
-        } else {
-            PathBuf::from("/escape.bin")
-        };
-        let result = resolve_under(
-            Path::new("output"),
-            &absolute,
-        );
-        assert_eq!(
-            result,
-            Err(RootedPathError::Absolute)
-        );
-    }
-}
+#[path = "../../../../tests/foundation/filesystem/unit/domain/tests.rs"]
+mod tests;

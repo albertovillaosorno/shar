@@ -1,7 +1,3 @@
-// File:
-//   - filesystem_batch_exporter_tests.rs
-// Path: tests/formats/p3d/unit/adapter-outbound/filesystem_batch_exporter_tests.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Focused regressions for the local P3D batch exporter.
+//   - Filesystem batch exporter tests test module.
 // - Must-Not:
-//   - Create persistent files or implement batch export behavior.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Exercise deterministic report and output-path helper contracts.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - One helper family requires an independent fixture boundary.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Batch exporter tests no longer obscure production behavior.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Local P3D batch exporter regression coverage.
+//   - Filesystem batch exporter tests test module.
 // - Description:
-//   - Verifies JSON report identity and output path helpers.
+//   - Implements the declared test module responsibility for p3d.
 // - Usage:
-//   - Included by filesystem_batch_exporter.rs under cfg(test).
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Tests use only deterministic in-memory values.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression tests for the local P3D batch exporter.
-//!
-//! These cases protect JSON report identity and output path rules without
-//! creating persistent local state.
+//! Filesystem batch exporter tests test module.
 
 #[cfg(windows)]
 use std::ffi::OsString;
@@ -70,9 +55,7 @@ fn report_rows_preserve_json_string_identity() {
     error.push(char::from(92));
     error.push(char::from(10));
     error.push(char::from(9));
-    let row = report_line(
-        "ok", root, input, output, &error,
-    );
+    let row = report_line("ok", root, input, output, &error);
     let escaped = escape_json(&error);
     let contains = row.contains(&escaped);
     assert!(contains);
@@ -81,22 +64,12 @@ fn report_rows_preserve_json_string_identity() {
 #[cfg(windows)]
 #[test]
 fn report_rows_preserve_unpaired_utf16_path_units() {
-    let path = PathBuf::from(
-        OsString::from_wide(
-            &[
-                u16::from(b'a'),
-                0xd800,
-                u16::from(b'b'),
-            ],
-        ),
-    );
-    let row = report_line(
-        "failed",
-        &path,
-        &path,
-        &path,
-        "read failure",
-    );
+    let path = PathBuf::from(OsString::from_wide(&[
+        u16::from(b'a'),
+        0xd800,
+        u16::from(b'b'),
+    ]));
+    let row = report_line("failed", &path, &path, &path, "read failure");
     let expected = escape_json(&DiagnosticPath::new(&path).to_string());
 
     assert!(
@@ -112,10 +85,7 @@ fn distinct_input_roots_keep_distinct_output_identities() {
     let underscored_root = Path::new("a_b");
     let nested = root_identity_path(nested_root);
     let underscored = root_identity_path(underscored_root);
-    assert_ne!(
-        nested,
-        underscored
-    );
+    assert_ne!(nested, underscored);
 }
 
 #[test]

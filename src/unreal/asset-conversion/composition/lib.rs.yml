@@ -1,0 +1,5 @@
+schema: shar-surface/v1
+path: src/unreal/asset-conversion/composition/lib.rs
+function: asset-conversion
+kind: facade
+authority: composition/lib.rs

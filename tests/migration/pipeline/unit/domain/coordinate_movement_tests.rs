@@ -1,7 +1,3 @@
-// File:
-//   - coordinate_movement_tests.rs
-// Path: tests/migration/pipeline/unit/domain/coordinate_movement_tests.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,27 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure affine movement regression coverage across coordinate families.
+//   - Coordinate movement tests test module.
 // - Must-Not:
-//   - Read repository assets, mutate meshes, or use external tools.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Compare deterministic points, directions, placements, and bounds.
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Coordinate movement domain tests.
-//
-// ADRs:
-// - docs/adr/pipeline/unreal/world-assembly-from-normalized-chunks.md
-//
-// Large file:
-//   - false
+//   - Coordinate movement tests test module.
+// - Description:
+//   - Implements the declared test module responsibility for pipeline.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Tests one movement contract independently from world adapters.
+//! Coordinate movement tests test module.
 
 use super::{
     CoordinateMovement, CoordinateSubject, MovementError, identity_matrix,
@@ -53,17 +51,12 @@ const SUBJECTS: &[CoordinateSubject] = &[
 ];
 
 /// Return whether two coordinates are equal within test precision.
-fn coordinates_close(
-    left: [f32; 3],
-    right: [f32; 3],
-) -> bool {
+fn coordinates_close(left: [f32; 3], right: [f32; 3]) -> bool {
     left.into_iter()
         .zip(right)
-        .all(
-            |(left_value, right_value)| {
-                (left_value - right_value).abs() <= f32::EPSILON
-            },
-        )
+        .all(|(left_value, right_value)| {
+            (left_value - right_value).abs() <= f32::EPSILON
+        })
 }
 
 /// Build one mirrored Z movement used by the Kwik-E-Mart placement shape.
@@ -71,8 +64,8 @@ const fn mirrored_movement() -> CoordinateMovement {
     CoordinateMovement::new(
         "test-movement",
         [
-            1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, -10.0,
-            20.0, -30.0, 1.0,
+            1., 0., 0., 0., 0., 1., 0., 0., 0., 0., -1., 0., -10., 20., -30.,
+            1.,
         ],
         SUBJECTS,
     )
@@ -81,60 +74,25 @@ const fn mirrored_movement() -> CoordinateMovement {
 #[test]
 fn point_direction_and_bounds_share_one_affine_basis() -> Result<(), String> {
     let movement = mirrored_movement();
-    movement
-        .validate()
-        .map_err(|error| error.to_string())?;
+    movement.validate().map_err(|error| error.to_string())?;
     let point = movement
-        .transform_point(
-            [
-                12.0, 4.0, -8.0,
-            ],
-        )
+        .transform_point([12., 4., -8.])
         .map_err(|error| error.to_string())?;
-    if !coordinates_close(
-        point,
-        [
-            2.0, 24.0, -22.0,
-        ],
-    ) {
+    if !coordinates_close(point, [2., 24., -22.]) {
         return Err(String::from("point movement was incorrect"));
     }
     let direction = movement
-        .transform_direction(
-            [
-                0.0, 0.0, 1.0,
-            ],
-        )
+        .transform_direction([0., 0., 1.])
         .map_err(|error| error.to_string())?;
-    if !coordinates_close(
-        direction,
-        [
-            0.0, 0.0, -1.0,
-        ],
-    ) {
+    if !coordinates_close(direction, [0., 0., -1.]) {
         return Err(String::from("direction included invalid translation"));
     }
     let bounds = movement
-        .transform_bounds(
-            [
-                10.0, 0.0, -5.0,
-            ],
-            [
-                20.0, 10.0, 5.0,
-            ],
-        )
+        .transform_bounds([10., 0., -5.], [20., 10., 5.])
         .map_err(|error| error.to_string())?;
-    if !coordinates_close(
-        bounds.0,
-        [
-            0.0, 20.0, -35.0,
-        ],
-    ) || !coordinates_close(
-        bounds.1,
-        [
-            10.0, 30.0, -25.0,
-        ],
-    ) {
+    if !coordinates_close(bounds.0, [0., 20., -35.])
+        || !coordinates_close(bounds.1, [10., 30., -25.])
+    {
         return Err(String::from("movement bounds were incorrect"));
     }
     Ok(())
@@ -144,25 +102,14 @@ fn point_direction_and_bounds_share_one_affine_basis() -> Result<(), String> {
 fn authored_placement_is_composed_before_world_movement() -> Result<(), String>
 {
     let movement = mirrored_movement();
-    let authored = translation_matrix(
-        [
-            1.0, 2.0, 3.0,
-        ],
-    );
+    let authored = translation_matrix([1., 2., 3.]);
     let transformed = movement.transform_placement(&authored);
-    let expected = [
-        -9.0, 22.0, -33.0,
-    ];
-    let matched = transformed
-        .into_iter()
-        .skip(12)
-        .take(3)
-        .zip(expected)
-        .all(
-            |(actual, expected_value)| {
-                (actual - expected_value).abs() <= f32::EPSILON
-            },
-        );
+    let expected = [-9., 22., -33.];
+    let matched = transformed.into_iter().skip(12).take(3).zip(expected).all(
+        |(actual, expected_value)| {
+            (actual - expected_value).abs() <= f32::EPSILON
+        },
+    );
     matched
         .then_some(())
         .ok_or_else(|| String::from("placement translation was incorrect"))
@@ -201,35 +148,13 @@ fn movement_declares_every_future_coordinate_family() -> Result<(), String> {
 
 #[test]
 fn invalid_affine_state_fails_closed() {
-    let empty = CoordinateMovement::new(
-        "",
-        identity_matrix(),
-        SUBJECTS,
-    );
-    assert_eq!(
-        empty.validate(),
-        Err(MovementError::MissingIdentity)
-    );
-    let degenerate = CoordinateMovement::new(
-        "degenerate",
-        [0.0; 16],
-        SUBJECTS,
-    );
-    assert!(
-        degenerate
-            .validate()
-            .is_err()
-    );
+    let empty = CoordinateMovement::new("", identity_matrix(), SUBJECTS);
+    assert_eq!(empty.validate(), Err(MovementError::MissingIdentity));
+    let degenerate = CoordinateMovement::new("degenerate", [0.; 16], SUBJECTS);
+    assert!(degenerate.validate().is_err());
     assert!(
         mirrored_movement()
-            .transform_bounds(
-                [
-                    1.0, 0.0, 0.0,
-                ],
-                [
-                    0.0, 1.0, 1.0,
-                ],
-            )
+            .transform_bounds([1., 0., 0.,], [0., 1., 1.,],)
             .is_err()
     );
 }

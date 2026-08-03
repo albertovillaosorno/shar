@@ -114,6 +114,8 @@ or affirmative steps.
   (Accessed: 16 July 2026).
 - [17 U.S.C. § 106](../statutes/17-usc-106.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Sony Corp. of America v. Universal City Studios, Inc.](sony-corp-v-universal-city-studios.md).
+- [Sony Corp. of America v. Universal City Studios,
+  Inc.](sony-corp-v-universal-city-studios.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Copyright-safe publication boundary](../repository/copyright-safe-publication-boundary.md).
+- [Copyright-safe publication
+  boundary](../repository/copyright-safe-publication-boundary.md).

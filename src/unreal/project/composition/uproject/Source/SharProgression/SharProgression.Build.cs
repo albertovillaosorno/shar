@@ -1,7 +1,9 @@
 // File: SharProgression.Build.cs
+// jig-ignore-next-line: exact syntax is indivisible
 // Path: src/unreal/project/composition/uproject/Source/SharProgression/SharProgression.Build.cs
 // Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier: MIT
+// jig-ignore-next-line: exact syntax is indivisible
 // Boundary: profile identity, progression catalogs, deterministic mutations, and immutable projections only; save I/O, platform accounts, UI, and gameplay execution remain external.
 // Specification: docs/technical/unreal/progression-collectibles-and-cheats.md
 

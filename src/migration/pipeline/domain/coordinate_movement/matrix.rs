@@ -1,7 +1,3 @@
-// File:
-//   - matrix.rs
-// Path: src/migration/pipeline/domain/coordinate_movement/matrix.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,27 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Fixed-size row-vector affine matrix primitives.
+//   - Matrix domain module.
 // - Must-Not:
-//   - Assign world meaning, read files, or mutate adapter-owned records.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Matrix construction, composition, stable keys, and coordinate mapping.
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Pure matrix mechanics for coordinate movement.
-//
-// ADRs:
-// - docs/adr/pipeline/unreal/world-assembly-from-normalized-chunks.md
-//
-// Large file:
-//   - false
+//   - Matrix domain module.
+// - Description:
+//   - Implements the declared domain module responsibility for pipeline.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Fixed-size affine matrix mechanics.
+//! Matrix domain module.
 
 use super::{CoordinateMatrix, MovementError};
 
@@ -38,8 +36,7 @@ use super::{CoordinateMatrix, MovementError};
 #[must_use]
 pub const fn identity_matrix() -> CoordinateMatrix {
     [
-        1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0,
-        0.0, 1.0,
+        1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.,
     ]
 }
 
@@ -59,15 +56,13 @@ pub fn multiply_matrices(
     first: &CoordinateMatrix,
     second: &CoordinateMatrix,
 ) -> CoordinateMatrix {
-    let mut product = [0.0_f32; 16];
+    let mut product = [0f32; 16];
     for row in 0..4 {
         for column in 0..4 {
-            let mut sum = 0.0_f32;
+            let mut sum = 0f32;
             for inner in 0..4 {
-                sum = first[row * 4 + inner].mul_add(
-                    second[inner * 4 + column],
-                    sum,
-                );
+                sum = first[row * 4 + inner]
+                    .mul_add(second[inner * 4 + column], sum);
             }
             product[row * 4 + column] = sum;
         }
@@ -86,43 +81,26 @@ pub(super) fn transform_point(
     value: [f32; 3],
     matrix: &CoordinateMatrix,
 ) -> Result<[f32; 3], MovementError> {
-    if !value
-        .iter()
-        .all(|component| component.is_finite())
-    {
+    if !value.iter().all(|component| component.is_finite()) {
         return Err(MovementError::NonFiniteCoordinate);
     }
-    finite_coordinate(
-        [
-            value[0].mul_add(
-                matrix[0],
-                value[1].mul_add(
-                    matrix[4],
-                    value[2].mul_add(
-                        matrix[8], matrix[12],
-                    ),
-                ),
-            ),
-            value[0].mul_add(
-                matrix[1],
-                value[1].mul_add(
-                    matrix[5],
-                    value[2].mul_add(
-                        matrix[9], matrix[13],
-                    ),
-                ),
-            ),
-            value[0].mul_add(
-                matrix[2],
-                value[1].mul_add(
-                    matrix[6],
-                    value[2].mul_add(
-                        matrix[10], matrix[14],
-                    ),
-                ),
-            ),
-        ],
-    )
+    finite_coordinate([
+        value[0].mul_add(
+            matrix[0],
+            value[1]
+                .mul_add(matrix[4], value[2].mul_add(matrix[8], matrix[12])),
+        ),
+        value[0].mul_add(
+            matrix[1],
+            value[1]
+                .mul_add(matrix[5], value[2].mul_add(matrix[9], matrix[13])),
+        ),
+        value[0].mul_add(
+            matrix[2],
+            value[1]
+                .mul_add(matrix[6], value[2].mul_add(matrix[10], matrix[14])),
+        ),
+    ])
 }
 
 /// Transform one direction by one affine basis without translation.
@@ -130,37 +108,23 @@ pub(super) fn transform_direction(
     value: [f32; 3],
     matrix: &CoordinateMatrix,
 ) -> Result<[f32; 3], MovementError> {
-    if !value
-        .iter()
-        .all(|component| component.is_finite())
-    {
+    if !value.iter().all(|component| component.is_finite()) {
         return Err(MovementError::NonFiniteCoordinate);
     }
-    finite_coordinate(
-        [
-            value[0].mul_add(
-                matrix[0],
-                value[1].mul_add(
-                    matrix[4],
-                    value[2] * matrix[8],
-                ),
-            ),
-            value[0].mul_add(
-                matrix[1],
-                value[1].mul_add(
-                    matrix[5],
-                    value[2] * matrix[9],
-                ),
-            ),
-            value[0].mul_add(
-                matrix[2],
-                value[1].mul_add(
-                    matrix[6],
-                    value[2] * matrix[10],
-                ),
-            ),
-        ],
-    )
+    finite_coordinate([
+        value[0].mul_add(
+            matrix[0],
+            value[1].mul_add(matrix[4], value[2] * matrix[8]),
+        ),
+        value[0].mul_add(
+            matrix[1],
+            value[1].mul_add(matrix[5], value[2] * matrix[9]),
+        ),
+        value[0].mul_add(
+            matrix[2],
+            value[1].mul_add(matrix[6], value[2] * matrix[10]),
+        ),
+    ])
 }
 
 /// Return one finite coordinate unchanged.
@@ -174,23 +138,11 @@ fn finite_coordinate(value: [f32; 3]) -> Result<[f32; 3], MovementError> {
 
 /// Return one affine basis determinant.
 pub(super) fn determinant(matrix: &CoordinateMatrix) -> f32 {
-    let first_minor = matrix[5].mul_add(
-        matrix[10],
-        -(matrix[6] * matrix[9]),
-    );
-    let second_minor = matrix[4].mul_add(
-        matrix[10],
-        -(matrix[6] * matrix[8]),
-    );
-    let third_minor = matrix[4].mul_add(
-        matrix[9],
-        -(matrix[5] * matrix[8]),
-    );
+    let first_minor = matrix[5].mul_add(matrix[10], -(matrix[6] * matrix[9]));
+    let second_minor = matrix[4].mul_add(matrix[10], -(matrix[6] * matrix[8]));
+    let third_minor = matrix[4].mul_add(matrix[9], -(matrix[5] * matrix[8]));
     matrix[0].mul_add(
         first_minor,
-        (-matrix[1]).mul_add(
-            second_minor,
-            matrix[2] * third_minor,
-        ),
+        (-matrix[1]).mul_add(second_minor, matrix[2] * third_minor),
     )
 }

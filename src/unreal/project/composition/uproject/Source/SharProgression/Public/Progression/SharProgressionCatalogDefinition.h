@@ -1,12 +1,34 @@
-// File: SharProgressionCatalogDefinition.h
-// Path: src/unreal/project/composition/uproject/Source/SharProgression/Public/Progression/SharProgressionCatalogDefinition.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: immutable progression operation, quantity, batch, and snapshot-schema policy only; no profile state, save I/O, UI, or gameplay effects.
-// Specification: docs/technical/unreal/progression-collectibles-and-cheats.md
-// LARGE-FILE owner=SharProgression; reason=cohesive reflected progression catalog contract;
-// split=extract domain-specific catalog rows when currency and collectibles require independent assets;
-// validation=validate.sh SharProgression plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar progression catalog definition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar progression catalog definition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar progression catalog definition composition module.
 
 #pragma once
 

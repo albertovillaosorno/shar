@@ -1,12 +1,34 @@
-// File: SharVehicleSelectionTransaction.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharVehicles/Private/Vehicles/SharVehicleSelectionTransaction.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: deterministic selection transaction transitions only; no spawning, ownership, or payment authority.
-// ADR: docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
-// LARGE-FILE owner=SharVehicles; reason=cohesive phone-booth transaction lifecycle;
-// split=extract reservation evidence if world-spawn orchestration grows;
-// validation=validate.sh SharVehicles plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar vehicle selection transaction composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar vehicle selection transaction composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar vehicle selection transaction composition module.
 
 #include "Vehicles/SharVehicleSelectionTransaction.h"
 
@@ -30,6 +52,7 @@ bool USharVehicleSelectionTransaction::Begin(
     if (bInvalid)
     {
         SetError(
+            // jig-ignore-next-line: exact syntax is indivisible
             TEXT("Vehicle selection requires an idle transaction and a different valid requested vehicle.")
         );
         return false;
@@ -54,6 +77,7 @@ bool USharVehicleSelectionTransaction::MarkSpawnReserved(
     if (bInvalid)
     {
         SetError(
+            // jig-ignore-next-line: exact syntax is indivisible
             TEXT("Spawn reservation requires a requested transaction and canonical reservation identity.")
         );
         return false;

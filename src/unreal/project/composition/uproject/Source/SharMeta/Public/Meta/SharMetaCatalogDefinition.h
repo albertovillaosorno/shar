@@ -1,12 +1,34 @@
-// File: SharMetaCatalogDefinition.h
-// Path: src/unreal/project/composition/uproject/Source/SharMeta/Public/Meta/SharMetaCatalogDefinition.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: immutable semantic cheat definitions within the shared meta catalog only; physical input mapping, runtime state, effect execution, credits playback, and calendar selection remain external.
-// Specification: docs/technical/unreal/progression-collectibles-and-cheats.md
-// LARGE-FILE owner=SharMeta; reason=cohesive reflected meta-catalog and cheat-definition contract;
-// split=extract credits and calendar rows when their runtimes are implemented;
-// validation=validate.sh SharMeta plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar meta catalog definition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar meta catalog definition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar meta catalog definition composition module.
 
 #pragma once
 

@@ -1,0 +1,25 @@
+schema: shar-function/v1
+identity:
+  id: editor-control
+  path: src/unreal/editor-control
+  domain: unreal
+architecture:
+  route: src/<domain>/<function>/<kind>/<part>
+  kinds:
+    - adapter-inbound
+    - adapter-outbound
+    - application
+    - composition
+    - contract
+    - domain
+    - port-outbound
+capabilities:
+  - math
+  - python
+projects:
+tests:
+  root: tests/unreal/editor-control
+ownership:
+  accountable: Alberto Villa Osorno
+validation:
+  mode: active

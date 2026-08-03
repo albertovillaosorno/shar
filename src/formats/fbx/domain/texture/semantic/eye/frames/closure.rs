@@ -1,7 +1,3 @@
-// File:
-//   - closure.rs
-// Path: src/formats/fbx/domain/texture/semantic/eye/frames/closure.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,38 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Monotonic symmetric lid-mask validation and per-frame evidence rows.
+//   - Closure domain module.
 // - Must-Not:
-//   - Classify source colors, scale images, change frame order, or access
-//   - files.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Exact mask-set comparison and checked row-count projection.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Closure validation and evidence projection need independent consumers.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Source eye evidence can own this behavior without exceeding SRP.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Eye closure evidence validation.
+//   - Closure domain module.
 // - Description:
-//   - Proves the source lid masks grow symmetrically and records frame counts.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Called only by source eye-frame evidence analysis.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Partial closure frames are one and two.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Monotonic eye closure validation and evidence projection.
+//! Closure domain module.
+
 #![expect(
     clippy::arithmetic_side_effects,
     clippy::indexing_slicing,
@@ -67,32 +55,24 @@ pub(super) fn validate(
         if !masks[earlier].is_subset(&masks[later])
             || masks[earlier].len() >= masks[later].len()
         {
-            return Err(
-                EyeTextureError::NonMonotonicClosure {
-                    earlier,
-                    later,
-                },
-            );
+            return Err(EyeTextureError::NonMonotonicClosure {
+                earlier,
+                later,
+            });
         }
     }
     let width = usize::try_from(width)
         .map_err(|_error| EyeTextureError::NumericOverflow)?;
     let half = usize::try_from(height / 2)
         .map_err(|_error| EyeTextureError::NumericOverflow)?;
-    for frame in [
-        1_usize, 2,
-    ] {
+    for frame in [1_usize, 2] {
         let upper = masks[frame]
             .iter()
             .filter(|index| **index / width < half)
             .count();
         let lower = masks[frame].len() - upper;
         if upper != lower {
-            return Err(
-                EyeTextureError::AsymmetricClosure {
-                    frame,
-                },
-            );
+            return Err(EyeTextureError::AsymmetricClosure { frame });
         }
     }
     Ok(())
@@ -115,20 +95,15 @@ pub(super) fn frame_evidence(
         .count();
     let preserved = pupil_indices
         .iter()
-        .filter(
-            |index| {
-                frames[frame_index].pixels()[**index]
-                    == frames[0].pixels()[**index]
-            },
-        )
+        .filter(|index| {
+            frames[frame_index].pixels()[**index] == frames[0].pixels()[**index]
+        })
         .count();
-    Ok(
-        EyeFrameEvidence {
-            frame_index,
-            lid_pixel_count: lid_indices.len(),
-            upper_lid_pixel_count: upper,
-            lower_lid_pixel_count: lid_indices.len() - upper,
-            preserved_pupil_pixel_count: preserved,
-        },
-    )
+    Ok(EyeFrameEvidence {
+        frame_index,
+        lid_pixel_count: lid_indices.len(),
+        upper_lid_pixel_count: upper,
+        lower_lid_pixel_count: lid_indices.len() - upper,
+        preserved_pupil_pixel_count: preserved,
+    })
 }

@@ -1,7 +1,3 @@
-# File:
-#   - skill_documents.py
-# Path: src/unreal/editor-control/port-outbound/mcp/port_outbound/skill_documents.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,40 +6,34 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Application-facing contracts for rendering and storing skill documents.
+#   - Skill documents outbound port.
 # - Must-Not:
-#   - Implement Markdown, filesystem behavior, MCP transport, or CLI parsing.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Decoupling live catalog discovery from documentation adapters.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Rendering and persistence need independently versioned ports.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another port module owns the same generated-document contracts.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Defines generated Unreal skill document ports.
+#   - Skill documents outbound port.
 # - Description:
-#   - Keeps the export use case independent from output technology.
+#   - Implements the declared outbound port responsibility for editor control.
 # - Usage:
-#   - Implemented by Markdown and filesystem driven adapters.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - One renderer and one replace-style store participate per export.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
-"""Ports for generated Unreal MCP skill documents."""
+
+"""Skill documents outbound port."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol
+from typing import Protocol
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from mcp.domain.catalog import ToolsetDefinition

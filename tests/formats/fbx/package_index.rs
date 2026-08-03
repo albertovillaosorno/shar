@@ -1,7 +1,3 @@
-// File:
-//   - package_index.rs
-// Path: tests/formats/fbx/package_index.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for FBX package-index evidence invariants.
+//   - Package index test module.
 // - Must-Not:
-//   - Access private assets, rediscover packages, or parse `Pure3D` sources.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic generated-index evidence and public port assertions.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Adapter JSONL behavior requires a distinct integration boundary.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Package evidence no longer requires independent port-level coverage.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects stable package evidence consumed by FBX planning.
+//   - Package index test module.
 // - Description:
-//   - Exercises package-index port models with synthetic member identities.
+//   - Implements the declared test module responsibility for fbx.
 // - Usage:
-//   - Run through the fbx crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No local files, generated assets, or external processes are required.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for FBX package-index evidence invariants.
-//!
-//! Synthetic evidence protects stable identity without filesystem discovery.
+//! Package index test module.
 
 use fbx::adapters::driven::generated_package_index::{
     GeneratedPackageCatalog, PackageIndexAdapterError,
@@ -60,37 +46,22 @@ use shar_sha256 as _;
 #[test]
 fn rejects_unknown_jsonl_fields() {
     let cases = [
-        GeneratedPackageCatalog::from_jsonl(
-            concat!(
-                r#"{"package_id":"package","package_category":"props","#,
-                r#""extra":1,"members":["#,
-                r#"{"id":"mesh","role":"model"}]}"#,
-            ),
-        ),
-        GeneratedPackageCatalog::from_jsonl(
-            concat!(
-                r#"{"package_id":"package","package_category":"props","#,
-                r#""members":["#,
-                r#"{"id":"mesh","role":"model","extra":1}]}"#,
-            ),
-        ),
+        GeneratedPackageCatalog::from_jsonl(concat!(
+            r#"{"package_id":"package","package_category":"props","#,
+            r#""extra":1,"members":["#,
+            r#"{"id":"mesh","role":"model"}]}"#,
+        )),
+        GeneratedPackageCatalog::from_jsonl(concat!(
+            r#"{"package_id":"package","package_category":"props","#,
+            r#""members":["#,
+            r#"{"id":"mesh","role":"model","extra":1}]}"#,
+        )),
     ];
 
-    assert!(
-        cases
-            .iter()
-            .all(
-                |result| matches!(
-                    result,
-                    Err(
-                        PackageIndexAdapterError::Parse {
-                            line: 1,
-                            ..
-                        }
-                    )
-                )
-            )
-    );
+    assert!(cases.iter().all(|result| matches!(
+        result,
+        Err(PackageIndexAdapterError::Parse { line: 1, .. })
+    )));
 }
 
 #[test]
@@ -103,12 +74,10 @@ fn rejects_duplicate_member_ids_while_reading_jsonl() {
 
     assert_eq!(
         GeneratedPackageCatalog::from_jsonl(jsonl),
-        Err(
-            PackageIndexAdapterError::DuplicateMemberId {
-                line: 1,
-                id: "shared".to_owned(),
-            }
-        )
+        Err(PackageIndexAdapterError::DuplicateMemberId {
+            line: 1,
+            id: "shared".to_owned(),
+        })
     );
 }
 
@@ -121,12 +90,10 @@ fn rejects_unknown_member_roles_while_reading_jsonl() {
 
     assert_eq!(
         GeneratedPackageCatalog::from_jsonl(jsonl),
-        Err(
-            PackageIndexAdapterError::UnknownMemberRole {
-                line: 1,
-                role: "model-metadata".to_owned(),
-            }
-        )
+        Err(PackageIndexAdapterError::UnknownMemberRole {
+            line: 1,
+            role: "model-metadata".to_owned(),
+        })
     );
 }
 
@@ -139,11 +106,7 @@ fn rejects_blank_member_roles_while_reading_jsonl() {
 
     assert_eq!(
         GeneratedPackageCatalog::from_jsonl(jsonl),
-        Err(
-            PackageIndexAdapterError::BlankMemberRole {
-                line: 1
-            }
-        )
+        Err(PackageIndexAdapterError::BlankMemberRole { line: 1 })
     );
 }
 
@@ -156,11 +119,7 @@ fn rejects_blank_member_ids_while_reading_jsonl() {
 
     assert_eq!(
         GeneratedPackageCatalog::from_jsonl(jsonl),
-        Err(
-            PackageIndexAdapterError::BlankMemberId {
-                line: 1
-            }
-        )
+        Err(PackageIndexAdapterError::BlankMemberId { line: 1 })
     );
 }
 
@@ -173,11 +132,7 @@ fn rejects_blank_package_categories_while_reading_jsonl() {
 
     assert_eq!(
         GeneratedPackageCatalog::from_jsonl(jsonl),
-        Err(
-            PackageIndexAdapterError::BlankPackageCategory {
-                line: 1
-            }
-        )
+        Err(PackageIndexAdapterError::BlankPackageCategory { line: 1 })
     );
 }
 
@@ -190,11 +145,7 @@ fn rejects_blank_package_ids_while_reading_jsonl() {
 
     assert_eq!(
         GeneratedPackageCatalog::from_jsonl(jsonl),
-        Err(
-            PackageIndexAdapterError::BlankPackageId {
-                line: 1
-            }
-        )
+        Err(PackageIndexAdapterError::BlankPackageId { line: 1 })
     );
 }
 
@@ -221,10 +172,7 @@ fn classification_uses_canonical_roles_only() {
         .and_then(|catalog| catalog.require_model_package("package"))
         .map(|evidence| evidence.model_member_ids);
 
-    assert_eq!(
-        result,
-        Ok(vec!["mesh".to_owned()])
-    );
+    assert_eq!(result, Ok(vec!["mesh".to_owned()]));
 }
 
 #[test]
@@ -233,10 +181,7 @@ fn rejects_duplicate_member_identities() {
         ModelPackageEvidence::new(
             "package",
             PackageModelFamily::Prop,
-            vec![
-                "mesh".to_owned(),
-                "mesh".to_owned(),
-            ],
+            vec!["mesh".to_owned(), "mesh".to_owned()],
             Vec::new(),
             Vec::new(),
             Vec::new(),
@@ -245,10 +190,7 @@ fn rejects_duplicate_member_identities() {
             "package",
             PackageModelFamily::Prop,
             vec!["mesh".to_owned()],
-            vec![
-                "material".to_owned(),
-                "material".to_owned(),
-            ],
+            vec!["material".to_owned(), "material".to_owned()],
             Vec::new(),
             Vec::new(),
         ),
@@ -324,8 +266,5 @@ fn rejects_blank_package_identity() {
         Vec::new(),
     );
 
-    assert_eq!(
-        result,
-        Err(PackageIndexError::MissingPackageId)
-    );
+    assert_eq!(result, Err(PackageIndexError::MissingPackageId));
 }

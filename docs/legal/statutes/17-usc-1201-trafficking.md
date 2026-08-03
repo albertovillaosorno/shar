@@ -2,8 +2,6 @@
 
 > [Legal Research Disclaimer](../disclaimer.md) applies to this record.
 
-<!-- cspell:ignore MGE -->
-
 - Status: Current statutory structure verified; fact-specific application not
   determined.
 - Jurisdiction: United States federal law.
@@ -122,20 +120,24 @@ For every challenged item, identify:
 ## Primary Sources
 
 - Office of the Law Revision Counsel, 17 U.S.C. § 1201:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title17-section1201&num=0&edition=prelim>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title17-section1201&num=0&edition=prelim> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - [Universal City Studios, Inc. v. Corley](../cases/universal-v-corley.md), for
   the Second Circuit's decryption-tool, linking, fair-use, and speech analysis.
 <!-- markdownlint-disable-next-line MD013 -->
-- [MGE UPS Systems, Inc. v. GE Consumer and Industrial, Inc.](../cases/mge-ups-systems-v-ge-consumer-and-industrial.md),
+- [MGE UPS Systems, Inc. v. GE Consumer and Industrial,
+  Inc.](../cases/mge-ups-systems-v-ge-consumer-and-industrial.md),
   for the Fifth Circuit's actor-specific circumvention and withdrawn-opinion
   boundaries.
 <!-- markdownlint-disable-next-line MD013 -->
-- [Chamberlain Group, Inc. v. Skylink Technologies, Inc.](../cases/chamberlain-v-skylink.md),
+- [Chamberlain Group, Inc. v. Skylink Technologies,
+  Inc.](../cases/chamberlain-v-skylink.md),
   for the Federal Circuit's authorization, claimant-burden, and nexus analysis.
 <!-- markdownlint-disable-next-line MD013 -->
-- [Storage Technology Corp. v. Custom Hardware Engineering & Consulting, Inc.](../cases/storage-technology-v-custom-hardware.md),
+- [Storage Technology Corp. v. Custom Hardware Engineering & Consulting,
+  Inc.](../cases/storage-technology-v-custom-hardware.md),
   for the Federal Circuit's maintenance-password and activation-copy analysis.
 - [Davidson & Associates, Inc. v. Jung](../cases/davidson-v-jung.md), for the
   Eighth Circuit's game-service authentication and emulator analysis.

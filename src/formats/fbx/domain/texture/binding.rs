@@ -1,7 +1,3 @@
-// File:
-//   - binding.rs
-// Path: src/formats/fbx/domain/texture/binding.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,42 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure fbx domain rules for domain texture binding.
+//   - Binding domain module.
 // - Must-Not:
-//   - Read files, parse generated indexes, invoke CLI code, or call writer
-//   - adapters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Value objects, invariant checks, and pure evidence-to-domain translation.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when binding contains two independently testable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another fbx module owns the same domain boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Material binding resolved for one mesh primitive group.
+//   - Binding domain module.
 // - Description:
-//   - Defines binding data and behavior for fbx domain texture.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Imported through crate domain facades or sibling domain modules.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No filesystem paths, no external process calls, and no implicit IO
-//   - defaults.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-// - docs/adr/pipeline/unreal/unreal-manifest-and-package-taxonomy.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Material binding resolved for one mesh primitive group.
-// These exact file-local lints preserve explicit domain and binary contracts.
+//! Binding domain module.
+
 #![expect(
     clippy::module_name_repetitions,
     reason = "Tests verify these intentional explicit file-local contracts \
@@ -77,16 +61,16 @@ pub struct MaterialSemantics {
 }
 
 impl MaterialSemantics {
-    /// Surface requires alpha or transparency handling.
-    const TRANSPARENT: u8 = 1 << 0;
     /// Surface is authored as glass or another optical lens.
     const GLASS: u8 = 1 << 1;
+    /// Surface represents a lamp, flare, or other light emitter.
+    const LIGHT_EMITTER: u8 = 1 << 4;
     /// Surface is authored as a mirror or rear-view element.
     const MIRROR: u8 = 1 << 2;
     /// Surface has source-backed reflection or metallic evidence.
     const REFLECTIVE: u8 = 1 << 3;
-    /// Surface represents a lamp, flare, or other light emitter.
-    const LIGHT_EMITTER: u8 = 1 << 4;
+    /// Surface requires alpha or transparency handling.
+    const TRANSPARENT: u8 = 1 << 0;
     /// Surface is a non-luminous smoke, fire, or particle plane.
     const VISUAL_EFFECT: u8 = 1 << 5;
 
@@ -96,20 +80,15 @@ impl MaterialSemantics {
         material_name: &str,
         texture_file_name: Option<&str>,
     ) -> Self {
-        infer_identity_semantics(
-            &identity_evidence(
-                material_name,
-                texture_file_name,
-            ),
-        )
+        infer_identity_semantics(&identity_evidence(
+            material_name,
+            texture_file_name,
+        ))
     }
 
     /// Merge additional decoded shader or runtime evidence.
     #[must_use]
-    pub const fn merge(
-        self,
-        additional: Self,
-    ) -> Self {
+    pub const fn merge(self, additional: Self) -> Self {
         let mut merged = Self {
             flags: self.flags | additional.flags,
         };
@@ -121,77 +100,41 @@ impl MaterialSemantics {
 
     /// Merge explicit transparency evidence.
     #[must_use]
-    pub const fn with_transparent(
-        self,
-        transparent: bool,
-    ) -> Self {
-        self.with_flag(
-            Self::TRANSPARENT,
-            transparent,
-        )
+    pub const fn with_transparent(self, transparent: bool) -> Self {
+        self.with_flag(Self::TRANSPARENT, transparent)
     }
 
     /// Merge explicit glass evidence and its required transparency.
     #[must_use]
-    pub const fn with_glass(
-        self,
-        glass: bool,
-    ) -> Self {
-        self.with_flag(
-            Self::GLASS | Self::TRANSPARENT,
-            glass,
-        )
+    pub const fn with_glass(self, glass: bool) -> Self {
+        self.with_flag(Self::GLASS | Self::TRANSPARENT, glass)
     }
 
     /// Merge explicit mirror evidence and its required reflection.
     #[must_use]
-    pub const fn with_mirror(
-        self,
-        mirror: bool,
-    ) -> Self {
-        self.with_flag(
-            Self::MIRROR | Self::REFLECTIVE,
-            mirror,
-        )
+    pub const fn with_mirror(self, mirror: bool) -> Self {
+        self.with_flag(Self::MIRROR | Self::REFLECTIVE, mirror)
     }
 
     /// Merge source-backed metallic or reflective presentation evidence.
     #[must_use]
-    pub const fn with_reflective(
-        self,
-        reflective: bool,
-    ) -> Self {
-        self.with_flag(
-            Self::REFLECTIVE,
-            reflective,
-        )
+    pub const fn with_reflective(self, reflective: bool) -> Self {
+        self.with_flag(Self::REFLECTIVE, reflective)
     }
 
     /// Merge explicit light-emitter evidence unless the surface is VFX.
     #[must_use]
-    pub const fn with_light_emitter(
-        self,
-        light_emitter: bool,
-    ) -> Self {
+    pub const fn with_light_emitter(self, light_emitter: bool) -> Self {
         if self.is_visual_effect() {
             return self;
         }
-        self.with_flag(
-            Self::LIGHT_EMITTER,
-            light_emitter,
-        )
+        self.with_flag(Self::LIGHT_EMITTER, light_emitter)
     }
 
     /// Mark one non-luminous visual effect and suppress light emission.
     #[must_use]
-    pub const fn with_visual_effect(
-        mut self,
-        visual_effect: bool,
-    ) -> Self {
-        self = self.with_flag(
-            Self::VISUAL_EFFECT,
-            visual_effect,
-        );
+    pub const fn with_visual_effect(mut self, visual_effect: bool) -> Self {
+        self = self.with_flag(Self::VISUAL_EFFECT, visual_effect);
         if visual_effect {
             self.flags &= !Self::LIGHT_EMITTER;
         }
@@ -260,19 +203,12 @@ impl MaterialSemantics {
     }
 
     /// Return whether one semantic flag is present.
-    const fn has(
-        self,
-        flag: u8,
-    ) -> bool {
+    const fn has(self, flag: u8) -> bool {
         self.flags & flag != 0
     }
 
     /// Merge one conditional semantic flag.
-    const fn with_flag(
-        mut self,
-        flag: u8,
-        enabled: bool,
-    ) -> Self {
+    const fn with_flag(mut self, flag: u8, enabled: bool) -> Self {
         if enabled {
             self.flags |= flag;
         }
@@ -300,14 +236,7 @@ fn infer_identity_semantics(evidence: &str) -> MaterialSemantics {
     let visual_effect = visual_effect_evidence(evidence);
     MaterialSemantics::default()
         .with_transparent(
-            glass
-                || contains_any(
-                    evidence,
-                    &[
-                        "transparent",
-                        "translucent",
-                    ],
-                ),
+            glass || contains_any(evidence, &["transparent", "translucent"]),
         )
         .with_glass(glass)
         .with_mirror(mirror)
@@ -318,169 +247,125 @@ fn infer_identity_semantics(evidence: &str) -> MaterialSemantics {
 
 /// Return whether identity evidence names glass or an optical lens.
 fn glass_evidence(evidence: &str) -> bool {
-    contains_any(
-        evidence,
-        &[
-            "glass",
-            "window",
-            "windshield",
-            "windsheild",
-            "windscreen",
-            "visor",
-            "goggle",
-            "spectacle",
-            "eyeglass",
-            "lens",
-        ],
-    )
+    contains_any(evidence, &[
+        "glass",
+        "window",
+        "windshield",
+        "windsheild",
+        "windscreen",
+        "visor",
+        "goggle",
+        "spectacle",
+        "eyeglass",
+        "lens",
+    ])
 }
 
 /// Return whether identity evidence names a mirror surface.
 fn mirror_evidence(evidence: &str) -> bool {
-    contains_any(
-        evidence,
-        &[
-            "mirror",
-            "rearview",
-            "rear-view",
-            "sideview",
-            "side-view",
-        ],
-    )
+    contains_any(evidence, &[
+        "mirror",
+        "rearview",
+        "rear-view",
+        "sideview",
+        "side-view",
+    ])
 }
 
 /// Return whether identity evidence names a reflective material family.
 fn reflective_evidence(evidence: &str) -> bool {
-    contains_any(
-        evidence,
-        &[
-            "chrome",
-            "metal",
-            "metallic",
-            "steel",
-            "spheremap",
-            "sphere-map",
-            "reflective",
-            "reflection",
-            "envmap",
-            "env-map",
-        ],
-    )
+    contains_any(evidence, &[
+        "chrome",
+        "metal",
+        "metallic",
+        "steel",
+        "spheremap",
+        "sphere-map",
+        "reflective",
+        "reflection",
+        "envmap",
+        "env-map",
+    ])
 }
 
 /// Return whether identity evidence names a non-luminous visual effect.
 fn visual_effect_evidence(evidence: &str) -> bool {
-    contains_token_start(
-        evidence,
-        &[
-            "smoke", "fire", "flame", "exhaust", "steam", "dust", "mist",
-            "fog", "vapor", "vapour", "particle", "spark", "backfire",
-        ],
-    )
+    contains_token_start(evidence, &[
+        "smoke", "fire", "flame", "exhaust", "steam", "dust", "mist", "fog",
+        "vapor", "vapour", "particle", "spark", "backfire",
+    ])
 }
 
 /// Return whether identity evidence names an emissive or luminous surface.
 fn light_emitter_evidence(evidence: &str) -> bool {
-    if contains_any(
-        evidence,
-        &[
-            "dontlight",
-            "do-not-light",
-            "relight",
-            "lighthouse",
-        ],
-    ) {
+    if contains_any(evidence, &[
+        "dontlight",
+        "do-not-light",
+        "relight",
+        "lighthouse",
+    ]) {
         return false;
     }
-    contains_any(
-        evidence,
-        &[
-            "headlight",
-            "head-light",
-            "taillight",
-            "tail-light",
-            "brakelight",
-            "brake-light",
-            "reverse-light",
-            "reverselight",
-            "lights",
-            "lightbar",
-            "light-bar",
-            "parkinglight",
-            "parking-light",
-            "globelight",
-            "globe-light",
-            "streetlight",
-            "street-light",
-            "trafficlight",
-            "traffic-light",
-            "lightshape",
-            "light-shape",
-            "light_shape",
-            "kwik_light",
-            "kwik-light",
-            "kwik light",
-            "siren",
-            "lamp",
-            "bulb",
-            "indicator",
-            "turnsignal",
-            "turn-signal",
-            "beacon",
-            "strobe",
-            "flare",
-            "glow",
-            "emiss",
-            "illum",
-            "neon",
-            "frinkarc",
-            "frink-arc",
-        ],
-    )
+    contains_any(evidence, &[
+        "headlight",
+        "head-light",
+        "taillight",
+        "tail-light",
+        "brakelight",
+        "brake-light",
+        "reverse-light",
+        "reverselight",
+        "lights",
+        "lightbar",
+        "light-bar",
+        "parkinglight",
+        "parking-light",
+        "globelight",
+        "globe-light",
+        "streetlight",
+        "street-light",
+        "trafficlight",
+        "traffic-light",
+        "lightshape",
+        "light-shape",
+        "light_shape",
+        "kwik_light",
+        "kwik-light",
+        "kwik light",
+        "siren",
+        "lamp",
+        "bulb",
+        "indicator",
+        "turnsignal",
+        "turn-signal",
+        "beacon",
+        "strobe",
+        "flare",
+        "glow",
+        "emiss",
+        "illum",
+        "neon",
+        "frinkarc",
+        "frink-arc",
+    ])
 }
 
 /// Return whether identity evidence contains any conservative semantic token.
-fn contains_any(
-    evidence: &str,
-    needles: &[&str],
-) -> bool {
-    needles
-        .iter()
-        .any(|needle| evidence.contains(needle))
+fn contains_any(evidence: &str, needles: &[&str]) -> bool {
+    needles.iter().any(|needle| evidence.contains(needle))
 }
 
 /// Return whether a token starts at one semantic identity boundary.
-fn contains_token_start(
-    evidence: &str,
-    needles: &[&str],
-) -> bool {
-    needles
-        .iter()
-        .any(
-            |needle| {
-                evidence
-                    .match_indices(needle)
-                    .any(
-                        |(index, _matched)| {
-                            index == 0
-                                || evidence
-                                    .get(..index)
-                                    .and_then(
-                                        |prefix| {
-                                            prefix
-                                                .chars()
-                                                .next_back()
-                                        },
-                                    )
-                                    .is_some_and(
-                                        |character| {
-                                            !character.is_ascii_alphanumeric()
-                                        },
-                                    )
-                        },
-                    )
-            },
-        )
+fn contains_token_start(evidence: &str, needles: &[&str]) -> bool {
+    needles.iter().any(|needle| {
+        evidence.match_indices(needle).any(|(index, _matched)| {
+            index == 0
+                || evidence
+                    .get(..index)
+                    .and_then(|prefix| prefix.chars().next_back())
+                    .is_some_and(|character| !character.is_ascii_alphanumeric())
+        })
+    })
 }
 
 /// Texture binding associated with a material channel.
@@ -499,12 +384,8 @@ pub struct MaterialBinding {
 /// Return whether a texture identity is exactly one normal file component.
 fn is_single_file_name(file_name: &str) -> bool {
     let mut components = Path::new(file_name).components();
-    matches!(
-        components.next(),
-        Some(Component::Normal(_))
-    ) && components
-        .next()
-        .is_none()
+    matches!(components.next(), Some(Component::Normal(_)))
+        && components.next().is_none()
 }
 
 impl MaterialBinding {
@@ -518,28 +399,17 @@ impl MaterialBinding {
         texture_file_name: Option<String>,
     ) -> Result<Self, MaterialBindingError> {
         let normalized_material_name = material_name.into();
-        if normalized_material_name
-            .trim()
-            .is_empty()
-        {
+        if normalized_material_name.trim().is_empty() {
             return Err(MaterialBindingError::MissingMaterialName);
         }
         if normalized_material_name != normalized_material_name.trim()
-            || normalized_material_name
-                .chars()
-                .any(char::is_control)
+            || normalized_material_name.chars().any(char::is_control)
         {
             return Err(MaterialBindingError::NonCanonicalMaterialName);
         }
         if texture_file_name
             .as_ref()
-            .is_some_and(
-                |file_name| {
-                    file_name
-                        .trim()
-                        .is_empty()
-                },
-            )
+            .is_some_and(|file_name| file_name.trim().is_empty())
         {
             return Err(MaterialBindingError::BlankTextureFileName);
         }
@@ -559,22 +429,17 @@ impl MaterialBinding {
             &normalized_material_name,
             texture_file_name.as_deref(),
         );
-        Ok(
-            Self {
-                material_name: normalized_material_name,
-                texture_file_name,
-                semantics,
-                base_color_rgba8: [u8::MAX; 4],
-            },
-        )
+        Ok(Self {
+            material_name: normalized_material_name,
+            texture_file_name,
+            semantics,
+            base_color_rgba8: [u8::MAX; 4],
+        })
     }
 
     /// Attach one decoded diffuse material tint.
     #[must_use]
-    pub const fn with_base_color_rgba8(
-        mut self,
-        color: [u8; 4],
-    ) -> Self {
+    pub const fn with_base_color_rgba8(mut self, color: [u8; 4]) -> Self {
         self.base_color_rgba8 = color;
         self
     }
@@ -585,9 +450,7 @@ impl MaterialBinding {
         mut self,
         semantics: MaterialSemantics,
     ) -> Self {
-        self.semantics = self
-            .semantics
-            .merge(semantics);
+        self.semantics = self.semantics.merge(semantics);
         self
     }
 }

@@ -1,12 +1,34 @@
-// File: SharProgressionProjection.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharProgression/Private/Progression/SharProgressionProjection.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: immutable progression observations, value queries, transaction queries, and exact counted projections only; no mutation or repair.
-// Specification: docs/technical/unreal/progression-collectibles-and-cheats.md
-// LARGE-FILE owner=SharProgression; reason=cohesive read-only progression projection surface;
-// split=extract campaign progress joins when additional domain snapshots are integrated;
-// validation=validate.sh SharProgression plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar progression projection composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar progression projection composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar progression projection composition module.
 
 #include "Progression/SharProgressionSubsystem.h"
 

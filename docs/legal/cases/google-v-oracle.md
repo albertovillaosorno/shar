@@ -64,4 +64,5 @@ categorical legal status for SHAR parsers or binary formats.
   July 2026).
 - [17 U.S.C. § 107](../statutes/17-usc-107.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Software interoperability research](../doctrines/software-interoperability.md).
+- [Software interoperability
+  research](../doctrines/software-interoperability.md).

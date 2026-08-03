@@ -5,22 +5,30 @@
 
 ## Governing decisions and specifications
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Contextual interaction query and transaction boundary](../../adr/unreal/runtime/contextual-interaction-query-and-transaction.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
+- [Collector cards, coins, rewards, gags, and
+  wasps](../../adr/gameplay/collectibles/collectibles-rewards-gags-and-wasps.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Contextual interaction query and transaction boundary](../../adr/unreal/runtime/contextual-interaction-query-and-transaction.md)
+- [Portable save storage and
+  lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Collector cards, coins, rewards, gags, and wasps](../../adr/gameplay/collectibles/collectibles-rewards-gags-and-wasps.md)
+- [Mission definition, stage, and objective
+  runtime](mission-definition-stage-and-objective-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+- [Persistent world-object state
+  runtime](persistent-world-object-state-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Mission definition, stage, and objective runtime](mission-definition-stage-and-objective-runtime.md)
+- [Authored spatial placement and trigger
+  runtime](authored-spatial-placement-and-trigger-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Persistent world-object state runtime](persistent-world-object-state-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Authored spatial placement and trigger runtime](authored-spatial-placement-and-trigger-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
+- [World render-entity and physics
+  runtime](world-render-entity-and-physics-runtime.md)
 
 ## Purpose
 
@@ -38,15 +46,27 @@ progress or choose mission state.
 
 <!-- markdownlint-disable MD013 -->
 
-| Service | Authority |
-| :--- | :--- |
-| Mission session subsystem | Owns mission and stage revisions, checkpoints, and stage transitions. |
-| Mission world-entity subsystem | Owns transient entity activation, respawn delay, restoration, and teardown. |
-| Persistent world-object service | Owns durable collected, destroyed, unlocked, and restored state. |
-| Interaction subsystem | Owns pickup and action reservations and exactly-once interaction results. |
-| Vehicle context service | Owns the controlled vehicle and vehicle-attached payload bindings. |
-| Spatial subsystem | Owns placement resolution, safe-zone occupancy, and bounded overlap evidence. |
-| Presentation services | Project icons, effects, audio, animation, camera shake, and visibility. |
+- **Service:** Mission session subsystem
+  - **Authority:** Owns mission and stage revisions, checkpoints, and stage
+    transitions.
+- **Service:** Mission world-entity subsystem
+  - **Authority:** Owns transient entity activation, respawn delay, restoration,
+    and teardown.
+- **Service:** Persistent world-object service
+  - **Authority:** Owns durable collected, destroyed, unlocked, and restored
+    state.
+- **Service:** Interaction subsystem
+  - **Authority:** Owns pickup and action reservations and exactly-once
+    interaction results.
+- **Service:** Vehicle context service
+  - **Authority:** Owns the controlled vehicle and vehicle-attached payload
+    bindings.
+- **Service:** Spatial subsystem
+  - **Authority:** Owns placement resolution, safe-zone occupancy, and bounded
+    overlap evidence.
+- **Service:** Presentation services
+  - **Authority:** Project icons, effects, audio, animation, camera shake, and
+    visibility.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -80,22 +100,36 @@ callback cannot mutate a replacement entity.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `EntityId` | Canonical entity identity. |
-| `EntityKind` | Pickup, mission prop, payload, destructible, safe-zone anchor, or another registered kind. |
-| `PlacementId` | Required authored placement identity. |
-| `PersistencePolicy` | Transient, checkpoint, chapter, or permanent state. |
-| `ActivationPredicate` | Chapter, mission, stage, feature, and progression requirements. |
-| `InteractionPolicyId` | Optional passive or explicit interaction definition. |
-| `RespawnPolicyId` | Optional respawn-delay or reset policy. |
-| `CollisionPolicyId` | Collision, attachment, destruction, and recovery behavior. |
-| `PayloadPolicyId` | Optional vehicle or actor attachment contract. |
-| `RewardTransactionId` | Optional exactly-once reward or progression transaction. |
-| `PresentationProfileId` | Icon, effect, audio, animation, and accessibility projection. |
-| `CheckpointPolicyId` | Snapshot and reconstruction behavior. |
-| `LoadPlanId` | Required asset and world-composition dependencies. |
-| `TeardownPolicyId` | Release, persist, transfer, or restore behavior. |
+- **Field:** `EntityId`
+  - **Contract:** Canonical entity identity.
+- **Field:** `EntityKind`
+  - **Contract:** Pickup, mission prop, payload, destructible, safe-zone anchor,
+    or another registered kind.
+- **Field:** `PlacementId`
+  - **Contract:** Required authored placement identity.
+- **Field:** `PersistencePolicy`
+  - **Contract:** Transient, checkpoint, chapter, or permanent state.
+- **Field:** `ActivationPredicate`
+  - **Contract:** Chapter, mission, stage, feature, and progression
+    requirements.
+- **Field:** `InteractionPolicyId`
+  - **Contract:** Optional passive or explicit interaction definition.
+- **Field:** `RespawnPolicyId`
+  - **Contract:** Optional respawn-delay or reset policy.
+- **Field:** `CollisionPolicyId`
+  - **Contract:** Collision, attachment, destruction, and recovery behavior.
+- **Field:** `PayloadPolicyId`
+  - **Contract:** Optional vehicle or actor attachment contract.
+- **Field:** `RewardTransactionId`
+  - **Contract:** Optional exactly-once reward or progression transaction.
+- **Field:** `PresentationProfileId`
+  - **Contract:** Icon, effect, audio, animation, and accessibility projection.
+- **Field:** `CheckpointPolicyId`
+  - **Contract:** Snapshot and reconstruction behavior.
+- **Field:** `LoadPlanId`
+  - **Contract:** Required asset and world-composition dependencies.
+- **Field:** `TeardownPolicyId`
+  - **Contract:** Release, persist, transfer, or restore behavior.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -285,7 +319,8 @@ and render visibility are not destruction.
 Actor/component composition, Chaos bodies, cooked query surfaces, collision
 profiles, sleep and wake, force requests, and breakable replacement follow
 <!-- markdownlint-disable-next-line MD013 -->
-[World render-entity and physics runtime](world-render-entity-and-physics-runtime.md).
+[World render-entity and physics
+runtime](world-render-entity-and-physics-runtime.md).
 Physics and collision callbacks provide revisioned evidence; they cannot commit
 the mission result or persistent destruction themselves.
 

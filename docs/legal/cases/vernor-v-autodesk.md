@@ -88,10 +88,13 @@ Section 1201 analysis.
 - [Krause v. Titleserv, Inc](krause-v-titleserv.md).
 - [UMG Recordings, Inc. v. Augusto](umg-recordings-v-augusto.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Wall Data Inc. v. Los Angeles County Sheriff's Department](wall-data-v-los-angeles-county-sheriff.md).
+- [Wall Data Inc. v. Los Angeles County Sheriff's
+  Department](wall-data-v-los-angeles-county-sheriff.md).
 - [17 U.S.C. § 109](../statutes/17-usc-109.md).
 - [17 U.S.C. § 117](../statutes/17-usc-117.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Lawful Copy And Local Game Modification](../doctrines/lawful-copy-and-local-game-modification.md).
+- [Lawful Copy And Local Game
+  Modification](../doctrines/lawful-copy-and-local-game-modification.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Software License Reverse-Engineering Clauses](../contracts/software-license-reverse-engineering-clauses.md).
+- [Software License Reverse-Engineering
+  Clauses](../contracts/software-license-reverse-engineering-clauses.md).

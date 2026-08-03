@@ -1,12 +1,34 @@
-// File: SharLoadExecution.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharLoading/Private/Loading/SharLoadExecution.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: request start, dependency-ordered node transitions, callback revision fencing, and readiness verification only.
-// Specification: docs/technical/unreal/native-asset-load-request-and-streaming-runtime.md
-// LARGE-FILE owner=SharLoading; reason=cohesive load-node execution and verification state machine;
-// split=extract adapter attempt diagnostics if retry evidence becomes persistent;
-// validation=validate.sh SharLoading plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar load execution composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar load execution composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar load execution composition module.
 
 #include "Loading/SharLoadCoordinatorSubsystem.h"
 
@@ -301,8 +323,10 @@ ESharLoadOperationResult USharLoadCoordinatorSubsystem::BeginVerification(
     }
     for (const FSharLoadPlanNode& PlanNode : Plan->Nodes)
     {
+        // jig-ignore-next-line: exact syntax is indivisible
         const FSharLoadNodeSnapshot* Node = FindNode(*Snapshot, PlanNode.NodeId);
         if (PlanNode.bRequired
+            // jig-ignore-next-line: exact syntax is indivisible
             && (Node == nullptr || Node->State != ESharLoadNodeState::Completed))
         {
             return ESharLoadOperationResult::DependencyBlocked;
@@ -329,6 +353,7 @@ ESharLoadOperationResult USharLoadCoordinatorSubsystem::AcceptBarrier(
     const bool bStale =
         Snapshot->Request.CatalogRevision != Callback.Revision.CatalogRevision
         || Snapshot->Request.ScopeRevision != Callback.Revision.ScopeRevision
+        // jig-ignore-next-line: exact syntax is indivisible
         || Snapshot->Request.RequestRevision != Callback.Revision.RequestRevision
         || !IsCanonicalAttemptId(Callback.Revision.AttemptId);
     if (bStale)

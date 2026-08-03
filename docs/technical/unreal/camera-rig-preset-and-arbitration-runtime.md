@@ -6,16 +6,20 @@
 ## Governing decisions and specifications
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [HUD, radar, camera, and navigation parity](../../adr/unreal/ui/hud-radar-camera-and-navigation.md)
+- [HUD, radar, camera, and navigation
+  parity](../../adr/unreal/ui/hud-radar-camera-and-navigation.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
+- [Runtime parity test
+  boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
 - [Camera system runtime](camera-system-runtime.md)
 - [Presentation playback runtime](presentation-playback-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md)
+- [Spatial audio listener and positional-source
+  runtime](spatial-audio-listener-and-positional-source-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md)
+- [Spatial visibility, bounds, and culling
+  runtime](spatial-visibility-bounds-and-culling-runtime.md)
 
 ## Purpose
 
@@ -33,16 +37,28 @@ raw previous-camera pointers with validated identities and typed requests.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Camera catalog | Stable mode, rig, preset, target, transition, modifier, and availability identities. |
-| Per-player camera subsystem | Request arbitration, active stack, target binding, and lifecycle. |
-| Player camera manager | Final view, native modifiers, projection, and engine integration. |
-| Camera rig evaluator | Pure desired-view calculation for one validated mode and snapshot. |
-| Collision adapter | Bounded scene queries and correction evidence. |
-| Input adapter | Semantic camera actions for the owning local player. |
-| Gameplay services | Typed mission, vehicle, character, conversation, race, and locator observations. |
-| Development tools | Read-only frustum, rail, hull, collision, and candidate visualization. |
+- **Authority:** Camera catalog
+  - **Responsibility:** Stable mode, rig, preset, target, transition, modifier,
+    and availability identities.
+- **Authority:** Per-player camera subsystem
+  - **Responsibility:** Request arbitration, active stack, target binding, and
+    lifecycle.
+- **Authority:** Player camera manager
+  - **Responsibility:** Final view, native modifiers, projection, and engine
+    integration.
+- **Authority:** Camera rig evaluator
+  - **Responsibility:** Pure desired-view calculation for one validated mode and
+    snapshot.
+- **Authority:** Collision adapter
+  - **Responsibility:** Bounded scene queries and correction evidence.
+- **Authority:** Input adapter
+  - **Responsibility:** Semantic camera actions for the owning local player.
+- **Authority:** Gameplay services
+  - **Responsibility:** Typed mission, vehicle, character, conversation, race,
+    and locator observations.
+- **Authority:** Development tools
+  - **Responsibility:** Read-only frustum, rail, hull, collision, and candidate
+    visualization.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -56,19 +72,37 @@ The runtime module owns these C++ types:
 
 <!-- markdownlint-disable MD013 -->
 
-| Type | Responsibility |
-| :--- | :--- |
-| `USharCameraRigDefinition` | Immutable execution kind, availability, target, preset, collision, input, and modifier policy. |
-| `USharCameraPresetDefinition` | Versioned offsets, rods, lags, FOV, planes, limits, and transition settings. |
-| `USharRailCameraDefinition` | Spline, interval, projection, radius, tracking, and reset policy. |
-| `USharAuthoredCameraShotDefinition` | Static, surveillance, snapshot, relative-animation, or overview shot data. |
-| `USharCameraModifierDefinition` | Shake and other bounded modifier parameters. |
-| `USharCameraCatalogSubsystem` | Definition lookup, revision checks, alias migration, and asset validation. |
-| `USharCameraSubsystem` | One per local player; owns request arbitration and active handles. |
-| `ASharPlayerCameraManager` | Applies the final validated view and native modifiers. |
-| `FSharCameraTargetSnapshot` | Immutable target transform, motion, state, bounds, and sockets. |
-| `FSharDesiredCameraView` | Desired location, rotation, look target, FOV, aspect, planes, and modifier requests. |
-| `FSharCameraEvaluationResult` | Closed success or failure result with correction evidence. |
+- **Type:** `USharCameraRigDefinition`
+  - **Responsibility:** Immutable execution kind, availability, target, preset,
+    collision, input, and modifier policy.
+- **Type:** `USharCameraPresetDefinition`
+  - **Responsibility:** Versioned offsets, rods, lags, FOV, planes, limits, and
+    transition settings.
+- **Type:** `USharRailCameraDefinition`
+  - **Responsibility:** Spline, interval, projection, radius, tracking, and
+    reset policy.
+- **Type:** `USharAuthoredCameraShotDefinition`
+  - **Responsibility:** Static, surveillance, snapshot, relative-animation, or
+    overview shot data.
+- **Type:** `USharCameraModifierDefinition`
+  - **Responsibility:** Shake and other bounded modifier parameters.
+- **Type:** `USharCameraCatalogSubsystem`
+  - **Responsibility:** Definition lookup, revision checks, alias migration, and
+    asset validation.
+- **Type:** `USharCameraSubsystem`
+  - **Responsibility:** One per local player; owns request arbitration and
+    active handles.
+- **Type:** `ASharPlayerCameraManager`
+  - **Responsibility:** Applies the final validated view and native modifiers.
+- **Type:** `FSharCameraTargetSnapshot`
+  - **Responsibility:** Immutable target transform, motion, state, bounds, and
+    sockets.
+- **Type:** `FSharDesiredCameraView`
+  - **Responsibility:** Desired location, rotation, look target, FOV, aspect,
+    planes, and modifier requests.
+- **Type:** `FSharCameraEvaluationResult`
+  - **Responsibility:** Closed success or failure result with correction
+    evidence.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -104,14 +138,21 @@ Every rig declares one availability class:
 
 <!-- markdownlint-disable MD013 -->
 
-| Availability | Contract |
-| :--- | :--- |
-| `shipping_default` | Available through ordinary player or gameplay policy. |
-| `shipping_contextual` | Available only from a typed mission, conversation, race, interaction, or world request. |
-| `cheat_optional` | Player-visible only when an explicit cheat or accessibility policy enables it. |
-| `development_only` | Editor, automation, or authorized development builds only. |
-| `diagnostic_only` | Read-only verification and visualization; never a gameplay view. |
-| `excluded` | Preserved as evidence but unavailable at runtime. |
+- **Availability:** `shipping_default`
+  - **Contract:** Available through ordinary player or gameplay policy.
+- **Availability:** `shipping_contextual`
+  - **Contract:** Available only from a typed mission, conversation, race,
+    interaction, or world request.
+- **Availability:** `cheat_optional`
+  - **Contract:** Player-visible only when an explicit cheat or accessibility
+    policy enables it.
+- **Availability:** `development_only`
+  - **Contract:** Editor, automation, or authorized development builds only.
+- **Availability:** `diagnostic_only`
+  - **Contract:** Read-only verification and visualization; never a gameplay
+    view.
+- **Availability:** `excluded`
+  - **Contract:** Preserved as evidence but unavailable at runtime.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -257,7 +298,8 @@ After the camera and view commit, the subsystem publishes one immutable listener
 candidate containing local-player, view, camera, world, position, orientation,
 velocity, controlled-participant, and interior revisions to
 <!-- markdownlint-disable-next-line MD013 -->
-[Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md).
+[Spatial audio listener and positional-source
+runtime](spatial-audio-listener-and-positional-source-runtime.md).
 
 The camera runtime does not write directly to the platform audio device, clamp a
 listener to an arbitrary participant, select the split-screen mix, or retain an
@@ -511,7 +553,8 @@ The camera subsystem owns accepted view and projection revisions. Renderer-owned
 primitive bounds, per-view frustum rejection, occlusion, and converted
 convex-volume diagnostics follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md).
+[Spatial visibility, bounds, and culling
+runtime](spatial-visibility-bounds-and-culling-runtime.md).
 A camera diagnostic cannot publish a second draw list or mutate world
 visibility.
 

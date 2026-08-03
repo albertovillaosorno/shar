@@ -1,7 +1,3 @@
-// File:
-//   - error.rs
-// Path: src/formats/rmv/domain/error.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,76 +6,123 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure rmv domain rules for domain error.
+//   - Error domain module.
 // - Must-Not:
-//   - Read files, parse generated indexes, invoke CLI code, or call writer
-//   - adapters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Value objects, invariant checks, and pure evidence-to-domain translation.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when error contains two independently testable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another rmv module owns the same domain boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Error variants for RMV/Bink audit and conversion gates.
+//   - Error domain module.
 // - Description:
-//   - Defines error data and behavior for rmv domain.
+//   - Implements the declared domain module responsibility for rmv.
 // - Usage:
-//   - Imported through crate domain facades or sibling domain modules.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No filesystem paths, no external process calls, and no implicit IO
-//   - defaults.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Error variants for RMV/Bink audit and conversion gates.
+//! Error domain module.
+
 use std::path::{Path, PathBuf};
 
-use schoenwald_filesystem::DiagnosticPath;
+use super::escaped_path::EscapedPath;
 
 /// Returns untrusted diagnostic text without raw control characters.
 fn escaped_text(value: &str) -> String {
-    value
-        .chars()
-        .flat_map(char::escape_default)
-        .collect()
+    value.chars().flat_map(char::escape_default).collect()
 }
 
+/// Stable domain evidence copied from one external I/O failure.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IoFailure {
+    /// Exact external failure text retained for diagnostics and inspection.
+    message: String,
+}
+
+impl IoFailure {
+    /// Captures one external failure without retaining its runtime type.
+    #[must_use]
+    pub fn new(source: impl core::fmt::Display) -> Self {
+        Self {
+            message: source.to_string(),
+        }
+    }
+
+    /// Returns the exact captured external failure text.
+    #[must_use]
+    pub fn message(&self) -> &str {
+        &self.message
+    }
+}
+
+impl core::fmt::Display for IoFailure {
+    fn fmt(
+        &self,
+        formatter: &mut core::fmt::Formatter<'_>,
+    ) -> core::fmt::Result {
+        formatter.write_str(&escaped_text(&self.message))
+    }
+}
+
+impl core::error::Error for IoFailure {}
+
+/// Failure while planning or materializing one RMV audit.
 #[derive(Debug)]
-/// Rmverror.
 pub enum RmvError {
-    /// Item.
+    /// One external I/O operation failed at an explicit path.
     Io {
-        /// Path.
+        /// Path associated with the failed operation.
         path: PathBuf,
-        /// Source.
-        source: std::io::Error,
+        /// Stable copied evidence from the external failure.
+        source: IoFailure,
     },
     /// The input root resolves to the output tree or one of its descendants.
     InputRootInsideOutput(PathBuf),
-    /// Item.
+    /// The input root has no safe portable folder name.
     InvalidRootName(PathBuf),
-    /// Item.
+    /// One path cannot be represented safely in the export tree.
     InvalidPath(PathBuf),
-    /// Item.
+    /// One movie stem is not a single safe path component.
     InvalidMovieStem(String),
-    /// Item.
+    /// Multiple RMV inputs map to the same output path.
     OutputPathCollision(PathBuf),
-    /// Item.
+    /// No input roots were supplied.
     NoInputRoots,
-    /// Item.
+    /// No RMV movie inputs were discovered.
     NoMovieInputs,
+}
+
+impl RmvError {
+    /// Captures one external I/O failure as stable domain evidence.
+    #[must_use]
+    pub fn io(path: PathBuf, source: impl core::fmt::Display) -> Self {
+        Self::Io {
+            path,
+            source: IoFailure::new(source),
+        }
+    }
+
+    /// Returns copied I/O failure evidence when this is an I/O error.
+    #[must_use]
+    pub const fn io_failure(&self) -> Option<&IoFailure> {
+        match self {
+            Self::Io { source, .. } => Some(source),
+            Self::InputRootInsideOutput(_)
+            | Self::InvalidRootName(_)
+            | Self::InvalidPath(_)
+            | Self::InvalidMovieStem(_)
+            | Self::OutputPathCollision(_)
+            | Self::NoInputRoots
+            | Self::NoMovieInputs => None,
+        }
+    }
 }
 
 impl core::fmt::Display for RmvError {
@@ -88,158 +131,49 @@ impl core::fmt::Display for RmvError {
         formatter: &mut core::fmt::Formatter<'_>,
     ) -> core::fmt::Result {
         match self {
-            Self::Io {
-                path,
-                source,
-            } => {
-                let source_text = source.to_string();
-                write!(
-                    formatter,
-                    "{}: {}",
-                    DiagnosticPath::new(path),
-                    escaped_text(&source_text)
-                )
-            }
-            Self::InputRootInsideOutput(path) => {
-                write!(
-                    formatter,
-                    "input root is inside the output tree: {}",
-                    DiagnosticPath::new(path)
-                )
-            }
-            Self::InvalidRootName(path) => {
-                write!(
-                    formatter,
-                    "input root has no safe folder name: {}",
-                    DiagnosticPath::new(path)
-                )
-            }
-            Self::InvalidPath(path) => {
-                write!(
-                    formatter,
-                    "path is not safe for export: {}",
-                    DiagnosticPath::new(path)
-                )
-            }
-            Self::InvalidMovieStem(stem) => {
-                write!(
-                    formatter,
-                    "movie stem is not a single safe path component: {}",
-                    DiagnosticPath::new(Path::new(stem))
-                )
-            }
-            Self::OutputPathCollision(path) => {
-                write!(
-                    formatter,
-                    "multiple RMV inputs map to the same output path: {}",
-                    DiagnosticPath::new(path)
-                )
-            }
-            Self::NoInputRoots => write!(
+            Self::Io { path, source } => write!(
                 formatter,
-                "at least one input root is required"
+                "{}: {}",
+                EscapedPath::new(path),
+                escaped_text(source.message())
             ),
-            Self::NoMovieInputs => write!(
+            Self::InputRootInsideOutput(path) => write!(
                 formatter,
-                "no .rmv movie inputs were found"
+                "input root is inside the output tree: {}",
+                EscapedPath::new(path)
             ),
+            Self::InvalidRootName(path) => write!(
+                formatter,
+                "input root has no safe folder name: {}",
+                EscapedPath::new(path)
+            ),
+            Self::InvalidPath(path) => write!(
+                formatter,
+                "path is not safe for export: {}",
+                EscapedPath::new(path)
+            ),
+            Self::InvalidMovieStem(stem) => write!(
+                formatter,
+                "movie stem is not a single safe path component: {}",
+                EscapedPath::new(Path::new(stem))
+            ),
+            Self::OutputPathCollision(path) => write!(
+                formatter,
+                "multiple RMV inputs map to the same output path: {}",
+                EscapedPath::new(path)
+            ),
+            Self::NoInputRoots => {
+                formatter.write_str("at least one input root is required")
+            },
+            Self::NoMovieInputs => {
+                formatter.write_str("no .rmv movie inputs were found")
+            },
         }
     }
 }
 
-impl std::error::Error for RmvError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Self::Io {
-                source,
-                ..
-            } => Some(source),
-            _ => None,
-        }
-    }
-}
+impl core::error::Error for RmvError {}
 
 #[cfg(test)]
-mod tests {
-    use std::error::Error as _;
-    #[cfg(windows)]
-    use std::ffi::OsString;
-    use std::io;
-    #[cfg(windows)]
-    use std::os::windows::ffi::OsStringExt as _;
-    #[cfg(windows)]
-    use std::path::PathBuf;
-
-    use super::RmvError;
-
-    #[test]
-    fn io_error_escapes_source_control_characters() {
-        let error = RmvError::Io {
-            path: PathBuf::from("movie.rmv"),
-            source: io::Error::other("read\nfailure"),
-        };
-
-        let rendered = error.to_string();
-
-        assert!(
-            !rendered
-                .chars()
-                .any(char::is_control),
-            "diagnostic contains a control character: {rendered:?}"
-        );
-        assert!(rendered.contains(r"read\nfailure"));
-        assert!(
-            error
-                .source()
-                .is_some()
-        );
-    }
-
-    #[test]
-    fn invalid_movie_stem_error_escapes_control_characters() {
-        let error = RmvError::InvalidMovieStem("bad\nstem".to_owned());
-
-        let rendered = error.to_string();
-
-        assert!(
-            !rendered
-                .chars()
-                .any(char::is_control),
-            "diagnostic contains a control character: {rendered:?}"
-        );
-        assert!(rendered.contains(r"bad\nstem"));
-    }
-
-    #[cfg(windows)]
-    #[test]
-    fn path_errors_preserve_unpaired_utf16_unit() {
-        let path = PathBuf::from(
-            OsString::from_wide(
-                &[
-                    u16::from(b'a'),
-                    0xd800,
-                    u16::from(b'b'),
-                ],
-            ),
-        );
-        let errors = [
-            RmvError::Io {
-                path: path.clone(),
-                source: io::Error::other("read failure"),
-            },
-            RmvError::InputRootInsideOutput(path.clone()),
-            RmvError::InvalidRootName(path.clone()),
-            RmvError::InvalidPath(path.clone()),
-            RmvError::OutputPathCollision(path),
-        ];
-
-        for error in errors {
-            let rendered = error.to_string();
-            assert!(
-                rendered.contains(r"a\u{D800}b"),
-                "diagnostic lost the native path unit: {rendered:?}"
-            );
-            assert!(!rendered.contains('\u{fffd}'));
-        }
-    }
-}
+#[path = "../../../../tests/formats/rmv/unit/domain/error/tests.rs"]
+mod tests;

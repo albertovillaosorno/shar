@@ -5,39 +5,53 @@
 
 ## Governing decisions and specifications
 
-<!-- markdownlint-disable-next-line MD013 -->
-- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
+- [Runtime parity test
+  boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
+- [World render-entity and physics
+  runtime](world-render-entity-and-physics-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
+- [Physical material and impact-response
+  runtime](physical-material-and-impact-response-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Physical material and impact-response runtime](physical-material-and-impact-response-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Ambient population and named-character runtime](ambient-population-and-named-character-runtime.md)
+- [Ambient population and named-character
+  runtime](ambient-population-and-named-character-runtime.md)
 - [Pedestrian path runtime](pedestrian-path-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Vehicle retrieval and phone-booth runtime](vehicle-retrieval-and-phone-booth-runtime.md)
+- [Vehicle retrieval and phone-booth
+  runtime](vehicle-retrieval-and-phone-booth-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Vehicle AI and route runtime](vehicle-ai-and-route-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+- [Native vehicle physics, control, damage, and presentation
+  runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md)
+- [Camera rig, preset, and arbitration
+  runtime](camera-rig-preset-and-arbitration-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Camera rig, preset, and arbitration runtime](camera-rig-preset-and-arbitration-runtime.md)
+- [Typed event and observation routing
+  runtime](typed-event-and-observation-routing-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md)
+- [Native asset load request and streaming
+  runtime](native-asset-load-request-and-streaming-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md)
+- [Transient VFX and breakable-presentation
+  runtime](transient-vfx-and-breakable-presentation-runtime.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md) <!-- markdownlint-disable-line MD013 -->
 
 ## Purpose
 
@@ -96,20 +110,42 @@ or algorithms are not sufficient justification.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Local-player service | Owns player identity, controller assignment, input scope, and split-screen isolation. |
-| Avatar service | Owns the accepted controlled participant, on-foot or vehicle mode, handoff transactions, and camera-target intent. |
-| Character definition | Declares model, skeleton, animation, movement, collision, materials, roles, props, effects, and fallbacks. |
-| Character Actor | Owns native component lifecycle, accepted transform, movement projection, collision, animation, and presentation. |
-| Character movement service | Owns project movement rules and configures the native movement component. |
-| Vehicle service | Owns vehicles, seats, enter and exit eligibility, vehicle movement, and vehicle state. |
-| AI and NPC services | Own decision-making, path intent, reactions, and conversation intent for non-human characters. |
-| Camera service | Owns camera rigs, accepted targets, blends, split-screen views, and first-person offsets. |
-| Asset service | Owns model, animation, material, prop, and effect readiness and retained handles. |
-| Footprint service | Owns bounded footprint presentation leases derived from accepted contact observations. |
-| Domain services | Own damage, missions, interactions, rewards, progression, notoriety, and persistence. |
-| Developer diagnostics | Observe immutable avatar, character, controller, movement, collision, loading, render, and footprint state. |
+- **Authority:** Local-player service
+  - **Responsibility:** Owns player identity, controller assignment, input
+    scope, and split-screen isolation.
+- **Authority:** Avatar service
+  - **Responsibility:** Owns the accepted controlled participant, on-foot or
+    vehicle mode, handoff transactions, and camera-target intent.
+- **Authority:** Character definition
+  - **Responsibility:** Declares model, skeleton, animation, movement,
+    collision, materials, roles, props, effects, and fallbacks.
+- **Authority:** Character Actor
+  - **Responsibility:** Owns native component lifecycle, accepted transform,
+    movement projection, collision, animation, and presentation.
+- **Authority:** Character movement service
+  - **Responsibility:** Owns project movement rules and configures the native
+    movement component.
+- **Authority:** Vehicle service
+  - **Responsibility:** Owns vehicles, seats, enter and exit eligibility,
+    vehicle movement, and vehicle state.
+- **Authority:** AI and NPC services
+  - **Responsibility:** Own decision-making, path intent, reactions, and
+    conversation intent for non-human characters.
+- **Authority:** Camera service
+  - **Responsibility:** Owns camera rigs, accepted targets, blends, split-screen
+    views, and first-person offsets.
+- **Authority:** Asset service
+  - **Responsibility:** Owns model, animation, material, prop, and effect
+    readiness and retained handles.
+- **Authority:** Footprint service
+  - **Responsibility:** Owns bounded footprint presentation leases derived from
+    accepted contact observations.
+- **Authority:** Domain services
+  - **Responsibility:** Own damage, missions, interactions, rewards,
+    progression, notoriety, and persistence.
+- **Authority:** Developer diagnostics
+  - **Responsibility:** Observe immutable avatar, character, controller,
+    movement, collision, loading, render, and footprint state.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -295,8 +331,9 @@ not construct asset paths by prefix, suffix, or character-name buffer.
 
 Historical character-animation scenes are private conversion evidence governed
 by
-<!-- markdownlint-disable-next-line MD013 -->
-[Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md).
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+[Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md). <!-- markdownlint-disable-line MD013 -->
 Fall, landing, flail, recovery, impact, idle, locomotion, dialogue, and other
 clip
 roles become canonical clip definitions only after Skeleton compatibility, exact
@@ -469,7 +506,8 @@ A per-character manually allocated ground plane is not the primary movement
 architecture. Compatibility support planes, when required, use the bounded pool
 and lifecycle in
 <!-- markdownlint-disable-next-line MD013 -->
-[World render-entity and physics runtime](world-render-entity-and-physics-runtime.md).
+[World render-entity and physics
+runtime](world-render-entity-and-physics-runtime.md).
 
 ## Ground snapping and relocation
 
@@ -524,14 +562,16 @@ Vehicle construction, seat and hardpoint definitions, controller leases, native
 movement state, collision, damage, destruction, reset, parked and traffic mode,
 and vehicle-side teardown follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+[Native vehicle physics, control, damage, and presentation
+runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
 Neither runtime may commit only its half of the handoff.
 
 Clip selection, seat and side variants, vehicle-height classes, door phases,
 composed and separate phase assets, root-motion or Motion Warping alignment,
 Montage Sections, typed markers, interruption, and animation teardown follow
-<!-- markdownlint-disable-next-line MD013 -->
-[Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md).
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+[Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md). <!-- markdownlint-disable-line MD013 -->
 Animation may propose a correlated phase observation, but the avatar and vehicle
 application services commit seat attachment and control transfer atomically.
 
@@ -688,7 +728,8 @@ A character camera target publishes immutable position, heading, up vector,
 velocity, first-person position, terrain, stability, movement, and identity
 observations to
 <!-- markdownlint-disable-next-line MD013 -->
-[Camera rig, preset, and arbitration runtime](camera-rig-preset-and-arbitration-runtime.md).
+[Camera rig, preset, and arbitration
+runtime](camera-rig-preset-and-arbitration-runtime.md).
 
 The camera adapter cannot mutate movement, infer vehicle ownership, or retain
 raw

@@ -1,9 +1,34 @@
-// File: SharModDescriptor.h
-// Path: src/unreal/project/composition/uproject/Source/SharModding/Public/Modding/SharModDescriptor.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: mod identity, compatibility, trust, replacement, save, and network contracts; no false sandbox claims.
-// ADR: docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar mod descriptor composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar mod descriptor composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar mod descriptor composition module.
 
 #pragma once
 
@@ -85,6 +110,7 @@ public:
     ESharModSavePolicy SavePolicy = ESharModSavePolicy::NoPersistentState;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Network")
+    // jig-ignore-next-line: exact syntax is indivisible
     ESharModNetworkPolicy NetworkPolicy = ESharModNetworkPolicy::SinglePlayerOnly;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Compatibility")

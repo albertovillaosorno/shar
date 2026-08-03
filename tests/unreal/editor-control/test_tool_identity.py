@@ -1,7 +1,3 @@
-# File:
-#   - test_tool_identity.py
-# Path: tests/unreal/editor-control/test_tool_identity.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,46 +6,36 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Regression tests for native tool identity normalization.
+#   - Test tool identity test module.
 # - Must-Not:
-#   - Open sockets, invoke Unreal, or depend on adapter behavior.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Pure qualified-name, leaf-name, and mismatch fixtures.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Toolset and tool identity grammars require separate fixtures.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another pure domain test module owns these identity invariants.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Guards copyable discovery identities and native invocation leaf names.
+#   - Test tool identity test module.
 # - Description:
-#   - Proves qualified skills remain executable through the terminal client.
+#   - Implements the declared test module responsibility for editor control.
 # - Usage:
-#   - Executed by pytest through the canonical validator workflow.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Uses synthetic public-safe Unreal Toolset Registry identities.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
-"""Regression tests for native Unreal MCP tool identities."""
+
+"""Test tool identity test module."""
 
 from __future__ import annotations
 
-import pytest
 from mcp.domain.errors import ProtocolError
-from mcp.domain.tool_identity import (
-    canonical_tool_identity,
-    native_tool_leaf,
-)
+from mcp.domain.tool_identity import canonical_tool_identity
+from mcp.domain.tool_identity import native_tool_leaf
+import pytest
 
 _TOOLSET = "EditorToolset.EditorAppToolset"
 _FULL_TOOL = f"{_TOOLSET}.GetOpenAssets"

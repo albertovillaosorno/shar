@@ -1,7 +1,3 @@
-# File:
-#   - catalog_renderer.py
-# Path: src/unreal/editor-control/adapter-outbound/mcp/adapter_outbound/catalog_renderer.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,43 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Deterministic JSON and Markdown catalog rendering.
+#   - Catalog renderer outbound adapter.
 # - Must-Not:
-#   - Call Unreal, open transports, or mutate repository files.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Stable presentation of validated domain catalog values.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - The module gains two independently testable contracts.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module owns the same contract without a distinct invariant.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Renders discovered tools for humans and automation.
+#   - Catalog renderer outbound adapter.
 # - Description:
-#   - Keeps presentation formatting outside the application core.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Called by the driving CLI after complete catalog discovery.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Sorts schemas and preserves native toolset ordering.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: deterministic catalog renderers
-#   - reason: JSON and Markdown rendering share one ordering contract
-#   - split: extract Markdown rendering if another output format is added
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess on responsibility or line-count growth
-#
-"""Deterministic renderers for discovered native Unreal tool catalogs."""
+
+"""Catalog renderer outbound adapter."""
 
 from __future__ import annotations
 
@@ -57,7 +39,8 @@ from mcp.adapter_outbound.skill_technical_text import validated_live_prose
 
 if TYPE_CHECKING:
     from mcp.domain.catalog import ToolsetDefinition
-    from mcp.domain.json_types import JsonObject, JsonValue
+    from mcp.domain.json_types import JsonObject
+    from mcp.domain.json_types import JsonValue
 
 
 def render_json(value: JsonValue) -> str:
@@ -65,6 +48,7 @@ def render_json(value: JsonValue) -> str:
 
     Returns:
         Deterministic pretty-printed JSON ending in one newline.
+
     """
     return (
         json.dumps(
@@ -84,6 +68,7 @@ def render_catalog_json(
 
     Returns:
         Deterministic catalog JSON ending in one newline.
+
     """
     payload: JsonObject = {
         "toolsets": [toolset.raw_schema for toolset in toolsets]
@@ -98,6 +83,7 @@ def render_catalog_markdown(
 
     Returns:
         Deterministic Markdown ending in one newline.
+
     """
     lines = [
         "# Unreal native MCP tool catalog",

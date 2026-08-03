@@ -5,24 +5,33 @@
 
 ## Governing decisions and specifications
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Converted asset ingestion boundary](../../adr/unreal/import-adapters/converted-asset-ingestion-boundary.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Native gameplay audio, dialogue, and listener boundary](../../adr/unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md)
+- [Historical core-design and dialogue evidence
+  normalization](historical-core-design-and-dialogue-evidence-normalization.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Converted asset ingestion boundary](../../adr/unreal/import-adapters/converted-asset-ingestion-boundary.md)
+- [Dialogue selection, queue, and playback
+  runtime](dialogue-selection-queue-and-playback-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native gameplay audio, dialogue, and listener boundary](../../adr/unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md)
+- [Native cooked-asset construction and registration
+  runtime](native-cooked-asset-construction-and-registration-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Native cooked-asset construction and registration runtime](native-cooked-asset-construction-and-registration-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Normalized language interchange](../localization/normalized-language-interchange.md)
+- [Normalized language
+  interchange](../localization/normalized-language-interchange.md)
 
 ## Purpose
 
@@ -289,20 +298,41 @@ Each table row resolves to exactly one class:
 
 <!-- markdownlint-disable MD013 -->
 
-| Row class | Required behavior |
-| :--- | :--- |
-| `blank` | Preserve consumption, produce no semantic record, and leave section state unchanged. |
-| `schema_header` | Confirm accepted column order and produce no semantic record. |
-| `legend` | Validate known explanatory text and produce no event, line, priority, or source value. |
-| `owner_section` | Change the registered owner or archetype scope only through an explicit mapping. |
-| `role_section` | Change walker, driver, pedestrian, mission, ambient, interior, or another registered role scope. |
-| `context_section` | Change a registered mission, race, tutorial, world, interior, interaction, or presentation context. |
-| `line_candidate` | Produce one candidate line or selection-group member after all required mappings resolve. |
-| `placeholder` | Record an intentional missing or future line without publishing runtime content. |
-| `review_note` | Preserve a private diagnostic and produce no runtime content. |
-| `repeated_header` | Confirm schema continuity and produce no semantic record. |
-| `rejected` | Record a typed non-semantic reason and produce no runtime content. |
-| `error` | Abort the complete source revision. |
+- **Row class:** `blank`
+  - **Required behavior:** Preserve consumption, produce no semantic record, and
+    leave section state unchanged.
+- **Row class:** `schema_header`
+  - **Required behavior:** Confirm accepted column order and produce no semantic
+    record.
+- **Row class:** `legend`
+  - **Required behavior:** Validate known explanatory text and produce no event,
+    line, priority, or source value.
+- **Row class:** `owner_section`
+  - **Required behavior:** Change the registered owner or archetype scope only
+    through an explicit mapping.
+- **Row class:** `role_section`
+  - **Required behavior:** Change walker, driver, pedestrian, mission, ambient,
+    interior, or another registered role scope.
+- **Row class:** `context_section`
+  - **Required behavior:** Change a registered mission, race, tutorial, world,
+    interior, interaction, or presentation context.
+- **Row class:** `line_candidate`
+  - **Required behavior:** Produce one candidate line or selection-group member
+    after all required mappings resolve.
+- **Row class:** `placeholder`
+  - **Required behavior:** Record an intentional missing or future line without
+    publishing runtime content.
+- **Row class:** `review_note`
+  - **Required behavior:** Preserve a private diagnostic and produce no runtime
+    content.
+- **Row class:** `repeated_header`
+  - **Required behavior:** Confirm schema continuity and produce no semantic
+    record.
+- **Row class:** `rejected`
+  - **Required behavior:** Record a typed non-semantic reason and produce no
+    runtime content.
+- **Row class:** `error`
+  - **Required behavior:** Abort the complete source revision.
 
 <!-- markdownlint-enable MD013 -->
 

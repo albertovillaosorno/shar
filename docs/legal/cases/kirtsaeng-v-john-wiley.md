@@ -90,4 +90,5 @@ modification, preservation, or publication exception.
 - [17 U.S.C. § 117](../statutes/17-usc-117.md).
 - [Vernor v. Autodesk, Inc.](vernor-v-autodesk.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Lawful copy and local game modification](../doctrines/lawful-copy-and-local-game-modification.md).
+- [Lawful copy and local game
+  modification](../doctrines/lawful-copy-and-local-game-modification.md).

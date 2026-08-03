@@ -1,0 +1,4 @@
+schema: shar-boundary/v1
+path: src/foundation/json-text/README.md
+boundary: src/foundation/json-text
+authority: README.md

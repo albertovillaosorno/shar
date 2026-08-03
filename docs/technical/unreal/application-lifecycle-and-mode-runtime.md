@@ -7,31 +7,44 @@
 
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
+- [Runtime parity test
+  boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native render-frame, view, and layer runtime](native-render-frame-view-and-layer-runtime.md)
+- [Native render-frame, view, and layer
+  runtime](native-render-frame-view-and-layer-runtime.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Native gameplay audio, dialogue, and listener boundary](../../adr/unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native gameplay audio, dialogue, and listener boundary](../../adr/unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md)
+- [Gameplay audio source, residency, mix, and environment
+  runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
+- [Native audio device, resource, player, and tuning adapter
+  runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
+- [Native vehicle physics, control, damage, and presentation
+  runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+- [Portable save storage and
+  lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+- [Common UI front end and progress
+  projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
+- [Frontend screen flow and settings
+  runtime](frontend-screen-flow-and-settings-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md)
+- [Local split-screen minigame session UI
+  runtime](local-split-screen-minigame-session-ui-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Local split-screen minigame session UI runtime](local-split-screen-minigame-session-ui-runtime.md)
+- [Local supersprint race session
+  runtime](local-supersprint-race-session-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Local supersprint race session runtime](local-supersprint-race-session-runtime.md)
+- [Playable avatar, character controller, and footprint
+  runtime](playable-avatar-character-controller-and-footprint-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md)
+- [Authored state-prop animation and event
+  runtime](authored-state-prop-animation-and-event-runtime.md)
 
 ## Purpose
 
@@ -52,15 +65,27 @@ state.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Game-instance mode coordinator | Active application mode, transition transaction, cancellation, and recovery. |
-| Mode catalog | Stable mode identities, allowed transitions, entry and exit plans, and verification. |
-| World and feature services | World creation, streaming, gameplay feature activation, and teardown. |
-| Profile and save services | Device-local settings, profile selection, migration, and durable state. |
-| Front-end and presentation services | Startup media, menus, loading presentation, subtitles, and prompts. |
-| Input service | Per-local-player mapping contexts and mode-specific input leases. |
-| Audio service | Boot, front-end, loading, gameplay, pause, and demo audio states. |
+- **Authority:** Game-instance mode coordinator
+  - **Responsibility:** Active application mode, transition transaction,
+    cancellation, and recovery.
+- **Authority:** Mode catalog
+  - **Responsibility:** Stable mode identities, allowed transitions, entry and
+    exit plans, and verification.
+- **Authority:** World and feature services
+  - **Responsibility:** World creation, streaming, gameplay feature activation,
+    and teardown.
+- **Authority:** Profile and save services
+  - **Responsibility:** Device-local settings, profile selection, migration, and
+    durable state.
+- **Authority:** Front-end and presentation services
+  - **Responsibility:** Startup media, menus, loading presentation, subtitles,
+    and prompts.
+- **Authority:** Input service
+  - **Responsibility:** Per-local-player mapping contexts and mode-specific
+    input leases.
+- **Authority:** Audio service
+  - **Responsibility:** Boot, front-end, loading, gameplay, pause, and demo
+    audio states.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -73,15 +98,27 @@ The application module owns these C++ types:
 
 <!-- markdownlint-disable MD013 -->
 
-| Type | Responsibility |
-| :--- | :--- |
-| `USharApplicationModeDefinition` | Immutable identity, transition rules, required services, entry and exit plan, and verification. |
-| `USharApplicationModeCatalogSubsystem` | Definition lookup, graph validation, and revision activation. |
-| `USharApplicationModeCoordinator` | One game-instance authority for active mode and transition transactions. |
-| `FSharApplicationModeRequest` | Requested target, reason, caller, parameters, and expected revisions. |
-| `FSharApplicationModeTransition` | Move-only handle for preparation, commit, rollback, cancellation, and result. |
-| `FSharApplicationModeObservation` | Immutable current mode, world, profile, local players, readiness, and presentation state. |
-| `FSharApplicationModeResult` | Closed success or failure result with verified postconditions. |
+- **Type:** `USharApplicationModeDefinition`
+  - **Responsibility:** Immutable identity, transition rules, required services,
+    entry and exit plan, and verification.
+- **Type:** `USharApplicationModeCatalogSubsystem`
+  - **Responsibility:** Definition lookup, graph validation, and revision
+    activation.
+- **Type:** `USharApplicationModeCoordinator`
+  - **Responsibility:** One game-instance authority for active mode and
+    transition transactions.
+- **Type:** `FSharApplicationModeRequest`
+  - **Responsibility:** Requested target, reason, caller, parameters, and
+    expected revisions.
+- **Type:** `FSharApplicationModeTransition`
+  - **Responsibility:** Move-only handle for preparation, commit, rollback,
+    cancellation, and result.
+- **Type:** `FSharApplicationModeObservation`
+  - **Responsibility:** Immutable current mode, world, profile, local players,
+    readiness, and presentation state.
+- **Type:** `FSharApplicationModeResult`
+  - **Responsibility:** Closed success or failure result with verified
+    postconditions.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -94,20 +131,37 @@ The initial catalog includes these mode identities:
 
 <!-- markdownlint-disable MD013 -->
 
-| Mode | Contract |
-| :--- | :--- |
-| `entry` | Minimal process and game-instance readiness before startup work. |
-| `boot` | Configuration, profile, catalog, save, service, and startup-presentation readiness. |
-| `front_end` | Main menu and profile-safe presentation with no active gameplay world. |
-| `loading_gameplay` | Transactional preparation of the selected gameplay world and session. |
-| `gameplay` | Active campaign or free-roam session. |
-| `pause` | Gameplay session retained while pause policy owns input and presentation. |
-| `super_sprint_front_end` | Contextual local multiplayer or bonus-race selection. |
-| `loading_super_sprint` | Transactional preparation of the selected super-sprint world and participants. |
-| `super_sprint` | Active super-sprint session. |
-| `loading_demo` | Isolated preparation of a bounded demonstration session. |
-| `demo` | Active non-progressing demonstration session. |
-| `exit` | Final cancellation, save flush policy, service shutdown, and process return. |
+- **Mode:** `entry`
+  - **Contract:** Minimal process and game-instance readiness before startup
+    work.
+- **Mode:** `boot`
+  - **Contract:** Configuration, profile, catalog, save, service, and
+    startup-presentation readiness.
+- **Mode:** `front_end`
+  - **Contract:** Main menu and profile-safe presentation with no active
+    gameplay world.
+- **Mode:** `loading_gameplay`
+  - **Contract:** Transactional preparation of the selected gameplay world and
+    session.
+- **Mode:** `gameplay`
+  - **Contract:** Active campaign or free-roam session.
+- **Mode:** `pause`
+  - **Contract:** Gameplay session retained while pause policy owns input and
+    presentation.
+- **Mode:** `super_sprint_front_end`
+  - **Contract:** Contextual local multiplayer or bonus-race selection.
+- **Mode:** `loading_super_sprint`
+  - **Contract:** Transactional preparation of the selected super-sprint world
+    and participants.
+- **Mode:** `super_sprint`
+  - **Contract:** Active super-sprint session.
+- **Mode:** `loading_demo`
+  - **Contract:** Isolated preparation of a bounded demonstration session.
+- **Mode:** `demo`
+  - **Contract:** Active non-progressing demonstration session.
+- **Mode:** `exit`
+  - **Contract:** Final cancellation, save flush policy, service shutdown, and
+    process return.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -183,7 +237,8 @@ second game loop.
 Frame execution, native tick groups, local-player views, render scopes, loading
 barriers, presentation freezes, display policy, and renderer ownership follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Native render-frame, view, and layer runtime](native-render-frame-view-and-layer-runtime.md).
+[Native render-frame, view, and layer
+runtime](native-render-frame-view-and-layer-runtime.md).
 A completed timer callback, visible frame, or successful buffer presentation
 cannot commit an application-mode transition.
 
@@ -193,14 +248,21 @@ Every request reaches one status:
 
 <!-- markdownlint-disable MD013 -->
 
-| Status | Meaning |
-| :--- | :--- |
-| `success` | Target mode and all required postconditions are active. |
-| `rejected` | Graph, caller, parameter, readiness, or concurrency validation failed before mutation. |
-| `failed` | Preparation or commit began but could not reach a valid target or rollback state. |
-| `timed_out` | A declared transition bound elapsed and cleanup completed. |
-| `cancelled` | An allowed cancellation restored the source or recovery mode. |
-| `superseded` | A higher-priority lifecycle request replaced the pending request. |
+- **Status:** `success`
+  - **Meaning:** Target mode and all required postconditions are active.
+- **Status:** `rejected`
+  - **Meaning:** Graph, caller, parameter, readiness, or concurrency validation
+    failed before mutation.
+- **Status:** `failed`
+  - **Meaning:** Preparation or commit began but could not reach a valid target
+    or rollback state.
+- **Status:** `timed_out`
+  - **Meaning:** A declared transition bound elapsed and cleanup completed.
+- **Status:** `cancelled`
+  - **Meaning:** An allowed cancellation restored the source or recovery mode.
+- **Status:** `superseded`
+  - **Meaning:** A higher-priority lifecycle request replaced the pending
+    request.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -215,7 +277,8 @@ capabilities, service dependencies, native frame ownership, and platform
 recovery
 follow the
 <!-- markdownlint-disable-next-line MD013 -->
-[native platform bootstrap and error-recovery runtime](native-platform-bootstrap-and-error-recovery-runtime.md).
+[native platform bootstrap and error-recovery
+runtime](native-platform-bootstrap-and-error-recovery-runtime.md).
 Entry may verify package, launch-configuration, crash-recovery, and
 game-instance
 prerequisites, but it cannot construct gameplay managers or select a player
@@ -357,7 +420,8 @@ and service revisions still match.
 
 The loading plan follows the
 <!-- markdownlint-disable-next-line MD013 -->
-[native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md).
+[native asset load request and streaming
+runtime](native-asset-load-request-and-streaming-runtime.md).
 It never depends on platform heap replacement for correctness. Native world,
 object, asset, and gameplay-feature lifetimes own memory release.
 <!-- markdownlint-disable-next-line MD013 -->
@@ -366,7 +430,8 @@ object, asset, and gameplay-feature lifetimes own memory release.
 
 Loading presentation consumes the correlated load-plan snapshot defined by the
 <!-- markdownlint-disable-next-line MD013 -->
-[frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md).
+[frontend screen flow and settings
+runtime](frontend-screen-flow-and-settings-runtime.md).
 Progress comes only from validated operation producers and required readiness
 barriers.
 
@@ -419,15 +484,18 @@ Playable avatar, character construction, input contexts, movement, artificial-
 intelligence and non-player-character control, vehicle handoffs, camera targets,
 props, and footprints follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md).
+[Playable avatar, character controller, and footprint
+runtime](playable-avatar-character-controller-and-footprint-runtime.md).
 Vehicle construction, native physics state, controllers, traffic and parked
 mode,
 damage, resets, husks, pursuit leases, and presentation follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+[Native vehicle physics, control, damage, and presentation
+runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
 Authored state-prop projection and callback lifecycle follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md).
+[Authored state-prop animation and event
+runtime](authored-state-prop-animation-and-event-runtime.md).
 
 Subsystem updates follow native engine tick groups and explicit dependencies.
 Application mode does not manually call every gameplay manager in one arbitrary
@@ -543,12 +611,14 @@ The complete built-in lobby, join, controller, character, vehicle, readiness,
 countdown, per-player HUD, pause, summary, replay, and teardown presentation
 follows
 <!-- markdownlint-disable-next-line MD013 -->
-[Local split-screen minigame session UI runtime](local-split-screen-minigame-session-ui-runtime.md).
+[Local split-screen minigame session UI
+runtime](local-split-screen-minigame-session-ui-runtime.md).
 World preparation, vehicles, artificial intelligence, gameplay countdown,
 checkpoints, laps, positions, finish windows, results, high scores, replay, and
 cleanup follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Local supersprint race session runtime](local-supersprint-race-session-runtime.md).
+[Local supersprint race session
+runtime](local-supersprint-race-session-runtime.md).
 That same-device transient session remains separate from mod-owned network
 multiplayer and cannot become campaign progression authority implicitly.
 
@@ -560,7 +630,8 @@ per local player and explicit about front-end, gameplay, pause, demo, or
 super-sprint actions. Device discovery, assignment, mappings, pointer behavior,
 and haptics follow the
 <!-- markdownlint-disable-next-line MD013 -->
-[semantic input, device, and haptics runtime](semantic-input-device-and-haptics-runtime.md).
+[semantic input, device, and haptics
+runtime](semantic-input-device-and-haptics-runtime.md).
 
 Transition preparation may stage mappings, but only commit activates them.
 Cancellation, controller removal, local-player removal, world teardown, and mode
@@ -606,7 +677,8 @@ A source mode's world remains authoritative until target preparation succeeds.
 After commit, obsolete worlds and features are torn down in declared order.
 Memory ownership, budgets, pressure response, pools, and diagnostics follow the
 <!-- markdownlint-disable-next-line MD013 -->
-[memory ownership, budget, and diagnostics runtime](memory-ownership-budget-and-diagnostics-runtime.md).
+[memory ownership, budget, and diagnostics
+runtime](memory-ownership-budget-and-diagnostics-runtime.md).
 No platform heap reset is required for correctness; ownership follows native
 object, world, subsystem, feature, streaming, and asset-manager lifetimes.
 <!-- markdownlint-disable-next-line MD013 -->
@@ -617,7 +689,8 @@ Subsystems publish typed readiness and lifecycle observations. The coordinator
 correlates them by transition, world, service, and revision identity. Channel,
 payload, scope, delivery, and subscription rules follow the
 <!-- markdownlint-disable-next-line MD013 -->
-[typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md).
+[typed event and observation routing
+runtime](typed-event-and-observation-routing-runtime.md).
 
 Untyped global events, listener order, and payload pointers cannot complete a
 transition. A late event for an earlier transition is ignored and recorded.

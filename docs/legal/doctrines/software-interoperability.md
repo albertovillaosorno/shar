@@ -2,8 +2,6 @@
 
 > [Legal Research Disclaimer](../disclaimer.md) applies to this record.
 
-<!-- cspell:ignore MGE -->
-
 - Status: Governing authorities verified; workflow-specific result requires
   exact facts.
 - Jurisdiction: United States baseline; other jurisdictions unresolved.
@@ -71,15 +69,42 @@ The verified authorities support these bounded propositions:
 
 <!-- markdownlint-disable MD013 -->
 
-| Issue                    | Required factual focus                                                                                      | Principal records                                                                                                                                                                                    |
-| :----------------------- | :---------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Copyrightability         | Exact element, originality, function, constraints, merger, selection, and arrangement                       | `google-v-oracle.md`, `lexmark-v-static-control.md`, `sas-v-world-programming.md`, `rj-control-v-multiject.md`, `premier-dealer-v-allegiance.md`                                                     |
-| Fair use                 | Purpose, character, necessity, amount, final output, market, alternatives, and jurisdiction                 | `sega-v-accolade.md`, `sony-v-connectix.md`, `google-v-oracle.md`                                                                                                                                    |
-| Access controls          | Protected work, measure, ordinary access route, circumvention act, tool design, marketing, and distribution | `chamberlain-v-skylink.md`, `storage-technology-v-custom-hardware.md`, `lexmark-v-static-control.md`, `mdy-v-blizzard.md`, `davidson-v-jung.md`                                                      |
-| Contract                 | Exact terms, notice, assent, condition or covenant, scope, governing law, and remedy                        | `davidson-v-jung.md`, `mdy-v-blizzard.md`, `bowers-v-baystate-technologies.md`, `vault-v-quaid-software.md`, `nguyen-v-barnes-and-noble.md`, `berman-v-freedom-financial.md`, `specht-v-netscape.md` |
-| Confidential information | Source, secrecy, acquisition, duties, exposure, independent derivation, and disclosure                      | `../statutes/18-usc-1836-and-1839.md`                                                                                                                                                                |
-| Patent                   | Exact algorithm or claim, territory, legal status, implementation, and license                              | `patent-and-codec-risk.md`                                                                                                                                                                           |
-| Trademark                | Exact public presentation, mark, owner, goods or services, audience, and confusion evidence                 | `trademark-and-compatibility-naming.md`                                                                                                                                                              |
+- **Issue:** Copyrightability
+  - **Required factual focus:** Exact element, originality, function,
+    constraints, merger, selection, and arrangement
+  - **Principal records:** `google-v-oracle.md`, `lexmark-v-static-control.md`,
+    `sas-v-world-programming.md`, `rj-control-v-multiject.md`,
+    `premier-dealer-v-allegiance.md`
+- **Issue:** Fair use
+  - **Required factual focus:** Purpose, character, necessity, amount, final
+    output, market, alternatives, and jurisdiction
+  - **Principal records:** `sega-v-accolade.md`, `sony-v-connectix.md`,
+    `google-v-oracle.md`
+- **Issue:** Access controls
+  - **Required factual focus:** Protected work, measure, ordinary access route,
+    circumvention act, tool design, marketing, and distribution
+  - **Principal records:** `chamberlain-v-skylink.md`,
+    `storage-technology-v-custom-hardware.md`, `lexmark-v-static-control.md`,
+    `mdy-v-blizzard.md`, `davidson-v-jung.md`
+- **Issue:** Contract
+  - **Required factual focus:** Exact terms, notice, assent, condition or
+    covenant, scope, governing law, and remedy
+  - **Principal records:** `davidson-v-jung.md`, `mdy-v-blizzard.md`,
+    `bowers-v-baystate-technologies.md`, `vault-v-quaid-software.md`,
+    `nguyen-v-barnes-and-noble.md`, `berman-v-freedom-financial.md`,
+    `specht-v-netscape.md`
+- **Issue:** Confidential information
+  - **Required factual focus:** Source, secrecy, acquisition, duties, exposure,
+    independent derivation, and disclosure
+  - **Principal records:** `../statutes/18-usc-1836-and-1839.md`
+- **Issue:** Patent
+  - **Required factual focus:** Exact algorithm or claim, territory, legal
+    status, implementation, and license
+  - **Principal records:** `patent-and-codec-risk.md`
+- **Issue:** Trademark
+  - **Required factual focus:** Exact public presentation, mark, owner, goods or
+    services, audience, and confusion evidence
+  - **Principal records:** `trademark-and-compatibility-naming.md`
 
 <!-- markdownlint-enable MD013 -->
 
@@ -135,16 +160,21 @@ identify:
 
 - [Google LLC v. Oracle America, Inc.](../cases/google-v-oracle.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Chamberlain Group, Inc. v. Skylink Technologies, Inc.](../cases/chamberlain-v-skylink.md).
+- [Chamberlain Group, Inc. v. Skylink Technologies,
+  Inc.](../cases/chamberlain-v-skylink.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Storage Technology Corp. v. Custom Hardware Engineering & Consulting, Inc.](../cases/storage-technology-v-custom-hardware.md).
+- [Storage Technology Corp. v. Custom Hardware Engineering & Consulting,
+  Inc.](../cases/storage-technology-v-custom-hardware.md).
 - [Davidson & Associates, Inc. v. Jung](../cases/davidson-v-jung.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Lexmark International, Inc. v. Static Control Components, Inc.](../cases/lexmark-v-static-control.md).
+- [Lexmark International, Inc. v. Static Control Components,
+  Inc.](../cases/lexmark-v-static-control.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [MDY Industries, LLC v. Blizzard Entertainment, Inc.](../cases/mdy-v-blizzard.md).
+- [MDY Industries, LLC v. Blizzard Entertainment,
+  Inc.](../cases/mdy-v-blizzard.md).
 - [Sega Enterprises Ltd. v. Accolade, Inc.](../cases/sega-v-accolade.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Sony Computer Entertainment, Inc. v. Connectix Corp.](../cases/sony-v-connectix.md).
+- [Sony Computer Entertainment, Inc. v. Connectix
+  Corp.](../cases/sony-v-connectix.md).
 - [17 U.S.C. § 1201(f)](../statutes/17-usc-1201f.md).
 - [17 U.S.C. § 107](../statutes/17-usc-107.md).

@@ -1,7 +1,3 @@
-// File:
-//   - color.rs
-// Path: src/formats/fbx/domain/texture/semantic/color.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,38 +6,31 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Exact RGBA values and sRGB-to-linear-light conversion.
+//   - Color domain module.
 // - Must-Not:
-//   - Store images, sample UVs, read files, or classify semantic regions.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Deterministic color-channel access and relative luminance calculation.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another color space becomes an independent public contract.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another texture-domain module owns the same color conversion invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Repository-owned color values for semantic texture preparation.
+//   - Color domain module.
 // - Description:
-//   - Keeps color-space behavior independent from image and PNG adapters.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Used by semantic body and eye planners and RGBA images.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - RGB channels are encoded as sRGB and alpha is straight eight-bit data.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Exact RGBA and linear-light color values.
-/// One eight-bit sRGB color with straight alpha.
+//! Color domain module.
+
+/// One eight-bit red, green, blue, and alpha color sample.
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct Rgba8 {
     /// Red sRGB channel.
@@ -57,26 +46,14 @@ pub struct Rgba8 {
 impl Rgba8 {
     /// Build one exact eight-bit RGBA color.
     #[must_use]
-    pub const fn new(
-        red: u8,
-        green: u8,
-        blue: u8,
-        alpha: u8,
-    ) -> Self {
-        Self {
-            red,
-            green,
-            blue,
-            alpha,
-        }
+    pub const fn new(red: u8, green: u8, blue: u8, alpha: u8) -> Self {
+        Self { red, green, blue, alpha }
     }
 
     /// Return the four channels in file order.
     #[must_use]
     pub const fn channels(self) -> [u8; 4] {
-        [
-            self.red, self.green, self.blue, self.alpha,
-        ]
+        [self.red, self.green, self.blue, self.alpha]
     }
 
     /// Convert the sRGB channels to linear light without changing alpha.
@@ -95,15 +72,7 @@ impl Rgba8 {
         let linear = self.linear_rgb();
         linear
             .red
-            .mul_add(
-                0.2126,
-                linear
-                    .green
-                    .mul_add(
-                        0.7152,
-                        linear.blue * 0.0722,
-                    ),
-            )
+            .mul_add(0.2126, linear.green.mul_add(0.7152, linear.blue * 0.0722))
     }
 }
 
@@ -120,7 +89,7 @@ pub struct LinearRgb {
 
 /// Convert one eight-bit sRGB channel into linear light.
 fn srgb_channel_to_linear(channel: u8) -> f32 {
-    let normalized = f32::from(channel) / 255.0;
+    let normalized = f32::from(channel) / 255.;
     if normalized <= 0.04045 {
         normalized / 12.92
     } else {

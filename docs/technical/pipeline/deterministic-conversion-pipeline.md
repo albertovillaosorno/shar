@@ -6,7 +6,8 @@
 ## Governing decision
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Eleven-phase remake delivery roadmap](../../adr/pipeline/eleven-phase-remake-delivery-roadmap.md)
+- [Eleven-phase remake delivery
+  roadmap](../../adr/pipeline/eleven-phase-remake-delivery-roadmap.md)
 
 ## Purpose
 

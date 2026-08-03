@@ -1,9 +1,34 @@
-// File: SharPlatformProfileDefinitionTests.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharContent/Private/Tests/SharPlatformProfileDefinitionTests.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: native SHAR platform-profile contract; no local SDK claims or runtime packaging mutation.
-// ADR: docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar platform profile definition tests composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar platform profile definition tests composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar platform profile definition tests composition module.
 
 #if WITH_DEV_AUTOMATION_TESTS
 
@@ -53,6 +78,7 @@ bool FSharPlatformProfileValidationTest::RunTest(const FString& Parameters)
     Errors.Reset();
     Profile->bSupportsDedicatedServer = true;
     Profile->GatherValidationErrors(Errors);
+    // jig-ignore-next-line: exact syntax is indivisible
     TestFalse(TEXT("Android dedicated-server claim is rejected"), Errors.IsEmpty());
     TestTrue(
         TEXT("Windows ARM64 is declared"),

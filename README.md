@@ -2,12 +2,13 @@
 
 > Project started: June 2026.
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD044 -->
 
 ## Project status: Archived
 
 **This repository is archived and is no longer under active development.** It is
-preserved for reference, study, scraping and forking. No further commits/phases will be delivered
+preserved for reference, study, scraping and forking. No further commits/phases
+will be delivered
 by the original author, and the project is marked as archived on GitHub.
 
 **Why it stopped.** The intellectually hard groundwork is done: a from-scratch,
@@ -35,23 +36,25 @@ priorities decision, not a matter of difficulty:
 This was a one-month learning project built for enjoyment and to prove the
 approach, and it is published as an artifact.
 
-**Corrected phase status (authoritative).** The per-phase "Complete" labels later
+**Corrected phase status (authoritative).** The per-phase "Complete" labels
+later
 in this document predate this decision; where they conflict with the table below
 — notably Phase 4 — this table governs.
 
-| Phase | Scope | Actual status |
-| :--- | :--- | :--- |
-| 1 | Decode source formats and build the game manifest | Complete |
-| 2 | Generate the minor-unit manifest | Complete |
-| 3 | Classify minor units into deterministic packages | Complete |
-| 4 | Convert model packages to binary FBX | **Not completed** — usable output exists but carries unresolved geometry, UV, mirroring, height, and material-state defects |
-| 5 | Establish native Unreal MCP terminal control | Complete |
-| 6 | Convert normalized data into native Unreal assets | In progress (partial) — contracts and a character-first C++ foundation only |
-| 7 | Implement the complete native runtime | Not started |
-| 8 | Verify graphics presets | Not started |
-| 9 | Local mods and AI-agent skills | Not started |
-| 10 | Package native platform builds | Not started |
-| 11 | Optimize, verify, document, and close | Not started |
+1. **Decode source formats and build the game manifest:** Complete.
+1. **Generate the minor-unit manifest:** Complete.
+1. **Classify minor units into deterministic packages:** Complete.
+1. **Convert model packages to binary FBX:** **Not completed** — usable
+   output exists but carries unresolved geometry, UV, mirroring, height, and
+   material-state defects.
+1. **Establish native Unreal MCP terminal control:** Complete.
+1. **Convert normalized data into native Unreal assets:** In progress
+   (partial) — contracts and a character-first C++ foundation only.
+1. **Implement the complete native runtime:** Not started.
+1. **Verify graphics presets:** Not started.
+1. **Local mods and AI-agent skills:** Not started.
+1. **Package native platform builds:** Not started.
+1. **Optimize, verify, document, and close:** Not started.
 
 **How to continue (for a fork).** The most valuable next step is not more manual
 geometry editing; it is removing the architecture's central source of
@@ -61,22 +64,32 @@ output, `world_level` corrections, and handedness/mirror/height/emissive fixes),
 so each fix can silently break another. A fork should:
 
 1. Preserve the manual world movement and rotation coordinates as durable data.
-2. Extract every manual patch out of `pipeline`/`p3d`/`fbx` into a single
+1. Extract every manual patch out of `pipeline`/`p3d`/`fbx` into a single
    isolated, documented defect boundary — one entry per known defect of the
    24-year-old source data — leaving the three crates patch-free.
-3. Add regression tests as a correctness contract (UV orientation, handedness,
-   height, texture and material identity) so one fix can no longer regress another.
-4. Only then choose between a straight port and a faithful remake, from a clean base.
+1. Add regression tests as a correctness contract (UV orientation, handedness,
+   height, texture and material identity) so one fix can no longer regress
+   another.
+1. Only then choose between a straight port and a faithful remake, from a clean
+   base.
 
-**Other notes**: I'll add are: for the textures, I planned to create agnostic textures using a Python/Rust pipeline to normalize the colors.
+**Other notes**: I'll add are: for the textures, I planned to create agnostic
+textures using a Python/Rust pipeline to normalize the colors.
 
 The game code is missing, although there's already quite a bit.
 
-Since I can't distribute copyrighted content (and no one would for legal trademark reasons), manually editing artifacts should create an algorithm for the encrypted models of the original game.
+Since I can't distribute copyrighted content (and no one would for legal
+trademark reasons), manually editing artifacts should create an algorithm for
+the encrypted models of the original game.
 
-Editing hundreds of FBX files by hand is a tedious task, but it's the only way to make a truly worthwhile remake. If any expert modeler wanted to extract the FBX files and create perfect, expected models, perfectly ready to generate the algorithms, I could consider finishing it, but I don't recommend anyone waste their time on it.
+Editing hundreds of FBX files by hand is a tedious task, but it's the only way
+to make a truly worthwhile remake. If any expert modeler wanted to extract the
+FBX files and create perfect, expected models, perfectly ready to generate the
+algorithms, I could consider finishing it, but I don't recommend anyone waste
+their time on it.
 
-And there's also a viunary exporter to fbx 7.7, in case anyone needs to export fbx without Blender or Maya.
+And there's also a binary exporter to fbx 7.7, in case anyone needs to export
+fbx without Blender or Maya.
 
 ---
 
@@ -116,7 +129,8 @@ remains planned.
 
 The base product excludes a first-party multiplayer campaign, matchmaking,
 server browser, hosted service, marketplace, social layer, and general-purpose
-launcher or editor. It does expose stable mod-facing server adapters so community
+launcher or editor. It does expose stable mod-facing server adapters so
+community
 packages may implement and operate their own multiplayer modes and servers.
 
 ## Legal and publication boundary
@@ -148,7 +162,8 @@ the Unreal terminal translator.
 The pipeline is fail-closed, deterministic, evidence-driven, and
 content-addressed. Equivalent validated input and policy must produce stable
 logical identities, ordering, plans, and reports. Silent data loss, guessed
-capabilities, manual production assembly, and stale partial success are rejected.
+capabilities, manual production assembly, and stale partial success are
+rejected.
 
 The canonical model artifact is binary FBX 7.7 generated from first principles
 by the repository-owned writer. Blender and Maya are not part of generation,
@@ -189,19 +204,18 @@ and install supported local changes.
 
 The primary delivery sequence is fixed by decision record. Current status is:
 
-| Phase | Scope | Status |
-| :--- | :--- | :--- |
-| 1 | Decode required source evidence | Complete |
-| 2 | Generate the minor-unit manifest | Complete |
-| 3 | Classify deterministic packages | Complete |
-| 4 | Generate semantically prepared first-principles binary FBX | Not completed (archived) |
-| 5 | Establish native Unreal MCP terminal control | Complete |
-| 6 | Create native Unreal assets | Planned |
-| 7 | Implement the complete native runtime | Planned |
-| 8 | Verify Low through Ultra graphics presets | Planned |
-| 9 | Add local mods and user-facing AI skills | Planned |
-| 10 | Package validated native platform builds | Planned |
-| 11 | Optimize, verify, document, and close | Planned |
+1. **Decode required source evidence:** Complete.
+1. **Generate the minor-unit manifest:** Complete.
+1. **Classify deterministic packages:** Complete.
+1. **Generate semantically prepared first-principles binary FBX:** Not
+   completed (archived).
+1. **Establish native Unreal MCP terminal control:** Complete.
+1. **Create native Unreal assets:** Planned.
+1. **Implement the complete native runtime:** Planned.
+1. **Verify Low through Ultra graphics presets:** Planned.
+1. **Add local mods and user-facing AI skills:** Planned.
+1. **Package validated native platform builds:** Planned.
+1. **Optimize, verify, document, and close:** Planned.
 
 Phase 3 is complete. A fresh audit covered all 119,361 manifest units with zero
 failures or error rows. The generated index contains 2,964 unique packages with
@@ -242,7 +256,8 @@ response time, compatibility window, issue-triage guarantee, or permanent
 availability is promised. The repository may be archived at any time.
 
 Repository-owned authored material is available under the MIT License in
-[`LICENSE-MIT`](LICENSE-MIT). The license applies only to material the repository owner
+[`LICENSE-MIT`](LICENSE-MIT). The license applies only to material the
+repository owner
 has authority to license.
 
 ## Detailed project definition
@@ -296,7 +311,8 @@ sequences.
 The game has exactly two player-facing gameplay states:
 
 - **non-mission**, the persistent open sandbox; and
-- **mission**, one accepted story mission, side activity, race, taxi job, or boss
+- **mission**, one accepted story mission, side activity, race, taxi job, or
+  boss
   encounter.
 
 There is no Level 11 and no test level. Development uses ordinary isolated test
@@ -304,33 +320,42 @@ fixtures that never appear in the campaign, saves, map, achievements, or content
 catalog.
 
 The story is organized into seven narrative **chapters**, not seven isolated
-player-facing levels. Historic level names remain source aliases only. Starting a
-new game places Homer directly in the world in non-mission state, with a contextual
+player-facing levels. Historic level names remain source aliases only. Starting
+a
+new game places Homer directly in the world in non-mission state, with a
+contextual
 ambient vignette such as eating a donut, performing a gag, idling at home, or
 appearing at Moe's Tavern.
 
 The persistent map is connected with original or appropriately licensed bridges,
-roads, tunnels, paths, and transitions. Chapter 1 initially permits ordinary play
+roads, tunnels, paths, and transitions. Chapter 1 initially permits ordinary
+play
 only in terrain family 1. Later terrain families unlock through discovery and
 chapter progression. Undiscovered map regions remain covered by attractive cloud
 fog, while available mission markers remain visible without revealing hidden
 roads or landmarks.
 
-Mission-specific actors, vehicles, pickups, hazards, routes, and scripted changes
-exist only while their mission is active. The game supports saving during missions
+Mission-specific actors, vehicles, pickups, hazards, routes, and scripted
+changes
+exist only while their mission is active. The game supports saving during
+missions
 through deterministic checkpoints and resumes without duplicating rewards,
 collectibles, currency, boss completion, or achievement progress.
 
-Chapter collectible sets activate cumulatively. Chapter 1 cards, wasps, gags, and
+Chapter collectible sets activate cumulatively. Chapter 1 cards, wasps, gags,
+and
 other persistent placements are available at new game. Completing each chapter's
 final story mission activates the next chapter's sets, and earlier uncollected
 content remains available. A player who completes the story first may therefore
 find all seven chapter sets active together.
 
 The menu shows collectible, costume, character, and achievement categories from
-the beginning. Purchased costumes are permanent and may be equipped from the menu.
-Unlocked eligible characters may be selected outside missions. Bart unlocks after
-Homer's final Chapter 1 mission, becomes unavailable after Chapter 2 until Chapter
+the beginning. Purchased costumes are permanent and may be equipped from the
+menu.
+Unlocked eligible characters may be selected outside missions. Bart unlocks
+after
+Homer's final Chapter 1 mission, becomes unavailable after Chapter 2 until
+Chapter
 4 completes, and Lisa's missions force Lisa.
 
 Chapter transitions use chapter language, for example:
@@ -346,17 +371,22 @@ sleep, permanent costumes, vehicles, taxi participation, and instant vehicle
 repair provide fair recurring coin sinks.
 
 A bounded set of coin sources regenerates when a world session begins. One-time
-mission, collectible, chapter, boss, purchase, achievement, and discovery rewards
+mission, collectible, chapter, boss, purchase, achievement, and discovery
+rewards
 never regenerate. Economy curves must grow gradually without excessive grinding
 and always preserve a recoverable path to story progress.
 
-There are 49 collector cards: seven sets of seven. Completing a whole chapter set
+There are 49 collector cards: seven sets of seven. Completing a whole chapter
+set
 unlocks one balanced passive ability. The base game therefore balances seven
 meaningful passives rather than 49 individual abilities.
 
-The game adds simple melee combat, sprint stamina, footprints, dirt, wetness, and
-other scalable world details. Bart gains zip-line traversal and may break a window
-only when the owning structure declares a real available interior and valid entry
+The game adds simple melee combat, sprint stamina, footprints, dirt, wetness,
+and
+other scalable world details. Bart gains zip-line traversal and may break a
+window
+only when the owning structure declares a real available interior and valid
+entry
 route. Every structure records whether its interior capability is none, linked,
 streamed, mission-only, or a future extension slot; structures and interiors
 remain separate from terrain.
@@ -365,16 +395,19 @@ Burns' mansion becomes permanently accessible through a later traversal route
 originating inside the nuclear plant. The route remains locked until it cannot
 create unfair shortcuts for earlier missions that use terrain family 1.
 
-Chapter 7 keeps the world clock but applies permanent irradiated cloud cover. Day
+Chapter 7 keeps the world clock but applies permanent irradiated cloud cover.
+Day
 is humid, overcast, slightly brighter, and mildly hazy. Night is darker and more
-threatening, with readable distance, monsters, and sustained environmental horror
+threatening, with readable distance, monsters, and sustained environmental
+horror
 rather than cheap jump scares. Radiation damages a visible health bar, zombies
 may attack, and a nearby vehicle explosion may cause immediate death and mission
 checkpoint restart. The Devil Homer costume suppresses ordinary zombie hostility
 without granting radiation or explosion immunity.
 
 The campaign reserves three boss slots, but only two are currently confirmed: a
-mechanical dinosaur encounter associated with the stadium near the end of Chapter
+mechanical dinosaur encounter associated with the stadium near the end of
+Chapter
 2, and an Apu-associated Tyrannosaurus-skeleton encounter associated with the
 museum. Their models are original, generic, and mod-replaceable. Completing the
 encounters permanently opens the stadium and museum. The third boss remains
@@ -382,7 +415,8 @@ pending rather than being invented.
 
 The purchasable taxi unlocks repeatable taxi side missions as a nod to classic
 open-world taxi gameplay and driving-focused Simpsons games. Completing every
-unique base taxi milestone earns an achievement; taxi work never gates the story.
+unique base taxi milestone earns an achievement; taxi work never gates the
+story.
 
 Achievements are required but still **pending implementation**. The base set is
 intentionally approachable and contains no missable achievements. Planned
@@ -395,8 +429,10 @@ The intended completion tone is summarized by the joke:
 
 > The platinum trophy for Simpsons Hit & Run gave me Simpsonphobia.
 
-Mods declare whether they preserve base-achievement eligibility, suspend affected
-base progress, or provide namespaced mod-owned achievements. Mods may also replace
+Mods declare whether they preserve base-achievement eligibility, suspend
+affected
+base progress, or provide namespaced mod-owned achievements. Mods may also
+replace
 semantic gameplay and presentation slots, including generic boss, connector, and
 Unused Content assets, without changing canonical identity or save meaning.
 
@@ -413,12 +449,18 @@ materials.
 
 Authoritative design and implementation records:
 
-- [Open sandbox chapters and world progression](docs/adr/gameplay/open-sandbox-chapters-and-world-progression.md)
-- [Open sandbox campaign design](docs/technical/gameplay/open-sandbox-campaign-design.md)
-- [Open sandbox chapter runtime](docs/technical/unreal/open-sandbox-chapter-runtime.md)
-- [Unified open world and chapter projection](docs/adr/pipeline/unreal/unified-open-world-and-chapter-projection.md)
-- [Mod-owned multiplayer adapters and community servers](docs/adr/modding/mod-owned-multiplayer-adapters-and-community-servers.md)
-- [Multiplayer adapter and community-server extension](docs/technical/modding/multiplayer-adapter-and-community-server-extension.md)
+- [Open sandbox chapters and world
+  progression](docs/adr/gameplay/open-sandbox-chapters-and-world-progression.md)
+- [Open sandbox campaign
+  design](docs/technical/gameplay/open-sandbox-campaign-design.md)
+- [Open sandbox chapter
+  runtime](docs/technical/unreal/open-sandbox-chapter-runtime.md)
+- [Unified open world and chapter
+  projection][j1]
+- [Mod-owned multiplayer adapters and community
+  servers][j2]
+- [Multiplayer adapter and community-server
+  extension][j3]
 
 ### Detailed legal and project boundary
 
@@ -428,7 +470,8 @@ publishers, developers, licensors, platform holders, Epic Games, NVIDIA, or any
 other third party named in documentation or compatibility targets.
 
 Repository-owned material is licensed under the MIT License in
-[`LICENSE-MIT`](LICENSE-MIT). The MIT License applies only to material the repository
+[`LICENSE-MIT`](LICENSE-MIT). The MIT License applies only to material the
+repository
 owner has the authority to license. It does not grant rights in the original
 game, third-party assets, trademarks, proprietary software, engine
 distributions, external plugins, or user-supplied mods.
@@ -438,14 +481,15 @@ Users are responsible for:
 - obtaining and using their own lawful game copy;
 - complying with the terms that govern Unreal Engine and optional plugins;
 - determining whether local conversion, modification, packaging, or
-  redistribution is lawful in their jurisdiction;
+  redistribution is lawful in their jurisdiction;
 - preserving required copyright and license notices; and
 - verifying the provenance and trustworthiness of third-party mods.
 
 The repository does not download the original game, authenticate ownership,
 ship extracted payloads, or grant permission to redistribute a generated build.
 See the
-[lawful local input and publication ADR](docs/adr/legal/lawful-local-input-and-publication-boundary.md)
+[lawful local input and publication
+ADR](docs/adr/legal/lawful-local-input-and-publication-boundary.md)
 for the project-specific boundary. This documentation is not legal advice.
 
 ### Detailed engineering model
@@ -453,22 +497,22 @@ for the project-specific boundary. This documentation is not legal advice.
 The pipeline is fail-closed, deterministic, and evidence-driven.
 
 - A decoder either produces a typed, count-checked representation or reports a
-  failure. Silent byte loss is not accepted.
+  failure. Silent byte loss is not accepted.
 - Generated identities, ordering, package selection, output names, and plans
-  must remain stable for identical input.
+  must remain stable for identical input.
 - Extraction, classification, packaging, conversion, Unreal import, and runtime
-  behavior remain separate architectural boundaries.
+  behavior remain separate architectural boundaries.
 - Rust owns orchestration, parsing, manifests, deterministic transforms, and
-  validation.
+  validation.
 - C++ owns the Unreal runtime.
 - Python is permitted only where Blender or Unreal exposes a materially better
-  native integration boundary.
+  native integration boundary.
 - Blueprints remain compatible for content inspection and authoring, but C++
-  and validated data remain the source of truth.
+  and validated data remain the source of truth.
 - JSON is an intermediate review and interchange representation. It is not the
-  final runtime format when Unreal provides an appropriate native asset type.
+  final runtime format when Unreal provides an appropriate native asset type.
 - Direct dragging and dropping is not the production import strategy. Asset
-  creation must be reproducible from manifests and conversion plans.
+  creation must be reproducible from manifests and conversion plans.
 
 The codebase uses explicit domain, application, port, and adapter boundaries.
 Shared CLI and filesystem crates own stable mechanisms only; domain policy stays
@@ -498,7 +542,8 @@ pipeline cancel <run-id>
 pipeline cancel all
 ```
 
-`pipeline --cancel <run-id>` is an equivalent alias. Cancellation is cooperative:
+`pipeline --cancel <run-id>` is an equivalent alias. Cancellation is
+cooperative:
 the current atomic archive, package, or output transaction may finish before the
 process exits, but the pipeline does not force termination halfway through one
 artifact.
@@ -549,7 +594,8 @@ The "Complete" evidence below is retained as a historical record of what the
 phase reached before the project was archived.
 
 **Executive result:** Every model-bearing Phase 3 package now has either a
-validated binary FBX 7.7 artifact or an explicit non-FBX route. The final ignored
+validated binary FBX 7.7 artifact or an explicit non-FBX route. The final
+ignored
 local publication contains 110 character packages, 73 non-world model props, 285
 standalone world props, Wasp Camera, Wrench, 88 vehicles, and a separated world
 collection assembled from 149 terrain packages across eight independent scopes.
@@ -564,7 +610,8 @@ Completed boundary work:
   skeletons, skin clusters, animation timing, and supported animation curves.
 - [x] Publish external PNG textures and prohibit packed image payloads in the
   canonical character catalog.
-- [x] Classify transparent, glass, mirror, reflective, light-emitting, and visual
+- [x] Classify transparent, glass, mirror, reflective, light-emitting, and
+  visual
   effect surfaces from decoded material and geometry evidence.
 - [x] Split shared source shaders into semantic FBX material variants when one
   source shader serves ordinary and light-emitting geometry.
@@ -579,9 +626,11 @@ Completed boundary work:
 - [x] Publish a globally aligned separated-world collection with collision
   inspection geometry and definition-only review galleries kept distinct.
 - [x] Keep coordinate-comparison evidence transform-only: it may align canonical
-  source geometry but never supplies public model, material, or texture payloads.
+  source geometry but never supplies public model, material, or texture
+  payloads.
 - [x] Route camera-only, controller-only, attribute-only, and gameplay-only
-  packages to Phase 6 native Unreal conversion instead of empty FBX placeholders.
+  packages to Phase 6 native Unreal conversion instead of empty FBX
+  placeholders.
 
 #### Character catalog
 
@@ -595,14 +644,16 @@ and the root catalog SHA-256 is
 Each package publishes one binary FBX, one deterministic texture plan, and its
 referenced external PNG files. The catalog records zero packed images, preserved
 source/output topology, non-empty skin clusters, and non-empty animation sets.
-Across all packages it records 7,243 animation clips, 3,657 bones, 469 geometries,
+Across all packages it records 7,243 animation clips, 3,657 bones, 469
+geometries,
 5,140 clusters, 280 materials, 280 FBX texture bindings, and 490 published PNG
 files. Character animation behavior is unchanged in this phase.
 
 Semantic material classification is shared with the prop, vehicle, and world
 writers. Evidence-backed glasses, lenses, transparent surfaces, reflectors, and
 emitters remain independently addressable without converting unrelated materials
-into glass or emissive surfaces. Character modernization does not increase source
+into glass or emissive surfaces. Character modernization does not increase
+source
 polygon or vertex counts. It changes deterministic UV placement, texture
 resolution, semantic material organization, and proven mesh presentation only.
 
@@ -620,7 +671,8 @@ pipeline fbx-export-characters extracted/minor-unit/index.jsonl \
 clusters, preserved vertex colors, external textures, and the authored
 `PTRN_beecamera` animation. The final FBX SHA-256 is
 `ff123439b6dd169e211de2fe9928cdf936a539d9725ffa666efd5e0746ac4614`.
-Shield, ray, particle, collision, state, explosion, and gameplay evidence remains
+Shield, ray, particle, collision, state, explosion, and gameplay evidence
+remains
 outside this model artifact.
 
 `fbx-assets/props/wrench/` contains two files totaling 74,302 bytes. Its
@@ -672,7 +724,8 @@ pipeline fbx-export-world-props extracted/minor-unit/index.jsonl game \
 ```
 
 Breakable tree FBXs contain only geometry owned by their selected model
-composites. Foliage, leaf-drop effects, particles, collision, placement, cameras,
+composites. Foliage, leaf-drop effects, particles, collision, placement,
+cameras,
 lights, sounds, scripts, and gameplay logic remain normalized inputs for Phase 6
 rather than invented FBX objects.
 
@@ -733,7 +786,8 @@ and the transform manifest SHA-256 is
 `9020fcb3c3de0b38c4252f81441d67d253a21970ecdcedb5fee9e293b02e7405`.
 
 The world catalog covers 129 source packages across the seven main-level scopes
-and publishes 108 normal-import FBXs plus 82 isolated review FBXs. The normal set
+and publishes 108 normal-import FBXs plus 82 isolated review FBXs. The normal
+set
 includes eight fused interior bases and four additive Halloween overlays derived
 from all 19 source interior packages. It records 9,744 source meshes, 12,216
 authored and reference-backed placements, zero canonical placement fallbacks,
@@ -744,19 +798,25 @@ No auxiliary or bonus-area package enters this stage.
 Material semantics remain explicit across the collection. The catalog records
 5,734 glass, eight mirror, 1,963 reflective, 4,536 light-emitting, 7,388
 transparent, and 527 visual-effect geometries. Collision meshes are excluded;
-definition-only review geometry remains isolated in similarity-overlaid inspection
-galleries without being merged into or substituted for canonical source geometry.
+definition-only review geometry remains isolated in similarity-overlaid
+inspection
+galleries without being merged into or substituted for canonical source
+geometry.
 
 `world.transforms.json` uses the
-`shar.world-package-transforms.v5` contract. Every normal world FBX has the exact
+`shar.world-package-transforms.v5` contract. Every normal world FBX has the
+exact
 `80.0` meter height translation in its geometry. Exterior, region, zone, race,
 door, fused-interior, and interior-overlay FBXs all use the same source-to-FBX
-X-axis `ReflectX` export root and preserve authored UVs. Import each asset without
+X-axis `ReflectX` export root and preserve authored UVs. Import each asset
+without
 additional per-package translation, rotation, scale, or UV mirroring.
 
-The Blender 5.1 review scene keeps 18 locked exterior review objects and replaces
+The Blender 5.1 review scene keeps 18 locked exterior review objects and
+replaces
 19 source interior packages with eight movable fused bases. Elementary School,
-Kwik-E-Mart, the Simpsons house, and Bart's room additionally expose four movable
+Kwik-E-Mart, the Simpsons house, and Bart's room additionally expose four
+movable
 Level 7 Halloween-only overlays. Every external image remains relative and
 unpacked, and the scene verifies both the reviewed interior placement and the
 exact global height translation. The current `world.blend` SHA-256 is
@@ -776,7 +836,8 @@ never copied into the publication, named in public catalog paths, or treated as
 model, topology, material, texture, or identity authority.
 
 The ignored `fbx-assets/world/world.blend` file is a temporary coordinate-review
-workspace. It is not model, topology, material, texture, validation, publication,
+workspace. It is not model, topology, material, texture, validation,
+publication,
 runtime, or production authority. The 18 exterior objects are transform-locked;
 the eight fused interiors and four Halloween overlays remain movable so the
 operator can report any final placement correction. Vertex, topology, and
@@ -785,12 +846,13 @@ material edits remain outside this review pass.
 #### Canonical Unreal structural guide
 
 The editor-only Landscape and placement guide is generated directly by the
-repository-owned FBX pipeline. It is not assembled in Blender and is not runtime,
-collision, gameplay, or shipping-render authority. Its fixed publication root is:
+repository-owned FBX pipeline. It is not assembled in Blender and is not
+runtime,
+collision, gameplay, or shipping-render authority. Its fixed publication root
+is:
 
-```text
-src/unreal/project/composition/uproject/Content/SHAR/EditorOnly/StructuralGuide/Source/
-```
+`src/unreal/project/composition/uproject/Content/SHAR/EditorOnly/`
+`StructuralGuide/Source/`
 
 The publication contains exactly four files: one binary FBX 7.7 mesh, one
 manifest, one external RGB8 atlas, and one deterministic atlas layout. The FBX
@@ -803,11 +865,13 @@ animation, and exactly the four per-loop UV channels
 Generate into an empty explicit staging directory with:
 
 ```bash
-pipeline fbx-export-structural-guide extracted/minor-unit/index.jsonl game game   temp/structural-guide
+pipeline fbx-export-structural-guide extracted/minor-unit/index.jsonl \
+  game game temp/structural-guide
 ```
 
 Omitting the final positional selects the fixed Unreal `Source/` directory. The
-command uses create-new atomic publication and fails when the destination already
+command uses create-new atomic publication and fails when the destination
+already
 exists or violates the four-file contract. Validate a temporary publication
 before copying it into the Unreal source directory during editor cleanup.
 
@@ -816,7 +880,8 @@ and two-pixel edge dilation. `UV0_Atlas` is the final atlas coordinate consumed
 by Unreal's imported one-texture material, so no custom offset, scale, or wrap
 shader is required. `UV1_Source`, `UV2_AtlasOffset`, and `UV3_AtlasScale`
 preserve audit evidence. Repeat or clamp behavior is baked into `UV0_Atlas`.
-Texture alpha is flattened into opaque RGB. Material base color is baked exactly.
+Texture alpha is flattened into opaque RGB. Material base color is baked
+exactly.
 When all source vertex colors for one material/wrap identity agree, that tint is
 baked exactly; when they differ, the guide uses one deterministic
 source-texture-wide average and records the affected triangle count in
@@ -826,10 +891,12 @@ time-of-day shaders, cutout transparency, and other dynamic presentation are
 known omissions documented in the manifest.
 
 The structural guide has no independent spatial policy. It concatenates the
-mesh content of every normal-import world FBX after canonical movement and repair,
+mesh content of every normal-import world FBX after canonical movement and
+repair,
 including all seven exterior levels, fused interior bases, additive Halloween
 interior overlays, mission doors, race content, and other geometry already owned
-by those FBXs. Isolated `review/` comparison galleries are not part of the normal
+by those FBXs. Isolated `review/` comparison galleries are not part of the
+normal
 world set and are not combined.
 
 The guide does not invent a spatial correction, height, or content filter. Every
@@ -838,9 +905,11 @@ only merges presentation data and clones positions, normals, source UVs, and
 triangle winding. It cannot evaluate, flatten, mirror, or otherwise re-express a
 source mesh. Loop duplication for the one-mesh representation and atlas UV
 projection are the only guide-specific representation changes. When any source
-FBX group has no normal layer, the one-mesh guide omits its normal layer globally
+FBX group has no normal layer, the one-mesh guide omits its normal layer
+globally
 instead of generating or repairing normals; the manifest records the affected
-source-group count. Import the resulting FBX at identity with `Force Front XAxis`
+source-group count. Import the resulting FBX at identity with `Force Front
+XAxis`
 disabled.
 
 #### Manual per-FBX repair dataset
@@ -859,7 +928,8 @@ publication, loaded by runtime code, or committed as reconstruction authority.
 A Blender import-and-export cycle may reorder objects, primitive groups,
 vertices, polygons, materials, metadata, normals, tangents, or floating-point
 serialization even when the operator made no corresponding semantic edit.
-Binary hashes, array order, generated object names, and Blender-only metadata are
+Binary hashes, array order, generated object names, and Blender-only metadata
+are
 therefore not change authority. Comparison must first align original and edited
 content by stable relative path and semantic mesh structure, then classify only
 verified differences in positions, UVs, normals, colors, triangle ownership,
@@ -884,7 +954,8 @@ relative path, exact normalized filename stem, and one unique normalized prefix
 in that order. Only when those identities do not resolve may it use the
 order-independent structural fingerprint: mesh, primitive-group, position,
 triangle, UV, normal, and color counts. Every structural dimension must score at
-least `9,900` of `10,000` basis points—99 percent—and the weakest-dimension score
+least `9,900` of `10,000` basis points—99 percent—and the weakest-dimension
+score
 must lead the runner-up by at least 25 basis points. Every selected repair,
 including an exact identity match, must also satisfy its registered source
 fingerprint. Weak, duplicate, stale, or ambiguous matches stop publication
@@ -893,8 +964,10 @@ instead of applying a plausible-looking repair to the wrong FBX.
 The registry is intentionally empty until the first edited FBX has been compared
 and reproduced by a deterministic algorithm. Registered repairs run immediately
 before FBX serialization, so regeneration always starts from original extracted
-content. After one repair reproduces the reviewed result and canonical validation
-passes, its edited comparison FBX may be deleted; the Rust transformation and its
+content. After one repair reproduces the reviewed result and canonical
+validation
+passes, its edited comparison FBX may be deleted; the Rust transformation and
+its
 regression evidence become durable authority.
 
 The reviewed world uses three recurring exterior families. Zone 1 contains
@@ -924,7 +997,8 @@ placements, character and object spawns, mission positions, triggers, cameras,
 locators, and lights all receive the same translation without exception.
 
 This value is an additive height offset, not a command to ground the world's
-lowest point at zero. Source Y becomes Blender Z, and measured review bounds move
+lowest point at zero. Source Y becomes Blender Z, and measured review bounds
+move
 from `-173.977081`–`289.812042` to approximately
 `-132.931076`–`330.858032` on Blender Z: both limits increase by the final
 `80.0` after `f32` storage. The world can therefore remain below Blender's
@@ -932,7 +1006,8 @@ green zero plane even though the requested height is correctly
 baked. Any future lowest-point-to-zero normalization is a separate algorithm and
 must not be confused with, added to, or substituted for this global offset.
 
-The strict local editing tree is organized by ownership rather than by a complete
+The strict local editing tree is organized by ownership rather than by a
+complete
 copy of every level. Each recurring family has exactly one common baseline:
 
 ```text
@@ -941,7 +1016,8 @@ fbx-assets/world/zone/2/general/
 fbx-assets/world/zone/3/general/
 ```
 
-Only true level-specific zone and region differences live below the corresponding
+Only true level-specific zone and region differences live below the
+corresponding
 `zone/<number>/level-<number>/` directory. Family-general geometry must not be
 repeated in a level variation. Race props and mission doors are excluded from
 zone FBXs and live below `race/` and `doors/`. A shared race-general file is
@@ -950,22 +1026,29 @@ common layer is never invented.
 
 Interiors are separate from zones and grouped by stable source-backed identity:
 elementary school (`i00`), Kwik-E-Mart (`i01`), Simpsons house (`i02`), DMV
-(`i03`), Moe's Tavern (`i04`), Android's Dungeon (`i05`), observatory (`i06`), and
+(`i03`), Moe's Tavern (`i04`), Android's Dungeon (`i05`), observatory (`i06`),
+and
 Bart's room (`i07`). All ordinary recurring copies are transformed into reviewed
 world space and fused into one base FBX below
-`fbx-assets/world/interiors/<id>-<name>/`. The reviewed matrices remain placement
-authority, but the source's artificial 8,192-meter Zone 2 and 16,384-meter Zone 3
-family displacements are cancelled before the shared FBX basis conversion because
+`fbx-assets/world/interiors/<id>-<name>/`. The reviewed matrices remain
+placement
+authority, but the source's artificial 8,192-meter Zone 2 and 16,384-meter Zone
+3
+family displacements are cancelled before the shared FBX basis conversion
+because
 the connected native world already owns family placement. Source collision
 remains excluded.
 
 Elementary School, Kwik-E-Mart, the Simpsons house, and Bart's room additionally
-publish one `*-halloween.fbx` Level 7 overlay. Spatial centroid, vertex, and surface
+publish one `*-halloween.fbx` Level 7 overlay. Spatial centroid, vertex, and
+surface
 buckets apply a bounded five-millimeter comparison. Alternate diagonals are
 removed only when all candidate vertices are already owned and the candidate
-centroid plus all three edge midpoints remain covered by owned coplanar triangles;
+centroid plus all three edge midpoints remain covered by owned coplanar
+triangles;
 uncovered planar spans remain new geometry. Retained triangles preserve their
-material, UV, normal, color, and source mesh authority. The overlays therefore add
+material, UV, normal, color, and source mesh authority. The overlays therefore
+add
 only genuine Halloween differences such as webs, pumpkins, and skeletons rather
 than repeating floors, walls, furniture, or fixtures. The `.blend` itself never
 becomes runtime or generation authority.
@@ -997,20 +1080,28 @@ Phase 4 completion evidence:
   world props are published under stable readable paths.
 - [x] Vehicles preserve authored assembly, grounded wheel surfaces, semantic
   material variants, supported animation, and malformed-evidence sidecars.
-- [x] The separated world baseline is deterministic, globally aligned, importable
-  without per-package offsets, and published with collision, review, catalog, and
+- [x] The separated world baseline is deterministic, globally aligned,
+  importable
+  without per-package offsets, and published with collision, review, catalog,
+  and
   transform evidence.
 - [x] Canonical FBX, P3D, and pipeline formatting, compile, test, and strict
-  Clippy gates pass. Version-currency remains a non-blocking infrastructure check.
+  Clippy gates pass. Version-currency remains a non-blocking infrastructure
+  check.
 
 Relevant decisions:
 
-- [Package evidence discovery boundary](docs/adr/fbx/extraction/source-discovery-boundary.md)
-- [Unsupported model evidence preservation](docs/adr/fbx/chunks/chunk-preservation-policy.md)
-- [Character semantic texture, rig, outfit, and prop contract](docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md)
-- [Semantic component and geographic placement contract](docs/adr/fbx/export/semantic-component-and-geographic-placement-contract.md)
+- [Package evidence discovery
+  boundary](docs/adr/fbx/extraction/source-discovery-boundary.md)
+- [Unsupported model evidence
+  preservation](docs/adr/fbx/chunks/chunk-preservation-policy.md)
+- [Character semantic texture, rig, outfit, and prop
+  contract][j4]
+- [Semantic component and geographic placement
+  contract][j5]
 - [Hexagonal scene export](docs/adr/pipeline/fbx/hexagonal-scene-export.md)
-- [First-principles FBX output contract](docs/adr/fbx/export/fbx-output-contract-boundary.md)
+- [First-principles FBX output
+  contract](docs/adr/fbx/export/fbx-output-contract-boundary.md)
 
 ### Phase 5 — Establish native Unreal MCP terminal control
 
@@ -1037,32 +1128,33 @@ engine or installed plugin source remains unchanged.
 Completed work:
 
 - [x] Enable the native Unreal MCP and required toolset plugins in the local
-  project configuration without committing proprietary plugin source.
+  project configuration without committing proprietary plugin source.
 - [x] Implement a repository-owned terminal MCP client outside `uasset`.
 - [x] Support initialization, capability and protocol-version negotiation,
-  Streamable HTTP, structured errors, progress, pagination, cancellation, and
-  bounded timeouts.
+  Streamable HTTP, structured errors, progress, pagination, cancellation, and
+  bounded timeouts.
 - [x] Connect only through the loopback endpoint and reject remote, tunneled, or
-  overlapping tool execution.
+  overlapping tool execution.
 - [x] Discover the live catalog through `list_toolsets`, `describe_toolset`, and
-  `call_tool`, plus eager `tools/list` mode when enabled.
+  `call_tool`, plus eager `tools/list` mode when enabled.
 - [x] Generate a deterministic machine-readable snapshot of every discovered
-  toolset, tool, input schema, output schema, default, enum, and side effect.
+  toolset, tool, input schema, output schema, default, enum, and side effect.
 - [x] Map every discovered tool to a generic lossless JSON terminal call.
 - [x] Add typed CLI commands for the complete catalog without silently omitting
-  difficult, experimental, destructive, or niche tools.
+  difficult, experimental, destructive, or niche tools.
 - [x] Populate `skills/unreal/` with complete command syntax, parameters,
-  examples, required editor state, approval rules, errors, and troubleshooting.
+  examples, required editor state, approval rules, errors, and troubleshooting.
 - [x] Add catalog drift checks that fail when the selected engine adds, removes,
-  renames, or changes a tool without a reviewed CLI and documentation update.
+  renames, or changes a tool without a reviewed CLI and documentation update.
 - [x] Black-box test server lifecycle, discovery, schemas, valid and invalid
-  calls, errors, refresh, reconnection, serial execution, and automation tests.
+  calls, errors, refresh, reconnection, serial execution, and automation tests.
 - [x] Use the MCP Inspector as an independent UI and CLI reference client.
 - [x] Preserve known editor safety failures as observable regressions instead of
-  custom bridge implementation details.
+  custom bridge implementation details.
 
 When a severe native defect blocks a required workflow, the project may add a
-distinctly named Python or C++ toolset, client workaround, or validation command.
+distinctly named Python or C++ toolset, client workaround, or validation
+command.
 The fix must be additive, independently authored, regression-tested, and usable
 against a clean unmodified engine installation. Repository-owned additive code
 is MIT-licensed and may be used by Epic Games or any other recipient under those
@@ -1080,9 +1172,12 @@ Completion criteria:
 
 Relevant decisions:
 
-- [Native Unreal MCP terminal bridge](docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md)
-- [Native MCP tool CLI projection and Unreal skills](docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md)
-- [Native plugin source and additive extension boundary](docs/adr/unreal/mcp/upstream-native-plugin-and-additive-extension-boundary.md)
+- [Native Unreal MCP terminal
+  bridge](docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md)
+- [Native MCP tool CLI projection and Unreal
+  skills](docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md)
+- [Native plugin source and additive extension
+  boundary][j6]
 
 ### Phase 6 — Convert normalized data into native Unreal assets
 
@@ -1095,13 +1190,17 @@ deterministic conversion plans and the Phase 5 terminal MCP surface rather than
 manual editor work.
 
 The authoritative native asset, mission, world, vehicle, character, animation,
-mod, networking, rendering, naming, folder, format, and validation contract lives
+mod, networking, rendering, naming, folder, format, and validation contract
+lives
 at [`docs/technical/pipeline/unreal/`](docs/technical/pipeline/unreal/index.md).
-Pipeline work must implement that contract exactly before introducing a new native
+Pipeline work must implement that contract exactly before introducing a new
+native
 asset family. The Unreal runtime is designed as a modern AAA game from first
 principles; legacy layouts are migration evidence, never runtime architecture.
-Characters are the first vertical slice because their normalized models are ready
-and they exercise identity, materials, rigs, shared animation libraries, physics,
+Characters are the first vertical slice because their normalized models are
+ready
+and they exercise identity, materials, rigs, shared animation libraries,
+physics,
 loading, selection, validation, and mod replacement.
 
 `uasset` is the pipeline-owned planning library for this phase. It validates
@@ -1120,15 +1219,17 @@ change Phase 4 FBX generation.
 Planned work:
 
 - [ ] Generate a committed, public-safe Unreal import manifest from opaque
-  package identifiers through the `uasset` conversion boundary.
+  package identifiers through the `uasset` conversion boundary.
 - [ ] Apply conversion plans through tested native MCP commands from Phase 5.
 - [ ] Import FBX files as Static Meshes, Skeletal Meshes, Skeletons, Physics
-  Assets, Animation Sequences, materials, and textures.
+  Assets, Animation Sequences, materials, and textures.
 - [ ] Import each compatible character animation once into the central shared
-  rig-family library under `/Game/SHAR/Art/Characters/Animations`; never copy
-  common clips into per-character folders.
-- [ ] Convert camera-only packages such as `phonecamera` directly from normalized
-  camera, controller, and animation evidence into native Unreal Camera Actors and
+  rig-family library under `/Game/SHAR/Art/Characters/Animations`; never copy
+  common clips into per-character folders.
+- [ ] Convert camera-only packages such as `phonecamera` directly from
+  normalized
+  camera, controller, and animation evidence into native Unreal Camera Actors
+  and
   Level Sequences without an intermediate FBX.
 - [ ] Convert the 64-row `atc` destructible-object attribute table into a native
   Data Table or Data Asset preserving class name, sound, particle, animation,
@@ -1136,7 +1237,8 @@ Planned work:
 - [ ] Require real canonical texture evidence for every textured material slot
   and bind optional normal, specular, and related maps only when detection and
   native read-back validate their semantic role.
-- [ ] Use an explicit neutral material value or no texture input when an optional
+- [ ] Use an explicit neutral material value or no texture input when an
+  optional
   map is absent; generate derived maps only through a deterministic recorded
   recipe.
 - [ ] Stage mesh UAssets until destination UV generation, texture rebaking,
@@ -1152,13 +1254,14 @@ Planned work:
   and audio variant required by each claimed native target.
 - [ ] Convert localization records into String Tables and language assets.
 - [ ] Convert mission, vehicle, gameplay, UI, collectible, and tuning records
-  into Data Tables, Data Assets, State Trees, or purpose-built native assets.
+  into Data Tables, Data Assets, State Trees, or purpose-built native assets.
 - [ ] Convert Scrooby-derived UI records into UMG assets or validated native UI
-  descriptions.
+  descriptions.
 - [ ] Import each natural assembled world FBX as placement evidence, then split
   houses and every other shipping world component into stable native mesh
   identities and reconstruct them in one canonical map composition.
-- [ ] Convert the approved world assembly into World Partition cells, Runtime Data
+- [ ] Convert the approved world assembly into World Partition cells, Runtime
+  Data
   Layers, streaming assets, collision data, and authored placement records.
 - [ ] Generate component LOD and HLOD representations so required distant world
   geometry degrades through approved detail levels instead of arbitrary authored
@@ -1169,13 +1272,14 @@ Planned work:
 Completion criteria:
 
 - every accepted package resolves to a native Unreal target or an explicit
-  do-not-import result;
+  do-not-import result;
 - deleting generated assets and rerunning the importer reproduces the same
-  logical project state;
+  logical project state;
 - every claimed native target has deterministic audio cooking and streaming
   policies that preserve dialogue, locale, loops, event timing, and required
   playback without network or external codec dependencies;
-- every claimed native target has a deterministic cinematic variant with verified
+- every claimed native target has a deterministic cinematic variant with
+  verified
   player, codec, container, audio synchronization, subtitles, event timing, and
   no required external codec or network dependency;
 - failures identify the package, member, invariant, and corrective action; and
@@ -1183,13 +1287,20 @@ Completion criteria:
 
 Relevant decisions and specifications:
 
-- [Staged mesh import and world assembly](docs/adr/unreal/import-adapters/staged-mesh-import-and-world-assembly.md)
-- [Native import, material rebuild, and world assembly](docs/technical/unreal/native-import-material-and-world-assembly.md)
-- [Native asset load request and streaming runtime](docs/technical/unreal/native-asset-load-request-and-streaming-runtime.md)
-- [Platform-native audio cooking and streaming](docs/adr/audio/platform-native-audio-cooking-and-streaming.md)
-- [Platform audio cooking and streaming](docs/technical/unreal/platform-audio-cooking-and-streaming.md)
-- [Native cinematic package strategy](docs/adr/rmv/unreal-native-cinematic-package.md)
-- [Platform cinematic media packaging](docs/technical/unreal/platform-cinematic-media-packaging.md)
+- [Staged mesh import and world
+  assembly][j7]
+- [Native import, material rebuild, and world
+  assembly](docs/technical/unreal/native-import-material-and-world-assembly.md)
+- [Native asset load request and streaming
+  runtime][j8]
+- [Platform-native audio cooking and
+  streaming](docs/adr/audio/platform-native-audio-cooking-and-streaming.md)
+- [Platform audio cooking and
+  streaming](docs/technical/unreal/platform-audio-cooking-and-streaming.md)
+- [Native cinematic package
+  strategy](docs/adr/rmv/unreal-native-cinematic-package.md)
+- [Platform cinematic media
+  packaging](docs/technical/unreal/platform-cinematic-media-packaging.md)
 
 ### Phase 7 — Implement the complete Unreal runtime
 
@@ -1202,20 +1313,20 @@ game from beginning to end using the assets generated by Phase 6.
 Planned work:
 
 - [ ] Implement startup, versioned portable save data, device-local profiles and
-  settings, loading, pause, migration, and progression.
+  settings, loading, pause, migration, and progression.
 - [ ] Implement player movement, camera behavior, interaction, vehicles,
-  traffic, pedestrians, collisions, damage, and recovery.
+  traffic, pedestrians, collisions, damage, and recovery.
 - [ ] Implement missions, objectives, triggers, dialogue, rewards, collectibles,
-  gags, races, and progression gates.
+  gags, races, and progression gates.
 - [ ] Implement HUD, radar, navigation, menus, subtitles, localization, audio,
-  cinematics, and accessibility settings.
+  cinematics, and accessibility settings.
 - [ ] Implement world streaming, actor placement, physics, animation, effects,
-  and platform input through native Unreal systems.
+  and platform input through native Unreal systems.
 - [ ] Bind generated assets through stable ports rather than direct path
-  assumptions.
+  assumptions.
 - [ ] Add parity tests for observable gameplay behavior and state transitions.
 - [ ] Keep all third-party proprietary runtime implementation outside tracked
-  repository content.
+  repository content.
 
 Completion criteria:
 
@@ -1229,44 +1340,73 @@ Completion criteria:
 Relevant decisions:
 
 - [Runtime parity boundary](docs/adr/unreal/runtime/remake-parity-boundary.md)
-- [Runtime parity tests](docs/adr/unreal/runtime/runtime-parity-test-boundary.md)
-- [Application lifecycle and mode runtime](docs/technical/unreal/application-lifecycle-and-mode-runtime.md)
+- [Runtime parity
+  tests](docs/adr/unreal/runtime/runtime-parity-test-boundary.md)
+- [Application lifecycle and mode
+  runtime](docs/technical/unreal/application-lifecycle-and-mode-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Frontend screen flow and settings runtime](docs/technical/unreal/frontend-screen-flow-and-settings-runtime.md)
+- [Frontend screen flow and settings
+  runtime](docs/technical/unreal/frontend-screen-flow-and-settings-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Authored spatial placement and trigger runtime](docs/technical/unreal/authored-spatial-placement-and-trigger-runtime.md)
+- [Authored spatial placement and trigger
+  runtime][j9]
 <!-- markdownlint-disable-next-line MD013 -->
-- [Mission definition, stage, and objective runtime](docs/technical/unreal/mission-definition-stage-and-objective-runtime.md)
+- [Mission definition, stage, and objective
+  runtime][j10]
 <!-- markdownlint-disable-next-line MD013 -->
-- [Mission, interaction, interior, and notoriety runtime](docs/technical/unreal/mission-interaction-and-notoriety-runtime.md)
+- [Mission, interaction, interior, and notoriety
+  runtime](docs/technical/unreal/mission-interaction-and-notoriety-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Mission world-entity and respawn runtime](docs/technical/unreal/mission-world-entity-and-respawn-runtime.md)
+- [Mission world-entity and respawn
+  runtime](docs/technical/unreal/mission-world-entity-and-respawn-runtime.md)
 - [Pedestrian path runtime](docs/technical/unreal/pedestrian-path-runtime.md)
-- [Presentation playback runtime](docs/technical/unreal/presentation-playback-runtime.md)
+- [Presentation playback
+  runtime](docs/technical/unreal/presentation-playback-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native platform bootstrap and error-recovery runtime](docs/technical/unreal/native-platform-bootstrap-and-error-recovery-runtime.md)
-- [Native asset load request and streaming runtime](docs/technical/unreal/native-asset-load-request-and-streaming-runtime.md)
+- [Native platform bootstrap and error-recovery
+  runtime][j11]
+- [Native asset load request and streaming
+  runtime][j12]
 <!-- markdownlint-disable-next-line MD013 -->
-- [Memory ownership, budget, and diagnostics runtime](docs/technical/unreal/memory-ownership-budget-and-diagnostics-runtime.md)
-- [Developer command and diagnostic runtime](docs/technical/unreal/developer-command-and-diagnostic-runtime.md)
-- [Device configuration and save-slot runtime](docs/technical/unreal/device-configuration-and-save-slot-runtime.md)
-- [Legacy runtime identity normalization](docs/technical/unreal/legacy-runtime-identity-normalization.md)
-- [Persistent world-object state runtime](docs/technical/unreal/persistent-world-object-state-runtime.md)
-- [Semantic input, device, and haptics runtime](docs/technical/unreal/semantic-input-device-and-haptics-runtime.md)
-- [Typed event and observation routing runtime](docs/technical/unreal/typed-event-and-observation-routing-runtime.md)
-- [Portable save storage and lifecycle](docs/adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
-- [Platform save storage and lifecycle](docs/technical/unreal/platform-save-storage-and-lifecycle.md)
-- [Contextual interaction query and transaction boundary](docs/adr/unreal/runtime/contextual-interaction-query-and-transaction.md)
-- [Contextual interaction runtime](docs/technical/unreal/contextual-interaction-runtime.md)
-- [HUD, radar, camera, and navigation parity](docs/adr/unreal/ui/hud-radar-camera-and-navigation.md)
+- [Memory ownership, budget, and diagnostics
+  runtime][j13]
+- [Developer command and diagnostic
+  runtime](docs/technical/unreal/developer-command-and-diagnostic-runtime.md)
+- [Device configuration and save-slot
+  runtime](docs/technical/unreal/device-configuration-and-save-slot-runtime.md)
+- [Legacy runtime identity
+  normalization](docs/technical/unreal/legacy-runtime-identity-normalization.md)
+- [Persistent world-object state
+  runtime](docs/technical/unreal/persistent-world-object-state-runtime.md)
+- [Semantic input, device, and haptics
+  runtime](docs/technical/unreal/semantic-input-device-and-haptics-runtime.md)
+- [Typed event and observation routing
+  runtime](docs/technical/unreal/typed-event-and-observation-routing-runtime.md)
+- [Portable save storage and
+  lifecycle](docs/adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+- [Platform save storage and
+  lifecycle](docs/technical/unreal/platform-save-storage-and-lifecycle.md)
+- [Contextual interaction query and transaction
+  boundary][j14]
+- [Contextual interaction
+  runtime](docs/technical/unreal/contextual-interaction-runtime.md)
+- [HUD, radar, camera, and navigation
+  parity](docs/adr/unreal/ui/hud-radar-camera-and-navigation.md)
 - [Camera system runtime](docs/technical/unreal/camera-system-runtime.md)
-- [Camera rig, preset, and arbitration runtime](docs/technical/unreal/camera-rig-preset-and-arbitration-runtime.md)
-- [Native flying-hazard actors and StateTree execution](docs/adr/unreal/runtime/native-flying-hazard-actors-and-state-trees.md)
-- [Flying-hazard and projectile runtime](docs/technical/unreal/flying-hazard-and-projectile-runtime.md)
-- [Typed StateTree action sequences](docs/adr/unreal/runtime/typed-state-tree-action-sequences.md)
-- [Typed action-sequence runtime](docs/technical/unreal/typed-action-sequence-runtime.md)
-- [Gameplay census, presentation, and development-content boundary](docs/technical/unreal/gameplay-census-presentation-and-development-boundary.md)
-- [Hexagonal runtime](docs/adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md)
+- [Camera rig, preset, and arbitration
+  runtime](docs/technical/unreal/camera-rig-preset-and-arbitration-runtime.md)
+- [Native flying-hazard actors and StateTree
+  execution][j15]
+- [Flying-hazard and projectile
+  runtime](docs/technical/unreal/flying-hazard-and-projectile-runtime.md)
+- [Typed StateTree action
+  sequences](docs/adr/unreal/runtime/typed-state-tree-action-sequences.md)
+- [Typed action-sequence
+  runtime](docs/technical/unreal/typed-action-sequence-runtime.md)
+- [Gameplay census, presentation, and development-content
+  boundary][j16]
+- [Hexagonal
+  runtime][j17]
 
 ### Phase 8 — Verify platform support and Low through Ultra graphics presets
 
@@ -1296,7 +1436,8 @@ mission, physics, timing, progression, save, package, or mod semantics.
 - [ ] Keep Low visually faithful to the original art direction, with a target
   broadly comparable to the original game or a seventh-generation console game.
 - [ ] `Medium`, `High`, and `Epic` increase native Unreal quality monotonically.
-- [ ] `Ultra` resolves every supported quality group and selected stable optional
+- [ ] `Ultra` resolves every supported quality group and selected stable
+  optional
   feature to the maximum validated setting for the active platform and hardware.
 - [ ] Keep unsupported hardware and vendor features optional and provide native
   Unreal fallbacks without changing gameplay.
@@ -1311,7 +1452,8 @@ mission, physics, timing, progression, save, package, or mod semantics.
 
 #### Optimization boundary
 
-- [ ] Profile CPU, GPU, memory, storage, streaming, shader compilation, and frame
+- [ ] Profile CPU, GPU, memory, storage, streaming, shader compilation, and
+  frame
   pacing before and after performance work.
 - [ ] Prefer native Unreal scalability, device profiles, streaming, visibility,
   shader, pipeline-cache, material-quality, and platform facilities.
@@ -1335,9 +1477,12 @@ Completion criteria:
 
 Relevant decisions and specifications:
 
-- [Graphics quality presets and platform support](docs/adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
-- [Shared runtime tagging, modding, and platform compatibility](docs/adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
-- [Platform, quality, and optimization contract](docs/technical/unreal/platform-quality-and-optimization.md)
+- [Graphics quality presets and platform
+  support][j18]
+- [Shared runtime tagging, modding, and platform
+  compatibility][j19]
+- [Platform, quality, and optimization
+  contract](docs/technical/unreal/platform-quality-and-optimization.md)
 
 ### Phase 9 — Add drop-in mods and AI-agent skills
 
@@ -1356,26 +1501,26 @@ service.
 Planned work:
 
 - [ ] Define deterministic mod package identity, priority, dependency,
-  compatibility, supersession, and conflict rules.
+  compatibility, supersession, and conflict rules.
 - [ ] Support replacements and additions for models, textures, materials,
-  animation, missions, localization, UI, audio, cinematics, tuning, and other
-  explicitly modeled asset families.
+  animation, missions, localization, UI, audio, cinematics, tuning, and other
+  explicitly modeled asset families.
 - [ ] Load supported data and asset packages through one normalized import
   contract: a local `mods/` root on desktop and managed application storage on
   Android.
 - [ ] Keep native-code mods behind an explicit trust boundary because native
-  code is not safely sandboxed by file validation alone.
+  code is not safely sandboxed by file validation alone.
 - [ ] Validate schema, normalized member paths, integrity, resource limits,
-  references, package topology, target and ABI compatibility, version
-  constraints, and deterministic load order before activation.
+  references, package topology, target and ABI compatibility, version
+  constraints, and deterministic load order before activation.
 - [ ] Provide preview and dry-run commands that show exactly what a mod changes.
 - [ ] Write practical `skills/` instructions for terminal-capable AI agents.
 - [ ] Let an agent translate a natural-language request into required assets,
-  mission logic, package changes, validation evidence, and a reviewable preview.
+  mission logic, package changes, validation evidence, and a reviewable preview.
 - [ ] Require the agent to ask for missing licensed assets or generate only
-  content the user is authorized to create.
+  content the user is authorized to create.
 - [ ] Require explicit user approval before replacing existing local content or
-  enabling trusted native code.
+  enabling trusted native code.
 
 A representative agent workflow is:
 
@@ -1401,8 +1546,10 @@ Completion criteria:
 
 Relevant decisions and specifications:
 
-- [Drop-in mod packages and AI skills](docs/adr/modding/drop-in-mod-packages-and-ai-skills.md)
-- [Local mod trust and distribution boundary](docs/adr/modding/mod-safety-scanner-and-distribution.md)
+- [Drop-in mod packages and AI
+  skills](docs/adr/modding/drop-in-mod-packages-and-ai-skills.md)
+- [Local mod trust and distribution
+  boundary](docs/adr/modding/mod-safety-scanner-and-distribution.md)
 - [Local mod package model](docs/technical/modding/local-package-model.md)
 - [Mod package validation](docs/technical/modding/package-validation.md)
 
@@ -1421,7 +1568,8 @@ pipeline full --game <path> --target <target-id> --preset <quality-id>
 ```
 
 Canonical target and quality identifiers are defined by the
-[platform, quality, and optimization contract](docs/technical/unreal/platform-quality-and-optimization.md).
+[platform, quality, and optimization
+contract](docs/technical/unreal/platform-quality-and-optimization.md).
 Android accepts only `android-arm64` with `low`.
 
 Planned work:
@@ -1459,7 +1607,7 @@ built from nothing. The user must provide:
 #### Optional external installation
 
 - The official NVIDIA Unreal or Streamline plugin may be required for the DLSS
-  compatibility target when it is available and selected.
+  compatibility target when it is available and selected.
 - Blender and Maya are optional experimental inspection aids only. They are not
   generation, conversion, staging, repair, validation, or acceptance
   dependencies.
@@ -1473,7 +1621,7 @@ user's behalf.
 Completion criteria:
 
 - a verified build host for the selected target can produce a native packaged
-  build from one source path and documented prerequisites;
+  build from one source path and documented prerequisites;
 - all intermediate stages are resumable and content-addressed;
 - the final report identifies every external dependency and generated artifact;
 - failure never leaves a misleading success marker; and
@@ -1489,23 +1637,24 @@ not as a perpetual product roadmap.
 Final checklist:
 
 - [ ] Complete a full start-to-finish playthrough without known
-  progression-blocking defects.
+  progression-blocking defects.
 - [ ] Verify every mission, chapter transition, vehicle, collectible, cinematic,
-  save point, localization path, and ending.
+  save point, localization path, and ending.
 - [ ] Profile CPU, GPU, memory, storage, shader compilation, loading, streaming,
-  and package-generation costs.
+  and package-generation costs.
 - [ ] Remove avoidable technical debt, nondeterminism, duplication, dead code,
-  undocumented workarounds, and unsupported compatibility bridges.
+  undocumented workarounds, and unsupported compatibility bridges.
 - [ ] Verify every graphics preset and claimed platform on representative
-  native hardware, including Android Low and its 144-frames-per-second ceiling.
+  native hardware, including Android Low and its 144-frames-per-second ceiling.
 - [ ] Rebuild from a clean source installation and compare deterministic
-  manifests, packages, reports, and logical Unreal output.
+  manifests, packages, reports, and logical Unreal output.
 - [ ] Create representative mods that replace a model, texture, mission,
-  localization entry, UI element, audio asset, and gameplay rule.
+  localization entry, UI element, audio asset, and gameplay rule.
 - [ ] Verify an AI coding agent can create and validate a mod from the published
-  skills without private repository knowledge.
+  skills without private repository knowledge.
 - [ ] Record known limitations honestly.
-- [ ] Record and publish a complete gameplay video link after final verification.
+- [ ] Record and publish a complete gameplay video link after final
+  verification.
 - [ ] Run the canonical global validation without cache.
 - [ ] Tag the completed primary roadmap.
 
@@ -1518,26 +1667,27 @@ the repository-owned code under its terms.
 
 Relevant decision:
 
-- [Eleven-phase delivery roadmap](docs/adr/pipeline/eleven-phase-remake-delivery-roadmap.md)
+- [Eleven-phase delivery
+  roadmap](docs/adr/pipeline/eleven-phase-remake-delivery-roadmap.md)
 
 ## Repository layout
 
 ```text
-game/             User-supplied lawful source installation. Ignored by Git,
-                  except for the tracked obfuscated completeness manifest.
-assets/           Local legacy and staged assets. Ignored by Git.
-cache/            Local generated state. Ignored by Git.
-dependencies/     Repository-managed toolchains and portable dependencies.
-docs/adr/         Architecture decision records.
+game/             User-supplied lawful source installation. Ignored by Git,
+                  except for the tracked obfuscated completeness manifest.
+assets/           Local legacy and staged assets. Ignored by Git.
+cache/            Local generated state. Ignored by Git.
+dependencies/     Repository-managed toolchains and portable dependencies.
+docs/adr/         Architecture decision records.
 docs/bibliography/ Public references and third-party notices.
-docs/legal/       Academic legal research records and the scope disclaimer.
-docs/technical/   Repository-owned technical specifications.
-extracted/        Local decoded and classified output. Ignored where required.
-skills/           Planned practical instructions for mod authors and AI agents.
-src/              Canonical authored source taxonomy.
-tests/            Cross-boundary and integration verification outside source.
-temp/             Validation caches, reports, and review output. Ignored by Git.
-validate.sh       Canonical repository validation entry point.
+docs/legal/       Academic legal research records and the scope disclaimer.
+docs/technical/   Repository-owned technical specifications.
+extracted/        Local decoded and classified output. Ignored where required.
+skills/           Planned practical instructions for mod authors and AI agents.
+src/              Canonical authored source taxonomy.
+tests/            Cross-boundary and integration verification outside source.
+temp/             Validation caches, reports, and review output. Ignored by Git.
+validate.sh       Canonical repository validation entry point.
 ```
 
 Authored source follows `src/<domain>/<function>/<kind>/<part>`. Current domains
@@ -1584,7 +1734,8 @@ archive as a Latin American Spanish override. No community-specific filename,
 local route, version, or acquisition source is a public repository contract.
 
 The archive is optional, is not distributed by this repository, and must pass
-the bounded LMLM validation contract before use. Its absence must not prevent the
+the bounded LMLM validation contract before use. Its absence must not prevent
+the
 base installation from validating or building.
 
 ## Validation
@@ -1632,7 +1783,8 @@ redistributable fixtures.
 ## License
 
 Repository-owned authored material is available under the MIT License in
-[`LICENSE-MIT`](LICENSE-MIT). Third-party names, software, game data, artwork, audio,
+[`LICENSE-MIT`](LICENSE-MIT). Third-party names, software, game data, artwork,
+audio,
 engine material, plugins, and documentation remain governed by their respective
 owners' terms and are not relicensed by this repository.
 
@@ -1737,4 +1889,35 @@ preservation of the repository in an unarchived state.
 The durable artifact is the licensed source and its recorded contracts, not a
 promise that its original author will remain available forever.
 
-<!-- markdownlint-enable MD013 -->
+<!-- markdownlint-enable MD013 MD044 -->
+
+<!-- Link destinations retained from the archived README. -->
+
+[j1]: docs/adr/pipeline/unreal/unified-open-world-and-chapter-projection.md
+[j2]: docs/adr/modding/mod-owned-multiplayer-adapters-and-community-servers.md
+[j4]: docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
+[j7]: docs/adr/unreal/import-adapters/staged-mesh-import-and-world-assembly.md
+[j8]: docs/technical/unreal/native-asset-load-request-and-streaming-runtime.md
+[j9]: docs/technical/unreal/authored-spatial-placement-and-trigger-runtime.md
+[j10]: docs/technical/unreal/mission-definition-stage-and-objective-runtime.md
+[j12]: docs/technical/unreal/native-asset-load-request-and-streaming-runtime.md
+[j13]: docs/technical/unreal/memory-ownership-budget-and-diagnostics-runtime.md
+[j14]: docs/adr/unreal/runtime/contextual-interaction-query-and-transaction.md
+[j15]: docs/adr/unreal/runtime/native-flying-hazard-actors-and-state-trees.md
+[j17]: docs/adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md
+[j18]: docs/adr/unreal/runtime/graphics-quality-presets-and-platform-support.md
+
+<!-- markdownlint-disable MD013 MD044 -->
+<!-- jig-ignore-next-line: documentation link target is indivisible -->
+[j3]: docs/technical/modding/multiplayer-adapter-and-community-server-extension.md
+<!-- jig-ignore-next-line: documentation link target is indivisible -->
+[j5]: docs/adr/fbx/export/semantic-component-and-geographic-placement-contract.md
+<!-- jig-ignore-next-line: documentation link target is indivisible -->
+[j6]: docs/adr/unreal/mcp/upstream-native-plugin-and-additive-extension-boundary.md
+<!-- jig-ignore-next-line: documentation link target is indivisible -->
+[j11]: docs/technical/unreal/native-platform-bootstrap-and-error-recovery-runtime.md
+<!-- jig-ignore-next-line: documentation link target is indivisible -->
+[j16]: docs/technical/unreal/gameplay-census-presentation-and-development-boundary.md
+<!-- jig-ignore-next-line: documentation link target is indivisible -->
+[j19]: docs/adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md
+<!-- markdownlint-enable MD013 MD044 -->

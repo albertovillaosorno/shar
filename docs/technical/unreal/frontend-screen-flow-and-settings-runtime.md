@@ -6,22 +6,29 @@
 ## Governing decisions and specifications
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
+- [Common UI front end and progress
+  projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
 - [UI parity boundary](../../adr/unreal/ui/ui-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+- [Portable save storage and
+  lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Frontend shell and menu runtime](frontend-shell-and-menu-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Common UI navigation, menu, and modal runtime](common-ui-navigation-menu-and-modal-runtime.md)
+- [Common UI navigation, menu, and modal
+  runtime](common-ui-navigation-menu-and-modal-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Frontend media, gallery, and audio runtime](frontend-media-gallery-and-audio-runtime.md)
+- [Frontend media, gallery, and audio
+  runtime](frontend-media-gallery-and-audio-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
+- [Application lifecycle and mode
+  runtime](application-lifecycle-and-mode-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Device configuration and save-slot runtime](device-configuration-and-save-slot-runtime.md)
+- [Device configuration and save-slot
+  runtime](device-configuration-and-save-slot-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Semantic input, device, and haptics runtime](semantic-input-device-and-haptics-runtime.md)
+- [Semantic input, device, and haptics
+  runtime](semantic-input-device-and-haptics-runtime.md)
 - [Presentation playback runtime](presentation-playback-runtime.md)
 
 ## Purpose
@@ -40,17 +47,32 @@ error prompts.
 
 <!-- markdownlint-disable MD013 -->
 
-| Service | Authority |
-| :--- | :--- |
-| Frontend subsystem | Owns stable frontend state, screen-flow requests, history, and command results. |
-| Common UI layer service | Owns widget activation, focus, action routing, and modal stacking. |
-| Application lifecycle service | Owns boot, loading, frontend, gameplay, demo, and bonus-mode transitions. |
-| Asset-load service | Owns correlated load plans, progress observations, cancellation, and readiness. |
-| Device-configuration service | Owns editable settings, previews, validation, commit, and rollback. |
-| Input subsystem | Owns devices, local-player assignment, semantic actions, and rebinding. |
-| Save service | Owns slot discovery, summaries, load, migration, recovery, and durable results. |
-| Progression service | Owns gallery availability, collected content, mission replay eligibility, and unlocks. |
-| Presentation playback service | Owns cinematic playback, skip, pause, fallback, and teardown. |
+- **Service:** Frontend subsystem
+  - **Authority:** Owns stable frontend state, screen-flow requests, history,
+    and command results.
+- **Service:** Common UI layer service
+  - **Authority:** Owns widget activation, focus, action routing, and modal
+    stacking.
+- **Service:** Application lifecycle service
+  - **Authority:** Owns boot, loading, frontend, gameplay, demo, and bonus-mode
+    transitions.
+- **Service:** Asset-load service
+  - **Authority:** Owns correlated load plans, progress observations,
+    cancellation, and readiness.
+- **Service:** Device-configuration service
+  - **Authority:** Owns editable settings, previews, validation, commit, and
+    rollback.
+- **Service:** Input subsystem
+  - **Authority:** Owns devices, local-player assignment, semantic actions, and
+    rebinding.
+- **Service:** Save service
+  - **Authority:** Owns slot discovery, summaries, load, migration, recovery,
+    and durable results.
+- **Service:** Progression service
+  - **Authority:** Owns gallery availability, collected content, mission replay
+    eligibility, and unlocks.
+- **Service:** Presentation playback service
+  - **Authority:** Owns cinematic playback, skip, pause, fallback, and teardown.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -109,21 +131,34 @@ or storage result cannot navigate or mutate a replacement screen.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `ScreenId` | Canonical screen identity. |
-| `LayerId` | Boot, primary, modal, notification, or another registered Common UI layer. |
-| `WidgetClass` | Cooked Common UI widget class. |
-| `ViewModelSchemaId` | Immutable snapshot schema accepted by the widget. |
-| `RequiredBundles` | Asset bundles required before activation. |
-| `SemanticActionSetId` | Accepted Common UI actions. |
-| `EntryPredicateId` | Application, feature, local-player, and domain requirements. |
-| `ExitPolicyId` | Back, complete, replace, modal result, or transition behavior. |
-| `FocusPolicyId` | Initial focus and restoration behavior. |
-| `LoadingPolicyId` | Optional loading presentation and readiness barrier. |
-| `FailurePolicyId` | Typed fallback, retry, prior-screen restoration, or blocked state. |
-| `AccessibilityProfileId` | Narration, text, contrast, timing, and reduced-motion policy. |
-| `FeatureOwnerId` | Base game or validated feature package. |
+- **Field:** `ScreenId`
+  - **Contract:** Canonical screen identity.
+- **Field:** `LayerId`
+  - **Contract:** Boot, primary, modal, notification, or another registered
+    Common UI layer.
+- **Field:** `WidgetClass`
+  - **Contract:** Cooked Common UI widget class.
+- **Field:** `ViewModelSchemaId`
+  - **Contract:** Immutable snapshot schema accepted by the widget.
+- **Field:** `RequiredBundles`
+  - **Contract:** Asset bundles required before activation.
+- **Field:** `SemanticActionSetId`
+  - **Contract:** Accepted Common UI actions.
+- **Field:** `EntryPredicateId`
+  - **Contract:** Application, feature, local-player, and domain requirements.
+- **Field:** `ExitPolicyId`
+  - **Contract:** Back, complete, replace, modal result, or transition behavior.
+- **Field:** `FocusPolicyId`
+  - **Contract:** Initial focus and restoration behavior.
+- **Field:** `LoadingPolicyId`
+  - **Contract:** Optional loading presentation and readiness barrier.
+- **Field:** `FailurePolicyId`
+  - **Contract:** Typed fallback, retry, prior-screen restoration, or blocked
+    state.
+- **Field:** `AccessibilityProfileId`
+  - **Contract:** Narration, text, contrast, timing, and reduced-motion policy.
+- **Field:** `FeatureOwnerId`
+  - **Contract:** Base game or validated feature package.
 
 <!-- markdownlint-enable MD013 -->
 

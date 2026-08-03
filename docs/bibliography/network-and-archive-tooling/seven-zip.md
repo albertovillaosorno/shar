@@ -102,5 +102,6 @@ the exact artifact conveyed.
 - 7-Zip (n.d.) *License for use and distribution*. Available at:
   <https://www.7-zip.org/license.txt> (Accessed: 14 July 2026).
 - SHAR repository and ignored dependency cache (2026),
-  `src/migration/pipeline/adapter-outbound/local/one/media_dependencies.rs`, cached
+  `src/migration/pipeline/composition/adapter-outbound/local/one/`
+  `media_dependencies.rs`, cached
   7-Zip 26.02 identity, response headers, and local SHA-256 evidence.

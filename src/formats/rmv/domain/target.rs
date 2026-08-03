@@ -1,7 +1,3 @@
-// File:
-//   - target.rs
-// Path: src/formats/rmv/domain/target.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,45 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure rmv domain rules for domain target.
+//   - Target domain module.
 // - Must-Not:
-//   - Read files, parse generated indexes, invoke CLI code, or call writer
-//   - adapters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Value objects, invariant checks, and pure evidence-to-domain translation.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when target contains two independently testable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another rmv module owns the same domain boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Target strategy for migrated cinematics.
+//   - Target domain module.
 // - Description:
-//   - Defines target data and behavior for rmv domain.
+//   - Implements the declared domain module responsibility for rmv.
 // - Usage:
-//   - Imported through crate domain facades or sibling domain modules.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No filesystem paths, no external process calls, and no implicit IO
-//   - defaults.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Target strategy for migrated cinematics.
-//!
-//! Bink 2 is an optional official-tooling target, not the only professional
-//! target. The portable fallback is a HAP movie stream plus WAV package so
-//! every developer can rebuild cinematics without private encoder binaries,
-//! global installs, or PATH mutation.
+//! Target domain module.
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 /// Cinematictarget.
 pub enum CinematicTarget {
@@ -71,19 +52,13 @@ impl CinematicTarget {
     #[must_use]
     /// Requires private encoder.
     pub const fn requires_private_encoder(self) -> bool {
-        matches!(
-            self,
-            Self::OfficialBink2
-        )
+        matches!(self, Self::OfficialBink2)
     }
 
     #[must_use]
     /// Is default without official encoder.
     pub const fn is_default_without_official_encoder(self) -> bool {
-        matches!(
-            self,
-            Self::UnrealHapMovie
-        )
+        matches!(self, Self::UnrealHapMovie)
     }
 }
 
@@ -114,25 +89,5 @@ impl TargetDecision {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::{CinematicTarget, TargetDecision};
-
-    #[test]
-    fn unreal_hap_movie_is_default_without_private_encoder() {
-        let decision = TargetDecision::without_official_bink2_encoder();
-        assert_eq!(
-            decision.primary_target,
-            CinematicTarget::UnrealHapMovie
-        );
-        assert_eq!(
-            decision.optional_target,
-            Some(CinematicTarget::OfficialBink2)
-        );
-    }
-
-    #[test]
-    fn official_bink2_is_marked_as_private_encoder_dependent() {
-        assert!(CinematicTarget::OfficialBink2.requires_private_encoder());
-        assert!(!CinematicTarget::UnrealHapMovie.requires_private_encoder());
-    }
-}
+#[path = "../../../../tests/formats/rmv/unit/domain/target/tests.rs"]
+mod tests;

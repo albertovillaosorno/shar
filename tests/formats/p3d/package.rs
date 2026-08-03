@@ -1,7 +1,3 @@
-// File:
-//   - package.rs
-// Path: tests/formats/p3d/package.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for public Pure3D package serialization invariants.
+//   - Package test module.
 // - Must-Not:
-//   - Access private assets or duplicate package implementation logic.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic component metadata and public serializer assertions.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another package artifact requires independent fixtures.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Package serialization regressions no longer need a distinct boundary.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects lossless Pure3D package metadata.
+//   - Package test module.
 // - Description:
-//   - Exercises public package JSON serialization with synthetic metadata.
+//   - Implements the declared test module responsibility for p3d.
 // - Usage:
-//   - Run through the p3d crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No local files, generated assets, or external processes are required.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for public `Pure3D` package serialization invariants.
-//!
-//! Synthetic metadata proves JSON output remains lossless and deterministic.
+//! Package test module.
 
 use p3d::adapters::driven::package::{
     ComponentOutput, component_line, kind_schema,
@@ -110,15 +96,9 @@ fn component_json_preserves_escaped_name_characters() {
 #[test]
 fn component_json_preserves_chunk_ancestry() {
     let mut value = component("value");
-    value
-        .chunk
-        .ordinal = 7;
-    value
-        .chunk
-        .depth = 3;
-    value
-        .chunk
-        .parent_ordinal = Some(4);
+    value.chunk.ordinal = 7;
+    value.chunk.depth = 3;
+    value.chunk.parent_ordinal = Some(4);
     value.container_ordinal = 1;
 
     let json = component_line(&value);
@@ -138,8 +118,5 @@ fn root_component_json_uses_null_parent_ordinal() {
 
 #[test]
 fn unknown_kind_uses_unknown_schema_identity() {
-    assert_eq!(
-        kind_schema("unregistered_kind"),
-        "unknown"
-    );
+    assert_eq!(kind_schema("unregistered_kind"), "unknown");
 }

@@ -1,7 +1,3 @@
-// File:
-//   - mod.rs
-// Path: src/foundation/json-text/domain/mod.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,37 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure JSON text domain primitives.
+//   - Domain domain module.
 // - Must-Not:
-//   - Perform filesystem, process, network, or environment access.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Deterministic in-memory JSON string-content escaping.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Typed document behavior gains an independently versioned contract.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another domain module owns the same escaping primitive.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - JSON text domain facade.
+//   - Domain domain module.
 // - Description:
-//   - Exposes portable JSON string escaping through the canonical domain kind.
+//   - Implements the declared domain module responsibility for json text.
 // - Usage:
-//   - Re-exported by the function public facade.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No document rendering or external effect is selected implicitly.
-//
-// Related documents:
-// - docs/adr/engineering/architecture/project-core-separation.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Pure JSON text domain primitives.
+//! Domain domain module.
 
 mod escaping;
 

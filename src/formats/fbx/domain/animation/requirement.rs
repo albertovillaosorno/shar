@@ -1,7 +1,3 @@
-// File:
-//   - requirement.rs
-// Path: src/formats/fbx/domain/animation/requirement.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,45 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure fbx domain rules for domain animation requirement.
+//   - Requirement domain module.
 // - Must-Not:
-//   - Read files, parse generated indexes, invoke CLI code, or call writer
-//   - adapters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Value objects, invariant checks, and pure evidence-to-domain translation.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when requirement contains two independently testable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another fbx module owns the same domain boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Animation requirement for one export package.
+//   - Requirement domain module.
 // - Description:
-//   - Defines requirement data and behavior for fbx domain animation.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Imported through crate domain facades or sibling domain modules.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No filesystem paths, no external process calls, and no implicit IO
-//   - defaults.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-// - docs/adr/pipeline/unreal/unreal-manifest-and-package-taxonomy.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Animation requirement for one export package.
-//!
-//! This boundary keeps animation requirement for one export package explicit
-//! and returns deterministic results to fbx callers.
-// These exact file-local lints preserve explicit domain and binary contracts.
+//! Requirement domain module.
+
 #![expect(
     clippy::module_name_repetitions,
     reason = "Tests verify these intentional explicit file-local contracts \
@@ -91,55 +72,30 @@ impl AnimationRequirement {
     ) -> Result<Self, AnimationRequirementError> {
         if member_ids
             .iter()
-            .any(
-                |member_id| {
-                    member_id
-                        .trim()
-                        .is_empty()
-                },
-            )
+            .any(|member_id| member_id.trim().is_empty())
         {
             return Err(AnimationRequirementError::BlankMemberId);
         }
-        if member_ids
-            .iter()
-            .any(
-                |member_id| {
-                    member_id != member_id.trim()
-                        || member_id
-                            .chars()
-                            .any(char::is_control)
-                },
-            )
-        {
+        if member_ids.iter().any(|member_id| {
+            member_id != member_id.trim()
+                || member_id.chars().any(char::is_control)
+        }) {
             return Err(AnimationRequirementError::NonCanonicalMemberId);
         }
         let mut unique_member_ids = BTreeSet::new();
-        if member_ids
-            .iter()
-            .any(
-                |member_id| {
-                    !unique_member_ids.insert(member_id.to_ascii_lowercase())
-                },
-            )
-        {
+        if member_ids.iter().any(|member_id| {
+            !unique_member_ids.insert(member_id.to_ascii_lowercase())
+        }) {
             return Err(AnimationRequirementError::DuplicateMemberId);
         }
         member_ids.sort();
-        Ok(
-            Self {
-                member_ids,
-                capability,
-            },
-        )
+        Ok(Self { member_ids, capability })
     }
 
     /// Returns true when animation data must be preserved in the export report.
     #[must_use]
     pub fn requires_report(&self) -> bool {
-        !self
-            .member_ids
-            .is_empty()
+        !self.member_ids.is_empty()
             && self.capability != AnimationCapability::BoundClip
     }
 }

@@ -39,157 +39,218 @@ proprietary external formats.
 ## Localization
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Normalized language interchange](localization/normalized-language-interchange.md)
+- [Normalized language
+  interchange](localization/normalized-language-interchange.md)
 
 ## Modding
 
 - [Local mod package model](modding/local-package-model.md)
 - [Mod package validation](modding/package-validation.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Multiplayer adapter and community-server extension](modding/multiplayer-adapter-and-community-server-extension.md)
+- [Multiplayer adapter and community-server
+  extension](modding/multiplayer-adapter-and-community-server-extension.md)
 
 ## Pipeline
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Deterministic conversion pipeline](pipeline/deterministic-conversion-pipeline.md)
+- [Deterministic conversion
+  pipeline](pipeline/deterministic-conversion-pipeline.md)
 - [Evidence and identity model](pipeline/evidence-and-identity-model.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Character capability evidence](pipeline/extraction/character-capability-evidence.md)
+- [Character capability
+  evidence](pipeline/extraction/character-capability-evidence.md)
 - [Model geometry evidence](pipeline/extraction/model-geometry-evidence.md)
 - [Rig and motion evidence](pipeline/extraction/rig-and-motion-evidence.md)
 - [Scene assembly evidence](pipeline/extraction/scene-assembly-evidence.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Texture and summary evidence](pipeline/extraction/texture-and-summary-evidence.md)
+- [Texture and summary
+  evidence](pipeline/extraction/texture-and-summary-evidence.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [World intersection evidence](pipeline/extraction/world-intersection-evidence.md)
+- [World intersection
+  evidence](pipeline/extraction/world-intersection-evidence.md)
 - [World simulation evidence](pipeline/extraction/world-simulation-evidence.md)
 
 ## Unreal
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Ambient population and named-character runtime](unreal/ambient-population-and-named-character-runtime.md)
+- [Ambient population and named-character
+  runtime](unreal/ambient-population-and-named-character-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Application lifecycle and mode runtime](unreal/application-lifecycle-and-mode-runtime.md)
+- [Application lifecycle and mode
+  runtime](unreal/application-lifecycle-and-mode-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Authored spatial placement and trigger runtime](unreal/authored-spatial-placement-and-trigger-runtime.md)
+- [Authored spatial placement and trigger
+  runtime](unreal/authored-spatial-placement-and-trigger-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Authored state-prop animation and event runtime](unreal/authored-state-prop-animation-and-event-runtime.md)
+- [Authored state-prop animation and event
+  runtime](unreal/authored-state-prop-animation-and-event-runtime.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Character animation clip catalog and vehicle-handoff choreography runtime](unreal/character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Character animation clip catalog and vehicle-handoff choreography runtime](unreal/character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Camera rig, preset, and arbitration runtime](unreal/camera-rig-preset-and-arbitration-runtime.md)
+- [Camera rig, preset, and arbitration
+  runtime](unreal/camera-rig-preset-and-arbitration-runtime.md)
 - [Camera system runtime](unreal/camera-system-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Common UI navigation, menu, and modal runtime](unreal/common-ui-navigation-menu-and-modal-runtime.md)
+- [Common UI navigation, menu, and modal
+  runtime](unreal/common-ui-navigation-menu-and-modal-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Open sandbox chapter runtime](unreal/open-sandbox-chapter-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Developer command and diagnostic runtime](unreal/developer-command-and-diagnostic-runtime.md)
+- [Developer command and diagnostic
+  runtime](unreal/developer-command-and-diagnostic-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Device configuration and save-slot runtime](unreal/device-configuration-and-save-slot-runtime.md)
+- [Device configuration and save-slot
+  runtime](unreal/device-configuration-and-save-slot-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Dialogue selection, queue, and playback runtime](unreal/dialogue-selection-queue-and-playback-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Dialogue authoring evidence import and native asset projection](unreal/dialogue-authoring-evidence-import-and-native-asset-projection.md)
+- [Dialogue selection, queue, and playback
+  runtime](unreal/dialogue-selection-queue-and-playback-runtime.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Dialogue authoring evidence import and native asset projection](unreal/dialogue-authoring-evidence-import-and-native-asset-projection.md) <!-- markdownlint-disable-line MD013 -->
 - [Frontend shell and menu runtime](unreal/frontend-shell-and-menu-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Frontend screen flow and settings runtime](unreal/frontend-screen-flow-and-settings-runtime.md)
+- [Frontend screen flow and settings
+  runtime](unreal/frontend-screen-flow-and-settings-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Frontend media, gallery, and audio runtime](unreal/frontend-media-gallery-and-audio-runtime.md)
+- [Frontend media, gallery, and audio
+  runtime](unreal/frontend-media-gallery-and-audio-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Unreal configuration and asset validation](unreal/config-and-asset-validation.md)
+- [Unreal configuration and asset
+  validation](unreal/config-and-asset-validation.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native art authoring, style, and asset validation contract](unreal/native-art-authoring-style-and-asset-validation-contract.md)
+- [Native art authoring, style, and asset validation
+  contract](unreal/native-art-authoring-style-and-asset-validation-contract.md)
 - [Unreal gameplay content catalog](unreal/gameplay-content-catalog.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Gameplay audio source, residency, mix, and environment runtime](unreal/gameplay-audio-source-residency-mix-and-environment-runtime.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Gameplay audio source, residency, mix, and environment runtime](unreal/gameplay-audio-source-residency-mix-and-environment-runtime.md)
+- [In-game HUD, pause, and transition
+  runtime](unreal/in-game-hud-pause-and-transition-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [In-game HUD, pause, and transition runtime](unreal/in-game-hud-pause-and-transition-runtime.md)
+- [HUD feedback cue and presentation-primitives
+  runtime](unreal/hud-feedback-cue-and-presentation-primitives-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [HUD feedback cue and presentation-primitives runtime](unreal/hud-feedback-cue-and-presentation-primitives-runtime.md)
+- [Legacy runtime identity
+  normalization](unreal/legacy-runtime-identity-normalization.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Historical source-document evidence classification and publication boundary](unreal/historical-source-document-evidence-classification-and-publication-boundary.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Historical core-design and dialogue evidence normalization](unreal/historical-core-design-and-dialogue-evidence-normalization.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Legacy runtime identity normalization](unreal/legacy-runtime-identity-normalization.md)
+- [Local split-screen minigame session UI
+  runtime](unreal/local-split-screen-minigame-session-ui-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Historical source-document evidence classification and publication boundary](unreal/historical-source-document-evidence-classification-and-publication-boundary.md)
+- [Local supersprint race session
+  runtime](unreal/local-supersprint-race-session-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Historical core-design and dialogue evidence normalization](unreal/historical-core-design-and-dialogue-evidence-normalization.md)
+- [Memory ownership, budget, and diagnostics
+  runtime](unreal/memory-ownership-budget-and-diagnostics-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Local split-screen minigame session UI runtime](unreal/local-split-screen-minigame-session-ui-runtime.md)
+- [Mission briefing, result, and replay UI
+  runtime](unreal/mission-briefing-result-and-replay-ui-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Local supersprint race session runtime](unreal/local-supersprint-race-session-runtime.md)
+- [Mission definition, stage, and objective
+  runtime](unreal/mission-definition-stage-and-objective-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Memory ownership, budget, and diagnostics runtime](unreal/memory-ownership-budget-and-diagnostics-runtime.md)
+- [Mission, interaction, interior, and notoriety
+  runtime](unreal/mission-interaction-and-notoriety-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Mission briefing, result, and replay UI runtime](unreal/mission-briefing-result-and-replay-ui-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Mission definition, stage, and objective runtime](unreal/mission-definition-stage-and-objective-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Mission, interaction, interior, and notoriety runtime](unreal/mission-interaction-and-notoriety-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Mission world-entity and respawn runtime](unreal/mission-world-entity-and-respawn-runtime.md)
+- [Mission world-entity and respawn
+  runtime](unreal/mission-world-entity-and-respawn-runtime.md)
 - [Mod package overlay runtime](unreal/mod-package-overlay-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Music state and transition runtime](unreal/music-state-and-transition-runtime.md)
+- [Music state and transition
+  runtime](unreal/music-state-and-transition-runtime.md)
 - [Unreal MCP terminal translator](unreal/mcp-terminal-translator.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Native audio device, resource, player, and tuning adapter runtime](unreal/native-audio-device-resource-player-and-tuning-adapter-runtime.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Native vehicle physics, control, damage, and presentation runtime](unreal/native-vehicle-physics-control-damage-and-presentation-runtime.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native audio device, resource, player, and tuning adapter runtime](unreal/native-audio-device-resource-player-and-tuning-adapter-runtime.md)
+- [Native asset load request and streaming
+  runtime](unreal/native-asset-load-request-and-streaming-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native vehicle physics, control, damage, and presentation runtime](unreal/native-vehicle-physics-control-damage-and-presentation-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Native asset load request and streaming runtime](unreal/native-asset-load-request-and-streaming-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Native cooked-asset construction and registration runtime](unreal/native-cooked-asset-construction-and-registration-runtime.md)
+- [Native cooked-asset construction and registration
+  runtime](unreal/native-cooked-asset-construction-and-registration-runtime.md)
 - [Native asset planning](unreal/native-asset-planning.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native import, material rebuild, and world assembly](unreal/native-import-material-and-world-assembly.md)
+- [Native import, material rebuild, and world
+  assembly](unreal/native-import-material-and-world-assembly.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native platform bootstrap and error-recovery runtime](unreal/native-platform-bootstrap-and-error-recovery-runtime.md)
+- [Native platform bootstrap and error-recovery
+  runtime](unreal/native-platform-bootstrap-and-error-recovery-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native render-frame, view, and layer runtime](unreal/native-render-frame-view-and-layer-runtime.md)
+- [Native render-frame, view, and layer
+  runtime](unreal/native-render-frame-view-and-layer-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Physical material and impact-response runtime](unreal/physical-material-and-impact-response-runtime.md)
+- [Physical material and impact-response
+  runtime](unreal/physical-material-and-impact-response-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Pedestrian path runtime](unreal/pedestrian-path-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Persistent world-object state runtime](unreal/persistent-world-object-state-runtime.md)
+- [Persistent world-object state
+  runtime](unreal/persistent-world-object-state-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Playable avatar, character controller, and footprint runtime](unreal/playable-avatar-character-controller-and-footprint-runtime.md)
+- [Playable avatar, character controller, and footprint
+  runtime](unreal/playable-avatar-character-controller-and-footprint-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Platform audio cooking and streaming](unreal/platform-audio-cooking-and-streaming.md)
+- [Platform audio cooking and
+  streaming](unreal/platform-audio-cooking-and-streaming.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Platform cinematic media packaging](unreal/platform-cinematic-media-packaging.md)
+- [Platform cinematic media
+  packaging](unreal/platform-cinematic-media-packaging.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Platform, quality, and optimization contract](unreal/platform-quality-and-optimization.md)
+- [Platform, quality, and optimization
+  contract](unreal/platform-quality-and-optimization.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Platform save storage and lifecycle](unreal/platform-save-storage-and-lifecycle.md)
+- [Platform save storage and
+  lifecycle](unreal/platform-save-storage-and-lifecycle.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Presentation playback runtime](unreal/presentation-playback-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Spatial audio listener and positional-source runtime](unreal/spatial-audio-listener-and-positional-source-runtime.md)
+- [Spatial audio listener and positional-source
+  runtime](unreal/spatial-audio-listener-and-positional-source-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Spatial visibility, bounds, and culling runtime](unreal/spatial-visibility-bounds-and-culling-runtime.md)
+- [Spatial visibility, bounds, and culling
+  runtime](unreal/spatial-visibility-bounds-and-culling-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Progression, collectibles, cheats, and credits](unreal/progression-collectibles-and-cheats.md)
+- [Progression, collectibles, cheats, and
+  credits](unreal/progression-collectibles-and-cheats.md)
 - [Race route and opponent runtime](unreal/race-route-and-opponent-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Road-network geometry and traffic runtime](unreal/road-network-geometry-and-traffic-runtime.md)
+- [Road-network geometry and traffic
+  runtime](unreal/road-network-geometry-and-traffic-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Reward browser, preview, and purchase UI runtime](unreal/reward-browser-preview-and-purchase-ui-runtime.md)
+- [Reward browser, preview, and purchase UI
+  runtime](unreal/reward-browser-preview-and-purchase-ui-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Semantic input, device, and haptics runtime](unreal/semantic-input-device-and-haptics-runtime.md)
+- [Semantic input, device, and haptics
+  runtime](unreal/semantic-input-device-and-haptics-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Transient VFX and breakable-presentation runtime](unreal/transient-vfx-and-breakable-presentation-runtime.md)
+- [Transient VFX and breakable-presentation
+  runtime](unreal/transient-vfx-and-breakable-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Typed event and observation routing runtime](unreal/typed-event-and-observation-routing-runtime.md)
+- [Typed event and observation routing
+  runtime](unreal/typed-event-and-observation-routing-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Vehicle access and roster runtime](unreal/vehicle-access-and-roster-runtime.md)
+- [Vehicle access and roster
+  runtime](unreal/vehicle-access-and-roster-runtime.md)
 - [Vehicle AI and route runtime](unreal/vehicle-ai-and-route-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Vehicle audio and avatar-sound runtime](unreal/vehicle-audio-and-avatar-sound-runtime.md)
+- [Vehicle audio and avatar-sound
+  runtime](unreal/vehicle-audio-and-avatar-sound-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Vehicle retrieval and phone-booth runtime](unreal/vehicle-retrieval-and-phone-booth-runtime.md)
+- [Vehicle retrieval and phone-booth
+  runtime](unreal/vehicle-retrieval-and-phone-booth-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [World render-entity and physics runtime](unreal/world-render-entity-and-physics-runtime.md)
+- [World render-entity and physics
+  runtime](unreal/world-render-entity-and-physics-runtime.md)
 - [Editor guardrails](unreal/testing/editor-guardrails.md)
 - [Unreal test taxonomy](unreal/testing/test-taxonomy.md)
 

@@ -1,12 +1,34 @@
-// File: SharApplicationModeCatalogSubsystem.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharApplication/Private/Application/SharApplicationModeCatalogSubsystem.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: immutable catalog registration, graph proof, and lookup only; transition execution remains external.
-// Specification: docs/technical/unreal/application-lifecycle-and-mode-runtime.md
-// LARGE-FILE owner=SharApplication; reason=cohesive graph registration and activation implementation;
-// split=extract graph diagnostics if validation evidence becomes persistent;
-// validation=validate.sh SharApplication plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar application mode catalog subsystem composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar application mode catalog subsystem composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar application mode catalog subsystem composition module.
 
 #include "Application/SharApplicationModeCatalogSubsystem.h"
 
@@ -39,6 +61,7 @@ USharApplicationModeCatalogSubsystem::FindMode(const FName& ModeId) const
     const TObjectPtr<USharApplicationModeDefinition>* Definition =
         Algo::FindByPredicate(
             Definitions,
+            // jig-ignore-next-line: exact syntax is indivisible
             [&ModeId](const TObjectPtr<USharApplicationModeDefinition>& Candidate)
             {
                 return Candidate != nullptr && Candidate->CanonicalId == ModeId;
@@ -55,6 +78,7 @@ USharApplicationModeCatalogSubsystem::FindModeByKind(
     const TObjectPtr<USharApplicationModeDefinition>* Definition =
         Algo::FindByPredicate(
             Definitions,
+            // jig-ignore-next-line: exact syntax is indivisible
             [ModeKind](const TObjectPtr<USharApplicationModeDefinition>& Candidate)
             {
                 return Candidate != nullptr && Candidate->ModeKind == ModeKind;

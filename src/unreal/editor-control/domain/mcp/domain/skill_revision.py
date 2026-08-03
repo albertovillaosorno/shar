@@ -1,7 +1,3 @@
-# File:
-#   - skill_revision.py
-# Path: src/unreal/editor-control/domain/mcp/domain/skill_revision.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,36 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Normalized Unreal MCP versions and generated skill revision identities.
+#   - Skill revision domain module.
 # - Must-Not:
-#   - Read package metadata, environment variables, descriptors, or files.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Combining one resolved Unreal MCP version with one interface digest.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Version normalization and revision identity evolve independently.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another domain value owns the same generated revision contract.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Defines version-aware generated Unreal MCP skill revisions.
+#   - Skill revision domain module.
 # - Description:
-#   - Uses the Unreal MCP plugin version, never the Python client version.
+#   - Implements the declared domain module responsibility for editor control.
 # - Usage:
-#   - Constructed by the Markdown skill renderer after version discovery.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Two-part plugin versions normalize to three-part SemVer.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
-"""Version-aware revision identities for generated Unreal MCP skills."""
+
+"""Skill revision domain module."""
 
 from __future__ import annotations
 
@@ -77,6 +66,7 @@ def build_skill_revision(
 
     Returns:
         Normalized Unreal MCP version and validated interface digest.
+
     """
     normalized_version = normalize_unreal_mcp_version(unreal_mcp_version)
     if _DIGEST_PATTERN.fullmatch(interface_digest) is None:
@@ -91,6 +81,7 @@ def normalize_unreal_mcp_version(version_name: str) -> str:
 
     Returns:
         A `major.minor.patch` version string.
+
     """
     match = _VERSION_PATTERN.fullmatch(version_name)
     if match is None:

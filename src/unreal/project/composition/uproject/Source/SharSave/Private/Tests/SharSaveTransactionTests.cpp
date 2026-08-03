@@ -1,12 +1,34 @@
-// File: SharSaveTransactionTests.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharSave/Private/Tests/SharSaveTransactionTests.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: successful atomic save and interrupted-write preservation tests only.
-// Specification: docs/technical/unreal/platform-save-storage-and-lifecycle.md
-// LARGE-FILE owner=SharSave; reason=two cohesive save transaction lifecycle scenarios;
-// split=separate atomic replacement tests if journaling policies expand;
-// validation=validate.sh SharSave plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar save transaction tests composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar save transaction tests composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar save transaction tests composition module.
 
 #if WITH_DEV_AUTOMATION_TESTS
 

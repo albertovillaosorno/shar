@@ -5,14 +5,17 @@
 
 ## Governing decisions and specifications
 
-<!-- markdownlint-disable-next-line MD013 -->
-- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Staged mesh import and world assembly](../../adr/unreal/import-adapters/staged-mesh-import-and-world-assembly.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Staged mesh import and world assembly](../../adr/unreal/import-adapters/staged-mesh-import-and-world-assembly.md) <!-- markdownlint-disable-line MD013 -->
 - [Spatial visibility, bounds, and culling
   runtime](spatial-visibility-bounds-and-culling-runtime.md)
 - [Physical material and impact-response
@@ -20,21 +23,28 @@
 - [Persistent world-object state
   runtime](persistent-world-object-state-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md)
+- [Authored state-prop animation and event
+  runtime](authored-state-prop-animation-and-event-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
+- [Playable avatar, character controller, and footprint
+  runtime](playable-avatar-character-controller-and-footprint-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+- [Native vehicle physics, control, damage, and presentation
+  runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Mission world-entity and respawn runtime](mission-world-entity-and-respawn-runtime.md)
+- [Mission world-entity and respawn
+  runtime](mission-world-entity-and-respawn-runtime.md)
 - [Native asset load request and streaming
   runtime](native-asset-load-request-and-streaming-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native cooked-asset construction and registration runtime](native-cooked-asset-construction-and-registration-runtime.md)
+- [Native cooked-asset construction and registration
+  runtime](native-cooked-asset-construction-and-registration-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native render-frame, view, and layer runtime](native-render-frame-view-and-layer-runtime.md)
+- [Native render-frame, view, and layer
+  runtime](native-render-frame-view-and-layer-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md)
+- [Transient VFX and breakable-presentation
+  runtime](transient-vfx-and-breakable-presentation-runtime.md)
 
 ## Purpose
 
@@ -82,18 +92,36 @@ parallel scene graph, renderer, collision solver, or rigid-body engine.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| World-entity application service | Validates spawn, activation, replacement, destruction, persistence, and teardown commands. |
-| Actor | Owns world lifetime, transform root, replication policy when applicable, and component composition. |
-| Primitive component | Owns renderer registration, conservative bounds, material slots, collision profile, query flags, and shadow flags. |
-| Chaos physics | Owns accepted rigid-body state, contacts, constraints, forces, impulses, sleep, wake, and solver integration. |
-| Physical-profile service | Owns mass, density, friction, restitution, impact classification, and response policy. |
-| Spatial visibility runtime | Owns renderer-facing bounds policy, view visibility, and converted spatial diagnostics. |
-| World-composition service | Owns streaming admission, World Partition readiness, Runtime Data Layers, and region teardown. |
-| Persistence service | Owns durable destroyed, collected, moved, unlocked, and replaced state. |
-| Mission and interaction services | Own gameplay eligibility and consume verified entity or collision results. |
-| Presentation service | Owns cosmetic effects, audio, animation, and camera feedback requested from accepted results. |
+- **Authority:** World-entity application service
+  - **Responsibility:** Validates spawn, activation, replacement, destruction,
+    persistence, and teardown commands.
+- **Authority:** Actor
+  - **Responsibility:** Owns world lifetime, transform root, replication policy
+    when applicable, and component composition.
+- **Authority:** Primitive component
+  - **Responsibility:** Owns renderer registration, conservative bounds,
+    material slots, collision profile, query flags, and shadow flags.
+- **Authority:** Chaos physics
+  - **Responsibility:** Owns accepted rigid-body state, contacts, constraints,
+    forces, impulses, sleep, wake, and solver integration.
+- **Authority:** Physical-profile service
+  - **Responsibility:** Owns mass, density, friction, restitution, impact
+    classification, and response policy.
+- **Authority:** Spatial visibility runtime
+  - **Responsibility:** Owns renderer-facing bounds policy, view visibility, and
+    converted spatial diagnostics.
+- **Authority:** World-composition service
+  - **Responsibility:** Owns streaming admission, World Partition readiness,
+    Runtime Data Layers, and region teardown.
+- **Authority:** Persistence service
+  - **Responsibility:** Owns durable destroyed, collected, moved, unlocked, and
+    replaced state.
+- **Authority:** Mission and interaction services
+  - **Responsibility:** Own gameplay eligibility and consume verified entity or
+    collision results.
+- **Authority:** Presentation service
+  - **Responsibility:** Owns cosmetic effects, audio, animation, and camera
+    feedback requested from accepted results.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -138,25 +166,50 @@ addresses are not durable identity.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `EntityId` | Canonical entity definition identity. |
-| `RepresentationKind` | Static mesh, instanced mesh, skeletal prop, collision-only surface, fence, registered composite, or no-render server representation. |
-| `AssetSetId` | Required mesh, material, animation, physics, collision, shadow, and effects assets. |
-| `MobilityPolicy` | Static, stationary where supported, movable, or simulated. |
-| `CollisionProfileId` | Registered object type, response matrix, query, overlap, and simulation policy. |
-| `PhysicalProfileId` | Mass, density, friction, restitution, damping, thresholds, and force policy. |
-| `BoundsPolicyId` | Conservative bounds and optional validated extension policy. |
-| `ShadowPolicyId` | Native dynamic, static, virtual, contact, capsule, or disabled policy. |
-| `BreakableDefinitionId` | Optional destruction and replacement transaction. |
-| `StatefulPropDefinitionId` | Optional accepted-state, animation, collision, visibility, and event projection. |
-| `SceneQueryPolicyId` | Optional native trace, overlap, surface, road, path, and line-of-sight query policy. |
-| `LensPresentationId` | Optional per-view lens, flare, bloom, and occlusion presentation policy. |
-| `WorldPresentationId` | Optional sky, atmosphere, horizon, dome, cloud, and world-background policy. |
-| `PersistencePolicyId` | Durable state ownership and migration behavior. |
-| `StreamingPolicyId` | Region, bundle, readiness, retention, and teardown behavior. |
-| `QualityPolicyId` | LOD, HLOD, Nanite, instancing, shadow, and effect policy by target. |
-| `DiagnosticsPolicyId` | Development visualization and capture permissions. |
+- **Field:** `EntityId`
+  - **Contract:** Canonical entity definition identity.
+- **Field:** `RepresentationKind`
+  - **Contract:** Static mesh, instanced mesh, skeletal prop, collision-only
+    surface, fence, registered composite, or no-render server representation.
+- **Field:** `AssetSetId`
+  - **Contract:** Required mesh, material, animation, physics, collision,
+    shadow, and effects assets.
+- **Field:** `MobilityPolicy`
+  - **Contract:** Static, stationary where supported, movable, or simulated.
+- **Field:** `CollisionProfileId`
+  - **Contract:** Registered object type, response matrix, query, overlap, and
+    simulation policy.
+- **Field:** `PhysicalProfileId`
+  - **Contract:** Mass, density, friction, restitution, damping, thresholds, and
+    force policy.
+- **Field:** `BoundsPolicyId`
+  - **Contract:** Conservative bounds and optional validated extension policy.
+- **Field:** `ShadowPolicyId`
+  - **Contract:** Native dynamic, static, virtual, contact, capsule, or disabled
+    policy.
+- **Field:** `BreakableDefinitionId`
+  - **Contract:** Optional destruction and replacement transaction.
+- **Field:** `StatefulPropDefinitionId`
+  - **Contract:** Optional accepted-state, animation, collision, visibility, and
+    event projection.
+- **Field:** `SceneQueryPolicyId`
+  - **Contract:** Optional native trace, overlap, surface, road, path, and
+    line-of-sight query policy.
+- **Field:** `LensPresentationId`
+  - **Contract:** Optional per-view lens, flare, bloom, and occlusion
+    presentation policy.
+- **Field:** `WorldPresentationId`
+  - **Contract:** Optional sky, atmosphere, horizon, dome, cloud, and
+    world-background policy.
+- **Field:** `PersistencePolicyId`
+  - **Contract:** Durable state ownership and migration behavior.
+- **Field:** `StreamingPolicyId`
+  - **Contract:** Region, bundle, readiness, retention, and teardown behavior.
+- **Field:** `QualityPolicyId`
+  - **Contract:** LOD, HLOD, Nanite, instancing, shadow, and effect policy by
+    target.
+- **Field:** `DiagnosticsPolicyId`
+  - **Contract:** Development visualization and capture permissions.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -347,7 +400,8 @@ Drivable vehicle chassis, wheels, suspension, powertrain, controllers, traffic
 handoff, damage, resets, husks, parked vehicles, pursuit vehicles, and vehicle
 presentation follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+[Native vehicle physics, control, damage, and presentation
+runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
 This general world contract does not become a second vehicle solver or retain
 native vehicle physics objects across lifecycle boundaries.
 
@@ -457,7 +511,8 @@ Authored state definitions, animation ranges, finite cycles, marker callbacks,
 event bindings, listener leases, automatic transition proposals, persistence,
 and streaming teardown follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md).
+[Authored state-prop animation and event
+runtime](authored-state-prop-animation-and-event-runtime.md).
 
 Stateful prop presentation cannot generate coins, rewards, progression, mission
 completion, or persistent destruction directly. Those effects require typed
@@ -757,7 +812,8 @@ Pool slots and generated numeric names are never support identity.
 
 Playable-character ground support and compatibility-plane use follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md).
+[Playable avatar, character controller, and footprint
+runtime](playable-avatar-character-controller-and-footprint-runtime.md).
 
 ## Forces and impulses
 
@@ -848,7 +904,8 @@ bodies, publish effects, and persist the accepted result.
 Geometry Collections, replacement Actors, authored animation, and Niagara may
 implement the presentation through
 <!-- markdownlint-disable-next-line MD013 -->
-[Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md).
+[Transient VFX and breakable-presentation
+runtime](transient-vfx-and-breakable-presentation-runtime.md).
 None can decide that the break transaction succeeded merely because an
 animation,
 fragment sequence, or effect completed.
@@ -875,7 +932,8 @@ Application scopes, local-player views, loading barriers, frontend and world
 composition, presentation freezes, frame execution, display policy, and renderer
 handoff follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Native render-frame, view, and layer runtime](native-render-frame-view-and-layer-runtime.md).
+[Native render-frame, view, and layer
+runtime](native-render-frame-view-and-layer-runtime.md).
 A world entity cannot add itself to an ordinal render layer or drive frame
 submission.
 
@@ -900,7 +958,8 @@ and cannot provide gameplay contact evidence.
 
 Every primitive follows
 <!-- markdownlint-disable-next-line MD013 -->
-[Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md).
+[Spatial visibility, bounds, and culling
+runtime](spatial-visibility-bounds-and-culling-runtime.md).
 
 The component owns accurate bounds and render-state invalidation. Unreal owns
 per-view visibility, instance culling, occlusion, LOD, and final draw
@@ -933,10 +992,12 @@ remove a replacement entity.
 
 Durable state follows
 <!-- markdownlint-disable-next-line MD013 -->
-[Persistent world-object state runtime](persistent-world-object-state-runtime.md)
+[Persistent world-object state
+runtime](persistent-world-object-state-runtime.md)
 and mission-scoped restoration follows
 <!-- markdownlint-disable-next-line MD013 -->
-[Mission world-entity and respawn runtime](mission-world-entity-and-respawn-runtime.md).
+[Mission world-entity and respawn
+runtime](mission-world-entity-and-respawn-runtime.md).
 
 The persistence snapshot stores canonical entity and placement identities plus
 schema-owned state. It does not store Actor addresses, component names, solver

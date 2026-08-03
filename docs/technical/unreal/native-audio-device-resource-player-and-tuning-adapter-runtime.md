@@ -5,25 +5,33 @@
 
 ## Governing decisions and specifications
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Native gameplay audio, dialogue, and listener boundary](../../adr/unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native gameplay audio, dialogue, and listener boundary](../../adr/unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md)
+- [Gameplay audio source, residency, mix, and environment
+  runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
+- [Platform audio cooking and
+  streaming](platform-audio-cooking-and-streaming.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Platform audio cooking and streaming](platform-audio-cooking-and-streaming.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md)
+- [Spatial audio listener and positional-source
+  runtime](spatial-audio-listener-and-positional-source-runtime.md)
 - [Music state and transition runtime](music-state-and-transition-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Presentation playback runtime](presentation-playback-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
+- [Application lifecycle and mode
+  runtime](application-lifecycle-and-mode-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md)
+- [Native asset load request and streaming
+  runtime](native-asset-load-request-and-streaming-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Device configuration and save-slot runtime](device-configuration-and-save-slot-runtime.md)
+- [Device configuration and save-slot
+  runtime](device-configuration-and-save-slot-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Developer command and diagnostic runtime](developer-command-and-diagnostic-runtime.md)
+- [Developer command and diagnostic
+  runtime](developer-command-and-diagnostic-runtime.md)
 
 ## Purpose
 
@@ -77,17 +85,33 @@ wrapper around source-era interfaces is not sufficient justification.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Gameplay and application services | Own semantic events, mode state, settings intent, world state, and durable results. |
-| Gameplay-audio source service | Owns canonical source requests, source definitions, source leases, and terminal presentation results. |
-| Audio residency service | Owns scope bundles, retained handles, readiness, references, and release. |
-| Audio-device adapter | Observes device readiness, output changes, suspension, focus, and platform capability without replacing Unreal's renderer. |
-| Audio-parameter adapter | Applies validated component parameters, Sound Class policy, Sound Mix or modulation state, and bounded fades. |
-| Unreal Audio Mixer | Owns source voices, decoding, rendering, DSP, stream cache, effects, submixes, and hardware output. |
-| Platform audio policy | Owns target cooking, channel-layout support, quality, memory, device, and focus behavior. |
-| Settings service | Owns validated player-facing volume, output, dynamic-range, accessibility, and language preferences. |
-| Developer diagnostics | Observe immutable renderer, source, residency, parameter, and device snapshots. |
+- **Authority:** Gameplay and application services
+  - **Responsibility:** Own semantic events, mode state, settings intent, world
+    state, and durable results.
+- **Authority:** Gameplay-audio source service
+  - **Responsibility:** Owns canonical source requests, source definitions,
+    source leases, and terminal presentation results.
+- **Authority:** Audio residency service
+  - **Responsibility:** Owns scope bundles, retained handles, readiness,
+    references, and release.
+- **Authority:** Audio-device adapter
+  - **Responsibility:** Observes device readiness, output changes, suspension,
+    focus, and platform capability without replacing Unreal's renderer.
+- **Authority:** Audio-parameter adapter
+  - **Responsibility:** Applies validated component parameters, Sound Class
+    policy, Sound Mix or modulation state, and bounded fades.
+- **Authority:** Unreal Audio Mixer
+  - **Responsibility:** Owns source voices, decoding, rendering, DSP, stream
+    cache, effects, submixes, and hardware output.
+- **Authority:** Platform audio policy
+  - **Responsibility:** Owns target cooking, channel-layout support, quality,
+    memory, device, and focus behavior.
+- **Authority:** Settings service
+  - **Responsibility:** Owns validated player-facing volume, output,
+    dynamic-range, accessibility, and language preferences.
+- **Authority:** Developer diagnostics
+  - **Responsibility:** Observe immutable renderer, source, residency,
+    parameter, and device snapshots.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -334,7 +358,8 @@ swap resource objects through fixed regions.
 
 Residency follows
 <!-- markdownlint-disable-next-line MD013 -->
-[Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md).
+[Gameplay audio source, residency, mix, and environment
+runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md).
 The adapter translates a semantic residency policy into native Sound Wave
 loading
 behavior, Asset Manager retention, stream-cache priming, quality, and release.
@@ -643,10 +668,12 @@ the definition explicitly allows overlap.
 
 Collision and positional effects follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
+[Gameplay audio source, residency, mix, and environment
+runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
 and
 <!-- markdownlint-disable-next-line MD013 -->
-[Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md).
+[Spatial audio listener and positional-source
+runtime](spatial-audio-listener-and-positional-source-runtime.md).
 
 Distance, impulse, severity, surface, participant, world, and listener evidence
 is

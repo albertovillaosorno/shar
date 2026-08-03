@@ -1,7 +1,3 @@
-# File:
-#   - skill_native_identity.py
-# Path: src/unreal/editor-control/adapter-outbound/mcp/adapter_outbound/skill_native_identity.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,36 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Parsing the stable native tool identity from one generated skill.
+#   - Skill native identity outbound adapter.
 # - Must-Not:
-#   - Read files, render Markdown, merge manual fields, or invoke Unreal.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Identity-based migration when generated taxonomy paths change.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Toolset and tool identities become independently migrated surfaces.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another adapter owns the same generated identity marker contract.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Extracts one native tool identity from generated Markdown.
+#   - Skill native identity outbound adapter.
 # - Description:
-#   - Uses the generated Native identities Tool block as stable ownership.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Called before filesystem mutation by the generated skill store.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Requires exactly one non-empty Tool identity block.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
-"""Native tool identity parsing for generated Unreal MCP skills."""
+
+"""Skill native identity outbound adapter."""
 
 from __future__ import annotations
 
@@ -58,6 +47,7 @@ def extract_native_tool_identity(content: str, *, context: str) -> str:
 
     Returns:
         The complete registry-qualified native tool identity.
+
     """
     matches = tuple(_TOOL_PATTERN.finditer(content))
     if len(matches) != 1:

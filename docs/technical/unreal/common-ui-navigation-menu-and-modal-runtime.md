@@ -6,29 +6,40 @@
 ## Governing decisions and specifications
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
+- [Common UI front end and progress
+  projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
 - [UI parity boundary](../../adr/unreal/ui/ui-parity-boundary.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Minimal hexagonal native runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Minimal hexagonal native runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md)
+- [Portable save storage and
+  lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md)
+- [Frontend screen flow and settings
+  runtime](frontend-screen-flow-and-settings-runtime.md)
 - [Frontend shell and menu runtime](frontend-shell-and-menu-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [In-game HUD, pause, and transition runtime](in-game-hud-pause-and-transition-runtime.md)
+- [In-game HUD, pause, and transition
+  runtime](in-game-hud-pause-and-transition-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [HUD feedback cue and presentation-primitives runtime](hud-feedback-cue-and-presentation-primitives-runtime.md)
+- [HUD feedback cue and presentation-primitives
+  runtime](hud-feedback-cue-and-presentation-primitives-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Local split-screen minigame session UI runtime](local-split-screen-minigame-session-ui-runtime.md)
+- [Local split-screen minigame session UI
+  runtime](local-split-screen-minigame-session-ui-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Mission briefing, result, and replay UI runtime](mission-briefing-result-and-replay-ui-runtime.md)
+- [Mission briefing, result, and replay UI
+  runtime](mission-briefing-result-and-replay-ui-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Reward browser, preview, and purchase UI runtime](reward-browser-preview-and-purchase-ui-runtime.md)
+- [Reward browser, preview, and purchase UI
+  runtime](reward-browser-preview-and-purchase-ui-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Semantic input, device, and haptics runtime](semantic-input-device-and-haptics-runtime.md)
+- [Semantic input, device, and haptics
+  runtime](semantic-input-device-and-haptics-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md)
+- [Typed event and observation routing
+  runtime](typed-event-and-observation-routing-runtime.md)
 
 ## Purpose
 
@@ -72,16 +83,38 @@ registry.
 
 <!-- markdownlint-disable MD013 -->
 
-| Service | Lifetime | Authority |
-| :--- | :--- | :--- |
-| `USharUiNavigationSubsystem` | Game instance | Screen registry, navigation transactions, history, layer ownership, and accepted screen revision. |
-| `USharUiViewModelSubsystem` | Game instance | Immutable view-model construction from accepted domain snapshots. |
-| `USharUiModalSubsystem` | Game instance | Modal queue, modal ownership, prompt results, and notification policy. |
-| `USharFrontendInputSubsystem` | Local player | Semantic UI actions, current input method, focus restoration, and glyph context. |
-| `USharApplicationLifecycleSubsystem` | Game instance | Boot, frontend, loading, gameplay, demo, pause, and shutdown transitions. |
-| Save application port | Application | Logical slots, storage capability, transactions, migration, recovery, and durable results. |
-| Localization port | Application | Locale, text identity, formatted arguments, fallback, and text revision. |
-| Presentation ports | Driven adapters | Widget, animation, audio, media, and transition execution only. |
+- **Service:** `USharUiNavigationSubsystem`
+  - **Lifetime:** Game instance
+  - **Authority:** Screen registry, navigation transactions, history, layer
+    ownership, and accepted screen revision.
+- **Service:** `USharUiViewModelSubsystem`
+  - **Lifetime:** Game instance
+  - **Authority:** Immutable view-model construction from accepted domain
+    snapshots.
+- **Service:** `USharUiModalSubsystem`
+  - **Lifetime:** Game instance
+  - **Authority:** Modal queue, modal ownership, prompt results, and
+    notification policy.
+- **Service:** `USharFrontendInputSubsystem`
+  - **Lifetime:** Local player
+  - **Authority:** Semantic UI actions, current input method, focus restoration,
+    and glyph context.
+- **Service:** `USharApplicationLifecycleSubsystem`
+  - **Lifetime:** Game instance
+  - **Authority:** Boot, frontend, loading, gameplay, demo, pause, and shutdown
+    transitions.
+- **Service:** Save application port
+  - **Lifetime:** Application
+  - **Authority:** Logical slots, storage capability, transactions, migration,
+    recovery, and durable results.
+- **Service:** Localization port
+  - **Lifetime:** Application
+  - **Authority:** Locale, text identity, formatted arguments, fallback, and
+    text revision.
+- **Service:** Presentation ports
+  - **Lifetime:** Driven adapters
+  - **Authority:** Widget, animation, audio, media, and transition execution
+    only.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -136,22 +169,35 @@ validation rather than degrading into input races.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `ScreenId` | Stable canonical identity. |
-| `LayerId` | Registered destination layer. |
-| `WidgetClass` | Cooked Common UI activatable widget class. |
-| `ViewModelSchemaId` | Exact immutable snapshot schema. |
-| `ActionSetId` | Common UI actions accepted while active. |
-| `EntryPredicateId` | Application, feature, player, and domain requirements. |
-| `ExitPolicyId` | Back, complete, replace, modal-result, or blocked policy. |
-| `FocusPolicyId` | Initial focus, restoration, and no-focus behavior. |
-| `HistoryPolicyId` | Push, replace, clear, preserve, or no-history behavior. |
-| `TransitionPolicyId` | Enter, exit, interruption, reduced-motion, and timeout policy. |
-| `RequiredBundles` | Asset Manager bundles required before activation. |
-| `FailurePolicyId` | Retry, prior-screen restoration, fallback, or blocked behavior. |
-| `AccessibilityProfileId` | Narration, contrast, timing, text, and motion requirements. |
-| `FeatureOwnerId` | Base game or validated feature package. |
+- **Field:** `ScreenId`
+  - **Contract:** Stable canonical identity.
+- **Field:** `LayerId`
+  - **Contract:** Registered destination layer.
+- **Field:** `WidgetClass`
+  - **Contract:** Cooked Common UI activatable widget class.
+- **Field:** `ViewModelSchemaId`
+  - **Contract:** Exact immutable snapshot schema.
+- **Field:** `ActionSetId`
+  - **Contract:** Common UI actions accepted while active.
+- **Field:** `EntryPredicateId`
+  - **Contract:** Application, feature, player, and domain requirements.
+- **Field:** `ExitPolicyId`
+  - **Contract:** Back, complete, replace, modal-result, or blocked policy.
+- **Field:** `FocusPolicyId`
+  - **Contract:** Initial focus, restoration, and no-focus behavior.
+- **Field:** `HistoryPolicyId`
+  - **Contract:** Push, replace, clear, preserve, or no-history behavior.
+- **Field:** `TransitionPolicyId`
+  - **Contract:** Enter, exit, interruption, reduced-motion, and timeout policy.
+- **Field:** `RequiredBundles`
+  - **Contract:** Asset Manager bundles required before activation.
+- **Field:** `FailurePolicyId`
+  - **Contract:** Retry, prior-screen restoration, fallback, or blocked
+    behavior.
+- **Field:** `AccessibilityProfileId`
+  - **Contract:** Narration, contrast, timing, text, and motion requirements.
+- **Field:** `FeatureOwnerId`
+  - **Contract:** Base game or validated feature package.
 
 <!-- markdownlint-enable MD013 -->
 

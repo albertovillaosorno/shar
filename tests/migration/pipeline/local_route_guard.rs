@@ -1,7 +1,3 @@
-// File:
-//   - local_route_guard.rs
-// Path: tests/migration/pipeline/local_route_guard.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Deterministic pipeline regression coverage for tests local route guard.
+//   - Local route guard test module.
 // - Must-Not:
-//   - Depend on private local outputs or non-deterministic repository state.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Focused fixtures and deterministic assertions for the owned behavior.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when local route guard contains two independently testable
-//   - contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another pipeline module owns the same tests boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Repository-level guard for local asset route literals in public files.
+//   - Local route guard test module.
 // - Description:
-//   - Defines local route guard data and behavior for pipeline tests.
+//   - Implements the declared test module responsibility for pipeline.
 // - Usage:
-//   - Executed through cargo test for the owning crate or focused target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Fixtures remain deterministic and repository-local.
-//
-// ADRs:
-// - docs/adr/pipeline/minor-unit-taxonomy-value-case.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Repository-level guard for local asset route literals in public files.
+//! Local route guard test module.
+
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -57,60 +44,42 @@ use rsd as _;
 use rtf as _;
 use schoenwald_cli as _;
 use schoenwald_filesystem as _;
+use serde as _;
 use serde_json as _;
-use shar_json_text as _;
 use shar_sha256 as _;
 
 #[test]
 fn public_files_reject_local_asset_route_literals() -> Result<(), String> {
-    let route_literal = concat!(
-        "game",
-        "/",
-        "extracted"
-    );
+    let route_literal = concat!("game", "/", "extracted");
     let root = repository_root()?;
-    let failures = route_failures(
-        &root,
-        route_literal,
-    )?;
+    let failures = route_failures(&root, route_literal)?;
     if failures.is_empty() {
         Ok(())
     } else {
-        Err(
-            format!(
-                "local asset route literal requires exact marker and 50-word \
+        Err(format!(
+            "local asset route literal requires exact marker and 50-word \
                  English justification: {}",
-                failures.join(", ")
-            ),
-        )
+            failures.join(", ")
+        ))
     }
 }
 
 #[test]
 fn lists_untracked_nonignored_public_files() -> Result<(), String> {
     let files = untracked_repository_fixture()?;
-    if files
-        .lines()
-        .any(|line| line == "canary.md")
-    {
+    if files.lines().any(|line| line == "canary.md") {
         Ok(())
     } else {
-        Err(
-            "repository file listing omitted an untracked public file"
-                .to_owned(),
-        )
+        Err("repository file listing omitted an untracked public file"
+            .to_owned())
     }
 }
 
 #[test]
 fn detects_local_asset_route_literal_in_all_untracked_files()
 -> Result<(), String> {
-    let root = std::env::temp_dir().join(
-        format!(
-            "shar-route-guard-files-{}",
-            std::process::id()
-        ),
-    );
+    let root = std::env::temp_dir()
+        .join(format!("shar-route-guard-files-{}", std::process::id()));
     drop(std::fs::remove_dir_all(&root));
     let result = (|| {
         std::fs::create_dir_all(&root)
@@ -121,22 +90,13 @@ fn detects_local_asset_route_literal_in_all_untracked_files()
             .current_dir(&root)
             .output()
             .map_err(|error| format!("fixture git init failed: {error}"))?;
-        if !output
-            .status
-            .success()
-        {
-            return Err(
-                format!(
-                    "fixture git init returned failure: {}",
-                    String::from_utf8_lossy(&output.stderr)
-                ),
-            );
+        if !output.status.success() {
+            return Err(format!(
+                "fixture git init returned failure: {}",
+                String::from_utf8_lossy(&output.stderr)
+            ));
         }
-        let route_literal = concat!(
-            "game",
-            "/",
-            "extracted"
-        );
+        let route_literal = concat!("game", "/", "extracted");
         std::fs::write(
             root.join("canary.yml"),
             format!("path: {route_literal}\n"),
@@ -145,29 +105,16 @@ fn detects_local_asset_route_literal_in_all_untracked_files()
         let mut binary = vec![0xff_u8];
         binary.extend_from_slice(route_literal.as_bytes());
         binary.push(b'\n');
-        std::fs::write(
-            root.join("canary.bin"),
-            binary,
-        )
-        .map_err(|error| format!("binary fixture write failed: {error}"))?;
-        let failures = route_failures(
-            &root,
-            route_literal,
-        )?;
-        if failures
-            == [
-                "canary.bin:1",
-                "canary.yml:1",
-            ]
-        {
+        std::fs::write(root.join("canary.bin"), binary)
+            .map_err(|error| format!("binary fixture write failed: {error}"))?;
+        let failures = route_failures(&root, route_literal)?;
+        if failures == ["canary.bin:1", "canary.yml:1"] {
             Ok(())
         } else {
-            Err(
-                format!(
-                    "public-file route literals were not detected: \
+            Err(format!(
+                "public-file route literals were not detected: \
                      {failures:?}"
-                ),
-            )
+            ))
         }
     })();
     drop(std::fs::remove_dir_all(&root));
@@ -186,24 +133,13 @@ fn route_failures(
             continue;
         };
         let text = String::from_utf8_lossy(&bytes);
-        let lines = text
-            .lines()
-            .collect::<Vec<_>>();
-        for (index, line) in lines
-            .iter()
-            .enumerate()
-        {
+        let lines = text.lines().collect::<Vec<_>>();
+        for (index, line) in lines.iter().enumerate() {
             if line.contains(route_literal)
-                && !has_route_exception(
-                    &lines, index,
-                )
+                && !has_route_exception(&lines, index)
             {
-                failures.push(
-                    format!(
-                        "{relative}:{}",
-                        index.saturating_add(1)
-                    ),
-                );
+                failures
+                    .push(format!("{relative}:{}", index.saturating_add(1)));
             }
         }
     }
@@ -212,12 +148,8 @@ fn route_failures(
 }
 
 fn untracked_repository_fixture() -> Result<String, String> {
-    let root = std::env::temp_dir().join(
-        format!(
-            "shar-route-guard-untracked-{}",
-            std::process::id()
-        ),
-    );
+    let root = std::env::temp_dir()
+        .join(format!("shar-route-guard-untracked-{}", std::process::id()));
     drop(std::fs::remove_dir_all(&root));
     let result = (|| {
         std::fs::create_dir_all(&root)
@@ -228,22 +160,14 @@ fn untracked_repository_fixture() -> Result<String, String> {
             .current_dir(&root)
             .output()
             .map_err(|error| format!("fixture git init failed: {error}"))?;
-        if !output
-            .status
-            .success()
-        {
-            return Err(
-                format!(
-                    "fixture git init returned failure: {}",
-                    String::from_utf8_lossy(&output.stderr)
-                ),
-            );
+        if !output.status.success() {
+            return Err(format!(
+                "fixture git init returned failure: {}",
+                String::from_utf8_lossy(&output.stderr)
+            ));
         }
-        std::fs::write(
-            root.join("canary.md"),
-            "# Canary\n",
-        )
-        .map_err(|error| format!("fixture write failed: {error}"))?;
+        std::fs::write(root.join("canary.md"), "# Canary\n")
+            .map_err(|error| format!("fixture write failed: {error}"))?;
         repository_files(&root)
     })();
     drop(std::fs::remove_dir_all(&root));
@@ -260,16 +184,11 @@ fn repository_files(root: &Path) -> Result<String, String> {
         .current_dir(root)
         .output()
         .map_err(|error| format!("repository listing failed: {error}"))?;
-    if !output
-        .status
-        .success()
-    {
-        return Err(
-            format!(
-                "git ls-files failed: {}",
-                String::from_utf8_lossy(&output.stderr)
-            ),
-        );
+    if !output.status.success() {
+        return Err(format!(
+            "git ls-files failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
     }
     String::from_utf8(output.stdout)
         .map_err(|error| format!("repository file list was not UTF-8: {error}"))
@@ -280,15 +199,12 @@ fn repository_files(root: &Path) -> Result<String, String> {
 fn repository_root() -> Result<PathBuf, String> {
     let mut current = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     loop {
-        if current
-            .join(".git")
-            .exists()
-        {
+        if current.join(".git").exists() {
             return Ok(current);
         }
         if !current.pop() {
             return Err(
-                "could not find repository root from Cargo manifest".to_owned(),
+                "could not find repository root from Cargo manifest".to_owned()
             );
         }
     }
@@ -296,22 +212,14 @@ fn repository_root() -> Result<PathBuf, String> {
 
 /// Accept only the exact marker plus a long nearby explanation because route
 /// exceptions should be rare, intentional, and self-reviewing in code review.
-fn has_route_exception(
-    lines: &[&str],
-    index: usize,
-) -> bool {
+fn has_route_exception(lines: &[&str], index: usize) -> bool {
     let start = index.saturating_sub(6);
     let Some(window) = lines.get(start..=index) else {
         return false;
     };
     let Some(marker_index) = window
         .iter()
-        .rposition(
-            |line| {
-                // cspell:disable-next-line -- shcoenwald
-                line.contains("except shcoenwald")
-            },
-        )
+        .rposition(|line| line.contains("except shcoenwald"))
     else {
         return false;
     };
@@ -322,11 +230,9 @@ fn has_route_exception(
     };
     let explanation = explanation_lines.join(" ");
     explanation
-        .split(
-            |character: char| {
-                !character.is_ascii_alphabetic() && character != '\''
-            },
-        )
+        .split(|character: char| {
+            !character.is_ascii_alphabetic() && character != '\''
+        })
         .filter(|word| !word.is_empty())
         .count()
         >= 50

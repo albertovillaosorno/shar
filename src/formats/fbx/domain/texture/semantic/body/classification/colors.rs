@@ -1,7 +1,3 @@
-// File:
-//   - colors.rs
-// Path: src/formats/fbx/domain/texture/semantic/body/classification/colors.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,38 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Exact source-color classification through unique bone-family votes,
-//   - reviewed overrides, and a bounded exposed-color hair threshold.
+//   - Colors domain module.
 // - Must-Not:
-//   - Sample images, inspect triangles, or infer an answer from tied evidence.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Deterministic minimum-region coverage checks.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Pattern, alpha, or accessory classifications require new evidence types.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - The parent classification transaction owns the same color-voting logic.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Strict source-color semantic voting.
+//   - Colors domain module.
 // - Description:
-//   - Converts exact flat-color evidence into stable parent body regions.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Called after all selected body vertices have been sampled.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Reviewed overrides are explicit and all automatic ties fail closed.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Strict source-color semantic voting.
+//! Colors domain module.
+
 use std::collections::BTreeMap;
 
 use super::super::super::color::Rgba8;
@@ -57,27 +45,17 @@ pub(super) fn classify_colors(
 ) -> Result<Vec<SourceColorAssignment>, SemanticTextureError> {
     let brightest_exposed = counts
         .iter()
-        .filter(
-            |(color, families)| {
-                recipe
-                    .color_overrides
-                    .get(color)
-                    == Some(&BodyRegion::Skin)
-                    || unique_winner(families) == Some(BoneFamily::Exposed)
-            },
-        )
+        .filter(|(color, families)| {
+            recipe.color_overrides.get(color) == Some(&BodyRegion::Skin)
+                || unique_winner(families) == Some(BoneFamily::Exposed)
+        })
         .map(|(color, _families)| color.relative_luminance())
         .max_by(f32::total_cmp)
-        .unwrap_or(0.0);
+        .unwrap_or(0.);
     let mut assignments = Vec::with_capacity(counts.len());
     for (color, family_counts) in counts {
-        let (region, overridden) = match recipe
-            .color_overrides
-            .get(color)
-        {
-            Some(region) => (
-                *region, true,
-            ),
+        let (region, overridden) = match recipe.color_overrides.get(color) {
+            Some(region) => (*region, true),
             None => (
                 automatic_region(
                     *color,
@@ -88,14 +66,12 @@ pub(super) fn classify_colors(
                 false,
             ),
         };
-        assignments.push(
-            SourceColorAssignment {
-                color: *color,
-                region,
-                family_counts: family_counts.clone(),
-                overridden,
-            },
-        );
+        assignments.push(SourceColorAssignment {
+            color: *color,
+            region,
+            family_counts: family_counts.clone(),
+            overridden,
+        });
     }
     Ok(assignments)
 }
@@ -118,13 +94,13 @@ fn automatic_region(
             } else {
                 Ok(BodyRegion::Skin)
             }
-        }
+        },
         BoneFamily::Torso => Ok(BodyRegion::Torso),
         BoneFamily::LowerBody => Ok(BodyRegion::Legs),
         BoneFamily::Foot => Ok(BodyRegion::Shoes),
         BoneFamily::Unsupported => {
             Err(SemanticTextureError::AmbiguousColorEvidence(color))
-        }
+        },
     }
 }
 
@@ -132,32 +108,13 @@ fn automatic_region(
 fn unique_winner(counts: &BTreeMap<BoneFamily, u32>) -> Option<BoneFamily> {
     let mut ordered = counts
         .iter()
-        .map(
-            |(family, count)| {
-                (
-                    *family, *count,
-                )
-            },
-        )
+        .map(|(family, count)| (*family, *count))
         .collect::<Vec<_>>();
-    ordered.sort_by(
-        |left, right| {
-            right
-                .1
-                .cmp(&left.1)
-                .then_with(
-                    || {
-                        left.0
-                            .cmp(&right.0)
-                    },
-                )
-        },
-    );
+    ordered.sort_by(|left, right| {
+        right.1.cmp(&left.1).then_with(|| left.0.cmp(&right.0))
+    });
     let first = ordered.first()?;
-    if ordered
-        .get(1)
-        .is_some_and(|second| second.1 == first.1)
-    {
+    if ordered.get(1).is_some_and(|second| second.1 == first.1) {
         return None;
     }
     Some(first.0)

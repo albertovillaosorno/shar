@@ -1,12 +1,34 @@
-// File: SharInteractionTransactionTests.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharInteraction/Private/Tests/SharInteractionTransactionTests.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: transient reservation, phase, compensation, and unload tests only.
-// ADR: docs/adr/unreal/runtime/contextual-interaction-query-and-transaction.md
-// LARGE-FILE owner=SharInteraction; reason=four cohesive transaction scenarios;
-// split=separate compensation tests if typed executors expand;
-// validation=validate.sh SharInteraction plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar interaction transaction tests composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar interaction transaction tests composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar interaction transaction tests composition module.
 
 #if WITH_DEV_AUTOMATION_TESTS
 

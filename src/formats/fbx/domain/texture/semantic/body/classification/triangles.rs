@@ -1,7 +1,3 @@
-// File:
-//   - triangles.rs
-// Path: src/formats/fbx/domain/texture/semantic/body/classification/triangles.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,37 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Triangle chart ownership and patterned-detail acceptance.
+//   - Triangles domain module.
 // - Must-Not:
-//   - Duplicate vertices, alter topology, or guess an unanchored pattern.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Attaching one isolated mixed triangle to a uniform shared anchor chart.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Patterned components require more than one shared anchor contract.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Primitive-group classification owns chart raster policy directly.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Flat and anchored-pattern triangle classification boundary.
+//   - Triangles domain module.
 // - Description:
-//   - Preserves isolated source patterns without changing vertex ownership.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Called after every selected vertex has a color and semantic region.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Mixed triangles fail unless exactly one safe anchor proves ownership.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Flat and anchored-pattern triangle classification boundary.
+//! Triangles domain module.
+
 #![expect(
     clippy::indexing_slicing,
     reason = "Triangle indices are validated against mesh topology before \
@@ -66,13 +55,11 @@ pub(super) fn classify(
         .triangles
         .iter()
         .enumerate()
-        .map(
-            |(triangle, indices)| {
-                classify_triangle(
-                    address, triangle, *indices, group, colors, regions, &uses,
-                )
-            },
-        )
+        .map(|(triangle, indices)| {
+            classify_triangle(
+                address, triangle, *indices, group, colors, regions, &uses,
+            )
+        })
         .collect()
 }
 
@@ -86,43 +73,25 @@ fn classify_triangle(
     regions: &[BodyRegion],
     uses: &[u32],
 ) -> Result<TriangleClassification, SemanticTextureError> {
-    let vertices = [
-        index(indices[0])?,
-        index(indices[1])?,
-        index(indices[2])?,
-    ];
-    if let Some((region, color)) = uniform_key(
-        vertices, colors, regions,
-    )? {
-        return Ok(
-            TriangleClassification {
-                color,
-                region,
-                sample_source: false,
-            },
-        );
+    let vertices = [index(indices[0])?, index(indices[1])?, index(indices[2])?];
+    if let Some((region, color)) = uniform_key(vertices, colors, regions)? {
+        return Ok(TriangleClassification {
+            color,
+            region,
+            sample_source: false,
+        });
     }
     let Some(anchor) = patterned_anchor(
         triangle, indices, vertices, group, colors, regions, uses,
     )?
     else {
-        return Err(
-            mixed_error(
-                address, triangle, vertices, colors,
-            )?,
-        );
+        return Err(mixed_error(address, triangle, vertices, colors)?);
     };
-    Ok(
-        TriangleClassification {
-            color: value(
-                colors, anchor,
-            )?,
-            region: value(
-                regions, anchor,
-            )?,
-            sample_source: true,
-        },
-    )
+    Ok(TriangleClassification {
+        color: value(colors, anchor)?,
+        region: value(regions, anchor)?,
+        sample_source: true,
+    })
 }
 
 /// Resolve the only safe shared anchor for one isolated patterned triangle.
@@ -138,14 +107,7 @@ fn patterned_anchor(
     let shared = vertices
         .iter()
         .copied()
-        .filter(
-            |vertex| {
-                value(
-                    uses, *vertex,
-                )
-                .is_ok_and(|count| count > 1)
-            },
-        )
+        .filter(|vertex| value(uses, *vertex).is_ok_and(|count| count > 1))
         .collect::<Vec<_>>();
     if shared.len() != 1 {
         return Ok(None);
@@ -155,33 +117,19 @@ fn patterned_anchor(
         .iter()
         .copied()
         .filter(|vertex| *vertex != anchor)
-        .any(
-            |vertex| {
-                value(
-                    uses, vertex,
-                ) != Ok(1)
-            },
-        )
+        .any(|vertex| value(uses, vertex) != Ok(1))
     {
         return Ok(None);
     }
-    let anchor_color = value(
-        colors, anchor,
-    )?;
-    let anchor_region = value(
-        regions, anchor,
-    )?;
+    let anchor_color = value(colors, anchor)?;
+    let anchor_region = value(regions, anchor)?;
     let anchor_raw = indices
         .iter()
         .copied()
         .find(|candidate| index(*candidate) == Ok(anchor))
         .ok_or(SemanticTextureError::NumericOverflow)?;
     let mut neighbor_count = 0_u32;
-    for (neighbor, neighbor_indices) in group
-        .triangles
-        .iter()
-        .enumerate()
-    {
+    for (neighbor, neighbor_indices) in group.triangles.iter().enumerate() {
         if neighbor == triangle || !neighbor_indices.contains(&anchor_raw) {
             continue;
         }
@@ -190,11 +138,8 @@ fn patterned_anchor(
             index(neighbor_indices[1])?,
             index(neighbor_indices[2])?,
         ];
-        let Some((region, color)) = uniform_key(
-            neighbor_vertices,
-            colors,
-            regions,
-        )?
+        let Some((region, color)) =
+            uniform_key(neighbor_vertices, colors, regions)?
         else {
             return Ok(None);
         };
@@ -213,51 +158,24 @@ fn uniform_key(
     vertices: [usize; 3],
     colors: &[Rgba8],
     regions: &[BodyRegion],
-) -> Result<
-    Option<(
-        BodyRegion,
-        Rgba8,
-    )>,
-    SemanticTextureError,
-> {
-    let color = value(
-        colors,
-        vertices[0],
-    )?;
-    let region = value(
-        regions,
-        vertices[0],
-    )?;
+) -> Result<Option<(BodyRegion, Rgba8)>, SemanticTextureError> {
+    let color = value(colors, vertices[0])?;
+    let region = value(regions, vertices[0])?;
     for vertex in &vertices[1..] {
-        if value(
-            colors, *vertex,
-        )? != color
-            || value(
-                regions, *vertex,
-            )? != region
+        if value(colors, *vertex)? != color
+            || value(regions, *vertex)? != region
         {
             return Ok(None);
         }
     }
-    Ok(
-        Some(
-            (
-                region, color,
-            ),
-        ),
-    )
+    Ok(Some((region, color)))
 }
 
 /// Count triangle ownership for every source vertex.
 fn vertex_use_counts(
-    group: &PrimitiveGroup
+    group: &PrimitiveGroup,
 ) -> Result<Vec<u32>, SemanticTextureError> {
-    let mut uses = vec![
-        0_u32;
-        group
-            .positions
-            .len()
-    ];
+    let mut uses = vec![0_u32; group.positions.len()];
     for indices in &group.triangles {
         for raw in indices {
             let vertex = index(*raw)?;
@@ -279,28 +197,16 @@ fn mixed_error(
     vertices: [usize; 3],
     colors: &[Rgba8],
 ) -> Result<SemanticTextureError, SemanticTextureError> {
-    let first = value(
-        colors,
-        vertices[0],
-    )?;
+    let first = value(colors, vertices[0])?;
     if vertices[1..]
         .iter()
         .copied()
-        .any(
-            |vertex| {
-                value(
-                    colors, vertex,
-                )
-                .is_ok_and(|color| color != first)
-            },
-        )
+        .any(|vertex| value(colors, vertex).is_ok_and(|color| color != first))
     {
-        return Ok(
-            SemanticTextureError::MixedSourceColorTriangle {
-                group: address,
-                triangle,
-            },
-        );
+        return Ok(SemanticTextureError::MixedSourceColorTriangle {
+            group: address,
+            triangle,
+        });
     }
     Ok(
         SemanticTextureError::MixedSemanticTriangle {

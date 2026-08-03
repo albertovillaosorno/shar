@@ -1,7 +1,3 @@
-// File:
-//   - ports.rs
-// Path: src/unreal/asset-conversion/port-outbound/mod.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,38 +6,28 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Hexagonal ports for persisted conversion artifacts.
+//   - Port outbound outbound port.
 // - Must-Not:
-//   - Define MCP, editor, process, network, or runtime-gameplay interfaces.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Storage contracts for deterministic conversion plans and reports.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Binary and text conversion artifacts require independent storage ports.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another port owns the same persisted conversion artifact contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Unreal conversion ports facade.
+//   - Port outbound outbound port.
 // - Description:
-//   - Exposes storage boundaries used by pipeline-owned adapters.
+//   - Implements the declared responsibility for asset conversion.
 // - Usage:
-//   - Implemented outside this crate by pipeline composition roots.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No storage adapter is selected implicitly.
-//
-// ADRs:
-// - docs/adr/unreal/architecture.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Storage ports for deterministic Unreal conversion artifacts.
-//!
-//! Pipeline composition roots provide the concrete storage adapters.
-/// Conversion artifact storage boundary.
+//! Port outbound outbound port.
+
 pub mod artifact_store;

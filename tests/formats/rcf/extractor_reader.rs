@@ -1,7 +1,3 @@
-// File:
-//   - extractor_reader.rs
-// Path: tests/formats/rcf/extractor_reader.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,41 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Caller-visible extractor reader-lifetime regressions.
+//   - Extractor reader test module.
 // - Must-Not:
-//   - Read private assets or depend on filesystem adapters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic archive readers, sources, sinks, and public extraction calls.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another extraction orchestration concern needs independent fixtures.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Reader lifetime no longer needs a distinct integration boundary.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects one-reader RCF extraction.
+//   - Extractor reader test module.
 // - Description:
-//   - Verifies parsing and payload reads share one opened source snapshot.
+//   - Implements the declared test module responsibility for rcf.
 // - Usage:
-//   - Run through the RCF crate integration test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No local files, generated assets, or external processes are required.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - true
-//   - Reason: Reader-lifetime regressions and their synthetic archive boundary
-//   - remain cohesive while validating one opened extraction snapshot.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Caller-visible regressions for extractor reader lifetime.
-//!
-//! A synthetic source records opens while serving one lawful archive snapshot.
+//! Extractor reader test module.
 
 use std::cell::Cell;
 use std::path::PathBuf;
@@ -61,48 +45,28 @@ const MAGIC: &[u8] = b"RADCORE CEMENT LIBRARY";
 
 #[test]
 fn extraction_uses_one_reader_snapshot() {
-    let source = CountingSource {
-        open_count: Cell::new(0),
-    };
+    let source = CountingSource { open_count: Cell::new(0) };
     let mut sink = RecordingSink::default();
     let mut observer = NoopObserver;
 
-    let result = Extractor::extract(
-        &source,
-        &mut sink,
-        &mut observer,
-    );
+    let result = Extractor::extract(&source, &mut sink, &mut observer);
 
-    assert!(
-        result.is_ok(),
-        "the synthetic archive must extract"
-    );
+    assert!(result.is_ok(), "the synthetic archive must extract");
     assert_eq!(
-        source
-            .open_count
-            .get(),
+        source.open_count.get(),
         1,
         "parsing and payload reads must share one source snapshot"
     );
-    assert_eq!(
-        sink.payload,
-        vec![7]
-    );
+    assert_eq!(sink.payload, vec![7]);
 }
 
 #[test]
 fn extraction_rejects_short_payload_reads() {
-    let source = PayloadSource {
-        payload: Vec::new(),
-    };
+    let source = PayloadSource { payload: Vec::new() };
     let mut sink = RecordingSink::default();
     let mut observer = NoopObserver;
 
-    let result = Extractor::extract(
-        &source,
-        &mut sink,
-        &mut observer,
-    );
+    let result = Extractor::extract(&source, &mut sink, &mut observer);
 
     assert!(
         matches!(
@@ -113,27 +77,18 @@ fn extraction_rejects_short_payload_reads() {
         "short payload reads must fail before output"
     );
     assert!(
-        sink.payload
-            .is_empty(),
+        sink.payload.is_empty(),
         "short payload reads must not reach the sink"
     );
 }
 
 #[test]
 fn extraction_rejects_oversized_payload_reads() {
-    let source = PayloadSource {
-        payload: vec![
-            7, 8,
-        ],
-    };
+    let source = PayloadSource { payload: vec![7, 8] };
     let mut sink = RecordingSink::default();
     let mut observer = NoopObserver;
 
-    let result = Extractor::extract(
-        &source,
-        &mut sink,
-        &mut observer,
-    );
+    let result = Extractor::extract(&source, &mut sink, &mut observer);
 
     assert!(
         matches!(
@@ -144,8 +99,7 @@ fn extraction_rejects_oversized_payload_reads() {
         "oversized payload reads must fail before output"
     );
     assert!(
-        sink.payload
-            .is_empty(),
+        sink.payload.is_empty(),
         "oversized payload reads must not reach the sink"
     );
 }
@@ -156,17 +110,11 @@ struct PayloadSource {
 
 impl ArchiveSource for PayloadSource {
     fn open_reader(
-        &self
+        &self,
     ) -> Result<Box<dyn ArchiveByteReader + '_>, ArchiveError> {
-        Ok(
-            Box::new(
-                SyntheticReader {
-                    payload: self
-                        .payload
-                        .clone(),
-                },
-            ),
-        )
+        Ok(Box::new(SyntheticReader {
+            payload: self.payload.clone(),
+        }))
     }
 
     fn archive_stem(&self) -> Result<String, ArchiveError> {
@@ -180,21 +128,10 @@ struct CountingSource {
 
 impl ArchiveSource for CountingSource {
     fn open_reader(
-        &self
+        &self,
     ) -> Result<Box<dyn ArchiveByteReader + '_>, ArchiveError> {
-        self.open_count
-            .set(
-                self.open_count
-                    .get()
-                    .saturating_add(1),
-            );
-        Ok(
-            Box::new(
-                SyntheticReader {
-                    payload: vec![7],
-                },
-            ),
-        )
+        self.open_count.set(self.open_count.get().saturating_add(1));
+        Ok(Box::new(SyntheticReader { payload: vec![7] }))
     }
 
     fn archive_stem(&self) -> Result<String, ArchiveError> {
@@ -216,80 +153,31 @@ impl ArchiveByteReader for SyntheticReader {
         offset: u64,
         length: u64,
     ) -> Result<Vec<u8>, ArchiveError> {
-        match (
-            offset, length,
-        ) {
-            (0, 48) => catalog_range(
-                0, 48,
-            ),
-            (0x800, 16) => catalog_range(
-                0x800, 16,
-            ),
-            (0x810, 12) => Ok(
-                words(
-                    &[
-                        97, 0x1000, 1,
-                    ],
-                ),
-            ),
+        match (offset, length) {
+            (0, 48) => catalog_range(0, 48),
+            (0x800, 16) => catalog_range(0x800, 16),
+            (0x810, 12) => Ok(words(&[97, 0x1000, 1])),
             (0x81c, 4) => Ok(words(&[1])),
             (0x824, 4) => Ok(words(&[2])),
-            (0x828, 2) => Ok(
-                vec![
-                    b'a', 0,
-                ],
-            ),
+            (0x828, 2) => Ok(vec![b'a', 0]),
             (0x82a, 4) => Ok(words(&[0])),
-            (0x1000, 1) => Ok(
-                self.payload
-                    .clone(),
-            ),
-            _ => Err(
-                ArchiveError::invalid_archive(
-                    format!("unexpected synthetic range: {offset:#x}+{length}"),
-                ),
-            ),
+            (0x1000, 1) => Ok(self.payload.clone()),
+            _ => Err(ArchiveError::invalid_archive(format!(
+                "unexpected synthetic range: {offset:#x}+{length}"
+            ))),
         }
     }
 }
 
 fn catalog_prefix() -> Result<Vec<u8>, ArchiveError> {
     let mut bytes = vec![0_u8; CATALOG_LENGTH];
-    copy_at(
-        &mut bytes, 0, MAGIC,
-    )?;
-    copy_at(
-        &mut bytes,
-        32,
-        &[
-            1, 2, 0, 1,
-        ],
-    )?;
-    copy_at(
-        &mut bytes,
-        36,
-        &0x800_u32.to_le_bytes(),
-    )?;
-    copy_at(
-        &mut bytes,
-        44,
-        &0x800_u32.to_le_bytes(),
-    )?;
-    copy_at(
-        &mut bytes,
-        0x800,
-        &1_u32.to_le_bytes(),
-    )?;
-    copy_at(
-        &mut bytes,
-        0x804,
-        &0x81c_u32.to_le_bytes(),
-    )?;
-    copy_at(
-        &mut bytes,
-        0x808,
-        &0x1000_u32.to_le_bytes(),
-    )?;
+    copy_at(&mut bytes, 0, MAGIC)?;
+    copy_at(&mut bytes, 32, &[1, 2, 0, 1])?;
+    copy_at(&mut bytes, 36, &0x800_u32.to_le_bytes())?;
+    copy_at(&mut bytes, 44, &0x800_u32.to_le_bytes())?;
+    copy_at(&mut bytes, 0x800, &1_u32.to_le_bytes())?;
+    copy_at(&mut bytes, 0x804, &0x81c_u32.to_le_bytes())?;
+    copy_at(&mut bytes, 0x808, &0x1000_u32.to_le_bytes())?;
     Ok(bytes)
 }
 
@@ -298,16 +186,12 @@ fn catalog_range(
     length: usize,
 ) -> Result<Vec<u8>, ArchiveError> {
     let bytes = catalog_prefix()?;
-    let end = offset
-        .checked_add(length)
-        .ok_or_else(
-            || ArchiveError::invalid_archive("fixture range overflow"),
-        )?;
-    let range = bytes
-        .get(offset..end)
-        .ok_or_else(
-            || ArchiveError::invalid_archive("fixture range is invalid"),
-        )?;
+    let end = offset.checked_add(length).ok_or_else(|| {
+        ArchiveError::invalid_archive("fixture range overflow")
+    })?;
+    let range = bytes.get(offset..end).ok_or_else(|| {
+        ArchiveError::invalid_archive("fixture range is invalid")
+    })?;
     Ok(range.to_vec())
 }
 
@@ -323,16 +207,12 @@ fn copy_at(
     offset: usize,
     value: &[u8],
 ) -> Result<(), ArchiveError> {
-    let end = offset
-        .checked_add(value.len())
-        .ok_or_else(
-            || ArchiveError::invalid_archive("fixture range overflow"),
-        )?;
-    let target = bytes
-        .get_mut(offset..end)
-        .ok_or_else(
-            || ArchiveError::invalid_archive("fixture range is invalid"),
-        )?;
+    let end = offset.checked_add(value.len()).ok_or_else(|| {
+        ArchiveError::invalid_archive("fixture range overflow")
+    })?;
+    let target = bytes.get_mut(offset..end).ok_or_else(|| {
+        ArchiveError::invalid_archive("fixture range is invalid")
+    })?;
     target.copy_from_slice(value);
     Ok(())
 }

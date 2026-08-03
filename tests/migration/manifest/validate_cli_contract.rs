@@ -1,7 +1,3 @@
-// File:
-//   - validate_cli_contract.rs
-// Path: tests/migration/manifest/validate_cli_contract.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Canonical input and argument regressions for validate-game.
+//   - Validate cli contract test module.
 // - Must-Not:
-//   - Read licensed inputs or repository-local generated trees.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic temporary manifests and compiled command execution.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when fixture setup exceeds the focused command-contract boundary.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test owns the same canonical validate-game command contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects canonical command and manifest input validation.
+//   - Validate cli contract test module.
 // - Description:
-//   - Executes validate-game against isolated synthetic directory trees.
+//   - Implements the declared test module responsibility for manifest.
 // - Usage:
-//   - Executed through cargo test for the game-manifest crate.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Temporary fixtures are removed after each command invocation.
-//
-// ADRs:
-// - docs/adr/pipeline/game-manifest-ledger.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Canonical validate-game command contract regression coverage.
-//!
-//! Synthetic manifests prove strict command behavior without reading operator
-//! inputs or repository-local output trees.
+//! Validate cli contract test module.
 
 use std::fs;
 use std::io::{self, ErrorKind};
@@ -61,27 +46,19 @@ fn run_validator(
     extra_argument: Option<&str>,
     empty_argument: bool,
 ) -> io::Result<Output> {
-    let sequence = NEXT_FIXTURE.fetch_add(
-        1,
-        Ordering::Relaxed,
-    );
-    let root = std::env::temp_dir().join(
-        format!(
-            "game-manifest-contract-{}-{sequence}",
-            std::process::id()
-        ),
-    );
+    let sequence = NEXT_FIXTURE.fetch_add(1, Ordering::Relaxed);
+    let root = std::env::temp_dir().join(format!(
+        "game-manifest-contract-{}-{sequence}",
+        std::process::id()
+    ));
     match fs::remove_dir_all(&root) {
-        Ok(()) => {}
-        Err(error) if error.kind() == ErrorKind::NotFound => {}
+        Ok(()) => {},
+        Err(error) if error.kind() == ErrorKind::NotFound => {},
         Err(error) => return Err(error),
     }
     fs::create_dir_all(&root)?;
     let result = (|| {
-        fs::write(
-            root.join(MANIFEST_FILE_NAME),
-            manifest,
-        )?;
+        fs::write(root.join(MANIFEST_FILE_NAME), manifest)?;
         let mut command = Command::new(env!("CARGO_BIN_EXE_validate-game"));
         if empty_argument {
             let _current_dir = command.current_dir(&root);
@@ -99,68 +76,45 @@ fn run_validator(
 }
 
 fn validate_manifest(manifest: &str) -> io::Result<Output> {
-    run_validator(
-        manifest, None, false,
-    )
+    run_validator(manifest, None, false)
 }
 
 #[test]
 fn validator_rejects_missing_final_newline() {
     let row =
         "{\"dir\":\"\",\"ext\":\"lmlm\",\"min\":0,\"kind\":\"language_mod\"}";
-    let manifest = format!(
-        "{}\n{row}",
-        kind_taxonomy_jsonl()
-    );
+    let manifest = format!("{}\n{row}", kind_taxonomy_jsonl());
     let result = validate_manifest(&manifest);
     assert!(result.is_ok());
     let Some(output) = result.ok() else {
         return;
     };
-    assert!(
-        !output
-            .status
-            .success()
-    );
+    assert!(!output.status.success());
 }
 
 #[test]
 fn validator_rejects_mismatched_kind() {
     let row = "{\"dir\":\"\",\"ext\":\"lmlm\",\"min\":0,\"kind\":\"audio\"}";
-    let manifest = format!(
-        "{}\n{row}\n",
-        kind_taxonomy_jsonl()
-    );
+    let manifest = format!("{}\n{row}\n", kind_taxonomy_jsonl());
     let result = validate_manifest(&manifest);
     assert!(result.is_ok());
     let Some(output) = result.ok() else {
         return;
     };
-    assert!(
-        !output
-            .status
-            .success()
-    );
+    assert!(!output.status.success());
 }
 
 #[test]
 fn validator_rejects_error_classification_before_counting() {
     let row =
         "{\"dir\":\"aa\",\"ext\":\"mystery\",\"min\":1,\"kind\":\"error\"}";
-    let manifest = format!(
-        "{}\n{row}\n",
-        kind_taxonomy_jsonl()
-    );
+    let manifest = format!("{}\n{row}\n", kind_taxonomy_jsonl());
     let result = validate_manifest(&manifest);
     assert!(result.is_ok());
     let Some(output) = result.ok() else {
         return;
     };
-    assert!(
-        !output
-            .status
-            .success()
-    );
+    assert!(!output.status.success());
     assert!(
         String::from_utf8_lossy(&output.stderr)
             .contains("unclassified coordinate")
@@ -171,42 +125,24 @@ fn validator_rejects_error_classification_before_counting() {
 fn validator_rejects_extra_arguments() {
     let row =
         "{\"dir\":\"\",\"ext\":\"lmlm\",\"min\":0,\"kind\":\"language_mod\"}";
-    let manifest = format!(
-        "{}\n{row}\n",
-        kind_taxonomy_jsonl()
-    );
-    let result = run_validator(
-        &manifest,
-        Some("unexpected"),
-        false,
-    );
+    let manifest = format!("{}\n{row}\n", kind_taxonomy_jsonl());
+    let result = run_validator(&manifest, Some("unexpected"), false);
     assert!(result.is_ok());
     let Some(output) = result.ok() else {
         return;
     };
-    assert!(
-        !output
-            .status
-            .success()
-    );
+    assert!(!output.status.success());
 }
 
 #[test]
 fn validator_rejects_crlf_line_endings() {
     let row =
         "{\"dir\":\"\",\"ext\":\"lmlm\",\"min\":0,\"kind\":\"language_mod\"}";
-    let manifest = format!(
-        "{}\r\n{row}\r\n",
-        kind_taxonomy_jsonl()
-    );
+    let manifest = format!("{}\r\n{row}\r\n", kind_taxonomy_jsonl());
     let result = validate_manifest(&manifest);
     assert!(result.is_ok());
     let Some(output) = result.ok() else {
         return;
     };
-    assert!(
-        !output
-            .status
-            .success()
-    );
+    assert!(!output.status.success());
 }

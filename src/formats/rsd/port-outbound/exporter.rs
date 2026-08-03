@@ -1,7 +1,3 @@
-// File:
-//   - exporter.rs
-// Path: src/formats/rsd/port-outbound/exporter.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Outbound batch RSD export contract.
+//   - Exporter outbound port.
 // - Must-Not:
-//   - Choose roots, print diagnostics, or prescribe filesystem mechanics.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Return deterministic export evidence from caller-supplied paths.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when discovery, conversion, and publication need separate ports.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another port owns the complete batch-export boundary.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Port for exporting RSD roots.
+//   - Exporter outbound port.
 // - Description:
-//   - Isolates application orchestration from concrete storage transactions.
+//   - Implements the declared outbound port responsibility for rsd.
 // - Usage:
-//   - Implemented by driven adapters and invoked by application commands.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No source or output paths are inferred.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Outbound port for deterministic RSD batch export.
-//!
-//! The application depends on this contract while traversal and transactional
-//! writes remain replaceable adapter concerns.
+//! Exporter outbound port.
+
 use std::path::{Path, PathBuf};
 
 use crate::domain::{ExportReport, RsdError};

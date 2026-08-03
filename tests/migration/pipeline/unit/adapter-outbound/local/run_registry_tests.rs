@@ -1,7 +1,3 @@
-// File:
-//   - run_registry_tests.rs
-// Path: tests/migration/pipeline/unit/adapter-outbound/local/run_registry_tests.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,31 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Deterministic cooperative run-registry regression coverage.
+//   - Run registry tests test module.
 // - Must-Not:
-//   - Depend on repository runtime state, sleep, or launch external processes.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Use isolated temporary registries and serialized in-process controls.
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Active-run lease, cancellation, ETA, and cleanup tests.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - true
-//   - Reason: one serialized fixture protects the complete lease lifecycle.
-//   - Split: separate state-codec tests if the JSON schema gains versions.
-//   - Validation: canonical pipeline test and strict Clippy gates.
-//   - Review: required when concurrency or stale cleanup semantics change.
+//   - Run registry tests test module.
+// - Description:
+//   - Implements the declared test module responsibility for pipeline.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression tests for the cooperative pipeline run registry.
+//! Run registry tests test module.
 
 use std::fs;
 use std::path::PathBuf;
@@ -62,29 +56,22 @@ struct TestRegistry {
 impl TestRegistry {
     /// Construct one unique empty registry.
     fn new(label: &str) -> Result<Self, String> {
-        let nonce = TEST_NONCE.fetch_add(
-            1,
-            Ordering::Relaxed,
-        );
-        let root = std::env::temp_dir().join(
-            format!(
-                "pipeline-run-registry-{label}-{}-{nonce}",
-                std::process::id()
-            ),
-        );
+        let nonce = TEST_NONCE.fetch_add(1, Ordering::Relaxed);
+        let root = std::env::temp_dir().join(format!(
+            "pipeline-run-registry-{label}-{}-{nonce}",
+            std::process::id()
+        ));
         match fs::remove_dir_all(&root) {
-            Ok(()) => {}
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Ok(()) => {},
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {},
             Err(error) => {
                 return Err(format!("test registry cleanup failed: {error}"));
-            }
-        }
-        Ok(
-            Self {
-                registry: RunRegistry::from_root(root.clone()),
-                root,
             },
-        )
+        }
+        Ok(Self {
+            registry: RunRegistry::from_root(root.clone()),
+            root,
+        })
     }
 }
 
@@ -113,19 +100,9 @@ fn exclusive_run_blocks_another_default_start_and_lists_metadata()
             Some(String::from("world-a")),
             RunMode::Exclusive,
         )
-        .map_err(
-            |error| {
-                error
-                    .message()
-                    .to_owned()
-            },
-        )?;
-    let first_id = first
-        .run_id()
-        .to_owned();
-    let lines = fixture
-        .registry
-        .active_lines()?;
+        .map_err(|error| error.message().to_owned())?;
+    let first_id = first.run_id().to_owned();
+    let lines = fixture.registry.active_lines()?;
     let Some(line) = lines.first() else {
         return Err(String::from("active exclusive run was not listed"));
     };
@@ -142,31 +119,20 @@ fn exclusive_run_blocks_another_default_start_and_lists_metadata()
             return Err(format!("active line lacks {expected:?}: {line}"));
         }
     }
-    let blocked = fixture
-        .registry
-        .start(
-            "fbx-export-vehicles",
-            None,
-            RunMode::Exclusive,
-        );
+    let blocked =
+        fixture
+            .registry
+            .start("fbx-export-vehicles", None, RunMode::Exclusive);
     let Err(error) = blocked else {
         return Err(String::from("second exclusive run was not blocked"));
     };
-    if error
-        .active_lines()
-        .len()
-        != 1
-    {
-        return Err(
-            String::from("conflict did not preserve active-run evidence"),
-        );
+    if error.active_lines().len() != 1 {
+        return Err(String::from(
+            "conflict did not preserve active-run evidence",
+        ));
     }
     first.finish()?;
-    if !fixture
-        .registry
-        .active_lines()?
-        .is_empty()
-    {
+    if !fixture.registry.active_lines()?.is_empty() {
         return Err(String::from("finished run remained active"));
     }
     Ok(())
@@ -186,10 +152,7 @@ fn explicit_concurrent_start_can_join_an_existing_derived_lease()
         RunMode::Concurrent,
         now,
     );
-    fixture
-        .registry
-        .storage
-        .create_run(&existing)?;
+    fixture.registry.storage.create_run(&existing)?;
     let second = fixture
         .registry
         .start(
@@ -197,26 +160,12 @@ fn explicit_concurrent_start_can_join_an_existing_derived_lease()
             Some(String::from("vehicles-b")),
             RunMode::Concurrent,
         )
-        .map_err(
-            |error| {
-                error
-                    .message()
-                    .to_owned()
-            },
-        )?;
-    if fixture
-        .registry
-        .active_lines()?
-        .len()
-        != 2
-    {
+        .map_err(|error| error.message().to_owned())?;
+    if fixture.registry.active_lines()?.len() != 2 {
         return Err(String::from("explicit concurrent run was not registered"));
     }
     second.finish()?;
-    fixture
-        .registry
-        .storage
-        .remove_run(existing.run_id())?;
+    fixture.registry.storage.remove_run(existing.run_id())?;
     Ok(())
 }
 
@@ -227,41 +176,22 @@ fn cancellation_request_is_observed_at_a_cooperative_checkpoint()
     let fixture = TestRegistry::new("cancel")?;
     let guard = fixture
         .registry
-        .start(
-            "extract-game-resume",
-            None,
-            RunMode::Exclusive,
-        )
-        .map_err(
-            |error| {
-                error
-                    .message()
-                    .to_owned()
-            },
-        )?;
-    let run_id = guard
-        .run_id()
-        .to_owned();
-    let requested = fixture
-        .registry
-        .request_cancel(&run_id)?;
+        .start("extract-game-resume", None, RunMode::Exclusive)
+        .map_err(|error| error.message().to_owned())?;
+    let run_id = guard.run_id().to_owned();
+    let requested = fixture.registry.request_cancel(&run_id)?;
     if requested != [run_id.clone()] {
         return Err(String::from("cancellation target was not preserved"));
     }
     let Err(error) = check_cancellation() else {
-        return Err(
-            String::from("requested cancellation did not fail the checkpoint"),
-        );
+        return Err(String::from(
+            "requested cancellation did not fail the checkpoint",
+        ));
     };
-    if !error
-        .to_string()
-        .contains(&run_id)
-    {
+    if !error.to_string().contains(&run_id) {
         return Err(String::from("cancellation error lacks the run id"));
     }
-    let lines = fixture
-        .registry
-        .active_lines()?;
+    let lines = fixture.registry.active_lines()?;
     let Some(line) = lines.first() else {
         return Err(String::from("cancelled run disappeared before cleanup"));
     };
@@ -326,14 +256,8 @@ fn stale_records_and_invalid_run_ids_are_rejected_or_pruned()
         RunMode::Concurrent,
         1,
     );
-    fixture
-        .registry
-        .storage
-        .create_run(&stale)?;
-    let active = fixture
-        .registry
-        .storage
-        .active_runs(500_000)?;
+    fixture.registry.storage.create_run(&stale)?;
+    let active = fixture.registry.storage.active_runs(500_000)?;
     if !active.is_empty() {
         return Err(String::from("stale run record was not pruned"));
     }
@@ -346,11 +270,7 @@ fn stale_records_and_invalid_run_ids_are_rejected_or_pruned()
     {
         return Err(String::from("stale run directory remained on disk"));
     }
-    if fixture
-        .registry
-        .request_cancel("../escape")
-        .is_ok()
-    {
+    if fixture.registry.request_cancel("../escape").is_ok() {
         return Err(String::from("invalid cancellation run id was accepted"));
     }
     Ok(())

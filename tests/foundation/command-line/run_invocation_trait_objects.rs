@@ -1,7 +1,3 @@
-// File:
-//   - run_invocation_trait_objects.rs
-// Path: tests/foundation/command-line/run_invocation_trait_objects.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for trait-object invocation ports.
+//   - Run invocation trait objects test module.
 // - Must-Not:
-//   - Access process arguments or standard streams.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Compose deterministic in-memory trait objects.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another invocation composition boundary needs distinct fixtures.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - The runner no longer accepts replaceable ports.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Trait-object invocation regression.
+//   - Run invocation trait objects test module.
 // - Description:
-//   - Proves all invocation ports accept dynamic dispatch.
+//   - Implements the declared test module responsibility for command line.
 // - Usage:
-//   - Executed by the schoenwald-cli integration test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - The program returns success without output.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for dynamically dispatched invocation ports.
-//!
-//! Replaceable adapters must remain usable behind trait-object boundaries.
+//! Run invocation trait objects test module.
 
 use std::io;
 
@@ -62,10 +48,7 @@ impl ArgumentSource for EmptyArguments {
 struct SuccessfulProgram;
 
 impl CliProgram for SuccessfulProgram {
-    fn execute(
-        &self,
-        _arguments: &[String],
-    ) -> CommandOutcome {
+    fn execute(&self, _arguments: &[String]) -> CommandOutcome {
         CommandOutcome::success()
     }
 }
@@ -73,11 +56,7 @@ impl CliProgram for SuccessfulProgram {
 struct AcceptingOutput;
 
 impl OutputSink for AcceptingOutput {
-    fn write(
-        &mut self,
-        _stream: OutputStream,
-        _text: &str,
-    ) -> io::Result<()> {
+    fn write(&mut self, _stream: OutputStream, _text: &str) -> io::Result<()> {
         Ok(())
     }
 }
@@ -90,14 +69,7 @@ fn invocation_accepts_all_ports_as_trait_objects() {
     let mut accepting_output = AcceptingOutput;
     let output: &mut dyn OutputSink = &mut accepting_output;
 
-    let result = RunInvocation::execute(
-        command, arguments, output,
-    );
+    let result = RunInvocation::execute(command, arguments, output);
 
-    assert!(
-        matches!(
-            result,
-            Ok(ExitStatus::Success)
-        )
-    );
+    assert!(matches!(result, Ok(ExitStatus::Success)));
 }

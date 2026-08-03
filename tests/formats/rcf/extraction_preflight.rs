@@ -1,7 +1,3 @@
-// File:
-//   - extraction_preflight.rs
-// Path: tests/formats/rcf/extraction_preflight.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,41 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Caller-visible extraction sink-preflight regressions.
+//   - Extraction preflight test module.
 // - Must-Not:
-//   - Read private assets, use filesystem adapters, or inspect implementation
-//   - details outside public ports.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic archives, in-memory readers, and recording sinks.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another extraction transaction boundary needs an independent fixture.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Sink preflight no longer needs a distinct integration target.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects extraction from partial sink writes.
+//   - Extraction preflight test module.
 // - Description:
-//   - Proves every archive entry is accepted before payload output begins.
+//   - Implements the declared test module responsibility for rcf.
 // - Usage:
-//   - Run through the RCF crate integration test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No local files, generated assets, or external processes are required.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Caller-visible extraction sink-preflight regressions.
-//!
-//! A synthetic two-entry archive proves that a later sink rejection cannot
-//! leave an earlier entry written.
+//! Extraction preflight test module.
 
 use std::path::PathBuf;
 
@@ -66,12 +50,8 @@ use fixture::archive_with_stored_names;
 
 #[test]
 fn sink_rejection_happens_before_any_entry_write() {
-    let fixture = archive_with_stored_names(
-        &[
-            b"sound/file.rsd\0",
-            b"sound/CON\0",
-        ],
-    );
+    let fixture =
+        archive_with_stored_names(&[b"sound/file.rsd\0", b"sound/CON\0"]);
     assert!(
         fixture.is_ok(),
         "the two-entry archive fixture must be constructible"
@@ -79,17 +59,11 @@ fn sink_rejection_happens_before_any_entry_write() {
     let Ok(bytes) = fixture else {
         return;
     };
-    let source = MemorySource {
-        bytes,
-    };
+    let source = MemorySource { bytes };
     let mut sink = RejectingSink::default();
     let mut observer = NoopObserver;
 
-    let result = Extractor::extract(
-        &source,
-        &mut sink,
-        &mut observer,
-    );
+    let result = Extractor::extract(&source, &mut sink, &mut observer);
 
     assert!(
         matches!(
@@ -99,8 +73,7 @@ fn sink_rejection_happens_before_any_entry_write() {
         "the sink must reject its unsafe second entry"
     );
     assert!(
-        sink.written_names
-            .is_empty(),
+        sink.written_names.is_empty(),
         "all sink paths must be accepted before the first write"
     );
 }
@@ -111,17 +84,11 @@ struct MemorySource {
 
 impl ArchiveSource for MemorySource {
     fn open_reader(
-        &self
+        &self,
     ) -> Result<Box<dyn ArchiveByteReader + '_>, ArchiveError> {
-        Ok(
-            Box::new(
-                MemoryReader {
-                    bytes: self
-                        .bytes
-                        .clone(),
-                },
-            ),
-        )
+        Ok(Box::new(MemoryReader {
+            bytes: self.bytes.clone(),
+        }))
     }
 
     fn archive_stem(&self) -> Result<String, ArchiveError> {
@@ -135,17 +102,11 @@ struct MemoryReader {
 
 impl ArchiveByteReader for MemoryReader {
     fn len(&self) -> Result<u64, ArchiveError> {
-        u64::try_from(
-            self.bytes
-                .len(),
-        )
-        .map_err(
-            |source| {
-                ArchiveError::invalid_archive(
-                    format!("fixture length does not fit u64: {source}"),
-                )
-            },
-        )
+        u64::try_from(self.bytes.len()).map_err(|source| {
+            ArchiveError::invalid_archive(format!(
+                "fixture length does not fit u64: {source}"
+            ))
+        })
     }
 
     fn read_range(
@@ -153,31 +114,25 @@ impl ArchiveByteReader for MemoryReader {
         offset: u64,
         length: u64,
     ) -> Result<Vec<u8>, ArchiveError> {
-        let start = usize::try_from(offset).map_err(
-            |source| {
-                ArchiveError::invalid_archive(
-                    format!("fixture offset does not fit usize: {source}"),
-                )
-            },
-        )?;
-        let count = usize::try_from(length).map_err(
-            |source| {
-                ArchiveError::invalid_archive(
-                    format!("fixture length does not fit usize: {source}"),
-                )
-            },
-        )?;
-        let end = start
-            .checked_add(count)
-            .ok_or_else(
-                || ArchiveError::invalid_archive("fixture range overflow"),
-            )?;
+        let start = usize::try_from(offset).map_err(|source| {
+            ArchiveError::invalid_archive(format!(
+                "fixture offset does not fit usize: {source}"
+            ))
+        })?;
+        let count = usize::try_from(length).map_err(|source| {
+            ArchiveError::invalid_archive(format!(
+                "fixture length does not fit usize: {source}"
+            ))
+        })?;
+        let end = start.checked_add(count).ok_or_else(|| {
+            ArchiveError::invalid_archive("fixture range overflow")
+        })?;
         self.bytes
             .get(start..end)
             .map(ToOwned::to_owned)
-            .ok_or_else(
-                || ArchiveError::invalid_archive("fixture range exceeds bytes"),
-            )
+            .ok_or_else(|| {
+                ArchiveError::invalid_archive("fixture range exceeds bytes")
+            })
     }
 }
 
@@ -192,9 +147,7 @@ impl EntrySink for RejectingSink {
         _archive_stem: &str,
         entries: &[ArchiveEntry],
     ) -> Result<(), ArchiveError> {
-        let rejected = entries
-            .iter()
-            .find(|entry| entry.name == "sound/CON");
+        let rejected = entries.iter().find(|entry| entry.name == "sound/CON");
         if let Some(entry) = rejected {
             return Err(ArchiveError::unsafe_entry_path(&entry.name));
         }
@@ -210,8 +163,7 @@ impl EntrySink for RejectingSink {
         if entry_name == "sound/CON" {
             return Err(ArchiveError::unsafe_entry_path(entry_name));
         }
-        self.written_names
-            .push(entry_name.to_owned());
+        self.written_names.push(entry_name.to_owned());
         Ok(PathBuf::from(entry_name))
     }
 }

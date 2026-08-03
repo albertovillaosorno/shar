@@ -1,7 +1,3 @@
-// File:
-//   - payload_validation.rs
-// Path: tests/formats/rsd/payload_validation.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,49 +6,36 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Public regression coverage for RSD payload frame validation.
+//   - Payload validation test module.
 // - Must-Not:
-//   - Depend on external audio fixtures or internal decoder functions.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic codec payloads and caller-visible parsing assertions.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when a codec gains an independent frame-layout fixture family.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another RSD test module owns the same payload-shape contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Verifies incomplete codec frames fail during RSD parsing.
+//   - Payload validation test module.
 // - Description:
-//   - Exercises public parsing for malformed PCM and RADP payload boundaries.
+//   - Implements the declared test module responsibility for rsd.
 // - Usage:
-//   - Executed through cargo test for the rsd crate.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Fixtures remain synthetic, deterministic, and repository-local.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Public regression coverage for RSD payload frame validation.
-//!
-//! Synthetic payloads prove malformed frames fail at the parsing boundary.
+//! Payload validation test module.
 
 use rsd::{RsdAudio, RsdError};
+use same_file as _;
 use schoenwald_cli as _;
 use schoenwald_filesystem as _;
 
-fn copy_fixture_bytes(
-    data: &mut [u8],
-    start: usize,
-    bytes: &[u8],
-) -> bool {
+fn copy_fixture_bytes(data: &mut [u8], start: usize, bytes: &[u8]) -> bool {
     let Some(end) = start.checked_add(bytes.len()) else {
         return false;
     };
@@ -71,39 +54,23 @@ fn rsd_with(
 ) -> Vec<u8> {
     let mut data = vec![0_u8; data_offset];
     assert!(
-        copy_fixture_bytes(
-            &mut data, 0, b"RSD4"
-        ),
+        copy_fixture_bytes(&mut data, 0, b"RSD4"),
         "fixture magic should fit"
     );
     assert!(
-        copy_fixture_bytes(
-            &mut data, 4, &tag
-        ),
+        copy_fixture_bytes(&mut data, 4, &tag),
         "fixture encoding should fit"
     );
     assert!(
-        copy_fixture_bytes(
-            &mut data,
-            8,
-            &channels.to_le_bytes(),
-        ),
+        copy_fixture_bytes(&mut data, 8, &channels.to_le_bytes(),),
         "fixture channel count should fit"
     );
     assert!(
-        copy_fixture_bytes(
-            &mut data,
-            12,
-            &16_u32.to_le_bytes(),
-        ),
+        copy_fixture_bytes(&mut data, 12, &16_u32.to_le_bytes(),),
         "fixture bit depth should fit"
     );
     assert!(
-        copy_fixture_bytes(
-            &mut data,
-            16,
-            &24_000_u32.to_le_bytes(),
-        ),
+        copy_fixture_bytes(&mut data, 16, &24_000_u32.to_le_bytes(),),
         "fixture sample rate should fit"
     );
     data.extend_from_slice(payload);
@@ -112,141 +79,62 @@ fn rsd_with(
 
 #[test]
 fn padded_headers_reject_corrupt_reserved_bytes() {
-    let mut data = rsd_with(
-        *b"PCM ",
-        1_u32,
-        0x800,
-        &[
-            1_u8, 0_u8,
-        ],
-    );
+    let mut data = rsd_with(*b"PCM ", 1_u32, 0x800, &[1_u8, 0_u8]);
     let reserved = vec![b'*'; 0x80 - 20];
-    assert!(
-        copy_fixture_bytes(
-            &mut data, 20, &reserved,
-        )
-    );
+    assert!(copy_fixture_bytes(&mut data, 20, &reserved,));
     let padding = vec![b'-'; 0x800 - 0x80];
-    assert!(
-        copy_fixture_bytes(
-            &mut data, 0x80, &padding,
-        )
-    );
-    assert!(
-        copy_fixture_bytes(
-            &mut data, 64, b"!"
-        )
-    );
+    assert!(copy_fixture_bytes(&mut data, 0x80, &padding,));
+    assert!(copy_fixture_bytes(&mut data, 64, b"!"));
 
     assert!(
-        matches!(
-            RsdAudio::parse(&data),
-            Err(RsdError::InvalidHeaderPadding)
-        ),
+        matches!(RsdAudio::parse(&data), Err(RsdError::InvalidHeaderPadding)),
         "padded RSD metadata corruption must fail before decoding"
     );
 }
 
 #[test]
 fn padded_pcm_rejects_corrupt_sector_padding() {
-    let mut data = rsd_with(
-        *b"PCM ",
-        1_u32,
-        0x800,
-        &[
-            1_u8, 0_u8,
-        ],
-    );
+    let mut data = rsd_with(*b"PCM ", 1_u32, 0x800, &[1_u8, 0_u8]);
     let reserved = vec![b'*'; 0x80 - 20];
-    assert!(
-        copy_fixture_bytes(
-            &mut data, 20, &reserved,
-        )
-    );
+    assert!(copy_fixture_bytes(&mut data, 20, &reserved,));
     let padding = vec![b'-'; 0x800 - 0x80];
-    assert!(
-        copy_fixture_bytes(
-            &mut data, 0x80, &padding,
-        )
-    );
-    assert!(
-        copy_fixture_bytes(
-            &mut data, 0x100, b"!"
-        )
-    );
+    assert!(copy_fixture_bytes(&mut data, 0x80, &padding,));
+    assert!(copy_fixture_bytes(&mut data, 0x100, b"!"));
 
     assert!(
-        matches!(
-            RsdAudio::parse(&data),
-            Err(RsdError::InvalidHeaderPadding)
-        ),
+        matches!(RsdAudio::parse(&data), Err(RsdError::InvalidHeaderPadding)),
         "padded PCM corruption must not be reclassified as compact audio"
     );
 }
 
 #[test]
 fn big_endian_pcm_requires_legacy_padding() {
-    let data = rsd_with(
-        *b"PCMB",
-        1_u32,
-        0x80,
-        &[
-            0_u8, 1_u8,
-        ],
-    );
+    let data = rsd_with(*b"PCMB", 1_u32, 0x80, &[0_u8, 1_u8]);
 
     assert!(
-        matches!(
-            RsdAudio::parse(&data),
-            Err(RsdError::InvalidHeaderPadding)
-        ),
+        matches!(RsdAudio::parse(&data), Err(RsdError::InvalidHeaderPadding)),
         "big-endian PCM must not use the compact extension layout"
     );
 }
 
 #[test]
 fn radical_adpcm_rejects_corrupt_sector_padding() {
-    let mut data = rsd_with(
-        *b"RADP",
-        1_u32,
-        0x800,
-        &[0_u8; 20],
-    );
+    let mut data = rsd_with(*b"RADP", 1_u32, 0x800, &[0_u8; 20]);
     let reserved = vec![b'*'; 0x80 - 20];
-    assert!(
-        copy_fixture_bytes(
-            &mut data, 20, &reserved,
-        )
-    );
+    assert!(copy_fixture_bytes(&mut data, 20, &reserved,));
     let padding = vec![b'-'; 0x800 - 0x80];
-    assert!(
-        copy_fixture_bytes(
-            &mut data, 0x80, &padding,
-        )
-    );
-    assert!(
-        copy_fixture_bytes(
-            &mut data, 0x100, b"!"
-        )
-    );
+    assert!(copy_fixture_bytes(&mut data, 0x80, &padding,));
+    assert!(copy_fixture_bytes(&mut data, 0x100, b"!"));
 
     assert!(
-        matches!(
-            RsdAudio::parse(&data),
-            Err(RsdError::InvalidHeaderPadding)
-        ),
+        matches!(RsdAudio::parse(&data), Err(RsdError::InvalidHeaderPadding)),
         "RADP sector-padding corruption must fail before decoding"
     );
 }
 
 #[test]
 fn radical_adpcm_rejects_sixteen_channels() {
-    let data = rsd_with(
-        *b"RADP",
-        16_u32,
-        0x800,
-        &[0_u8; 20 * 16],
-    );
+    let data = rsd_with(*b"RADP", 16_u32, 0x800, &[0_u8; 20 * 16]);
 
     assert!(
         RsdAudio::parse(&data).is_err(),
@@ -256,22 +144,10 @@ fn radical_adpcm_rejects_sixteen_channels() {
 
 #[test]
 fn misaligned_payloads_fail_during_parse() {
-    let incomplete_stereo_pcm = rsd_with(
-        *b"PCM ",
-        2_u32,
-        0x80,
-        &[
-            0, 0,
-        ],
-    );
-    let incomplete_radp = rsd_with(
-        *b"RADP", 1_u32, 0x800, &[0; 19],
-    );
+    let incomplete_stereo_pcm = rsd_with(*b"PCM ", 2_u32, 0x80, &[0, 0]);
+    let incomplete_radp = rsd_with(*b"RADP", 1_u32, 0x800, &[0; 19]);
 
-    for data in [
-        incomplete_stereo_pcm,
-        incomplete_radp,
-    ] {
+    for data in [incomplete_stereo_pcm, incomplete_radp] {
         assert!(
             RsdAudio::parse(&data).is_err(),
             "incomplete codec frames must fail at the parsing boundary"

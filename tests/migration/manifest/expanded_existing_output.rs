@@ -1,7 +1,3 @@
-// File:
-//   - expanded_existing_output.rs
-// Path: tests/migration/manifest/expanded_existing_output.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Existing expanded-output replacement regressions.
+//   - Expanded existing output test module.
 // - Must-Not:
-//   - Read licensed inputs or repository-local generated trees.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic temporary trees and compiled generator execution.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when output identity needs independent parser fixtures.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test owns the same existing-output protection boundary.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects unrelated JSONL files from expanded-output replacement.
+//   - Expanded existing output test module.
 // - Description:
-//   - Executes generation with a preexisting non-manifest JSONL destination.
+//   - Implements the declared test module responsibility for manifest.
 // - Usage:
-//   - Executed through cargo test for the game-manifest crate.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Temporary fixtures are removed after each test.
-//
-// ADRs:
-// - docs/adr/pipeline/game-manifest-ledger.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Existing expanded-output replacement regression coverage.
-//!
-//! Synthetic destinations prove the generator overwrites only its own durable
-//! expanded ledger format.
+//! Expanded existing output test module.
 
 use std::fs;
 use std::io::{self, ErrorKind};
@@ -57,24 +42,16 @@ use schoenwald_filesystem as _;
 static NEXT_FIXTURE: AtomicU64 = AtomicU64::new(0);
 
 fn run_with_existing_output(
-    existing: &str
-) -> io::Result<(
-    std::process::Output,
-    String,
-)> {
-    let sequence = NEXT_FIXTURE.fetch_add(
-        1,
-        Ordering::Relaxed,
-    );
-    let root = std::env::temp_dir().join(
-        format!(
-            "game-manifest-existing-output-{}-{sequence}",
-            std::process::id()
-        ),
-    );
+    existing: &str,
+) -> io::Result<(std::process::Output, String)> {
+    let sequence = NEXT_FIXTURE.fetch_add(1, Ordering::Relaxed);
+    let root = std::env::temp_dir().join(format!(
+        "game-manifest-existing-output-{}-{sequence}",
+        std::process::id()
+    ));
     match fs::remove_dir_all(&root) {
-        Ok(()) => {}
-        Err(error) if error.kind() == ErrorKind::NotFound => {}
+        Ok(()) => {},
+        Err(error) if error.kind() == ErrorKind::NotFound => {},
         Err(error) => return Err(error),
     }
     let game = root.join("input");
@@ -82,14 +59,8 @@ fn run_with_existing_output(
     let output_path = game.join("custom.jsonl");
     fs::create_dir_all(&game)?;
     fs::create_dir_all(&extracted)?;
-    fs::write(
-        game.join("asset.p3d"),
-        b"fixture",
-    )?;
-    fs::write(
-        &output_path,
-        existing,
-    )?;
+    fs::write(game.join("asset.p3d"), b"fixture")?;
+    fs::write(&output_path, existing)?;
     let result = (|| {
         let output =
             Command::new(env!("CARGO_BIN_EXE_generate-expanded-manifest"))
@@ -98,11 +69,7 @@ fn run_with_existing_output(
                 .arg(&output_path)
                 .output()?;
         let remaining = fs::read_to_string(&output_path)?;
-        Ok(
-            (
-                output, remaining,
-            ),
-        )
+        Ok((output, remaining))
     })();
     drop(fs::remove_dir_all(&root));
     result
@@ -118,15 +85,8 @@ fn expanded_output_preserves_unrelated_jsonl() {
     let Some((output, remaining)) = result.ok() else {
         return;
     };
-    assert!(
-        !output
-            .status
-            .success()
-    );
-    assert_eq!(
-        remaining,
-        "unrelated-ledger\n"
-    );
+    assert!(!output.status.success());
+    assert_eq!(remaining, "unrelated-ledger\n");
 }
 
 #[test]
@@ -141,15 +101,8 @@ fn expanded_output_rejects_spoofed_second_line() {
     let Some((output, remaining)) = result.ok() else {
         return;
     };
-    assert!(
-        !output
-            .status
-            .success()
-    );
-    assert_eq!(
-        remaining,
-        existing
-    );
+    assert!(!output.status.success());
+    assert_eq!(remaining, existing);
 }
 
 #[test]
@@ -164,14 +117,7 @@ fn expanded_output_rejects_noncanonical_line_endings() {
         let Some((output, remaining)) = result.ok() else {
             continue;
         };
-        assert!(
-            !output
-                .status
-                .success()
-        );
-        assert_eq!(
-            remaining,
-            existing
-        );
+        assert!(!output.status.success());
+        assert_eq!(remaining, existing);
     }
 }

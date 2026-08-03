@@ -312,7 +312,8 @@ support. It cannot reinterpret a base save, fabricate base achievements, or
 claim that its server mode is the first-party campaign. The complete boundary is
 owned by
 <!-- markdownlint-disable-next-line MD013 -->
-[mod-owned multiplayer adapters and community servers](../modding/mod-owned-multiplayer-adapters-and-community-servers.md).
+[mod-owned multiplayer adapters and community
+servers](../modding/mod-owned-multiplayer-adapters-and-community-servers.md).
 
 ## Visual direction
 

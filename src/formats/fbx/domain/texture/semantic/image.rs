@@ -1,7 +1,3 @@
-// File:
-//   - image.rs
-// Path: src/formats/fbx/domain/texture/semantic/image.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Checked top-left-origin RGBA image storage and pixel access.
+//   - Image domain module.
 // - Must-Not:
-//   - Decode files, sample UVs, scale images, or classify semantic regions.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Exact construction, fill, indexed access, mutation, and byte flattening.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when mutable image operations need an independent contract.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another texture-domain module owns the same checked image storage.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - File-container-independent RGBA image storage.
+//   - Image domain module.
 // - Description:
-//   - Preserves exact pixels behind checked dimensions and coordinates.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Extended by sampling behavior and consumed by PNG adapters.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Pixels use row-major top-left-origin order.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - true
-//   - Reason: construction, checked indexing, mutation, and flattening enforce
-//   - one image-storage invariant set.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Checked file-container-independent RGBA image storage.
+//! Image domain module.
+
 #![expect(
     clippy::indexing_slicing,
     clippy::module_name_repetitions,
@@ -101,24 +88,14 @@ impl RgbaImage {
         height: u32,
         pixels: Vec<Rgba8>,
     ) -> Result<Self, RgbaImageError> {
-        let expected = checked_pixel_count(
-            width, height,
-        )?;
+        let expected = checked_pixel_count(width, height)?;
         if pixels.len() != expected {
-            return Err(
-                RgbaImageError::PixelCountMismatch {
-                    expected,
-                    actual: pixels.len(),
-                },
-            );
+            return Err(RgbaImageError::PixelCountMismatch {
+                expected,
+                actual: pixels.len(),
+            });
         }
-        Ok(
-            Self {
-                width,
-                height,
-                pixels,
-            },
-        )
+        Ok(Self { width, height, pixels })
     }
 
     /// Build an image filled with one exact color.
@@ -131,14 +108,8 @@ impl RgbaImage {
         height: u32,
         color: Rgba8,
     ) -> Result<Self, RgbaImageError> {
-        let count = checked_pixel_count(
-            width, height,
-        )?;
-        Self::new(
-            width,
-            height,
-            vec![color; count],
-        )
+        let count = checked_pixel_count(width, height)?;
+        Self::new(width, height, vec![color; count])
     }
 
     /// Return the image width.
@@ -164,14 +135,8 @@ impl RgbaImage {
     /// # Errors
     ///
     /// Returns an error when the coordinate is outside the image.
-    pub fn pixel(
-        &self,
-        x: u32,
-        y: u32,
-    ) -> Result<Rgba8, RgbaImageError> {
-        let index = self.pixel_index(
-            x, y,
-        )?;
+    pub fn pixel(&self, x: u32, y: u32) -> Result<Rgba8, RgbaImageError> {
+        let index = self.pixel_index(x, y)?;
         Ok(self.pixels[index])
     }
 
@@ -186,9 +151,7 @@ impl RgbaImage {
         y: u32,
         color: Rgba8,
     ) -> Result<(), RgbaImageError> {
-        let index = self.pixel_index(
-            x, y,
-        )?;
+        let index = self.pixel_index(x, y)?;
         self.pixels[index] = color;
         Ok(())
     }
@@ -209,12 +172,7 @@ impl RgbaImage {
         y: u32,
     ) -> Result<usize, RgbaImageError> {
         if x >= self.width || y >= self.height {
-            return Err(
-                RgbaImageError::PixelOutOfBounds {
-                    x,
-                    y,
-                },
-            );
+            return Err(RgbaImageError::PixelOutOfBounds { x, y });
         }
         let row = usize::try_from(y)
             .map_err(|_error| RgbaImageError::PixelCountOverflow)?;

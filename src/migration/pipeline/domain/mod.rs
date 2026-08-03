@@ -1,7 +1,3 @@
-// File:
-//   - domain.rs
-// Path: src/migration/pipeline/domain/mod.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure pipeline state, output evidence, and JSON encoding support.
+//   - Domain domain module.
 // - Must-Not:
-//   - Perform IO, invoke tools, or select concrete adapters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Expose stable values used across pipeline application slices.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when one domain family becomes independently versioned.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another facade owns the same pipeline invariants.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Pipeline domain facade.
+//   - Domain domain module.
 // - Description:
-//   - Exposes pure state and encoding behavior to inward-facing layers.
+//   - Implements the declared domain module responsibility for pipeline.
 // - Usage:
-//   - Imported by application, ports, adapters, and public callers.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Domain modules have no process or storage side effects.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Pure domain values for the extraction and planning pipeline.
-//!
-//! Filesystem and process behavior remain in adapters.
+//! Domain domain module.
+
 pub mod coordinate_movement;
 mod json;
 mod output_summary;

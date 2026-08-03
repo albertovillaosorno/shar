@@ -1,7 +1,3 @@
-// File:
-//   - raster.rs
-// Path: src/formats/fbx/domain/texture/semantic/body/raster.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - The ordered flat-color chart rasterization transaction and checked
-//   - coverage indexing.
+//   - Raster domain module.
 // - Must-Not:
-//   - Discover charts, classify colors, map UVs, or invoke external image
-//   - tools.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Focused triangle-painting and chart-cell dilation modules.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another texture lane cannot reuse flat-color painting and dilation.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - The chart facade can own rasterization directly without duplication.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Repository-owned flat-color rasterization facade.
+//   - Raster domain module.
 // - Description:
-//   - Paints every chart triangle, rejects empty output, then applies padding.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Called after chart placement and before atlas serialization.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Uncovered atlas pixels retain the opaque neutral background.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Ordered flat-color atlas rasterization.
+//! Raster domain module.
+
 #![expect(
     clippy::shadow_reuse,
     reason = "Raster stages intentionally refine validated coordinate and \
@@ -70,70 +57,38 @@ pub(super) fn rasterize(
     chart: &PlacedChart,
     padding: u32,
 ) -> Result<(), SemanticTextureError> {
-    if chart
-        .public
-        .sample_source
-    {
-        let covered = triangle_source::paint(
-            atlas,
-            coverage,
-            source_texture,
-            chart,
-        )?;
+    if chart.public.sample_source {
+        let covered =
+            triangle_source::paint(atlas, coverage, source_texture, chart)?;
         if covered == 0 {
-            return Err(
-                SemanticTextureError::EmptyRasterizedChart(
-                    chart
-                        .public
-                        .id
-                        .clone(),
-                ),
-            );
+            return Err(SemanticTextureError::EmptyRasterizedChart(
+                chart.public.id.clone(),
+            ));
         }
-        return dilation::apply(
-            atlas, coverage, chart, padding,
-        );
+        return dilation::apply(atlas, coverage, chart, padding);
     }
     let mut covered = 0_usize;
-    for triangle_index in &chart
-        .public
-        .triangle_indices
-    {
+    for triangle_index in &chart.public.triangle_indices {
         let indices = group
             .triangles
             .get(*triangle_index)
             .ok_or(SemanticTextureError::NumericOverflow)?;
         let points = [
-            point(
-                chart, indices[0],
-            )?,
-            point(
-                chart, indices[1],
-            )?,
-            point(
-                chart, indices[2],
-            )?,
+            point(chart, indices[0])?,
+            point(chart, indices[1])?,
+            point(chart, indices[2])?,
         ];
-        let painted = triangle::paint(
-            atlas, coverage, chart, points,
-        )?;
+        let painted = triangle::paint(atlas, coverage, chart, points)?;
         covered = covered
             .checked_add(painted)
             .ok_or(SemanticTextureError::NumericOverflow)?;
     }
     if covered == 0 {
-        return Err(
-            SemanticTextureError::EmptyRasterizedChart(
-                chart
-                    .public
-                    .id
-                    .clone(),
-            ),
-        );
+        return Err(SemanticTextureError::EmptyRasterizedChart(
+            chart.public.id.clone(),
+        ));
     }
-    dilation::apply(
-        atlas, coverage, chart, padding,
-    )
+    dilation::apply(atlas, coverage, chart, padding)
 }
 
 /// Resolve one mapped destination vertex.

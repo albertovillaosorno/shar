@@ -5,27 +5,35 @@
 
 ## Governing decisions and specifications
 
-<!-- markdownlint-disable-next-line MD013 -->
-- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
+- [Runtime parity test
+  boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Local split-screen minigame session UI runtime](local-split-screen-minigame-session-ui-runtime.md)
+- [Local split-screen minigame session UI
+  runtime](local-split-screen-minigame-session-ui-runtime.md)
 - [Race route and opponent runtime](race-route-and-opponent-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Road-network geometry and traffic runtime](road-network-geometry-and-traffic-runtime.md)
+- [Road-network geometry and traffic
+  runtime](road-network-geometry-and-traffic-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Vehicle AI and route runtime](vehicle-ai-and-route-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
+- [Application lifecycle and mode
+  runtime](application-lifecycle-and-mode-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md)
+- [Typed event and observation routing
+  runtime](typed-event-and-observation-routing-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md)
+- [Native asset load request and streaming
+  runtime](native-asset-load-request-and-streaming-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Music state and transition runtime](music-state-and-transition-runtime.md)
 
@@ -42,7 +50,8 @@ replay.
 
 It complements the frontend and lobby behavior in
 <!-- markdownlint-disable-next-line MD013 -->
-[Local split-screen minigame session UI runtime](local-split-screen-minigame-session-ui-runtime.md)
+[Local split-screen minigame session UI
+runtime](local-split-screen-minigame-session-ui-runtime.md)
 and the generic race semantics in
 [Race route and opponent runtime](race-route-and-opponent-runtime.md).
 
@@ -89,18 +98,35 @@ or fixed vehicle pointer array becomes authority.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Supersprint session service | Owns session identity, participant slots, race state, transition transactions, results, and cleanup. |
-| Lobby and UI runtime | Owns joining, selection presentation, readiness, options, result screens, and user commands. |
-| Race route runtime | Owns route, checkpoint, lap, progress, position, finish, and reset semantics. |
-| Local-player and input services | Own controller assignment, mapping contexts, reconnect, and per-player input. |
-| Vehicle runtime | Owns vehicle movement, damage policy, turbo execution, and physical state. |
-| AI runtime | Owns route-following decisions for accepted artificial-intelligence participants. |
-| Camera runtime | Owns native cameras, split-screen views, transitions, and accepted focus targets. |
-| Audio runtime | Owns countdown, music, effects, and ducking presentation. |
-| Persistence service | Owns validated local high-score records and migration. |
-| Developer diagnostics | Observe immutable session, participant, route, vehicle, controller, camera, and result state. |
+- **Authority:** Supersprint session service
+  - **Responsibility:** Owns session identity, participant slots, race state,
+    transition transactions, results, and cleanup.
+- **Authority:** Lobby and UI runtime
+  - **Responsibility:** Owns joining, selection presentation, readiness,
+    options, result screens, and user commands.
+- **Authority:** Race route runtime
+  - **Responsibility:** Owns route, checkpoint, lap, progress, position, finish,
+    and reset semantics.
+- **Authority:** Local-player and input services
+  - **Responsibility:** Own controller assignment, mapping contexts, reconnect,
+    and per-player input.
+- **Authority:** Vehicle runtime
+  - **Responsibility:** Owns vehicle movement, damage policy, turbo execution,
+    and physical state.
+- **Authority:** AI runtime
+  - **Responsibility:** Owns route-following decisions for accepted
+    artificial-intelligence participants.
+- **Authority:** Camera runtime
+  - **Responsibility:** Owns native cameras, split-screen views, transitions,
+    and accepted focus targets.
+- **Authority:** Audio runtime
+  - **Responsibility:** Owns countdown, music, effects, and ducking
+    presentation.
+- **Authority:** Persistence service
+  - **Responsibility:** Owns validated local high-score records and migration.
+- **Authority:** Developer diagnostics
+  - **Responsibility:** Observe immutable session, participant, route, vehicle,
+    controller, camera, and result state.
 
 <!-- markdownlint-enable MD013 -->
 

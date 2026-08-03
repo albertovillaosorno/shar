@@ -1,9 +1,34 @@
-// File: SharSaveSchemaCatalogSubsystem.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharSave/Private/Save/SharSaveSchemaCatalogSubsystem.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: immutable save-schema catalog registration and lookup only.
-// Specification: docs/technical/unreal/platform-save-storage-and-lifecycle.md
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar save schema catalog subsystem composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar save schema catalog subsystem composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar save schema catalog subsystem composition module.
 
 #include "Save/SharSaveSchemaCatalogSubsystem.h"
 
@@ -78,6 +103,7 @@ const USharSaveSchemaDefinition* USharSaveSchemaCatalogSubsystem::FindSchema(
             Definitions,
             [&SchemaId](const TObjectPtr<USharSaveSchemaDefinition>& Candidate)
             {
+                // jig-ignore-next-line: exact syntax is indivisible
                 return Candidate != nullptr && Candidate->CanonicalId == SchemaId;
             }
         );

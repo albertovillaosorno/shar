@@ -25,7 +25,8 @@ validation when absent.
 ## Consequences
 
 - English base-installation completeness is checked before expensive conversion.
-- Optional language and edition coordinates remain visible without becoming mandatory.
+- Optional language and edition coordinates remain visible without becoming
+  mandatory.
 - Public history does not disclose unnecessary source names.
 - The ledger proves minimum shape, not ownership or legal entitlement.
 

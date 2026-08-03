@@ -17,21 +17,25 @@ retarget an arbitrary skeleton during spawn.
 
 ## Canonical placement
 
-<!-- markdownlint-disable MD013 -->
-```text
-/Game/SHAR/Data/Characters/<id>/DA_Character_<id>
-/Game/SHAR/Data/Characters/<id>/DA_CharacterPresentation_<id>_<variant>
-/Game/SHAR/Art/Characters/<id>/Meshes/SK_Character_<id>_<variant>
-/Game/SHAR/Art/Characters/Rigs/<rig_family>/SKEL_<rig_family>
-/Game/SHAR/Art/Characters/Rigs/<rig_family>/DA_Rig_<rig_family>
-/Game/SHAR/Art/Characters/<id>/Physics/PHYS_Character_<id>_<variant>
-/Game/SHAR/Data/Characters/AnimationLibraries/DA_CharacterAnimationLibrary_<rig_family>
-/Game/SHAR/Art/Characters/AnimationBlueprints/<rig_family>/ABP_Character_<rig_family>
-/Game/SHAR/Art/Characters/Animations/<rig_family>/<clip_group>/<animation_asset>
-/Game/SHAR/Art/Characters/<id>/Materials/MI_Character_<id>_<surface_role>
-/Game/SHAR/Art/Characters/<id>/Textures/T_Character_<id>_<surface_role>_<texture_role>
-```
-<!-- markdownlint-enable MD013 -->
+- `/Game/SHAR/Data/Characters/<id>/DA_Character_<id>`
+- `/Game/SHAR/Data/Characters/<id>/DA_CharacterPresentation_<id>_<variant>`
+- `/Game/SHAR/Art/Characters/<id>/Meshes/SK_Character_<id>_<variant>`
+- `/Game/SHAR/Art/Characters/Rigs/<rig_family>/SKEL_<rig_family>`
+- `/Game/SHAR/Art/Characters/Rigs/<rig_family>/DA_Rig_<rig_family>`
+- `/Game/SHAR/Art/Characters/<id>/Physics/PHYS_Character_<id>_<variant>`
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Unreal asset path is indivisible -->
+- `/Game/SHAR/Data/Characters/AnimationLibraries/DA_CharacterAnimationLibrary_<rig_family>` <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Unreal asset path is indivisible -->
+- `/Game/SHAR/Art/Characters/AnimationBlueprints/<rig_family>/ABP_Character_<rig_family>` <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Unreal asset path is indivisible -->
+- `/Game/SHAR/Art/Characters/Animations/<rig_family>/<clip_group>/<animation_asset>` <!-- markdownlint-disable-line MD013 -->
+- `/Game/SHAR/Art/Characters/<id>/Materials/MI_Character_<id>_<surface_role>`
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Unreal asset path is indivisible -->
+- `/Game/SHAR/Art/Characters/<id>/Textures/T_Character_<id>_<surface_role>_<texture_role>` <!-- markdownlint-disable-line MD013 -->
 
 Shared Skeletons, Animation Blueprints, and every Animation Sequence, Montage,
 Blend Space, Pose Asset, and animation-support asset live under the central rig-
@@ -101,14 +105,22 @@ deterministic retarget recipe whose result is a native Animation Sequence.
 
 Every shipping character declares one LOD profile. `character_standard_v1` uses:
 
-<!-- markdownlint-disable MD013 -->
-| LOD | Screen-size intent | Triangle target relative to LOD0 | Notes |
-| :--- | :--- | :--- | :--- |
-| 0 | Close gameplay and cinematics | 100 percent | Full silhouette and deformation |
-| 1 | Ordinary third-person play | at most 65 percent | Preserve face, hands, and major curves |
-| 2 | Medium distance | at most 35 percent | Reduce small accessories and hidden loops |
-| 3 | Far actor representation | at most 15 percent | Preserve silhouette and material identity |
-<!-- markdownlint-enable MD013 -->
+- **LOD:** 0
+  - **Screen-size intent:** Close gameplay and cinematics
+  - **Triangle target relative to LOD0:** 100 percent
+  - **Notes:** Full silhouette and deformation
+- **LOD:** 1
+  - **Screen-size intent:** Ordinary third-person play
+  - **Triangle target relative to LOD0:** at most 65 percent
+  - **Notes:** Preserve face, hands, and major curves
+- **LOD:** 2
+  - **Screen-size intent:** Medium distance
+  - **Triangle target relative to LOD0:** at most 35 percent
+  - **Notes:** Reduce small accessories and hidden loops
+- **LOD:** 3
+  - **Screen-size intent:** Far actor representation
+  - **Triangle target relative to LOD0:** at most 15 percent
+  - **Notes:** Preserve silhouette and material identity
 
 A tiny source character may share geometry between adjacent LODs only when the
 plan records that reduction would create worse deformation or no measurable

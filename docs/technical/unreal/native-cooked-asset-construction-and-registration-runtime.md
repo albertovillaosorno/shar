@@ -5,26 +5,35 @@
 
 ## Governing decisions and specifications
 
-<!-- markdownlint-disable-next-line MD013 -->
-- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Staged mesh import and world assembly](../../adr/unreal/import-adapters/staged-mesh-import-and-world-assembly.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Staged mesh import and world assembly](../../adr/unreal/import-adapters/staged-mesh-import-and-world-assembly.md)
+- [Validated game-feature mod
+  overlays](../../adr/unreal/runtime/validated-game-feature-mod-overlays.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Validated game-feature mod overlays](../../adr/unreal/runtime/validated-game-feature-mod-overlays.md)
+- [Native asset load request and streaming
+  runtime](native-asset-load-request-and-streaming-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md)
+- [Native import, material rebuild, and world
+  assembly](native-import-material-and-world-assembly.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native import, material rebuild, and world assembly](native-import-material-and-world-assembly.md)
+- [World render-entity and physics
+  runtime](world-render-entity-and-physics-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
+- [Native render-frame, view, and layer
+  runtime](native-render-frame-view-and-layer-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native render-frame, view, and layer runtime](native-render-frame-view-and-layer-runtime.md)
+- [Transient VFX and breakable-presentation
+  runtime](transient-vfx-and-breakable-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md)
+- [Spatial visibility, bounds, and culling
+  runtime](spatial-visibility-bounds-and-culling-runtime.md)
 
 ## Purpose
 
@@ -73,18 +82,35 @@ loader or source-chunk object system.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Asset Manager | Discovers primary assets, applies rules, resolves bundles, and audits cooked dependencies. |
-| Streamable Manager | Performs asynchronous object loading and retains loaded objects while handles are owned. |
-| Cook and import pipeline | Converts normalized evidence into native assets and validates read-back before publication. |
-| Construction catalog | Maps canonical definition identities to closed native construction plans. |
-| Construction subsystem | Prepares Actors, components, and adapters and commits one accepted runtime revision. |
-| World-composition service | Owns world, Data Layer, region, and feature readiness and teardown. |
-| World render-entity runtime | Owns native Actor and component composition after construction commit. |
-| Persistence and mission services | Own durable state, gameplay activation, rewards, collection, and destruction. |
-| Feature runtime | Owns namespaced overlay registration and removal. |
-| Presentation services | Own optional lens, sky, animation, particle, audio, and feedback adapters. |
+- **Authority:** Asset Manager
+  - **Responsibility:** Discovers primary assets, applies rules, resolves
+    bundles, and audits cooked dependencies.
+- **Authority:** Streamable Manager
+  - **Responsibility:** Performs asynchronous object loading and retains loaded
+    objects while handles are owned.
+- **Authority:** Cook and import pipeline
+  - **Responsibility:** Converts normalized evidence into native assets and
+    validates read-back before publication.
+- **Authority:** Construction catalog
+  - **Responsibility:** Maps canonical definition identities to closed native
+    construction plans.
+- **Authority:** Construction subsystem
+  - **Responsibility:** Prepares Actors, components, and adapters and commits
+    one accepted runtime revision.
+- **Authority:** World-composition service
+  - **Responsibility:** Owns world, Data Layer, region, and feature readiness
+    and teardown.
+- **Authority:** World render-entity runtime
+  - **Responsibility:** Owns native Actor and component composition after
+    construction commit.
+- **Authority:** Persistence and mission services
+  - **Responsibility:** Own durable state, gameplay activation, rewards,
+    collection, and destruction.
+- **Authority:** Feature runtime
+  - **Responsibility:** Owns namespaced overlay registration and removal.
+- **Authority:** Presentation services
+  - **Responsibility:** Own optional lens, sky, animation, particle, audio, and
+    feedback adapters.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -123,23 +149,41 @@ are not durable identity.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `DefinitionId` | Canonical project identity. |
-| `PrimaryAssetId` | Registered Unreal primary asset or definition asset. |
-| `ConstructionKind` | Closed native construction strategy. |
-| `AssetSetId` | Required and optional asset identities. |
-| `BundleIds` | Named bundles required for preparation, activation, and optional presentation. |
-| `RepresentationId` | World render-entity representation contract when applicable. |
-| `ComponentPlan` | Immutable component types, attachments, transforms, and configuration. |
-| `CollisionPlan` | Cooked collision, Physics Asset, query, and physical-material requirements. |
-| `AnimationPlan` | Optional Animation Blueprint, sequence, montage, controller, and state binding. |
-| `PresentationPlan` | Optional sky, lens, particle, shadow, and audio bindings. |
-| `WorldPolicy` | World, region, Data Layer, placement, and teardown requirements. |
-| `PersistencePolicy` | Durable-state projection and migration behavior. |
-| `FeaturePolicy` | Base or namespaced overlay ownership. |
-| `FallbackPolicy` | Declared optional representation fallback. |
-| `DiagnosticsPolicy` | Development inspection and capture permissions. |
+- **Field:** `DefinitionId`
+  - **Contract:** Canonical project identity.
+- **Field:** `PrimaryAssetId`
+  - **Contract:** Registered Unreal primary asset or definition asset.
+- **Field:** `ConstructionKind`
+  - **Contract:** Closed native construction strategy.
+- **Field:** `AssetSetId`
+  - **Contract:** Required and optional asset identities.
+- **Field:** `BundleIds`
+  - **Contract:** Named bundles required for preparation, activation, and
+    optional presentation.
+- **Field:** `RepresentationId`
+  - **Contract:** World render-entity representation contract when applicable.
+- **Field:** `ComponentPlan`
+  - **Contract:** Immutable component types, attachments, transforms, and
+    configuration.
+- **Field:** `CollisionPlan`
+  - **Contract:** Cooked collision, Physics Asset, query, and physical-material
+    requirements.
+- **Field:** `AnimationPlan`
+  - **Contract:** Optional Animation Blueprint, sequence, montage, controller,
+    and state binding.
+- **Field:** `PresentationPlan`
+  - **Contract:** Optional sky, lens, particle, shadow, and audio bindings.
+- **Field:** `WorldPolicy`
+  - **Contract:** World, region, Data Layer, placement, and teardown
+    requirements.
+- **Field:** `PersistencePolicy`
+  - **Contract:** Durable-state projection and migration behavior.
+- **Field:** `FeaturePolicy`
+  - **Contract:** Base or namespaced overlay ownership.
+- **Field:** `FallbackPolicy`
+  - **Contract:** Declared optional representation fallback.
+- **Field:** `DiagnosticsPolicy`
+  - **Contract:** Development inspection and capture permissions.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -468,7 +512,8 @@ select behavior at runtime.
 Converted spatial-tree data may be retained as deterministic import evidence and
 diagnostics under
 <!-- markdownlint-disable-next-line MD013 -->
-[Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md).
+[Spatial visibility, bounds, and culling
+runtime](spatial-visibility-bounds-and-culling-runtime.md).
 It is not constructed as a second authoritative runtime renderer or visibility
 tree. Unreal component registration and renderer facilities own active scene
 membership.
@@ -523,7 +568,8 @@ Particle construction binds cooked Niagara Systems, Effect Types, parameter
 schemas, attachment policy, coordinate space, lifetime class, scalability,
 pooling eligibility, platform variants, and fallback according to
 <!-- markdownlint-disable-next-line MD013 -->
-[Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md).
+[Transient VFX and breakable-presentation
+runtime](transient-vfx-and-breakable-presentation-runtime.md).
 
 The constructor prepares native assets and optional components only. It cannot
 load source particle factories, allocate fixed source instance arrays, assign
@@ -549,7 +595,8 @@ grant coins, rewards, or progression.
 A prepared renderable object transfers its immutable Actor, component, asset,
 world, placement, and presentation revisions to
 <!-- markdownlint-disable-next-line MD013 -->
-[Native render-frame, view, and layer runtime](native-render-frame-view-and-layer-runtime.md).
+[Native render-frame, view, and layer
+runtime](native-render-frame-view-and-layer-runtime.md).
 The render boundary validates the active application scope and native view
 eligibility before presentation.
 

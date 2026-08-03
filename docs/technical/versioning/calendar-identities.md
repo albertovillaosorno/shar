@@ -6,7 +6,8 @@
 ## Governing decision
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Calendar versioning, Conventional Commits, and no releases](../../adr/governance/versioning-commits-and-publication.md)
+- [Calendar versioning, Conventional Commits, and no
+  releases](../../adr/governance/versioning-commits-and-publication.md)
 
 ## Purpose
 

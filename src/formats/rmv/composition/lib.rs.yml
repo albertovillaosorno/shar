@@ -1,0 +1,5 @@
+schema: shar-surface/v1
+path: src/formats/rmv/composition/lib.rs
+function: rmv
+kind: facade
+authority: composition/lib.rs

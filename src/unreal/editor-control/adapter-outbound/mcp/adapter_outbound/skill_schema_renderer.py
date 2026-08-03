@@ -1,7 +1,3 @@
-# File:
-#   - skill_schema_renderer.py
-# Path: src/unreal/editor-control/adapter-outbound/mcp/adapter_outbound/skill_schema_renderer.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,55 +6,43 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Human-readable input, output, and example schema summaries.
+#   - Skill schema renderer outbound adapter.
 # - Must-Not:
-#   - Render complete skills, infer side effects, access files, or call tools.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Describing fields, constraints, defaults, and placeholder values.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Input and output schema rendering require independent depth policies.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another adapter owns the same generated schema guidance contract.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Converts live native tool schemas into actionable skill sections.
+#   - Skill schema renderer outbound adapter.
 # - Description:
-#   - Keeps every field explanation tied to exposed MCP interface metadata.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Consumed by the per-tool skill renderer.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Summarizes fields and requires live `describe` for exact nesting.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: generated Unreal MCP schema guidance
-#   - reason: field summaries, constraints, and examples share one contract
-#   - split: extract example generation if nested schema support expands
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess when native schema vocabulary changes
-#
-"""Render live Unreal MCP JSON schemas as actionable skill guidance."""
+
+"""Skill schema renderer outbound adapter."""
 
 from __future__ import annotations
 
+from html import escape
 import json
 import textwrap
-from html import escape
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
+from typing import cast
 
-from mcp.adapter_outbound.skill_markdown_policy import (
-    render_unbreakable_line,
-)
+from mcp.adapter_outbound.skill_markdown_policy import render_unbreakable_line
 from mcp.domain.errors import fail_protocol
-from mcp.domain.json_types import JsonObject, JsonValue, require_json_object
+from mcp.domain.json_types import JsonObject
+from mcp.domain.json_types import JsonValue
+from mcp.domain.json_types import require_json_object
 
 if TYPE_CHECKING:
     from mcp.domain.catalog import ToolDefinition
@@ -74,6 +58,7 @@ def render_inputs(
 
     Returns:
         Markdown lines describing every exposed input field.
+
     """
     properties = _properties(tool.input_schema, f"{tool.name}.inputSchema")
     required = _required_names(tool.input_schema, f"{tool.name}.inputSchema")
@@ -102,6 +87,7 @@ def render_output(tool: ToolDefinition, returns_text: str) -> list[str]:
 
     Returns:
         Markdown lines describing the declared structured output.
+
     """
     schema = tool.output_schema
     if schema is None:

@@ -1,7 +1,3 @@
-# File:
-#   - streamable_http.py
-# Path: src/unreal/editor-control/adapter-outbound/mcp/adapter_outbound/streamable_http.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,43 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Native MCP lifecycle and tool operations over HTTP exchanges.
+#   - Streamable http outbound adapter.
 # - Must-Not:
-#   - Accept remote endpoints, expose a server, or bypass sessions.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Serialized lifecycle, pagination, and native tool calls.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - The module gains two independently testable contracts.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module owns the same contract without a distinct invariant.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Implements the driven MCP transport port.
+#   - Streamable http outbound adapter.
 # - Description:
-#   - Separates MCP operations from low-level HTTP framing.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Injected through the MCP transport port by the driving CLI.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Uses bounded timeouts and protocol version 2025-11-25.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: serialized MCP operation transport
-#   - reason: lifecycle, pagination, and tool calls share one active session
-#   - split: split lifecycle from operations if reconnection support is added
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess on responsibility or line-count growth
-#
-"""Streamable HTTP transport for the native Unreal MCP server."""
+
+"""Streamable http outbound adapter."""
 
 from __future__ import annotations
 
@@ -56,24 +38,18 @@ from typing import TYPE_CHECKING
 from mcp.adapter_outbound.http_exchange import HttpExchangeClient
 from mcp.adapter_outbound.http_payload import DEFAULT_MAX_RESPONSE_BYTES
 from mcp.adapter_outbound.http_request import DEFAULT_MAX_REQUEST_BYTES
-from mcp.adapter_outbound.json_rpc_request import (
-    build_json_rpc_request,
-)
+from mcp.adapter_outbound.json_rpc_request import build_json_rpc_request
 from mcp.adapter_outbound.package_version import package_version
-from mcp.adapter_outbound.request_cancellation import (
-    cancel_timed_out_request,
-)
+from mcp.adapter_outbound.request_cancellation import cancel_timed_out_request
+from mcp.adapter_outbound.response_validation import parse_initialized_session
+from mcp.adapter_outbound.response_validation import parse_tool_names
+from mcp.adapter_outbound.response_validation import require_json_rpc_result
 from mcp.adapter_outbound.response_validation import (
-    parse_initialized_session,
-    parse_tool_names,
-    require_json_rpc_result,
     require_visible_ascii_session_id,
 )
-from mcp.domain.errors import (
-    RequestTimeoutError,
-    UnrealMcpError,
-    fail_protocol,
-)
+from mcp.domain.errors import RequestTimeoutError
+from mcp.domain.errors import UnrealMcpError
+from mcp.domain.errors import fail_protocol
 from mcp.domain.tool_outcome import parse_tool_outcome
 
 if TYPE_CHECKING:
@@ -102,6 +78,7 @@ def _extend_tool_names(
 
     Returns:
         Updated aggregate UTF-8 tool-name byte count.
+
     """
     if len(tools) + len(page_tools) > _MAX_TOOL_NAMES:
         fail_protocol("tools/list exceeded its tool limit")
@@ -131,6 +108,7 @@ class StreamableHttpTransport:
             timeout_seconds: Positive timeout for each HTTP exchange.
             max_request_bytes: Positive per-request byte ceiling.
             max_response_bytes: Positive per-response byte ceiling.
+
         """
         self._exchange = HttpExchangeClient(
             endpoint,
@@ -146,6 +124,7 @@ class StreamableHttpTransport:
 
         Returns:
             The initialized session identity and negotiated server metadata.
+
         """
         with self._lock:
             request_id = self._take_request_id()
@@ -203,6 +182,7 @@ class StreamableHttpTransport:
 
         Args:
             session: Active initialized native MCP session.
+
         """
         with self._lock:
             request_id = self._take_request_id()
@@ -225,6 +205,7 @@ class StreamableHttpTransport:
 
         Returns:
             Every unique top-level tool name in server order.
+
         """
         with self._lock:
             tools: list[str] = []
@@ -301,6 +282,7 @@ class StreamableHttpTransport:
 
         Raises:
             RequestTimeoutError: If the serialized native call times out.
+
         """
         with self._lock:
             request_id = self._take_request_id()
@@ -330,6 +312,7 @@ class StreamableHttpTransport:
 
         Args:
             session: Active initialized native MCP session.
+
         """
         with self._lock:
             self._delete_session(session)

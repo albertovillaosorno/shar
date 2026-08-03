@@ -1,7 +1,3 @@
-// File:
-//   - expanded_classification.rs
-// Path: tests/migration/manifest/expanded_classification.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Expanded-manifest classification parity regressions.
+//   - Expanded classification test module.
 // - Must-Not:
-//   - Read licensed inputs or repository-local generated trees.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic extension fixtures and compiled generator execution.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when path-specialized classification requires separate fixtures.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test owns expanded-to-minimum classifier parity.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects shared classification across manifest surfaces.
+//   - Expanded classification test module.
 // - Description:
-//   - Verifies expanded records use the controlled minimum classifier taxonomy.
+//   - Implements the declared test module responsibility for manifest.
 // - Usage:
-//   - Executed through cargo test for the game-manifest crate.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Temporary fixtures are removed after each test.
-//
-// ADRs:
-// - docs/adr/pipeline/game-manifest-ledger.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Expanded-manifest classification parity regression coverage.
-//!
-//! Synthetic files prove both ledger surfaces share deterministic extension
-//! classification instead of drifting in duplicated match statements.
+//! Expanded classification test module.
 
 use std::fs;
 use std::io::{self, ErrorKind};
@@ -61,19 +46,14 @@ fn generate_for(extension: &str) -> io::Result<String> {
 }
 
 fn generate_named(file_name: &str) -> io::Result<String> {
-    let sequence = NEXT_FIXTURE.fetch_add(
-        1,
-        Ordering::Relaxed,
-    );
-    let root = std::env::temp_dir().join(
-        format!(
-            "game-manifest-expanded-kind-{}-{sequence}",
-            std::process::id()
-        ),
-    );
+    let sequence = NEXT_FIXTURE.fetch_add(1, Ordering::Relaxed);
+    let root = std::env::temp_dir().join(format!(
+        "game-manifest-expanded-kind-{}-{sequence}",
+        std::process::id()
+    ));
     match fs::remove_dir_all(&root) {
-        Ok(()) => {}
-        Err(error) if error.kind() == ErrorKind::NotFound => {}
+        Ok(()) => {},
+        Err(error) if error.kind() == ErrorKind::NotFound => {},
         Err(error) => return Err(error),
     }
     let game = root.join("input");
@@ -81,10 +61,7 @@ fn generate_named(file_name: &str) -> io::Result<String> {
     let output_path = root.join("result.jsonl");
     fs::create_dir_all(&game)?;
     fs::create_dir_all(&extracted)?;
-    fs::write(
-        game.join(file_name),
-        b"fixture",
-    )?;
+    fs::write(game.join(file_name), b"fixture")?;
     let result = (|| {
         let output =
             Command::new(env!("CARGO_BIN_EXE_generate-expanded-manifest"))
@@ -92,13 +69,10 @@ fn generate_named(file_name: &str) -> io::Result<String> {
                 .arg(&extracted)
                 .arg(&output_path)
                 .output()?;
-        if !output
-            .status
-            .success()
-        {
-            return Err(
-                io::Error::other(String::from_utf8_lossy(&output.stderr)),
-            );
+        if !output.status.success() {
+            return Err(io::Error::other(String::from_utf8_lossy(
+                &output.stderr,
+            )));
         }
         fs::read_to_string(output_path)
     })();
@@ -109,16 +83,9 @@ fn generate_named(file_name: &str) -> io::Result<String> {
 #[test]
 fn expanded_classifier_matches_controlled_taxonomy() {
     for (extension, kind) in [
-        (
-            "typ",
-            "sound-type",
-        ),
-        (
-            "json", "metadata",
-        ),
-        (
-            "bik", "movie",
-        ),
+        ("typ", "sound-type"),
+        ("json", "metadata"),
+        ("bik", "movie"),
     ] {
         let result = generate_for(extension);
         assert!(result.is_ok());
@@ -184,11 +151,7 @@ fn expanded_vehicle_tag_requires_a_path_token() {
 
 #[test]
 fn expanded_world_tag_requires_a_path_token() {
-    for file_name in [
-        "cleveland.p3d",
-        "terrace.p3d",
-        "worldview.p3d",
-    ] {
+    for file_name in ["cleveland.p3d", "terrace.p3d", "worldview.p3d"] {
         let result = generate_named(file_name);
         assert!(result.is_ok());
         let Some(manifest) = result.ok() else {
@@ -201,12 +164,7 @@ fn expanded_world_tag_requires_a_path_token() {
 
 #[test]
 fn expanded_ui_tag_requires_a_path_token() {
-    for file_name in [
-        // cspell:disable-next-line -- backendfrontend
-        "backendfrontend.p3d",
-        // cspell:disable-next-line -- miscrooby
-        "miscrooby.p3d",
-    ] {
+    for file_name in ["backendfrontend.p3d", "miscrooby.p3d"] {
         let result = generate_named(file_name);
         assert!(result.is_ok());
         let Some(manifest) = result.ok() else {

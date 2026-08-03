@@ -1,7 +1,3 @@
-// File:
-//   - ports.rs
-// Path: src/formats/rsd/port-outbound/mod.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - RSD outbound port declarations.
+//   - Port outbound outbound port.
 // - Must-Not:
-//   - Implement IO or command-line policy.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Traits isolating use cases from external mechanisms.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when one port family becomes an independent context.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another facade owns the same port declarations.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Hexagonal ports for RSD export workflows.
+//   - Port outbound outbound port.
 // - Description:
-//   - Exposes replaceable boundaries used by application commands.
+//   - Implements the declared outbound port responsibility for rsd.
 // - Usage:
-//   - Implemented by driven adapters and supplied by driving adapters.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Ports infer no paths.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Hexagonal ports for RSD export workflows.
-//!
-//! Application code depends on these contracts rather than concrete
-//! filesystems.
+//! Port outbound outbound port.
+
 mod exporter;
 
 pub use exporter::Exporter;

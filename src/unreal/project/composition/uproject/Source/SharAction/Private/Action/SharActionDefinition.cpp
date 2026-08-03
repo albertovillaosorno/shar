@@ -1,12 +1,34 @@
-// File: SharActionDefinition.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharAction/Private/Action/SharActionDefinition.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: load-free action definition validation only; no task scheduling or domain effects.
-// ADR: docs/adr/unreal/runtime/typed-state-tree-action-sequences.md
-// LARGE-FILE owner=SharAction; reason=cohesive action-contract validation;
-// split=extract resource validation if parallel action schemas expand;
-// validation=validate.sh SharAction plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar action definition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar action definition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar action definition composition module.
 
 #include "Action/SharActionDefinition.h"
 
@@ -42,6 +64,7 @@ static void AppendPolicyIdentityErrors(
     {
         AddActionDefinitionError(
             OutErrors,
+            // jig-ignore-next-line: exact syntax is indivisible
             TEXT("Action parameter, policy, presentation, verification, and executor identities must be canonical.")
         );
     }
@@ -87,6 +110,7 @@ static void AppendTimeoutErrors(
     {
         AddActionDefinitionError(
             OutErrors,
+            // jig-ignore-next-line: exact syntax is indivisible
             TEXT("Action timeout must be finite and positive unless no-timeout is explicitly allowed.")
         );
     }

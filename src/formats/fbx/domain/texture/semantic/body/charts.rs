@@ -1,7 +1,3 @@
-// File:
-//   - charts.rs
-// Path: src/formats/fbx/domain/texture/semantic/body/charts.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,42 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - The ordered connected-chart, atlas-placement, raster, and UV-only remap
-//   - transaction for one classified character body.
+//   - Charts domain module.
 // - Must-Not:
-//   - Reclassify source evidence, alter topology, bones, weights, normals, or
-//   - invoke filesystem or external authoring applications.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Focused discovery, projection, packing, and raster modules.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another texture lane cannot reuse the chart transaction.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - The body facade can own this transaction without duplicated stages.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Semantic body chart transaction.
+//   - Charts domain module.
 // - Description:
-//   - Produces the modern atlas and a character clone with only UV changes.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Called after strict body classification succeeds.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Every chart is rasterized and every selected vertex receives one UV.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-//
-// Large file:
-//   - true
-//   - Reason: chart-stage ordering, atlas allocation, UV-only mutation, and
-//   - final plan assembly form one bounded transaction.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Semantic body chart, atlas, and UV-remapping transaction.
+//! Charts domain module.
+
 use super::super::image::RgbaImage;
 use super::classification::{Classification, selected_group};
 use super::error::SemanticTextureError;
@@ -75,68 +59,38 @@ pub(super) fn build_plan(
         &classification,
         recipe.texture_address_mode,
     )?;
-    let placed = packing::place(
-        &projected,
-        &recipe.atlas,
-        [
-            source_texture.width(),
-            source_texture.height(),
-        ],
-    )?;
+    let placed = packing::place(&projected, &recipe.atlas, [
+        source_texture.width(),
+        source_texture.height(),
+    ])?;
     let mut atlas = RgbaImage::filled(
-        recipe
-            .atlas
-            .width,
-        recipe
-            .atlas
-            .height,
-        recipe
-            .atlas
-            .background,
+        recipe.atlas.width,
+        recipe.atlas.height,
+        recipe.atlas.background,
     )?;
-    let mut coverage = vec![
-        false;
-        atlas
-            .pixels()
-            .len()
-    ];
+    let mut coverage = vec![false; atlas.pixels().len()];
     let mut remapped_character = character.clone();
     for chart in &placed {
-        let (source_group, _influences) = selected_group(
-            character,
-            chart
-                .public
-                .group,
-        )?;
+        let (source_group, _influences) =
+            selected_group(character, chart.public.group)?;
         raster::rasterize(
             &mut atlas,
             &mut coverage,
             source_texture,
             source_group,
             chart,
-            recipe
-                .atlas
-                .padding,
+            recipe.atlas.padding,
         )?;
-        apply_uvs(
-            &mut remapped_character,
-            chart,
-            &recipe.atlas,
-        )?;
+        apply_uvs(&mut remapped_character, chart, &recipe.atlas)?;
     }
-    Ok(
-        BodyTexturePlan {
-            atlas,
-            remapped_character,
-            color_assignments: classification.assignments,
-            charts: placed
-                .into_iter()
-                .map(|chart| chart.public)
-                .collect(),
-            source_vertex_count: classification.vertex_count,
-            source_triangle_count: classification.triangle_count,
-        },
-    )
+    Ok(BodyTexturePlan {
+        atlas,
+        remapped_character,
+        color_assignments: classification.assignments,
+        charts: placed.into_iter().map(|chart| chart.public).collect(),
+        source_vertex_count: classification.vertex_count,
+        source_triangle_count: classification.triangle_count,
+    })
 }
 
 /// Apply one chart's destination UVs to the cloned character only.
@@ -145,24 +99,13 @@ fn apply_uvs(
     chart: &model::PlacedChart,
     config: &AtlasConfig,
 ) -> Result<(), SemanticTextureError> {
-    let group = mutable_group(
-        character,
-        chart
-            .public
-            .group,
-    )?;
+    let group = mutable_group(character, chart.public.group)?;
     for (vertex, position) in &chart.pixel_positions {
         let uv = group
             .uvs
             .get_mut(*vertex)
             .ok_or(SemanticTextureError::NumericOverflow)?;
-        *uv = packing::atlas_uv(
-            *position,
-            config,
-            chart
-                .public
-                .projection,
-        );
+        *uv = packing::atlas_uv(*position, config, chart.public.projection);
     }
     Ok(())
 }

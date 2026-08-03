@@ -1,7 +1,3 @@
-# File:
-#   - skill_index_renderer.py
-# Path: src/unreal/editor-control/adapter-outbound/mcp/adapter_outbound/skill_index_renderer.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,53 +6,39 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - The single central Unreal MCP skill index Markdown document.
+#   - Skill index renderer outbound adapter.
 # - Must-Not:
-#   - Render skill-page details, open files, or invoke Unreal.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Listing every toolset and capability under a docs-style taxonomy.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - The central index gains another independently versioned output format.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another adapter owns the same generated central index.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Renders the mandatory central Unreal MCP skill index.
+#   - Skill index renderer outbound adapter.
 # - Description:
-#   - Mirrors docs indexes with semantic headings and direct skill links.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Called by the generated skill orchestration adapter.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Includes capabilities, workflow routing, and regeneration guidance.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: central generated Unreal MCP skill index
-#   - reason: all capability routing must remain discoverable in one index
-#   - split: extract introductory prose if another index format is added
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess after taxonomy, workflow, or generation changes
-#
-"""Central docs-style index for native Unreal MCP skills."""
+
+"""Skill index renderer outbound adapter."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from mcp.adapter_outbound.skill_document_layout import tool_skill_path
-from mcp.adapter_outbound.skill_markdown_policy import (
-    render_unbreakable_line,
-)
+from mcp.adapter_outbound.skill_markdown_policy import render_unbreakable_line
 from mcp.domain.errors import fail_protocol
-from mcp.domain.skill_categories import CATEGORIES, SkillCategory
+from mcp.domain.skill_categories import CATEGORIES
+from mcp.domain.skill_categories import SkillCategory
 
 if TYPE_CHECKING:
     from mcp.domain.catalog import ToolsetDefinition
@@ -164,6 +146,7 @@ def render_root_index(
 
     Returns:
         Complete central index Markdown containing every capability.
+
     """
     toolset_count = sum(len(items) for items in grouped.values())
     tool_count = sum(
@@ -269,6 +252,7 @@ def replace_manual_review_summary(
 
     Returns:
         Complete index content with exact persisted review counts.
+
     """
     updated = _replace_count_line(
         content,

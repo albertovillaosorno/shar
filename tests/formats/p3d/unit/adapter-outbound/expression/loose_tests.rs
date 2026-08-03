@@ -1,0 +1,94 @@
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Expression loose unit tests.
+// - Must-Not:
+//   - Own production behavior or broaden the tested API surface.
+// - Allows:
+//   - Private assertions for the owning source module.
+// - Split-When:
+//   - Split when an independent fixture family gains separate ownership.
+// - Merge-When:
+//   - Merge when another test module owns the identical evidence.
+// - Summary:
+//   - Expression loose unit tests.
+// - Description:
+//   - Preserves unit-test access through a test-only path module.
+// - Usage:
+//   - Included only by the owning source module under cfg(test).
+// - Defaults:
+//   - Assertions fail explicitly.
+//
+
+//! Expression loose unit tests.
+
+use super::*;
+
+#[test]
+fn expression_mixer_rejects_invalid_utf8_names() {
+    let mut chunk = Vec::new();
+    chunk.extend_from_slice(&0x0002_1002_u32.to_le_bytes());
+    chunk.extend_from_slice(&26_u32.to_le_bytes());
+    chunk.extend_from_slice(&26_u32.to_le_bytes());
+    chunk.extend_from_slice(&1_u32.to_le_bytes());
+    chunk.extend_from_slice(&[1, 0xff]);
+    chunk.extend_from_slice(&0_u32.to_le_bytes());
+    chunk.extend_from_slice(&[1, b't', 1, b'g']);
+
+    assert!(
+        vertex_expression_json("vertex_expression_mixer", &chunk,).is_none()
+    );
+}
+
+#[test]
+fn expression_mixer_preserves_declared_trailing_null_names()
+-> Result<(), String> {
+    let mut chunk = Vec::new();
+    chunk.extend_from_slice(&0x0002_1002_u32.to_le_bytes());
+    chunk.extend_from_slice(&27_u32.to_le_bytes());
+    chunk.extend_from_slice(&27_u32.to_le_bytes());
+    chunk.extend_from_slice(&1_u32.to_le_bytes());
+    chunk.extend_from_slice(&[2, b'n', 0]);
+    chunk.extend_from_slice(&0_u32.to_le_bytes());
+    chunk.extend_from_slice(&[1, b't', 1, b'g']);
+
+    let Some(json) = vertex_expression_json("vertex_expression_mixer", &chunk)
+    else {
+        return Err(String::from("valid expression mixer should decode"));
+    };
+    if !json.contains(r#""name":"n\u0000""#) {
+        return Err(format!("trailing null was not preserved: {json:?}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn expression_group_rejects_missing_declared_children() {
+    let mut chunk = Vec::new();
+    chunk.extend_from_slice(&0x0002_1001_u32.to_le_bytes());
+    chunk.extend_from_slice(&28_u32.to_le_bytes());
+    chunk.extend_from_slice(&28_u32.to_le_bytes());
+    chunk.extend_from_slice(&1_u32.to_le_bytes());
+    chunk.extend_from_slice(&[1, b'n', 1, b't']);
+    chunk.extend_from_slice(&1_u32.to_le_bytes());
+    chunk.extend_from_slice(&0_u32.to_le_bytes());
+
+    assert!(
+        vertex_expression_json("vertex_expression_group", &chunk,).is_none()
+    );
+}
+
+#[test]
+fn expression_key_format_preserves_f32_roundtrip() {
+    let value = f32::from_bits(0x3f80_0001);
+
+    assert_eq!(format_f32(value), value.to_string());
+}

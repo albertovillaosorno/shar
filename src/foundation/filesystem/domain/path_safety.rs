@@ -1,7 +1,3 @@
-// File:
-//   - path_safety.rs
-// Path: src/foundation/filesystem/domain/path_safety.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Portable component identity validation for shared filesystem paths.
+//   - Path safety domain module.
 // - Must-Not:
-//   - Perform IO, resolve containment roots, or select storage adapters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Reject host aliases that cannot represent ordinary file identities.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another identity family has independent versioning policy.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another domain module owns the same portable component rules.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Portable filesystem path safety.
+//   - Path safety domain module.
 // - Description:
-//   - Rejects component identities reserved by Windows.
+//   - Implements the declared domain module responsibility for filesystem.
 // - Usage:
-//   - Called by explicit local operations and rooted path resolution.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Ordinary Unicode component names remain accepted.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Portable component identity validation.
-//!
-//! This module rejects host aliases without performing filesystem access.
+//! Path safety domain module.
+
 use std::path::{Component, Path};
 
 use super::RootedPathError;
@@ -51,12 +38,11 @@ use super::RootedPathError;
 const MAX_PORTABLE_COMPONENT_UTF16_UNITS: usize = 255;
 
 /// Reserved host stems that alias non-file destinations.
-const RESERVED_HOST_STEMS: [&str; 7] = [
-    "AUX", "CLOCK$", "CON", "CONIN$", "CONOUT$", "NUL", "PRN",
-];
+const RESERVED_HOST_STEMS: [&str; 7] =
+    ["AUX", "CLOCK$", "CON", "CONIN$", "CONOUT$", "NUL", "PRN"];
 /// Reserved numbered host aliases recognized by Windows.
 const RESERVED_HOST_SUFFIXES: [&str; 12] = [
-    "1", "2", "3", "4", "5", "6", "7", "8", "9", "¹", "²", "³",
+    "1", "2", "3", "4", "5", "6", "7", "8", "9", "\u{b9}", "\u{b2}", "\u{b3}",
 ];
 
 /// Reports whether one portable component targets a reserved host alias.
@@ -65,11 +51,7 @@ fn is_reserved_host_alias(name: &str) -> bool {
         .split('.')
         .next()
         .unwrap_or(name)
-        .trim_end_matches(
-            [
-                ' ', '.',
-            ],
-        )
+        .trim_end_matches([' ', '.'])
         .to_ascii_uppercase();
     if RESERVED_HOST_STEMS.contains(&stem.as_str()) {
         return true;
@@ -104,20 +86,12 @@ fn has_forbidden_host_character(name: &str) -> bool {
         return true;
     }
     name.chars()
-        .any(
-            |character| {
-                matches!(
-                    character,
-                    '<' | '>' | '"' | '|' | '?' | '*'
-                )
-            },
-        )
+        .any(|character| matches!(character, '<' | '>' | '"' | '|' | '?' | '*'))
 }
 
 /// Reports whether one component contains a control character.
 fn has_control_character(name: &str) -> bool {
-    name.chars()
-        .any(char::is_control)
+    name.chars().any(char::is_control)
 }
 
 /// Reports whether one Unicode character can conceal path identity.
@@ -136,15 +110,12 @@ const fn is_unicode_path_modifier(character: char) -> bool {
 
 /// Reports whether one component contains an invisible path modifier.
 fn has_unicode_path_modifier(name: &str) -> bool {
-    name.chars()
-        .any(is_unicode_path_modifier)
+    name.chars().any(is_unicode_path_modifier)
 }
 
 /// Reports whether one component exceeds the portable unit limit.
 fn is_component_too_long(name: &str) -> bool {
-    name.encode_utf16()
-        .count()
-        > MAX_PORTABLE_COMPONENT_UTF16_UNITS
+    name.encode_utf16().count() > MAX_PORTABLE_COMPONENT_UTF16_UNITS
 }
 
 /// Validates portable component identities without interpreting path policy.
@@ -190,11 +161,6 @@ pub fn validate_portable_path(path: &Path) -> Result<(), RootedPathError> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::has_forbidden_host_character;
-
-    #[test]
-    fn backslash_is_reserved_host_punctuation() {
-        assert!(has_forbidden_host_character(r"folder\file.bin"));
-    }
-}
+// jig-ignore-next-line: exact syntax is indivisible
+#[path = "../../../../tests/foundation/filesystem/unit/domain/path_safety/tests.rs"]
+mod tests;

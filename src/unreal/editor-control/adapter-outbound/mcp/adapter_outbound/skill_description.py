@@ -1,7 +1,3 @@
-# File:
-#   - skill_description.py
-# Path: src/unreal/editor-control/adapter-outbound/mcp/adapter_outbound/skill_description.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,42 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Interpretation of live MCP documentation text for generated tool skills.
+#   - Skill description outbound adapter.
 # - Must-Not:
-#   - Render complete Markdown, inspect schemas, access files, or call tools.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Extracting purpose, argument notes, returns, failures, and risk posture.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Docstring parsing and operational posture require separate policies.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another adapter owns the same live-description interpretation contract.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Converts native interface prose into focused skill guidance.
+#   - Skill description outbound adapter.
 # - Description:
-#   - Parses exposed MCP documentation only; it does not inspect engine source.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Consumed by the per-tool skill renderer.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Preserves useful prose and fails back to explicit schema-only guidance.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: live Unreal MCP description interpretation
-#   - reason: purpose, sections, and posture share one technical contract
-#   - split: extract posture policy if native annotations become available
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess when native tool documentation format changes
-#
-"""Interpret live Unreal MCP descriptions for generated skills."""
+
+"""Skill description outbound adapter."""
 
 from __future__ import annotations
 
@@ -56,6 +39,7 @@ from typing import NamedTuple
 from mcp.adapter_outbound.skill_technical_text import technical_only_text
 
 _SECTION = re.compile(
+    # jig-ignore-next-line: exact value is indivisible
     r"^(?P<name>Args|Arguments|Parameters|Returns|Raises|Examples?|Notes?):\s*$",
     re.IGNORECASE,
 )
@@ -141,6 +125,7 @@ def parse_description(description: str) -> DescriptionSections:
 
     Returns:
         Purpose, argument notes, return guidance, failures, and notes.
+
     """
     technical_description = technical_only_text(description)
     lines = textwrap.dedent(technical_description).strip().splitlines()

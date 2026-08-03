@@ -6,12 +6,15 @@
 ## Governing decisions
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [HUD, radar, camera, and navigation parity](../../adr/unreal/ui/hud-radar-camera-and-navigation.md)
+- [HUD, radar, camera, and navigation
+  parity](../../adr/unreal/ui/hud-radar-camera-and-navigation.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
+- [Runtime parity test
+  boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
 
 ## Purpose
 
@@ -27,20 +30,30 @@ Detailed rig identities, imported presets, target snapshots, per-player
 isolation, rail and static cameras, specialized modes, modifiers, and diagnostic
 visualization follow the
 <!-- markdownlint-disable-next-line MD013 -->
-[camera rig, preset, and arbitration runtime](camera-rig-preset-and-arbitration-runtime.md).
+[camera rig, preset, and arbitration
+runtime](camera-rig-preset-and-arbitration-runtime.md).
 
 ## Ownership
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Camera catalog | Stable mode, preset, transition, shot, collision, and input identities. |
-| Camera subsystem | Request arbitration, active stack, transitions, cancellation, and recovery. |
-| Player camera manager | Final view calculation and native camera-modifier execution. |
-| Gameplay services | Mission, conversation, vehicle, damage, and interaction observations. |
-| UI presentation | Letterbox, skip prompt, subtitle-safe region, and accessibility projection. |
-| Input service | Camera action values and active mapping context. |
+- **Authority:** Camera catalog
+  - **Responsibility:** Stable mode, preset, transition, shot, collision, and
+    input identities.
+- **Authority:** Camera subsystem
+  - **Responsibility:** Request arbitration, active stack, transitions,
+    cancellation, and recovery.
+- **Authority:** Player camera manager
+  - **Responsibility:** Final view calculation and native camera-modifier
+    execution.
+- **Authority:** Gameplay services
+  - **Responsibility:** Mission, conversation, vehicle, damage, and interaction
+    observations.
+- **Authority:** UI presentation
+  - **Responsibility:** Letterbox, skip prompt, subtitle-safe region, and
+    accessibility projection.
+- **Authority:** Input service
+  - **Responsibility:** Camera action values and active mapping context.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -53,18 +66,32 @@ The runtime module owns these C++ types:
 
 <!-- markdownlint-disable MD013 -->
 
-| Type | Responsibility |
-| :--- | :--- |
-| `USharCameraModeDefinition` | Immutable mode, target, collision, FOV, input, and transition policy. |
-| `USharCameraPresetDefinition` | Data for rods, offsets, lag, limits, framing, and platform variants. |
-| `USharConversationShotDefinition` | Typed two-character or authored conversation framing. |
-| `USharAnimatedCameraDefinition` | Authored camera and sequence bindings with skip and completion policy. |
-| `USharCameraSubsystem` | Request arbitration, handles, active stack, restoration, and typed results. |
-| `ASharPlayerCameraManager` | Native final view target and modifier integration. |
-| `USharCameraCollisionComponent` | Bounded obstruction queries and safe camera placement. |
-| `FSharCameraRequest` | Priority, mode, targets, preset, transition, reason, and lifetime. |
-| `FSharCameraHandle` | Move-only cancellation and ownership handle. |
-| `FSharCameraObservation` | Immutable target transform, velocity, state, input, and world snapshot. |
+- **Type:** `USharCameraModeDefinition`
+  - **Responsibility:** Immutable mode, target, collision, FOV, input, and
+    transition policy.
+- **Type:** `USharCameraPresetDefinition`
+  - **Responsibility:** Data for rods, offsets, lag, limits, framing, and
+    platform variants.
+- **Type:** `USharConversationShotDefinition`
+  - **Responsibility:** Typed two-character or authored conversation framing.
+- **Type:** `USharAnimatedCameraDefinition`
+  - **Responsibility:** Authored camera and sequence bindings with skip and
+    completion policy.
+- **Type:** `USharCameraSubsystem`
+  - **Responsibility:** Request arbitration, handles, active stack, restoration,
+    and typed results.
+- **Type:** `ASharPlayerCameraManager`
+  - **Responsibility:** Native final view target and modifier integration.
+- **Type:** `USharCameraCollisionComponent`
+  - **Responsibility:** Bounded obstruction queries and safe camera placement.
+- **Type:** `FSharCameraRequest`
+  - **Responsibility:** Priority, mode, targets, preset, transition, reason, and
+    lifetime.
+- **Type:** `FSharCameraHandle`
+  - **Responsibility:** Move-only cancellation and ownership handle.
+- **Type:** `FSharCameraObservation`
+  - **Responsibility:** Immutable target transform, velocity, state, input, and
+    world snapshot.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -77,19 +104,35 @@ Every camera-mode definition contains:
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `CameraModeId` | Globally unique canonical identity. |
-| `ModeKind` | Follow, chase, bumper, burnout, first person, conversation, animated, debug, or registered extension. |
-| `RequiredTargetKinds` | Character, vehicle, camera actor, sequence, or multiple targets. |
-| `PresetId` | Validated offset, lag, FOV, input, collision, and framing data. |
-| `PriorityClass` | Default, gameplay override, conversation, cinematic, safety, or debug. |
-| `TransitionPolicyId` | Cut, blend, match, defer, or authored transition. |
-| `CollisionPolicyId` | Query shape, channels, margin, recovery, and target exclusion. |
-| `InputPolicyId` | Allowed look, zoom, reverse, quick-turn, skip, and debug actions. |
-| `CancellationPolicy` | Immediate, blend out, safe point, or uninterruptible authored section. |
-| `VerificationPolicy` | Required active mode, target, framing, and completion observations. |
-| `DefinitionRevision` | Immutable revision used to reject stale requests. |
+- **Field:** `CameraModeId`
+  - **Contract:** Globally unique canonical identity.
+- **Field:** `ModeKind`
+  - **Contract:** Follow, chase, bumper, burnout, first person, conversation,
+    animated, debug, or registered extension.
+- **Field:** `RequiredTargetKinds`
+  - **Contract:** Character, vehicle, camera actor, sequence, or multiple
+    targets.
+- **Field:** `PresetId`
+  - **Contract:** Validated offset, lag, FOV, input, collision, and framing
+    data.
+- **Field:** `PriorityClass`
+  - **Contract:** Default, gameplay override, conversation, cinematic, safety,
+    or debug.
+- **Field:** `TransitionPolicyId`
+  - **Contract:** Cut, blend, match, defer, or authored transition.
+- **Field:** `CollisionPolicyId`
+  - **Contract:** Query shape, channels, margin, recovery, and target exclusion.
+- **Field:** `InputPolicyId`
+  - **Contract:** Allowed look, zoom, reverse, quick-turn, skip, and debug
+    actions.
+- **Field:** `CancellationPolicy`
+  - **Contract:** Immediate, blend out, safe point, or uninterruptible authored
+    section.
+- **Field:** `VerificationPolicy`
+  - **Contract:** Required active mode, target, framing, and completion
+    observations.
+- **Field:** `DefinitionRevision`
+  - **Contract:** Immutable revision used to reject stale requests.
 
 <!-- markdownlint-enable MD013 -->
 

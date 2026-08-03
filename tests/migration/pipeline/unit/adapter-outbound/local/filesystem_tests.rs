@@ -1,7 +1,3 @@
-// File:
-//   - filesystem_tests.rs
-// Path: tests/migration/pipeline/unit/adapter-outbound/local/filesystem_tests.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for deterministic shared filesystem traversal.
+//   - Filesystem tests test module.
 // - Must-Not:
-//   - Test unrelated phase behavior or depend on repository-local data.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Isolated temporary files removed before the test returns.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Traversal gains a second independently testable contract.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Filesystem traversal tests move to a dedicated integration-test crate.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Deterministic filesystem traversal regressions.
+//   - Filesystem tests test module.
 // - Description:
-//   - Verifies canonical result ordering for shared recursive traversal.
+//   - Implements the declared test module responsibility for pipeline.
 // - Usage:
-//   - Included only by phase/filesystem.rs under cfg(test).
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Test fixtures are local, unique, and removed before return.
-//
-// ADRs:
-// - docs/adr/pipeline/minor-unit-taxonomy-value-case.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression tests for deterministic shared filesystem traversal.
-//!
-//! Each case uses explicit local fixtures so ordering and file-only behavior
-//! remain readable without sharing production test helpers.
+//! Filesystem tests test module.
 
 use std::fs;
 
@@ -55,15 +40,11 @@ fn non_unicode_root_error_is_reversible() -> Result<(), String> {
     use std::ffi::OsString;
     use std::os::windows::ffi::OsStringExt as _;
 
-    let root = std::path::PathBuf::from(
-        OsString::from_wide(
-            &[
-                u16::from(b'a'),
-                0xd800_u16,
-                u16::from(b'b'),
-            ],
-        ),
-    );
+    let root = std::path::PathBuf::from(OsString::from_wide(&[
+        u16::from(b'a'),
+        0xd800_u16,
+        u16::from(b'b'),
+    ]));
     let result = collect_files(&root);
     let Some(error) = result.err() else {
         return Err("non-Unicode root unexpectedly succeeded".to_owned());
@@ -80,32 +61,21 @@ fn non_unicode_root_error_is_reversible() -> Result<(), String> {
 
 #[test]
 fn collect_files_returns_paths_in_canonical_order() -> Result<(), String> {
-    let root = std::env::temp_dir().join(
-        format!(
-            "pipeline-filesystem-order-{}",
-            std::process::id(),
-        ),
-    );
+    let root = std::env::temp_dir()
+        .join(format!("pipeline-filesystem-order-{}", std::process::id(),));
     match fs::remove_dir_all(&root) {
-        Ok(()) => {}
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+        Ok(()) => {},
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {},
         Err(error) => return Err(error.to_string()),
     }
-    for directory in [
-        "zeta", "alpha", "middle",
-    ] {
-        let path = root
-            .join(directory)
-            .join("file.bin");
+    for directory in ["zeta", "alpha", "middle"] {
+        let path = root.join(directory).join("file.bin");
         fs::create_dir_all(
             path.parent()
                 .ok_or_else(|| String::from("missing parent"))?,
         )
         .map_err(|error| error.to_string())?;
-        fs::write(
-            &path, directory,
-        )
-        .map_err(|error| error.to_string())?;
+        fs::write(&path, directory).map_err(|error| error.to_string())?;
     }
 
     let actual = collect_files(&root).map_err(|error| error.to_string())?;
@@ -114,9 +84,9 @@ fn collect_files_returns_paths_in_canonical_order() -> Result<(), String> {
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
 
     if actual != expected {
-        return Err(
-            format!("filesystem traversal was not canonical: {actual:?}"),
-        );
+        return Err(format!(
+            "filesystem traversal was not canonical: {actual:?}"
+        ));
     }
     Ok(())
 }

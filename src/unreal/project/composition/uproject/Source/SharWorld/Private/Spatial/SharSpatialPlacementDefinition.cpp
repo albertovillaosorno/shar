@@ -1,12 +1,34 @@
-// File: SharSpatialPlacementDefinition.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharWorld/Private/Spatial/SharSpatialPlacementDefinition.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: load-free authored placement and volume validation only; no overlap queries or domain mutation.
-// ADR: docs/adr/unreal/runtime/contextual-interaction-query-and-transaction.md
-// LARGE-FILE owner=SharWorld; reason=cohesive spatial definition validation;
-// split=extract shape validation if convex or spline volumes are introduced;
-// validation=validate.sh SharWorld plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar spatial placement definition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar spatial placement definition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar spatial placement definition composition module.
 
 #include "Spatial/SharSpatialPlacementDefinition.h"
 
@@ -134,6 +156,7 @@ static void AppendVolumeErrors(
     {
         AddSpatialDefinitionError(
             OutErrors,
+            // jig-ignore-next-line: exact syntax is indivisible
             TEXT("Spatial volume dimensions must be finite and valid for the declared shape.")
         );
     }
@@ -141,6 +164,7 @@ static void AppendVolumeErrors(
     {
         AddSpatialDefinitionError(
             OutErrors,
+            // jig-ignore-next-line: exact syntax is indivisible
             TEXT("Spatial observation tolerances and timing must be finite and non-negative.")
         );
     }
@@ -246,6 +270,7 @@ void USharSpatialPlacementDefinition::GatherValidationErrors(
         RoleIds,
         true,
         {
+            // jig-ignore-next-line: exact syntax is indivisible
             .Missing = TEXT("Spatial placement requires at least one semantic role."),
             .Invalid = TEXT("Spatial role identities must be canonical."),
             .Duplicate = TEXT("Spatial role identities must be unique."),

@@ -1,7 +1,3 @@
-// File:
-//   - adapters.rs
-// Path: src/formats/rcf/composition/adapters.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,46 +6,34 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - rcf module behavior for adapters.
+//   - Adapters composition module.
 // - Must-Not:
-//   - Violate repository architecture, path, provenance, or output rules.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Operations required to validate and execute adapters.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when adapters contains two independently testable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another rcf module owns the same module boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Filesystem adapters for RCF archive extraction.
+//   - Adapters composition module.
 // - Description:
-//   - Defines adapters data and behavior for rcf root.
+//   - Implements the declared composition module responsibility for rcf.
 // - Usage:
-//   - Used by rcf root code that needs adapters.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No implicit output outside the repository is allowed.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Inbound and outbound adapters for RCF archive workflows.
-//!
-//! Driving adapters translate operator requests into application use cases,
-//! while driven adapters implement the storage ports selected by composition.
-/// Outbound adapters called through RCF ports.
-#[path = "../adapter-outbound/mod.rs"]
+//! Adapters composition module.
+
+#[path = "adapter-outbound/mod.rs"]
 pub mod driven;
 /// Inbound adapters such as command-line request handling.
-#[path = "../adapter-inbound/mod.rs"]
+#[path = "adapter-inbound/mod.rs"]
 pub mod driving;
 
 pub use driven::{FileArchiveSource, FileEntrySink};

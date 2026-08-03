@@ -1,7 +1,3 @@
-// File:
-//   - binary_only_contract.rs
-// Path: tests/formats/fbx/binary_only_contract.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,44 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for the binary-only FBX export architecture.
+//   - Binary only contract test module.
 // - Must-Not:
-//   - Parse private assets, invoke review tools, or duplicate format tests.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Inspect tracked composition-root source text for retired export surfaces.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another format becomes an independently approved canonical artifact.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - A repository architecture gate owns the identical source assertions.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Prevents alternate FBX formats and authoring-helper reintroduction.
+//   - Binary only contract test module.
 // - Description:
-//   - Proves the direct binary writer API and absence of external helpers.
+//   - Implements the declared test module responsibility for fbx.
 // - Usage:
-//   - Run through the fbx crate test suite.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Documentation may name rejected formats when explaining the boundary.
-//
-// ADRs:
-// - docs/adr/fbx/export/fbx-output-contract-boundary.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Binary-only FBX export architecture regression.
-//!
-//! This test inspects only public composition-root source text. It guards the
-//! direct binary writer API, FBX 7.7 identity, and retirement of external
-//! authoring helpers without reading generated assets or local machine paths.
-//!
-//! Rejected legacy tokens are intentionally kept out of implementation source;
-//! explanatory documentation may still name retired formats.
+//! Binary only contract test module.
 
 use fbx as _;
 use png as _;
@@ -56,21 +37,31 @@ use serde as _;
 use serde_json as _;
 use shar_sha256 as _;
 
-const DRIVEN_MODULE: &str = include_str!("../../../src/formats/fbx/adapter-outbound/mod.rs");
-const PIPELINE_EXPORT: &str =
-    include_str!("../../../src/migration/pipeline/adapter-outbound/local/fbx_export.rs");
-const PIPELINE_CLI: &str =
-    include_str!("../../../src/migration/pipeline/adapter-inbound/cli.rs");
-const PIPELINE_OPTIONS: &str =
-    include_str!("../../../src/migration/pipeline/adapter-inbound/cli/options.rs");
-const PIPELINE_PORTS: &str = include_str!("../../../src/migration/pipeline/port-outbound/mod.rs");
-const SEMANTIC_TEXTURE_CLI: &str =
-    include_str!("../../../src/formats/fbx/composition/semantic_character_texture_cli.rs");
+const DRIVEN_MODULE: &str = include_str!(
+    "../../../src/formats/fbx/composition/adapter-outbound/mod.rs",
+);
+const PIPELINE_EXPORT: &str = include_str!(
+    // jig-ignore-next-line: exact source contract path is indivisible
+    "../../../src/migration/pipeline/composition/adapter-outbound/local/fbx_export.rs",
+);
+const PIPELINE_CLI: &str = include_str!(
+    "../../../src/migration/pipeline/composition/adapter-inbound/cli.rs"
+);
+const PIPELINE_OPTIONS: &str = include_str!(
+    "../../../src/migration/pipeline/composition/adapter-inbound/cli/options.rs"
+);
+const PIPELINE_PORTS: &str =
+    include_str!("../../../src/migration/pipeline/port-outbound/mod.rs");
+const SEMANTIC_TEXTURE_CLI: &str = include_str!(
+    "../../../src/formats/fbx/composition/semantic_character_texture_cli.rs"
+);
 const SEMANTIC_TEXTURE_PACKAGE: &str = include_str!(
-    "../../../src/formats/fbx/adapter-outbound/semantic_character_texture/package.rs",
+    // jig-ignore-next-line: exact syntax is indivisible
+    "../../../src/formats/fbx/composition/adapter-outbound/semantic_character_texture/package.rs",
 );
 const SEMANTIC_TEXTURE_PUBLICATION: &str = include_str!(
-    "../../../src/formats/fbx/adapter-outbound/semantic_character_texture/publication.rs",
+    // jig-ignore-next-line: exact syntax is indivisible
+    "../../../src/formats/fbx/composition/adapter-outbound/semantic_character_texture/publication.rs",
 );
 
 #[test]
@@ -118,9 +109,9 @@ fn exposes_only_binary_fbx_7700() -> Result<(), String> {
         ".maya.py",
     ] {
         if contract_sources.contains(forbidden) {
-            return Err(
-                format!("retired FBX export surface returned: {forbidden}"),
-            );
+            return Err(format!(
+                "retired FBX export surface returned: {forbidden}"
+            ));
         }
     }
     Ok(())

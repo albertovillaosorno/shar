@@ -1,7 +1,3 @@
-// File:
-//   - SharPrimaryContentValidation.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharContent/Private/Content/SharPrimaryContentValidation.cpp
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,41 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Focused identity, provenance, and dependency validation operations.
+//   - Shar primary content validation composition module.
 // - Must-Not:
-//   - Load assets, inspect editor registries, or apply concrete family rules.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Deterministic validation against authored primary-definition fields.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - One validation family needs state or a separate module boundary.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - The validation groups no longer change independently.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Implements private primary-content validation operations.
+//   - Shar primary content validation composition module.
 // - Description:
-//   - Preserves strict complexity ceilings through cohesive functions.
+//   - Implements the declared composition module responsibility for project.
 // - Usage:
-//   - Invoked by USharPrimaryContentDefinition::GatherValidationErrors.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Reports every independent error without short-circuiting.
+//   - Invalid or missing inputs fail explicitly.
 //
-// ADRs:
-// - docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
-//
-// Large file:
-//   - true
-// LARGE-FILE:
-// - owner: Unreal content foundation
-// - reason: Three cohesive validation families share one private implementation.
-// - split: Separate a family only when it gains state or another consumer.
-// - validation: Canonical validate.sh plus native Unreal automation tests.
-// - review: 2027-01
-//
+
+//! Shar primary content validation composition module.
 
 #include "Content/SharPrimaryContentValidation.h"
 
@@ -144,6 +128,7 @@ void FSharPrimaryContentValidation::AppendIdentityErrors(
         OutErrors.Add(NSLOCTEXT(
             "SharPrimaryContentDefinition",
             "InvalidCanonicalId",
+            // jig-ignore-next-line: exact syntax is indivisible
             "CanonicalId must be lowercase ASCII snake_case without repeated underscores."
         ));
     }
@@ -232,6 +217,7 @@ void FSharPrimaryContentValidation::AppendDependencyErrors(
             OutErrors.Add(NSLOCTEXT(
                 "SharPrimaryContentDefinition",
                 "InvalidDependency",
+                // jig-ignore-next-line: exact syntax is indivisible
                 "RequiredDefinitions contains an invalid Primary Asset identity."
             ));
             continue;

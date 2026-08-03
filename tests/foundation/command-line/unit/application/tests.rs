@@ -1,7 +1,3 @@
-// File:
-//   - tests.rs
-// Path: tests/foundation/command-line/unit/application/tests.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Unit regressions for process-neutral invocation orchestration.
+//   - Tests test module.
 // - Must-Not:
-//   - Access current-process arguments or operating-system streams.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Use deterministic in-memory command, argument, and output ports.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - One orchestration behavior needs an independent fixture family.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - The application runner no longer owns invocation orchestration.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Shared CLI application tests.
+//   - Tests test module.
 // - Description:
-//   - Verifies command execution, argument diagnostics, and output order.
+//   - Implements the declared test module responsibility for command line.
 // - Usage:
-//   - Compiled with the schoenwald-cli unit test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - All ports remain process neutral and deterministic.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Unit regressions for shared CLI invocation orchestration.
-//!
-//! Test ports stay deterministic and avoid current-process mechanisms.
+//! Tests test module.
 
 mod cases {
     use std::cell::RefCell;
@@ -61,18 +47,14 @@ mod cases {
 
     impl ArgumentSource for SuppliedArguments {
         fn arguments(&mut self) -> Result<Vec<String>, ArgumentError> {
-            self.values
-                .clone()
+            self.values.clone()
         }
     }
 
     struct EchoProgram;
 
     impl CliProgram for EchoProgram {
-        fn execute(
-            &self,
-            arguments: &[String],
-        ) -> CommandOutcome {
+        fn execute(&self, arguments: &[String]) -> CommandOutcome {
             CommandOutcome::success()
                 .stdout_line(arguments.join("|"))
                 .stderr("diagnostic")
@@ -82,12 +64,7 @@ mod cases {
     #[derive(Default)]
     struct RecordingOutput {
         /// Exact chunks observed in presentation order.
-        chunks: RefCell<
-            Vec<(
-                OutputStream,
-                String,
-            )>,
-        >,
+        chunks: RefCell<Vec<(OutputStream, String)>>,
     }
 
     impl OutputSink for RecordingOutput {
@@ -96,14 +73,7 @@ mod cases {
             stream: OutputStream,
             text: &str,
         ) -> io::Result<()> {
-            self.chunks
-                .borrow_mut()
-                .push(
-                    (
-                        stream,
-                        text.to_owned(),
-                    ),
-                );
+            self.chunks.borrow_mut().push((stream, text.to_owned()));
             Ok(())
         }
     }
@@ -111,43 +81,18 @@ mod cases {
     #[test]
     fn command_receives_arguments_and_output_order_is_preserved() {
         let mut arguments = SuppliedArguments {
-            values: Ok(
-                vec![
-                    "first".to_owned(),
-                    "second".to_owned(),
-                ],
-            ),
+            values: Ok(vec!["first".to_owned(), "second".to_owned()]),
         };
         let mut output = RecordingOutput::default();
 
-        let result = RunInvocation::execute(
-            &EchoProgram,
-            &mut arguments,
-            &mut output,
-        );
+        let result =
+            RunInvocation::execute(&EchoProgram, &mut arguments, &mut output);
 
-        assert!(
-            matches!(
-                result,
-                Ok(ExitStatus::Success)
-            )
-        );
-        assert_eq!(
-            output
-                .chunks
-                .borrow()
-                .as_slice(),
-            &[
-                (
-                    OutputStream::Stdout,
-                    "first|second\n".to_owned()
-                ),
-                (
-                    OutputStream::Stderr,
-                    "diagnostic".to_owned()
-                ),
-            ]
-        );
+        assert!(matches!(result, Ok(ExitStatus::Success)));
+        assert_eq!(output.chunks.borrow().as_slice(), &[
+            (OutputStream::Stdout, "first|second\n".to_owned()),
+            (OutputStream::Stderr, "diagnostic".to_owned()),
+        ]);
     }
 
     #[test]
@@ -157,38 +102,19 @@ mod cases {
         };
         let mut output = RecordingOutput::default();
 
-        let result = RunInvocation::execute(
-            &EchoProgram,
-            &mut arguments,
-            &mut output,
-        );
+        let result =
+            RunInvocation::execute(&EchoProgram, &mut arguments, &mut output);
 
-        assert!(
-            matches!(
-                result,
-                Ok(ExitStatus::Failure)
-            )
-        );
-        assert_eq!(
-            output
-                .chunks
-                .borrow()
-                .as_slice(),
-            &[
-                (
-                    OutputStream::Stderr,
-                    "command argument 3 is not valid Unicode\n".to_owned(),
-                )
-            ]
-        );
+        assert!(matches!(result, Ok(ExitStatus::Failure)));
+        assert_eq!(output.chunks.borrow().as_slice(), &[(
+            OutputStream::Stderr,
+            "command argument 3 is not valid Unicode\n".to_owned(),
+        )]);
     }
     struct EmptyOutputProgram;
 
     impl CliProgram for EmptyOutputProgram {
-        fn execute(
-            &self,
-            _arguments: &[String],
-        ) -> CommandOutcome {
+        fn execute(&self, _arguments: &[String]) -> CommandOutcome {
             CommandOutcome::success().stdout("")
         }
     }
@@ -205,23 +131,17 @@ mod cases {
             _stream: OutputStream,
             _text: &str,
         ) -> io::Result<()> {
-            self.calls = self
-                .calls
-                .saturating_add(1);
-            Err(
-                io::Error::new(
-                    io::ErrorKind::BrokenPipe,
-                    "sink rejected output",
-                ),
-            )
+            self.calls = self.calls.saturating_add(1);
+            Err(io::Error::new(
+                io::ErrorKind::BrokenPipe,
+                "sink rejected output",
+            ))
         }
     }
 
     #[test]
     fn empty_output_does_not_touch_the_sink() {
-        let mut arguments = SuppliedArguments {
-            values: Ok(Vec::new()),
-        };
+        let mut arguments = SuppliedArguments { values: Ok(Vec::new()) };
         let mut output = RejectingOutput::default();
 
         let result = RunInvocation::execute(
@@ -230,15 +150,7 @@ mod cases {
             &mut output,
         );
 
-        assert!(
-            matches!(
-                result,
-                Ok(ExitStatus::Success)
-            )
-        );
-        assert_eq!(
-            output.calls,
-            0
-        );
+        assert!(matches!(result, Ok(ExitStatus::Success)));
+        assert_eq!(output.calls, 0);
     }
 }

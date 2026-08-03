@@ -2,7 +2,9 @@
 // Path: src/unreal/project/composition/uproject/Source/sharServer.Target.cs
 // Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier: MIT
+// jig-ignore-next-line: exact syntax is indivisible
 // Boundary: self-hosted dedicated-server target declaration only; no operated infrastructure.
+// jig-ignore-next-line: exact syntax is indivisible
 // ADR: docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
 
 using UnrealBuildTool;

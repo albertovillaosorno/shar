@@ -1,7 +1,3 @@
-// File:
-//   - chunk.rs
-// Path: src/formats/p3d/domain/chunk.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,42 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure p3d domain rules for domain chunk.
+//   - Chunk domain module.
 // - Must-Not:
-//   - Read files, parse generated indexes, invoke CLI code, or call writer
-//   - adapters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Value objects, invariant checks, and pure evidence-to-domain translation.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when chunk contains two independently testable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another p3d module owns the same domain boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Defines p3d error for this module boundary.
+//   - Chunk domain module.
 // - Description:
-//   - Defines chunk data and behavior for p3d domain.
+//   - Implements the declared domain module responsibility for p3d.
 // - Usage:
-//   - Imported through crate domain facades or sibling domain modules.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No filesystem paths, no external process calls, and no implicit IO
-//   - defaults.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - true
-//   - Reason: src/formats/p3d/domain/chunk.rs has 542 effective lines after the
-//   - required header and remains cohesive until a focused split lands.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! This code defines p3d error as pure domain behavior for domain chunk.
+//! Chunk domain module.
+
 use std::fmt;
 
 use super::extract::prepare_p3d_bytes;
@@ -63,9 +47,7 @@ pub struct P3dError {
 impl P3dError {
     /// Invalid source.
     pub fn invalid_source(message: impl Into<String>) -> Self {
-        Self {
-            message: message.into(),
-        }
+        Self { message: message.into() }
     }
 }
 
@@ -83,10 +65,7 @@ fn escaped_diagnostic_text(value: &str) -> String {
 }
 
 impl fmt::Display for P3dError {
-    fn fmt(
-        &self,
-        formatter: &mut fmt::Formatter<'_>,
-    ) -> fmt::Result {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         let rendered_message = escaped_diagnostic_text(&self.message);
         formatter.write_str(&rendered_message)
     }
@@ -359,43 +338,28 @@ pub struct P3dDocument {
 /// Returns an error when source parsing or filesystem output fails.
 pub fn analyze_p3d(source: &[u8]) -> Result<P3dDocument, P3dError> {
     let prepared = prepare_p3d_bytes(source)?;
-    let bytes = prepared
-        .bytes
-        .as_ref();
+    let bytes = prepared.bytes.as_ref();
     let endian = detect_endian(bytes)?;
     let mut chunks = Vec::new();
-    parse_range(
-        bytes,
-        endian,
-        0,
-        bytes.len(),
-        0,
-        None,
-        &mut chunks,
-    )?;
+    parse_range(bytes, endian, 0, bytes.len(), 0, None, &mut chunks)?;
     let root = chunks
         .first()
         .ok_or_else(|| P3dError::invalid_source("missing root chunk"))?;
     if root.total_size != bytes.len() {
-        return Err(
-            P3dError::invalid_source("root chunk does not span the document"),
-        );
+        return Err(P3dError::invalid_source(
+            "root chunk does not span the document",
+        ));
     }
     let child_counts = compute_child_counts(&chunks)?;
-    for (chunk, count) in chunks
-        .iter_mut()
-        .zip(child_counts)
-    {
+    for (chunk, count) in chunks.iter_mut().zip(child_counts) {
         chunk.child_count = count;
     }
-    Ok(
-        P3dDocument {
-            endian,
-            compression: prepared.compression,
-            byte_len: bytes.len(),
-            chunks,
-        },
-    )
+    Ok(P3dDocument {
+        endian,
+        compression: prepared.compression,
+        byte_len: bytes.len(),
+        chunks,
+    })
 }
 
 /// Parse range.
@@ -416,33 +380,21 @@ fn parse_range(
     chunks: &mut Vec<ChunkRecord>,
 ) -> Result<(), P3dError> {
     if depth > MAX_CHUNK_DEPTH {
-        return Err(
-            P3dError::invalid_source("chunk nesting exceeds safe limit"),
-        );
+        return Err(P3dError::invalid_source(
+            "chunk nesting exceeds safe limit",
+        ));
     }
     let mut cursor = start;
     while cursor < end {
-        let header_end = cursor
-            .checked_add(12)
-            .ok_or_else(
-                || P3dError::invalid_source("chunk header end overflow"),
-            )?;
+        let header_end = cursor.checked_add(12).ok_or_else(|| {
+            P3dError::invalid_source("chunk header end overflow")
+        })?;
         if header_end > end {
             break;
         }
-        let id = read_u32(
-            bytes, cursor, endian,
-        )?;
-        let header_size = read_u32(
-            bytes,
-            cursor + 4,
-            endian,
-        )? as usize;
-        let total_size = read_u32(
-            bytes,
-            cursor + 8,
-            endian,
-        )? as usize;
+        let id = read_u32(bytes, cursor, endian)?;
+        let header_size = read_u32(bytes, cursor + 4, endian)? as usize;
+        let total_size = read_u32(bytes, cursor + 8, endian)? as usize;
         let chunk_end = cursor
             .checked_add(total_size)
             .ok_or_else(|| P3dError::invalid_source("chunk end overflow"))?;
@@ -450,21 +402,19 @@ fn parse_range(
             return Err(P3dError::invalid_source("invalid chunk bounds"));
         }
         let ordinal = chunks.len();
-        chunks.push(
-            ChunkRecord {
-                ordinal,
-                depth,
-                parent_ordinal,
-                id,
-                kind: classify_chunk(id),
-                offset: cursor,
-                header_size,
-                total_size,
-                payload_offset: cursor + header_size,
-                payload_size: total_size - header_size,
-                child_count: 0,
-            },
-        );
+        chunks.push(ChunkRecord {
+            ordinal,
+            depth,
+            parent_ordinal,
+            id,
+            kind: classify_chunk(id),
+            offset: cursor,
+            header_size,
+            total_size,
+            payload_offset: cursor + header_size,
+            payload_size: total_size - header_size,
+            child_count: 0,
+        });
         parse_range(
             bytes,
             endian,
@@ -477,56 +427,38 @@ fn parse_range(
         cursor = chunk_end;
     }
     if cursor != end {
-        return Err(
-            P3dError::invalid_source("trailing bytes after chunk stream"),
-        );
+        return Err(P3dError::invalid_source(
+            "trailing bytes after chunk stream",
+        ));
     }
     Ok(())
 }
 
 /// Compute child counts.
 fn compute_child_counts(
-    chunks: &[ChunkRecord]
+    chunks: &[ChunkRecord],
 ) -> Result<Vec<usize>, P3dError> {
     let mut counts = vec![0usize; chunks.len()];
     for chunk in chunks {
         let Some(parent) = chunk.parent_ordinal else {
             continue;
         };
-        let count = counts
-            .get_mut(parent)
-            .ok_or_else(
-                || {
-                    P3dError::invalid_source(
-                        "chunk parent ordinal is out of bounds",
-                    )
-                },
-            )?;
-        *count = count
-            .checked_add(1)
-            .ok_or_else(
-                || P3dError::invalid_source("chunk child count overflowed"),
-            )?;
+        let count = counts.get_mut(parent).ok_or_else(|| {
+            P3dError::invalid_source("chunk parent ordinal is out of bounds")
+        })?;
+        *count = count.checked_add(1).ok_or_else(|| {
+            P3dError::invalid_source("chunk child count overflowed")
+        })?;
     }
     Ok(counts)
 }
 
 /// Detect endian.
 fn detect_endian(bytes: &[u8]) -> Result<Endian, P3dError> {
-    if read_u32(
-        bytes,
-        0,
-        Endian::Little,
-    )? == 0xFF44_3350
-    {
+    if read_u32(bytes, 0, Endian::Little)? == 0xff44_3350 {
         return Ok(Endian::Little);
     }
-    if read_u32(
-        bytes,
-        0,
-        Endian::Big,
-    )? == 0xFF44_3350
-    {
+    if read_u32(bytes, 0, Endian::Big)? == 0xff44_3350 {
         return Ok(Endian::Big);
     }
     Err(P3dError::invalid_source("missing Pure3D root chunk"))
@@ -549,23 +481,19 @@ fn read_u32(
     let slice = bytes
         .get(offset..end)
         .ok_or_else(|| P3dError::invalid_source("unexpected end of u32"))?;
-    let array = [
-        slice[0], slice[1], slice[2], slice[3],
-    ];
-    Ok(
-        match endian {
-            Endian::Little => u32::from_le_bytes(array),
-            Endian::Big => u32::from_be_bytes(array),
-        },
-    )
+    let array = [slice[0], slice[1], slice[2], slice[3]];
+    Ok(match endian {
+        Endian::Little => u32::from_le_bytes(array),
+        Endian::Big => u32::from_be_bytes(array),
+    })
 }
 
 /// Classify chunk.
 const fn classify_chunk(id: u32) -> ChunkKind {
     match id {
-        0xFF44_3350 => ChunkKind::Root,
-        0x0001_800D => ChunkKind::TextBible,
-        0x0001_800E => ChunkKind::Language,
+        0xff44_3350 => ChunkKind::Root,
+        0x0001_800d => ChunkKind::TextBible,
+        0x0001_800e => ChunkKind::Language,
         0x0001_9000 => ChunkKind::Texture,
         0x0001_9002 => ChunkKind::ImageData,
         0x0001_0000 => ChunkKind::Mesh,
@@ -628,82 +556,5 @@ const fn classify_chunk(id: u32) -> ChunkKind {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::{Endian, P3dError, analyze_p3d, parse_range, read_u32};
-
-    #[test]
-    fn invalid_source_error_escapes_control_characters() {
-        let error = P3dError::invalid_source("invalid\nsource");
-
-        assert_eq!(
-            error.to_string(),
-            r"invalid\nsource"
-        );
-    }
-
-    #[test]
-    fn chunk_u32_reader_rejects_offset_overflow() -> Result<(), String> {
-        let read = read_u32(
-            &[],
-            usize::MAX,
-            Endian::Little,
-        );
-        if read.is_ok() {
-            return Err(
-                String::from(
-                    "chunk u32 reads must reject an offset that cannot \
-                     contain four bytes",
-                ),
-            );
-        }
-        Ok(())
-    }
-
-    #[test]
-    fn empty_maximum_range_does_not_overflow() -> Result<(), String> {
-        let mut chunks = Vec::new();
-        parse_range(
-            &[],
-            Endian::Little,
-            usize::MAX,
-            usize::MAX,
-            0,
-            None,
-            &mut chunks,
-        )
-        .map_err(|error| error.to_string())
-    }
-    #[test]
-    fn parses_minimal_root() -> Result<(), String> {
-        let bytes = [
-            0x50, 0x33, 0x44, 0xFF, 12, 0, 0, 0, 12, 0, 0, 0,
-        ];
-        let document =
-            analyze_p3d(&bytes).map_err(|error| error.to_string())?;
-        if document
-            .chunks
-            .len()
-            != 1
-        {
-            return Err(
-                "minimal root must produce exactly one chunk".to_owned(),
-            );
-        }
-        let root = document
-            .chunks
-            .first()
-            .ok_or_else(
-                || "parsed document must contain the root chunk".to_owned(),
-            )?;
-        if root
-            .kind
-            .label()
-            != "root"
-        {
-            return Err(
-                "minimal root chunk must retain the root kind".to_owned(),
-            );
-        }
-        Ok(())
-    }
-}
+#[path = "../../../../tests/formats/p3d/unit/domain/chunk/tests.rs"]
+mod tests;

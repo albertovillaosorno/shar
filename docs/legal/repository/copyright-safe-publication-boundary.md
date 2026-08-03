@@ -26,8 +26,9 @@ relying on a later deletion.
 
 Historical administrative records, credits candidates, technical art guides,
 generated document companions, and digital-content-creation scenes follow
-<!-- markdownlint-disable-next-line MD013 -->
-[Historical source-document evidence classification and publication boundary](../../technical/unreal/historical-source-document-evidence-classification-and-publication-boundary.md).
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+[Historical source-document evidence classification and publication boundary](../../technical/unreal/historical-source-document-evidence-classification-and-publication-boundary.md). <!-- markdownlint-disable-line MD013 -->
 The public repository may contain independently written normalized facts,
 schemas, tests, and native assets after review. It must not contain the
 historical
@@ -41,16 +42,39 @@ the publication baseline, not a license grant for any particular artifact.
 
 <!-- markdownlint-disable MD013 -->
 
-| Artifact class                                  | Public baseline                                           | Required evidence before inclusion                                                             |
-| :---------------------------------------------- | :-------------------------------------------------------- | :--------------------------------------------------------------------------------------------- |
-| Repository source, schemas, and documentation   | Allowed when independently authored or otherwise licensed | Provenance, license scope, and excluded-material scan                                          |
-| Synthetic tests and fixtures                    | Allowed                                                   | Reproducible synthetic origin or a redistribution license                                      |
-| Binaries, installers, and plugins               | Conditional                                               | Source mapping, dependency notices, license compatibility, and secret scan                     |
-| Manifests and reports                           | Conditional                                               | No protected payload, unnecessary original names, personal data, credentials, or private paths |
-| Screenshots, video, audio, models, and textures | Excluded by default                                       | Artifact-specific ownership or redistribution permission                                       |
-| Original game files and extracted payloads      | Excluded                                                  | No public-repository exception is established                                                  |
-| Converted game-derived output                   | Local only by default                                     | Source-content rights and output-specific distribution authority                               |
-| Third-party replacement media                   | Excluded by default                                       | Exact license, attribution, modification, and redistribution authority                         |
+- **Artifact class:** Repository source, schemas, and documentation
+  - **Public baseline:** Allowed when independently authored or otherwise
+    licensed
+  - **Required evidence before inclusion:** Provenance, license scope, and
+    excluded-material scan
+- **Artifact class:** Synthetic tests and fixtures
+  - **Public baseline:** Allowed
+  - **Required evidence before inclusion:** Reproducible synthetic origin or a
+    redistribution license
+- **Artifact class:** Binaries, installers, and plugins
+  - **Public baseline:** Conditional
+  - **Required evidence before inclusion:** Source mapping, dependency notices,
+    license compatibility, and secret scan
+- **Artifact class:** Manifests and reports
+  - **Public baseline:** Conditional
+  - **Required evidence before inclusion:** No protected payload, unnecessary
+    original names, personal data, credentials, or private paths
+- **Artifact class:** Screenshots, video, audio, models, and textures
+  - **Public baseline:** Excluded by default
+  - **Required evidence before inclusion:** Artifact-specific ownership or
+    redistribution permission
+- **Artifact class:** Original game files and extracted payloads
+  - **Public baseline:** Excluded
+  - **Required evidence before inclusion:** No public-repository exception is
+    established
+- **Artifact class:** Converted game-derived output
+  - **Public baseline:** Local only by default
+  - **Required evidence before inclusion:** Source-content rights and
+    output-specific distribution authority
+- **Artifact class:** Third-party replacement media
+  - **Public baseline:** Excluded by default
+  - **Required evidence before inclusion:** Exact license, attribution,
+    modification, and redistribution authority
 
 <!-- markdownlint-enable MD013 -->
 
@@ -109,9 +133,11 @@ establish inducement.
 - [Authors Guild v. Google, Inc](../cases/authors-guild-v-google.md)
 - [Capitol Records, LLC v. ReDigi Inc.](../cases/capitol-records-v-redigi.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Hachette Book Group, Inc. v. Internet Archive](../cases/hachette-book-group-v-internet-archive.md)
+- [Hachette Book Group, Inc. v. Internet
+  Archive](../cases/hachette-book-group-v-internet-archive.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Metro-Goldwyn-Mayer Studios Inc. v. Grokster, Ltd.](../cases/mgm-studios-v-grokster.md)
+- [Metro-Goldwyn-Mayer Studios Inc. v. Grokster,
+  Ltd.](../cases/mgm-studios-v-grokster.md)
 - [Universal City Studios, Inc. v. Corley](../cases/universal-v-corley.md)
 - [GitHub hosting and terms](../platforms/github-hosting-and-terms.md)
 

@@ -1,7 +1,3 @@
-// File:
-//   - region.rs
-// Path: src/formats/fbx/domain/texture/semantic/region.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,37 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Stable body-region identities and bone-name evidence families.
+//   - Region domain module.
 // - Must-Not:
-//   - Read files, sample textures, infer color ownership, or modify geometry.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Deterministic region ordering and conservative bone-token matching.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Outfit or accessory regions require an independent semantic taxonomy.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Body planning becomes the sole owner of these identities.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Semantic body and bone-family taxonomy.
+//   - Region domain module.
 // - Description:
-//   - Provides stable names and ordering for character texture evidence.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Used by body color classification, atlas grouping, and manifests.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Unrecognized bone identities remain unsupported and fail closed.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Stable body-region and bone-evidence identities.
+//! Region domain module.
+
 #![expect(
     clippy::module_name_repetitions,
     reason = "Region names remain explicit across semantic texture manifests."
@@ -63,13 +52,8 @@ pub enum BodyRegion {
 
 impl BodyRegion {
     /// Canonical region order used by atlas columns and manifests.
-    pub const ALL: [Self; 5] = [
-        Self::Skin,
-        Self::Hair,
-        Self::Torso,
-        Self::Legs,
-        Self::Shoes,
-    ];
+    pub const ALL: [Self; 5] =
+        [Self::Skin, Self::Hair, Self::Torso, Self::Legs, Self::Shoes];
 
     /// Return the stable manifest identity.
     #[must_use]
@@ -120,37 +104,21 @@ impl BoneFamily {
             .filter(|token| !token.is_empty())
             .map(str::to_ascii_lowercase)
             .collect::<Vec<_>>();
-        if contains_any(
-            &tokens,
-            &[
-                "ankle", "ball", "foot", "toe",
-            ],
-        ) {
+        if contains_any(&tokens, &["ankle", "ball", "foot", "toe"]) {
             return Self::Foot;
         }
-        if contains_any(
-            &tokens,
-            &[
-                "ass", "pelvis", "hip", "knee", "thigh", "calf", "leg",
-            ],
-        ) {
+        if contains_any(&tokens, &[
+            "ass", "pelvis", "hip", "knee", "thigh", "calf", "leg",
+        ]) {
             return Self::LowerBody;
         }
-        if contains_any(
-            &tokens,
-            &[
-                "spine", "chest", "clavicle", "shoulder",
-            ],
-        ) {
+        if contains_any(&tokens, &["spine", "chest", "clavicle", "shoulder"]) {
             return Self::Torso;
         }
-        if contains_any(
-            &tokens,
-            &[
-                "head", "jaw", "neck", "arm", "elbow", "wrist", "hand",
-                "middle", "thumb", "finger",
-            ],
-        ) {
+        if contains_any(&tokens, &[
+            "head", "jaw", "neck", "arm", "elbow", "wrist", "hand", "middle",
+            "thumb", "finger",
+        ]) {
             return Self::Exposed;
         }
         Self::Unsupported
@@ -170,17 +138,8 @@ impl BoneFamily {
 }
 
 /// Return whether one token list contains any complete candidate token.
-fn contains_any(
-    tokens: &[String],
-    candidates: &[&str],
-) -> bool {
+fn contains_any(tokens: &[String], candidates: &[&str]) -> bool {
     candidates
         .iter()
-        .any(
-            |candidate| {
-                tokens
-                    .iter()
-                    .any(|token| token == candidate)
-            },
-        )
+        .any(|candidate| tokens.iter().any(|token| token == candidate))
 }

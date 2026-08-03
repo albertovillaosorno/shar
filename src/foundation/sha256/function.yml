@@ -1,0 +1,20 @@
+schema: shar-function/v1
+identity:
+  id: sha256
+  path: src/foundation/sha256
+  domain: foundation
+architecture:
+  route: src/<domain>/<function>/<kind>/<part>
+  kinds:
+    - domain
+capabilities:
+  - math
+  - rust
+projects:
+  - Cargo.toml
+tests:
+  root: none
+ownership:
+  accountable: Alberto Villa Osorno
+validation:
+  mode: active

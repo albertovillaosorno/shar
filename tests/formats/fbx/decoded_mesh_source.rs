@@ -1,7 +1,3 @@
-// File:
-//   - decoded_mesh_source.rs
-// Path: tests/formats/fbx/decoded_mesh_source.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for decoded FBX mesh resolution boundaries.
+//   - Decoded mesh source test module.
 // - Must-Not:
-//   - Read private assets, discover packages, or use fixed machine paths.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic mesh JSON and process-unique temporary directories.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Surface-layer decoding requires an independent test boundary.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Mesh regressions move into shared adapter conformance tests.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects decoded mesh identity and evidence before domain translation.
+//   - Decoded mesh source test module.
 // - Description:
-//   - Exercises decoded mesh resolution with synthetic evidence.
+//   - Implements the declared test module responsibility for fbx.
 // - Usage:
-//   - Run through the fbx crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Temporary directories are process-unique and removed by each regression.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for decoded FBX mesh resolution boundaries.
-//!
-//! Synthetic mesh evidence verifies stable identity without private assets or
-//! machine-local dependency routes.
+//! Decoded mesh source test module.
 
 use std::fs;
 use std::path::PathBuf;
@@ -59,21 +44,14 @@ use serde_json as _;
 use shar_sha256 as _;
 
 fn temp_root(label: &str) -> PathBuf {
-    std::env::temp_dir().join(
-        format!(
-            "fbx-decoded-mesh-{label}-{}",
-            std::process::id()
-        ),
-    )
+    std::env::temp_dir()
+        .join(format!("fbx-decoded-mesh-{label}-{}", std::process::id()))
 }
 
 #[test]
 fn rejects_windows_device_member_ids() {
     let root = temp_root("windows-device-name");
-    let source = DecodedComponentSource::new(
-        &root,
-        root.join("textures"),
-    );
+    let source = DecodedComponentSource::new(&root, root.join("textures"));
     let result = source.load_mesh("CON");
 
     assert_eq!(
@@ -85,25 +63,21 @@ fn rejects_windows_device_member_ids() {
 #[test]
 fn rejects_member_ids_with_nonportable_file_characters() {
     let root = temp_root("nonportable-character");
-    let source = DecodedComponentSource::new(
-        &root,
-        root.join("textures"),
-    );
+    let source = DecodedComponentSource::new(&root, root.join("textures"));
     let result = source.load_mesh("mesh:stream");
 
     assert_eq!(
         result,
-        Err(DecodedComponentError::InvalidMemberId("mesh:stream".to_owned()))
+        Err(DecodedComponentError::InvalidMemberId(
+            "mesh:stream".to_owned()
+        ))
     );
 }
 
 #[test]
 fn rejects_member_ids_with_trailing_dots() {
     let root = temp_root("trailing-dot");
-    let source = DecodedComponentSource::new(
-        &root,
-        root.join("textures"),
-    );
+    let source = DecodedComponentSource::new(&root, root.join("textures"));
     let result = source.load_mesh("mesh.");
 
     assert_eq!(
@@ -115,27 +89,16 @@ fn rejects_member_ids_with_trailing_dots() {
 #[test]
 fn rejects_member_ids_with_surrounding_whitespace() {
     let root = temp_root("member-whitespace");
-    let mesh_dir = root
-        .join("components")
-        .join("mesh");
+    let mesh_dir = root.join("components").join("mesh");
     let mesh_json = concat!(
         r#"{"schema":"mesh","name":" mesh","prim_groups":[{"#,
         r#""shader":"shader","positions":[[0,0,0],[1,0,0],[0,1,0]],"#,
         r#""indices":[0,1,2]}]}"#,
     );
-    let setup_result = fs::create_dir_all(&mesh_dir).and_then(
-        |()| {
-            fs::write(
-                mesh_dir.join(" mesh.json"),
-                mesh_json,
-            )
-        },
-    );
+    let setup_result = fs::create_dir_all(&mesh_dir)
+        .and_then(|()| fs::write(mesh_dir.join(" mesh.json"), mesh_json));
     assert!(setup_result.is_ok());
-    let source = DecodedComponentSource::new(
-        &root,
-        root.join("textures"),
-    );
+    let source = DecodedComponentSource::new(&root, root.join("textures"));
     let result = source.load_mesh(" mesh");
     let _cleanup_result = fs::remove_dir_all(&root);
 
@@ -148,114 +111,68 @@ fn rejects_member_ids_with_surrounding_whitespace() {
 #[test]
 fn rejects_declared_uv_channels_without_coordinates() {
     let root = temp_root("empty-uv-channel");
-    let mesh_dir = root
-        .join("components")
-        .join("mesh");
+    let mesh_dir = root.join("components").join("mesh");
     let mesh_json = concat!(
         r#"{"schema":"mesh","name":"mesh","prim_groups":[{"#,
         r#""shader":"shader","positions":[[0,0,0],[1,0,0],[0,1,0]],"#,
         r#""indices":[0,1,2],"uvs":[{"channel":0,"coords":[]}]}]}"#,
     );
-    let setup_result = fs::create_dir_all(&mesh_dir).and_then(
-        |()| {
-            fs::write(
-                mesh_dir.join("mesh.json"),
-                mesh_json,
-            )
-        },
-    );
+    let setup_result = fs::create_dir_all(&mesh_dir)
+        .and_then(|()| fs::write(mesh_dir.join("mesh.json"), mesh_json));
     assert!(setup_result.is_ok());
-    let source = DecodedComponentSource::new(
-        &root,
-        root.join("textures"),
-    );
+    let source = DecodedComponentSource::new(&root, root.join("textures"));
     let result = source.load_mesh("mesh");
     let _cleanup_result = fs::remove_dir_all(&root);
 
     assert_eq!(
         result,
-        Err(
-            DecodedComponentError::EmptyUvChannel {
-                group: 0,
-                channel: 0,
-            }
-        )
+        Err(DecodedComponentError::EmptyUvChannel { group: 0, channel: 0 })
     );
 }
 
 #[test]
 fn rejects_mesh_identity_mismatches() {
     let root = temp_root("identity-mismatch");
-    let mesh_dir = root
-        .join("components")
-        .join("mesh");
+    let mesh_dir = root.join("components").join("mesh");
     let mesh_json = concat!(
         r#"{"schema":"mesh","name":"decoded","prim_groups":[{"#,
         r#""shader":"shader","positions":[[0,0,0],[1,0,0],[0,1,0]],"#,
         r#""indices":[0,1,2]}]}"#,
     );
-    let setup_result = fs::create_dir_all(&mesh_dir).and_then(
-        |()| {
-            fs::write(
-                mesh_dir.join("requested.json"),
-                mesh_json,
-            )
-        },
-    );
+    let setup_result = fs::create_dir_all(&mesh_dir)
+        .and_then(|()| fs::write(mesh_dir.join("requested.json"), mesh_json));
     assert!(setup_result.is_ok());
-    let source = DecodedComponentSource::new(
-        &root,
-        root.join("textures"),
-    );
+    let source = DecodedComponentSource::new(&root, root.join("textures"));
     let result = source.load_mesh("requested");
     let _cleanup_result = fs::remove_dir_all(&root);
 
     assert_eq!(
         result,
-        Err(
-            DecodedComponentError::MeshIdentityMismatch {
-                requested: "requested".to_owned(),
-                decoded: "decoded".to_owned(),
-            }
-        )
+        Err(DecodedComponentError::MeshIdentityMismatch {
+            requested: "requested".to_owned(),
+            decoded: "decoded".to_owned(),
+        })
     );
 }
 
 #[test]
 fn analysis_loader_discards_repeated_index_triangles() -> Result<(), String> {
     let root = temp_root("analysis-degenerate-triangle");
-    let mesh_dir = root
-        .join("components")
-        .join("mesh");
+    let mesh_dir = root.join("components").join("mesh");
     let mesh_json = concat!(
         r#"{"schema":"mesh","name":"mesh","prim_groups":[{"#,
         r#""shader":"shader","positions":[[0,0,0],[1,0,0],[0,1,0],"#,
         r#"[1,1,0]],"indices":[0,1,2,2,2,3]}]}"#,
     );
     fs::create_dir_all(&mesh_dir)
-        .and_then(
-            |()| {
-                fs::write(
-                    mesh_dir.join("mesh.json"),
-                    mesh_json,
-                )
-            },
-        )
+        .and_then(|()| fs::write(mesh_dir.join("mesh.json"), mesh_json))
         .map_err(|error| error.to_string())?;
-    let source = DecodedComponentSource::new(
-        &root,
-        root.join("textures"),
-    );
-    if source
-        .load_mesh("mesh")
-        .is_ok()
-    {
+    let source = DecodedComponentSource::new(&root, root.join("textures"));
+    if source.load_mesh("mesh").is_ok() {
         return Err("strict mesh loading accepted repeated indices".to_owned());
     }
-    let recovery_result = read_mesh_for_analysis(
-        &root, "mesh",
-    )
-    .map_err(|error| format!("analysis mesh failed: {error:?}"));
+    let recovery_result = read_mesh_for_analysis(&root, "mesh")
+        .map_err(|error| format!("analysis mesh failed: {error:?}"));
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     let (mesh, discarded) = recovery_result?;
     if discarded != 1 {
@@ -265,13 +182,7 @@ fn analysis_loader_discards_repeated_index_triangles() -> Result<(), String> {
         .groups
         .first()
         .ok_or_else(|| "analysis mesh has no primitive group".to_owned())?;
-    if group.triangles
-        != vec![
-            [
-                0, 1, 2,
-            ],
-        ]
-    {
+    if group.triangles != vec![[0, 1, 2]] {
         return Err("analysis mesh retained unexpected triangles".to_owned());
     }
     Ok(())

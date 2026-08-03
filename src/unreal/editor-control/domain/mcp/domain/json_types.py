@@ -1,7 +1,3 @@
-# File:
-#   - json_types.py
-# Path: src/unreal/editor-control/domain/mcp/domain/json_types.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,43 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Recursive JSON value validation and normalization.
+#   - Json types domain module.
 # - Must-Not:
-#   - Interpret MCP, Unreal, HTTP, or command semantics.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Pure JSON aliases and fail-closed validation.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - The module gains two independently testable contracts.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module owns the same contract without a distinct invariant.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Normalizes untrusted values into strict JSON types.
+#   - Json types domain module.
 # - Description:
-#   - Prevents untyped or non-JSON values crossing boundaries.
+#   - Implements the declared domain module responsibility for editor control.
 # - Usage:
-#   - Called after parsing and before transport serialization.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Unsupported values fail with a precise context path.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: strict JSON boundary
-#   - reason: aliases and recursive normalization form one JSON-only contract
-#   - split: extract traversal if serialization behavior is introduced
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess on responsibility or line-count growth
-#
-"""Strict JSON values used across translator boundaries."""
+
+"""Json types domain module."""
 
 from __future__ import annotations
 
@@ -96,6 +78,7 @@ def reject_duplicate_json_object(
 
     Raises:
         DuplicateJsonKeyError: When one member name appears more than once.
+
     """
     _require_container_item_limit(len(pairs), context="JSON object")
     result: dict[str, object] = {}
@@ -129,6 +112,7 @@ def normalize_json(value: object, *, context: str) -> JsonValue:
 
     Returns:
         A JSON-only value without untyped objects.
+
     """
     try:
         return _normalize_json_value(value, context=context)
@@ -141,6 +125,7 @@ def _normalize_json_value(value: object, *, context: str) -> JsonValue:
 
     Returns:
         A JSON-only value without untyped objects.
+
     """
     if isinstance(value, str):
         return _normalize_json_text(value, context=context)

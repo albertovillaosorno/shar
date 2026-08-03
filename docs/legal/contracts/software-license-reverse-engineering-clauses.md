@@ -78,7 +78,8 @@ private terms.
 - [ProCD, Inc. v. Zeidenberg](../cases/procd-v-zeidenberg.md), for one
   post-purchase formation and contract-preemption analysis.
 <!-- markdownlint-disable-next-line MD013 -->
-- [Bowers v. Baystate Technologies, Inc.](../cases/bowers-v-baystate-technologies.md),
+- [Bowers v. Baystate Technologies,
+  Inc.](../cases/bowers-v-baystate-technologies.md),
   for one influential private-contract analysis and its contrary dissent.
 - [Vault Corp. v. Quaid Software Ltd.](../cases/vault-v-quaid-software.md),
   for the conflicting state-license-act and § 117 analysis.

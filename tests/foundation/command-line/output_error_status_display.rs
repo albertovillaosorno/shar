@@ -1,7 +1,3 @@
-// File:
-//   - output_error_status_display.rs
-// Path: tests/foundation/command-line/output_error_status_display.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for command status in output-error diagnostics.
+//   - Output error status display test module.
 // - Must-Not:
-//   - Access operating-system arguments or streams.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Compare deterministic failures from successful and failed commands.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another output-error display field needs independent coverage.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Output errors no longer retain command status.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Output-error status display regression.
+//   - Output error status display test module.
 // - Description:
-//   - Proves ordinary diagnostics distinguish command outcome status.
+//   - Implements the declared test module responsibility for command line.
 // - Usage:
-//   - Executed by the schoenwald-cli integration test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Both commands fail on the same standard-error write.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for command status in output-error text.
-//!
-//! Otherwise identical presentation failures must remain distinguishable.
+//! Output error status display test module.
 
 use std::io;
 
@@ -62,10 +48,7 @@ impl ArgumentSource for EmptyArguments {
 struct SuccessfulProgram;
 
 impl CliProgram for SuccessfulProgram {
-    fn execute(
-        &self,
-        _arguments: &[String],
-    ) -> CommandOutcome {
+    fn execute(&self, _arguments: &[String]) -> CommandOutcome {
         CommandOutcome::success().stderr("diagnostic")
     }
 }
@@ -73,10 +56,7 @@ impl CliProgram for SuccessfulProgram {
 struct FailedProgram;
 
 impl CliProgram for FailedProgram {
-    fn execute(
-        &self,
-        _arguments: &[String],
-    ) -> CommandOutcome {
+    fn execute(&self, _arguments: &[String]) -> CommandOutcome {
         CommandOutcome::failure().stderr("diagnostic")
     }
 }
@@ -84,28 +64,15 @@ impl CliProgram for FailedProgram {
 struct DeniedOutput;
 
 impl OutputSink for DeniedOutput {
-    fn write(
-        &mut self,
-        _stream: OutputStream,
-        _text: &str,
-    ) -> io::Result<()> {
-        Err(
-            io::Error::new(
-                io::ErrorKind::PermissionDenied,
-                "denied",
-            ),
-        )
+    fn write(&mut self, _stream: OutputStream, _text: &str) -> io::Result<()> {
+        Err(io::Error::new(io::ErrorKind::PermissionDenied, "denied"))
     }
 }
 
 fn render_failure(command: &dyn CliProgram) -> String {
     let mut arguments = EmptyArguments;
     let mut output = DeniedOutput;
-    let result = RunInvocation::execute(
-        command,
-        &mut arguments,
-        &mut output,
-    );
+    let result = RunInvocation::execute(command, &mut arguments, &mut output);
     let Some(error) = result.err() else {
         return String::new();
     };

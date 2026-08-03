@@ -98,13 +98,16 @@ modification, or repository publication.
 
 - Public.Resource.Org (n.d.), *MAI Systems Corporation v. Peak Computer, Inc.*,
   991 F.2d 511 (9th Cir. 1993), public-domain reporter duplicate. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://law.resource.org/pub/us/case/reporter/F2/991/991.F2d.511.92-55363.93-55106.html>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://law.resource.org/pub/us/case/reporter/F2/991/991.F2d.511.92-55363.93-55106.html> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - [17 U.S.C. § 101](../statutes/17-usc-101.md).
 - [17 U.S.C. § 117](../statutes/17-usc-117.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Cartoon Network LP, LLLP v. CSC Holdings, Inc.](cartoon-network-v-csc-holdings.md).
+- [Cartoon Network LP, LLLP v. CSC Holdings,
+  Inc.](cartoon-network-v-csc-holdings.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Storage Technology Corp. v. Custom Hardware Engineering & Consulting, Inc.](storage-technology-v-custom-hardware.md).
+- [Storage Technology Corp. v. Custom Hardware Engineering & Consulting,
+  Inc.](storage-technology-v-custom-hardware.md).
 - [Vernor v. Autodesk, Inc.](vernor-v-autodesk.md).

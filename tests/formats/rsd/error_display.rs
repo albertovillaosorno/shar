@@ -1,7 +1,3 @@
-// File:
-//   - error_display.rs
-// Path: tests/formats/rsd/error_display.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,74 +6,52 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Public regression coverage for safe RSD diagnostics.
+//   - Error display test module.
 // - Must-Not:
-//   - Depend on terminal state or private malformed files.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic error values and caller-visible display assertions.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when path diagnostics need independent platform fixtures.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another RSD test module owns the same diagnostic-safety contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Verifies untrusted RSD fields are escaped in diagnostics.
+//   - Error display test module.
 // - Description:
-//   - Exercises public error formatting for hostile codec tags.
+//   - Implements the declared test module responsibility for rsd.
 // - Usage:
-//   - Executed through cargo test for the rsd crate.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Fixtures remain synthetic, deterministic, and repository-local.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Public regression coverage for safe RSD error formatting.
-//!
-//! Synthetic control bytes keep terminal-injection evidence deterministic.
+//! Error display test module.
 
 use rsd::RsdError;
+use same_file as _;
 use schoenwald_cli as _;
 use schoenwald_filesystem as _;
 
 #[test]
 fn unsupported_encoding_escapes_control_bytes() {
-    let rendered = RsdError::UnsupportedEncoding(
-        [
-            0x1b_u8, b'[', b'2', b'J',
-        ],
-    )
-    .to_string();
+    let rendered =
+        RsdError::UnsupportedEncoding([0x1b_u8, b'[', b'2', b'J']).to_string();
 
     assert!(
         !rendered.contains('\u{1b}'),
         "untrusted codec bytes must not emit terminal escape controls"
     );
-    assert_eq!(
-        rendered,
-        r"unsupported RSD encoding: \x1B\x5B\x32\x4A"
-    );
+    assert_eq!(rendered, r"unsupported RSD encoding: \x1B\x5B\x32\x4A");
 }
 
 #[test]
 fn path_errors_escape_control_characters() {
-    let rendered = RsdError::InvalidPath(
-        std::path::PathBuf::from(
-            {
-                // cspell:disable-next-line -- Jbad
-                "\u{1b}[2Jbad.rsd"
-            },
-        ),
-    )
-    .to_string();
+    let rendered =
+        RsdError::InvalidPath(std::path::PathBuf::from("\u{1b}[2Jbad.rsd"))
+            .to_string();
 
     assert!(
         !rendered.contains('\u{1b}'),
@@ -95,15 +69,11 @@ fn path_errors_preserve_unpaired_utf16_units() {
     use std::ffi::OsString;
     use std::os::windows::ffi::OsStringExt as _;
 
-    let path = std::path::PathBuf::from(
-        OsString::from_wide(
-            &[
-                u16::from(b'b'),
-                0xd800_u16,
-                u16::from(b'x'),
-            ],
-        ),
-    );
+    let path = std::path::PathBuf::from(OsString::from_wide(&[
+        u16::from(b'b'),
+        0xd800_u16,
+        u16::from(b'x'),
+    ]));
     let rendered = RsdError::InvalidPath(path).to_string();
 
     assert!(
@@ -122,13 +92,8 @@ fn path_errors_preserve_invalid_utf8_bytes() {
     use std::ffi::OsString;
     use std::os::unix::ffi::OsStringExt as _;
 
-    let path = std::path::PathBuf::from(
-        OsString::from_vec(
-            vec![
-                b'b', 0xff_u8, b'x',
-            ],
-        ),
-    );
+    let path =
+        std::path::PathBuf::from(OsString::from_vec(vec![b'b', 0xff_u8, b'x']));
     let rendered = RsdError::InvalidPath(path).to_string();
 
     assert!(

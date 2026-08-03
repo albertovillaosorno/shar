@@ -1,7 +1,3 @@
-// File:
-//   - table.rs
-// Path: src/formats/lmlm/domain/table.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,41 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Recursive entry-table traversal and metadata decoding.
+//   - Table domain module.
 // - Must-Not:
-//   - Write extracted files or accept unchecked archive structure.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Operations required by this single LMLM responsibility.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - One contained invariant gains independent state or a distinct API.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another LMLM module proves the same invariant without distinction.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Owns recursive entry-table traversal and metadata decoding.
+//   - Table domain module.
 // - Description:
-//   - Keeps this parser responsibility deterministic and fail closed.
+//   - Implements the declared domain module responsibility for lmlm.
 // - Usage:
-//   - Imported only by parser orchestration.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Every structural range is bounded before interpretation.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Recursive LMLM entry-table traversal.
-//!
-//! Decodes bounded records, tracks table extent, and creates file entries.
+//! Table domain module.
 
-// Sibling parser modules share these contracts without exposing them publicly.
 #![expect(
     clippy::redundant_pub_crate,
     reason = "sibling parser modules require crate-visible contracts while \
@@ -63,59 +48,33 @@ fn validate_metadata_reserved_bytes(
     data: &[u8],
     meta: usize,
 ) -> Result<(), LmlmError> {
-    for (start, len) in [
-        (
-            meta, 2,
-        ),
-        (
-            checked_offset(
-                meta, 0x0b,
-            )?,
-            1,
-        ),
-    ] {
-        if let Some((padding_offset, value)) = first_nonzero_byte(
-            data, start, len,
-        )? {
-            return Err(
-                LmlmError::NonZeroMetadataPadding {
-                    offset: padding_offset,
-                    value,
-                },
-            );
+    for (start, len) in [(meta, 2), (checked_offset(meta, 0x0b)?, 1)] {
+        if let Some((padding_offset, value)) =
+            first_nonzero_byte(data, start, len)?
+        {
+            return Err(LmlmError::NonZeroMetadataPadding {
+                offset: padding_offset,
+                value,
+            });
         }
     }
     Ok(())
 }
 
 /// Reads the entry offset and validates the reserved metadata bytes.
-fn read_metadata_offset(
-    data: &[u8],
-    meta: usize,
-) -> Result<u64, LmlmError> {
-    validate_metadata_reserved_bytes(
-        data, meta,
-    )?;
-    let offset = read_u64(
-        data,
-        checked_offset(
-            meta, 0x14,
-        )?,
-    )
-    .ok_or(LmlmError::Truncated)?;
+fn read_metadata_offset(data: &[u8], meta: usize) -> Result<u64, LmlmError> {
+    validate_metadata_reserved_bytes(data, meta)?;
+    let offset = read_u64(data, checked_offset(meta, 0x14)?)
+        .ok_or(LmlmError::Truncated)?;
     if let Some((padding_offset, value)) = first_nonzero_byte(
         data,
-        checked_offset(
-            meta, 0x1c,
-        )?,
+        checked_offset(meta, 0x1c)?,
         BLOCK.saturating_sub(0x1c),
     )? {
-        return Err(
-            LmlmError::NonZeroMetadataPadding {
-                offset: padding_offset,
-                value,
-            },
-        );
+        return Err(LmlmError::NonZeroMetadataPadding {
+            offset: padding_offset,
+            value,
+        });
     }
     Ok(offset)
 }
@@ -124,50 +83,28 @@ fn read_metadata_offset(
 fn read_directory_record_control(
     data: &[u8],
     meta: usize,
-) -> Result<
-    (
-        usize,
-        u8,
-    ),
-    LmlmError,
-> {
-    let control_offset = checked_offset(
-        meta, 0x0e,
-    )?;
+) -> Result<(usize, u8), LmlmError> {
+    let control_offset = checked_offset(meta, 0x0e)?;
     let control = data
         .get(control_offset)
         .copied()
         .ok_or(LmlmError::Truncated)?;
     if control > 1 {
-        return Err(
-            LmlmError::UnsupportedDirectoryRecordControl {
-                offset: control_offset,
-                value: control,
-            },
-        );
+        return Err(LmlmError::UnsupportedDirectoryRecordControl {
+            offset: control_offset,
+            value: control,
+        });
     }
-    let padding_start = checked_offset(
-        control_offset,
-        1,
-    )?;
-    if let Some((padding_offset, value)) = first_nonzero_byte(
-        data,
-        padding_start,
-        5,
-    )? {
-        return Err(
-            LmlmError::NonZeroMetadataPadding {
-                offset: padding_offset,
-                value,
-            },
-        );
+    let padding_start = checked_offset(control_offset, 1)?;
+    if let Some((padding_offset, value)) =
+        first_nonzero_byte(data, padding_start, 5)?
+    {
+        return Err(LmlmError::NonZeroMetadataPadding {
+            offset: padding_offset,
+            value,
+        });
     }
-    Ok(
-        (
-            control_offset,
-            control,
-        ),
-    )
+    Ok((control_offset, control))
 }
 
 /// Validated fields needed before descending into one directory.
@@ -189,37 +126,25 @@ fn read_directory_record(
     path: &str,
     depth: usize,
 ) -> Result<DirectoryRecord, LmlmError> {
-    let (control_offset, declared_control) = read_directory_record_control(
-        data, meta,
-    )?;
+    let (control_offset, declared_control) =
+        read_directory_record_control(data, meta)?;
     let child_count = usize::from(
-        read_u16(
-            data,
-            checked_offset(
-                meta, 0x0c,
-            )?,
-        )
-        .ok_or(LmlmError::Truncated)?,
+        read_u16(data, checked_offset(meta, 0x0c)?)
+            .ok_or(LmlmError::Truncated)?,
     );
-    let child_depth = depth
-        .checked_add(1)
-        .ok_or(LmlmError::Truncated)?;
+    let child_depth = depth.checked_add(1).ok_or(LmlmError::Truncated)?;
     if child_depth > MAX_DIRECTORY_DEPTH {
-        return Err(
-            LmlmError::ExcessiveDirectoryDepth {
-                path: path.to_owned(),
-                depth: child_depth,
-            },
-        );
+        return Err(LmlmError::ExcessiveDirectoryDepth {
+            path: path.to_owned(),
+            depth: child_depth,
+        });
     }
-    Ok(
-        DirectoryRecord {
-            control_offset,
-            declared_control,
-            child_count,
-            child_depth,
-        },
-    )
+    Ok(DirectoryRecord {
+        control_offset,
+        declared_control,
+        child_count,
+        child_depth,
+    })
 }
 
 /// Validates a directory control against its immediate child kinds.
@@ -231,14 +156,12 @@ fn validate_directory_record_control(
 ) -> Result<(), LmlmError> {
     let expected = u8::from(contains_directory);
     if declared != expected {
-        return Err(
-            LmlmError::DirectoryRecordControlMismatch {
-                path: path.to_owned(),
-                offset,
-                declared,
-                expected,
-            },
-        );
+        return Err(LmlmError::DirectoryRecordControlMismatch {
+            path: path.to_owned(),
+            offset,
+            declared,
+            expected,
+        });
     }
     Ok(())
 }
@@ -253,33 +176,21 @@ fn validate_file_record_control(
         .copied()
         .ok_or(LmlmError::Truncated)?;
     if control > 1 {
-        return Err(
-            LmlmError::UnsupportedFileRecordControl {
-                offset: control_start,
-                value: control,
-            },
-        );
+        return Err(LmlmError::UnsupportedFileRecordControl {
+            offset: control_start,
+            value: control,
+        });
     }
-    let padding_start = checked_offset(
-        control_start,
-        1,
-    )?;
-    if let Some((padding_offset, value)) = first_nonzero_byte(
-        data,
-        padding_start,
-        BLOCK.saturating_sub(1),
-    )? {
-        return Err(
-            LmlmError::NonZeroFileRecordPadding {
-                offset: padding_offset,
-                value,
-            },
-        );
+    let padding_start = checked_offset(control_start, 1)?;
+    if let Some((padding_offset, value)) =
+        first_nonzero_byte(data, padding_start, BLOCK.saturating_sub(1))?
+    {
+        return Err(LmlmError::NonZeroFileRecordPadding {
+            offset: padding_offset,
+            value,
+        });
     }
-    checked_offset(
-        control_start,
-        BLOCK,
-    )
+    checked_offset(control_start, BLOCK)
 }
 
 /// Returns the end of one file record, including an optional final control.
@@ -290,27 +201,18 @@ fn file_record_end(
     entries: &[FileEntry],
 ) -> Result<usize, LmlmError> {
     if !globally_final {
-        return validate_file_record_control(
-            data,
-            metadata_end,
-        );
+        return validate_file_record_control(data, metadata_end);
     }
     let earliest_payload = entries
         .iter()
         .map(|entry| entry.offset)
         .min()
         .and_then(|offset| usize::try_from(offset).ok());
-    let control_end = checked_offset(
-        metadata_end,
-        BLOCK,
-    )?;
+    let control_end = checked_offset(metadata_end, BLOCK)?;
     if earliest_payload
         .is_some_and(|payload_start| payload_start >= control_end)
     {
-        return validate_file_record_control(
-            data,
-            metadata_end,
-        );
+        return validate_file_record_control(data, metadata_end);
     }
     Ok(metadata_end)
 }
@@ -333,13 +235,9 @@ pub(crate) fn parse_entries(
     seen_paths: &mut BTreeMap<String, String>,
     table_end: &mut usize,
 ) -> Result<usize, LmlmError> {
-    let mut state = (
-        out, seen_paths, table_end,
-    );
-    parse_entries_at(
-        data, pos, count, prefix, &mut state, 0, true,
-    )
-    .map(|parsed| parsed.next_pos)
+    let mut state = (out, seen_paths, table_end);
+    parse_entries_at(data, pos, count, prefix, &mut state, 0, true)
+        .map(|parsed| parsed.next_pos)
 }
 
 /// Parses `count` sibling entries and their bounded descendants.
@@ -360,47 +258,27 @@ fn parse_entries_at(
     for index in 0..count {
         let globally_final =
             globally_final_branch && index.saturating_add(1) == count;
-        let kind = read_u16(
-            data, pos,
-        )
-        .ok_or(LmlmError::Truncated)?;
+        let kind = read_u16(data, pos).ok_or(LmlmError::Truncated)?;
         if kind != ENTRY_KIND {
-            return Err(
-                LmlmError::InvalidEntryKind {
-                    offset: pos,
-                    value: kind,
-                },
-            );
+            return Err(LmlmError::InvalidEntryKind {
+                offset: pos,
+                value: kind,
+            });
         }
-        let full_path = register_path(
-            read_name(
-                data, pos,
-            )?,
-            prefix,
-            &mut *state.1,
-        )?;
-        let meta = checked_offset(
-            pos, BLOCK,
-        )?;
-        let metadata_end = checked_offset(
-            meta, BLOCK,
-        )?;
+        let full_path =
+            register_path(read_name(data, pos)?, prefix, &mut *state.1)?;
+        let meta = checked_offset(pos, BLOCK)?;
+        let metadata_end = checked_offset(meta, BLOCK)?;
         *state.2 = (*state.2).max(metadata_end);
-        let offset = read_metadata_offset(
-            data, meta,
-        )?;
+        let offset = read_metadata_offset(data, meta)?;
         if offset == 0 {
             contains_directory = true;
-            let directory = read_directory_record(
-                data, meta, &full_path, depth,
-            )?;
+            let directory =
+                read_directory_record(data, meta, &full_path, depth)?;
             let child_prefix = format!("{full_path}/");
             let parsed_children = parse_entries_at(
                 data,
-                checked_offset(
-                    pos,
-                    BLOCK.saturating_mul(2),
-                )?,
+                checked_offset(pos, BLOCK.saturating_mul(2))?,
                 directory.child_count,
                 &child_prefix,
                 state,
@@ -415,35 +293,19 @@ fn parse_entries_at(
             )?;
             pos = parsed_children.next_pos;
         } else {
-            let size = read_u64(
-                data,
-                checked_offset(
-                    meta, 0x0c,
-                )?,
-            )
-            .ok_or(LmlmError::Truncated)?;
-            state
-                .0
-                .push(
-                    FileEntry {
-                        path: full_path,
-                        offset,
-                        size,
-                    },
-                );
-            pos = file_record_end(
-                data,
-                metadata_end,
-                globally_final,
-                state.0,
-            )?;
+            let size = read_u64(data, checked_offset(meta, 0x0c)?)
+                .ok_or(LmlmError::Truncated)?;
+            state.0.push(FileEntry {
+                path: full_path,
+                offset,
+                size,
+            });
+            pos = file_record_end(data, metadata_end, globally_final, state.0)?;
             *state.2 = (*state.2).max(pos);
         }
     }
-    Ok(
-        ParsedEntries {
-            next_pos: pos,
-            contains_directory,
-        },
-    )
+    Ok(ParsedEntries {
+        next_pos: pos,
+        contains_directory,
+    })
 }

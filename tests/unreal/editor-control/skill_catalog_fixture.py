@@ -1,7 +1,3 @@
-# File:
-#   - skill_catalog_fixture.py
-# Path: tests/unreal/editor-control/skill_catalog_fixture.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,48 +6,36 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Synthetic complete native Unreal MCP catalogs for generated-skill tests.
+#   - Skill catalog fixture test module.
 # - Must-Not:
-#   - Render documents, access files, connect to Unreal, or assert behavior.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Reusing one deterministic capability schema across focused test modules.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Tests require independently varied tool and toolset schemas.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - A single test module becomes the sole consumer of this fixture.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Builds deterministic complete skill-generation test catalogs.
+#   - Skill catalog fixture test module.
 # - Description:
-#   - Uses one synthetic capability for each of the 52 known toolsets.
+#   - Implements the declared test module responsibility for editor control.
 # - Usage:
-#   - Imported by rendering, storage, and export tests.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Embeds sentinel prose that generated output must omit.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: generated skill synthetic catalog fixture
-#   - reason: complete toolset and schema construction form one test fixture
-#   - split: extract schema variants if more than one capability shape is needed
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess after taxonomy or generated schema changes
-#
-"""Synthetic complete catalogs for Unreal MCP skill generation tests."""
+
+"""Skill catalog fixture test module."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from mcp.domain.catalog import ToolDefinition, ToolsetDefinition
+from mcp.domain.catalog import ToolDefinition
+from mcp.domain.catalog import ToolsetDefinition
 from mcp.domain.skill_taxonomy import known_toolset_names
 
 if TYPE_CHECKING:

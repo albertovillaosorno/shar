@@ -1,7 +1,3 @@
-// File:
-//   - audit.rs
-// Path: src/formats/rmv/domain/audit.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,37 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure movie audit records and deterministic report projections.
+//   - Audit domain module.
 // - Must-Not:
-//   - Traverse filesystems, serialize manifests, or select adapters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Immutable source evidence and report-derived counts.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when records and report projections evolve independently.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another domain module owns the same audit aggregate.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - RMV audit domain records.
+//   - Audit domain module.
 // - Description:
-//   - Models discovered movies and deterministic audit summaries.
+//   - Implements the declared domain module responsibility for rmv.
 // - Usage:
-//   - Shared by ports, application use cases, adapters, and callers.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Empty reports infer no movie evidence.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Pure RMV audit records and deterministic report projections.
+//! Audit domain module.
+
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 
@@ -94,9 +83,7 @@ impl AuditReport {
     pub fn kind_counts(&self) -> BTreeMap<MovieKind, usize> {
         let mut counts = BTreeMap::new();
         for record in &self.records {
-            let count = counts
-                .entry(record.kind)
-                .or_insert(0_usize);
+            let count = counts.entry(record.kind).or_insert(0_usize);
             *count = count.saturating_add(1);
         }
         counts

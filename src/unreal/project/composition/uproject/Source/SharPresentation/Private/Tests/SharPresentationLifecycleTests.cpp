@@ -1,12 +1,34 @@
-// File: SharPresentationLifecycleTests.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharPresentation/Private/Tests/SharPresentationLifecycleTests.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: readiness, start, terminal result, skip, cancellation, and release tests only.
-// Specification: docs/technical/unreal/presentation-playback-runtime.md
-// LARGE-FILE owner=SharPresentation; reason=three cohesive lifecycle and teardown scenarios;
-// split=separate terminal-result tests if adapter evidence expands;
-// validation=validate.sh SharPresentation plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar presentation lifecycle tests composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar presentation lifecycle tests composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar presentation lifecycle tests composition module.
 
 #if WITH_DEV_AUTOMATION_TESTS
 

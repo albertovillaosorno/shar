@@ -1,7 +1,3 @@
-// File:
-//   - decoded_rigid_prop_source.rs
-// Path: tests/formats/fbx/decoded_rigid_prop_source.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for selected rigid-prop assembly and rig pruning.
+//   - Decoded rigid prop source test module.
 // - Must-Not:
-//   - Read private game assets or mirror implementation logic in assertions.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic decoded skeleton, composite, and mesh fixtures.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another selected-prop behavior needs an independent fixture family.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Decoded skin-source tests adopt the selected-prop public contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Proves unselected composite props and skeleton branches stay excluded.
+//   - Decoded rigid prop source test module.
 // - Description:
-//   - Builds one synthetic rigid body while rejecting an unbound selection.
+//   - Implements the declared test module responsibility for fbx.
 // - Usage:
-//   - Run through the fbx crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Temporary fixture roots are process-specific and removed after each test.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-// - docs/adr/fbx/export/fbx-output-contract-boundary.md
-//
-// Large file:
-//   - true
-//   - Reason: Two behavioral regressions share one compact decoded fixture
-//   - family so selection, pruning, and rejection evidence remain auditable.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for selected rigid-prop assembly.
+//! Decoded rigid prop source test module.
+
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -56,12 +42,8 @@ use serde_json as _;
 use shar_sha256 as _;
 
 fn temp_root(label: &str) -> PathBuf {
-    std::env::temp_dir().join(
-        format!(
-            "fbx-rigid-prop-{label}-{}",
-            std::process::id()
-        ),
-    )
+    std::env::temp_dir()
+        .join(format!("fbx-rigid-prop-{label}-{}", std::process::id()))
 }
 
 const fn skeleton_json() -> &'static str {
@@ -112,50 +94,16 @@ fn mesh_json(name: &str) -> String {
 fn write_fixture(
     root: &Path,
     mesh_name: &str,
-) -> Result<
-    (
-        PathBuf,
-        PathBuf,
-        PathBuf,
-    ),
-    String,
-> {
+) -> Result<(PathBuf, PathBuf, PathBuf), String> {
     let skeleton_path = root.join("skeleton.json");
     let composite_path = root.join("composite.json");
     let mesh_path = root.join(format!("{mesh_name}.json"));
     fs::create_dir_all(root)
-        .and_then(
-            |()| {
-                fs::write(
-                    &skeleton_path,
-                    skeleton_json(),
-                )
-            },
-        )
-        .and_then(
-            |()| {
-                fs::write(
-                    &composite_path,
-                    composite_json(),
-                )
-            },
-        )
-        .and_then(
-            |()| {
-                fs::write(
-                    &mesh_path,
-                    mesh_json(mesh_name),
-                )
-            },
-        )
+        .and_then(|()| fs::write(&skeleton_path, skeleton_json()))
+        .and_then(|()| fs::write(&composite_path, composite_json()))
+        .and_then(|()| fs::write(&mesh_path, mesh_json(mesh_name)))
         .map_err(|error| error.to_string())?;
-    Ok(
-        (
-            skeleton_path,
-            composite_path,
-            mesh_path,
-        ),
-    )
+    Ok((skeleton_path, composite_path, mesh_path))
 }
 
 fn remove_fixture(root: &Path) -> Result<(), String> {
@@ -165,10 +113,8 @@ fn remove_fixture(root: &Path) -> Result<(), String> {
 #[test]
 fn loads_selected_prop_and_prunes_unselected_branches() -> Result<(), String> {
     let root = temp_root("selection");
-    let (skeleton_path, composite_path, mesh_path) = write_fixture(
-        &root,
-        "BodyShape",
-    )?;
+    let (skeleton_path, composite_path, mesh_path) =
+        write_fixture(&root, "BodyShape")?;
 
     let result = decoded_rigid_prop_source::load_selected_rigid_prop_asset(
         "selected",
@@ -183,37 +129,19 @@ fn loads_selected_prop_and_prunes_unselected_branches() -> Result<(), String> {
     let bone_ids = asset
         .bones
         .iter()
-        .map(
-            |bone| {
-                bone.id
-                    .as_str()
-            },
-        )
+        .map(|bone| bone.id.as_str())
         .collect::<Vec<_>>();
-    if bone_ids
-        != [
-            "root", "body",
-        ]
-    {
+    if bone_ids != ["root", "body"] {
         return Err(format!("unexpected retained bones: {bone_ids:?}"));
     }
-    let Some(part) = asset
-        .parts
-        .first()
-    else {
+    let Some(part) = asset.parts.first() else {
         return Err("selected rigid prop produced no part".to_owned());
     };
-    if asset
-        .parts
-        .len()
-        != 1
-        || part
-            .mesh
-            .name
-            != "BodyShape__transparent-source"
+    if asset.parts.len() != 1
+        || part.mesh.name != "BodyShape__transparent-source"
     {
         return Err(
-            "selected rigid prop did not preserve one body mesh".to_owned(),
+            "selected rigid prop did not preserve one body mesh".to_owned()
         );
     }
     let positions = &part
@@ -222,39 +150,18 @@ fn loads_selected_prop_and_prunes_unselected_branches() -> Result<(), String> {
         .first()
         .ok_or_else(|| "selected rigid prop has no primitive group".to_owned())?
         .positions;
-    if positions
-        != &[
-            [
-                2.0, 3.0, 4.0,
-            ],
-            [
-                3.0, 3.0, 4.0,
-            ],
-            [
-                2.0, 4.0, 4.0,
-            ],
-        ]
-    {
-        return Err(
-            format!(
-                "selected rigid prop did not bake its authored rest \
+    if positions != &[[2., 3., 4.], [3., 3., 4.], [2., 4., 4.]] {
+        return Err(format!(
+            "selected rigid prop did not bake its authored rest \
                  transform: {positions:?}"
-            ),
-        );
+        ));
     }
-    if part
-        .group_influences
-        .iter()
-        .flatten()
-        .any(
-            |influence| {
-                influence.bone_id != "body"
-                    || (influence.weight - 1.0).abs() > f32::EPSILON
-            },
-        )
-    {
+    if part.group_influences.iter().flatten().any(|influence| {
+        influence.bone_id != "body"
+            || (influence.weight - 1.).abs() > f32::EPSILON
+    }) {
         return Err(
-            "selected rigid prop was not fully bound to body".to_owned(),
+            "selected rigid prop was not fully bound to body".to_owned()
         );
     }
     Ok(())
@@ -263,10 +170,8 @@ fn loads_selected_prop_and_prunes_unselected_branches() -> Result<(), String> {
 #[test]
 fn rejects_selected_mesh_without_composite_binding() -> Result<(), String> {
     let root = temp_root("missing-binding");
-    let (skeleton_path, composite_path, mesh_path) = write_fixture(
-        &root,
-        "MissingShape",
-    )?;
+    let (skeleton_path, composite_path, mesh_path) =
+        write_fixture(&root, "MissingShape")?;
 
     let result = decoded_rigid_prop_source::load_selected_rigid_prop_asset(
         "selected",
@@ -281,7 +186,7 @@ fn rejects_selected_mesh_without_composite_binding() -> Result<(), String> {
             if reason.contains("has no composite binding") =>
         {
             Ok(())
-        }
+        },
         other => Err(format!("missing binding was accepted: {other:?}")),
     }
 }

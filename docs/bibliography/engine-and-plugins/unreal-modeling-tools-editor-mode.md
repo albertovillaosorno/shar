@@ -69,8 +69,9 @@ before publication or distribution.
 
 ## Source References
 
-- Epic Games (2026) *Modeling Mode in Unreal Engine 5.8*. Available at: [Epic
-  Modeling Mode][epic-modeling] (Accessed: 12 July 2026).
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: external link target is indivisible -->
+- Epic Games (2026) *Modeling Mode in Unreal Engine 5.8*. Available at: [Epic Modeling Mode](<https://dev.epicgames.com/documentation/en-us/unreal-engine/modeling-mode-in-unreal-engine>) (Accessed: 12 July 2026). <!-- markdownlint-disable-line MD013 -->
 - Epic Games (2026) *Unreal Engine End User License Agreement*. Available at:
   <https://www.unrealengine.com/eula/unreal> (Accessed: 12 July 2026).
 - Epic Games (n.d.) *Accessing Unreal Engine source code on GitHub*. Available
@@ -81,10 +82,8 @@ before publication or distribution.
   is linked and authorized as Epic documents. Available at:
   <https://github.com/EpicGames/UnrealEngine> (Accessed: 12 July 2026).
 - SHAR repository and selected engine installation (2026),
-  `src/unreal/project/composition/uproject/shar.uproject`, Unreal Engine 5.8.0 build evidence, and
+  `src/unreal/project/composition/uproject/shar.uproject`, Unreal Engine 5.8.0
+  build evidence, and
   installed
   `ModelingToolsEditorMode.uplugin` version 0.1 with beta status, editor module,
   and dependent toolsets.
-
-[epic-modeling]:
-  https://dev.epicgames.com/documentation/en-us/unreal-engine/modeling-mode-in-unreal-engine

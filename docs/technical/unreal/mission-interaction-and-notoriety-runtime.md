@@ -5,27 +5,36 @@
 
 ## Governing decisions
 
-<!-- markdownlint-disable-next-line MD013 -->
-- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Contextual interaction query and transaction boundary](../../adr/unreal/runtime/contextual-interaction-query-and-transaction.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Contextual interaction query and transaction boundary](../../adr/unreal/runtime/contextual-interaction-query-and-transaction.md) <!-- markdownlint-disable-line MD013 -->
 - [Contextual interaction runtime](contextual-interaction-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Authored spatial placement and trigger runtime](authored-spatial-placement-and-trigger-runtime.md)
+- [Authored spatial placement and trigger
+  runtime](authored-spatial-placement-and-trigger-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Mission definition, stage, and objective runtime](mission-definition-stage-and-objective-runtime.md)
+- [Mission definition, stage, and objective
+  runtime](mission-definition-stage-and-objective-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Typed StateTree action sequences](../../adr/unreal/runtime/typed-state-tree-action-sequences.md)
+- [Typed StateTree action
+  sequences](../../adr/unreal/runtime/typed-state-tree-action-sequences.md)
 - [Typed action-sequence runtime](typed-action-sequence-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+- [Data-driven Unreal gameplay content
+  catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+- [Portable save storage and
+  lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+- [Native vehicle physics, control, damage, and presentation
+  runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 
 ## Purpose
 
@@ -43,12 +52,22 @@ Four services own the runtime state described here:
 
 <!-- markdownlint-disable MD013 -->
 
-| Service | Lifetime | Authority |
-| :--- | :--- | :--- |
-| `USharMissionSessionSubsystem` | World | Active mission, objective state, ordered transitions, failure, recovery, and completion. |
-| `USharInteractionSubsystem` | World | Interaction eligibility, reservation, execution, cancellation, and exactly-once results. |
-| `USharInteriorSubsystem` | World | Interior transition transactions, world composition, movement restrictions, and exterior restoration. |
-| `USharNotorietySubsystem` | World | Notoriety value, warning, pursuit, arrest, decay, and resolution. |
+- **Service:** `USharMissionSessionSubsystem`
+  - **Lifetime:** World
+  - **Authority:** Active mission, objective state, ordered transitions,
+    failure, recovery, and completion.
+- **Service:** `USharInteractionSubsystem`
+  - **Lifetime:** World
+  - **Authority:** Interaction eligibility, reservation, execution,
+    cancellation, and exactly-once results.
+- **Service:** `USharInteriorSubsystem`
+  - **Lifetime:** World
+  - **Authority:** Interior transition transactions, world composition, movement
+    restrictions, and exterior restoration.
+- **Service:** `USharNotorietySubsystem`
+  - **Lifetime:** World
+  - **Authority:** Notoriety value, warning, pursuit, arrest, decay, and
+    resolution.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -112,7 +131,8 @@ entered only after rewards, unlocks, and mission completion commit exactly once.
 Definition compilation, load barriers, stage lifecycle, objective adapters,
 checkpoint restoration, abort, and completion follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Mission definition, stage, and objective runtime](mission-definition-stage-and-objective-runtime.md).
+[Mission definition, stage, and objective
+runtime](mission-definition-stage-and-objective-runtime.md).
 
 ## StateTree projection
 
@@ -141,20 +161,33 @@ it never becomes success through actor destruction, unloading, or missing data.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `PolicyId` | Stable identity referenced by one or more mission stages. |
-| `ObjectiveKind` | Exact controlled objective kind. |
-| `RouteId` | Optional ordered route or destination identity. |
-| `TargetIds` | Ordered canonical target identities. |
-| `StartTrigger` | Immediate, proximity, interaction, dialogue completion, or explicit signal. |
-| `CompletionRule` | Typed predicate evaluated from accepted observations. |
-| `FailureRule` | Typed predicate with a declared grace period where applicable. |
-| `RecoveryRule` | Restart stage, restart mission, restore checkpoint, or return to free roam. |
-| `NotorietyPolicyId` | Required policy for target contact and objective exemptions. |
-| `CatchUpProfileId` | Optional artificial-intelligence catch-up profile. |
-| `DropSequenceId` | Optional ordered dropped-item sequence. |
-| `PresentationProfileId` | Objective marker, radar, gauge, prompt, and briefing presentation. |
+- **Field:** `PolicyId`
+  - **Contract:** Stable identity referenced by one or more mission stages.
+- **Field:** `ObjectiveKind`
+  - **Contract:** Exact controlled objective kind.
+- **Field:** `RouteId`
+  - **Contract:** Optional ordered route or destination identity.
+- **Field:** `TargetIds`
+  - **Contract:** Ordered canonical target identities.
+- **Field:** `StartTrigger`
+  - **Contract:** Immediate, proximity, interaction, dialogue completion, or
+    explicit signal.
+- **Field:** `CompletionRule`
+  - **Contract:** Typed predicate evaluated from accepted observations.
+- **Field:** `FailureRule`
+  - **Contract:** Typed predicate with a declared grace period where applicable.
+- **Field:** `RecoveryRule`
+  - **Contract:** Restart stage, restart mission, restore checkpoint, or return
+    to free roam.
+- **Field:** `NotorietyPolicyId`
+  - **Contract:** Required policy for target contact and objective exemptions.
+- **Field:** `CatchUpProfileId`
+  - **Contract:** Optional artificial-intelligence catch-up profile.
+- **Field:** `DropSequenceId`
+  - **Contract:** Optional ordered dropped-item sequence.
+- **Field:** `PresentationProfileId`
+  - **Contract:** Objective marker, radar, gauge, prompt, and briefing
+    presentation.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -439,16 +472,23 @@ World adapters publish immutable observations with:
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `ObservationId` | Unique session-scoped identity for deduplication. |
-| `MissionId` | Active mission identity. |
-| `StageId` | Active canonical stage identity. |
-| `StageRevision` | Exact active stage activation revision. |
-| `SourceId` | Canonical actor, item, zone, or interaction identity. |
-| `Kind` | Typed collision, overlap, destruction, collection, route, timer, or interaction event. |
-| `SimulationTime` | Monotonic fixed-step simulation timestamp. |
-| `Payload` | Schema-defined values for the observation kind. |
+- **Field:** `ObservationId`
+  - **Contract:** Unique session-scoped identity for deduplication.
+- **Field:** `MissionId`
+  - **Contract:** Active mission identity.
+- **Field:** `StageId`
+  - **Contract:** Active canonical stage identity.
+- **Field:** `StageRevision`
+  - **Contract:** Exact active stage activation revision.
+- **Field:** `SourceId`
+  - **Contract:** Canonical actor, item, zone, or interaction identity.
+- **Field:** `Kind`
+  - **Contract:** Typed collision, overlap, destruction, collection, route,
+    timer, or interaction event.
+- **Field:** `SimulationTime`
+  - **Contract:** Monotonic fixed-step simulation timestamp.
+- **Field:** `Payload`
+  - **Contract:** Schema-defined values for the observation kind.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -464,20 +504,37 @@ script. It contains:
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `ConditionId` | Stable identity unique within its owning mission definition. |
-| `ConditionKind` | One registered condition schema. |
-| `MissionId` | Owning canonical mission identity. |
-| `ActiveStageRange` | First and last stage revisions during which evaluation is valid. |
-| `ParticipantScope` | Exact local player, character, vehicle, opponent, payload, or shared-world policy. |
-| `SubjectIds` | Ordered canonical vehicles, actors, routes, interiors, payloads, or zones. |
-| `ObservationSchemas` | Exact typed observations accepted by the evaluator. |
-| `Parameters` | Schema-validated thresholds, durations, counts, ranks, distances, and units. |
-| `SuspensionPolicyId` | Declared pauses for interior transitions, arrest resolution, cinematics, or other controlled states. |
-| `TerminalPolicy` | Violation, satisfaction, stage rollback, mission failure, or non-terminal signal. |
-| `RecoveryTransitionId` | Required successor when the terminal policy is recoverable. |
-| `TelemetryProfileId` | Optional non-authoritative warning, meter, music, and accessibility projection. |
+- **Field:** `ConditionId`
+  - **Contract:** Stable identity unique within its owning mission definition.
+- **Field:** `ConditionKind`
+  - **Contract:** One registered condition schema.
+- **Field:** `MissionId`
+  - **Contract:** Owning canonical mission identity.
+- **Field:** `ActiveStageRange`
+  - **Contract:** First and last stage revisions during which evaluation is
+    valid.
+- **Field:** `ParticipantScope`
+  - **Contract:** Exact local player, character, vehicle, opponent, payload, or
+    shared-world policy.
+- **Field:** `SubjectIds`
+  - **Contract:** Ordered canonical vehicles, actors, routes, interiors,
+    payloads, or zones.
+- **Field:** `ObservationSchemas`
+  - **Contract:** Exact typed observations accepted by the evaluator.
+- **Field:** `Parameters`
+  - **Contract:** Schema-validated thresholds, durations, counts, ranks,
+    distances, and units.
+- **Field:** `SuspensionPolicyId`
+  - **Contract:** Declared pauses for interior transitions, arrest resolution,
+    cinematics, or other controlled states.
+- **Field:** `TerminalPolicy`
+  - **Contract:** Violation, satisfaction, stage rollback, mission failure, or
+    non-terminal signal.
+- **Field:** `RecoveryTransitionId`
+  - **Contract:** Required successor when the terminal policy is recoverable.
+- **Field:** `TelemetryProfileId`
+  - **Contract:** Optional non-authoritative warning, meter, music, and
+    accessibility projection.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -590,23 +647,36 @@ reward or consumed save key.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `GagId` | Canonical gag concept identity. |
-| `ActivationProfileId` | Input, proximity, cue, and animation policy. |
-| `SelectionPolicyId` | Weight, deterministic random pool, and eligibility rules. |
-| `AnimationSequenceId` | Intro, loop, outro, and cycle presentation. |
-| `SoundPresentationId` | Optional positional sound and residency policy. |
-| `DialoguePolicyId` | Optional instruction, acceptance, or rejection exchange. |
-| `MediaPolicyId` | Optional validated cinematic or scrapbook check. |
-| `CameraCueId` | Optional bounded camera-shake or shot request. |
-| `RewardPolicyId` | Optional currency or non-currency reward transaction. |
-| `EffectPolicyId` | Optional sparkle, icon, or collection presentation. |
-| `CollisionPolicyId` | Optional animation-collision participation. |
-| `ResidencyPolicyId` | Actor and sound load, unload, and prefetch ranges. |
-| `ReplayPolicy` | Presentation replay allowed or denied after completion. |
-| `PersistenceKeyId` | Optional level-scoped durable completion identity. |
-| `LocalePresentationId` | Optional localized media or presentation selection. |
+- **Field:** `GagId`
+  - **Contract:** Canonical gag concept identity.
+- **Field:** `ActivationProfileId`
+  - **Contract:** Input, proximity, cue, and animation policy.
+- **Field:** `SelectionPolicyId`
+  - **Contract:** Weight, deterministic random pool, and eligibility rules.
+- **Field:** `AnimationSequenceId`
+  - **Contract:** Intro, loop, outro, and cycle presentation.
+- **Field:** `SoundPresentationId`
+  - **Contract:** Optional positional sound and residency policy.
+- **Field:** `DialoguePolicyId`
+  - **Contract:** Optional instruction, acceptance, or rejection exchange.
+- **Field:** `MediaPolicyId`
+  - **Contract:** Optional validated cinematic or scrapbook check.
+- **Field:** `CameraCueId`
+  - **Contract:** Optional bounded camera-shake or shot request.
+- **Field:** `RewardPolicyId`
+  - **Contract:** Optional currency or non-currency reward transaction.
+- **Field:** `EffectPolicyId`
+  - **Contract:** Optional sparkle, icon, or collection presentation.
+- **Field:** `CollisionPolicyId`
+  - **Contract:** Optional animation-collision participation.
+- **Field:** `ResidencyPolicyId`
+  - **Contract:** Actor and sound load, unload, and prefetch ranges.
+- **Field:** `ReplayPolicy`
+  - **Contract:** Presentation replay allowed or denied after completion.
+- **Field:** `PersistenceKeyId`
+  - **Contract:** Optional level-scoped durable completion identity.
+- **Field:** `LocalePresentationId`
+  - **Contract:** Optional localized media or presentation selection.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -669,27 +739,44 @@ mission gate.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `InteriorId` | Canonical location identity. |
-| `StructureId` | Owning structure identity. |
-| `ChapterPredicate` | Chapter and persistent-unlock availability. |
-| `GameplayStatePredicate` | Mission or non-mission availability. |
-| `ExteriorPortalId` | Required entry interaction placement. |
-| `InteriorPortalId` | Required exit interaction placement. |
-| `InteriorDataLayers` | Runtime layers activated for the interior. |
-| `ExteriorDataLayers` | Runtime layers whose state is restored on exit. |
-| `LoadBundleId` | Required world, interaction, audio, camera, and UI assets. |
-| `SpawnTransformId` | Interior player arrival transform. |
-| `ReturnTransformId` | Exterior player return transform. |
-| `EntrySequenceId` | Orientation, input lease, transition, and arrival policy. |
-| `ExitSequenceId` | Exit cue, restoration, and return-control policy. |
-| `LightingProfileId` | Interior lighting and exposure definition. |
-| `ReflectionProfileId` | Optional mirror or planar-reflection presentation. |
-| `AnimationSetId` | Ambient interior animation definitions. |
-| `RestrictionProfileId` | Movement, combat, and action restrictions. |
-| `NotorietyTransitionId` | Interior-specific pursuit and decay policy. |
-| `InteractionPlacementIds` | Gags, characters, mission anchors, and costume stations. |
+- **Field:** `InteriorId`
+  - **Contract:** Canonical location identity.
+- **Field:** `StructureId`
+  - **Contract:** Owning structure identity.
+- **Field:** `ChapterPredicate`
+  - **Contract:** Chapter and persistent-unlock availability.
+- **Field:** `GameplayStatePredicate`
+  - **Contract:** Mission or non-mission availability.
+- **Field:** `ExteriorPortalId`
+  - **Contract:** Required entry interaction placement.
+- **Field:** `InteriorPortalId`
+  - **Contract:** Required exit interaction placement.
+- **Field:** `InteriorDataLayers`
+  - **Contract:** Runtime layers activated for the interior.
+- **Field:** `ExteriorDataLayers`
+  - **Contract:** Runtime layers whose state is restored on exit.
+- **Field:** `LoadBundleId`
+  - **Contract:** Required world, interaction, audio, camera, and UI assets.
+- **Field:** `SpawnTransformId`
+  - **Contract:** Interior player arrival transform.
+- **Field:** `ReturnTransformId`
+  - **Contract:** Exterior player return transform.
+- **Field:** `EntrySequenceId`
+  - **Contract:** Orientation, input lease, transition, and arrival policy.
+- **Field:** `ExitSequenceId`
+  - **Contract:** Exit cue, restoration, and return-control policy.
+- **Field:** `LightingProfileId`
+  - **Contract:** Interior lighting and exposure definition.
+- **Field:** `ReflectionProfileId`
+  - **Contract:** Optional mirror or planar-reflection presentation.
+- **Field:** `AnimationSetId`
+  - **Contract:** Ambient interior animation definitions.
+- **Field:** `RestrictionProfileId`
+  - **Contract:** Movement, combat, and action restrictions.
+- **Field:** `NotorietyTransitionId`
+  - **Contract:** Interior-specific pursuit and decay policy.
+- **Field:** `InteractionPlacementIds`
+  - **Contract:** Gags, characters, mission anchors, and costume stations.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -724,7 +811,8 @@ Entry is an atomic world-composition transaction:
 
 The load request follows the
 <!-- markdownlint-disable-next-line MD013 -->
-[native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md).
+[native asset load request and streaming
+runtime](native-asset-load-request-and-streaming-runtime.md).
 A wipe, camera cut, sound cue, or animation may present the transition but
 cannot commit it. Input returns only after the target composition and spawn
 postcondition are verified.
@@ -802,7 +890,8 @@ pursuers.
 
 Each accepted pursuer is represented by a revisioned pursuit-vehicle lease under
 <!-- markdownlint-disable-next-line MD013 -->
-[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+[Native vehicle physics, control, damage, and presentation
+runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
 The lease owns vehicle construction, controller, target, route, visibility,
 active budget, destruction, withdrawal, and teardown. Fixed chase arrays,
 player-

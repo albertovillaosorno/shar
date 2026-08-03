@@ -1,7 +1,3 @@
-# File:
-#   - repair_unreal_project.py
-# Path: src/unreal/project/composition/uproject/Scripts/repair_unreal_project.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,37 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Recovery and regeneration of Visual Studio project files.
+#   - Repair unreal project composition module.
 # - Must-Not:
-#   - Modify authored Unreal assets or unrelated generated state.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Bounded UBT invocation and deterministic SLNX repair.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Another generated-file family needs separate recovery.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another entry point owns this repair workflow.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Repairs Visual Studio files for the Unreal project.
+#   - Repair unreal project composition module.
 # - Description:
-#   - Clears corrupt UBT state and repairs generated SLNX data.
+#   - Implements the declared composition module responsibility for project.
 # - Usage:
-#   - Invoked by the batch entry point and imported by unit tests.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - No engine process runs unless regeneration is requested.
-#
-# ADRs:
-# - docs/adr/pipeline/unreal/unreal-manifest-and-package-taxonomy.md
-#
-# Large file:
-#   - true
+#   - Invalid or missing inputs fail explicitly.
 #
 
-"""Repair Visual Studio project files for the SHAR Unreal project."""
+"""Repair unreal project composition module."""
 
 from __future__ import annotations
 
@@ -48,11 +36,12 @@ import argparse
 import codecs
 import json
 import os
+from pathlib import Path
 import re
 import subprocess  # noqa: S404 -- Runs one resolved local Unreal batch file.
 import sys
-from pathlib import Path
-from typing import Final, cast
+from typing import Final
+from typing import cast
 
 ENGINE_ASSOCIATION: Final = "5.8"
 _SCRIPT_GENERATOR_PROJECT: Final = "ScriptGeneratorUbtPlugin.ubtplugin.csproj"
@@ -99,6 +88,7 @@ def read_engine_association(project_path: Path) -> str:
     Raises:
         ProjectAssociationError: The association is missing or unsupported.
         ProjectDescriptorTypeError: The descriptor is not a JSON object.
+
     """
     payload = cast(
         "object",
@@ -129,6 +119,7 @@ def project_generation_script(engine_root: Path) -> Path:
 
     Returns:
         The UnrealBuildTool batch-file path.
+
     """
     return engine_root / "Engine" / "Build" / "BatchFiles" / "Build.bat"
 
@@ -141,6 +132,7 @@ def resolve_engine_root(association: str, explicit_root: Path | None) -> Path:
 
     Raises:
         EngineInstallationNotFoundError: No matching installation exists.
+
     """
     candidates: list[Path] = []
     if explicit_root is not None:
@@ -171,6 +163,7 @@ def project_xml_config_cache_path(project_path: Path) -> Path:
 
     Returns:
         The cache path selected when UBT receives a project path.
+
     """
     return project_path.parent / "Intermediate" / "Build" / "XmlConfigCache.bin"
 
@@ -180,6 +173,7 @@ def remove_project_xml_config_cache(project_path: Path) -> bool:
 
     Returns:
         Whether the generated cache existed and was removed.
+
     """
     cache_path = project_xml_config_cache_path(project_path)
     if not cache_path.exists():
@@ -193,6 +187,7 @@ def workspace_generation_arguments(project_path: Path) -> CommandArguments:
 
     Returns:
         The bounded arguments matching Visual Studio integration.
+
     """
     return (
         "-mode=GenerateProjectFiles",
@@ -215,6 +210,7 @@ def solution_generation_arguments(project_path: Path) -> CommandArguments:
 
     Returns:
         The bounded arguments used to refresh the generated solution.
+
     """
     return (
         "-projectfiles",
@@ -244,6 +240,7 @@ def repair_solution_configuration(solution_path: Path) -> int:
 
     Returns:
         The number of invalid project configurations repaired.
+
     """
     raw_solution = solution_path.read_bytes()
     has_bom = raw_solution.startswith(codecs.BOM_UTF8)
@@ -290,6 +287,7 @@ def repair_project_files(
 
     Raises:
         GeneratedSolutionNotFoundError: The generated solution does not exist.
+
     """
     association = read_engine_association(project_path)
     cache_removed = False
@@ -320,6 +318,7 @@ def parse_arguments() -> Arguments:
 
     Returns:
         The project path, optional engine root, and patch-only flag.
+
     """
     project_root = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser(
@@ -352,6 +351,7 @@ def main() -> int:
 
     Returns:
         A successful process exit status.
+
     """
     project, engine_root, patch_only = parse_arguments()
     cache_removed, repaired_count = repair_project_files(

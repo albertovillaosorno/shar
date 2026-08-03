@@ -35,7 +35,8 @@ to independently authored repository material.
 ## Repository Use And Scope
 
 `validate.sh` invokes the managed Node.js runtime and CSpell module with the
-repository-local `.jig/cspell/cspell.json`, disabled configuration search, an explicit file
+repository-local `.jig/cspell/cspell.json`, disabled configuration search, an
+explicit file
 list, directive validation, and no CSpell-owned cache. The repository validator
 separately enforces dictionary classification, sorted and unique entries, and
 exact line-scoped suppressions for intentional invalid sequences.
@@ -62,7 +63,8 @@ of every bundled dictionary notice, or make a dated version permanently current.
 
 CSpell and its upstream packages are authored by their respective upstream
 authors and contributors. Bundled or optional dictionaries may have separate
-authors and notices. SHAR owns its independently authored `.jig/cspell/cspell.json` and
+authors and notices. SHAR owns its independently authored
+`.jig/cspell/cspell.json` and
 curated wordlists; loading those files into CSpell does not transfer ownership
 or apply CSpell's license to unrelated repository material.
 
@@ -83,7 +85,8 @@ artifacts distributed.
 
 - SHAR does not bundle Node.js, CSpell, its package tree, or third-party add-on
   dictionaries in the repository or current distributed payload.
-- The repository distributes only its own `.jig/cspell/cspell.json` and curated wordlists.
+- The repository distributes only its own `.jig/cspell/cspell.json` and curated
+  wordlists.
 - A CSpell package, transitive dependency, and bundled-dictionary notice
   inventory is outside the current SHAR distribution boundary and is required
   when executable or package contents are redistributed.
@@ -115,6 +118,7 @@ artifacts distributed.
 - Street Side Software and contributors (n.d.) *CSpell official GitHub
   repository*. Available at: <https://github.com/streetsidesoftware/cspell>
   (Accessed: 14 July 2026).
-- SHAR managed command authority (2026), `.jig/cspell/cspell.json` and its dictionaries,
+- SHAR managed command authority (2026), `.jig/cspell/cspell.json` and its
+  dictionaries,
   `validate.sh`, root package authority, lockfile, and managed `cspell` 10.0.1
   package metadata and executable output.

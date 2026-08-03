@@ -1,7 +1,3 @@
-// File:
-//   - package.rs
-// Path: src/formats/lmlm/domain/package.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,41 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Identity validation for the supported LMLM package.
+//   - Package domain module.
 // - Must-Not:
-//   - Write extracted files or bypass checked parser boundaries.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Operations required by this single LMLM responsibility.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - One contained invariant gains independent state or a distinct API.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another LMLM module proves the same invariant without distinction.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Owns identity validation for the supported lmlm package.
+//   - Package domain module.
 // - Description:
-//   - Keeps this parser responsibility deterministic and fail closed.
+//   - Implements the declared domain module responsibility for lmlm.
 // - Usage:
-//   - Imported only by owned LMLM modules.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Malformed input never becomes a portable output identity.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Supported-package identity validation.
-//!
-//! Reads only the declared metadata payload and matches an exact title line.
+//! Package domain module.
 
-// Sibling parser modules share these contracts without exposing them publicly.
 #![expect(
     clippy::redundant_pub_crate,
     reason = "sibling parser modules require crate-visible contracts while \
@@ -57,10 +42,7 @@ use super::{FileEntry, LmlmError};
 
 /// Returns whether metadata declares exactly one supported package title.
 fn metadata_title_matches(bytes: &[u8]) -> bool {
-    let mut expected_lines = JEBANO_TITLE_LF.splitn(
-        2,
-        |byte| *byte == b'\n',
-    );
+    let mut expected_lines = JEBANO_TITLE_LF.splitn(2, |byte| *byte == b'\n');
     let Some(expected_section) = expected_lines.next() else {
         return false;
     };
@@ -70,9 +52,7 @@ fn metadata_title_matches(bytes: &[u8]) -> bool {
     let mut in_expected_section = false;
     let mut title_matched = false;
     for raw_line in bytes.split(|byte| *byte == b'\n') {
-        let line = raw_line
-            .strip_suffix(b"\r")
-            .unwrap_or(raw_line);
+        let line = raw_line.strip_suffix(b"\r").unwrap_or(raw_line);
         if line.starts_with(b"[") && line.ends_with(b"]") {
             in_expected_section = line == expected_section;
             continue;
@@ -97,18 +77,13 @@ pub(crate) fn require_jebano_latino_package(
         .iter()
         .find(|entry| entry.path == PACKAGE_METADATA_PATH)
         .ok_or(LmlmError::UnsupportedPackage)?;
-    let bytes = entry_bytes(
-        data, metadata,
-    )
-    .ok_or_else(
-        || LmlmError::InvalidEntryRange {
-            path: metadata
-                .path
-                .clone(),
+    let bytes = entry_bytes(data, metadata).ok_or_else(|| {
+        LmlmError::InvalidEntryRange {
+            path: metadata.path.clone(),
             offset: metadata.offset,
             size: metadata.size,
-        },
-    )?;
+        }
+    })?;
     if metadata_title_matches(bytes) {
         Ok(())
     } else {

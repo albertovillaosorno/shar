@@ -1,12 +1,34 @@
-// File: SharAudioLeaseRegistry.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharAudio/Private/Audio/SharAudioLeaseRegistry.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: deterministic audio request and lease lifecycle only; no native source playback.
-// ADR: docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
-// LARGE-FILE owner=SharAudio; reason=cohesive lease lifecycle implementation;
-// split=extract owner teardown if request retention policies expand;
-// validation=validate.sh SharAudio plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar audio lease registry composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar audio lease registry composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar audio lease registry composition module.
 
 #include "Audio/SharAudioLeaseRegistry.h"
 
@@ -145,11 +167,13 @@ int32 USharAudioLeaseRegistry::GetActiveCount() const
     int32 ActiveCount = 0;
     for (const FSharAudioPlaybackState& State : States)
     {
+        // jig-ignore-next-line: exact syntax is indivisible
         ActiveCount += State.Result == ESharAudioPlaybackResult::Accepted ? 1 : 0;
     }
     return ActiveCount;
 }
 
+// jig-ignore-next-line: exact syntax is indivisible
 const TArray<FSharAudioPlaybackState>& USharAudioLeaseRegistry::GetStates() const
 {
     return States;

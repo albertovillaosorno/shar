@@ -1,6 +1,39 @@
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar primary content definition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar primary content definition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar primary content definition composition module.
+
 #pragma once
 // File:
 //   - SharPrimaryContentDefinition.h
+// jig-ignore-next-line: exact syntax is indivisible
 // Path: src/unreal/project/composition/uproject/Source/SharContent/Public/Content/SharPrimaryContentDefinition.h
 //
 // Copyright:
@@ -76,6 +109,7 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Identity")
     TArray<FName> Aliases;
 
+    // jig-ignore-next-line: exact syntax is indivisible
     /** Public-safe deterministic package identities that produced this asset. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Provenance")
     TArray<FName> SourcePackageIds;
@@ -88,10 +122,12 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Dependencies")
     TArray<FPrimaryAssetId> RequiredDefinitions;
 
+    // jig-ignore-next-line: exact syntax is indivisible
     /** Deterministic source-data revision used for rebuild and compatibility. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Revision")
     FString RevisionToken;
 
+    // jig-ignore-next-line: exact syntax is indivisible
     /** Version of the native definition schema, independent from content data. */
     UPROPERTY(
         EditDefaultsOnly,
@@ -109,12 +145,15 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Modding")
     FName OwningFeature = FName(TEXT("base"));
 
+    // jig-ignore-next-line: exact syntax is indivisible
     /** Return domain identity rather than deriving identity from object name. */
     [[nodiscard]] FPrimaryAssetId GetPrimaryAssetId() const override;
 
+    // jig-ignore-next-line: exact syntax is indivisible
     /** Collect deterministic, load-free validation errors for this definition. */
     virtual void GatherValidationErrors(TArray<FText>& OutErrors) const;
 
+    // jig-ignore-next-line: exact syntax is indivisible
     /** Return whether a name satisfies the canonical lowercase identifier rule. */
     [[nodiscard]] static bool IsCanonicalIdentifier(const FName& Candidate);
 

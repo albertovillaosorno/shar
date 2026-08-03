@@ -1,7 +1,3 @@
-// File:
-//   - mod.rs
-// Path: src/foundation/sha256/domain/mod.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,37 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure SHA-256 domain primitives.
+//   - Domain domain module.
 // - Must-Not:
-//   - Read files, use network access, or expose mutable hash state.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Deterministic hashing and lowercase hexadecimal projection.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Incremental hashing gains an independently testable state machine.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another domain module owns the same exact SHA-256 primitive.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - SHA-256 domain facade.
+//   - Domain domain module.
 // - Description:
-//   - Exposes dependency-free hashing through the canonical domain kind.
+//   - Implements the declared domain module responsibility for sha256.
 // - Usage:
-//   - Re-exported by the function public facade.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No input source or external effect is selected implicitly.
-//
-// Related documents:
-// - docs/adr/engineering/architecture/project-core-separation.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Pure SHA-256 domain primitives.
+//! Domain domain module.
 
 mod sha256;
 

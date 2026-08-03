@@ -1,7 +1,3 @@
-// File:
-//   - topology.rs
-// Path: src/formats/fbx/domain/mesh/topology.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,44 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure fbx domain rules for domain mesh topology.
+//   - Topology domain module.
 // - Must-Not:
-//   - Read files, parse generated indexes, invoke CLI code, or call writer
-//   - adapters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Value objects, invariant checks, and pure evidence-to-domain translation.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when topology contains two independently testable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another fbx module owns the same domain boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Normalize decoded triangle topology and authored facing.
+//   - Topology domain module.
 // - Description:
-//   - Defines topology data and behavior for fbx domain mesh.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Imported through crate domain facades or sibling domain modules.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No filesystem paths, no external process calls, and no implicit IO
-//   - defaults.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-// - docs/adr/pipeline/unreal/unreal-manifest-and-package-taxonomy.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Normalize decoded triangle topology and authored facing.
-//!
-//! This boundary triangulates decoded index streams and aligns geometric face
-//! winding with authoritative per-vertex normals.
+//! Topology domain module.
+
 use super::error::MeshError;
 
 /// Convert decoded indices into triangles.
@@ -57,7 +39,7 @@ use super::error::MeshError;
 /// Returns an error when the index list is neither a triangle list nor one
 /// quad.
 pub fn triangulate_indices(
-    indices: &[u32]
+    indices: &[u32],
 ) -> Result<Vec<[u32; 3]>, MeshError> {
     if indices.is_empty() {
         return Err(MeshError::UnsupportedIndexCount(0));
@@ -66,23 +48,8 @@ pub fn triangulate_indices(
     if remainder.is_empty() {
         return Ok(triangles.to_vec());
     }
-    if let [
-        first,
-        second,
-        third,
-        fourth,
-    ] = indices
-    {
-        return Ok(
-            vec![
-                [
-                    *first, *second, *third,
-                ],
-                [
-                    *first, *third, *fourth,
-                ],
-            ],
-        );
+    if let [first, second, third, fourth] = indices {
+        return Ok(vec![[*first, *second, *third], [*first, *third, *fourth]]);
     }
     Err(MeshError::UnsupportedIndexCount(indices.len()))
 }
@@ -101,33 +68,17 @@ pub fn triangulate_strip(indices: &[u32]) -> Result<Vec<[u32; 3]>, MeshError> {
         return Err(MeshError::UnsupportedIndexCount(indices.len()));
     }
     let mut triangles = Vec::new();
-    for (position, window) in indices
-        .windows(3)
-        .enumerate()
-    {
-        let [
-            first,
-            second,
-            third,
-        ] = window
-        else {
+    for (position, window) in indices.windows(3).enumerate() {
+        let [first, second, third] = window else {
             continue;
         };
         if first == second || second == third || first == third {
             continue;
         }
         if position % 2 == 0 {
-            triangles.push(
-                [
-                    *first, *second, *third,
-                ],
-            );
+            triangles.push([*first, *second, *third]);
         } else {
-            triangles.push(
-                [
-                    *second, *first, *third,
-                ],
-            );
+            triangles.push([*second, *first, *third]);
         }
     }
     if triangles.is_empty() {
@@ -180,18 +131,12 @@ pub(super) fn align_triangle_winding(
             third[2] - first[2],
         ];
         let face_normal = [
-            first_edge[1].mul_add(
-                second_edge[2],
-                -first_edge[2] * second_edge[1],
-            ),
-            first_edge[2].mul_add(
-                second_edge[0],
-                -first_edge[0] * second_edge[2],
-            ),
-            first_edge[0].mul_add(
-                second_edge[1],
-                -first_edge[1] * second_edge[0],
-            ),
+            first_edge[1]
+                .mul_add(second_edge[2], -first_edge[2] * second_edge[1]),
+            first_edge[2]
+                .mul_add(second_edge[0], -first_edge[0] * second_edge[2]),
+            first_edge[0]
+                .mul_add(second_edge[1], -first_edge[1] * second_edge[0]),
         ];
         let authored_normal = [
             first_normal[0] + second_normal[0] + third_normal[0],
@@ -213,49 +158,13 @@ pub(super) fn align_triangle_winding(
             .sum::<f32>();
         if face_length_squared > f32::EPSILON
             && authored_length_squared > f32::EPSILON
-            && alignment < 0.0
+            && alignment < 0.
         {
-            triangle.swap(
-                1, 2,
-            );
+            triangle.swap(1, 2);
         }
     }
 }
 
 #[cfg(test)]
-mod tests {
-    use super::triangulate_indices;
-
-    #[test]
-    fn empty_index_stream_is_rejected() {
-        let result = triangulate_indices(&[]);
-
-        assert_eq!(
-            result,
-            Err(super::MeshError::UnsupportedIndexCount(0))
-        );
-    }
-
-    #[test]
-    fn quad_triangles_preserve_winding() {
-        let result = triangulate_indices(
-            &[
-                0, 1, 2, 3,
-            ],
-        );
-
-        assert_eq!(
-            result,
-            Ok(
-                vec![
-                    [
-                        0, 1, 2
-                    ],
-                    [
-                        0, 2, 3
-                    ]
-                ]
-            )
-        );
-    }
-}
+#[path = "../../../../../tests/formats/fbx/unit/domain/mesh/topology/tests.rs"]
+mod tests;

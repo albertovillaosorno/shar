@@ -6,10 +6,12 @@
 ## Governing decisions and evidence
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native cinematic package strategy](../../adr/rmv/unreal-native-cinematic-package.md)
+- [Native cinematic package
+  strategy](../../adr/rmv/unreal-native-cinematic-package.md)
 - [Local cinematic overrides](../../adr/rmv/local-movie-overrides.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md) <!-- markdownlint-disable-line MD013 -->
 - [Unreal Engine](../../bibliography/engine-and-plugins/unreal-engine.md)
 
 ## Related runtime specification
@@ -28,17 +30,25 @@ Every cinematic has one platform-neutral definition containing at least:
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `CinematicId` | Stable canonical identity. |
-| `Timebase` | Exact rational timeline unit. |
-| `Duration` | Canonical presentation duration in timeline units. |
-| `VideoTrackId` | Canonical visual presentation identity. |
-| `AudioTrackIds` | Ordered explicit audio identities by role and locale. |
-| `SubtitleTrackIds` | Ordered subtitle and localization identities. |
-| `EventMarkers` | Deterministic gameplay, fade, transition, and completion events. |
-| `SourceRevision` | Normalized evidence revision and provenance. |
-| `VariantRequirements` | Required target variants and their acceptance state. |
+- **Field:** `CinematicId`
+  - **Contract:** Stable canonical identity.
+- **Field:** `Timebase`
+  - **Contract:** Exact rational timeline unit.
+- **Field:** `Duration`
+  - **Contract:** Canonical presentation duration in timeline units.
+- **Field:** `VideoTrackId`
+  - **Contract:** Canonical visual presentation identity.
+- **Field:** `AudioTrackIds`
+  - **Contract:** Ordered explicit audio identities by role and locale.
+- **Field:** `SubtitleTrackIds`
+  - **Contract:** Ordered subtitle and localization identities.
+- **Field:** `EventMarkers`
+  - **Contract:** Deterministic gameplay, fade, transition, and completion
+    events.
+- **Field:** `SourceRevision`
+  - **Contract:** Normalized evidence revision and provenance.
+- **Field:** `VariantRequirements`
+  - **Contract:** Required target variants and their acceptance state.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -67,19 +77,30 @@ Each target variant has a deterministic manifest containing:
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `TargetId` | Exact canonical target identifier. |
-| `VariantRevision` | Deterministic derived-media revision. |
-| `MediaPlayer` | Exact enabled Unreal player or plugin selected for playback. |
-| `Container` | Packaged local container identity. |
-| `VideoCodec` | Exact codec, profile, level, and pixel-format requirements. |
-| `AudioStrategy` | Explicit external Unreal audio tracks or verified packaged stream strategy. |
-| `Dimensions` | Encoded width, height, and pixel-aspect contract. |
-| `FrameRate` | Exact encoded rate and timestamp mapping. |
-| `QualityParameters` | Deterministic bitrate, quality, keyframe, and conversion settings. |
-| `Members` | Lengths, hashes, roles, and package identities for every file. |
-| `VerificationRevision` | Native playback evidence accepted for this target. |
+- **Field:** `TargetId`
+  - **Contract:** Exact canonical target identifier.
+- **Field:** `VariantRevision`
+  - **Contract:** Deterministic derived-media revision.
+- **Field:** `MediaPlayer`
+  - **Contract:** Exact enabled Unreal player or plugin selected for playback.
+- **Field:** `Container`
+  - **Contract:** Packaged local container identity.
+- **Field:** `VideoCodec`
+  - **Contract:** Exact codec, profile, level, and pixel-format requirements.
+- **Field:** `AudioStrategy`
+  - **Contract:** Explicit external Unreal audio tracks or verified packaged
+    stream strategy.
+- **Field:** `Dimensions`
+  - **Contract:** Encoded width, height, and pixel-aspect contract.
+- **Field:** `FrameRate`
+  - **Contract:** Exact encoded rate and timestamp mapping.
+- **Field:** `QualityParameters`
+  - **Contract:** Deterministic bitrate, quality, keyframe, and conversion
+    settings.
+- **Field:** `Members`
+  - **Contract:** Lengths, hashes, roles, and package identities for every file.
+- **Field:** `VerificationRevision`
+  - **Contract:** Native playback evidence accepted for this target.
 
 <!-- markdownlint-enable MD013 -->
 

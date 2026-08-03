@@ -6,7 +6,8 @@
 ## Governing decision
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [First-principles FBX output contract](../../../adr/fbx/export/fbx-output-contract-boundary.md)
+- [First-principles FBX output
+  contract](../../../adr/fbx/export/fbx-output-contract-boundary.md)
 
 ## Purpose
 

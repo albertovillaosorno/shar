@@ -5,22 +5,29 @@
 
 ## Governing decisions and specifications
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Native gameplay audio, dialogue, and listener boundary](../../adr/unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native gameplay audio, dialogue, and listener boundary](../../adr/unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Platform audio cooking and streaming](platform-audio-cooking-and-streaming.md)
+- [Platform audio cooking and
+  streaming](platform-audio-cooking-and-streaming.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Presentation playback runtime](presentation-playback-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md)
+- [Spatial audio listener and positional-source
+  runtime](spatial-audio-listener-and-positional-source-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md)
+- [Typed event and observation routing
+  runtime](typed-event-and-observation-routing-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md)
+- [Historical core-design and dialogue evidence
+  normalization](historical-core-design-and-dialogue-evidence-normalization.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Dialogue authoring evidence import and native asset projection](dialogue-authoring-evidence-import-and-native-asset-projection.md)
+- [Dialogue authoring evidence import and native asset
+  projection](dialogue-authoring-evidence-import-and-native-asset-projection.md)
 
 ## Purpose
 
@@ -64,17 +71,31 @@ results. It does not implement a second audio mixer.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Dialogue catalog | Owns line, conversation, selection-group, event-binding, participant, locale, subtitle, priority, and playback definitions. |
-| Event-routing service | Publishes immutable semantic events and participant context. |
-| Mission and interaction services | Own domain transactions, eligibility, completion, rewards, progression, and persistence. |
-| Dialogue-selection service | Resolves eligible definitions and deterministic variants. |
-| Dialogue-queue service | Owns admission, ordering, interruption, expiry, pause, cancellation, and terminal queue results. |
-| Unreal Audio Engine | Owns source playback, attenuation, concurrency, routing, mixing, virtualization, and output. |
-| Subtitle and accessibility services | Own localized text projection and accessibility policy. |
-| Character presentation | Owns mouth, facial, gesture, and look-at projections from accepted line observations. |
-| Spatial-audio subsystem | Owns listener policy and positional-source projection. |
+- **Authority:** Dialogue catalog
+  - **Responsibility:** Owns line, conversation, selection-group, event-binding,
+    participant, locale, subtitle, priority, and playback definitions.
+- **Authority:** Event-routing service
+  - **Responsibility:** Publishes immutable semantic events and participant
+    context.
+- **Authority:** Mission and interaction services
+  - **Responsibility:** Own domain transactions, eligibility, completion,
+    rewards, progression, and persistence.
+- **Authority:** Dialogue-selection service
+  - **Responsibility:** Resolves eligible definitions and deterministic
+    variants.
+- **Authority:** Dialogue-queue service
+  - **Responsibility:** Owns admission, ordering, interruption, expiry, pause,
+    cancellation, and terminal queue results.
+- **Authority:** Unreal Audio Engine
+  - **Responsibility:** Owns source playback, attenuation, concurrency, routing,
+    mixing, virtualization, and output.
+- **Authority:** Subtitle and accessibility services
+  - **Responsibility:** Own localized text projection and accessibility policy.
+- **Authority:** Character presentation
+  - **Responsibility:** Owns mouth, facial, gesture, and look-at projections
+    from accepted line observations.
+- **Authority:** Spatial-audio subsystem
+  - **Responsibility:** Owns listener policy and positional-source projection.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -115,28 +136,51 @@ not durable identity.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `LineId` | Canonical line identity. |
-| `EventId` | Semantic event or presentation intent. |
-| `SpeakerId` | Canonical speaker, archetype, role, or participant binding. |
-| `AddresseePolicy` | Optional second participant, group, local-player, or contextual target. |
-| `ConversationId` | Optional ordered conversation membership. |
-| `ConversationOrdinal` | Canonical line order within that conversation revision. |
-| `SelectionGroupId` | Optional group of equivalent or varied lines. |
-| `WorldScope` | Allowed world, chapter, region, interior, level, mission, race, or mode policy. |
-| `RolePolicy` | Walker, driver, pedestrian, villain, mission actor, ambient actor, or another registered role. |
-| `AudioByLocale` | Required and optional localized audio identities. |
-| `SubtitleByLocale` | Localized subtitle identity and timing policy. |
-| `PlaybackPolicy` | Positional, non-positional, attached, local-player, or shared presentation. |
-| `PriorityPolicy` | Admission class, interruption, and queue ordering. |
-| `ProbabilityPolicy` | Optional deterministic variation probability. |
-| `LifetimePolicy` | Queue expiry, playback deadline, and stale-event policy. |
-| `ConcurrencyPolicy` | Native Sound Concurrency and project queue limits. |
-| `DuckingPolicy` | Sound Class, submix, cinematic, music, and ambience behavior. |
-| `MouthPolicy` | Optional facial, mouth, subtitle, and speaker-observation correlation. |
-| `FallbackPolicy` | Locale, speaker, positional, and optional-line fallback. |
-| `DefinitionRevision` | Immutable revision for stale-result rejection. |
+- **Field:** `LineId`
+  - **Contract:** Canonical line identity.
+- **Field:** `EventId`
+  - **Contract:** Semantic event or presentation intent.
+- **Field:** `SpeakerId`
+  - **Contract:** Canonical speaker, archetype, role, or participant binding.
+- **Field:** `AddresseePolicy`
+  - **Contract:** Optional second participant, group, local-player, or
+    contextual target.
+- **Field:** `ConversationId`
+  - **Contract:** Optional ordered conversation membership.
+- **Field:** `ConversationOrdinal`
+  - **Contract:** Canonical line order within that conversation revision.
+- **Field:** `SelectionGroupId`
+  - **Contract:** Optional group of equivalent or varied lines.
+- **Field:** `WorldScope`
+  - **Contract:** Allowed world, chapter, region, interior, level, mission,
+    race, or mode policy.
+- **Field:** `RolePolicy`
+  - **Contract:** Walker, driver, pedestrian, villain, mission actor, ambient
+    actor, or another registered role.
+- **Field:** `AudioByLocale`
+  - **Contract:** Required and optional localized audio identities.
+- **Field:** `SubtitleByLocale`
+  - **Contract:** Localized subtitle identity and timing policy.
+- **Field:** `PlaybackPolicy`
+  - **Contract:** Positional, non-positional, attached, local-player, or shared
+    presentation.
+- **Field:** `PriorityPolicy`
+  - **Contract:** Admission class, interruption, and queue ordering.
+- **Field:** `ProbabilityPolicy`
+  - **Contract:** Optional deterministic variation probability.
+- **Field:** `LifetimePolicy`
+  - **Contract:** Queue expiry, playback deadline, and stale-event policy.
+- **Field:** `ConcurrencyPolicy`
+  - **Contract:** Native Sound Concurrency and project queue limits.
+- **Field:** `DuckingPolicy`
+  - **Contract:** Sound Class, submix, cinematic, music, and ambience behavior.
+- **Field:** `MouthPolicy`
+  - **Contract:** Optional facial, mouth, subtitle, and speaker-observation
+    correlation.
+- **Field:** `FallbackPolicy`
+  - **Contract:** Locale, speaker, positional, and optional-line fallback.
+- **Field:** `DefinitionRevision`
+  - **Contract:** Immutable revision for stale-result rejection.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -228,7 +272,8 @@ mapping.
 
 Historical conversation and sound-event spreadsheets follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md).
+[Historical core-design and dialogue evidence
+normalization](historical-core-design-and-dialogue-evidence-normalization.md).
 The importer treats non-empty conversation rows as private semantic evidence for
 speaker, event, mission or location context, conversation membership, ordinal,
 role, variant, audio alias, and locale. Sound-event rows add candidate event
@@ -611,7 +656,8 @@ advancing. It never skips to an arbitrary later line.
 
 Positional dialogue follows
 <!-- markdownlint-disable-next-line MD013 -->
-[Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md).
+[Spatial audio listener and positional-source
+runtime](spatial-audio-listener-and-positional-source-runtime.md).
 The request names the exact speaker Actor, component, socket, world, and
 revision,
 or carries a bounded world-space snapshot when attachment is not required.

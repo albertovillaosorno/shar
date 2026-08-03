@@ -6,22 +6,30 @@
 ## Governing decisions and specifications
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+- [Portable save storage and
+  lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
+- [Common UI front end and progress
+  projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md) <!-- markdownlint-disable-line MD013 -->
 - [Platform save storage and lifecycle](platform-save-storage-and-lifecycle.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md)
+- [Frontend screen flow and settings
+  runtime](frontend-screen-flow-and-settings-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [In-game HUD, pause, and transition runtime](in-game-hud-pause-and-transition-runtime.md)
+- [In-game HUD, pause, and transition
+  runtime](in-game-hud-pause-and-transition-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
+- [Application lifecycle and mode
+  runtime](application-lifecycle-and-mode-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
+- [Native audio device, resource, player, and tuning adapter
+  runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md)
+- [Historical core-design and dialogue evidence
+  normalization](historical-core-design-and-dialogue-evidence-normalization.md)
 
 ## Purpose
 
@@ -38,15 +46,26 @@ and callback-order completion with native schemas and transaction handles.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Configuration schema | Device-local setting identities, types, bounds, defaults, and migration. |
-| Configuration repository | Load, validate, stage, commit, reset, and observe local settings. |
-| Save repository | Logical slot lookup, summary reads, portable snapshot transactions, and recovery. |
-| Platform storage adapter | Native container, quota, permission, lifecycle, and atomicity behavior. |
-| Profile service | Active local profile and account-container identity. |
-| Front-end UI | Slot selection, confirmation, progress, failure, and recovery presentation. |
-| Gameplay domains | Immutable portable snapshot and accepted checkpoint metadata. |
+- **Authority:** Configuration schema
+  - **Responsibility:** Device-local setting identities, types, bounds,
+    defaults, and migration.
+- **Authority:** Configuration repository
+  - **Responsibility:** Load, validate, stage, commit, reset, and observe local
+    settings.
+- **Authority:** Save repository
+  - **Responsibility:** Logical slot lookup, summary reads, portable snapshot
+    transactions, and recovery.
+- **Authority:** Platform storage adapter
+  - **Responsibility:** Native container, quota, permission, lifecycle, and
+    atomicity behavior.
+- **Authority:** Profile service
+  - **Responsibility:** Active local profile and account-container identity.
+- **Authority:** Front-end UI
+  - **Responsibility:** Slot selection, confirmation, progress, failure, and
+    recovery presentation.
+- **Authority:** Gameplay domains
+  - **Responsibility:** Immutable portable snapshot and accepted checkpoint
+    metadata.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -59,19 +78,34 @@ The platform module owns these C++ types:
 
 <!-- markdownlint-disable MD013 -->
 
-| Type | Responsibility |
-| :--- | :--- |
-| `USharDeviceConfigurationSchema` | Immutable setting definitions and migration chain. |
-| `USharDeviceConfigurationSubsystem` | Read model, staged edits, commit, reset, and observers. |
-| `ISharDeviceConfigurationRepository` | Platform-local serialized configuration port. |
-| `USharSaveSlotPolicy` | Product slot identities, visibility, ordering, and creation rules. |
-| `USharSaveRepositorySubsystem` | Slot summaries, load, save, delete, recovery, and active handles. |
-| `ISharPlatformStorageAdapter` | Native account container, quota, permissions, and durable operations. |
-| `FSharSaveSlotId` | Stable logical profile and slot identity. |
-| `FSharSaveSlotSummary` | Validated display projection for one accepted save revision. |
-| `FSharStorageProviderState` | Availability, readiness, quota, permissions, and remediation. |
-| `FSharSaveOperationHandle` | Move-only asynchronous operation and cancellation handle. |
-| `FSharSaveOperationResult` | Closed terminal status with verified resulting revision. |
+- **Type:** `USharDeviceConfigurationSchema`
+  - **Responsibility:** Immutable setting definitions and migration chain.
+- **Type:** `USharDeviceConfigurationSubsystem`
+  - **Responsibility:** Read model, staged edits, commit, reset, and observers.
+- **Type:** `ISharDeviceConfigurationRepository`
+  - **Responsibility:** Platform-local serialized configuration port.
+- **Type:** `USharSaveSlotPolicy`
+  - **Responsibility:** Product slot identities, visibility, ordering, and
+    creation rules.
+- **Type:** `USharSaveRepositorySubsystem`
+  - **Responsibility:** Slot summaries, load, save, delete, recovery, and active
+    handles.
+- **Type:** `ISharPlatformStorageAdapter`
+  - **Responsibility:** Native account container, quota, permissions, and
+    durable operations.
+- **Type:** `FSharSaveSlotId`
+  - **Responsibility:** Stable logical profile and slot identity.
+- **Type:** `FSharSaveSlotSummary`
+  - **Responsibility:** Validated display projection for one accepted save
+    revision.
+- **Type:** `FSharStorageProviderState`
+  - **Responsibility:** Availability, readiness, quota, permissions, and
+    remediation.
+- **Type:** `FSharSaveOperationHandle`
+  - **Responsibility:** Move-only asynchronous operation and cancellation
+    handle.
+- **Type:** `FSharSaveOperationResult`
+  - **Responsibility:** Closed terminal status with verified resulting revision.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -84,17 +118,28 @@ Every setting definition contains:
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `SettingId` | Stable canonical identity. |
-| `ValueType` | Boolean, bounded integer, finite scalar, closed enum, or validated binding. |
-| `DefaultValue` | Platform-neutral default or explicit adapter-resolved default. |
-| `Bounds` | Closed range, allowed set, and normalization rules. |
-| `Portability` | Device-local or explicitly portable preference. |
-| `RestartPolicy` | Immediate, next world, renderer restart, or application restart. |
-| `Availability` | Platform, hardware, input, display, and package capability predicate. |
-| `Migration` | Ordered converters from recognized prior revisions. |
-| `Presentation` | Localizable label, description, category, and accessibility metadata. |
+- **Field:** `SettingId`
+  - **Contract:** Stable canonical identity.
+- **Field:** `ValueType`
+  - **Contract:** Boolean, bounded integer, finite scalar, closed enum, or
+    validated binding.
+- **Field:** `DefaultValue`
+  - **Contract:** Platform-neutral default or explicit adapter-resolved default.
+- **Field:** `Bounds`
+  - **Contract:** Closed range, allowed set, and normalization rules.
+- **Field:** `Portability`
+  - **Contract:** Device-local or explicitly portable preference.
+- **Field:** `RestartPolicy`
+  - **Contract:** Immediate, next world, renderer restart, or application
+    restart.
+- **Field:** `Availability`
+  - **Contract:** Platform, hardware, input, display, and package capability
+    predicate.
+- **Field:** `Migration`
+  - **Contract:** Ordered converters from recognized prior revisions.
+- **Field:** `Presentation`
+  - **Contract:** Localizable label, description, category, and accessibility
+    metadata.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -128,13 +173,17 @@ Configuration load returns one result:
 
 <!-- markdownlint-disable MD013 -->
 
-| Result | Meaning |
-| :--- | :--- |
-| `loaded` | Current schema read and validated. |
-| `migrated` | Recognized prior schema converted and committed. |
-| `defaulted` | No accepted configuration existed and defaults were committed. |
-| `quarantined` | Invalid local data was preserved for diagnostics before defaults. |
-| `failed` | No valid configuration or safe default commit was possible. |
+- **Result:** `loaded`
+  - **Meaning:** Current schema read and validated.
+- **Result:** `migrated`
+  - **Meaning:** Recognized prior schema converted and committed.
+- **Result:** `defaulted`
+  - **Meaning:** No accepted configuration existed and defaults were committed.
+- **Result:** `quarantined`
+  - **Meaning:** Invalid local data was preserved for diagnostics before
+    defaults.
+- **Result:** `failed`
+  - **Meaning:** No valid configuration or safe default commit was possible.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -179,7 +228,8 @@ the accepted safe mode before normal frontend presentation.
 
 The detailed capture, preview, commit, and recovery sequence follows the
 <!-- markdownlint-disable-next-line MD013 -->
-[frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md).
+[frontend screen flow and settings
+runtime](frontend-screen-flow-and-settings-runtime.md).
 
 ## Audio settings
 
@@ -195,7 +245,8 @@ are migration evidence only.
 Preview, native projection, output-device behavior, Sound Class or modulation
 application, callback correlation, and rollback follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md).
+[Native audio device, resource, player, and tuning adapter
+runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md).
 
 A preview lease is reversible and belongs to the current settings edit revision.
 A preview sound or fade completing cannot commit the setting. Commit persists
@@ -237,18 +288,26 @@ record. It contains:
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `SlotId` | Stable logical slot identity. |
-| `RevisionToken` | Accepted portable revision. |
-| `SchemaVersion` | Logical save schema version. |
-| `TimestampUtc` | Adapter-normalized accepted commit timestamp. |
-| `Checkpoint` | Optional canonical level, mission, and checkpoint identities. |
-| `ProgressProjection` | Read-only completion summary from the campaign service. |
-| `PlayTime` | Optional validated accumulated duration. |
-| `ContentStatus` | Required content available, optional missing, or blocked. |
-| `IntegrityStatus` | Verified, recoverable prior revision, or invalid. |
-| `Presentation` | Localizable derived label and thumbnail identity. |
+- **Field:** `SlotId`
+  - **Contract:** Stable logical slot identity.
+- **Field:** `RevisionToken`
+  - **Contract:** Accepted portable revision.
+- **Field:** `SchemaVersion`
+  - **Contract:** Logical save schema version.
+- **Field:** `TimestampUtc`
+  - **Contract:** Adapter-normalized accepted commit timestamp.
+- **Field:** `Checkpoint`
+  - **Contract:** Optional canonical level, mission, and checkpoint identities.
+- **Field:** `ProgressProjection`
+  - **Contract:** Read-only completion summary from the campaign service.
+- **Field:** `PlayTime`
+  - **Contract:** Optional validated accumulated duration.
+- **Field:** `ContentStatus`
+  - **Contract:** Required content available, optional missing, or blocked.
+- **Field:** `IntegrityStatus`
+  - **Contract:** Verified, recoverable prior revision, or invalid.
+- **Field:** `Presentation`
+  - **Contract:** Localizable derived label and thumbnail identity.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -395,7 +454,8 @@ the gameplay save transaction and requires explicit user control.
 
 Historical memory-card and platform flow charts are normalized through
 <!-- markdownlint-disable-next-line MD013 -->
-[Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md).
+[Historical core-design and dialogue evidence
+normalization](historical-core-design-and-dialogue-evidence-normalization.md).
 Physical slot letters, market formatting, format-card actions, numeric row IDs,
 and console-specific button labels are evidence only. They map to semantic
 provider unavailable, slot unavailable, save missing, quota exceeded, corrupt,

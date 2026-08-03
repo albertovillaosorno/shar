@@ -5,8 +5,9 @@
 
 ## Governing decision
 
-<!-- markdownlint-disable-next-line MD013 -->
-- [Minimal hexagonal architecture](../../adr/engineering/architecture/minimal-hexagonal-architecture.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Minimal hexagonal architecture](../../adr/engineering/architecture/minimal-hexagonal-architecture.md) <!-- markdownlint-disable-line MD013 -->
 
 ## Purpose
 

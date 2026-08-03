@@ -1,5 +1,5 @@
 [package]
-name = "shar-json-text"
+name = "shar_json_text"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,9 +8,12 @@ publish = false
 
 [lib]
 name = "shar_json_text"
-path = "lib.rs"
+path = "composition/lib.rs"
 # Canonical external integration tests.
 
 [[test]]
 name = "escape"
 path = "../../../tests/foundation/json-text/escape.rs"
+
+[lints]
+workspace = true

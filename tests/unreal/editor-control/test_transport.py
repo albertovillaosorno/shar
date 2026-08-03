@@ -1,7 +1,3 @@
-# File:
-#   - test_transport.py
-# Path: tests/unreal/editor-control/test_transport.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,51 +6,40 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Black-box tests for native MCP HTTP lifecycle and SSE framing.
+#   - Test transport test module.
 # - Must-Not:
-#   - Require Unreal binaries, plugin code, or external networks.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Synthetic loopback protocol integration tests.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - The module gains two independently testable contracts.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module owns the same contract without a distinct invariant.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Guards transport lifecycle, pagination, and SSE outcomes.
+#   - Test transport test module.
 # - Description:
-#   - Exercises the real Python HTTP adapter end to end.
+#   - Implements the declared test module responsibility for editor control.
 # - Usage:
-#   - Executed by pytest through the canonical validator workflow.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Each test uses an ephemeral loopback server.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
+
+"""Test transport test module."""
+
 from __future__ import annotations
 
-import pytest
-from mcp.adapter_outbound.streamable_http import (
-    StreamableHttpTransport,
-)
-from mcp.domain.endpoint import McpEndpoint
-from mcp.domain.errors import (
-    ConfigurationError,
-    ProtocolError,
-    RequestTimeoutError,
-    TransportError,
-)
-
 from fake_unreal_server import FakeUnrealServer
+from mcp.adapter_outbound.streamable_http import StreamableHttpTransport
+from mcp.domain.endpoint import McpEndpoint
+from mcp.domain.errors import ConfigurationError
+from mcp.domain.errors import ProtocolError
+from mcp.domain.errors import RequestTimeoutError
+from mcp.domain.errors import TransportError
+import pytest
 
 
 def test_transport_rejects_non_finite_timeout_before_connection() -> None:

@@ -1,7 +1,3 @@
-// File:
-//   - wav_validation.rs
-// Path: tests/formats/rsd/wav_validation.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,41 +6,32 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Public regression coverage for WAV model invariants.
+//   - Wav validation test module.
 // - Must-Not:
-//   - Depend on filesystem output or external audio fixtures.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic WAV models and caller-visible serialization assertions.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another output codec needs independent validation fixtures.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another RSD test module owns the same WAV serialization contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Verifies invalid WAV models fail before RIFF serialization.
+//   - Wav validation test module.
 // - Description:
-//   - Exercises public WAV output for invalid metadata and PCM frame shapes.
+//   - Implements the declared test module responsibility for rsd.
 // - Usage:
-//   - Executed through cargo test for the rsd crate.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Fixtures remain synthetic, deterministic, and repository-local.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Public regression coverage for WAV model validation.
-//!
-//! Synthetic models prove invalid metadata cannot escape as RIFF bytes.
+//! Wav validation test module.
 
 use rsd::{RsdError, WavAudio};
+use same_file as _;
 use schoenwald_cli as _;
 use schoenwald_filesystem as _;
 
@@ -55,17 +42,13 @@ fn invalid_wav_models_are_rejected() {
             channels: 0,
             bits_per_sample: 16,
             sample_rate: 24_000,
-            pcm: vec![
-                0, 0,
-            ],
+            pcm: vec![0, 0],
         },
         WavAudio {
             channels: 1,
             bits_per_sample: 16,
             sample_rate: 0,
-            pcm: vec![
-                0, 0,
-            ],
+            pcm: vec![0, 0],
         },
         WavAudio {
             channels: 1,
@@ -83,16 +66,13 @@ fn invalid_wav_models_are_rejected() {
             channels: 2,
             bits_per_sample: 16,
             sample_rate: 24_000,
-            pcm: vec![
-                0, 0,
-            ],
+            pcm: vec![0, 0],
         },
     ];
 
     for wav in cases {
         assert!(
-            wav.to_bytes()
-                .is_err(),
+            wav.to_bytes().is_err(),
             "invalid WAV metadata or incomplete PCM frames must fail"
         );
     }
@@ -108,10 +88,7 @@ fn byte_rate_overflow_is_a_sample_rate_error() {
     };
 
     assert!(
-        matches!(
-            wav.to_bytes(),
-            Err(RsdError::UnsupportedSampleRate(_))
-        ),
+        matches!(wav.to_bytes(), Err(RsdError::UnsupportedSampleRate(_))),
         "tiny PCM payloads must not be reported as oversized"
     );
 }

@@ -1,7 +1,3 @@
-# File:
-#   - endpoint.py
-# Path: src/unreal/editor-control/domain/mcp/domain/endpoint.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,49 +6,36 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Validation of the loopback-only Unreal MCP endpoint.
+#   - Endpoint domain module.
 # - Must-Not:
-#   - Open sockets, read configuration, or start Unreal Editor.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Pure URL parsing and canonical endpoint formatting.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - The module gains two independently testable contracts.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module owns the same contract without a distinct invariant.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Defines the only network destination the client may use.
+#   - Endpoint domain module.
 # - Description:
-#   - Rejects remote, credentialed, and ambiguous endpoints.
+#   - Implements the declared domain module responsibility for editor control.
 # - Usage:
-#   - Constructed by driving adapters before transport creation.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Uses the native server default on loopback port 8000.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: loopback MCP endpoint value
-#   - reason: validation and canonical formatting form one immutable value
-#   - split: extract host policy if configurable trust boundaries are added
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess on responsibility or line-count growth
-#
-"""Loopback-only endpoint value for the native Unreal MCP server."""
+
+"""Endpoint domain module."""
 
 from __future__ import annotations
 
 import re
 from typing import NamedTuple
-from urllib.parse import SplitResult, urlsplit
+from urllib.parse import SplitResult
+from urllib.parse import urlsplit
 
 from mcp.domain.errors import fail_endpoint
 
@@ -132,6 +115,7 @@ class McpEndpoint(NamedTuple):
 
         Returns:
             The loopback endpoint on port 8000 and path `/mcp`.
+
         """
         return cls(host="127.0.0.1", port=_DEFAULT_PORT, path=_DEFAULT_PATH)
 
@@ -153,6 +137,7 @@ class McpEndpoint(NamedTuple):
 
         Returns:
             The validated loopback hostname.
+
         """
         return self.host
 
@@ -162,6 +147,7 @@ class McpEndpoint(NamedTuple):
 
         Returns:
             The scheme, host, and explicit port without the MCP path.
+
         """
         host = f"[{self.host}]" if ":" in self.host else self.host
         return f"http://{host}:{self.port}"
@@ -172,5 +158,6 @@ class McpEndpoint(NamedTuple):
 
         Returns:
             The complete loopback URL with explicit port and path.
+
         """
         return f"{self.origin}{self.path}"

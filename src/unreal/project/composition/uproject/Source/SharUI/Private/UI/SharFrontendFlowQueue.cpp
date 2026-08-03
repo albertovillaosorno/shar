@@ -1,9 +1,34 @@
-// File: SharFrontendFlowQueue.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharUI/Private/UI/SharFrontendFlowQueue.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: frontend request validation, deterministic queue ordering, and head preparation only.
-// Specification: docs/technical/unreal/frontend-screen-flow-and-settings-runtime.md
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar frontend flow queue composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar frontend flow queue composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar frontend flow queue composition module.
 
 #include "UI/SharFrontendFlowSubsystem.h"
 

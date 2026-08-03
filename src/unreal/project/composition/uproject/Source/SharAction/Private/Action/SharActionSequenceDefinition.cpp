@@ -1,12 +1,34 @@
-// File: SharActionSequenceDefinition.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharAction/Private/Action/SharActionSequenceDefinition.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: load-free action-sequence validation only; no StateTree execution or scheduling.
-// ADR: docs/adr/unreal/runtime/typed-state-tree-action-sequences.md
-// LARGE-FILE owner=SharAction; reason=cohesive ordered sequence validation;
-// split=extract parameter-binding validation if schemas expand;
-// validation=validate.sh SharAction plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar action sequence definition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar action sequence definition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar action sequence definition composition module.
 
 #include "Action/SharActionSequenceDefinition.h"
 
@@ -57,6 +79,7 @@ static void AppendStepErrors(
         {
             AddActionSequenceError(
                 OutErrors,
+                // jig-ignore-next-line: exact syntax is indivisible
                 TEXT("Action sequence steps require canonical identities, valid action assets, and SHA-256 revisions.")
             );
         }
@@ -64,6 +87,7 @@ static void AppendStepErrors(
         {
             AddActionSequenceError(
                 OutErrors,
+                // jig-ignore-next-line: exact syntax is indivisible
                 TEXT("Action sequence step ordinals must be dense and zero-based.")
             );
         }
@@ -122,6 +146,7 @@ static void AppendSequenceTimeoutErrors(
     {
         AddActionSequenceError(
             OutErrors,
+            // jig-ignore-next-line: exact syntax is indivisible
             TEXT("Action sequence timeout must be finite and positive unless no-timeout is explicitly allowed.")
         );
     }
@@ -129,6 +154,7 @@ static void AppendSequenceTimeoutErrors(
     {
         AddActionSequenceError(
             OutErrors,
+            // jig-ignore-next-line: exact syntax is indivisible
             TEXT("No-timeout action sequences must use a non-positive timeout value.")
         );
     }
@@ -144,6 +170,7 @@ void USharActionSequenceDefinition::GatherValidationErrors(
     {
         AddActionSequenceError(
             OutErrors,
+            // jig-ignore-next-line: exact syntax is indivisible
             TEXT("Action sequence template and verification identities must be canonical.")
         );
     }

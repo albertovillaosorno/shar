@@ -6,21 +6,29 @@
 ## Governing decisions
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Platform-native audio cooking and streaming](../../adr/audio/platform-native-audio-cooking-and-streaming.md)
+- [Platform-native audio cooking and
+  streaming](../../adr/audio/platform-native-audio-cooking-and-streaming.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Event-driven music and ambience](../../adr/unreal/runtime/event-driven-music-and-ambience.md)
+- [Event-driven music and
+  ambience](../../adr/unreal/runtime/event-driven-music-and-ambience.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Native gameplay audio, dialogue, and listener boundary](../../adr/unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native gameplay audio, dialogue, and listener boundary](../../adr/unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md)
+- [Gameplay audio source, residency, mix, and environment
+  runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
+- [Native audio device, resource, player, and tuning adapter
+  runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
+- [Latin American Spanish audio
+  fallback](../../adr/audio/lmlm-spanish-latam-audio-fallback.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Latin American Spanish audio fallback](../../adr/audio/lmlm-spanish-latam-audio-fallback.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Native cinematic package strategy](../../adr/rmv/unreal-native-cinematic-package.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
+- [Native cinematic package
+  strategy](../../adr/rmv/unreal-native-cinematic-package.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md) <!-- markdownlint-disable-line MD013 -->
 
 ## Purpose
 
@@ -34,21 +42,33 @@ Each decoded source produces one normalized PCM record containing at least:
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `AudioId` | Stable canonical identity. |
-| `Role` | Dialogue, music, cinematic, vehicle, ambient, UI, or gameplay effect. |
-| `Locale` | Canonical locale or locale-neutral identity. |
-| `Channels` | Exact channel count and semantic layout when known. |
-| `SampleRate` | Exact samples per second. |
-| `BitDepth` | Exact normalized PCM depth. |
-| `SampleCount` | Exact sample count per channel. |
-| `Duration` | Derived rational duration. |
-| `LoopPoints` | Optional exact start and end sample positions. |
-| `SyncMarkers` | Optional canonical sample-aligned events. |
-| `GainMetadata` | Source gain and measured loudness evidence when available. |
-| `SourceRevision` | Provenance and deterministic source revision. |
-| `IntegrityRecord` | Length and hash evidence for metadata and PCM payload. |
+- **Field:** `AudioId`
+  - **Contract:** Stable canonical identity.
+- **Field:** `Role`
+  - **Contract:** Dialogue, music, cinematic, vehicle, ambient, UI, or gameplay
+    effect.
+- **Field:** `Locale`
+  - **Contract:** Canonical locale or locale-neutral identity.
+- **Field:** `Channels`
+  - **Contract:** Exact channel count and semantic layout when known.
+- **Field:** `SampleRate`
+  - **Contract:** Exact samples per second.
+- **Field:** `BitDepth`
+  - **Contract:** Exact normalized PCM depth.
+- **Field:** `SampleCount`
+  - **Contract:** Exact sample count per channel.
+- **Field:** `Duration`
+  - **Contract:** Derived rational duration.
+- **Field:** `LoopPoints`
+  - **Contract:** Optional exact start and end sample positions.
+- **Field:** `SyncMarkers`
+  - **Contract:** Optional canonical sample-aligned events.
+- **Field:** `GainMetadata`
+  - **Contract:** Source gain and measured loudness evidence when available.
+- **Field:** `SourceRevision`
+  - **Contract:** Provenance and deterministic source revision.
+- **Field:** `IntegrityRecord`
+  - **Contract:** Length and hash evidence for metadata and PCM payload.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -86,14 +106,17 @@ Dialogue prioritizes intelligibility, locale correctness, bounded start latency,
 and event timing. Its runtime metadata, deterministic selection, queueing,
 subtitles, positional policy, and completion correlation follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md).
+[Dialogue selection, queue, and playback
+runtime](dialogue-selection-queue-and-playback-runtime.md).
 
 Vehicle loops preserve pitch and transition behavior through
 <!-- markdownlint-disable-next-line MD013 -->
-[Vehicle audio and avatar-sound runtime](vehicle-audio-and-avatar-sound-runtime.md).
+[Vehicle audio and avatar-sound
+runtime](vehicle-audio-and-avatar-sound-runtime.md).
 Listener and moving-source projection follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md).
+[Spatial audio listener and positional-source
+runtime](spatial-audio-listener-and-positional-source-runtime.md).
 
 Music and ambient loops preserve declared loop sample boundaries. Cinematic
 audio
@@ -150,7 +173,8 @@ Runtime scope definitions, primary-asset bundles, retained streamable handles,
 shared references, load transactions, source leases, Sound Class routing, mix
 state, environmental reverb, concurrency, pressure results, and release follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md).
+[Gameplay audio source, residency, mix, and environment
+runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md).
 Target cooking remains authority over the representation placed in those
 bundles.
 

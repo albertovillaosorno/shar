@@ -83,6 +83,7 @@ and controlling law.
   (Accessed: 15 July 2026).
 - [Vault Corp. v. Quaid Software Ltd.](vault-v-quaid-software.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Software license reverse-engineering clauses](../contracts/software-license-reverse-engineering-clauses.md).
+- [Software license reverse-engineering
+  clauses](../contracts/software-license-reverse-engineering-clauses.md).
 - [17 U.S.C. § 301](../statutes/17-usc-301.md).
 - [17 U.S.C. § 1201](../statutes/17-usc-1201-trafficking.md).

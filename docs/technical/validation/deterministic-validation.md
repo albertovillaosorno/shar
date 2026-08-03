@@ -6,7 +6,8 @@
 ## Governing decision
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Strict validation and linting](../../adr/engineering/quality/strict-validation-and-linting.md)
+- [Strict validation and
+  linting](../../adr/engineering/quality/strict-validation-and-linting.md)
 
 ## Purpose
 

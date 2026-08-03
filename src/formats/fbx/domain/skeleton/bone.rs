@@ -1,7 +1,3 @@
-// File:
-//   - bone.rs
-// Path: src/formats/fbx/domain/skeleton/bone.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,45 +6,31 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure fbx domain rules for domain skeleton bone.
+//   - Bone domain module.
 // - Must-Not:
-//   - Read files, parse generated indexes, invoke CLI code, or call writer
-//   - adapters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Value objects, invariant checks, and pure evidence-to-domain translation.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when bone contains two independently testable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another fbx module owns the same domain boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Bone in a normalized skeleton.
+//   - Bone domain module.
 // - Description:
-//   - Defines bone data and behavior for fbx domain skeleton.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Imported through crate domain facades or sibling domain modules.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No filesystem paths, no external process calls, and no implicit IO
-//   - defaults.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-// - docs/adr/pipeline/unreal/unreal-manifest-and-package-taxonomy.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Bone in a normalized skeleton.
-//!
-//! This boundary keeps bone in a normalized skeleton explicit and returns
-//! deterministic results to fbx callers.
-/// Skeleton bone with stable parent and transform data.
+//! Bone domain module.
+
+/// One canonical skeleton bone and its bind-pose relationship.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Bone {
     /// Stable bone id.

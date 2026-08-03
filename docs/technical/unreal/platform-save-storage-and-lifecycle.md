@@ -6,13 +6,17 @@
 ## Governing decisions
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+- [Portable save storage and
+  lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
+- [Data-driven Unreal gameplay content
+  catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md)
+- [Historical core-design and dialogue evidence
+  normalization](historical-core-design-and-dialogue-evidence-normalization.md)
 
 ## Purpose
 
@@ -23,10 +27,12 @@ progression across supported operating systems and processor architectures.
 Logical slot policy, device-local settings, slot summaries, storage-provider
 readiness, quota, delete, reset, and user remediation follow the
 <!-- markdownlint-disable-next-line MD013 -->
-[device configuration and save-slot runtime](device-configuration-and-save-slot-runtime.md).
+[device configuration and save-slot
+runtime](device-configuration-and-save-slot-runtime.md).
 Persistent destructible and consumable placement state follows the
 <!-- markdownlint-disable-next-line MD013 -->
-[persistent world-object state runtime](persistent-world-object-state-runtime.md).
+[persistent world-object state
+runtime](persistent-world-object-state-runtime.md).
 
 ## Repository model
 
@@ -40,15 +46,23 @@ A logical save document contains at least:
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `SchemaVersion` | Exact version of the logical save schema. |
-| `RevisionToken` | Monotonic accepted revision identity for the logical slot. |
-| `CatalogRevision` | Gameplay catalog revision required to resolve identities. |
-| `ContentRequirements` | Canonical required base and mod content identities. |
-| `ProgressionState` | Levels, missions, collectibles, rewards, vehicles, costumes, and bonus-state records. |
-| `ResumeState` | Optional resumable mission and step identity recorded only at a valid checkpoint. |
-| `IntegrityRecord` | Deterministic length and checksum evidence for the complete serialized candidate. |
+- **Field:** `SchemaVersion`
+  - **Contract:** Exact version of the logical save schema.
+- **Field:** `RevisionToken`
+  - **Contract:** Monotonic accepted revision identity for the logical slot.
+- **Field:** `CatalogRevision`
+  - **Contract:** Gameplay catalog revision required to resolve identities.
+- **Field:** `ContentRequirements`
+  - **Contract:** Canonical required base and mod content identities.
+- **Field:** `ProgressionState`
+  - **Contract:** Levels, missions, collectibles, rewards, vehicles, costumes,
+    and bonus-state records.
+- **Field:** `ResumeState`
+  - **Contract:** Optional resumable mission and step identity recorded only at
+    a valid checkpoint.
+- **Field:** `IntegrityRecord`
+  - **Contract:** Deterministic length and checksum evidence for the complete
+    serialized candidate.
 
 <!-- markdownlint-enable MD013 -->
 

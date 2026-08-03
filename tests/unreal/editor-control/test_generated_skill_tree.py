@@ -1,7 +1,3 @@
-# File:
-#   - test_generated_skill_tree.py
-# Path: tests/unreal/editor-control/test_generated_skill_tree.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,47 +6,34 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Static integrity checks for the checked-in Unreal MCP skill tree.
+#   - Test generated skill tree test module.
 # - Must-Not:
-#   - Connect to Unreal, regenerate files, or validate Markdown style broadly.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Counting generated identities, pages, digests, and local links.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Capability coverage and navigation integrity need separate runtimes.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another test module owns the same checked-in generated tree contract.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Guards the complete generated Unreal MCP skill snapshot.
+#   - Test generated skill tree test module.
 # - Description:
-#   - Proves 52 toolsets and 830 capabilities remain indexed and navigable.
+#   - Implements the declared test module responsibility for editor control.
 # - Usage:
-#   - Executed by pytest through the canonical validator workflow.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Permits the mandatory root index to exceed 300 lines by explicit design.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: checked-in Unreal MCP skill snapshot integrity
-#   - reason: counts, links, digest, and page bounds share one snapshot contract
-#   - split: separate link validation if generated formats expand
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess after live skill regeneration or taxonomy changes
-#
-"""Integrity tests for the checked-in native Unreal MCP skill tree."""
+
+"""Test generated skill tree test module."""
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
+import re
 
 from mcp.adapter_outbound.skill_manual_field_schema import MANUAL_FIELDS
 
@@ -89,9 +72,9 @@ _MARKDOWNLINT_MD013_NEXT_LINE = "<!-- markdownlint-disable-next-line MD013 -->"
 _GENERAL_POLICY_TERMS = (
     "approval",
     "permission from the user",
-    "permiso",  # cspell:disable-line -- permiso
-    "explícito",  # cspell:disable-line -- explícito
-    "usuario",  # cspell:disable-line -- usuario
+    "permiso",
+    "explícito",
+    "usuario",
     " legal ",
     " illegal ",
     " ethical ",
@@ -99,11 +82,11 @@ _GENERAL_POLICY_TERMS = (
     "copyright",
     "trademark",
     "intellectual property",
-    "propiedad",  # cspell:disable-line -- propiedad
-    "intelectual",  # cspell:disable-line -- intelectual
+    "propiedad",
+    "intelectual",
     "proprietary",
     "confidential",
-    "confidencial",  # cspell:disable-line -- confidencial
+    "confidencial",
 )
 
 

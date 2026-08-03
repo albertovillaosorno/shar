@@ -1,7 +1,3 @@
-// File:
-//   - dir_count_parse.rs
-// Path: tests/migration/manifest/dir_count_parse.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Canonical JSONL parsing regressions for manifest directory counts.
+//   - Dir count parse test module.
 // - Must-Not:
-//   - Depend on private local outputs or non-deterministic repository state.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Focused canonical rows and malformed-line assertions.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when parsing needs filesystem-backed fixture support.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another game-manifest test owns the same JSONL parsing boundary.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects canonical manifest record parsing.
+//   - Dir count parse test module.
 // - Description:
-//   - Verifies caller-visible rows preserve fields and reject malformed input.
+//   - Implements the declared test module responsibility for manifest.
 // - Usage:
-//   - Executed through cargo test for the game-manifest crate.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Fixtures remain deterministic and repository-local.
-//
-// ADRs:
-// - docs/adr/pipeline/game-manifest-ledger.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Canonical JSONL parsing regression coverage.
-//!
-//! These tests protect the shared parser used by validation and extraction from
-//! silently changing or accepting manifest data outside the public contract.
+//! Dir count parse test module.
 
 use game_manifest::DirCount;
 use schoenwald_cli as _;
@@ -56,13 +41,7 @@ fn dir_count_parse_preserves_kind() {
     );
 
     assert_eq!(
-        parsed
-            .as_ref()
-            .map(
-                |record| record
-                    .kind
-                    .as_str()
-            ),
+        parsed.as_ref().map(|record| record.kind.as_str()),
         Some("p3d_container")
     );
 }
@@ -87,9 +66,7 @@ fn dir_count_parse_rejects_trailing_fields() {
 
 #[test]
 fn dir_count_parse_rejects_non_integer_minimums() {
-    for minimum in [
-        "1.5", "1e3",
-    ] {
+    for minimum in ["1.5", "1e3"] {
         let line = format!(
             "{{\"dir\":\"at\",\"ext\":\"p3d\",\"min\":{minimum},\"kind\":\"\
              p3d_container\"}}"
@@ -120,62 +97,24 @@ fn dir_count_parse_decodes_json_strings() {
     let parsed = DirCount::parse(&original.to_jsonl());
 
     assert_eq!(
-        parsed
-            .as_ref()
-            .map(
-                |record| record
-                    .dir
-                    .as_str()
-            ),
-        Some(
-            original
-                .dir
-                .as_str()
-        )
+        parsed.as_ref().map(|record| record.dir.as_str()),
+        Some(original.dir.as_str())
     );
     assert_eq!(
-        parsed
-            .as_ref()
-            .map(
-                |record| record
-                    .extension
-                    .as_str()
-            ),
-        Some(
-            original
-                .extension
-                .as_str()
-        )
+        parsed.as_ref().map(|record| record.extension.as_str()),
+        Some(original.extension.as_str())
     );
     assert_eq!(
-        parsed
-            .as_ref()
-            .map(
-                |record| record
-                    .kind
-                    .as_str()
-            ),
-        Some(
-            original
-                .kind
-                .as_str()
-        )
+        parsed.as_ref().map(|record| record.kind.as_str()),
+        Some(original.kind.as_str())
     );
 
-    let unicode = DirCount::parse(
-        concat!(
-            r#"{"dir":"\u0061\ud83d\ude00","ext":"p3d","#,
-            r#""min":1,"kind":"p3d_container"}"#
-        ),
-    );
+    let unicode = DirCount::parse(concat!(
+        r#"{"dir":"\u0061\ud83d\ude00","ext":"p3d","#,
+        r#""min":1,"kind":"p3d_container"}"#
+    ));
     assert_eq!(
-        unicode
-            .as_ref()
-            .map(
-                |record| record
-                    .dir
-                    .as_str()
-            ),
+        unicode.as_ref().map(|record| record.dir.as_str()),
         Some("a😀")
     );
 

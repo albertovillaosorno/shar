@@ -102,19 +102,22 @@ matrix, and decide whether multichannel output requires
 ### Verified sources
 
 - Microsoft (2021), *Resource Interchange File Format (RIFF)*.
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://learn.microsoft.com/en-us/windows/win32/xaudio2/resource-interchange-file-format--riff->
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://learn.microsoft.com/en-us/windows/win32/xaudio2/resource-interchange-file-format--riff-> <!-- markdownlint-disable-line MD013 -->
 - Microsoft, *WAVEFORMATEXTENSIBLE structure*.
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://learn.microsoft.com/en-us/windows/win32/api/mmreg/ns-mmreg-waveformatextensible>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://learn.microsoft.com/en-us/windows/win32/api/mmreg/ns-mmreg-waveformatextensible> <!-- markdownlint-disable-line MD013 -->
 - SHAR repository evidence: `src/formats/rsd/domain/wav.rs` and
   `tests/formats/rsd/wav_validation.rs`.
 
 ## Source References
 
 - Microsoft (n.d.) *WAVEFORMATEX structure*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://learn.microsoft.com/en-us/windows/win32/api/mmreg/ns-mmreg-waveformatex>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://learn.microsoft.com/en-us/windows/win32/api/mmreg/ns-mmreg-waveformatex> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 12 July 2026).
 - Library of Congress (n.d.) *WAVE Audio File Format with LPCM Audio*. Available
   at: <https://www.loc.gov/preservation/digital/formats/fdd/fdd000001.shtml>

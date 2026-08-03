@@ -1,7 +1,3 @@
-# File:
-#   - http_exchange.py
-# Path: src/unreal/editor-control/adapter-outbound/mcp/adapter_outbound/http_exchange.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,67 +6,51 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Low-level loopback HTTP and SSE exchange mechanics.
+#   - Http exchange outbound adapter.
 # - Must-Not:
-#   - Interpret toolsets, catalog policy, or terminal commands.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Bounded JSON-RPC POST, session DELETE, and SSE decoding.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - The module gains two independently testable contracts.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module owns the same contract without a distinct invariant.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Owns reliable native MCP wire exchanges.
+#   - Http exchange outbound adapter.
 # - Description:
-#   - Separates HTTP framing from MCP application operations.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Composed by the Streamable HTTP transport adapter.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Creates one bounded loopback connection per exchange.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: Streamable HTTP wire exchange adapter
-#   - reason: POST, DELETE, and SSE decoding share one connection lifecycle
-#   - split: extract SSE parsing if retry or resumption support is added
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess on responsibility or line-count growth
-#
-"""Low-level loopback HTTP and SSE exchanges for native Unreal MCP."""
+
+"""Http exchange outbound adapter."""
 
 from __future__ import annotations
 
-from http.client import HTTPConnection, HTTPException, HTTPResponse
-from typing import TYPE_CHECKING, NamedTuple
+from http.client import HTTPConnection
+from http.client import HTTPException
+from http.client import HTTPResponse
+from typing import NamedTuple
+from typing import TYPE_CHECKING
 
-from mcp.adapter_outbound.http_payload import (
-    DEFAULT_MAX_RESPONSE_BYTES,
-    read_bounded_body,
-    read_http_error_payload,
-    read_http_payload,
-    validate_max_response_bytes,
-)
-from mcp.adapter_outbound.http_request import (
-    DEFAULT_MAX_REQUEST_BYTES,
-    encode_json_request,
-    validate_max_request_bytes,
-)
-from mcp.adapter_outbound.http_status import (
-    is_http_success,
-    require_http_success,
-)
+from mcp.adapter_outbound.http_payload import DEFAULT_MAX_RESPONSE_BYTES
+from mcp.adapter_outbound.http_payload import read_bounded_body
+from mcp.adapter_outbound.http_payload import read_http_error_payload
+from mcp.adapter_outbound.http_payload import read_http_payload
+from mcp.adapter_outbound.http_payload import validate_max_response_bytes
+from mcp.adapter_outbound.http_request import DEFAULT_MAX_REQUEST_BYTES
+from mcp.adapter_outbound.http_request import encode_json_request
+from mcp.adapter_outbound.http_request import validate_max_request_bytes
+from mcp.adapter_outbound.http_status import is_http_success
+from mcp.adapter_outbound.http_status import require_http_success
 from mcp.adapter_outbound.http_timeout import resolve_timeout_seconds
-from mcp.domain.errors import fail_timeout, fail_transport
+from mcp.domain.errors import fail_timeout
+from mcp.domain.errors import fail_transport
 
 if TYPE_CHECKING:
     from mcp.domain.endpoint import McpEndpoint
@@ -106,6 +86,7 @@ class HttpExchangeClient:
             timeout_seconds: Positive socket-operation timeout.
             max_request_bytes: Positive per-request byte ceiling.
             max_response_bytes: Positive per-response byte ceiling.
+
         """
         self._endpoint = endpoint
         self._timeout_seconds = resolve_timeout_seconds(timeout_seconds, None)
@@ -131,6 +112,7 @@ class HttpExchangeClient:
 
         Returns:
             Status, optional session header, and optional JSON payload.
+
         """
         exchange_timeout = resolve_timeout_seconds(
             self._timeout_seconds,
@@ -206,6 +188,7 @@ class HttpExchangeClient:
 
         Returns:
             Native server HTTP status.
+
         """
         connection = self._connection()
         try:

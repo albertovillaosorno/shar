@@ -1,7 +1,3 @@
-// File:
-//   - malformed_hex_controls.rs
-// Path: tests/formats/rtf/malformed_hex_controls.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,37 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Deterministic RTF regression coverage for malformed hexadecimal controls.
+//   - Malformed hex controls test module.
 // - Must-Not:
-//   - Depend on private documents or parser implementation details.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Public malformed fixtures and caller-visible recovery assertions.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another malformed-control family needs independent fixtures.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another RTF test module owns the same hexadecimal recovery contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Verifies malformed hexadecimal escapes cannot consume group delimiters.
+//   - Malformed hex controls test module.
 // - Description:
-//   - Exercises public parser recovery around structural RTF braces.
+//   - Implements the declared test module responsibility for rtf.
 // - Usage:
-//   - Executed through cargo test for the rtf crate.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Fixtures remain deterministic and repository-local.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Public regression coverage for malformed hexadecimal RTF controls.
+//! Malformed hex controls test module.
 
 use rtf::rtf_to_markdown;
 use schoenwald_cli as _;
@@ -50,8 +38,5 @@ use schoenwald_filesystem as _;
 fn malformed_hex_escape_does_not_consume_group_delimiter() {
     let markdown = rtf_to_markdown(br"{\rtf1 A{\fonttbl \'4}B}");
 
-    assert_eq!(
-        markdown,
-        "AB\n"
-    );
+    assert_eq!(markdown, "AB\n");
 }

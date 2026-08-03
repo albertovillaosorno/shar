@@ -1,7 +1,3 @@
-// File:
-//   - semantic_eye.rs
-// Path: tests/formats/fbx/common/semantic_eye.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,38 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Redistributable two-component eye geometry and four-frame blink fixtures.
+//   - Semantic eye test module.
 // - Must-Not:
-//   - Read extracted assets, contain proprietary pixels, or duplicate eye
-//   - analysis logic.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Explicit public-domain mesh and image construction.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Geometry and frame fixtures need independent behavior contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test-support module owns the same eye fixtures.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Synthetic semantic eye fixtures.
+//   - Semantic eye test module.
 // - Description:
-//   - Builds two disconnected eye components and symmetric monotonic closure.
+//   - Implements the declared test module responsibility for fbx.
 // - Usage:
-//   - Imported by semantic eye and PNG integration tests.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Pupil pixels remain unchanged through both partial-closure frames.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Redistributable synthetic semantic eye fixtures.
+//! Semantic eye test module.
+
 use fbx::domain::mesh::PrimitiveGroup;
 use fbx::domain::texture::semantic::{Rgba8, RgbaImage};
 
@@ -56,34 +44,15 @@ pub(super) fn eye_group() -> Result<PrimitiveGroup, String> {
         0,
         "synthetic-eyes",
         vec![
-            [
-                -2.0, 0.0, 0.0,
-            ],
-            [
-                -1.0, 0.0, 0.0,
-            ],
-            [
-                -2.0, 1.0, 0.0,
-            ],
-            [
-                1.0, 0.0, 0.0,
-            ],
-            [
-                2.0, 0.0, 0.0,
-            ],
-            [
-                1.0, 1.0, 0.0,
-            ],
+            [-2., 0., 0.],
+            [-1., 0., 0.],
+            [-2., 1., 0.],
+            [1., 0., 0.],
+            [2., 0., 0.],
+            [1., 1., 0.],
         ],
-        vec![
-            [
-                0.5, 0.5
-            ];
-            6
-        ],
-        &[
-            0, 1, 2, 3, 4, 5,
-        ],
+        vec![[0.5, 0.5]; 6],
+        &[0, 1, 2, 3, 4, 5],
     )
     .map_err(|error| format!("eye group failed: {error:?}"))
 }
@@ -95,66 +64,22 @@ pub(super) fn eye_group() -> Result<PrimitiveGroup, String> {
               public API."
 )]
 pub(super) fn eye_frames() -> Result<[RgbaImage; 4], String> {
-    let white = Rgba8::new(
-        255, 255, 255, 255,
-    );
-    let black = Rgba8::new(
-        0, 0, 0, 255,
-    );
-    let lid = Rgba8::new(
-        255, 210, 0, 255,
-    );
-    let mut open = RgbaImage::filled(
-        8, 8, white,
-    )
-    .map_err(|error| format!("open frame failed: {error:?}"))?;
-    for (x, y) in [
-        (
-            2, 3,
-        ),
-        (
-            5, 3,
-        ),
-        (
-            2, 4,
-        ),
-        (
-            5, 4,
-        ),
-    ] {
-        open.set_pixel(
-            x, y, black,
-        )
-        .map_err(|error| format!("pupil failed: {error:?}"))?;
+    let white = Rgba8::new(255, 255, 255, 255);
+    let black = Rgba8::new(0, 0, 0, 255);
+    let lid = Rgba8::new(255, 210, 0, 255);
+    let mut open = RgbaImage::filled(8, 8, white)
+        .map_err(|error| format!("open frame failed: {error:?}"))?;
+    for (x, y) in [(2, 3), (5, 3), (2, 4), (5, 4)] {
+        open.set_pixel(x, y, black)
+            .map_err(|error| format!("pupil failed: {error:?}"))?;
     }
     let mut half = open.clone();
-    paint_lid_rows(
-        &mut half,
-        lid,
-        &[
-            0, 1, 6, 7,
-        ],
-    )?;
+    paint_lid_rows(&mut half, lid, &[0, 1, 6, 7])?;
     let mut near_closed = open.clone();
-    paint_lid_rows(
-        &mut near_closed,
-        lid,
-        &[
-            0, 1, 2, 5, 6, 7,
-        ],
-    )?;
-    let closed = RgbaImage::filled(
-        8, 8, lid,
-    )
-    .map_err(|error| format!("closed frame failed: {error:?}"))?;
-    Ok(
-        [
-            open,
-            half,
-            near_closed,
-            closed,
-        ],
-    )
+    paint_lid_rows(&mut near_closed, lid, &[0, 1, 2, 5, 6, 7])?;
+    let closed = RgbaImage::filled(8, 8, lid)
+        .map_err(|error| format!("closed frame failed: {error:?}"))?;
+    Ok([open, half, near_closed, closed])
 }
 
 /// Paint exact full-width lid rows in one synthetic frame.
@@ -166,9 +91,7 @@ fn paint_lid_rows(
     for y in rows {
         for x in 0..frame.width() {
             frame
-                .set_pixel(
-                    x, *y, color,
-                )
+                .set_pixel(x, *y, color)
                 .map_err(|error| format!("lid pixel failed: {error:?}"))?;
         }
     }

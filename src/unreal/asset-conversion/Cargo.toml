@@ -1,9 +1,12 @@
 [package]
-name = "shar-unreal-conversion"
+name = "shar_unreal_conversion"
 version.workspace = true
 edition = "2024"
 license = "MIT"
 publish = false
 
 [lib]
-path = "lib.rs"
+path = "composition/lib.rs"
+
+[lints]
+workspace = true

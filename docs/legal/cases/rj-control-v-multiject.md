@@ -51,6 +51,8 @@ independently expressive.
   <https://www.opn.ca6.uscourts.gov/opinions.pdf/24a0075p-06.pdf> (Accessed: 12
   July 2026).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Lexmark International, Inc. v. Static Control Components, Inc.](lexmark-v-static-control.md).
+- [Lexmark International, Inc. v. Static Control Components,
+  Inc.](lexmark-v-static-control.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [File-format copyrightability research](../doctrines/file-format-copyrightability.md).
+- [File-format copyrightability
+  research](../doctrines/file-format-copyrightability.md).

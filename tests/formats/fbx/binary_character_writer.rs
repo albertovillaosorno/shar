@@ -1,7 +1,3 @@
-// File:
-//   - binary_character_writer.rs
-// Path: tests/formats/fbx/binary_character_writer.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,51 +6,34 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for deterministic binary character FBX artifacts.
+//   - Binary character writer test module.
 // - Must-Not:
-//   - Read private assets, invoke Blender, or depend on machine-local paths.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic character evidence and process-unique temporary output files.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Binary container parsing needs an independent conformance test surface.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Character writer formats share one stable conformance fixture.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects binary FBX 7.7 character artifact generation.
+//   - Binary character writer test module.
 // - Description:
-//   - Verifies binary identity, footer structure, offsets, and deterministic
-//   - bytes from one synthetic skinned character.
+//   - Implements the declared test module responsibility for fbx.
 // - Usage:
-//   - Run through the fbx crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Temporary artifacts are process-unique and removed after each test.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-//
-// Large file:
-//   - true
-//   - Reason: One ordered binary FBX conformance regression keeps the 7.7
-//   - header, 64-bit node records, graph markers, UV bytes, and footer evidence
-//   - together so byte offsets remain auditable as one artifact contract.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for deterministic binary character FBX artifacts.
-//!
-//! Synthetic geometry and skin data prove the binary container without
-//! depending on private extracted assets or an installed DCC application.
+//! Binary character writer test module.
 
-/// Shared paired-artifact test helper.
 #[path = "common/binary_artifact.rs"]
 pub mod binary_artifact;
 
 use std::fs;
-use std::mem::size_of;
 use std::path::PathBuf;
 
 use binary_artifact::read_binary_pair;
@@ -92,139 +71,69 @@ fn synthetic_character() -> Result<CharacterAsset, String> {
     let group = PrimitiveGroup::new(
         0,
         "skin",
-        vec![
-            [
-                0.0, 0.0, 0.0,
-            ],
-            [
-                1.0, 0.0, 0.0,
-            ],
-            [
-                0.0, 1.0, 0.0,
-            ],
-        ],
-        vec![
-            [
-                0.25, 0.75,
-            ],
-            [
-                1.0, 0.0,
-            ],
-            [
-                0.0, 1.0,
-            ],
-        ],
-        &[
-            0, 1, 2,
-        ],
+        vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
+        vec![[0.25, 0.75], [1., 0.], [0., 1.]],
+        &[0, 1, 2],
     )
-    .and_then(
-        |group| {
-            group.with_normals(
-                vec![
-                    [
-                        0.0, 0.0, 1.0,
-                    ],
-                    [
-                        0.0, 0.0, 1.0,
-                    ],
-                    [
-                        0.0, 0.0, 1.0,
-                    ],
-                ],
-            )
-        },
-    )
-    .and_then(
-        |group| {
-            group.with_colors(
-                vec![
-                    [
-                        1.0, 0.0, 0.0, 1.0,
-                    ],
-                    [
-                        0.0, 1.0, 0.0, 0.5,
-                    ],
-                    [
-                        0.0, 0.0, 1.0, 0.25,
-                    ],
-                ],
-            )
-        },
-    )
+    .and_then(|group| {
+        group.with_normals(vec![[0., 0., 1.], [0., 0., 1.], [0., 0., 1.]])
+    })
+    .and_then(|group| {
+        group.with_colors(vec![[1., 0., 0., 1.], [0., 1., 0., 0.5], [
+            0., 0., 1., 0.25,
+        ]])
+    })
     .map_err(|error| format!("synthetic primitive group failed: {error:?}"))?;
-    let mesh = MeshAsset::new(
-        "body",
-        vec![group],
-    )
-    .map_err(|error| format!("synthetic mesh failed: {error:?}"))?;
+    let mesh = MeshAsset::new("body", vec![group])
+        .map_err(|error| format!("synthetic mesh failed: {error:?}"))?;
     let influences = (0_u32..3)
-        .map(
-            |vertex_index| SkinInfluence {
-                vertex_index,
-                bone_id: "root".to_owned(),
-                weight: 1.0,
-            },
-        )
+        .map(|vertex_index| SkinInfluence {
+            vertex_index,
+            bone_id: "root".to_owned(),
+            weight: 1.,
+        })
         .collect();
     CharacterAsset::new(
         "synthetic",
-        vec![
-            Bone {
-                id: "root".to_owned(),
-                parent_id: None,
-                rest_matrix: [
-                    1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
-                    2.0, 3.0, 4.0, 1.0,
-                ],
-            },
-        ],
-        vec![
-            SkinnedPart {
-                mesh,
-                group_influences: vec![influences],
-            },
-        ],
+        vec![Bone {
+            id: "root".to_owned(),
+            parent_id: None,
+            rest_matrix: [
+                1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 2., 3., 4., 1.,
+            ],
+        }],
+        vec![SkinnedPart {
+            mesh,
+            group_influences: vec![influences],
+        }],
     )
     .map_err(|error| format!("synthetic character failed: {error:?}"))
 }
 
 fn materials() -> Result<Vec<MaterialBinding>, String> {
-    let material = MaterialBinding::new(
-        "skin",
-        Some("skin.png".to_owned()),
-    )
-    .map_err(|error| format!("synthetic material failed: {error:?}"))?;
+    let material = MaterialBinding::new("skin", Some("skin.png".to_owned()))
+        .map_err(|error| format!("synthetic material failed: {error:?}"))?;
     Ok(vec![material])
 }
 
 fn embedded_textures() -> Vec<EmbeddedTexture> {
-    vec![
-        EmbeddedTexture {
-            file_name: "skin.png".to_owned(),
-            content: b"\x89PNG\r\n\x1a\nsynthetic-texture".to_vec(),
-        },
-    ]
+    vec![EmbeddedTexture {
+        file_name: "skin.png".to_owned(),
+        content: b"\x89PNG\r\n\x1a\nsynthetic-texture".to_vec(),
+    }]
 }
 
 fn output_path(label: &str) -> PathBuf {
-    std::env::temp_dir().join(
-        format!(
-            "fbx-binary-character-{label}-{}.fbx",
-            std::process::id()
-        ),
-    )
+    std::env::temp_dir().join(format!(
+        "fbx-binary-character-{label}-{}.fbx",
+        std::process::id()
+    ))
 }
 
 /// Encode one exact FBX integer property payload for byte-level assertions.
-fn integer_property_token(
-    name: &str,
-    value: i32,
-) -> Option<Vec<u8>> {
+fn integer_property_token(name: &str, value: i32) -> Option<Vec<u8>> {
     let mut token = Vec::new();
-    for field in [
-        name, "int", "Integer", "",
-    ] {
+    for field in [name, "int", "Integer", ""] {
         let length = u32::try_from(field.len()).ok()?;
         token.push(b'S');
         token.extend_from_slice(&length.to_le_bytes());
@@ -236,10 +145,7 @@ fn integer_property_token(
 }
 
 /// Read one exact signed integer leaf-node value by its unique node name.
-fn i32_leaf_value(
-    document: &[u8],
-    name: &str,
-) -> Option<i32> {
+fn i32_leaf_value(document: &[u8], name: &str) -> Option<i32> {
     let name_start = document
         .windows(name.len())
         .position(|window| window == name.as_bytes())?;
@@ -250,21 +156,13 @@ fn i32_leaf_value(
     let value_start = property_start.checked_add(1)?;
     let value_end = value_start.checked_add(size_of::<i32>())?;
     let bytes = document.get(value_start..value_end)?;
-    Some(
-        i32::from_le_bytes(
-            bytes
-                .try_into()
-                .ok()?,
-        ),
-    )
+    Some(i32::from_le_bytes(bytes.try_into().ok()?))
 }
 
 /// Encode one exact uncompressed FBX double-array property payload.
 fn f64_array_token(values: &[f64]) -> Option<Vec<u8>> {
     let count = u32::try_from(values.len()).ok()?;
-    let payload_byte_count = values
-        .len()
-        .checked_mul(size_of::<f64>())?;
+    let payload_byte_count = values.len().checked_mul(size_of::<f64>())?;
     let encoded_byte_count = u32::try_from(payload_byte_count).ok()?;
     let mut token = Vec::new();
     token.push(b'd');
@@ -278,10 +176,7 @@ fn f64_array_token(values: &[f64]) -> Option<Vec<u8>> {
 }
 
 /// Count exact byte-window matches.
-fn byte_window_count(
-    haystack: &[u8],
-    needle: &[u8],
-) -> usize {
+fn byte_window_count(haystack: &[u8], needle: &[u8]) -> usize {
     if needle.is_empty() {
         return 0;
     }
@@ -314,16 +209,9 @@ fn external_textures_are_default_and_payloads_are_omitted() {
     let Some(materials) = materials_result.ok() else {
         return;
     };
-    let summary = write_binary_character_fbx(
-        &character,
-        &materials,
-        &[],
-        &path,
-    );
-    assert!(
-        summary.is_ok(),
-        "external FBX write failed: {summary:?}"
-    );
+    let summary =
+        write_binary_character_fbx(&character, &materials, &[], &path);
+    assert!(summary.is_ok(), "external FBX write failed: {summary:?}");
     let bytes_result = fs::read(&path);
     assert!(
         bytes_result.is_ok(),
@@ -396,36 +284,24 @@ fn writes_deterministic_binary_fbx_7700_with_standard_footer() {
         &[],
         &second_path,
     );
-    let artifacts = read_binary_pair(
-        &first_path,
-        &second_path,
-        "binary FBX",
-    );
+    let artifacts = read_binary_pair(&first_path, &second_path, "binary FBX");
     let Some((first, second)) = artifacts else {
         return;
     };
 
     assert_eq!(
         first_summary,
-        Ok(
-            CharacterBinaryFbxSummary {
-                geometries: 1,
-                bones: 1,
-                clusters: 1,
-                materials: 1,
-                textures: 1,
-                animations: 0,
-            }
-        )
+        Ok(CharacterBinaryFbxSummary {
+            geometries: 1,
+            bones: 1,
+            clusters: 1,
+            materials: 1,
+            textures: 1,
+            animations: 0,
+        })
     );
-    assert_eq!(
-        second_summary,
-        first_summary
-    );
-    assert_eq!(
-        first,
-        second
-    );
+    assert_eq!(second_summary, first_summary);
+    assert_eq!(first, second);
     assert_eq!(
         first.get(..BINARY_MAGIC.len()),
         Some(BINARY_MAGIC.as_slice())
@@ -434,10 +310,7 @@ fn writes_deterministic_binary_fbx_7700_with_standard_footer() {
         .get(23..27)
         .and_then(|bytes| <[u8; 4]>::try_from(bytes).ok())
         .map(u32::from_le_bytes);
-    assert_eq!(
-        version,
-        Some(FBX_VERSION)
-    );
+    assert_eq!(version, Some(FBX_VERSION));
     let root_header_end_result =
         ROOT_NODE_OFFSET.checked_add(NODE_RECORD_WIDTH);
     assert!(root_header_end_result.is_some());
@@ -453,37 +326,23 @@ fn writes_deterministic_binary_fbx_7700_with_standard_footer() {
         .get(8..16)
         .and_then(|bytes| <[u8; 8]>::try_from(bytes).ok())
         .map(u64::from_le_bytes);
-    assert_eq!(
-        root_property_count,
-        Some(0)
-    );
+    assert_eq!(root_property_count, Some(0));
     let root_property_bytes = root_header
         .get(16..24)
         .and_then(|bytes| <[u8; 8]>::try_from(bytes).ok())
         .map(u64::from_le_bytes);
-    assert_eq!(
-        root_property_bytes,
-        Some(0)
-    );
-    assert_eq!(
-        root_header.get(24),
-        Some(&18)
-    );
+    assert_eq!(root_property_bytes, Some(0));
+    assert_eq!(root_header.get(24), Some(&18));
     assert_eq!(
         first.get(root_header_end..root_header_end + 18),
         Some(b"FBXHeaderExtension".as_slice())
     );
-    let final_magic_start_result = first
-        .len()
-        .checked_sub(FINAL_MAGIC.len());
+    let final_magic_start_result = first.len().checked_sub(FINAL_MAGIC.len());
     assert!(final_magic_start_result.is_some());
     let Some(final_magic_start) = final_magic_start_result else {
         return;
     };
-    assert_eq!(
-        first.get(final_magic_start..),
-        Some(FINAL_MAGIC.as_slice())
-    );
+    assert_eq!(first.get(final_magic_start..), Some(FINAL_MAGIC.as_slice()));
     let footer_id_start_result = first
         .windows(FOOTER_ID.len())
         .rposition(|window| window == FOOTER_ID);
@@ -517,9 +376,7 @@ fn writes_deterministic_binary_fbx_7700_with_standard_footer() {
         b"ColorIndex".as_slice(),
     ] {
         assert!(
-            first
-                .windows(token.len())
-                .any(|window| window == token),
+            first.windows(token.len()).any(|window| window == token),
             "missing binary vertex-color token: {token:?}"
         );
     }
@@ -569,29 +426,18 @@ fn writes_deterministic_binary_fbx_7700_with_standard_footer() {
         )
     );
     assert_eq!(
-        i32_leaf_value(
-            &first,
-            "NbPoseNodes",
-        ),
+        i32_leaf_value(&first, "NbPoseNodes",),
         Some(3_i32),
         concat!(
             "bind pose must include the export root, mesh model, and root ",
             "bone"
         )
     );
-    let export_space_bind = compose(
-        &TrsParts {
-            translation: [
-                0.0_f64, 0.0_f64, 0.0_f64,
-            ],
-            rotation_degrees: [
-                0.0_f64, 180.0_f64, 0.0_f64,
-            ],
-            scale: [
-                1.0_f64, 1.0_f64, 1.0_f64,
-            ],
-        },
-    );
+    let export_space_bind = compose(&TrsParts {
+        translation: [0f64, 0f64, 0f64],
+        rotation_degrees: [0f64, 180f64, 0f64],
+        scale: [1f64, 1f64, 1f64],
+    });
     let export_space_bind_token_result = f64_array_token(&export_space_bind);
     assert!(
         export_space_bind_token_result.is_some(),
@@ -601,23 +447,18 @@ fn writes_deterministic_binary_fbx_7700_with_standard_footer() {
         return;
     };
     assert!(
-        byte_window_count(
-            &first,
-            &export_space_bind_token,
-        ) >= 3_usize,
+        byte_window_count(&first, &export_space_bind_token,) >= 3_usize,
         concat!(
             "export root, mesh bind pose, and associate-model records must ",
             "share the export-root world transform"
         )
     );
     let source_global_bind = [
-        1.0_f64, 0.0_f64, 0.0_f64, 0.0_f64, 0.0_f64, 1.0_f64, 0.0_f64, 0.0_f64,
-        0.0_f64, 0.0_f64, 1.0_f64, 0.0_f64, 2.0_f64, 3.0_f64, 4.0_f64, 1.0_f64,
+        1f64, 0f64, 0f64, 0f64, 0f64, 1f64, 0f64, 0f64, 0f64, 0f64, 1f64, 0f64,
+        2f64, 3f64, 4f64, 1f64,
     ];
-    let export_space_bone_bind = multiply(
-        &source_global_bind,
-        &export_space_bind,
-    );
+    let export_space_bone_bind =
+        multiply(&source_global_bind, &export_space_bind);
     let export_space_bone_token_result =
         f64_array_token(&export_space_bone_bind);
     assert!(
@@ -628,10 +469,7 @@ fn writes_deterministic_binary_fbx_7700_with_standard_footer() {
         return;
     };
     assert!(
-        byte_window_count(
-            &first,
-            &export_space_bone_token,
-        ) >= 2_usize,
+        byte_window_count(&first, &export_space_bone_token,) >= 2_usize,
         concat!(
             "bone pose and TransformLink must use the same export-space ",
             "global bind"
@@ -656,10 +494,7 @@ fn writes_deterministic_binary_fbx_7700_with_standard_footer() {
         return;
     };
     assert!(
-        byte_window_count(
-            &first,
-            &inverse_source_bind_token,
-        ) >= 1_usize,
+        byte_window_count(&first, &inverse_source_bind_token,) >= 1_usize,
         "cluster Transform must preserve the source-space inverse bind"
     );
     let Some(texture) = textures.first() else {
@@ -685,41 +520,16 @@ fn writes_deterministic_binary_fbx_7700_with_standard_footer() {
         "embedded textures must not depend on a sibling textures directory"
     );
     for (name, value) in [
-        (
-            "UpAxis", 1_i32,
-        ),
-        (
-            "UpAxisSign",
-            1_i32,
-        ),
-        (
-            "FrontAxis",
-            2_i32,
-        ),
-        (
-            "FrontAxisSign",
-            1_i32,
-        ),
-        (
-            "CoordAxis",
-            0_i32,
-        ),
-        (
-            "CoordAxisSign",
-            1_i32,
-        ),
-        (
-            "OriginalUpAxis",
-            1_i32,
-        ),
-        (
-            "OriginalUpAxisSign",
-            1_i32,
-        ),
+        ("UpAxis", 1_i32),
+        ("UpAxisSign", 1_i32),
+        ("FrontAxis", 2_i32),
+        ("FrontAxisSign", 1_i32),
+        ("CoordAxis", 0_i32),
+        ("CoordAxisSign", 1_i32),
+        ("OriginalUpAxis", 1_i32),
+        ("OriginalUpAxisSign", 1_i32),
     ] {
-        let token_result = integer_property_token(
-            name, value,
-        );
+        let token_result = integer_property_token(name, value);
         assert!(
             token_result.is_some(),
             "axis property token should fit u32: {name}"
@@ -728,9 +538,7 @@ fn writes_deterministic_binary_fbx_7700_with_standard_footer() {
             return;
         };
         assert!(
-            first
-                .windows(token.len())
-                .any(|window| window == token),
+            first.windows(token.len()).any(|window| window == token),
             "binary FBX axis property must match Maya 7.7: {name}={value}"
         );
     }
@@ -753,9 +561,8 @@ fn writes_deterministic_binary_fbx_7700_with_standard_footer() {
             .any(|window| window == flipped_uv_bytes),
         "binary FBX must not vertically flip palette UV coordinates"
     );
-    let footer_version_offset_result = first
-        .len()
-        .checked_sub(FOOTER_VERSION_DISTANCE);
+    let footer_version_offset_result =
+        first.len().checked_sub(FOOTER_VERSION_DISTANCE);
     assert!(footer_version_offset_result.is_some());
     let Some(footer_version_offset) = footer_version_offset_result else {
         return;
@@ -769,10 +576,7 @@ fn writes_deterministic_binary_fbx_7700_with_standard_footer() {
         .get(footer_version_offset..footer_version_end)
         .and_then(|bytes| <[u8; 4]>::try_from(bytes).ok())
         .map(u32::from_le_bytes);
-    assert_eq!(
-        footer_version,
-        Some(FBX_VERSION)
-    );
+    assert_eq!(footer_version, Some(FBX_VERSION));
 }
 
 #[test]
@@ -782,11 +586,10 @@ fn writes_shared_glass_and_emitter_automation_evidence() -> Result<(), String> {
         .parts
         .first_mut()
         .ok_or_else(|| "synthetic character has no part".to_owned())?;
-    let group = part
-        .mesh
-        .groups
-        .first_mut()
-        .ok_or_else(|| "synthetic character part has no group".to_owned())?;
+    let group =
+        part.mesh.groups.first_mut().ok_or_else(|| {
+            "synthetic character part has no group".to_owned()
+        })?;
     group.shader = "windshield_glass_m".to_owned();
     let material = MaterialBinding::new(
         "windshield_glass_m",
@@ -799,13 +602,9 @@ fn writes_shared_glass_and_emitter_automation_evidence() -> Result<(), String> {
             .with_light_emitter(true),
     );
     let path = output_path("semantic-surface");
-    let _summary = write_binary_character_fbx(
-        &character,
-        &[material],
-        &[],
-        &path,
-    )
-    .map_err(|error| format!("semantic FBX write failed: {error:?}"))?;
+    let _summary =
+        write_binary_character_fbx(&character, &[material], &[], &path)
+            .map_err(|error| format!("semantic FBX write failed: {error:?}"))?;
     let bytes = fs::read(&path).map_err(|error| error.to_string())?;
     fs::remove_file(&path).map_err(|error| error.to_string())?;
     for token in [
@@ -834,23 +633,15 @@ fn merges_composite_transparency_from_geometry_identity() -> Result<(), String>
         .parts
         .first_mut()
         .ok_or_else(|| "synthetic character has no part".to_owned())?;
-    part.mesh
-        .name = "body__transparent-source".to_owned();
-    let material = MaterialBinding::new(
-        "skin",
-        Some("skin.png".to_owned()),
-    )
-    .map_err(|error| format!("opaque source material failed: {error:?}"))?;
+    part.mesh.name = "body__transparent-source".to_owned();
+    let material = MaterialBinding::new("skin", Some("skin.png".to_owned()))
+        .map_err(|error| format!("opaque source material failed: {error:?}"))?;
     let path = output_path("composite-transparent-surface");
-    let _summary = write_binary_character_fbx(
-        &character,
-        &[material],
-        &[],
-        &path,
-    )
-    .map_err(
-        |error| format!("composite semantic FBX write failed: {error:?}"),
-    )?;
+    let _summary =
+        write_binary_character_fbx(&character, &[material], &[], &path)
+            .map_err(|error| {
+                format!("composite semantic FBX write failed: {error:?}")
+            })?;
     let bytes = fs::read(&path).map_err(|error| error.to_string())?;
     fs::remove_file(&path).map_err(|error| error.to_string())?;
     for token in [
@@ -863,9 +654,9 @@ fn merges_composite_transparency_from_geometry_identity() -> Result<(), String>
             .windows(token.len())
             .any(|window| window == token.as_bytes())
         {
-            return Err(
-                format!("composite transparency token is missing: {token}"),
-            );
+            return Err(format!(
+                "composite transparency token is missing: {token}"
+            ));
         }
     }
     Ok(())

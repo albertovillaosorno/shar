@@ -6,14 +6,24 @@
 ## Governing decisions and specifications
 
 <!-- markdownlint-disable MD013 -->
-- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md)
-- [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
-- [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md) <!-- markdownlint-disable-line MD013 -->
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
-- [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
-- [Device configuration and save-slot runtime](device-configuration-and-save-slot-runtime.md)
-- [Semantic input, device, and haptics runtime](semantic-input-device-and-haptics-runtime.md)
-- [Native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md)
+- [Application lifecycle and mode
+  runtime](application-lifecycle-and-mode-runtime.md)
+- [Device configuration and save-slot
+  runtime](device-configuration-and-save-slot-runtime.md)
+- [Semantic input, device, and haptics
+  runtime](semantic-input-device-and-haptics-runtime.md)
+- [Native asset load request and streaming
+  runtime](native-asset-load-request-and-streaming-runtime.md)
 - [Unreal configuration and asset validation](config-and-asset-validation.md)
 <!-- markdownlint-enable MD013 -->
 
@@ -34,18 +44,29 @@ only typed product policy and application coordination.
 
 ## Ownership
 
-<!-- markdownlint-disable MD013 -->
-| Authority | Responsibility |
-| :--- | :--- |
-| Unreal launcher and build target | Process entry, engine creation, platform runtime, and package startup. |
-| Engine loop | Frame scheduling, task servicing, rendering, input polling, audio integration, and shutdown callbacks. |
-| Game instance | Application-mode coordinator and product service readiness. |
-| Platform adapter | Capabilities, suspension, display, storage, system UI, restart, and terminal exit. |
-| Error-recovery subsystem | Typed platform observations, pause policy, recovery requests, and terminal results. |
-| Device configuration | User-requested display, window, audio, input, and accessibility settings. |
-| Presentation catalog | Legal, startup, error, and recovery text and media. |
-| Diagnostic subsystem | Crash, trace, screenshot, platform, and recovery evidence. |
-<!-- markdownlint-enable MD013 -->
+- **Authority:** Unreal launcher and build target
+  - **Responsibility:** Process entry, engine creation, platform runtime, and
+    package startup.
+- **Authority:** Engine loop
+  - **Responsibility:** Frame scheduling, task servicing, rendering, input
+    polling, audio integration, and shutdown callbacks.
+- **Authority:** Game instance
+  - **Responsibility:** Application-mode coordinator and product service
+    readiness.
+- **Authority:** Platform adapter
+  - **Responsibility:** Capabilities, suspension, display, storage, system UI,
+    restart, and terminal exit.
+- **Authority:** Error-recovery subsystem
+  - **Responsibility:** Typed platform observations, pause policy, recovery
+    requests, and terminal results.
+- **Authority:** Device configuration
+  - **Responsibility:** User-requested display, window, audio, input, and
+    accessibility settings.
+- **Authority:** Presentation catalog
+  - **Responsibility:** Legal, startup, error, and recovery text and media.
+- **Authority:** Diagnostic subsystem
+  - **Responsibility:** Crash, trace, screenshot, platform, and recovery
+    evidence.
 
 The platform adapter does not own missions, progression, world state, camera,
 vehicle behavior, content selection, or gameplay timing.

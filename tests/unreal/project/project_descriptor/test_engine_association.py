@@ -1,7 +1,3 @@
-# File:
-#   - test_engine_association.py
-# Path: tests/unreal/project/project_descriptor/test_engine_association.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,38 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Validation behavior for portable engine associations.
+#   - Test engine association test module.
 # - Must-Not:
-#   - Invoke live Unreal processes or depend on network services.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Deterministic local fixtures and observable assertions.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Another behavior belongs to a different tooling boundary.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another test module proves the same behavior contract.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Unit tests for Unreal engine-association validation.
+#   - Test engine association test module.
 # - Description:
-#   - Proves accepted, GUID, version, missing, and shape outcomes.
+#   - Implements the declared test module responsibility for project.
 # - Usage:
-#   - Run by pytest as the project descriptor validation slice.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Fixtures use isolated JSON project descriptors.
-#
-# ADRs:
-# - docs/adr/unreal/runtime/runtime-parity-test-boundary.md
-#
-# Large file:
-#   - false
+#   - Invalid or missing inputs fail explicitly.
 #
 
-
-"""Engine-association contracts for the Unreal project descriptor."""
+"""Test engine association test module."""
 
 from __future__ import annotations
 

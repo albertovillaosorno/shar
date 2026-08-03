@@ -1,7 +1,3 @@
-// File:
-//   - cli_run_error.rs
-// Path: tests/formats/lmlm/cli_run_error.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Public CLI-run error typing regressions.
+//   - Cli run error test module.
 // - Must-Not:
-//   - Read private archives or create output state.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Invalid synthetic input paths that fail during source loading.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another public CLI-run stage needs independent fixtures.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - The CLI no longer exposes a process-neutral run function.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Proves public CLI runs preserve typed application failures.
+//   - Cli run error test module.
 // - Description:
-//   - Exercises source-read failure identity before presentation mapping.
+//   - Implements the declared test module responsibility for lmlm.
 // - Usage:
-//   - Compiled as an LMLM integration test.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No filesystem mutation occurs.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Public CLI-run error typing regressions.
-//!
-//! Presentation must not erase application failure structure.
+//! Cli run error test module.
 
 use std::path::Path;
 
@@ -53,9 +39,7 @@ use schoenwald_filesystem as _;
 
 #[test]
 fn run_preserves_typed_application_failures() {
-    let result: Result<usize, ExtractArchiveError> = run(
-        Path::new(""),
-        Path::new("unused-output"),
-    );
+    let result: Result<usize, ExtractArchiveError> =
+        run(Path::new(""), Path::new("unused-output"));
     drop(result);
 }

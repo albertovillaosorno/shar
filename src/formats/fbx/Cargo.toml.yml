@@ -1,0 +1,5 @@
+schema: shar-surface/v1
+path: src/formats/fbx/Cargo.toml
+function: fbx
+kind: project
+authority: Cargo.toml

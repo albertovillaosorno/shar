@@ -1,7 +1,3 @@
-// File:
-//   - output_error.rs
-// Path: tests/foundation/command-line/support/output_error.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,37 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Shared integration-test assertions for required CLI output failures.
+//   - Output error test module.
 // - Must-Not:
-//   - Define production behavior or access operating-system process state.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Inspect one completed invocation and return its public output error.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another helper family gains a separate test responsibility.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - A production API owns the same assertion boundary.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Shared CLI output-error test helper.
+//   - Output error test module.
 // - Description:
-//   - Centralizes repeated required-error extraction from invocation results.
+//   - Implements the declared test module responsibility for command line.
 // - Usage:
-//   - Imported by CLI integration tests that inspect `OutputError` details.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - A successful invocation is an immediate test failure.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Shared assertions for CLI integration tests.
+//! Output error test module.
 
 use schoenwald_cli::{ExitStatus, OutputError};
 

@@ -5,22 +5,29 @@
 
 ## Governing decisions and specifications
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Transactional phone-booth vehicle retrieval](../../adr/unreal/runtime/transactional-phone-booth-vehicle-retrieval.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Transactional phone-booth vehicle retrieval](../../adr/unreal/runtime/transactional-phone-booth-vehicle-retrieval.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
+- [Common UI front end and progress
+  projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
 - [UI parity boundary](../../adr/unreal/ui/ui-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Common UI navigation, menu, and modal runtime](common-ui-navigation-menu-and-modal-runtime.md)
+- [Common UI navigation, menu, and modal
+  runtime](common-ui-navigation-menu-and-modal-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [HUD feedback cue and presentation-primitives runtime](hud-feedback-cue-and-presentation-primitives-runtime.md)
+- [HUD feedback cue and presentation-primitives
+  runtime](hud-feedback-cue-and-presentation-primitives-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Vehicle retrieval and phone-booth runtime](vehicle-retrieval-and-phone-booth-runtime.md)
+- [Vehicle retrieval and phone-booth
+  runtime](vehicle-retrieval-and-phone-booth-runtime.md)
 - [Vehicle access and roster runtime](vehicle-access-and-roster-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Progression, collectibles, cheats, and credits](progression-collectibles-and-cheats.md)
+- [Progression, collectibles, cheats, and
+  credits](progression-collectibles-and-cheats.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md)
+- [Native asset load request and streaming
+  runtime](native-asset-load-request-and-streaming-runtime.md)
 
 ## Purpose
 
@@ -61,18 +68,36 @@ vehicle, or claim that a save completed.
 
 <!-- markdownlint-disable MD013 -->
 
-| Service | Authority |
-| :--- | :--- |
-| `USharRewardBrowserSubsystem` | Browser sessions, entry ordering, selection, preview leases, focus, and accepted presentation revision. |
-| `USharRewardBrowserViewModelSubsystem` | Immutable browser, selected-entry, price, stat, and transaction-result viewmodels. |
-| Merchandise application service | Seller inventory, offer eligibility, price, purchase transaction, ownership grant, and purchase result. |
-| Vehicle-retrieval application service | Owned-vehicle projection, damage, repair eligibility, selection, delivery, and active retrieval result. |
-| Economy service | Currency balance, reservation, debit, refund, and ledger revision. |
-| Progression service | Chapter reach, rewards, unlocks, completion overrides, and accepted save state. |
-| Equipment service | Current outfit, outfit compatibility, equip transaction, and character-presentation revision. |
-| Preview presentation service | Isolated preview scene, camera, lighting, animation, turntable, and asset lease. |
-| Asset-load service | Required browser, entry, preview, and transaction presentation bundles. |
-| Common UI kernel | Screen activation, focus, semantic actions, modals, transitions, and restoration. |
+- **Service:** `USharRewardBrowserSubsystem`
+  - **Authority:** Browser sessions, entry ordering, selection, preview leases,
+    focus, and accepted presentation revision.
+- **Service:** `USharRewardBrowserViewModelSubsystem`
+  - **Authority:** Immutable browser, selected-entry, price, stat, and
+    transaction-result viewmodels.
+- **Service:** Merchandise application service
+  - **Authority:** Seller inventory, offer eligibility, price, purchase
+    transaction, ownership grant, and purchase result.
+- **Service:** Vehicle-retrieval application service
+  - **Authority:** Owned-vehicle projection, damage, repair eligibility,
+    selection, delivery, and active retrieval result.
+- **Service:** Economy service
+  - **Authority:** Currency balance, reservation, debit, refund, and ledger
+    revision.
+- **Service:** Progression service
+  - **Authority:** Chapter reach, rewards, unlocks, completion overrides, and
+    accepted save state.
+- **Service:** Equipment service
+  - **Authority:** Current outfit, outfit compatibility, equip transaction, and
+    character-presentation revision.
+- **Service:** Preview presentation service
+  - **Authority:** Isolated preview scene, camera, lighting, animation,
+    turntable, and asset lease.
+- **Service:** Asset-load service
+  - **Authority:** Required browser, entry, preview, and transaction
+    presentation bundles.
+- **Service:** Common UI kernel
+  - **Authority:** Screen activation, focus, semantic actions, modals,
+    transitions, and restoration.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -127,27 +152,44 @@ pending for the browser. Every request has one terminal result.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `RewardId` | Canonical outfit, vehicle, or reward identity. |
-| `OfferId` | Seller-specific offer identity when purchasable. |
-| `RewardKind` | Outfit, vehicle, retrieval entry, or registered feature kind. |
-| `DisplayName` | Localized reward name identity. |
-| `Description` | Optional localized description identity. |
-| `OwnershipState` | Locked, available, owned, equipped, or completion override. |
-| `UnlockReason` | Typed prerequisite or effective override. |
-| `Price` | Non-negative integer currency amount when purchasable. |
-| `Affordability` | Affordable, insufficient balance, not for sale, or stale. |
-| `ThumbnailAsset` | Optional soft thumbnail reference. |
-| `PreviewAssetId` | Registered isolated preview definition. |
-| `StatProfileId` | Optional vehicle or reward statistic projection. |
-| `DamageState` | Healthy, damaged, destroyed, or not applicable. |
-| `RepairCost` | Optional declared repair amount. |
-| `Selectable` | Derived selection eligibility. |
-| `UnavailableReason` | Typed reason when selection or purchase is blocked. |
-| `CatalogOrdinal` | Stable data-defined ordering value. |
-| `FeatureOwnerId` | Base game or validated feature package. |
-| `ProjectionRevision` | Exact source revision set. |
+- **Field:** `RewardId`
+  - **Contract:** Canonical outfit, vehicle, or reward identity.
+- **Field:** `OfferId`
+  - **Contract:** Seller-specific offer identity when purchasable.
+- **Field:** `RewardKind`
+  - **Contract:** Outfit, vehicle, retrieval entry, or registered feature kind.
+- **Field:** `DisplayName`
+  - **Contract:** Localized reward name identity.
+- **Field:** `Description`
+  - **Contract:** Optional localized description identity.
+- **Field:** `OwnershipState`
+  - **Contract:** Locked, available, owned, equipped, or completion override.
+- **Field:** `UnlockReason`
+  - **Contract:** Typed prerequisite or effective override.
+- **Field:** `Price`
+  - **Contract:** Non-negative integer currency amount when purchasable.
+- **Field:** `Affordability`
+  - **Contract:** Affordable, insufficient balance, not for sale, or stale.
+- **Field:** `ThumbnailAsset`
+  - **Contract:** Optional soft thumbnail reference.
+- **Field:** `PreviewAssetId`
+  - **Contract:** Registered isolated preview definition.
+- **Field:** `StatProfileId`
+  - **Contract:** Optional vehicle or reward statistic projection.
+- **Field:** `DamageState`
+  - **Contract:** Healthy, damaged, destroyed, or not applicable.
+- **Field:** `RepairCost`
+  - **Contract:** Optional declared repair amount.
+- **Field:** `Selectable`
+  - **Contract:** Derived selection eligibility.
+- **Field:** `UnavailableReason`
+  - **Contract:** Typed reason when selection or purchase is blocked.
+- **Field:** `CatalogOrdinal`
+  - **Contract:** Stable data-defined ordering value.
+- **Field:** `FeatureOwnerId`
+  - **Contract:** Base game or validated feature package.
+- **Field:** `ProjectionRevision`
+  - **Contract:** Exact source revision set.
 
 <!-- markdownlint-enable MD013 -->
 

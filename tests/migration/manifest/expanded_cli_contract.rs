@@ -1,7 +1,3 @@
-// File:
-//   - expanded_cli_contract.rs
-// Path: tests/migration/manifest/expanded_cli_contract.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - End-to-end expanded-manifest generator command regressions.
+//   - Expanded cli contract test module.
 // - Must-Not:
-//   - Read licensed inputs or repository-local generated trees.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic temporary inputs and compiled generator execution.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when fixture setup exceeds this focused command boundary.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test owns the same expanded generator process contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects fail-closed expanded-manifest command behavior.
+//   - Expanded cli contract test module.
 // - Description:
-//   - Executes generate-expanded-manifest against isolated synthetic trees.
+//   - Implements the declared test module responsibility for manifest.
 // - Usage:
-//   - Executed through cargo test for the game-manifest crate.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Temporary fixtures are removed after each command invocation.
-//
-// ADRs:
-// - docs/adr/pipeline/game-manifest-ledger.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! End-to-end expanded-manifest generator contract coverage.
-//!
-//! Synthetic trees prove operator behavior without exposing source names or
-//! depending on repository-local outputs.
+//! Expanded cli contract test module.
 
 use std::fs;
 use std::io::{self, ErrorKind};
@@ -66,19 +51,14 @@ struct ExpandedFixture {
 
 impl ExpandedFixture {
     fn new(label: &str) -> io::Result<Self> {
-        let sequence = NEXT_FIXTURE.fetch_add(
-            1,
-            Ordering::Relaxed,
-        );
-        let root = std::env::temp_dir().join(
-            format!(
-                "game-manifest-expanded-{label}-{}-{sequence}",
-                std::process::id()
-            ),
-        );
+        let sequence = NEXT_FIXTURE.fetch_add(1, Ordering::Relaxed);
+        let root = std::env::temp_dir().join(format!(
+            "game-manifest-expanded-{label}-{}-{sequence}",
+            std::process::id()
+        ));
         match fs::remove_dir_all(&root) {
-            Ok(()) => {}
-            Err(error) if error.kind() == ErrorKind::NotFound => {}
+            Ok(()) => {},
+            Err(error) if error.kind() == ErrorKind::NotFound => {},
             Err(error) => return Err(error),
         }
         let game = root.join("input");
@@ -86,20 +66,15 @@ impl ExpandedFixture {
         let output = root.join("result.jsonl");
         fs::create_dir_all(&game)?;
         fs::create_dir_all(&extracted)?;
-        Ok(
-            Self {
-                root,
-                game,
-                extracted,
-                output,
-            },
-        )
+        Ok(Self {
+            root,
+            game,
+            extracted,
+            output,
+        })
     }
 
-    fn run(
-        &self,
-        extra_argument: Option<&str>,
-    ) -> io::Result<Output> {
+    fn run(&self, extra_argument: Option<&str>) -> io::Result<Output> {
         let mut command =
             Command::new(env!("CARGO_BIN_EXE_generate-expanded-manifest"));
         let _game = command.arg(&self.game);
@@ -126,35 +101,21 @@ impl Drop for ExpandedFixture {
 fn expanded_generator_rejects_extra_arguments() {
     let result = (|| {
         let fixture = ExpandedFixture::new("extra-args")?;
-        fs::write(
-            fixture
-                .game()
-                .join("asset.p3d"),
-            b"fixture",
-        )?;
+        fs::write(fixture.game().join("asset.p3d"), b"fixture")?;
         fixture.run(Some("unexpected"))
     })();
     assert!(result.is_ok());
     let Some(output) = result.ok() else {
         return;
     };
-    assert!(
-        !output
-            .status
-            .success()
-    );
+    assert!(!output.status.success());
 }
 
 #[test]
 fn expanded_generator_rejects_identical_input_roots() {
     let result = (|| {
         let fixture = ExpandedFixture::new("same-roots")?;
-        fs::write(
-            fixture
-                .game
-                .join("asset.p3d"),
-            b"fixture",
-        )?;
+        fs::write(fixture.game.join("asset.p3d"), b"fixture")?;
         let output =
             Command::new(env!("CARGO_BIN_EXE_generate-expanded-manifest"))
                 .arg(&fixture.game)
@@ -167,31 +128,17 @@ fn expanded_generator_rejects_identical_input_roots() {
     let Some(output) = result.ok() else {
         return;
     };
-    assert!(
-        !output
-            .status
-            .success()
-    );
+    assert!(!output.status.success());
 }
 
 #[test]
 fn expanded_generator_rejects_nested_input_roots() {
     let result = (|| {
         let fixture = ExpandedFixture::new("nested-roots")?;
-        let nested = fixture
-            .game
-            .join("decoded");
+        let nested = fixture.game.join("decoded");
         fs::create_dir_all(&nested)?;
-        fs::write(
-            fixture
-                .game
-                .join("asset.p3d"),
-            b"fixture",
-        )?;
-        fs::write(
-            nested.join("decoded.p3d"),
-            b"fixture",
-        )?;
+        fs::write(fixture.game.join("asset.p3d"), b"fixture")?;
+        fs::write(nested.join("decoded.p3d"), b"fixture")?;
         let output =
             Command::new(env!("CARGO_BIN_EXE_generate-expanded-manifest"))
                 .arg(&fixture.game)
@@ -204,23 +151,14 @@ fn expanded_generator_rejects_nested_input_roots() {
     let Some(output) = result.ok() else {
         return;
     };
-    assert!(
-        !output
-            .status
-            .success()
-    );
+    assert!(!output.status.success());
 }
 
 #[test]
 fn expanded_generator_requires_rcf_extraction_root() {
     let result = (|| {
         let fixture = ExpandedFixture::new("missing-rcf-root")?;
-        fs::write(
-            fixture
-                .game
-                .join("archive.rcf"),
-            b"fixture",
-        )?;
+        fs::write(fixture.game.join("archive.rcf"), b"fixture")?;
         fs::remove_dir_all(&fixture.extracted)?;
         fixture.run(None)
     })();
@@ -228,91 +166,52 @@ fn expanded_generator_requires_rcf_extraction_root() {
     let Some(output) = result.ok() else {
         return;
     };
-    assert!(
-        !output
-            .status
-            .success()
-    );
+    assert!(!output.status.success());
 }
 
 #[test]
 fn expanded_generator_rejects_orphan_rcf_extraction() {
     let result = (|| {
         let fixture = ExpandedFixture::new("orphan-rcf")?;
-        fs::write(
-            fixture
-                .game
-                .join("asset.p3d"),
-            b"fixture",
-        )?;
-        fs::write(
-            fixture
-                .extracted
-                .join("orphan.p3d"),
-            b"fixture",
-        )?;
+        fs::write(fixture.game.join("asset.p3d"), b"fixture")?;
+        fs::write(fixture.extracted.join("orphan.p3d"), b"fixture")?;
         fixture.run(None)
     })();
     assert!(result.is_ok());
     let Some(output) = result.ok() else {
         return;
     };
-    assert!(
-        !output
-            .status
-            .success()
-    );
+    assert!(!output.status.success());
 }
 
 #[test]
 fn expanded_generator_rejects_empty_rcf_extraction() {
     let result = (|| {
         let fixture = ExpandedFixture::new("empty-rcf-root")?;
-        fs::write(
-            fixture
-                .game
-                .join("archive.rcf"),
-            b"fixture",
-        )?;
+        fs::write(fixture.game.join("archive.rcf"), b"fixture")?;
         fixture.run(None)
     })();
     assert!(result.is_ok());
     let Some(output) = result.ok() else {
         return;
     };
-    assert!(
-        !output
-            .status
-            .success()
-    );
+    assert!(!output.status.success());
 }
 
 #[test]
 fn expanded_generator_rejects_file_as_optional_rcf_root() {
     let result = (|| {
         let fixture = ExpandedFixture::new("file-rcf-root")?;
-        fs::write(
-            fixture
-                .game
-                .join("asset.p3d"),
-            b"fixture",
-        )?;
+        fs::write(fixture.game.join("asset.p3d"), b"fixture")?;
         fs::remove_dir_all(&fixture.extracted)?;
-        fs::write(
-            &fixture.extracted,
-            b"not-a-directory",
-        )?;
+        fs::write(&fixture.extracted, b"not-a-directory")?;
         fixture.run(None)
     })();
     assert!(result.is_ok());
     let Some(output) = result.ok() else {
         return;
     };
-    assert!(
-        !output
-            .status
-            .success()
-    );
+    assert!(!output.status.success());
 }
 
 #[test]
@@ -325,9 +224,5 @@ fn expanded_generator_rejects_empty_game_directory() {
     let Some(output) = result.ok() else {
         return;
     };
-    assert!(
-        !output
-            .status
-            .success()
-    );
+    assert!(!output.status.success());
 }

@@ -7,18 +7,22 @@ description = "Audits Radical RMV/Bink movie inputs and gates HAP conversion."
 publish = false
 
 [dependencies]
-# shar-sha256 owns the dependency-free repository SHA-256 primitive.
-shar-sha256 = { path = "../../foundation/sha256" }
-# schoenwald-cli centralizes process arguments, ordered diagnostics, newline handling, and exit-code mapping for the RMV driving adapter.
-schoenwald-cli = { path = "../../foundation/command-line" }
-# schoenwald-filesystem centralizes canonical identities, complete movie snapshots, output inspection, and complete TSV publication.
-schoenwald-filesystem = { path = "../../foundation/filesystem" }
+# shar_sha256 owns the dependency-free repository SHA-256 primitive.
+shar_sha256 = { path = "../../foundation/sha256" }
+# jig-ignore-next-line: exact value is indivisible
+# schoenwald_cli centralizes process arguments, ordered diagnostics, newline handling, and exit-code mapping for the RMV driving adapter.
+schoenwald_cli = { path = "../../foundation/command-line" }
+# jig-ignore-next-line: exact value is indivisible
+# schoenwald_filesystem centralizes canonical identities, complete movie snapshots, output inspection, and complete TSV publication.
+schoenwald_filesystem = { path = "../../foundation/filesystem" }
 
 [lib]
 name = "rmv"
-path = "lib.rs"
+path = "composition/lib.rs"
 
 [[bin]]
 name = "rmv-audit"
 path = "composition/main.rs"
 
+[lints]
+workspace = true

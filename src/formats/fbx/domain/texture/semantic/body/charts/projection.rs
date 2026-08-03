@@ -1,7 +1,3 @@
-// File:
-//   - projection.rs
-// Path: src/formats/fbx/domain/texture/semantic/body/charts/projection.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,41 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Deterministic non-degenerate orthographic projection selection for one
-//   - connected flat-color chart.
+//   - Projection domain module.
 // - Must-Not:
-//   - Change topology, split vertices, pack atlas rectangles, or rasterize.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - XY, XZ, and YZ projection scoring by minimum and total triangle area.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - A non-orthographic unwrap becomes an independently validated algorithm.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Chart discovery becomes the sole owner of projection selection.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Non-degenerate chart projection.
+//   - Projection domain module.
 // - Description:
-//   - Chooses the strongest projection only when every source triangle
-//   - survives.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Called once for each connected semantic chart.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Equal scores retain fixed XY, XZ, then YZ preference.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - true
-//   - Reason: projection scoring, bounds, and checked source lookup form one
-//   - complete geometric acceptance contract.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Deterministic non-degenerate orthographic chart projection.
+//! Projection domain module.
+
 #![expect(
     clippy::shadow_reuse,
     clippy::unneeded_field_pattern,
@@ -66,7 +51,7 @@ use super::model::{ProjectedChart, ProjectionBounds};
 use crate::domain::mesh::PrimitiveGroup;
 
 /// Minimum accepted doubled projected triangle area.
-const MINIMUM_PROJECTED_AREA: f32 = 1.0e-10;
+const MINIMUM_PROJECTED_AREA: f32 = 1e-10;
 
 /// Immutable chart-projection ownership and sampling request.
 pub(super) struct ProjectionRequest {
@@ -91,10 +76,7 @@ pub(super) fn project(
     triangle_indices: Vec<usize>,
     vertex_indices: Vec<usize>,
 ) -> Result<ProjectedChart, SemanticTextureError> {
-    if !request
-        .source_sampled_triangles
-        .is_empty()
-    {
+    if !request.source_sampled_triangles.is_empty() {
         return source_uv_projection(
             request,
             group,
@@ -112,24 +94,14 @@ pub(super) fn project(
     } = request;
     let mut best: Option<Candidate> = None;
     for axis in ProjectionAxis::ALL {
-        let candidate = candidate(
-            axis,
-            group,
-            &triangle_indices,
-            &vertex_indices,
-        )?;
+        let candidate =
+            candidate(axis, group, &triangle_indices, &vertex_indices)?;
         if candidate.minimum_area <= MINIMUM_PROJECTED_AREA {
             continue;
         }
         if best
             .as_ref()
-            .is_none_or(
-                |current| {
-                    stronger(
-                        &candidate, current,
-                    )
-                },
-            )
+            .is_none_or(|current| stronger(&candidate, current))
         {
             best = Some(candidate);
         }
@@ -137,21 +109,19 @@ pub(super) fn project(
     let Some(best) = best else {
         return Err(SemanticTextureError::DegenerateChartProjection(id));
     };
-    Ok(
-        ProjectedChart {
-            id,
-            group: address,
-            region,
-            source_color,
-            sample_source: false,
-            source_sampled_triangles,
-            triangle_indices,
-            vertex_indices,
-            projection: best.axis,
-            projected_positions: best.positions,
-            bounds: best.bounds,
-        },
-    )
+    Ok(ProjectedChart {
+        id,
+        group: address,
+        region,
+        source_color,
+        sample_source: false,
+        source_sampled_triangles,
+        triangle_indices,
+        vertex_indices,
+        projection: best.axis,
+        projected_positions: best.positions,
+        bounds: best.bounds,
+    })
 }
 
 /// Preserve one patterned chart through its original source UV coordinates.
@@ -178,40 +148,30 @@ fn source_uv_projection(
             .get(*vertex)
             .copied()
             .ok_or(SemanticTextureError::NumericOverflow)?;
-        let uv = normalize_uv(
-            uv,
-            address_mode,
-        )?;
+        let uv = normalize_uv(uv, address_mode)?;
         minimum[0] = minimum[0].min(uv[0]);
         minimum[1] = minimum[1].min(uv[1]);
         maximum[0] = maximum[0].max(uv[0]);
         maximum[1] = maximum[1].max(uv[1]);
-        positions.insert(
-            *vertex, uv,
-        );
+        positions.insert(*vertex, uv);
     }
-    let bounds = ProjectionBounds {
-        minimum,
-        maximum,
-    };
-    if bounds.width() <= 0.0 || bounds.height() <= 0.0 {
+    let bounds = ProjectionBounds { minimum, maximum };
+    if bounds.width() <= 0. || bounds.height() <= 0. {
         return Err(SemanticTextureError::DegenerateChartProjection(id));
     }
-    Ok(
-        ProjectedChart {
-            id,
-            group: address,
-            region,
-            source_color,
-            sample_source: true,
-            source_sampled_triangles,
-            triangle_indices,
-            vertex_indices,
-            projection: ProjectionAxis::SourceUv,
-            projected_positions: positions,
-            bounds,
-        },
-    )
+    Ok(ProjectedChart {
+        id,
+        group: address,
+        region,
+        source_color,
+        sample_source: true,
+        source_sampled_triangles,
+        triangle_indices,
+        vertex_indices,
+        projection: ProjectionAxis::SourceUv,
+        projected_positions: positions,
+        bounds,
+    })
 }
 
 /// Normalize one finite UV coordinate through the declared address mode.
@@ -224,19 +184,16 @@ fn normalize_uv(
     }
     match address_mode {
         TextureAddressMode::Clamp => {
-            if !(0.0..=1.0).contains(&uv[0]) || !(0.0..=1.0).contains(&uv[1]) {
-                return Err(
-                    SemanticTextureError::Image(RgbaImageError::InvalidUv),
-                );
+            if !(0. ..=1.).contains(&uv[0]) || !(0. ..=1.).contains(&uv[1]) {
+                return Err(SemanticTextureError::Image(
+                    RgbaImageError::InvalidUv,
+                ));
             }
             Ok(uv)
-        }
-        TextureAddressMode::Tile => Ok(
-            [
-                uv[0].rem_euclid(1.0),
-                uv[1].rem_euclid(1.0),
-            ],
-        ),
+        },
+        TextureAddressMode::Tile => {
+            Ok([uv[0].rem_euclid(1.), uv[1].rem_euclid(1.)])
+        },
     }
 }
 
@@ -275,44 +232,31 @@ fn candidate(
         minimum[1] = minimum[1].min(projected[1]);
         maximum[0] = maximum[0].max(projected[0]);
         maximum[1] = maximum[1].max(projected[1]);
-        positions.insert(
-            *vertex, projected,
-        );
+        positions.insert(*vertex, projected);
     }
     let mut minimum_area = f32::INFINITY;
-    let mut total_area = 0.0_f32;
+    let mut total_area = 0f32;
     for triangle in triangle_indices {
         let indices = group
             .triangles
             .get(*triangle)
             .ok_or(SemanticTextureError::NumericOverflow)?;
         let points = [
-            projected(
-                &positions, indices[0],
-            )?,
-            projected(
-                &positions, indices[1],
-            )?,
-            projected(
-                &positions, indices[2],
-            )?,
+            projected(&positions, indices[0])?,
+            projected(&positions, indices[1])?,
+            projected(&positions, indices[2])?,
         ];
         let area = doubled_area(points);
         minimum_area = minimum_area.min(area);
         total_area += area;
     }
-    Ok(
-        Candidate {
-            axis,
-            positions,
-            bounds: ProjectionBounds {
-                minimum,
-                maximum,
-            },
-            minimum_area,
-            total_area,
-        },
-    )
+    Ok(Candidate {
+        axis,
+        positions,
+        bounds: ProjectionBounds { minimum, maximum },
+        minimum_area,
+        total_area,
+    })
 }
 
 /// Resolve one projected vertex.
@@ -330,36 +274,16 @@ fn projected(
 
 /// Return the doubled absolute area of one projected triangle.
 fn doubled_area(points: [[f32; 2]; 3]) -> f32 {
-    let first = [
-        points[1][0] - points[0][0],
-        points[1][1] - points[0][1],
-    ];
-    let second = [
-        points[2][0] - points[0][0],
-        points[2][1] - points[0][1],
-    ];
-    first[0]
-        .mul_add(
-            second[1],
-            -(first[1] * second[0]),
-        )
-        .abs()
+    let first = [points[1][0] - points[0][0], points[1][1] - points[0][1]];
+    let second = [points[2][0] - points[0][0], points[2][1] - points[0][1]];
+    first[0].mul_add(second[1], -(first[1] * second[0])).abs()
 }
 
 /// Compare valid projections without replacing an exact fixed-order tie.
-fn stronger(
-    candidate: &Candidate,
-    current: &Candidate,
-) -> bool {
+fn stronger(candidate: &Candidate, current: &Candidate) -> bool {
     candidate
         .minimum_area
         .total_cmp(&current.minimum_area)
-        .then_with(
-            || {
-                candidate
-                    .total_area
-                    .total_cmp(&current.total_area)
-            },
-        )
+        .then_with(|| candidate.total_area.total_cmp(&current.total_area))
         .is_gt()
 }

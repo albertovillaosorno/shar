@@ -1,7 +1,3 @@
-// File:
-//   - generate_cli_contract.rs
-// Path: tests/migration/manifest/generate_cli_contract.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - End-to-end minimum-manifest generator command regressions.
+//   - Generate cli contract test module.
 // - Must-Not:
-//   - Read licensed inputs or repository-local generated trees.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic temporary files and compiled generator execution.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when output persistence requires independent fixture support.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test owns the same generate-manifest command boundary.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects fail-closed generator command behavior.
+//   - Generate cli contract test module.
 // - Description:
-//   - Executes generate-manifest against isolated synthetic directory trees.
+//   - Implements the declared test module responsibility for manifest.
 // - Usage:
-//   - Executed through cargo test for the game-manifest crate.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Temporary fixtures are removed after each command invocation.
-//
-// ADRs:
-// - docs/adr/pipeline/game-manifest-ledger.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! End-to-end minimum-manifest generator contract coverage.
-//!
-//! Synthetic trees prove operator command behavior without exposing source
-//! names or depending on repository-local outputs.
+//! Generate cli contract test module.
 
 use std::fs;
 use std::io::{self, ErrorKind};
@@ -60,19 +45,14 @@ fn run_generator(
     extension: Option<&str>,
     extra_argument: Option<&str>,
 ) -> io::Result<Output> {
-    let sequence = NEXT_FIXTURE.fetch_add(
-        1,
-        Ordering::Relaxed,
-    );
-    let root = std::env::temp_dir().join(
-        format!(
-            "game-manifest-generate-{}-{sequence}",
-            std::process::id()
-        ),
-    );
+    let sequence = NEXT_FIXTURE.fetch_add(1, Ordering::Relaxed);
+    let root = std::env::temp_dir().join(format!(
+        "game-manifest-generate-{}-{sequence}",
+        std::process::id()
+    ));
     match fs::remove_dir_all(&root) {
-        Ok(()) => {}
-        Err(error) if error.kind() == ErrorKind::NotFound => {}
+        Ok(()) => {},
+        Err(error) if error.kind() == ErrorKind::NotFound => {},
         Err(error) => return Err(error),
     }
     fs::create_dir_all(&root)?;
@@ -96,36 +76,22 @@ fn run_generator(
 
 #[test]
 fn generator_rejects_extra_arguments() {
-    let result = run_generator(
-        Some("p3d"),
-        Some("unexpected"),
-    );
+    let result = run_generator(Some("p3d"), Some("unexpected"));
     assert!(result.is_ok());
     let Some(output) = result.ok() else {
         return;
     };
-    assert!(
-        !output
-            .status
-            .success()
-    );
+    assert!(!output.status.success());
 }
 
 #[test]
 fn generator_rejects_unclassified_buckets() {
-    let result = run_generator(
-        Some("mystery"),
-        None,
-    );
+    let result = run_generator(Some("mystery"), None);
     assert!(result.is_ok());
     let Some(output) = result.ok() else {
         return;
     };
-    assert!(
-        !output
-            .status
-            .success()
-    );
+    assert!(!output.status.success());
     assert!(
         String::from_utf8_lossy(&output.stderr).contains("unclassified bucket")
     );
@@ -133,16 +99,10 @@ fn generator_rejects_unclassified_buckets() {
 
 #[test]
 fn generator_rejects_empty_game_directory() {
-    let result = run_generator(
-        None, None,
-    );
+    let result = run_generator(None, None);
     assert!(result.is_ok());
     let Some(output) = result.ok() else {
         return;
     };
-    assert!(
-        !output
-            .status
-            .success()
-    );
+    assert!(!output.status.success());
 }

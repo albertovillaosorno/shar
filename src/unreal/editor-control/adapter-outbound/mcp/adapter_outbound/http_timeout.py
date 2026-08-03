@@ -1,7 +1,3 @@
-# File:
-#   - http_timeout.py
-# Path: src/unreal/editor-control/adapter-outbound/mcp/adapter_outbound/http_timeout.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,36 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Positive timeout resolution for bounded HTTP exchanges.
+#   - Http timeout outbound adapter.
 # - Must-Not:
-#   - Open sockets, interpret MCP payloads, or manage sessions.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Selecting a per-exchange override over one validated default.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Timeout classes gain independent retry or deadline semantics.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another adapter module owns the same timeout-selection invariant.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Resolves bounded HTTP timeout values.
+#   - Http timeout outbound adapter.
 # - Description:
-#   - Rejects non-positive defaults and overrides before socket creation.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Called by the loopback HTTP exchange adapter.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Uses the configured client timeout when no override is supplied.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-#
-# Large file:
-#   - false
-#
-"""Timeout selection for bounded native MCP HTTP exchanges."""
+
+"""Http timeout outbound adapter."""
 
 from __future__ import annotations
 
@@ -56,6 +45,7 @@ def resolve_timeout_seconds(
 
     Returns:
         The override when present, otherwise the configured default.
+
     """
     resolved = default_seconds if override_seconds is None else override_seconds
     if not math.isfinite(resolved) or resolved <= 0:

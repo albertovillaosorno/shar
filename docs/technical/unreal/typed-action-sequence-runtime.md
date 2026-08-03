@@ -6,14 +6,18 @@
 ## Governing decisions
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Typed StateTree action sequences](../../adr/unreal/runtime/typed-state-tree-action-sequences.md)
+- [Typed StateTree action
+  sequences](../../adr/unreal/runtime/typed-state-tree-action-sequences.md)
 - [Presentation playback runtime](presentation-playback-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Contextual interaction query and transaction boundary](../../adr/unreal/runtime/contextual-interaction-query-and-transaction.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Transactional phone-booth vehicle retrieval](../../adr/unreal/runtime/transactional-phone-booth-vehicle-retrieval.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Contextual interaction query and transaction boundary](../../adr/unreal/runtime/contextual-interaction-query-and-transaction.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Transactional phone-booth vehicle retrieval](../../adr/unreal/runtime/transactional-phone-booth-vehicle-retrieval.md) <!-- markdownlint-disable-line MD013 -->
 
 ## Purpose
 
@@ -31,13 +35,19 @@ Those effects remain behind application ports.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Generated action catalog | Stable identities, execution kinds, parameters, resources, and verification policy. |
-| StateTree | Ordered states, transitions, task lifetime, failure, and cancellation. |
-| Resource arbiter | Exclusive and shared runtime leases. |
-| Native task library | Typed movement, animation, vehicle, delay, event, and state operations. |
-| Domain services | Authoritative gameplay effects and persistent results. |
+- **Authority:** Generated action catalog
+  - **Responsibility:** Stable identities, execution kinds, parameters,
+    resources, and verification policy.
+- **Authority:** StateTree
+  - **Responsibility:** Ordered states, transitions, task lifetime, failure, and
+    cancellation.
+- **Authority:** Resource arbiter
+  - **Responsibility:** Exclusive and shared runtime leases.
+- **Authority:** Native task library
+  - **Responsibility:** Typed movement, animation, vehicle, delay, event, and
+    state operations.
+- **Authority:** Domain services
+  - **Responsibility:** Authoritative gameplay effects and persistent results.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -47,17 +57,29 @@ The runtime module owns these C++ types:
 
 <!-- markdownlint-disable MD013 -->
 
-| Type | Responsibility |
-| :--- | :--- |
-| `USharActionDefinition` | Primary data asset for one reusable action contract. |
-| `USharActionSequenceDefinition` | Immutable ordered plan using registered action identities. |
-| `USharActionCatalogSubsystem` | Definition lookup, revision validation, and executor registration. |
-| `USharActionResourceArbiter` | Grants and releases typed resource leases. |
-| `FSharActionContext` | Immutable actor, interaction, mission, vehicle, and world context. |
-| `FSharActionRequest` | Definition identity, typed parameters, expected revision, and action ordinal. |
-| `FSharActionResult` | Closed result with reason, observations, and verification evidence. |
-| `FSharActionLease` | Move-only lease for one declared resource. |
-| `FSharActionSequenceHandle` | Cancellation-safe handle for one active sequence. |
+- **Type:** `USharActionDefinition`
+  - **Responsibility:** Primary data asset for one reusable action contract.
+- **Type:** `USharActionSequenceDefinition`
+  - **Responsibility:** Immutable ordered plan using registered action
+    identities.
+- **Type:** `USharActionCatalogSubsystem`
+  - **Responsibility:** Definition lookup, revision validation, and executor
+    registration.
+- **Type:** `USharActionResourceArbiter`
+  - **Responsibility:** Grants and releases typed resource leases.
+- **Type:** `FSharActionContext`
+  - **Responsibility:** Immutable actor, interaction, mission, vehicle, and
+    world context.
+- **Type:** `FSharActionRequest`
+  - **Responsibility:** Definition identity, typed parameters, expected
+    revision, and action ordinal.
+- **Type:** `FSharActionResult`
+  - **Responsibility:** Closed result with reason, observations, and
+    verification evidence.
+- **Type:** `FSharActionLease`
+  - **Responsibility:** Move-only lease for one declared resource.
+- **Type:** `FSharActionSequenceHandle`
+  - **Responsibility:** Cancellation-safe handle for one active sequence.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -71,19 +93,29 @@ Every `USharActionDefinition` contains:
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `ActionId` | Globally unique canonical identity. |
-| `ExecutionKind` | Closed enum selecting one native task implementation. |
-| `GameplayTags` | Family, capability, blocking, mission, and presentation tags. |
-| `ParameterSchema` | Closed typed payload for the selected execution kind. |
-| `RequiredResources` | Ordered resource claims with exclusive or shared access. |
-| `Preconditions` | Required actor, world, mission, vehicle, and interaction state. |
-| `TimeoutPolicy` | Positive timeout or explicit no-timeout permission. |
-| `CancellationPolicy` | Allowed cancellation points and required compensation. |
-| `VerificationPolicy` | Observable postcondition required for success. |
-| `PresentationPolicy` | Optional animation, sound, effects, prompt, and camera data. |
-| `DefinitionRevision` | Immutable revision used to reject stale requests. |
+- **Field:** `ActionId`
+  - **Contract:** Globally unique canonical identity.
+- **Field:** `ExecutionKind`
+  - **Contract:** Closed enum selecting one native task implementation.
+- **Field:** `GameplayTags`
+  - **Contract:** Family, capability, blocking, mission, and presentation tags.
+- **Field:** `ParameterSchema`
+  - **Contract:** Closed typed payload for the selected execution kind.
+- **Field:** `RequiredResources`
+  - **Contract:** Ordered resource claims with exclusive or shared access.
+- **Field:** `Preconditions`
+  - **Contract:** Required actor, world, mission, vehicle, and interaction
+    state.
+- **Field:** `TimeoutPolicy`
+  - **Contract:** Positive timeout or explicit no-timeout permission.
+- **Field:** `CancellationPolicy`
+  - **Contract:** Allowed cancellation points and required compensation.
+- **Field:** `VerificationPolicy`
+  - **Contract:** Observable postcondition required for success.
+- **Field:** `PresentationPolicy`
+  - **Contract:** Optional animation, sound, effects, prompt, and camera data.
+- **Field:** `DefinitionRevision`
+  - **Contract:** Immutable revision used to reject stale requests.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -91,16 +123,24 @@ Every `USharActionSequenceDefinition` contains:
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `SequenceId` | Globally unique canonical identity. |
-| `StateTreeTemplate` | Canonical template compatible with the action schema. |
-| `Steps` | Ordered action identities and typed parameter bindings. |
-| `FailurePolicy` | Abort, compensate, fallback, retry, or continue for each declared failure class. |
-| `SequenceTimeout` | Optional total bound not shorter than required step bounds. |
-| `RequiredContext` | Actor, vehicle, interaction, mission, or world context requirements. |
-| `VerificationPolicy` | Final observable sequence postcondition. |
-| `DefinitionRevision` | Immutable revision used to reject stale execution. |
+- **Field:** `SequenceId`
+  - **Contract:** Globally unique canonical identity.
+- **Field:** `StateTreeTemplate`
+  - **Contract:** Canonical template compatible with the action schema.
+- **Field:** `Steps`
+  - **Contract:** Ordered action identities and typed parameter bindings.
+- **Field:** `FailurePolicy`
+  - **Contract:** Abort, compensate, fallback, retry, or continue for each
+    declared failure class.
+- **Field:** `SequenceTimeout`
+  - **Contract:** Optional total bound not shorter than required step bounds.
+- **Field:** `RequiredContext`
+  - **Contract:** Actor, vehicle, interaction, mission, or world context
+    requirements.
+- **Field:** `VerificationPolicy`
+  - **Contract:** Final observable sequence postcondition.
+- **Field:** `DefinitionRevision`
+  - **Contract:** Immutable revision used to reject stale execution.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -171,14 +211,23 @@ states are:
 
 <!-- markdownlint-disable MD013 -->
 
-| State | Contract |
-| :--- | :--- |
-| `locomotion` | Character Movement owns walking, running, jumping, and grounded recovery. |
-| `in_vehicle` | A verified seat and vehicle relationship owns locomotion presentation. |
-| `entering_vehicle` | A typed vehicle-entry sequence owns approach, door, seat, and control handoff. |
-| `exiting_vehicle` | A typed exit sequence owns door, placement, collision, and control restoration. |
-| `simulation_reaction` | Ragdoll or other physics-owned reaction temporarily supersedes normal movement. |
-| `disabled` | No ordinary locomotion or vehicle sequence may start. |
+- **State:** `locomotion`
+  - **Contract:** Character Movement owns walking, running, jumping, and
+    grounded recovery.
+- **State:** `in_vehicle`
+  - **Contract:** A verified seat and vehicle relationship owns locomotion
+    presentation.
+- **State:** `entering_vehicle`
+  - **Contract:** A typed vehicle-entry sequence owns approach, door, seat, and
+    control handoff.
+- **State:** `exiting_vehicle`
+  - **Contract:** A typed exit sequence owns door, placement, collision, and
+    control restoration.
+- **State:** `simulation_reaction`
+  - **Contract:** Ragdoll or other physics-owned reaction temporarily supersedes
+    normal movement.
+- **State:** `disabled`
+  - **Contract:** No ordinary locomotion or vehicle sequence may start.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -199,14 +248,19 @@ ownership.
 
 <!-- markdownlint-disable MD013 -->
 
-| Status | Meaning |
-| :--- | :--- |
-| `success` | The declared postcondition was observed. |
-| `rejected` | Preconditions were not met and no side effect began. |
-| `failed` | Execution began but could not reach the postcondition. |
-| `timed_out` | The authored bound elapsed and cleanup completed. |
-| `cancelled` | A permitted external cancellation completed cleanup. |
-| `compensated` | A failure occurred and the declared compensation restored a valid state. |
+- **Status:** `success`
+  - **Meaning:** The declared postcondition was observed.
+- **Status:** `rejected`
+  - **Meaning:** Preconditions were not met and no side effect began.
+- **Status:** `failed`
+  - **Meaning:** Execution began but could not reach the postcondition.
+- **Status:** `timed_out`
+  - **Meaning:** The authored bound elapsed and cleanup completed.
+- **Status:** `cancelled`
+  - **Meaning:** A permitted external cancellation completed cleanup.
+- **Status:** `compensated`
+  - **Meaning:** A failure occurred and the declared compensation restored a
+    valid state.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -220,19 +274,32 @@ The resource arbiter supports these canonical resources:
 
 <!-- markdownlint-disable MD013 -->
 
-| Resource | Typical access |
-| :--- | :--- |
-| `character_movement` | Exclusive for arrive, position, jump, dodge, or forced locomotion. |
-| `character_facing` | Exclusive while an action owns orientation. |
-| `character_controller` | Exclusive while input or NPC control is overridden. |
-| `root_motion` | Exclusive for a montage or movement action that applies root motion. |
-| `animation_slot.<name>` | Exclusive within one montage slot group. |
-| `vehicle_control` | Exclusive for driver or forced vehicle actions. |
-| `vehicle_door.<door>` | Exclusive for an individual door. |
-| `interaction_reservation` | Exclusive for the selected interaction source and slot. |
-| `camera_interest` | Shared request handle; final selection belongs to the camera subsystem. |
-| `audio_emitter.<name>` | Exclusive only when stop and replacement semantics require it. |
-| `domain_transaction.<kind>` | Exclusive for one idempotent commit identity. |
+- **Resource:** `character_movement`
+  - **Typical access:** Exclusive for arrive, position, jump, dodge, or forced
+    locomotion.
+- **Resource:** `character_facing`
+  - **Typical access:** Exclusive while an action owns orientation.
+- **Resource:** `character_controller`
+  - **Typical access:** Exclusive while input or NPC control is overridden.
+- **Resource:** `root_motion`
+  - **Typical access:** Exclusive for a montage or movement action that applies
+    root motion.
+- **Resource:** `animation_slot.<name>`
+  - **Typical access:** Exclusive within one montage slot group.
+- **Resource:** `vehicle_control`
+  - **Typical access:** Exclusive for driver or forced vehicle actions.
+- **Resource:** `vehicle_door.<door>`
+  - **Typical access:** Exclusive for an individual door.
+- **Resource:** `interaction_reservation`
+  - **Typical access:** Exclusive for the selected interaction source and slot.
+- **Resource:** `camera_interest`
+  - **Typical access:** Shared request handle; final selection belongs to the
+    camera subsystem.
+- **Resource:** `audio_emitter.<name>`
+  - **Typical access:** Exclusive only when stop and replacement semantics
+    require it.
+- **Resource:** `domain_transaction.<kind>`
+  - **Typical access:** Exclusive for one idempotent commit identity.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -267,31 +334,75 @@ The registered execution kinds are:
 
 <!-- markdownlint-disable MD013 -->
 
-| Kind | Required behavior |
-| :--- | :--- |
-| `delay` | Complete after the authored simulation duration; pause policy is explicit. |
-| `publish_event` | Publish one schema-registered typed event and action ordinal. |
-| `arrive` | Move through Character Movement or navigation to a destination and verify tolerance. |
-| `orient` | Rotate toward an authored direction or target within angular tolerance. |
-| `position` | Move through a bounded interpolation or authored slot; never hide an invalid path with a teleport. |
-| `ground_snap` | Resolve a valid walkable floor and apply a bounded correction. |
-| `change_locomotion` | Request the declared walking, vehicle, disabled, or contextual locomotion mode. |
-| `change_controller_state` | Request a registered NPC or player-controller state and verify ownership. |
-| `change_character_state` | Request a registered character state through the character application port. |
-| `play_montage` | Play a montage or section and complete on required notify or montage result. |
-| `play_idle_montage` | Play an interruptible idle montage and restore the prior idle policy. |
-| `hold_montage_frame` | Hold a validated frame or section until a typed release condition. |
-| `vehicle_idle` | Play the driver or passenger presentation while vehicle and seat state remain valid. |
-| `vehicle_door` | Open, close, lock, unlock, or release one validated door. |
-| `jump` | Delegate launch, airborne movement, landing, and recovery to Character Movement. |
-| `dodge` | Execute the authored dodge with collision and recovery verification. |
-| `cringe` | Play the bounded reaction while preserving movement policy. |
-| `flail` | Enter and leave the airborne or impact reaction through explicit states. |
-| `get_up` | Recover from a valid prone or impact state and verify locomotion restoration. |
-| `kick` | Emit the contact window through an animation notify and typed hit query. |
-| `surf` | Maintain the authored vehicle-relative presentation while attachment remains valid. |
-| `assign_parameter` | Write one sequence-local typed value; it cannot mutate domain storage. |
-| `commit_domain_effect` | Request one registered idempotent application transaction and verify its result. |
+- **Kind:** `delay`
+  - **Required behavior:** Complete after the authored simulation duration;
+    pause policy is explicit.
+- **Kind:** `publish_event`
+  - **Required behavior:** Publish one schema-registered typed event and action
+    ordinal.
+- **Kind:** `arrive`
+  - **Required behavior:** Move through Character Movement or navigation to a
+    destination and verify tolerance.
+- **Kind:** `orient`
+  - **Required behavior:** Rotate toward an authored direction or target within
+    angular tolerance.
+- **Kind:** `position`
+  - **Required behavior:** Move through a bounded interpolation or authored
+    slot; never hide an invalid path with a teleport.
+- **Kind:** `ground_snap`
+  - **Required behavior:** Resolve a valid walkable floor and apply a bounded
+    correction.
+- **Kind:** `change_locomotion`
+  - **Required behavior:** Request the declared walking, vehicle, disabled, or
+    contextual locomotion mode.
+- **Kind:** `change_controller_state`
+  - **Required behavior:** Request a registered NPC or player-controller state
+    and verify ownership.
+- **Kind:** `change_character_state`
+  - **Required behavior:** Request a registered character state through the
+    character application port.
+- **Kind:** `play_montage`
+  - **Required behavior:** Play a montage or section and complete on required
+    notify or montage result.
+- **Kind:** `play_idle_montage`
+  - **Required behavior:** Play an interruptible idle montage and restore the
+    prior idle policy.
+- **Kind:** `hold_montage_frame`
+  - **Required behavior:** Hold a validated frame or section until a typed
+    release condition.
+- **Kind:** `vehicle_idle`
+  - **Required behavior:** Play the driver or passenger presentation while
+    vehicle and seat state remain valid.
+- **Kind:** `vehicle_door`
+  - **Required behavior:** Open, close, lock, unlock, or release one validated
+    door.
+- **Kind:** `jump`
+  - **Required behavior:** Delegate launch, airborne movement, landing, and
+    recovery to Character Movement.
+- **Kind:** `dodge`
+  - **Required behavior:** Execute the authored dodge with collision and
+    recovery verification.
+- **Kind:** `cringe`
+  - **Required behavior:** Play the bounded reaction while preserving movement
+    policy.
+- **Kind:** `flail`
+  - **Required behavior:** Enter and leave the airborne or impact reaction
+    through explicit states.
+- **Kind:** `get_up`
+  - **Required behavior:** Recover from a valid prone or impact state and verify
+    locomotion restoration.
+- **Kind:** `kick`
+  - **Required behavior:** Emit the contact window through an animation notify
+    and typed hit query.
+- **Kind:** `surf`
+  - **Required behavior:** Maintain the authored vehicle-relative presentation
+    while attachment remains valid.
+- **Kind:** `assign_parameter`
+  - **Required behavior:** Write one sequence-local typed value; it cannot
+    mutate domain storage.
+- **Kind:** `commit_domain_effect`
+  - **Required behavior:** Request one registered idempotent application
+    transaction and verify its result.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -423,7 +534,8 @@ all doors open or closed and cannot override damage, lock, or mission policy.
 `publish_event` uses a registered event identity and a reflected payload struct.
 Channel, schema, scope, subscription, delivery, and tracing behavior follow the
 <!-- markdownlint-disable-next-line MD013 -->
-[typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md).
+[typed event and observation routing
+runtime](typed-event-and-observation-routing-runtime.md).
 The event envelope contains sequence identity, action identity, action ordinal,
 source identity, optional target identity, world time, and definition revision.
 
@@ -475,14 +587,20 @@ authored trigger or Smart Object occupancy query and these states:
 
 <!-- markdownlint-disable MD013 -->
 
-| State | Contract |
-| :--- | :--- |
-| `closed` | No eligible occupant is present and collision is in the closed state. |
-| `opening` | The first eligible occupant triggered the open sequence. |
-| `open` | The required open notify or transform is verified. |
-| `closing` | The final eligible occupant left and the close sequence is active. |
-| `blocked` | A sweep or overlap prevents safe closing. |
-| `disabled` | Definition, world, mission, or damage state forbids operation. |
+- **State:** `closed`
+  - **Contract:** No eligible occupant is present and collision is in the closed
+    state.
+- **State:** `opening`
+  - **Contract:** The first eligible occupant triggered the open sequence.
+- **State:** `open`
+  - **Contract:** The required open notify or transform is verified.
+- **State:** `closing`
+  - **Contract:** The final eligible occupant left and the close sequence is
+    active.
+- **State:** `blocked`
+  - **Contract:** A sweep or overlap prevents safe closing.
+- **State:** `disabled`
+  - **Contract:** Definition, world, mission, or damage state forbids operation.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -557,15 +675,31 @@ destroyed objects.
 
 <!-- markdownlint-disable MD013 -->
 
-| Historical technique | Original constraint | Unreal replacement |
-| :--- | :--- | :--- |
-| Fixed action-handler array | Bounded memory and simple global lookup. | Validated subsystem map keyed by canonical identity. |
-| Parallel action-name and constructor arrays | Avoid reflection and dynamic registration. | Generated definitions plus closed native executor registration. |
-| Custom task scheduler and memory pool | Reduce allocation and coordinate character actions. | StateTree task instances, Unreal object lifetime, and bounded resource leases. |
-| Frame-based animation control | Limited montage and notify tooling. | Animation montages, sections, slots, root motion, and notifies. |
-| Direct character transform writes | Simple scripted alignment. | Character Movement, navigation, Smart Object slots, and bounded presentation alignment. |
-| Raw global event payloads | Low-overhead cross-system signaling. | Reflected typed events and application-port results. |
-| Entrant counters for automatic doors | Minimal trigger state. | Stable occupancy sets and explicit door states. |
+- **Historical technique:** Fixed action-handler array
+  - **Original constraint:** Bounded memory and simple global lookup.
+  - **Unreal replacement:** Validated subsystem map keyed by canonical identity.
+- **Historical technique:** Parallel action-name and constructor arrays
+  - **Original constraint:** Avoid reflection and dynamic registration.
+  - **Unreal replacement:** Generated definitions plus closed native executor
+    registration.
+- **Historical technique:** Custom task scheduler and memory pool
+  - **Original constraint:** Reduce allocation and coordinate character actions.
+  - **Unreal replacement:** StateTree task instances, Unreal object lifetime,
+    and bounded resource leases.
+- **Historical technique:** Frame-based animation control
+  - **Original constraint:** Limited montage and notify tooling.
+  - **Unreal replacement:** Animation montages, sections, slots, root motion,
+    and notifies.
+- **Historical technique:** Direct character transform writes
+  - **Original constraint:** Simple scripted alignment.
+  - **Unreal replacement:** Character Movement, navigation, Smart Object slots,
+    and bounded presentation alignment.
+- **Historical technique:** Raw global event payloads
+  - **Original constraint:** Low-overhead cross-system signaling.
+  - **Unreal replacement:** Reflected typed events and application-port results.
+- **Historical technique:** Entrant counters for automatic doors
+  - **Original constraint:** Minimal trigger state.
+  - **Unreal replacement:** Stable occupancy sets and explicit door states.
 
 <!-- markdownlint-enable MD013 -->
 

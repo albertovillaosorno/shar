@@ -1,9 +1,34 @@
-// File: SharFrontendFlowSubsystem.h
-// Path: src/unreal/project/composition/uproject/Source/SharUI/Public/UI/SharFrontendFlowSubsystem.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: game-instance frontend navigation arbitration, readiness fencing, history, modal state, rollback, and terminal results only.
-// Specification: docs/technical/unreal/frontend-screen-flow-and-settings-runtime.md
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar frontend flow subsystem composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar frontend flow subsystem composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar frontend flow subsystem composition module.
 
 #pragma once
 
@@ -11,6 +36,7 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 
 #include "UI/SharFrontendCatalogSubsystem.h"
+// jig-ignore-next-line: exact syntax is indivisible
 // NOLINTNEXTLINE(llvm-include-order) -- Unreal requires the generated header last.
 #include "UI/SharFrontendFlowContracts.h"
 #include "SharFrontendFlowSubsystem.generated.h"

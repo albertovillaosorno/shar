@@ -1,7 +1,3 @@
-// File:
-//   - document_break_controls.rs
-// Path: tests/formats/rtf/document_break_controls.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,37 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Deterministic RTF regression coverage for document break controls.
+//   - Document break controls test module.
 // - Must-Not:
-//   - Depend on private documents or parser implementation details.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Public fixtures and caller-visible Markdown structure assertions.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another break family needs independent output semantics.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another RTF test module owns the same document-break contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Verifies that RTF line and paragraph controls remain distinct.
+//   - Document break controls test module.
 // - Description:
-//   - Exercises public conversion behavior for hard lines and paragraphs.
+//   - Implements the declared test module responsibility for rtf.
 // - Usage:
-//   - Executed through cargo test for the rtf crate.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Fixtures remain deterministic and repository-local.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Public regression coverage for RTF document break controls.
+//! Document break controls test module.
 
 use rtf::rtf_to_markdown;
 use schoenwald_cli as _;
@@ -50,8 +38,5 @@ use schoenwald_filesystem as _;
 fn line_and_paragraph_controls_keep_distinct_markdown_structure() {
     let markdown = rtf_to_markdown(br"{\rtf1 first\line second\par third}");
 
-    assert_eq!(
-        markdown,
-        "first<br>\nsecond\n\nthird\n"
-    );
+    assert_eq!(markdown, "first<br>\nsecond\n\nthird\n");
 }

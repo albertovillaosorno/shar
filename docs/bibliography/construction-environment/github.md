@@ -88,8 +88,9 @@ collection for commercial AI training.
   (Accessed: 14 July 2026).
 - GitHub (2026) *GitHub Terms for Additional Products and Features*, version
   effective 27 April 2026. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://docs.github.com/en/site-policy/github-terms/github-terms-for-additional-products-and-features>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://docs.github.com/en/site-policy/github-terms/github-terms-for-additional-products-and-features> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 14 July 2026).
 - GitHub (n.d.) *About GitHub*. Available at: <https://github.com/about>
   (Accessed: 14 July 2026).

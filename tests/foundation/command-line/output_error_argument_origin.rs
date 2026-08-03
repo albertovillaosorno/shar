@@ -1,7 +1,3 @@
-// File:
-//   - output_error_argument_origin.rs
-// Path: tests/foundation/command-line/output_error_argument_origin.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for argument-failure output provenance.
+//   - Output error argument origin test module.
 // - Must-Not:
-//   - Access operating-system arguments or streams.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Compare an acquisition failure with matching command output.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another invocation-origin field needs independent coverage.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Output errors no longer preserve invocation origin.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Argument-origin output-error regression.
+//   - Output error argument origin test module.
 // - Description:
-//   - Proves failed argument diagnostics remain distinguishable from commands.
+//   - Implements the declared test module responsibility for command line.
 // - Usage:
-//   - Executed by the schoenwald-cli integration test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Both invocations attempt the same standard-error text.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for argument acquisition provenance.
-//!
-//! Matching command text must not erase whether the command was executed.
+//! Output error argument origin test module.
 
 use std::io;
 
@@ -72,10 +58,7 @@ impl ArgumentSource for EmptyArguments {
 struct MatchingDiagnosticProgram;
 
 impl CliProgram for MatchingDiagnosticProgram {
-    fn execute(
-        &self,
-        _arguments: &[String],
-    ) -> CommandOutcome {
+    fn execute(&self, _arguments: &[String]) -> CommandOutcome {
         CommandOutcome::failure().stderr_line(ARGUMENT_DIAGNOSTIC)
     }
 }
@@ -83,10 +66,7 @@ impl CliProgram for MatchingDiagnosticProgram {
 struct UnusedProgram;
 
 impl CliProgram for UnusedProgram {
-    fn execute(
-        &self,
-        _arguments: &[String],
-    ) -> CommandOutcome {
+    fn execute(&self, _arguments: &[String]) -> CommandOutcome {
         CommandOutcome::success()
     }
 }
@@ -94,28 +74,16 @@ impl CliProgram for UnusedProgram {
 struct DeniedOutput;
 
 impl OutputSink for DeniedOutput {
-    fn write(
-        &mut self,
-        _stream: OutputStream,
-        _text: &str,
-    ) -> io::Result<()> {
-        Err(
-            io::Error::new(
-                io::ErrorKind::PermissionDenied,
-                "denied",
-            ),
-        )
+    fn write(&mut self, _stream: OutputStream, _text: &str) -> io::Result<()> {
+        Err(io::Error::new(io::ErrorKind::PermissionDenied, "denied"))
     }
 }
 
 fn render_argument_failure() -> String {
     let mut arguments = InvalidArguments;
     let mut output = DeniedOutput;
-    let result = RunInvocation::execute(
-        &UnusedProgram,
-        &mut arguments,
-        &mut output,
-    );
+    let result =
+        RunInvocation::execute(&UnusedProgram, &mut arguments, &mut output);
     let Some(error) = result.err() else {
         return String::new();
     };

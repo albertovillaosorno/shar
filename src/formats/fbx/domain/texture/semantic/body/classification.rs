@@ -1,7 +1,3 @@
-// File:
-//   - classification.rs
-// Path: src/formats/fbx/domain/texture/semantic/body/classification.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - The ordered transaction that samples selected body groups and assembles
-//   - deterministic semantic classification evidence.
+//   - Classification domain module.
 // - Must-Not:
-//   - Pack charts, rasterize atlases, mutate UVs, or guess ambiguous evidence.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Focused dominant-influence, color-voting, and triangle-check modules.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Sampling and evidence assembly no longer share one failure boundary.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another body module owns the same classification transaction.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Flat-color semantic body classification transaction.
+//   - Classification domain module.
 // - Description:
-//   - Correlates source texels with dominant skin bones before UV changes.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Called only by the body-planning facade.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Transparency, unsupported bones, ties, and mixed triangles fail closed.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - true
-//   - Reason: selected-group access, source sampling, and result assembly form
-//   - one bounded transaction while complex rules live in submodules.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Ordered flat-color semantic body classification transaction.
+//! Classification domain module.
+
 #![expect(
     unused_results,
     reason = "Private classification carriers mirror the documented recipe \
@@ -112,28 +98,14 @@ pub(super) fn classify(
     let mut vertex_count = 0_usize;
     let mut triangle_count = 0_usize;
     for address in &recipe.groups {
-        let (group, influences) = selected_group(
-            character, *address,
-        )?;
-        if group
-            .uvs
-            .len()
-            != group
-                .positions
-                .len()
-        {
+        let (group, influences) = selected_group(character, *address)?;
+        if group.uvs.len() != group.positions.len() {
             return Err(SemanticTextureError::MissingGroupUvs(*address));
         }
-        let group_colors = sample_group_colors(
-            group,
-            source_texture,
-            recipe,
-        )?;
+        let group_colors = sample_group_colors(group, source_texture, recipe)?;
         let dominant_evidence = dominant::dominant_bones(
             *address,
-            group
-                .positions
-                .len(),
+            group.positions.len(),
             influences,
             &group_colors,
             &recipe.color_overrides,
@@ -145,49 +117,25 @@ pub(super) fn classify(
             &mut counts,
         )?;
         vertex_count = vertex_count
-            .checked_add(
-                group
-                    .positions
-                    .len(),
-            )
+            .checked_add(group.positions.len())
             .ok_or(SemanticTextureError::NumericOverflow)?;
         triangle_count = triangle_count
-            .checked_add(
-                group
-                    .triangles
-                    .len(),
-            )
+            .checked_add(group.triangles.len())
             .ok_or(SemanticTextureError::NumericOverflow)?;
-        sampled.insert(
-            *address,
-            group_colors,
-        );
+        sampled.insert(*address, group_colors);
     }
-    let assignments = colors::classify_colors(
-        &counts, recipe,
-    )?;
+    let assignments = colors::classify_colors(&counts, recipe)?;
     let by_color = assignments
         .iter()
-        .map(
-            |assignment| {
-                (
-                    assignment.color,
-                    assignment.region,
-                )
-            },
-        )
+        .map(|assignment| (assignment.color, assignment.region))
         .collect::<BTreeMap<_, _>>();
-    let groups = classify_groups(
-        character, recipe, sampled, &by_color,
-    )?;
-    Ok(
-        Classification {
-            groups,
-            assignments,
-            vertex_count,
-            triangle_count,
-        },
-    )
+    let groups = classify_groups(character, recipe, sampled, &by_color)?;
+    Ok(Classification {
+        groups,
+        assignments,
+        vertex_count,
+        triangle_count,
+    })
 }
 
 /// Build per-group triangle ownership from resolved color regions.
@@ -199,39 +147,24 @@ fn classify_groups(
 ) -> Result<BTreeMap<GroupAddress, GroupClassification>, SemanticTextureError> {
     let mut groups = BTreeMap::new();
     for address in &recipe.groups {
-        let (group, _influences) = selected_group(
-            character, *address,
-        )?;
+        let (group, _influences) = selected_group(character, *address)?;
         let group_colors = sampled
             .remove(address)
             .ok_or(SemanticTextureError::MissingGroup(*address))?;
         let regions = group_colors
             .iter()
-            .map(
-                |color| {
-                    by_color
-                        .get(color)
-                        .copied()
-                        .ok_or(
-                            SemanticTextureError::AmbiguousColorEvidence(
-                                *color,
-                            ),
-                        )
-                },
-            )
+            .map(|color| {
+                by_color
+                    .get(color)
+                    .copied()
+                    .ok_or(SemanticTextureError::AmbiguousColorEvidence(*color))
+            })
             .collect::<Result<Vec<_>, _>>()?;
-        let triangle_classifications = triangles::classify(
-            *address,
-            group,
-            &group_colors,
-            &regions,
-        )?;
-        groups.insert(
-            *address,
-            GroupClassification {
-                triangles: triangle_classifications,
-            },
-        );
+        let triangle_classifications =
+            triangles::classify(*address, group, &group_colors, &regions)?;
+        groups.insert(*address, GroupClassification {
+            triangles: triangle_classifications,
+        });
     }
     Ok(groups)
 }
@@ -240,13 +173,7 @@ fn classify_groups(
 pub(super) fn selected_group(
     character: &CharacterAsset,
     address: GroupAddress,
-) -> Result<
-    (
-        &PrimitiveGroup,
-        &[SkinInfluence],
-    ),
-    SemanticTextureError,
-> {
+) -> Result<(&PrimitiveGroup, &[SkinInfluence]), SemanticTextureError> {
     let part = character
         .parts
         .get(address.part_index)
@@ -260,11 +187,7 @@ pub(super) fn selected_group(
         .group_influences
         .get(address.group_index)
         .ok_or(SemanticTextureError::MissingGroup(address))?;
-    Ok(
-        (
-            group, influences,
-        ),
-    )
+    Ok((group, influences))
 }
 
 /// Sample exact source colors before reducing skin-bone evidence.
@@ -273,20 +196,16 @@ fn sample_group_colors(
     source_texture: &RgbaImage,
     recipe: &BodySemanticRecipe,
 ) -> Result<Vec<Rgba8>, SemanticTextureError> {
-    let mut group_colors = Vec::with_capacity(
-        group
-            .uvs
-            .len(),
-    );
+    let mut group_colors = Vec::with_capacity(group.uvs.len());
     for uv in &group.uvs {
         let color = source_texture.sample_uv_v_up_with_address_mode(
             *uv,
             recipe.texture_address_mode,
         )?;
         if color.alpha != u8::MAX {
-            return Err(
-                SemanticTextureError::TransparentSourceBodyColor(color),
-            );
+            return Err(SemanticTextureError::TransparentSourceBodyColor(
+                color,
+            ));
         }
         group_colors.push(color);
     }
@@ -303,34 +222,20 @@ fn record_family_counts(
     if colors.len() != evidence.len() {
         return Err(SemanticTextureError::NumericOverflow);
     }
-    for (color, dominant) in colors
-        .iter()
-        .copied()
-        .zip(evidence)
-    {
-        let family_counts = counts
-            .entry(color)
-            .or_default();
+    for (color, dominant) in colors.iter().copied().zip(evidence) {
+        let family_counts = counts.entry(color).or_default();
         let Some(family) = dominant.family else {
             continue;
         };
         if family == BoneFamily::Unsupported
-            && !recipe
-                .color_overrides
-                .contains_key(&color)
+            && !recipe.color_overrides.contains_key(&color)
         {
-            return Err(
-                SemanticTextureError::UnsupportedBoneEvidence {
-                    color,
-                    bone_id: dominant
-                        .bone_id
-                        .clone(),
-                },
-            );
+            return Err(SemanticTextureError::UnsupportedBoneEvidence {
+                color,
+                bone_id: dominant.bone_id.clone(),
+            });
         }
-        let entry = family_counts
-            .entry(family)
-            .or_default();
+        let entry = family_counts.entry(family).or_default();
         *entry = entry
             .checked_add(1)
             .ok_or(SemanticTextureError::NumericOverflow)?;

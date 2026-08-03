@@ -1,7 +1,3 @@
-// File:
-//   - expanded_output_location.rs
-// Path: tests/migration/manifest/expanded_output_location.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Expanded-manifest destination isolation from evidence roots.
+//   - Expanded output location test module.
 // - Must-Not:
-//   - Read licensed inputs or repository-local generated trees.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic temporary trees and generator process execution.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another evidence root gains distinct destination rules.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test owns the same output-location contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects extracted RCF evidence from generated ledger contamination.
+//   - Expanded output location test module.
 // - Description:
-//   - Verifies output publication cannot write beneath an evidence root.
+//   - Implements the declared test module responsibility for manifest.
 // - Usage:
-//   - Executed through cargo test for the game-manifest crate.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Temporary fixtures are removed after each test.
-//
-// ADRs:
-// - docs/adr/pipeline/game-manifest-ledger.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Expanded-manifest output-location regression coverage.
-//!
-//! Generated ledgers must remain outside extracted evidence roots.
+//! Expanded output location test module.
 
 use std::fs;
 use std::io::{self, ErrorKind};
@@ -60,19 +46,14 @@ struct FixtureRoot(PathBuf);
 
 impl FixtureRoot {
     fn new() -> io::Result<Self> {
-        let sequence = NEXT_FIXTURE.fetch_add(
-            1,
-            Ordering::Relaxed,
-        );
-        let path = std::env::temp_dir().join(
-            format!(
-                "game-manifest-output-location-{}-{sequence}",
-                std::process::id()
-            ),
-        );
+        let sequence = NEXT_FIXTURE.fetch_add(1, Ordering::Relaxed);
+        let path = std::env::temp_dir().join(format!(
+            "game-manifest-output-location-{}-{sequence}",
+            std::process::id()
+        ));
         match fs::remove_dir_all(&path) {
-            Ok(()) => {}
-            Err(error) if error.kind() == ErrorKind::NotFound => {}
+            Ok(()) => {},
+            Err(error) if error.kind() == ErrorKind::NotFound => {},
             Err(error) => return Err(error),
         }
         fs::create_dir_all(&path)?;
@@ -94,43 +75,27 @@ impl Drop for FixtureRoot {
 fn expanded_output_must_not_contaminate_rcf_evidence() {
     let result = (|| -> io::Result<(std::process::Output, bool)> {
         let fixture = FixtureRoot::new()?;
-        let game = fixture
-            .path()
-            .join("input");
-        let extracted = fixture
-            .path()
-            .join("decoded");
+        let game = fixture.path().join("input");
+        let extracted = fixture.path().join("decoded");
         fs::create_dir_all(&game)?;
         fs::create_dir_all(&extracted)?;
-        fs::write(
-            game.join("asset.p3d"),
-            b"fixture",
-        )?;
+        fs::write(game.join("asset.p3d"), b"fixture")?;
         let output_path = extracted.join("result.jsonl");
 
-        let output = Command::new(
-            env!("CARGO_BIN_EXE_generate-expanded-manifest"),
-        )
-        .arg(&game)
-        .arg(&extracted)
-        .arg(&output_path)
-        .output()?;
-        Ok(
-            (
-                output, output_path.exists(),
-            ),
-        )
+        let output =
+            Command::new(env!("CARGO_BIN_EXE_generate-expanded-manifest"))
+                .arg(&game)
+                .arg(&extracted)
+                .arg(&output_path)
+                .output()?;
+        Ok((output, output_path.exists()))
     })();
     assert!(result.is_ok());
     let Some((output, output_exists)) = result.ok() else {
         return;
     };
 
-    assert!(
-        !output
-            .status
-            .success()
-    );
+    assert!(!output.status.success());
     assert!(!output_exists);
 }
 
@@ -138,51 +103,28 @@ fn expanded_output_must_not_contaminate_rcf_evidence() {
 fn aliased_evidence_roots_are_rejected() {
     let result = (|| -> io::Result<(std::process::Output, bool)> {
         let fixture = FixtureRoot::new()?;
-        let game = fixture
-            .path()
-            .join("game");
-        let alias_parent = fixture
-            .path()
-            .join("alias");
+        let game = fixture.path().join("game");
+        let alias_parent = fixture.path().join("alias");
         fs::create_dir_all(&game)?;
         fs::create_dir_all(&alias_parent)?;
-        fs::write(
-            game.join("asset.p3d"),
-            b"fixture",
-        )?;
-        fs::write(
-            game.join("source.rcf"),
-            b"fixture",
-        )?;
-        let aliased_game = alias_parent
-            .join("..")
-            .join("game");
-        let output_path = fixture
-            .path()
-            .join("result.jsonl");
+        fs::write(game.join("asset.p3d"), b"fixture")?;
+        fs::write(game.join("source.rcf"), b"fixture")?;
+        let aliased_game = alias_parent.join("..").join("game");
+        let output_path = fixture.path().join("result.jsonl");
 
-        let output = Command::new(
-            env!("CARGO_BIN_EXE_generate-expanded-manifest"),
-        )
-        .arg(&aliased_game)
-        .arg(&game)
-        .arg(&output_path)
-        .output()?;
-        Ok(
-            (
-                output, output_path.exists(),
-            ),
-        )
+        let output =
+            Command::new(env!("CARGO_BIN_EXE_generate-expanded-manifest"))
+                .arg(&aliased_game)
+                .arg(&game)
+                .arg(&output_path)
+                .output()?;
+        Ok((output, output_path.exists()))
     })();
     assert!(result.is_ok());
     let Some((output, output_exists)) = result.ok() else {
         return;
     };
 
-    assert!(
-        !output
-            .status
-            .success()
-    );
+    assert!(!output.status.success());
     assert!(!output_exists);
 }

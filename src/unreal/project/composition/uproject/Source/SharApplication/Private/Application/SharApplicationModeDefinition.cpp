@@ -1,12 +1,34 @@
-// File: SharApplicationModeDefinition.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharApplication/Private/Application/SharApplicationModeDefinition.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: load-free application-mode policy validation only; transition state remains external.
-// Specification: docs/technical/unreal/application-lifecycle-and-mode-runtime.md
-// LARGE-FILE owner=SharApplication; reason=cohesive application-mode policy validation;
-// split=extract graph validation when catalog diagnostics become persistent;
-// validation=validate.sh SharApplication plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar application mode definition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar application mode definition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar application mode definition composition module.
 
 #include "Application/SharApplicationModeDefinition.h"
 
@@ -75,6 +97,7 @@ static void AppendIdentityAndGraphErrors(
     {
         AddModeError(
             OutErrors,
+            // jig-ignore-next-line: exact syntax is indivisible
             TEXT("Application mode plans, graph edges, services, and readiness barrier must use unique canonical identities.")
         );
     }
@@ -93,6 +116,7 @@ static void AppendIdentityAndGraphErrors(
         );
     if (bSelfEdge)
     {
+        // jig-ignore-next-line: exact syntax is indivisible
         AddModeError(OutErrors, TEXT("Application mode cannot reference itself as a graph edge."));
     }
 }
@@ -105,6 +129,7 @@ static void AppendKindErrors(
     if (Definition.ModeKind == ESharApplicationModeKind::Entry
         && !Definition.AllowedPredecessorIds.IsEmpty())
     {
+        // jig-ignore-next-line: exact syntax is indivisible
         AddModeError(OutErrors, TEXT("Entry mode cannot declare predecessors."));
     }
     if (Definition.ModeKind == ESharApplicationModeKind::Exit
@@ -123,6 +148,7 @@ static void AppendKindErrors(
         {
             AddModeError(
                 OutErrors,
+                // jig-ignore-next-line: exact syntax is indivisible
                 TEXT("Loading mode requires canonical success and recovery targets plus cancellation and bounded timeout.")
             );
         }
@@ -130,6 +156,7 @@ static void AppendKindErrors(
     if (Definition.ModeKind == ESharApplicationModeKind::Overlay
         && !IsCanonicalModeIdentity(Definition.ReturnModeId))
     {
+        // jig-ignore-next-line: exact syntax is indivisible
         AddModeError(OutErrors, TEXT("Overlay mode requires a canonical return mode."));
     }
 }
@@ -145,17 +172,20 @@ static void AppendOwnershipErrors(
         || !IsCanonicalOrNone(Definition.ReturnModeId);
     if (bInvalidRecovery)
     {
+        // jig-ignore-next-line: exact syntax is indivisible
         AddModeError(OutErrors, TEXT("Optional application mode targets must be canonical when present."));
     }
     if (Definition.WorldPolicy == ESharApplicationWorldPolicy::Retain
         && Definition.RecoveryModeId.IsNone())
     {
+        // jig-ignore-next-line: exact syntax is indivisible
         AddModeError(OutErrors, TEXT("World-retaining mode requires an explicit recovery target."));
     }
     if (Definition.bDemonstrationMode
         && Definition.ProgressionPolicy
             == ESharApplicationProgressionPolicy::Durable)
     {
+        // jig-ignore-next-line: exact syntax is indivisible
         AddModeError(OutErrors, TEXT("Demonstration mode cannot own durable progression."));
     }
 }

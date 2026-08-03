@@ -5,21 +5,28 @@
 
 ## Governing decisions and specifications
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
+- [Common UI front end and progress
+  projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
 - [UI parity boundary](../../adr/unreal/ui/ui-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Common UI navigation, menu, and modal runtime](common-ui-navigation-menu-and-modal-runtime.md)
+- [Common UI navigation, menu, and modal
+  runtime](common-ui-navigation-menu-and-modal-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [In-game HUD, pause, and transition runtime](in-game-hud-pause-and-transition-runtime.md)
+- [In-game HUD, pause, and transition
+  runtime](in-game-hud-pause-and-transition-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Mission definition, stage, and objective runtime](mission-definition-stage-and-objective-runtime.md)
+- [Mission definition, stage, and objective
+  runtime](mission-definition-stage-and-objective-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Mission, interaction, interior, and notoriety runtime](mission-interaction-and-notoriety-runtime.md)
+- [Mission, interaction, interior, and notoriety
+  runtime](mission-interaction-and-notoriety-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Progression, collectibles, cheats, and credits](progression-collectibles-and-cheats.md)
+- [Progression, collectibles, cheats, and
+  credits](progression-collectibles-and-cheats.md)
 
 ## Purpose
 
@@ -55,16 +62,30 @@ Those operations remain typed commands to the mission and application services.
 
 <!-- markdownlint-disable MD013 -->
 
-| Service | Authority |
-| :--- | :--- |
-| `USharMissionPresentationSubsystem` | Presentation flow, mission screen requests, accepted presentation revision, and screen restoration. |
-| `USharMissionPresentationViewModelSubsystem` | Immutable briefing, result, statistics, and replay viewmodels. |
-| Mission application service | Mission definition, load, start, stage, completion, failure, retry, abort, skip eligibility, and terminal result. |
-| Progression service | Attempt counts, completion, skipped state, unlocks, chapter reach, best results, and save revision. |
-| Economy service | Wager entry fee, balance, payout, and linked currency transactions. |
-| Asset-load service | Required mission, presentation, audio, and world bundle readiness. |
-| Application lifecycle service | Loading, gameplay, pause, frontend, and chapter-transition modes. |
-| Common UI kernel | Screen activation, focus, actions, history, modals, and transition leases. |
+- **Service:** `USharMissionPresentationSubsystem`
+  - **Authority:** Presentation flow, mission screen requests, accepted
+    presentation revision, and screen restoration.
+- **Service:** `USharMissionPresentationViewModelSubsystem`
+  - **Authority:** Immutable briefing, result, statistics, and replay
+    viewmodels.
+- **Service:** Mission application service
+  - **Authority:** Mission definition, load, start, stage, completion, failure,
+    retry, abort, skip eligibility, and terminal result.
+- **Service:** Progression service
+  - **Authority:** Attempt counts, completion, skipped state, unlocks, chapter
+    reach, best results, and save revision.
+- **Service:** Economy service
+  - **Authority:** Wager entry fee, balance, payout, and linked currency
+    transactions.
+- **Service:** Asset-load service
+  - **Authority:** Required mission, presentation, audio, and world bundle
+    readiness.
+- **Service:** Application lifecycle service
+  - **Authority:** Loading, gameplay, pause, frontend, and chapter-transition
+    modes.
+- **Service:** Common UI kernel
+  - **Authority:** Screen activation, focus, actions, history, modals, and
+    transition leases.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -96,23 +117,38 @@ assets.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `MissionId` | Canonical mission identity. |
-| `PresentationProfileId` | Normal, race, bonus, wager, tutorial, or registered feature profile. |
-| `TitleTextId` | Localized title identity. |
-| `BriefingTextId` | Localized briefing identity. |
-| `HintSetId` | Optional localized hint set. |
-| `ArtworkId` | Optional mission artwork or animated presentation identity. |
-| `FlagId` | Optional chapter or mission marker presentation. |
-| `CameraPresentationId` | Optional camera sequence or static camera policy. |
-| `AudioPolicyId` | Briefing mix, cue, voice, and restoration policy. |
-| `TransitionPolicyId` | Enter, readiness barrier, exit, and reduced-motion behavior. |
-| `InputPolicyId` | Confirm, cancel, skip, and hold requirements. |
-| `RequiredBundles` | Presentation, mission, audio, and world dependencies. |
-| `FailurePresentationMapId` | Typed failure categories and localized reason data. |
-| `ReplayPolicyId` | Visibility, eligibility, best-result fields, and load behavior. |
-| `FeatureOwnerId` | Base game or validated feature package. |
+- **Field:** `MissionId`
+  - **Contract:** Canonical mission identity.
+- **Field:** `PresentationProfileId`
+  - **Contract:** Normal, race, bonus, wager, tutorial, or registered feature
+    profile.
+- **Field:** `TitleTextId`
+  - **Contract:** Localized title identity.
+- **Field:** `BriefingTextId`
+  - **Contract:** Localized briefing identity.
+- **Field:** `HintSetId`
+  - **Contract:** Optional localized hint set.
+- **Field:** `ArtworkId`
+  - **Contract:** Optional mission artwork or animated presentation identity.
+- **Field:** `FlagId`
+  - **Contract:** Optional chapter or mission marker presentation.
+- **Field:** `CameraPresentationId`
+  - **Contract:** Optional camera sequence or static camera policy.
+- **Field:** `AudioPolicyId`
+  - **Contract:** Briefing mix, cue, voice, and restoration policy.
+- **Field:** `TransitionPolicyId`
+  - **Contract:** Enter, readiness barrier, exit, and reduced-motion behavior.
+- **Field:** `InputPolicyId`
+  - **Contract:** Confirm, cancel, skip, and hold requirements.
+- **Field:** `RequiredBundles`
+  - **Contract:** Presentation, mission, audio, and world dependencies.
+- **Field:** `FailurePresentationMapId`
+  - **Contract:** Typed failure categories and localized reason data.
+- **Field:** `ReplayPolicyId`
+  - **Contract:** Visibility, eligibility, best-result fields, and load
+    behavior.
+- **Field:** `FeatureOwnerId`
+  - **Contract:** Base game or validated feature package.
 
 <!-- markdownlint-enable MD013 -->
 

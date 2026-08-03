@@ -1,7 +1,3 @@
-# File:
-#   - skill_markdown_renderer.py
-# Path: src/unreal/editor-control/adapter-outbound/mcp/adapter_outbound/skill_markdown_renderer.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,42 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Orchestration of generated Unreal skill Markdown documents.
+#   - Skill markdown renderer outbound adapter.
 # - Must-Not:
-#   - Format indexes, format tool details, open files, or invoke Unreal tools.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Validating taxonomy coverage and routing catalog slices to renderers.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Catalog validation and document orchestration evolve independently.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another adapter owns the complete generated document composition.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Composes the canonical Unreal MCP skill document tree.
+#   - Skill markdown renderer outbound adapter.
 # - Description:
-#   - Delegates index and toolset formatting to responsibility-focused modules.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Injected into the Unreal skill export application use case.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Rejects missing, duplicate, or unowned live toolsets.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: generated Unreal skill document orchestration
-#   - reason: taxonomy validation and document routing form one adapter contract
-#   - split: extract catalog validation if another renderer consumes it
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess after taxonomy or renderer contract changes
-#
-"""Orchestration for deterministic native Unreal MCP skill Markdown."""
+
+"""Skill markdown renderer outbound adapter."""
 
 from __future__ import annotations
 
@@ -53,19 +36,18 @@ from collections import defaultdict
 from typing import TYPE_CHECKING
 
 from mcp.adapter_outbound.skill_capability_renderer import render_tool_skill
+from mcp.adapter_outbound.skill_document_layout import tool_skill_path
 from mcp.adapter_outbound.skill_document_layout import (
-    tool_skill_path,
     validate_unique_tool_paths,
 )
 from mcp.adapter_outbound.skill_index_renderer import render_root_index
 from mcp.domain.errors import fail_protocol
-from mcp.domain.skill_documents import SkillDocument, interface_digest
+from mcp.domain.skill_documents import SkillDocument
+from mcp.domain.skill_documents import interface_digest
 from mcp.domain.skill_revision import build_skill_revision
-from mcp.domain.skill_taxonomy import (
-    CATEGORIES,
-    category_for_toolset,
-    known_toolset_names,
-)
+from mcp.domain.skill_taxonomy import CATEGORIES
+from mcp.domain.skill_taxonomy import category_for_toolset
+from mcp.domain.skill_taxonomy import known_toolset_names
 
 if TYPE_CHECKING:
     from mcp.domain.catalog import ToolsetDefinition

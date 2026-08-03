@@ -36,7 +36,8 @@ the supported workflow and must be retired rather than used as evidence.
 The structural guide is an opt-in FBX 7.7 profile of the same repository-owned
 binary writer. It emits one combined mesh under the shared world `ReflectX`
 export root, one material, one external texture reference, and four named
-per-polygon-vertex UV layers. It must not change the ordinary character, vehicle,
+per-polygon-vertex UV layers. It must not change the ordinary character,
+vehicle,
 prop, or separated-world byte path.
 
 This profile optimizes Unreal editor inspection rather than shipping fidelity.

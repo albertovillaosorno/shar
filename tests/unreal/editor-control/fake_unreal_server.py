@@ -1,7 +1,3 @@
-# File:
-#   - fake_unreal_server.py
-# Path: tests/unreal/editor-control/fake_unreal_server.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,49 +6,40 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Lifecycle and observable state for a synthetic Unreal MCP server.
+#   - Fake unreal server test module.
 # - Must-Not:
-#   - Parse protocol messages or implement HTTP response behavior.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Ephemeral loopback startup, shutdown, and test-state snapshots.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Server state and context-manager lifecycle evolve independently.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - The protocol handler no longer needs an independent HTTP boundary.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Provides the context-managed black-box Unreal MCP fixture.
+#   - Fake unreal server test module.
 # - Description:
-#   - Keeps test server lifetime separate from request handling semantics.
+#   - Implements the declared test module responsibility for editor control.
 # - Usage:
-#   - Imported by black-box translator tests.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Binds an ephemeral loopback port and closes after each test.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: synthetic server lifecycle fixture
-#   - reason: context management and observable server state form one contract
-#   - split: separate state storage if it gains behavior beyond snapshots
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess on any lifecycle responsibility or line-count growth
-#
-"""Context-managed synthetic Unreal MCP server for black-box tests."""
+
+"""Fake unreal server test module."""
 
 from __future__ import annotations
 
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from threading import Event, Thread
-from typing import TYPE_CHECKING, NamedTuple, Self, cast
+from http.server import BaseHTTPRequestHandler
+from http.server import ThreadingHTTPServer
+from threading import Event
+from threading import Thread
+from typing import NamedTuple
+from typing import Self
+from typing import TYPE_CHECKING
+from typing import cast
 
 from fake_unreal_protocol import FakeUnrealRequestHandler
 
@@ -118,6 +105,7 @@ class FakeUnrealServer:
 
         Returns:
             A stopped server configured for initialization failure.
+
         """
         server = cls()
         server._server.behavior = FakeUnrealBehavior(
@@ -132,6 +120,7 @@ class FakeUnrealServer:
 
         Returns:
             A stopped server configured with an invalid initialize result.
+
         """
         server = cls()
         server._server.behavior = FakeUnrealBehavior(
@@ -145,6 +134,7 @@ class FakeUnrealServer:
 
         Returns:
             A stopped server configured with a redirected ping response.
+
         """
         server = cls()
         server._server.behavior = FakeUnrealBehavior(redirect_ping=True)
@@ -156,6 +146,7 @@ class FakeUnrealServer:
 
         Returns:
             A stopped server configured with a non-JSON error response.
+
         """
         server = cls()
         server._server.behavior = FakeUnrealBehavior(plain_error_ping=True)
@@ -166,6 +157,7 @@ class FakeUnrealServer:
 
         Returns:
             This running server fixture.
+
         """
         self._thread.start()
         return self
@@ -188,6 +180,7 @@ class FakeUnrealServer:
 
         Returns:
             A loopback HTTP URL ending in `/mcp`.
+
         """
         host, port = cast("tuple[str, int]", self._server.server_address)
         return f"http://{host}:{port}/mcp"
@@ -198,6 +191,7 @@ class FakeUnrealServer:
 
         Returns:
             An immutable request snapshot in arrival order.
+
         """
         return tuple(self._server.requests)
 
@@ -212,6 +206,7 @@ class FakeUnrealServer:
 
         Returns:
             `True` after one valid MCP DELETE request.
+
         """
         return self._server.session_closed
 

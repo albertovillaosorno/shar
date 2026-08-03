@@ -1,5 +1,7 @@
 <!-- markdownlint-disable-next-line MD013 -->
-# Historical technical-design, QA, performance, and production evidence normalization
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: technical document title is indivisible -->
+# Historical technical-design, QA, performance, and production evidence normalization <!-- markdownlint-disable-line MD013 -->
 
 - Status: Active
 - Last reviewed: 2026-07-17
@@ -8,23 +10,30 @@
 
 <!-- markdownlint-disable-next-line MD013 -->
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md)
+- [Historical core-design and dialogue evidence
+  normalization](historical-core-design-and-dialogue-evidence-normalization.md)
 - [Configuration and asset validation](config-and-asset-validation.md)
 - [Unreal test taxonomy](testing/test-taxonomy.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native art authoring, style, and asset validation contract](native-art-authoring-style-and-asset-validation-contract.md)
+- [Native art authoring, style, and asset validation
+  contract](native-art-authoring-style-and-asset-validation-contract.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Memory ownership, budget, and diagnostics runtime](memory-ownership-budget-and-diagnostics-runtime.md)
+- [Memory ownership, budget, and diagnostics
+  runtime](memory-ownership-budget-and-diagnostics-runtime.md)
 - [Platform quality and optimization](platform-quality-and-optimization.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Developer command and diagnostic runtime](developer-command-and-diagnostic-runtime.md)
+- [Developer command and diagnostic
+  runtime](developer-command-and-diagnostic-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native platform bootstrap and error-recovery runtime](native-platform-bootstrap-and-error-recovery-runtime.md)
+- [Native platform bootstrap and error-recovery
+  runtime](native-platform-bootstrap-and-error-recovery-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Deterministic conversion pipeline](../pipeline/deterministic-conversion-pipeline.md)
+- [Deterministic conversion
+  pipeline](../pipeline/deterministic-conversion-pipeline.md)
 
 ## Purpose
 
@@ -63,14 +72,24 @@ the public repository.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Evidence intake | Inventory, digest, structure, media classification, and private identity. |
-| Privacy and publication review | Personal, employment, network, rights, and public-output decisions. |
-| Technical normalization | Complete fact extraction, semantic routing, conflict tracking, and terminal classification. |
-| Current domain specifications | Target behavior, native Unreal ownership, typed identities, and accepted architecture. |
-| Native Unreal and platform tooling | Runtime behavior, profiling, packaging, cooking, diagnostics, and platform integration. |
-| Validation | Deterministic tests, asset read-back, performance evidence, leak checks, and public-safety scans. |
+- **Authority:** Evidence intake
+  - **Responsibility:** Inventory, digest, structure, media classification, and
+    private identity.
+- **Authority:** Privacy and publication review
+  - **Responsibility:** Personal, employment, network, rights, and public-output
+    decisions.
+- **Authority:** Technical normalization
+  - **Responsibility:** Complete fact extraction, semantic routing, conflict
+    tracking, and terminal classification.
+- **Authority:** Current domain specifications
+  - **Responsibility:** Target behavior, native Unreal ownership, typed
+    identities, and accepted architecture.
+- **Authority:** Native Unreal and platform tooling
+  - **Responsibility:** Runtime behavior, profiling, packaging, cooking,
+    diagnostics, and platform integration.
+- **Authority:** Validation
+  - **Responsibility:** Deterministic tests, asset read-back, performance
+    evidence, leak checks, and public-safety scans.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -273,20 +292,41 @@ product requirements. The source values themselves are never copied.
 
 <!-- markdownlint-disable MD013 -->
 
-| Historical topic | Current authority |
-| :--- | :--- |
-| Avatar, character, vehicle entry, and control | Playable-avatar, vehicle-access, vehicle-physics, and input specifications. |
-| Camera modes, targets, transitions, and arbitration | Camera system and camera-rig specifications. |
-| Character animation, facial behavior, and choreography | Character-animation catalog, typed action sequence, and presentation playback. |
-| Missions, scripts, events, objectives, and locators | Mission, typed-event, spatial-placement, interaction, and world-entity specifications. |
-| Road networks, pedestrian paths, traffic, and vehicle AI | Road-network, pedestrian-path, race-route, and vehicle-AI specifications. |
-| Rendering, shadows, toon lines, culling, and layers | Native render-frame, art-validation, material, visibility, and VFX specifications. |
-| Frontend, GUI, platform errors, save, and input | CommonUI, frontend flow, platform bootstrap, storage, and semantic-input specifications. |
-| Audio, dialogue, music, and sound pipelines | Dialogue, music, gameplay-audio, vehicle-audio, spatial-audio, and platform-audio specifications. |
-| Loading, streaming, memory, and resource lifetime | Native asset-load, world streaming, memory ownership, and application-lifecycle specifications. |
-| Art pipeline, import, conversion, and asset assembly | Deterministic conversion, native import, cooked construction, and asset validation. |
-| Performance, quality, and platform budgets | Platform-quality, memory-budget, diagnostics, and supported-target specifications. |
-| QA, content review, and regression evidence | Test taxonomy, config and asset validation, native read-back, and owning domain tests. |
+- **Historical topic:** Avatar, character, vehicle entry, and control
+  - **Current authority:** Playable-avatar, vehicle-access, vehicle-physics, and
+    input specifications.
+- **Historical topic:** Camera modes, targets, transitions, and arbitration
+  - **Current authority:** Camera system and camera-rig specifications.
+- **Historical topic:** Character animation, facial behavior, and choreography
+  - **Current authority:** Character-animation catalog, typed action sequence,
+    and presentation playback.
+- **Historical topic:** Missions, scripts, events, objectives, and locators
+  - **Current authority:** Mission, typed-event, spatial-placement, interaction,
+    and world-entity specifications.
+- **Historical topic:** Road networks, pedestrian paths, traffic, and vehicle AI
+  - **Current authority:** Road-network, pedestrian-path, race-route, and
+    vehicle-AI specifications.
+- **Historical topic:** Rendering, shadows, toon lines, culling, and layers
+  - **Current authority:** Native render-frame, art-validation, material,
+    visibility, and VFX specifications.
+- **Historical topic:** Frontend, GUI, platform errors, save, and input
+  - **Current authority:** CommonUI, frontend flow, platform bootstrap, storage,
+    and semantic-input specifications.
+- **Historical topic:** Audio, dialogue, music, and sound pipelines
+  - **Current authority:** Dialogue, music, gameplay-audio, vehicle-audio,
+    spatial-audio, and platform-audio specifications.
+- **Historical topic:** Loading, streaming, memory, and resource lifetime
+  - **Current authority:** Native asset-load, world streaming, memory ownership,
+    and application-lifecycle specifications.
+- **Historical topic:** Art pipeline, import, conversion, and asset assembly
+  - **Current authority:** Deterministic conversion, native import, cooked
+    construction, and asset validation.
+- **Historical topic:** Performance, quality, and platform budgets
+  - **Current authority:** Platform-quality, memory-budget, diagnostics, and
+    supported-target specifications.
+- **Historical topic:** QA, content review, and regression evidence
+  - **Current authority:** Test taxonomy, config and asset validation, native
+    read-back, and owning domain tests.
 
 <!-- markdownlint-enable MD013 -->
 

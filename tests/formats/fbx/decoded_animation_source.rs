@@ -1,7 +1,3 @@
-// File:
-//   - decoded_animation_source.rs
-// Path: tests/formats/fbx/decoded_animation_source.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,44 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for decoded skeletal animation reconstruction.
+//   - Decoded animation source test module.
 // - Must-Not:
-//   - Read game assets, use machine-local fixed paths, or invoke Blender.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic decoded JSON and process-unique temporary directories.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Texture-name controllers gain an independent decoded adapter.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Animation adapter conformance tests own the same source contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects Pure3D channel semantics before FBX serialization.
+//   - Decoded animation source test module.
 // - Description:
-//   - Exercises signed quaternions, compact vectors, interpolation, and
-//   - binding.
+//   - Implements the declared test module responsibility for fbx.
 // - Usage:
-//   - Run through the fbx crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Synthetic fixtures are removed after every regression.
-//
-// ADRs:
-// - docs/adr/fbx/export/fbx-output-contract-boundary.md
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-//
-// Large file:
-//   - true
-//   - Reason: The decoded JSON fixture, compact-channel assertions, and
-//   - skeleton-binding checks form one inseparable source-contract regression.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for decoded skeletal animation reconstruction.
-//!
-//! Synthetic PTRN evidence protects signed quaternions, compact-vector axis
-//! mappings, interpolation modes, NUL trimming, and helper-group exclusion.
+//! Decoded animation source test module.
 
 use std::fs;
 use std::path::PathBuf;
@@ -65,32 +46,28 @@ use shar_sha256 as _;
 const TOLERANCE: f64 = 1e-10;
 
 fn temp_root() -> PathBuf {
-    std::env::temp_dir().join(
-        format!(
-            "fbx-decoded-animation-{}",
-            std::process::id()
-        ),
-    )
+    std::env::temp_dir()
+        .join(format!("fbx-decoded-animation-{}", std::process::id()))
 }
 
 const fn rest_matrix(translation: [f32; 3]) -> [f32; 16] {
     [
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-        0.0,
+        1.,
+        0.,
+        0.,
+        0.,
+        0.,
+        1.,
+        0.,
+        0.,
+        0.,
+        0.,
+        1.,
+        0.,
         translation[0],
         translation[1],
         translation[2],
-        1.0,
+        1.,
     ]
 }
 
@@ -137,14 +114,8 @@ const fn fixture_json() -> &'static str {
     }"#
 }
 
-fn assert_vector_close(
-    actual: [f64; 3],
-    expected: [f64; 3],
-) {
-    for (actual_value, expected_value) in actual
-        .iter()
-        .zip(expected)
-    {
+fn assert_vector_close(actual: [f64; 3], expected: [f64; 3]) {
+    for (actual_value, expected_value) in actual.iter().zip(expected) {
         assert!(
             (actual_value - expected_value).abs() <= TOLERANCE,
             "vector component differed: actual={actual_value} \
@@ -153,14 +124,8 @@ fn assert_vector_close(
     }
 }
 
-fn assert_quaternion_close(
-    actual: [f64; 4],
-    expected: [f64; 4],
-) {
-    for (actual_value, expected_value) in actual
-        .iter()
-        .zip(expected)
-    {
+fn assert_quaternion_close(actual: [f64; 4], expected: [f64; 4]) {
+    for (actual_value, expected_value) in actual.iter().zip(expected) {
         assert!(
             (actual_value - expected_value).abs() <= TOLERANCE,
             "quaternion component differed: actual={actual_value} \
@@ -175,61 +140,30 @@ fn assert_root_track(track: &BoneAnimationTrack) {
         "root track should bind to the root skeleton bone"
     );
     assert_eq!(
-        track
-            .samples
-            .len(),
+        track.samples.len(),
         3,
         "root track should contain every integer source frame"
     );
-    let Some(first) = track
-        .samples
-        .first()
-    else {
+    let Some(first) = track.samples.first() else {
         return;
     };
-    let Some(middle) = track
-        .samples
-        .get(1)
-    else {
+    let Some(middle) = track.samples.get(1) else {
         return;
     };
-    let Some(last) = track
-        .samples
-        .get(2)
-    else {
+    let Some(last) = track.samples.get(2) else {
         return;
     };
-    assert_vector_close(
-        first.translation,
-        [
-            1.0_f64, 2.0_f64, 3.0_f64,
-        ],
-    );
-    assert_vector_close(
-        middle.translation,
-        [
-            2.0_f64, 2.0_f64, 3.0_f64,
-        ],
-    );
-    assert_vector_close(
-        last.translation,
-        [
-            3.0_f64, 2.0_f64, 3.0_f64,
-        ],
-    );
-    assert_quaternion_close(
-        first.rotation_wxyz,
-        [
-            -1.0_f64, 0.0_f64, 0.0_f64, 0.0_f64,
-        ],
-    );
+    assert_vector_close(first.translation, [1f64, 2f64, 3f64]);
+    assert_vector_close(middle.translation, [2f64, 2f64, 3f64]);
+    assert_vector_close(last.translation, [3f64, 2f64, 3f64]);
+    assert_quaternion_close(first.rotation_wxyz, [-1f64, 0f64, 0f64, 0f64]);
     let middle_length = middle
         .rotation_wxyz
         .iter()
         .map(|value| value * value)
         .sum::<f64>();
     assert!(
-        (middle_length - 1.0_f64).abs() < TOLERANCE,
+        (middle_length - 1f64).abs() < TOLERANCE,
         "interpolated root quaternion should remain unit length"
     );
 }
@@ -240,62 +174,30 @@ fn assert_child_track(track: &BoneAnimationTrack) {
         "child track should bind to the child skeleton bone"
     );
     assert_eq!(
-        track
-            .samples
-            .len(),
+        track.samples.len(),
         3,
         "child track should contain every integer source frame"
     );
-    let Some(first) = track
-        .samples
-        .first()
-    else {
+    let Some(first) = track.samples.first() else {
         return;
     };
-    let Some(middle) = track
-        .samples
-        .get(1)
-    else {
+    let Some(middle) = track.samples.get(1) else {
         return;
     };
-    let Some(last) = track
-        .samples
-        .get(2)
-    else {
+    let Some(last) = track.samples.get(2) else {
         return;
     };
-    assert_vector_close(
-        first.translation,
-        [
-            4.0_f64, 5.0_f64, 6.0_f64,
-        ],
-    );
-    assert_vector_close(
-        middle.translation,
-        [
-            6.0_f64, 5.0_f64, 8.0_f64,
-        ],
-    );
-    assert_vector_close(
-        last.translation,
-        [
-            8.0_f64, 5.0_f64, 10.0_f64,
-        ],
-    );
+    assert_vector_close(first.translation, [4f64, 5f64, 6f64]);
+    assert_vector_close(middle.translation, [6f64, 5f64, 8f64]);
+    assert_vector_close(last.translation, [8f64, 5f64, 10f64]);
 }
 
 #[test]
 fn reconstructs_compact_channels_and_preserves_helper_evidence() {
     let root = temp_root();
     let path = root.join("animation.json");
-    let setup = fs::create_dir_all(&root).and_then(
-        |()| {
-            fs::write(
-                &path,
-                fixture_json(),
-            )
-        },
-    );
+    let setup = fs::create_dir_all(&root)
+        .and_then(|()| fs::write(&path, fixture_json()));
     assert!(
         setup.is_ok(),
         "synthetic animation fixture should be writable"
@@ -304,26 +206,15 @@ fn reconstructs_compact_channels_and_preserves_helper_evidence() {
         Bone {
             id: "Root".to_owned(),
             parent_id: None,
-            rest_matrix: rest_matrix(
-                [
-                    1.0_f32, 2.0_f32, 3.0_f32,
-                ],
-            ),
+            rest_matrix: rest_matrix([1f32, 2f32, 3f32]),
         },
         Bone {
             id: "Child".to_owned(),
             parent_id: Some("Root".to_owned()),
-            rest_matrix: rest_matrix(
-                [
-                    4.0_f32, 5.0_f32, 6.0_f32,
-                ],
-            ),
+            rest_matrix: rest_matrix([4f32, 5f32, 6f32]),
         },
     ];
-    let result = load_animation_clips(
-        &[path.as_path()],
-        &bones,
-    );
+    let result = load_animation_clips(&[path.as_path()], &bones);
     let cleanup = fs::remove_dir_all(&root);
     assert!(
         cleanup.is_ok(),
@@ -336,42 +227,20 @@ fn reconstructs_compact_channels_and_preserves_helper_evidence() {
     let Some(clips) = result.ok() else {
         return;
     };
-    assert_eq!(
-        clips.len(),
-        1
-    );
+    assert_eq!(clips.len(), 1);
     let Some(clip) = clips.first() else {
         return;
     };
-    assert_eq!(
-        clip.name,
-        "walk"
-    );
-    assert!((clip.frame_rate - 30.0_f64).abs() <= TOLERANCE);
+    assert_eq!(clip.name, "walk");
+    assert!((clip.frame_rate - 30f64).abs() <= TOLERANCE);
     assert!(clip.cyclic);
-    assert_eq!(
-        clip.frame_count,
-        3
-    );
-    assert_eq!(
-        clip.ignored_group_ids,
-        vec!["IK_Helper"]
-    );
-    assert_eq!(
-        clip.tracks
-            .len(),
-        2
-    );
-    let Some(root_track) = clip
-        .tracks
-        .first()
-    else {
+    assert_eq!(clip.frame_count, 3);
+    assert_eq!(clip.ignored_group_ids, vec!["IK_Helper"]);
+    assert_eq!(clip.tracks.len(), 2);
+    let Some(root_track) = clip.tracks.first() else {
         return;
     };
-    let Some(child_track) = clip
-        .tracks
-        .get(1)
-    else {
+    let Some(child_track) = clip.tracks.get(1) else {
         return;
     };
     assert_root_track(root_track);
@@ -380,11 +249,7 @@ fn reconstructs_compact_channels_and_preserves_helper_evidence() {
 
 #[test]
 fn decodes_compressed_words_as_signed_wxyz_components() {
-    let result = decode_signed_i16_wxyz(
-        [
-            32_769, 0, 0, 0,
-        ],
-    );
+    let result = decode_signed_i16_wxyz([32_769, 0, 0, 0]);
     assert!(
         result.is_ok(),
         "signed identity quaternion should decode: {result:?}"
@@ -392,10 +257,5 @@ fn decodes_compressed_words_as_signed_wxyz_components() {
     let Some(decoded) = result.ok() else {
         return;
     };
-    assert_quaternion_close(
-        decoded,
-        [
-            -1.0_f64, 0.0_f64, 0.0_f64, 0.0_f64,
-        ],
-    );
+    assert_quaternion_close(decoded, [-1f64, 0f64, 0f64, 0f64]);
 }

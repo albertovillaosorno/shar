@@ -7,34 +7,46 @@
 
 <!-- markdownlint-disable-next-line MD013 -->
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Staged mesh import and world assembly](../../adr/unreal/import-adapters/staged-mesh-import-and-world-assembly.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Converted asset ingestion boundary](../../adr/unreal/import-adapters/converted-asset-ingestion-boundary.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Native asset translation without copy-paste](../../adr/pipeline/unreal/native-asset-translation-and-no-copy-paste.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Staged mesh import and world assembly](../../adr/unreal/import-adapters/staged-mesh-import-and-world-assembly.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Converted asset ingestion boundary](../../adr/unreal/import-adapters/converted-asset-ingestion-boundary.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Native asset translation without copy-paste](../../adr/pipeline/unreal/native-asset-translation-and-no-copy-paste.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Copyright-safe publication boundary](../../legal/repository/copyright-safe-publication-boundary.md)
+- [Copyright-safe publication
+  boundary](../../legal/repository/copyright-safe-publication-boundary.md)
 - [Privacy and personal
   data](../../legal/doctrines/privacy-and-personal-data.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native import, material rebuild, and world assembly](native-import-material-and-world-assembly.md)
+- [Native import, material rebuild, and world
+  assembly](native-import-material-and-world-assembly.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native art authoring, style, and asset validation contract](native-art-authoring-style-and-asset-validation-contract.md)
+- [Native art authoring, style, and asset validation
+  contract](native-art-authoring-style-and-asset-validation-contract.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Progression, collectibles, cheats, and credits](progression-collectibles-and-cheats.md)
+- [Progression, collectibles, cheats, and
+  credits](progression-collectibles-and-cheats.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md)
+- [Authored state-prop animation and event
+  runtime](authored-state-prop-animation-and-event-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md)
+- [Playable avatar, character controller, and footprint
+  runtime](playable-avatar-character-controller-and-footprint-runtime.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md) <!-- markdownlint-disable-line MD013 -->
 - [Animation clip timing](../fbx/animation/clip-timing.md)
 - [Animation rig model](../fbx/animation/rig-model.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Historical technical-design, QA, performance, and production evidence normalization](historical-technical-design-qa-performance-and-production-evidence-normalization.md)
+- [Historical core-design and dialogue evidence
+  normalization](historical-core-design-and-dialogue-evidence-normalization.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Historical technical-design, QA, performance, and production evidence normalization](historical-technical-design-qa-performance-and-production-evidence-normalization.md) <!-- markdownlint-disable-line MD013 -->
 
 ## Purpose
 
@@ -60,16 +72,30 @@ images, obsolete paths, or digital-content-creation scene text.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Evidence intake | Inventories private evidence and records cryptographic identity, media type, size, and review state. |
-| Privacy review | Classifies personal, employment, schedule, contact, account, and other sensitive information. |
-| Publication review | Decides whether any derived fact may enter a public specification, test, catalog, or attribution record. |
-| Technical reviewer | Extracts behavior, geometry, animation, workflow, naming, timing, or platform facts needed by a bounded reconstruction task. |
-| Legal records | Define publication, attribution, copyright, privacy, retention, and counsel-escalation boundaries. |
-| Import pipeline | Consumes only normalized technical inputs and deterministic conversion recipes. |
-| Runtime specifications | Own target behavior and native Unreal architecture. Historical documents cannot override accepted public decisions. |
-| Validation | Rejects prohibited source text, personal data, private paths, unreviewed names, and unsupported claims from public artifacts. |
+- **Authority:** Evidence intake
+  - **Responsibility:** Inventories private evidence and records cryptographic
+    identity, media type, size, and review state.
+- **Authority:** Privacy review
+  - **Responsibility:** Classifies personal, employment, schedule, contact,
+    account, and other sensitive information.
+- **Authority:** Publication review
+  - **Responsibility:** Decides whether any derived fact may enter a public
+    specification, test, catalog, or attribution record.
+- **Authority:** Technical reviewer
+  - **Responsibility:** Extracts behavior, geometry, animation, workflow,
+    naming, timing, or platform facts needed by a bounded reconstruction task.
+- **Authority:** Legal records
+  - **Responsibility:** Define publication, attribution, copyright, privacy,
+    retention, and counsel-escalation boundaries.
+- **Authority:** Import pipeline
+  - **Responsibility:** Consumes only normalized technical inputs and
+    deterministic conversion recipes.
+- **Authority:** Runtime specifications
+  - **Responsibility:** Own target behavior and native Unreal architecture.
+    Historical documents cannot override accepted public decisions.
+- **Authority:** Validation
+  - **Responsibility:** Rejects prohibited source text, personal data, private
+    paths, unreviewed names, and unsupported claims from public artifacts.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -330,8 +356,9 @@ classifications. They may establish pose purpose, chronological comparison,
 intentional channel reduction, conversion intent, rig roles, locomotion groups,
 blend policy, priorities, foot-plant intent, or vehicle-handoff variants only
 after normalization through
-<!-- markdownlint-disable-next-line MD013 -->
-[Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md).
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+[Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md). <!-- markdownlint-disable-line MD013 -->
 They are never executed, imported by line order, or treated as canonical merely
 because they accompanied animation scenes.
 
@@ -412,7 +439,8 @@ collision,
 materials, state props, animation, naming, streaming, rendering, or validation.
 Accepted art facts are normalized through
 <!-- markdownlint-disable-next-line MD013 -->
-[Native art authoring, style, and asset validation contract](native-art-authoring-style-and-asset-validation-contract.md)
+[Native art authoring, style, and asset validation
+contract](native-art-authoring-style-and-asset-validation-contract.md)
 before import. Historical polygon counts, folder rules, workstation steps,
 exporter settings, platform viewers, completion checklists, and naming
 conventions
@@ -427,7 +455,8 @@ Broad core-design documents, flow-chart exports, gameplay-event inventories,
 content lists, character-availability matrices, and conversation spreadsheets
 follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md).
+[Historical core-design and dialogue evidence
+normalization](historical-core-design-and-dialogue-evidence-normalization.md).
 That contract separates product goals from source-era implementation, applies
 the
 current authority hierarchy, rejects superseded base-game modes, normalizes

@@ -126,18 +126,21 @@ signature recognition, structural validation, decoding, and encoding.
 ### Verified sources
 
 - Epic Games, *Bink Video for Unreal Engine*.
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/unreal-engine/bink-video-for-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/unreal-engine/bink-video-for-unreal-engine> <!-- markdownlint-disable-line MD013 -->
 - SHAR repository evidence: `src/formats/rmv/domain/format.rs`,
-  `src/formats/rmv/domain/target.rs`, and `src/formats/rmv/application/package_plan.rs`.
+  `src/formats/rmv/domain/target.rs`, and
+  `src/formats/rmv/composition/application/package_plan.rs`.
 
 ## Source References
 
 - Epic Games Tools (2026) *Bink Video: The Video Codec for Games*. Available at:
   <https://www.radgametools.com/bnkmain.htm> (Accessed: 12 July 2026).
 - Epic Games (n.d.) *Bink Video for Unreal Engine*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/bink-video-for-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/bink-video-for-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 12 July 2026).
 - SHAR repository (2026), RMV Bink recognition, cinematic target selection, and
   game-manifest classification tests.

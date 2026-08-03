@@ -80,4 +80,5 @@ as a legal ruling.
   July 2026).
 - [17 U.S.C. § 107](../statutes/17-usc-107.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Gameplay video, streaming, and monetization](../platforms/gameplay-video-streaming-and-monetization.md).
+- [Gameplay video, streaming, and
+  monetization](../platforms/gameplay-video-streaming-and-monetization.md).

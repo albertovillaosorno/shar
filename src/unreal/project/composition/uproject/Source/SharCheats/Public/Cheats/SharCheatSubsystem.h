@@ -1,12 +1,34 @@
-// File: SharCheatSubsystem.h
-// Path: src/unreal/project/composition/uproject/Source/SharCheats/Public/Cheats/SharCheatSubsystem.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: local-player semantic cheat arming, four-token recognition, prerequisite checks, context cancellation, and typed effect request publication only; physical input mapping, gameplay execution, UI, and persistence remain external.
-// Specification: docs/technical/unreal/progression-collectibles-and-cheats.md
-// LARGE-FILE owner=SharCheats; reason=cohesive recognizer control-plane API;
-// split=extract recognizer projections when diagnostic history is introduced;
-// validation=validate.sh SharCheats plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar cheat subsystem composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar cheat subsystem composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar cheat subsystem composition module.
 
 #pragma once
 

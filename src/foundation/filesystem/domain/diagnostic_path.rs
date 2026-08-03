@@ -1,7 +1,3 @@
-// File:
-//   - diagnostic_path.rs
-// Path: src/foundation/filesystem/domain/diagnostic_path.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,51 +6,40 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Exact, control-safe rendering of untrusted filesystem paths and text.
+//   - Diagnostic path domain module.
 // - Must-Not:
-//   - Read filesystem state, normalize path identity, or choose error policy.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Platform-aware path traversal and reversible scalar or invalid-unit
-//   - escaping.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another diagnostic transport requires a distinct escaping grammar.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another filesystem domain module owns the same path rendering.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Lossless diagnostic wrapper for shared filesystem paths.
+//   - Diagnostic path domain module.
 // - Description:
-//   - Preserves path identity without allowing controls or native invalid units
-//   - to alter terminal diagnostics.
+//   - Implements the declared domain module responsibility for filesystem.
 // - Usage:
-//   - Used by filesystem and caller-domain errors before text reaches
-//   - terminals.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Scalars use Rust default escapes; invalid native units use uppercase
-//   - escapes.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Lossless, control-safe rendering for shared filesystem diagnostics.
+//! Diagnostic path domain module.
+
 use std::path::Path;
 
 /// Wraps one untrusted path without normalizing its native identity.
 #[derive(Debug)]
-pub struct DiagnosticPath<'a>(&'a Path);
+pub struct DiagnosticPath<'value>(&'value Path);
 
-impl<'a> DiagnosticPath<'a> {
+impl<'value> DiagnosticPath<'value> {
     /// Creates one borrowed diagnostic path renderer.
     #[must_use]
-    pub const fn new(path: &'a Path) -> Self {
+    pub const fn new(path: &'value Path) -> Self {
         Self(path)
     }
 }
@@ -65,12 +50,12 @@ impl<'a> DiagnosticPath<'a> {
     clippy::redundant_pub_crate,
     reason = "The parent module re-exports this renderer across the crate."
 )]
-pub(crate) struct DiagnosticText<'a>(&'a str);
+pub(crate) struct DiagnosticText<'value>(&'value str);
 
-impl<'a> DiagnosticText<'a> {
+impl<'value> DiagnosticText<'value> {
     /// Creates one borrowed diagnostic text renderer.
     #[must_use]
-    pub(crate) const fn new(value: &'a str) -> Self {
+    pub(crate) const fn new(value: &'value str) -> Self {
         Self(value)
     }
 }
@@ -80,13 +65,8 @@ impl core::fmt::Display for DiagnosticText<'_> {
         &self,
         formatter: &mut core::fmt::Formatter<'_>,
     ) -> core::fmt::Result {
-        for character in self
-            .0
-            .chars()
-        {
-            write_character(
-                formatter, character,
-            )?;
+        for character in self.0.chars() {
+            write_character(formatter, character)?;
         }
         Ok(())
     }
@@ -97,9 +77,7 @@ impl core::fmt::Display for DiagnosticPath<'_> {
         &self,
         formatter: &mut core::fmt::Formatter<'_>,
     ) -> core::fmt::Result {
-        write_path(
-            formatter, self.0,
-        )
+        write_path(formatter, self.0)
     }
 }
 
@@ -109,10 +87,7 @@ fn write_character(
     character: char,
 ) -> core::fmt::Result {
     for escaped in character.escape_default() {
-        write!(
-            formatter,
-            "{escaped}"
-        )?;
+        write!(formatter, "{escaped}")?;
     }
     Ok(())
 }
@@ -125,19 +100,12 @@ fn write_path(
 ) -> core::fmt::Result {
     use std::os::windows::ffi::OsStrExt as _;
 
-    for decoded in char::decode_utf16(
-        path.as_os_str()
-            .encode_wide(),
-    ) {
+    for decoded in char::decode_utf16(path.as_os_str().encode_wide()) {
         match decoded {
-            Ok(character) => write_character(
-                formatter, character,
-            )?,
-            Err(error) => write!(
-                formatter,
-                r"\u{{{:04X}}}",
-                error.unpaired_surrogate()
-            )?,
+            Ok(character) => write_character(formatter, character)?,
+            Err(error) => {
+                write!(formatter, r"\u{{{:04X}}}", error.unpaired_surrogate())?;
+            },
         }
     }
     Ok(())
@@ -151,30 +119,23 @@ fn write_path(
 ) -> core::fmt::Result {
     use std::os::unix::ffi::OsStrExt as _;
 
-    let mut remaining = path
-        .as_os_str()
-        .as_bytes();
+    let mut remaining = path.as_os_str().as_bytes();
     while !remaining.is_empty() {
         match core::str::from_utf8(remaining) {
             Ok(text) => {
                 for character in text.chars() {
-                    write_character(
-                        formatter, character,
-                    )?;
+                    write_character(formatter, character)?;
                 }
                 break;
-            }
+            },
             Err(error) => {
                 let valid_length = error.valid_up_to();
-                let valid_bytes = remaining
-                    .get(..valid_length)
-                    .ok_or(core::fmt::Error)?;
+                let valid_bytes =
+                    remaining.get(..valid_length).ok_or(core::fmt::Error)?;
                 let valid_text = core::str::from_utf8(valid_bytes)
                     .map_err(|_utf8_error| core::fmt::Error)?;
                 for character in valid_text.chars() {
-                    write_character(
-                        formatter, character,
-                    )?;
+                    write_character(formatter, character)?;
                 }
                 let invalid_length = error
                     .error_len()
@@ -186,39 +147,24 @@ fn write_path(
                     .get(valid_length..invalid_end)
                     .ok_or(core::fmt::Error)?;
                 for byte in invalid_bytes {
-                    write!(
-                        formatter,
-                        r"\x{byte:02X}"
-                    )?;
+                    write!(formatter, r"\x{byte:02X}")?;
                 }
-                remaining = remaining
-                    .get(invalid_end..)
-                    .ok_or(core::fmt::Error)?;
-            }
+                remaining =
+                    remaining.get(invalid_end..).ok_or(core::fmt::Error)?;
+            },
         }
     }
     Ok(())
 }
 
 /// Falls back to scalar escaping on targets without native encoding access.
-#[cfg(
-    not(
-        any(
-            unix, windows
-        )
-    )
-)]
+#[cfg(not(any(unix, windows)))]
 fn write_path(
     formatter: &mut core::fmt::Formatter<'_>,
     path: &Path,
 ) -> core::fmt::Result {
-    for character in path
-        .to_string_lossy()
-        .chars()
-    {
-        write_character(
-            formatter, character,
-        )?;
+    for character in path.to_string_lossy().chars() {
+        write_character(formatter, character)?;
     }
     Ok(())
 }

@@ -1,7 +1,3 @@
-// File:
-//   - packing.rs
-// Path: src/formats/fbx/domain/texture/semantic/body/charts/packing.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - The ordered semantic chart placement transaction.
+//   - Packing domain module.
 // - Must-Not:
-//   - Discover charts, change topology, rasterize pixels, or sample source
-//   - color.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Focused integer-grid and aspect-preserving mapping modules.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another packing family cannot reuse region grouping and stable ordering.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - The chart facade can own placement directly without duplication.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Semantic chart packing facade.
+//   - Packing domain module.
 // - Description:
-//   - Places charts by fixed region order and delegates exact rectangle
-//   - mapping.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Called after chart discovery and before UV mutation or rasterization.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Region columns follow the fixed BodyRegion order.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Ordered semantic chart atlas placement.
+//! Packing domain module.
+
 use super::super::super::region::BodyRegion;
 use super::super::error::SemanticTextureError;
 use super::super::recipe::AtlasConfig;
@@ -60,9 +47,7 @@ pub(super) fn atlas_uv(
     config: &AtlasConfig,
     projection: ProjectionAxis,
 ) -> [f32; 2] {
-    mapping::atlas_uv(
-        position, config, projection,
-    )
+    mapping::atlas_uv(position, config, projection)
 }
 
 /// Place every chart in deterministic semantic and chart order.
@@ -80,32 +65,21 @@ pub(super) fn place(
         if region_charts.is_empty() {
             continue;
         }
-        let region_rect = grid::semantic_column(
-            config, region,
-        )?;
+        let region_rect = grid::semantic_column(config, region)?;
         let layout = grid::choose(
             region,
             region_rect,
             region_charts.len(),
             config.padding,
         )?;
-        for (index, chart) in region_charts
-            .into_iter()
-            .enumerate()
-        {
-            let cell = grid::cell(
-                region_rect,
-                layout,
-                index,
-            )?;
-            placed.push(
-                mapping::map_chart(
-                    chart,
-                    cell,
-                    config,
-                    source_texture_size,
-                )?,
-            );
+        for (index, chart) in region_charts.into_iter().enumerate() {
+            let cell = grid::cell(region_rect, layout, index)?;
+            placed.push(mapping::map_chart(
+                chart,
+                cell,
+                config,
+                source_texture_size,
+            )?);
         }
     }
     Ok(placed)

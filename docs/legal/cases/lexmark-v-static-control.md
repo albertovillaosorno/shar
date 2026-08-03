@@ -73,7 +73,9 @@ compatibility lock does not decide the statutory elements.
   Available at: <https://www.ca6.uscourts.gov/opinions.pdf/04a0364p-06.pdf>
   (Accessed: 16 July 2026).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Chamberlain Group, Inc. v. Skylink Technologies, Inc.](chamberlain-v-skylink.md).
+- [Chamberlain Group, Inc. v. Skylink Technologies,
+  Inc.](chamberlain-v-skylink.md).
 - [MDY Industries, LLC v. Blizzard Entertainment, Inc.](mdy-v-blizzard.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Software interoperability research](../doctrines/software-interoperability.md).
+- [Software interoperability
+  research](../doctrines/software-interoperability.md).

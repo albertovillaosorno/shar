@@ -1,7 +1,3 @@
-# File:
-#   - test_project_configuration.py
-# Path: tests/unreal/editor-control/test_project_configuration.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,55 +6,43 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Regression tests for Unreal MCP project configuration and layout.
+#   - Test project configuration test module.
 # - Must-Not:
-#   - Start Unreal, edit plugins, or inspect installed engine source.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Read-only checks of project declarations, layout, and ignore policy.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - The module gains two independently testable contracts.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module owns the same contract without a distinct invariant.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Guards canonical project layout, plugin direction, and local exclusion.
+#   - Test project configuration test module.
 # - Description:
-#   - Prevents duplicate project roots, outbound defaults, or vendored plugins.
+#   - Implements the declared test module responsibility for editor control.
 # - Usage:
-#   - Executed by pytest through the canonical validator workflow.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Checks repository files only.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: Unreal project configuration guards
-#   - reason: plugin, ignore, and auto-start checks share one project boundary
-#   - split: split plugin and settings checks if either surface expands
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess on responsibility or line-count growth
-#
+
+"""Test project configuration test module."""
+
 from __future__ import annotations
 
-import json
-import tomllib
 from importlib.metadata import PackageNotFoundError
+import json
 from pathlib import Path
+import tomllib
 from typing import cast
 from unittest.mock import patch
 
-import pytest
 from mcp.adapter_outbound.package_version import package_version
 from mcp.domain.errors import ConfigurationError
 from mcp.domain.json_types import require_json_object
+import pytest
 
 _REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 
@@ -80,7 +64,10 @@ def test_unreal_project_has_one_canonical_descriptor_root() -> None:
 
 
 def test_unreal_project_enables_inbound_server_and_all_toolsets() -> None:
-    project_path = _REPOSITORY_ROOT / "src/unreal/project/composition/uproject/shar.uproject"
+    project_path = (
+        _REPOSITORY_ROOT
+        / "src/unreal/project/composition/uproject/shar.uproject"
+    )
     project = require_json_object(
         cast("object", json.loads(project_path.read_text(encoding="utf-8"))),
         context="shar.uproject",
@@ -105,13 +92,15 @@ def test_unreal_project_enables_inbound_server_and_all_toolsets() -> None:
 
 def test_project_plugins_remain_local_and_translator_is_not_a_server() -> None:
     ignore_text = (_REPOSITORY_ROOT / ".gitignore").read_text(encoding="utf-8")
-    translator_readme = (_REPOSITORY_ROOT / "src/unreal/editor-control/composition/mcp/README.md").read_text(
-        encoding="utf-8"
+    translator_readme_path = (
+        _REPOSITORY_ROOT
+        / "src/unreal/editor-control/composition/mcp/README.md"
     )
+    translator_readme = translator_readme_path.read_text(encoding="utf-8")
 
     ignore_lines = ignore_text.splitlines()
     assert "src/unreal/project/composition/uproject/Plugins/" in ignore_lines
-    logs_segment = "[Ll]ogs/"  # cspell:disable-line -- ogs
+    logs_segment = "[Ll]ogs/"
     prefix = "!skills/unreal/capabilities/**/"
     assert f"{prefix}{logs_segment}" in ignore_lines
     assert f"{prefix}{logs_segment}**" in ignore_lines
@@ -137,9 +126,10 @@ def test_repository_pytest_configuration_owns_import_discovery() -> None:
         "adapter-inbound",
         "adapter-outbound",
     ):
-        assert (
-            f"    ../../../src/unreal/editor-control/{kind_root}" in config_lines
+        expected_root = (
+            f"    ../../../src/unreal/editor-control/{kind_root}"
         )
+        assert expected_root in config_lines
     assert (
         "    ../../../src/unreal/project/composition/uproject"
         in config_lines
@@ -164,15 +154,17 @@ def test_translator_version_matches_package_metadata() -> None:
         cast(
             "object",
             tomllib.loads(
-                (_REPOSITORY_ROOT / "src/unreal/editor-control/composition/mcp/pyproject.toml").read_text(
-                    encoding="utf-8"
-                )
+                (
+                    _REPOSITORY_ROOT
+                    / "src/unreal/editor-control/composition/mcp/pyproject.toml"
+                ).read_text(encoding="utf-8")
             ),
         ),
         context="src/unreal/editor-control/composition/mcp/pyproject.toml",
     )
     project = require_json_object(
         pyproject.get("project"),
+        # jig-ignore-next-line: exact value is indivisible
         context="src/unreal/editor-control/composition/mcp/pyproject.toml.project",
     )
 
@@ -229,7 +221,8 @@ def test_translator_source_version_wraps_invalid_utf8(tmp_path: Path) -> None:
 def test_native_mcp_server_autostarts_with_tool_search() -> None:
     settings_path = (
         _REPOSITORY_ROOT
-        / "src/unreal/project/composition/uproject/Config/DefaultEditorPerProjectUserSettings.ini"
+        / "src/unreal/project/composition/uproject/Config"
+        / "DefaultEditorPerProjectUserSettings.ini"
     )
     settings = settings_path.read_text(encoding="utf-8")
 
@@ -287,7 +280,10 @@ def test_translator_uses_canonical_kind_layout_and_stable_entrypoint() -> None:
 
 def test_game_feature_data_primary_asset_type_is_always_cooked() -> None:
     """Game Feature plugins require a non-default asset management rule."""
-    settings_path = _REPOSITORY_ROOT / "src/unreal/project/composition/uproject/Config/DefaultGame.ini"
+    settings_path = (
+        _REPOSITORY_ROOT
+        / "src/unreal/project/composition/uproject/Config/DefaultGame.ini"
+    )
     settings_lines = settings_path.read_text(encoding="utf-8").splitlines()
     expected_entry = (
         '+PrimaryAssetTypesToScan=(PrimaryAssetType="GameFeatureData",'

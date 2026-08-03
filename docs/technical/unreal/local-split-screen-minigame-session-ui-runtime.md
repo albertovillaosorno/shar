@@ -5,24 +5,32 @@
 
 ## Governing decisions and specifications
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Mod-owned multiplayer adapters and community servers](../../adr/modding/mod-owned-multiplayer-adapters-and-community-servers.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Mod-owned multiplayer adapters and community servers](../../adr/modding/mod-owned-multiplayer-adapters-and-community-servers.md)
+- [HUD, radar, camera, and navigation
+  parity](../../adr/unreal/ui/hud-radar-camera-and-navigation.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [HUD, radar, camera, and navigation parity](../../adr/unreal/ui/hud-radar-camera-and-navigation.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
+- [Common UI front end and progress
+  projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
 - [UI parity boundary](../../adr/unreal/ui/ui-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
+- [Application lifecycle and mode
+  runtime](application-lifecycle-and-mode-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Common UI navigation, menu, and modal runtime](common-ui-navigation-menu-and-modal-runtime.md)
+- [Common UI navigation, menu, and modal
+  runtime](common-ui-navigation-menu-and-modal-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [In-game HUD, pause, and transition runtime](in-game-hud-pause-and-transition-runtime.md)
+- [In-game HUD, pause, and transition
+  runtime](in-game-hud-pause-and-transition-runtime.md)
 - [Race route and opponent runtime](race-route-and-opponent-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Local supersprint race session runtime](local-supersprint-race-session-runtime.md)
+- [Local supersprint race session
+  runtime](local-supersprint-race-session-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Semantic input, device, and haptics runtime](semantic-input-device-and-haptics-runtime.md)
+- [Semantic input, device, and haptics
+  runtime](semantic-input-device-and-haptics-runtime.md)
 - [Vehicle access and roster runtime](vehicle-access-and-roster-runtime.md)
 
 ## Purpose
@@ -82,17 +90,33 @@ progression directly.
 
 <!-- markdownlint-disable MD013 -->
 
-| Service | Authority |
-| :--- | :--- |
-| `USharLocalMinigameSubsystem` | Shared session identity, lobby state, race request, loading, pause, summary, and return intent. |
-| `USharLocalMinigamePlayerSubsystem` | One participant's join state, controller assignment, selections, readiness, and local HUD. |
-| Local-player manager | Creation and removal of `ULocalPlayer` instances and viewport assignment. |
-| Input service | Device claims, semantic UI actions, gameplay mapping leases, disconnect, and reconnect. |
-| Race application service | Route, lap, direction, grid, countdown readiness, race state, finish, and results. |
-| Catalog and progression services | Track, character, and vehicle visibility and accepted unlock state. |
-| Vehicle service | Vehicle eligibility, tuning identity, presentation, and race spawn request. |
-| Application lifecycle service | `super_sprint_front_end`, loading, active race, summary, and frontend transitions. |
-| Common UI kernel | Shared and per-player activation, focus, actions, prompts, and restoration. |
+- **Service:** `USharLocalMinigameSubsystem`
+  - **Authority:** Shared session identity, lobby state, race request, loading,
+    pause, summary, and return intent.
+- **Service:** `USharLocalMinigamePlayerSubsystem`
+  - **Authority:** One participant's join state, controller assignment,
+    selections, readiness, and local HUD.
+- **Service:** Local-player manager
+  - **Authority:** Creation and removal of `ULocalPlayer` instances and viewport
+    assignment.
+- **Service:** Input service
+  - **Authority:** Device claims, semantic UI actions, gameplay mapping leases,
+    disconnect, and reconnect.
+- **Service:** Race application service
+  - **Authority:** Route, lap, direction, grid, countdown readiness, race state,
+    finish, and results.
+- **Service:** Catalog and progression services
+  - **Authority:** Track, character, and vehicle visibility and accepted unlock
+    state.
+- **Service:** Vehicle service
+  - **Authority:** Vehicle eligibility, tuning identity, presentation, and race
+    spawn request.
+- **Service:** Application lifecycle service
+  - **Authority:** `super_sprint_front_end`, loading, active race, summary, and
+    frontend transitions.
+- **Service:** Common UI kernel
+  - **Authority:** Shared and per-player activation, focus, actions, prompts,
+    and restoration.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -124,24 +148,40 @@ match the accepted session, participant, request, and revisions.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `ModeId` | Stable local-minigame mode identity. |
-| `MinimumPlayers` | Validated minimum joined participants. |
-| `MaximumPlayers` | Validated local-player and platform limit. |
-| `TrackSetId` | Ordered eligible track definitions. |
-| `CharacterSetId` | Eligible character-presentation definitions. |
-| `VehicleSetPolicyId` | Ownership, unlock, fallback, and duplicate-selection policy. |
-| `LapPolicyId` | Minimum, maximum, default, and allowed steps. |
-| `DirectionPolicyId` | Normal, reverse, or other registered route variants. |
-| `ReadinessPolicyId` | Required selections, countdown, cancellation, and timeout behavior. |
-| `ViewportPolicyId` | Split-screen layout and per-player safe areas. |
-| `HudProfileId` | Per-player and shared HUD definitions. |
-| `PausePolicyId` | Pause owner, vote, input, and resume behavior. |
-| `ResultPolicyId` | Ranking, statistics, replay, and return behavior. |
-| `ProgressionPolicyId` | Explicit transient or declared non-campaign effects. |
-| `RequiredBundles` | Lobby, player, track, vehicle, race, HUD, audio, and result bundles. |
-| `FeatureOwnerId` | Base game or validated feature package. |
+- **Field:** `ModeId`
+  - **Contract:** Stable local-minigame mode identity.
+- **Field:** `MinimumPlayers`
+  - **Contract:** Validated minimum joined participants.
+- **Field:** `MaximumPlayers`
+  - **Contract:** Validated local-player and platform limit.
+- **Field:** `TrackSetId`
+  - **Contract:** Ordered eligible track definitions.
+- **Field:** `CharacterSetId`
+  - **Contract:** Eligible character-presentation definitions.
+- **Field:** `VehicleSetPolicyId`
+  - **Contract:** Ownership, unlock, fallback, and duplicate-selection policy.
+- **Field:** `LapPolicyId`
+  - **Contract:** Minimum, maximum, default, and allowed steps.
+- **Field:** `DirectionPolicyId`
+  - **Contract:** Normal, reverse, or other registered route variants.
+- **Field:** `ReadinessPolicyId`
+  - **Contract:** Required selections, countdown, cancellation, and timeout
+    behavior.
+- **Field:** `ViewportPolicyId`
+  - **Contract:** Split-screen layout and per-player safe areas.
+- **Field:** `HudProfileId`
+  - **Contract:** Per-player and shared HUD definitions.
+- **Field:** `PausePolicyId`
+  - **Contract:** Pause owner, vote, input, and resume behavior.
+- **Field:** `ResultPolicyId`
+  - **Contract:** Ranking, statistics, replay, and return behavior.
+- **Field:** `ProgressionPolicyId`
+  - **Contract:** Explicit transient or declared non-campaign effects.
+- **Field:** `RequiredBundles`
+  - **Contract:** Lobby, player, track, vehicle, race, HUD, audio, and result
+    bundles.
+- **Field:** `FeatureOwnerId`
+  - **Contract:** Base game or validated feature package.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -371,19 +411,28 @@ or start race time.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `RaceRequestId` | Unique idempotency identity. |
-| `SessionId` | Owning local session. |
-| `TrackId` | Accepted track and route identity. |
-| `RaceOptionsRevision` | Laps, direction, and other mode options. |
-| `Participants` | Ordered stable participant snapshots. |
-| `ControllerAssignments` | Exact accepted device claims. |
-| `ViewportPolicyId` | Split-screen composition. |
-| `RequiredBundles` | World, vehicles, characters, cameras, HUD, audio, and results. |
-| `CatalogRevision` | Exact content projection. |
-| `InputRevision` | Exact device and mapping state. |
-| `FeatureRevision` | Exact package set. |
+- **Field:** `RaceRequestId`
+  - **Contract:** Unique idempotency identity.
+- **Field:** `SessionId`
+  - **Contract:** Owning local session.
+- **Field:** `TrackId`
+  - **Contract:** Accepted track and route identity.
+- **Field:** `RaceOptionsRevision`
+  - **Contract:** Laps, direction, and other mode options.
+- **Field:** `Participants`
+  - **Contract:** Ordered stable participant snapshots.
+- **Field:** `ControllerAssignments`
+  - **Contract:** Exact accepted device claims.
+- **Field:** `ViewportPolicyId`
+  - **Contract:** Split-screen composition.
+- **Field:** `RequiredBundles`
+  - **Contract:** World, vehicles, characters, cameras, HUD, audio, and results.
+- **Field:** `CatalogRevision`
+  - **Contract:** Exact content projection.
+- **Field:** `InputRevision`
+  - **Contract:** Exact device and mapping state.
+- **Field:** `FeatureRevision`
+  - **Contract:** Exact package set.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -392,7 +441,8 @@ participant identity, never by callback timing.
 
 The accepted request is the immutable handoff to
 <!-- markdownlint-disable-next-line MD013 -->
-[Local supersprint race session runtime](local-supersprint-race-session-runtime.md),
+[Local supersprint race session
+runtime](local-supersprint-race-session-runtime.md),
 which owns world preparation, vehicles, artificial intelligence, grid placement,
 gameplay countdown, checkpoints, laps, positions, finish windows, results,
 replay,

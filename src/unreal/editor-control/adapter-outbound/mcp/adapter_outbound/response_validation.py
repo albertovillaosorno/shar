@@ -1,7 +1,3 @@
-# File:
-#   - response_validation.py
-# Path: src/unreal/editor-control/adapter-outbound/mcp/adapter_outbound/response_validation.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,50 +6,37 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Pure validation of MCP JSON-RPC and initialization responses.
+#   - Response validation outbound adapter.
 # - Must-Not:
-#   - Open sockets, execute tools, parse CLI input, or mutate editor state.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Constructing domain session values from validated wire evidence.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Tool-list parsing and initialization validation evolve independently.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module owns the same wire-response invariants.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Validates native Unreal MCP response contracts fail closed.
+#   - Response validation outbound adapter.
 # - Description:
-#   - Separates protocol evidence validation from HTTP exchange mechanics.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Called by the Streamable HTTP adapter after response decoding.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Rejects unsupported versions, capabilities, IDs, and JSON-RPC forms.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: native MCP response validation boundary
-#   - reason: initialization and result checks share one JSON-RPC trust boundary
-#   - split: extract initialization checks if capability negotiation expands
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess on responsibility or line-count growth
-#
-"""Pure response validation for the native Unreal MCP transport."""
+
+"""Response validation outbound adapter."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from mcp.domain.errors import fail_protocol
-from mcp.domain.json_types import JsonObject, require_json_object
+from mcp.domain.json_types import JsonObject
+from mcp.domain.json_types import require_json_object
 from mcp.domain.session import McpSession
 
 if TYPE_CHECKING:
@@ -85,6 +68,7 @@ def parse_initialized_session(
 
     Returns:
         A fully validated native Unreal MCP session.
+
     """
     session_id = require_visible_ascii_session_id(exchange.session_id)
     outcome = require_json_rpc_result(exchange, request_id)
@@ -128,6 +112,7 @@ def _require_server_metadata(value: object, *, field: str) -> str:
 
     Returns:
         Validated text, including an allowed empty string.
+
     """
     if not isinstance(value, str):
         fail_protocol(f"serverInfo.{field} must be text")
@@ -146,6 +131,7 @@ def validated_json_rpc_error_message(value: object) -> str | None:
 
     Returns:
         Validated text, or `None` when the value is unsuitable for display.
+
     """
     if (
         not isinstance(value, str)
@@ -178,6 +164,7 @@ def require_json_rpc_result(
 
     Returns:
         The strict JSON object stored in the response result member.
+
     """
     payload = exchange.payload
     if payload is None:
@@ -219,6 +206,7 @@ def parse_tool_names(result: JsonObject) -> tuple[str, ...]:
 
     Returns:
         Tool names in server-provided order.
+
     """
     raw_tools = result.get("tools")
     if not isinstance(raw_tools, list):
@@ -260,6 +248,7 @@ def require_visible_ascii_session_id(value: str | None) -> str:
 
     Returns:
         A non-empty visible-ASCII session identifier.
+
     """
     if (
         value is None

@@ -7,13 +7,22 @@
 
 ## Governing decisions and specifications
 
-- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
-- [Contextual interaction query and transaction boundary](../../adr/unreal/runtime/contextual-interaction-query-and-transaction.md)
-- [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
-- [Typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md)
-- [Native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md)
-- [Camera rig, preset, and arbitration runtime](camera-rig-preset-and-arbitration-runtime.md)
-- [Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Contextual interaction query and transaction boundary](../../adr/unreal/runtime/contextual-interaction-query-and-transaction.md) <!-- markdownlint-disable-line MD013 -->
+- [Data-driven Unreal gameplay content
+  catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+- [Typed event and observation routing
+  runtime](typed-event-and-observation-routing-runtime.md)
+- [Native asset load request and streaming
+  runtime](native-asset-load-request-and-streaming-runtime.md)
+- [Camera rig, preset, and arbitration
+  runtime](camera-rig-preset-and-arbitration-runtime.md)
+- [Spatial visibility, bounds, and culling
+  runtime](spatial-visibility-bounds-and-culling-runtime.md)
 
 ## Purpose
 
@@ -22,7 +31,8 @@ registration, occupancy, enter and exit observations, filtering, streaming,
 diagnostics, and domain adapters.
 
 It replaces one mutable locator inheritance hierarchy, one process-wide trigger
-tracker, fixed-capacity player and artificial-intelligence arrays, raw camera and
+tracker, fixed-capacity player and artificial-intelligence arrays, raw camera
+and
 character pointers, filename-owned interiors, ordinal event dispatch, and direct
 streaming or gameplay mutation from overlap callbacks.
 
@@ -32,15 +42,24 @@ streaming policy, progression, rewards, or vehicle behavior.
 
 ## Ownership
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Import pipeline | Convert source placement and volume evidence into canonical definitions. |
-| Asset Manager | Load definition and presentation bundles by stable identity. |
-| World spatial subsystem | Register active definitions and produce typed observations. |
-| Unreal collision and query systems | Broad phase, overlap, sweep, and shape-query evidence. |
-| Domain adapters | Interpret accepted observations for interactions, missions, cameras, audio, streaming, population, and presentation. |
-| Domain services | Validate commands and own resulting state transitions. |
-| World Partition and Data Layers | Composition availability and streaming lifecycle. |
+- **Authority:** Import pipeline
+  - **Responsibility:** Convert source placement and volume evidence into
+    canonical definitions.
+- **Authority:** Asset Manager
+  - **Responsibility:** Load definition and presentation bundles by stable
+    identity.
+- **Authority:** World spatial subsystem
+  - **Responsibility:** Register active definitions and produce typed
+    observations.
+- **Authority:** Unreal collision and query systems
+  - **Responsibility:** Broad phase, overlap, sweep, and shape-query evidence.
+- **Authority:** Domain adapters
+  - **Responsibility:** Interpret accepted observations for interactions,
+    missions, cameras, audio, streaming, population, and presentation.
+- **Authority:** Domain services
+  - **Responsibility:** Validate commands and own resulting state transitions.
+- **Authority:** World Partition and Data Layers
+  - **Responsibility:** Composition availability and streaming lifecycle.
 
 A placement definition can be shared by several consumers through typed roles,
 but it never invokes those consumers directly.
@@ -69,20 +88,34 @@ definition and registration revision, not an object pointer or actor name.
 
 Every placement definition contains:
 
-| Field | Contract |
-| :--- | :--- |
-| `PlacementId` | Stable canonical identity. |
-| `OwnerId` | Owning content, mission, chapter, structure, route, or feature identity. |
-| `RoleIds` | One or more registered semantic roles. |
-| `Transform` | Finite canonical world or owner-relative transform. |
-| `VolumeIds` | Ordered trigger or query shapes. |
-| `ActivationPredicate` | Chapter, mission, discovery, gameplay-state, layer, feature, and mod requirements. |
-| `ParticipantFilterId` | Accepted pawn, vehicle, AI, local-player, or custom participant policy. |
-| `ObservationPolicyId` | Enter, stay, exit, dwell, cooldown, hysteresis, and duplicate rules. |
-| `DataLayerIds` | Exact Runtime Data Layer dependencies. |
-| `BundleIds` | Required gameplay, presentation, audio, or diagnostic bundles. |
-| `RevisionToken` | Definition and conversion revision. |
-| `SourceAliases` | Optional conversion aliases with no runtime authority. |
+- **Field:** `PlacementId`
+  - **Contract:** Stable canonical identity.
+- **Field:** `OwnerId`
+  - **Contract:** Owning content, mission, chapter, structure, route, or feature
+    identity.
+- **Field:** `RoleIds`
+  - **Contract:** One or more registered semantic roles.
+- **Field:** `Transform`
+  - **Contract:** Finite canonical world or owner-relative transform.
+- **Field:** `VolumeIds`
+  - **Contract:** Ordered trigger or query shapes.
+- **Field:** `ActivationPredicate`
+  - **Contract:** Chapter, mission, discovery, gameplay-state, layer, feature,
+    and mod requirements.
+- **Field:** `ParticipantFilterId`
+  - **Contract:** Accepted pawn, vehicle, AI, local-player, or custom
+    participant policy.
+- **Field:** `ObservationPolicyId`
+  - **Contract:** Enter, stay, exit, dwell, cooldown, hysteresis, and duplicate
+    rules.
+- **Field:** `DataLayerIds`
+  - **Contract:** Exact Runtime Data Layer dependencies.
+- **Field:** `BundleIds`
+  - **Contract:** Required gameplay, presentation, audio, or diagnostic bundles.
+- **Field:** `RevisionToken`
+  - **Contract:** Definition and conversion revision.
+- **Field:** `SourceAliases`
+  - **Contract:** Optional conversion aliases with no runtime authority.
 
 Display names, source type numbers, event ordinals, array positions, filenames,
 and package load order are not placement identity.
@@ -106,7 +139,8 @@ Initial semantic roles include:
 - damage, death, radiation, bounce, or other typed hazard region; and
 - diagnostic-only review placement.
 
-A role selects a registered schema and adapter. It does not encode behavior in an
+A role selects a registered schema and adapter. It does not encode behavior in
+an
 integer subtype or generic script string.
 
 ## Volume definitions
@@ -126,11 +160,13 @@ participant filters, boundary tolerance, hysteresis, dwell duration, cooldown,
 priority, enabled policy, and diagnostic presentation.
 
 Dimensions and transforms are finite. Negative radius, inverted extent,
-degenerate basis, non-invertible transform, unbounded convex data, and NaN values
+degenerate basis, non-invertible transform, unbounded convex data, and NaN
+values
 fail conversion or activation.
 
 Sphere and oriented-box containment, intersection, line, sweep, and bounds use
-Unreal geometry and collision facilities. Repository-owned code supplies semantic
+Unreal geometry and collision facilities. Repository-owned code supplies
+semantic
 policy and deterministic normalization, not a second general-purpose physics
 library.
 
@@ -186,26 +222,38 @@ Filters may require or forbid participant kinds, roles, tags, local-player
 ownership, vehicle state, character state, mission state, chapter availability,
 or artificial-intelligence category.
 
-Raw pointer type tests, fixed player indices, vehicle-array slots, and one global
+Raw pointer type tests, fixed player indices, vehicle-array slots, and one
+global
 locator-type bit mask are not filter authority.
 
 ## Observation model
 
 A spatial observation contains:
 
-| Field | Contract |
-| :--- | :--- |
-| `ObservationKind` | Enter, stay, exit, dwell-complete, enabled, disabled, or invalidated. |
-| `PlacementId` | Canonical placement identity. |
-| `VolumeId` | Exact contributing shape identity. |
-| `RoleId` | Semantic role delivered to the adapter. |
-| `ParticipantId` | Stable observed participant identity. |
-| `OccupancyToken` | Unique revision-bound occupancy identity. |
-| `WorldRevision` | Exact world and composition revision. |
-| `RegistrationRevision` | Exact active placement registration. |
-| `Sequence` | Monotonic sequence within the placement registration. |
-| `ContactEvidence` | Optional point, normal, distance, approach, and velocity. |
-| `Cause` | Physics overlap, sweep, query, streaming reconciliation, or explicit test. |
+- **Field:** `ObservationKind`
+  - **Contract:** Enter, stay, exit, dwell-complete, enabled, disabled, or
+    invalidated.
+- **Field:** `PlacementId`
+  - **Contract:** Canonical placement identity.
+- **Field:** `VolumeId`
+  - **Contract:** Exact contributing shape identity.
+- **Field:** `RoleId`
+  - **Contract:** Semantic role delivered to the adapter.
+- **Field:** `ParticipantId`
+  - **Contract:** Stable observed participant identity.
+- **Field:** `OccupancyToken`
+  - **Contract:** Unique revision-bound occupancy identity.
+- **Field:** `WorldRevision`
+  - **Contract:** Exact world and composition revision.
+- **Field:** `RegistrationRevision`
+  - **Contract:** Exact active placement registration.
+- **Field:** `Sequence`
+  - **Contract:** Monotonic sequence within the placement registration.
+- **Field:** `ContactEvidence`
+  - **Contract:** Optional point, normal, distance, approach, and velocity.
+- **Field:** `Cause`
+  - **Contract:** Physics overlap, sweep, query, streaming reconciliation, or
+    explicit test.
 
 Observations are immutable facts. A spatial callback cannot grant a reward,
 complete an objective, change camera mode, load an interior, or stream a zone by
@@ -226,16 +274,19 @@ second enter nor a transient exit. Shape identity remains available as evidence,
 but array order and callback order cannot change the aggregate result.
 
 An enter is accepted only after registration, participant, filter, and geometry
-revisions match. A stay observation is emitted only when the role requests it and
+revisions match. A stay observation is emitted only when the role requests it
+and
 at the declared bounded cadence. Exit occurs when the participant leaves,
 becomes ineligible, unloads, is destroyed, changes world, or the placement
 invalidates.
 
 Streaming reconciliation may synthesize an explicit invalidated exit when a
-participant or placement disappears while occupied. It cannot synthesize a domain
+participant or placement disappears while occupied. It cannot synthesize a
+domain
 success.
 
-Hysteresis and boundary tolerance prevent repeated enter and exit at one floating
+Hysteresis and boundary tolerance prevent repeated enter and exit at one
+floating
 point boundary. Dwell and cooldown use simulation or presentation time according
 to role policy, never frame count.
 
@@ -268,7 +319,8 @@ An interaction placement references one canonical interaction definition,
 interaction slot transform, prompt role, participant filter, reservation policy,
 and optional presentation anchor.
 
-Object name, joint name, action name, input-button ordinal, and mutable character
+Object name, joint name, action name, input-button ordinal, and mutable
+character
 handler pointers are conversion evidence only. Conversion resolves them to
 canonical actor/component identities, semantic actions, typed interaction kinds,
 and verified transforms.
@@ -295,7 +347,8 @@ breakable-window routes follow their declared structure and mission predicates.
 Camera placements reference camera request, rig, preset, rail, static-shot, FOV,
 transition, participant, priority, one-shot, cut, reset, and fallback policies.
 
-The spatial adapter submits or releases a typed camera request. It does not hold a
+The spatial adapter submits or releases a typed camera request. It does not hold
+a
 mutable camera pointer, switch a global camera directly, or restore a previous
 mode by raw pointer.
 
@@ -307,14 +360,16 @@ bounded physical units and the camera subsystem's arbitration contract.
 
 ## Vehicle and character starts
 
-Vehicle, character, traffic, mission, recovery, and race starts contain canonical
+Vehicle, character, traffic, mission, recovery, and race starts contain
+canonical
 spawn role, transform, orientation, participant or vehicle predicate, safety
 profile, chapter, mission, world composition, and fallback identities.
 
 A start definition is queried by the owning spawn or recovery service. Merely
 streaming the placement does not spawn an entity.
 
-Directional anchors expose a normalized transform or heading observation. They do
+Directional anchors expose a normalized transform or heading observation. They
+do
 not mutate the target actor directly.
 
 ## Mission, race, and checkpoint placements
@@ -360,7 +415,8 @@ composition, and request revisions. Late readiness cannot activate a replacement
 zone or dismiss a newer loading state.
 
 Nearest-interior or recovery queries use deterministic distance, eligibility,
-priority, and canonical identity ordering. They do not scan mutable active-volume
+priority, and canonical identity ordering. They do not scan mutable
+active-volume
 arrays or force a hidden load zone active.
 
 ## Occlusion and visibility
@@ -374,9 +430,11 @@ permanent occlusion behavior.
 
 Renderer-owned bounds, frustum rejection, occlusion, distance policy, and
 converted cell diagnostics follow
-[Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md).
+[Spatial visibility, bounds, and culling
+runtime](spatial-visibility-bounds-and-culling-runtime.md).
 An overlap observation may request explicit visibility policy, but it cannot
-publish a draw list, unload a region, or reinterpret culling as gameplay absence.
+publish a draw list, unload a region, or reinterpret culling as gameplay
+absence.
 
 Conflicting regions use declared priority and deterministic identity ordering.
 World unload releases all requests and restores the owner's fallback state.
@@ -384,7 +442,8 @@ World unload releases all requests and restores the owner's fallback state.
 ## Script and generic-event conversion
 
 A source script or generic-event placement must convert to one registered typed
-role with a known owner and bounded schema. Arbitrary script text, command names,
+role with a known owner and bounded schema. Arbitrary script text, command
+names,
 positional sound strings, or untyped payloads cannot execute at runtime.
 
 When conversion resolves a sound, interaction, camera, mission, streaming, or
@@ -397,12 +456,15 @@ A presentation anchor may identify an object/component attachment, joint or bone
 reference, local transform, semantic action, icon, decal, particle, sound, or UI
 role.
 
-Object, component, bone, and socket references resolve through canonical prepared
-asset metadata. A missing optional presentation anchor may suppress presentation;
+Object, component, bone, and socket references resolve through canonical
+prepared
+asset metadata. A missing optional presentation anchor may suppress
+presentation;
 it cannot change interaction or mission authority.
 
 Character animation, skeleton, eye, outfit, and prop preparation remain owned by
-the FBX preparation contract. A placement cannot invent a runtime prop attachment
+the FBX preparation contract. A placement cannot invent a runtime prop
+attachment
 or change deformation behavior.
 
 ## Event routing
@@ -424,7 +486,8 @@ Definitions are registered when their owning composition becomes ready and
 released before that composition becomes unavailable to ordinary interaction.
 
 Persistent placement identity survives actor recreation. Occupancy does not.
-Reloading a cell reconstructs registration from canonical definitions and current
+Reloading a cell reconstructs registration from canonical definitions and
+current
 world state.
 
 A participant straddling a streaming boundary receives at most one accepted
@@ -501,7 +564,8 @@ Activation or observation fails closed on:
 - incomplete teardown; or
 - a domain mutation attempted directly from the spatial callback.
 
-Failure returns a typed finding and leaves domain state unchanged. Invalidating an
+Failure returns a typed finding and leaves domain state unchanged. Invalidating
+an
 occupied placement releases its observation and consumer requests safely.
 
 ## Validation
@@ -551,7 +615,8 @@ Required tests include:
 - One participant-volume pair has at most one active occupancy token.
 - Local players and worlds remain isolated.
 - Registration and listener order never select behavior.
-- A raw filename, script string, camera pointer, or AI pointer is never authority.
+- A raw filename, script string, camera pointer, or AI pointer is never
+  authority.
 - Streaming cannot replay one-time progression or mission completion.
 - Fixed source array capacities do not define product limits.
 - Every registration and consumer request has explicit teardown.

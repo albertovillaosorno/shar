@@ -1,7 +1,3 @@
-// File:
-//   - failed_stream_empty_chunk.rs
-// Path: tests/foundation/command-line/failed_stream_empty_chunk.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for empty chunks after a stream failure.
+//   - Failed stream empty chunk test module.
 // - Must-Not:
-//   - Access operating-system arguments or streams.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Use deterministic output failure and delivery-summary fixtures.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another failed-stream classification needs independent coverage.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Empty chunks no longer participate in invocation delivery summaries.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Failed-stream empty-chunk regression.
+//   - Failed stream empty chunk test module.
 // - Description:
-//   - Proves an empty chunk after failure is suppressed, not presented.
+//   - Implements the declared test module responsibility for command line.
 // - Usage:
-//   - Executed by the schoenwald-cli integration test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Standard output fails before its later empty chunk is encountered.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for empty chunks after one stream fails.
-//!
-//! Delivery summaries classify chunks according to stream state first.
+//! Failed stream empty chunk test module.
 
 #[path = "support/output_error.rs"]
 pub mod support;
@@ -66,10 +52,7 @@ impl ArgumentSource for EmptyArguments {
 struct EmptyAfterFailureProgram;
 
 impl CliProgram for EmptyAfterFailureProgram {
-    fn execute(
-        &self,
-        _arguments: &[String],
-    ) -> CommandOutcome {
+    fn execute(&self, _arguments: &[String]) -> CommandOutcome {
         CommandOutcome::failure()
             .stdout("primary")
             .stdout("")
@@ -80,18 +63,11 @@ impl CliProgram for EmptyAfterFailureProgram {
 struct DenyStandardOutput;
 
 impl OutputSink for DenyStandardOutput {
-    fn write(
-        &mut self,
-        stream: OutputStream,
-        _text: &str,
-    ) -> io::Result<()> {
+    fn write(&mut self, stream: OutputStream, _text: &str) -> io::Result<()> {
         match stream {
-            OutputStream::Stdout => Err(
-                io::Error::new(
-                    io::ErrorKind::BrokenPipe,
-                    "blocked",
-                ),
-            ),
+            OutputStream::Stdout => {
+                Err(io::Error::new(io::ErrorKind::BrokenPipe, "blocked"))
+            },
             OutputStream::Stderr => Ok(()),
         }
     }
@@ -102,23 +78,12 @@ fn empty_chunk_after_failed_stream_is_suppressed() {
     let mut arguments = EmptyArguments;
     let mut output = DenyStandardOutput;
 
-    let error = output_error(
-        RunInvocation::execute(
-            &EmptyAfterFailureProgram,
-            &mut arguments,
-            &mut output,
-        ),
-    );
-    assert_eq!(
-        error.output_chunk_count(),
-        3
-    );
-    assert_eq!(
-        error.presented_chunk_count(),
-        1
-    );
-    assert_eq!(
-        error.suppressed_chunk_count(),
-        1
-    );
+    let error = output_error(RunInvocation::execute(
+        &EmptyAfterFailureProgram,
+        &mut arguments,
+        &mut output,
+    ));
+    assert_eq!(error.output_chunk_count(), 3);
+    assert_eq!(error.presented_chunk_count(), 1);
+    assert_eq!(error.suppressed_chunk_count(), 1);
 }

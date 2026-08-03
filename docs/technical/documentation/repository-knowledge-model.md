@@ -6,7 +6,8 @@
 ## Governing decision
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Decision and technical knowledge boundaries](../../adr/governance/documentation-and-knowledge-boundaries.md)
+- [Decision and technical knowledge
+  boundaries](../../adr/governance/documentation-and-knowledge-boundaries.md)
 
 ## Purpose
 

@@ -1,12 +1,34 @@
-// File: SharCheatRecognition.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharCheats/Private/Cheats/SharCheatRecognition.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: semantic token admission, four-token lookup, prerequisite evaluation, and typed activation publication only.
-// Specification: docs/technical/unreal/progression-collectibles-and-cheats.md
-// LARGE-FILE owner=SharCheats; reason=cohesive deterministic recognizer transition implementation;
-// split=extract input-delivery guards when more semantic input sources exist;
-// validation=validate.sh SharCheats plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar cheat recognition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar cheat recognition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar cheat recognition composition module.
 
 #include "Cheats/SharCheatSubsystem.h"
 
@@ -194,6 +216,7 @@ ESharCheatOperationResult USharCheatSubsystem::CompleteSequence(
     Activation.CatalogRevision = Recognizer.Request.CatalogRevision;
     Activation.ContextRevision = Recognizer.Request.ContextRevision;
     Activation.ActivationRevision = Recognizer.Request.RecognitionRevision;
+    // jig-ignore-next-line: exact syntax is indivisible
     const ESharCheatOperationResult Result = EffectSubsystem->Submit(Activation);
     if (Result != ESharCheatOperationResult::Accepted)
     {

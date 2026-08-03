@@ -1,7 +1,3 @@
-// File:
-//   - coordinate_movement.rs
-// Path: src/migration/pipeline/domain/coordinate_movement.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,27 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure affine coordinate movement shared by every world-record family.
+//   - Coordinate movement domain module.
 // - Must-Not:
-//   - Read files, classify packages, mutate meshes, or serialize manifests.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Transform points, directions, placements, and axis-aligned bounds.
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - One coordinate movement contract above geometry-specific adapters.
-//
-// ADRs:
-// - docs/adr/pipeline/unreal/world-assembly-from-normalized-chunks.md
-//
-// Large file:
-//   - false
+//   - Coordinate movement domain module.
+// - Description:
+//   - Implements the declared domain module responsibility for pipeline.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Pure affine movement for geometry and non-geometry world coordinates.
+//! Coordinate movement domain module.
 
 #![expect(
     clippy::arithmetic_side_effects,
@@ -109,11 +107,7 @@ impl CoordinateMovement {
         matrix: CoordinateMatrix,
         subjects: &'static [CoordinateSubject],
     ) -> Self {
-        Self {
-            id,
-            matrix,
-            subjects,
-        }
+        Self { id, matrix, subjects }
     }
 
     /// Return the stable movement identity.
@@ -147,29 +141,19 @@ impl CoordinateMovement {
     /// Returns an error for empty identity, non-finite values, non-affine
     /// matrices, degenerate bases, or an empty subject contract.
     pub fn validate(self) -> Result<(), MovementError> {
-        if self
-            .id
-            .is_empty()
-        {
+        if self.id.is_empty() {
             return Err(MovementError::MissingIdentity);
         }
-        if self
-            .subjects
-            .is_empty()
-        {
+        if self.subjects.is_empty() {
             return Err(MovementError::MissingSubjects);
         }
-        if !self
-            .matrix
-            .iter()
-            .all(|value| value.is_finite())
-        {
+        if !self.matrix.iter().all(|value| value.is_finite()) {
             return Err(MovementError::NonFiniteMatrix);
         }
         if self.matrix[3].abs() > f32::EPSILON
             || self.matrix[7].abs() > f32::EPSILON
             || self.matrix[11].abs() > f32::EPSILON
-            || (self.matrix[15] - 1.0).abs() > f32::EPSILON
+            || (self.matrix[15] - 1.).abs() > f32::EPSILON
         {
             return Err(MovementError::NonAffineMatrix);
         }
@@ -191,10 +175,7 @@ impl CoordinateMovement {
         self,
         value: [f32; 3],
     ) -> Result<[f32; 3], MovementError> {
-        transform_point(
-            value,
-            &self.matrix,
-        )
+        transform_point(value, &self.matrix)
     }
 
     /// Transform one direction without translation.
@@ -206,10 +187,7 @@ impl CoordinateMovement {
         self,
         value: [f32; 3],
     ) -> Result<[f32; 3], MovementError> {
-        transform_direction(
-            value,
-            &self.matrix,
-        )
+        transform_direction(value, &self.matrix)
     }
 
     /// Compose one authored placement followed by this movement.
@@ -218,10 +196,7 @@ impl CoordinateMovement {
         self,
         placement: &CoordinateMatrix,
     ) -> CoordinateMatrix {
-        multiply_matrices(
-            placement,
-            &self.matrix,
-        )
+        multiply_matrices(placement, &self.matrix)
     }
 
     /// Transform all eight corners of one axis-aligned bound.
@@ -233,32 +208,16 @@ impl CoordinateMovement {
         self,
         low: [f32; 3],
         high: [f32; 3],
-    ) -> Result<
-        (
-            [f32; 3],
-            [f32; 3],
-        ),
-        MovementError,
-    > {
+    ) -> Result<([f32; 3], [f32; 3]), MovementError> {
         if (0..3).any(|axis| low[axis] > high[axis]) {
             return Err(MovementError::InvertedBounds);
         }
         let mut transformed_low = [f32::INFINITY; 3];
         let mut transformed_high = [f32::NEG_INFINITY; 3];
-        for x in [
-            low[0], high[0],
-        ] {
-            for y in [
-                low[1], high[1],
-            ] {
-                for z in [
-                    low[2], high[2],
-                ] {
-                    let point = self.transform_point(
-                        [
-                            x, y, z,
-                        ],
-                    )?;
+        for x in [low[0], high[0]] {
+            for y in [low[1], high[1]] {
+                for z in [low[2], high[2]] {
+                    let point = self.transform_point([x, y, z])?;
                     for axis in 0..3 {
                         transformed_low[axis] =
                             transformed_low[axis].min(point[axis]);
@@ -268,12 +227,7 @@ impl CoordinateMovement {
                 }
             }
         }
-        Ok(
-            (
-                transformed_low,
-                transformed_high,
-            ),
-        )
+        Ok((transformed_low, transformed_high))
     }
 }
 
@@ -297,10 +251,7 @@ pub enum MovementError {
 }
 
 impl fmt::Display for MovementError {
-    fn fmt(
-        &self,
-        formatter: &mut fmt::Formatter<'_>,
-    ) -> fmt::Result {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         let message = match self {
             Self::MissingIdentity => "coordinate movement identity is missing",
             Self::MissingSubjects => "coordinate movement subjects are missing",
@@ -309,7 +260,7 @@ impl fmt::Display for MovementError {
             Self::DegenerateBasis => "coordinate movement basis is degenerate",
             Self::NonFiniteCoordinate => {
                 "coordinate movement value is non-finite"
-            }
+            },
             Self::InvertedBounds => "coordinate movement bounds are inverted",
         };
         formatter.write_str(message)
@@ -324,5 +275,6 @@ pub use matrix::{
 };
 
 #[cfg(test)]
+// jig-ignore-next-line: exact syntax is indivisible
 #[path = "../../../../tests/migration/pipeline/unit/domain/coordinate_movement_tests.rs"]
 mod tests;

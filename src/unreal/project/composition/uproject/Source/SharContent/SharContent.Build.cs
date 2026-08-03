@@ -1,5 +1,6 @@
 // File:
 //   - SharContent.Build.cs
+// jig-ignore-next-line: exact syntax is indivisible
 // Path: src/unreal/project/composition/uproject/Source/SharContent/SharContent.Build.cs
 //
 // Copyright:

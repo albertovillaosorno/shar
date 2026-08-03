@@ -5,28 +5,38 @@
 
 ## Governing decisions and specifications
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Typed StateTree action sequences](../../adr/unreal/runtime/typed-state-tree-action-sequences.md)
+- [Typed StateTree action
+  sequences](../../adr/unreal/runtime/typed-state-tree-action-sequences.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
+- [Runtime parity test
+  boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
+- [World render-entity and physics
+  runtime](world-render-entity-and-physics-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Persistent world-object state runtime](persistent-world-object-state-runtime.md)
+- [Persistent world-object state
+  runtime](persistent-world-object-state-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md)
+- [Typed event and observation routing
+  runtime](typed-event-and-observation-routing-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
+- [Gameplay audio source, residency, mix, and environment
+  runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md)
+- [Transient VFX and breakable-presentation
+  runtime](transient-vfx-and-breakable-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md)
+- [Native asset load request and streaming
+  runtime](native-asset-load-request-and-streaming-runtime.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md) <!-- markdownlint-disable-line MD013 -->
 
 ## Purpose
 
@@ -47,8 +57,9 @@ slots, or per-render mutation as runtime authority.
 
 Historical state-prop creation and level-art guidance is private technical
 evidence classified by
-<!-- markdownlint-disable-next-line MD013 -->
-[Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md).
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+[Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md). <!-- markdownlint-disable-line MD013 -->
 It may corroborate state roles, animation ranges, visibility, events, callbacks,
 component naming, and export intent, but source prose, screenshots, paths,
 obsolete tools, generated document companions, and production metadata are not
@@ -80,16 +91,30 @@ array order, or one particular Blueprint layout.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Owning domain service | Commits durable gameplay, interaction, mission, damage, reward, and persistence state. |
-| State-prop definition | Declares valid states, projections, transitions, events, markers, fallbacks, and teardown. |
-| State-prop runtime | Applies one accepted state revision to native components and emits typed observations. |
-| Animation system | Owns native playback, evaluation, blending, notifies, root motion policy, and pose output. |
-| Render and physics systems | Own visibility, materials, collision, simulation, transforms, bounds, and scene registration. |
-| Audio and VFX services | Consume accepted state and marker observations through independent presentation leases. |
-| Persistence service | Stores durable state identity and revision when the placement policy requires it. |
-| Developer diagnostics | Observe definitions, instances, state, transitions, markers, callbacks, and failures. |
+- **Authority:** Owning domain service
+  - **Responsibility:** Commits durable gameplay, interaction, mission, damage,
+    reward, and persistence state.
+- **Authority:** State-prop definition
+  - **Responsibility:** Declares valid states, projections, transitions, events,
+    markers, fallbacks, and teardown.
+- **Authority:** State-prop runtime
+  - **Responsibility:** Applies one accepted state revision to native components
+    and emits typed observations.
+- **Authority:** Animation system
+  - **Responsibility:** Owns native playback, evaluation, blending, notifies,
+    root motion policy, and pose output.
+- **Authority:** Render and physics systems
+  - **Responsibility:** Own visibility, materials, collision, simulation,
+    transforms, bounds, and scene registration.
+- **Authority:** Audio and VFX services
+  - **Responsibility:** Consume accepted state and marker observations through
+    independent presentation leases.
+- **Authority:** Persistence service
+  - **Responsibility:** Stores durable state identity and revision when the
+    placement policy requires it.
+- **Authority:** Developer diagnostics
+  - **Responsibility:** Observe definitions, instances, state, transitions,
+    markers, callbacks, and failures.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -376,7 +401,8 @@ authority.
 
 Per-state collision policy follows
 <!-- markdownlint-disable-next-line MD013 -->
-[World render-entity and physics runtime](world-render-entity-and-physics-runtime.md).
+[World render-entity and physics
+runtime](world-render-entity-and-physics-runtime.md).
 A state may change collision profile, body enablement, simulation mode, query
 availability, or physical material only through an accepted transition.
 

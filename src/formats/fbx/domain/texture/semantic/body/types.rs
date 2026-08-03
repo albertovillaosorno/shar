@@ -1,7 +1,3 @@
-// File:
-//   - types.rs
-// Path: src/formats/fbx/domain/texture/semantic/body/types.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Stable semantic body color, chart, rectangle, and complete plan values.
+//   - Types domain module.
 // - Must-Not:
-//   - Classify evidence, pack charts, rasterize pixels, or mutate characters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Immutable deterministic result metadata and one UV-remapped character.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Chart geometry and manifest projection need independent public contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another body module owns the same result identities.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Semantic body-atlas result values.
+//   - Types domain module.
 // - Description:
-//   - Exposes the complete pure-domain planning result to driven adapters.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Serialized by adapters and asserted by behavioral tests.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Chart and color ordering is deterministic.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - true
-//   - Reason: result values remain together so adapters consume one stable plan
-//   - contract without duplicating chart or evidence fields.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Deterministic semantic body-atlas result values.
+//! Types domain module.
+
 use std::collections::BTreeMap;
 
 use super::super::color::Rgba8;
@@ -79,11 +66,7 @@ pub enum ProjectionAxis {
 
 impl ProjectionAxis {
     /// Fixed projection evaluation order.
-    pub const ALL: [Self; 3] = [
-        Self::Xy,
-        Self::Xz,
-        Self::Yz,
-    ];
+    pub const ALL: [Self; 3] = [Self::Xy, Self::Xz, Self::Yz];
 
     /// Return the stable manifest identity.
     #[must_use]
@@ -98,23 +81,11 @@ impl ProjectionAxis {
 
     /// Project one three-dimensional position into two dimensions.
     #[must_use]
-    pub const fn project(
-        self,
-        position: [f32; 3],
-    ) -> [f32; 2] {
+    pub const fn project(self, position: [f32; 3]) -> [f32; 2] {
         match self {
-            Self::Xy | Self::SourceUv => [
-                position[0],
-                position[1],
-            ],
-            Self::Xz => [
-                position[0],
-                position[2],
-            ],
-            Self::Yz => [
-                position[1],
-                position[2],
-            ],
+            Self::Xy | Self::SourceUv => [position[0], position[1]],
+            Self::Xz => [position[0], position[2]],
+            Self::Yz => [position[1], position[2]],
         }
     }
 }
@@ -140,11 +111,7 @@ impl PixelRect {
     /// Returns `None` when checked arithmetic overflows.
     #[must_use]
     pub fn right(self) -> Option<u32> {
-        self.x
-            .checked_add(
-                self.width
-                    .checked_sub(1)?,
-            )
+        self.x.checked_add(self.width.checked_sub(1)?)
     }
 
     /// Return the inclusive bottom coordinate.
@@ -154,11 +121,7 @@ impl PixelRect {
     /// Returns `None` when checked arithmetic overflows.
     #[must_use]
     pub fn bottom(self) -> Option<u32> {
-        self.y
-            .checked_add(
-                self.height
-                    .checked_sub(1)?,
-            )
+        self.y.checked_add(self.height.checked_sub(1)?)
     }
 }
 

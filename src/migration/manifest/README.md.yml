@@ -1,0 +1,4 @@
+schema: shar-boundary/v1
+path: src/migration/manifest/README.md
+boundary: src/migration/manifest
+authority: README.md

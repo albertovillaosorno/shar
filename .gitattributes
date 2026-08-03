@@ -7,11 +7,35 @@
 *.vcxproj text eol=crlf
 *.vcxproj.filters text eol=crlf
 
-# Binary image assets
+# Binary file types governed by Jig
+*.7z binary
+*.a binary
+*.bmp binary
+*.dll binary
+*.dylib binary
+*.exe binary
+*.fbx binary
+*.gif binary
+*.gz binary
+*.ico binary
+*.jpeg binary
 *.jpg binary
+*.lib binary
+*.pdf binary
+*.png binary
+*.so binary
+*.uasset binary
+*.umap binary
+*.webp binary
+*.zip binary
+# End binary file types governed by Jig
 
 # Canonical authored World Partition map publication
+# jig-ignore-next-line: exact value is indivisible
 src/unreal/project/composition/uproject/Content/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld.umap filter=lfs diff=lfs merge=lfs -text
+# jig-ignore-next-line: exact value is indivisible
 src/unreal/project/composition/uproject/Content/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld_HLOD0_Instancing.uasset filter=lfs diff=lfs merge=lfs -text
+# jig-ignore-next-line: exact value is indivisible
 src/unreal/project/composition/uproject/Content/__ExternalActors__/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld/** filter=lfs diff=lfs merge=lfs -text
+# jig-ignore-next-line: exact value is indivisible
 src/unreal/project/composition/uproject/Content/__ExternalObjects__/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld/** filter=lfs diff=lfs merge=lfs -text

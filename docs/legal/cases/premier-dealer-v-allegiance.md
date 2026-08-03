@@ -52,4 +52,5 @@ based only on the functional purpose of the artifact.
   July 2026).
 - [RJ Control Consultants, Inc. v. Multiject, LLC](rj-control-v-multiject.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [File-format copyrightability research](../doctrines/file-format-copyrightability.md).
+- [File-format copyrightability
+  research](../doctrines/file-format-copyrightability.md).

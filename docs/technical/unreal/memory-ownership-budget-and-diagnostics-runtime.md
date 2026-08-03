@@ -6,12 +6,19 @@
 ## Governing decisions and specifications
 
 <!-- markdownlint-disable MD013 -->
-- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md) <!-- markdownlint-disable-line MD013 -->
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
-- [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
-- [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
-- [Native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md)
-- [Developer command and diagnostic runtime](developer-command-and-diagnostic-runtime.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md) <!-- markdownlint-disable-line MD013 -->
+- [Application lifecycle and mode
+  runtime](application-lifecycle-and-mode-runtime.md)
+- [Native asset load request and streaming
+  runtime](native-asset-load-request-and-streaming-runtime.md)
+- [Developer command and diagnostic
+  runtime](developer-command-and-diagnostic-runtime.md)
 <!-- markdownlint-enable MD013 -->
 
 ## Purpose
@@ -32,18 +39,30 @@ owners.
 
 ## Ownership
 
-<!-- markdownlint-disable MD013 -->
-| Authority | Responsibility |
-| :--- | :--- |
-| Unreal allocator and platform memory layer | Native allocation, alignment, low-level failure, and platform reporting. |
-| UObject and garbage collection | Reflected object reachability, collection, clusters, and weak references. |
-| Native C++ owners | RAII, smart pointers, containers, resources, and deterministic destruction. |
-| Asset Manager and streaming | Asset residency, bundle handles, package dependencies, and release. |
-| World and game features | World, Data Layer, level-instance, feature, actor, and component lifetimes. |
-| Memory budget subsystem | Product categories, target budgets, pressure, and evidence. |
-| Diagnostic subsystem | Memory Trace, Insights, LLM, statistics, leak tests, and reports. |
-| Domain and application services | Bounded data structures and explicit ownership contracts. |
-<!-- markdownlint-enable MD013 -->
+- **Authority:** Unreal allocator and platform memory layer
+  - **Responsibility:** Native allocation, alignment, low-level failure, and
+    platform reporting.
+- **Authority:** UObject and garbage collection
+  - **Responsibility:** Reflected object reachability, collection, clusters, and
+    weak references.
+- **Authority:** Native C++ owners
+  - **Responsibility:** RAII, smart pointers, containers, resources, and
+    deterministic destruction.
+- **Authority:** Asset Manager and streaming
+  - **Responsibility:** Asset residency, bundle handles, package dependencies,
+    and release.
+- **Authority:** World and game features
+  - **Responsibility:** World, Data Layer, level-instance, feature, actor, and
+    component lifetimes.
+- **Authority:** Memory budget subsystem
+  - **Responsibility:** Product categories, target budgets, pressure, and
+    evidence.
+- **Authority:** Diagnostic subsystem
+  - **Responsibility:** Memory Trace, Insights, LLM, statistics, leak tests, and
+    reports.
+- **Authority:** Domain and application services
+  - **Responsibility:** Bounded data structures and explicit ownership
+    contracts.
 
 The memory subsystem does not decide mission, progression, streaming
 destination, quality preset, or application mode. It reports budget and pressure
@@ -73,19 +92,35 @@ Unreal's allocator, garbage collector, containers, or tracing systems.
 
 Every long-lived allocation belongs to one declared scope:
 
-<!-- markdownlint-disable MD013 -->
-| Scope | Examples | Required release boundary |
-| :--- | :--- | :--- |
-| Process | Immutable catalogs, core modules, crash-safe metadata. | Engine shutdown. |
-| Game instance | Profile, application services, root UI, device configuration. | Game-instance teardown. |
-| World | Actors, components, physics, navigation, streaming projections. | World cleanup. |
-| Session | Mission, race, demo, replay, transient progression projections. | Session terminal result. |
-| Game feature | Feature assets, services, actions, and overlays. | Feature deactivation. |
-| Local player | Input, camera, HUD, menu, and player presentation. | Local-player removal. |
-| Load request | Shared or private asset handles and verification state. | Request or final dependent release. |
-| Task | Native temporary buffers and work products. | Task completion or cancellation. |
-| Frame | Scratch values valid only for one declared frame phase. | End of the owning frame phase. |
-<!-- markdownlint-enable MD013 -->
+- **Scope:** Process
+  - **Examples:** Immutable catalogs, core modules, crash-safe metadata.
+  - **Required release boundary:** Engine shutdown.
+- **Scope:** Game instance
+  - **Examples:** Profile, application services, root UI, device configuration.
+  - **Required release boundary:** Game-instance teardown.
+- **Scope:** World
+  - **Examples:** Actors, components, physics, navigation, streaming
+    projections.
+  - **Required release boundary:** World cleanup.
+- **Scope:** Session
+  - **Examples:** Mission, race, demo, replay, transient progression
+    projections.
+  - **Required release boundary:** Session terminal result.
+- **Scope:** Game feature
+  - **Examples:** Feature assets, services, actions, and overlays.
+  - **Required release boundary:** Feature deactivation.
+- **Scope:** Local player
+  - **Examples:** Input, camera, HUD, menu, and player presentation.
+  - **Required release boundary:** Local-player removal.
+- **Scope:** Load request
+  - **Examples:** Shared or private asset handles and verification state.
+  - **Required release boundary:** Request or final dependent release.
+- **Scope:** Task
+  - **Examples:** Native temporary buffers and work products.
+  - **Required release boundary:** Task completion or cancellation.
+- **Scope:** Frame
+  - **Examples:** Scratch values valid only for one declared frame phase.
+  - **Required release boundary:** End of the owning frame phase.
 
 An allocation cannot be described only as `temporary`, `level`, `special`,
 `other`, or `anywhere`. Its owner and release boundary must be observable.
@@ -200,20 +235,27 @@ meaning.
 
 A budget definition contains:
 
-<!-- markdownlint-disable MD013 -->
-| Field | Contract |
-| :--- | :--- |
-| `BudgetId` | Stable namespaced identity. |
-| `CategoryId` | Semantic usage category. |
-| `ScopePolicy` | Process, game instance, world, session, feature, player, or request. |
-| `SoftLimitBytes` | Warning and pressure threshold. |
-| `HardLimitBytes` | Maximum accepted product usage when enforceable. |
-| `PeakWindow` | Bounded interval for transient peaks. |
-| `Priority` | Required, important, optional, or diagnostic. |
-| `RecoveryPolicyId` | Permitted pressure response. |
-| `TargetPredicate` | Exact supported target and profile condition. |
-| `EvidencePolicy` | Required trace, report, and test observations. |
-<!-- markdownlint-enable MD013 -->
+- **Field:** `BudgetId`
+  - **Contract:** Stable namespaced identity.
+- **Field:** `CategoryId`
+  - **Contract:** Semantic usage category.
+- **Field:** `ScopePolicy`
+  - **Contract:** Process, game instance, world, session, feature, player, or
+    request.
+- **Field:** `SoftLimitBytes`
+  - **Contract:** Warning and pressure threshold.
+- **Field:** `HardLimitBytes`
+  - **Contract:** Maximum accepted product usage when enforceable.
+- **Field:** `PeakWindow`
+  - **Contract:** Bounded interval for transient peaks.
+- **Field:** `Priority`
+  - **Contract:** Required, important, optional, or diagnostic.
+- **Field:** `RecoveryPolicyId`
+  - **Contract:** Permitted pressure response.
+- **Field:** `TargetPredicate`
+  - **Contract:** Exact supported target and profile condition.
+- **Field:** `EvidencePolicy`
+  - **Contract:** Required trace, report, and test observations.
 
 Budgets are not allocator IDs. Multiple owners and engine systems may contribute
 to one semantic budget.

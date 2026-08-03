@@ -1,7 +1,3 @@
-// File:
-//   - diagnostics.rs
-// Path: tests/formats/lmlm/filesystem_entry_sink/diagnostics.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Public materialization-error diagnostic regressions.
+//   - Diagnostics test module.
 // - Must-Not:
-//   - Read private archives or create filesystem state.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic entries and nonexisting output paths.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another sink error family needs independent fixtures.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Materialization errors no longer contain path evidence.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Proves sink diagnostics escape untrusted path text.
+//   - Diagnostics test module.
 // - Description:
-//   - Exercises entry-validation and destination-collision errors.
+//   - Implements the declared test module responsibility for lmlm.
 // - Usage:
-//   - Compiled only by the LMLM filesystem sink test module.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Every scenario fails before filesystem mutation.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Public materialization-error diagnostic regressions.
-//!
-//! Direct callers must receive single-line path evidence.
+//! Diagnostics test module.
 
 use std::path::Path;
 
@@ -51,18 +37,12 @@ use crate::FileEntry;
 
 #[test]
 fn materialization_errors_escape_untrusted_paths() {
-    let entries = [
-        FileEntry {
-            path: "unsafe\nname.bin".to_owned(),
-            offset: 0,
-            size: 1,
-        },
-    ];
-    let result = materialize_entries(
-        b"x",
-        &entries,
-        Path::new("output"),
-    );
+    let entries = [FileEntry {
+        path: "unsafe\nname.bin".to_owned(),
+        offset: 0,
+        size: 1,
+    }];
+    let result = materialize_entries(b"x", &entries, Path::new("output"));
 
     assert!(
         matches!(

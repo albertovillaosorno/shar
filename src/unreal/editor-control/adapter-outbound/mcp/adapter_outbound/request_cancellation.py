@@ -1,7 +1,3 @@
-# File:
-#   - request_cancellation.py
-# Path: src/unreal/editor-control/adapter-outbound/mcp/adapter_outbound/request_cancellation.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,43 +6,38 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Timeout-triggered MCP cancellation notification handling.
+#   - Request cancellation outbound adapter.
 # - Must-Not:
-#   - Allocate request IDs, invoke tools, or manage session lifecycle.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Bounded cancellation POSTs and timeout error enrichment.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Cancellation acknowledgement gains independent protocol states.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another adapter module owns the same cancellation invariant.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Cancels timed-out native Unreal MCP requests.
+#   - Request cancellation outbound adapter.
 # - Description:
-#   - Preserves the original timeout while reporting cancellation failure.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Called by the serialized transport after a tool-call timeout.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Uses a five-second cancellation grace window.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-#
-# Large file:
-#   - false
-#
-"""Timeout-triggered native Unreal MCP request cancellation."""
+
+"""Request cancellation outbound adapter."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from mcp.adapter_outbound.json_rpc_request import build_json_rpc_request
-from mcp.domain.errors import UnrealMcpError, fail_protocol, fail_timeout
+from mcp.domain.errors import UnrealMcpError
+from mcp.domain.errors import fail_protocol
+from mcp.domain.errors import fail_timeout
 
 if TYPE_CHECKING:
     from mcp.adapter_outbound.http_exchange import HttpExchangeClient
@@ -70,6 +61,7 @@ def cancel_timed_out_request(
         session: Active initialized MCP session.
         request_id: Timed-out JSON-RPC request identity.
         timeout_error: Original timeout failure to preserve.
+
     """
     try:
         cancellation = exchange.post(

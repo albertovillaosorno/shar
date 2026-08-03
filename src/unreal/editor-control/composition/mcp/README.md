@@ -47,7 +47,8 @@ an external repository-owned MCP service becomes the safest interoperable
 boundary. Enabling that fallback requires a reviewed ADR, tests, and an explicit
 project configuration change; it is not part of the default architecture.
 
-Installed project plugins remain local under `src/unreal/project/composition/uproject/Plugins/` and
+Installed project plugins remain local under
+`src/unreal/project/composition/uproject/Plugins/` and
 are ignored by Git.
 
 The tracked Unreal project defaults enable automatic server startup, preserve

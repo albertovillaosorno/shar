@@ -1,7 +1,3 @@
-// File:
-//   - directory_creation.rs
-// Path: tests/foundation/filesystem/directory_creation.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for explicit directory-creation inputs.
+//   - Directory creation test module.
 // - Must-Not:
-//   - Test caller policy or depend on machine-specific paths.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Assert that false-success directory requests fail closed.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another filesystem capability needs independent coverage.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test file owns the same directory-creation contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Directory creation regression tests.
+//   - Directory creation test module.
 // - Description:
-//   - Protects public local composition from reporting no-op creation success.
+//   - Implements the declared test module responsibility for filesystem.
 // - Usage:
-//   - Runs through the filesystem crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Invalid requests must not be accepted as successful work.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for explicit directory-creation inputs.
-//!
-//! Invalid no-op requests must fail instead of reporting created state.
+//! Directory creation test module.
+
 use std::io;
 use std::path::Path;
 
@@ -53,19 +40,17 @@ fn empty_directory_path_is_rejected() -> Result<(), String> {
     let error = match local::create_dir_all(Path::new("")) {
         Ok(()) => {
             return Err(
-                "an empty path reported directory creation success".to_owned(),
+                "an empty path reported directory creation success".to_owned()
             );
-        }
+        },
         Err(error) => error,
     };
 
     if error.kind() != io::ErrorKind::InvalidInput {
-        return Err(
-            format!(
-                "unexpected empty-path error kind: {:?}",
-                error.kind()
-            ),
-        );
+        return Err(format!(
+            "unexpected empty-path error kind: {:?}",
+            error.kind()
+        ));
     }
     Ok(())
 }

@@ -1,5 +1,5 @@
 [package]
-name = "shar-sha256"
+name = "shar_sha256"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,4 +8,7 @@ publish = false
 
 [lib]
 name = "shar_sha256"
-path = "lib.rs"
+path = "composition/lib.rs"
+
+[lints]
+workspace = true

@@ -1,7 +1,3 @@
-// File:
-//   - entry.rs
-// Path: src/formats/lmlm/domain/entry.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,42 +6,31 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - The immutable public identity of one parsed LMLM file payload.
+//   - Entry domain module.
 // - Must-Not:
-//   - Parse archives, validate byte ranges, or write extracted files.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Archive-relative path, offset, and size data.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Entry identity gains independently versioned domain concepts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another LMLM domain record proves the same identity contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Defines the parsed file-entry value object.
+//   - Entry domain module.
 // - Description:
-//   - Carries the stable path and payload range produced by parsing.
+//   - Implements the declared domain module responsibility for lmlm.
 // - Usage:
-//   - Returned by parse and consumed by bounded extraction adapters.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Values are validated before the parser returns them.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Domain value for one parsed LMLM file entry.
-//!
-//! The record carries identity and declared payload location only. Parsing,
-//! structural validation, and filesystem materialization remain separate.
+//! Entry domain module.
 
-/// A single extractable file and its archive-relative payload range.
+/// One validated file entry declared by an LMLM archive.
 #[derive(Debug)]
 pub struct FileEntry {
     /// Path relative to the archive root, using `/` separators.

@@ -1,7 +1,3 @@
-// File:
-//   - explicit_paths.rs
-// Path: tests/foundation/filesystem/explicit_paths.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for explicit public path inputs.
+//   - Explicit paths test module.
 // - Must-Not:
-//   - Test caller policy or depend on machine-specific paths.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Assert that empty paths fail before optional-state mapping.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another malformed input needs independent coverage.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test file owns the same explicit-path contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Explicit path regression tests.
+//   - Explicit paths test module.
 // - Description:
-//   - Protects optional reads from treating empty input as missing state.
+//   - Implements the declared test module responsibility for filesystem.
 // - Usage:
-//   - Runs through the filesystem crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Empty explicit paths fail with invalid input.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for explicit public path inputs.
-//!
-//! Empty paths must fail before optional missing-state mapping.
+//! Explicit paths test module.
 
 #[cfg(windows)]
 #[path = "support/junction.rs"]
@@ -58,17 +44,15 @@ fn empty_optional_read_path_is_rejected() -> Result<(), String> {
     let result = local::read_optional_utf8(Path::new(""));
     let Err(error) = result else {
         return Err(
-            "empty path unexpectedly returned optional state".to_owned(),
+            "empty path unexpectedly returned optional state".to_owned()
         );
     };
 
     if error.kind() != io::ErrorKind::InvalidInput {
-        return Err(
-            format!(
-                "unexpected empty-path error kind: {:?}",
-                error.kind()
-            ),
-        );
+        return Err(format!(
+            "unexpected empty-path error kind: {:?}",
+            error.kind()
+        ));
     }
     Ok(())
 }
@@ -76,23 +60,16 @@ fn empty_optional_read_path_is_rejected() -> Result<(), String> {
 #[cfg(windows)]
 #[test]
 fn read_rejects_linked_path_prefix() -> Result<(), String> {
-    let root = std::env::temp_dir().join(
-        format!(
-            "schoenwald-filesystem-linked-read-{}",
-            std::process::id()
-        ),
-    );
+    let root = std::env::temp_dir().join(format!(
+        "schoenwald-filesystem-linked-read-{}",
+        std::process::id()
+    ));
     let target = root.join("target");
     let link = root.join("link");
     fs::create_dir_all(&target).map_err(|error| error.to_string())?;
-    fs::write(
-        target.join("private.bin"),
-        b"private",
-    )
-    .map_err(|error| error.to_string())?;
-    support::create_junction(
-        &link, &target,
-    )?;
+    fs::write(target.join("private.bin"), b"private")
+        .map_err(|error| error.to_string())?;
+    support::create_junction(&link, &target)?;
 
     let result = local::read_bytes(&link.join("private.bin"));
 
@@ -101,12 +78,10 @@ fn read_rejects_linked_path_prefix() -> Result<(), String> {
         return Err("read followed linked path prefix".to_owned());
     };
     if error.kind() != io::ErrorKind::InvalidInput {
-        return Err(
-            format!(
-                "unexpected linked-read error kind: {:?}",
-                error.kind()
-            ),
-        );
+        return Err(format!(
+            "unexpected linked-read error kind: {:?}",
+            error.kind()
+        ));
     }
     Ok(())
 }
@@ -114,22 +89,16 @@ fn read_rejects_linked_path_prefix() -> Result<(), String> {
 #[cfg(windows)]
 #[test]
 fn reserved_device_write_path_is_rejected() -> Result<(), String> {
-    let result = local::write_bytes(
-        Path::new("NUL"),
-        b"payload",
-        false,
-    );
+    let result = local::write_bytes(Path::new("NUL"), b"payload", false);
     let Err(error) = result else {
         return Err("reserved device accepted a file write".to_owned());
     };
 
     if error.kind() != io::ErrorKind::InvalidInput {
-        return Err(
-            format!(
-                "unexpected reserved-device error kind: {:?}",
-                error.kind()
-            ),
-        );
+        return Err(format!(
+            "unexpected reserved-device error kind: {:?}",
+            error.kind()
+        ));
     }
     Ok(())
 }

@@ -1,7 +1,3 @@
-// File:
-//   - execute.rs
-// Path: src/migration/pipeline/application/execute.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,41 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Process-neutral orchestration of pipeline operations through one port.
+//   - Execute application service.
 // - Must-Not:
-//   - Select local adapters, traverse storage, or invoke external tools.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Dispatch explicit extraction, manifest, audit, and planning requests.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when one operation family gains an independent application
-//   - policy.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another application service owns the same operation dispatch contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Pipeline application service.
+//   - Execute application service.
 // - Description:
-//   - Keeps inbound adapters independent from concrete local phase
-//   - execution.
+//   - Implements the declared application service responsibility for pipeline.
 // - Usage:
-//   - Constructed by driving adapters with an explicit operations provider.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No provider or path is selected implicitly.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Process-neutral pipeline application orchestration.
-//!
-//! Every operation is delegated through the outbound operations port.
+//! Execute application service.
+
 use std::path::Path;
 
 use crate::domain::{
@@ -67,9 +52,7 @@ where
     /// Binds application orchestration to one explicit provider.
     #[must_use]
     pub const fn new(provider: &'provider Provider) -> Self {
-        Self {
-            provider,
-        }
+        Self { provider }
     }
 
     /// Runs the complete ordered extraction pipeline.
@@ -81,8 +64,7 @@ where
         &self,
         config: &PipelineConfig,
     ) -> PipelineOutcome<PipelineReport> {
-        self.provider
-            .run(config)
+        self.provider.run(config)
     }
 
     /// Exports only movie packages.
@@ -94,8 +76,7 @@ where
         &self,
         config: &PipelineConfig,
     ) -> PipelineOutcome<PipelineReport> {
-        self.provider
-            .export_movies(config)
+        self.provider.export_movies(config)
     }
 
     /// Exports only LMLM packages.
@@ -107,8 +88,7 @@ where
         &self,
         config: &PipelineConfig,
     ) -> PipelineOutcome<PipelineReport> {
-        self.provider
-            .export_lmlm(config)
+        self.provider.export_lmlm(config)
     }
 
     /// Writes the phase-two minor-unit manifest.
@@ -122,10 +102,7 @@ where
         extracted_root: &Path,
     ) -> PipelineOutcome<StageReport> {
         self.provider
-            .manifest_minor_units(
-                game_root,
-                extracted_root,
-            )
+            .manifest_minor_units(game_root, extracted_root)
     }
 
     /// Fills derived minor-unit metadata.
@@ -137,8 +114,7 @@ where
         &self,
         extracted_root: &Path,
     ) -> PipelineOutcome<StageReport> {
-        self.provider
-            .fill_minor_unit_metadata(extracted_root)
+        self.provider.fill_minor_unit_metadata(extracted_root)
     }
 
     /// Applies deterministic minor-unit metadata edits.
@@ -150,8 +126,7 @@ where
         &self,
         extracted_root: &Path,
     ) -> PipelineOutcome<StageReport> {
-        self.provider
-            .edit_minor_unit_metadata(extracted_root)
+        self.provider.edit_minor_unit_metadata(extracted_root)
     }
 
     /// Writes the minor-unit package index.
@@ -163,8 +138,7 @@ where
         &self,
         extracted_root: &Path,
     ) -> PipelineOutcome<StageReport> {
-        self.provider
-            .index_minor_units(extracted_root)
+        self.provider.index_minor_units(extracted_root)
     }
 
     /// Audits the minor-unit manifest and package evidence.
@@ -176,8 +150,7 @@ where
         &self,
         extracted_root: &Path,
     ) -> PipelineOutcome<StageReport> {
-        self.provider
-            .audit_minor_units(extracted_root)
+        self.provider.audit_minor_units(extracted_root)
     }
 
     /// Writes one selected phase-three FBX manifest.
@@ -192,9 +165,7 @@ where
         output_dir: &Path,
     ) -> PipelineOutcome<StageReport> {
         self.provider
-            .write_fbx_manifest(
-                index_path, selector, output_dir,
-            )
+            .write_fbx_manifest(index_path, selector, output_dir)
     }
 
     /// Exports every skinned character package as a verified FBX catalog.
@@ -209,9 +180,7 @@ where
         base_root: &Path,
     ) -> PipelineOutcome<StageReport> {
         self.provider
-            .export_character_catalog(
-                index_path, output_dir, base_root,
-            )
+            .export_character_catalog(index_path, output_dir, base_root)
     }
 
     /// Exports one canonical standalone Wasp Camera FBX artifact.
@@ -226,9 +195,7 @@ where
         base_root: &Path,
     ) -> PipelineOutcome<StageReport> {
         self.provider
-            .export_wasp_camera(
-                index_path, output_dir, base_root,
-            )
+            .export_wasp_camera(index_path, output_dir, base_root)
     }
 
     /// Exports one canonical standalone Wrench model FBX artifact.
@@ -243,9 +210,7 @@ where
         base_root: &Path,
     ) -> PipelineOutcome<StageReport> {
         self.provider
-            .export_wrench(
-                index_path, output_dir, base_root,
-            )
+            .export_wrench(index_path, output_dir, base_root)
     }
 
     /// Exports the complete non-world card and mission prop catalog.
@@ -260,9 +225,7 @@ where
         output_dir: &Path,
     ) -> PipelineOutcome<StageReport> {
         self.provider
-            .export_prop_catalog(
-                index_path, game_root, output_dir,
-            )
+            .export_prop_catalog(index_path, game_root, output_dir)
     }
 
     /// Exports the complete semantically separated vehicle FBX catalog.
@@ -277,9 +240,7 @@ where
         output_dir: &Path,
     ) -> PipelineOutcome<StageReport> {
         self.provider
-            .export_vehicle_catalog(
-                index_path, game_root, output_dir,
-            )
+            .export_vehicle_catalog(index_path, game_root, output_dir)
     }
 
     /// Exports every terrain-world model prop under hash-free names.
@@ -294,9 +255,7 @@ where
         output_dir: &Path,
     ) -> PipelineOutcome<StageReport> {
         self.provider
-            .export_world_prop_catalog(
-                index_path, game_root, output_dir,
-            )
+            .export_world_prop_catalog(index_path, game_root, output_dir)
     }
 
     /// Exports one separated static master-world FBX for all main game levels.
@@ -311,13 +270,12 @@ where
         coordinate_root: &Path,
         output_dir: &Path,
     ) -> PipelineOutcome<StageReport> {
-        self.provider
-            .export_world_master(
-                index_path,
-                game_root,
-                coordinate_root,
-                output_dir,
-            )
+        self.provider.export_world_master(
+            index_path,
+            game_root,
+            coordinate_root,
+            output_dir,
+        )
     }
 
     /// Exports one canonical one-mesh Unreal structural guide.
@@ -332,13 +290,12 @@ where
         coordinate_root: &Path,
         output_dir: &Path,
     ) -> PipelineOutcome<StageReport> {
-        self.provider
-            .export_structural_guide(
-                index_path,
-                game_root,
-                coordinate_root,
-                output_dir,
-            )
+        self.provider.export_structural_guide(
+            index_path,
+            game_root,
+            coordinate_root,
+            output_dir,
+        )
     }
 
     /// Exports one selected phase-three package as an FBX artifact.
@@ -354,9 +311,8 @@ where
         base_root: &Path,
         options: FbxExportOptions,
     ) -> PipelineOutcome<StageReport> {
-        self.provider
-            .export_fbx_package(
-                index_path, selector, output_dir, base_root, options,
-            )
+        self.provider.export_fbx_package(
+            index_path, selector, output_dir, base_root, options,
+        )
     }
 }

@@ -113,8 +113,11 @@ inducement, access-control, contract, or platform-policy risk.
 - [17 U.S.C. § 106](../statutes/17-usc-106.md).
 - [17 U.S.C. § 107](../statutes/17-usc-107.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Metro-Goldwyn-Mayer Studios Inc. v. Grokster, Ltd.](mgm-studios-v-grokster.md).
+- [Metro-Goldwyn-Mayer Studios Inc. v. Grokster,
+  Ltd.](mgm-studios-v-grokster.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [American Broadcasting Companies, Inc. v. Aereo, Inc.](american-broadcasting-v-aereo.md).
+- [American Broadcasting Companies, Inc. v. Aereo,
+  Inc.](american-broadcasting-v-aereo.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Gameplay video, streaming, and monetization](../platforms/gameplay-video-streaming-and-monetization.md).
+- [Gameplay video, streaming, and
+  monetization](../platforms/gameplay-video-streaming-and-monetization.md).

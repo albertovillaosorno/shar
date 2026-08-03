@@ -1,7 +1,3 @@
-# File:
-#   - skill_markdown_policy.py
-# Path: src/unreal/editor-control/adapter-outbound/mcp/adapter_outbound/skill_markdown_policy.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,37 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Narrow Markdown lint guards for generated unbreakable lines.
+#   - Skill markdown policy outbound adapter.
 # - Must-Not:
-#   - Wrap prose, render documents, access files, or invoke external tools.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Guarding stable hashes, revision tokens, and Markdown destinations.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Generated Markdown gains another independently configured lint policy.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another adapter owns the same generated-line lint contract.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Preserves strict line-length validation for unbreakable generated values.
+#   - Skill markdown policy outbound adapter.
 # - Description:
-#   - Emits one exact next-line marker only when a stable line exceeds the
-#     canonical 80-column limit.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Called by generated skill renderers for values that cannot be wrapped.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Lines at or below the canonical limit are emitted without a marker.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
-"""Narrow line-length policy for generated Unreal MCP Markdown."""
+
+"""Skill markdown policy outbound adapter."""
 
 from __future__ import annotations
 
@@ -56,6 +44,7 @@ def render_unbreakable_line(line: str) -> tuple[str, ...]:
 
     Returns:
         The line alone, or one exact MD013 marker followed by the line.
+
     """
     if len(line) <= _MARKDOWN_LINE_LIMIT:
         return (line,)

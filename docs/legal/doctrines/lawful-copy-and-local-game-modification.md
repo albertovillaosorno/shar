@@ -132,19 +132,24 @@ reverse engineering as machine maintenance.
 - [17 U.S.C. § 117](../statutes/17-usc-117.md).
 - [17 U.S.C. § 1201](../statutes/17-usc-1201-trafficking.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Bowers v. Baystate Technologies, Inc.](../cases/bowers-v-baystate-technologies.md).
+- [Bowers v. Baystate Technologies,
+  Inc.](../cases/bowers-v-baystate-technologies.md).
 - [Kirtsaeng v. John Wiley & Sons, Inc.](../cases/kirtsaeng-v-john-wiley.md).
 - [Krause v. Titleserv, Inc](../cases/krause-v-titleserv.md).
 - [Vault Corp. v. Quaid Software Ltd.](../cases/vault-v-quaid-software.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Storage Technology Corp. v. Custom Hardware Engineering & Consulting, Inc.](../cases/storage-technology-v-custom-hardware.md).
+- [Storage Technology Corp. v. Custom Hardware Engineering & Consulting,
+  Inc.](../cases/storage-technology-v-custom-hardware.md).
 - [Vernor v. Autodesk, Inc](../cases/vernor-v-autodesk.md).
 - [UMG Recordings, Inc. v. Augusto](../cases/umg-recordings-v-augusto.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Wall Data Inc. v. Los Angeles County Sheriff's Department](../cases/wall-data-v-los-angeles-county-sheriff.md).
+- [Wall Data Inc. v. Los Angeles County Sheriff's
+  Department](../cases/wall-data-v-los-angeles-county-sheriff.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Lewis Galoob Toys, Inc. v. Nintendo of America, Inc](../cases/lewis-galoob-toys-v-nintendo.md).
+- [Lewis Galoob Toys, Inc. v. Nintendo of America,
+  Inc](../cases/lewis-galoob-toys-v-nintendo.md).
 - [Micro Star v. FormGen, Inc](../cases/micro-star-v-formgen.md).
 - [Derivative works and game mods](derivative-works-and-game-mods.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Software license reverse-engineering clauses](../contracts/software-license-reverse-engineering-clauses.md).
+- [Software license reverse-engineering
+  clauses](../contracts/software-license-reverse-engineering-clauses.md).

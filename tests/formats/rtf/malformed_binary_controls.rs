@@ -1,7 +1,3 @@
-// File:
-//   - malformed_binary_controls.rs
-// Path: tests/formats/rtf/malformed_binary_controls.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,37 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Deterministic RTF regression coverage for malformed binary controls.
+//   - Malformed binary controls test module.
 // - Must-Not:
-//   - Depend on private documents or parser implementation details.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Public malformed fixtures and fail-closed output assertions.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another binary-control family needs independent fixtures.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another RTF test module owns the same malformed-binary contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Verifies invalid binary lengths cannot expose opaque payload bytes.
+//   - Malformed binary controls test module.
 // - Description:
-//   - Exercises public fail-closed behavior for missing and negative lengths.
+//   - Implements the declared test module responsibility for rtf.
 // - Usage:
-//   - Executed through cargo test for the rtf crate.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Fixtures remain deterministic and repository-local.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Public regression coverage for malformed RTF binary controls.
+//! Malformed binary controls test module.
 
 use rtf::rtf_to_markdown;
 use schoenwald_cli as _;
@@ -51,12 +39,6 @@ fn invalid_binary_lengths_hide_opaque_group_payloads() {
     let missing = rtf_to_markdown(br"{\rtf1 A{\bin payload}B}");
     let negative = rtf_to_markdown(br"{\rtf1 A{\bin-1 payload}B}");
 
-    assert_eq!(
-        missing,
-        "AB\n"
-    );
-    assert_eq!(
-        negative,
-        "AB\n"
-    );
+    assert_eq!(missing, "AB\n");
+    assert_eq!(negative, "AB\n");
 }

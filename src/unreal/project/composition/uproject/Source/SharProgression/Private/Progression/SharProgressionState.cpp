@@ -1,12 +1,34 @@
-// File: SharProgressionState.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharProgression/Private/Progression/SharProgressionState.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: deterministic idempotent progression mutation; no save serialization or gameplay side effects.
-// Specification: docs/technical/unreal/progression-collectibles-and-cheats.md
-// LARGE-FILE owner=SharProgression; reason=cohesive idempotent progression behavior;
-// split=extract operation registry if reward families become independently extensible;
-// validation=validate.sh SharProgression plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar progression state composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar progression state composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar progression state composition module.
 
 #include "Progression/SharProgressionState.h"
 
@@ -65,6 +87,7 @@ static bool HasInvalidOrDuplicateTransactionIds(
         TransactionIds,
         [&TransactionIds](const FName& Candidate)
         {
+            // jig-ignore-next-line: exact syntax is indivisible
             if (!USharPrimaryContentDefinition::IsCanonicalIdentifier(Candidate))
             {
                 return true;

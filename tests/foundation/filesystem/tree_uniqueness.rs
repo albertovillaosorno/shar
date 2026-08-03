@@ -1,7 +1,3 @@
-// File:
-//   - tree_uniqueness.rs
-// Path: tests/foundation/filesystem/tree_uniqueness.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for unique tree snapshot entries.
+//   - Tree uniqueness test module.
 // - Must-Not:
-//   - Depend on local storage or caller-specific deduplication.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Supply duplicate port output and assert one public path identity.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another identity rule needs unrelated fixtures.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test file owns the same uniqueness contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Tree uniqueness regression tests.
+//   - Tree uniqueness test module.
 // - Description:
-//   - Ensures duplicate adapter rows cannot multiply downstream work.
+//   - Implements the declared test module responsibility for filesystem.
 // - Usage:
-//   - Runs through the filesystem crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - One path appears at most once in a snapshot.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for unique tree snapshot entries.
-//!
-//! Duplicate provider rows must collapse before leaving the application layer.
+//! Tree uniqueness test module.
+
 use std::io;
 use std::path::{Path, PathBuf};
 
@@ -52,32 +39,25 @@ use schoenwald_filesystem::ports::TreeReader;
 struct DuplicateTree;
 
 impl TreeReader for DuplicateTree {
-    fn regular_files(
-        &self,
-        _root: &Path,
-    ) -> io::Result<Vec<PathBuf>> {
-        Ok(
-            vec![
-                PathBuf::from("root/file.bin"),
-                PathBuf::from("root/file.bin"),
-            ],
-        )
+    fn regular_files(&self, _root: &Path) -> io::Result<Vec<PathBuf>> {
+        Ok(vec![
+            PathBuf::from("root/file.bin"),
+            PathBuf::from("root/file.bin"),
+        ])
     }
 }
 
 #[test]
 fn application_removes_duplicate_port_rows() -> Result<(), String> {
-    let actual = CollectRegularFiles::execute(
-        &DuplicateTree,
-        Path::new("root"),
-    )
-    .map_err(|error| error.to_string())?;
+    let actual =
+        CollectRegularFiles::execute(&DuplicateTree, Path::new("root"))
+            .map_err(|error| error.to_string())?;
     let expected = vec![PathBuf::from("root/file.bin")];
 
     if actual != expected {
-        return Err(
-            format!("duplicate paths escaped the use case: {actual:?}"),
-        );
+        return Err(format!(
+            "duplicate paths escaped the use case: {actual:?}"
+        ));
     }
     Ok(())
 }

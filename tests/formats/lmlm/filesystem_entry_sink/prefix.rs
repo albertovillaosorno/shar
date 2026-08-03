@@ -1,7 +1,3 @@
-// File:
-//   - prefix.rs
-// Path: tests/formats/lmlm/filesystem_entry_sink/prefix.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for file/directory destination prefix collisions.
+//   - Prefix test module.
 // - Must-Not:
-//   - Read private archives or retain temporary output directories.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic entries and process-local filesystem roots.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another destination identity family needs independent fixtures.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - The parent materialization tests remain below the file-size boundary.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Proves prefix collisions fail before publication begins.
+//   - Prefix test module.
 // - Description:
-//   - Exercises both archive entry orders for one file/directory conflict.
+//   - Implements the declared test module responsibility for lmlm.
 // - Usage:
-//   - Compiled only by the LMLM filesystem sink test module.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Every temporary root is removed before and after each scenario.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Prefix-collision regressions for LMLM materialization.
-//!
-//! Both entry orders must fail before creating either destination.
+//! Prefix test module.
 
 use std::io;
 
@@ -52,16 +38,12 @@ use crate::FileEntry;
 #[test]
 fn rejects_file_directory_prefix_collisions_before_writing()
 -> Result<(), String> {
-    for parent_first in [
-        true, false,
-    ] {
-        let root = test_root(
-            if parent_first {
-                "prefix-parent-first"
-            } else {
-                "prefix-child-first"
-            },
-        );
+    for parent_first in [true, false] {
+        let root = test_root(if parent_first {
+            "prefix-parent-first"
+        } else {
+            "prefix-child-first"
+        });
         remove_test_root(&root)?;
         let parent = FileEntry {
             path: "node".to_owned(),
@@ -74,39 +56,27 @@ fn rejects_file_directory_prefix_collisions_before_writing()
             size: 1,
         };
         let entries = if parent_first {
-            vec![
-                parent, child,
-            ]
+            vec![parent, child]
         } else {
-            vec![
-                child, parent,
-            ]
+            vec![child, parent]
         };
-        let result = materialize_entries(
-            b"ab", &entries, &root,
-        );
-        let parent_exists = root
-            .join("node")
-            .exists();
-        let child_exists = root
-            .join("node/child.bin")
-            .exists();
+        let result = materialize_entries(b"ab", &entries, &root);
+        let parent_exists = root.join("node").exists();
+        let child_exists = root.join("node/child.bin").exists();
         remove_test_root(&root)?;
         match result {
             Err(error)
                 if error.kind() == io::ErrorKind::AlreadyExists
                     && !parent_exists
-                    && !child_exists => {}
+                    && !child_exists => {},
             other => {
-                return Err(
-                    format!(
-                        "file/directory prefix collisions must fail before \
+                return Err(format!(
+                    "file/directory prefix collisions must fail before \
                          writes, got {other:?}, \
                          parent_exists={parent_exists}, \
                          child_exists={child_exists}"
-                    ),
-                );
-            }
+                ));
+            },
         }
     }
     Ok(())

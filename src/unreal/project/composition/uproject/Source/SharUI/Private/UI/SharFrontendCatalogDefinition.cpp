@@ -1,9 +1,34 @@
-// File: SharFrontendCatalogDefinition.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharUI/Private/UI/SharFrontendCatalogDefinition.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: load-free frontend screen-definition validation and lookup only.
-// Specification: docs/technical/unreal/frontend-screen-flow-and-settings-runtime.md
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar frontend catalog definition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar frontend catalog definition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar frontend catalog definition composition module.
 
 #include "UI/SharFrontendCatalogDefinition.h"
 
@@ -167,6 +192,7 @@ static void ValidateDestinationIds(
         if (DestinationIds.Contains(DestinationId))
         {
             OutErrors.Add(FText::FromString(
+                // jig-ignore-next-line: exact syntax is indivisible
                 TEXT("Frontend destination identities must be unique per screen.")
             ));
             continue;

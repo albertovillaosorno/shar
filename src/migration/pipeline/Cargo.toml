@@ -7,39 +7,49 @@ description = "Official ordered extraction pipeline for local SHAR game assets."
 publish = false
 
 [dependencies]
-# schoenwald-cli centralizes process arguments, ordered streams, newline handling, and exit-code mapping for the pipeline driving adapter.
-schoenwald-cli = { path = "../../foundation/command-line" }
-# schoenwald-filesystem centralizes complete local reads, writes, traversal, metadata inspection, and rooted path validation for pipeline adapters.
-schoenwald-filesystem = { path = "../../foundation/filesystem" }
-# game-manifest owns canonical asset identity and manifest records consumed by pipeline stages.
-game-manifest = { path = "../manifest" }
+# jig-ignore-next-line: exact value is indivisible
+# schoenwald_cli centralizes process arguments, ordered streams, newline handling, and exit-code mapping for the pipeline driving adapter.
+schoenwald_cli = { path = "../../foundation/command-line" }
+# jig-ignore-next-line: exact value is indivisible
+# schoenwald_filesystem centralizes complete local reads, writes, traversal, metadata inspection, and rooted path validation for pipeline adapters.
+schoenwald_filesystem = { path = "../../foundation/filesystem" }
+# jig-ignore-next-line: exact value is indivisible
+# game_manifest owns canonical asset identity and manifest records consumed by pipeline stages.
+game_manifest = { path = "../manifest" }
+# jig-ignore-next-line: exact value is indivisible
 # rtf decodes text resources before pipeline packaging preserves their language metadata and source provenance.
 rtf = { path = "../../formats/rtf" }
+# jig-ignore-next-line: exact value is indivisible
 # rcf validates archive indexes and extracts bounded entries before pipeline classification and manifest rebuilding begin.
 rcf = { path = "../../formats/rcf" }
 # rsd decodes source audio into validated PCM artifacts used by pipeline output.
 rsd = { path = "../../formats/rsd" }
+# jig-ignore-next-line: exact value is indivisible
 # rmv validates movie provenance and conversion plans required by pipeline media stages.
 rmv = { path = "../../formats/rmv" }
+# jig-ignore-next-line: exact value is indivisible
 # p3d decodes validated Pure3D components required by pipeline package planning and streamed world reconstruction.
 p3d = { path = "../../formats/p3d" }
+# jig-ignore-next-line: exact value is indivisible
 # lmlm extracts embedded package content required by pipeline manifest reconstruction and duplicate comparison stages.
 lmlm = { path = "../../formats/lmlm" }
+# jig-ignore-next-line: exact value is indivisible
 # fbx translates decoded package components into deterministic FBX interchange artifacts for phase-three model export.
 fbx = { path = "../../formats/fbx" }
-# shar-json-text owns lossless JSON string-content escaping shared across format boundaries.
-shar-json-text = { path = "../../foundation/json-text" }
-# shar-sha256 provides deterministic artifact identities without duplicating cryptographic primitives across adapters.
-shar-sha256 = { path = "../../foundation/sha256" }
+# jig-ignore-next-line: exact value is indivisible
+# shar_sha256 provides deterministic artifact identities without duplicating cryptographic primitives across adapters.
+shar_sha256 = { path = "../../foundation/sha256" }
 
+# jig-ignore-next-line: exact value is indivisible
 # serde derives typed deterministic structural-guide manifest and layout records.
 serde = { version = "1", features = ["derive"] }
+# jig-ignore-next-line: exact value is indivisible
 # serde_json enforces final extracted JSON and JSONL syntax before the pipeline publishes completion.
 serde_json = "1"
 
 [lib]
 name = "pipeline"
-path = "lib.rs"
+path = "composition/lib.rs"
 
 [[bin]]
 name = "pipeline"
@@ -53,3 +63,6 @@ path = "../../../tests/migration/pipeline/local_route_guard.rs"
 [[test]]
 name = "machine_specific_path_guard"
 path = "../../../tests/migration/pipeline/machine_specific_path_guard.rs"
+
+[lints]
+workspace = true

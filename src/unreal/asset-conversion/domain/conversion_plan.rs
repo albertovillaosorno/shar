@@ -1,7 +1,3 @@
-// File:
-//   - conversion_plan.rs
-// Path: src/unreal/asset-conversion/domain/conversion_plan.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,46 +6,31 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Accepted conversion formats and deterministic native target plan records.
+//   - Conversion plan domain module.
 // - Must-Not:
-//   - Read source files, invoke Unreal Engine, encode MCP calls, or select an
-//   - IO adapter.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Typed conversion evidence, target-family selection, dependencies, and
-//   - object identities supplied by pipeline orchestration.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - One source family gains independently testable planning invariants.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another module owns the same source-format and target-plan contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Native Unreal asset conversion plan records.
+//   - Conversion plan domain module.
 // - Description:
-//   - Represents normalized JSON, WAV, HAP, and FBX evidence without editor
-//   - transport or live project behavior.
+//   - Implements the declared responsibility for asset conversion.
 // - Usage:
-//   - Constructed by pipeline orchestration before a separate terminal client
-//   - applies the plan through native Unreal tools.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No format, target, destination, dependency, or editor action is implicit.
-//
-// ADRs:
-// - docs/adr/unreal/architecture.md
-// - docs/adr/pipeline/eleven-phase-remake-delivery-roadmap.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Typed records for the four accepted Unreal conversion source families.
-//!
-//! Pipeline owns validation and construction until Phase 6 implementation.
+//! Conversion plan domain module.
 
-/// Accepted normalized source format.
+/// Normalized source representation accepted by Unreal conversion.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SourceFormat {
     /// Structured normalized records.

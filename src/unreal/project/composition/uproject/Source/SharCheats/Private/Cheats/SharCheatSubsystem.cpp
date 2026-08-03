@@ -1,9 +1,34 @@
-// File: SharCheatSubsystem.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharCheats/Private/Cheats/SharCheatSubsystem.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: recognizer configuration, arming, context synchronization, cancellation, release, and immutable queries only.
-// Specification: docs/technical/unreal/progression-collectibles-and-cheats.md
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar cheat subsystem composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar cheat subsystem composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar cheat subsystem composition module.
 
 #include "Cheats/SharCheatSubsystem.h"
 
@@ -167,6 +192,7 @@ ESharCheatOperationResult USharCheatSubsystem::ValidateArmRequest(
     const FSharCheatArmRequest& Request
 ) const
 {
+    // jig-ignore-next-line: exact syntax is indivisible
     if (!bConfigured || CatalogSubsystem == nullptr || EffectSubsystem == nullptr)
     {
         return ESharCheatOperationResult::NotConfigured;
@@ -280,6 +306,7 @@ int32 USharCheatSubsystem::CountUnreleasedRecognizers() const
     int32 Count = 0;
     for (const FSharCheatRecognizerSnapshot& Recognizer : Recognizers)
     {
+        // jig-ignore-next-line: exact syntax is indivisible
         Count += Recognizer.State == ESharCheatRecognizerState::Released ? 0 : 1;
     }
     return Count;

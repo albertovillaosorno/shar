@@ -49,7 +49,8 @@ examples, or documentation.
 
 ## Covered Material
 
-Unreal Engine 5.8, as selected by `src/unreal/project/composition/uproject/shar.uproject`, together with
+Unreal Engine 5.8, as selected by
+`src/unreal/project/composition/uproject/shar.uproject`, together with
 Epic-provided engine modules and project-generation tooling required by the SHAR
 Unreal target. Organization identity and general Epic source routing are
 recorded separately in [Epic Games](../organizations/epic-games.md).
@@ -129,279 +130,340 @@ royalty or seat analysis.
   July 2026).
 - Epic Games (2026) *Common UI Quickstart Guide for Unreal Engine 5.8*.
   Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/common-ui-quickstart-guide-for-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/common-ui-quickstart-guide-for-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 15 July 2026).
 - Epic Games (2026) *Programming Subsystems in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/programming-subsystems-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/programming-subsystems-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 15 July 2026).
 - Epic Games (2026) *Asset Management in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/asset-management-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/asset-management-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 15 July 2026).
 - Epic Games (2026) *Data Validation in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/unreal-engine/data-validation-in-unreal-engine?lang=en-US>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/unreal-engine/data-validation-in-unreal-engine?lang=en-US> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 17 July 2026).
 - Epic Games (2026) *Saving and Loading Your Game in Unreal Engine 5.8*.
   Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/unreal-engine/saving-and-loading-your-game-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/unreal-engine/saving-and-loading-your-game-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 17 July 2026).
 - Epic Games (2026) *ISaveGameSystem in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/unreal-engine/API/Runtime/Engine/ISaveGameSystem?lang=en-US>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/unreal-engine/API/Runtime/Engine/ISaveGameSystem?lang=en-US> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 17 July 2026).
 - Epic Games (2026) *Asset Localization in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/asset-localization-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/asset-localization-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 17 July 2026).
 - Epic Games (2026) *UDialogueWave in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Runtime/Engine/UDialogueWave>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Runtime/Engine/UDialogueWave> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 17 July 2026).
 - Epic Games (2026) *Networking Overview for Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/unreal-engine/networking-overview-for-unreal-engine?lang=en-US>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/unreal-engine/networking-overview-for-unreal-engine?lang=en-US> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 17 July 2026).
 - Epic Games (2026) *Setting Up Dedicated Servers in Unreal Engine 5.8*.
   Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/unreal-engine/setting-up-dedicated-servers-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/unreal-engine/setting-up-dedicated-servers-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 17 July 2026).
 - Epic Games (2026) *Set Global Time Dilation in Unreal Engine 5.8*.
   Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/BlueprintAPI/Utilities/Time/SetGlobalTimeDilation>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/BlueprintAPI/Utilities/Time/SetGlobalTimeDilation> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 17 July 2026).
 - Epic Games (2026) *Asynchronous Asset Loading in Unreal Engine 5.8*.
   Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/asynchronous-asset-loading-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/asynchronous-asset-loading-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *UMG Viewmodel for Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/umg-viewmodel-for-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/umg-viewmodel-for-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 15 July 2026).
 - Epic Games (2026) *Sequencer Cinematic Editor for Unreal Engine 5.8*.
   Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/sequencer-cinematic-editor-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/sequencer-cinematic-editor-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 15 July 2026).
 - Epic Games (2026) *Localization Overview for Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/localization-overview-for-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/localization-overview-for-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 15 July 2026).
 - Epic Games (2026) *Control Rig in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/control-rig-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/control-rig-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 15 July 2026).
 - Epic Games (2026) *Visibility and Occlusion Culling in Unreal Engine 5.8*.
   Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/visibility-and-occlusion-culling-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/visibility-and-occlusion-culling-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 15 July 2026).
 - Epic Games (2026) *Post Process Effects in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/post-process-effects-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/post-process-effects-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Niagara Overview in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/overview-of-niagara-effects-for-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/overview-of-niagara-effects-for-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Actor Ticking in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/actor-ticking-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/actor-ticking-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Blueprint Spline Components Overview in Unreal Engine 5.8*.
   Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/blueprint-spline-components-overview-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/blueprint-spline-components-overview-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Navigation System in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/navigation-system-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/navigation-system-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Audio Engine Overview in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/audio-engine-overview-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/audio-engine-overview-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Sound Attenuation in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/sound-attenuation-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/sound-attenuation-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *MetaSounds in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/metasounds-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/metasounds-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Sound Concurrency Reference Guide for Unreal Engine 5.8*.
   Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/sound-concurrency-reference-guide>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/sound-concurrency-reference-guide> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Audio Mixer Overview in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/audio-mixer-overview-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/audio-mixer-overview-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Sound Classes in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/sound-classes-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/sound-classes-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Overview of Submixes in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/overview-of-submixes-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/overview-of-submixes-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Audio Volumes in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/audio-volumes-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/audio-volumes-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Audio Settings in Unreal Engine Project Settings 5.8*.
   Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/audio-settings-in-the-unreal-engine-project-settings>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/audio-settings-in-the-unreal-engine-project-settings> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Audio Modulation Overview in Unreal Engine 5.8*. Available
   at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/audio-modulation-overview-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/audio-modulation-overview-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Audio Stream Caching Overview in Unreal Engine 5.8*.
   Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/an-overview-of-audio-stream-caching-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/an-overview-of-audio-stream-caching-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Enhanced Input in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/enhanced-input-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/enhanced-input-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Networked Movement in the Character Movement Component for
   Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/understanding-networked-movement-in-the-character-movement-component-for-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/understanding-networked-movement-in-the-character-movement-component-for-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *UCharacterMovementComponent in Unreal Engine 5.8*.
   Available
   at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Runtime/Engine/UCharacterMovementComponent>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Runtime/Engine/UCharacterMovementComponent> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Overview of StateTree in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/overview-of-state-tree-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/overview-of-state-tree-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Importing Static Meshes Using FBX in Unreal Engine 5.8*.
   Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/importing-static-meshes-using-fbx-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/importing-static-meshes-using-fbx-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 17 July 2026).
 - Epic Games (2026) *Importing Skeletal Meshes Using FBX in Unreal Engine 5.8*.
   Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/importing-skeletal-meshes-using-fbx-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/importing-skeletal-meshes-using-fbx-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 17 July 2026).
 - Epic Games (2026) *Importing Static Mesh LODs Using FBX in Unreal Engine 5.8*.
   Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/importing-static-mesh-lods-using-fbx-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/importing-static-mesh-lods-using-fbx-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 17 July 2026).
 - Epic Games (2026) *Importing Skeletal Mesh LODs Using FBX in Unreal Engine
   5.8*.
   Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/importing-skeletal-mesh-lods-using-fbx-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/importing-skeletal-mesh-lods-using-fbx-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 17 July 2026).
 - Epic Games (2026) *Importing Materials Reference in Unreal Engine 5.8*.
   Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/importing-materials-reference-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/importing-materials-reference-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 17 July 2026).
 - Epic Games (2026) *Importing Animations Using FBX in Unreal Engine 5.8*.
   Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/importing-animations-using-fbx-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/importing-animations-using-fbx-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *FBX Import Options Reference in Unreal Engine 5.8*.
   Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/fbx-import-options-reference-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/fbx-import-options-reference-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Animation Sequences in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-sequences-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-sequences-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Animation Montage in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-montage-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-montage-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Animation Blueprints in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-blueprints-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-blueprints-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 17 July 2026).
 - Epic Games (2026) *Animation Sync Groups in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-sync-groups-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/animation-sync-groups-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 17 July 2026).
 - Epic Games (2026) *Root Motion in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/root-motion-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/root-motion-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 17 July 2026).
 - Epic Games (2026) *Motion Warping in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/motion-warping-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/motion-warping-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 17 July 2026).
 - Epic Games (2026) *Chaos Vehicles in Unreal Engine 5.8*. Available at:
   <!-- markdownlint-disable-next-line MD013 -->
   <https://dev.epicgames.com/documentation/en-us/unreal-engine/chaos-vehicles>
   (Accessed: 16 July 2026).
 - Epic Games (2026) *How to Set Up Vehicles in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/how-to-set-up-vehicles-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/how-to-set-up-vehicles-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *UChaosWheeledVehicleMovementComponent in Unreal Engine
   5.8*.
   Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Plugins/ChaosVehicles/UChaosWheeledVehicleMovementComp->
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Plugins/ChaosVehicles/UChaosWheeledVehicleMovementComp-> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Chaos Modular Vehicles Overview in Unreal Engine 5.8*.
   Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/chaos-modular-vehicles-overview>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/chaos-modular-vehicles-overview> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Epic Games (2026) *Physics in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/physics-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/physics-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 15 July 2026).
 - Epic Games (2026) *Collision in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/collision-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/collision-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 15 July 2026).
 - Epic Games (2026) *Traces with Raycasts in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/traces-with-raycasts-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/traces-with-raycasts-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 15 July 2026).
 - Epic Games (2026) *Physics Components in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/physics-components-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/physics-components-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 15 July 2026).
 - Epic Games (2026) *Instanced Static Mesh Component in Unreal Engine 5.8*.
   Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/instanced-static-mesh-component-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/instanced-static-mesh-component-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 15 July 2026).
 - Epic Games (2026) *Chaos Visual Debugger in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/chaos-visual-debugger-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/chaos-visual-debugger-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 15 July 2026).
 - Epic Games (2026) *Media Framework Technical Reference for Unreal Engine 5.8*.
   Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/media-framework-technical-reference-for-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/media-framework-technical-reference-for-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 14 July 2026).
 - Epic Games (2026) *Electra Media Player in Unreal Engine 5.8*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://dev.epicgames.com/documentation/en-us/unreal-engine/electra-media-player-in-unreal-engine>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://dev.epicgames.com/documentation/en-us/unreal-engine/electra-media-player-in-unreal-engine> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 14 July 2026).
 - Epic Games (n.d.) *Accessing Unreal Engine source code on GitHub*. Available
   at: <https://www.unrealengine.com/en-US/ue-on-github> (Accessed: 14 July
@@ -411,6 +473,7 @@ royalty or seat analysis.
   is linked and authorized as Epic documents. Available at:
   <https://github.com/EpicGames/UnrealEngine> (Accessed: 14 July 2026).
 - SHAR repository and selected engine installation (2026),
-  `src/unreal/project/composition/uproject/shar.uproject`, `README.md`, and Unreal Engine `Build.version`
+  `src/unreal/project/composition/uproject/shar.uproject`, `README.md`, and
+  Unreal Engine `Build.version`
   identifying version 5.8.0, changelist 55116800, promoted-build status, and
   branch `++UE5+Release-5.8`.

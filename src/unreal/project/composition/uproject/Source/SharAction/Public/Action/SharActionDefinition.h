@@ -1,12 +1,34 @@
-// File: SharActionDefinition.h
-// Path: src/unreal/project/composition/uproject/Source/SharAction/Public/Action/SharActionDefinition.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: immutable reusable action contract only; execution remains in registered native StateTree tasks.
-// ADR: docs/adr/unreal/runtime/typed-state-tree-action-sequences.md
-// LARGE-FILE owner=SharAction; reason=cohesive reflected action definition and resource claim schema;
-// split=extract presentation policy if independently versioned assets appear;
-// validation=validate.sh SharAction plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar action definition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar action definition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar action definition composition module.
 
 #pragma once
 

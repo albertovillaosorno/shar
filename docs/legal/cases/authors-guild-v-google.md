@@ -89,13 +89,15 @@ The Supreme Court denied certiorari without addressing the merits. A denial of
 certiorari is not approval of the lower court's reasoning.
 
 <!-- markdownlint-disable-next-line MD013 -->
-[*Andy Warhol Foundation for the Visual Arts, Inc. v. Goldsmith*](andy-warhol-foundation-v-goldsmith.md)
+[*Andy Warhol Foundation for the Visual Arts, Inc. v.
+Goldsmith*](andy-warhol-foundation-v-goldsmith.md)
 requires the first factor to examine the specific challenged use, its purpose,
 and commercial context. A claimed new purpose does not replace analysis of all
 four factors.
 
 <!-- markdownlint-disable-next-line MD013 -->
-[*Hachette Book Group, Inc. v. Internet Archive*](hachette-book-group-v-internet-archive.md)
+[*Hachette Book Group, Inc. v. Internet
+Archive*](hachette-book-group-v-internet-archive.md)
 later distinguished Google Books. The Second Circuit rejected fair use where
 complete digital books were made available for users to read for free. That
 service served the same purpose as the original books and substituted for
@@ -156,8 +158,9 @@ outside public history unless artifact-specific distribution authority exists.
 
 - Justia (2015), *Authors Guild v. Google, Inc.*, 804 F.3d 202,
   public-domain opinion duplicate. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://law.justia.com/cases/federal/appellate-courts/ca2/13-4829/13-4829-2015-10-16.html>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://law.justia.com/cases/federal/appellate-courts/ca2/13-4829/13-4829-2015-10-16.html> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Supreme Court of the United States, docket 15-849, certiorari denied
   2016-04-18. Available at:
@@ -165,9 +168,11 @@ outside public history unless artifact-specific distribution authority exists.
   (Accessed: 16 July 2026).
 - Justia (2024), *Hachette Book Group, Inc. v. Internet Archive*, 115 F.4th 163,
   public-domain opinion duplicate. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://law.justia.com/cases/federal/appellate-courts/ca2/23-1260/23-1260-2024-09-04.html>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://law.justia.com/cases/federal/appellate-courts/ca2/23-1260/23-1260-2024-09-04.html> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - [17 U.S.C. § 107](../statutes/17-usc-107.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Copyright-Safe Publication Boundary](../repository/copyright-safe-publication-boundary.md).
+- [Copyright-Safe Publication
+  Boundary](../repository/copyright-safe-publication-boundary.md).

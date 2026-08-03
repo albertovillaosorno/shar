@@ -1,7 +1,3 @@
-# File:
-#   - __init__.py
-# Path: tests/unreal/project/__init__.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,35 +6,26 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - The package marker for Unreal tooling regression tests.
+#   - Project test module.
 # - Must-Not:
-#   - Contain production behavior or shared mutable state.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Pytest and type checking to discover sliced tests.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Another test package targets a separate product boundary.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another marker owns the same test discovery surface.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Package marker for Unreal tooling regression tests.
+#   - Project test module.
 # - Description:
-#   - Keeps the feature-sliced tooling suite importable.
+#   - Implements the declared test module responsibility for project.
 # - Usage:
-#   - Discovered by the repository-root pytest configuration.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Test package import performs no setup.
-#
-# ADRs:
-# - docs/adr/unreal/runtime/runtime-parity-test-boundary.md
-#
-# Large file:
-#   - false
+#   - Invalid or missing inputs fail explicitly.
 #
 
-
-"""Regression tests for the SHAR Unreal project."""
+"""Project test module."""

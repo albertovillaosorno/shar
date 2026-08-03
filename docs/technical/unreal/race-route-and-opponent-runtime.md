@@ -5,27 +5,37 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
+- [Data-driven Unreal gameplay content
+  catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+- [Gameplay census, presentation, and development-content
+  boundary](gameplay-census-presentation-and-development-boundary.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Gameplay census, presentation, and development-content boundary](gameplay-census-presentation-and-development-boundary.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Driving, traffic, and vehicle behavior parity](../../adr/gameplay/vehicles/driving-traffic-and-vehicle-ai.md)
+- [Driving, traffic, and vehicle behavior
+  parity](../../adr/gameplay/vehicles/driving-traffic-and-vehicle-ai.md)
 - [Vehicle AI and route runtime](vehicle-ai-and-route-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Mission definition, stage, and objective runtime](mission-definition-stage-and-objective-runtime.md)
+- [Mission definition, stage, and objective
+  runtime](mission-definition-stage-and-objective-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Local split-screen minigame session UI runtime](local-split-screen-minigame-session-ui-runtime.md)
+- [Local split-screen minigame session UI
+  runtime](local-split-screen-minigame-session-ui-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Local supersprint race session runtime](local-supersprint-race-session-runtime.md)
+- [Local supersprint race session
+  runtime](local-supersprint-race-session-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [HUD, radar, camera, and navigation parity](../../adr/unreal/ui/hud-radar-camera-and-navigation.md)
+- [HUD, radar, camera, and navigation
+  parity](../../adr/unreal/ui/hud-radar-camera-and-navigation.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Event-driven music and ambience](../../adr/unreal/runtime/event-driven-music-and-ambience.md)
+- [Event-driven music and
+  ambience](../../adr/unreal/runtime/event-driven-music-and-ambience.md)
 
 ## Purpose
 
@@ -41,7 +51,8 @@ consumed by that mission state.
 The built-in local supersprint mode consumes the same route, checkpoint, lap,
 position, timer, and finish semantics through
 <!-- markdownlint-disable-next-line MD013 -->
-[Local supersprint race session runtime](local-supersprint-race-session-runtime.md),
+[Local supersprint race session
+runtime](local-supersprint-race-session-runtime.md),
 which additionally owns local-player slots, controller assignments, vehicles,
 artificial intelligence, countdown, finish windows, results, replay, and
 cleanup.
@@ -72,23 +83,36 @@ success.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `RaceId` | Stable canonical race identity. |
-| `LevelId` | Owning level. |
-| `RaceClass` | Time trial, circuit, checkpoint, wager, or mission race. |
-| `RouteId` | Canonical ordered route definition. |
-| `StartGridId` | Ordered player and opponent start transforms. |
-| `LapPolicy` | Exact lap count or no-lap checkpoint policy. |
-| `TimePolicy` | Exact timer or untimed policy. |
-| `OpponentIds` | Ordered opponent placements. |
-| `FailurePolicyId` | Damage, out-of-vehicle, position, timeout, and mission rules. |
-| `ResetPolicyId` | Player, opponent, route, timer, and world restoration. |
-| `CatchUpPolicyId` | Explicit AI speed and shortcut policy. |
-| `PresentationProfileId` | HUD, radar, dialogue, audio, and finish presentation. |
-| `RewardPolicyId` | Optional wager or street-race-set contribution. |
-| `RequiredLayers` | Exact Runtime Data Layers and streamed route cells. |
-| `RevisionToken` | Deterministic generated-data revision. |
+- **Field:** `RaceId`
+  - **Contract:** Stable canonical race identity.
+- **Field:** `LevelId`
+  - **Contract:** Owning level.
+- **Field:** `RaceClass`
+  - **Contract:** Time trial, circuit, checkpoint, wager, or mission race.
+- **Field:** `RouteId`
+  - **Contract:** Canonical ordered route definition.
+- **Field:** `StartGridId`
+  - **Contract:** Ordered player and opponent start transforms.
+- **Field:** `LapPolicy`
+  - **Contract:** Exact lap count or no-lap checkpoint policy.
+- **Field:** `TimePolicy`
+  - **Contract:** Exact timer or untimed policy.
+- **Field:** `OpponentIds`
+  - **Contract:** Ordered opponent placements.
+- **Field:** `FailurePolicyId`
+  - **Contract:** Damage, out-of-vehicle, position, timeout, and mission rules.
+- **Field:** `ResetPolicyId`
+  - **Contract:** Player, opponent, route, timer, and world restoration.
+- **Field:** `CatchUpPolicyId`
+  - **Contract:** Explicit AI speed and shortcut policy.
+- **Field:** `PresentationProfileId`
+  - **Contract:** HUD, radar, dialogue, audio, and finish presentation.
+- **Field:** `RewardPolicyId`
+  - **Contract:** Optional wager or street-race-set contribution.
+- **Field:** `RequiredLayers`
+  - **Contract:** Exact Runtime Data Layers and streamed route cells.
+- **Field:** `RevisionToken`
+  - **Contract:** Deterministic generated-data revision.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -239,17 +263,24 @@ vehicle ownership.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `OpponentPlacementId` | Stable race-scoped placement identity. |
-| `VehicleId` | Canonical vehicle definition. |
-| `DriverCharacterId` | Optional canonical driver presentation. |
-| `StartSlotOrdinal` | Exact starting-grid position. |
-| `RouteControllerId` | Circuit, waypoint, pursuit, or mission race controller. |
-| `CatchUpProfileId` | Deterministic speed and recovery policy. |
-| `ShortcutPolicyId` | Allowed shortcut decisions. |
-| `FailureDisposition` | Recover, withdraw, or fail owning mission. |
-| `PresentationProfileId` | HUD marker, radar icon, dialogue, and audio. |
+- **Field:** `OpponentPlacementId`
+  - **Contract:** Stable race-scoped placement identity.
+- **Field:** `VehicleId`
+  - **Contract:** Canonical vehicle definition.
+- **Field:** `DriverCharacterId`
+  - **Contract:** Optional canonical driver presentation.
+- **Field:** `StartSlotOrdinal`
+  - **Contract:** Exact starting-grid position.
+- **Field:** `RouteControllerId`
+  - **Contract:** Circuit, waypoint, pursuit, or mission race controller.
+- **Field:** `CatchUpProfileId`
+  - **Contract:** Deterministic speed and recovery policy.
+- **Field:** `ShortcutPolicyId`
+  - **Contract:** Allowed shortcut decisions.
+- **Field:** `FailureDisposition`
+  - **Contract:** Recover, withdraw, or fail owning mission.
+- **Field:** `PresentationProfileId`
+  - **Contract:** HUD marker, radar icon, dialogue, and audio.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -403,7 +434,8 @@ Race start, warning, win, lose, retry, and leave-vehicle events are distinct.
 The built-in local split-screen race consumes the same canonical route, lap,
 position, countdown, and result state through
 <!-- markdownlint-disable-next-line MD013 -->
-[Local split-screen minigame session UI runtime](local-split-screen-minigame-session-ui-runtime.md).
+[Local split-screen minigame session UI
+runtime](local-split-screen-minigame-session-ui-runtime.md).
 Its lobby and summary remain presentation adapters; the race service owns start,
 finish, points, wins, times, and did-not-finish results.
 
@@ -411,12 +443,22 @@ finish, points, wins, times, and did-not-finish results.
 
 <!-- markdownlint-disable MD013 -->
 
-| Race identity | Verified contract |
-| :--- | :--- |
-| `rich_district_2_circuit_level_04` | Three laps; six AI route waypoints and five dense player checkpoints; opponents are Apu in the Longhorn, the Nuclear Waste Truck, and the Garbage Truck; first place required; player-vehicle destruction or ten seconds out of vehicle fails; no timer. |
-| `squidport_checkpoint_level_03` | Five ordered checkpoints; opponents are Marge in the Canyonero, Sports Car A, and the road Pickup; first place required; player-vehicle destruction or ten seconds out of vehicle fails. |
-| `squidport_tourist_resort_time_trial_level_06` | Two laps through eight ordered checkpoints within 115 seconds; player-vehicle destruction or ten seconds out of vehicle fails. |
-| `squidport_2_checkpoint_level_06` | Six ordered checkpoints against Homer in the canonical Level 7 sports car placement; first place required; player-vehicle destruction or ten seconds out of vehicle fails. |
+- **Race identity:** `rich_district_2_circuit_level_04`
+  - **Verified contract:** Three laps; six AI route waypoints and five dense
+    player checkpoints; opponents are Apu in the Longhorn, the Nuclear Waste
+    Truck, and the Garbage Truck; first place required; player-vehicle
+    destruction or ten seconds out of vehicle fails; no timer.
+- **Race identity:** `squidport_checkpoint_level_03`
+  - **Verified contract:** Five ordered checkpoints; opponents are Marge in the
+    Canyonero, Sports Car A, and the road Pickup; first place required;
+    player-vehicle destruction or ten seconds out of vehicle fails.
+- **Race identity:** `squidport_tourist_resort_time_trial_level_06`
+  - **Verified contract:** Two laps through eight ordered checkpoints within 115
+    seconds; player-vehicle destruction or ten seconds out of vehicle fails.
+- **Race identity:** `squidport_2_checkpoint_level_06`
+  - **Verified contract:** Six ordered checkpoints against Homer in the
+    canonical Level 7 sports car placement; first place required; player-vehicle
+    destruction or ten seconds out of vehicle fails.
 
 <!-- markdownlint-enable MD013 -->
 

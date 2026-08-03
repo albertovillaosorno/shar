@@ -1,0 +1,5 @@
+schema: shar-surface/v1
+path: src/migration/manifest/Cargo.toml
+function: manifest
+kind: project
+authority: Cargo.toml

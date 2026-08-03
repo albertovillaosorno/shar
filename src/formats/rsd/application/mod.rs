@@ -1,7 +1,3 @@
-// File:
-//   - application.rs
-// Path: src/formats/rsd/application/mod.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,41 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - rsd module behavior for application.
+//   - Application application service.
 // - Must-Not:
-//   - Violate repository architecture, path, provenance, or output rules.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Operations required to validate and execute application.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when application contains two independently testable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another rsd module owns the same module boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Application services for batch RSD export.
+//   - Application application service.
 // - Description:
-//   - Defines application data and behavior for rsd root.
+//   - Implements the declared application service responsibility for rsd.
 // - Usage:
-//   - Used by rsd root code that needs application.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No implicit output outside the repository is allowed.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Application services for batch RSD export.
-//!
-//! This boundary keeps application services for batch rsd export explicit and
-//! returns deterministic results to rsd callers.
+//! Application application service.
+
 mod export;
 
 pub use export::ExportRoots;

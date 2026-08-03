@@ -1,7 +1,3 @@
-// File:
-//   - mutable_output_sink.rs
-// Path: tests/foundation/command-line/mutable_output_sink.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for ordinary mutable output sinks.
+//   - Mutable output sink test module.
 // - Must-Not:
-//   - Require interior mutability or operating-system streams.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Record exact output in a directly owned vector.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another port receiver contract needs independent coverage.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Output sinks no longer own mutable presentation state.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Mutable output-sink regression.
+//   - Mutable output sink test module.
 // - Description:
-//   - Proves sequential sinks can mutate through exclusive port access.
+//   - Implements the declared test module responsibility for command line.
 // - Usage:
-//   - Executed by the schoenwald-cli integration test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - The program emits one standard-output chunk.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for directly mutable output sinks.
-//!
-//! Sequential presentation must not force runtime interior-mutability wrappers.
+//! Mutable output sink test module.
 
 use std::io;
 
@@ -62,10 +48,7 @@ impl ArgumentSource for EmptyArguments {
 struct OneChunkProgram;
 
 impl CliProgram for OneChunkProgram {
-    fn execute(
-        &self,
-        _arguments: &[String],
-    ) -> CommandOutcome {
+    fn execute(&self, _arguments: &[String]) -> CommandOutcome {
         CommandOutcome::success().stdout("direct")
     }
 }
@@ -73,25 +56,12 @@ impl CliProgram for OneChunkProgram {
 #[derive(Default)]
 struct VecOutput {
     /// Exact chunks accepted by the sink.
-    chunks: Vec<(
-        OutputStream,
-        String,
-    )>,
+    chunks: Vec<(OutputStream, String)>,
 }
 
 impl OutputSink for VecOutput {
-    fn write(
-        &mut self,
-        stream: OutputStream,
-        text: &str,
-    ) -> io::Result<()> {
-        self.chunks
-            .push(
-                (
-                    stream,
-                    text.to_owned(),
-                ),
-            );
+    fn write(&mut self, stream: OutputStream, text: &str) -> io::Result<()> {
+        self.chunks.push((stream, text.to_owned()));
         Ok(())
     }
 }
@@ -101,25 +71,9 @@ fn invocation_accepts_a_directly_mutable_output_sink() {
     let mut arguments = EmptyArguments;
     let mut output = VecOutput::default();
 
-    let result = RunInvocation::execute(
-        &OneChunkProgram,
-        &mut arguments,
-        &mut output,
-    );
+    let result =
+        RunInvocation::execute(&OneChunkProgram, &mut arguments, &mut output);
 
-    assert!(
-        matches!(
-            result,
-            Ok(ExitStatus::Success)
-        )
-    );
-    assert_eq!(
-        output.chunks,
-        [
-            (
-                OutputStream::Stdout,
-                "direct".to_owned()
-            )
-        ]
-    );
+    assert!(matches!(result, Ok(ExitStatus::Success)));
+    assert_eq!(output.chunks, [(OutputStream::Stdout, "direct".to_owned())]);
 }

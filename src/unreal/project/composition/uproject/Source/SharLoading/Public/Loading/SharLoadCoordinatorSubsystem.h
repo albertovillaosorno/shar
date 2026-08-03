@@ -1,12 +1,34 @@
-// File: SharLoadCoordinatorSubsystem.h
-// Path: src/unreal/project/composition/uproject/Source/SharLoading/Public/Loading/SharLoadCoordinatorSubsystem.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: immutable load plans, request arbitration, progress, cancellation, and terminal results only; adapters own actual handles and package operations.
-// Specification: docs/technical/unreal/native-asset-load-request-and-streaming-runtime.md
-// LARGE-FILE owner=SharLoading; reason=cohesive reflected load-plan and request transaction contract;
-// split=extract diagnostics if immutable progress history becomes persistent;
-// validation=validate.sh SharLoading plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar load coordinator subsystem composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar load coordinator subsystem composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar load coordinator subsystem composition module.
 
 #pragma once
 

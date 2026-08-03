@@ -1,7 +1,3 @@
-# File:
-#   - __init__.py
-# Path: src/unreal/editor-control/adapter-outbound/mcp/adapter_outbound/__init__.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,34 +6,26 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - The public facade for this hexagonal package boundary.
+#   - Adapter outbound outbound adapter.
 # - Must-Not:
-#   - Introduce outward dependencies into inner package layers.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Explicit imports that preserve the package dependency direction.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - The module gains two independently testable contracts.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module owns the same contract without a distinct invariant.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Defines one package facade for the terminal translator.
+#   - Adapter outbound outbound adapter.
 # - Description:
-#   - Keeps package discovery explicit and side-effect free.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Imported through normal Python package resolution.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Importing the package performs no network or file IO.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
-"""Infrastructure-facing translator adapters."""
+
+"""Adapter outbound outbound adapter."""

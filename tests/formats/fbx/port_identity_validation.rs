@@ -1,7 +1,3 @@
-// File:
-//   - port_identity_validation.rs
-// Path: tests/formats/fbx/port_identity_validation.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for FBX port and adapter identity validation.
+//   - Port identity validation test module.
 // - Must-Not:
-//   - Read private assets, discover packages, or invoke external processes.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic request identities and public constructor assertions.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - One adapter requires filesystem or process integration evidence.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Port identity rules move behind one shared value object.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects driving and driven boundaries from noncanonical identities.
+//   - Port identity validation test module.
 // - Description:
-//   - Exercises synthetic values at explicit port and adapter constructors.
+//   - Implements the declared test module responsibility for fbx.
 // - Usage:
-//   - Run through the fbx crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No local files or external processes are required.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for FBX port and adapter identity validation.
-//!
-//! Synthetic identities prove boundary constructors fail closed before work.
+//! Port identity validation test module.
 
 use fbx::adapters::driving::cli::{
     CliExportSelection, CliExportSelectionError,
@@ -58,23 +44,14 @@ use shar_sha256 as _;
 
 #[test]
 fn rejects_padded_cli_output_paths() {
-    let result = CliExportSelection::new(
-        "package",
-        " output.fbx",
-    );
+    let result = CliExportSelection::new("package", " output.fbx");
 
-    assert_eq!(
-        result,
-        Err(CliExportSelectionError::NonCanonicalOutputFile)
-    );
+    assert_eq!(result, Err(CliExportSelectionError::NonCanonicalOutputFile));
 }
 
 #[test]
 fn rejects_padded_cli_package_selectors() {
-    let result = CliExportSelection::new(
-        " package",
-        "output.fbx",
-    );
+    let result = CliExportSelection::new(" package", "output.fbx");
 
     assert_eq!(
         result,
@@ -85,17 +62,11 @@ fn rejects_padded_cli_package_selectors() {
 #[test]
 fn rejects_control_characters_in_cli_export_fields() {
     assert_eq!(
-        CliExportSelection::new(
-            "package\nalias",
-            "output.fbx",
-        ),
+        CliExportSelection::new("package\nalias", "output.fbx",),
         Err(CliExportSelectionError::NonCanonicalPackageSelector)
     );
     assert_eq!(
-        CliExportSelection::new(
-            "package",
-            "output\nalias.fbx",
-        ),
+        CliExportSelection::new("package", "output\nalias.fbx",),
         Err(CliExportSelectionError::NonCanonicalOutputFile)
     );
 }
@@ -104,20 +75,14 @@ fn rejects_control_characters_in_cli_export_fields() {
 fn rejects_padded_scene_artifact_receipt_locations() {
     let result = SceneArtifactReceipt::new(" location");
 
-    assert_eq!(
-        result,
-        Err(SceneArtifactError::NonCanonicalReceiptLocation)
-    );
+    assert_eq!(result, Err(SceneArtifactError::NonCanonicalReceiptLocation));
 }
 
 #[test]
 fn rejects_padded_scene_artifact_target_ids() {
     let result = SceneArtifactTarget::new(" artifact");
 
-    assert_eq!(
-        result,
-        Err(SceneArtifactError::NonCanonicalArtifactId)
-    );
+    assert_eq!(result, Err(SceneArtifactError::NonCanonicalArtifactId));
 }
 
 #[test]

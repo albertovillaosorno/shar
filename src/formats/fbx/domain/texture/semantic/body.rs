@@ -1,7 +1,3 @@
-// File:
-//   - body.rs
-// Path: src/formats/fbx/domain/texture/semantic/body.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,41 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - The public pure-domain facade and orchestration for semantic body-atlas
-//   - planning.
+//   - Body domain module.
 // - Must-Not:
-//   - Read files, decode PNG containers, serialize manifests, or alter
-//   - topology, skeletons, skin weights, normals, or animation data.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Focused recipe, evidence, chart, raster, and UV-remapping modules.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - A new texture family cannot reuse body classification and chart planning.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - The parent semantic facade can expose the same API directly.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Deterministic semantic body-atlas planning facade.
+//   - Body domain module.
 // - Description:
-//   - Coordinates classification and chart planning behind stable pure types.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Called by repository-owned artifact adapters and synthetic tests.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Ambiguous evidence fails closed and every minimum body region is
-//   - required.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Public semantic body-atlas planning facade.
+//! Body domain module.
+
 #![expect(
     clippy::module_name_repetitions,
     reason = "Body semantic types retain explicit names across adapter \
@@ -85,15 +70,7 @@ pub fn plan_body_texture(
     source_texture: &RgbaImage,
     recipe: &BodySemanticRecipe,
 ) -> Result<BodyTexturePlan, SemanticTextureError> {
-    let classification = classification::classify(
-        character,
-        source_texture,
-        recipe,
-    )?;
-    charts::build_plan(
-        character,
-        source_texture,
-        recipe,
-        classification,
-    )
+    let classification =
+        classification::classify(character, source_texture, recipe)?;
+    charts::build_plan(character, source_texture, recipe, classification)
 }

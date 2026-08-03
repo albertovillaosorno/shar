@@ -1,7 +1,3 @@
-// File:
-//   - decoded_billboard_source.rs
-// Path: tests/formats/fbx/decoded_billboard_source.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,25 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for decoded billboard inspection geometry.
+//   - Decoded billboard source test module.
 // - Must-Not:
-//   - Depend on private assets or installed DCC applications.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic decoded JSON and exact geometry assertions.
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Proves billboard dimensions, transforms, UVs, colors, and shader
-//     identity.
-//
-// Large file:
-//   - false
+//   - Decoded billboard source test module.
+// - Description:
+//   - Implements the declared test module responsibility for fbx.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Decoded billboard inspection geometry regression coverage.
+//! Decoded billboard source test module.
 
 use std::fs;
 use std::path::PathBuf;
@@ -41,12 +41,8 @@ use serde_json as _;
 use shar_sha256 as _;
 
 fn fixture_path() -> PathBuf {
-    std::env::temp_dir().join(
-        format!(
-            "fbx-decoded-billboard-{}.json",
-            std::process::id()
-        ),
-    )
+    std::env::temp_dir()
+        .join(format!("fbx-decoded-billboard-{}.json", std::process::id()))
 }
 
 #[test]
@@ -68,18 +64,10 @@ fn decodes_authored_billboard_quad_geometry() -> Result<(), String> {
         ),
     )
     .map_err(|error| error.to_string())?;
-    let mesh = read_billboard_quad_group(
-        &path,
-        "brake1Shape",
-    )
-    .map_err(|error| format!("billboard decode failed: {error:?}"))?;
+    let mesh = read_billboard_quad_group(&path, "brake1Shape")
+        .map_err(|error| format!("billboard decode failed: {error:?}"))?;
     fs::remove_file(&path).map_err(|error| error.to_string())?;
-    if mesh.name != "brake1Shape"
-        || mesh
-            .groups
-            .len()
-            != 1
-    {
+    if mesh.name != "brake1Shape" || mesh.groups.len() != 1 {
         return Err(format!("unexpected billboard mesh: {mesh:?}"));
     }
     let group = mesh
@@ -87,20 +75,7 @@ fn decodes_authored_billboard_quad_geometry() -> Result<(), String> {
         .first()
         .ok_or_else(|| "billboard mesh has no primitive group".to_owned())?;
     if group.positions
-        != vec![
-            [
-                1.0, 1.0, 4.0,
-            ],
-            [
-                3.0, 1.0, 4.0,
-            ],
-            [
-                3.0, 5.0, 4.0,
-            ],
-            [
-                1.0, 5.0, 4.0,
-            ],
-        ]
+        != vec![[1., 1., 4.], [3., 1., 4.], [3., 5., 4.], [1., 5., 4.]]
         || group.shader != "brakeFlareA_m"
     {
         return Err(format!("billboard geometry changed: {group:?}"));

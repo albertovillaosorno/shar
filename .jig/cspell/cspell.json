@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
   "version": "0.2",
   "language": "en-US,en-GB",
-  "readonly": false,
+  "readonly": true,
   "useGitignore": true,
   "enableGlobDot": true,
   "validateDirectives": true,
@@ -11,75 +11,43 @@
   "minWordLength": 3,
   "usePnP": false,
   "files": [
-    "../../AGENTS.md",
-    "../../Cargo.toml",
-    "../../LICENSE-MIT",
-    "../../README.md",
-    "../../.github/**/*.{json,md,yaml,yml}",
-    "../../.jig/**/*.{json,md,mdc,txt,yaml,yml}",
-    "../../docs/**/*.{json,md,mdc,yaml,yml}",
-    "../../skills/**/*.{json,md,mdc,yaml,yml}",
-    "../../src/**/*.{c,cc,cpp,cs,cxx,h,hh,hpp,hxx,ini,inl,json,md,py,rs,sh,toml,txt,yaml,yml}",
-    "../../tests/**/*.{c,cc,cpp,cs,cxx,h,hh,hpp,hxx,ini,inl,json,md,py,rs,sh,toml,txt,yaml,yml}"
+    "../../**/*.{cpp,cs,h,ini,json,jsonc,md,mdc,py,rs,toml,txt,yml,yaml}"
   ],
-  "ignoreRegExpList": [],
+  "ignoreRegExpList": [
+    "/\\b[0-9a-f]{7,64}\\b/g"
+  ],
   "ignoreWords": [],
   "dictionaryDefinitions": [
     {
       "name": "custom-english",
-      "path": "./english.txt"
+      "path": "./english.txt",
+      "addWords": true
     },
     {
       "name": "custom-named-entities",
-      "path": "./named-entities.txt"
+      "path": "./named-entities.txt",
+      "addWords": true
     },
     {
       "name": "custom-technical",
-      "path": "./technical.txt"
+      "path": "./technical.txt",
+      "addWords": true
     }
   ],
   "dictionaries": [
-    "aws",
-    "bash",
-    "companies",
-    "computing-acronyms",
-    "cpp",
-    "csharp",
-    "css",
     "custom-english",
     "custom-named-entities",
-    "custom-technical",
-    "data-science",
-    "data-science-tools",
-    "dotnet",
-    "en-gb",
-    "filetypes",
-    "fullstack",
-    "game-development",
-    "gaming-terms",
-    "git",
-    "html",
-    "networking-terms",
-    "node",
-    "npm",
-    "public-licenses",
-    "python",
-    "rust",
-    "rust-crates",
-    "shellscript",
-    "software-tools",
-    "softwareTerms",
-    "sql",
-    "typescript",
-    "web-services"
+    "custom-technical"
   ],
   "ignorePaths": [
     "../../.cache/**",
     "../../.dependencies/**",
     "../../.git/**",
+    "../../.logs/**",
     "../../.temp/**",
     "../../Cargo.lock",
     "../../game/**",
+    "../../src/unreal/project/composition/uproject/Content/**",
     "../../target/**",
     "../../tests/fixtures/**"
   ]

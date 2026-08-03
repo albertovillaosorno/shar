@@ -1,7 +1,3 @@
-// File:
-//   - batch_extract.rs
-// Path: src/formats/p3d/composition/bin/batch_extract.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,37 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - The minimal batch Pure3D process entrypoint.
+//   - Batch extract composition module.
 // - Must-Not:
-//   - Decode arguments, select adapters, or execute use cases directly.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Delegation to the public batch driving adapter.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another independently shipped batch binary is introduced.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - The package no longer publishes this executable.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Thin `p3d-batch-extract` process entrypoint.
+//   - Batch extract composition module.
 // - Description:
-//   - Delegates command behavior to the library-owned batch CLI adapter.
+//   - Implements the declared composition module responsibility for p3d.
 // - Usage:
-//   - Invoked as the `p3d-batch-extract` binary.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Exit status comes from the driving adapter.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Thin process entrypoint for batch `Pure3D` extraction.
+//! Batch extract composition module.
 
 use std::process::ExitCode;
 

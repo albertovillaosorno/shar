@@ -1,7 +1,3 @@
-# File:
-#   - __init__.py
-# Path: src/unreal/project/composition/uproject/Content/Python/__init__.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,36 +6,26 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - The package marker for Unreal Editor Python discovery.
+#   - Python composition module.
 # - Must-Not:
-#   - Run editor actions or mutate project state during import.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Unreal and validation tools to discover authored modules.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - An editor extension gains an independent package boundary.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another marker owns this same discovery boundary.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Package marker for Unreal Editor Python tooling.
+#   - Python composition module.
 # - Description:
-#   - Keeps the editor-facing Python directory importable.
+#   - Implements the declared composition module responsibility for project.
 # - Usage:
-#   - Imported by Unreal and repository validation discovery.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Package import performs no work.
-#
-# ADRs:
-# - docs/adr/pipeline/unreal/unreal-manifest-and-package-taxonomy.md
-#
-# Large file:
-#   - false
+#   - Invalid or missing inputs fail explicitly.
 #
 
-# ruff: noqa: N999 -- path name is externally defined and cannot be renamed safely.
-
-"""Package marker for validation discovery."""
+"""Python composition module."""

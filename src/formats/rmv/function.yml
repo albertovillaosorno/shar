@@ -1,0 +1,21 @@
+schema: shar-function/v1
+identity:
+  id: rmv
+  path: src/formats/rmv
+  domain: formats
+architecture:
+  route: src/<domain>/<function>/<kind>/<part>
+  kinds:
+    - composition
+    - domain
+capabilities:
+  - math
+  - rust
+projects:
+  - Cargo.toml
+tests:
+  root: tests/formats/rmv
+ownership:
+  accountable: Alberto Villa Osorno
+validation:
+  mode: active

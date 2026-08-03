@@ -1,12 +1,34 @@
-// File: SharWorldMessagePublication.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharMessaging/Private/Messaging/SharWorldMessagePublication.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: accepted envelope validation, phase dispatch, replay evidence, and delivery consumption only.
-// Specification: docs/technical/unreal/typed-event-and-observation-routing-runtime.md
-// LARGE-FILE owner=SharMessaging; reason=cohesive publication and phase-delivery implementation;
-// split=extract delivery storage if typed callback adapters are introduced;
-// validation=validate.sh SharMessaging plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar world message publication composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar world message publication composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar world message publication composition module.
 
 #include "Messaging/SharWorldMessageRouterSubsystem.h"
 

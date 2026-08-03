@@ -1,7 +1,3 @@
-# File:
-#   - catalog.py
-# Path: src/unreal/editor-control/domain/mcp/domain/catalog.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,62 +6,45 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Native toolset catalog, schema, and tool outcome values.
+#   - Catalog domain module.
 # - Must-Not:
-#   - Perform HTTP, CLI parsing, file IO, or editor mutation.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Pure parsing and validation of native catalog evidence.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - The module gains two independently testable contracts.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module owns the same contract without a distinct invariant.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Models the native Unreal tool catalog deterministically.
+#   - Catalog domain module.
 # - Description:
-#   - Parses discovery output without adapter dependencies.
+#   - Implements the declared domain module responsibility for editor control.
 # - Usage:
-#   - Consumed by discovery and invocation application use cases.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Malformed, duplicate, or error outcomes fail closed.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: native tool catalog domain
-#   - reason: toolset schemas and outcomes share catalog validation invariants
-#   - split: extract outcome parsing if additional MCP content kinds are added
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess on responsibility or line-count growth
-#
-"""Native Unreal toolset and tool catalog values."""
+
+"""Catalog domain module."""
 
 from __future__ import annotations
 
 import json
 import re
-from typing import NamedTuple, cast
+from typing import NamedTuple
+from typing import cast
 
 from mcp.domain.errors import fail_protocol
-from mcp.domain.json_types import (
-    DuplicateJsonKeyError,
-    JsonObject,
-    JsonValue,
-    reject_duplicate_json_object,
-    require_json_object,
-)
-from mcp.domain.tool_identity import (
-    canonical_tool_identity,
-    validated_toolset_identity,
-)
+from mcp.domain.json_types import DuplicateJsonKeyError
+from mcp.domain.json_types import JsonObject
+from mcp.domain.json_types import JsonValue
+from mcp.domain.json_types import reject_duplicate_json_object
+from mcp.domain.json_types import require_json_object
+from mcp.domain.tool_identity import canonical_tool_identity
+from mcp.domain.tool_identity import validated_toolset_identity
 
 _TOOLSET_NAME_PATTERN = r"[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)+"
 _TOOLSET_DESCRIPTION_PATTERN = r"(?: (?P<description>.*))?$"

@@ -1,7 +1,3 @@
-// File:
-//   - machine_specific_path_guard.rs
-// Path: tests/migration/pipeline/machine_specific_path_guard.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,37 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for machine-specific home paths in public files.
+//   - Machine specific path guard test module.
 // - Must-Not:
-//   - Depend on private local outputs or a specific operator profile path.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic path prefixes, temporary Git repositories, and byte scans.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another machine-specific path family needs distinct parsing semantics.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another public-file guard owns the same confidentiality invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Rejects Windows, Linux, and macOS home paths in public files.
+//   - Machine specific path guard test module.
 // - Description:
-//   - Scans tracked and untracked nonignored files without extension bypasses.
+//   - Implements the declared test module responsibility for pipeline.
 // - Usage:
-//   - Executed through cargo test for the pipeline crate.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Findings are repository-relative and deterministically ordered.
-//
-// ADRs:
-// - docs/adr/engineering/quality/strict-validation-and-linting.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Repository-level guard for machine-specific home paths in public files.
+//! Machine specific path guard test module.
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -56,8 +44,8 @@ use rsd as _;
 use rtf as _;
 use schoenwald_cli as _;
 use schoenwald_filesystem as _;
+use serde as _;
 use serde_json as _;
-use shar_json_text as _;
 use shar_sha256 as _;
 
 #[test]
@@ -67,24 +55,18 @@ fn public_files_reject_machine_specific_home_paths() -> Result<(), String> {
     if failures.is_empty() {
         Ok(())
     } else {
-        Err(
-            format!(
-                "machine-specific home paths are forbidden in public files: {}",
-                failures.join(", ")
-            ),
-        )
+        Err(format!(
+            "machine-specific home paths are forbidden in public files: {}",
+            failures.join(", ")
+        ))
     }
 }
 
 #[test]
 fn detects_windows_linux_and_macos_paths_in_untracked_files()
 -> Result<(), String> {
-    let root = std::env::temp_dir().join(
-        format!(
-            "shar-machine-path-guard-{}",
-            std::process::id()
-        ),
-    );
+    let root = std::env::temp_dir()
+        .join(format!("shar-machine-path-guard-{}", std::process::id()));
     drop(std::fs::remove_dir_all(&root));
     let result = (|| {
         initialize_fixture_repository(&root)?;
@@ -106,21 +88,15 @@ fn detects_windows_linux_and_macos_paths_in_untracked_files()
         )
         .map_err(|error| format!("Unix fixture write failed: {error}"))?;
         let failures = machine_path_failures(&root)?;
-        let expected = [
-            "unix.yml:1",
-            "unix.yml:2",
-            "windows.txt:1",
-            "windows.txt:2",
-        ];
+        let expected =
+            ["unix.yml:1", "unix.yml:2", "windows.txt:1", "windows.txt:2"];
         if failures == expected {
             Ok(())
         } else {
-            Err(
-                format!(
-                    "machine-specific path fixtures were not detected: \
+            Err(format!(
+                "machine-specific path fixtures were not detected: \
                      {failures:?}"
-                ),
-            )
+            ))
         }
     })();
     drop(std::fs::remove_dir_all(&root));
@@ -138,19 +114,10 @@ fn machine_path_failures(root: &Path) -> Result<Vec<String>, String> {
             continue;
         };
         let text = String::from_utf8_lossy(&bytes);
-        for (index, line) in text
-            .lines()
-            .enumerate()
-        {
-            if line_has_machine_path(
-                line, &prefixes,
-            ) {
-                failures.push(
-                    format!(
-                        "{relative}:{}",
-                        index.saturating_add(1)
-                    ),
-                );
+        for (index, line) in text.lines().enumerate() {
+            if line_has_machine_path(line, &prefixes) {
+                failures
+                    .push(format!("{relative}:{}", index.saturating_add(1)));
             }
         }
     }
@@ -158,33 +125,16 @@ fn machine_path_failures(root: &Path) -> Result<Vec<String>, String> {
     Ok(failures)
 }
 
-fn line_has_machine_path(
-    line: &str,
-    prefixes: &[String; 4],
-) -> bool {
+fn line_has_machine_path(line: &str, prefixes: &[String; 4]) -> bool {
     let normalized = line.to_ascii_lowercase();
-    prefixes
-        .iter()
-        .any(
-            |prefix| {
-                normalized
-                    .match_indices(prefix)
-                    .any(
-                        |(index, _)| {
-                            has_path_boundary(
-                                normalized.as_bytes(),
-                                index,
-                            )
-                        },
-                    )
-            },
-        )
+    prefixes.iter().any(|prefix| {
+        normalized
+            .match_indices(prefix)
+            .any(|(index, _)| has_path_boundary(normalized.as_bytes(), index))
+    })
 }
 
-fn has_path_boundary(
-    bytes: &[u8],
-    index: usize,
-) -> bool {
+fn has_path_boundary(bytes: &[u8], index: usize) -> bool {
     index == 0
         || index
             .checked_sub(1)
@@ -204,18 +154,9 @@ fn machine_path_prefixes() -> [String; 4] {
     let backslash = char::from(92);
     [
         format!("C:{backslash}Users{backslash}"),
-        [
-            "C:", "/", "Users", "/",
-        ]
-        .concat(),
-        [
-            "/", "home", "/",
-        ]
-        .concat(),
-        [
-            "/", "Users", "/",
-        ]
-        .concat(),
+        ["C:", "/", "Users", "/"].concat(),
+        ["/", "home", "/"].concat(),
+        ["/", "Users", "/"].concat(),
     ]
 }
 
@@ -228,18 +169,13 @@ fn initialize_fixture_repository(root: &Path) -> Result<(), String> {
         .current_dir(root)
         .output()
         .map_err(|error| format!("fixture git init failed: {error}"))?;
-    if output
-        .status
-        .success()
-    {
+    if output.status.success() {
         Ok(())
     } else {
-        Err(
-            format!(
-                "fixture git init returned failure: {}",
-                String::from_utf8_lossy(&output.stderr)
-            ),
-        )
+        Err(format!(
+            "fixture git init returned failure: {}",
+            String::from_utf8_lossy(&output.stderr)
+        ))
     }
 }
 
@@ -252,16 +188,11 @@ fn repository_files(root: &Path) -> Result<String, String> {
         .current_dir(root)
         .output()
         .map_err(|error| format!("repository listing failed: {error}"))?;
-    if !output
-        .status
-        .success()
-    {
-        return Err(
-            format!(
-                "git ls-files failed: {}",
-                String::from_utf8_lossy(&output.stderr)
-            ),
-        );
+    if !output.status.success() {
+        return Err(format!(
+            "git ls-files failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
     }
     String::from_utf8(output.stdout)
         .map_err(|error| format!("repository file list was not UTF-8: {error}"))
@@ -270,15 +201,12 @@ fn repository_files(root: &Path) -> Result<String, String> {
 fn repository_root() -> Result<PathBuf, String> {
     let mut current = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     loop {
-        if current
-            .join(".git")
-            .exists()
-        {
+        if current.join(".git").exists() {
             return Ok(current);
         }
         if !current.pop() {
             return Err(
-                "could not find repository root from Cargo manifest".to_owned(),
+                "could not find repository root from Cargo manifest".to_owned()
             );
         }
     }

@@ -5,8 +5,9 @@
 
 ## Governing decision
 
-<!-- markdownlint-disable-next-line MD013 -->
-- [Extraction provenance and manifest linkage](../../../adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Extraction provenance and manifest linkage](../../../adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md) <!-- markdownlint-disable-line MD013 -->
 
 ## Purpose
 

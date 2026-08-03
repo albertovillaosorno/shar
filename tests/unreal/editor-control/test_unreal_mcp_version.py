@@ -1,7 +1,3 @@
-# File:
-#   - test_unreal_mcp_version.py
-# Path: tests/unreal/editor-control/test_unreal_mcp_version.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,36 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Regression tests for installed Unreal MCP plugin version discovery.
+#   - Test unreal mcp version test module.
 # - Must-Not:
-#   - Inspect the operator's real engine, connect to Unreal, or render skills.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Temporary project and engine descriptor fixtures.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Engine resolution and version normalization need independent suites.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module owns the complete plugin version discovery contract.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Guards the single Unreal MCP version authority used by skill revisions.
+#   - Test unreal mcp version test module.
 # - Description:
-#   - Proves descriptor `1.0` normalizes to public SemVer `1.0.0`.
+#   - Implements the declared test module responsibility for editor control.
 # - Usage:
-#   - Executed by pytest through the canonical validator workflow.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Uses `UNREAL_ENGINE_ROOT` fixtures without external dependencies.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
-"""Installed Unreal MCP plugin version discovery regression tests."""
+
+"""Test unreal mcp version test module."""
 
 from __future__ import annotations
 
@@ -47,15 +36,13 @@ import json
 import sys
 from typing import TYPE_CHECKING
 
-import pytest
 from mcp.adapter_outbound.unreal_mcp_version import (
     FilesystemUnrealMcpVersionProvider,
 )
 from mcp.domain.errors import ConfigurationError
-from mcp.domain.skill_revision import (
-    build_skill_revision,
-    normalize_unreal_mcp_version,
-)
+from mcp.domain.skill_revision import build_skill_revision
+from mcp.domain.skill_revision import normalize_unreal_mcp_version
+import pytest
 
 if TYPE_CHECKING:
     from pathlib import Path

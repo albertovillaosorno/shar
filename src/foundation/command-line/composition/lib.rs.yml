@@ -1,0 +1,5 @@
+schema: shar-surface/v1
+path: src/foundation/command-line/composition/lib.rs
+function: command-line
+kind: facade
+authority: composition/lib.rs

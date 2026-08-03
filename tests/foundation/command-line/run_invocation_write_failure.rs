@@ -1,7 +1,3 @@
-// File:
-//   - run_invocation_write_failure.rs
-// Path: tests/foundation/command-line/run_invocation_write_failure.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for ordered presentation after one sink failure.
+//   - Run invocation write failure test module.
 // - Must-Not:
-//   - Exercise operating-system streams or caller command policy.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Use deterministic in-memory ports.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another output-failure behavior needs independent coverage.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - The application runner no longer owns ordered presentation.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Run-invocation write-failure regression.
+//   - Run invocation write failure test module.
 // - Description:
-//   - Proves a failed chunk does not suppress later ordered diagnostics.
+//   - Implements the declared test module responsibility for command line.
 // - Usage:
-//   - Executed by the schoenwald-cli integration test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - The first write fails and the second write remains observable.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for ordered presentation after an output failure.
-//!
-//! A failed chunk must not suppress later chunks that can still be written.
+//! Run invocation write failure test module.
 
 #[path = "support/output_error.rs"]
 pub mod support;
@@ -67,10 +53,7 @@ impl ArgumentSource for EmptyArguments {
 struct TwoChunkProgram;
 
 impl CliProgram for TwoChunkProgram {
-    fn execute(
-        &self,
-        _arguments: &[String],
-    ) -> CommandOutcome {
+    fn execute(&self, _arguments: &[String]) -> CommandOutcome {
         CommandOutcome::success()
             .stdout("primary")
             .stderr("diagnostic")
@@ -80,41 +63,22 @@ impl CliProgram for TwoChunkProgram {
 #[derive(Default)]
 struct FailingFirstSink {
     calls: Cell<usize>,
-    successful_chunks: RefCell<
-        Vec<(
-            OutputStream,
-            String,
-        )>,
-    >,
+    successful_chunks: RefCell<Vec<(OutputStream, String)>>,
 }
 
 impl OutputSink for FailingFirstSink {
-    fn write(
-        &mut self,
-        stream: OutputStream,
-        text: &str,
-    ) -> io::Result<()> {
-        let call = self
-            .calls
-            .get();
-        self.calls
-            .set(call.saturating_add(1));
+    fn write(&mut self, stream: OutputStream, text: &str) -> io::Result<()> {
+        let call = self.calls.get();
+        self.calls.set(call.saturating_add(1));
         if call == 0 {
-            return Err(
-                io::Error::new(
-                    io::ErrorKind::BrokenPipe,
-                    "first write failed",
-                ),
-            );
+            return Err(io::Error::new(
+                io::ErrorKind::BrokenPipe,
+                "first write failed",
+            ));
         }
         self.successful_chunks
             .borrow_mut()
-            .push(
-                (
-                    stream,
-                    text.to_owned(),
-                ),
-            );
+            .push((stream, text.to_owned()));
         Ok(())
     }
 }
@@ -124,43 +88,24 @@ fn a_failed_chunk_does_not_suppress_later_ordered_output() {
     let mut arguments = EmptyArguments;
     let mut sink = FailingFirstSink::default();
 
-    let result = RunInvocation::execute(
-        &TwoChunkProgram,
-        &mut arguments,
-        &mut sink,
-    );
+    let result =
+        RunInvocation::execute(&TwoChunkProgram, &mut arguments, &mut sink);
 
-    assert!(
-        matches!(
-            result,
-            Err(error) if error.kind() == io::ErrorKind::BrokenPipe
-        )
-    );
-    assert_eq!(
-        sink.calls
-            .get(),
-        2
-    );
-    assert_eq!(
-        sink.successful_chunks
-            .borrow()
-            .as_slice(),
-        &[
-            (
-                OutputStream::Stderr,
-                "diagnostic".to_owned()
-            )
-        ]
-    );
+    assert!(matches!(
+        result,
+        Err(error) if error.kind() == io::ErrorKind::BrokenPipe
+    ));
+    assert_eq!(sink.calls.get(), 2);
+    assert_eq!(sink.successful_chunks.borrow().as_slice(), &[(
+        OutputStream::Stderr,
+        "diagnostic".to_owned()
+    )]);
 }
 
 struct ThreeChunkProgram;
 
 impl CliProgram for ThreeChunkProgram {
-    fn execute(
-        &self,
-        _arguments: &[String],
-    ) -> CommandOutcome {
+    fn execute(&self, _arguments: &[String]) -> CommandOutcome {
         CommandOutcome::success()
             .stdout("primary")
             .stderr("diagnostic")
@@ -173,43 +118,18 @@ fn a_failed_stream_suppresses_later_chunks_on_that_stream() {
     let mut arguments = EmptyArguments;
     let mut sink = FailingFirstSink::default();
 
-    let error = output_error(
-        RunInvocation::execute(
-            &ThreeChunkProgram,
-            &mut arguments,
-            &mut sink,
-        ),
-    );
-    assert_eq!(
-        error.kind(),
-        io::ErrorKind::BrokenPipe
-    );
-    assert_eq!(
-        error.output_chunk_count(),
-        3
-    );
-    assert_eq!(
-        error.presented_chunk_count(),
-        1
-    );
-    assert_eq!(
-        error.suppressed_chunk_count(),
-        1
-    );
-    assert_eq!(
-        sink.calls
-            .get(),
-        2
-    );
-    assert_eq!(
-        sink.successful_chunks
-            .borrow()
-            .as_slice(),
-        &[
-            (
-                OutputStream::Stderr,
-                "diagnostic".to_owned()
-            )
-        ]
-    );
+    let error = output_error(RunInvocation::execute(
+        &ThreeChunkProgram,
+        &mut arguments,
+        &mut sink,
+    ));
+    assert_eq!(error.kind(), io::ErrorKind::BrokenPipe);
+    assert_eq!(error.output_chunk_count(), 3);
+    assert_eq!(error.presented_chunk_count(), 1);
+    assert_eq!(error.suppressed_chunk_count(), 1);
+    assert_eq!(sink.calls.get(), 2);
+    assert_eq!(sink.successful_chunks.borrow().as_slice(), &[(
+        OutputStream::Stderr,
+        "diagnostic".to_owned()
+    )]);
 }

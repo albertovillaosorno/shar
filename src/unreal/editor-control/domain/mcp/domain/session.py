@@ -1,7 +1,3 @@
-# File:
-#   - session.py
-# Path: src/unreal/editor-control/domain/mcp/domain/session.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,37 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Negotiated MCP session identity and protocol version.
+#   - Session domain module.
 # - Must-Not:
-#   - Open connections or mutate session transport state.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Immutable session values returned by one transport.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - The module gains two independently testable contracts.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module owns the same contract without a distinct invariant.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Carries the minimum state required after initialization.
+#   - Session domain module.
 # - Description:
-#   - Separates protocol state from the HTTP implementation.
+#   - Implements the declared domain module responsibility for editor control.
 # - Usage:
-#   - Passed from application use cases to the transport port.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - No session exists before successful initialization.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
-"""Negotiated native Unreal MCP session values."""
+
+"""Session domain module."""
 
 from typing import NamedTuple
 

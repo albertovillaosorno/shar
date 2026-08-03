@@ -1,12 +1,34 @@
-// File: SharVehicleRuntimeState.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharVehicles/Private/Vehicles/SharVehicleRuntimeState.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: deterministic damage-band selection only; no actor or Chaos mutation.
-// ADR: docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
-// LARGE-FILE owner=SharVehicles; reason=cohesive runtime damage-state behavior;
-// split=extract repair policy if vehicle persistence grows;
-// validation=validate.sh SharVehicles plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar vehicle runtime state composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar vehicle runtime state composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar vehicle runtime state composition module.
 
 #include "Vehicles/SharVehicleRuntimeState.h"
 

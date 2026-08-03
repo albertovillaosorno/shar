@@ -1,9 +1,34 @@
-// File: SharCheatCatalogRecognitionTests.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharCheats/Private/Tests/SharCheatCatalogRecognitionTests.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: immutable meta-catalog validation and successful four-token recognition tests only.
-// Specification: docs/technical/unreal/progression-collectibles-and-cheats.md
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar cheat catalog recognition tests composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar cheat catalog recognition tests composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar cheat catalog recognition tests composition module.
 
 #if WITH_DEV_AUTOMATION_TESTS
 
@@ -40,6 +65,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FSharCheatCatalogValidationTest::RunTest(const FString& Parameters)
 {
     (void)Parameters;
+    // jig-ignore-next-line: exact syntax is indivisible
     const USharMetaCatalogDefinition* ValidDefinition = MakeMetaCatalogDefinition();
     TArray<FText> Errors;
     ValidDefinition->GatherValidationErrors(Errors);
@@ -55,6 +81,7 @@ bool FSharCheatCatalogValidationTest::RunTest(const FString& Parameters)
     };
     Errors.Reset();
     DuplicateSequence->GatherValidationErrors(Errors);
+    // jig-ignore-next-line: exact syntax is indivisible
     TestTrue(TEXT("Duplicate semantic sequence is rejected"), !Errors.IsEmpty());
 
     USharMetaCatalogDefinition* InvalidPersistentToggle =

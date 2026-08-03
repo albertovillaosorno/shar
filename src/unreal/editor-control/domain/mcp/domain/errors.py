@@ -1,7 +1,3 @@
-# File:
-#   - errors.py
-# Path: src/unreal/editor-control/domain/mcp/domain/errors.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,43 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Typed translator failures and centralized failure construction.
+#   - Errors domain module.
 # - Must-Not:
-#   - Import transport, CLI, filesystem, or Unreal APIs.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Stable exceptions and cause-preserving fail helpers.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - The module gains two independently testable contracts.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module owns the same contract without a distinct invariant.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Defines fail-closed translator error categories.
+#   - Errors domain module.
 # - Description:
-#   - Keeps messages and exception chaining in one domain module.
+#   - Implements the declared domain module responsibility for editor control.
 # - Usage:
-#   - Called by domain, application, and adapter boundaries.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Unknown failures are never converted to success.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: translator domain failure taxonomy
-#   - reason: error types and fail helpers share one failure contract
-#   - split: extract construction helpers if error categories expand
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess on responsibility or line-count growth
-#
-"""Domain-specific failures for the Unreal MCP terminal translator."""
+
+"""Errors domain module."""
 
 from __future__ import annotations
 

@@ -16,14 +16,14 @@ camera intents, audio, rewards, checkpoint policy, and transitions.
 
 ## Canonical placement
 
-<!-- markdownlint-disable MD013 -->
-```text
-/Game/SHAR/Data/Missions/<chapter_id>/<mission_id>/DA_Mission_<chapter_id>_<mission_id>
-/Game/SHAR/Data/Missions/<chapter_id>/<mission_id>/DT_MissionStages_<chapter_id>_<mission_id>
-/Game/SHAR/Data/Missions/Templates/ST_Mission_<template_id>
-/Game/SHAR/Data/Rewards/<reward_id>/DA_Reward_<reward_id>
-```
-<!-- markdownlint-enable MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Unreal asset path is indivisible -->
+- `/Game/SHAR/Data/Missions/<chapter_id>/<mission_id>/DA_Mission_<chapter_id>_<mission_id>` <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Unreal asset path is indivisible -->
+- `/Game/SHAR/Data/Missions/<chapter_id>/<mission_id>/DT_MissionStages_<chapter_id>_<mission_id>` <!-- markdownlint-disable-line MD013 -->
+- `/Game/SHAR/Data/Missions/Templates/ST_Mission_<template_id>`
+- `/Game/SHAR/Data/Rewards/<reward_id>/DA_Reward_<reward_id>`
 
 ## Mission input format
 

@@ -1,7 +1,3 @@
-# File:
-#   - manual_skill_fixture.py
-# Path: tests/unreal/editor-control/manual_skill_fixture.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,48 +6,37 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Shared synthetic generated-skill fixtures for manual-field tests.
+#   - Manual skill fixture test module.
 # - Must-Not:
-#   - Access repository skills, connect to Unreal, or perform assertions.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Building current and legacy marker layouts with deterministic content.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Another fixture family requires different generated document structure.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another test helper owns the same synthetic manual-skill contract.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Provides reusable manual-field document fixtures.
+#   - Manual skill fixture test module.
 # - Description:
-#   - Keeps parser and review-status test modules responsibility-focused.
+#   - Implements the declared test module responsibility for editor control.
 # - Usage:
-#   - Imported only by MCP manual-field regression tests.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Uses one deterministic synthetic translator/interface revision.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
-"""Synthetic generated-skill fixtures for manual-field tests."""
+
+"""Manual skill fixture test module."""
 
 from __future__ import annotations
 
-from mcp.adapter_outbound.skill_manual_fields import (
-    extract_manual_fields,
-    merge_manual_fields,
-    render_manual_section,
-)
-from mcp.adapter_outbound.skill_manual_review import (
-    MANUAL_REVIEW_FIELD_KEY,
-    MANUAL_REVIEW_PLACEHOLDER,
-)
+from mcp.adapter_outbound.skill_manual_fields import extract_manual_fields
+from mcp.adapter_outbound.skill_manual_fields import merge_manual_fields
+from mcp.adapter_outbound.skill_manual_fields import render_manual_section
+from mcp.adapter_outbound.skill_manual_review import MANUAL_REVIEW_FIELD_KEY
+from mcp.adapter_outbound.skill_manual_review import MANUAL_REVIEW_PLACEHOLDER
 
 CURRENT_REVISION = "1.0.0/" + ("a" * 64)
 
@@ -61,6 +46,7 @@ def document(generated_purpose: str) -> str:
 
     Returns:
         Complete synthetic generated skill content.
+
     """
     lines = [
         "# Example tool",
@@ -81,6 +67,7 @@ def legacy_document(generated_purpose: str) -> str:
 
     Returns:
         Complete legacy generated skill content.
+
     """
     content = document(generated_purpose)
     review_block = field_block(
@@ -104,6 +91,7 @@ def merge_and_extract(
 
     Returns:
         Refreshed content and its complete protected field mapping.
+
     """
     merged = merge_manual_fields(
         document("new generated purpose"),
@@ -123,6 +111,7 @@ def replace_field(content: str, key: str, value: str) -> str:
 
     Returns:
         Content with the requested protected value replaced.
+
     """
     begin = begin_marker(key)
     end = end_marker(key)
@@ -136,6 +125,7 @@ def field_block(key: str, value: str) -> str:
 
     Returns:
         Opening marker, value, and closing marker.
+
     """
     newline = chr(10)
     return f"{begin_marker(key)}{newline}{value}{newline}{end_marker(key)}"

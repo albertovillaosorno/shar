@@ -1,12 +1,34 @@
-// File: SharInteractionSubsystem.h
-// Path: src/unreal/project/composition/uproject/Source/SharInteraction/Public/Interaction/SharInteractionSubsystem.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: per-world interaction source, query, reservation, and transaction state only; no domain effect storage.
-// ADR: docs/adr/unreal/runtime/contextual-interaction-query-and-transaction.md
-// LARGE-FILE owner=SharInteraction; reason=cohesive reflected interaction runtime contract;
-// split=extract result observations if durable publication storage is introduced;
-// validation=validate.sh SharInteraction plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar interaction subsystem composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar interaction subsystem composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar interaction subsystem composition module.
 
 #pragma once
 

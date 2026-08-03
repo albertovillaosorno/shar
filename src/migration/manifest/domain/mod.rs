@@ -1,7 +1,3 @@
-// File:
-//   - domain.rs
-// Path: src/migration/manifest/domain/mod.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,57 +6,32 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure manifest records, taxonomy, classification, and path projections.
+//   - Domain domain module.
 // - Must-Not:
-//   - Avoid filesystem IO, artifact writes, CLI parsing, and adapter selection.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Deterministic obfuscation, normalized counting, and JSON rows.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when one manifest subdomain becomes independently versioned.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another domain facade owns the same manifest invariants.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Domain model for name-hiding game manifests.
+//   - Domain domain module.
 // - Description:
-//   - Defines pure manifest behavior over caller-supplied path evidence.
+//   - Implements the declared domain module responsibility for manifest.
 // - Usage:
-//   - Used by application commands, ports, adapters, and library callers.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Unknown classifications fail closed as `error`.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Name-hiding manifest format for `game/` content.
-//!
-//! The manifest preserves the directory *shape* of the game copy but hides the
-//! real names: every folder name is reduced to its first and last character,
-//! and file names are dropped entirely — only a per-folder, per-type count is
-//! kept.
-//!
-//! For example `scripts/missions/something.mfk` contributes to the record:
-//!
-//! ```text
-//! {"dir":"ss/ms","ext":"mfk","min":1}
-//! ```
-//!
-//! `scripts` becomes `ss`, `missions` becomes `ms`, and the file name is
-//! replaced by the count "1 mfk file in this folder". This lets validation
-//! pinpoint which folder is short on which file type, without publishing the
-//! game's real folder names or file names.
+//! Domain domain module.
+
 use std::collections::{BTreeMap, BTreeSet};
-use std::path::{Path, PathBuf};
-
-use schoenwald_filesystem::resolve_under;
+use std::path::{Component, Path, PathBuf};
 
 mod classification;
 mod json;
@@ -113,13 +84,7 @@ pub const GENERATED_IMAGE_EXTENSION: &str = "png";
 pub const BACKUP_EXTENSION: &str = "schoenwald-original";
 
 /// Counts keyed by `(obfuscated directory, file extension)`.
-pub type DirExtCounts = BTreeMap<
-    (
-        String,
-        String,
-    ),
-    usize,
->;
+pub type DirExtCounts = BTreeMap<(String, String), usize>;
 
 /// One manifest record: an obfuscated folder path, a file extension, and the
 /// minimum number of files of that type the folder must contain.
@@ -160,10 +125,7 @@ pub fn extension_of(path: &Path) -> String {
     path.extension()
         .and_then(|extension| extension.to_str())
         .filter(|extension| !extension.is_empty())
-        .map_or_else(
-            || NO_EXTENSION.to_owned(),
-            str::to_lowercase,
-        )
+        .map_or_else(|| NO_EXTENSION.to_owned(), str::to_lowercase)
 }
 
 /// Reduces a folder name to its first and last character, lowercased.
@@ -173,31 +135,20 @@ pub fn extension_of(path: &Path) -> String {
 /// obfuscation contract a single source of truth across manifests.
 #[must_use]
 pub fn obfuscate_component(name: &str) -> String {
-    let first_char = name
-        .chars()
-        .next();
-    let last_char = name
-        .chars()
-        .last();
-    match (
-        first_char, last_char,
-    ) {
-        (Some(first), Some(last)) => [
-            first, last,
-        ]
-        .into_iter()
-        .flat_map(char::to_lowercase)
-        .collect(),
+    let first_char = name.chars().next();
+    let last_char = name.chars().last();
+    match (first_char, last_char) {
+        (Some(first), Some(last)) => [first, last]
+            .into_iter()
+            .flat_map(char::to_lowercase)
+            .collect(),
         _ => String::new(),
     }
 }
 
 /// Builds the obfuscated, `/`-separated folder path for a file, relative to the
 /// game root. Returns an empty string for files directly in the root.
-fn obfuscate_parent(
-    root: &Path,
-    file: &Path,
-) -> String {
+fn obfuscate_parent(root: &Path, file: &Path) -> String {
     let Some(parent) = file.parent() else {
         return String::new();
     };
@@ -206,10 +157,7 @@ fn obfuscate_parent(
     };
     let mut parts: Vec<String> = Vec::new();
     for component in relative.components() {
-        if let Some(name) = component
-            .as_os_str()
-            .to_str()
-        {
+        if let Some(name) = component.as_os_str().to_str() {
             parts.push(obfuscate_component(name));
         }
     }
@@ -228,17 +176,11 @@ struct ManifestSource {
 }
 
 /// Returns whether one root file is a generated manifest ledger.
-fn is_root_manifest(
-    root: &Path,
-    path: &Path,
-) -> bool {
+fn is_root_manifest(root: &Path, path: &Path) -> bool {
     if path.parent() != Some(root) {
         return false;
     }
-    let Some(name) = path
-        .file_name()
-        .and_then(|value| value.to_str())
-    else {
+    let Some(name) = path.file_name().and_then(|value| value.to_str()) else {
         return false;
     };
     let is_minimum = name.eq_ignore_ascii_case(MANIFEST_FILE_NAME);
@@ -246,18 +188,29 @@ fn is_root_manifest(
     is_minimum || is_expanded
 }
 
+/// Returns whether one relative source coordinate stays beneath its root.
+fn is_safe_relative_source(relative: &Path) -> bool {
+    let mut has_descendant = false;
+    for component in relative.components() {
+        match component {
+            Component::Normal(_) => has_descendant = true,
+            Component::CurDir => {},
+            Component::ParentDir
+            | Component::RootDir
+            | Component::Prefix(_) => {
+                return false;
+            },
+        }
+    }
+    has_descendant
+}
+
 /// Returns one countable source coordinate for a rooted source path.
-fn manifest_source(
-    root: &Path,
-    path: &Path,
-) -> Option<ManifestSource> {
-    let relative = path
-        .strip_prefix(root)
-        .ok()?;
-    let _resolved = resolve_under(
-        root, relative,
-    )
-    .ok()?;
+fn manifest_source(root: &Path, path: &Path) -> Option<ManifestSource> {
+    let relative = path.strip_prefix(root).ok()?;
+    if !is_safe_relative_source(relative) {
+        return None;
+    }
     let extension = extension_of(path);
     let at_root = path.parent() == Some(root);
     if at_root && extension == OPTIONAL_EXTENSION {
@@ -269,41 +222,27 @@ fn manifest_source(
     if extension == BACKUP_EXTENSION {
         return None;
     }
-    if is_root_manifest(
-        root, path,
-    ) {
+    if is_root_manifest(root, path) {
         return None;
     }
     let parent = path.parent()?;
-    let relative_parent = parent
-        .strip_prefix(root)
-        .ok()?
-        .to_path_buf();
-    Some(
-        ManifestSource {
-            relative_parent,
-            base_dir: obfuscate_parent(
-                root, path,
-            ),
-            extension,
-        },
-    )
+    let relative_parent = parent.strip_prefix(root).ok()?.to_path_buf();
+    Some(ManifestSource {
+        relative_parent,
+        base_dir: obfuscate_parent(root, path),
+        extension,
+    })
 }
 
 /// Collects unique countable source coordinates in deterministic path order.
-fn manifest_sources(
-    root: &Path,
-    files: &[PathBuf],
-) -> Vec<ManifestSource> {
+fn manifest_sources(root: &Path, files: &[PathBuf]) -> Vec<ManifestSource> {
     let mut seen = BTreeSet::new();
     let mut sources = Vec::new();
     for path in files {
         if !seen.insert(path) {
             continue;
         }
-        let Some(source) = manifest_source(
-            root, path,
-        ) else {
+        let Some(source) = manifest_source(root, path) else {
             continue;
         };
         sources.push(source);
@@ -315,35 +254,20 @@ fn manifest_sources(
 fn public_parent_ids(sources: &[ManifestSource]) -> BTreeMap<PathBuf, String> {
     let mut grouped = BTreeMap::<String, BTreeSet<PathBuf>>::new();
     for source in sources {
-        let parents = grouped
-            .entry(
-                source
-                    .base_dir
-                    .clone(),
-            )
-            .or_default();
-        let _inserted = parents.insert(
-            source
-                .relative_parent
-                .clone(),
-        );
+        let parents = grouped.entry(source.base_dir.clone()).or_default();
+        let _inserted = parents.insert(source.relative_parent.clone());
     }
     let mut identities = BTreeMap::new();
     for (base_dir, parents) in grouped {
         let needs_ordinal = parents.len() > 1;
-        for (offset, parent) in parents
-            .into_iter()
-            .enumerate()
-        {
+        for (offset, parent) in parents.into_iter().enumerate() {
             let ordinal = offset.saturating_add(1);
             let identity = if needs_ordinal {
                 format!("{base_dir}~{ordinal:02}")
             } else {
                 base_dir.clone()
             };
-            let _previous = identities.insert(
-                parent, identity,
-            );
+            let _previous = identities.insert(parent, identity);
         }
     }
     identities
@@ -355,26 +279,16 @@ fn public_parent_ids(sources: &[ManifestSource]) -> BTreeMap<PathBuf, String> {
 /// stable ordinal suffixes, preventing ambiguous merged evidence without
 /// publishing either original directory name.
 #[must_use]
-pub fn count_by_dir_ext_paths(
-    root: &Path,
-    files: &[PathBuf],
-) -> DirExtCounts {
-    let sources = manifest_sources(
-        root, files,
-    );
+pub fn count_by_dir_ext_paths(root: &Path, files: &[PathBuf]) -> DirExtCounts {
+    let sources = manifest_sources(root, files);
     let identities = public_parent_ids(&sources);
     let mut counts = DirExtCounts::new();
     for source in sources {
         let Some(dir) = identities.get(&source.relative_parent) else {
             continue;
         };
-        let key = (
-            dir.clone(),
-            source.extension,
-        );
-        let count = counts
-            .entry(key)
-            .or_insert(0);
+        let key = (dir.clone(), source.extension);
+        let count = counts.entry(key).or_insert(0);
         *count = count.saturating_add(1);
     }
     counts

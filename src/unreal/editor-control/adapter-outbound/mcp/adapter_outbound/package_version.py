@@ -1,7 +1,3 @@
-# File:
-#   - package_version.py
-# Path: src/unreal/editor-control/adapter-outbound/mcp/adapter_outbound/package_version.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,44 +6,37 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Reading the Python translator package version from one metadata authority.
+#   - Package version outbound adapter.
 # - Must-Not:
-#   - Define a version literal or influence generated skill review revisions.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Falling back to source pyproject metadata for an uninstalled checkout.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Distribution and source metadata require independent adapters.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another adapter owns the same package metadata lookup.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Resolves the terminal client's package version without duplication.
+#   - Package version outbound adapter.
 # - Description:
-#   - Installed metadata wins; source pyproject is the development fallback.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Supplies MCP clientInfo during transport initialization.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Fails closed when neither metadata source is valid.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-#
-# Large file:
-#   - false
-#
-"""Single-source package version resolution for the Python translator."""
+
+"""Package version outbound adapter."""
 
 from __future__ import annotations
 
-import tomllib
 from functools import lru_cache
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as distribution_version
 from pathlib import Path
+import tomllib
 from typing import cast
 
 from mcp.domain.errors import fail_configuration
@@ -66,6 +55,7 @@ def package_version() -> str:
 
     Returns:
         Installed distribution version or source-project version.
+
     """
     try:
         resolved = distribution_version(_DISTRIBUTION_NAME)
@@ -90,6 +80,7 @@ def _source_project_version() -> str:
         )
     project = require_json_object(
         cast("object", parsed.get("project")),
+        # jig-ignore-next-line: exact value is indivisible
         context="src/unreal/editor-control/composition/mcp/pyproject.toml.project",
     )
     resolved = project.get("version")

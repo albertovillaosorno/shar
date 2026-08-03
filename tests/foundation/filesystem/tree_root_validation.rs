@@ -1,7 +1,3 @@
-// File:
-//   - tree_root_validation.rs
-// Path: tests/foundation/filesystem/tree_root_validation.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for tree-root containment authorities.
+//   - Tree root validation test module.
 // - Must-Not:
-//   - Depend on concrete storage or returned tree entries.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Supply an empty reader and assert root validation before port access.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another tree-root invariant needs unrelated fixtures.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test target owns the same tree-root authority contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Tree-root validation regression tests.
+//   - Tree root validation test module.
 // - Description:
-//   - Prevents empty snapshots from bypassing root traversal validation.
+//   - Implements the declared test module responsibility for filesystem.
 // - Usage:
-//   - Runs through the filesystem crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Tree roots must not contain parent traversal.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for tree-root containment authorities.
-//!
-//! Empty reader output must not bypass validation of the requested root.
+//! Tree root validation test module.
+
 use std::io;
 use std::path::{Path, PathBuf};
 
@@ -52,24 +39,18 @@ use schoenwald_filesystem::ports::TreeReader;
 struct EmptyTree;
 
 impl TreeReader for EmptyTree {
-    fn regular_files(
-        &self,
-        _root: &Path,
-    ) -> io::Result<Vec<PathBuf>> {
+    fn regular_files(&self, _root: &Path) -> io::Result<Vec<PathBuf>> {
         Ok(Vec::new())
     }
 }
 
 #[test]
 fn parent_traversal_tree_root_is_rejected() -> Result<(), String> {
-    let result = CollectRegularFiles::execute(
-        &EmptyTree,
-        Path::new("root/.."),
-    );
+    let result = CollectRegularFiles::execute(&EmptyTree, Path::new("root/.."));
 
     if result.is_ok() {
         return Err(
-            "traversing tree root unexpectedly returned a snapshot".to_owned(),
+            "traversing tree root unexpectedly returned a snapshot".to_owned()
         );
     }
     Ok(())

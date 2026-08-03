@@ -1,7 +1,3 @@
-// File:
-//   - ports.rs
-// Path: src/migration/pipeline/port-outbound/mod.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Outbound contracts required by pipeline application use cases.
+//   - Port outbound outbound port.
 // - Must-Not:
-//   - Implement local storage or command presentation behavior.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Request process-neutral output inventory evidence.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another provider family gains an independent lifecycle.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another facade owns the same pipeline outbound contracts.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Pipeline outbound ports.
+//   - Port outbound outbound port.
 // - Description:
-//   - Keeps application use cases independent from concrete providers.
+//   - Implements the declared outbound port responsibility for pipeline.
 // - Usage:
-//   - Implemented by driven adapters and consumed by application commands.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Ports receive every root and selection explicitly.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Outbound ports for pipeline application use cases.
-//!
-//! Concrete filesystem and tool providers remain in driven adapters.
+//! Port outbound outbound port.
+
 use std::path::Path;
 
 use crate::domain::{
@@ -78,10 +65,7 @@ pub trait PipelineOperations {
     /// # Errors
     ///
     /// Returns a validated pipeline failure.
-    fn run(
-        &self,
-        config: &PipelineConfig,
-    ) -> PipelineOutcome<PipelineReport>;
+    fn run(&self, config: &PipelineConfig) -> PipelineOutcome<PipelineReport>;
 
     /// Exports only movie packages.
     ///

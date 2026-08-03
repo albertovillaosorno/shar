@@ -102,12 +102,13 @@ JSON document in the repository.
 - IETF (2017), *RFC 8259: The JavaScript Object Notation Data Interchange
   Format*. <https://www.rfc-editor.org/rfc/rfc8259.html>
 - Ecma International (2017), *ECMA-404: The JSON Data Interchange Syntax*.
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://ecma-international.org/publications-and-standards/standards/ecma-404/>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://ecma-international.org/publications-and-standards/standards/ecma-404/> <!-- markdownlint-disable-line MD013 -->
 - JSON Lines, *JSON Lines*. <https://jsonlines.org/>
 - SHAR repository evidence: `src/migration/manifest/domain/json.rs`,
   `src/migration/manifest/domain/mod.rs`, and
-  `src/migration/manifest/application/validate_manifest.rs`.
+  `src/migration/manifest/composition/application/validate_manifest.rs`.
 
 ## Source References
 
@@ -116,8 +117,9 @@ JSON document in the repository.
   <https://www.rfc-editor.org/rfc/rfc8259.html> (Accessed: 12 July 2026).
 - Ecma International (2017) *ECMA-404: The JSON Data Interchange Syntax*.
   Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://ecma-international.org/publications-and-standards/standards/ecma-404/>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://ecma-international.org/publications-and-standards/standards/ecma-404/> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 12 July 2026).
 - JSON Lines (n.d.) *JSON Lines documentation*. Available at:
   <https://jsonlines.org/> (Accessed: 12 July 2026).

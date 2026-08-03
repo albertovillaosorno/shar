@@ -1,7 +1,3 @@
-// File:
-//   - polygon.rs
-// Path: src/formats/fbx/domain/geometry/polygon.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,45 +6,31 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure fbx domain rules for domain geometry polygon.
+//   - Polygon domain module.
 // - Must-Not:
-//   - Read files, parse generated indexes, invoke CLI code, or call writer
-//   - adapters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Value objects, invariant checks, and pure evidence-to-domain translation.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when polygon contains two independently testable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another fbx module owns the same domain boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Polygon with explicit corner indices.
+//   - Polygon domain module.
 // - Description:
-//   - Defines polygon data and behavior for fbx domain geometry.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Imported through crate domain facades or sibling domain modules.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No filesystem paths, no external process calls, and no implicit IO
-//   - defaults.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-// - docs/adr/pipeline/unreal/unreal-manifest-and-package-taxonomy.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Polygon with explicit corner indices.
-//!
-//! This boundary keeps polygon with explicit corner indices explicit and
-//! returns deterministic results to fbx callers.
-/// Polygon index sequence for one geometry face.
+//! Polygon domain module.
+
+/// One polygon expressed as ordered mesh control-point indices.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Polygon {
     /// Vertex indices for this polygon.

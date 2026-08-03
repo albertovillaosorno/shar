@@ -1,7 +1,3 @@
-// File:
-//   - tests.rs
-// Path: tests/foundation/command-line/unit/adapter-outbound/standard_streams/tests.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regressions for complete writes and operation error context.
+//   - Tests test module.
 // - Must-Not:
-//   - Access operating-system standard streams.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Use a deterministic in-memory writer.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Fixture families no longer exercise the same write helper.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - The standard-stream adapter no longer owns flushing.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Standard stream write and error-context tests.
+//   - Tests test module.
 // - Description:
-//   - Proves exact delivery and distinct write or flush failures.
+//   - Implements the declared test module responsibility for command line.
 // - Usage:
-//   - Compiled with the schoenwald-cli unit test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - The recording writer accepts every byte.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for complete standard-stream presentation.
-//!
-//! Complete writes flush successfully and failures retain operation context.
+//! Tests test module.
 
 use std::io::{self, Write};
 
@@ -53,16 +39,12 @@ const fn increment(count: usize) -> usize {
 
 /// Writes the shared non-empty fixture text through the adapter helper.
 fn write_alpha(writer: &mut impl Write) -> io::Result<()> {
-    super::write_complete(
-        writer, "alpha",
-    )
+    super::write_complete(writer, "alpha")
 }
 
 /// Writes the shared empty fixture text through the adapter helper.
 fn write_empty(writer: &mut impl Write) -> io::Result<()> {
-    super::write_complete(
-        writer, "",
-    )
+    super::write_complete(writer, "")
 }
 
 #[derive(Default)]
@@ -72,10 +54,7 @@ struct RecordingWriter {
 }
 
 impl Write for RecordingWriter {
-    fn write(
-        &mut self,
-        buffer: &[u8],
-    ) -> io::Result<usize> {
+    fn write(&mut self, buffer: &[u8]) -> io::Result<usize> {
         self.bytes = buffer.to_vec();
         Ok(buffer.len())
     }
@@ -95,12 +74,8 @@ struct InterruptedFlushWriter {
 }
 
 impl Write for InterruptedFlushWriter {
-    fn write(
-        &mut self,
-        buffer: &[u8],
-    ) -> io::Result<usize> {
-        self.bytes
-            .extend_from_slice(buffer);
+    fn write(&mut self, buffer: &[u8]) -> io::Result<usize> {
+        self.bytes.extend_from_slice(buffer);
         Ok(buffer.len())
     }
 
@@ -108,12 +83,10 @@ impl Write for InterruptedFlushWriter {
         let call = self.flush_calls;
         self.flush_calls = increment(self.flush_calls);
         if call == 0 {
-            return Err(
-                io::Error::new(
-                    io::ErrorKind::Interrupted,
-                    "flush interrupted",
-                ),
-            );
+            return Err(io::Error::new(
+                io::ErrorKind::Interrupted,
+                "flush interrupted",
+            ));
         }
         Ok(())
     }
@@ -126,10 +99,7 @@ fn complete_write_flushes_exact_bytes_before_returning() {
     let result = write_alpha(&mut writer);
 
     assert!(result.is_ok());
-    assert_eq!(
-        writer.bytes,
-        b"alpha"
-    );
+    assert_eq!(writer.bytes, b"alpha");
     assert!(writer.was_flushed);
 }
 
@@ -140,14 +110,8 @@ fn interrupted_flush_is_retried_before_write_completion() {
     let result = write_alpha(&mut writer);
 
     assert!(result.is_ok());
-    assert_eq!(
-        writer.bytes,
-        b"alpha"
-    );
-    assert_eq!(
-        writer.flush_calls,
-        2
-    );
+    assert_eq!(writer.bytes, b"alpha");
+    assert_eq!(writer.flush_calls, 2);
 }
 
 #[derive(Default)]
@@ -159,27 +123,14 @@ struct RejectingWriter {
 }
 
 impl Write for RejectingWriter {
-    fn write(
-        &mut self,
-        _buffer: &[u8],
-    ) -> io::Result<usize> {
+    fn write(&mut self, _buffer: &[u8]) -> io::Result<usize> {
         self.write_calls = increment(self.write_calls);
-        Err(
-            io::Error::new(
-                io::ErrorKind::BrokenPipe,
-                "write rejected",
-            ),
-        )
+        Err(io::Error::new(io::ErrorKind::BrokenPipe, "write rejected"))
     }
 
     fn flush(&mut self) -> io::Result<()> {
         self.flush_calls = increment(self.flush_calls);
-        Err(
-            io::Error::new(
-                io::ErrorKind::BrokenPipe,
-                "flush rejected",
-            ),
-        )
+        Err(io::Error::new(io::ErrorKind::BrokenPipe, "flush rejected"))
     }
 }
 
@@ -190,14 +141,8 @@ fn empty_output_does_not_touch_the_writer() {
     let result = write_empty(&mut writer);
 
     assert!(result.is_ok());
-    assert_eq!(
-        writer.write_calls,
-        0
-    );
-    assert_eq!(
-        writer.flush_calls,
-        0
-    );
+    assert_eq!(writer.write_calls, 0);
+    assert_eq!(writer.flush_calls, 0);
 }
 
 #[derive(Default)]
@@ -207,29 +152,15 @@ struct PrefixThenDenied {
 }
 
 impl Write for PrefixThenDenied {
-    fn write(
-        &mut self,
-        buffer: &[u8],
-    ) -> io::Result<usize> {
+    fn write(&mut self, buffer: &[u8]) -> io::Result<usize> {
         let call = self.calls;
         self.calls = increment(self.calls);
         if call == 0 {
             let accepted = 2;
-            self.bytes
-                .extend(
-                    buffer
-                        .iter()
-                        .take(accepted)
-                        .copied(),
-                );
+            self.bytes.extend(buffer.iter().take(accepted).copied());
             return Ok(accepted);
         }
-        Err(
-            io::Error::new(
-                io::ErrorKind::PermissionDenied,
-                "blocked",
-            ),
-        )
+        Err(io::Error::new(io::ErrorKind::PermissionDenied, "blocked"))
     }
 
     fn flush(&mut self) -> io::Result<()> {
@@ -244,22 +175,13 @@ struct FlushDenied {
 }
 
 impl Write for FlushDenied {
-    fn write(
-        &mut self,
-        buffer: &[u8],
-    ) -> io::Result<usize> {
-        self.bytes
-            .extend_from_slice(buffer);
+    fn write(&mut self, buffer: &[u8]) -> io::Result<usize> {
+        self.bytes.extend_from_slice(buffer);
         Ok(buffer.len())
     }
 
     fn flush(&mut self) -> io::Result<()> {
-        Err(
-            io::Error::new(
-                io::ErrorKind::PermissionDenied,
-                "blocked",
-            ),
-        )
+        Err(io::Error::new(io::ErrorKind::PermissionDenied, "blocked"))
     }
 }
 
@@ -287,12 +209,6 @@ fn write_and_flush_failures_retain_progress_and_operation_context() {
         flush_error.to_string(),
         "failed to flush standard stream after accepting 5 bytes: blocked"
     );
-    assert_eq!(
-        write_denied.bytes,
-        b"al"
-    );
-    assert_eq!(
-        flush_denied.bytes,
-        b"alpha"
-    );
+    assert_eq!(write_denied.bytes, b"al");
+    assert_eq!(flush_denied.bytes, b"alpha");
 }
