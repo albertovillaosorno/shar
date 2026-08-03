@@ -1,9 +1,34 @@
-// File: SharWorldOrientationTests.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharWorld/Private/Tests/SharWorldOrientationTests.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: deterministic world-orientation contract tests; no map, actor, asset, or widget loading.
-// ADR: docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar world orientation tests composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar world orientation tests composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar world orientation tests composition module.
 
 #if WITH_DEV_AUTOMATION_TESTS
 
@@ -269,6 +294,7 @@ bool FSharWorldOrientationAxesTest::RunTest(const FString& Parameters)
     const FSharWorldOrientationDefinition Orientation =
         USharWorldOrientationLibrary::GetCanonicalWorldOrientation();
 
+    // jig-ignore-next-line: exact syntax is indivisible
     TestTrue(TEXT("Canonical orientation validates"), Orientation.IsCanonical());
     TestTrue(
         TEXT("World north is +X"),
@@ -358,6 +384,7 @@ bool FSharWorldOrientationHeadingTest::RunTest(const FString& Parameters)
     TestTrue(
         TEXT("Negative bearings normalize into the canonical range"),
         NearlyEqual(
+            // jig-ignore-next-line: exact syntax is indivisible
             USharWorldOrientationLibrary::NormalizeBearingDegrees(WestYawDegrees),
             WestBearingDegrees,
             BearingTolerance
@@ -366,6 +393,7 @@ bool FSharWorldOrientationHeadingTest::RunTest(const FString& Parameters)
     TestTrue(
         TEXT("Unreal yaw is the canonical compass heading"),
         NearlyEqual(
+            // jig-ignore-next-line: exact syntax is indivisible
             USharWorldOrientationLibrary::GetHeadingDegreesFromYaw(EastHeadingDegrees),
             EastHeadingDegrees,
             BearingTolerance

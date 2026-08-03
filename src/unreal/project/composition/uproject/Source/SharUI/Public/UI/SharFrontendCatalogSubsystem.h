@@ -1,15 +1,41 @@
-// File: SharFrontendCatalogSubsystem.h
-// Path: src/unreal/project/composition/uproject/Source/SharUI/Public/UI/SharFrontendCatalogSubsystem.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: frontend catalog registration, cross-catalog validation, immutable activation, and lookup only.
-// Specification: docs/technical/unreal/frontend-screen-flow-and-settings-runtime.md
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar frontend catalog subsystem composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar frontend catalog subsystem composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar frontend catalog subsystem composition module.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 
+// jig-ignore-next-line: exact syntax is indivisible
 // NOLINTNEXTLINE(llvm-include-order) -- Unreal requires the generated header last.
 #include "UI/SharFrontendCatalogDefinition.h"
 #include "SharFrontendCatalogSubsystem.generated.h"

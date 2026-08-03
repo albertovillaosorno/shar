@@ -1,7 +1,3 @@
-// File:
-//   - material.rs
-// Path: src/formats/fbx/domain/material/material.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,42 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure fbx domain rules for domain material material.
+//   - Material domain module.
 // - Must-Not:
-//   - Read files, parse generated indexes, invoke CLI code, or call writer
-//   - adapters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Value objects, invariant checks, and pure evidence-to-domain translation.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when material contains two independently testable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another fbx module owns the same domain boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Defines definition for this module boundary.
+//   - Material domain module.
 // - Description:
-//   - Defines material data and behavior for fbx domain material.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Imported through crate domain facades or sibling domain modules.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No filesystem paths, no external process calls, and no implicit IO
-//   - defaults.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-// - docs/adr/pipeline/unreal/unreal-manifest-and-package-taxonomy.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! This code exposes definition as pure domain behavior for domain material
-//! material.
+//! Material domain module.
+
 pub mod definition;
 pub mod slot;
 pub mod translator;

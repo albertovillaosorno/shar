@@ -5,27 +5,35 @@
 
 ## Governing decisions and specifications
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Gameplay census, presentation, and development-content boundary](gameplay-census-presentation-and-development-boundary.md)
+- [Gameplay census, presentation, and development-content
+  boundary](gameplay-census-presentation-and-development-boundary.md)
 - [Unreal gameplay content catalog](gameplay-content-catalog.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Open sandbox campaign design](../gameplay/open-sandbox-campaign-design.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Multiplayer adapter and community-server extension](../modding/multiplayer-adapter-and-community-server-extension.md)
+- [Multiplayer adapter and community-server
+  extension](../modding/multiplayer-adapter-and-community-server-extension.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md)
+- [Dialogue selection, queue, and playback
+  runtime](dialogue-selection-queue-and-playback-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Dialogue authoring evidence import and native asset projection](dialogue-authoring-evidence-import-and-native-asset-projection.md)
+- [Dialogue authoring evidence import and native asset
+  projection](dialogue-authoring-evidence-import-and-native-asset-projection.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Device configuration and save-slot runtime](device-configuration-and-save-slot-runtime.md)
+- [Device configuration and save-slot
+  runtime](device-configuration-and-save-slot-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Platform save storage and lifecycle](platform-save-storage-and-lifecycle.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md)
+- [Typed event and observation routing
+  runtime](typed-event-and-observation-routing-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native art authoring, style, and asset validation contract](native-art-authoring-style-and-asset-validation-contract.md)
+- [Native art authoring, style, and asset validation
+  contract](native-art-authoring-style-and-asset-validation-contract.md)
 
 ## Purpose
 

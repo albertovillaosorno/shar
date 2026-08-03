@@ -1,7 +1,3 @@
-// File:
-//   - main.rs
-// Path: src/formats/rmv/composition/main.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,37 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - The minimal process entrypoint for the RMV CLI.
+//   - Main composition module.
 // - Must-Not:
-//   - Decode arguments, select storage policy, or execute use cases directly.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Delegation to the public driving adapter.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another process entrypoint is published.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - The package no longer publishes this executable.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Thin RMV executable entrypoint.
+//   - Main composition module.
 // - Description:
-//   - Delegates command behavior to the library-owned CLI adapter.
+//   - Implements the declared composition module responsibility for rmv.
 // - Usage:
-//   - Invoked as the `rmv-audit` binary.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Exit status comes from the driving adapter.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Thin process entrypoint for the RMV driving adapter.
+//! Main composition module.
+
 use std::process::ExitCode;
 
 use schoenwald_cli as _;

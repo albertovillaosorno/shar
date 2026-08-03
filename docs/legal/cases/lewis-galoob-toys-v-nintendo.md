@@ -66,12 +66,15 @@ of the amended reported opinion.
 
 - *Lewis Galoob Toys, Inc. v. Nintendo of America, Inc.*, 964 F.2d 965
   (9th Cir. 1992), amended opinion transcription. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://en.wikisource.org/wiki/Lewis_Galoob_Toys,_Inc._v._Nintendo_of_America,_Inc./Opinion_of_the_Court>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://en.wikisource.org/wiki/Lewis_Galoob_Toys,_Inc._v._Nintendo_of_America,_Inc./Opinion_of_the_Court> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 13 July 2026).
 - [Micro Star v. FormGen, Inc](micro-star-v-formgen.md).
 - [17 U.S.C. § 107](../statutes/17-usc-107.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Derivative Works And Game Mods](../doctrines/derivative-works-and-game-mods.md).
+- [Derivative Works And Game
+  Mods](../doctrines/derivative-works-and-game-mods.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Lawful Copy And Local Game Modification](../doctrines/lawful-copy-and-local-game-modification.md).
+- [Lawful Copy And Local Game
+  Modification](../doctrines/lawful-copy-and-local-game-modification.md).

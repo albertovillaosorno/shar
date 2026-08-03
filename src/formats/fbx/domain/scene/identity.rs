@@ -1,7 +1,3 @@
-// File:
-//   - identity.rs
-// Path: src/formats/fbx/domain/scene/identity.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,44 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure fbx domain rules for domain scene identity.
+//   - Identity domain module.
 // - Must-Not:
-//   - Read files, parse generated indexes, invoke CLI code, or call writer
-//   - adapters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Value objects, invariant checks, and pure evidence-to-domain translation.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when identity contains two independently testable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another fbx module owns the same domain boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Stable scene identity selected by application planning.
+//   - Identity domain module.
 // - Description:
-//   - Defines identity data and behavior for fbx domain scene.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Imported through crate domain facades or sibling domain modules.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No filesystem paths, no external process calls, and no implicit IO
-//   - defaults.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-// - docs/adr/pipeline/unreal/unreal-manifest-and-package-taxonomy.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Stable scene identity selected by application planning.
-//!
-//! This boundary keeps stable scene identity selected by application planning
-//! explicit and returns deterministic results to fbx callers.
+//! Identity domain module.
+
 use std::path::{Component, Path};
 
 /// Stable scene identity for deterministic export.
@@ -64,36 +46,21 @@ pub fn is_portable_path_segment(value: &str) -> bool {
     !value.is_empty()
         && value == value.trim()
         && !value.ends_with('.')
-        && value
-            .chars()
-            .all(
-                |character| {
-                    !character.is_control()
-                        && !r#"<>:"/\|?*"#.contains(character)
-                },
-            )
+        && value.chars().all(|character| {
+            !character.is_control() && !r#"<>:"/\|?*"#.contains(character)
+        })
         && !is_windows_reserved_name(value)
-        && matches!(
-            components.next(),
-            Some(Component::Normal(_))
-        )
-        && components
-            .next()
-            .is_none()
+        && matches!(components.next(), Some(Component::Normal(_)))
+        && components.next().is_none()
 }
 
 /// Return whether one portable segment maps to a Windows device name.
 #[must_use]
 pub fn is_windows_reserved_name(value: &str) -> bool {
-    let stem = value
-        .split('.')
-        .next()
-        .unwrap_or(value);
-    if [
-        "con", "prn", "aux", "nul", "clock$", "conin$", "conout$",
-    ]
-    .iter()
-    .any(|reserved| stem.eq_ignore_ascii_case(reserved))
+    let stem = value.split('.').next().unwrap_or(value);
+    if ["con", "prn", "aux", "nul", "clock$", "conin$", "conout$"]
+        .iter()
+        .any(|reserved| stem.eq_ignore_ascii_case(reserved))
     {
         return true;
     }
@@ -103,30 +70,14 @@ pub fn is_windows_reserved_name(value: &str) -> bool {
     let Some(suffix) = stem.get(3..) else {
         return false;
     };
-    let numbered_suffix = matches!(
-        suffix,
-        "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
-    );
-    let superscript_suffix = matches!(
-        suffix,
-        "¹" | "²" | "³"
-    );
+    let numbered_suffix =
+        matches!(suffix, "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9");
+    let superscript_suffix = matches!(suffix, "¹" | "²" | "³");
     (numbered_suffix || superscript_suffix)
         && (prefix.eq_ignore_ascii_case("com")
             || prefix.eq_ignore_ascii_case("lpt"))
 }
-
 #[cfg(test)]
-#[test]
-fn recognizes_superscript_device_suffixes() {
-    for value in [
-        "COM¹.png",
-        "com².json",
-        "LPT³.fbx",
-    ] {
-        assert!(
-            is_windows_reserved_name(value),
-            "reserved Windows alias was accepted: {value}"
-        );
-    }
-}
+// jig-ignore-next-line: exact syntax is indivisible
+#[path = "../../../../../tests/formats/fbx/unit/domain/scene/identity/loose_tests.rs"]
+mod loose_tests;

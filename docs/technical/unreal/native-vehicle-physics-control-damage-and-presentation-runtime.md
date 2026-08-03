@@ -6,36 +6,49 @@
 ## Governing decisions and specifications
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Driving, traffic, and vehicle behavior parity](../../adr/gameplay/vehicles/driving-traffic-and-vehicle-ai.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md)
+- [Driving, traffic, and vehicle behavior
+  parity](../../adr/gameplay/vehicles/driving-traffic-and-vehicle-ai.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
+- [Runtime parity test
+  boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
+- [World render-entity and physics
+  runtime](world-render-entity-and-physics-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
+- [Physical material and impact-response
+  runtime](physical-material-and-impact-response-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Physical material and impact-response runtime](physical-material-and-impact-response-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Road-network geometry and traffic runtime](road-network-geometry-and-traffic-runtime.md)
+- [Road-network geometry and traffic
+  runtime](road-network-geometry-and-traffic-runtime.md)
 - [Vehicle AI and route runtime](vehicle-ai-and-route-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Vehicle access and roster runtime](vehicle-access-and-roster-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Vehicle retrieval and phone-booth runtime](vehicle-retrieval-and-phone-booth-runtime.md)
+- [Vehicle retrieval and phone-booth
+  runtime](vehicle-retrieval-and-phone-booth-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
+- [Playable avatar, character controller, and footprint
+  runtime](playable-avatar-character-controller-and-footprint-runtime.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md)
+- [Semantic input, device, and haptics
+  runtime](semantic-input-device-and-haptics-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Semantic input, device, and haptics runtime](semantic-input-device-and-haptics-runtime.md)
+- [Transient VFX and breakable-presentation
+  runtime](transient-vfx-and-breakable-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Vehicle audio and avatar-sound runtime](vehicle-audio-and-avatar-sound-runtime.md)
+- [Vehicle audio and avatar-sound
+  runtime](vehicle-audio-and-avatar-sound-runtime.md)
 
 ## Purpose
 
@@ -91,19 +104,41 @@ network policy, cooking, fallback, and migration.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Vehicle definition | Declares stable vehicle identity, compatible native class, physics assets, movement configuration, wheels, damage, presentation, seats, and fallbacks. |
-| Vehicle simulation component | Owns native source forces, suspension, tires, steering, brakes, transmission, engine, wheel contacts, rigid-body state, and physics-thread integration. |
-| Vehicle application service | Owns construction, mode, controller, occupant, damage, reset, destruction, replacement, parking, and teardown transactions. |
-| Human input service | Owns per-local-player input actions, contexts, modifiers, triggers, device assignment, accessibility, and haptics requests. |
-| Vehicle AI service | Owns driving intent, route intent, obstacle response, chase, evade, race, traffic, and recovery decisions. |
-| Road and traffic services | Own lanes, legal movements, reservations, route projections, density, and traffic spawn policy. |
-| Damage and impact services | Own accepted damage, breakage eligibility, gameplay consequences, notoriety observations, and reward transactions. |
-| Render and presentation services | Own mesh, wheel animation, materials, lights, particles, skid presentation, shadows, and camera-facing presentation. |
-| Audio service | Owns engine, skid, horn, collision, damage, door, and environmental playback from immutable observations. |
-| Persistence and roster services | Own access class, acquired vehicle state, persistent health, repair, and durable placement state. |
-| Developer diagnostics | Observe immutable definitions, commands, physics state, contacts, damage, controllers, presentation, capacity, and failures. |
+- **Authority:** Vehicle definition
+  - **Responsibility:** Declares stable vehicle identity, compatible native
+    class, physics assets, movement configuration, wheels, damage, presentation,
+    seats, and fallbacks.
+- **Authority:** Vehicle simulation component
+  - **Responsibility:** Owns native source forces, suspension, tires, steering,
+    brakes, transmission, engine, wheel contacts, rigid-body state, and
+    physics-thread integration.
+- **Authority:** Vehicle application service
+  - **Responsibility:** Owns construction, mode, controller, occupant, damage,
+    reset, destruction, replacement, parking, and teardown transactions.
+- **Authority:** Human input service
+  - **Responsibility:** Owns per-local-player input actions, contexts,
+    modifiers, triggers, device assignment, accessibility, and haptics requests.
+- **Authority:** Vehicle AI service
+  - **Responsibility:** Owns driving intent, route intent, obstacle response,
+    chase, evade, race, traffic, and recovery decisions.
+- **Authority:** Road and traffic services
+  - **Responsibility:** Own lanes, legal movements, reservations, route
+    projections, density, and traffic spawn policy.
+- **Authority:** Damage and impact services
+  - **Responsibility:** Own accepted damage, breakage eligibility, gameplay
+    consequences, notoriety observations, and reward transactions.
+- **Authority:** Render and presentation services
+  - **Responsibility:** Own mesh, wheel animation, materials, lights, particles,
+    skid presentation, shadows, and camera-facing presentation.
+- **Authority:** Audio service
+  - **Responsibility:** Owns engine, skid, horn, collision, damage, door, and
+    environmental playback from immutable observations.
+- **Authority:** Persistence and roster services
+  - **Responsibility:** Own access class, acquired vehicle state, persistent
+    health, repair, and durable placement state.
+- **Authority:** Developer diagnostics
+  - **Responsibility:** Observe immutable definitions, commands, physics state,
+    contacts, damage, controllers, presentation, capacity, and failures.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -368,7 +403,8 @@ Ground support consumes native wheel contacts and the world physics contract. A
 compatibility support plane may be used only through the bounded support-plane
 lease in
 <!-- markdownlint-disable-next-line MD013 -->
-[World render-entity and physics runtime](world-render-entity-and-physics-runtime.md).
+[World render-entity and physics
+runtime](world-render-entity-and-physics-runtime.md).
 It cannot replace missing world collision or become the ordinary wheel-contact
 system.
 
@@ -468,7 +504,8 @@ Controller modes and route behavior follow
 Traffic vehicles consume immutable road, lane, legal-movement, reservation,
 density, and route state from
 <!-- markdownlint-disable-next-line MD013 -->
-[Road-network geometry and traffic runtime](road-network-geometry-and-traffic-runtime.md).
+[Road-network geometry and traffic
+runtime](road-network-geometry-and-traffic-runtime.md).
 
 A traffic projection may contain:
 
@@ -506,7 +543,8 @@ active or returns a typed removal result.
 
 Vehicle collision observations follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Physical material and impact-response runtime](physical-material-and-impact-response-runtime.md)
+[Physical material and impact-response
+runtime](physical-material-and-impact-response-runtime.md)
 and contain:
 
 - contact and causation identities;
@@ -669,7 +707,8 @@ mission or arrest participant without validating ownership.
 Qualifying vehicle contact, vehicle destruction, pedestrian impact, and other
 accepted offenses publish typed observations to
 <!-- markdownlint-disable-next-line MD013 -->
-[Mission, interaction, interior, and notoriety runtime](mission-interaction-and-notoriety-runtime.md).
+[Mission, interaction, interior, and notoriety
+runtime](mission-interaction-and-notoriety-runtime.md).
 The notoriety service owns value, decay, warning, pursuit, resolution, arrest,
 and fine transactions.
 
@@ -722,7 +761,8 @@ source implementation. Required handling is verified behaviorally.
 
 Vehicle occupant handoff follows
 <!-- markdownlint-disable-next-line MD013 -->
-[Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md).
+[Playable avatar, character controller, and footprint
+runtime](playable-avatar-character-controller-and-footprint-runtime.md).
 The vehicle exposes validated seat, entry, exit, passenger, driver, and camera
 anchors by stable identity.
 
@@ -733,8 +773,9 @@ occupant animation cannot commit possession.
 
 Vehicle height class, seat role, side, door capability, hardpoint transforms,
 occupancy, collision, motion, and world readiness are immutable inputs to
-<!-- markdownlint-disable-next-line MD013 -->
-[Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md).
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+[Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md). <!-- markdownlint-disable-line MD013 -->
 The vehicle accepts only revision-correlated phase observations and application
 commands; a door, seat, or attachment marker cannot mutate native vehicle state
 directly.
@@ -806,7 +847,8 @@ skid and surface observation, not a custom skid-mark renderer.
 Vehicle audio consumes immutable simulation and presentation observations
 through
 <!-- markdownlint-disable-next-line MD013 -->
-[Vehicle audio and avatar-sound runtime](vehicle-audio-and-avatar-sound-runtime.md).
+[Vehicle audio and avatar-sound
+runtime](vehicle-audio-and-avatar-sound-runtime.md).
 Observations include engine load, engine rotation speed, gear, throttle, speed,
 reverse, airborne, skid, burnout, powerslide, horn, damage, door, surface, and
 proximity state.

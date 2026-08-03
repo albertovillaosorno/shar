@@ -1,7 +1,3 @@
-// File:
-//   - runtime_source.rs
-// Path: src/formats/rmv/domain/runtime_source.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,43 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure rmv domain rules for domain runtime source.
+//   - Runtime source domain module.
 // - Must-Not:
-//   - Read files, parse generated indexes, invoke CLI code, or call writer
-//   - adapters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Value objects, invariant checks, and pure evidence-to-domain translation.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when runtime source contains two independently testable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another rmv module owns the same domain boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Runtimemoviecandidate.
+//   - Runtime source domain module.
 // - Description:
-//   - Defines runtime source data and behavior for rmv domain.
+//   - Implements the declared domain module responsibility for rmv.
 // - Usage:
-//   - Imported through crate domain facades or sibling domain modules.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No filesystem paths, no external process calls, and no implicit IO
-//   - defaults.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Runtimemoviecandidate.
-//!
-//! This boundary keeps runtimemoviecandidate explicit and returns
-//! deterministic results to rmv callers.
+//! Runtime source domain module.
+
 use std::path::PathBuf;
 
 use crate::domain::{MovieKind, Sha256, is_windows_safe_component};
@@ -138,10 +121,7 @@ impl RuntimeCompletionRule {
                 "invalid-accepted-kind",
             );
         }
-        if !movie_names_match(
-            &evidence.logical_name,
-            &self.logical_name,
-        ) {
+        if !movie_names_match(&evidence.logical_name, &self.logical_name) {
             return incomplete_runtime(
                 &evidence.logical_name,
                 "logical-name-mismatch",
@@ -169,36 +149,29 @@ impl RuntimeCompletionRule {
             ) =>
             {
                 Some("candidate-name-mismatch")
-            }
+            },
             () if runtime_candidate.kind != self.accepted_kind => {
                 Some("candidate-kind-mismatch")
-            }
+            },
             () if runtime_candidate.byte_len == 0 => Some("candidate-empty"),
             () if runtime_candidate.byte_len <= 4 => {
                 Some("candidate-truncated")
-            }
+            },
             () if runtime_candidate.byte_len < self.min_byte_len => {
                 Some("candidate-too-small")
-            }
+            },
             () if runtime_candidate.sha256 == evidence.sha256 => {
                 Some("candidate-same-as-incomplete-input")
-            }
+            },
             () => None,
         };
 
         if let Some(reason) = rejection_reason {
-            return incomplete_runtime(
-                &self.logical_name,
-                reason,
-            );
+            return incomplete_runtime(&self.logical_name, reason);
         }
         RuntimeCompletionDecision::Ready {
-            logical_name: self
-                .logical_name
-                .clone(),
-            candidate_path: runtime_candidate
-                .path
-                .clone(),
+            logical_name: self.logical_name.clone(),
+            candidate_path: runtime_candidate.path.clone(),
             candidate_sha256: runtime_candidate.sha256,
         }
     }
@@ -206,20 +179,11 @@ impl RuntimeCompletionRule {
 
 /// Compares movie identities using Unicode case folding suitable for Windows
 /// filename identity while preserving exact equality as the fast path.
-fn movie_names_match(
-    left: &str,
-    right: &str,
-) -> bool {
+fn movie_names_match(left: &str, right: &str) -> bool {
     if left == right {
         return true;
     }
-    if left
-        .chars()
-        .count()
-        != right
-            .chars()
-            .count()
-    {
+    if left.chars().count() != right.chars().count() {
         return false;
     }
     left.to_uppercase() == right.to_uppercase()
@@ -233,14 +197,7 @@ fn candidate_matches_logical_name(
 ) -> bool {
     path.file_stem()
         .and_then(std::ffi::OsStr::to_str)
-        .is_some_and(
-            |stem| {
-                movie_names_match(
-                    stem,
-                    logical_name,
-                )
-            },
-        )
+        .is_some_and(|stem| movie_names_match(stem, logical_name))
         && path
             .extension()
             .and_then(std::ffi::OsStr::to_str)

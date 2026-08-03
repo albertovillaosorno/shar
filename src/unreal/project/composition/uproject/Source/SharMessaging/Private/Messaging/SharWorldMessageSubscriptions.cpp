@@ -1,12 +1,34 @@
-// File: SharWorldMessageSubscriptions.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharMessaging/Private/Messaging/SharWorldMessageSubscriptions.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: world configuration, subscription ownership, replay, and teardown only; no domain fact creation.
-// Specification: docs/technical/unreal/typed-event-and-observation-routing-runtime.md
-// LARGE-FILE owner=SharMessaging; reason=cohesive subscription and world-lifetime implementation;
-// split=extract replay storage if additional replay policies appear;
-// validation=validate.sh SharMessaging plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar world message subscriptions composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar world message subscriptions composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar world message subscriptions composition module.
 
 #include "Messaging/SharWorldMessageRouterSubsystem.h"
 

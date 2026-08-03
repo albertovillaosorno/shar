@@ -1,12 +1,34 @@
-// File: SharCameraProfileDefinition.h
-// Path: src/unreal/project/composition/uproject/Source/SharCamera/Public/Camera/SharCameraProfileDefinition.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: immutable camera intent, target, policy, and framing metadata only.
-// ADR: docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
-// LARGE-FILE owner=SharCamera; reason=cohesive reflected camera profile contract;
-// split=extract framing data if independent preset assets are introduced;
-// validation=validate.sh SharCamera plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar camera profile definition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar camera profile definition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar camera profile definition composition module.
 
 #pragma once
 

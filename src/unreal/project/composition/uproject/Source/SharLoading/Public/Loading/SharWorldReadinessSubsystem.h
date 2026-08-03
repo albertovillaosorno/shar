@@ -1,12 +1,34 @@
-// File: SharWorldReadinessSubsystem.h
-// Path: src/unreal/project/composition/uproject/Source/SharLoading/Public/Loading/SharWorldReadinessSubsystem.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: world-revision and required-checkpoint barriers only; streaming visibility, actors, physics, and gameplay activation remain external.
-// Specification: docs/technical/unreal/native-asset-load-request-and-streaming-runtime.md
-// LARGE-FILE owner=SharLoading; reason=cohesive reflected world-readiness barrier contract;
-// split=extract diagnostics if checkpoint evidence becomes persistent;
-// validation=validate.sh SharLoading plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar world readiness subsystem composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar world readiness subsystem composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar world readiness subsystem composition module.
 
 #pragma once
 

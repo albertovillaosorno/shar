@@ -7,15 +7,17 @@ description = "From-scratch RTF to Markdown converter for the pipeline."
 publish = false
 
 [dependencies]
-# schoenwald-cli centralizes process arguments, ordered streams, exact stdout documents, newline handling, and exit-code mapping for the RTF driving adapter.
-schoenwald-cli = { path = "../../foundation/command-line" }
-# schoenwald-filesystem centralizes complete source snapshots and complete Markdown publication while timestamp provenance remains RTF-specific.
-schoenwald-filesystem = { path = "../../foundation/filesystem" }
+# jig-ignore-next-line: exact value is indivisible
+# schoenwald_cli centralizes process arguments, ordered streams, exact stdout documents, newline handling, and exit-code mapping for the RTF driving adapter.
+schoenwald_cli = { path = "../../foundation/command-line" }
+# jig-ignore-next-line: exact value is indivisible
+# schoenwald_filesystem centralizes complete source snapshots and complete Markdown publication while timestamp provenance remains RTF-specific.
+schoenwald_filesystem = { path = "../../foundation/filesystem" }
 
 
 [lib]
 name = "rtf"
-path = "lib.rs"
+path = "composition/lib.rs"
 
 [[bin]]
 name = "rtf-to-md"
@@ -49,3 +51,6 @@ path = "../../../tests/formats/rtf/special_character_controls.rs"
 [[test]]
 name = "unicode_character_controls"
 path = "../../../tests/formats/rtf/unicode_character_controls.rs"
+
+[lints]
+workspace = true

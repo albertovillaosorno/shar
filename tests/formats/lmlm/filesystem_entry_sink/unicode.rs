@@ -1,7 +1,3 @@
-// File:
-//   - unicode.rs
-// Path: tests/formats/lmlm/filesystem_entry_sink/unicode.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Unicode portable-identity regressions for filesystem publication.
+//   - Unicode test module.
 // - Must-Not:
-//   - Read private archives or retain temporary output directories.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic entries and process-local filesystem roots.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another Unicode destination invariant needs independent fixtures.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - The parent test module remains below its file-size boundary.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Proves Unicode case collisions fail before publication begins.
+//   - Unicode test module.
 // - Description:
-//   - Exercises portable identities whose uppercase mappings converge.
+//   - Implements the declared test module responsibility for lmlm.
 // - Usage:
-//   - Compiled only by the LMLM filesystem sink test module.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Every temporary root is removed before and after each scenario.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Unicode collision regressions for LMLM materialization.
-//!
-//! Equivalent portable identities must fail before either file is created.
+//! Unicode test module.
 
 use std::io;
 
@@ -65,15 +51,9 @@ fn rejects_unicode_case_collisions_before_writing() -> Result<(), String> {
             size: 1,
         },
     ];
-    let result = materialize_entries(
-        b"ab", &entries, &root,
-    );
-    let first_exists = root
-        .join("Σ.bin")
-        .exists();
-    let second_exists = root
-        .join("ς.bin")
-        .exists();
+    let result = materialize_entries(b"ab", &entries, &root);
+    let first_exists = root.join("Σ.bin").exists();
+    let second_exists = root.join("ς.bin").exists();
     remove_test_root(&root)?;
     match result {
         Err(error)
@@ -82,13 +62,11 @@ fn rejects_unicode_case_collisions_before_writing() -> Result<(), String> {
                 && !second_exists =>
         {
             Ok(())
-        }
-        other => Err(
-            format!(
-                "Unicode case-colliding destinations must fail before writes, \
+        },
+        other => Err(format!(
+            "Unicode case-colliding destinations must fail before writes, \
                  got {other:?}, first_exists={first_exists}, \
                  second_exists={second_exists}"
-            ),
-        ),
+        )),
     }
 }

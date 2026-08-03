@@ -1,7 +1,3 @@
-// File:
-//   - filesystem_reader.rs
-// Path: tests/formats/rcf/filesystem_reader.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Caller-visible file-reader range regressions.
+//   - Filesystem reader test module.
 // - Must-Not:
-//   - Read private assets or repository-local game inputs.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Isolated temporary files and public archive-reader operations.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another reader adapter needs an independent integration target.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - File-reader range safety no longer needs a distinct test boundary.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects bounded RCF file reads.
+//   - Filesystem reader test module.
 // - Description:
-//   - Exercises public file-backed range reads against declared file length.
+//   - Implements the declared test module responsibility for rcf.
 // - Usage:
-//   - Run through the RCF crate integration test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Temporary files are process-local and removed after each regression.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Caller-visible regressions for the RCF file-backed byte reader.
-//!
-//! Tests use isolated temporary files and remove them after each assertion.
+//! Filesystem reader test module.
 
 use std::fs;
 use std::io::Write;
@@ -59,14 +45,9 @@ static NEXT_FILE_ID: AtomicU64 = AtomicU64::new(0);
 
 #[test]
 fn rejects_ranges_beyond_the_file_before_reading() {
-    let file_id = NEXT_FILE_ID.fetch_add(
-        1,
-        Ordering::Relaxed,
-    );
+    let file_id = NEXT_FILE_ID.fetch_add(1, Ordering::Relaxed);
     let path = temporary_file_path(file_id);
-    let written = fs::write(
-        &path, b"ab",
-    );
+    let written = fs::write(&path, b"ab");
     assert!(
         written.is_ok(),
         "the isolated fixture file must be writable"
@@ -76,17 +57,12 @@ fn rejects_ranges_beyond_the_file_before_reading() {
     }
     let source = FileArchiveSource::new(&path);
     let opened_reader = source.open_reader();
-    assert!(
-        opened_reader.is_ok(),
-        "the fixture reader must open"
-    );
+    assert!(opened_reader.is_ok(), "the fixture reader must open");
     let Ok(mut reader) = opened_reader else {
         cleanup(&path);
         return;
     };
-    let result = reader.read_range(
-        1, 2,
-    );
+    let result = reader.read_range(1, 2);
     cleanup(&path);
 
     assert!(
@@ -101,14 +77,9 @@ fn rejects_ranges_beyond_the_file_before_reading() {
 
 #[test]
 fn reader_length_remains_stable_after_source_growth() {
-    let file_id = NEXT_FILE_ID.fetch_add(
-        1,
-        Ordering::Relaxed,
-    );
+    let file_id = NEXT_FILE_ID.fetch_add(1, Ordering::Relaxed);
     let path = temporary_file_path(file_id);
-    let written = fs::write(
-        &path, b"ab",
-    );
+    let written = fs::write(&path, b"ab");
     assert!(
         written.is_ok(),
         "the isolated fixture file must be writable"
@@ -118,17 +89,12 @@ fn reader_length_remains_stable_after_source_growth() {
     }
     let source = FileArchiveSource::new(&path);
     let opened_reader = source.open_reader();
-    assert!(
-        opened_reader.is_ok(),
-        "the fixture reader must open"
-    );
+    assert!(opened_reader.is_ok(), "the fixture reader must open");
     let Ok(mut reader) = opened_reader else {
         cleanup(&path);
         return;
     };
-    let append_result = fs::OpenOptions::new()
-        .append(true)
-        .open(&path);
+    let append_result = fs::OpenOptions::new().append(true).open(&path);
     assert!(
         append_result.is_ok(),
         "the fixture file must reopen for appending"
@@ -148,16 +114,11 @@ fn reader_length_remains_stable_after_source_growth() {
     }
 
     let length = reader.len();
-    let result = reader.read_range(
-        0, 4,
-    );
+    let result = reader.read_range(0, 4);
     cleanup(&path);
 
     assert!(
-        matches!(
-            length,
-            Ok(2)
-        ),
+        matches!(length, Ok(2)),
         "one opened reader must preserve its original archive length"
     );
     assert!(
@@ -172,14 +133,9 @@ fn reader_length_remains_stable_after_source_growth() {
 
 #[test]
 fn truncation_after_open_is_reported_as_invalid_archive() {
-    let file_id = NEXT_FILE_ID.fetch_add(
-        1,
-        Ordering::Relaxed,
-    );
+    let file_id = NEXT_FILE_ID.fetch_add(1, Ordering::Relaxed);
     let path = temporary_file_path(file_id);
-    let written = fs::write(
-        &path, b"abcd",
-    );
+    let written = fs::write(&path, b"abcd");
     assert!(
         written.is_ok(),
         "the isolated fixture file must be writable"
@@ -189,17 +145,12 @@ fn truncation_after_open_is_reported_as_invalid_archive() {
     }
     let source = FileArchiveSource::new(&path);
     let opened_reader = source.open_reader();
-    assert!(
-        opened_reader.is_ok(),
-        "the fixture reader must open"
-    );
+    assert!(opened_reader.is_ok(), "the fixture reader must open");
     let Ok(mut reader) = opened_reader else {
         cleanup(&path);
         return;
     };
-    let truncated = fs::write(
-        &path, b"ab",
-    );
+    let truncated = fs::write(&path, b"ab");
     assert!(
         truncated.is_ok(),
         "the fixture file must truncate after the reader opens"
@@ -209,9 +160,7 @@ fn truncation_after_open_is_reported_as_invalid_archive() {
         return;
     }
 
-    let result = reader.read_range(
-        0, 4,
-    );
+    let result = reader.read_range(0, 4);
     cleanup(&path);
 
     assert!(
@@ -225,12 +174,8 @@ fn truncation_after_open_is_reported_as_invalid_archive() {
 }
 
 fn temporary_file_path(file_id: u64) -> PathBuf {
-    std::env::temp_dir().join(
-        format!(
-            "rcf-reader-{}-{file_id}.bin",
-            std::process::id()
-        ),
-    )
+    std::env::temp_dir()
+        .join(format!("rcf-reader-{}-{file_id}.bin", std::process::id()))
 }
 
 fn cleanup(path: &PathBuf) {

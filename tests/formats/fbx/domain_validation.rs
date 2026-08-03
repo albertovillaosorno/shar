@@ -1,7 +1,3 @@
-// File:
-//   - domain_validation.rs
-// Path: tests/formats/fbx/domain_validation.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for independent FBX domain value invariants.
+//   - Domain validation test module.
 // - Must-Not:
-//   - Access private assets, perform filesystem discovery, or call adapters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic identities, numeric values, and public domain constructors.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - One aggregate requires fixtures or adapter integration.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Domain value regressions move into a more specific existing test target.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects normalized domain values before planning and serialization.
+//   - Domain validation test module.
 // - Description:
-//   - Exercises public constructors with deterministic synthetic evidence.
+//   - Implements the declared test module responsibility for fbx.
 // - Usage:
-//   - Run through the fbx crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No local files, generated assets, or external processes are required.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for independent normalized FBX domain value invariants.
-//!
-//! Synthetic evidence verifies invalid values fail before application planning,
-//! adapter staging, or deterministic scene serialization.
+//! Domain validation test module.
 
 use std::path::PathBuf;
 
@@ -68,17 +53,11 @@ use shar_sha256 as _;
 #[test]
 fn rejects_incomplete_cli_export_selections() {
     assert_eq!(
-        CliExportSelection::new(
-            "   ",
-            "output.fbx"
-        ),
+        CliExportSelection::new("   ", "output.fbx"),
         Err(CliExportSelectionError::MissingPackageSelector)
     );
     assert_eq!(
-        CliExportSelection::new(
-            "package",
-            PathBuf::new()
-        ),
+        CliExportSelection::new("package", PathBuf::new()),
         Err(CliExportSelectionError::MissingOutputFile)
     );
 }
@@ -102,11 +81,7 @@ fn rejects_blank_scene_artifact_target_identity() {
 #[test]
 fn rejects_invalid_shader_requirement_identities() {
     assert_eq!(
-        ShaderRequirement::new(
-            "   ",
-            MaterialChannel::Diffuse,
-            None,
-        ),
+        ShaderRequirement::new("   ", MaterialChannel::Diffuse, None,),
         Err(ShaderRequirementError::MissingShaderId)
     );
     assert_eq!(
@@ -130,10 +105,7 @@ fn rejects_invalid_animation_member_identities() {
     );
     assert_eq!(
         AnimationRequirement::new(
-            vec![
-                "clip".to_owned(),
-                "clip".to_owned()
-            ],
+            vec!["clip".to_owned(), "clip".to_owned()],
             AnimationCapability::PreservedOnly,
         ),
         Err(AnimationRequirementError::DuplicateMemberId)

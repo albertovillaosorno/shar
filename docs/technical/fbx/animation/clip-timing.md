@@ -6,14 +6,18 @@
 ## Governing decisions and specifications
 
 - [Hexagonal scene export](../../../adr/pipeline/fbx/hexagonal-scene-export.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Historical source-document evidence classification and publication boundary](../../unreal/historical-source-document-evidence-classification-and-publication-boundary.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Historical source-document evidence classification and publication boundary](../../unreal/historical-source-document-evidence-classification-and-publication-boundary.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Native import, material rebuild, and world assembly](../../unreal/native-import-material-and-world-assembly.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Playable avatar, character controller, and footprint runtime](../../unreal/playable-avatar-character-controller-and-footprint-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Character animation clip catalog and vehicle-handoff choreography runtime](../../unreal/character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md)
+- [Native import, material rebuild, and world
+  assembly](../../unreal/native-import-material-and-world-assembly.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Playable avatar, character controller, and footprint runtime](../../unreal/playable-avatar-character-controller-and-footprint-runtime.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Character animation clip catalog and vehicle-handoff choreography runtime](../../unreal/character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md) <!-- markdownlint-disable-line MD013 -->
 
 ## Purpose
 
@@ -185,8 +189,9 @@ one composed clip or multiple phase clips. The canonical choreography records:
 A source filename token such as all, driver, high, open, or close cannot define
 phase timing. The normalized catalog and native read-back own those semantics.
 Composed and phased variants must reach equivalent accepted gameplay state under
-<!-- markdownlint-disable-next-line MD013 -->
-[Character animation clip catalog and vehicle-handoff choreography runtime](../../unreal/character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md).
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+[Character animation clip catalog and vehicle-handoff choreography runtime](../../unreal/character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md). <!-- markdownlint-disable-line MD013 -->
 
 ## Looping clips
 

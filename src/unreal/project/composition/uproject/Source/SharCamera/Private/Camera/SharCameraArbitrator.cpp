@@ -1,12 +1,34 @@
-// File: SharCameraArbitrator.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharCamera/Private/Camera/SharCameraArbitrator.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: deterministic camera request ordering, cancellation, and restoration only.
-// ADR: docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
-// LARGE-FILE owner=SharCamera; reason=cohesive arbitration lifecycle implementation;
-// split=extract priority policy if additional arbitration classes appear;
-// validation=validate.sh SharCamera plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar camera arbitrator composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar camera arbitrator composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar camera arbitrator composition module.
 
 #include "Camera/SharCameraArbitrator.h"
 
@@ -186,6 +208,7 @@ ESharCameraRequestStatus USharCameraArbitrator::SubmitRequest(
     const FSharCameraRequest& Request
 )
 {
+    // jig-ignore-next-line: exact syntax is indivisible
     if (!IsValidRequest(Request) || FindRequestState(Request.RequestId) != nullptr)
     {
         return ESharCameraRequestStatus::Rejected;

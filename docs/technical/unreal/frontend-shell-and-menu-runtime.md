@@ -6,22 +6,30 @@
 ## Governing decisions
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
+- [Common UI front end and progress
+  projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md) <!-- markdownlint-disable-line MD013 -->
 - [UI parity boundary](../../adr/unreal/ui/ui-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+- [Portable save storage and
+  lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
+- [Application lifecycle and mode
+  runtime](application-lifecycle-and-mode-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Common UI navigation, menu, and modal runtime](common-ui-navigation-menu-and-modal-runtime.md)
+- [Common UI navigation, menu, and modal
+  runtime](common-ui-navigation-menu-and-modal-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Frontend media, gallery, and audio runtime](frontend-media-gallery-and-audio-runtime.md)
+- [Frontend media, gallery, and audio
+  runtime](frontend-media-gallery-and-audio-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md)
+- [Frontend screen flow and settings
+  runtime](frontend-screen-flow-and-settings-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Device configuration and save-slot runtime](device-configuration-and-save-slot-runtime.md)
+- [Device configuration and save-slot
+  runtime](device-configuration-and-save-slot-runtime.md)
 
 ## Purpose
 
@@ -40,12 +48,22 @@ The owning services are:
 
 <!-- markdownlint-disable MD013 -->
 
-| Service | Lifetime | Authority |
-| :--- | :--- | :--- |
-| `USharFrontendCatalogSubsystem` | Game instance | Immutable screen definitions, root-catalog activation, and cross-catalog identity validation. |
-| `USharFrontendFlowSubsystem` | Game instance | Revisioned frontend observations, deterministic navigation, history, modal state, readiness evidence, rollback, and terminal results. |
-| `USharFrontendInputSubsystem` | Local player | Semantic menu actions, active input method, focus restoration, and glyph context. |
-| `USharFrontendViewModelSubsystem` | Game instance | Immutable view-model construction from accepted domain snapshots. |
+- **Service:** `USharFrontendCatalogSubsystem`
+  - **Lifetime:** Game instance
+  - **Authority:** Immutable screen definitions, root-catalog activation, and
+    cross-catalog identity validation.
+- **Service:** `USharFrontendFlowSubsystem`
+  - **Lifetime:** Game instance
+  - **Authority:** Revisioned frontend observations, deterministic navigation,
+    history, modal state, readiness evidence, rollback, and terminal results.
+- **Service:** `USharFrontendInputSubsystem`
+  - **Lifetime:** Local player
+  - **Authority:** Semantic menu actions, active input method, focus
+    restoration, and glyph context.
+- **Service:** `USharFrontendViewModelSubsystem`
+  - **Lifetime:** Game instance
+  - **Authority:** Immutable view-model construction from accepted domain
+    snapshots.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -110,7 +128,8 @@ semantic action.
 
 Boot executes the validated task graph defined by the
 <!-- markdownlint-disable-next-line MD013 -->
-[frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md).
+[frontend screen flow and settings
+runtime](frontend-screen-flow-and-settings-runtime.md).
 The required base tasks are:
 
 1. initialize the root gameplay and user-interface catalogs;
@@ -164,17 +183,28 @@ The primary menu exposes these semantic commands:
 
 <!-- markdownlint-disable MD013 -->
 
-| Command | Availability |
-| :--- | :--- |
-| `new_game` | Base campaign and an empty or replaceable target slot are available. |
-| `resume_game` | One accepted slot has a valid resume or campaign destination. |
-| `load_game` | At least one logical slot summary is inspectable. |
-| `scrapbook` | One accepted progression snapshot is selectable. |
-| `unused_content` | The accepted Unused Content catalog and required generic fallback bundles resolve. |
-| `achievements` | Shows `Achievements pending` until the required achievement service and catalog are implemented. |
-| `options` | Device-local configuration service is available. |
-| `credits` | Credits definition and presentation bundle resolve. |
-| `quit` | Platform policy exposes an application-exit command. |
+- **Command:** `new_game`
+  - **Availability:** Base campaign and an empty or replaceable target slot are
+    available.
+- **Command:** `resume_game`
+  - **Availability:** One accepted slot has a valid resume or campaign
+    destination.
+- **Command:** `load_game`
+  - **Availability:** At least one logical slot summary is inspectable.
+- **Command:** `scrapbook`
+  - **Availability:** One accepted progression snapshot is selectable.
+- **Command:** `unused_content`
+  - **Availability:** The accepted Unused Content catalog and required generic
+    fallback bundles resolve.
+- **Command:** `achievements`
+  - **Availability:** Shows `Achievements pending` until the required
+    achievement service and catalog are implemented.
+- **Command:** `options`
+  - **Availability:** Device-local configuration service is available.
+- **Command:** `credits`
+  - **Availability:** Credits definition and presentation bundle resolve.
+- **Command:** `quit`
+  - **Availability:** Platform policy exposes an application-exit command.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -188,7 +218,8 @@ general-purpose launcher. A validated server mod may contribute its own
 namespaced connection surface through a declared UI extension point governed by
 the
 <!-- markdownlint-disable-next-line MD013 -->
-[multiplayer adapter and community-server extension](../modding/multiplayer-adapter-and-community-server-extension.md).
+[multiplayer adapter and community-server
+extension](../modding/multiplayer-adapter-and-community-server-extension.md).
 
 ## Unused Content command
 
@@ -323,7 +354,8 @@ Cancellation releases temporary assignments and preserves campaign progression.
 
 The detailed setup, navigation, and transition contract follows the
 <!-- markdownlint-disable-next-line MD013 -->
-[frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md).
+[frontend screen flow and settings
+runtime](frontend-screen-flow-and-settings-runtime.md).
 
 ## Controller loss and recovery
 
@@ -336,7 +368,8 @@ player assignment. Duplicate disconnects do not stack prompts, and a newly
 enumerated device cannot inherit ownership from a physical index. Recovery,
 media pause, modal lifetime, and focus restoration follow the
 <!-- markdownlint-disable-next-line MD013 -->
-[frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md).
+[frontend screen flow and settings
+runtime](frontend-screen-flow-and-settings-runtime.md).
 
 ## Options screen
 
@@ -377,7 +410,8 @@ set.
 Device discovery, assignment, rebinding, pointer capture, and haptic feedback
 follow the
 <!-- markdownlint-disable-next-line MD013 -->
-[semantic input, device, and haptics runtime](semantic-input-device-and-haptics-runtime.md).
+[semantic input, device, and haptics
+runtime](semantic-input-device-and-haptics-runtime.md).
 The active-input method changes glyphs and hints only. It does not change
 command
 availability or navigation meaning.

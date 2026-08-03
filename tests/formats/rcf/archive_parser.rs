@@ -1,7 +1,3 @@
-// File:
-//   - archive_parser.rs
-// Path: tests/formats/rcf/archive_parser.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,41 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Caller-visible RCF parser regressions.
+//   - Archive parser test module.
 // - Must-Not:
-//   - Read private assets or assert parser implementation details.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic archive rows and public parser assertions.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - A non-parser use case needs an independent test target.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Parser regressions no longer need a distinct integration boundary.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects RCF archive parsing contracts.
+//   - Archive parser test module.
 // - Description:
-//   - Exercises public parsing with synthetic malformed archive evidence.
+//   - Implements the declared test module responsibility for rcf.
 // - Usage:
-//   - Run through the RCF crate integration test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No local files, generated assets, or external processes are required.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - true
-//   - Reason: Public parser regressions remain grouped by one synthetic archive
-//   - boundary while focused fixture construction stays in fixture/archive.rs.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Caller-visible regressions for the RCF parser.
-//!
-//! Synthetic archives verify failures through the public parser boundary.
+//! Archive parser test module.
 
 use schoenwald_cli as _;
 use schoenwald_filesystem as _;
@@ -240,16 +224,9 @@ fn preserves_first_file_offset() {
     let result = parse_archive(bytes);
 
     assert!(
-        result
-            .as_ref()
-            .is_ok_and(
-                |archive| {
-                    archive
-                        .header
-                        .first_file_offset
-                        == 0x1000
-                },
-            ),
+        result.as_ref().is_ok_and(|archive| {
+            archive.header.first_file_offset == 0x1000
+        },),
         "the public header must report m_FirstFileStartPos"
     );
 }
@@ -269,14 +246,7 @@ fn preserves_file_info_alignment() {
     assert!(
         result
             .as_ref()
-            .is_ok_and(
-                |archive| {
-                    archive
-                        .header
-                        .alignment
-                        == 0x800
-                },
-            ),
+            .is_ok_and(|archive| { archive.header.alignment == 0x800 },),
         "archive alignment must come from the fixed file-info structure"
     );
 }
@@ -383,18 +353,12 @@ fn preserves_utf8_while_normalizing_separators() {
     let result = parse_archive(bytes);
 
     assert!(
-        result
-            .as_ref()
-            .is_ok_and(
-                |archive| {
-                    archive
-                        .entries
-                        .first()
-                        .is_some_and(
-                            |entry| entry.name == "sound/caf\u{00e9}.rsd",
-                        )
-                },
-            ),
+        result.as_ref().is_ok_and(|archive| {
+            archive
+                .entries
+                .first()
+                .is_some_and(|entry| entry.name == "sound/caf\u{00e9}.rsd")
+        },),
         "separator normalization must not reinterpret UTF-8 bytes"
     );
 }
@@ -450,10 +414,7 @@ fn rejects_invisible_unicode_direction_controls() {
 #[test]
 fn preserves_file_modification_times() {
     let expected = 0x1234_5678;
-    let fixture = archive_with_modification_time(
-        b"sound/file.rsd\0",
-        expected,
-    );
+    let fixture = archive_with_modification_time(b"sound/file.rsd\0", expected);
     assert!(
         fixture.is_ok(),
         "the synthetic archive fixture must be constructible"
@@ -464,18 +425,12 @@ fn preserves_file_modification_times() {
     let result = parse_archive(bytes);
 
     assert!(
-        result
-            .as_ref()
-            .is_ok_and(
-                |archive| {
-                    archive
-                        .entries
-                        .first()
-                        .is_some_and(
-                            |entry| entry.modification_time == expected,
-                        )
-                },
-            ),
+        result.as_ref().is_ok_and(|archive| {
+            archive
+                .entries
+                .first()
+                .is_some_and(|entry| entry.modification_time == expected)
+        },),
         "detailed rows must preserve their file modification time"
     );
 }
@@ -534,10 +489,7 @@ fn rejects_index_tables_beyond_the_declared_archive() {
     let Ok((bytes, declared_length)) = fixture else {
         return;
     };
-    let result = parse_archive_with_declared_length(
-        bytes,
-        declared_length,
-    );
+    let result = parse_archive_with_declared_length(bytes, declared_length);
 
     assert!(
         matches!(
@@ -550,12 +502,10 @@ fn rejects_index_tables_beyond_the_declared_archive() {
 }
 #[test]
 fn rejects_names_that_normalize_to_the_same_output_path() {
-    let fixture = archive_with_stored_names(
-        &[
-            b"sound/file.rsd\x00",
-            b"sound\x5cfile.rsd\x00",
-        ],
-    );
+    let fixture = archive_with_stored_names(&[
+        b"sound/file.rsd\x00",
+        b"sound\x5cfile.rsd\x00",
+    ]);
     assert!(
         fixture.is_ok(),
         "the synthetic archive fixture must be constructible"
@@ -579,12 +529,10 @@ fn rejects_names_that_normalize_to_the_same_output_path() {
 fn rejects_unicode_case_folded_output_path_collisions() {
     let upper_name = "sound/CAFÉ.rsd\0";
     let lower_name = "sound/café.rsd\0";
-    let fixture = archive_with_stored_names(
-        &[
-            upper_name.as_bytes(),
-            lower_name.as_bytes(),
-        ],
-    );
+    let fixture = archive_with_stored_names(&[
+        upper_name.as_bytes(),
+        lower_name.as_bytes(),
+    ]);
     assert!(
         fixture.is_ok(),
         "the synthetic archive fixture must be constructible"
@@ -606,12 +554,8 @@ fn rejects_unicode_case_folded_output_path_collisions() {
 
 #[test]
 fn rejects_unsorted_hash_index_rows() {
-    let fixture = archive_with_stored_names(
-        &[
-            b"sound/other.rsd\0",
-            b"sound/file.rsd\0",
-        ],
-    );
+    let fixture =
+        archive_with_stored_names(&[b"sound/other.rsd\0", b"sound/file.rsd\0"]);
     assert!(
         fixture.is_ok(),
         "the synthetic archive fixture must be constructible"

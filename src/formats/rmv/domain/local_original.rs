@@ -1,7 +1,3 @@
-// File:
-//   - local_original.rs
-// Path: src/formats/rmv/domain/local_original.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,43 +6,26 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure rmv domain rules for domain local original.
+//   - Local original domain module.
 // - Must-Not:
-//   - Read files, parse generated indexes, invoke CLI code, or call writer
-//   - adapters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Value objects, invariant checks, and pure evidence-to-domain translation.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when local original contains two independently testable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another rmv module owns the same domain boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Runtime completion is represented by `runtime_source` so the movie
-//   - pipeline.
+//   - Local original domain module.
 // - Description:
-//   - Defines local original data and behavior for rmv domain.
+//   - Implements the declared domain module responsibility for rmv.
 // - Usage:
-//   - Imported through crate domain facades or sibling domain modules.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No filesystem paths, no external process calls, and no implicit IO
-//   - defaults.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Historical local-original terminology intentionally has no separate domain
-//! model.
-//!
-//! Runtime completion is represented by `runtime_source` so the movie pipeline
-//! has one validation policy for user-supplied movie bytes instead of two
-//! drifting copies of the same prerequisite checks.
+//! Local original domain module.

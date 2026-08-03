@@ -2,8 +2,6 @@
 
 > [Legal Research Disclaimer](../disclaimer.md) applies to this record.
 
-<!-- cspell:ignore MGE -->
-
 - Status: Reported Second Circuit opinion text verified from a public-domain
   reporter duplicate; an official archival court copy was not located.
 - Court: United States Court of Appeals for the Second Circuit.
@@ -103,16 +101,21 @@ or prohibited circumvention material remain outside the repository boundary.
 
 - Public.Resource.Org (n.d.), *Universal City Studios, Inc. v. Corley*, 273 F.3d
   429 (2d Cir. 2001), public-domain reporter duplicate. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://law.resource.org/pub/us/case/reporter/F3/273/273.F3d.429.00-9185.html>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://law.resource.org/pub/us/case/reporter/F3/273/273.F3d.429.00-9185.html> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 <!-- markdownlint-disable-next-line MD013 -->
-- [17 U.S.C. § 1201 tool-distribution research](../statutes/17-usc-1201-trafficking.md).
+- [17 U.S.C. § 1201 tool-distribution
+  research](../statutes/17-usc-1201-trafficking.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Copyright-safe publication boundary](../repository/copyright-safe-publication-boundary.md).
+- [Copyright-safe publication
+  boundary](../repository/copyright-safe-publication-boundary.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Chamberlain Group, Inc. v. Skylink Technologies, Inc.](chamberlain-v-skylink.md).
+- [Chamberlain Group, Inc. v. Skylink Technologies,
+  Inc.](chamberlain-v-skylink.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [MGE UPS Systems, Inc. v. GE Consumer and Industrial, Inc.](mge-ups-systems-v-ge-consumer-and-industrial.md).
+- [MGE UPS Systems, Inc. v. GE Consumer and Industrial,
+  Inc.](mge-ups-systems-v-ge-consumer-and-industrial.md).
 <!-- markdownlint-disable-next-line MD013 -->
 - [MDY Industries, LLC v. Blizzard Entertainment, Inc.](mdy-v-blizzard.md).

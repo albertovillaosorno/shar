@@ -1,7 +1,3 @@
-// File:
-//   - recipe.rs
-// Path: src/formats/fbx/domain/texture/semantic/body/recipe.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,41 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Validated semantic body-group selection, color overrides, and atlas
-//   - configuration.
+//   - Recipe domain module.
 // - Must-Not:
-//   - Inspect characters, sample images, build charts, or mutate UVs.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Checked dimensions, explicit reviewed overrides, and deterministic group
-//   - ordering.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Outfit-specific recipes require a separate compatibility contract.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another body-planning module owns the same input validation.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Semantic body preparation recipe.
+//   - Recipe domain module.
 // - Description:
-//   - Separates human-reviewed evidence from pure automatic classification.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Constructed by adapters before invoking the body planner.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Selected groups are sorted and duplicate selection is rejected.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - true
-//   - Reason: group identity, atlas validation, and reviewed overrides form one
-//   - cohesive request contract.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Validated semantic body preparation recipe.
+//! Recipe domain module.
+
 #![expect(
     clippy::indexing_slicing,
     reason = "Recipe group addresses are validated before exact part and \
@@ -103,25 +88,21 @@ impl AtlasConfig {
             .checked_mul(region_count)
             .ok_or(SemanticTextureError::AtlasDimensionsOverflow)?;
         if width < minimum_width || height < minimum_dimension {
-            return Err(
-                SemanticTextureError::AtlasTooSmall {
-                    width,
-                    height,
-                    padding,
-                },
-            );
+            return Err(SemanticTextureError::AtlasTooSmall {
+                width,
+                height,
+                padding,
+            });
         }
         if background.alpha != u8::MAX {
             return Err(SemanticTextureError::TransparentBodyAtlasBackground);
         }
-        Ok(
-            Self {
-                width,
-                height,
-                padding,
-                background,
-            },
-        )
+        Ok(Self {
+            width,
+            height,
+            padding,
+            background,
+        })
     }
 }
 
@@ -157,25 +138,20 @@ impl BodySemanticRecipe {
             return Err(SemanticTextureError::MissingBodyGroups);
         }
         if !hair_luminance_ratio.is_finite()
-            || !(0.0..1.0).contains(&hair_luminance_ratio)
+            || !(0. ..1.).contains(&hair_luminance_ratio)
         {
             return Err(SemanticTextureError::InvalidHairLuminanceRatio);
         }
         groups.sort_unstable();
-        if groups
-            .windows(2)
-            .any(|pair| pair[0] == pair[1])
-        {
+        if groups.windows(2).any(|pair| pair[0] == pair[1]) {
             return Err(SemanticTextureError::DuplicateBodyGroup);
         }
-        Ok(
-            Self {
-                groups,
-                color_overrides,
-                texture_address_mode,
-                hair_luminance_ratio,
-                atlas,
-            },
-        )
+        Ok(Self {
+            groups,
+            color_overrides,
+            texture_address_mode,
+            hair_luminance_ratio,
+            atlas,
+        })
     }
 }

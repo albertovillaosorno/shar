@@ -1,9 +1,34 @@
-// File: SharFrontendFlowSubsystem.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharUI/Private/UI/SharFrontendFlowSubsystem.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: frontend flow configuration, immutable observations, queue queries, and shared lifecycle helpers only.
-// Specification: docs/technical/unreal/frontend-screen-flow-and-settings-runtime.md
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar frontend flow subsystem composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar frontend flow subsystem composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar frontend flow subsystem composition module.
 
 #include "UI/SharFrontendFlowSubsystem.h"
 

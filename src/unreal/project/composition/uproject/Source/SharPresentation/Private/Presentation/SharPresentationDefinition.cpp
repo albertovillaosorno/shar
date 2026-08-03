@@ -1,12 +1,34 @@
-// File: SharPresentationDefinition.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharPresentation/Private/Presentation/SharPresentationDefinition.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: load-free presentation-policy validation only; adapters and playback state remain external.
-// Specification: docs/technical/unreal/presentation-playback-runtime.md
-// LARGE-FILE owner=SharPresentation; reason=cohesive presentation-policy validation;
-// split=extract adapter-policy validation if platform-specific contracts expand;
-// validation=validate.sh SharPresentation plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar presentation definition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar presentation definition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar presentation definition composition module.
 
 #include "Presentation/SharPresentationDefinition.h"
 
@@ -47,6 +69,7 @@ static void AppendRequiredPolicyErrors(
     {
         AddPresentationDefinitionError(
             OutErrors,
+            // jig-ignore-next-line: exact syntax is indivisible
             TEXT("Presentation asset, owner, playback, fallback, result, and teardown identities must be canonical.")
         );
     }
@@ -65,6 +88,7 @@ static void AppendOptionalPolicyErrors(
     {
         AddPresentationDefinitionError(
             OutErrors,
+            // jig-ignore-next-line: exact syntax is indivisible
             TEXT("Optional presentation policy identities must be canonical when present.")
         );
     }

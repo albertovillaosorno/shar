@@ -5,16 +5,21 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Native flying-hazard actors and StateTree execution](../../adr/unreal/runtime/native-flying-hazard-actors-and-state-trees.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native flying-hazard actors and StateTree execution](../../adr/unreal/runtime/native-flying-hazard-actors-and-state-trees.md)
+- [Data-driven Unreal gameplay content
+  catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
+- [Mission world-entity and respawn
+  runtime](mission-world-entity-and-respawn-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Mission world-entity and respawn runtime](mission-world-entity-and-respawn-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Progression, collectibles, cheats, and credits](progression-collectibles-and-cheats.md)
+- [Progression, collectibles, cheats, and
+  credits](progression-collectibles-and-cheats.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 
 ## Purpose
@@ -31,12 +36,17 @@ The runtime has four authorities:
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Gameplay catalog | Stable identities and immutable hazard definitions. |
-| Hazard subsystem | Validation, loaded-instance lookup, spawn coordination, pooling, and typed results. |
-| Pawn and StateTree | Per-instance perception, movement, behavior, animation state, and task lifetime. |
-| Domain services | Damage, currency, progression, mission observations, rewards, and save commits. |
+- **Authority:** Gameplay catalog
+  - **Responsibility:** Stable identities and immutable hazard definitions.
+- **Authority:** Hazard subsystem
+  - **Responsibility:** Validation, loaded-instance lookup, spawn coordination,
+    pooling, and typed results.
+- **Authority:** Pawn and StateTree
+  - **Responsibility:** Per-instance perception, movement, behavior, animation
+    state, and task lifetime.
+- **Authority:** Domain services
+  - **Responsibility:** Damage, currency, progression, mission observations,
+    rewards, and save commits.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -50,18 +60,33 @@ The runtime module owns these C++ types:
 
 <!-- markdownlint-disable MD013 -->
 
-| Type | Responsibility |
-| :--- | :--- |
-| `USharFlyingHazardDefinition` | Primary data asset containing one immutable archetype contract. |
-| `ASharFlyingHazardPawn` | Loaded world representation with collision, movement, presentation, and StateTree components. |
-| `ASharFlyingHazardAIController` | AI Perception configuration and StateTree context. |
-| `USharFlyingHazardMovementComponent` | Swept three-dimensional movement and altitude policy. |
-| `USharFlyingHazardSubsystem` | World-scoped registry, pooling, spawn coordination, and result publication. |
-| `USharHazardDefenseComponent` | Shield and damage-phase state. |
-| `USharTractorBeamComponent` | Beam activation, target reservations, pull transactions, and release. |
-| `ASharHazardProjectile` | Pooled projectile representation with one impact authority. |
-| `USharHazardSpawnDefinition` | Stable spawn identity, activation, persistence, and respawn policy. |
-| `ASharHazardSpawnAnchor` | Authored world anchor that references one spawn definition. |
+- **Type:** `USharFlyingHazardDefinition`
+  - **Responsibility:** Primary data asset containing one immutable archetype
+    contract.
+- **Type:** `ASharFlyingHazardPawn`
+  - **Responsibility:** Loaded world representation with collision, movement,
+    presentation, and StateTree components.
+- **Type:** `ASharFlyingHazardAIController`
+  - **Responsibility:** AI Perception configuration and StateTree context.
+- **Type:** `USharFlyingHazardMovementComponent`
+  - **Responsibility:** Swept three-dimensional movement and altitude policy.
+- **Type:** `USharFlyingHazardSubsystem`
+  - **Responsibility:** World-scoped registry, pooling, spawn coordination, and
+    result publication.
+- **Type:** `USharHazardDefenseComponent`
+  - **Responsibility:** Shield and damage-phase state.
+- **Type:** `USharTractorBeamComponent`
+  - **Responsibility:** Beam activation, target reservations, pull transactions,
+    and release.
+- **Type:** `ASharHazardProjectile`
+  - **Responsibility:** Pooled projectile representation with one impact
+    authority.
+- **Type:** `USharHazardSpawnDefinition`
+  - **Responsibility:** Stable spawn identity, activation, persistence, and
+    respawn policy.
+- **Type:** `ASharHazardSpawnAnchor`
+  - **Responsibility:** Authored world anchor that references one spawn
+    definition.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -75,24 +100,45 @@ Every `USharFlyingHazardDefinition` contains:
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `HazardId` | Globally unique canonical identity. |
-| `Archetype` | Closed enum such as wasp camera, attack UFO, beam UFO, or boss UFO. |
-| `PawnClass` | Validated native Pawn class with required components. |
-| `StateTree` | Canonical StateTree template compatible with the hazard schema. |
-| `GameplayTags` | Archetype, team, target, damage, mission, and presentation tags. |
-| `MovementPolicy` | Speed, acceleration, turn rate, ground clearance, altitude range, and sweep shape. |
-| `PerceptionPolicy` | Sight, damage, touch, hearing, and custom stimulus filters. |
-| `AttackPolicy` | Range, arc, charge, volley, cooldown, movement, and target rules. |
-| `EvasionPolicy` | Trigger, distance, candidate query, speed, and recovery rules. |
-| `ProjectileDefinition` | Optional projectile identity used by ranged attacks. |
-| `DefensePolicy` | Health, shield phases, immunity tags, and damage reactions. |
-| `TractorBeamPolicy` | Optional beam radius, height, pull rate, target filters, and completion result. |
-| `RewardPolicy` | Typed reward and progression transaction identity. |
-| `PresentationPolicy` | Mesh, animation, audio, effects, shadow, camera request, and accessibility cues. |
-| `PoolingPolicy` | Preallocation count and reset contract. |
-| `VerificationIds` | Golden scenarios required before activation. |
+- **Field:** `HazardId`
+  - **Contract:** Globally unique canonical identity.
+- **Field:** `Archetype`
+  - **Contract:** Closed enum such as wasp camera, attack UFO, beam UFO, or boss
+    UFO.
+- **Field:** `PawnClass`
+  - **Contract:** Validated native Pawn class with required components.
+- **Field:** `StateTree`
+  - **Contract:** Canonical StateTree template compatible with the hazard
+    schema.
+- **Field:** `GameplayTags`
+  - **Contract:** Archetype, team, target, damage, mission, and presentation
+    tags.
+- **Field:** `MovementPolicy`
+  - **Contract:** Speed, acceleration, turn rate, ground clearance, altitude
+    range, and sweep shape.
+- **Field:** `PerceptionPolicy`
+  - **Contract:** Sight, damage, touch, hearing, and custom stimulus filters.
+- **Field:** `AttackPolicy`
+  - **Contract:** Range, arc, charge, volley, cooldown, movement, and target
+    rules.
+- **Field:** `EvasionPolicy`
+  - **Contract:** Trigger, distance, candidate query, speed, and recovery rules.
+- **Field:** `ProjectileDefinition`
+  - **Contract:** Optional projectile identity used by ranged attacks.
+- **Field:** `DefensePolicy`
+  - **Contract:** Health, shield phases, immunity tags, and damage reactions.
+- **Field:** `TractorBeamPolicy`
+  - **Contract:** Optional beam radius, height, pull rate, target filters, and
+    completion result.
+- **Field:** `RewardPolicy`
+  - **Contract:** Typed reward and progression transaction identity.
+- **Field:** `PresentationPolicy`
+  - **Contract:** Mesh, animation, audio, effects, shadow, camera request, and
+    accessibility cues.
+- **Field:** `PoolingPolicy`
+  - **Contract:** Preallocation count and reset contract.
+- **Field:** `VerificationIds`
+  - **Contract:** Golden scenarios required before activation.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -105,18 +151,28 @@ Every `USharHazardSpawnDefinition` contains:
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `SpawnId` | Globally unique persistent identity. |
-| `HazardId` | Resolved hazard definition identity. |
-| `LevelId` | Owning campaign level. |
-| `Transform` | Authored world transform or anchor-relative transform. |
-| `ActivationPolicy` | Always loaded, proximity, mission, data-layer, or explicit application request. |
-| `PersistencePolicy` | Session, level, profile, or permanent completion state. |
-| `RespawnPolicy` | Never, stream reload, cooldown, mission reset, or explicit reset. |
-| `RespawnDelay` | Required only when the policy uses a cooldown. |
-| `InitialStateTags` | Validated state supplied to the StateTree context. |
-| `DefinitionRevision` | Immutable revision used to reject stale loaded instances. |
+- **Field:** `SpawnId`
+  - **Contract:** Globally unique persistent identity.
+- **Field:** `HazardId`
+  - **Contract:** Resolved hazard definition identity.
+- **Field:** `LevelId`
+  - **Contract:** Owning campaign level.
+- **Field:** `Transform`
+  - **Contract:** Authored world transform or anchor-relative transform.
+- **Field:** `ActivationPolicy`
+  - **Contract:** Always loaded, proximity, mission, data-layer, or explicit
+    application request.
+- **Field:** `PersistencePolicy`
+  - **Contract:** Session, level, profile, or permanent completion state.
+- **Field:** `RespawnPolicy`
+  - **Contract:** Never, stream reload, cooldown, mission reset, or explicit
+    reset.
+- **Field:** `RespawnDelay`
+  - **Contract:** Required only when the policy uses a cooldown.
+- **Field:** `InitialStateTags`
+  - **Contract:** Validated state supplied to the StateTree context.
+- **Field:** `DefinitionRevision`
+  - **Contract:** Immutable revision used to reject stale loaded instances.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -136,7 +192,8 @@ level revisions, proximity cooldown, or an ineligible trigger rejects the spawn
 without creating a Pawn. Despawn before destruction releases the reservation;
 destruction converts it to the declared coin batch under
 <!-- markdownlint-disable-next-line MD013 -->
-[Progression, collectibles, cheats, and credits](progression-collectibles-and-cheats.md).
+[Progression, collectibles, cheats, and
+credits](progression-collectibles-and-cheats.md).
 
 ## Loaded-instance registry
 
@@ -178,20 +235,40 @@ ports. The canonical state vocabulary is:
 
 <!-- markdownlint-disable MD013 -->
 
-| State | Contract |
-| :--- | :--- |
-| `dormant` | Presentation may be loaded, but perception and movement are inactive. |
-| `spawning` | Bind identity, restore persistence, reset components, and validate the initial transform. |
-| `idle` | Maintain authored altitude and consume perception updates. |
-| `observing` | Face or orbit a perceived stimulus without attacking. |
-| `seeking_attack_position` | Run the bounded attack-position query and move to the accepted result. |
-| `charging` | Lock the verified target, play charge presentation, and permit interruption. |
-| `attacking` | Commit one projectile or beam activation according to the attack policy. |
-| `evading` | Move to a deterministic safe result while preserving target memory policy. |
-| `stunned` | Suspend attack and movement resources for the authored duration. |
-| `damaged` | Apply damage reaction and evaluate shield or phase transitions. |
-| `dying` | Disable attacks, commit destruction once, play terminal presentation, and release resources. |
-| `despawned` | Unregister or pool after every terminal obligation is complete. |
+- **State:** `dormant`
+  - **Contract:** Presentation may be loaded, but perception and movement are
+    inactive.
+- **State:** `spawning`
+  - **Contract:** Bind identity, restore persistence, reset components, and
+    validate the initial transform.
+- **State:** `idle`
+  - **Contract:** Maintain authored altitude and consume perception updates.
+- **State:** `observing`
+  - **Contract:** Face or orbit a perceived stimulus without attacking.
+- **State:** `seeking_attack_position`
+  - **Contract:** Run the bounded attack-position query and move to the accepted
+    result.
+- **State:** `charging`
+  - **Contract:** Lock the verified target, play charge presentation, and permit
+    interruption.
+- **State:** `attacking`
+  - **Contract:** Commit one projectile or beam activation according to the
+    attack policy.
+- **State:** `evading`
+  - **Contract:** Move to a deterministic safe result while preserving target
+    memory policy.
+- **State:** `stunned`
+  - **Contract:** Suspend attack and movement resources for the authored
+    duration.
+- **State:** `damaged`
+  - **Contract:** Apply damage reaction and evaluate shield or phase
+    transitions.
+- **State:** `dying`
+  - **Contract:** Disable attacks, commit destruction once, play terminal
+    presentation, and release resources.
+- **State:** `despawned`
+  - **Contract:** Unregister or pool after every terminal obligation is
+    complete.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -315,19 +392,29 @@ Every projectile definition contains:
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `ProjectileId` | Stable canonical identity. |
-| `ActorClass` | Validated pooled projectile class. |
-| `CollisionProfile` | Dedicated query and object responses. |
-| `Shape` | Sphere or capsule dimensions used for every sweep. |
-| `InitialSpeed` | Positive speed in Unreal units per second. |
-| `MaximumSpeed` | Not less than the initial speed. |
-| `Lifetime` | Positive maximum lifetime. |
-| `GravityScale` | Authored value, normally zero for wasp bolts. |
-| `ImpactPolicy` | Typed player, vehicle, world, shield, and ignored-target effects. |
-| `PresentationPolicy` | Mesh, trail, audio, impact effect, and accessibility cue. |
-| `SubstepPolicy` | Maximum simulation step and iteration count. |
+- **Field:** `ProjectileId`
+  - **Contract:** Stable canonical identity.
+- **Field:** `ActorClass`
+  - **Contract:** Validated pooled projectile class.
+- **Field:** `CollisionProfile`
+  - **Contract:** Dedicated query and object responses.
+- **Field:** `Shape`
+  - **Contract:** Sphere or capsule dimensions used for every sweep.
+- **Field:** `InitialSpeed`
+  - **Contract:** Positive speed in Unreal units per second.
+- **Field:** `MaximumSpeed`
+  - **Contract:** Not less than the initial speed.
+- **Field:** `Lifetime`
+  - **Contract:** Positive maximum lifetime.
+- **Field:** `GravityScale`
+  - **Contract:** Authored value, normally zero for wasp bolts.
+- **Field:** `ImpactPolicy`
+  - **Contract:** Typed player, vehicle, world, shield, and ignored-target
+    effects.
+- **Field:** `PresentationPolicy`
+  - **Contract:** Mesh, trail, audio, impact effect, and accessibility cue.
+- **Field:** `SubstepPolicy`
+  - **Contract:** Maximum simulation step and iteration count.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -491,16 +578,37 @@ error; it does not silently reuse an incompatible pooled Pawn.
 
 <!-- markdownlint-disable MD013 -->
 
-| Historical technique | Original constraint | Unreal replacement |
-| :--- | :--- | :--- |
-| Fixed actor arrays and manual banks | Avoid dynamic allocation and old-console memory pressure. | World subsystem registries plus validated actor and projectile pools. |
-| Distance-based actor removal | Keep a small active set without world streaming. | World Partition, data-layer activation, significance, and persistent spawn state. |
-| Private static and dynamic intersection lists | Avoid repeated broad scene queries. | Collision channels, bounded sweeps, AI Perception, and EQS tests. |
-| Hand-built flying waypoints | No native three-dimensional query workflow. | EQS candidate positions plus custom swept movement. |
-| Visibility-gated attack checks | Avoid off-screen work and presentation anomalies. | Significance may reduce presentation cost; attack eligibility remains gameplay-driven. |
-| Scene-graph shield and beam props | Couple rendering and gameplay state. | Dedicated defense and tractor-beam components with independent effects. |
-| Procedural drawable mutation | Limited animation asset pipeline. | Animation Blueprint, Control Rig, component animation, and material parameters. |
-| Global event listeners | Centralized low-cost awareness. | AI Perception stimuli and typed application events. |
+- **Historical technique:** Fixed actor arrays and manual banks
+  - **Original constraint:** Avoid dynamic allocation and old-console memory
+    pressure.
+  - **Unreal replacement:** World subsystem registries plus validated actor and
+    projectile pools.
+- **Historical technique:** Distance-based actor removal
+  - **Original constraint:** Keep a small active set without world streaming.
+  - **Unreal replacement:** World Partition, data-layer activation,
+    significance, and persistent spawn state.
+- **Historical technique:** Private static and dynamic intersection lists
+  - **Original constraint:** Avoid repeated broad scene queries.
+  - **Unreal replacement:** Collision channels, bounded sweeps, AI Perception,
+    and EQS tests.
+- **Historical technique:** Hand-built flying waypoints
+  - **Original constraint:** No native three-dimensional query workflow.
+  - **Unreal replacement:** EQS candidate positions plus custom swept movement.
+- **Historical technique:** Visibility-gated attack checks
+  - **Original constraint:** Avoid off-screen work and presentation anomalies.
+  - **Unreal replacement:** Significance may reduce presentation cost; attack
+    eligibility remains gameplay-driven.
+- **Historical technique:** Scene-graph shield and beam props
+  - **Original constraint:** Couple rendering and gameplay state.
+  - **Unreal replacement:** Dedicated defense and tractor-beam components with
+    independent effects.
+- **Historical technique:** Procedural drawable mutation
+  - **Original constraint:** Limited animation asset pipeline.
+  - **Unreal replacement:** Animation Blueprint, Control Rig, component
+    animation, and material parameters.
+- **Historical technique:** Global event listeners
+  - **Original constraint:** Centralized low-cost awareness.
+  - **Unreal replacement:** AI Perception stimuli and typed application events.
 
 <!-- markdownlint-enable MD013 -->
 

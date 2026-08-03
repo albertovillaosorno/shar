@@ -1,7 +1,3 @@
-# File:
-#   - skill_export.py
-# Path: src/unreal/editor-control/application/mcp/application/skill_export.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,53 +6,42 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Orchestration of live catalog discovery, rendering, and persistence.
+#   - Skill export application service.
 # - Must-Not:
-#   - Implement Markdown, filesystem operations, HTTP, or terminal grammar.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Producing one deterministic export report after successful persistence.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Validation and persistence become independent application use cases.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - The translator service becomes the explicit owner of generated skills.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Exports the live Unreal MCP catalog as repository skills.
+#   - Skill export application service.
 # - Description:
-#   - Coordinates ports without leaking adapter details inward.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Composed by the terminal driving adapter for the `skills` command.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Fails before persistence when taxonomy or rendering is incomplete.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
-"""Application use case for exporting native Unreal MCP skills."""
+
+"""Skill export application service."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from mcp.domain.skill_documents import (
-    SkillExportReport,
-    interface_digest,
-)
+from mcp.domain.skill_documents import SkillExportReport
+from mcp.domain.skill_documents import interface_digest
 from mcp.domain.skill_taxonomy import CATEGORIES
 
 if TYPE_CHECKING:
     from mcp.application.service import UnrealMcpTranslator
-    from mcp.port_outbound.skill_documents import (
-        SkillDocumentRenderer,
-        SkillDocumentStore,
-    )
+    from mcp.port_outbound.skill_documents import SkillDocumentRenderer
+    from mcp.port_outbound.skill_documents import SkillDocumentStore
 
 
 class UnrealSkillExporter:
@@ -78,6 +63,7 @@ class UnrealSkillExporter:
 
         Returns:
             Counts, digest, and output path for the completed export.
+
         """
         catalog = self._translator.discover_catalog()
         documents = self._renderer.render(catalog)

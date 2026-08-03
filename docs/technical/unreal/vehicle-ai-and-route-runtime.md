@@ -6,18 +6,24 @@
 ## Governing decisions
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
+- [Data-driven Unreal gameplay content
+  catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md) <!-- markdownlint-disable-line MD013 -->
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
+- [Runtime parity test
+  boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Road-network geometry and traffic runtime](road-network-geometry-and-traffic-runtime.md)
+- [Road-network geometry and traffic
+  runtime](road-network-geometry-and-traffic-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+- [Native vehicle physics, control, damage, and presentation
+  runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Vehicle audio and avatar-sound runtime](vehicle-audio-and-avatar-sound-runtime.md)
+- [Vehicle audio and avatar-sound
+  runtime](vehicle-audio-and-avatar-sound-runtime.md)
 
 ## Purpose
 
@@ -32,15 +38,27 @@ frame-dependent steering with validated data and bounded native controllers.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Gameplay catalog | Stable vehicle, route, lane, checkpoint, waypoint, and policy identities. |
-| Mission and race services | Objective state, opponent membership, completion, failure, and catch-up permission. |
-| Road-network subsystem | Immutable road, segment, lane, intersection, traffic-control, connectivity, spline, and query snapshots. |
-| Vehicle AI controller | Target observation, route progress, driving state, steering requests, and recovery. |
-| Vehicle movement port | Throttle, brake, steering, handbrake, reverse, turbo, and physical read-back. |
-| Traffic subsystem | Ambient lane occupancy, intersection admission, density, and lifecycle. |
-| UI projection | HUD and radar icon presentation from typed vehicle observations. |
+- **Authority:** Gameplay catalog
+  - **Responsibility:** Stable vehicle, route, lane, checkpoint, waypoint, and
+    policy identities.
+- **Authority:** Mission and race services
+  - **Responsibility:** Objective state, opponent membership, completion,
+    failure, and catch-up permission.
+- **Authority:** Road-network subsystem
+  - **Responsibility:** Immutable road, segment, lane, intersection,
+    traffic-control, connectivity, spline, and query snapshots.
+- **Authority:** Vehicle AI controller
+  - **Responsibility:** Target observation, route progress, driving state,
+    steering requests, and recovery.
+- **Authority:** Vehicle movement port
+  - **Responsibility:** Throttle, brake, steering, handbrake, reverse, turbo,
+    and physical read-back.
+- **Authority:** Traffic subsystem
+  - **Responsibility:** Ambient lane occupancy, intersection admission, density,
+    and lifecycle.
+- **Authority:** UI projection
+  - **Responsibility:** HUD and radar icon presentation from typed vehicle
+    observations.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -53,16 +71,29 @@ The runtime module owns these C++ types:
 
 <!-- markdownlint-disable MD013 -->
 
-| Type | Responsibility |
-| :--- | :--- |
-| `USharVehicleAIDefinition` | Immutable controller, skill, recovery, and driving policy. |
-| `USharVehicleRouteDefinition` | Ordered road, lane, waypoint, checkpoint, shortcut, and destination identity. |
-| `ASharVehicleAIController` | Per-vehicle decision authority and StateTree context. |
-| `USharVehicleRouteFollowingComponent` | Road-graph projection, route progress, look-ahead, and destination queries. |
-| `USharVehicleLocalAvoidanceComponent` | Bounded obstacle sampling and safe steering candidate selection. |
-| `USharTrafficCoordinationSubsystem` | Lane occupancy, intersection reservation, impedance events, and ambient lifecycle. |
-| `FSharVehicleDriveRequest` | Desired speed, steering, brake, reverse, turbo, and validity interval. |
-| `FSharVehicleAIObservation` | Immutable target, route, traffic, physics, and mission snapshot for one decision step. |
+- **Type:** `USharVehicleAIDefinition`
+  - **Responsibility:** Immutable controller, skill, recovery, and driving
+    policy.
+- **Type:** `USharVehicleRouteDefinition`
+  - **Responsibility:** Ordered road, lane, waypoint, checkpoint, shortcut, and
+    destination identity.
+- **Type:** `ASharVehicleAIController`
+  - **Responsibility:** Per-vehicle decision authority and StateTree context.
+- **Type:** `USharVehicleRouteFollowingComponent`
+  - **Responsibility:** Road-graph projection, route progress, look-ahead, and
+    destination queries.
+- **Type:** `USharVehicleLocalAvoidanceComponent`
+  - **Responsibility:** Bounded obstacle sampling and safe steering candidate
+    selection.
+- **Type:** `USharTrafficCoordinationSubsystem`
+  - **Responsibility:** Lane occupancy, intersection reservation, impedance
+    events, and ambient lifecycle.
+- **Type:** `FSharVehicleDriveRequest`
+  - **Responsibility:** Desired speed, steering, brake, reverse, turbo, and
+    validity interval.
+- **Type:** `FSharVehicleAIObservation`
+  - **Responsibility:** Immutable target, route, traffic, physics, and mission
+    snapshot for one decision step.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -76,18 +107,27 @@ Every `USharVehicleAIDefinition` contains:
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `ControllerId` | Globally unique canonical identity. |
-| `Mode` | Traffic, waypoint, race, chase, evade, target, or mission-specific adapter. |
-| `StateTree` | Compatible native StateTree template. |
-| `DrivingProfileId` | Speed, acceleration, braking, cornering, and reverse policy. |
-| `RoutePolicyId` | Road projection, look-ahead, destination, and shortcut policy. |
-| `AvoidancePolicyId` | Obstacle classes, sample bounds, clearance, and fallback. |
-| `CatchUpPolicyId` | Optional bounded speed, skill, route, and distance correction. |
-| `RecoveryPolicyId` | Stuck, overturned, invalid route, limbo, and reset behavior. |
-| `PresentationPolicyId` | Radar, HUD, effects, and debug-view policy. |
-| `DefinitionRevision` | Immutable revision used to reject stale controllers. |
+- **Field:** `ControllerId`
+  - **Contract:** Globally unique canonical identity.
+- **Field:** `Mode`
+  - **Contract:** Traffic, waypoint, race, chase, evade, target, or
+    mission-specific adapter.
+- **Field:** `StateTree`
+  - **Contract:** Compatible native StateTree template.
+- **Field:** `DrivingProfileId`
+  - **Contract:** Speed, acceleration, braking, cornering, and reverse policy.
+- **Field:** `RoutePolicyId`
+  - **Contract:** Road projection, look-ahead, destination, and shortcut policy.
+- **Field:** `AvoidancePolicyId`
+  - **Contract:** Obstacle classes, sample bounds, clearance, and fallback.
+- **Field:** `CatchUpPolicyId`
+  - **Contract:** Optional bounded speed, skill, route, and distance correction.
+- **Field:** `RecoveryPolicyId`
+  - **Contract:** Stuck, overturned, invalid route, limbo, and reset behavior.
+- **Field:** `PresentationPolicyId`
+  - **Contract:** Radar, HUD, effects, and debug-view policy.
+- **Field:** `DefinitionRevision`
+  - **Contract:** Immutable revision used to reject stale controllers.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -106,7 +146,8 @@ Every route definition contains:
 Road, segment, lane, intersection, legal-movement, speed, density, shortcut,
 traffic-control, spatial-index, and path-query semantics follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Road-network geometry and traffic runtime](road-network-geometry-and-traffic-runtime.md).
+[Road-network geometry and traffic
+runtime](road-network-geometry-and-traffic-runtime.md).
 The vehicle controller consumes immutable graph results and never owns the base
 road graph.
 
@@ -171,20 +212,33 @@ The canonical driving states are:
 
 <!-- markdownlint-disable MD013 -->
 
-| State | Contract |
-| :--- | :--- |
-| `waiting` | No drive request is emitted. |
-| `waiting_for_player` | Mission policy pauses progress until the player satisfies the gate. |
-| `accelerating` | Desired speed exceeds current speed within the drive profile. |
-| `braking` | Planned speed or obstacle clearance requires deceleration. |
-| `corner_preparation` | Look-ahead curvature requires a bounded entry speed. |
-| `reversing` | Recovery or route policy explicitly permits reverse control. |
-| `stopped` | A valid stop condition is active. |
-| `evading` | A bounded avoidance candidate owns steering temporarily. |
-| `limbo` | Presentation and collision are unavailable during a controlled transition. |
-| `stunned` | External gameplay policy temporarily suspends control. |
-| `out_of_control` | Physics read-back rejects normal drive authority. |
-| `recovering` | The recovery transaction is evaluating or applying a safe reset. |
+- **State:** `waiting`
+  - **Contract:** No drive request is emitted.
+- **State:** `waiting_for_player`
+  - **Contract:** Mission policy pauses progress until the player satisfies the
+    gate.
+- **State:** `accelerating`
+  - **Contract:** Desired speed exceeds current speed within the drive profile.
+- **State:** `braking`
+  - **Contract:** Planned speed or obstacle clearance requires deceleration.
+- **State:** `corner_preparation`
+  - **Contract:** Look-ahead curvature requires a bounded entry speed.
+- **State:** `reversing`
+  - **Contract:** Recovery or route policy explicitly permits reverse control.
+- **State:** `stopped`
+  - **Contract:** A valid stop condition is active.
+- **State:** `evading`
+  - **Contract:** A bounded avoidance candidate owns steering temporarily.
+- **State:** `limbo`
+  - **Contract:** Presentation and collision are unavailable during a controlled
+    transition.
+- **State:** `stunned`
+  - **Contract:** External gameplay policy temporarily suspends control.
+- **State:** `out_of_control`
+  - **Contract:** Physics read-back rejects normal drive authority.
+- **State:** `recovering`
+  - **Contract:** The recovery transaction is evaluating or applying a safe
+    reset.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -325,7 +379,8 @@ semantic drive intent before the vehicle physics step. Command projection,
 standard Chaos vehicle simulation, wheels, suspension, powertrain, steering,
 brakes, damage, reset, and immutable read-back follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+[Native vehicle physics, control, damage, and presentation
+runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
 
 The AI controller cannot write native wheel forces, suspension offsets, engine,
 transmission, tire, rigid-body, or render-transform state. Human and artificial-
@@ -346,7 +401,8 @@ own widgets.
 Engine, shift, reverse, in-air, skid, horn, damage, overlay, backup, and door
 audio consume the same immutable vehicle observations through
 <!-- markdownlint-disable-next-line MD013 -->
-[Vehicle audio and avatar-sound runtime](vehicle-audio-and-avatar-sound-runtime.md).
+[Vehicle audio and avatar-sound
+runtime](vehicle-audio-and-avatar-sound-runtime.md).
 The controller cannot select an audio clip, infer a gear from pitch, or accept
 an
 audio callback as movement, route, recovery, or mission evidence.

@@ -1,7 +1,3 @@
-# File:
-#   - __init__.py
-# Path: tests/unreal/editor-control/__init__.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,34 +6,26 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - The Python package marker for MCP translator tests.
+#   - Editor control test module.
 # - Must-Not:
-#   - Execute tests or mutate runtime state during import.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Stable absolute imports between test support modules.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - The module gains two independently testable contracts.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module owns the same contract without a distinct invariant.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Defines the MCP translator test package.
+#   - Editor control test module.
 # - Description:
-#   - Keeps black-box support imports explicit.
+#   - Implements the declared test module responsibility for editor control.
 # - Usage:
-#   - Imported only by the Python test runner.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Importing this package has no side effects.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
-"""Regression tests for the Unreal MCP terminal translator."""
+
+"""Editor control test module."""

@@ -1,7 +1,3 @@
-// File:
-//   - semantic.rs
-// Path: src/formats/fbx/domain/texture/semantic.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,37 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Public pure-domain exports for semantic character texture preparation.
+//   - Semantic domain module.
 // - Must-Not:
-//   - Read files, decode PNG containers, or serialize artifacts.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Focused color, image, body-atlas, and eye-frame domain modules.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - A semantic texture family needs an independent facade.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - The parent texture facade can expose the same stable API directly.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Semantic character texture domain facade.
+//   - Semantic domain module.
 // - Description:
-//   - Keeps repository-owned texture planning independent from adapters.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Imported by PNG and artifact adapters and behavioral tests.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No filesystem or external authoring application is implied.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Pure semantic character texture preparation.
+//! Semantic domain module.
+
 #![expect(
     clippy::module_name_repetitions,
     reason = "Public semantic texture names remain explicit at the domain \

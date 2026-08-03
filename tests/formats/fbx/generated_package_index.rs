@@ -1,7 +1,3 @@
-// File:
-//   - generated_package_index.rs
-// Path: tests/formats/fbx/generated_package_index.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for generated FBX package-index adapter behavior.
+//   - Generated package index test module.
 // - Must-Not:
-//   - Read private assets, rediscover packages, or parse source containers.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic generated-index JSONL and public adapter assertions.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Filesystem loading requires an independent integration boundary.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Generated-index regressions move into shared adapter conformance tests.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects canonical generated evidence before FBX planning.
+//   - Generated package index test module.
 // - Description:
-//   - Exercises generated package-index parsing with synthetic rows.
+//   - Implements the declared test module responsibility for fbx.
 // - Usage:
-//   - Run through the fbx crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No local files, generated assets, or external processes are required.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for generated FBX package-index adapter behavior.
-//!
-//! Synthetic JSONL protects canonical evidence without package rediscovery.
+//! Generated package index test module.
 
 use fbx::adapters::driven::generated_package_index::{
     GeneratedPackageCatalog, PackageIndexAdapterError,
@@ -60,33 +46,21 @@ fn rejects_invalid_generated_package_selectors() {
         r#"{"package_id":"package","package_category":"props","#,
         r#""members":[{"id":"mesh","role":"model"}]}"#,
     );
-    for selector in [
-        "",
-        " package",
-        "package ",
-        "package\nalias",
-    ] {
+    for selector in ["", " package", "package ", "package\nalias"] {
         let result = GeneratedPackageCatalog::from_jsonl(jsonl)
             .and_then(|catalog| catalog.require_model_package(selector));
         assert_eq!(
             result,
-            Err(
-                PackageIndexAdapterError::InvalidPackageSelector(
-                    selector.to_owned()
-                )
-            )
+            Err(PackageIndexAdapterError::InvalidPackageSelector(
+                selector.to_owned()
+            ))
         );
     }
 }
 
 #[test]
 fn rejects_generated_member_ids_unsafe_for_component_lookup() {
-    for member_id in [
-        "../mesh",
-        "mesh:stream",
-        "mesh.",
-        "CON",
-    ] {
+    for member_id in ["../mesh", "mesh:stream", "mesh.", "CON"] {
         let jsonl = format!(
             concat!(
                 r#"{{"package_id":"package","package_category":"props","#,
@@ -96,12 +70,10 @@ fn rejects_generated_member_ids_unsafe_for_component_lookup() {
         );
         assert_eq!(
             GeneratedPackageCatalog::from_jsonl(&jsonl),
-            Err(
-                PackageIndexAdapterError::InvalidMemberId {
-                    line: 1,
-                    id: member_id.to_owned(),
-                }
-            )
+            Err(PackageIndexAdapterError::InvalidMemberId {
+                line: 1,
+                id: member_id.to_owned(),
+            })
         );
     }
 }
@@ -109,13 +81,11 @@ fn rejects_generated_member_ids_unsafe_for_component_lookup() {
 #[test]
 fn rejects_generated_indexes_without_package_rows() {
     assert_eq!(
-        GeneratedPackageCatalog::from_jsonl(
-            concat!(
-                "
+        GeneratedPackageCatalog::from_jsonl(concat!(
+            "
 ", "  ", "
-", "	"
-            )
-        ),
+", "\t"
+        )),
         Err(PackageIndexAdapterError::EmptyCatalog)
     );
 }
@@ -141,10 +111,7 @@ fn member_order_does_not_change_generated_package_evidence() {
     let second_evidence = GeneratedPackageCatalog::from_jsonl(second)
         .and_then(|catalog| catalog.require_model_package("package"));
 
-    assert_eq!(
-        first_evidence,
-        second_evidence
-    );
+    assert_eq!(first_evidence, second_evidence);
 }
 
 #[test]
@@ -215,12 +182,10 @@ fn rejects_noncanonical_generated_index_fields() {
     for (jsonl, field) in cases {
         assert_eq!(
             GeneratedPackageCatalog::from_jsonl(jsonl),
-            Err(
-                PackageIndexAdapterError::NonCanonicalWhitespace {
-                    line: 1,
-                    field: field.to_owned(),
-                }
-            )
+            Err(PackageIndexAdapterError::NonCanonicalWhitespace {
+                line: 1,
+                field: field.to_owned(),
+            })
         );
     }
 }

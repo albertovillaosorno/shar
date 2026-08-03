@@ -1,7 +1,3 @@
-// File:
-//   - pipeline.rs
-// Path: src/migration/pipeline/domain/pipeline.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,41 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pipeline configuration, reports, stage evidence, and domain failures.
+//   - Pipeline domain module.
 // - Must-Not:
-//   - Perform IO, invoke tools, or choose command-line defaults.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Represent explicit roots, execution mode, results, and failure
-//   - messages.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when configuration and reporting evolve independently.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another domain module owns the same pipeline state contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Core pipeline state and result values.
+//   - Pipeline domain module.
 // - Description:
-//   - Keeps process and filesystem mechanisms outside the pipeline domain.
+//   - Implements the declared domain module responsibility for pipeline.
 // - Usage:
-//   - Consumed by application use cases, ports, adapters, and public
-//   - callers.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Paths and clean-extraction behavior are always explicit.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Pure pipeline configuration, report, and failure values.
-//!
-//! These values carry no filesystem, process, or adapter behavior.
+//! Pipeline domain module.
+
 use std::path::PathBuf;
 
 /// Explicit configuration for one pipeline execution.
@@ -88,10 +73,7 @@ impl StageReport {
         let message = format!("{stage} file count overflowed");
         total
             .checked_add(files)
-            .map_or_else(
-                || Err(PipelineError::new(message)),
-                Ok,
-            )
+            .map_or_else(|| Err(PipelineError::new(message)), Ok)
     }
 
     /// Adds one byte length without saturating a stage report.
@@ -103,10 +85,7 @@ impl StageReport {
         let message = format!("{stage} byte total overflowed");
         total
             .checked_add(bytes)
-            .map_or_else(
-                || Err(PipelineError::new(message)),
-                Ok,
-            )
+            .map_or_else(|| Err(PipelineError::new(message)), Ok)
     }
 }
 
@@ -121,9 +100,7 @@ impl PipelineError {
     /// Creates one pipeline failure from a public-safe message.
     #[must_use]
     pub(crate) fn new(message: impl Into<String>) -> Self {
-        Self {
-            message: message.into(),
-        }
+        Self { message: message.into() }
     }
 }
 

@@ -1,7 +1,3 @@
-// File:
-//   - generate_expanded.rs
-// Path: src/migration/manifest/composition/bin/generate_expanded.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,37 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - The minimal process entrypoint for expanded game-manifest generation.
+//   - Generate expanded composition module.
 // - Must-Not:
-//   - Parse arguments, access storage, or execute use cases directly.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Delegate once to the library-owned driving adapter.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split only when another independently shipped binary is introduced.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another entrypoint owns the same executable contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Thin `generate-expanded-manifest` process entrypoint.
+//   - Generate expanded composition module.
 // - Description:
-//   - Keeps command behavior inside the driving CLI adapter.
+//   - Implements the declared composition module responsibility for manifest.
 // - Usage:
-//   - Invoked by Cargo as the `generate-expanded-manifest` binary.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Returns the exit code produced by the driving adapter.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Thin process entrypoint for expanded game-manifest generation.
+//! Generate expanded composition module.
 
 use std::process::ExitCode;
 

@@ -1,7 +1,3 @@
-// File:
-//   - classification.rs
-// Path: src/migration/manifest/domain/classification.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,47 +6,33 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Deterministic kind classification for minimum-manifest buckets.
+//   - Classification domain module.
 // - Must-Not:
-//   - Inspect private names beyond obfuscated coordinates.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Extension and approved obfuscated-coordinate classification.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when classification requires independent evidence providers.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another module owns the same minimum-manifest classification contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Maps manifest bucket evidence to controlled taxonomy values.
+//   - Classification domain module.
 // - Description:
-//   - Centralizes generator classification so tests and callers share one rule.
+//   - Implements the declared domain module responsibility for manifest.
 // - Usage:
-//   - Called by the minimum manifest generator for every counted bucket.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Unrecognized evidence remains explicit as error.
-//
-// ADRs:
-// - docs/adr/pipeline/game-manifest-ledger.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Minimum-manifest bucket classification.
-//!
-//! Rules use only extension evidence and approved obfuscated coordinates so the
-//! generated ledger remains deterministic and confidentiality-safe.
+//! Classification domain module.
 
-/// Classifies one minimum-manifest bucket into the controlled taxonomy.
 #[must_use]
-pub fn classify_manifest_bucket(
-    dir: &str,
-    extension: &str,
-) -> String {
+/// Classify one manifest directory and extension into a stable bucket.
+pub fn classify_manifest_bucket(dir: &str, extension: &str) -> String {
     if extension == "lmlm" {
         return "language_mod".to_owned();
     }
@@ -71,25 +53,16 @@ pub fn classify_manifest_bucket(
     if extension == "rcf" {
         return "rcf_container".to_owned();
     }
-    if matches!(
-        extension,
-        "rsd" | "wav"
-    ) {
+    if matches!(extension, "rsd" | "wav") {
         return "audio".to_owned();
     }
     if extension == "rms" {
         return "music_arrangement".to_owned();
     }
-    if matches!(
-        extension,
-        "mfk" | "con" | "lua"
-    ) {
+    if matches!(extension, "mfk" | "con" | "lua") {
         return "script".to_owned();
     }
-    if matches!(
-        extension,
-        "ico" | "bmp" | "tga" | "jpg" | "jpeg"
-    ) {
+    if matches!(extension, "ico" | "bmp" | "tga" | "jpg" | "jpeg") {
         return "image".to_owned();
     }
     if extension == "png" {
@@ -101,16 +74,10 @@ pub fn classify_manifest_bucket(
     if extension == "typ" {
         return "sound-type".to_owned();
     }
-    if matches!(
-        extension,
-        "txt" | "e" | "f" | "g" | "i" | "s" | "x"
-    ) {
+    if matches!(extension, "txt" | "e" | "f" | "g" | "i" | "s" | "x") {
         return "language_textbible".to_owned();
     }
-    if matches!(
-        extension,
-        "prj" | "pag" | "scr"
-    ) {
+    if matches!(extension, "prj" | "pag" | "scr") {
         return "ui-resource".to_owned();
     }
     if extension == "rtf" {
@@ -119,10 +86,7 @@ pub fn classify_manifest_bucket(
     if extension == "err" {
         return "build-log".to_owned();
     }
-    if matches!(
-        extension,
-        "bik" | "bk2"
-    ) {
+    if matches!(extension, "bik" | "bk2") {
         return "movie".to_owned();
     }
     if extension == "jsonl" {

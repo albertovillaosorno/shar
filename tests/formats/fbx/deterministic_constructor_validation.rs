@@ -1,7 +1,3 @@
-// File:
-//   - deterministic_constructor_validation.rs
-// Path: tests/formats/fbx/deterministic_constructor_validation.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for deterministic FBX constructor ordering.
+//   - Deterministic constructor validation test module.
 // - Must-Not:
-//   - Read private assets, discover packages, or use filesystem fixtures.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic values and public constructor equality assertions.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - One aggregate requires an independent integration boundary.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Deterministic ordering moves behind one shared domain collection.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects equivalent constructor input from order-dependent results.
+//   - Deterministic constructor validation test module.
 // - Description:
-//   - Exercises semantically equal values supplied in different input orders.
+//   - Implements the declared test module responsibility for fbx.
 // - Usage:
-//   - Run through the fbx crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No local files or external processes are required.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for deterministic FBX constructor ordering.
-//!
-//! Equivalent synthetic input must produce equal domain aggregates.
+//! Deterministic constructor validation test module.
 
 use fbx::domain::animation::{AnimationCapability, AnimationRequirement};
 use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
@@ -52,53 +38,24 @@ use serde as _;
 use serde_json as _;
 use shar_sha256 as _;
 
-fn group(
-    index: usize,
-    shader: &str,
-) -> Result<PrimitiveGroup, String> {
+fn group(index: usize, shader: &str) -> Result<PrimitiveGroup, String> {
     PrimitiveGroup::new(
         index,
         shader,
-        vec![
-            [
-                0.0, 0.0, 0.0,
-            ],
-            [
-                1.0, 0.0, 0.0,
-            ],
-            [
-                0.0, 1.0, 0.0,
-            ],
-        ],
+        vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
         Vec::new(),
-        &[
-            0, 1, 2,
-        ],
+        &[0, 1, 2],
     )
     .map_err(|error| format!("valid group failed: {error:?}"))
 }
 
 #[test]
 fn canonicalizes_mesh_asset_group_order() -> Result<(), String> {
-    let group_zero = group(
-        0, "zero",
-    )?;
-    let group_one = group(
-        1, "one",
-    )?;
-    let first = MeshAsset::new(
-        "mesh",
-        vec![
-            group_one.clone(),
-            group_zero.clone(),
-        ],
-    );
-    let second = MeshAsset::new(
-        "mesh",
-        vec![
-            group_zero, group_one,
-        ],
-    );
+    let group_zero = group(0, "zero")?;
+    let group_one = group(1, "one")?;
+    let first =
+        MeshAsset::new("mesh", vec![group_one.clone(), group_zero.clone()]);
+    let second = MeshAsset::new("mesh", vec![group_zero, group_one]);
 
     if first == second {
         Ok(())
@@ -110,22 +67,13 @@ fn canonicalizes_mesh_asset_group_order() -> Result<(), String> {
 #[test]
 fn canonicalizes_animation_requirement_member_order() {
     let first = AnimationRequirement::new(
-        vec![
-            "walk".to_owned(),
-            "idle".to_owned(),
-        ],
+        vec!["walk".to_owned(), "idle".to_owned()],
         AnimationCapability::PreservedOnly,
     );
     let second = AnimationRequirement::new(
-        vec![
-            "idle".to_owned(),
-            "walk".to_owned(),
-        ],
+        vec!["idle".to_owned(), "walk".to_owned()],
         AnimationCapability::PreservedOnly,
     );
 
-    assert_eq!(
-        first,
-        second
-    );
+    assert_eq!(first, second);
 }

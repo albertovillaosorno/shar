@@ -7,14 +7,18 @@
 
 ## Governing decision
 
-- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Historical core-design and dialogue evidence normalization](../unreal/historical-core-design-and-dialogue-evidence-normalization.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Historical core-design and dialogue evidence normalization](../unreal/historical-core-design-and-dialogue-evidence-normalization.md) <!-- markdownlint-disable-line MD013 -->
 
 ## Purpose
 
 This specification defines the player-facing campaign, sandbox, chapter,
-exploration, time, progression, character, economy, boss, achievement, traversal,
+exploration, time, progression, character, economy, boss, achievement,
+traversal,
 horror, and visual-design behavior independently from any engine implementation.
 
 It preserves the original story-mission sequences while changing the surrounding
@@ -24,10 +28,12 @@ structure from isolated numbered levels into one connected, persistent sandbox.
 
 The player is always in one of two gameplay states:
 
-| State | Meaning |
-| :--- | :--- |
-| `non_mission` | Persistent free-roam sandbox with exploration, side activities, collectibles, purchases, character switching, and world progression. |
-| `mission` | One accepted story mission, side mission, taxi job, race, or boss encounter with explicit objectives and checkpoint state. |
+- **State:** `non_mission`
+  - **Meaning:** Persistent free-roam sandbox with exploration, side activities,
+    collectibles, purchases, character switching, and world progression.
+- **State:** `mission`
+  - **Meaning:** One accepted story mission, side mission, taxi job, race, or
+    boss encounter with explicit objectives and checkpoint state.
 
 Menus, loading screens, cinematics, pause, failure presentation, and frontend
 screens are presentation or application states. They do not create a third
@@ -58,15 +64,20 @@ A chapter definition contains:
 - next-chapter transition.
 
 Chapter completion occurs only after the final required story mission commits.
-Optional content contributes to completion and achievements but does not block the
+Optional content contributes to completion and achievements but does not block
+the
 next chapter unless its own definition explicitly says otherwise.
 
 Historical external mission and story frameworks are proposal evidence under
-[Historical core-design and dialogue evidence normalization](../unreal/historical-core-design-and-dialogue-evidence-normalization.md).
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+[Historical core-design and dialogue evidence normalization](../unreal/historical-core-design-and-dialogue-evidence-normalization.md). <!-- markdownlint-disable-line MD013 -->
 Their draft level counts, playable-character tables, mission inventories, boss
 counts, landmark and interior allocations, vehicle groups, and story ordering do
-not override this seven-chapter open sandbox. A proposal affects the campaign only
-after its individual facts are accepted or adapted into current public contracts.
+not override this seven-chapter open sandbox. A proposal affects the campaign
+only
+after its individual facts are accepted or adapted into current public
+contracts.
 
 ## New game
 
@@ -135,7 +146,8 @@ progress.
 
 ## Open-world map and discovery
 
-The map uses stylized cloud fog over undiscovered terrain. Discovery is permanent
+The map uses stylized cloud fog over undiscovered terrain. Discovery is
+permanent
 per save and occurs through traversal, landmarks, chapter unlocks, viewpoints,
 missions, and declared exploration events.
 
@@ -143,7 +155,8 @@ Map presentation distinguishes:
 
 - undiscovered terrain under opaque decorative clouds;
 - partially discovered terrain with approximate routes or hints;
-- discovered terrain with roads, landmarks, interiors, activities, and shortcuts;
+- discovered terrain with roads, landmarks, interiors, activities, and
+  shortcuts;
 - available mission markers visible regardless of discovery;
 - unavailable markers with a clear prerequisite; and
 - temporary mission routes shown only during the active mission.
@@ -171,13 +184,17 @@ terrain family or erase its collectibles.
 
 Every structure record contains an interior capability:
 
-| Capability | Meaning |
-| :--- | :--- |
-| `none` | Decorative or exterior-only structure; no implied entrance. |
-| `linked` | Persistent interior connected to the exterior. |
-| `streamed` | Interior loaded through an explicit transition or streaming boundary. |
-| `mission_only` | Interior exists only for declared mission projection. |
-| `future_slot` | Stable extension point with no base interior yet. |
+- **Capability:** `none`
+  - **Meaning:** Decorative or exterior-only structure; no implied entrance.
+- **Capability:** `linked`
+  - **Meaning:** Persistent interior connected to the exterior.
+- **Capability:** `streamed`
+  - **Meaning:** Interior loaded through an explicit transition or streaming
+    boundary.
+- **Capability:** `mission_only`
+  - **Meaning:** Interior exists only for declared mission projection.
+- **Capability:** `future_slot`
+  - **Meaning:** Stable extension point with no base interior yet.
 
 Structures, exterior components, interiors, windows, doors, and terrain are
 separate semantic records. A structure may expose breakable windows only when an
@@ -198,12 +215,14 @@ character. Character switching restores a safe nearby placement, preserves world
 state, and cannot bypass a terrain, mission, boss, or interior gate.
 
 Completing the final Chapter 1 story mission unlocks Bart and presents a chapter
-completion message. The next Bart mission may automatically select Bart and place
+completion message. The next Bart mission may automatically select Bart and
+place
 him at its accepted start location.
 
 Bart is unavailable before that transition. After the final Chapter 2 story
 mission, Bart becomes temporarily ineligible until the final Chapter 4 mission
-commits because the story treats him as missing and then ill. Lisa missions force
+commits because the story treats him as missing and then ill. Lisa missions
+force
 Lisa. Every other mission may force its canonical protagonist.
 
 ## Costumes
@@ -211,9 +230,11 @@ Lisa. Every other mission may force its canonical protagonist.
 Every costume appears in the menu from the beginning. Locked or unowned costumes
 show price and prerequisites.
 
-Purchasing a costume is permanent. An owned costume may be equipped from the menu
+Purchasing a costume is permanent. An owned costume may be equipped from the
+menu
 at any safe point without returning to a shop. Mission definitions may force,
-forbid, or temporarily replace a costume only when the story or mechanics require
+forbid, or temporarily replace a costume only when the story or mechanics
+require
 it.
 
 The Devil Homer costume prevents ordinary zombie aggression. It does not prevent
@@ -230,7 +251,8 @@ Chapter sets activate cumulatively:
 1. the pattern continues through Chapter 7; and
 1. activated uncollected content remains active permanently.
 
-A player who completes every story mission before collecting optional content can
+A player who completes every story mission before collecting optional content
+can
 then find every chapter's activated collectibles in the connected world.
 
 Persistent activation applies to cards, wasps, gags, and declared chapter-scoped
@@ -242,7 +264,8 @@ coins follow the economy policy rather than collectible persistence.
 There are exactly 49 counted collector cards: seven chapter sets of seven.
 Individual cards do not grant abilities.
 
-Completing a chapter's seven-card set grants one passive ability. Seven abilities
+Completing a chapter's seven-card set grants one passive ability. Seven
+abilities
 are the maximum base set because each must remain visible, useful, testable, and
 compatible with mission balance.
 
@@ -276,7 +299,8 @@ in-game hour. Phase boundaries and lighting curves are data-driven but preserve
 that total duration.
 
 The clock runs continuously in `non_mission`. A mission declares whether it uses
-world time, pauses time, clamps to a phase, advances from a checkpoint, or applies
+world time, pauses time, clamps to a phase, advances from a checkpoint, or
+applies
 a temporary authored override. Returning to `non_mission` reconciles the world
 clock through an explicit policy.
 
@@ -295,7 +319,8 @@ boss locks, terrain discovery, or required narrative events.
 ## Movement, stamina, and world detail
 
 Running consumes a bounded stamina meter. Stamina recovers while walking,
-standing, resting, or through declared abilities. Exhaustion limits sprinting but
+standing, resting, or through declared abilities. Exhaustion limits sprinting
+but
 does not trap the player or prevent required mission completion.
 
 Surface response may produce footprints, dirt, mud, dust, wetness, splashes,
@@ -356,7 +381,8 @@ cannot depend on an exhausted one-time currency source.
 ## Taxi missions
 
 Purchasing the taxi unlocks taxi work. The activity is a respectful nod to
-classic open-world taxi missions and driving-focused Simpsons games, not a copied
+classic open-world taxi missions and driving-focused Simpsons games, not a
+copied
 mission script.
 
 Taxi definitions may include:
@@ -370,7 +396,8 @@ Taxi definitions may include:
 - fare, tip, streak, and failure rules; and
 - unique milestone identity.
 
-Completing every unique base taxi milestone grants an achievement. Repeatable taxi
+Completing every unique base taxi milestone grants an achievement. Repeatable
+taxi
 work remains available for fair income. No taxi activity is missable or required
 for the main story.
 
@@ -380,13 +407,17 @@ The campaign reserves three boss slots. Two are confirmed:
 
 1. a mechanical dinosaur encounter associated with the stadium near the end of
    Chapter 2; and
-1. an Apu-associated Tyrannosaurus-skeleton encounter associated with the museum.
+1. an Apu-associated Tyrannosaurus-skeleton encounter associated with the
+   museum.
 
 The third remains pending design approval. It has no invented location, chapter,
 mechanics, reward, or asset requirement yet.
 
-Historical boss and Truckasaurus documents are candidate encounter evidence under
-[Historical core-design and dialogue evidence normalization](../unreal/historical-core-design-and-dialogue-evidence-normalization.md).
+Historical boss and Truckasaurus documents are candidate encounter evidence
+under
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+[Historical core-design and dialogue evidence normalization](../unreal/historical-core-design-and-dialogue-evidence-normalization.md). <!-- markdownlint-disable-line MD013 -->
 Claims such as one boss per level, infinite mass, fixed waypoint pursuit, or a
 specific count of encounters do not override these accepted slots. Each shipping
 boss requires one complete reviewed encounter definition with arena, phases,
@@ -398,7 +429,8 @@ appropriately licensed generic assets. The mechanical dinosaur and skeleton may
 be replaced through validated mods.
 
 Completing the respective encounters permanently opens the stadium and museum.
-Those locations remain explorable in `non_mission`, gain map entries, and may host
+Those locations remain explorable in `non_mission`, gain map entries, and may
+host
 later side content.
 
 ## Chapter 7 horror and survival
@@ -413,7 +445,8 @@ monsters, unsettling ambience, and stronger contrast.
 
 The player has a visible health bar. Radiation applies rate-based damage through
 volumes, surfaces, weather exposure, or declared hazards. Zombies can attack.
-Nearby vehicle explosions are lethal when the player is inside a validated lethal
+Nearby vehicle explosions are lethal when the player is inside a validated
+lethal
 radius. Mission death restarts from the accepted checkpoint.
 
 The Devil Homer costume changes zombie affiliation so ordinary zombies do not
@@ -471,7 +504,8 @@ base or platform achievements.
 
 ## Burns' mansion
 
-Burns' mansion is accessible in the final sandbox. Its primary unlock route begins
+Burns' mansion is accessible in the final sandbox. Its primary unlock route
+begins
 inside the nuclear plant and becomes available through a later traversal
 transaction.
 
@@ -480,7 +514,8 @@ terrain family 1, especially chapters that reuse that geography. Once unlocked,
 the route and mansion remain available outside missions unless a temporary
 mission rule closes them.
 
-The exact semi-authored, mathematically generated traversal geometry is pending a
+The exact semi-authored, mathematically generated traversal geometry is pending
+a
 later specification. Until then, the route identity, endpoints, gate, fairness
 constraints, and persistent unlock are authoritative.
 
@@ -498,7 +533,8 @@ design favors genuine mastery over corrupt or accidental state.
 ## Visual direction
 
 The visual baseline uses cel shading inspired by the dimensional cartoon look of
-*The Simpsons Game*. All shaders, outlines, materials, textures, lighting models,
+*The Simpsons Game*. All shaders, outlines, materials, textures, lighting
+models,
 and authored assets are original to this project or appropriately licensed.
 
 The rendering model supports:
@@ -547,7 +583,8 @@ explicit contract. Server state never silently writes into a base save. The
 community package and operator own hosting, security, anti-cheat, moderation,
 compatibility, and support. Adapter, protocol, package, authority, persistence,
 and teardown behavior follow the
-[multiplayer adapter and community-server extension](../modding/multiplayer-adapter-and-community-server-extension.md).
+[multiplayer adapter and community-server
+extension](../modding/multiplayer-adapter-and-community-server-extension.md).
 
 ## Failure behavior
 
@@ -579,7 +616,8 @@ Required evidence includes:
 - cloud-map discovery and hidden-terrain mission markers;
 - terrain connector and Burns' mansion shortcut fairness tests;
 - 24-minute cycle timing and sleep transitions;
-- Chapter 7 day, night, radiation, zombie, disguise, death, and checkpoint tests;
+- Chapter 7 day, night, radiation, zombie, disguise, death, and checkpoint
+  tests;
 - seven card-set passive simulations and mission regressions;
 - economy solvency, renewable-source, repair, costume, sleep, and taxi models;
 - museum and stadium permanent-open transactions;
@@ -593,7 +631,8 @@ Required evidence includes:
 ## Known limits
 
 The third boss encounter, exact chapter-set passive values, final achievement
-catalog, Burns' mansion generated traversal geometry, detailed taxi route census,
+catalog, Burns' mansion generated traversal geometry, detailed taxi route
+census,
 and final economy coefficients remain pending explicit design and balancing.
 They cannot be guessed by implementation code.
 

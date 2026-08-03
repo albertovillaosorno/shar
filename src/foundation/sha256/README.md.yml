@@ -1,0 +1,4 @@
+schema: shar-boundary/v1
+path: src/foundation/sha256/README.md
+boundary: src/foundation/sha256
+authority: README.md

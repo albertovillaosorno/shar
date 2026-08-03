@@ -1,7 +1,3 @@
-// File:
-//   - extract_archive_error.rs
-// Path: tests/formats/lmlm/extract_archive_error.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Public extraction-error diagnostic regressions.
+//   - Extract archive error test module.
 // - Must-Not:
-//   - Read archives, write outputs, or expose operator paths.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic paths and in-memory error sources.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another public error family needs independent fixtures.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Application errors no longer have a public display contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Proves extraction diagnostics remain single-line and escaped.
+//   - Extract archive error test module.
 // - Description:
-//   - Exercises read, parse, and materialization error variants.
+//   - Implements the declared test module responsibility for lmlm.
 // - Usage:
-//   - Compiled as an LMLM integration test.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No filesystem state is created.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Public extraction-error diagnostic regressions.
-//!
-//! Untrusted paths and source messages must not inject terminal lines.
+//! Extract archive error test module.
 
 #[cfg(windows)]
 use std::ffi::OsString;
@@ -74,9 +60,7 @@ fn extraction_errors_escape_control_characters() {
     for error in errors {
         let rendered = error.to_string();
         assert!(
-            !rendered
-                .chars()
-                .any(char::is_control),
+            !rendered.chars().any(char::is_control),
             "diagnostic contains a control character: {rendered:?}"
         );
     }
@@ -85,15 +69,11 @@ fn extraction_errors_escape_control_characters() {
 #[cfg(windows)]
 #[test]
 fn extraction_error_preserves_unpaired_utf16_path_unit() {
-    let path = PathBuf::from(
-        OsString::from_wide(
-            &[
-                u16::from(b'a'),
-                0xd800,
-                u16::from(b'b'),
-            ],
-        ),
-    );
+    let path = PathBuf::from(OsString::from_wide(&[
+        u16::from(b'a'),
+        0xd800,
+        u16::from(b'b'),
+    ]));
     let error = ExtractArchiveError::Read {
         path,
         source: io::Error::other("read failure"),

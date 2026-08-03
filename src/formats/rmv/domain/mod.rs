@@ -1,7 +1,3 @@
-// File:
-//   - domain.rs
-// Path: src/formats/rmv/domain/mod.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,33 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - rmv module behavior for domain.
+//   - Domain domain module.
 // - Must-Not:
-//   - Violate repository architecture, path, provenance, or output rules.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Operations required to validate and execute domain.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when domain contains two independently testable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another rmv module owns the same module boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Domain model for movie container identification and hashing.
+//   - Domain domain module.
 // - Description:
-//   - Defines domain data and behavior for rmv root.
+//   - Implements the declared domain module responsibility for rmv.
 // - Usage:
-//   - Used by rmv root code that needs domain.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No implicit output outside the repository is allowed.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Domain model for movie evidence, audit records, and conversion decisions.
+//! Domain domain module.
+
 mod audit;
 mod error;
+mod escaped_path;
 mod format;
 mod provenance;
 /// Item.
@@ -55,7 +44,7 @@ mod sha256;
 mod target;
 
 pub use audit::{AuditReport, MovieRecord};
-pub use error::RmvError;
+pub use error::{IoFailure, RmvError};
 pub use format::MovieKind;
 pub use provenance::ProvenanceEvidence;
 pub use runtime_source::{
@@ -67,33 +56,20 @@ pub use target::{CinematicTarget, TargetDecision};
 /// Reports whether one logical name can materialize as a Windows component.
 pub(crate) fn is_windows_safe_component(value: &str) -> bool {
     if value.is_empty()
-        || matches!(
-            value,
-            "." | ".."
-        )
-        || value
-            .encode_utf16()
-            .count()
-            > 255
+        || matches!(value, "." | "..")
+        || value.encode_utf16().count() > 255
     {
         return false;
     }
-    if value.ends_with(
-        [
-            ' ', '.',
-        ],
-    ) || value
-        .chars()
-        .any(
-            |character| {
-                character.is_control()
-                    || character == char::from(92)
-                    || matches!(
-                        character,
-                        '<' | '>' | ':' | '"' | '/' | '|' | '?' | '*'
-                    )
-            },
-        )
+    if value.ends_with([' ', '.'])
+        || value.chars().any(|character| {
+            character.is_control()
+                || character == char::from(92)
+                || matches!(
+                    character,
+                    '<' | '>' | ':' | '"' | '/' | '|' | '?' | '*'
+                )
+        })
     {
         return false;
     }

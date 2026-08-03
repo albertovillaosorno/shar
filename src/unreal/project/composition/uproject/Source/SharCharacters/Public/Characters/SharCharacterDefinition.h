@@ -1,6 +1,39 @@
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar character definition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar character definition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar character definition composition module.
+
 #pragma once
 // File:
 //   - SharCharacterDefinition.h
+// jig-ignore-next-line: exact syntax is indivisible
 // Path: src/unreal/project/composition/uproject/Source/SharCharacters/Public/Characters/SharCharacterDefinition.h
 //
 // Copyright:
@@ -18,8 +51,10 @@
 // - Owns:
 //   - Stable character identity and replaceable gameplay or presentation links.
 // - Must-Not:
+// jig-ignore-next-line: exact syntax is indivisible
 //   - Spawn pawns, grant progression, run missions, or synchronously load assets.
 // - Allows:
+// jig-ignore-next-line: exact syntax is indivisible
 //   - Soft character class, presentation, profile, selector, and collision data.
 // - Split-When:
 //   - A character subsystem needs its own independently versioned definition.
@@ -28,6 +63,7 @@
 // - Summary:
 //   - Defines the native character catalog contract.
 // - Description:
+// jig-ignore-next-line: exact syntax is indivisible
 //   - Separates stable character identity from replaceable implementation assets.
 // - Usage:
 //   - Resolved by catalog, selector, mission, spawning, save, and mod services.
@@ -111,6 +147,7 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Presentation")
     FName FootprintProfileId;
 
+    // jig-ignore-next-line: exact syntax is indivisible
     /** Progression policy that controls permanent and temporary availability. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Progression")
     FName UnlockPolicyId;

@@ -25,24 +25,33 @@ Read and implement these documents in order:
 
 1. [Native game foundation](native-game-foundation.md)
 <!-- markdownlint-disable-next-line MD013 -->
-1. [Content roots, modules, and package layout](content-roots-modules-and-packages.md)
+1. [Content roots, modules, and package
+   layout](content-roots-modules-and-packages.md)
 <!-- markdownlint-disable-next-line MD013 -->
-1. [Identity, naming, revisions, and import plans](identity-naming-revisions-and-import-plans.md)
+1. [Identity, naming, revisions, and import
+   plans](identity-naming-revisions-and-import-plans.md)
 <!-- markdownlint-disable-next-line MD013 -->
-1. [Materials, textures, UVs, and shaders](materials-textures-uvs-and-shaders.md)
+1. [Materials, textures, UVs, and
+   shaders](materials-textures-uvs-and-shaders.md)
 1. [Shared character animation library](shared-character-animation-library.md)
 <!-- markdownlint-disable-next-line MD013 -->
-1. [Characters, rigs, animation, and selection](characters-rigs-animation-and-selection.md)
+1. [Characters, rigs, animation, and
+   selection](characters-rigs-animation-and-selection.md)
 <!-- markdownlint-disable-next-line MD013 -->
-1. [Vehicles, handling, damage, and phone booths](vehicles-handling-damage-and-phone-booths.md)
+1. [Vehicles, handling, damage, and phone
+   booths](vehicles-handling-damage-and-phone-booths.md)
 <!-- markdownlint-disable-next-line MD013 -->
-1. [World, props, roads, interiors, and streaming](world-props-roads-interiors-and-streaming.md)
+1. [World, props, roads, interiors, and
+   streaming](world-props-roads-interiors-and-streaming.md)
 <!-- markdownlint-disable-next-line MD013 -->
-1. [Missions, gameplay, rewards, and saves](missions-gameplay-rewards-and-saves.md)
+1. [Missions, gameplay, rewards, and
+   saves](missions-gameplay-rewards-and-saves.md)
 <!-- markdownlint-disable-next-line MD013 -->
-1. [Audio, UI, mods, networking, rendering, and platforms](platform-services-and-extension-contract.md)
+1. [Audio, UI, mods, networking, rendering, and
+   platforms](platform-services-and-extension-contract.md)
 <!-- markdownlint-disable-next-line MD013 -->
-1. [Synthetic fixtures, validation, and promotion](synthetic-fixtures-validation-and-promotion.md)
+1. [Synthetic fixtures, validation, and
+   promotion](synthetic-fixtures-validation-and-promotion.md)
 
 ## Binding rules
 

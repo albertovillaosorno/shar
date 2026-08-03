@@ -1,7 +1,3 @@
-// File:
-//   - decoded_vertex_color.rs
-// Path: tests/formats/fbx/decoded_vertex_color.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,38 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for decoded PDDI vertex-color channel order.
+//   - Decoded vertex color test module.
 // - Must-Not:
-//   - Read private assets or accept unvalidated color counts.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic decoded mesh JSON with packed `0xAARRGGBB` values.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another decoded color encoding needs an independent contract.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Decoded mesh tests adopt color-channel conformance.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Proves PDDI colors become normalized FBX RGBA values.
+//   - Decoded vertex color test module.
 // - Description:
-//   - Loads three packed colors and checks channel order and normalization.
+//   - Implements the declared test module responsibility for fbx.
 // - Usage:
-//   - Run through the fbx crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Temporary fixture roots are process-specific and removed after the test.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-// - docs/adr/fbx/export/fbx-output-contract-boundary.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for PDDI packed vertex colors.
+//! Decoded vertex color test module.
+
 use std::fs;
 use std::path::PathBuf;
 
@@ -54,20 +42,14 @@ use serde_json as _;
 use shar_sha256 as _;
 
 fn temp_root() -> PathBuf {
-    std::env::temp_dir().join(
-        format!(
-            "fbx-decoded-vertex-color-{}",
-            std::process::id()
-        ),
-    )
+    std::env::temp_dir()
+        .join(format!("fbx-decoded-vertex-color-{}", std::process::id()))
 }
 
 #[test]
 fn decodes_pddi_aarrggbb_into_normalized_rgba() -> Result<(), String> {
     let root = temp_root();
-    let mesh_dir = root
-        .join("components")
-        .join("mesh");
+    let mesh_dir = root.join("components").join("mesh");
     let mesh_json = concat!(
         r#"{"schema":"mesh","name":"color_mesh","prim_groups":[{"#,
         r#""shader":"color_m","positions":[[0,0,0],[1,0,0],[0,1,0]],"#,
@@ -75,54 +57,28 @@ fn decodes_pddi_aarrggbb_into_normalized_rgba() -> Result<(), String> {
         r#""indices":[0,1,2]}]}"#,
     );
     fs::create_dir_all(&mesh_dir)
-        .and_then(
-            |()| {
-                fs::write(
-                    mesh_dir.join("color_mesh.json"),
-                    mesh_json,
-                )
-            },
-        )
+        .and_then(|()| fs::write(mesh_dir.join("color_mesh.json"), mesh_json))
         .map_err(|error| error.to_string())?;
-    let source = DecodedComponentSource::new(
-        &root,
-        root.join("textures"),
-    );
+    let source = DecodedComponentSource::new(&root, root.join("textures"));
     let result = source.load_mesh("color_mesh");
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     let mesh = result
         .map_err(|error| format!("vertex-color decode failed: {error:?}"))?;
-    let Some(group) = mesh
-        .groups
-        .first()
-    else {
+    let Some(group) = mesh.groups.first() else {
         return Err("vertex-color mesh has no primitive group".to_owned());
     };
-    let expected = [
-        [
-            1.0, 0.0, 0.0, 1.0,
-        ],
-        [
-            0.0,
-            1.0,
-            0.0,
-            128.0 / 255.0,
-        ],
-        [
-            0.0,
-            0.0,
-            1.0,
-            64.0 / 255.0,
-        ],
-    ];
+    let expected = [[1., 0., 0., 1.], [0., 1., 0., 128. / 255.], [
+        0.,
+        0.,
+        1.,
+        64. / 255.,
+    ]];
     if group.colors == expected {
         Ok(())
     } else {
-        Err(
-            format!(
-                "unexpected normalized vertex colors: {:?}",
-                group.colors
-            ),
-        )
+        Err(format!(
+            "unexpected normalized vertex colors: {:?}",
+            group.colors
+        ))
     }
 }

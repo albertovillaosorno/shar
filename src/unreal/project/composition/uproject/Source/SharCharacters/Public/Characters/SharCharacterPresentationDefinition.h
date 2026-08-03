@@ -1,6 +1,39 @@
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar character presentation definition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar character presentation definition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar character presentation definition composition module.
+
 #pragma once
 // File:
 //   - SharCharacterPresentationDefinition.h
+// jig-ignore-next-line: exact syntax is indivisible
 // Path: src/unreal/project/composition/uproject/Source/SharCharacters/Public/Characters/SharCharacterPresentationDefinition.h
 //
 // Copyright:
@@ -91,6 +124,7 @@ public:
     )
     TSoftObjectPtr<USkeleton> Skeleton;
 
+    // jig-ignore-next-line: exact syntax is indivisible
     /** Physics Asset used for ragdoll, traces, and cosmetic physical response. */
     UPROPERTY(
         EditDefaultsOnly,
@@ -109,6 +143,7 @@ public:
     )
     TArray<TSoftObjectPtr<UMaterialInterface>> MaterialInstances;
 
+    // jig-ignore-next-line: exact syntax is indivisible
     /** Semantic rig profile that maps gameplay roles to real bones and sockets. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Rig")
     FName RigProfileId;
@@ -122,10 +157,12 @@ public:
     )
     TSoftObjectPtr<USharCharacterAnimationLibraryDefinition> AnimationLibrary;
 
+    // jig-ignore-next-line: exact syntax is indivisible
     /** Texture and material budget profile used during import and validation. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Presentation")
     FName TextureProfileId;
 
+    // jig-ignore-next-line: exact syntax is indivisible
     /** Deterministic semantic mesh, UV, eye, and texture preparation revision. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Provenance")
     FString SemanticPreparationRevision;

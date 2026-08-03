@@ -1,7 +1,3 @@
-// File:
-//   - special_character_controls.rs
-// Path: tests/formats/rtf/special_character_controls.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,37 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Deterministic RTF regression coverage for special character controls.
+//   - Special character controls test module.
 // - Must-Not:
-//   - Depend on private inputs or implementation-specific parser structure.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Public conversion fixtures and caller-visible Markdown assertions.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when special character controls require separate fixture families.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another RTF test module owns the same special-character contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Verifies semantic preservation of RTF special character controls.
+//   - Special character controls test module.
 // - Description:
-//   - Exercises public RTF conversion behavior for character control symbols.
+//   - Implements the declared test module responsibility for rtf.
 // - Usage:
-//   - Executed through cargo test for the rtf crate.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Fixtures remain deterministic and repository-local.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Public regression coverage for RTF special character controls.
+//! Special character controls test module.
 
 use rtf::rtf_to_markdown;
 use schoenwald_cli as _;
@@ -50,8 +38,5 @@ use schoenwald_filesystem as _;
 fn nonbreaking_hyphen_remains_nonbreaking() {
     let markdown = rtf_to_markdown(br"{\rtf1 co\_operate}");
 
-    assert_eq!(
-        markdown,
-        "co‑operate\n"
-    );
+    assert_eq!(markdown, "co‑operate\n");
 }

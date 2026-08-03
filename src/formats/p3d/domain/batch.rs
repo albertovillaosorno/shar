@@ -1,7 +1,3 @@
-// File:
-//   - batch.rs
-// Path: src/formats/p3d/domain/batch.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,41 +6,31 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Process-neutral counters for one batch package export.
+//   - Batch domain module.
 // - Must-Not:
-//   - Traverse storage, decode packages, or format operator diagnostics.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Represent scanned, skipped, extracted, and failed package counts.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when batch evidence gains independently versioned record families.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another domain type owns the same complete batch result.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Batch package export report.
+//   - Batch domain module.
 // - Description:
-//   - Carries deterministic counters between application and driving adapters.
+//   - Implements the declared domain module responsibility for p3d.
 // - Usage:
-//   - Returned by the batch-export port and presented by the CLI adapter.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Every counter starts at zero.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Process-neutral result of one batch `Pure3D` export.
-//!
-//! Counters remain independent from discovery, cache, and CLI mechanisms.
+//! Batch domain module.
 
-/// Deterministic counters for one batch export pass.
+/// Deterministic report for one exported P3D package.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct PackageExportReport {
     /// Number of scanned input packages.

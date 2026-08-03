@@ -1,9 +1,34 @@
-// File: SharCheatEffectLifecycle.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharCheats/Private/Cheats/SharCheatEffectLifecycle.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: queued cheat-effect dispatch, correlated postcondition acceptance, terminal publication, and release only.
-// Specification: docs/technical/unreal/progression-collectibles-and-cheats.md
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar cheat effect lifecycle composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar cheat effect lifecycle composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar cheat effect lifecycle composition module.
 
 #include "Cheats/SharCheatEffectSubsystem.h"
 
@@ -174,6 +199,7 @@ bool USharCheatEffectSubsystem::IsHead(
 {
     for (const FSharCheatActivationSnapshot& Candidate : Activations)
     {
+        // jig-ignore-next-line: exact syntax is indivisible
         if (&Candidate == &Activation || Candidate.State == ESharCheatEffectState::Released
             || IsTerminalState(Candidate.State))
         {

@@ -6,18 +6,24 @@
 ## Governing decisions
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+- [Data-driven Unreal gameplay content
+  catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Gameplay census, presentation, and development-content boundary](gameplay-census-presentation-and-development-boundary.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Transactional phone-booth vehicle retrieval](../../adr/unreal/runtime/transactional-phone-booth-vehicle-retrieval.md)
+- [Gameplay census, presentation, and development-content
+  boundary](gameplay-census-presentation-and-development-boundary.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Transactional phone-booth vehicle retrieval](../../adr/unreal/runtime/transactional-phone-booth-vehicle-retrieval.md) <!-- markdownlint-disable-line MD013 -->
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Driving, traffic, and vehicle behavior parity](../../adr/gameplay/vehicles/driving-traffic-and-vehicle-ai.md)
+- [Driving, traffic, and vehicle behavior
+  parity](../../adr/gameplay/vehicles/driving-traffic-and-vehicle-ai.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+- [Native vehicle physics, control, damage, and presentation
+  runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 
 ## Purpose
 
@@ -28,7 +34,8 @@ validation, and verification for the connected sandbox.
 
 It complements the transaction rules in
 <!-- markdownlint-disable-next-line MD013 -->
-[Vehicle retrieval and phone-booth runtime](vehicle-retrieval-and-phone-booth-runtime.md).
+[Vehicle retrieval and phone-booth
+runtime](vehicle-retrieval-and-phone-booth-runtime.md).
 That specification owns browser, repair, loading, delivery, and rollback. This
 one owns which vehicle definitions may enter each access class.
 
@@ -38,18 +45,30 @@ Every vehicle definition declares one or more explicit access rows.
 
 <!-- markdownlint-disable MD013 -->
 
-| Access class | Meaning |
-| :--- | :--- |
-| `starting` | Persistent ownership is granted when the chapter acquisition group becomes available. |
-| `bonus_reward` | One accepted bonus-mission reward grants ownership. |
-| `street_race_reward` | Completing the chapter's historic street-race set grants ownership. |
-| `purchase` | One accepted offer transaction grants ownership. |
-| `traffic` | An available world population profile may spawn disposable drivable traffic instances. |
-| `secret_world` | One authored world placement grants temporary sandbox access. |
-| `mission_forced` | A mission supplies the vehicle without granting ownership. |
-| `mission_required` | Mission activation requires existing ownership. |
-| `completion_override` | Full completion plus the declared cheat permits retrieval. |
-| `unused_content` | Verified unused content ships through the dedicated Unused Content surface with generic fallbacks and mod-replaceable semantic slots. |
+- **Access class:** `starting`
+  - **Meaning:** Persistent ownership is granted when the chapter acquisition
+    group becomes available.
+- **Access class:** `bonus_reward`
+  - **Meaning:** One accepted bonus-mission reward grants ownership.
+- **Access class:** `street_race_reward`
+  - **Meaning:** Completing the chapter's historic street-race set grants
+    ownership.
+- **Access class:** `purchase`
+  - **Meaning:** One accepted offer transaction grants ownership.
+- **Access class:** `traffic`
+  - **Meaning:** An available world population profile may spawn disposable
+    drivable traffic instances.
+- **Access class:** `secret_world`
+  - **Meaning:** One authored world placement grants temporary sandbox access.
+- **Access class:** `mission_forced`
+  - **Meaning:** A mission supplies the vehicle without granting ownership.
+- **Access class:** `mission_required`
+  - **Meaning:** Mission activation requires existing ownership.
+- **Access class:** `completion_override`
+  - **Meaning:** Full completion plus the declared cheat permits retrieval.
+- **Access class:** `unused_content`
+  - **Meaning:** Verified unused content ships through the dedicated Unused
+    Content surface with generic fallbacks and mod-replaceable semantic slots.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -203,15 +222,26 @@ Each level declares exactly four ordinary traffic models.
 
 <!-- markdownlint-disable MD013 -->
 
-| Level | Canonical traffic roster |
-| :--- | :--- |
-| 1 | `minivan`, `glass_truck`, `mini_school_bus`, `pickup_road_vehicle` |
-| 2 | `taxi`, `sedan_b`, `sports_car_a`, `pizza_van` |
-| 3 | `compact_car`, `pickup_road_vehicle`, `sports_car_a`, `fish_delivery_truck` |
-| 4 | `compact_car`, `suv`, `garbage_truck`, `nuclear_waste_truck` |
-| 5 | `sports_car_b`, `suv`, `ambulance`, `vote_quimby_truck` |
-| 6 | `compact_car`, `pickup_road_vehicle`, `burns_armored_truck`, `itchy_and_scratchy_movie_truck` |
-| 7 | `coffin_cart`, `hallo_hearse`, `ghost_ship`, `witch_car` |
+- **Level:** 1
+  - **Canonical traffic roster:** `minivan`, `glass_truck`, `mini_school_bus`,
+    `pickup_road_vehicle`
+- **Level:** 2
+  - **Canonical traffic roster:** `taxi`, `sedan_b`, `sports_car_a`, `pizza_van`
+- **Level:** 3
+  - **Canonical traffic roster:** `compact_car`, `pickup_road_vehicle`,
+    `sports_car_a`, `fish_delivery_truck`
+- **Level:** 4
+  - **Canonical traffic roster:** `compact_car`, `suv`, `garbage_truck`,
+    `nuclear_waste_truck`
+- **Level:** 5
+  - **Canonical traffic roster:** `sports_car_b`, `suv`, `ambulance`,
+    `vote_quimby_truck`
+- **Level:** 6
+  - **Canonical traffic roster:** `compact_car`, `pickup_road_vehicle`,
+    `burns_armored_truck`, `itchy_and_scratchy_movie_truck`
+- **Level:** 7
+  - **Canonical traffic roster:** `coffin_cart`, `hallo_hearse`, `ghost_ship`,
+    `witch_car`
 
 <!-- markdownlint-enable MD013 -->
 
@@ -234,7 +264,8 @@ persistence, respawn, mission, streaming, and removal behavior.
 Construction, native physics mode, occupancy, transition to player control,
 capacity, and teardown follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+[Native vehicle physics, control, damage, and presentation
+runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
 Fixed vehicle-name arrays, locator-array positions, zone ordinals, first-free
 slots, and model lookup strings are provenance only.
 

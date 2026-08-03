@@ -1,12 +1,34 @@
-// File: SharCheatContracts.h
-// Path: src/unreal/project/composition/uproject/Source/SharCheats/Public/Cheats/SharCheatContracts.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: reflected cheat context, recognition, activation, evidence, lifetime, and immutable observation records only; no subsystem behavior or gameplay execution.
-// Specification: docs/technical/unreal/progression-collectibles-and-cheats.md
-// LARGE-FILE owner=SharCheats; reason=cohesive reflected cheat control-plane value contract;
-// split=extract effect observations when additional effect-owner result families exist;
-// validation=validate.sh SharCheats plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar cheat contracts composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar cheat contracts composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar cheat contracts composition module.
 
 #pragma once
 

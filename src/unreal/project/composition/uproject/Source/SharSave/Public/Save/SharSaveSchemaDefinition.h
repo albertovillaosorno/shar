@@ -1,12 +1,34 @@
-// File: SharSaveSchemaDefinition.h
-// Path: src/unreal/project/composition/uproject/Source/SharSave/Public/Save/SharSaveSchemaDefinition.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: immutable portable save schema, section, content-requirement, and migration metadata only.
-// Specification: docs/technical/unreal/platform-save-storage-and-lifecycle.md
-// LARGE-FILE owner=SharSave; reason=cohesive reflected portable-save schema contract;
-// split=extract section schemas if field-level validation becomes independently authored;
-// validation=validate.sh SharSave plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar save schema definition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar save schema definition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar save schema definition composition module.
 
 #pragma once
 

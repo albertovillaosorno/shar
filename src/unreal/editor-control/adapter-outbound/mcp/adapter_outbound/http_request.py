@@ -1,7 +1,3 @@
-# File:
-#   - http_request.py
-# Path: src/unreal/editor-control/adapter-outbound/mcp/adapter_outbound/http_request.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,47 +6,38 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Deterministic bounded JSON encoding for MCP HTTP requests.
+#   - Http request outbound adapter.
 # - Must-Not:
-#   - Open sockets, manage sessions, or interpret tool semantics.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - UTF-8 serialization and positive request byte ceilings.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Streaming uploads or compression require independent policies.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another adapter module owns the same request-encoding invariant.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Encodes bounded native MCP HTTP request bodies.
+#   - Http request outbound adapter.
 # - Description:
-#   - Rejects oversized serialized JSON before opening a connection.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Called by the loopback HTTP exchange adapter.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Limits each serialized request body to 64 MiB.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-#
-# Large file:
-#   - false
-#
-"""Bounded native MCP HTTP request serialization."""
+
+"""Http request outbound adapter."""
 
 from __future__ import annotations
 
 import json
 from typing import TYPE_CHECKING
 
-from mcp.domain.errors import (
-    ProtocolError,
-    fail_configuration,
-    fail_transport,
-)
+from mcp.domain.errors import ProtocolError
+from mcp.domain.errors import fail_configuration
+from mcp.domain.errors import fail_transport
 from mcp.domain.json_types import require_json_object
 
 if TYPE_CHECKING:
@@ -64,6 +51,7 @@ def validate_max_request_bytes(value: int) -> int:
 
     Returns:
         The validated request byte ceiling.
+
     """
     if value <= 0:
         fail_configuration("max_request_bytes must be positive")
@@ -83,6 +71,7 @@ def encode_json_request(
 
     Returns:
         Deterministic compact UTF-8 JSON bytes.
+
     """
     limit = validate_max_request_bytes(max_request_bytes)
     try:

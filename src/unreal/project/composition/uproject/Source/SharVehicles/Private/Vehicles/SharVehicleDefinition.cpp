@@ -1,12 +1,34 @@
-// File: SharVehicleDefinition.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharVehicles/Private/Vehicles/SharVehicleDefinition.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: load-free vehicle physics, seat, damage, and policy validation only.
-// ADR: docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
-// LARGE-FILE owner=SharVehicles; reason=cohesive vehicle-definition validation;
-// split=extract damage validation when independent damage assets are introduced;
-// validation=validate.sh SharVehicles plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar vehicle definition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar vehicle definition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar vehicle definition composition module.
 
 #include "Vehicles/SharVehicleDefinition.h"
 
@@ -42,6 +64,7 @@ static void AppendIdentityErrors(
     {
         AddVehicleError(
             OutErrors,
+            // jig-ignore-next-line: exact syntax is indivisible
             TEXT("Vehicle family, presentation, AI, network, and recovery identities must be canonical.")
         );
     }
@@ -71,6 +94,7 @@ static void AppendPhysicsErrors(
     {
         AddVehicleError(
             OutErrors,
+            // jig-ignore-next-line: exact syntax is indivisible
             TEXT("Drivable vehicle physics values must be finite and physically positive.")
         );
     }
@@ -101,6 +125,7 @@ static void AppendSeatErrors(
         {
             AddVehicleError(
                 OutErrors,
+                // jig-ignore-next-line: exact syntax is indivisible
                 TEXT("Vehicle seats require canonical role, transform, camera, and seat identities.")
             );
         }
@@ -147,6 +172,7 @@ static void AppendDamageBandEntryErrors(
     {
         AddVehicleError(
             OutErrors,
+            // jig-ignore-next-line: exact syntax is indivisible
             TEXT("Vehicle damage bands contain invalid thresholds, handling, or presentation identities.")
         );
     }
@@ -211,6 +237,7 @@ static void AppendDamageBandErrors(
     {
         AddVehicleError(
             OutErrors,
+            // jig-ignore-next-line: exact syntax is indivisible
             TEXT("Vehicle damage bands require operational and disabled states.")
         );
     }

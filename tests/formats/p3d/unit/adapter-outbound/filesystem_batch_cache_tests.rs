@@ -1,7 +1,3 @@
-// File:
-//   - filesystem_batch_cache_tests.rs
-// Path: tests/formats/p3d/unit/adapter-outbound/filesystem_batch_cache_tests.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Focused regressions for local P3D batch cache evidence.
+//   - Filesystem batch cache tests test module.
 // - Must-Not:
-//   - Create persistent files, execute extraction, or publish batch reports.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Exercise deterministic manifests and read-only missing-path checks.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Header and component-row contracts need independent fixture families.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Cache validation no longer has behavior distinct from batch export.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Local P3D batch cache regression coverage.
+//   - Filesystem batch cache tests test module.
 // - Description:
-//   - Verifies package headers, component identities, and artifact evidence.
+//   - Implements the declared test module responsibility for p3d.
 // - Usage:
-//   - Included by filesystem_batch_cache.rs under cfg(test).
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Tests create no persistent local state.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression tests for local P3D batch cache evidence.
-//!
-//! These cases keep malformed headers, incomplete rows, duplicate identities,
-//! and missing component artifacts from suppressing required extraction.
+//! Filesystem batch cache tests test module.
 
 use std::path::Path;
 
@@ -282,10 +267,8 @@ fn cache_manifest_validates_header_count_and_artifacts() {
         manifest_is_complete(undersized_chunks.as_str());
     let complete_valid = manifest_is_complete(complete.as_str());
     let recovered_valid = manifest_is_complete(recovered.as_str());
-    let missing_component = cache_component_exists(
-        Path::new("Cargo.toml"),
-        "components/mesh.json",
-    );
+    let missing_component =
+        cache_component_exists(Path::new("Cargo.toml"), "components/mesh.json");
     let missing_manifest_component = manifest_component_files_exist(
         Path::new("Cargo.toml"),
         complete.as_str(),

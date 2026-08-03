@@ -7,19 +7,23 @@ description = "Lossless Pure3D inspection and extraction for normalization."
 publish = false
 
 [dependencies]
-# schoenwald-cli centralizes process arguments, ordered streams, newline handling, and exit-code mapping for both P3D driving adapters.
-schoenwald-cli = { path = "../../foundation/command-line" }
-# schoenwald-filesystem centralizes complete package reads, deterministic traversal, path inspection, and complete report publication.
-schoenwald-filesystem = { path = "../../foundation/filesystem" }
-# shar-json-text owns lossless JSON string-content escaping shared across format boundaries.
-shar-json-text = { path = "../../foundation/json-text" }
+# jig-ignore-next-line: exact value is indivisible
+# schoenwald_cli centralizes process arguments, ordered streams, newline handling, and exit-code mapping for both P3D driving adapters.
+schoenwald_cli = { path = "../../foundation/command-line" }
+# jig-ignore-next-line: exact value is indivisible
+# schoenwald_filesystem centralizes complete package reads, deterministic traversal, path inspection, and complete report publication.
+schoenwald_filesystem = { path = "../../foundation/filesystem" }
+# jig-ignore-next-line: exact value is indivisible
+# shar_json_text owns lossless JSON string-content escaping shared across format boundaries.
+shar_json_text = { path = "../../foundation/json-text" }
 
+# jig-ignore-next-line: exact value is indivisible
 # serde_json validates every generated component and manifest document before any P3D package publication.
 serde_json = "1"
 
 [lib]
 name = "p3d"
-path = "lib.rs"
+path = "composition/lib.rs"
 
 [[bin]]
 name = "p3d-extract"
@@ -45,3 +49,6 @@ path = "../../../tests/formats/p3d/package.rs"
 [[test]]
 name = "reader"
 path = "../../../tests/formats/p3d/reader.rs"
+
+[lints]
+workspace = true

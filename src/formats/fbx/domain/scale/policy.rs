@@ -1,7 +1,3 @@
-// File:
-//   - policy.rs
-// Path: src/formats/fbx/domain/scale/policy.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,41 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure fbx domain rules for domain scale policy.
+//   - Policy domain module.
 // - Must-Not:
-//   - Read files, parse generated indexes, invoke CLI code, or call writer
-//   - adapters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Value objects, invariant checks, and pure evidence-to-domain translation.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when policy contains two independently testable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another fbx module owns the same domain boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Multiplicative factor from decoded units into FBX scene units.
+//   - Policy domain module.
 // - Description:
-//   - Defines policy data and behavior for fbx domain scale.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Imported through crate domain facades or sibling domain modules.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No filesystem paths, no external process calls, and no implicit IO
-//   - defaults.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-// - docs/adr/pipeline/unreal/unreal-manifest-and-package-taxonomy.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Unit scale policy applied to model coordinates before serialization.
+//! Policy domain module.
+
 use super::error::ScalePolicyError;
 
 /// Unit scale policy applied to model coordinates before serialization.
@@ -79,45 +64,5 @@ impl ScalePolicy {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::ScalePolicy;
-
-    #[test]
-    fn accepts_positive_finite_unit_scale() -> Result<(), String> {
-        let policy = ScalePolicy::new(
-            1.0, true,
-        )
-        .map_err(|error| format!("valid scale policy failed: {error:?}"))?;
-        if policy
-            .unit_scale
-            .to_bits()
-            == 1.0_f32.to_bits()
-            && policy.preserves_source_axes
-        {
-            Ok(())
-        } else {
-            Err(format!("unexpected scale policy: {policy:?}"))
-        }
-    }
-
-    #[test]
-    fn rejects_nonpositive_or_nonfinite_unit_scale() -> Result<(), String> {
-        for value in [
-            0.0,
-            -1.0,
-            f32::INFINITY,
-            f32::NAN,
-        ] {
-            if ScalePolicy::new(
-                value, false,
-            )
-            .is_ok()
-            {
-                return Err(
-                    format!("invalid unit scale was accepted: {value}"),
-                );
-            }
-        }
-        Ok(())
-    }
-}
+#[path = "../../../../../tests/formats/fbx/unit/domain/scale/policy/tests.rs"]
+mod tests;

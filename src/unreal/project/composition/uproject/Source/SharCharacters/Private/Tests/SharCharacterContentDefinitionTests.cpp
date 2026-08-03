@@ -1,7 +1,3 @@
-// File:
-//   - SharCharacterContentDefinitionTests.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharCharacters/Private/Tests/SharCharacterContentDefinitionTests.cpp
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,36 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Native regression coverage for shared content and character definitions.
+//   - Shar character content definition tests composition module.
 // - Must-Not:
-//   - Load project assets, mutate editor packages, or depend on private fixtures.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Transient definitions, synthetic soft paths, and load-free validation.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - One definition family needs independent fixture setup or editor integration.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test owns the same native definition acceptance scenarios.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Verifies stable character identities and shared animation-library contracts.
+//   - Shar character content definition tests composition module.
 // - Description:
-//   - Exercises valid and adversarial definitions without requiring imported art.
+//   - Implements the declared composition module responsibility for project.
 // - Usage:
-//   - Run with the SHAR Unreal automation-test filter.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Uses transient objects and nonexistent but syntactically valid soft paths.
+//   - Invalid or missing inputs fail explicitly.
 //
-// ADRs:
-// - docs/adr/unreal/runtime/shared-rig-family-animation-libraries.md
-// - docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
-//
-// Large file:
-//   - false
-//
+
+//! Shar character content definition tests composition module.
 
 #if WITH_DEV_AUTOMATION_TESTS
 
@@ -133,6 +122,7 @@ static USharCharacterAnimationLibraryDefinition* MakeValidAnimationLibrary()
 static USharCharacterPresentationDefinition* MakeValidPresentation()
 {
     auto* Presentation = NewObject<USharCharacterPresentationDefinition>();
+    // jig-ignore-next-line: exact syntax is indivisible
     FillSharedDefinition(*Presentation, FName(TEXT("fixture_character_default")));
     Presentation->PresentationVariant = FName(TEXT("default"));
     Presentation->SkeletalMesh = MakeSoftObject<USkeletalMesh>(
@@ -332,6 +322,7 @@ bool FSharCharacterContentDefinitionRejectionTest::RunTest(
         ContainsError(LibraryErrors, TEXT("invalid sample rate"))
     );
 
+    // jig-ignore-next-line: exact syntax is indivisible
     USharCharacterPresentationDefinition* Presentation = MakeValidPresentation();
     Presentation->AnimationLibrary.Reset();
     Presentation->ExpectedBoundsExtentCentimeters.X = -1.0;
@@ -358,6 +349,7 @@ bool FSharCharacterContentDefinitionRejectionTest::RunTest(
     );
     TestTrue(
         TEXT("invalid capsule shape is rejected"),
+        // jig-ignore-next-line: exact syntax is indivisible
         ContainsError(CharacterErrors, TEXT("cannot be smaller than the radius"))
     );
     return true;

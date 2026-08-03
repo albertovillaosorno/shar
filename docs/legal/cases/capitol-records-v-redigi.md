@@ -97,14 +97,17 @@ material.
 
 - Justia (2018), *Capitol Records, LLC v. ReDigi Inc.*, 910 F.3d 649
   (2d Cir. 2018), public opinion duplicate. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://law.justia.com/cases/federal/appellate-courts/ca2/16-2321/16-2321-2018-12-12.html>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://law.justia.com/cases/federal/appellate-courts/ca2/16-2321/16-2321-2018-12-12.html> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - [17 U.S.C. § 101](../statutes/17-usc-101.md).
 - [17 U.S.C. § 106](../statutes/17-usc-106.md).
 - [17 U.S.C. § 109](../statutes/17-usc-109.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Cartoon Network LP, LLLP v. CSC Holdings, Inc.](cartoon-network-v-csc-holdings.md).
+- [Cartoon Network LP, LLLP v. CSC Holdings,
+  Inc.](cartoon-network-v-csc-holdings.md).
 - [Kirtsaeng v. John Wiley & Sons, Inc.](kirtsaeng-v-john-wiley.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Copyright-safe publication boundary](../repository/copyright-safe-publication-boundary.md).
+- [Copyright-safe publication
+  boundary](../repository/copyright-safe-publication-boundary.md).

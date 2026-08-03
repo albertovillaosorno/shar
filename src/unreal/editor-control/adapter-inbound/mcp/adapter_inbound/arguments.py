@@ -1,7 +1,3 @@
-# File:
-#   - arguments.py
-# Path: src/unreal/editor-control/adapter-inbound/mcp/adapter_inbound/arguments.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,60 +6,49 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Terminal grammar, option validation, and JSON argument parsing.
+#   - Arguments inbound adapter.
 # - Must-Not:
-#   - Open MCP sessions, perform HTTP, or invoke native tools.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Pure parsing into validated CLI values.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - The module gains two independently testable contracts.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module owns the same contract without a distinct invariant.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Defines the terminal translator command grammar.
+#   - Arguments inbound adapter.
 # - Description:
-#   - Rejects invalid input before any editor connection.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Called by the driving CLI before adapter composition.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Uses the loopback endpoint and a thirty-second timeout.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: terminal command grammar
-#   - reason: global options and action operands form one deterministic grammar
-#   - split: split command parsers when another command family is introduced
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess on responsibility or line-count growth
-#
-"""Terminal argument grammar for the native Unreal MCP translator."""
+
+"""Arguments inbound adapter."""
 
 from __future__ import annotations
 
 import json
 import math
 import ntpath
-from pathlib import Path, PurePosixPath, PureWindowsPath
-from typing import NamedTuple, Never, cast
+from pathlib import Path
+from pathlib import PurePosixPath
+from pathlib import PureWindowsPath
+from typing import NamedTuple
+from typing import Never
+from typing import cast
 
 from mcp.domain.endpoint import McpEndpoint
-from mcp.domain.errors import ProtocolError, UnrealMcpError
-from mcp.domain.json_types import (
-    DuplicateJsonKeyError,
-    JsonObject,
-    reject_duplicate_json_object,
-    require_json_object,
-)
+from mcp.domain.errors import ProtocolError
+from mcp.domain.errors import UnrealMcpError
+from mcp.domain.json_types import DuplicateJsonKeyError
+from mcp.domain.json_types import JsonObject
+from mcp.domain.json_types import reject_duplicate_json_object
+from mcp.domain.json_types import require_json_object
 
 _DEFAULT_TIMEOUT_SECONDS = 30.0
 _TWO_OPTION_PARTS = 2
@@ -107,6 +92,7 @@ def usage_text() -> str:
 
     Returns:
         Human-readable CLI usage text ending in one newline.
+
     """
     return _USAGE
 
@@ -164,6 +150,7 @@ def is_help_action(action: str) -> bool:
 
     Returns:
         `True` for every supported help spelling.
+
     """
     return action in _HELP_ACTIONS
 
@@ -218,6 +205,7 @@ def parse_skill_output_path(operands: tuple[str, ...]) -> Path:
 
     Returns:
         A safe child path for generated Unreal skills.
+
     """
     if not operands:
         return Path("skills/unreal")

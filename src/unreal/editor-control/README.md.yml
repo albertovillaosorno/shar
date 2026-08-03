@@ -1,0 +1,4 @@
+schema: shar-boundary/v1
+path: src/unreal/editor-control/README.md
+boundary: src/unreal/editor-control
+authority: README.md

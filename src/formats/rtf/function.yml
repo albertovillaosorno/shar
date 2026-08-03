@@ -1,0 +1,21 @@
+schema: shar-function/v1
+identity:
+  id: rtf
+  path: src/formats/rtf
+  domain: formats
+architecture:
+  route: src/<domain>/<function>/<kind>/<part>
+  kinds:
+    - composition
+    - domain
+capabilities:
+  - math
+  - rust
+projects:
+  - Cargo.toml
+tests:
+  root: tests/formats/rtf
+ownership:
+  accountable: Alberto Villa Osorno
+validation:
+  mode: active

@@ -1,7 +1,3 @@
-// File:
-//   - validation_path_evidence.rs
-// Path: tests/migration/manifest/validation_path_evidence.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Minimum-manifest validation path-evidence regressions.
+//   - Validation path evidence test module.
 // - Must-Not:
-//   - Access local game data or repository output directories.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - In-memory manifest storage and synthetic path snapshots.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another validation evidence invariant needs isolation.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test owns the same validation snapshot boundary.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects validation from unsafe adapter evidence.
+//   - Validation path evidence test module.
 // - Description:
-//   - Verifies invalid snapshots fail before requirement comparison.
+//   - Implements the declared test module responsibility for manifest.
 // - Usage:
-//   - Executed through cargo test for the game-manifest crate.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Synthetic paths remain portable and deterministic.
-//
-// ADRs:
-// - docs/adr/pipeline/game-manifest-ledger.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Minimum-manifest validation path-evidence regression coverage.
-//!
-//! Invalid adapter snapshots must fail closed before comparison.
+//! Validation path evidence test module.
 
 use std::io;
 use std::path::{Path, PathBuf};
@@ -59,64 +45,41 @@ struct OutsideTree;
 struct AmbiguousTree;
 
 impl GameTree for AmbiguousTree {
-    fn kind(
-        &self,
-        _path: &Path,
-    ) -> io::Result<PathKind> {
+    fn kind(&self, _path: &Path) -> io::Result<PathKind> {
         Ok(PathKind::Directory)
     }
 
-    fn files(
-        &self,
-        root: &Path,
-    ) -> io::Result<Vec<PathBuf>> {
-        Ok(
-            vec![
-                root.join("alpha/first.p3d"),
-                root.join("agenda/second.p3d"),
-            ],
-        )
+    fn files(&self, root: &Path) -> io::Result<Vec<PathBuf>> {
+        Ok(vec![
+            root.join("alpha/first.p3d"),
+            root.join("agenda/second.p3d"),
+        ])
     }
 }
 
 impl GameTree for OutsideTree {
-    fn kind(
-        &self,
-        _path: &Path,
-    ) -> io::Result<PathKind> {
+    fn kind(&self, _path: &Path) -> io::Result<PathKind> {
         Ok(PathKind::Directory)
     }
 
-    fn files(
-        &self,
-        root: &Path,
-    ) -> io::Result<Vec<PathBuf>> {
-        Ok(
-            vec![
-                root.join("asset.p3d"),
-                PathBuf::from("outside/hidden.p3d"),
-            ],
-        )
+    fn files(&self, root: &Path) -> io::Result<Vec<PathBuf>> {
+        Ok(vec![
+            root.join("asset.p3d"),
+            PathBuf::from("outside/hidden.p3d"),
+        ])
     }
 }
 
 struct StaticStore;
 
 impl TextArtifactStore for StaticStore {
-    fn read_optional(
-        &self,
-        _path: &Path,
-    ) -> io::Result<Option<String>> {
+    fn read_optional(&self, _path: &Path) -> io::Result<Option<String>> {
         let text = manifest();
         let value = Some(text);
         Ok(value)
     }
 
-    fn write(
-        &self,
-        _path: &Path,
-        _text: &str,
-    ) -> io::Result<()> {
+    fn write(&self, _path: &Path, _text: &str) -> io::Result<()> {
         Ok(())
     }
 }
@@ -153,20 +116,14 @@ fn manifest() -> String {
         .map(DirCount::to_jsonl)
         .collect::<Vec<_>>()
         .join("\n");
-    format!(
-        "{}\n{body}\n",
-        kind_taxonomy_jsonl()
-    )
+    format!("{}\n{body}\n", kind_taxonomy_jsonl())
 }
 
 #[test]
 fn validation_rejects_outside_root_evidence() {
     let store = StaticStore;
-    let result = ValidateManifest::execute(
-        &OutsideTree,
-        &store,
-        Path::new("game"),
-    );
+    let result =
+        ValidateManifest::execute(&OutsideTree, &store, Path::new("game"));
 
     assert!(result.is_err());
 }
@@ -174,21 +131,12 @@ fn validation_rejects_outside_root_evidence() {
 #[test]
 fn validation_accepts_disambiguated_obfuscated_coordinates() {
     let store = StaticStore;
-    let result = ValidateManifest::execute(
-        &AmbiguousTree,
-        &store,
-        Path::new("game"),
-    );
+    let result =
+        ValidateManifest::execute(&AmbiguousTree, &store, Path::new("game"));
 
     assert!(
         result
             .as_ref()
-            .is_ok_and(
-                |report| {
-                    report
-                        .shortfalls
-                        .is_empty()
-                },
-            )
+            .is_ok_and(|report| { report.shortfalls.is_empty() },)
     );
 }

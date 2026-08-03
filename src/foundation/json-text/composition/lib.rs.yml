@@ -1,0 +1,5 @@
+schema: shar-surface/v1
+path: src/foundation/json-text/composition/lib.rs
+function: json-text
+kind: facade
+authority: composition/lib.rs

@@ -5,26 +5,35 @@
 
 ## Governing decisions and specifications
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Native gameplay audio, dialogue, and listener boundary](../../adr/unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native gameplay audio, dialogue, and listener boundary](../../adr/unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md)
+- [Native audio device, resource, player, and tuning adapter
+  runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
+- [Platform audio cooking and
+  streaming](platform-audio-cooking-and-streaming.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Platform audio cooking and streaming](platform-audio-cooking-and-streaming.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md)
+- [Spatial audio listener and positional-source
+  runtime](spatial-audio-listener-and-positional-source-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Presentation playback runtime](presentation-playback-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Physical material and impact-response runtime](physical-material-and-impact-response-runtime.md)
+- [Physical material and impact-response
+  runtime](physical-material-and-impact-response-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md)
+- [Native asset load request and streaming
+  runtime](native-asset-load-request-and-streaming-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
+- [Application lifecycle and mode
+  runtime](application-lifecycle-and-mode-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md)
+- [Typed event and observation routing
+  runtime](typed-event-and-observation-routing-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Developer command and diagnostic runtime](developer-command-and-diagnostic-runtime.md)
+- [Developer command and diagnostic
+  runtime](developer-command-and-diagnostic-runtime.md)
 
 ## Purpose
 
@@ -79,17 +88,34 @@ spatializer, or reverberation engine.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Gameplay and application services | Own accepted semantic events, mode state, world state, collisions, interactions, and durable results. |
-| Audio-source catalog | Owns stable source definitions, parameters, role, attenuation, concurrency, routing, residency, and fallback policy. |
-| Audio-residency service | Owns scope requests, primary-asset bundles, retained handles, readiness, reference counts, eviction, and teardown. |
-| Gameplay-audio source service | Validates playback requests, allocates source leases, applies parameters, correlates callbacks, and returns typed terminal results. |
-| Mix and environment service | Resolves Sound Class, Sound Mix, submix, bus, Audio Volume, room, reverb, ducking, and transition policy. |
-| Spatial-audio service | Owns listeners, positional-source projection, attenuation, occlusion, and attachment policy. |
-| Unreal Audio Engine | Owns decoding, native source playback, mixing, voice management, spatialization, effects, virtualization, and hardware output. |
-| Platform audio policy | Owns target cooking, quality, output-device, focus, and suspension behavior. |
-| Developer diagnostics | Observe accepted state without mutating playback, residency, mix, or gameplay. |
+- **Authority:** Gameplay and application services
+  - **Responsibility:** Own accepted semantic events, mode state, world state,
+    collisions, interactions, and durable results.
+- **Authority:** Audio-source catalog
+  - **Responsibility:** Owns stable source definitions, parameters, role,
+    attenuation, concurrency, routing, residency, and fallback policy.
+- **Authority:** Audio-residency service
+  - **Responsibility:** Owns scope requests, primary-asset bundles, retained
+    handles, readiness, reference counts, eviction, and teardown.
+- **Authority:** Gameplay-audio source service
+  - **Responsibility:** Validates playback requests, allocates source leases,
+    applies parameters, correlates callbacks, and returns typed terminal
+    results.
+- **Authority:** Mix and environment service
+  - **Responsibility:** Resolves Sound Class, Sound Mix, submix, bus, Audio
+    Volume, room, reverb, ducking, and transition policy.
+- **Authority:** Spatial-audio service
+  - **Responsibility:** Owns listeners, positional-source projection,
+    attenuation, occlusion, and attachment policy.
+- **Authority:** Unreal Audio Engine
+  - **Responsibility:** Owns decoding, native source playback, mixing, voice
+    management, spatialization, effects, virtualization, and hardware output.
+- **Authority:** Platform audio policy
+  - **Responsibility:** Owns target cooking, quality, output-device, focus, and
+    suspension behavior.
+- **Authority:** Developer diagnostics
+  - **Responsibility:** Observe accepted state without mutating playback,
+    residency, mix, or gameplay.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -134,23 +160,45 @@ are not durable identity.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `DefinitionId` | Canonical semantic source identity. |
-| `SourceAsset` | Validated Sound Wave, Sound Cue, MetaSound, Dialogue Wave, or registered source adapter. |
-| `RoleId` | Gameplay effect, UI, ambience, vehicle, dialogue, cinematic, music, or another closed role. |
-| `PlaybackPolicy` | One-shot, finite loop, leased continuous, queued, attached, or owner-scoped persistent behavior. |
-| `ParameterSchema` | Allowed pitch, gain, filters, switches, triggers, and typed graph parameters. |
-| `AttenuationPolicy` | Positional requirements and approved Sound Attenuation asset. |
-| `ConcurrencyPolicy` | Sound Concurrency asset and project significance policy. |
-| `RoutingPolicy` | Sound Class, submix, bus, reverb-send, and modulation identities. |
-| `ResidencyPolicy` | Required audio bundle, preload, retention, and eviction behavior. |
-| `PausePolicy` | Pause, continue, duck, virtualize, stop, or restart behavior. |
-| `CompletionPolicy` | Observable completion, ignored completion, chained presentation, or barrier behavior. |
-| `NetworkPolicy` | Authority, replication, prediction, local-only, or owner-only presentation. |
-| `QualityPolicy` | Required and optional target variants. |
-| `FallbackPolicy` | Missing optional layer, alternate source, silent typed result, or activation failure. |
-| `DefinitionRevision` | Immutable revision for stale-result rejection. |
+- **Field:** `DefinitionId`
+  - **Contract:** Canonical semantic source identity.
+- **Field:** `SourceAsset`
+  - **Contract:** Validated Sound Wave, Sound Cue, MetaSound, Dialogue Wave, or
+    registered source adapter.
+- **Field:** `RoleId`
+  - **Contract:** Gameplay effect, UI, ambience, vehicle, dialogue, cinematic,
+    music, or another closed role.
+- **Field:** `PlaybackPolicy`
+  - **Contract:** One-shot, finite loop, leased continuous, queued, attached, or
+    owner-scoped persistent behavior.
+- **Field:** `ParameterSchema`
+  - **Contract:** Allowed pitch, gain, filters, switches, triggers, and typed
+    graph parameters.
+- **Field:** `AttenuationPolicy`
+  - **Contract:** Positional requirements and approved Sound Attenuation asset.
+- **Field:** `ConcurrencyPolicy`
+  - **Contract:** Sound Concurrency asset and project significance policy.
+- **Field:** `RoutingPolicy`
+  - **Contract:** Sound Class, submix, bus, reverb-send, and modulation
+    identities.
+- **Field:** `ResidencyPolicy`
+  - **Contract:** Required audio bundle, preload, retention, and eviction
+    behavior.
+- **Field:** `PausePolicy`
+  - **Contract:** Pause, continue, duck, virtualize, stop, or restart behavior.
+- **Field:** `CompletionPolicy`
+  - **Contract:** Observable completion, ignored completion, chained
+    presentation, or barrier behavior.
+- **Field:** `NetworkPolicy`
+  - **Contract:** Authority, replication, prediction, local-only, or owner-only
+    presentation.
+- **Field:** `QualityPolicy`
+  - **Contract:** Required and optional target variants.
+- **Field:** `FallbackPolicy`
+  - **Contract:** Missing optional layer, alternate source, silent typed result,
+    or activation failure.
+- **Field:** `DefinitionRevision`
+  - **Contract:** Immutable revision for stale-result rejection.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -293,7 +341,8 @@ virtualization policy.
 
 Collision and impact audio consume accepted evidence from
 <!-- markdownlint-disable-next-line MD013 -->
-[Physical material and impact-response runtime](physical-material-and-impact-response-runtime.md).
+[Physical material and impact-response
+runtime](physical-material-and-impact-response-runtime.md).
 
 `FSharCollisionAudioObservation` includes:
 
@@ -313,17 +362,29 @@ apply damage, impulse, breakage, notoriety, mission progress, or persistence.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `ResidencyId` | Canonical residency-policy identity. |
-| `Bundles` | Primary-asset bundle identities and required source definitions. |
-| `EligibleScopes` | Process, frontend, gameplay, world region, mission, character, vehicle, cinematic, local player, or feature. |
-| `LoadPolicy` | Resident, prime, stream, on-demand, or target-native cache behavior. |
-| `RetentionPolicy` | Scope reference, pin, grace interval, stream cache, or immediate release. |
-| `Priority` | Load and eviction priority. |
-| `BudgetClass` | Memory, decoder, stream, and voice budget classification. |
-| `FailurePolicy` | Required activation failure, partial optional readiness, or typed degradation. |
-| `DefinitionRevision` | Immutable revision and content digest. |
+- **Field:** `ResidencyId`
+  - **Contract:** Canonical residency-policy identity.
+- **Field:** `Bundles`
+  - **Contract:** Primary-asset bundle identities and required source
+    definitions.
+- **Field:** `EligibleScopes`
+  - **Contract:** Process, frontend, gameplay, world region, mission, character,
+    vehicle, cinematic, local player, or feature.
+- **Field:** `LoadPolicy`
+  - **Contract:** Resident, prime, stream, on-demand, or target-native cache
+    behavior.
+- **Field:** `RetentionPolicy`
+  - **Contract:** Scope reference, pin, grace interval, stream cache, or
+    immediate release.
+- **Field:** `Priority`
+  - **Contract:** Load and eviction priority.
+- **Field:** `BudgetClass`
+  - **Contract:** Memory, decoder, stream, and voice budget classification.
+- **Field:** `FailurePolicy`
+  - **Contract:** Required activation failure, partial optional readiness, or
+    typed degradation.
+- **Field:** `DefinitionRevision`
+  - **Contract:** Immutable revision and content digest.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -442,7 +503,8 @@ source-voice, stream-cache, fade, callback, output-layout, and parameter
 behavior
 follows
 <!-- markdownlint-disable-next-line MD013 -->
-[Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md).
+[Native audio device, resource, player, and tuning adapter
+runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md).
 
 ## Mode-scoped sound-effect bindings
 
@@ -542,19 +604,31 @@ reconstruct a platform-specific manual DSP graph.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `EnvironmentId` | Canonical room, tunnel, interior, exterior, or authored environment identity. |
-| `VolumePolicy` | Audio Volume, room, portal, Data Layer, or fixed semantic-region binding. |
-| `Priority` | Deterministic overlap and nesting priority. |
-| `ReverbPolicy` | Reverb effect, plugin effect, submix send, or effect-chain override. |
-| `WetLevel` | Bounded reverb or send level. |
-| `TransitionPolicy` | Entry, exit, interpolation, hold, and supersession behavior. |
-| `SourcePolicy` | Which source roles and positions are affected. |
-| `ListenerPolicy` | Which listeners or local players are affected. |
-| `InteriorPolicy` | Filtering, ambience, portals, and room relationships. |
-| `PlatformPolicy` | Verified target implementation and fallback. |
-| `EnvironmentRevision` | Immutable revision for stale transition rejection. |
+- **Field:** `EnvironmentId`
+  - **Contract:** Canonical room, tunnel, interior, exterior, or authored
+    environment identity.
+- **Field:** `VolumePolicy`
+  - **Contract:** Audio Volume, room, portal, Data Layer, or fixed
+    semantic-region binding.
+- **Field:** `Priority`
+  - **Contract:** Deterministic overlap and nesting priority.
+- **Field:** `ReverbPolicy`
+  - **Contract:** Reverb effect, plugin effect, submix send, or effect-chain
+    override.
+- **Field:** `WetLevel`
+  - **Contract:** Bounded reverb or send level.
+- **Field:** `TransitionPolicy`
+  - **Contract:** Entry, exit, interpolation, hold, and supersession behavior.
+- **Field:** `SourcePolicy`
+  - **Contract:** Which source roles and positions are affected.
+- **Field:** `ListenerPolicy`
+  - **Contract:** Which listeners or local players are affected.
+- **Field:** `InteriorPolicy`
+  - **Contract:** Filtering, ambience, portals, and room relationships.
+- **Field:** `PlatformPolicy`
+  - **Contract:** Verified target implementation and fallback.
+- **Field:** `EnvironmentRevision`
+  - **Contract:** Immutable revision for stale transition rejection.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -685,7 +759,8 @@ Nearby-source labels, voice counts, memory summaries, role pages, and
 environment
 visualization are registered with
 <!-- markdownlint-disable-next-line MD013 -->
-[Developer command and diagnostic runtime](developer-command-and-diagnostic-runtime.md).
+[Developer command and diagnostic
+runtime](developer-command-and-diagnostic-runtime.md).
 
 Overlay visibility, page order, screen position, line count, and color are user
 or

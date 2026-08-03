@@ -1,7 +1,3 @@
-// File:
-//   - SharCharacterDefinition.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharCharacters/Private/Characters/SharCharacterDefinition.cpp
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,36 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Load-free validation and Primary Asset identity for character definitions.
+//   - Shar character definition composition module.
 // - Must-Not:
-//   - Spawn characters, inspect progression, load presentations, or run gameplay.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Structural validation of character profiles and soft implementation links.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - A character domain rule needs an independently versioned definition asset.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another implementation owns the same canonical character invariants.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Implements character definition identity and validation.
+//   - Shar character definition composition module.
 // - Description:
-//   - Keeps character identity stable while concrete gameplay remains replaceable.
+//   - Implements the declared composition module responsibility for project.
 // - Usage:
-//   - Called by import validation, catalog tests, and Unreal Data Validation.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Requires explicit implementation profiles and valid capsule dimensions.
+//   - Invalid or missing inputs fail explicitly.
 //
-// ADRs:
-// - docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
-// - docs/adr/unreal/runtime/data-driven-gameplay-content-catalog.md
-//
-// Large file:
-//   - false
-//
+
+//! Shar character definition composition module.
 
 #include "Characters/SharCharacterDefinition.h"
 

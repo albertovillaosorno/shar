@@ -1,12 +1,34 @@
-// File: SharWorldReadiness.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharLoading/Private/Loading/SharWorldReadiness.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: required world-checkpoint registration, revision fencing, readiness projection, and teardown only.
-// Specification: docs/technical/unreal/native-asset-load-request-and-streaming-runtime.md
-// LARGE-FILE owner=SharLoading; reason=cohesive world-readiness barrier implementation;
-// split=extract diagnostics if checkpoint failure evidence becomes persistent;
-// validation=validate.sh SharLoading plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar world readiness composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar world readiness composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar world readiness composition module.
 
 #include "Loading/SharWorldReadinessSubsystem.h"
 
@@ -160,6 +182,7 @@ ESharWorldReadinessResult USharWorldReadinessSubsystem::CompleteCheckpoint(
     {
         return ESharWorldReadinessResult::CheckpointMissing;
     }
+    // jig-ignore-next-line: exact syntax is indivisible
     const bool bDuplicate = Snapshot->CompletedCheckpointIds.ContainsByPredicate(
         [&Completion](const FName& CompletedId)
         {

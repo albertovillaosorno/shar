@@ -1,7 +1,3 @@
-// File:
-//   - sha256.rs
-// Path: src/foundation/sha256/domain/sha256.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,35 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Dependency-free SHA-256 hashing shared by SHAR crates.
+//   - Sha256 domain module.
 // - Must-Not:
-//   - Read files, perform network access, expose mutable hash state, or own
-//   - domain-specific identity types.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Hash exact in-memory bytes and project standard lowercase hexadecimal.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Incremental streaming requires an independently testable state machine.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - A reviewed repository-common cryptography crate owns this exact
-//   - primitive.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Provides one offline SHA-256 implementation for repository consumers.
-//
-// ADRs:
-// - docs/adr/engineering/architecture/project-core-separation.md
-//
-// Large file:
-//   - false
+//   - Sha256 domain module.
+// - Description:
+//   - Implements the declared domain module responsibility for sha256.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Dependency-free SHA-256 hashing for exact in-memory bytes.
+//! Sha256 domain module.
 
-/// Standard SHA-256 initial state.
 const INITIAL: [u32; 8] = [
     0x6a09_e667,
     0xbb67_ae85,
@@ -120,31 +111,28 @@ const ROUND_CONSTANTS: [u32; 64] = [
 
 /// Hash exact bytes into the standard 32-byte SHA-256 digest.
 #[must_use]
+#[expect(
+    clippy::integer_division_remainder_used,
+    // jig-ignore-next-line: exact syntax is indivisible
+    reason = "SHA-256 padding is defined by the message length modulo one 64-byte block"
+)]
 pub fn digest(data: &[u8]) -> [u8; 32] {
     let mut state = INITIAL;
     let bit_length = u64::try_from(data.len())
         .unwrap_or(u64::MAX)
         .saturating_mul(8);
-    let mut padded = Vec::with_capacity(
-        data.len()
-            .saturating_add(72),
-    );
+    let mut padded = Vec::with_capacity(data.len().saturating_add(72));
     padded.extend_from_slice(data);
-    padded.push(0x80_u8);
-    while (padded.len() % 64_usize) != 56_usize {
+    padded.push(0x80u8);
+    while (padded.len() % 64usize) != 56usize {
         padded.push(0);
     }
     padded.extend_from_slice(&bit_length.to_be_bytes());
     for block in padded.chunks(64) {
-        compress(
-            &mut state, block,
-        );
+        compress(&mut state, block);
     }
-    let mut output = [0_u8; 32];
-    for (chunk, value) in output
-        .chunks_mut(4)
-        .zip(state)
-    {
+    let mut output = [0u8; 32];
+    for (chunk, value) in output.chunks_mut(4).zip(state) {
         chunk.copy_from_slice(&value.to_be_bytes());
     }
     output
@@ -156,12 +144,7 @@ pub fn hex(digest: [u8; 32]) -> String {
     let mut output = String::with_capacity(64);
     for byte in digest {
         use core::fmt::Write as _;
-        if write!(
-            output,
-            "{byte:02x}"
-        )
-        .is_err()
-        {
+        if write!(output, "{byte:02x}").is_err() {
             return output;
         }
     }
@@ -177,49 +160,31 @@ pub fn digest_hex(data: &[u8]) -> String {
 /// Apply one standard SHA-256 compression block.
 #[expect(
     clippy::many_single_char_names,
+    clippy::min_ident_chars,
     clippy::indexing_slicing,
+    clippy::missing_asserts_for_indexing,
     clippy::arithmetic_side_effects,
     reason = "SHA-256 compression uses fixed-size schedule and state arrays \
               with standard algorithm variable names."
 )]
-fn compress(
-    state: &mut [u32; 8],
-    block: &[u8],
-) {
-    let mut words = [0_u32; 64];
-    for (word, chunk) in words
-        .iter_mut()
-        .take(16)
-        .zip(block.chunks(4))
-    {
-        *word = u32::from_be_bytes(
-            [
-                chunk[0], chunk[1], chunk[2], chunk[3],
-            ],
-        );
+fn compress(state: &mut [u32; 8], block: &[u8]) {
+    let mut words = [0u32; 64];
+    for (word, chunk) in words.iter_mut().take(16).zip(block.chunks(4)) {
+        *word = u32::from_be_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
     }
     for index in 16..64 {
         let first = words[index - 15].rotate_right(7)
             ^ words[index - 15].rotate_right(18)
-            ^ (words[index - 15] >> 3_u32);
+            ^ (words[index - 15] >> 3u32);
         let second = words[index - 2].rotate_right(17)
             ^ words[index - 2].rotate_right(19)
-            ^ (words[index - 2] >> 10_u32);
+            ^ (words[index - 2] >> 10u32);
         words[index] = words[index - 16]
             .wrapping_add(first)
             .wrapping_add(words[index - 7])
             .wrapping_add(second);
     }
-    let [
-        mut a,
-        mut b,
-        mut c,
-        mut d,
-        mut e,
-        mut f,
-        mut g,
-        mut h,
-    ] = *state;
+    let [mut a, mut b, mut c, mut d, mut e, mut f, mut g, mut h] = *state;
     for index in 0..64 {
         let upper_sigma =
             e.rotate_right(6) ^ e.rotate_right(11) ^ e.rotate_right(25);
@@ -242,35 +207,11 @@ fn compress(
         b = a;
         a = first.wrapping_add(second);
     }
-    for (target, value) in state
-        .iter_mut()
-        .zip(
-            [
-                a, b, c, d, e, f, g, h,
-            ],
-        )
-    {
+    for (target, value) in state.iter_mut().zip([a, b, c, d, e, f, g, h]) {
         *target = target.wrapping_add(value);
     }
 }
 
 #[cfg(test)]
-mod tests {
-    use super::digest_hex;
-
-    #[test]
-    fn matches_known_empty_digest() {
-        assert_eq!(
-            digest_hex(b""),
-            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-        );
-    }
-
-    #[test]
-    fn matches_known_abc_digest() {
-        assert_eq!(
-            digest_hex(b"abc"),
-            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
-        );
-    }
-}
+#[path = "../../../../tests/foundation/sha256/unit/domain/sha256/tests.rs"]
+mod tests;

@@ -1,7 +1,3 @@
-# File:
-#   - skill_manual_field_schema.py
-# Path: src/unreal/editor-control/adapter-outbound/mcp/adapter_outbound/skill_manual_field_schema.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,45 +6,36 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Stable manual-field identities, order, placeholders, and marker text.
+#   - Skill manual field schema outbound adapter.
 # - Must-Not:
-#   - Parse documents, merge content, render status, or access files.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Defining the legacy five-field schema for lossless migration.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Marker syntax and field definitions need independent versioning.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module owns the same protected field schema.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Defines the generated Unreal skill manual-field schema.
+#   - Skill manual field schema outbound adapter.
 # - Description:
-#   - The review revision is the sixth and final protected field.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Imported by renderers, parsers, stores, and regression tests.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - New review fields start as `[REVIEW_REQUIRED]`.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
-"""Stable protected field schema for generated Unreal MCP skills."""
+
+"""Skill manual field schema outbound adapter."""
 
 from __future__ import annotations
 
 from typing import NamedTuple
 
-from mcp.adapter_outbound.skill_manual_review import (
-    MANUAL_REVIEW_FIELD_KEY,
-    MANUAL_REVIEW_PLACEHOLDER,
-)
+from mcp.adapter_outbound.skill_manual_review import MANUAL_REVIEW_FIELD_KEY
+from mcp.adapter_outbound.skill_manual_review import MANUAL_REVIEW_PLACEHOLDER
 
 
 class ManualFieldDefinition(NamedTuple):

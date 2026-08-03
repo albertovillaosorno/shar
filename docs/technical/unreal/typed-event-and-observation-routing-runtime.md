@@ -5,41 +5,58 @@
 
 ## Governing decisions
 
-<!-- markdownlint-disable-next-line MD013 -->
-- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md) <!-- markdownlint-disable-line MD013 -->
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
+- [Runtime parity test
+  boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Typed StateTree action sequences](../../adr/unreal/runtime/typed-state-tree-action-sequences.md)
+- [Typed StateTree action
+  sequences](../../adr/unreal/runtime/typed-state-tree-action-sequences.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Event-driven music and ambience](../../adr/unreal/runtime/event-driven-music-and-ambience.md)
+- [Event-driven music and
+  ambience](../../adr/unreal/runtime/event-driven-music-and-ambience.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Native gameplay audio, dialogue, and listener boundary](../../adr/unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native gameplay audio, dialogue, and listener boundary](../../adr/unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md)
+- [Dialogue selection, queue, and playback
+  runtime](dialogue-selection-queue-and-playback-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md)
+- [Vehicle audio and avatar-sound
+  runtime](vehicle-audio-and-avatar-sound-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Vehicle audio and avatar-sound runtime](vehicle-audio-and-avatar-sound-runtime.md)
+- [Spatial audio listener and positional-source
+  runtime](spatial-audio-listener-and-positional-source-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md)
+- [Gameplay audio source, residency, mix, and environment
+  runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
+- [Native audio device, resource, player, and tuning adapter
+  runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
+- [Native vehicle physics, control, damage, and presentation
+  runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+- [Authored state-prop animation and event
+  runtime](authored-state-prop-animation-and-event-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md)
+- [Local supersprint race session
+  runtime](local-supersprint-race-session-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Local supersprint race session runtime](local-supersprint-race-session-runtime.md)
+- [Playable avatar, character controller, and footprint
+  runtime](playable-avatar-character-controller-and-footprint-runtime.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
+- [HUD feedback cue and presentation-primitives
+  runtime](hud-feedback-cue-and-presentation-primitives-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [HUD feedback cue and presentation-primitives runtime](hud-feedback-cue-and-presentation-primitives-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md)
+- [Historical core-design and dialogue evidence
+  normalization](historical-core-design-and-dialogue-evidence-normalization.md)
 
 ## Purpose
 
@@ -110,7 +127,8 @@ canonical channel and schema.
 
 Historical gameplay-event inventories follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md).
+[Historical core-design and dialogue evidence
+normalization](historical-core-design-and-dialogue-evidence-normalization.md).
 Each retained event receives one semantic channel, owning domain, payload
 schema, scope, delivery phase, replay policy, lifetime, diagnostics, and
 networking classification. Blank sheet companions, source headings, row order,
@@ -292,8 +310,9 @@ Character animation channels carry immutable catalog, clip, pose, montage,
 section, slot, sync-group, marker, curve, playback, character, controller,
 local-
 player, world, feature, and expected owner revisions from
-<!-- markdownlint-disable-next-line MD013 -->
-[Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md).
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+[Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md). <!-- markdownlint-disable-line MD013 -->
 
 Vehicle-handoff observations additionally carry transaction, phase, vehicle,
 seat, door, side, height class, occupant role, alignment, attachment,
@@ -334,7 +353,8 @@ priority, lifetime, positional policy, and expected revisions. Matching and
 queue
 results return immutable canonical identities from
 <!-- markdownlint-disable-next-line MD013 -->
-[Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md).
+[Dialogue selection, queue, and playback
+runtime](dialogue-selection-queue-and-playback-runtime.md).
 They never pass mutable character pointers, raw sound-name strings, linked queue
 nodes, or callback user data as authority.
 
@@ -342,20 +362,23 @@ Vehicle-audio observations carry vehicle, movement, gear, speed, surface,
 damage,
 horn, door, local-player, and world revisions to
 <!-- markdownlint-disable-next-line MD013 -->
-[Vehicle audio and avatar-sound runtime](vehicle-audio-and-avatar-sound-runtime.md).
+[Vehicle audio and avatar-sound
+runtime](vehicle-audio-and-avatar-sound-runtime.md).
 Listener candidates and positional-source observations carry camera, view,
 participant, transform, velocity, attachment, listener-policy, and world
 revisions
 to
 <!-- markdownlint-disable-next-line MD013 -->
-[Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md).
+[Spatial audio listener and positional-source
+runtime](spatial-audio-listener-and-positional-source-runtime.md).
 
 Generic gameplay-audio requests carry canonical source definition, semantic
 role,
 owner, causation, world, mode, local-player, feature, residency, mix,
 environment, priority, lifetime, and expected revisions to
 <!-- markdownlint-disable-next-line MD013 -->
-[Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md).
+[Gameplay audio source, residency, mix, and environment
+runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md).
 
 Residency, source-readiness, queue admission, voice pressure, virtualization,
 mix, ducking, Audio Volume, reverb, pause, output-device, and terminal playback
@@ -363,7 +386,8 @@ observations return typed immutable results. Native device readiness, component
 acquisition, stream-cache priming, source admission, fade, parameter, device
 change, and callback correlation follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md).
+[Native audio device, resource, player, and tuning adapter
+runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md).
 
 They never route raw resource names, clip or stream player slots, cluster
 ordinals, namespace pointers, native source voices, file instances, sound-memory
@@ -379,7 +403,8 @@ State-prop requests and observations carry definition, placement, instance,
 state, transition, event, marker, callback, listener, world, feature, and
 persistence revisions to
 <!-- markdownlint-disable-next-line MD013 -->
-[Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md).
+[Authored state-prop animation and event
+runtime](authored-state-prop-animation-and-event-runtime.md).
 They never route frame-controller pointers, state-array positions, raw event
 names, callback integers, or listener slots.
 
@@ -388,7 +413,8 @@ track, route, checkpoint, lap, position, clock, vehicle,
 artificial-intelligence,
 camera, result, world, and feature revisions to
 <!-- markdownlint-disable-next-line MD013 -->
-[Local supersprint race session runtime](local-supersprint-race-session-runtime.md).
+[Local supersprint race session
+runtime](local-supersprint-race-session-runtime.md).
 Rendered countdown text, camera completion, vehicle pointers, or
 controller-array
 order cannot publish race start or results.
@@ -398,7 +424,8 @@ character, movement, input, vehicle handoff, collision, support, artificial-
 intelligence, camera-target, prop, interaction, footprint, world, and feature
 revisions to
 <!-- markdownlint-disable-next-line MD013 -->
-[Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md).
+[Playable avatar, character controller, and footprint
+runtime](playable-avatar-character-controller-and-footprint-runtime.md).
 They never expose fixed manager slots, raw button callbacks, model-name buffers,
 object pointers, collision arrays, or footprint-pool positions.
 
@@ -407,7 +434,8 @@ controller, input, artificial-intelligence, occupant, damage, presentation,
 reset, husk, parking, pursuit, road, world, feature, and physics-step revisions
 to
 <!-- markdownlint-disable-next-line MD013 -->
-[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+[Native vehicle physics, control, damage, and presentation
+runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
 They never route native physics pointers, wheel-array positions, force
 accumulators, raw controller identifiers, model or joint strings, custom
 collision-solving answers, drawable pointers, or pool slots.
@@ -444,7 +472,8 @@ state.
 Short-lived HUD cues are scheduled from accepted observations through the
 per-player and shared arbitration contract in
 <!-- markdownlint-disable-next-line MD013 -->
-[HUD feedback cue and presentation-primitives runtime](hud-feedback-cue-and-presentation-primitives-runtime.md).
+[HUD feedback cue and presentation-primitives
+runtime](hud-feedback-cue-and-presentation-primitives-runtime.md).
 Cue queues are bounded, accessibility-aware, revision-correlated, and distinct
 from domain event delivery. An animation callback cannot reconstruct authority
 or complete the observation that caused it.

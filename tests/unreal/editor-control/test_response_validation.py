@@ -1,7 +1,3 @@
-# File:
-#   - test_response_validation.py
-# Path: tests/unreal/editor-control/test_response_validation.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,59 +6,44 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Regression evidence for native MCP response validation.
+#   - Test response validation test module.
 # - Must-Not:
-#   - Open sockets, invoke Unreal, or exercise terminal parsing.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Pure JSON-RPC, session, identity, version, and capability fixtures.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Initialization and general JSON-RPC validation need separate fixtures.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another test module owns the same pure response evidence.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Guards fail-closed native Unreal MCP response validation.
+#   - Test response validation test module.
 # - Description:
-#   - Proves invalid wire identities cannot cross into application sessions.
+#   - Implements the declared test module responsibility for editor control.
 # - Usage:
-#   - Executed by pytest through the canonical validator workflow.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Uses protocol version 2025-11-25 and server name unreal-mcp.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: native MCP response validation tests
-#   - reason: protocol identity and session fixtures share one boundary
-#   - split: split initialization from general result tests if either expands
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess on responsibility or line-count growth
-#
-"""Regression tests for native Unreal MCP response validation."""
+
+"""Test response validation test module."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
 from mcp.adapter_outbound.http_exchange import HttpExchange
-from mcp.adapter_outbound.response_validation import (
-    parse_initialized_session,
-    parse_tool_names,
-    require_json_rpc_result,
-)
+from mcp.adapter_outbound.response_validation import parse_initialized_session
+from mcp.adapter_outbound.response_validation import parse_tool_names
+from mcp.adapter_outbound.response_validation import require_json_rpc_result
 from mcp.domain.errors import ProtocolError
+import pytest
 
 if TYPE_CHECKING:
-    from mcp.domain.json_types import JsonObject, JsonValue
+    from mcp.domain.json_types import JsonObject
+    from mcp.domain.json_types import JsonValue
 
 _PROTOCOL_VERSION = "2025-11-25"
 _SERVER_NAME = ""
@@ -353,6 +334,7 @@ def test_result_rejects_excessive_json_rpc_error_message(
 ) -> None:
     """One server error cannot become an oversized exception diagnostic."""
     monkeypatch.setattr(
+        # jig-ignore-next-line: exact value is indivisible
         "mcp.adapter_outbound.response_validation._MAX_JSON_RPC_ERROR_MESSAGE_BYTES",
         4,
         raising=False,

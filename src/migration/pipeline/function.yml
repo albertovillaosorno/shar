@@ -1,0 +1,23 @@
+schema: shar-function/v1
+identity:
+  id: pipeline
+  path: src/migration/pipeline
+  domain: migration
+architecture:
+  route: src/<domain>/<function>/<kind>/<part>
+  kinds:
+    - application
+    - composition
+    - domain
+    - port-outbound
+capabilities:
+  - math
+  - rust
+projects:
+  - Cargo.toml
+tests:
+  root: tests/migration/pipeline
+ownership:
+  accountable: Alberto Villa Osorno
+validation:
+  mode: active

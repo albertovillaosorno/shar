@@ -1,7 +1,3 @@
-# File:
-#   - skill_manual_review.py
-# Path: src/unreal/editor-control/adapter-outbound/mcp/adapter_outbound/skill_manual_review.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,45 +6,36 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Generated manual-guidance revision and review-status Markdown.
+#   - Skill manual review outbound adapter.
 # - Must-Not:
-#   - Parse protected field markers, access files, or invoke Unreal tools.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Rendering, refreshing, and validating one deterministic review status.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Review state gains another output format or lifecycle state.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Protected marker parsing owns generated review metadata too.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Marks preserved manual guidance current or review-required.
+#   - Skill manual review outbound adapter.
 # - Description:
-#   - A review is current only when its protected token exactly matches.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Called during skill rendering, merge, and index summary finalization.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Missing and legacy review tokens require review.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
-"""Version-aware manual review status for generated Unreal MCP skills."""
+
+"""Skill manual review outbound adapter."""
 
 from __future__ import annotations
 
 import re
 from typing import NamedTuple
 
-from mcp.adapter_outbound.skill_markdown_policy import (
-    render_unbreakable_line,
-)
+from mcp.adapter_outbound.skill_markdown_policy import render_unbreakable_line
 from mcp.domain.errors import fail_protocol
 
 MANUAL_REVIEW_FIELD_KEY = "manual-review-revision"
@@ -79,6 +66,7 @@ def render_manual_review_lines(
 
     Returns:
         Generated Markdown lines for revision and review status.
+
     """
     state = _state(current_revision, reviewed_revision)
     return [
@@ -102,6 +90,7 @@ def refresh_manual_review_status(
 
     Returns:
         Complete content with the derived review status refreshed.
+
     """
     current_revision = _extract_current_revision(content, context=context)
     replacement = (
@@ -126,6 +115,7 @@ def manual_review_state(
 
     Returns:
         Parsed current and reviewed revision state.
+
     """
     current_revision = _extract_current_revision(content, context=context)
     status_matches = tuple(_STATUS_PATTERN.finditer(content))

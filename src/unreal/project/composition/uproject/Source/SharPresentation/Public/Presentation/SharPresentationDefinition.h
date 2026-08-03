@@ -1,12 +1,34 @@
-// File: SharPresentationDefinition.h
-// Path: src/unreal/project/composition/uproject/Source/SharPresentation/Public/Presentation/SharPresentationDefinition.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: immutable playback policy only; animation, camera, media, UI, and audio remain external adapters.
-// Specification: docs/technical/unreal/presentation-playback-runtime.md
-// LARGE-FILE owner=SharPresentation; reason=cohesive reflected presentation policy schema;
-// split=extract adapter-specific policy identities if they become independently versioned assets;
-// validation=validate.sh SharPresentation plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar presentation definition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar presentation definition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar presentation definition composition module.
 
 #pragma once
 

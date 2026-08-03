@@ -89,8 +89,9 @@ not infer build acceptance from installation alone.
 
 ## Source References
 
-- Epic Games (2026) *Setting Up Visual Studio Development Environment for C++
-  Projects in Unreal Engine 5.8*. Available at: [Epic C++ setup][epic-cpp]
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: external link target is indivisible -->
+- Epic Games (2026) *Setting Up Visual Studio Development Environment for C++ Projects in Unreal Engine 5.8*. Available at: [Epic C++ setup](<https://dev.epicgames.com/documentation/en-us/unreal-engine/setting-up-visual-studio-development-environment-for-cplusplus-projects-in-unreal-engine>) <!-- markdownlint-disable-line MD013 -->
   (Accessed: 13 July 2026).
 - Microsoft (n.d.) *Visual Studio Build Tools for C++*. Available at:
   <https://visualstudio.microsoft.com/visual-cpp-build-tools/> (Accessed: 14
@@ -99,6 +100,3 @@ not infer build acceptance from installation alone.
   prerequisites, installed Visual Studio 18 Community layout, MSBuild
   18.7.8.30822, MSVC toolsets 14.44.35207 and 14.51.36231, compiler
   19.51.36248 for x64, and Windows SDK 10.0.26100.0.
-
-[epic-cpp]:
-  https://dev.epicgames.com/documentation/en-us/unreal-engine/setting-up-visual-studio-development-environment-for-cplusplus-projects-in-unreal-engine

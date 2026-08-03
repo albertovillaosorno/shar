@@ -6,34 +6,47 @@
 ## Governing decisions and specifications
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Typed StateTree action sequences](../../adr/unreal/runtime/typed-state-tree-action-sequences.md)
+- [Typed StateTree action
+  sequences](../../adr/unreal/runtime/typed-state-tree-action-sequences.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [HUD, radar, camera, and navigation parity](../../adr/unreal/ui/hud-radar-camera-and-navigation.md)
+- [HUD, radar, camera, and navigation
+  parity](../../adr/unreal/ui/hud-radar-camera-and-navigation.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native cinematic package strategy](../../adr/rmv/unreal-native-cinematic-package.md)
+- [Native cinematic package
+  strategy](../../adr/rmv/unreal-native-cinematic-package.md)
 - [Local cinematic overrides](../../adr/rmv/local-movie-overrides.md)
 - [Typed action-sequence runtime](typed-action-sequence-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Camera rig, preset, and arbitration runtime](camera-rig-preset-and-arbitration-runtime.md)
+- [Camera rig, preset, and arbitration
+  runtime](camera-rig-preset-and-arbitration-runtime.md)
 - [Platform cinematic media packaging](platform-cinematic-media-packaging.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md)
+- [Frontend screen flow and settings
+  runtime](frontend-screen-flow-and-settings-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Frontend media, gallery, and audio runtime](frontend-media-gallery-and-audio-runtime.md)
+- [Frontend media, gallery, and audio
+  runtime](frontend-media-gallery-and-audio-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md)
+- [Dialogue selection, queue, and playback
+  runtime](dialogue-selection-queue-and-playback-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md)
+- [Spatial audio listener and positional-source
+  runtime](spatial-audio-listener-and-positional-source-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
+- [Gameplay audio source, residency, mix, and environment
+  runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Common UI navigation, menu, and modal runtime](common-ui-navigation-menu-and-modal-runtime.md)
+- [Common UI navigation, menu, and modal
+  runtime](common-ui-navigation-menu-and-modal-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md)
+- [Typed event and observation routing
+  runtime](typed-event-and-observation-routing-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md)
+- [Spatial visibility, bounds, and culling
+  runtime](spatial-visibility-bounds-and-culling-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md)
+- [Native asset load request and streaming
+  runtime](native-asset-load-request-and-streaming-runtime.md)
 
 ## Purpose
 
@@ -74,15 +87,24 @@ adapters. None can become a second application or gameplay scheduler.
 
 <!-- markdownlint-disable MD013 -->
 
-| Service | Authority |
-| :--- | :--- |
-| Presentation playback subsystem | Owns request validation, lifecycle, cancellation, result publication, and teardown. |
-| Asset Manager adapter | Resolves required assets and reports correlated load results. |
-| Action-sequence runtime | Owns authored action order and gameplay-facing task results. |
-| Camera subsystem | Owns camera requests, arbitration, view calculation, and restoration. |
-| Character presentation service | Owns cosmetic animation layers such as blink and facial idles. |
-| Media adapter | Owns platform playback handles and normalized media results. |
-| Mission and interaction services | Consume validated presentation results without delegating authority. |
+- **Service:** Presentation playback subsystem
+  - **Authority:** Owns request validation, lifecycle, cancellation, result
+    publication, and teardown.
+- **Service:** Asset Manager adapter
+  - **Authority:** Resolves required assets and reports correlated load results.
+- **Service:** Action-sequence runtime
+  - **Authority:** Owns authored action order and gameplay-facing task results.
+- **Service:** Camera subsystem
+  - **Authority:** Owns camera requests, arbitration, view calculation, and
+    restoration.
+- **Service:** Character presentation service
+  - **Authority:** Owns cosmetic animation layers such as blink and facial
+    idles.
+- **Service:** Media adapter
+  - **Authority:** Owns platform playback handles and normalized media results.
+- **Service:** Mission and interaction services
+  - **Authority:** Consume validated presentation results without delegating
+    authority.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -116,21 +138,37 @@ or clean up a replacement request.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `PresentationId` | Canonical presentation identity. |
-| `PresentationKind` | Animation, camera, cosmetic layer, sequence, media, or registered composite. |
-| `AssetSetId` | Required primary assets and load bundles. |
-| `OwnerPolicyId` | Mission, interaction, frontend, world, or ambient owner policy. |
-| `PlaybackPolicyId` | Start, loop, completion, and replay behavior. |
-| `ExclusivityPolicyId` | Scoped input, simulation, camera, HUD, and world-presentation leases. |
-| `SkipPolicyId` | Not skippable, immediate, hold, vote, accessibility, or owner-controlled. |
-| `TimePolicyId` | Simulation, sequence, audio, or media time source. |
-| `CameraPolicyId` | Optional camera request and restoration policy. |
-| `CharacterLayerPolicyId` | Optional facial, blink, or additive animation policy. |
-| `FallbackPolicyId` | Platform, accessibility, and missing-presentation fallback. |
-| `ResultPolicyId` | Terminal results accepted by the owner. |
-| `TeardownPolicyId` | Stop, restore, release, transfer, and asset residency behavior. |
+- **Field:** `PresentationId`
+  - **Contract:** Canonical presentation identity.
+- **Field:** `PresentationKind`
+  - **Contract:** Animation, camera, cosmetic layer, sequence, media, or
+    registered composite.
+- **Field:** `AssetSetId`
+  - **Contract:** Required primary assets and load bundles.
+- **Field:** `OwnerPolicyId`
+  - **Contract:** Mission, interaction, frontend, world, or ambient owner
+    policy.
+- **Field:** `PlaybackPolicyId`
+  - **Contract:** Start, loop, completion, and replay behavior.
+- **Field:** `ExclusivityPolicyId`
+  - **Contract:** Scoped input, simulation, camera, HUD, and world-presentation
+    leases.
+- **Field:** `SkipPolicyId`
+  - **Contract:** Not skippable, immediate, hold, vote, accessibility, or
+    owner-controlled.
+- **Field:** `TimePolicyId`
+  - **Contract:** Simulation, sequence, audio, or media time source.
+- **Field:** `CameraPolicyId`
+  - **Contract:** Optional camera request and restoration policy.
+- **Field:** `CharacterLayerPolicyId`
+  - **Contract:** Optional facial, blink, or additive animation policy.
+- **Field:** `FallbackPolicyId`
+  - **Contract:** Platform, accessibility, and missing-presentation fallback.
+- **Field:** `ResultPolicyId`
+  - **Contract:** Terminal results accepted by the owner.
+- **Field:** `TeardownPolicyId`
+  - **Contract:** Stop, restore, release, transfer, and asset residency
+    behavior.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -392,14 +430,16 @@ or interaction eligibility.
 Dialogue presentation consumes accepted speaker, listener, line, conversation,
 character-representation, and audio revisions from
 <!-- markdownlint-disable-next-line MD013 -->
-[Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md).
+[Dialogue selection, queue, and playback
+runtime](dialogue-selection-queue-and-playback-runtime.md).
 It may request ambient idles, speaking layers, listening layers, look-at
 presentation, facial curves, and camera targets without owning dialogue
 progression.
 
 Positional speaker and listener projection follows
 <!-- markdownlint-disable-next-line MD013 -->
-[Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md).
+[Spatial audio listener and positional-source
+runtime](spatial-audio-listener-and-positional-source-runtime.md).
 Presentation playback cannot select a dialogue variant, reorder the queue, or
 reinterpret native audio completion as a domain result.
 
@@ -475,7 +515,8 @@ Each group declares:
 
 The group acquires residency through
 <!-- markdownlint-disable-next-line MD013 -->
-[Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
+[Gameplay audio source, residency, mix, and environment
+runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
 and retains the accepted handles until the sequence reaches its declared
 terminal
 state.
@@ -595,7 +636,8 @@ or revive stale callbacks.
 
 The screen and recovery flow follows the
 <!-- markdownlint-disable-next-line MD013 -->
-[frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md).
+[frontend screen flow and settings
+runtime](frontend-screen-flow-and-settings-runtime.md).
 
 ## Completion result
 
@@ -603,18 +645,28 @@ The screen and recovery flow follows the
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `RequestId` | Accepted request identity. |
-| `PresentationRevision` | Exact playback revision. |
-| `OwnerId` | Owning mission, interaction, sequence, frontend, or world identity. |
-| `OwnerRevision` | Exact owner revision. |
-| `ResultKind` | Completed, skipped, cancelled, failed, or unavailable fallback. |
-| `CompletedAdapters` | Deterministic set of required adapter results. |
-| `DegradedAdapters` | Optional presentation degradation. |
-| `StartTick` | Accepted playback start. |
-| `EndTick` | Accepted terminal boundary. |
-| `FindingIds` | Typed load, playback, fallback, or teardown evidence. |
+- **Field:** `RequestId`
+  - **Contract:** Accepted request identity.
+- **Field:** `PresentationRevision`
+  - **Contract:** Exact playback revision.
+- **Field:** `OwnerId`
+  - **Contract:** Owning mission, interaction, sequence, frontend, or world
+    identity.
+- **Field:** `OwnerRevision`
+  - **Contract:** Exact owner revision.
+- **Field:** `ResultKind`
+  - **Contract:** Completed, skipped, cancelled, failed, or unavailable
+    fallback.
+- **Field:** `CompletedAdapters`
+  - **Contract:** Deterministic set of required adapter results.
+- **Field:** `DegradedAdapters`
+  - **Contract:** Optional presentation degradation.
+- **Field:** `StartTick`
+  - **Contract:** Accepted playback start.
+- **Field:** `EndTick`
+  - **Contract:** Accepted terminal boundary.
+- **Field:** `FindingIds`
+  - **Contract:** Typed load, playback, fallback, or teardown evidence.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -656,7 +708,8 @@ overlay.
 
 Cinematic and overlay views follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md).
+[Spatial visibility, bounds, and culling
+runtime](spatial-visibility-bounds-and-culling-runtime.md).
 Temporary camera or visibility changes do not become durable world or streaming
 state.
 

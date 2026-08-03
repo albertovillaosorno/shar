@@ -1,12 +1,34 @@
-// File: SharApplicationModeCatalogSubsystem.h
-// Path: src/unreal/project/composition/uproject/Source/SharApplication/Public/Application/SharApplicationModeCatalogSubsystem.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: application-mode definition registration, graph validation, lookup, and revision activation only.
-// Specification: docs/technical/unreal/application-lifecycle-and-mode-runtime.md
-// LARGE-FILE owner=SharApplication; reason=cohesive reflected mode-catalog contract;
-// split=extract diagnostics if graph findings become persistent artifacts;
-// validation=validate.sh SharApplication plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar application mode catalog subsystem composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar application mode catalog subsystem composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar application mode catalog subsystem composition module.
 
 #pragma once
 

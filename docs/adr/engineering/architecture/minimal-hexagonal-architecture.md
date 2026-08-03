@@ -26,7 +26,8 @@ production visibility.
 
 Leaf logic remains direct when another kind would not isolate policy, state, or
 an external effect. Shared command-line and filesystem functions own stable
-mechanisms only; domain policy stays with its capability. Engine-mandated project
+mechanisms only; domain policy stays with its capability. Engine-mandated
+project
 structure is contained as one composition part rather than treated as a second
 repository taxonomy.
 

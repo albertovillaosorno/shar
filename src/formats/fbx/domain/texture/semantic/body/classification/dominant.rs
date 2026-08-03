@@ -1,7 +1,3 @@
-// File:
-//   - dominant.rs
-// Path: src/formats/fbx/domain/texture/semantic/body/classification/dominant.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Deterministic reduction of explicit skin influences to one dominant bone
-//   - per vertex.
+//   - Dominant domain module.
 // - Must-Not:
-//   - Sample textures, classify colors, or resolve equal strongest weights by
-//   - arbitrary ordering.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Exact weight accumulation and stable tie detection.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Multi-bone semantic evidence becomes a supported classification input.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Skin influence validation owns the same dominant-bone contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Dominant skin-bone evidence reduction.
+//   - Dominant domain module.
 // - Description:
-//   - Converts validated explicit influences into conservative semantic
-//   - evidence.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Called by semantic body classification.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Missing and tied strongest influences fail closed.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Dominant skin-bone evidence reduction.
+//! Dominant domain module.
+
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
 
@@ -75,40 +61,25 @@ pub(super) fn dominant_bones(
         let vertex = usize::try_from(influence.vertex_index)
             .map_err(|_error| SemanticTextureError::NumericOverflow)?;
         let Some(vertex_weights) = weights.get_mut(vertex) else {
-            return Err(
-                SemanticTextureError::MissingDominantInfluence {
-                    group: address,
-                    vertex,
-                },
-            );
+            return Err(SemanticTextureError::MissingDominantInfluence {
+                group: address,
+                vertex,
+            });
         };
-        let entry = vertex_weights
-            .entry(
-                influence
-                    .bone_id
-                    .clone(),
-            )
-            .or_default();
+        let entry =
+            vertex_weights.entry(influence.bone_id.clone()).or_default();
         *entry += influence.weight;
     }
     weights
         .into_iter()
         .enumerate()
-        .map(
-            |(vertex, candidates)| {
-                let color = colors
-                    .get(vertex)
-                    .copied()
-                    .ok_or(SemanticTextureError::NumericOverflow)?;
-                dominant_bone(
-                    address,
-                    vertex,
-                    color,
-                    candidates,
-                    overridden_colors,
-                )
-            },
-        )
+        .map(|(vertex, candidates)| {
+            let color = colors
+                .get(vertex)
+                .copied()
+                .ok_or(SemanticTextureError::NumericOverflow)?;
+            dominant_bone(address, vertex, color, candidates, overridden_colors)
+        })
         .collect()
 }
 
@@ -121,64 +92,42 @@ fn dominant_bone(
     candidates: BTreeMap<String, f32>,
     overridden_colors: &BTreeMap<Rgba8, BodyRegion>,
 ) -> Result<DominantEvidence, SemanticTextureError> {
-    let mut ordered = candidates
-        .into_iter()
-        .collect::<Vec<_>>();
-    ordered.sort_by(
-        |left, right| {
-            right
-                .1
-                .total_cmp(&left.1)
-                .then_with(
-                    || {
-                        left.0
-                            .cmp(&right.0)
-                    },
-                )
-        },
-    );
+    let mut ordered = candidates.into_iter().collect::<Vec<_>>();
+    ordered.sort_by(|left, right| {
+        right
+            .1
+            .total_cmp(&left.1)
+            .then_with(|| left.0.cmp(&right.0))
+    });
     let Some((bone_id, weight)) = ordered.first() else {
-        return Err(
-            SemanticTextureError::MissingDominantInfluence {
-                group: address,
-                vertex,
-            },
-        );
+        return Err(SemanticTextureError::MissingDominantInfluence {
+            group: address,
+            vertex,
+        });
     };
     let strongest_family = BoneFamily::from_bone_id(bone_id);
     let cross_family_tie = ordered
         .iter()
         .skip(1)
-        .take_while(
-            |candidate| {
-                candidate
-                    .1
-                    .total_cmp(weight)
-                    == Ordering::Equal
-            },
-        )
-        .any(
-            |candidate| {
-                BoneFamily::from_bone_id(&candidate.0) != strongest_family
-            },
-        );
+        .take_while(|candidate| {
+            candidate.1.total_cmp(weight) == Ordering::Equal
+        })
+        .any(|candidate| {
+            BoneFamily::from_bone_id(&candidate.0) != strongest_family
+        });
     if cross_family_tie {
         let marker = if overridden_colors.contains_key(&color) {
             "reviewed-color-override"
         } else {
             "cross-family-tie"
         };
-        return Ok(
-            DominantEvidence {
-                family: None,
-                bone_id: marker.to_owned(),
-            },
-        );
+        return Ok(DominantEvidence {
+            family: None,
+            bone_id: marker.to_owned(),
+        });
     }
-    Ok(
-        DominantEvidence {
-            family: Some(strongest_family),
-            bone_id: bone_id.clone(),
-        },
-    )
+    Ok(DominantEvidence {
+        family: Some(strongest_family),
+        bone_id: bone_id.clone(),
+    })
 }

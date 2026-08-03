@@ -1,7 +1,3 @@
-// File:
-//   - run_process_trait_object.rs
-// Path: tests/foundation/command-line/run_process_trait_object.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for trait-object process programs.
+//   - Run process trait object test module.
 // - Must-Not:
-//   - Emit output or interpret test-runner arguments.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Invoke one dynamically dispatched no-output program.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another process-composition behavior needs distinct fixtures.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Current-process composition no longer accepts caller programs.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Trait-object process regression.
+//   - Run process trait object test module.
 // - Description:
-//   - Proves process composition accepts dynamic dispatch.
+//   - Implements the declared test module responsibility for command line.
 // - Usage:
-//   - Executed by the schoenwald-cli integration test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - The program ignores arguments and succeeds.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for dynamically dispatched process programs.
-//!
-//! Thin binaries may keep caller programs behind stable trait objects.
+//! Run process trait object test module.
 
 use std::process::ExitCode;
 
@@ -51,10 +37,7 @@ use schoenwald_cli::{CliProgram, CommandOutcome, run_process};
 struct SuccessfulProgram;
 
 impl CliProgram for SuccessfulProgram {
-    fn execute(
-        &self,
-        _arguments: &[String],
-    ) -> CommandOutcome {
+    fn execute(&self, _arguments: &[String]) -> CommandOutcome {
         CommandOutcome::success()
     }
 }
@@ -65,8 +48,5 @@ fn process_runner_accepts_a_program_trait_object() {
 
     let status = run_process(command);
 
-    assert_eq!(
-        status,
-        ExitCode::SUCCESS
-    );
+    assert_eq!(status, ExitCode::SUCCESS);
 }

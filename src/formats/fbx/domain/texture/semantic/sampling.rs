@@ -1,7 +1,3 @@
-// File:
-//   - sampling.rs
-// Path: src/formats/fbx/domain/texture/semantic/sampling.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,37 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - V-up UV sampling and deterministic nearest-neighbor image scaling.
+//   - Sampling domain module.
 // - Must-Not:
-//   - Read or write files, change color values, or classify mesh semantics.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Checked coordinate conversion and exact source-texel selection.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another resampling filter becomes a supported contract.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - RGBA image storage becomes the sole owner of sampling behavior.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Deterministic image sampling for semantic texture preparation.
+//   - Sampling domain module.
 // - Description:
-//   - Bridges V-up mesh UVs to top-left-origin image rows without adapters.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Used by body classification and eye-frame modernization.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Sampling uses source texel ownership and scaling uses nearest neighbor.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Deterministic V-up UV sampling and nearest-neighbor scaling.
+//! Sampling domain module.
+
 #![expect(
     clippy::arithmetic_side_effects,
     clippy::as_conversions,
@@ -76,17 +65,9 @@ impl RgbaImage {
         &self,
         uv: [f32; 2],
     ) -> Result<Rgba8, RgbaImageError> {
-        let x = unit_coordinate_to_index(
-            f64::from(uv[0]),
-            self.width,
-        )?;
-        let y = unit_coordinate_to_index(
-            1.0 - f64::from(uv[1]),
-            self.height,
-        )?;
-        self.pixel(
-            x, y,
-        )
+        let x = unit_coordinate_to_index(f64::from(uv[0]), self.width)?;
+        let y = unit_coordinate_to_index(1. - f64::from(uv[1]), self.height)?;
+        self.pixel(x, y)
     }
 
     /// Sample one V-up UV coordinate through an explicit address mode.
@@ -105,17 +86,10 @@ impl RgbaImage {
             TextureAddressMode::Tile => {
                 let u = tiled_coordinate(f64::from(uv[0]))?;
                 let v = tiled_coordinate(f64::from(uv[1]))?;
-                let x = unit_coordinate_to_index(
-                    u, self.width,
-                )?;
-                let y = unit_coordinate_to_index(
-                    1.0 - v,
-                    self.height,
-                )?;
-                self.pixel(
-                    x, y,
-                )
-            }
+                let x = unit_coordinate_to_index(u, self.width)?;
+                let y = unit_coordinate_to_index(1. - v, self.height)?;
+                self.pixel(x, y)
+            },
         }
     }
 
@@ -129,30 +103,16 @@ impl RgbaImage {
         width: u32,
         height: u32,
     ) -> Result<Self, RgbaImageError> {
-        let count = checked_pixel_count(
-            width, height,
-        )?;
+        let count = checked_pixel_count(width, height)?;
         let mut pixels = Vec::with_capacity(count);
         for y in 0..height {
-            let source_y = proportional_index(
-                y,
-                height,
-                self.height,
-            );
+            let source_y = proportional_index(y, height, self.height);
             for x in 0..width {
-                let source_x = proportional_index(
-                    x, width, self.width,
-                );
-                pixels.push(
-                    self.pixel(
-                        source_x, source_y,
-                    )?,
-                );
+                let source_x = proportional_index(x, width, self.width);
+                pixels.push(self.pixel(source_x, source_y)?);
             }
         }
-        Self::new(
-            width, height, pixels,
-        )
+        Self::new(width, height, pixels)
     }
 }
 
@@ -161,7 +121,7 @@ fn tiled_coordinate(value: f64) -> Result<f64, RgbaImageError> {
     if !value.is_finite() {
         return Err(RgbaImageError::InvalidUv);
     }
-    Ok(value.rem_euclid(1.0))
+    Ok(value.rem_euclid(1.))
 }
 
 /// Convert one unit coordinate into source-texel ownership.
@@ -175,7 +135,7 @@ fn unit_coordinate_to_index(
     value: f64,
     size: u32,
 ) -> Result<u32, RgbaImageError> {
-    if !value.is_finite() || !(0.0..=1.0).contains(&value) {
+    if !value.is_finite() || !(0. ..=1.).contains(&value) {
         return Err(RgbaImageError::InvalidUv);
     }
     let scaled = (value * f64::from(size)).floor();

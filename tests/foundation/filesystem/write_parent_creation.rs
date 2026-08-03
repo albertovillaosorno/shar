@@ -1,7 +1,3 @@
-// File:
-//   - write_parent_creation.rs
-// Path: tests/foundation/filesystem/write_parent_creation.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for write parent-creation requests.
+//   - Write parent creation test module.
 // - Must-Not:
-//   - Depend on local storage or caller-specific output policy.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Record port calls and reject current-directory creation noise.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another write orchestration invariant gains fixtures.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test file owns the same parent-creation behavior.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Write parent-creation regression tests.
+//   - Write parent creation test module.
 // - Description:
-//   - Prevents writes from requesting a no-op current directory creation.
+//   - Implements the declared test module responsibility for filesystem.
 // - Usage:
-//   - Runs through the filesystem crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Only a meaningful missing parent is created.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for write parent-creation requests.
-//!
-//! An explicit current-directory marker is not a missing parent directory.
+//! Write parent creation test module.
 
 #[cfg(windows)]
 #[path = "support/junction.rs"]
@@ -63,30 +49,15 @@ struct RecordingWriter {
 }
 
 impl FileWriter for RecordingWriter {
-    fn create_dir_all(
-        &self,
-        _path: &Path,
-    ) -> io::Result<()> {
-        let next_count = self
-            .create_calls
-            .get()
-            .saturating_add(1);
-        self.create_calls
-            .set(next_count);
+    fn create_dir_all(&self, _path: &Path) -> io::Result<()> {
+        let next_count = self.create_calls.get().saturating_add(1);
+        self.create_calls.set(next_count);
         Ok(())
     }
 
-    fn write_bytes(
-        &self,
-        _path: &Path,
-        _bytes: &[u8],
-    ) -> io::Result<()> {
-        let next_count = self
-            .write_calls
-            .get()
-            .saturating_add(1);
-        self.write_calls
-            .set(next_count);
+    fn write_bytes(&self, _path: &Path, _bytes: &[u8]) -> io::Result<()> {
+        let next_count = self.write_calls.get().saturating_add(1);
+        self.write_calls.set(next_count);
         Ok(())
     }
 }
@@ -95,19 +66,10 @@ impl FileWriter for RecordingWriter {
 fn current_directory_parent_is_not_created() -> Result<(), String> {
     let writer = RecordingWriter::default();
 
-    WriteFile::bytes(
-        &writer,
-        Path::new("./report.txt"),
-        b"report",
-        true,
-    )
-    .map_err(|error| error.to_string())?;
+    WriteFile::bytes(&writer, Path::new("./report.txt"), b"report", true)
+        .map_err(|error| error.to_string())?;
 
-    if writer
-        .create_calls
-        .get()
-        != 0
-    {
+    if writer.create_calls.get() != 0 {
         return Err("write requested current-directory creation".to_owned());
     }
     Ok(())
@@ -116,25 +78,17 @@ fn current_directory_parent_is_not_created() -> Result<(), String> {
 #[cfg(windows)]
 #[test]
 fn write_rejects_linked_parent_without_parent_creation() -> Result<(), String> {
-    let root = std::env::temp_dir().join(
-        format!(
-            "schoenwald-filesystem-linked-write-{}",
-            std::process::id()
-        ),
-    );
+    let root = std::env::temp_dir().join(format!(
+        "schoenwald-filesystem-linked-write-{}",
+        std::process::id()
+    ));
     let target = root.join("target");
     let link = root.join("link");
     fs::create_dir_all(&target).map_err(|error| error.to_string())?;
-    support::create_junction(
-        &link, &target,
-    )?;
+    support::create_junction(&link, &target)?;
 
     let escaped = target.join("escaped.txt");
-    let result = local::write_text(
-        &link.join("escaped.txt"),
-        "escaped",
-        false,
-    );
+    let result = local::write_text(&link.join("escaped.txt"), "escaped", false);
     let escaped_exists = escaped.exists();
 
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
@@ -142,12 +96,10 @@ fn write_rejects_linked_parent_without_parent_creation() -> Result<(), String> {
         return Err("write followed linked parent".to_owned());
     };
     if error.kind() != io::ErrorKind::InvalidInput {
-        return Err(
-            format!(
-                "unexpected linked-write error kind: {:?}",
-                error.kind()
-            ),
-        );
+        return Err(format!(
+            "unexpected linked-write error kind: {:?}",
+            error.kind()
+        ));
     }
     if escaped_exists {
         return Err("linked write created target content".to_owned());
@@ -164,19 +116,10 @@ fn filesystem_root_parent_is_not_created() -> Result<(), String> {
         Path::new("/report.txt")
     };
 
-    WriteFile::bytes(
-        &writer,
-        destination,
-        b"report",
-        true,
-    )
-    .map_err(|error| error.to_string())?;
+    WriteFile::bytes(&writer, destination, b"report", true)
+        .map_err(|error| error.to_string())?;
 
-    if writer
-        .create_calls
-        .get()
-        != 0
-    {
+    if writer.create_calls.get() != 0 {
         return Err("write requested filesystem-root creation".to_owned());
     }
     Ok(())
@@ -194,11 +137,7 @@ fn named_parent_chain_before_parent_marker_is_created() -> Result<(), String> {
     )
     .map_err(|error| error.to_string())?;
 
-    if writer
-        .create_calls
-        .get()
-        != 1
-    {
+    if writer.create_calls.get() != 1 {
         return Err("named lexical parent chain was not created".to_owned());
     }
     Ok(())
@@ -207,40 +146,22 @@ fn named_parent_chain_before_parent_marker_is_created() -> Result<(), String> {
 #[test]
 fn parent_marker_write_destination_is_rejected() -> Result<(), String> {
     let writer = RecordingWriter::default();
-    let result = WriteFile::bytes(
-        &writer,
-        Path::new("scratch/.."),
-        b"report",
-        true,
-    );
+    let result =
+        WriteFile::bytes(&writer, Path::new("scratch/.."), b"report", true);
 
     let Err(error) = result else {
-        return Err(
-            "parent marker unexpectedly accepted file bytes".to_owned(),
-        );
+        return Err("parent marker unexpectedly accepted file bytes".to_owned());
     };
     if error.kind() != io::ErrorKind::InvalidInput {
-        return Err(
-            format!(
-                "unexpected write-destination error kind: {:?}",
-                error.kind()
-            ),
-        );
+        return Err(format!(
+            "unexpected write-destination error kind: {:?}",
+            error.kind()
+        ));
     }
-    if writer
-        .create_calls
-        .get()
-        != 0
-    {
-        return Err(
-            "invalid write destination created parent state".to_owned(),
-        );
+    if writer.create_calls.get() != 0 {
+        return Err("invalid write destination created parent state".to_owned());
     }
-    if writer
-        .write_calls
-        .get()
-        != 0
-    {
+    if writer.write_calls.get() != 0 {
         return Err("invalid write destination reached provider".to_owned());
     }
     Ok(())
@@ -249,36 +170,22 @@ fn parent_marker_write_destination_is_rejected() -> Result<(), String> {
 #[test]
 fn directory_syntax_write_destination_is_rejected() -> Result<(), String> {
     let writer = RecordingWriter::default();
-    let result = WriteFile::bytes(
-        &writer,
-        Path::new("report/"),
-        b"report",
-        true,
-    );
+    let result =
+        WriteFile::bytes(&writer, Path::new("report/"), b"report", true);
 
     let Err(error) = result else {
         return Err("directory syntax accepted file bytes".to_owned());
     };
     if error.kind() != io::ErrorKind::InvalidInput {
-        return Err(
-            format!(
-                "unexpected directory-syntax error kind: {:?}",
-                error.kind()
-            ),
-        );
+        return Err(format!(
+            "unexpected directory-syntax error kind: {:?}",
+            error.kind()
+        ));
     }
-    if writer
-        .create_calls
-        .get()
-        != 0
-    {
+    if writer.create_calls.get() != 0 {
         return Err("directory syntax created parent state".to_owned());
     }
-    if writer
-        .write_calls
-        .get()
-        != 0
-    {
+    if writer.write_calls.get() != 0 {
         return Err("directory syntax reached the provider".to_owned());
     }
     Ok(())

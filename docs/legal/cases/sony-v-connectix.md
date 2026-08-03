@@ -91,11 +91,13 @@ output, market effect, access controls, agreements, and governing jurisdiction.
 - *Sony Computer Entertainment, Inc. v. Connectix Corp.*, 203 F.3d 596 (9th Cir.
   2000), No. 99-15852, secondary duplicate copies (one with reporter star
   pagination, one with paragraph numbering):
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://www.courtlistener.com/opinion/7079964/sony-computer-entertainment-inc-v-connectix-corp/>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://www.courtlistener.com/opinion/7079964/sony-computer-entertainment-inc-v-connectix-corp/> <!-- markdownlint-disable-line MD013 -->
   and
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://www.courtlistener.com/opinion/767633/sony-computer-entertainment-inc-v-connectix-corporation/>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://www.courtlistener.com/opinion/767633/sony-computer-entertainment-inc-v-connectix-corporation/> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 13 July 2026).
 - U.S. Copyright Office, *Sony Computer Entertainment, Inc. v. Connectix Corp.*
   fair-use summary:

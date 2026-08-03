@@ -85,12 +85,14 @@ and federal objective must all be identified.
 
 - Public.Resource.Org (n.d.), *ProCD, Inc. v. Zeidenberg*, 86 F.3d 1447
   (7th Cir. 1996), public-domain reporter duplicate. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://law.resource.org/pub/us/case/reporter/F3/086/86.F3d.1447.96-1139.html>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://law.resource.org/pub/us/case/reporter/F3/086/86.F3d.1447.96-1139.html> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - [Online assent](../contracts/online-assent.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Software license reverse-engineering clauses](../contracts/software-license-reverse-engineering-clauses.md).
+- [Software license reverse-engineering
+  clauses](../contracts/software-license-reverse-engineering-clauses.md).
 - [17 U.S.C. § 301](../statutes/17-usc-301.md).
 - [Specht v. Netscape Communications Corp.](specht-v-netscape.md).
 - [Nguyen v. Barnes & Noble, Inc.](nguyen-v-barnes-and-noble.md).

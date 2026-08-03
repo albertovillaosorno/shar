@@ -3,14 +3,18 @@
 ## Governing decisions
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
+- [Data-driven Unreal gameplay content
+  catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md) <!-- markdownlint-disable-line MD013 -->
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Contextual interaction query and transaction boundary](../../adr/unreal/runtime/contextual-interaction-query-and-transaction.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Native flying-hazard actors and StateTree execution](../../adr/unreal/runtime/native-flying-hazard-actors-and-state-trees.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Contextual interaction query and transaction boundary](../../adr/unreal/runtime/contextual-interaction-query-and-transaction.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Native flying-hazard actors and StateTree execution](../../adr/unreal/runtime/native-flying-hazard-actors-and-state-trees.md) <!-- markdownlint-disable-line MD013 -->
 
 ## Purpose
 
@@ -27,14 +31,17 @@ Detailed execution remains in the owning specifications:
 - [Open sandbox chapter runtime](open-sandbox-chapter-runtime.md)
 - [Gameplay content catalog](gameplay-content-catalog.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Mission, interaction, interior, and notoriety runtime](mission-interaction-and-notoriety-runtime.md)
+- [Mission, interaction, interior, and notoriety
+  runtime](mission-interaction-and-notoriety-runtime.md)
 - [Race route and opponent runtime](race-route-and-opponent-runtime.md)
 - [Vehicle access and roster runtime](vehicle-access-and-roster-runtime.md)
 - [Contextual interaction runtime](contextual-interaction-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Flying-hazard and projectile runtime](flying-hazard-and-projectile-runtime.md)
+- [Flying-hazard and projectile
+  runtime](flying-hazard-and-projectile-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md)
+- [Historical core-design and dialogue evidence
+  normalization](historical-core-design-and-dialogue-evidence-normalization.md)
 
 ## Canonicalization
 
@@ -47,17 +54,27 @@ Each census record contains:
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `ContentId` | Stable canonical identity used by generated data and save rows. |
-| `DisplayNameKey` | Localized presentation identity; never the canonical key. |
-| `Aliases` | Reviewed alternate names that resolve only to `ContentId`. |
-| `ContentFamily` | Mission, race, vehicle, character, location, collectible, presentation, or development evidence. |
-| `Availability` | Shipping state from the closed enum below. |
-| `LevelScope` | Ordered base levels or explicit global scope. |
-| `RuntimeRoles` | Concrete roles such as ownership reward, traffic, mission target, or vendor. |
-| `OwningDefinition` | Primary asset or generated row that owns runtime behavior. |
-| `VerificationIds` | Golden tests and import checks required before activation. |
+- **Field:** `ContentId`
+  - **Contract:** Stable canonical identity used by generated data and save
+    rows.
+- **Field:** `DisplayNameKey`
+  - **Contract:** Localized presentation identity; never the canonical key.
+- **Field:** `Aliases`
+  - **Contract:** Reviewed alternate names that resolve only to `ContentId`.
+- **Field:** `ContentFamily`
+  - **Contract:** Mission, race, vehicle, character, location, collectible,
+    presentation, or development evidence.
+- **Field:** `Availability`
+  - **Contract:** Shipping state from the closed enum below.
+- **Field:** `LevelScope`
+  - **Contract:** Ordered base levels or explicit global scope.
+- **Field:** `RuntimeRoles`
+  - **Contract:** Concrete roles such as ownership reward, traffic, mission
+    target, or vendor.
+- **Field:** `OwningDefinition`
+  - **Contract:** Primary asset or generated row that owns runtime behavior.
+- **Field:** `VerificationIds`
+  - **Contract:** Golden tests and import checks required before activation.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -65,14 +82,21 @@ The availability enum is:
 
 <!-- markdownlint-disable MD013 -->
 
-| Value | Meaning |
-| :--- | :--- |
-| `shipping` | Normal campaign or front-end content. |
-| `mission_only` | Spawned or selectable only by declared mission state. |
-| `traffic_only` | Ambient traffic access; never persistent ownership by implication. |
-| `development_only` | Retained for diagnostics or parity research; absent from normal shipping queries. |
-| `diagnostic_only` | Metadata or review evidence with no runtime asset. |
-| `excluded` | Rejected evidence that cannot enter generated or runtime catalogs. |
+- **Value:** `shipping`
+  - **Meaning:** Normal campaign or front-end content.
+- **Value:** `mission_only`
+  - **Meaning:** Spawned or selectable only by declared mission state.
+- **Value:** `traffic_only`
+  - **Meaning:** Ambient traffic access; never persistent ownership by
+    implication.
+- **Value:** `development_only`
+  - **Meaning:** Retained for diagnostics or parity research; absent from normal
+    shipping queries.
+- **Value:** `diagnostic_only`
+  - **Meaning:** Metadata or review evidence with no runtime asset.
+- **Value:** `excluded`
+  - **Meaning:** Rejected evidence that cannot enter generated or runtime
+    catalogs.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -96,19 +120,57 @@ under the development-evidence contract below.
 
 <!-- markdownlint-disable MD013 -->
 
-| Mission identity | Source chapter and class | Required contract |
-| :--- | :--- | :--- |
-| `the_cola_caper` | Level 1 tutorial | Drive to the Kwik-E-Mart, enter the interior, talk to Apu, collect the declared groceries, and unlock the main mission sequence. The tutorial is non-failing and not replayable in the same save after completion. |
-| `the_fat_and_furious` | Chapter 1 story finale; source Level 1 | Start at the power plant, race Smithers to the manor, complete the Burns interaction, commit Chapter 1 completion, unlock Bart, activate Chapter 2 collectibles, and expose the next Bart mission. The title alias without the second article resolves to this identity. |
-| `this_old_shanty` | Level 1 bonus | Complete Cletus's ordered collection chores and grant the declared vehicle reward once. |
-| `weapons_of_mass_delinquency` | Level 2 story mission 2 | Collect the ordered fireworks from named contacts, then escape the police pursuit without losing the mission vehicle state. Capitalization variants resolve to one identity. |
-| `vox_nerduli` | Level 2 story mission 3 | Race the declared opponent to the Java Server destination and publish one race result. |
-| `the_old_pirate_and_the_sea` | Level 3 story finale | Destroy the black sedan target, complete Bart's rescue sequence, and unlock the Level 4 transition. |
-| `wolves_stole_my_pills` | Level 4 story mission 5 | Reach Nelson, follow the sedan, collect ten medication payloads, lose the pursuer, return to Grampa, obtain the caffeine target, and complete the final crop-circle dialogue. |
-| `the_cola_wars` | Level 4 story mission 6 | Require the police costume at activation, collect the authored cola-can set across the suburban route, and complete the Apu follow-up. The collection is primarily on foot. |
-| `and_baby_makes_8` | Level 5 story mission 2 | Escape the mafia pursuit and complete the declared destination sequence without promoting the pursuer to an owned vehicle. |
-| `this_little_piggy` | Level 5 story mission 4 | Require the American costume at activation, collect the donut trail, follow Wiggum, and complete the DMV destination sequence. |
-| `theres_something_about_monty` | Level 7 story mission 4 | Reach the power plant while avoiding the alien probe, then complete the authored vertical ascent to the terminal interaction. |
+- **Mission identity:** `the_cola_caper`
+  - **Source chapter and class:** Level 1 tutorial
+  - **Required contract:** Drive to the Kwik-E-Mart, enter the interior, talk to
+    Apu, collect the declared groceries, and unlock the main mission sequence.
+    The tutorial is non-failing and not replayable in the same save after
+    completion.
+- **Mission identity:** `the_fat_and_furious`
+  - **Source chapter and class:** Chapter 1 story finale; source Level 1
+  - **Required contract:** Start at the power plant, race Smithers to the manor,
+    complete the Burns interaction, commit Chapter 1 completion, unlock Bart,
+    activate Chapter 2 collectibles, and expose the next Bart mission. The title
+    alias without the second article resolves to this identity.
+- **Mission identity:** `this_old_shanty`
+  - **Source chapter and class:** Level 1 bonus
+  - **Required contract:** Complete Cletus's ordered collection chores and grant
+    the declared vehicle reward once.
+- **Mission identity:** `weapons_of_mass_delinquency`
+  - **Source chapter and class:** Level 2 story mission 2
+  - **Required contract:** Collect the ordered fireworks from named contacts,
+    then escape the police pursuit without losing the mission vehicle state.
+    Capitalization variants resolve to one identity.
+- **Mission identity:** `vox_nerduli`
+  - **Source chapter and class:** Level 2 story mission 3
+  - **Required contract:** Race the declared opponent to the Java Server
+    destination and publish one race result.
+- **Mission identity:** `the_old_pirate_and_the_sea`
+  - **Source chapter and class:** Level 3 story finale
+  - **Required contract:** Destroy the black sedan target, complete Bart's
+    rescue sequence, and unlock the Level 4 transition.
+- **Mission identity:** `wolves_stole_my_pills`
+  - **Source chapter and class:** Level 4 story mission 5
+  - **Required contract:** Reach Nelson, follow the sedan, collect ten
+    medication payloads, lose the pursuer, return to Grampa, obtain the caffeine
+    target, and complete the final crop-circle dialogue.
+- **Mission identity:** `the_cola_wars`
+  - **Source chapter and class:** Level 4 story mission 6
+  - **Required contract:** Require the police costume at activation, collect the
+    authored cola-can set across the suburban route, and complete the Apu
+    follow-up. The collection is primarily on foot.
+- **Mission identity:** `and_baby_makes_8`
+  - **Source chapter and class:** Level 5 story mission 2
+  - **Required contract:** Escape the mafia pursuit and complete the declared
+    destination sequence without promoting the pursuer to an owned vehicle.
+- **Mission identity:** `this_little_piggy`
+  - **Source chapter and class:** Level 5 story mission 4
+  - **Required contract:** Require the American costume at activation, collect
+    the donut trail, follow Wiggum, and complete the DMV destination sequence.
+- **Mission identity:** `theres_something_about_monty`
+  - **Source chapter and class:** Level 7 story mission 4
+  - **Required contract:** Reach the power plant while avoiding the alien probe,
+    then complete the authored vertical ascent to the terminal interaction.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -135,12 +197,20 @@ progression.
 
 <!-- markdownlint-disable MD013 -->
 
-| Race identity | Required route contract |
-| :--- | :--- |
-| `time_trial_level_01` | Level 1 time trial hosted near the trailer park; complete five laps within the authored time limit. |
-| `town_square_circuit_level_02` | Level 2 circuit hosted near the town-square Krusty Burger; complete four laps and finish first. |
-| `suburban_rich_checkpoint_level_04` | Start near the Evergreen Terrace stone sign, traverse the rich district and tunnel route, and finish at the power-plant bridge. |
-| `suburban_countryside_2_checkpoint_level_07` | Start at the school, traverse the Halloween suburban route, and finish at the power-plant parking lot against the Hearse, Ghost Ship, and Coffin Cart. |
+- **Race identity:** `time_trial_level_01`
+  - **Required route contract:** Level 1 time trial hosted near the trailer
+    park; complete five laps within the authored time limit.
+- **Race identity:** `town_square_circuit_level_02`
+  - **Required route contract:** Level 2 circuit hosted near the town-square
+    Krusty Burger; complete four laps and finish first.
+- **Race identity:** `suburban_rich_checkpoint_level_04`
+  - **Required route contract:** Start near the Evergreen Terrace stone sign,
+    traverse the rich district and tunnel route, and finish at the power-plant
+    bridge.
+- **Race identity:** `suburban_countryside_2_checkpoint_level_07`
+  - **Required route contract:** Start at the school, traverse the Halloween
+    suburban route, and finish at the power-plant parking lot against the
+    Hearse, Ghost Ship, and Coffin Cart.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -158,17 +228,47 @@ race-route tests.
 
 <!-- markdownlint-disable MD013 -->
 
-| Vehicle identity | Availability and role | Required contract |
-| :--- | :--- | :--- |
-| `station_wagon` | `Unused Content` | Ships through the dedicated Unused Content surface with generic fallback presentation where required and stable mod-replacement slots. Campaign ownership remains opt-in. |
-| `surveillance_van` | `shipping`, Chapter 1 purchase | Gil offer for 100 coins; ownership grants persistent sandbox retrieval access. Mission and cinematic placements remain separate roles. |
-| `taxi` | `shipping`, purchasable after its chapter prerequisite | Ordinary traffic use never grants ownership. Purchasing the taxi grants permanent sandbox access and unlocks taxi side missions, repeatable fares, unique milestones, and the all-taxi achievement path. |
-| `tractor` | `shipping`, Level 4 purchase | Willie offer for 400 coins; ownership grants cross-level phone-booth access. |
-| `wwii_vehicle` | `shipping`, Level 2 bonus reward | Grant once from the declared bonus mission and expose through phone booths after ownership. |
-| `wwii_vehicle_rocket` | `mission_only`, Level 7 | Distinct loadout variant required by the final delivery mission; never collapse into the ordinary WWII vehicle definition. |
-| `zombie_car` | `shipping`, Level 7 purchase | Zombie-vendor offer for 500 coins; ownership grants cross-level phone-booth access. |
-| `vote_quimby_truck` | `traffic_only`, Level 5 | Ambient truck with its declared campaign livery and horn event; no ownership implication. |
-| `witch_broom` | `traffic_only`, Level 7 | Small traffic vehicle with passenger seating, cackle horn event, no wheel-skid presentation, and no ordinary ownership. |
+- **Vehicle identity:** `station_wagon`
+  - **Availability and role:** `Unused Content`
+  - **Required contract:** Ships through the dedicated Unused Content surface
+    with generic fallback presentation where required and stable mod-replacement
+    slots. Campaign ownership remains opt-in.
+- **Vehicle identity:** `surveillance_van`
+  - **Availability and role:** `shipping`, Chapter 1 purchase
+  - **Required contract:** Gil offer for 100 coins; ownership grants persistent
+    sandbox retrieval access. Mission and cinematic placements remain separate
+    roles.
+- **Vehicle identity:** `taxi`
+  - **Availability and role:** `shipping`, purchasable after its chapter
+    prerequisite
+  - **Required contract:** Ordinary traffic use never grants ownership.
+    Purchasing the taxi grants permanent sandbox access and unlocks taxi side
+    missions, repeatable fares, unique milestones, and the all-taxi achievement
+    path.
+- **Vehicle identity:** `tractor`
+  - **Availability and role:** `shipping`, Level 4 purchase
+  - **Required contract:** Willie offer for 400 coins; ownership grants
+    cross-level phone-booth access.
+- **Vehicle identity:** `wwii_vehicle`
+  - **Availability and role:** `shipping`, Level 2 bonus reward
+  - **Required contract:** Grant once from the declared bonus mission and expose
+    through phone booths after ownership.
+- **Vehicle identity:** `wwii_vehicle_rocket`
+  - **Availability and role:** `mission_only`, Level 7
+  - **Required contract:** Distinct loadout variant required by the final
+    delivery mission; never collapse into the ordinary WWII vehicle definition.
+- **Vehicle identity:** `zombie_car`
+  - **Availability and role:** `shipping`, Level 7 purchase
+  - **Required contract:** Zombie-vendor offer for 500 coins; ownership grants
+    cross-level phone-booth access.
+- **Vehicle identity:** `vote_quimby_truck`
+  - **Availability and role:** `traffic_only`, Level 5
+  - **Required contract:** Ambient truck with its declared campaign livery and
+    horn event; no ownership implication.
+- **Vehicle identity:** `witch_broom`
+  - **Availability and role:** `traffic_only`, Level 7
+  - **Required contract:** Small traffic vehicle with passenger seating, cackle
+    horn event, no wheel-skid presentation, and no ordinary ownership.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -189,12 +289,18 @@ query policy over the same definition, never a rewrite of availability.
 
 <!-- markdownlint-disable MD013 -->
 
-| Identity | Required roles |
-| :--- | :--- |
-| `waylon_smithers` | Mission opponent, driver, bonus-mission participant, ambient placement, and cinematic placement under one character identity. |
-| `chief_wiggum` | Mission contact, pursuer, driver presentation, ambient placement, doorbell voice event, and Level 7 world placement. |
-| `groundskeeper_willie` | School-area ambient placement, gag presentation, and Level 4 tractor vendor. |
-| `zombie_ambient` | Level 7 weighted ambient archetypes, street-race hosts, vendor presentation, and mission contacts; no named-character save identity. |
+- **Identity:** `waylon_smithers`
+  - **Required roles:** Mission opponent, driver, bonus-mission participant,
+    ambient placement, and cinematic placement under one character identity.
+- **Identity:** `chief_wiggum`
+  - **Required roles:** Mission contact, pursuer, driver presentation, ambient
+    placement, doorbell voice event, and Level 7 world placement.
+- **Identity:** `groundskeeper_willie`
+  - **Required roles:** School-area ambient placement, gag presentation, and
+    Level 4 tractor vendor.
+- **Identity:** `zombie_ambient`
+  - **Required roles:** Level 7 weighted ambient archetypes, street-race hosts,
+    vendor presentation, and mission contacts; no named-character save identity.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -337,14 +443,20 @@ with:
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `EvidenceId` | Stable diagnostic identity. |
-| `RelatedContentIds` | Existing canonical identities affected by the evidence. |
-| `DifferenceClass` | Presentation, mission, vehicle, world, audio, text, bug, or unknown. |
-| `ObservedDifference` | Public domain-level summary without implementation text. |
-| `ShippingDecision` | Keep final behavior, restore verified behavior, diagnostic only, or reject. |
-| `VerificationIds` | Tests proving the decision cannot silently drift. |
+- **Field:** `EvidenceId`
+  - **Contract:** Stable diagnostic identity.
+- **Field:** `RelatedContentIds`
+  - **Contract:** Existing canonical identities affected by the evidence.
+- **Field:** `DifferenceClass`
+  - **Contract:** Presentation, mission, vehicle, world, audio, text, bug, or
+    unknown.
+- **Field:** `ObservedDifference`
+  - **Contract:** Public domain-level summary without implementation text.
+- **Field:** `ShippingDecision`
+  - **Contract:** Keep final behavior, restore verified behavior, diagnostic
+    only, or reject.
+- **Field:** `VerificationIds`
+  - **Contract:** Tests proving the decision cannot silently drift.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -358,7 +470,8 @@ only. They never create aggregate runtime assets or duplicate campaign data.
 
 Historical core-design and conversation evidence follows
 <!-- markdownlint-disable-next-line MD013 -->
-[Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md).
+[Historical core-design and dialogue evidence
+normalization](historical-core-design-and-dialogue-evidence-normalization.md).
 That contract routes product goals to the current owners, rejects obsolete
 platform and implementation assumptions, keeps the base campaign single-player,
 normalizes conversation rows without publishing source dialogue, and excludes

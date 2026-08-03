@@ -1,7 +1,3 @@
-// File:
-//   - tree_containment.rs
-// Path: tests/foundation/filesystem/tree_containment.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for tree-entry containment.
+//   - Tree containment test module.
 // - Must-Not:
-//   - Depend on local storage or trust malformed adapter output.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Assert that snapshots contain strict descendants of their root.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when physical containment gains a separate provider contract.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test file owns the same lexical containment behavior.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Tree containment regression tests.
+//   - Tree containment test module.
 // - Description:
-//   - Prevents adapters from returning lexically escaping paths.
+//   - Implements the declared test module responsibility for filesystem.
 // - Usage:
-//   - Runs through the filesystem crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Every result is a normalized lexical descendant.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for tree-entry containment.
-//!
-//! Provider output must remain a strict normalized descendant of the request.
+//! Tree containment test module.
+
 use std::io;
 use std::path::{Path, PathBuf};
 
@@ -52,31 +39,23 @@ use schoenwald_filesystem::ports::TreeReader;
 struct EscapingTree;
 
 impl TreeReader for EscapingTree {
-    fn regular_files(
-        &self,
-        _root: &Path,
-    ) -> io::Result<Vec<PathBuf>> {
+    fn regular_files(&self, _root: &Path) -> io::Result<Vec<PathBuf>> {
         Ok(vec![PathBuf::from("root/../escape.bin")])
     }
 }
 
 #[test]
 fn application_rejects_lexically_escaping_port_path() -> Result<(), String> {
-    let result = CollectRegularFiles::execute(
-        &EscapingTree,
-        Path::new("root"),
-    );
+    let result = CollectRegularFiles::execute(&EscapingTree, Path::new("root"));
     let Err(error) = result else {
         return Err("escaping path passed containment validation".to_owned());
     };
 
     if error.kind() != io::ErrorKind::InvalidData {
-        return Err(
-            format!(
-                "unexpected containment error kind: {:?}",
-                error.kind()
-            ),
-        );
+        return Err(format!(
+            "unexpected containment error kind: {:?}",
+            error.kind()
+        ));
     }
     Ok(())
 }

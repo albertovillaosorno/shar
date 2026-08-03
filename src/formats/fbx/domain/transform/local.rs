@@ -1,7 +1,3 @@
-// File:
-//   - local.rs
-// Path: src/formats/fbx/domain/transform/local.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,45 +6,31 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure fbx domain rules for domain transform local.
+//   - Local domain module.
 // - Must-Not:
-//   - Read files, parse generated indexes, invoke CLI code, or call writer
-//   - adapters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Value objects, invariant checks, and pure evidence-to-domain translation.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when local contains two independently testable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another fbx module owns the same domain boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Local transform for a scene node.
+//   - Local domain module.
 // - Description:
-//   - Defines local data and behavior for fbx domain transform.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Imported through crate domain facades or sibling domain modules.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No filesystem paths, no external process calls, and no implicit IO
-//   - defaults.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-// - docs/adr/pipeline/unreal/unreal-manifest-and-package-taxonomy.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Local transform for a scene node.
-//!
-//! This boundary keeps local transform for a scene node explicit and returns
-//! deterministic results to fbx callers.
-/// Local transform relative to a scene parent.
+//! Local domain module.
+
+/// Local translation, rotation, and scale transform.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Transform {
     /// Translation vector.
@@ -65,15 +47,9 @@ impl Transform {
     #[must_use]
     pub const fn identity() -> Self {
         Self {
-            translation: [
-                0.0, 0.0, 0.0,
-            ],
-            rotation: [
-                0.0, 0.0, 0.0, 1.0,
-            ],
-            scale: [
-                1.0, 1.0, 1.0,
-            ],
+            translation: [0., 0., 0.],
+            rotation: [0., 0., 0., 1.],
+            scale: [1., 1., 1.],
         }
     }
 }

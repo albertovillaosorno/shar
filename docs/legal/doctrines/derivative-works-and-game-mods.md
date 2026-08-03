@@ -74,7 +74,8 @@ the effect on existing or reasonably likely derivative markets.
 
 - 17 U.S.C. §§ 101, 103, 106, and 107.
 <!-- markdownlint-disable-next-line MD013 -->
-- [Lewis Galoob Toys, Inc. v. Nintendo of America, Inc](../cases/lewis-galoob-toys-v-nintendo.md).
+- [Lewis Galoob Toys, Inc. v. Nintendo of America,
+  Inc](../cases/lewis-galoob-toys-v-nintendo.md).
 - [Micro Star v. FormGen, Inc](../cases/micro-star-v-formgen.md).
 - Current controlling authority in the governing jurisdiction, including later
   treatment of fixation, derivative works, fair use, and standing.

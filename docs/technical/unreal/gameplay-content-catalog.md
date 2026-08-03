@@ -5,41 +5,58 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
+- [Data-driven Unreal gameplay content
+  catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+- [Gameplay census, presentation, and development-content
+  boundary](gameplay-census-presentation-and-development-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Gameplay census, presentation, and development-content boundary](gameplay-census-presentation-and-development-boundary.md)
+- [Legacy runtime identity
+  normalization](legacy-runtime-identity-normalization.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Legacy runtime identity normalization](legacy-runtime-identity-normalization.md)
+- [Event-driven music and
+  ambience](../../adr/unreal/runtime/event-driven-music-and-ambience.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Event-driven music and ambience](../../adr/unreal/runtime/event-driven-music-and-ambience.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Mass Entity ambient population](../../adr/unreal/runtime/mass-entity-ambient-population.md)
+- [Mass Entity ambient
+  population](../../adr/unreal/runtime/mass-entity-ambient-population.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Transactional phone-booth vehicle retrieval](../../adr/unreal/runtime/transactional-phone-booth-vehicle-retrieval.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
+- [Validated game-feature mod
+  overlays](../../adr/unreal/runtime/validated-game-feature-mod-overlays.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Transactional phone-booth vehicle retrieval](../../adr/unreal/runtime/transactional-phone-booth-vehicle-retrieval.md)
+- [Driving, traffic, and vehicle behavior
+  parity](../../adr/gameplay/vehicles/driving-traffic-and-vehicle-ai.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Validated game-feature mod overlays](../../adr/unreal/runtime/validated-game-feature-mod-overlays.md)
+- [Unreal manifest and package
+  taxonomy](../../adr/pipeline/unreal/unreal-manifest-and-package-taxonomy.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Unified open world and chapter projection](../../adr/pipeline/unreal/unified-open-world-and-chapter-projection.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Driving, traffic, and vehicle behavior parity](../../adr/gameplay/vehicles/driving-traffic-and-vehicle-ai.md)
+- [Native world partition and data
+  layers](../../adr/pipeline/unreal/world-partition-and-data-layer-import.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Unreal manifest and package taxonomy](../../adr/pipeline/unreal/unreal-manifest-and-package-taxonomy.md)
+- [Native art authoring, style, and asset validation
+  contract](native-art-authoring-style-and-asset-validation-contract.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Unified open world and chapter projection](../../adr/pipeline/unreal/unified-open-world-and-chapter-projection.md)
+- [Historical core-design and dialogue evidence
+  normalization](historical-core-design-and-dialogue-evidence-normalization.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native world partition and data layers](../../adr/pipeline/unreal/world-partition-and-data-layer-import.md)
+- [Progression, collectibles, cheats, and
+  credits](progression-collectibles-and-cheats.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native art authoring, style, and asset validation contract](native-art-authoring-style-and-asset-validation-contract.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Progression, collectibles, cheats, and credits](progression-collectibles-and-cheats.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Flying hazard and projectile runtime](flying-hazard-and-projectile-runtime.md)
+- [Flying hazard and projectile
+  runtime](flying-hazard-and-projectile-runtime.md)
 
 ## Purpose
 
@@ -147,26 +164,60 @@ or local routes.
 
 <!-- markdownlint-disable MD013 -->
 
-| Asset family | Primary asset type | Object name |
-| :--- | :--- | :--- |
-| Root catalog | `SharCatalog` | `DA_SHAR_GameplayCatalog` |
-| Campaign | `SharCampaign` | `DA_Campaign_<canonical_id>` |
-| Level | `SharLevel` | `DA_Level_<canonical_id>` |
-| Character | `SharCharacter` | `DA_Character_<canonical_id>` |
-| Vehicle | `SharVehicle` | `DA_Vehicle_<canonical_id>` |
-| Mission | `SharMission` | `DA_Mission_<canonical_id>` |
-| Location | `SharLocation` | `DA_Location_<canonical_id>` |
-| Population | `SharPopulation` | `DA_Population_<canonical_id>` |
-| Music profile | `SharMusicProfile` | `DA_MusicProfile_<canonical_id>` |
-| Music composition | `SharMusicComposition` | `DA_Music_<canonical_id>` |
-| Reward | `SharReward` | `DA_Reward_<canonical_id>` |
-| Costume set | `SharCostumeSet` | `DA_CostumeSet_<canonical_id>` |
-| Billboard | `SharBillboard` | `DA_Billboard_<canonical_id>` |
-| Collector card | `SharCollectorCard` | `DA_CollectorCard_<canonical_id>` |
-| Gag | `SharGag` | `DA_Gag_<canonical_id>` |
-| Interior presentation | `SharInteriorPresentation` | `DA_InteriorPresentation_<canonical_id>` |
-| Presentation catalog | `SharPresentationCatalog` | `DA_PresentationCatalog_<canonical_id>` |
-| Bonus mode | `SharBonusMode` | `DA_BonusMode_<canonical_id>` |
+- **Asset family:** Root catalog
+  - **Primary asset type:** `SharCatalog`
+  - **Object name:** `DA_SHAR_GameplayCatalog`
+- **Asset family:** Campaign
+  - **Primary asset type:** `SharCampaign`
+  - **Object name:** `DA_Campaign_<canonical_id>`
+- **Asset family:** Level
+  - **Primary asset type:** `SharLevel`
+  - **Object name:** `DA_Level_<canonical_id>`
+- **Asset family:** Character
+  - **Primary asset type:** `SharCharacter`
+  - **Object name:** `DA_Character_<canonical_id>`
+- **Asset family:** Vehicle
+  - **Primary asset type:** `SharVehicle`
+  - **Object name:** `DA_Vehicle_<canonical_id>`
+- **Asset family:** Mission
+  - **Primary asset type:** `SharMission`
+  - **Object name:** `DA_Mission_<canonical_id>`
+- **Asset family:** Location
+  - **Primary asset type:** `SharLocation`
+  - **Object name:** `DA_Location_<canonical_id>`
+- **Asset family:** Population
+  - **Primary asset type:** `SharPopulation`
+  - **Object name:** `DA_Population_<canonical_id>`
+- **Asset family:** Music profile
+  - **Primary asset type:** `SharMusicProfile`
+  - **Object name:** `DA_MusicProfile_<canonical_id>`
+- **Asset family:** Music composition
+  - **Primary asset type:** `SharMusicComposition`
+  - **Object name:** `DA_Music_<canonical_id>`
+- **Asset family:** Reward
+  - **Primary asset type:** `SharReward`
+  - **Object name:** `DA_Reward_<canonical_id>`
+- **Asset family:** Costume set
+  - **Primary asset type:** `SharCostumeSet`
+  - **Object name:** `DA_CostumeSet_<canonical_id>`
+- **Asset family:** Billboard
+  - **Primary asset type:** `SharBillboard`
+  - **Object name:** `DA_Billboard_<canonical_id>`
+- **Asset family:** Collector card
+  - **Primary asset type:** `SharCollectorCard`
+  - **Object name:** `DA_CollectorCard_<canonical_id>`
+- **Asset family:** Gag
+  - **Primary asset type:** `SharGag`
+  - **Object name:** `DA_Gag_<canonical_id>`
+- **Asset family:** Interior presentation
+  - **Primary asset type:** `SharInteriorPresentation`
+  - **Object name:** `DA_InteriorPresentation_<canonical_id>`
+- **Asset family:** Presentation catalog
+  - **Primary asset type:** `SharPresentationCatalog`
+  - **Object name:** `DA_PresentationCatalog_<canonical_id>`
+- **Asset family:** Bonus mode
+  - **Primary asset type:** `SharBonusMode`
+  - **Object name:** `DA_BonusMode_<canonical_id>`
 
 <!-- markdownlint-enable MD013 -->
 
@@ -194,16 +245,30 @@ Every top-level definition contains the following fields.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Type | Contract |
-| :--- | :--- | :--- |
-| `CanonicalId` | `FName` | Stable domain identity; never localized. |
-| `DisplayName` | `FText` | Localizable player-facing name. |
-| `Aliases` | `TArray<FName>` | Alternate lookup names resolving to this identity. |
-| `SourcePackageIds` | `TArray<FName>` | Approved deterministic package references. |
-| `ContentTags` | `FGameplayTagContainer` | Capabilities and classifications, never identity. |
-| `RequiredDefinitions` | soft primary-asset references | Definitions that must resolve before activation. |
-| `RevisionToken` | `FString` | Deterministic generated-data revision. |
-| `ValidationProfile` | `FName` | Exact validator contract for the asset family. |
+- **Field:** `CanonicalId`
+  - **Type:** `FName`
+  - **Contract:** Stable domain identity; never localized.
+- **Field:** `DisplayName`
+  - **Type:** `FText`
+  - **Contract:** Localizable player-facing name.
+- **Field:** `Aliases`
+  - **Type:** `TArray<FName>`
+  - **Contract:** Alternate lookup names resolving to this identity.
+- **Field:** `SourcePackageIds`
+  - **Type:** `TArray<FName>`
+  - **Contract:** Approved deterministic package references.
+- **Field:** `ContentTags`
+  - **Type:** `FGameplayTagContainer`
+  - **Contract:** Capabilities and classifications, never identity.
+- **Field:** `RequiredDefinitions`
+  - **Type:** soft primary-asset references
+  - **Contract:** Definitions that must resolve before activation.
+- **Field:** `RevisionToken`
+  - **Type:** `FString`
+  - **Contract:** Deterministic generated-data revision.
+- **Field:** `ValidationProfile`
+  - **Type:** `FName`
+  - **Contract:** Exact validator contract for the asset family.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -237,14 +302,25 @@ Every definition uses the same bundle vocabulary.
 
 <!-- markdownlint-disable MD013 -->
 
-| Bundle | Includes | Allowed load point |
-| :--- | :--- | :--- |
-| `Definition` | Definition object and generated rows | Catalog validation and save migration |
-| `Gameplay` | Collision, physics, objective, AI, and interaction assets | Available sandbox, chapter unlock, or active mission scope |
-| `Presentation` | Meshes, materials, animation, UI, and icons | Visible or previewed content |
-| `Audio` | Dialogue, music, vehicle, and interaction sounds | Audible content scope |
-| `Cinematic` | Sequences, media, cameras, and cinematic-only assets | Active cinematic |
-| `EditorReview` | Review-only references and conformance evidence | Editor and automated review only |
+- **Bundle:** `Definition`
+  - **Includes:** Definition object and generated rows
+  - **Allowed load point:** Catalog validation and save migration
+- **Bundle:** `Gameplay`
+  - **Includes:** Collision, physics, objective, AI, and interaction assets
+  - **Allowed load point:** Available sandbox, chapter unlock, or active mission
+    scope
+- **Bundle:** `Presentation`
+  - **Includes:** Meshes, materials, animation, UI, and icons
+  - **Allowed load point:** Visible or previewed content
+- **Bundle:** `Audio`
+  - **Includes:** Dialogue, music, vehicle, and interaction sounds
+  - **Allowed load point:** Audible content scope
+- **Bundle:** `Cinematic`
+  - **Includes:** Sequences, media, cameras, and cinematic-only assets
+  - **Allowed load point:** Active cinematic
+- **Bundle:** `EditorReview`
+  - **Includes:** Review-only references and conformance evidence
+  - **Allowed load point:** Editor and automated review only
 
 <!-- markdownlint-enable MD013 -->
 
@@ -272,7 +348,8 @@ screen or command identity.
 
 The detailed runtime contract follows the
 <!-- markdownlint-disable-next-line MD013 -->
-[frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md).
+[frontend screen flow and settings
+runtime](frontend-screen-flow-and-settings-runtime.md).
 
 ## Character definition
 
@@ -280,21 +357,35 @@ The detailed runtime contract follows the
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `CharacterRole` | Playable, non-playable, mission giver, ambient, or passenger. |
-| `PlayableLevelIds` | Levels in which player control is permitted. |
-| `PresenceLevelIds` | Levels in which the character may be placed. |
-| `DefaultVehicleId` | Optional canonical vehicle identity. |
-| `CostumeSetId` | Optional canonical costume-set identity. |
-| `QuoteTable` | Soft reference to ordered quote-event rows. |
-| `DefaultPresentationId` | Complete prepared base-model presentation identity. |
-| `PresentationVariantTable` | Complete outfit, costume, or prop-bearing model variants. |
-| `SemanticPreparationManifest` | FBX-owned UV, texture-region, eye-layer, rig-preservation, and variant evidence. |
-| `EyeProfileId` | Prepared sclera, pupil, upper-eyelid, and lower-eyelid ownership. |
-| `SkeletalMesh` | Soft default complete-model presentation reference. |
-| `AnimationClass` | Existing animation Blueprint consumer; no retargeting change is implied. |
-| `VoiceProfileId` | Canonical audio routing identity. |
+- **Field:** `CharacterRole`
+  - **Contract:** Playable, non-playable, mission giver, ambient, or passenger.
+- **Field:** `PlayableLevelIds`
+  - **Contract:** Levels in which player control is permitted.
+- **Field:** `PresenceLevelIds`
+  - **Contract:** Levels in which the character may be placed.
+- **Field:** `DefaultVehicleId`
+  - **Contract:** Optional canonical vehicle identity.
+- **Field:** `CostumeSetId`
+  - **Contract:** Optional canonical costume-set identity.
+- **Field:** `QuoteTable`
+  - **Contract:** Soft reference to ordered quote-event rows.
+- **Field:** `DefaultPresentationId`
+  - **Contract:** Complete prepared base-model presentation identity.
+- **Field:** `PresentationVariantTable`
+  - **Contract:** Complete outfit, costume, or prop-bearing model variants.
+- **Field:** `SemanticPreparationManifest`
+  - **Contract:** FBX-owned UV, texture-region, eye-layer, rig-preservation, and
+    variant evidence.
+- **Field:** `EyeProfileId`
+  - **Contract:** Prepared sclera, pupil, upper-eyelid, and lower-eyelid
+    ownership.
+- **Field:** `SkeletalMesh`
+  - **Contract:** Soft default complete-model presentation reference.
+- **Field:** `AnimationClass`
+  - **Contract:** Existing animation Blueprint consumer; no retargeting change
+    is implied.
+- **Field:** `VoiceProfileId`
+  - **Contract:** Canonical audio routing identity.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -338,18 +429,26 @@ audio may suppress playback, but it must not remove the event or alter gameplay.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `LifecycleState` | Active, inaccessible, or unused. |
-| `NativeLevelIds` | Levels where the vehicle naturally exists. |
-| `AcquisitionTable` | Soft reference to ordered acquisition rows. |
-| `DriverCharacterId` | Optional canonical driver identity. |
-| `TuningRowId` | Required vehicle-tuning row. |
-| `Mesh` | Soft skeletal or static mesh reference. |
-| `AnimationProfileId` | Doors, wheels, suspension, damage, and special effects. |
-| `AudioProfileId` | Engine, horn, collision, and special audio. |
-| `DamageProfileId` | Health, visual damage, destruction, and repair behavior. |
-| `TrafficProfileId` | Optional traffic and pursuit behavior. |
+- **Field:** `LifecycleState`
+  - **Contract:** Active, inaccessible, or unused.
+- **Field:** `NativeLevelIds`
+  - **Contract:** Levels where the vehicle naturally exists.
+- **Field:** `AcquisitionTable`
+  - **Contract:** Soft reference to ordered acquisition rows.
+- **Field:** `DriverCharacterId`
+  - **Contract:** Optional canonical driver identity.
+- **Field:** `TuningRowId`
+  - **Contract:** Required vehicle-tuning row.
+- **Field:** `Mesh`
+  - **Contract:** Soft skeletal or static mesh reference.
+- **Field:** `AnimationProfileId`
+  - **Contract:** Doors, wheels, suspension, damage, and special effects.
+- **Field:** `AudioProfileId`
+  - **Contract:** Engine, horn, collision, and special audio.
+- **Field:** `DamageProfileId`
+  - **Contract:** Health, visual damage, destruction, and repair behavior.
+- **Field:** `TrafficProfileId`
+  - **Contract:** Optional traffic and pursuit behavior.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -380,31 +479,44 @@ has no corresponding native profile evidence.
 
 `USharMissionDefinition` extends the shared definition with:
 
-| Field | Contract |
-| :--- | :--- |
-| `ChapterId` | Canonical narrative chapter identity. |
-| `SourceLevelAlias` | Optional historic conversion alias only. |
-| `SequenceOrdinal` | Stable sequence position within its mission family. |
-<!-- markdownlint-disable-next-line MD013 -->
-| `MissionClass` | Story, bonus, race, wager, taxi, boss, or another registered side activity. |
-| `GiverCharacterId` | Optional mission-giver identity. |
-| `PlayableCharacterId` | Required or default controlled-character identity. |
-<!-- markdownlint-disable-next-line MD013 -->
-| `OfferDefinitionId` | Optional world offer, marker, dialogue, and availability definition. |
-| `PreviousMissionId` | Optional progression predecessor. |
-| `NextMissionId` | Optional progression successor. |
-| `StageTable` | Required ordered mission-stage table. |
-<!-- markdownlint-disable-next-line MD013 -->
-| `ConditionDefinitionIds` | Ordered required, optional, failure, and recovery condition definitions. |
-<!-- markdownlint-disable-next-line MD013 -->
-| `PresentationProfileId` | Mission offer, conversation, marker, HUD, camera, and transition presentation. |
-<!-- markdownlint-disable-next-line MD013 -->
-| `BonusObjectiveIds` | Optional independently evaluated objective definitions. |
-| `BossEncounterId` | Optional typed encounter definition for a boss mission. |
-| `RewardId` | Optional completion reward. |
-<!-- markdownlint-disable-next-line MD013 -->
-| `CompletionTransition` | Unlock, chapter transition, world expansion, ending, or none. |
-| `WorldLayerSetId` | Required world and data-layer composition. |
+- **Field:** `ChapterId`
+  - **Contract:** Canonical narrative chapter identity.
+- **Field:** `SourceLevelAlias`
+  - **Contract:** Optional historic conversion alias only.
+- **Field:** `SequenceOrdinal`
+  - **Contract:** Stable sequence position within its mission family.
+- **Field:** `MissionClass`
+  - **Contract:** Story, bonus, race, wager, taxi, boss, or another registered
+    side activity.
+- **Field:** `GiverCharacterId`
+  - **Contract:** Optional mission-giver identity.
+- **Field:** `PlayableCharacterId`
+  - **Contract:** Required or default controlled-character identity.
+- **Field:** `OfferDefinitionId`
+  - **Contract:** Optional world offer, marker, dialogue, and availability
+    definition.
+- **Field:** `PreviousMissionId`
+  - **Contract:** Optional progression predecessor.
+- **Field:** `NextMissionId`
+  - **Contract:** Optional progression successor.
+- **Field:** `StageTable`
+  - **Contract:** Required ordered mission-stage table.
+- **Field:** `ConditionDefinitionIds`
+  - **Contract:** Ordered required, optional, failure, and recovery condition
+    definitions.
+- **Field:** `PresentationProfileId`
+  - **Contract:** Mission offer, conversation, marker, HUD, camera, and
+    transition presentation.
+- **Field:** `BonusObjectiveIds`
+  - **Contract:** Optional independently evaluated objective definitions.
+- **Field:** `BossEncounterId`
+  - **Contract:** Optional typed encounter definition for a boss mission.
+- **Field:** `RewardId`
+  - **Contract:** Optional completion reward.
+- **Field:** `CompletionTransition`
+  - **Contract:** Unlock, chapter transition, world expansion, ending, or none.
+- **Field:** `WorldLayerSetId`
+  - **Contract:** Required world and data-layer composition.
 
 Mission identity is independent of the world actor that starts it. A mission
 may move or gain additional entry points without changing its save key.
@@ -415,31 +527,57 @@ may move or gain additional entry points without changing its save key.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `MissionId` | Owning mission identity. |
-| `StageId` | Stable mission-scoped stage identity. |
-| `SequenceOrdinal` | Dense zero-based order within the mission. |
-| `ObjectiveKind` | One value from the controlled objective taxonomy. |
-| `ObjectivePolicyId` | Required objective-specific runtime policy identity. |
-| `ConditionIds` | Ordered required, failure, optional, and recovery conditions. |
-| `ParticipantBindingIds` | Characters, vehicles, AI, payloads, and world actors. |
-| `RouteAndWaypointIds` | Ordered route, checkpoint, destination, and recovery identities. |
-| `TargetIds` | Canonical entities, actors, zones, or items. |
-| `RequiredCount` | Non-negative completion count. |
-| `TimePolicyId` | Countdown, count-up, inherited, added, paused, or untimed policy. |
-| `ForcedVehicleId` | Optional vehicle required for this stage. |
-| `OpponentIds` | Ordered race, chase, or avoid participants. |
-| `LocationId` | Canonical location or route identity. |
-| `LockRequirementIds` | Explicit vehicle, costume, reward, or progression requirements. |
-| `LoadPlanId` | Stage-specific asset and world-composition plan. |
-| `CheckpointPolicyId` | Checkpoint creation and restore behavior. |
-| `SuccessTransition` | Declared successor or mission completion. |
-| `FailureTransition` | Stage retry, checkpoint restore, mission retry, abort, or failure. |
-| `PresentationProfileId` | HUD, camera, dialogue, countdown, music, and transition requests. |
-| `WorldPolicyId` | Traffic, population, notoriety, safe-zone, and control policy. |
-| `FinalPolicy` | Whether accepted success may terminate the mission. |
-| `BonusObjectiveStartIds` | Optional objectives activated by this stage revision. |
+- **Field:** `MissionId`
+  - **Contract:** Owning mission identity.
+- **Field:** `StageId`
+  - **Contract:** Stable mission-scoped stage identity.
+- **Field:** `SequenceOrdinal`
+  - **Contract:** Dense zero-based order within the mission.
+- **Field:** `ObjectiveKind`
+  - **Contract:** One value from the controlled objective taxonomy.
+- **Field:** `ObjectivePolicyId`
+  - **Contract:** Required objective-specific runtime policy identity.
+- **Field:** `ConditionIds`
+  - **Contract:** Ordered required, failure, optional, and recovery conditions.
+- **Field:** `ParticipantBindingIds`
+  - **Contract:** Characters, vehicles, AI, payloads, and world actors.
+- **Field:** `RouteAndWaypointIds`
+  - **Contract:** Ordered route, checkpoint, destination, and recovery
+    identities.
+- **Field:** `TargetIds`
+  - **Contract:** Canonical entities, actors, zones, or items.
+- **Field:** `RequiredCount`
+  - **Contract:** Non-negative completion count.
+- **Field:** `TimePolicyId`
+  - **Contract:** Countdown, count-up, inherited, added, paused, or untimed
+    policy.
+- **Field:** `ForcedVehicleId`
+  - **Contract:** Optional vehicle required for this stage.
+- **Field:** `OpponentIds`
+  - **Contract:** Ordered race, chase, or avoid participants.
+- **Field:** `LocationId`
+  - **Contract:** Canonical location or route identity.
+- **Field:** `LockRequirementIds`
+  - **Contract:** Explicit vehicle, costume, reward, or progression
+    requirements.
+- **Field:** `LoadPlanId`
+  - **Contract:** Stage-specific asset and world-composition plan.
+- **Field:** `CheckpointPolicyId`
+  - **Contract:** Checkpoint creation and restore behavior.
+- **Field:** `SuccessTransition`
+  - **Contract:** Declared successor or mission completion.
+- **Field:** `FailureTransition`
+  - **Contract:** Stage retry, checkpoint restore, mission retry, abort, or
+    failure.
+- **Field:** `PresentationProfileId`
+  - **Contract:** HUD, camera, dialogue, countdown, music, and transition
+    requests.
+- **Field:** `WorldPolicyId`
+  - **Contract:** Traffic, population, notoriety, safe-zone, and control policy.
+- **Field:** `FinalPolicy`
+  - **Contract:** Whether accepted success may terminate the mission.
+- **Field:** `BonusObjectiveStartIds`
+  - **Contract:** Optional objectives activated by this stage revision.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -471,10 +609,12 @@ second objective kind. Definition compilation, stage execution, objective
 adapters, participant bindings, loading, checkpoint, abort, and progression
 behavior follow the
 <!-- markdownlint-disable-next-line MD013 -->
-[mission definition, stage, and objective runtime](mission-definition-stage-and-objective-runtime.md).
+[mission definition, stage, and objective
+runtime](mission-definition-stage-and-objective-runtime.md).
 Interaction, interior, notoriety, and world-safety behavior follow the
 <!-- markdownlint-disable-next-line MD013 -->
-[mission, interaction, interior, and notoriety runtime](mission-interaction-and-notoriety-runtime.md).
+[mission, interaction, interior, and notoriety
+runtime](mission-interaction-and-notoriety-runtime.md).
 
 ## Avoid objective contract
 
@@ -518,17 +658,28 @@ identity.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `RewardId` | Canonical reward identity. |
-| `RewardKind` | Vehicle ownership, costume ownership, currency, media, feature, service, or another registered kind. |
-| `GrantedDefinitionIds` | Ordered canonical identities granted by the reward. |
-| `ProgressionPredicateId` | Mission, race, collectible, achievement, purchase, or system eligibility. |
-| `RepeatabilityPolicy` | Permanent once, repeatable service, per-attempt, or another registered policy. |
-| `TransactionKeyPolicy` | Deterministic exactly-once key construction. |
-| `PresentationProfileId` | Unlock, purchase, preview, audio, and accessibility presentation. |
-| `SaveSchemaId` | Durable ownership or completion projection. |
-| `SupersessionPolicyId` | Replacement and mod-overlay behavior. |
+- **Field:** `RewardId`
+  - **Contract:** Canonical reward identity.
+- **Field:** `RewardKind`
+  - **Contract:** Vehicle ownership, costume ownership, currency, media,
+    feature, service, or another registered kind.
+- **Field:** `GrantedDefinitionIds`
+  - **Contract:** Ordered canonical identities granted by the reward.
+- **Field:** `ProgressionPredicateId`
+  - **Contract:** Mission, race, collectible, achievement, purchase, or system
+    eligibility.
+- **Field:** `RepeatabilityPolicy`
+  - **Contract:** Permanent once, repeatable service, per-attempt, or another
+    registered policy.
+- **Field:** `TransactionKeyPolicy`
+  - **Contract:** Deterministic exactly-once key construction.
+- **Field:** `PresentationProfileId`
+  - **Contract:** Unlock, purchase, preview, audio, and accessibility
+    presentation.
+- **Field:** `SaveSchemaId`
+  - **Contract:** Durable ownership or completion projection.
+- **Field:** `SupersessionPolicyId`
+  - **Contract:** Replacement and mod-overlay behavior.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -567,16 +718,27 @@ loses ownership at a chapter transition, or grants undeclared gameplay behavior.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `BillboardId` | Canonical sign or environmental-graphic identity. |
-| `PresentationAssetId` | Approved mesh, material, texture, decal, or animated presentation identity. |
-| `LocalizationPolicyId` | Fixed graphic, localized material, text overlay, or another declared policy. |
-| `PlacementPolicyId` | Allowed location, zone, structure, route, surface, and orientation rules. |
-| `VariantIds` | Approved visual, chapter, damage, daypart, or rotating variants. |
-| `InteractionPolicyId` | None, mission target, breakable, collectible-adjacent, camera target, or another registered policy. |
-| `StreamingProfileId` | Bundle, Data Layer, HLOD, instancing, and residency policy. |
-| `RightsAndApprovalState` | Import-review state that must be accepted before publication. |
+- **Field:** `BillboardId`
+  - **Contract:** Canonical sign or environmental-graphic identity.
+- **Field:** `PresentationAssetId`
+  - **Contract:** Approved mesh, material, texture, decal, or animated
+    presentation identity.
+- **Field:** `LocalizationPolicyId`
+  - **Contract:** Fixed graphic, localized material, text overlay, or another
+    declared policy.
+- **Field:** `PlacementPolicyId`
+  - **Contract:** Allowed location, zone, structure, route, surface, and
+    orientation rules.
+- **Field:** `VariantIds`
+  - **Contract:** Approved visual, chapter, damage, daypart, or rotating
+    variants.
+- **Field:** `InteractionPolicyId`
+  - **Contract:** None, mission target, breakable, collectible-adjacent, camera
+    target, or another registered policy.
+- **Field:** `StreamingProfileId`
+  - **Contract:** Bundle, Data Layer, HLOD, instancing, and residency policy.
+- **Field:** `RightsAndApprovalState`
+  - **Contract:** Import-review state that must be accepted before publication.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -599,19 +761,28 @@ profile; it is not inferred from a spreadsheet column or texture filename.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `CollectorCardId` | Canonical card identity. |
-| `SetId` | Owning chapter or registered card-set identity. |
-| `Ordinal` | Dense stable ordinal within the set. |
-| `TitleTextKey` | Localized title key. |
-| `DescriptionTextKey` | Localized description or trivia key. |
-| `FrontPresentationId` | Card-front material, texture, mesh, or widget presentation. |
-| `DetailPresentationId` | Full-detail gallery presentation. |
-| `AudioProfileId` | Optional collection and gallery audio. |
-| `UnlockPolicyId` | Collection and persistence rule. |
-| `ProgressionContributionId` | Chapter and game-completion contribution. |
-| `ReplacementPolicyId` | Overlay and supersession behavior. |
+- **Field:** `CollectorCardId`
+  - **Contract:** Canonical card identity.
+- **Field:** `SetId`
+  - **Contract:** Owning chapter or registered card-set identity.
+- **Field:** `Ordinal`
+  - **Contract:** Dense stable ordinal within the set.
+- **Field:** `TitleTextKey`
+  - **Contract:** Localized title key.
+- **Field:** `DescriptionTextKey`
+  - **Contract:** Localized description or trivia key.
+- **Field:** `FrontPresentationId`
+  - **Contract:** Card-front material, texture, mesh, or widget presentation.
+- **Field:** `DetailPresentationId`
+  - **Contract:** Full-detail gallery presentation.
+- **Field:** `AudioProfileId`
+  - **Contract:** Optional collection and gallery audio.
+- **Field:** `UnlockPolicyId`
+  - **Contract:** Collection and persistence rule.
+- **Field:** `ProgressionContributionId`
+  - **Contract:** Chapter and game-completion contribution.
+- **Field:** `ReplacementPolicyId`
+  - **Contract:** Overlay and supersession behavior.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -639,7 +810,8 @@ Card runtime, collection, save state, reward contribution, and gallery
 projection
 follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Progression, collectibles, cheats, and credits](progression-collectibles-and-cheats.md).
+[Progression, collectibles, cheats, and
+credits](progression-collectibles-and-cheats.md).
 
 ## Gag definition
 
@@ -692,10 +864,12 @@ Animation, dialogue, VFX, or a source completion column cannot grant completion.
 
 Gag completion and persistence follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Progression, collectibles, cheats, and credits](progression-collectibles-and-cheats.md).
+[Progression, collectibles, cheats, and
+credits](progression-collectibles-and-cheats.md).
 Character animation follows
-<!-- markdownlint-disable-next-line MD013 -->
-[Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md).
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+[Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md). <!-- markdownlint-disable-line MD013 -->
 
 ## Interior-presentation definition
 
@@ -725,7 +899,8 @@ identities.
 
 Interior transitions and interaction authority follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Mission, interaction, interior, and notoriety runtime](mission-interaction-and-notoriety-runtime.md).
+[Mission, interaction, interior, and notoriety
+runtime](mission-interaction-and-notoriety-runtime.md).
 
 ## Presentation-catalog definition
 
@@ -833,7 +1008,8 @@ world placement. Those relationships require existing canonical owners.
 
 External mission and story proposal sets follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md).
+[Historical core-design and dialogue evidence
+normalization](historical-core-design-and-dialogue-evidence-normalization.md).
 Candidate chapter, character, vehicle, landmark, location, interior, mission,
 boss, race, collectible, dialogue, camera, audio, and presentation facts are
 reconciled individually against current canonical definitions. Conflicting draft
@@ -872,14 +1048,29 @@ the same canonical character and vehicle definitions as the main game.
 
 <!-- markdownlint-disable MD013 -->
 
-| Canonical identity | Aliases | Required contract |
-| :--- | :--- | :--- |
-| `abraham_simpson` | `abe_simpson`, `grampa` | Non-playable mission giver; present across several levels; mission roles remain level-scoped. |
-| `agnes_skinner` | none | Ambient and passenger-capable non-playable character. |
-| `apu_nahasapeemapetilon` | `apu` | Playable in Level 5; present in all seven levels; owns the Longhorn; has event-tagged dialogue. |
-| `barney_gumble` | `barney` | Non-playable character; car-dealer and mission roles are placement-specific. |
-| `bart_simpson` | `bart` | Playable protagonist with level-scoped missions, costumes, owned vehicles, and event-tagged dialogue. |
-| `carl_carlson` | `carl` | Non-playable mission giver with a Level 1 mission role. |
+- **Canonical identity:** `abraham_simpson`
+  - **Aliases:** `abe_simpson`, `grampa`
+  - **Required contract:** Non-playable mission giver; present across several
+    levels; mission roles remain level-scoped.
+- **Canonical identity:** `agnes_skinner`
+  - **Aliases:** none
+  - **Required contract:** Ambient and passenger-capable non-playable character.
+- **Canonical identity:** `apu_nahasapeemapetilon`
+  - **Aliases:** `apu`
+  - **Required contract:** Playable in Level 5; present in all seven levels;
+    owns the Longhorn; has event-tagged dialogue.
+- **Canonical identity:** `barney_gumble`
+  - **Aliases:** `barney`
+  - **Required contract:** Non-playable character; car-dealer and mission roles
+    are placement-specific.
+- **Canonical identity:** `bart_simpson`
+  - **Aliases:** `bart`
+  - **Required contract:** Playable protagonist with level-scoped missions,
+    costumes, owned vehicles, and event-tagged dialogue.
+- **Canonical identity:** `carl_carlson`
+  - **Aliases:** `carl`
+  - **Required contract:** Non-playable mission giver with a Level 1 mission
+    role.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -891,23 +1082,68 @@ world actors.
 
 <!-- markdownlint-disable MD013 -->
 
-| Canonical identity | Verified context | Required rule |
-| :--- | :--- | :--- |
-| `stutz_bearcat_1936` | Reward | Level 6 street-race prize; phone-booth access after unlock. |
-| `sports_car_1970s` | Starting | Level 7 starting vehicle; character-driver presentation is level-scoped. |
-| `atv` | Secret | Native to Level 4; normal progression does not grant global access. |
-| `ambulance` | Road | Native to Level 5; completion override may expose it outside normal progression. |
-| `armored_truck` | Purchasable | Persistent unlockable vehicle with a separate reward and phone-booth rule. |
-| `audi_tt` | Unused Content | Ships as a reachable unused-content vehicle; incomplete presentation or support uses declared generic fallbacks and remains replaceable by validated mod overlays. |
-| `bandit` | Reward | Level 6 bonus-mission reward and a forced vehicle in a later mission. |
-| `bonestorm_truck` | Inaccessible | Alias `cbone`; mission target in Level 1; completion override does not change its canonical identity. |
-| `book_burning_van` | Reward | Level 3 street-race prize; phone-booth access after unlock. |
-| `brick_car` | Unused Content | Ships through the unused-content selection surface with isolated progression and mod-replaceable presentation, tuning, and placement fields. |
-| `burns_armored_truck` | Road | Distinct Level 6 road variant; never aliases the purchasable armored truck. |
-| `cpolice` | Inaccessible | Police vehicle present in Levels 1 through 6; excluded from normal progression. |
-| `canyonero` | Purchasable | Player vehicle and forced transport for the Level 1 hit-and-collect mission. |
-| `car_built_for_homer` | Reward and purchase | Bonus-mission reward in one context and a 500-coin Level 5 purchase in another; alias `custom_built_car`; one canonical vehicle and phone-booth identity. |
-| `cell_phone_car` | Inaccessible | Level 2 mission target; excluded from normal progression. |
+- **Canonical identity:** `stutz_bearcat_1936`
+  - **Verified context:** Reward
+  - **Required rule:** Level 6 street-race prize; phone-booth access after
+    unlock.
+- **Canonical identity:** `sports_car_1970s`
+  - **Verified context:** Starting
+  - **Required rule:** Level 7 starting vehicle; character-driver presentation
+    is level-scoped.
+- **Canonical identity:** `atv`
+  - **Verified context:** Secret
+  - **Required rule:** Native to Level 4; normal progression does not grant
+    global access.
+- **Canonical identity:** `ambulance`
+  - **Verified context:** Road
+  - **Required rule:** Native to Level 5; completion override may expose it
+    outside normal progression.
+- **Canonical identity:** `armored_truck`
+  - **Verified context:** Purchasable
+  - **Required rule:** Persistent unlockable vehicle with a separate reward and
+    phone-booth rule.
+- **Canonical identity:** `audi_tt`
+  - **Verified context:** Unused Content
+  - **Required rule:** Ships as a reachable unused-content vehicle; incomplete
+    presentation or support uses declared generic fallbacks and remains
+    replaceable by validated mod overlays.
+- **Canonical identity:** `bandit`
+  - **Verified context:** Reward
+  - **Required rule:** Level 6 bonus-mission reward and a forced vehicle in a
+    later mission.
+- **Canonical identity:** `bonestorm_truck`
+  - **Verified context:** Inaccessible
+  - **Required rule:** Alias `cbone`; mission target in Level 1; completion
+    override does not change its canonical identity.
+- **Canonical identity:** `book_burning_van`
+  - **Verified context:** Reward
+  - **Required rule:** Level 3 street-race prize; phone-booth access after
+    unlock.
+- **Canonical identity:** `brick_car`
+  - **Verified context:** Unused Content
+  - **Required rule:** Ships through the unused-content selection surface with
+    isolated progression and mod-replaceable presentation, tuning, and placement
+    fields.
+- **Canonical identity:** `burns_armored_truck`
+  - **Verified context:** Road
+  - **Required rule:** Distinct Level 6 road variant; never aliases the
+    purchasable armored truck.
+- **Canonical identity:** `cpolice`
+  - **Verified context:** Inaccessible
+  - **Required rule:** Police vehicle present in Levels 1 through 6; excluded
+    from normal progression.
+- **Canonical identity:** `canyonero`
+  - **Verified context:** Purchasable
+  - **Required rule:** Player vehicle and forced transport for the Level 1
+    hit-and-collect mission.
+- **Canonical identity:** `car_built_for_homer`
+  - **Verified context:** Reward and purchase
+  - **Required rule:** Bonus-mission reward in one context and a 500-coin Level
+    5 purchase in another; alias `custom_built_car`; one canonical vehicle and
+    phone-booth identity.
+- **Canonical identity:** `cell_phone_car`
+  - **Verified context:** Inaccessible
+  - **Required rule:** Level 2 mission target; excluded from normal progression.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -962,20 +1198,55 @@ grant rewards, unlocks, purchases, completion, or achievements.
 
 <!-- markdownlint-disable MD013 -->
 
-| Canonical identity | Level and class | Ordered contract |
-| :--- | :--- | :--- |
-| `alien_autotopsy_part_1` | Level 7 main mission 5 | Collect map, enter vehicle, collect waste, travel to playground, deliver vehicle into the target zone, then exit. |
-| `alien_autotopsy_part_2` | Level 7 main mission 6 | Force `bandit`, deliver the payload, and satisfy an avoid objective before completion. |
-| `alien_autotopsy_part_3` | Level 7 main mission 7 | Force the rocket-equipped wartime vehicle, race an opponent, collect and deliver the payload, satisfy avoidance, then trigger the ending transition. |
-| `bart_and_frink` | Level 2 main mission 4 | Follow the delivery vehicle, talk to the police contact, locate the criminal, talk to the opponent, race to the stadium, and collect the radio. |
-| `beached_love` | Level 4 bonus mission | Timed collect mission with a one-time vehicle reward. |
-| `better_than_beef` | Level 2 main mission 5 | Force the pickup, collect all road items, return, avoid the pursuer, then return again. |
-| `blind_big_brother` | Level 1 main mission 4 | On-foot travel, enter the office, exit, destroy nine control boxes, and return. |
-| `bonestorm_storm` | Level 1 main mission 6 | Force `canyonero`, travel, talk, hit the target truck, collect ten dropped boxes, and return home. |
-| `bonfire_of_the_manatees` | Level 3 main mission 3 | Force `longhorn`, travel and talk, hit the target vehicle and collect dropped items, travel to the observatory, then talk. |
-| `caravan_park_time_trial` | Level 1 street race | Five clockwise laps through the trailer-park route within ninety seconds. |
-| `casino_circuit_race` | Level 6 street race | Five counter-clockwise laps with one ordered opponent and a fixed circuit. |
-| `cell_outs` | Level 2 final main mission | Destroy four cell-phone cars, complete the mission, and unlock Level 3. |
+- **Canonical identity:** `alien_autotopsy_part_1`
+  - **Level and class:** Level 7 main mission 5
+  - **Ordered contract:** Collect map, enter vehicle, collect waste, travel to
+    playground, deliver vehicle into the target zone, then exit.
+- **Canonical identity:** `alien_autotopsy_part_2`
+  - **Level and class:** Level 7 main mission 6
+  - **Ordered contract:** Force `bandit`, deliver the payload, and satisfy an
+    avoid objective before completion.
+- **Canonical identity:** `alien_autotopsy_part_3`
+  - **Level and class:** Level 7 main mission 7
+  - **Ordered contract:** Force the rocket-equipped wartime vehicle, race an
+    opponent, collect and deliver the payload, satisfy avoidance, then trigger
+    the ending transition.
+- **Canonical identity:** `bart_and_frink`
+  - **Level and class:** Level 2 main mission 4
+  - **Ordered contract:** Follow the delivery vehicle, talk to the police
+    contact, locate the criminal, talk to the opponent, race to the stadium, and
+    collect the radio.
+- **Canonical identity:** `beached_love`
+  - **Level and class:** Level 4 bonus mission
+  - **Ordered contract:** Timed collect mission with a one-time vehicle reward.
+- **Canonical identity:** `better_than_beef`
+  - **Level and class:** Level 2 main mission 5
+  - **Ordered contract:** Force the pickup, collect all road items, return,
+    avoid the pursuer, then return again.
+- **Canonical identity:** `blind_big_brother`
+  - **Level and class:** Level 1 main mission 4
+  - **Ordered contract:** On-foot travel, enter the office, exit, destroy nine
+    control boxes, and return.
+- **Canonical identity:** `bonestorm_storm`
+  - **Level and class:** Level 1 main mission 6
+  - **Ordered contract:** Force `canyonero`, travel, talk, hit the target truck,
+    collect ten dropped boxes, and return home.
+- **Canonical identity:** `bonfire_of_the_manatees`
+  - **Level and class:** Level 3 main mission 3
+  - **Ordered contract:** Force `longhorn`, travel and talk, hit the target
+    vehicle and collect dropped items, travel to the observatory, then talk.
+- **Canonical identity:** `caravan_park_time_trial`
+  - **Level and class:** Level 1 street race
+  - **Ordered contract:** Five clockwise laps through the trailer-park route
+    within ninety seconds.
+- **Canonical identity:** `casino_circuit_race`
+  - **Level and class:** Level 6 street race
+  - **Ordered contract:** Five counter-clockwise laps with one ordered opponent
+    and a fixed circuit.
+- **Canonical identity:** `cell_outs`
+  - **Level and class:** Level 2 final main mission
+  - **Ordered contract:** Destroy four cell-phone cars, complete the mission,
+    and unlock Level 3.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -1017,7 +1288,8 @@ mission:
 Mission offer, marker, acceptance, optional-objective, and completion behavior
 follow the
 <!-- markdownlint-disable-next-line MD013 -->
-[mission, interaction, interior, and notoriety runtime](mission-interaction-and-notoriety-runtime.md).
+[mission, interaction, interior, and notoriety
+runtime](mission-interaction-and-notoriety-runtime.md).
 
 ### Bonus game
 
@@ -1246,14 +1518,29 @@ Runtime parity tests execute representative contracts from this slice:
 
 <!-- markdownlint-disable MD013 -->
 
-| Canonical identity | Aliases | Required contract |
-| :--- | :--- | :--- |
-| `charles_montgomery_burns` | `mr_burns`, `burns` | Non-playable mission character with distinct Level 1 and Level 7 placements. |
-| `clancy_wiggum` | `chief_wiggum`, `wiggum` | Non-playable police character, passenger, and mission participant; present across all seven levels; owns event-tagged dialogue. |
-| `cletus_spuckler` | `cletus` | Non-playable mission giver with level-scoped main and bonus mission roles. |
-| `comic_book_guy` | `jeffrey_albertson` | Non-playable mission giver; owns the Kremlin vehicle reference; cutscene-only and interactive placements remain distinct. |
-| `julius_hibbert` | `dr_hibbert` | Non-playable Level 5 mission giver. |
-| `nick_riviera` | `dr_nick` | Non-playable mission character with Level 2, Level 3, and Level 6 placements. |
+- **Canonical identity:** `charles_montgomery_burns`
+  - **Aliases:** `mr_burns`, `burns`
+  - **Required contract:** Non-playable mission character with distinct Level 1
+    and Level 7 placements.
+- **Canonical identity:** `clancy_wiggum`
+  - **Aliases:** `chief_wiggum`, `wiggum`
+  - **Required contract:** Non-playable police character, passenger, and mission
+    participant; present across all seven levels; owns event-tagged dialogue.
+- **Canonical identity:** `cletus_spuckler`
+  - **Aliases:** `cletus`
+  - **Required contract:** Non-playable mission giver with level-scoped main and
+    bonus mission roles.
+- **Canonical identity:** `comic_book_guy`
+  - **Aliases:** `jeffrey_albertson`
+  - **Required contract:** Non-playable mission giver; owns the Kremlin vehicle
+    reference; cutscene-only and interactive placements remain distinct.
+- **Canonical identity:** `julius_hibbert`
+  - **Aliases:** `dr_hibbert`
+  - **Required contract:** Non-playable Level 5 mission giver.
+- **Canonical identity:** `nick_riviera`
+  - **Aliases:** `dr_nick`
+  - **Required contract:** Non-playable mission character with Level 2, Level 3,
+    and Level 6 placements.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -1265,25 +1552,77 @@ Likewise, alternate pages for Cletus resolve to `cletus_spuckler`.
 
 <!-- markdownlint-disable MD013 -->
 
-| Canonical identity | Verified contexts | Required rule |
-| :--- | :--- | :--- |
-| `chase_sedan` | Level 6 purchase for 500 coins; mission and opponent placements in Levels 3, 4, and 6 | Purchase ownership, police presentation, and alien-controlled mission behavior are separate acquisition and placement rows. |
-| `clown_car` | Level 4 street-race reward | Phone-booth access begins after the reward transaction. |
-| `coffin_cart` | Level 7 road vehicle | Native road access does not grant persistent retrieval before the completion override. |
-| `cola_truck` | Level 5 purchase for 350 coins; mission target | The player-owned offer and alien-controlled mission placement share one vehicle definition. |
-| `compact_car` | Road vehicle in Levels 3, 4, and 6 | Native traffic access remains distinct from completion-override retrieval. |
-| `cube_van` | Unused and inaccessible | Cataloged for completeness; no normal world placement or progression activation. |
-| `curator` | Level 4 purchase for 300 coins; Level 5 mission target | Player ownership and target behavior use separate acquisition and placement rows. |
-| `car_built_for_homer` | Alias `custom_built_car`; Level 5 purchase for 500 coins; reward context | Every acquisition grants the same canonical vehicle and save identity. |
-| `donut_truck` | Level 3 purchase for 250 coins | Persistent retrieval begins only after purchase. |
-| `duff_truck` | Level 1 purchase for 125 coins; Level 6 mission target | Ordinary tuning and mission-specific target tuning remain explicit profiles. |
-| `el_carro_loco` | Level 5 street-race reward | Phone-booth access begins after all three level races complete. |
-| `electaurus` | Level 1 street-race reward | Driver presentation in later levels does not change ownership identity. |
-| `family_sedan` | Level 1 starting vehicle | Available from the retrieval interface from the start; Homer is the canonical driver presentation. |
-| `ferrini_black` | Inaccessible Level 7 hostile vehicle | Alias `alien_car`; mission pursuit and race roles do not grant ownership. |
-| `ferrini_red` | Level 6 starting vehicle; Level 5 forced mission vehicle | Bart driver presentation and cross-level mission use retain one identity. |
-| `fire_truck` | Level 2 purchase for 250 coins | Persistent retrieval begins only after purchase. |
-| `fish_delivery_truck` | Level 3 road vehicle | Alias `fish_van`; completion override does not change its native traffic role. |
+- **Canonical identity:** `chase_sedan`
+  - **Verified contexts:** Level 6 purchase for 500 coins; mission and opponent
+    placements in Levels 3, 4, and 6
+  - **Required rule:** Purchase ownership, police presentation, and
+    alien-controlled mission behavior are separate acquisition and placement
+    rows.
+- **Canonical identity:** `clown_car`
+  - **Verified contexts:** Level 4 street-race reward
+  - **Required rule:** Phone-booth access begins after the reward transaction.
+- **Canonical identity:** `coffin_cart`
+  - **Verified contexts:** Level 7 road vehicle
+  - **Required rule:** Native road access does not grant persistent retrieval
+    before the completion override.
+- **Canonical identity:** `cola_truck`
+  - **Verified contexts:** Level 5 purchase for 350 coins; mission target
+  - **Required rule:** The player-owned offer and alien-controlled mission
+    placement share one vehicle definition.
+- **Canonical identity:** `compact_car`
+  - **Verified contexts:** Road vehicle in Levels 3, 4, and 6
+  - **Required rule:** Native traffic access remains distinct from
+    completion-override retrieval.
+- **Canonical identity:** `cube_van`
+  - **Verified contexts:** Unused and inaccessible
+  - **Required rule:** Cataloged for completeness; no normal world placement or
+    progression activation.
+- **Canonical identity:** `curator`
+  - **Verified contexts:** Level 4 purchase for 300 coins; Level 5 mission
+    target
+  - **Required rule:** Player ownership and target behavior use separate
+    acquisition and placement rows.
+- **Canonical identity:** `car_built_for_homer`
+  - **Verified contexts:** Alias `custom_built_car`; Level 5 purchase for 500
+    coins; reward context
+  - **Required rule:** Every acquisition grants the same canonical vehicle and
+    save identity.
+- **Canonical identity:** `donut_truck`
+  - **Verified contexts:** Level 3 purchase for 250 coins
+  - **Required rule:** Persistent retrieval begins only after purchase.
+- **Canonical identity:** `duff_truck`
+  - **Verified contexts:** Level 1 purchase for 125 coins; Level 6 mission
+    target
+  - **Required rule:** Ordinary tuning and mission-specific target tuning remain
+    explicit profiles.
+- **Canonical identity:** `el_carro_loco`
+  - **Verified contexts:** Level 5 street-race reward
+  - **Required rule:** Phone-booth access begins after all three level races
+    complete.
+- **Canonical identity:** `electaurus`
+  - **Verified contexts:** Level 1 street-race reward
+  - **Required rule:** Driver presentation in later levels does not change
+    ownership identity.
+- **Canonical identity:** `family_sedan`
+  - **Verified contexts:** Level 1 starting vehicle
+  - **Required rule:** Available from the retrieval interface from the start;
+    Homer is the canonical driver presentation.
+- **Canonical identity:** `ferrini_black`
+  - **Verified contexts:** Inaccessible Level 7 hostile vehicle
+  - **Required rule:** Alias `alien_car`; mission pursuit and race roles do not
+    grant ownership.
+- **Canonical identity:** `ferrini_red`
+  - **Verified contexts:** Level 6 starting vehicle; Level 5 forced mission
+    vehicle
+  - **Required rule:** Bart driver presentation and cross-level mission use
+    retain one identity.
+- **Canonical identity:** `fire_truck`
+  - **Verified contexts:** Level 2 purchase for 250 coins
+  - **Required rule:** Persistent retrieval begins only after purchase.
+- **Canonical identity:** `fish_delivery_truck`
+  - **Verified contexts:** Level 3 road vehicle
+  - **Required rule:** Alias `fish_van`; completion override does not change its
+    native traffic role.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -1296,16 +1635,44 @@ acquisition, and save identity.
 
 <!-- markdownlint-disable MD013 -->
 
-| Canonical identity | Level and class | Ordered contract |
-| :--- | :--- | :--- |
-| `clueless` | Level 3 main mission 2 | Alternate timed travel and talk steps across Wall E. Weasel's, Planet Hype, and the Springfield Sign. |
-| `curious_curator` | Level 5 final main mission | Force `ferrini_red`, pursue and destroy `curator`, collect the museum key, complete the transition, and unlock Level 6. |
-| `detention_deficit_disorder` | Level 2 main mission 1 | Travel toward the store, satisfy the Skinner avoid objective, then complete the destination step. |
-| `dial_b_for_blood` | Level 2 bonus mission | Collect the plasma-center blood, travel and talk at Moe's, collect the second blood, travel and talk at the construction-site restaurant, collect the third blood, return, talk, and grant the wartime vehicle reward once. |
-| `duff_for_me_duff_for_you` | Level 6 main mission 4 | Travel to the brewery, hit the target Duff Truck, collect six dropped laser crates, return to the brewery, and collect the final proof item. |
-| `eight_is_too_much` | Level 5 main mission 3 | Talk to Hibbert, require `car_built_for_homer` or an explicitly permitted substitute, enter the vehicle, hit the van, collect ten diapers, return to the hospital, and talk. |
-| `fishy_deals` | Level 3 main mission 6 | Talk to the sea-captain contact, collect the ordered moving fish targets with the declared miss allowance, and complete the save objective. |
-| `flaming_tires` | Level 7 bonus mission | Talk to Smithers, collect the three ordered personal-item targets under their timers, return after each required segment, and grant the Burns limousine once. |
+- **Canonical identity:** `clueless`
+  - **Level and class:** Level 3 main mission 2
+  - **Ordered contract:** Alternate timed travel and talk steps across Wall E.
+    Weasel's, Planet Hype, and the Springfield Sign.
+- **Canonical identity:** `curious_curator`
+  - **Level and class:** Level 5 final main mission
+  - **Ordered contract:** Force `ferrini_red`, pursue and destroy `curator`,
+    collect the museum key, complete the transition, and unlock Level 6.
+- **Canonical identity:** `detention_deficit_disorder`
+  - **Level and class:** Level 2 main mission 1
+  - **Ordered contract:** Travel toward the store, satisfy the Skinner avoid
+    objective, then complete the destination step.
+- **Canonical identity:** `dial_b_for_blood`
+  - **Level and class:** Level 2 bonus mission
+  - **Ordered contract:** Collect the plasma-center blood, travel and talk at
+    Moe's, collect the second blood, travel and talk at the construction-site
+    restaurant, collect the third blood, return, talk, and grant the wartime
+    vehicle reward once.
+- **Canonical identity:** `duff_for_me_duff_for_you`
+  - **Level and class:** Level 6 main mission 4
+  - **Ordered contract:** Travel to the brewery, hit the target Duff Truck,
+    collect six dropped laser crates, return to the brewery, and collect the
+    final proof item.
+- **Canonical identity:** `eight_is_too_much`
+  - **Level and class:** Level 5 main mission 3
+  - **Ordered contract:** Talk to Hibbert, require `car_built_for_homer` or an
+    explicitly permitted substitute, enter the vehicle, hit the van, collect ten
+    diapers, return to the hospital, and talk.
+- **Canonical identity:** `fishy_deals`
+  - **Level and class:** Level 3 main mission 6
+  - **Ordered contract:** Talk to the sea-captain contact, collect the ordered
+    moving fish targets with the declared miss allowance, and complete the save
+    objective.
+- **Canonical identity:** `flaming_tires`
+  - **Level and class:** Level 7 bonus mission
+  - **Ordered contract:** Talk to Smithers, collect the three ordered
+    personal-item targets under their timers, return after each required
+    segment, and grant the Burns limousine once.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -1318,15 +1685,35 @@ cannot silently replace an invalid vehicle with an arbitrary current car.
 
 <!-- markdownlint-disable MD013 -->
 
-| Canonical identity | Level and policy | Route contract |
-| :--- | :--- | :--- |
-| `checkpoint_race_level_01` | Level 1 checkpoint race | Start at the church, traverse the ordered residential and poor-district checkpoints, and finish at the power-plant parking area against three ordered opponents. |
-| `circuit_race_level_01` | Level 1 circuit race | Complete three laps around the rich-district loop before three ordered opponents. |
-| `commercial_district_time_trial_level_02` | Level 2 time trial | Complete three laps of the commercial and monorail loop within 81 seconds. |
-| `docks_time_trial_level_03` | Level 3 time trial | Complete four laps of the docks, studio road, alley, ramp, and ship-jump loop within 111 seconds. |
-| `commercial_district_circuit_level_05` | Level 5 circuit race | Complete three ordered commercial-to-town-square laps against `ferrini_red`, a campaign truck, and an ambulance. |
-| `entertainment_district_time_trial_level_05` | Level 5 time trial | Complete five clockwise laps of the two-block entertainment loop within 81 seconds. |
-| `entertainment_commercial_checkpoint_level_05` | Level 5 checkpoint race | Traverse the courthouse, train-yard, expressway, and commercial-district checkpoint chain against `ferrini_red`. |
+- **Canonical identity:** `checkpoint_race_level_01`
+  - **Level and policy:** Level 1 checkpoint race
+  - **Route contract:** Start at the church, traverse the ordered residential
+    and poor-district checkpoints, and finish at the power-plant parking area
+    against three ordered opponents.
+- **Canonical identity:** `circuit_race_level_01`
+  - **Level and policy:** Level 1 circuit race
+  - **Route contract:** Complete three laps around the rich-district loop before
+    three ordered opponents.
+- **Canonical identity:** `commercial_district_time_trial_level_02`
+  - **Level and policy:** Level 2 time trial
+  - **Route contract:** Complete three laps of the commercial and monorail loop
+    within 81 seconds.
+- **Canonical identity:** `docks_time_trial_level_03`
+  - **Level and policy:** Level 3 time trial
+  - **Route contract:** Complete four laps of the docks, studio road, alley,
+    ramp, and ship-jump loop within 111 seconds.
+- **Canonical identity:** `commercial_district_circuit_level_05`
+  - **Level and policy:** Level 5 circuit race
+  - **Route contract:** Complete three ordered commercial-to-town-square laps
+    against `ferrini_red`, a campaign truck, and an ambulance.
+- **Canonical identity:** `entertainment_district_time_trial_level_05`
+  - **Level and policy:** Level 5 time trial
+  - **Route contract:** Complete five clockwise laps of the two-block
+    entertainment loop within 81 seconds.
+- **Canonical identity:** `entertainment_commercial_checkpoint_level_05`
+  - **Level and policy:** Level 5 checkpoint race
+  - **Route contract:** Traverse the courthouse, train-yard, expressway, and
+    commercial-district checkpoint chain against `ferrini_red`.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -1349,7 +1736,8 @@ identities.
 The currency, collector-card, destructible-source, cheat, credits, and calendar
 entries in this coverage slice are governed by
 <!-- markdownlint-disable-next-line MD013 -->
-[Progression, collectibles, cheats, and credits](progression-collectibles-and-cheats.md).
+[Progression, collectibles, cheats, and
+credits](progression-collectibles-and-cheats.md).
 The gameplay catalog references their primary assets and tables but does not
 collapse their persistence or mutation semantics into generic pickups.
 
@@ -1372,19 +1760,53 @@ Additional parity tests from this slice verify:
 
 <!-- markdownlint-disable MD013 -->
 
-| Canonical identity | Aliases | Required contract |
-| :--- | :--- | :--- |
-| `professor_frink` | `frink` | Non-playable scientist and mission giver with level-scoped story, bonus-mission, ambient, and cinematic placements from Levels 2 through 7. |
-| `gil_gunderson` | `gil` | Non-playable vehicle vendor whose level inventories are separate offer rows owned by one character identity. |
-| `abraham_simpson` | `abe_simpson`, `grampa_simpson`, `grampa`, `grandpa_simpson`, `grandpa` | Non-playable mission giver and ambient character; every spelling resolves to one dialogue, placement, and save identity. |
-| `groundskeeper_willie` | `willie` | Non-playable school-area character with level-scoped ambient placements and an explicit tractor association. |
-| `hans_moleman` | `ralph_melish` | Non-playable mission giver and ambient gag participant; mission placement and gag presentation remain separate rows. |
-| `homer_simpson` | `homer` | Playable character in Levels 1 and 7 with additional level-scoped presentation roles; all quote rows bind to this identity. |
-| `horatio_mccallister` | `sea_captain` | Non-playable Level 3 mission giver and ambient Squidport placement. |
-| `comic_book_guy` | `jeffrey_albertson` | The existing canonical identity is reaffirmed; cutscene, mission-giver, store, vehicle-owner, and ambient placements do not create another character. |
-| `jimbo_jones` | `jimbo` | Non-playable Level 2 mission character with declared ambient placements in later entertainment-district variants. |
-| `kang` | none | Individual cinematic antagonist identity with no ordinary world placement. |
-| `kodos` | none | Individual cinematic antagonist identity with no ordinary world placement. |
+- **Canonical identity:** `professor_frink`
+  - **Aliases:** `frink`
+  - **Required contract:** Non-playable scientist and mission giver with
+    level-scoped story, bonus-mission, ambient, and cinematic placements from
+    Levels 2 through 7.
+- **Canonical identity:** `gil_gunderson`
+  - **Aliases:** `gil`
+  - **Required contract:** Non-playable vehicle vendor whose level inventories
+    are separate offer rows owned by one character identity.
+- **Canonical identity:** `abraham_simpson`
+  - **Aliases:** `abe_simpson`, `grampa_simpson`, `grampa`, `grandpa_simpson`,
+    `grandpa`
+  - **Required contract:** Non-playable mission giver and ambient character;
+    every spelling resolves to one dialogue, placement, and save identity.
+- **Canonical identity:** `groundskeeper_willie`
+  - **Aliases:** `willie`
+  - **Required contract:** Non-playable school-area character with level-scoped
+    ambient placements and an explicit tractor association.
+- **Canonical identity:** `hans_moleman`
+  - **Aliases:** `ralph_melish`
+  - **Required contract:** Non-playable mission giver and ambient gag
+    participant; mission placement and gag presentation remain separate rows.
+- **Canonical identity:** `homer_simpson`
+  - **Aliases:** `homer`
+  - **Required contract:** Playable character in Levels 1 and 7 with additional
+    level-scoped presentation roles; all quote rows bind to this identity.
+- **Canonical identity:** `horatio_mccallister`
+  - **Aliases:** `sea_captain`
+  - **Required contract:** Non-playable Level 3 mission giver and ambient
+    Squidport placement.
+- **Canonical identity:** `comic_book_guy`
+  - **Aliases:** `jeffrey_albertson`
+  - **Required contract:** The existing canonical identity is reaffirmed;
+    cutscene, mission-giver, store, vehicle-owner, and ambient placements do not
+    create another character.
+- **Canonical identity:** `jimbo_jones`
+  - **Aliases:** `jimbo`
+  - **Required contract:** Non-playable Level 2 mission character with declared
+    ambient placements in later entertainment-district variants.
+- **Canonical identity:** `kang`
+  - **Aliases:** none
+  - **Required contract:** Individual cinematic antagonist identity with no
+    ordinary world placement.
+- **Canonical identity:** `kodos`
+  - **Aliases:** none
+  - **Required contract:** Individual cinematic antagonist identity with no
+    ordinary world placement.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -1400,19 +1822,50 @@ quote-only character. No separate gag quote owner is defined by this slice.
 
 <!-- markdownlint-disable MD013 -->
 
-| Canonical identity | Verified context | Required rule |
-| :--- | :--- | :--- |
-| `garbage_truck` | Level 4 road vehicle | Drivable from native traffic only; no normal retrieval ownership before the completion override. |
-| `ghost_ship` | Level 7 road vehicle and race opponent | Drivable from native traffic only; race placement and completion-override retrieval do not create a second vehicle. |
-| `glass_truck` | Level 1 road vehicle | Drivable from native traffic only; no normal retrieval ownership before the completion override. |
-| `globex_super_villain_car` | Level 6 purchase for 600 coins | The accepted purchase grants persistent retrieval for this canonical identity. |
-| `hallo_hearse` | Level 7 road vehicle | Distinct from `hearse`; native traffic access does not grant persistent retrieval. |
-| `hearse` | Level 7 purchase for 750 coins and race opponent | Purchase ownership and race placement share one vehicle definition. |
-| `honor_roller` | Level 2 starting vehicle | Persistent retrieval is available from level start without a purchase transaction. |
-| `hover_bike` | Level 7 purchase for 1,000 coins | Persistent retrieval begins only after the accepted purchase. |
-| `hover_car` | Level 5 bonus-mission reward | The reward transaction grants persistent retrieval exactly once. |
-| `ice_cream_truck` | Unused and inaccessible | Cataloged for completeness; no ordinary traffic, mission, purchase, reward, or retrieval activation. |
-| `itchy_and_scratchy_movie_truck` | Level 6 road vehicle | Drivable from native traffic only; presentation audio belongs to its vehicle profile and does not imply ownership. |
+- **Canonical identity:** `garbage_truck`
+  - **Verified context:** Level 4 road vehicle
+  - **Required rule:** Drivable from native traffic only; no normal retrieval
+    ownership before the completion override.
+- **Canonical identity:** `ghost_ship`
+  - **Verified context:** Level 7 road vehicle and race opponent
+  - **Required rule:** Drivable from native traffic only; race placement and
+    completion-override retrieval do not create a second vehicle.
+- **Canonical identity:** `glass_truck`
+  - **Verified context:** Level 1 road vehicle
+  - **Required rule:** Drivable from native traffic only; no normal retrieval
+    ownership before the completion override.
+- **Canonical identity:** `globex_super_villain_car`
+  - **Verified context:** Level 6 purchase for 600 coins
+  - **Required rule:** The accepted purchase grants persistent retrieval for
+    this canonical identity.
+- **Canonical identity:** `hallo_hearse`
+  - **Verified context:** Level 7 road vehicle
+  - **Required rule:** Distinct from `hearse`; native traffic access does not
+    grant persistent retrieval.
+- **Canonical identity:** `hearse`
+  - **Verified context:** Level 7 purchase for 750 coins and race opponent
+  - **Required rule:** Purchase ownership and race placement share one vehicle
+    definition.
+- **Canonical identity:** `honor_roller`
+  - **Verified context:** Level 2 starting vehicle
+  - **Required rule:** Persistent retrieval is available from level start
+    without a purchase transaction.
+- **Canonical identity:** `hover_bike`
+  - **Verified context:** Level 7 purchase for 1,000 coins
+  - **Required rule:** Persistent retrieval begins only after the accepted
+    purchase.
+- **Canonical identity:** `hover_car`
+  - **Verified context:** Level 5 bonus-mission reward
+  - **Required rule:** The reward transaction grants persistent retrieval
+    exactly once.
+- **Canonical identity:** `ice_cream_truck`
+  - **Verified context:** Unused and inaccessible
+  - **Required rule:** Cataloged for completeness; no ordinary traffic, mission,
+    purchase, reward, or retrieval activation.
+- **Canonical identity:** `itchy_and_scratchy_movie_truck`
+  - **Verified context:** Level 6 road vehicle
+  - **Required rule:** Drivable from native traffic only; presentation audio
+    belongs to its vehicle profile and does not imply ownership.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -1424,16 +1877,42 @@ placement, or race row that collapses them.
 
 <!-- markdownlint-disable MD013 -->
 
-| Canonical identity | Level and class | Ordered contract |
-| :--- | :--- | :--- |
-| `flowers_by_irene` | Level 1 main mission 5 | Enter the house, activate the television interaction, leave the interior, enter a vehicle, and follow the surveillance vehicle to the declared destination without violating the separation policy. |
-| `for_a_few_donuts_more` | Level 4 main mission 1 | Complete the opening follow segment, hit the donut truck, collect ten emitted donuts exactly once, return, and deliver the accepted set. |
-| `from_outer_space` | Level 4 final main mission | Destroy three declared trucks, return toward home, satisfy the final avoid policy, complete the transition, and unlock Level 5. |
-| `full_metal_jackass` | Level 6 main mission 5 | Pursue and destroy the declared sedan, accept the dropped laser item once, and complete only after collection. |
-| `getting_down_with_the_clown` | Level 6 main mission 2 | Trigger the opponent vehicle and win the declared race to the Squidport finish against the limousine. |
-| `going_to_the_lu` | Level 6 main mission 1 | Force the school bus, collect the declared child targets, deliver them to the studio destination, and retain no ownership change from the forced vehicle. |
-| `incriminating_caffeine` | Level 5 main mission 1 | Follow the target truck, collect eleven ordered drops without violating the follow policy, and finish at the declared club destination. |
-| `kang_and_kodos_strike_back` | Level 6 final main mission | Force the 1970s sports car, race the chase sedan to the brewery, complete the transition, and unlock Level 7. |
+- **Canonical identity:** `flowers_by_irene`
+  - **Level and class:** Level 1 main mission 5
+  - **Ordered contract:** Enter the house, activate the television interaction,
+    leave the interior, enter a vehicle, and follow the surveillance vehicle to
+    the declared destination without violating the separation policy.
+- **Canonical identity:** `for_a_few_donuts_more`
+  - **Level and class:** Level 4 main mission 1
+  - **Ordered contract:** Complete the opening follow segment, hit the donut
+    truck, collect ten emitted donuts exactly once, return, and deliver the
+    accepted set.
+- **Canonical identity:** `from_outer_space`
+  - **Level and class:** Level 4 final main mission
+  - **Ordered contract:** Destroy three declared trucks, return toward home,
+    satisfy the final avoid policy, complete the transition, and unlock Level 5.
+- **Canonical identity:** `full_metal_jackass`
+  - **Level and class:** Level 6 main mission 5
+  - **Ordered contract:** Pursue and destroy the declared sedan, accept the
+    dropped laser item once, and complete only after collection.
+- **Canonical identity:** `getting_down_with_the_clown`
+  - **Level and class:** Level 6 main mission 2
+  - **Ordered contract:** Trigger the opponent vehicle and win the declared race
+    to the Squidport finish against the limousine.
+- **Canonical identity:** `going_to_the_lu`
+  - **Level and class:** Level 6 main mission 1
+  - **Ordered contract:** Force the school bus, collect the declared child
+    targets, deliver them to the studio destination, and retain no ownership
+    change from the forced vehicle.
+- **Canonical identity:** `incriminating_caffeine`
+  - **Level and class:** Level 5 main mission 1
+  - **Ordered contract:** Follow the target truck, collect eleven ordered drops
+    without violating the follow policy, and finish at the declared club
+    destination.
+- **Canonical identity:** `kang_and_kodos_strike_back`
+  - **Level and class:** Level 6 final main mission
+  - **Ordered contract:** Force the 1970s sports car, race the chase sedan to
+    the brewery, complete the transition, and unlock Level 7.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -1455,10 +1934,14 @@ runtime data.
 
 <!-- markdownlint-disable MD013 -->
 
-| Canonical identity | Level and policy | Route contract |
-| :--- | :--- | :--- |
-| `hillside_area_circuit_level_03` | Level 3 circuit race | Complete five laps of the declared figure-eight hillside loop against the Canyonero, one sports car, and one compact car. |
-| `haunted_suburbia_circuit_level_07` | Level 7 circuit race | Complete three school-to-residential-and-return laps against the Hearse, Ghost Ship, and Coffin Cart. |
+- **Canonical identity:** `hillside_area_circuit_level_03`
+  - **Level and policy:** Level 3 circuit race
+  - **Route contract:** Complete five laps of the declared figure-eight hillside
+    loop against the Canyonero, one sports car, and one compact car.
+- **Canonical identity:** `haunted_suburbia_circuit_level_07`
+  - **Level and policy:** Level 7 circuit race
+  - **Route contract:** Complete three school-to-residential-and-return laps
+    against the Hearse, Ghost Ship, and Coffin Cart.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -1484,26 +1967,48 @@ The canonical indoor set, portal transactions, world-layer composition, movement
 restrictions, vehicle-state preservation, gag interactions, and notoriety
 behavior follow the
 <!-- markdownlint-disable-next-line MD013 -->
-[mission, interaction, interior, and notoriety runtime](mission-interaction-and-notoriety-runtime.md).
+[mission, interaction, interior, and notoriety
+runtime](mission-interaction-and-notoriety-runtime.md).
 
 Gag placements, rewards, level-scoped completion, and the verified level totals
 follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Progression, collectibles, cheats, and credits](progression-collectibles-and-cheats.md).
+[Progression, collectibles, cheats, and
+credits](progression-collectibles-and-cheats.md).
 
 ## Verified fourth character slice
 
 <!-- markdownlint-disable MD013 -->
 
-| Canonical identity | Aliases | Required contract |
-| :--- | :--- | :--- |
-| `kearney_zzyzwicz` | `kearney` | Non-playable character with Level 2, Level 4, and Level 6 placements; the Level 6 vendor role references the existing vehicle offers. |
-| `kent_brockman` | none | Cutscene and broadcast character; television-gag audio is a presentation placement, not an ambient world character. |
-| `krusty_the_clown` | `krusty` | Non-playable mission giver and story character with level-scoped ambient, cinematic, and mission placements. |
-| `lenny_leonard` | `lenny` | Non-playable Level 1 mission giver with declared ambient placements in Levels 2 and 5. |
-| `lisa_simpson` | `lisa` | Playable Level 3 protagonist; quote rows and every other level placement retain one character identity. |
-| `marge_simpson` | `marge` | Playable Level 4 protagonist; quote rows and every other level placement retain one character identity. |
-| `louie` | none | Non-playable wager-race host in all seven levels and a separate Level 5 story placement. |
+- **Canonical identity:** `kearney_zzyzwicz`
+  - **Aliases:** `kearney`
+  - **Required contract:** Non-playable character with Level 2, Level 4, and
+    Level 6 placements; the Level 6 vendor role references the existing vehicle
+    offers.
+- **Canonical identity:** `kent_brockman`
+  - **Aliases:** none
+  - **Required contract:** Cutscene and broadcast character; television-gag
+    audio is a presentation placement, not an ambient world character.
+- **Canonical identity:** `krusty_the_clown`
+  - **Aliases:** `krusty`
+  - **Required contract:** Non-playable mission giver and story character with
+    level-scoped ambient, cinematic, and mission placements.
+- **Canonical identity:** `lenny_leonard`
+  - **Aliases:** `lenny`
+  - **Required contract:** Non-playable Level 1 mission giver with declared
+    ambient placements in Levels 2 and 5.
+- **Canonical identity:** `lisa_simpson`
+  - **Aliases:** `lisa`
+  - **Required contract:** Playable Level 3 protagonist; quote rows and every
+    other level placement retain one character identity.
+- **Canonical identity:** `marge_simpson`
+  - **Aliases:** `marge`
+  - **Required contract:** Playable Level 4 protagonist; quote rows and every
+    other level placement retain one character identity.
+- **Canonical identity:** `louie`
+  - **Aliases:** none
+  - **Required contract:** Non-playable wager-race host in all seven levels and
+    a separate Level 5 story placement.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -1518,14 +2023,37 @@ character definitions.
 
 <!-- markdownlint-disable MD013 -->
 
-| Canonical identity | Aliases | Verified context | Required rule |
-| :--- | :--- | :--- | :--- |
-| `knight_boat` | `knightboat` | Level 3 secret vehicle | One world placement grants temporary access; it does not count toward the five progression vehicles. |
-| `kremlin` | none | Level 4 bonus-mission reward | The accepted reward grants persistent retrieval exactly once. |
-| `krustys_limo` | none | Level 4 purchase for 350 coins and mission presentation | Purchase ownership and opponent or ambient placements share one definition. |
-| `limo` | none | Level 2 purchase for 150 coins | Distinct from `krustys_limo`; purchase grants persistent retrieval. |
-| `longhorn` | none | Level 5 starting vehicle | Available from level start and excluded from counted progression vehicles. |
-| `malibu_stacy_car` | none | Level 3 starting vehicle | Available from level start and bound to Lisa's default driver presentation. |
+- **Canonical identity:** `knight_boat`
+  - **Aliases:** `knightboat`
+  - **Verified context:** Level 3 secret vehicle
+  - **Required rule:** One world placement grants temporary access; it does not
+    count toward the five progression vehicles.
+- **Canonical identity:** `kremlin`
+  - **Aliases:** none
+  - **Verified context:** Level 4 bonus-mission reward
+  - **Required rule:** The accepted reward grants persistent retrieval exactly
+    once.
+- **Canonical identity:** `krustys_limo`
+  - **Aliases:** none
+  - **Verified context:** Level 4 purchase for 350 coins and mission
+    presentation
+  - **Required rule:** Purchase ownership and opponent or ambient placements
+    share one definition.
+- **Canonical identity:** `limo`
+  - **Aliases:** none
+  - **Verified context:** Level 2 purchase for 150 coins
+  - **Required rule:** Distinct from `krustys_limo`; purchase grants persistent
+    retrieval.
+- **Canonical identity:** `longhorn`
+  - **Aliases:** none
+  - **Verified context:** Level 5 starting vehicle
+  - **Required rule:** Available from level start and excluded from counted
+    progression vehicles.
+- **Canonical identity:** `malibu_stacy_car`
+  - **Aliases:** none
+  - **Verified context:** Level 3 starting vehicle
+  - **Required rule:** Available from level start and bound to Lisa's default
+    driver presentation.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -1537,13 +2065,32 @@ that collapses the two limousine definitions.
 
 <!-- markdownlint-disable MD013 -->
 
-| Canonical identity | Level and class | Ordered contract |
-| :--- | :--- | :--- |
-| `ketchup_logic` | Level 4 main mission 3 | Force the pickup truck and required costume, collect eighteen ordered packets within 120 seconds, reach the pursuit trigger within 45 seconds, evade the sedan within 60 seconds, and return to the declared destination. |
-| `kinky_frinky` | Level 5 bonus mission | Destroy the Hover Car within 180 seconds, return within 30 seconds, complete the conversation, and grant the Hover Car reward once. |
-| `kwik_cash` | Level 5 main mission 6 | Force the Bandit, reach and evade the first police pursuit, locate and destroy the Armored Truck without a destroy timer, return, evade the second pursuit within 45 seconds, and complete the final return and conversation. |
-| `lab_coat_caper` | Level 6 main mission 3 | Follow Frink's Hover Car through the declared repeated route to the observatory while satisfying the separation policy. |
-| `long_black_probes` | Level 7 main mission 2 | Require the owned Zombie Car, enter it, travel to the playground, and follow the alien probe to the power plant without violating separation or vehicle-health policy. |
+- **Canonical identity:** `ketchup_logic`
+  - **Level and class:** Level 4 main mission 3
+  - **Ordered contract:** Force the pickup truck and required costume, collect
+    eighteen ordered packets within 120 seconds, reach the pursuit trigger
+    within 45 seconds, evade the sedan within 60 seconds, and return to the
+    declared destination.
+- **Canonical identity:** `kinky_frinky`
+  - **Level and class:** Level 5 bonus mission
+  - **Ordered contract:** Destroy the Hover Car within 180 seconds, return
+    within 30 seconds, complete the conversation, and grant the Hover Car reward
+    once.
+- **Canonical identity:** `kwik_cash`
+  - **Level and class:** Level 5 main mission 6
+  - **Ordered contract:** Force the Bandit, reach and evade the first police
+    pursuit, locate and destroy the Armored Truck without a destroy timer,
+    return, evade the second pursuit within 45 seconds, and complete the final
+    return and conversation.
+- **Canonical identity:** `lab_coat_caper`
+  - **Level and class:** Level 6 main mission 3
+  - **Ordered contract:** Follow Frink's Hover Car through the declared repeated
+    route to the observatory while satisfying the separation policy.
+- **Canonical identity:** `long_black_probes`
+  - **Level and class:** Level 7 main mission 2
+  - **Ordered contract:** Require the owned Zombie Car, enter it, travel to the
+    playground, and follow the alien probe to the power plant without violating
+    separation or vehicle-health policy.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -1560,10 +2107,14 @@ public ordered contract.
 
 <!-- markdownlint-disable MD013 -->
 
-| Canonical identity | Level and policy | Route contract |
-| :--- | :--- | :--- |
-| `mansion_power_plant_time_trial_level_04` | Level 4 time trial | Complete three laps through the mansion grounds, power-plant passage, and Stonecutters route within 131 seconds. |
-| `kwik_e_mart_time_trial_level_07` | Level 7 time trial | Complete five counter-clockwise laps of the store, gas-station, and donut-shop block within the seventy-second stage timer. |
+- **Canonical identity:** `mansion_power_plant_time_trial_level_04`
+  - **Level and policy:** Level 4 time trial
+  - **Route contract:** Complete three laps through the mansion grounds,
+    power-plant passage, and Stonecutters route within 131 seconds.
+- **Canonical identity:** `kwik_e_mart_time_trial_level_07`
+  - **Level and policy:** Level 7 time trial
+  - **Route contract:** Complete five counter-clockwise laps of the store,
+    gas-station, and donut-shop block within the seventy-second stage timer.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -1604,16 +2155,39 @@ level audio profile and exact role records.
 
 <!-- markdownlint-disable MD013 -->
 
-| Canonical identity | Aliases | Required contract |
-| :--- | :--- | :--- |
-| `mayor_quimby` | `quimby` | Non-playable civic character with cinematic, billboard, vehicle-presentation, and level-scoped ambient roles. |
-| `milhouse_van_houten` | `milhouse` | Non-playable mission character and Levels 1 through 6 time-trial host; race-host and story placements share one character identity. |
-| `moe_szyslak` | `moe` | Non-playable talkable and mission character with house, tavern, ambient, and story placements. |
-| `charles_montgomery_burns` | `mr_burns`, `monty_burns`, `burns` | The existing canonical identity is reaffirmed for intercom, mission, cinematic, and Level 7 interaction roles. |
-| `waylon_smithers` | `mr_smithers`, `smithers` | Non-playable mission, ambient, driver, cinematic, and Level 7 bonus-mission character. |
-| `ned_flanders` | `ned` | Non-playable mission, talkable, house-interaction, gag, and ambient character. |
-| `nerd` | none | Non-playable mission and race-driver archetype with exact Level 2 and Level 3 story placements. |
-| `otto_mann` | `otto` | Non-playable mission character, bus driver, and level-scoped ambient placement. |
+- **Canonical identity:** `mayor_quimby`
+  - **Aliases:** `quimby`
+  - **Required contract:** Non-playable civic character with cinematic,
+    billboard, vehicle-presentation, and level-scoped ambient roles.
+- **Canonical identity:** `milhouse_van_houten`
+  - **Aliases:** `milhouse`
+  - **Required contract:** Non-playable mission character and Levels 1 through 6
+    time-trial host; race-host and story placements share one character
+    identity.
+- **Canonical identity:** `moe_szyslak`
+  - **Aliases:** `moe`
+  - **Required contract:** Non-playable talkable and mission character with
+    house, tavern, ambient, and story placements.
+- **Canonical identity:** `charles_montgomery_burns`
+  - **Aliases:** `mr_burns`, `monty_burns`, `burns`
+  - **Required contract:** The existing canonical identity is reaffirmed for
+    intercom, mission, cinematic, and Level 7 interaction roles.
+- **Canonical identity:** `waylon_smithers`
+  - **Aliases:** `mr_smithers`, `smithers`
+  - **Required contract:** Non-playable mission, ambient, driver, cinematic, and
+    Level 7 bonus-mission character.
+- **Canonical identity:** `ned_flanders`
+  - **Aliases:** `ned`
+  - **Required contract:** Non-playable mission, talkable, house-interaction,
+    gag, and ambient character.
+- **Canonical identity:** `nerd`
+  - **Aliases:** none
+  - **Required contract:** Non-playable mission and race-driver archetype with
+    exact Level 2 and Level 3 story placements.
+- **Canonical identity:** `otto_mann`
+  - **Aliases:** `otto`
+  - **Required contract:** Non-playable mission character, bus driver, and
+    level-scoped ambient placement.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -1621,49 +2195,133 @@ The minor-character and non-story-character indexes are query projections over
 canonical definitions and placement capabilities. They do not create aggregate
 characters or duplicate dialogue owners. The full placement rules follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Ambient population and named-character runtime](ambient-population-and-named-character-runtime.md).
+[Ambient population and named-character
+runtime](ambient-population-and-named-character-runtime.md).
 
 ## Verified fifth vehicle slice
 
 <!-- markdownlint-disable MD013 -->
 
-| Canonical identity | Aliases | Verified context | Required rule |
-| :--- | :--- | :--- | :--- |
-| `milk_truck` | none | Level 6 mission target and completion override | Mission destruction does not grant ownership; completion-only retrieval uses its explicit override. |
-| `mini_school_bus` | none | Level 1 traffic and completion override | Traffic access is temporary and does not grant ordinary retrieval ownership. |
-| `minivan` | none | Level 1 traffic and completion override | Native traffic and completion-override retrieval reference one definition. |
-| `monorail_car` | none | Level 2 secret vehicle | World access is temporary and excluded from the five counted progression vehicles. |
-| `obliteratatron_big_wheel_truck` | `obliteration_big_wheel_truck`, `monster_truck` | Level 5 secret vehicle | All three names resolve to one secret-vehicle definition and placement family. |
-| `mr_burns_limo` | `burns_limo` | Level 7 bonus-mission reward | The accepted reward grants persistent retrieval exactly once. |
-| `mr_plow` | none | Level 2 purchase for 200 coins | Purchase ownership gates the declared required-vehicle mission and normal retrieval. |
-| `nerd_car` | none | Level 3 purchase for 250 coins and race opponent | Purchase and opponent placements share one definition. |
-| `nonuplets_minivan` | `shelbyville_nonuplets_van` | Completion-override vehicle | No ordinary traffic, purchase, reward, or secret placement grants ownership. |
-| `nuclear_waste_truck` | none | Level 4 traffic and completion override | The traffic vehicle is distinct from the nuclear-waste mission payload. |
-| `open_wheel_race_car` | none | Level 7 street-race reward | Completing the declared race set grants persistent retrieval. |
-| `pickup_road_vehicle` | `pickup` | Traffic in Levels 1, 3, and 6 plus completion override | Traffic access and static prop placements do not grant ownership. |
-| `cletus_pickup_truck` | `pickup_truck` | Level 1 bonus reward and mission vehicle | Distinct from `pickup_road_vehicle`; reward ownership and forced mission use share one definition. |
-| `pizza_van` | none | Level 2 traffic and mission target plus completion override | Distinct from the purchasable surveillance vehicle despite related presentation. |
+- **Canonical identity:** `milk_truck`
+  - **Aliases:** none
+  - **Verified context:** Level 6 mission target and completion override
+  - **Required rule:** Mission destruction does not grant ownership;
+    completion-only retrieval uses its explicit override.
+- **Canonical identity:** `mini_school_bus`
+  - **Aliases:** none
+  - **Verified context:** Level 1 traffic and completion override
+  - **Required rule:** Traffic access is temporary and does not grant ordinary
+    retrieval ownership.
+- **Canonical identity:** `minivan`
+  - **Aliases:** none
+  - **Verified context:** Level 1 traffic and completion override
+  - **Required rule:** Native traffic and completion-override retrieval
+    reference one definition.
+- **Canonical identity:** `monorail_car`
+  - **Aliases:** none
+  - **Verified context:** Level 2 secret vehicle
+  - **Required rule:** World access is temporary and excluded from the five
+    counted progression vehicles.
+- **Canonical identity:** `obliteratatron_big_wheel_truck`
+  - **Aliases:** `obliteration_big_wheel_truck`, `monster_truck`
+  - **Verified context:** Level 5 secret vehicle
+  - **Required rule:** All three names resolve to one secret-vehicle definition
+    and placement family.
+- **Canonical identity:** `mr_burns_limo`
+  - **Aliases:** `burns_limo`
+  - **Verified context:** Level 7 bonus-mission reward
+  - **Required rule:** The accepted reward grants persistent retrieval exactly
+    once.
+- **Canonical identity:** `mr_plow`
+  - **Aliases:** none
+  - **Verified context:** Level 2 purchase for 200 coins
+  - **Required rule:** Purchase ownership gates the declared required-vehicle
+    mission and normal retrieval.
+- **Canonical identity:** `nerd_car`
+  - **Aliases:** none
+  - **Verified context:** Level 3 purchase for 250 coins and race opponent
+  - **Required rule:** Purchase and opponent placements share one definition.
+- **Canonical identity:** `nonuplets_minivan`
+  - **Aliases:** `shelbyville_nonuplets_van`
+  - **Verified context:** Completion-override vehicle
+  - **Required rule:** No ordinary traffic, purchase, reward, or secret
+    placement grants ownership.
+- **Canonical identity:** `nuclear_waste_truck`
+  - **Aliases:** none
+  - **Verified context:** Level 4 traffic and completion override
+  - **Required rule:** The traffic vehicle is distinct from the nuclear-waste
+    mission payload.
+- **Canonical identity:** `open_wheel_race_car`
+  - **Aliases:** none
+  - **Verified context:** Level 7 street-race reward
+  - **Required rule:** Completing the declared race set grants persistent
+    retrieval.
+- **Canonical identity:** `pickup_road_vehicle`
+  - **Aliases:** `pickup`
+  - **Verified context:** Traffic in Levels 1, 3, and 6 plus completion override
+  - **Required rule:** Traffic access and static prop placements do not grant
+    ownership.
+- **Canonical identity:** `cletus_pickup_truck`
+  - **Aliases:** `pickup_truck`
+  - **Verified context:** Level 1 bonus reward and mission vehicle
+  - **Required rule:** Distinct from `pickup_road_vehicle`; reward ownership and
+    forced mission use share one definition.
+- **Canonical identity:** `pizza_van`
+  - **Aliases:** none
+  - **Verified context:** Level 2 traffic and mission target plus completion
+    override
+  - **Required rule:** Distinct from the purchasable surveillance vehicle
+    despite related presentation.
 
 <!-- markdownlint-enable MD013 -->
 
 The vehicle browser, locked rows, health, repair, completion override, delivery,
 and mission restrictions follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Vehicle retrieval and phone-booth runtime](vehicle-retrieval-and-phone-booth-runtime.md).
+[Vehicle retrieval and phone-booth
+runtime](vehicle-retrieval-and-phone-booth-runtime.md).
 
 ## Verified fifth mission slice
 
 <!-- markdownlint-disable MD013 -->
 
-| Canonical identity | Level and class | Ordered contract |
-| :--- | :--- | :--- |
-| `milking_the_pigs` | Level 6 bonus mission | Hit Chief Wiggum's vehicle and accept the evidence folder within 120 seconds, complete the Snake conversation, locate and destroy the Milk Truck within 180 seconds, return, and grant the Bandit once. |
-| `monkey_see_monkey_doh` | Level 2 main mission 6 | Require the owned Mr. Plow, travel to the research center, collect thirty declared monkeys within 240 seconds, return, complete the Dr. Nick interaction, and reach the final blender target. |
-| `nerd_race_queen` | Level 3 main mission 1 | Force Comic Book Guy's vehicle, win the declared race against the Nerd Car, reach the comic target, return within 90 seconds, and complete the final interaction. |
-| `never_trust_a_snake` | Level 5 main mission 5 | Hit the garbage truck and accept five emitted targets within 255 seconds, collect twenty-five declared garbage targets without a timer, reach the DMV, complete the Snake interaction and interior transition, and accept the folder target. |
-| `office_spaced` | Level 1 main mission 3 | Require the Plow King, reach Lenny, reach the Smithers pursuit start within 90 seconds, and destroy Smithers' vehicle before its race-condition destination. |
-| `operation_hellfish` | Level 3 main mission 4 | Require the School Bus, reach the observatory and first target, then destroy three declared sedans in successive 120-second, 90-second, and 75-second stages. |
-| `petty_theft_homer` | Level 1 main mission 2 | Collect the ordered personal-item targets under their declared 40-second or untimed policies, complete the Barney interaction, return to Ned, and complete the final conversation. |
+- **Canonical identity:** `milking_the_pigs`
+  - **Level and class:** Level 6 bonus mission
+  - **Ordered contract:** Hit Chief Wiggum's vehicle and accept the evidence
+    folder within 120 seconds, complete the Snake conversation, locate and
+    destroy the Milk Truck within 180 seconds, return, and grant the Bandit
+    once.
+- **Canonical identity:** `monkey_see_monkey_doh`
+  - **Level and class:** Level 2 main mission 6
+  - **Ordered contract:** Require the owned Mr. Plow, travel to the research
+    center, collect thirty declared monkeys within 240 seconds, return, complete
+    the Dr. Nick interaction, and reach the final blender target.
+- **Canonical identity:** `nerd_race_queen`
+  - **Level and class:** Level 3 main mission 1
+  - **Ordered contract:** Force Comic Book Guy's vehicle, win the declared race
+    against the Nerd Car, reach the comic target, return within 90 seconds, and
+    complete the final interaction.
+- **Canonical identity:** `never_trust_a_snake`
+  - **Level and class:** Level 5 main mission 5
+  - **Ordered contract:** Hit the garbage truck and accept five emitted targets
+    within 255 seconds, collect twenty-five declared garbage targets without a
+    timer, reach the DMV, complete the Snake interaction and interior
+    transition, and accept the folder target.
+- **Canonical identity:** `office_spaced`
+  - **Level and class:** Level 1 main mission 3
+  - **Ordered contract:** Require the Plow King, reach Lenny, reach the Smithers
+    pursuit start within 90 seconds, and destroy Smithers' vehicle before its
+    race-condition destination.
+- **Canonical identity:** `operation_hellfish`
+  - **Level and class:** Level 3 main mission 4
+  - **Ordered contract:** Require the School Bus, reach the observatory and
+    first target, then destroy three declared sedans in successive 120-second,
+    90-second, and 75-second stages.
+- **Canonical identity:** `petty_theft_homer`
+  - **Level and class:** Level 1 main mission 2
+  - **Ordered contract:** Collect the ordered personal-item targets under their
+    declared 40-second or untimed policies, complete the Barney interaction,
+    return to Ned, and complete the final conversation.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -1693,7 +2351,8 @@ payload remains a separate canonical vehicle instance.
 
 The detailed payload lifecycle follows the
 <!-- markdownlint-disable-next-line MD013 -->
-[mission, interaction, interior, and notoriety runtime](mission-interaction-and-notoriety-runtime.md).
+[mission, interaction, interior, and notoriety
+runtime](mission-interaction-and-notoriety-runtime.md).
 
 ## Verified fifth system and index slice
 
@@ -1706,11 +2365,13 @@ The music census resolves through
 [Music state and transition runtime](music-state-and-transition-runtime.md).
 The pedestrian census resolves through
 <!-- markdownlint-disable-next-line MD013 -->
-[Ambient population and named-character runtime](ambient-population-and-named-character-runtime.md).
+[Ambient population and named-character
+runtime](ambient-population-and-named-character-runtime.md).
 Historical pedestrian, ambient-gag, walker, driver, passenger, character-role,
 and vehicle-availability tables follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md).
+[Historical core-design and dialogue evidence
+normalization](historical-core-design-and-dialogue-evidence-normalization.md).
 They create canonical definitions and typed availability or placement rows only
 after character, vehicle, mission, seat, dialogue, animation, collision, native
 asset, and loading dependencies resolve. Model-ready, animator, status,
@@ -1718,7 +2379,8 @@ approval,
 voice-production, and matrix-position fields remain import-review metadata.
 The phone-booth census resolves through
 <!-- markdownlint-disable-next-line MD013 -->
-[Vehicle retrieval and phone-booth runtime](vehicle-retrieval-and-phone-booth-runtime.md).
+[Vehicle retrieval and phone-booth
+runtime](vehicle-retrieval-and-phone-booth-runtime.md).
 
 The newspaper page contributes no independently identified gameplay definition
 in
@@ -1731,15 +2393,36 @@ intentional behavior has its own verified contract.
 
 <!-- markdownlint-disable MD013 -->
 
-| Canonical identity | Aliases | Required contract |
-| :--- | :--- | :--- |
-| `principal_seymour_skinner` | `principal_skinner`, `seymour_skinner`, `skinner` | One non-playable character owns mission-opponent, bonus-mission-giver, school, ambient, driver, and cinematic placements. |
-| `professor_frink` | `frink` | The existing scientist identity is reaffirmed for mission-giver, driver, observatory, bonus-reward, ambient, and cinematic placements. |
-| `reverend_lovejoy` | `lovejoy` | Non-playable named character with level-scoped ambient and presentation placements. |
-| `horatio_mccallister` | `sea_captain` | The existing canonical identity is reaffirmed for Squidport ambience and the `princi_pal` interaction. |
-| `snake_jailbird` | `snake` | One non-playable character owns mission-giver, target, driver, ambient, and dialogue placements across Levels 2, 3, 5, 6, and 7. |
-| `mayor_quimby` | `quimby` | The existing civic character identity owns cutscene, billboard, vehicle-presentation, and ambient references. |
-| `waylon_smithers` | `mr_smithers`, `smithers` | The existing character identity owns mission, driver, bonus-mission, ambient, and cinematic placements. |
+- **Canonical identity:** `principal_seymour_skinner`
+  - **Aliases:** `principal_skinner`, `seymour_skinner`, `skinner`
+  - **Required contract:** One non-playable character owns mission-opponent,
+    bonus-mission-giver, school, ambient, driver, and cinematic placements.
+- **Canonical identity:** `professor_frink`
+  - **Aliases:** `frink`
+  - **Required contract:** The existing scientist identity is reaffirmed for
+    mission-giver, driver, observatory, bonus-reward, ambient, and cinematic
+    placements.
+- **Canonical identity:** `reverend_lovejoy`
+  - **Aliases:** `lovejoy`
+  - **Required contract:** Non-playable named character with level-scoped
+    ambient and presentation placements.
+- **Canonical identity:** `horatio_mccallister`
+  - **Aliases:** `sea_captain`
+  - **Required contract:** The existing canonical identity is reaffirmed for
+    Squidport ambience and the `princi_pal` interaction.
+- **Canonical identity:** `snake_jailbird`
+  - **Aliases:** `snake`
+  - **Required contract:** One non-playable character owns mission-giver,
+    target, driver, ambient, and dialogue placements across Levels 2, 3, 5, 6,
+    and 7.
+- **Canonical identity:** `mayor_quimby`
+  - **Aliases:** `quimby`
+  - **Required contract:** The existing civic character identity owns cutscene,
+    billboard, vehicle-presentation, and ambient references.
+- **Canonical identity:** `waylon_smithers`
+  - **Aliases:** `mr_smithers`, `smithers`
+  - **Required contract:** The existing character identity owns mission, driver,
+    bonus-mission, ambient, and cinematic placements.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -1747,30 +2430,89 @@ intentional behavior has its own verified contract.
 archetype and placement rows, not a named character, dialogue owner, or save
 identity. Named-character and ambient-archetype behavior follows
 <!-- markdownlint-disable-next-line MD013 -->
-[Ambient population and named-character runtime](ambient-population-and-named-character-runtime.md).
+[Ambient population and named-character
+runtime](ambient-population-and-named-character-runtime.md).
 
 ## Verified sixth vehicle slice
 
 <!-- markdownlint-disable MD013 -->
 
-| Canonical identity | Aliases | Verified context | Required rule |
-| :--- | :--- | :--- | :--- |
-| `planet_hype_50s_car` | none | Level 6 secret vehicle | Temporary world access only; completion override does not create ordinary ownership. |
-| `plow_king` | none | Level 1 purchase for 150 coins | Purchase ownership is required by the declared mission gate. |
-| `police_car` | none | Level 5 purchase for 425 coins and mission-forced placement | Ownership, forced use, driver presentation, and pursuit placement remain separate rows. |
-| `hover_car` | `professor_frinks_hover_car`, `frinks_hover_car` | Level 5 bonus reward and later forced or target placements | The bonus reward grants ownership once; other placements do not replay it. |
-| `quad_bike` | `atv` | Level 4 secret vehicle | One trailer-park placement grants temporary access. |
-| `rc_buggy` | `r_c_buggy` | Level 7 secret vehicle | One roof placement grants temporary access. |
-| `red_brick_car` | `brick_car` | Development-only vehicle | Excluded from shipping ownership, traffic, secret, mission, race, and completion-override queries. |
-| `suv` | none | Traffic in Levels 4 and 5 | Native traffic access does not grant persistent ownership. |
-| `school_bus` | none | Level 3 purchase for 300 coins and mission vehicle | Purchase, forced use, required use, and Otto driver presentation share one definition. |
-| `sedan_level_02` | none | Level 2 street-race reward | Distinct persistent reward identity. |
-| `sedan_level_03` | `skinners_sedan` | Level 3 bonus-mission reward and Skinner driver placement | Distinct from every other sedan definition. |
-| `sedan_a` | none | Unused development traffic definition | Excluded from normal shipping access. |
-| `sedan_b` | none | Level 2 traffic | Traffic and completion override remain separate from ownership. |
-| `speed_rocket` | none | Level 1 secret vehicle | Temporary world access only. |
-| `sports_car_a` | none | Traffic in Levels 2 and 3 plus race placements | Traffic, opponent, prop, and completion-override rows share one definition. |
-| `sports_car_b` | none | Level 5 traffic | Traffic access does not grant persistent ownership. |
+- **Canonical identity:** `planet_hype_50s_car`
+  - **Aliases:** none
+  - **Verified context:** Level 6 secret vehicle
+  - **Required rule:** Temporary world access only; completion override does not
+    create ordinary ownership.
+- **Canonical identity:** `plow_king`
+  - **Aliases:** none
+  - **Verified context:** Level 1 purchase for 150 coins
+  - **Required rule:** Purchase ownership is required by the declared mission
+    gate.
+- **Canonical identity:** `police_car`
+  - **Aliases:** none
+  - **Verified context:** Level 5 purchase for 425 coins and mission-forced
+    placement
+  - **Required rule:** Ownership, forced use, driver presentation, and pursuit
+    placement remain separate rows.
+- **Canonical identity:** `hover_car`
+  - **Aliases:** `professor_frinks_hover_car`, `frinks_hover_car`
+  - **Verified context:** Level 5 bonus reward and later forced or target
+    placements
+  - **Required rule:** The bonus reward grants ownership once; other placements
+    do not replay it.
+- **Canonical identity:** `quad_bike`
+  - **Aliases:** `atv`
+  - **Verified context:** Level 4 secret vehicle
+  - **Required rule:** One trailer-park placement grants temporary access.
+- **Canonical identity:** `rc_buggy`
+  - **Aliases:** `r_c_buggy`
+  - **Verified context:** Level 7 secret vehicle
+  - **Required rule:** One roof placement grants temporary access.
+- **Canonical identity:** `red_brick_car`
+  - **Aliases:** `brick_car`
+  - **Verified context:** Development-only vehicle
+  - **Required rule:** Excluded from shipping ownership, traffic, secret,
+    mission, race, and completion-override queries.
+- **Canonical identity:** `suv`
+  - **Aliases:** none
+  - **Verified context:** Traffic in Levels 4 and 5
+  - **Required rule:** Native traffic access does not grant persistent
+    ownership.
+- **Canonical identity:** `school_bus`
+  - **Aliases:** none
+  - **Verified context:** Level 3 purchase for 300 coins and mission vehicle
+  - **Required rule:** Purchase, forced use, required use, and Otto driver
+    presentation share one definition.
+- **Canonical identity:** `sedan_level_02`
+  - **Aliases:** none
+  - **Verified context:** Level 2 street-race reward
+  - **Required rule:** Distinct persistent reward identity.
+- **Canonical identity:** `sedan_level_03`
+  - **Aliases:** `skinners_sedan`
+  - **Verified context:** Level 3 bonus-mission reward and Skinner driver
+    placement
+  - **Required rule:** Distinct from every other sedan definition.
+- **Canonical identity:** `sedan_a`
+  - **Aliases:** none
+  - **Verified context:** Unused development traffic definition
+  - **Required rule:** Excluded from normal shipping access.
+- **Canonical identity:** `sedan_b`
+  - **Aliases:** none
+  - **Verified context:** Level 2 traffic
+  - **Required rule:** Traffic and completion override remain separate from
+    ownership.
+- **Canonical identity:** `speed_rocket`
+  - **Aliases:** none
+  - **Verified context:** Level 1 secret vehicle
+  - **Required rule:** Temporary world access only.
+- **Canonical identity:** `sports_car_a`
+  - **Aliases:** none
+  - **Verified context:** Traffic in Levels 2 and 3 plus race placements
+  - **Required rule:** Traffic, opponent, prop, and completion-override rows
+    share one definition.
+- **Canonical identity:** `sports_car_b`
+  - **Aliases:** none
+  - **Verified context:** Level 5 traffic
+  - **Required rule:** Traffic access does not grant persistent ownership.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -1784,16 +2526,52 @@ exclusions follow
 
 <!-- markdownlint-disable MD013 -->
 
-| Canonical identity | Level and class | Ordered contract |
-| :--- | :--- | :--- |
-| `s_m_r_t` | Level 1 main mission 1 | Accept the science-project target, reach Skinner's start, win the untimed route race, enter Springfield Elementary, talk to Lisa, and complete the final dialogue. |
-| `princi_pal` | Level 3 bonus mission | Force Skinner's Sedan; complete the 40-second opening errand, untimed laundry target, 30-second restaurant travel, meal interaction, 45-second casino travel, cream interaction, and 35-second arcade return; then grant Skinner's Sedan once. |
-| `slithery_sleuthing` | Level 3 main mission 5 | Force the Police Car, follow Snake over four route waypoints and accept three emitted targets, satisfy separation and vehicle conditions, reach the casino within 60 seconds, and complete Wiggum's final sequence. |
-| `redneck_roundup` | Level 4 main mission 2 | Follow Cletus over eight route waypoints and accept seven emitted objects without violating the separation policy; no timer applies. |
-| `return_of_the_nearly_dead` | Level 4 main mission 5 | Reach the school within 30 seconds, complete Nelson's interaction, follow the sedan and accept ten pills, reach the false destination within 90 seconds, lose the tail within 90 seconds, reach Grampa within 150 seconds, collect the interior caffeine target, return, and complete the cinematic transition. |
-| `set_to_kill` | Level 6 main mission 6 | Require purchase of the Globex Super Villain Car, reach Krustylu, destroy and accept twenty-five laser-stand targets within 100 seconds, return within 50 seconds, and complete the Krusty interaction. |
-| `rigor_motors` | Level 7 main mission 1 | Talk to Ned within 30 seconds, collect the first-aid kit, reach and collect the boards within the declared 15-second travel stage, reach Moe within 15 seconds, collect the chainsaw, and return home within 40 seconds. |
-| `pocket_protector` | Level 7 main mission 3 | Force the Hover Car, acquire the nuclear-waste payload within 120 seconds, reach the playground within 100 seconds while retaining vehicle and payload, and destroy the boss target within 10 seconds while preserving the payload policy. |
+- **Canonical identity:** `s_m_r_t`
+  - **Level and class:** Level 1 main mission 1
+  - **Ordered contract:** Accept the science-project target, reach Skinner's
+    start, win the untimed route race, enter Springfield Elementary, talk to
+    Lisa, and complete the final dialogue.
+- **Canonical identity:** `princi_pal`
+  - **Level and class:** Level 3 bonus mission
+  - **Ordered contract:** Force Skinner's Sedan; complete the 40-second opening
+    errand, untimed laundry target, 30-second restaurant travel, meal
+    interaction, 45-second casino travel, cream interaction, and 35-second
+    arcade return; then grant Skinner's Sedan once.
+- **Canonical identity:** `slithery_sleuthing`
+  - **Level and class:** Level 3 main mission 5
+  - **Ordered contract:** Force the Police Car, follow Snake over four route
+    waypoints and accept three emitted targets, satisfy separation and vehicle
+    conditions, reach the casino within 60 seconds, and complete Wiggum's final
+    sequence.
+- **Canonical identity:** `redneck_roundup`
+  - **Level and class:** Level 4 main mission 2
+  - **Ordered contract:** Follow Cletus over eight route waypoints and accept
+    seven emitted objects without violating the separation policy; no timer
+    applies.
+- **Canonical identity:** `return_of_the_nearly_dead`
+  - **Level and class:** Level 4 main mission 5
+  - **Ordered contract:** Reach the school within 30 seconds, complete Nelson's
+    interaction, follow the sedan and accept ten pills, reach the false
+    destination within 90 seconds, lose the tail within 90 seconds, reach Grampa
+    within 150 seconds, collect the interior caffeine target, return, and
+    complete the cinematic transition.
+- **Canonical identity:** `set_to_kill`
+  - **Level and class:** Level 6 main mission 6
+  - **Ordered contract:** Require purchase of the Globex Super Villain Car,
+    reach Krustylu, destroy and accept twenty-five laser-stand targets within
+    100 seconds, return within 50 seconds, and complete the Krusty interaction.
+- **Canonical identity:** `rigor_motors`
+  - **Level and class:** Level 7 main mission 1
+  - **Ordered contract:** Talk to Ned within 30 seconds, collect the first-aid
+    kit, reach and collect the boards within the declared 15-second travel
+    stage, reach Moe within 15 seconds, collect the chainsaw, and return home
+    within 40 seconds.
+- **Canonical identity:** `pocket_protector`
+  - **Level and class:** Level 7 main mission 3
+  - **Ordered contract:** Force the Hover Car, acquire the nuclear-waste payload
+    within 120 seconds, reach the playground within 100 seconds while retaining
+    vehicle and payload, and destroy the boss target within 10 seconds while
+    preserving the payload policy.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -1805,12 +2583,19 @@ owned vehicles never collapse into one acquisition state.
 
 <!-- markdownlint-disable MD013 -->
 
-| Canonical identity | Verified route contract |
-| :--- | :--- |
-| `rich_district_2_circuit_level_04` | Three laps; six AI route waypoints and five dense player checkpoints; opponents are Apu in the Longhorn, the Nuclear Waste Truck, and the Garbage Truck; first place required; no timer. |
-| `squidport_checkpoint_level_03` | Five ordered checkpoints against Marge in the Canyonero, Sports Car A, and the road Pickup; first place required. |
-| `squidport_tourist_resort_time_trial_level_06` | Two laps through eight ordered checkpoints within 115 seconds. |
-| `squidport_2_checkpoint_level_06` | Six ordered checkpoints against Homer in the canonical Level 7 sports-car placement; first place required. |
+- **Canonical identity:** `rich_district_2_circuit_level_04`
+  - **Verified route contract:** Three laps; six AI route waypoints and five
+    dense player checkpoints; opponents are Apu in the Longhorn, the Nuclear
+    Waste Truck, and the Garbage Truck; first place required; no timer.
+- **Canonical identity:** `squidport_checkpoint_level_03`
+  - **Verified route contract:** Five ordered checkpoints against Marge in the
+    Canyonero, Sports Car A, and the road Pickup; first place required.
+- **Canonical identity:** `squidport_tourist_resort_time_trial_level_06`
+  - **Verified route contract:** Two laps through eight ordered checkpoints
+    within 115 seconds.
+- **Canonical identity:** `squidport_2_checkpoint_level_06`
+  - **Verified route contract:** Six ordered checkpoints against Homer in the
+    canonical Level 7 sports-car placement; first place required.
 
 <!-- markdownlint-enable MD013 -->
 

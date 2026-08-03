@@ -1,12 +1,34 @@
-// File: SharMessageSchemaCatalog.h
-// Path: src/unreal/project/composition/uproject/Source/SharMessaging/Public/Messaging/SharMessageSchemaCatalog.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: generated schema and delivery-policy metadata only; owning modules retain typed payload definitions.
-// Specification: docs/technical/unreal/typed-event-and-observation-routing-runtime.md
-// LARGE-FILE owner=SharMessaging; reason=cohesive reflected schema and policy vocabulary;
-// split=extract alias metadata if historical aliases become runtime-visible;
-// validation=validate.sh SharMessaging plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar message schema catalog composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar message schema catalog composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar message schema catalog composition module.
 
 #pragma once
 

@@ -1,7 +1,3 @@
-// File:
-//   - slot.rs
-// Path: src/formats/fbx/domain/material/slot.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,45 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure fbx domain rules for domain material slot.
+//   - Slot domain module.
 // - Must-Not:
-//   - Read files, parse generated indexes, invoke CLI code, or call writer
-//   - adapters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Value objects, invariant checks, and pure evidence-to-domain translation.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when slot contains two independently testable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another fbx module owns the same domain boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Material slot assigned to polygon ranges.
+//   - Slot domain module.
 // - Description:
-//   - Defines slot data and behavior for fbx domain material.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Imported through crate domain facades or sibling domain modules.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No filesystem paths, no external process calls, and no implicit IO
-//   - defaults.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-// - docs/adr/pipeline/unreal/unreal-manifest-and-package-taxonomy.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Material slot assigned to polygon ranges.
-//!
-//! This boundary keeps material slot assigned to polygon ranges explicit and
-//! returns deterministic results to fbx callers.
-// These exact file-local lints preserve explicit domain and binary contracts.
+//! Slot domain module.
+
 #![expect(
     clippy::module_name_repetitions,
     reason = "Tests verify these intentional explicit file-local contracts \

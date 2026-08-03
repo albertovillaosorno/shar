@@ -1,12 +1,34 @@
-// File: SharSaveRepositoryEvidence.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharSave/Private/Save/SharSaveRepositoryEvidence.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: adapter evidence ordering, read-back verification, atomic replacement, load, recovery, and delete completion only.
-// Specification: docs/technical/unreal/platform-save-storage-and-lifecycle.md
-// LARGE-FILE owner=SharSave; reason=cohesive adapter-stage state machine and accepted-slot mutation;
-// split=extract load and delete adapters if provider-specific evidence expands;
-// validation=validate.sh SharSave plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar save repository evidence composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar save repository evidence composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar save repository evidence composition module.
 
 #include "Save/SharSaveRepositorySubsystem.h"
 #include "Save/SharSaveContracts.h"

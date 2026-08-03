@@ -1,0 +1,5 @@
+schema: shar-surface/v1
+path: src/formats/p3d/Cargo.toml
+function: p3d
+kind: project
+authority: Cargo.toml

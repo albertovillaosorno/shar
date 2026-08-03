@@ -1,7 +1,3 @@
-# File:
-#   - skill_technical_text.py
-# Path: src/unreal/editor-control/adapter-outbound/mcp/adapter_outbound/skill_technical_text.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,36 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Technical-only projection of live MCP documentation prose.
+#   - Skill technical text outbound adapter.
 # - Must-Not:
-#   - Parse schemas, render complete Markdown, access files, or invoke Unreal.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Removing general policy sentences before generated skill rendering.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Language-specific filters require independently versioned policies.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module owns the same technical documentation projection.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Keeps generated Unreal skills limited to technical interface guidance.
+#   - Skill technical text outbound adapter.
 # - Description:
-#   - Filters general policy prose while preserving exposed technical sentences.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Called before structured native-description parsing.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Supports known English and Spanish general-policy phrases.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
-"""Technical-only projection for live Unreal MCP documentation text."""
+
+"""Skill technical text outbound adapter."""
 
 from __future__ import annotations
 
@@ -53,6 +42,7 @@ def _pattern(*parts: str) -> str:
 
     Returns:
         One complete regular-expression source string.
+
     """
     return "".join(parts)
 
@@ -62,25 +52,25 @@ _GENERAL_POLICY_PATTERNS = (
     re.compile(r"\bpermission\s+from\s+the\s+user\b", re.IGNORECASE),
     re.compile(
         _pattern(
-            r"\bpermiso\s+",  # cspell:disable-line -- bpermiso
-            r"(?:explicito|",  # cspell:disable-line -- explicito
-            r"explícito)?",  # cspell:disable-line -- explícito
+            r"\bpermiso\s+",
+            r"(?:explicito|",
+            r"explícito)?",
             r"\s*del\s+",
-            r"usuario\b",  # cspell:disable-line -- usuario
+            r"usuario\b",
         ),
         re.IGNORECASE,
     ),
     re.compile(
         _pattern(
-            r"\bauthori[sz]",  # cspell:disable-line -- bauthori
-            r"(?:e|ed|ation)",  # cspell:disable-line -- ation
+            r"\bauthori[sz]",
+            r"(?:e|ed|ation)",
             r"\b",
         ),
         re.IGNORECASE,
     ),
     re.compile(
         _pattern(
-            r"\bautorizaci",  # cspell:disable-line -- bautorizaci
+            r"\bautorizaci",
             r"[oó]n\b",
         ),
         re.IGNORECASE,
@@ -92,12 +82,12 @@ _GENERAL_POLICY_PATTERNS = (
     ),
     re.compile(
         _pattern(
-            r"\b(?:derechos?",  # cspell:disable-line -- derechos
+            r"\b(?:derechos?",
             r"\s+de\s+",
-            r"autor|",  # cspell:disable-line -- autor
-            r"propiedad",  # cspell:disable-line -- propiedad
+            r"autor|",
+            r"propiedad",
             r"\s+",
-            r"intelectual)",  # cspell:disable-line -- intelectual
+            r"intelectual)",
             r"\b",
         ),
         re.IGNORECASE,
@@ -105,7 +95,7 @@ _GENERAL_POLICY_PATTERNS = (
     re.compile(
         _pattern(
             r"\b(?:proprietary|confidential|",
-            r"confidencial)",  # cspell:disable-line -- confidencial
+            r"confidencial)",
             r"\b",
         ),
         re.IGNORECASE,
@@ -119,6 +109,7 @@ def validated_live_prose(description: str) -> str:
 
     Returns:
         The validated prose with canonical newline characters.
+
     """
     normalized = description.replace("\r\n", "\n").replace("\r", "\n")
     if any(

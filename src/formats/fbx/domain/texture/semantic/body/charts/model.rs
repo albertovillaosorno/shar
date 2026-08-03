@@ -1,7 +1,3 @@
-// File:
-//   - model.rs
-// Path: src/formats/fbx/domain/texture/semantic/body/charts/model.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Internal projected and placed chart values shared by body planning
-//   - stages.
+//   - Model domain module.
 // - Must-Not:
-//   - Discover topology, select projections, pack rectangles, or mutate images.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Deterministic chart metadata and per-vertex projected or pixel positions.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Public chart values need a different representation from planner state.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - One chart stage becomes the only consumer of these internal values.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Internal semantic chart planning values.
+//   - Model domain module.
 // - Description:
-//   - Carries exact chart evidence between discovery, packing, and
-//   - rasterization.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Private to semantic body chart planning.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Vertex and triangle collections remain sorted.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Internal semantic chart planning values.
+//! Model domain module.
 
 use std::collections::BTreeMap;
 

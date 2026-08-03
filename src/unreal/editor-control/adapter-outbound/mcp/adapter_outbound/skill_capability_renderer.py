@@ -1,7 +1,3 @@
-# File:
-#   - skill_capability_renderer.py
-# Path: src/unreal/editor-control/adapter-outbound/mcp/adapter_outbound/skill_capability_renderer.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,68 +6,50 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Complete generated Markdown for one native Unreal MCP tool skill.
+#   - Skill capability renderer outbound adapter.
 # - Must-Not:
-#   - Generate paths, parse raw schemas, access files, or invoke tools.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Combining description, schema guidance, invocation, and checks.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Invocation and verification guidance require independent policies.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another adapter owns the same complete per-tool skill document.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Renders one actionable skill for one native Unreal MCP tool.
+#   - Skill capability renderer outbound adapter.
 # - Description:
-#   - Produces purpose, inputs, outputs, example use, posture, and checks.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Called once per live tool by the skill Markdown orchestration adapter.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Requires a live `describe` refresh before state-changing use.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: generated native Unreal MCP per-tool skill rendering
-#   - reason: purpose, invocation, posture, and checks form one contract
-#   - split: extract verification policy if native annotations become available
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess after generated skill content or workflow changes
-#
-"""Render one actionable Markdown skill per native Unreal MCP tool."""
+
+"""Skill capability renderer outbound adapter."""
 
 from __future__ import annotations
 
-import re
 from pathlib import PurePosixPath
+import re
 from typing import TYPE_CHECKING
 
-from mcp.adapter_outbound.skill_description import (
-    markdown_paragraphs,
-    operational_posture,
-    parse_description,
-)
+from mcp.adapter_outbound.skill_description import markdown_paragraphs
+from mcp.adapter_outbound.skill_description import operational_posture
+from mcp.adapter_outbound.skill_description import parse_description
 from mcp.adapter_outbound.skill_manual_fields import render_manual_section
-from mcp.adapter_outbound.skill_markdown_policy import (
-    render_unbreakable_line,
-)
-from mcp.adapter_outbound.skill_schema_renderer import (
-    example_arguments,
-    render_example_json,
-    render_inputs,
-    render_output,
-)
+from mcp.adapter_outbound.skill_markdown_policy import render_unbreakable_line
+from mcp.adapter_outbound.skill_schema_renderer import example_arguments
+from mcp.adapter_outbound.skill_schema_renderer import render_example_json
+from mcp.adapter_outbound.skill_schema_renderer import render_inputs
+from mcp.adapter_outbound.skill_schema_renderer import render_output
 from mcp.domain.skill_documents import SkillDocument
 
 if TYPE_CHECKING:
-    from mcp.domain.catalog import ToolDefinition, ToolsetDefinition
+    from mcp.domain.catalog import ToolDefinition
+    from mcp.domain.catalog import ToolsetDefinition
     from mcp.domain.skill_categories import SkillCategory
     from mcp.domain.skill_revision import SkillRevision
 
@@ -101,6 +79,7 @@ def render_tool_skill(
 
     Returns:
         A complete generated Markdown document for this native tool.
+
     """
     sections = parse_description(tool.description)
     posture = operational_posture(tool.name)

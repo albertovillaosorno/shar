@@ -135,7 +135,8 @@ actor mirror, runtime yaw correction, UV mirror, or height offset.
 
 The structural guide uses that same world root and concatenates mesh channels
 without evaluating or re-expressing source roots. It does not invent another
-orientation or height rule. Import the guide at identity with `Force Front XAxis`
+orientation or height rule. Import the guide at identity with `Force Front
+XAxis`
 disabled. The authored Unreal ocean and Landscape convention remains
 independently anchored at world `Z = 0 cm`.
 

@@ -7,10 +7,16 @@
 
 ## Governing decisions
 
-- [Mod-owned multiplayer adapters and community servers](../../adr/modding/mod-owned-multiplayer-adapters-and-community-servers.md)
-- [Local drop-in mod packages and AI skills](../../adr/modding/drop-in-mod-packages-and-ai-skills.md)
-- [Local mod trust and distribution boundary](../../adr/modding/mod-safety-scanner-and-distribution.md)
-- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Mod-owned multiplayer adapters and community servers](../../adr/modding/mod-owned-multiplayer-adapters-and-community-servers.md) <!-- markdownlint-disable-line MD013 -->
+- [Local drop-in mod packages and AI
+  skills](../../adr/modding/drop-in-mod-packages-and-ai-skills.md)
+- [Local mod trust and distribution
+  boundary](../../adr/modding/mod-safety-scanner-and-distribution.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md) <!-- markdownlint-disable-line MD013 -->
 
 ## Purpose
 
@@ -20,11 +26,14 @@ base campaign already supports networked play.
 
 It separates:
 
-| Layer | Contract |
-| :--- | :--- |
-| Current base behavior | Single-player campaign and local-only authority. |
-| Required architecture support | Stable identities, schemas, package declarations, adapter ports, validation, and teardown seams. |
-| Deferred mod implementation | Transport, replication, server process, discovery, administration, and custom multiplayer mode behavior. |
+- **Layer:** Current base behavior
+  - **Contract:** Single-player campaign and local-only authority.
+- **Layer:** Required architecture support
+  - **Contract:** Stable identities, schemas, package declarations, adapter
+    ports, validation, and teardown seams.
+- **Layer:** Deferred mod implementation
+  - **Contract:** Transport, replication, server process, discovery,
+    administration, and custom multiplayer mode behavior.
 
 ## Base boundary
 
@@ -39,7 +48,9 @@ authority.
 
 Historical head-to-head, flag-steal, split-screen chase, global bullet-time,
 speed-cap, or shared-meter proposals are superseded mode evidence under
-[Historical core-design and dialogue evidence normalization](../unreal/historical-core-design-and-dialogue-evidence-normalization.md).
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+[Historical core-design and dialogue evidence normalization](../unreal/historical-core-design-and-dialogue-evidence-normalization.md). <!-- markdownlint-disable-line MD013 -->
 They do not create a first-party mode. A mod may reinterpret such an idea only
 through its own namespaced ruleset, protocol, authority, replication, scoped
 time-presentation, fairness, accessibility, cancellation, disconnect, and
@@ -74,21 +85,32 @@ implementation in this phase.
 
 A multiplayer package declaration includes:
 
-| Field | Contract |
-| :--- | :--- |
-| `MultiplayerModeId` | Stable namespaced mode identity. |
-| `ProtocolId` | Stable protocol family identity. |
-| `ProtocolRevision` | Exact compatible protocol revision. |
-| `AuthorityModel` | Dedicated server, listen server, or another declared model. |
-| `ClientRoles` | Supported player, spectator, administrator, or custom roles. |
-| `ServerTargets` | Exact supported platform and architecture targets. |
-| `RequiredPackages` | Deterministic package and revision closure. |
-| `RequiredCatalogRevision` | Exact compatible gameplay and content schema. |
-| `NativeCodePolicy` | Content-only or explicitly trusted native code. |
-| `SavePolicy` | None, ephemeral session, or namespaced mod-owned persistence. |
-| `AchievementPolicy` | Base-compatible, base-incompatible, or custom provider. |
-| `DiscoveryPolicy` | Direct address or mod-owned directory adapter. |
-| `TeardownPolicy` | Required cleanup and recovery behavior. |
+- **Field:** `MultiplayerModeId`
+  - **Contract:** Stable namespaced mode identity.
+- **Field:** `ProtocolId`
+  - **Contract:** Stable protocol family identity.
+- **Field:** `ProtocolRevision`
+  - **Contract:** Exact compatible protocol revision.
+- **Field:** `AuthorityModel`
+  - **Contract:** Dedicated server, listen server, or another declared model.
+- **Field:** `ClientRoles`
+  - **Contract:** Supported player, spectator, administrator, or custom roles.
+- **Field:** `ServerTargets`
+  - **Contract:** Exact supported platform and architecture targets.
+- **Field:** `RequiredPackages`
+  - **Contract:** Deterministic package and revision closure.
+- **Field:** `RequiredCatalogRevision`
+  - **Contract:** Exact compatible gameplay and content schema.
+- **Field:** `NativeCodePolicy`
+  - **Contract:** Content-only or explicitly trusted native code.
+- **Field:** `SavePolicy`
+  - **Contract:** None, ephemeral session, or namespaced mod-owned persistence.
+- **Field:** `AchievementPolicy`
+  - **Contract:** Base-compatible, base-incompatible, or custom provider.
+- **Field:** `DiscoveryPolicy`
+  - **Contract:** Direct address or mod-owned directory adapter.
+- **Field:** `TeardownPolicy`
+  - **Contract:** Required cleanup and recovery behavior.
 
 Missing or ambiguous declarations reject activation.
 
@@ -98,7 +120,8 @@ Community operators host independent servers and choose their mode,
 configuration, and required package set. The project does not operate, endorse,
 moderate, or vouch for those servers.
 
-A server may publish connection metadata such as address, mode identity, protocol
+A server may publish connection metadata such as address, mode identity,
+protocol
 revision, package-set digest, player count, and human-readable description. It
 must not claim that connection metadata is package trust evidence.
 
@@ -150,7 +173,8 @@ failure modes to ordinary offline play.
 
 ## Base campaign isolation
 
-The base campaign does not become a multiplayer mode merely because an adapter is
+The base campaign does not become a multiplayer mode merely because an adapter
+is
 installed. A package that wants cooperative or competitive story behavior must
 define a separate namespaced mod mode, explicit mission semantics, authority,
 checkpoint, save, achievement, and failure policies.
@@ -165,9 +189,11 @@ Multiplayer modes use one of these policies:
 
 - no persistence;
 - ephemeral session persistence owned by the current server; or
-- namespaced mod-owned durable persistence with an explicit schema and migration.
+- namespaced mod-owned durable persistence with an explicit schema and
+  migration.
 
-Base save slots remain separate. A server cannot overwrite, merge, or reinterpret
+Base save slots remain separate. A server cannot overwrite, merge, or
+reinterpret
 a base save slot. Export or import between a mod save and base save requires a
 separate reviewed converter and is not implied by shared content identities.
 
@@ -184,10 +210,12 @@ completion messages.
 ## Discovery and frontend integration
 
 The base frontend exposes no multiplayer command by default. A validated active
-package may register a namespaced menu route for its mode, direct-connect screen,
+package may register a namespaced menu route for its mode, direct-connect
+screen,
 or server directory.
 
-The route must identify the providing package, trust state, required native code,
+The route must identify the providing package, trust state, required native
+code,
 network risk, active package set, and whether base achievements are suspended.
 Removing the package removes the route and restores the ordinary frontend.
 
@@ -216,7 +244,8 @@ Activation is atomic. The adapter acquires explicit handles for transport,
 session, world, input, event, persistence, and frontend integration.
 
 Disconnect, server failure, suspension, mode exit, package deactivation, process
-shutdown, and validation failure release every handle. Late network callbacks are
+shutdown, and validation failure release every handle. Late network callbacks
+are
 ignored by session and adapter revision.
 
 A failed activation or disconnect returns to a stable frontend or mod-defined

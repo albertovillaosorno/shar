@@ -1,7 +1,3 @@
-# File:
-#   - unreal_mcp_version.py
-# Path: src/unreal/editor-control/port-outbound/mcp/port_outbound/unreal_mcp_version.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,36 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Application-facing discovery contract for the Unreal MCP plugin version.
+#   - Unreal mcp version outbound port.
 # - Must-Not:
-#   - Parse descriptors, inspect installations, or define version values.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Decoupling skill generation from installed Unreal filesystem layout.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - More plugin metadata requires an independent port.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another port owns the same Unreal MCP installation metadata.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Defines the single Unreal MCP version discovery port.
+#   - Unreal mcp version outbound port.
 # - Description:
-#   - The implementation reads the active engine plugin descriptor.
+#   - Implements the declared outbound port responsibility for editor control.
 # - Usage:
-#   - Composed by the CLI only for generated skill export.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - No version fallback is permitted.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
-"""Port for resolving the installed Unreal MCP plugin version."""
+
+"""Unreal mcp version outbound port."""
 
 from __future__ import annotations
 

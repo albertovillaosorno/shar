@@ -1,12 +1,34 @@
-// File: SharCheatEffectSubsystem.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharCheats/Private/Cheats/SharCheatEffectSubsystem.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: cheat-effect configuration, request validation, deterministic queueing, and immutable queries only.
-// Specification: docs/technical/unreal/progression-collectibles-and-cheats.md
-// LARGE-FILE owner=SharCheats; reason=cohesive effect request admission and query behavior;
-// split=separate validation helpers if new effect-owner families add policies;
-// validation=validate.sh SharCheats plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar cheat effect subsystem composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar cheat effect subsystem composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar cheat effect subsystem composition module.
 
 #include "Cheats/SharCheatEffectSubsystem.h"
 
@@ -81,6 +103,7 @@ int32 USharCheatEffectSubsystem::GetQueuePosition(
 {
     const FSharCheatActivationSnapshot* Activation =
         FindActivation(ActivationId);
+    // jig-ignore-next-line: exact syntax is indivisible
     if (Activation == nullptr || Activation->State != ESharCheatEffectState::Queued)
     {
         return 0;

@@ -1,7 +1,3 @@
-// File:
-//   - grid.rs
-// Path: src/formats/fbx/domain/texture/semantic/body/charts/packing/grid.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,41 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Fixed semantic atlas columns, deterministic grid scoring, and checked
-//   - cell rectangles.
+//   - Grid domain module.
 // - Must-Not:
-//   - Inspect chart geometry, calculate UVs, or rasterize pixels.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Integer partitioning and stable tie preferences.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - A different packing policy needs independent region ownership.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Coordinate mapping becomes the sole owner of cell selection.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Integer semantic atlas grid policy.
+//   - Grid domain module.
 // - Description:
-//   - Distributes remainder pixels by exact boundaries and maximizes interior
-//   - chart dimensions.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Called by the packing facade once per semantic region and chart.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Region columns follow BodyRegion order and ties prefer fewer columns.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - true
-//   - Reason: semantic columns, grid scoring, and checked boundary distribution
-//   - form one deterministic integer layout contract.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Deterministic integer semantic atlas grid policy.
+//! Grid domain module.
+
 #![expect(
     clippy::arithmetic_side_effects,
     clippy::integer_division,
@@ -84,16 +69,14 @@ pub(super) fn semantic_column(
         .checked_mul(ordinal + 1)
         .ok_or(SemanticTextureError::NumericOverflow)?
         / count;
-    Ok(
-        PixelRect {
-            x: u32::try_from(x)
-                .map_err(|_error| SemanticTextureError::NumericOverflow)?,
-            y: 0,
-            width: u32::try_from(right - x)
-                .map_err(|_error| SemanticTextureError::NumericOverflow)?,
-            height: config.height,
-        },
-    )
+    Ok(PixelRect {
+        x: u32::try_from(x)
+            .map_err(|_error| SemanticTextureError::NumericOverflow)?,
+        y: 0,
+        width: u32::try_from(right - x)
+            .map_err(|_error| SemanticTextureError::NumericOverflow)?,
+        height: config.height,
+    })
 }
 
 /// Choose the grid with the largest minimum interior dimension.
@@ -103,10 +86,7 @@ pub(super) fn choose(
     count: usize,
     padding: u32,
 ) -> Result<Grid, SemanticTextureError> {
-    let mut best: Option<(
-        Grid,
-        GridScore,
-    )> = None;
+    let mut best: Option<(Grid, GridScore)> = None;
     for columns in 1..=count {
         let rows = count.div_ceil(columns);
         let columns_u32 = u32::try_from(columns)
@@ -140,15 +120,7 @@ pub(super) fn choose(
             .as_ref()
             .is_none_or(|(_grid, current)| score.stronger_than(current))
         {
-            best = Some(
-                (
-                    Grid {
-                        columns,
-                        rows,
-                    },
-                    score,
-                ),
-            );
+            best = Some((Grid { columns, rows }, score));
         }
     }
     best.map(|(grid, _score)| grid)
@@ -163,38 +135,19 @@ pub(super) fn cell(
 ) -> Result<PixelRect, SemanticTextureError> {
     let column = index % grid.columns;
     let row = index / grid.columns;
-    let left = partition_boundary(
-        region.x,
-        region.width,
-        column,
-        grid.columns,
-    )?;
-    let right = partition_boundary(
-        region.x,
-        region.width,
-        column + 1,
-        grid.columns,
-    )?;
-    let top = partition_boundary(
-        region.y,
-        region.height,
-        row,
-        grid.rows,
-    )?;
-    let bottom = partition_boundary(
-        region.y,
-        region.height,
-        row + 1,
-        grid.rows,
-    )?;
-    Ok(
-        PixelRect {
-            x: left,
-            y: top,
-            width: right - left,
-            height: bottom - top,
-        },
-    )
+    let left =
+        partition_boundary(region.x, region.width, column, grid.columns)?;
+    let right =
+        partition_boundary(region.x, region.width, column + 1, grid.columns)?;
+    let top = partition_boundary(region.y, region.height, row, grid.rows)?;
+    let bottom =
+        partition_boundary(region.y, region.height, row + 1, grid.rows)?;
+    Ok(PixelRect {
+        x: left,
+        y: top,
+        width: right - left,
+        height: bottom - top,
+    })
 }
 
 /// Stable integer score for one candidate grid.
@@ -211,10 +164,7 @@ struct GridScore {
 
 impl GridScore {
     /// Compare scores while preserving deterministic tie preferences.
-    const fn stronger_than(
-        &self,
-        other: &Self,
-    ) -> bool {
+    const fn stronger_than(&self, other: &Self) -> bool {
         self.minimum_dimension > other.minimum_dimension
             || (self.minimum_dimension == other.minimum_dimension
                 && (self.area > other.area

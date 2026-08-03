@@ -1,7 +1,3 @@
-// File:
-//   - options_run_tests.rs
-// Path: tests/migration/pipeline/unit/adapter-inbound/cli/options_run_tests.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,27 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Cooperative-run option parsing and log-isolation regressions.
+//   - Options run tests test module.
 // - Must-Not:
-//   - Acquire runtime leases, inspect processes, or execute pipeline stages.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Parse explicit argument vectors and compare derived run options.
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Pipeline run-option parser tests.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Options run tests test module.
+// - Description:
+//   - Implements the declared test module responsibility for pipeline.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression tests for cooperative pipeline run options.
+//! Options run tests test module.
 
 use std::path::PathBuf;
 
@@ -40,21 +38,15 @@ use crate::adapters::driven::RunMode;
 #[test]
 fn concurrent_run_label_and_default_log_isolation_are_explicit()
 -> Result<(), String> {
-    let parsed = parse_common_arguments(
-        &[
-            String::from("--allow-concurrent"),
-            String::from("--run-label=world-b"),
-            String::from("game"),
-        ],
-    )?;
+    let parsed = parse_common_arguments(&[
+        String::from("--allow-concurrent"),
+        String::from("--run-label=world-b"),
+        String::from("game"),
+    ])?;
     if parsed.run_mode() != RunMode::Concurrent {
         return Err(String::from("concurrent mode was not selected"));
     }
-    if parsed
-        .run_label()
-        .as_deref()
-        != Some("world-b")
-    {
+    if parsed.run_label().as_deref() != Some("world-b") {
         return Err(String::from("run label was not preserved"));
     }
     let expected = PathBuf::from("logs")
@@ -72,12 +64,10 @@ fn concurrent_run_label_and_default_log_isolation_are_explicit()
 
 #[test]
 fn explicit_concurrent_log_path_is_preserved() -> Result<(), String> {
-    let parsed = parse_common_arguments(
-        &[
-            String::from("--allow-concurrent"),
-            String::from("--log=logs/custom/shared.jsonl"),
-        ],
-    )?;
+    let parsed = parse_common_arguments(&[
+        String::from("--allow-concurrent"),
+        String::from("--log=logs/custom/shared.jsonl"),
+    ])?;
     let expected = Some(PathBuf::from("logs/custom/shared.jsonl"));
     if parsed.log_file_for_run("run-test") != expected {
         return Err(String::from("explicit concurrent log path changed"));

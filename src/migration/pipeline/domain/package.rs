@@ -1,7 +1,3 @@
-// File:
-//   - package.rs
-// Path: src/migration/pipeline/domain/package.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,45 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - The package contract for pipeline phase three.
+//   - Package domain module.
 // - Must-Not:
-//   - Violate repository architecture, path, provenance, or output rules.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Operations required to validate and execute package.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when package contains two independently testable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another pipeline module owns the same module boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Phase-three package intake.
+//   - Package domain module.
 // - Description:
-//   - Defines package data and behavior for pipeline phase three.
+//   - Implements the declared domain module responsibility for pipeline.
 // - Usage:
-//   - Used by pipeline phase three code that needs package.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No implicit output outside the repository is allowed.
-//
-// ADRs:
-// - docs/adr/pipeline/minor-unit-taxonomy-value-case.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Phase-three package intake.
-//! Phase-three package intake.
-//!
-//! Phase three starts from the package index instead of extraction internals.
-//! The modules below keep package reading and conversion planning reusable so
-//! future CLI commands, FBX adapters, and Unreal adapters share one contract.
+//! Package domain module.
 
-/// Package-index reader.
 pub mod index;
 /// Package conversion planner.
 pub mod plan;

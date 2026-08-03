@@ -1,7 +1,3 @@
-# File:
-#   - skill_document_layout.py
-# Path: src/unreal/editor-control/adapter-outbound/mcp/adapter_outbound/skill_document_layout.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,42 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Deterministic name-derived paths for generated Unreal MCP tool skills.
+#   - Skill document layout outbound adapter.
 # - Must-Not:
-#   - Render Markdown, access files, invoke Unreal, or classify behavior.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Mapping each native tool identity to exactly one focused skill file.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Toolset taxonomy and tool filename rules require separate versioning.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another adapter owns the same generated skill path contract.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Defines one name-derived path per native Unreal MCP tool.
+#   - Skill document layout outbound adapter.
 # - Description:
-#   - Converts registry words into semantic folders and tool names into files.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Shared by the central index and per-tool skill renderer.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Extracts shared sibling prefixes and drops generic path components.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: generated Unreal MCP per-tool skill path layout
-#   - reason: tokenization and collision checks form one path identity contract
-#   - split: extract tokenization if another generated surface consumes it
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess after native naming or taxonomy conventions change
-#
-"""Name-derived document layout for native Unreal MCP tool skills."""
+
+"""Skill document layout outbound adapter."""
 
 from __future__ import annotations
 
@@ -55,7 +38,8 @@ from typing import TYPE_CHECKING
 from mcp.domain.errors import fail_protocol
 
 if TYPE_CHECKING:
-    from mcp.domain.catalog import ToolDefinition, ToolsetDefinition
+    from mcp.domain.catalog import ToolDefinition
+    from mcp.domain.catalog import ToolsetDefinition
 
 _WORDS = re.compile(r"[A-Z]+(?=[A-Z][a-z]|\d|$)|[A-Z]?[a-z]+|[A-Z]+|\d+")
 _GENERIC_DROPPED_WORDS = frozenset({"tools"})
@@ -71,6 +55,7 @@ def tool_skill_path(
 
     Returns:
         Repository-relative path under `capabilities/`.
+
     """
     tool_words = _tool_words(tool.name)
     shared_prefix = _shared_tool_prefix(toolset, tool_words)

@@ -117,12 +117,14 @@ that license model or legal consequence true.
 - Public.Resource.Org (n.d.), *Wall Data Incorporated v. Los Angeles County
   Sheriff's Department*, 447 F.3d 769 (9th Cir. 2006), public-domain reporter
   duplicate. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://law.resource.org/pub/us/case/reporter/F3/447/447.F3d.769.03-56559.html>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://law.resource.org/pub/us/case/reporter/F3/447/447.F3d.769.03-56559.html> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - [17 U.S.C. § 107](../statutes/17-usc-107.md).
 - [17 U.S.C. § 117](../statutes/17-usc-117.md).
 - [MAI Systems Corp. v. Peak Computer, Inc.](mai-systems-v-peak-computer.md).
 - [Vernor v. Autodesk, Inc.](vernor-v-autodesk.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Lawful Copy And Local Game Modification](../doctrines/lawful-copy-and-local-game-modification.md).
+- [Lawful Copy And Local Game
+  Modification](../doctrines/lawful-copy-and-local-game-modification.md).

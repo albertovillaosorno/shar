@@ -1,7 +1,3 @@
-# File:
-#   - __init__.py
-# Path: src/unreal/project/composition/uproject/Scripts/__init__.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,36 +6,26 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - The import boundary for Unreal maintenance scripts.
+#   - Scripts composition module.
 # - Must-Not:
-#   - Run project generation or alter files during import.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Tests and launchers to import deterministic helpers.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - A script family gains an independent lifecycle.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another package owns this maintenance boundary.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Package marker for Unreal maintenance tooling.
+#   - Scripts composition module.
 # - Description:
-#   - Exposes project-generation and validation helpers.
+#   - Implements the declared composition module responsibility for project.
 # - Usage:
-#   - Imported by tests and project-generation entry points.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Package import invokes no external process.
-#
-# ADRs:
-# - docs/adr/pipeline/unreal/unreal-manifest-and-package-taxonomy.md
-#
-# Large file:
-#   - false
+#   - Invalid or missing inputs fail explicitly.
 #
 
-# ruff: noqa: N999 -- Unreal project paths are externally defined.
-
-"""Maintenance scripts owned by the SHAR Unreal project."""
+"""Scripts composition module."""

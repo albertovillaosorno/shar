@@ -1,7 +1,3 @@
-# File:
-#   - test_http_payload.py
-# Path: tests/unreal/editor-control/test_http_payload.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,56 +6,43 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Regression evidence for bounded JSON and SSE response decoding.
+#   - Test http payload test module.
 # - Must-Not:
-#   - Open sockets, invoke Unreal, or depend on external services.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - In-memory HTTP body and header fixtures.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - JSON and SSE fixtures require independent support classes.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another test module owns the same payload byte-limit contract.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Guards bounded native MCP response decoding.
+#   - Test http payload test module.
 # - Description:
-#   - Proves content-length and streamed overflow fail before allocation growth.
+#   - Implements the declared test module responsibility for editor control.
 # - Usage:
-#   - Executed by pytest through the canonical validator workflow.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Uses deliberately small byte ceilings for deterministic tests.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: bounded HTTP payload regression tests
-#   - reason: JSON, SSE, and header limits share one response boundary
-#   - split: split SSE fixtures if replay or reconnection is implemented
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess on responsibility or line-count growth
-#
-"""Regression tests for bounded native MCP HTTP payload decoding."""
+
+"""Test http payload test module."""
 
 from __future__ import annotations
 
-import sys
 from io import BytesIO
-from typing import TypeVar, overload
+import sys
+from typing import TypeVar
+from typing import overload
 
+from mcp.adapter_outbound.http_payload import read_bounded_body
+from mcp.adapter_outbound.http_payload import read_http_payload
+from mcp.adapter_outbound.http_payload import validate_max_response_bytes
+from mcp.domain.errors import ConfigurationError
+from mcp.domain.errors import ProtocolError
 import pytest
-from mcp.adapter_outbound.http_payload import (
-    read_bounded_body,
-    read_http_payload,
-    validate_max_response_bytes,
-)
-from mcp.domain.errors import ConfigurationError, ProtocolError
 
 _HeaderDefault = TypeVar("_HeaderDefault")
 
@@ -99,6 +82,7 @@ class MemoryResponse:
 
         Returns:
             The requested bytes or the remaining body.
+
         """
         return self._body.read() if amt is None else self._body.read(amt)
 
@@ -107,6 +91,7 @@ class MemoryResponse:
 
         Returns:
             One line or the remaining bounded fragment.
+
         """
         return self._body.readline(limit)
 

@@ -1,7 +1,3 @@
-// File:
-//   - main.rs
-// Path: src/formats/p3d/composition/main.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - The minimal single-package Pure3D process entrypoint.
+//   - Main composition module.
 // - Must-Not:
-//   - Decode arguments, select adapters, or execute use cases directly.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Delegation to the public driving adapter.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another process entrypoint is published.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - The package no longer publishes this executable.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Thin Pure3D single-package executable.
+//   - Main composition module.
 // - Description:
-//   - Delegates command behavior to the library-owned driving adapter.
+//   - Implements the declared composition module responsibility for p3d.
 // - Usage:
-//   - Invoked as the `p3d-extract` binary.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Exit status comes from the driving adapter.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Thin process entrypoint for single-package `Pure3D` extraction.
-//!
-//! All argument handling and dependency composition live in the driving
-//! adapter.
+//! Main composition module.
+
 use std::process::ExitCode;
 
 use schoenwald_cli as _;

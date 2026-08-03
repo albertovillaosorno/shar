@@ -1,12 +1,34 @@
-// File: SharApplicationTestFixtures.h
-// Path: src/unreal/project/composition/uproject/Source/SharApplication/Private/Tests/SharApplicationTestFixtures.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: explicit transient application-mode, catalog, request, evidence, and coordinator fixtures only.
-// Specification: docs/technical/unreal/application-lifecycle-and-mode-runtime.md
-// LARGE-FILE owner=SharApplication; reason=cohesive typed application lifecycle test fixtures;
-// split=extract catalog fixtures if overlay modes expand;
-// validation=validate.sh SharApplication plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar application test fixtures composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar application test fixtures composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar application test fixtures composition module.
 
 #pragma once
 

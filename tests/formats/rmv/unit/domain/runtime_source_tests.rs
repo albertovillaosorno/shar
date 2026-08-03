@@ -1,7 +1,3 @@
-// File:
-//   - runtime_source_tests.rs
-// Path: tests/formats/rmv/unit/domain/runtime_source_tests.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,43 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Focused regression coverage for runtime movie completion policy.
+//   - Runtime source tests test module.
 // - Must-Not:
-//   - Implement runtime completion policy or perform filesystem I/O.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Construct domain evidence and candidates for pure policy assertions.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when one independent runtime policy family exceeds this suite.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Merge when runtime completion policy returns to a smaller focused suite.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Runtime completion domain regressions.
+//   - Runtime source tests test module.
 // - Description:
-//   - Verifies fail-closed rule configuration and identity checks.
-//   - Verifies runtime format and size checks.
+//   - Implements the declared test module responsibility for rmv.
 // - Usage:
-//   - Compiled only for RMV domain tests.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No production behavior or external resources.
-//
-// ADRs:
-// - docs/adr/rmv/local-movie-overrides.md
-//
-// Large file:
-//   - true
-//   - Reason: this file is the cohesive runtime completion regression suite and
-//   - contains no production responsibilities.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Runtime completion policy regression coverage.
-//!
-//! These tests keep construction-heavy evidence out of the production policy
-//! module while exercising its public domain contract.
+//! Runtime source tests test module.
 
 use std::path::PathBuf;
 
@@ -74,9 +56,7 @@ fn fails_closed_without_runtime_candidate() {
         kind: MovieKind::OggNamedRmv,
     };
     assert_eq!(
-        rule.decide(
-            &evidence, None
-        ),
+        rule.decide(&evidence, None),
         RuntimeCompletionDecision::Incomplete {
             logical_name: "gracie".to_owned(),
             reason: "missing-runtime-candidate".to_owned(),
@@ -99,9 +79,7 @@ fn rejects_minimums_too_small_for_movie_bytes() {
             kind: MovieKind::OggNamedRmv,
         };
         assert_eq!(
-            rule.decide(
-                &evidence, None
-            ),
+            rule.decide(&evidence, None),
             RuntimeCompletionDecision::Incomplete {
                 logical_name: "gracie".to_owned(),
                 reason: "invalid-min-byte-len".to_owned(),
@@ -130,10 +108,7 @@ fn rejects_zero_minimum_completion_rules() {
         kind: MovieKind::BinkV1,
     };
     assert_eq!(
-        rule.decide(
-            &evidence,
-            Some(&candidate)
-        ),
+        rule.decide(&evidence, Some(&candidate)),
         RuntimeCompletionDecision::Incomplete {
             logical_name: "gracie".to_owned(),
             reason: "invalid-min-byte-len".to_owned(),
@@ -161,10 +136,7 @@ fn rejects_placeholder_kinds_as_complete_candidates() {
         kind: MovieKind::OggNamedRmv,
     };
     assert_eq!(
-        rule.decide(
-            &evidence,
-            Some(&candidate)
-        ),
+        rule.decide(&evidence, Some(&candidate)),
         RuntimeCompletionDecision::Incomplete {
             logical_name: "gracie".to_owned(),
             reason: "invalid-accepted-kind".to_owned(),
@@ -192,10 +164,7 @@ fn rejects_unknown_as_a_complete_candidate_kind() {
         kind: MovieKind::Unknown,
     };
     assert_eq!(
-        rule.decide(
-            &evidence,
-            Some(&candidate)
-        ),
+        rule.decide(&evidence, Some(&candidate)),
         RuntimeCompletionDecision::Incomplete {
             logical_name: "gracie".to_owned(),
             reason: "invalid-accepted-kind".to_owned(),
@@ -223,10 +192,7 @@ fn rejects_signature_only_completion_candidates() {
         kind: MovieKind::BinkV1,
     };
     assert_eq!(
-        rule.decide(
-            &evidence,
-            Some(&candidate)
-        ),
+        rule.decide(&evidence, Some(&candidate)),
         RuntimeCompletionDecision::Incomplete {
             logical_name: "gracie".to_owned(),
             reason: "candidate-truncated".to_owned(),
@@ -254,10 +220,7 @@ fn rejects_candidates_shorter_than_a_container_signature() {
         kind: MovieKind::BinkV1,
     };
     assert_eq!(
-        rule.decide(
-            &evidence,
-            Some(&candidate)
-        ),
+        rule.decide(&evidence, Some(&candidate)),
         RuntimeCompletionDecision::Incomplete {
             logical_name: "gracie".to_owned(),
             reason: "candidate-truncated".to_owned(),
@@ -285,10 +248,7 @@ fn rejects_empty_runtime_candidate() {
         kind: MovieKind::BinkV1,
     };
     assert_eq!(
-        rule.decide(
-            &evidence,
-            Some(&candidate)
-        ),
+        rule.decide(&evidence, Some(&candidate)),
         RuntimeCompletionDecision::Incomplete {
             logical_name: "gracie".to_owned(),
             reason: "candidate-empty".to_owned(),
@@ -316,10 +276,7 @@ fn rejects_replacement_when_source_is_already_complete() {
         kind: MovieKind::BinkV1,
     };
     assert_eq!(
-        rule.decide(
-            &evidence,
-            Some(&candidate)
-        ),
+        rule.decide(&evidence, Some(&candidate)),
         RuntimeCompletionDecision::Incomplete {
             logical_name: "gracie".to_owned(),
             reason: "source-already-complete".to_owned(),
@@ -334,8 +291,7 @@ fn rejects_invalid_logical_movie_names() {
         ".",
         "..",
         "folder/name",
-        r"folder
-// cspell:disable-next-line -- ame
+        "folder
 ame",
         "CON",
         "movie.",
@@ -354,9 +310,7 @@ ame",
             kind: MovieKind::OggNamedRmv,
         };
         assert_eq!(
-            rule.decide(
-                &evidence, None
-            ),
+            rule.decide(&evidence, None),
             RuntimeCompletionDecision::Incomplete {
                 logical_name: logical_name.to_owned(),
                 reason: "invalid-logical-name".to_owned(),
@@ -369,32 +323,25 @@ ame",
 #[test]
 fn rejects_unicode_expansion_aliases() {
     let rule = RuntimeCompletionRule {
-        // cspell:disable-next-line -- straße
         logical_name: "straße".to_owned(),
         accepted_kind: MovieKind::BinkV1,
         min_byte_len: 100_000,
     };
     let evidence = MovieEvidence {
-        // cspell:disable-next-line -- straße
         logical_name: "straße".to_owned(),
         byte_len: 2_887,
         sha256: hash(b"small"),
         kind: MovieKind::OggNamedRmv,
     };
     let candidate = RuntimeMovieCandidate {
-        // cspell:disable-next-line -- strasse
         path: PathBuf::from("selected/strasse.rmv"),
         byte_len: 851_028,
         sha256: hash(b"large"),
         kind: MovieKind::BinkV1,
     };
     assert_eq!(
-        rule.decide(
-            &evidence,
-            Some(&candidate)
-        ),
+        rule.decide(&evidence, Some(&candidate)),
         RuntimeCompletionDecision::Incomplete {
-            // cspell:disable-next-line -- straße
             logical_name: "straße".to_owned(),
             reason: "candidate-name-mismatch".to_owned(),
         }
@@ -404,34 +351,26 @@ fn rejects_unicode_expansion_aliases() {
 #[test]
 fn accepts_unicode_case_variants_of_movie_identity() {
     let rule = RuntimeCompletionRule {
-        // cspell:disable-next-line -- GRÄCIE
         logical_name: "GRÄCIE".to_owned(),
         accepted_kind: MovieKind::BinkV1,
         min_byte_len: 100_000,
     };
     let evidence = MovieEvidence {
-        // cspell:disable-next-line -- gräcie
         logical_name: "gräcie".to_owned(),
         byte_len: 2_887,
         sha256: hash(b"small"),
         kind: MovieKind::OggNamedRmv,
     };
     let candidate = RuntimeMovieCandidate {
-        // cspell:disable-next-line -- Gräcie
         path: PathBuf::from("selected/Gräcie.RMV"),
         byte_len: 851_028,
         sha256: hash(b"large"),
         kind: MovieKind::BinkV1,
     };
-    assert!(
-        matches!(
-            rule.decide(
-                &evidence,
-                Some(&candidate)
-            ),
-            RuntimeCompletionDecision::Ready { .. }
-        )
-    );
+    assert!(matches!(
+        rule.decide(&evidence, Some(&candidate)),
+        RuntimeCompletionDecision::Ready { .. }
+    ));
 }
 
 #[test]
@@ -453,15 +392,10 @@ fn accepts_ascii_case_variants_in_movie_evidence() {
         sha256: hash(b"large"),
         kind: MovieKind::BinkV1,
     };
-    assert!(
-        matches!(
-            rule.decide(
-                &evidence,
-                Some(&candidate)
-            ),
-            RuntimeCompletionDecision::Ready { .. }
-        )
-    );
+    assert!(matches!(
+        rule.decide(&evidence, Some(&candidate)),
+        RuntimeCompletionDecision::Ready { .. }
+    ));
 }
 
 #[test]
@@ -483,15 +417,10 @@ fn accepts_ascii_case_variants_of_the_same_movie_name() {
         sha256: hash(b"large"),
         kind: MovieKind::BinkV1,
     };
-    assert!(
-        matches!(
-            rule.decide(
-                &evidence,
-                Some(&candidate)
-            ),
-            RuntimeCompletionDecision::Ready { .. }
-        )
-    );
+    assert!(matches!(
+        rule.decide(&evidence, Some(&candidate)),
+        RuntimeCompletionDecision::Ready { .. }
+    ));
 }
 
 #[test]
@@ -514,10 +443,7 @@ fn rejects_candidate_for_a_different_movie_name() {
         kind: MovieKind::BinkV1,
     };
     assert_eq!(
-        rule.decide(
-            &evidence,
-            Some(&candidate)
-        ),
+        rule.decide(&evidence, Some(&candidate)),
         RuntimeCompletionDecision::Incomplete {
             logical_name: "gracie".to_owned(),
             reason: "candidate-name-mismatch".to_owned(),
@@ -545,10 +471,7 @@ fn accepts_distinct_runtime_candidate() {
         kind: MovieKind::BinkV1,
     };
     assert_eq!(
-        rule.decide(
-            &evidence,
-            Some(&candidate)
-        ),
+        rule.decide(&evidence, Some(&candidate)),
         RuntimeCompletionDecision::Ready {
             logical_name: "gracie".to_owned(),
             candidate_path: PathBuf::from("selected/gracie.rmv"),

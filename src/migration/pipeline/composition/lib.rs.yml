@@ -1,0 +1,5 @@
+schema: shar-surface/v1
+path: src/migration/pipeline/composition/lib.rs
+function: pipeline
+kind: facade
+authority: composition/lib.rs

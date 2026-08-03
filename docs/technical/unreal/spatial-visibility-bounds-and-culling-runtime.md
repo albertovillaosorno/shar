@@ -5,22 +5,29 @@
 
 ## Governing decisions and specifications
 
-<!-- markdownlint-disable-next-line MD013 -->
-- [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Staged mesh import and world assembly](../../adr/unreal/import-adapters/staged-mesh-import-and-world-assembly.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Staged mesh import and world assembly](../../adr/unreal/import-adapters/staged-mesh-import-and-world-assembly.md)
+- [HUD, radar, camera, and navigation
+  parity](../../adr/unreal/ui/hud-radar-camera-and-navigation.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [HUD, radar, camera, and navigation parity](../../adr/unreal/ui/hud-radar-camera-and-navigation.md)
+- [Native import, material rebuild, and world
+  assembly](native-import-material-and-world-assembly.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native import, material rebuild, and world assembly](native-import-material-and-world-assembly.md)
+- [Authored spatial placement and trigger
+  runtime](authored-spatial-placement-and-trigger-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Authored spatial placement and trigger runtime](authored-spatial-placement-and-trigger-runtime.md)
+- [Camera rig, preset, and arbitration
+  runtime](camera-rig-preset-and-arbitration-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Camera rig, preset, and arbitration runtime](camera-rig-preset-and-arbitration-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md)
+- [Native asset load request and streaming
+  runtime](native-asset-load-request-and-streaming-runtime.md)
 
 ## Purpose
 
@@ -59,16 +66,30 @@ what the renderer should draw.
 
 <!-- markdownlint-disable MD013 -->
 
-| Service | Authority |
-| :--- | :--- |
-| Unreal renderer | Per-view primitive visibility, frustum rejection, supported occlusion, render-thread scene state, and final draw submission. |
-| Primitive or component | Accurate local bounds, world transform, mobility, LOD, draw distance, and render-state invalidation. |
-| Camera subsystem | Accepted view, projection, near plane, field of view, viewport, and camera revision. |
-| World-composition service | World Partition, Runtime Data Layers, streaming sources, HLOD membership, and region readiness. |
-| Spatial build service | Deterministic converted cell evidence, weighted partition diagnostics, and versioned build artifacts. |
-| Visibility-policy service | Explicit mission, interaction, interior, feature, or accessibility visibility commands. |
-| Asset-streaming service | Admission, residency, cancellation, and release of streamable world content. |
-| Diagnostics service | Bounds, cell, frustum, culling, occlusion, and overdraw inspection without gameplay mutation. |
+- **Service:** Unreal renderer
+  - **Authority:** Per-view primitive visibility, frustum rejection, supported
+    occlusion, render-thread scene state, and final draw submission.
+- **Service:** Primitive or component
+  - **Authority:** Accurate local bounds, world transform, mobility, LOD, draw
+    distance, and render-state invalidation.
+- **Service:** Camera subsystem
+  - **Authority:** Accepted view, projection, near plane, field of view,
+    viewport, and camera revision.
+- **Service:** World-composition service
+  - **Authority:** World Partition, Runtime Data Layers, streaming sources, HLOD
+    membership, and region readiness.
+- **Service:** Spatial build service
+  - **Authority:** Deterministic converted cell evidence, weighted partition
+    diagnostics, and versioned build artifacts.
+- **Service:** Visibility-policy service
+  - **Authority:** Explicit mission, interaction, interior, feature, or
+    accessibility visibility commands.
+- **Service:** Asset-streaming service
+  - **Authority:** Admission, residency, cancellation, and release of streamable
+    world content.
+- **Service:** Diagnostics service
+  - **Authority:** Bounds, cell, frustum, culling, occlusion, and overdraw
+    inspection without gameplay mutation.
 
 <!-- markdownlint-enable MD013 -->
 

@@ -31,8 +31,9 @@ companion files may identify people even when the record contains no email
 address or account identifier.
 
 The technical handling contract is
-<!-- markdownlint-disable-next-line MD013 -->
-[Historical source-document evidence classification and publication boundary](../../technical/unreal/historical-source-document-evidence-classification-and-publication-boundary.md).
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+[Historical source-document evidence classification and publication boundary](../../technical/unreal/historical-source-document-evidence-classification-and-publication-boundary.md). <!-- markdownlint-disable-line MD013 -->
 Administrative and personal-data evidence is private by default and normally
 produces no public content.
 

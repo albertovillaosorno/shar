@@ -1,0 +1,5 @@
+schema: shar-surface/v1
+path: src/migration/manifest/composition/lib.rs
+function: manifest
+kind: facade
+authority: composition/lib.rs

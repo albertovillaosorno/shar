@@ -5,43 +5,61 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
+- [Common UI front end and progress
+  projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
+- [Collector cards, coins, rewards, gags, and
+  wasps](../../adr/gameplay/collectibles/collectibles-rewards-gags-and-wasps.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Native flying-hazard actors and StateTree execution](../../adr/unreal/runtime/native-flying-hazard-actors-and-state-trees.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Collector cards, coins, rewards, gags, and wasps](../../adr/gameplay/collectibles/collectibles-rewards-gags-and-wasps.md)
+- [Flying-hazard and projectile
+  runtime](flying-hazard-and-projectile-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native flying-hazard actors and StateTree execution](../../adr/unreal/runtime/native-flying-hazard-actors-and-state-trees.md)
+- [Mission world-entity and respawn
+  runtime](mission-world-entity-and-respawn-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Flying-hazard and projectile runtime](flying-hazard-and-projectile-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Mission world-entity and respawn runtime](mission-world-entity-and-respawn-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
+- [Data-driven Unreal gameplay content
+  catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md) <!-- markdownlint-disable-line MD013 -->
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
+- [Portable save storage and
+  lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+- [Frontend screen flow and settings
+  runtime](frontend-screen-flow-and-settings-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md)
+- [HUD feedback cue and presentation-primitives
+  runtime](hud-feedback-cue-and-presentation-primitives-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [HUD feedback cue and presentation-primitives runtime](hud-feedback-cue-and-presentation-primitives-runtime.md)
+- [Playable avatar, character controller, and footprint
+  runtime](playable-avatar-character-controller-and-footprint-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
+- [Transient VFX and breakable-presentation
+  runtime](transient-vfx-and-breakable-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md)
+- [Native audio device, resource, player, and tuning adapter
+  runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
+- [Mission briefing, result, and replay UI
+  runtime](mission-briefing-result-and-replay-ui-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Mission briefing, result, and replay UI runtime](mission-briefing-result-and-replay-ui-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Reward browser, preview, and purchase UI runtime](reward-browser-preview-and-purchase-ui-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md)
+- [Reward browser, preview, and purchase UI
+  runtime](reward-browser-preview-and-purchase-ui-runtime.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md) <!-- markdownlint-disable-line MD013 -->
 
 ## Purpose
 
@@ -82,17 +100,35 @@ The root gameplay catalog references the following generated assets:
 
 <!-- markdownlint-disable MD013 -->
 
-| Asset | Primary asset type | Purpose |
-| :--- | :--- | :--- |
-| Progression catalog | `SharProgressionCatalog` | Currency, collectible sets, rewards, and completion rules. |
-| Meta catalog | `SharMetaCatalog` | Cheat definitions, credits sequences, and calendar themes. |
-| Currency source table | `FSharCurrencySourceRow` | World, reward, penalty, repair, purchase, and cheat transactions. |
-| Collectible table | `FSharCollectibleRow` | Card and other collectible identities. |
-| Collectible placement table | `FSharCollectiblePlacementRow` | Level-scoped placement and consumption state. |
-| Collectible-set table | `FSharCollectibleSetRow` | Deck membership and completion rewards. |
-| Cheat definitions | `FSharCheatDefinition` | Logical sequence, prerequisites, lifetime, typed effect, and feedback identities. |
-| Credits table | `FSharCreditsSequenceRow` | Ordered rows, cues, playback mode, and return state. |
-| Calendar-theme table | `FSharCalendarThemeRow` | Date predicate and presentation-only overrides. |
+- **Asset:** Progression catalog
+  - **Primary asset type:** `SharProgressionCatalog`
+  - **Purpose:** Currency, collectible sets, rewards, and completion rules.
+- **Asset:** Meta catalog
+  - **Primary asset type:** `SharMetaCatalog`
+  - **Purpose:** Cheat definitions, credits sequences, and calendar themes.
+- **Asset:** Currency source table
+  - **Primary asset type:** `FSharCurrencySourceRow`
+  - **Purpose:** World, reward, penalty, repair, purchase, and cheat
+    transactions.
+- **Asset:** Collectible table
+  - **Primary asset type:** `FSharCollectibleRow`
+  - **Purpose:** Card and other collectible identities.
+- **Asset:** Collectible placement table
+  - **Primary asset type:** `FSharCollectiblePlacementRow`
+  - **Purpose:** Level-scoped placement and consumption state.
+- **Asset:** Collectible-set table
+  - **Primary asset type:** `FSharCollectibleSetRow`
+  - **Purpose:** Deck membership and completion rewards.
+- **Asset:** Cheat definitions
+  - **Primary asset type:** `FSharCheatDefinition`
+  - **Purpose:** Logical sequence, prerequisites, lifetime, typed effect, and
+    feedback identities.
+- **Asset:** Credits table
+  - **Primary asset type:** `FSharCreditsSequenceRow`
+  - **Purpose:** Ordered rows, cues, playback mode, and return state.
+- **Asset:** Calendar-theme table
+  - **Primary asset type:** `FSharCalendarThemeRow`
+  - **Purpose:** Date predicate and presentation-only overrides.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -106,17 +142,33 @@ Canonical identifiers are stable lowercase `snake_case` values.
 
 <!-- markdownlint-disable MD013 -->
 
-| Domain | Identity examples | Rule |
-| :--- | :--- | :--- |
-| Currency | `coins` | One global spendable balance. |
-| Card set | `collector_cards_level_01` | One set per gameplay level. |
-| Card | `collector_card_level_01_01` | One stable identity per card and level ordinal. |
-| Destructible source | `cola_crate`, `vending_machine` | Definition identity, not placement identity. |
-| Placement | deterministic opaque placement identity | One consumed-state key per authored instance. |
-| Reward | `bonus_map_level_01`, `movie_ticket` | Explicit unlock identity. |
-| Cheat | `unlock_cards`, `extra_coins` | Logical effect identity, never a button sequence. |
-| Credits | `front_end_credits`, `post_ending_credits` | Distinct playback and return contracts. |
-| Calendar theme | `christmas_menu`, `halloween_menu` | Presentation-only date rule. |
+- **Domain:** Currency
+  - **Identity examples:** `coins`
+  - **Rule:** One global spendable balance.
+- **Domain:** Card set
+  - **Identity examples:** `collector_cards_level_01`
+  - **Rule:** One set per gameplay level.
+- **Domain:** Card
+  - **Identity examples:** `collector_card_level_01_01`
+  - **Rule:** One stable identity per card and level ordinal.
+- **Domain:** Destructible source
+  - **Identity examples:** `cola_crate`, `vending_machine`
+  - **Rule:** Definition identity, not placement identity.
+- **Domain:** Placement
+  - **Identity examples:** deterministic opaque placement identity
+  - **Rule:** One consumed-state key per authored instance.
+- **Domain:** Reward
+  - **Identity examples:** `bonus_map_level_01`, `movie_ticket`
+  - **Rule:** Explicit unlock identity.
+- **Domain:** Cheat
+  - **Identity examples:** `unlock_cards`, `extra_coins`
+  - **Rule:** Logical effect identity, never a button sequence.
+- **Domain:** Credits
+  - **Identity examples:** `front_end_credits`, `post_ending_credits`
+  - **Rule:** Distinct playback and return contracts.
+- **Domain:** Calendar theme
+  - **Identity examples:** `christmas_menu`, `halloween_menu`
+  - **Rule:** Presentation-only date rule.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -131,18 +183,26 @@ accepted state. Every change is an immutable `FSharCurrencyTransaction` with:
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `TransactionId` | Deterministic unique identity within the save revision. |
-| `CurrencyId` | Canonical currency identity. |
-| `Reason` | Controlled source or sink kind. |
-| `Amount` | Positive grant or negative debit. |
-| `SourceDefinitionId` | Optional reward, purchase, penalty, or cheat identity. |
-| `PlacementId` | Required for one-time world sources. |
-| `LevelId` | Level context without changing the global balance. |
-| `MissionId` | Optional mission context. |
-| `TimestampOrdinal` | Deterministic transaction order, not wall-clock authority. |
-| `SavePolicy` | Persistent, transient-drop, or session-only. |
+- **Field:** `TransactionId`
+  - **Contract:** Deterministic unique identity within the save revision.
+- **Field:** `CurrencyId`
+  - **Contract:** Canonical currency identity.
+- **Field:** `Reason`
+  - **Contract:** Controlled source or sink kind.
+- **Field:** `Amount`
+  - **Contract:** Positive grant or negative debit.
+- **Field:** `SourceDefinitionId`
+  - **Contract:** Optional reward, purchase, penalty, or cheat identity.
+- **Field:** `PlacementId`
+  - **Contract:** Required for one-time world sources.
+- **Field:** `LevelId`
+  - **Contract:** Level context without changing the global balance.
+- **Field:** `MissionId`
+  - **Contract:** Optional mission context.
+- **Field:** `TimestampOrdinal`
+  - **Contract:** Deterministic transaction order, not wall-clock authority.
+- **Field:** `SavePolicy`
+  - **Contract:** Persistent, transient-drop, or session-only.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -246,10 +306,12 @@ audio, sparkle, HUD, callback, and ownership field before reuse.
 
 Coin collection sounds follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md).
+[Native audio device, resource, player, and tuning adapter
+runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md).
 Sparkles and collection effects follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md).
+[Transient VFX and breakable-presentation
+runtime](transient-vfx-and-breakable-presentation-runtime.md).
 
 ### Attraction and collection presentation
 
@@ -320,16 +382,22 @@ completion key is the ordered pair of `LevelId` and `GagPlacementId`.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `LevelId` | Exact level variant that owns the completion. |
-| `GagPlacementId` | Stable interaction placement identity. |
-| `GagDefinitionId` | Reusable gag concept and presentation identity. |
-| `LocationId` | Canonical exterior or interior location. |
-| `RewardPolicyId` | Optional exactly-once reward transaction. |
-| `CompletionKey` | Durable level-scoped save identity. |
-| `CountsForLevelCompletion` | Whether the placement contributes to the level gag total. |
-| `ReplayPolicy` | Whether presentation may replay after completion. |
+- **Field:** `LevelId`
+  - **Contract:** Exact level variant that owns the completion.
+- **Field:** `GagPlacementId`
+  - **Contract:** Stable interaction placement identity.
+- **Field:** `GagDefinitionId`
+  - **Contract:** Reusable gag concept and presentation identity.
+- **Field:** `LocationId`
+  - **Contract:** Canonical exterior or interior location.
+- **Field:** `RewardPolicyId`
+  - **Contract:** Optional exactly-once reward transaction.
+- **Field:** `CompletionKey`
+  - **Contract:** Durable level-scoped save identity.
+- **Field:** `CountsForLevelCompletion`
+  - **Contract:** Whether the placement contributes to the level gag total.
+- **Field:** `ReplayPolicy`
+  - **Contract:** Whether presentation may replay after completion.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -392,7 +460,8 @@ mutation.
 - Repairing a destroyed selected vehicle through the retrieval interface costs
   10 coins when the repair condition applies. Eligibility, insufficient-currency
   rejection, health persistence, delivery, and rollback follow
-  [Vehicle retrieval and phone-booth runtime](vehicle-retrieval-and-phone-booth-runtime.md).
+  [Vehicle retrieval and phone-booth
+  runtime](vehicle-retrieval-and-phone-booth-runtime.md).
 - A wasp hit or destruction of the currently driven vehicle may emit a
   recoverable transient drop according to its definition.
 - Recoverable dropped coins retain a source batch identity and expiration. A
@@ -517,10 +586,12 @@ The shared card catalog uses a closed subtype:
 
 <!-- markdownlint-disable MD013 -->
 
-| Subtype | Contract |
-| :--- | :--- |
-| `collector` | Counted world collectible that belongs to one seven-card level set. |
-| `bonus` | Non-collector card metadata used only by an explicitly owning presentation or reward definition. |
+- **Subtype:** `collector`
+  - **Contract:** Counted world collectible that belongs to one seven-card level
+    set.
+- **Subtype:** `bonus`
+  - **Contract:** Non-collector card metadata used only by an explicitly owning
+    presentation or reward definition.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -704,7 +775,8 @@ close a replacement screen.
 
 Card-collected, chapter-set-complete, complete-deck, and unlock feedback follows
 <!-- markdownlint-disable-next-line MD013 -->
-[HUD feedback cue and presentation-primitives runtime](hud-feedback-cue-and-presentation-primitives-runtime.md).
+[HUD feedback cue and presentation-primitives
+runtime](hud-feedback-cue-and-presentation-primitives-runtime.md).
 Those cues project committed progression and cannot grant collection or unlocks.
 
 ## Frontend card and mission galleries
@@ -728,7 +800,8 @@ save, progression, mission, participant, checkpoint, content, and isolation
 revisions. Widget exit, image load, or transition animation cannot start replay.
 Detailed screen and asset lifetime follows the
 <!-- markdownlint-disable-next-line MD013 -->
-[frontend screen flow and settings runtime](frontend-screen-flow-and-settings-runtime.md).
+[frontend screen flow and settings
+runtime](frontend-screen-flow-and-settings-runtime.md).
 
 ## Chapter and game progress projection
 
@@ -758,18 +831,36 @@ Portable state is decomposed by domain and stable identity:
 
 <!-- markdownlint-disable MD013 -->
 
-| Domain | Authoritative state |
-| :--- | :--- |
-| Campaign | Current chapter boundary, completed story missions, and accepted chapter transitions. |
-| Mission | Active mission checkpoint and completed mission transaction identities. |
-| Side activities | Completed bonus mission, street race, wager, taxi, and boss identities. |
-| Collectibles | Collected card, wasp, gag, and other placement transaction identities. |
-| Economy | Ordered currency ledger and permanent purchase identities. |
-| Characters and costumes | Unlocked, currently eligible, purchased, and equipped identities. |
-| Vehicles | Ownership, access, active vehicle, damage, repair, and retrieval state. |
-| Media and tutorials | Explicit viewed, unlocked, or acknowledged identities. |
-| Achievements | Accepted counters and completion identities under the achievement schema. |
-| World | Discovery, interiors, connectors, expansions, persistent placements, and clock state. |
+- **Domain:** Campaign
+  - **Authoritative state:** Current chapter boundary, completed story missions,
+    and accepted chapter transitions.
+- **Domain:** Mission
+  - **Authoritative state:** Active mission checkpoint and completed mission
+    transaction identities.
+- **Domain:** Side activities
+  - **Authoritative state:** Completed bonus mission, street race, wager, taxi,
+    and boss identities.
+- **Domain:** Collectibles
+  - **Authoritative state:** Collected card, wasp, gag, and other placement
+    transaction identities.
+- **Domain:** Economy
+  - **Authoritative state:** Ordered currency ledger and permanent purchase
+    identities.
+- **Domain:** Characters and costumes
+  - **Authoritative state:** Unlocked, currently eligible, purchased, and
+    equipped identities.
+- **Domain:** Vehicles
+  - **Authoritative state:** Ownership, access, active vehicle, damage, repair,
+    and retrieval state.
+- **Domain:** Media and tutorials
+  - **Authoritative state:** Explicit viewed, unlocked, or acknowledged
+    identities.
+- **Domain:** Achievements
+  - **Authoritative state:** Accepted counters and completion identities under
+    the achievement schema.
+- **Domain:** World
+  - **Authoritative state:** Discovery, interiors, connectors, expansions,
+    persistent placements, and clock state.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -965,16 +1056,24 @@ The cheat definition never stores a platform-specific key code as its identity.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `CheatId` | Stable logical effect identity. |
-| `InputTokens` | Exactly four logical input tokens. |
-| `Prerequisite` | None, loaded profile, completed story, or developer build. |
-| `ActivationMode` | Enable-only, toggle, or immediate command. |
-| `Lifetime` | Session, current chapter boundary, current mission, or persistent transaction. |
-| `EffectKind` | Controlled effect taxonomy. |
-| `EffectParameters` | Typed parameters owned by the receiving subsystem. |
-| `SuccessFeedbackEvent`, `UnavailableFeedbackEvent`, `DisabledFeedbackEvent`, `InvalidSequenceFeedbackEvent` | Typed local-player feedback identities. |
+- **Field:** `CheatId`
+  - **Contract:** Stable logical effect identity.
+- **Field:** `InputTokens`
+  - **Contract:** Exactly four logical input tokens.
+- **Field:** `Prerequisite`
+  - **Contract:** None, loaded profile, completed story, or developer build.
+- **Field:** `ActivationMode`
+  - **Contract:** Enable-only, toggle, or immediate command.
+- **Field:** `Lifetime`
+  - **Contract:** Session, current chapter boundary, current mission, or
+    persistent transaction.
+- **Field:** `EffectKind`
+  - **Contract:** Controlled effect taxonomy.
+- **Field:** `EffectParameters`
+  - **Contract:** Typed parameters owned by the receiving subsystem.
+- **Field:** `SuccessFeedbackEvent`, `UnavailableFeedbackEvent`,
+  `DisabledFeedbackEvent`, `InvalidSequenceFeedbackEvent`
+  - **Contract:** Typed local-player feedback identities.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -991,8 +1090,9 @@ one explicit activation
 chord or action. Platform button labels are presentation only.
 
 Historical cheat tables are private evidence normalized through
-<!-- markdownlint-disable-next-line MD013 -->
-[Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md).
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+[Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md). <!-- markdownlint-disable-line MD013 -->
 They may corroborate semantic effect identity and platform-era physical labels,
 but source numeric identifiers, file order, prose, spacing, and physical button
 codes do not become target identity or executable runtime data.
@@ -1081,10 +1181,12 @@ Credits are deterministic presentation sequences with two entry modes:
 
 <!-- markdownlint-disable MD013 -->
 
-| Sequence | Entry | Return contract |
-| :--- | :--- | :--- |
-| `front_end_credits` | Explicit front-end selection | Return to the invoking front-end state. |
-| `post_ending_credits` | Final mission and ending transition | Continue to the declared post-ending front-end state. |
+- **Sequence:** `front_end_credits`
+  - **Entry:** Explicit front-end selection
+  - **Return contract:** Return to the invoking front-end state.
+- **Sequence:** `post_ending_credits`
+  - **Entry:** Final mission and ending transition
+  - **Return contract:** Continue to the declared post-ending front-end state.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -1093,8 +1195,9 @@ presentation style, scroll timing, optional dialogue cue, optional music cue,
 optional sound-mix override, skippability, and minimum display policy.
 
 Historical credits lists are candidate attribution evidence handled through
-<!-- markdownlint-disable-next-line MD013 -->
-[Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md).
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+[Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md). <!-- markdownlint-disable-line MD013 -->
 Every public row requires exact name, spelling, role, organization, ordering,
 notice, rights, and source verification. Historical prose, formatting, special-
 thanks text, and unreviewed names are not imported automatically.
@@ -1129,17 +1232,26 @@ Intentional environmental references use `FSharEnvironmentalReferenceRow` with:
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `ReferenceId` | Stable presentation identity. |
-| `LevelIds` | Exact level contexts in which it is observable. |
-| `LocationId` | Canonical owning location. |
-| `PlacementId` | Deterministic world placement or ambience zone. |
-| `ReferenceKind` | Prop, texture, architecture variant, ambience, pedestrian, gag, or collectible metadata. |
-| `PresentationAssets` | Soft references loaded through the owning location bundle. |
-| `InteractionPolicy` | None, inspect, activate, destroy, collect, or ambience trigger. |
-| `ProgressionEffect` | Explicit reward identity or none. |
-| `LegacyStatus` | Intentional, accidental out-of-bounds, or unused. |
+- **Field:** `ReferenceId`
+  - **Contract:** Stable presentation identity.
+- **Field:** `LevelIds`
+  - **Contract:** Exact level contexts in which it is observable.
+- **Field:** `LocationId`
+  - **Contract:** Canonical owning location.
+- **Field:** `PlacementId`
+  - **Contract:** Deterministic world placement or ambience zone.
+- **Field:** `ReferenceKind`
+  - **Contract:** Prop, texture, architecture variant, ambience, pedestrian,
+    gag, or collectible metadata.
+- **Field:** `PresentationAssets`
+  - **Contract:** Soft references loaded through the owning location bundle.
+- **Field:** `InteractionPolicy`
+  - **Contract:** None, inspect, activate, destroy, collect, or ambience
+    trigger.
+- **Field:** `ProgressionEffect`
+  - **Contract:** Explicit reward identity or none.
+- **Field:** `LegacyStatus`
+  - **Contract:** Intentional, accidental out-of-bounds, or unused.
 
 <!-- markdownlint-enable MD013 -->
 

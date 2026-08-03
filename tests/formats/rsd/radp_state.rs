@@ -1,7 +1,3 @@
-// File:
-//   - radp_state.rs
-// Path: tests/formats/rsd/radp_state.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,49 +6,36 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Public regression coverage for malformed RADP predictor state.
+//   - Radp state test module.
 // - Must-Not:
-//   - Depend on private audio files or internal decoder functions.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic RADP frames and caller-visible PCM assertions.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when RADP sample layout needs a separate fixture family.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another RSD test module owns the same predictor-state contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Verifies invalid RADP state headers fail before sample decoding.
+//   - Radp state test module.
 // - Description:
-//   - Exercises public conversion for out-of-range RADP step indexes.
+//   - Implements the declared test module responsibility for rsd.
 // - Usage:
-//   - Executed through cargo test for the rsd crate.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Fixtures remain synthetic, deterministic, and repository-local.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Public regression coverage for malformed RADP predictor state.
-//!
-//! Synthetic frames prove invalid indexes fail without private audio inputs.
+//! Radp state test module.
 
 use rsd::{RsdAudio, RsdError};
+use same_file as _;
 use schoenwald_cli as _;
 use schoenwald_filesystem as _;
 
-fn copy_fixture_bytes(
-    data: &mut [u8],
-    start: usize,
-    bytes: &[u8],
-) -> bool {
+fn copy_fixture_bytes(data: &mut [u8], start: usize, bytes: &[u8]) -> bool {
     let Some(end) = start.checked_add(bytes.len()) else {
         return false;
     };
@@ -66,70 +49,44 @@ fn copy_fixture_bytes(
 fn radp_with_index(index: i16) -> Vec<u8> {
     let mut data = vec![0_u8; 0x800];
     assert!(
-        copy_fixture_bytes(
-            &mut data, 0, b"RSD4"
-        ),
+        copy_fixture_bytes(&mut data, 0, b"RSD4"),
         "fixture magic should fit"
     );
     assert!(
-        copy_fixture_bytes(
-            &mut data, 4, b"RADP"
-        ),
+        copy_fixture_bytes(&mut data, 4, b"RADP"),
         "fixture encoding should fit"
     );
     assert!(
-        copy_fixture_bytes(
-            &mut data,
-            8,
-            &1_u32.to_le_bytes(),
-        ),
+        copy_fixture_bytes(&mut data, 8, &1_u32.to_le_bytes(),),
         "fixture channel count should fit"
     );
     assert!(
-        copy_fixture_bytes(
-            &mut data,
-            12,
-            &16_u32.to_le_bytes(),
-        ),
+        copy_fixture_bytes(&mut data, 12, &16_u32.to_le_bytes(),),
         "fixture bit depth should fit"
     );
     assert!(
-        copy_fixture_bytes(
-            &mut data,
-            16,
-            &24_000_u32.to_le_bytes(),
-        ),
+        copy_fixture_bytes(&mut data, 16, &24_000_u32.to_le_bytes(),),
         "fixture sample rate should fit"
     );
     let reserved = vec![b'*'; 0x80 - 20];
     assert!(
-        copy_fixture_bytes(
-            &mut data, 20, &reserved,
-        ),
+        copy_fixture_bytes(&mut data, 20, &reserved,),
         "fixture reserved metadata should fit"
     );
     let padding = vec![b'-'; 0x800 - 0x80];
     assert!(
-        copy_fixture_bytes(
-            &mut data, 0x80, &padding,
-        ),
+        copy_fixture_bytes(&mut data, 0x80, &padding,),
         "fixture sector padding should fit"
     );
     data.extend_from_slice(&index.to_le_bytes());
     data.extend_from_slice(&0_i16.to_le_bytes());
-    data.extend(
-        std::iter::repeat_n(
-            0_u8, 16,
-        ),
-    );
+    data.extend(std::iter::repeat_n(0_u8, 16));
     data
 }
 
 #[test]
 fn radp_out_of_range_indexes_are_rejected() {
-    for index in [
-        -1_i16, 89_i16,
-    ] {
+    for index in [-1_i16, 89_i16] {
         let data = radp_with_index(index);
         let parsed = RsdAudio::parse(&data);
         assert!(

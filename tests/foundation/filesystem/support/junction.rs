@@ -1,7 +1,3 @@
-// File:
-//   - junction.rs
-// Path: tests/foundation/filesystem/support/junction.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Shared platform fixtures for filesystem integration tests.
+//   - Junction test module.
 // - Must-Not:
-//   - Assert product behavior or expose machine-specific paths.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Create bounded local link fixtures with explicit cleanup ownership.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another platform fixture has independent lifecycle policy.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test support module owns the same fixture command.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Filesystem integration test support.
+//   - Junction test module.
 // - Description:
-//   - Centralizes reliable platform setup without duplicating assertions.
+//   - Implements the declared test module responsibility for filesystem.
 // - Usage:
-//   - Imported only by filesystem integration tests under matching cfg gates.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Callers own fixture cleanup after each assertion.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Shared platform fixtures for filesystem integration tests.
-//!
-//! Assertion policy stays in each owning integration test.
+//! Junction test module.
+
 use std::path::Path;
 
 /// Creates one Windows junction for a bounded integration-test fixture.
@@ -50,10 +37,7 @@ use std::path::Path;
 /// # Errors
 ///
 /// Returns a diagnostic when the platform command cannot create the junction.
-pub fn create_junction(
-    link: &Path,
-    target: &Path,
-) -> Result<(), String> {
+pub fn create_junction(link: &Path, target: &Path) -> Result<(), String> {
     let link_status = std::process::Command::new("cmd")
         .arg("/C")
         .arg("mklink")

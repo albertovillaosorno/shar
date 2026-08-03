@@ -1,7 +1,3 @@
-// File:
-//   - semantic_body_texture_patterned.rs
-// Path: tests/formats/fbx/semantic_body_texture_patterned.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,37 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Anchored patterned-detail semantic atlas behavior regression.
+//   - Semantic body texture patterned test module.
 // - Must-Not:
-//   - Read extracted assets or weaken arbitrary mixed-triangle rejection.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Source-versus-atlas sampling and topology-invariance assertions.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - More source-UV chart families require independent test transactions.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - General semantic body tests own patterned-detail behavior completely.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Patterned semantic body atlas regression.
+//   - Semantic body texture patterned test module.
 // - Description:
-//   - Proves one safe anchored pattern survives atlas remapping exactly.
+//   - Implements the declared test module responsibility for fbx.
 // - Usage:
-//   - Runs with the complete FBX package integration test suite.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Every interior sample must retain exact source texel ownership.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Patterned semantic body atlas regression.
+//! Semantic body texture patterned test module.
+
 #[path = "common/semantic_patterned_body.rs"]
 mod semantic_patterned_body;
 
@@ -62,18 +51,10 @@ use shar_sha256 as _;
 fn preserves_one_anchored_pattern_without_topology_changes()
 -> Result<(), String> {
     let (character, source, recipe) = patterned_body_fixture()?;
-    let source_group = &character.parts[0]
-        .mesh
-        .groups[0];
-    let planned = plan_body_texture(
-        &character, &source, &recipe,
-    )
-    .map_err(|error| format!("patterned plan failed: {error:?}"))?;
-    let remapped_group = &planned
-        .remapped_character
-        .parts[0]
-        .mesh
-        .groups[0];
+    let source_group = &character.parts[0].mesh.groups[0];
+    let planned = plan_body_texture(&character, &source, &recipe)
+        .map_err(|error| format!("patterned plan failed: {error:?}"))?;
+    let remapped_group = &planned.remapped_character.parts[0].mesh.groups[0];
     if remapped_group.positions != source_group.positions
         || remapped_group.triangles != source_group.triangles
     {
@@ -114,38 +95,32 @@ fn preserves_one_anchored_pattern_without_topology_changes()
                     continue;
                 }
                 let weights = [
-                    f32::from(first) / 8.0,
-                    f32::from(second) / 8.0,
-                    f32::from(third) / 8.0,
+                    f32::from(first) / 8.,
+                    f32::from(second) / 8.,
+                    f32::from(third) / 8.,
                 ];
                 let expected = source
                     .sample_uv_v_up_with_address_mode(
-                        interpolate(
-                            source_uvs, weights,
-                        ),
+                        interpolate(source_uvs, weights),
                         TextureAddressMode::Clamp,
                     )
-                    .map_err(
-                        |error| format!("source sample failed: {error:?}"),
-                    )?;
+                    .map_err(|error| {
+                        format!("source sample failed: {error:?}")
+                    })?;
                 let actual = planned
                     .atlas
                     .sample_uv_v_up_with_address_mode(
-                        interpolate(
-                            atlas_uvs, weights,
-                        ),
+                        interpolate(atlas_uvs, weights),
                         TextureAddressMode::Clamp,
                     )
-                    .map_err(
-                        |error| format!("atlas sample failed: {error:?}"),
-                    )?;
+                    .map_err(|error| {
+                        format!("atlas sample failed: {error:?}")
+                    })?;
                 if actual != expected {
-                    return Err(
-                        format!(
-                            "patterned sample changed: expected={expected:?}, \
+                    return Err(format!(
+                        "patterned sample changed: expected={expected:?}, \
                              actual={actual:?}, weights={weights:?}",
-                        ),
-                    );
+                    ));
                 }
                 sample_count = sample_count
                     .checked_add(1)
@@ -159,24 +134,15 @@ fn preserves_one_anchored_pattern_without_topology_changes()
     Ok(())
 }
 
-fn interpolate(
-    values: [[f32; 2]; 3],
-    weights: [f32; 3],
-) -> [f32; 2] {
+fn interpolate(values: [[f32; 2]; 3], weights: [f32; 3]) -> [f32; 2] {
     [
         values[0][0].mul_add(
             weights[0],
-            values[1][0].mul_add(
-                weights[1],
-                values[2][0] * weights[2],
-            ),
+            values[1][0].mul_add(weights[1], values[2][0] * weights[2]),
         ),
         values[0][1].mul_add(
             weights[0],
-            values[1][1].mul_add(
-                weights[1],
-                values[2][1] * weights[2],
-            ),
+            values[1][1].mul_add(weights[1], values[2][1] * weights[2]),
         ),
     ]
 }

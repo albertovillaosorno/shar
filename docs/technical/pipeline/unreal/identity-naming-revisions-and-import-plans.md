@@ -24,37 +24,87 @@ Examples:
 
 ## Primary Asset types and object names
 
-<!-- markdownlint-disable MD013 -->
-| Family | Primary Asset type | Object name |
-| :--- | :--- | :--- |
-| Gameplay catalog | `SharCatalog` | `DA_SHAR_GameplayCatalog` |
-| Platform profile | `SharPlatformProfile` | `DA_PlatformProfile_<id>` |
-| Character | `SharCharacter` | `DA_Character_<id>` |
-| Character presentation | `SharCharacterPresentation` | `DA_CharacterPresentation_<id>_<variant>` |
-| Rig profile | `SharRigProfile` | `DA_Rig_<id>` |
-| Character animation library | `SharCharacterAnimationLibrary` | `DA_CharacterAnimationLibrary_<rig_family>` |
-| Vehicle | `SharVehicle` | `DA_Vehicle_<id>` |
-| Vehicle presentation | `SharVehiclePresentation` | `DA_VehiclePresentation_<id>_<variant>` |
-| World | `SharWorld` | `DA_World_<id>` |
-| Action | `SharAction` | `DA_Action_<id>` |
-| Action sequence | `SharActionSequence` | `DA_ActionSequence_<id>` |
-| Interaction | `SharInteraction` | `DA_Interaction_<id>` |
-| Application mode | `SharApplicationMode` | `DA_ApplicationMode_<id>` |
-| Save schema | `SharSaveSchema` | `DA_SaveSchema_<id>` |
-| Progression catalog | `SharProgressionCatalog` | `DA_ProgressionCatalog_<id>` |
-| Meta catalog | `SharMetaCatalog` | `DA_MetaCatalog_<id>` |
-| Frontend catalog | `SharFrontendCatalog` | `DA_FrontendCatalog_<id>` |
-| Presentation | `SharPresentation` | `DA_Presentation_<id>` |
-| Location | `SharLocation` | `DA_Location_<id>` |
-| Mission | `SharMission` | `DA_Mission_<chapter>_<id>` |
-| Reward | `SharReward` | `DA_Reward_<id>` |
-| Ability | `SharAbility` | `DA_Ability_<id>` |
-| Camera profile | `SharCameraProfile` | `DA_Camera_<id>` |
-| Audio profile | `SharAudioProfile` | `DA_Audio_<id>` |
-| UI flow | `SharUIFlow` | `DA_UIFlow_<id>` |
-| Game mode | `SharGameMode` | `DA_GameMode_<id>` |
-| Mod descriptor | `SharModDescriptor` | `DA_Mod_<namespace>` |
-<!-- markdownlint-enable MD013 -->
+- **Family:** Gameplay catalog
+  - **Primary Asset type:** `SharCatalog`
+  - **Object name:** `DA_SHAR_GameplayCatalog`
+- **Family:** Platform profile
+  - **Primary Asset type:** `SharPlatformProfile`
+  - **Object name:** `DA_PlatformProfile_<id>`
+- **Family:** Character
+  - **Primary Asset type:** `SharCharacter`
+  - **Object name:** `DA_Character_<id>`
+- **Family:** Character presentation
+  - **Primary Asset type:** `SharCharacterPresentation`
+  - **Object name:** `DA_CharacterPresentation_<id>_<variant>`
+- **Family:** Rig profile
+  - **Primary Asset type:** `SharRigProfile`
+  - **Object name:** `DA_Rig_<id>`
+- **Family:** Character animation library
+  - **Primary Asset type:** `SharCharacterAnimationLibrary`
+  - **Object name:** `DA_CharacterAnimationLibrary_<rig_family>`
+- **Family:** Vehicle
+  - **Primary Asset type:** `SharVehicle`
+  - **Object name:** `DA_Vehicle_<id>`
+- **Family:** Vehicle presentation
+  - **Primary Asset type:** `SharVehiclePresentation`
+  - **Object name:** `DA_VehiclePresentation_<id>_<variant>`
+- **Family:** World
+  - **Primary Asset type:** `SharWorld`
+  - **Object name:** `DA_World_<id>`
+- **Family:** Action
+  - **Primary Asset type:** `SharAction`
+  - **Object name:** `DA_Action_<id>`
+- **Family:** Action sequence
+  - **Primary Asset type:** `SharActionSequence`
+  - **Object name:** `DA_ActionSequence_<id>`
+- **Family:** Interaction
+  - **Primary Asset type:** `SharInteraction`
+  - **Object name:** `DA_Interaction_<id>`
+- **Family:** Application mode
+  - **Primary Asset type:** `SharApplicationMode`
+  - **Object name:** `DA_ApplicationMode_<id>`
+- **Family:** Save schema
+  - **Primary Asset type:** `SharSaveSchema`
+  - **Object name:** `DA_SaveSchema_<id>`
+- **Family:** Progression catalog
+  - **Primary Asset type:** `SharProgressionCatalog`
+  - **Object name:** `DA_ProgressionCatalog_<id>`
+- **Family:** Meta catalog
+  - **Primary Asset type:** `SharMetaCatalog`
+  - **Object name:** `DA_MetaCatalog_<id>`
+- **Family:** Frontend catalog
+  - **Primary Asset type:** `SharFrontendCatalog`
+  - **Object name:** `DA_FrontendCatalog_<id>`
+- **Family:** Presentation
+  - **Primary Asset type:** `SharPresentation`
+  - **Object name:** `DA_Presentation_<id>`
+- **Family:** Location
+  - **Primary Asset type:** `SharLocation`
+  - **Object name:** `DA_Location_<id>`
+- **Family:** Mission
+  - **Primary Asset type:** `SharMission`
+  - **Object name:** `DA_Mission_<chapter>_<id>`
+- **Family:** Reward
+  - **Primary Asset type:** `SharReward`
+  - **Object name:** `DA_Reward_<id>`
+- **Family:** Ability
+  - **Primary Asset type:** `SharAbility`
+  - **Object name:** `DA_Ability_<id>`
+- **Family:** Camera profile
+  - **Primary Asset type:** `SharCameraProfile`
+  - **Object name:** `DA_Camera_<id>`
+- **Family:** Audio profile
+  - **Primary Asset type:** `SharAudioProfile`
+  - **Object name:** `DA_Audio_<id>`
+- **Family:** UI flow
+  - **Primary Asset type:** `SharUIFlow`
+  - **Object name:** `DA_UIFlow_<id>`
+- **Family:** Game mode
+  - **Primary Asset type:** `SharGameMode`
+  - **Object name:** `DA_GameMode_<id>`
+- **Family:** Mod descriptor
+  - **Primary Asset type:** `SharModDescriptor`
+  - **Object name:** `DA_Mod_<namespace>`
 
 Primary Asset identity is `<type>:<canonical_id>`. Runtime identity never
 depends on the object name, although validation requires the object name to

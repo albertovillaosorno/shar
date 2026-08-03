@@ -1,7 +1,3 @@
-// File:
-//   - clip.rs
-// Path: src/formats/fbx/domain/animation/clip.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,41 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Validated skeletal animation clips, tracks, and local transform samples.
+//   - Clip domain module.
 // - Must-Not:
-//   - Read decoded files, resolve package dependencies, or emit FBX nodes.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Pure identity, timing, ordering, and finite-value invariants.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Key reduction or non-transform channels gain independent contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another animation value-object module owns the same invariants.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Pure sampled skeletal animation domain values.
+//   - Clip domain module.
 // - Description:
-//   - Keeps source-independent clip timing and per-bone local transforms.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Produced by decoded adapters and consumed by scene writer adapters.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Samples are integer source frames in deterministic bone order.
-//
-// ADRs:
-// - docs/adr/fbx/export/fbx-output-contract-boundary.md
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Pure sampled skeletal animation domain values.
-//!
-//! Clips keep source timing, canonical bone order, absolute local transforms,
-//! and helper-group evidence independent of decoded files and FBX encoding.
+//! Clip domain module.
 
 use std::collections::BTreeSet;
 
@@ -68,10 +52,7 @@ pub struct BoneAnimationTrack {
 
 /// Return whether two validated source frame rates are exactly identical.
 #[must_use]
-pub const fn frame_rates_match(
-    left: f64,
-    right: f64,
-) -> bool {
+pub const fn frame_rates_match(left: f64, right: f64) -> bool {
     left.to_bits() == right.to_bits()
 }
 
@@ -159,13 +140,11 @@ impl AnimationClip {
         let clip_name = name.into();
         if clip_name.is_empty()
             || clip_name != clip_name.trim()
-            || clip_name
-                .chars()
-                .any(char::is_control)
+            || clip_name.chars().any(char::is_control)
         {
             return Err(AnimationClipError::InvalidClipName);
         }
-        if !frame_rate.is_finite() || frame_rate <= 0.0_f64 {
+        if !frame_rate.is_finite() || frame_rate <= 0f64 {
             return Err(AnimationClipError::InvalidFrameRate);
         }
         if frame_count == 0 {
@@ -174,21 +153,16 @@ impl AnimationClip {
         if tracks.is_empty() {
             return Err(AnimationClipError::MissingTracks);
         }
-        validate_tracks(
-            &tracks,
-            frame_count,
-        )?;
+        validate_tracks(&tracks, frame_count)?;
         validate_ignored_groups(&ignored_group_ids)?;
-        Ok(
-            Self {
-                name: clip_name,
-                frame_rate,
-                cyclic,
-                frame_count,
-                tracks,
-                ignored_group_ids,
-            },
-        )
+        Ok(Self {
+            name: clip_name,
+            frame_rate,
+            cyclic,
+            frame_count,
+            tracks,
+            ignored_group_ids,
+        })
     }
 }
 
@@ -199,88 +173,46 @@ fn validate_tracks(
 ) -> Result<(), AnimationClipError> {
     let mut bone_ids = BTreeSet::new();
     for track in tracks {
-        if track
-            .bone_id
-            .is_empty()
-            || track.bone_id
-                != track
-                    .bone_id
-                    .trim()
-            || track
-                .bone_id
-                .chars()
-                .any(char::is_control)
+        if track.bone_id.is_empty()
+            || track.bone_id != track.bone_id.trim()
+            || track.bone_id.chars().any(char::is_control)
         {
             return Err(AnimationClipError::InvalidBoneId);
         }
-        if !bone_ids.insert(
-            track
-                .bone_id
-                .clone(),
-        ) {
-            return Err(
-                AnimationClipError::DuplicateBoneId(
-                    track
-                        .bone_id
-                        .clone(),
-                ),
-            );
+        if !bone_ids.insert(track.bone_id.clone()) {
+            return Err(AnimationClipError::DuplicateBoneId(
+                track.bone_id.clone(),
+            ));
         }
-        if track
-            .samples
-            .len()
-            != frame_count
-        {
-            return Err(
-                AnimationClipError::SampleCountMismatch {
-                    bone: track
-                        .bone_id
-                        .clone(),
-                    expected: frame_count,
-                    actual: track
-                        .samples
-                        .len(),
-                },
-            );
+        if track.samples.len() != frame_count {
+            return Err(AnimationClipError::SampleCountMismatch {
+                bone: track.bone_id.clone(),
+                expected: frame_count,
+                actual: track.samples.len(),
+            });
         }
-        for (frame, sample) in track
-            .samples
-            .iter()
-            .enumerate()
-        {
+        for (frame, sample) in track.samples.iter().enumerate() {
             if sample
                 .translation
                 .iter()
-                .chain(
-                    sample
-                        .rotation_wxyz
-                        .iter(),
-                )
+                .chain(sample.rotation_wxyz.iter())
                 .any(|value| !value.is_finite())
             {
-                return Err(
-                    AnimationClipError::NonFiniteSample {
-                        bone: track
-                            .bone_id
-                            .clone(),
-                        frame,
-                    },
-                );
+                return Err(AnimationClipError::NonFiniteSample {
+                    bone: track.bone_id.clone(),
+                    frame,
+                });
             }
             let length_squared = sample
                 .rotation_wxyz
                 .iter()
                 .map(|value| value * value)
                 .sum::<f64>();
-            if (length_squared - 1.0_f64).abs() > 1e-4_f64 {
-                return Err(
-                    AnimationClipError::NonUnitQuaternion {
-                        bone: track
-                            .bone_id
-                            .clone(),
-                        frame,
-                    },
-                );
+            if (length_squared - 1f64).abs() > 1e-4_f64 {
+                return Err(AnimationClipError::NonUnitQuaternion {
+                    bone: track.bone_id.clone(),
+                    frame,
+                });
             }
         }
     }
@@ -289,22 +221,20 @@ fn validate_tracks(
 
 /// Validate deterministic unique ignored-group evidence.
 fn validate_ignored_groups(
-    ignored_group_ids: &[String]
+    ignored_group_ids: &[String],
 ) -> Result<(), AnimationClipError> {
     let mut groups = BTreeSet::new();
     for group in ignored_group_ids {
         if group.is_empty()
             || group != group.trim()
-            || group
-                .chars()
-                .any(char::is_control)
+            || group.chars().any(char::is_control)
         {
             return Err(AnimationClipError::InvalidIgnoredGroup);
         }
         if !groups.insert(group.clone()) {
-            return Err(
-                AnimationClipError::DuplicateIgnoredGroup(group.clone()),
-            );
+            return Err(AnimationClipError::DuplicateIgnoredGroup(
+                group.clone(),
+            ));
         }
     }
     Ok(())

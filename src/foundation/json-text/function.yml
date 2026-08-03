@@ -1,0 +1,20 @@
+schema: shar-function/v1
+identity:
+  id: json-text
+  path: src/foundation/json-text
+  domain: foundation
+architecture:
+  route: src/<domain>/<function>/<kind>/<part>
+  kinds:
+    - domain
+capabilities:
+  - math
+  - rust
+projects:
+  - Cargo.toml
+tests:
+  root: tests/foundation/json-text
+ownership:
+  accountable: Alberto Villa Osorno
+validation:
+  mode: active

@@ -7,12 +7,19 @@
 
 ## Governing decisions and design
 
-- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
-- [Faithful seven-chapter open-world scope](../../adr/pipeline/unreal/faithful-seven-chapter-open-world-scope.md)
-- [Unified open world and chapter projection](../../adr/pipeline/unreal/unified-open-world-and-chapter-projection.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md) <!-- markdownlint-disable-line MD013 -->
+- [Faithful seven-chapter open-world
+  scope](../../adr/pipeline/unreal/faithful-seven-chapter-open-world-scope.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Unified open world and chapter projection](../../adr/pipeline/unreal/unified-open-world-and-chapter-projection.md) <!-- markdownlint-disable-line MD013 -->
 - [Open sandbox campaign design](../gameplay/open-sandbox-campaign-design.md)
-- [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
-- [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+- [Data-driven Unreal gameplay content
+  catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+- [Portable save storage and
+  lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
 
 ## Purpose
 
@@ -29,13 +36,15 @@ player-facing authority uses chapter, world, mission, and unlock identities.
 
 The runtime owns:
 
-- `USharCampaignSubsystem`, chapter order, story completion, and chapter unlocks;
+- `USharCampaignSubsystem`, chapter order, story completion, and chapter
+  unlocks;
 - `USharSandboxStateSubsystem`, the exclusive `mission` or `non_mission` state;
 - `USharWorldClockSubsystem`, the 24-minute clock and sleep transactions;
 - `USharMapDiscoverySubsystem`, fog, landmarks, routes, and terrain discovery;
 - `USharCharacterEligibilitySubsystem`, unlock and story availability;
 - `USharCollectibleActivationSubsystem`, cumulative chapter-set activation;
-- `USharAchievementSubsystem`, pending base and mod-aware achievement projection;
+- `USharAchievementSubsystem`, pending base and mod-aware achievement
+  projection;
 - `USharSideActivitySubsystem`, taxi, race, wager, and other activity ownership;
 - `USharWorldExpansionSubsystem`, bosses, structures, shortcuts, and permanent
   area unlocks; and
@@ -62,7 +71,8 @@ filenames, widget state, or source level ordinals.
 
 The sandbox subsystem accepts one transition at a time. Entering `mission`
 requires a validated mission or activity transaction. Returning to `non_mission`
-removes transient mission projection and commits only accepted persistent results.
+removes transient mission projection and commits only accepted persistent
+results.
 
 Application states such as loading, pause, frontend, and failure presentation do
 not create additional gameplay-state values.
@@ -95,7 +105,8 @@ not create additional gameplay-state values.
 - completion rewards and presentation; and
 - successor chapter.
 
-The catalog validates exactly seven dense base chapters. A mod may add a separate
+The catalog validates exactly seven dense base chapters. A mod may add a
+separate
 campaign but cannot insert into the base order or reuse base save identities.
 
 ## New-game transaction
@@ -132,7 +143,8 @@ locations, animation, props, and audio. It cannot mutate progression.
 - expected world and campaign revisions.
 
 Mission projection is a move-only lease. It owns mission-specific actors,
-vehicles, pickups, hazards, routes, Data Layers, dialogue, audio, camera, UI, and
+vehicles, pickups, hazards, routes, Data Layers, dialogue, audio, camera, UI,
+and
 objective state. Releasing it removes transient content in deterministic order.
 
 Persistent mission results use typed transactions and are never inferred from
@@ -185,7 +197,8 @@ appear only in diagnostics and conversion evidence.
 - temporary story lock reason.
 
 Homer is initially unlocked. Bart unlocks after the final Chapter 1 mission and
-may be automatically selected for the next accepted mission. Bart is locked after
+may be automatically selected for the next accepted mission. Bart is locked
+after
 Chapter 2 until Chapter 4 completes. Lisa missions force Lisa. Outside missions,
 any unlocked and eligible character may be selected from the menu.
 
@@ -236,7 +249,8 @@ contains:
 - balance-test identities.
 
 One card never grants an ability independently. Completing a set commits one
-exactly-once unlock. Mod overlays may replace extensible tuning but cannot change
+exactly-once unlock. Mod overlays may replace extensible tuning but cannot
+change
 base set membership or fabricate completion.
 
 ## World clock
@@ -244,8 +258,10 @@ base set membership or fabricate completion.
 `USharWorldClockSubsystem` advances one full cycle in 1,440 real seconds. One
 in-game hour therefore lasts 60 real seconds.
 
-The clock defines sunrise, day, sunset, and night intervals plus continuous solar,
-lighting, sky, audio, population, and material parameters. It uses simulation time
+The clock defines sunrise, day, sunset, and night intervals plus continuous
+solar,
+lighting, sky, audio, population, and material parameters. It uses simulation
+time
 and remains deterministic under pause, save, load, and fixed-step tests.
 
 A mission declares one policy:
@@ -276,25 +292,31 @@ atomically. Free homes and paid motels use the same contract.
 interiors, connectors, and viewpoints. Portable state stores discovered semantic
 identities, not texture pixels.
 
-The map renders undiscovered regions with stylized cloud fog. Mission markers use
+The map renders undiscovered regions with stylized cloud fog. Mission markers
+use
 a separate projection and remain visible through fog. A marker cannot reveal
 hidden road geometry, collectibles, or shortcuts.
 
-Discovery transactions may unlock help cards, route hints, terrain gates, and map
-presentation. Terrain family 1 is initial; later terrain families require chapter
+Discovery transactions may unlock help cards, route hints, terrain gates, and
+map
+presentation. Terrain family 1 is initial; later terrain families require
+chapter
 or discovery transactions.
 
 ## Connected terrain and shortcuts
 
-Connectors are semantic world assets with endpoints, traversal class, availability,
-chapter gate, discovery effect, mission restrictions, navigation support, and mod
+Connectors are semantic world assets with endpoints, traversal class,
+availability,
+chapter gate, discovery effect, mission restrictions, navigation support, and
+mod
 extension points.
 
 Burns' mansion uses a persistent connector originating inside the nuclear plant.
 Its unlock transaction occurs only after fairness tests prove it cannot bypass
 earlier terrain-family-1 missions. The exact generated geometry remains pending.
 
-Known progression-breaking shortcuts are rejected by mission-route and world-gate
+Known progression-breaking shortcuts are rejected by mission-route and
+world-gate
 tests even when historical speedruns used them.
 
 ## Structure and interior capability
@@ -322,7 +344,8 @@ entry conditions, motion profile, camera, animation, cancellation, failure
 recovery, discovery effect, and mission restrictions.
 
 Melee uses character-specific ability definitions with attack phases, collision,
-damage or reaction policy, stamina interaction, AI response, mission restrictions,
+damage or reaction policy, stamina interaction, AI response, mission
+restrictions,
 and accessibility presentation. Original missions may ignore melee.
 
 ## Stamina and world-detail presentation
@@ -376,11 +399,13 @@ side-content projections.
 
 Chapter 7 activates an irradiated weather and survival profile while retaining
 the world clock. The profile drives cloud cover, humidity, haze, visibility,
-lighting, audio, population, radiation, zombie hostility, and horror presentation.
+lighting, audio, population, radiation, zombie hostility, and horror
+presentation.
 
 `USharHealthSubsystem` becomes visible and authoritative for damage. Radiation
 uses bounded exposure rules. Vehicle explosion lethality uses validated radius,
-line-of-effect, and mission policy. Death restores the accepted checkpoint during
+line-of-effect, and mission policy. Death restores the accepted checkpoint
+during
 missions or a safe recovery point outside missions.
 
 Zombie affiliation consumes character and costume tags. Devil Homer suppresses
@@ -401,7 +426,8 @@ Achievement implementation is pending, but the schema is authoritative.
 - progress migration; and
 - presentation.
 
-Base definitions cover chapter completion, collectibles, current coin milestones,
+Base definitions cover chapter completion, collectibles, current coin
+milestones,
 side missions, taxi milestones, 100 percent completion, shortcuts, no-death
 mission records, world expansions, purchases, and cumulative humorous actions.
 
@@ -415,7 +441,8 @@ base platform mappings.
 ## Cel-shaded rendering
 
 The rendering module uses project-owned cel-shading materials, post-process or
-material-domain outlines, lighting profiles, and quality variants inspired by the
+material-domain outlines, lighting profiles, and quality variants inspired by
+the
 dimensional cartoon presentation of *The Simpsons Game*.
 
 The implementation does not copy assets or proprietary shaders. It supports the
@@ -426,10 +453,12 @@ roads, mission markers, hazards, and interiors across all phases and presets.
 ## Speedrun integrity
 
 Regression fixtures cover invalid campaign completion, checkpoint corruption,
-out-of-bounds objectives, stale mission leases, duplicate rewards, time arithmetic,
+out-of-bounds objectives, stale mission leases, duplicate rewards, time
+arithmetic,
 shortcut gate bypass, and platform-dependent computation behavior.
 
-Intentional movement and route skill remain supported. The runtime does not keep a
+Intentional movement and route skill remain supported. The runtime does not keep
+a
 known progression defect merely because an existing speedrun category uses it.
 
 ## Mod-facing server adapter
@@ -492,7 +521,8 @@ Generation and cook checks prove:
 ## Tests
 
 Required tests mirror every scenario in the implementation-neutral
-[open sandbox campaign design](../gameplay/open-sandbox-campaign-design.md), plus
+[open sandbox campaign design](../gameplay/open-sandbox-campaign-design.md),
+plus
 Unreal lifecycle, streaming, Asset Manager, World Partition, Data Layer, save,
 input, camera, audio, rendering, and mod-overlay integration tests.
 

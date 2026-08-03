@@ -1,7 +1,3 @@
-# File:
-#   - test_skill_manual_fields.py
-# Path: tests/unreal/editor-control/test_skill_manual_fields.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,66 +6,46 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Regression tests for protected manual fields in generated Unreal skills.
+#   - Test skill manual fields test module.
 # - Must-Not:
-#   - Access repository skills, connect to Unreal, or test filesystem cleanup.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Pure generated templates and deliberately malformed marker fixtures.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Marker parsing and merge evolution require independent test fixtures.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another test module owns the same manual-field preservation contract.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Guards default placeholders and lossless human-content preservation.
+#   - Test skill manual fields test module.
 # - Description:
-#   - Proves malformed markers fail before generated replacement.
+#   - Implements the declared test module responsibility for editor control.
 # - Usage:
-#   - Executed by pytest through the canonical validator workflow.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Uses the complete current protected field schema.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: generated Unreal skill manual-field regression tests
-#   - reason: defaults, merge, and fail-closed parsing share one contract
-#   - split: separate parser failures if marker schema becomes versioned
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess before changing the protected field schema
-#
-"""Regression tests for protected manual fields in generated tool skills."""
+
+"""Test skill manual fields test module."""
 
 from __future__ import annotations
 
-import pytest
+from manual_skill_fixture import CURRENT_REVISION
+from manual_skill_fixture import begin_marker
+from manual_skill_fixture import document
+from manual_skill_fixture import end_marker
+from manual_skill_fixture import field_block
+from manual_skill_fixture import merge_and_extract
+from manual_skill_fixture import replace_field
 from mcp.adapter_outbound.skill_manual_field_schema import MANUAL_FIELDS
-from mcp.adapter_outbound.skill_manual_fields import (
-    merge_manual_fields,
-    render_manual_section,
-)
-from mcp.adapter_outbound.skill_manual_review import (
-    MANUAL_REVIEW_FIELD_KEY,
-    MANUAL_REVIEW_PLACEHOLDER,
-)
+from mcp.adapter_outbound.skill_manual_fields import merge_manual_fields
+from mcp.adapter_outbound.skill_manual_fields import render_manual_section
+from mcp.adapter_outbound.skill_manual_review import MANUAL_REVIEW_FIELD_KEY
+from mcp.adapter_outbound.skill_manual_review import MANUAL_REVIEW_PLACEHOLDER
 from mcp.domain.errors import ProtocolError
-
-from manual_skill_fixture import (
-    CURRENT_REVISION,
-    begin_marker,
-    document,
-    end_marker,
-    field_block,
-    merge_and_extract,
-    replace_field,
-)
+import pytest
 
 
 def test_manual_section_starts_with_explicit_placeholders() -> None:

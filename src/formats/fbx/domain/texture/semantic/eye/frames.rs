@@ -1,7 +1,3 @@
-// File:
-//   - frames.rs
-// Path: src/formats/fbx/domain/texture/semantic/eye/frames.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,38 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Ordered source-evidence analysis and deterministic four-frame scaling.
+//   - Frames domain module.
 // - Must-Not:
-//   - Reimplement source color or closure rules, change frame order, or access
-//   - files.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Delegation to focused evidence modules and nearest-neighbor scaling.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another source-supported frame modernization policy is introduced.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - The eye facade can own orchestration without duplicating frame behavior.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Four-frame eye texture modernization orchestration.
+//   - Frames domain module.
 // - Description:
-//   - Validates source evidence before scaling every authoritative frame.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Called by the semantic eye facade after component discovery.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Source frame order and pixel ownership remain unchanged.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Four-frame eye texture modernization orchestration.
+//! Frames domain module.
 
 use super::super::color::Rgba8;
 use super::super::image::RgbaImage;
@@ -71,35 +58,18 @@ pub(super) fn analyze(
     frames: &[RgbaImage; 4],
     output_size: u32,
 ) -> Result<AnalyzedFrames, EyeTextureError> {
-    let source = evidence::analyze(
-        frames,
-        output_size,
-    )?;
+    let source = evidence::analyze(frames, output_size)?;
     let modern_frames = [
-        frames[0].scale_nearest(
-            output_size,
-            output_size,
-        )?,
-        frames[1].scale_nearest(
-            output_size,
-            output_size,
-        )?,
-        frames[2].scale_nearest(
-            output_size,
-            output_size,
-        )?,
-        frames[3].scale_nearest(
-            output_size,
-            output_size,
-        )?,
+        frames[0].scale_nearest(output_size, output_size)?,
+        frames[1].scale_nearest(output_size, output_size)?,
+        frames[2].scale_nearest(output_size, output_size)?,
+        frames[3].scale_nearest(output_size, output_size)?,
     ];
-    Ok(
-        AnalyzedFrames {
-            evidence: source.frames,
-            modern_frames,
-            lid_color: source.lid_color,
-            surface_color: source.surface_color,
-            pupil_color: source.pupil_color,
-        },
-    )
+    Ok(AnalyzedFrames {
+        evidence: source.frames,
+        modern_frames,
+        lid_color: source.lid_color,
+        surface_color: source.surface_color,
+        pupil_color: source.pupil_color,
+    })
 }

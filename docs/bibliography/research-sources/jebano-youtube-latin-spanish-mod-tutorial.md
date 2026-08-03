@@ -22,7 +22,6 @@ branding, or linked third-party content.
 ## Covered Material
 
 The YouTube channel identified publicly as **Jebano** and the video titled
-<!-- cspell:disable-next-line -- ESPAÑOL LATINO para Los de Instalación -->
 *¡Mod en ESPAÑOL LATINO para Los Simpson Hit & Run! | Tutorial de Instalación*,
 YouTube video identifier `ZzXvcmzyoF4`.
 
@@ -94,14 +93,13 @@ platform.
 
 - Jebano (n.d.) *Jebano YouTube channel*. Available at:
   <https://www.youtube.com/@Jebano/> (Accessed: 12 July 2026).
-<!-- cspell:disable-next-line -- ESPAÑOL LATINO para Los -->
 - Jebano (n.d.) \*¡Mod en ESPAÑOL LATINO para Los Simpson Hit & Run! |
-  <!-- cspell:disable-next-line -- de Instalación -->
   Tutorial de Instalación\*. YouTube video `ZzXvcmzyoF4`. Available at:
   <https://www.youtube.com/watch?v=ZzXvcmzyoF4> (Accessed: 12 July 2026).
 - YouTube (n.d.) *oEmbed response for video `ZzXvcmzyoF4`*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://www.youtube.com/oembed?url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DZzXvcmzyoF4&format=json>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://www.youtube.com/oembed?url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DZzXvcmzyoF4&format=json> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 12 July 2026).
 - YouTube (2023) *Terms of Service*, dated 15 December 2023. Available at:
   <https://www.youtube.com/t/terms> (Accessed: 14 July 2026).

@@ -1,7 +1,3 @@
-// File:
-//   - filesystem_batch_identity_tests.rs
-// Path: tests/formats/p3d/unit/adapter-outbound/filesystem_batch_identity_tests.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for cached P3D component identity uniqueness.
+//   - Filesystem batch identity tests test module.
 // - Must-Not:
-//   - Inspect local storage or duplicate package-header parsing behavior.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Construct deterministic component rows with conflicting identities.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another independent identity dimension requires a dedicated fixture.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Component identity no longer has behavior distinct from cache evidence.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Cached P3D component identity regressions.
+//   - Filesystem batch identity tests test module.
 // - Description:
-//   - Verifies ordinal range, ordinal uniqueness, and artifact path uniqueness.
+//   - Implements the declared test module responsibility for p3d.
 // - Usage:
-//   - Included by filesystem_batch_cache.rs under cfg(test).
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Tests are deterministic and filesystem-free.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression tests for cached P3D component identities.
-//!
-//! Component ordinals must belong to the package chunk table, and both ordinal
-//! and artifact path identities must remain unique across manifest rows.
+//! Filesystem batch identity tests test module.
 
 use super::manifest_is_complete;
 

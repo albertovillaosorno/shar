@@ -5,19 +5,25 @@
 
 ## Governing decisions and specifications
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Native gameplay audio, dialogue, and listener boundary](../../adr/unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native gameplay audio, dialogue, and listener boundary](../../adr/unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Platform audio cooking and streaming](platform-audio-cooking-and-streaming.md)
+- [Platform audio cooking and
+  streaming](platform-audio-cooking-and-streaming.md)
 - [Vehicle AI and route runtime](vehicle-ai-and-route-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+- [Native vehicle physics, control, damage, and presentation
+  runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Physical material and impact-response runtime](physical-material-and-impact-response-runtime.md)
+- [Physical material and impact-response
+  runtime](physical-material-and-impact-response-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md)
+- [Spatial audio listener and positional-source
+  runtime](spatial-audio-listener-and-positional-source-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md)
+- [Typed event and observation routing
+  runtime](typed-event-and-observation-routing-runtime.md)
 
 ## Purpose
 
@@ -60,16 +66,28 @@ and diagnostics. It does not implement a second audio mixer.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Vehicle and movement services | Own speed, RPM evidence, throttle, brake, gear, reverse, contact, airborne, skid, damage, horn, door, and replacement state. |
-| Physical-material service | Owns accepted tire-contact and surface identity. |
-| Vehicle-audio catalog | Owns stable vehicle-audio profiles, layer definitions, curves, assets, and platform policy. |
-| Vehicle-audio subsystem | Validates observations, resolves profiles, projects audio state, and manages presentation leases. |
-| Unreal Audio Engine | Owns source playback, parameter evaluation, spatialization, attenuation, concurrency, routing, mixing, and output. |
-| Spatial-audio subsystem | Owns listener policy and positional-source projection. |
-| Application lifecycle | Owns gameplay, pause, frontend, focus, suspension, and teardown leases. |
-| Domain services | Own missions, rewards, damage, progression, and persistence. |
+- **Authority:** Vehicle and movement services
+  - **Responsibility:** Own speed, RPM evidence, throttle, brake, gear, reverse,
+    contact, airborne, skid, damage, horn, door, and replacement state.
+- **Authority:** Physical-material service
+  - **Responsibility:** Owns accepted tire-contact and surface identity.
+- **Authority:** Vehicle-audio catalog
+  - **Responsibility:** Owns stable vehicle-audio profiles, layer definitions,
+    curves, assets, and platform policy.
+- **Authority:** Vehicle-audio subsystem
+  - **Responsibility:** Validates observations, resolves profiles, projects
+    audio state, and manages presentation leases.
+- **Authority:** Unreal Audio Engine
+  - **Responsibility:** Owns source playback, parameter evaluation,
+    spatialization, attenuation, concurrency, routing, mixing, and output.
+- **Authority:** Spatial-audio subsystem
+  - **Responsibility:** Owns listener policy and positional-source projection.
+- **Authority:** Application lifecycle
+  - **Responsibility:** Owns gameplay, pause, frontend, focus, suspension, and
+    teardown leases.
+- **Authority:** Domain services
+  - **Responsibility:** Own missions, rewards, damage, progression, and
+    persistence.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -106,30 +124,55 @@ not durable identity.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `ProfileId` | Canonical vehicle-audio identity. |
-| `CompatibleVehicleTags` | Allowed vehicle archetypes and presentation variants. |
-| `EngineLayer` | Required engine source, parameter schema, looping, and pitch policy. |
-| `IdleLayer` | Optional dedicated idle source and transition policy. |
-| `ShiftLayer` | Optional upshift and downshift sources or graph triggers. |
-| `ReverseLayer` | Reverse source, pitch curve, activation, and release policy. |
-| `InAirLayer` | Airborne source or engine-parameter override. |
-| `SkidLayers` | Surface-group sources, pitch, gain, and contact policy. |
-| `HornLayer` | Horn source, repeat, cooldown, concurrency, and ownership policy. |
-| `DamageLayer` | Damage source, threshold, gain curve, and recovery policy. |
-| `OverlayLayer` | Optional vehicle-specific continuous or one-shot presentation. |
-| `BackupLayer` | Optional reverse warning source and vehicle-class eligibility. |
-| `DoorLayers` | Open, close, entry, exit, and latch presentation definitions. |
-| `PitchModel` | RPM, speed, gear, throttle, and state parameter curves. |
-| `ShiftModel` | Gear thresholds, hysteresis, attack, hold, decay, and pitch-drop policy. |
-| `SpatialPolicy` | Attachment, attenuation, occlusion, interior, and listener policy. |
-| `ConcurrencyPolicy` | Native concurrency assets and project queue limits. |
-| `MixPolicy` | Sound Class, submix, ducking, interior, and local-player routing. |
-| `StreamingPolicy` | Required bundles, preload, residency, and eviction behavior. |
-| `QualityPolicy` | Platform variants and declared optional fallbacks. |
-| `DiagnosticsPolicy` | Development telemetry and capture permissions. |
-| `DefinitionRevision` | Immutable revision used for stale-result rejection. |
+- **Field:** `ProfileId`
+  - **Contract:** Canonical vehicle-audio identity.
+- **Field:** `CompatibleVehicleTags`
+  - **Contract:** Allowed vehicle archetypes and presentation variants.
+- **Field:** `EngineLayer`
+  - **Contract:** Required engine source, parameter schema, looping, and pitch
+    policy.
+- **Field:** `IdleLayer`
+  - **Contract:** Optional dedicated idle source and transition policy.
+- **Field:** `ShiftLayer`
+  - **Contract:** Optional upshift and downshift sources or graph triggers.
+- **Field:** `ReverseLayer`
+  - **Contract:** Reverse source, pitch curve, activation, and release policy.
+- **Field:** `InAirLayer`
+  - **Contract:** Airborne source or engine-parameter override.
+- **Field:** `SkidLayers`
+  - **Contract:** Surface-group sources, pitch, gain, and contact policy.
+- **Field:** `HornLayer`
+  - **Contract:** Horn source, repeat, cooldown, concurrency, and ownership
+    policy.
+- **Field:** `DamageLayer`
+  - **Contract:** Damage source, threshold, gain curve, and recovery policy.
+- **Field:** `OverlayLayer`
+  - **Contract:** Optional vehicle-specific continuous or one-shot presentation.
+- **Field:** `BackupLayer`
+  - **Contract:** Optional reverse warning source and vehicle-class eligibility.
+- **Field:** `DoorLayers`
+  - **Contract:** Open, close, entry, exit, and latch presentation definitions.
+- **Field:** `PitchModel`
+  - **Contract:** RPM, speed, gear, throttle, and state parameter curves.
+- **Field:** `ShiftModel`
+  - **Contract:** Gear thresholds, hysteresis, attack, hold, decay, and
+    pitch-drop policy.
+- **Field:** `SpatialPolicy`
+  - **Contract:** Attachment, attenuation, occlusion, interior, and listener
+    policy.
+- **Field:** `ConcurrencyPolicy`
+  - **Contract:** Native concurrency assets and project queue limits.
+- **Field:** `MixPolicy`
+  - **Contract:** Sound Class, submix, ducking, interior, and local-player
+    routing.
+- **Field:** `StreamingPolicy`
+  - **Contract:** Required bundles, preload, residency, and eviction behavior.
+- **Field:** `QualityPolicy`
+  - **Contract:** Platform variants and declared optional fallbacks.
+- **Field:** `DiagnosticsPolicy`
+  - **Contract:** Development telemetry and capture permissions.
+- **Field:** `DefinitionRevision`
+  - **Contract:** Immutable revision used for stale-result rejection.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -188,7 +231,8 @@ The observation is projected from the accepted native simulation and
 presentation
 snapshots in
 <!-- markdownlint-disable-next-line MD013 -->
-[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+[Native vehicle physics, control, damage, and presentation
+runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
 The audio subsystem does not query mutable vehicle internals, native solver
 objects, wheel arrays, or controller state after accepting it. A new revision
 replaces the old snapshot.
@@ -438,7 +482,8 @@ remain the first budget controls.
 
 Every controlled vehicle source follows
 <!-- markdownlint-disable-next-line MD013 -->
-[Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md).
+[Spatial audio listener and positional-source
+runtime](spatial-audio-listener-and-positional-source-runtime.md).
 The binding declares Actor, component, socket, transform, velocity, attenuation,
 occlusion, reverb, local-player, and teardown policy.
 

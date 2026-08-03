@@ -1,12 +1,34 @@
-// File: SharPresentationLifecycle.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharPresentation/Private/Presentation/SharPresentationLifecycle.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: readiness, start, pause, terminal result, cancellation, and release transitions only.
-// Specification: docs/technical/unreal/presentation-playback-runtime.md
-// LARGE-FILE owner=SharPresentation; reason=cohesive playback lifecycle and teardown implementation;
-// split=extract terminal publication if adapter evidence becomes persistent;
-// validation=validate.sh SharPresentation plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar presentation lifecycle composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar presentation lifecycle composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar presentation lifecycle composition module.
 
 #include "Presentation/SharPresentationPlaybackSubsystem.h"
 

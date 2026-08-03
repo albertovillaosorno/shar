@@ -1,7 +1,3 @@
-// File:
-//   - plan.rs
-// Path: src/migration/pipeline/domain/package/plan.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,43 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - The plan contract for pipeline phase three package.
+//   - Plan domain module.
 // - Must-Not:
-//   - Violate repository architecture, path, provenance, or output rules.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Operations required to validate and execute plan.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when plan contains two independently testable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another pipeline module owns the same module boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Phase-three package conversion planner.
+//   - Plan domain module.
 // - Description:
-//   - Defines plan data and behavior for pipeline phase three package.
+//   - Implements the declared domain module responsibility for pipeline.
 // - Usage:
-//   - Used by pipeline phase three package code that needs plan.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No implicit output outside the repository is allowed.
-//
-// ADRs:
-// - docs/adr/pipeline/minor-unit-taxonomy-value-case.md
-//
-// Large file:
-//   - true
-//   - Reason: Phase-three package conversion planner keeps tightly coupled
-//   - validation, ordering, and deterministic transformation invariants
-//   - together; split when a stable independently testable sub-boundary is
-//   - identified.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Phase-three package conversion planner.
-//! Phase-three package conversion planner.
+//! Plan domain module.
 
 use super::index::{PackageRole, PhaseThreePackageRow};
 
@@ -195,86 +177,45 @@ fn fbx_category(category: &str) -> bool {
 
 /// Detects packages whose ids are retained only for traceability metadata.
 fn metadata_only_package(package: &PhaseThreePackageRow) -> bool {
-    package
-        .unit_ids
-        .len()
-        == package
-            .ids_for_role(PackageRole::Metadata)
-            .len()
-        && package
-            .text_key_ids
-            .is_empty()
+    package.unit_ids.len() == package.ids_for_role(PackageRole::Metadata).len()
+        && package.text_key_ids.is_empty()
 }
 
 /// Builds a non-importing plan that preserves metadata identifiers.
 fn metadata_plan(package: &PhaseThreePackageRow) -> PhaseThreePackagePlan {
     PhaseThreePackagePlan {
-        package_id: package
-            .package_id
-            .clone(),
+        package_id: package.package_id.clone(),
         family: ConversionFamily::DoNotImport,
         fbx: None,
-        unreal: Some(
-            UnrealNativePlan {
-                package_id: package
-                    .package_id
-                    .clone(),
-                subcategory: package
-                    .subcategory
-                    .clone(),
-                target_kind: UnrealTargetKind::Metadata,
-                input_ids: package
-                    .unit_ids
-                    .clone(),
-            },
-        ),
+        unreal: Some(UnrealNativePlan {
+            package_id: package.package_id.clone(),
+            subcategory: package.subcategory.clone(),
+            target_kind: UnrealTargetKind::Metadata,
+            input_ids: package.unit_ids.clone(),
+        }),
     }
 }
 
 /// Builds an FBX plan while keeping non-model companion ids attached.
 fn fbx_plan(package: &PhaseThreePackageRow) -> PhaseThreePackagePlan {
     PhaseThreePackagePlan {
-        package_id: package
-            .package_id
-            .clone(),
+        package_id: package.package_id.clone(),
         family: ConversionFamily::FbxModel,
-        fbx: Some(
-            FbxModelPlan {
-                package_id: package
-                    .package_id
-                    .clone(),
-                subcategory: package
-                    .subcategory
-                    .clone(),
-                model_ids: package
-                    .ids_for_role(PackageRole::Model)
-                    .to_vec(),
-                world_ids: package
-                    .ids_for_role(PackageRole::World)
-                    .to_vec(),
-                scene_ids: package
-                    .ids_for_role(PackageRole::Scene)
-                    .to_vec(),
-                locator_ids: package
-                    .ids_for_role(PackageRole::Locator)
-                    .to_vec(),
-                camera_ids: package
-                    .ids_for_role(PackageRole::Camera)
-                    .to_vec(),
-                animation_ids: package
-                    .ids_for_role(PackageRole::Animation)
-                    .to_vec(),
-                texture_ids: package
-                    .ids_for_role(PackageRole::Texture)
-                    .to_vec(),
-                material_ids: package
-                    .ids_for_role(PackageRole::Material)
-                    .to_vec(),
-                physics_ids: package
-                    .ids_for_role(PackageRole::Physics)
-                    .to_vec(),
-            },
-        ),
+        fbx: Some(FbxModelPlan {
+            package_id: package.package_id.clone(),
+            subcategory: package.subcategory.clone(),
+            model_ids: package.ids_for_role(PackageRole::Model).to_vec(),
+            world_ids: package.ids_for_role(PackageRole::World).to_vec(),
+            scene_ids: package.ids_for_role(PackageRole::Scene).to_vec(),
+            locator_ids: package.ids_for_role(PackageRole::Locator).to_vec(),
+            camera_ids: package.ids_for_role(PackageRole::Camera).to_vec(),
+            animation_ids: package
+                .ids_for_role(PackageRole::Animation)
+                .to_vec(),
+            texture_ids: package.ids_for_role(PackageRole::Texture).to_vec(),
+            material_ids: package.ids_for_role(PackageRole::Material).to_vec(),
+            physics_ids: package.ids_for_role(PackageRole::Physics).to_vec(),
+        }),
         unreal: None,
     }
 }
@@ -283,32 +224,21 @@ fn fbx_plan(package: &PhaseThreePackageRow) -> PhaseThreePackagePlan {
 fn unreal_plan(package: &PhaseThreePackageRow) -> PhaseThreePackagePlan {
     let target_kind = unreal_target_kind(package);
     PhaseThreePackagePlan {
-        package_id: package
-            .package_id
-            .clone(),
+        package_id: package.package_id.clone(),
         family: ConversionFamily::UnrealNative,
         fbx: None,
-        unreal: Some(
-            UnrealNativePlan {
-                package_id: package
-                    .package_id
-                    .clone(),
-                subcategory: package
-                    .subcategory
-                    .clone(),
-                target_kind,
-                input_ids: unreal_input_ids(package),
-            },
-        ),
+        unreal: Some(UnrealNativePlan {
+            package_id: package.package_id.clone(),
+            subcategory: package.subcategory.clone(),
+            target_kind,
+            input_ids: unreal_input_ids(package),
+        }),
     }
 }
 
 /// Selects the stable Unreal target kind from package evidence.
 fn unreal_target_kind(package: &PhaseThreePackageRow) -> UnrealTargetKind {
-    match package
-        .category
-        .as_str()
-    {
+    match package.category.as_str() {
         "language" => UnrealTargetKind::StringTable,
         "ui-images" | "game-icons" | "cards" => UnrealTargetKind::Texture,
         "ui-screens" | "ui-components" => UnrealTargetKind::UserInterface,
@@ -330,226 +260,11 @@ fn unreal_input_ids(package: &PhaseThreePackageRow) -> Vec<String> {
         }
         ids.extend_from_slice(package.ids_for_role(role));
     }
-    ids.extend(
-        package
-            .text_key_ids
-            .iter()
-            .cloned(),
-    );
+    ids.extend(package.text_key_ids.iter().cloned());
     ids
 }
 
 #[cfg(test)]
-mod tests {
-    use super::{ConversionFamily, PhaseThreePackagePlanner, UnrealTargetKind};
-    use crate::domain::package::index::PhaseThreePackageRow;
-
-    fn row(
-        category: &str,
-        subcategory: &str,
-        role_field: &str,
-    ) -> Result<PhaseThreePackageRow, String> {
-        let mut json = concat!(
-            "{\"package_id\":\"pkg\",\"package_root\":\"pkg\",",
-            "\"package_category\":\"CATEGORY\",",
-            "\"package_subcategory\":\"SUBCATEGORY\",",
-            "\"unit_count\":1,\"text_key_count\":0,",
-            "\"unit_ids\":[\"unit-a\"],\"world_ids\":[],",
-            "\"texture_ids\":[],\"material_ids\":[],",
-            "\"model_ids\":[],\"physics_ids\":[],",
-            "\"animation_ids\":[],\"scene_ids\":[],",
-            "\"locator_ids\":[],\"camera_ids\":[],",
-            "\"light_ids\":[],\"particle_ids\":[],",
-            "\"controller_ids\":[],\"audio_ids\":[],",
-            "\"movie_ids\":[],\"script_ids\":[],",
-            "\"text_ids\":[],\"ui_ids\":[],",
-            "\"metadata_ids\":[],\"error_ids\":[],",
-            "\"source_unit_ids\":[],\"text_key_ids\":[],",
-            "\"members\":[],\"text_keys\":[]}",
-        )
-        .replace(
-            "SUBCATEGORY",
-            subcategory,
-        )
-        .replace(
-            "CATEGORY", category,
-        );
-        let empty_field = format!("\"{role_field}\":[]");
-        let filled_field = format!("\"{role_field}\":[\"unit-a\"]");
-        json = json.replace(
-            &empty_field,
-            &filled_field,
-        );
-        let role = role_field
-            .strip_suffix("_ids")
-            .ok_or_else(|| format!("invalid role field: {role_field}"))?;
-        let member = format!(
-            concat!(
-                "\"members\":[{{",
-                "\"id\":\"unit-a\",",
-                "\"role\":\"{}\",",
-                "\"path\":\"extracted/unit-a.bin\",",
-                "\"type\":\"test\",",
-                "\"kind\":\"test\",",
-                "\"source_chunk_kind\":\"test\"}}]"
-            ),
-            role,
-        );
-        json = json.replace(
-            "\"members\":[]",
-            &member,
-        );
-        PhaseThreePackageRow::from_json_line(&json)
-            .map_err(|error| error.to_string())
-    }
-
-    #[test]
-    fn preserves_scene_assembly_roles_in_fbx_plans() -> Result<(), String> {
-        for role_field in [
-            "scene_ids",
-            "locator_ids",
-            "camera_ids",
-        ] {
-            let package = row(
-                "cars",
-                "cars/character-rigs/homer-v",
-                role_field,
-            )?;
-            let plan = PhaseThreePackagePlanner::plan(&package);
-            let Some(fbx) = plan.fbx else {
-                return Err(
-                    format!("{role_field} package should produce an FBX plan"),
-                );
-            };
-            let retained = [
-                fbx.model_ids,
-                fbx.world_ids,
-                fbx.scene_ids,
-                fbx.locator_ids,
-                fbx.camera_ids,
-                fbx.animation_ids,
-                fbx.texture_ids,
-                fbx.material_ids,
-                fbx.physics_ids,
-            ]
-            .into_iter()
-            .flatten()
-            .collect::<Vec<_>>();
-            if retained != ["unit-a".to_owned()] {
-                return Err(
-                    format!("FBX plan dropped {role_field}: {retained:?}"),
-                );
-            }
-        }
-        Ok(())
-    }
-
-    #[test]
-    fn routes_model_packages_to_fbx() -> Result<(), String> {
-        let package = row(
-            "cars",
-            "cars/character-rigs/homer-v",
-            "model_ids",
-        )?;
-        let plan = PhaseThreePackagePlanner::plan(&package);
-        if plan.family != ConversionFamily::FbxModel {
-            return Err("car model package should route to FBX".to_owned());
-        }
-        let Some(fbx) = plan.fbx else {
-            return Err("fbx plan should exist".to_owned());
-        };
-        if fbx.model_ids != ["unit-a".to_owned()] {
-            return Err("fbx plan should carry model ids".to_owned());
-        }
-        Ok(())
-    }
-
-    #[test]
-    fn excludes_provenance_sources_from_unreal_inputs() -> Result<(), String> {
-        let json = concat!(
-            "{\"package_id\":\"derived-language\",",
-            "\"package_root\":\"derived/language\",",
-            "\"package_category\":\"language\",",
-            "\"package_subcategory\":\"language/objectives\",",
-            "\"unit_count\":0,\"text_key_count\":1,",
-            "\"unit_ids\":[],\"world_ids\":[],",
-            "\"texture_ids\":[],\"material_ids\":[],",
-            "\"model_ids\":[],\"physics_ids\":[],",
-            "\"animation_ids\":[],\"scene_ids\":[],",
-            "\"locator_ids\":[],\"camera_ids\":[],",
-            "\"light_ids\":[],\"particle_ids\":[],",
-            "\"controller_ids\":[],\"audio_ids\":[],",
-            "\"movie_ids\":[],\"script_ids\":[],",
-            "\"text_ids\":[],\"ui_ids\":[],",
-            "\"metadata_ids\":[],\"error_ids\":[],",
-            "\"source_unit_ids\":[\"source-a\"],",
-            "\"text_key_ids\":[\"text-a\"],",
-            "\"members\":[],",
-            "\"text_keys\":[{",
-            "\"id\":\"text-a\",",
-            "\"key\":\"HELLO\",",
-            "\"source_unit_id\":\"source-a\",",
-            "\"subcategory\":\"language/objectives\"}]}",
-        );
-        let package = PhaseThreePackageRow::from_json_line(json)
-            .map_err(|error| error.to_string())?;
-        let plan = PhaseThreePackagePlanner::plan(&package);
-        let unreal = plan
-            .unreal
-            .ok_or_else(
-                || {
-                    "derived text package should produce an Unreal plan"
-                        .to_owned()
-                },
-            )?;
-        if unreal.input_ids != ["text-a".to_owned()] {
-            return Err(
-                format!(
-                    "provenance sources leaked into Unreal inputs: {:?}",
-                    unreal.input_ids,
-                ),
-            );
-        }
-        Ok(())
-    }
-
-    #[test]
-    fn routes_dialog_voice_to_unreal_sound_waves() -> Result<(), String> {
-        let package = row(
-            "dialog",
-            "dialog/homer/ad-lib/free-roam/default",
-            "audio_ids",
-        )?;
-        let plan = PhaseThreePackagePlanner::plan(&package);
-        if plan.family != ConversionFamily::UnrealNative {
-            return Err("dialog should route to Unreal-native data".to_owned());
-        }
-        let Some(unreal) = plan.unreal else {
-            return Err("unreal plan should exist".to_owned());
-        };
-        if unreal.target_kind != UnrealTargetKind::SoundWave {
-            return Err("dialog voice should target sound waves".to_owned());
-        }
-        Ok(())
-    }
-
-    #[test]
-    fn routes_metadata_only_packages_to_do_not_import() -> Result<(), String> {
-        let package = row(
-            "ui-images",
-            "ui-images/source-metadata/root",
-            "metadata_ids",
-        )?;
-        let plan = PhaseThreePackagePlanner::plan(&package);
-        if plan.family != ConversionFamily::DoNotImport {
-            return Err("metadata-only package should not import".to_owned());
-        }
-        let Some(unreal) = plan.unreal else {
-            return Err("metadata plan should exist".to_owned());
-        };
-        if unreal.target_kind != UnrealTargetKind::Metadata {
-            return Err("metadata package should target metadata".to_owned());
-        }
-        Ok(())
-    }
-}
+// jig-ignore-next-line: exact syntax is indivisible
+#[path = "../../../../../tests/migration/pipeline/unit/domain/package/plan/tests.rs"]
+mod tests;

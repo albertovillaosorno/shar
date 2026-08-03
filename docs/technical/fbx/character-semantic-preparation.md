@@ -7,9 +7,13 @@
 
 ## Governing decisions
 
-- [Character semantic texture, rig, outfit, and prop contract](../../adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md)
-- [First-principles FBX output contract](../../adr/fbx/export/fbx-output-contract-boundary.md)
-- [Eleven-phase remake delivery roadmap](../../adr/pipeline/eleven-phase-remake-delivery-roadmap.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Character semantic texture, rig, outfit, and prop contract](../../adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md) <!-- markdownlint-disable-line MD013 -->
+- [First-principles FBX output
+  contract](../../adr/fbx/export/fbx-output-contract-boundary.md)
+- [Eleven-phase remake delivery
+  roadmap](../../adr/pipeline/eleven-phase-remake-delivery-roadmap.md)
 
 ## Purpose
 
@@ -20,7 +24,8 @@ manifest evidence, and representative validation.
 
 This phase does not change character animation behavior. It does not implement
 eye tracking, gaze control, blink changes, animation retargeting, skeleton
-behavior changes, runtime clothing, runtime props, or a modular attachment system.
+behavior changes, runtime clothing, runtime props, or a modular attachment
+system.
 
 ## Ownership boundary
 
@@ -60,24 +65,37 @@ eye-tracking behavior, retargeting changes, or deformation changes.
 
 A prepared character artifact contains:
 
-| Field | Contract |
-| :--- | :--- |
-| `CharacterPresentationId` | Stable identity for one complete visual presentation. |
-| `BaseCharacterId` | Canonical character identity shared by related variants. |
-| `VariantKind` | Base, outfit, costume, or prop-bearing complete-model variant. |
-| `MeshManifest` | Deterministic mesh, material, topology, and semantic ownership evidence. |
-| `TextureManifest` | Atlas, region, source evidence, hashes, encoding, and padding rules. |
-| `EyeProfile` | Sclera, pupil, upper-eyelid, and lower-eyelid ownership for both eyes. |
-| `RigDisplayProfile` | Optional visual-only bone readability and support-bone visibility metadata. |
-| `BehaviorPreservation` | Hierarchy, bind, skinning, animation, and deformation invariants. |
-| `DeferredCapabilities` | Explicit future extension slots not implemented by this phase. |
+- **Field:** `CharacterPresentationId`
+  - **Contract:** Stable identity for one complete visual presentation.
+- **Field:** `BaseCharacterId`
+  - **Contract:** Canonical character identity shared by related variants.
+- **Field:** `VariantKind`
+  - **Contract:** Base, outfit, costume, or prop-bearing complete-model variant.
+- **Field:** `MeshManifest`
+  - **Contract:** Deterministic mesh, material, topology, and semantic ownership
+    evidence.
+- **Field:** `TextureManifest`
+  - **Contract:** Atlas, region, source evidence, hashes, encoding, and padding
+    rules.
+- **Field:** `EyeProfile`
+  - **Contract:** Sclera, pupil, upper-eyelid, and lower-eyelid ownership for
+    both eyes.
+- **Field:** `RigDisplayProfile`
+  - **Contract:** Optional visual-only bone readability and support-bone
+    visibility metadata.
+- **Field:** `BehaviorPreservation`
+  - **Contract:** Hierarchy, bind, skinning, animation, and deformation
+    invariants.
+- **Field:** `DeferredCapabilities`
+  - **Contract:** Explicit future extension slots not implemented by this phase.
 
 Equivalent input evidence produces equivalent FBX structure, manifests, texture
 bytes, semantic identities, and hashes.
 
 ## Representative validation set
 
-Semantic character preparation must pass representative non-Homer conformance on:
+Semantic character preparation must pass representative non-Homer conformance
+on:
 
 - Krusty the Clown;
 - Lisa Simpson;
@@ -87,7 +105,8 @@ Semantic character preparation must pass representative non-Homer conformance on
 The validator resolves canonical base-model packages rather than display-name
 searches or arbitrary costume variants.
 
-This set tests varied head geometry, hair, clothing, eye presentation, body shape,
+This set tests varied head geometry, hair, clothing, eye presentation, body
+shape,
 and rig-display complexity. Passing Homer alone is insufficient.
 
 ## Geometry boundary
@@ -115,7 +134,8 @@ At minimum, every prepared character distinguishes:
 - torso.
 
 Evidence may add mouth, teeth, headwear, accessories, garment details, or other
-regions. A region identity describes semantic ownership, not an incidental source
+regions. A region identity describes semantic ownership, not an incidental
+source
 texel island.
 
 Patterns and details move into the atlas region owned by the corresponding body
@@ -150,7 +170,8 @@ separate mesh objects per eye.
 Equivalent eye evidence may share a content-hashed eye profile. A character may
 provide a local override for any layer without changing canonical eye behavior.
 
-This phase does not add gaze, tracking, blinking, controller, bone, transform, or
+This phase does not add gaze, tracking, blinking, controller, bone, transform,
+or
 texture-animation behavior.
 
 ## Skeleton visual review
@@ -226,11 +247,13 @@ save identity, mod precedence, and runtime ownership before activation.
 
 ## Unreal import boundary
 
-Native Unreal import consumes one prepared presentation identity and its complete
+Native Unreal import consumes one prepared presentation identity and its
+complete
 FBX, texture, eye-profile, semantic-region, skeleton-preservation, and variant
 manifests.
 
-The importer may create skeletal mesh, material, texture, and metadata assets from
+The importer may create skeletal mesh, material, texture, and metadata assets
+from
 that evidence. It may not:
 
 - split an unprepared source eye for the first time;

@@ -1,7 +1,3 @@
-// File:
-//   - error.rs
-// Path: src/formats/rsd/domain/error.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,47 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure rsd domain rules for domain error.
+//   - Error domain module.
 // - Must-Not:
-//   - Read files, parse generated indexes, invoke CLI code, or call writer
-//   - adapters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Value objects, invariant checks, and pure evidence-to-domain translation.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - A new transport layer requires adapter-specific context that cannot
-//   - remain represented as a pure parsing, decoding, or export failure.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another rsd module owns the same domain boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Error variants for RSD parsing, decoding, and export.
+//   - Error domain module.
 // - Description:
-//   - Defines the closed failure vocabulary shared by container validation,
-//   - sample decoding, safe path handling, and RIFF serialization.
+//   - Implements the declared domain module responsibility for rsd.
 // - Usage:
-//   - Imported through crate domain facades or sibling domain modules.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No filesystem paths, no external process calls, and no implicit IO
-//   - defaults.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - true
-//   - Reason: The closed RSD failure taxonomy, formatter helpers, and error
-//   - source chaining form one exhaustive domain contract.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Error variants for RSD parsing, decoding, and export.
-//!
-//! A closed taxonomy keeps corrupt input, unsupported codecs, and output-size
-//! failures explicit without leaking adapter implementation details.
+//! Error domain module.
+
 use std::path::PathBuf;
 
 use super::EscapedPath;
@@ -67,8 +46,8 @@ pub enum RsdError {
     Io {
         /// Path tied to the failed IO operation.
         path: PathBuf,
-        /// Original IO failure retained for error chaining.
-        source: std::io::Error,
+        /// Adapter-rendered technical failure without a retained I/O type.
+        message: String,
     },
     /// Source audio conversion failed with the owning file path preserved.
     SourceAudio {
@@ -157,15 +136,10 @@ fn escaped_source_text(value: &str) -> String {
 fn write_path_error(
     formatter: &mut core::fmt::Formatter<'_>,
     path: &std::path::Path,
-    source: &dyn core::fmt::Display,
+    message: &str,
 ) -> core::fmt::Result {
-    let source_text = source.to_string();
-    let rendered_source = escaped_source_text(&source_text);
-    write!(
-        formatter,
-        "{}: {rendered_source}",
-        EscapedPath::new(path)
-    )
+    let rendered_source = escaped_source_text(message);
+    write!(formatter, "{}: {rendered_source}", EscapedPath::new(path))
 }
 
 /// Writes one labeled path without dropping non-Unicode components.
@@ -174,11 +148,7 @@ fn write_labeled_path(
     label: &str,
     path: &std::path::Path,
 ) -> core::fmt::Result {
-    write!(
-        formatter,
-        "{label}: {}",
-        EscapedPath::new(path)
-    )
+    write!(formatter, "{label}: {}", EscapedPath::new(path))
 }
 
 /// Writes two paths that participate in one filesystem conflict.
@@ -201,15 +171,9 @@ fn write_encoding_tag(
     formatter: &mut core::fmt::Formatter<'_>,
     tag: [u8; 4],
 ) -> core::fmt::Result {
-    write!(
-        formatter,
-        "unsupported RSD encoding: "
-    )?;
+    write!(formatter, "unsupported RSD encoding: ")?;
     for byte in tag {
-        write!(
-            formatter,
-            "\\x{byte:02X}"
-        )?;
+        write!(formatter, "\\x{byte:02X}")?;
     }
     Ok(())
 }
@@ -234,16 +198,15 @@ const fn static_display(message: &'static str) -> ErrorDisplay<'static> {
 }
 
 /// Typed rendering case derived exhaustively from one RSD failure.
-#[derive(Clone, Copy)]
 enum ErrorDisplay<'a> {
     /// Fixed diagnostic text.
     Static(&'static str),
-    /// Path plus retained typed source.
+    /// Path plus adapter-rendered source evidence.
     PathError {
         /// Path tied to the source failure.
         path: &'a std::path::Path,
-        /// Typed source rendered after the path.
-        source: &'a dyn core::fmt::Display,
+        /// Source evidence rendered before entering the domain boundary.
+        message: String,
     },
     /// Labeled path diagnostic.
     LabeledPath {
@@ -293,33 +256,33 @@ enum ErrorDisplay<'a> {
 }
 
 impl RsdError {
+    /// Constructs one path-scoped technical failure from adapter-rendered text.
+    #[must_use]
+    pub(crate) const fn io(path: PathBuf, message: String) -> Self {
+        Self::Io { path, message }
+    }
+
     /// Classify one failure into its complete rendering contract.
     fn diagnostic_case(&self) -> ErrorDisplay<'_> {
         match self {
             Self::NoInputRoots => {
                 static_display("no RSD source roots provided")
-            }
-            Self::NoAudioInputs => static_display("no RSD audio inputs found"),
-            Self::Io {
-                path,
-                source,
-            } => ErrorDisplay::PathError {
-                path,
-                source,
             },
-            Self::SourceAudio {
+            Self::NoAudioInputs => static_display("no RSD audio inputs found"),
+            Self::Io { path, message } => ErrorDisplay::PathError {
                 path,
-                source,
-            } => ErrorDisplay::PathError {
+                message: message.clone(),
+            },
+            Self::SourceAudio { path, source } => ErrorDisplay::PathError {
                 path,
-                source: source.as_ref(),
+                message: source.to_string(),
             },
             Self::BadMagic => static_display("not an RSD4 audio file"),
             Self::TruncatedHeader => static_display("RSD header is truncated"),
             Self::TruncatedData => static_display("RSD payload is truncated"),
             Self::InvalidHeaderPadding => {
                 static_display("RSD padded header metadata is corrupt")
-            }
+            },
             Self::InvalidRootName(path) => ErrorDisplay::LabeledPath {
                 label: "input root has no safe folder name",
                 path,
@@ -332,25 +295,23 @@ impl RsdError {
                 label: "output root is not a directory",
                 path,
             },
-            Self::CollidingRootName {
-                first,
-                second,
-            } => ErrorDisplay::PathPair {
-                label: "source roots share one output folder name",
-                first,
-                second,
+            Self::CollidingRootName { first, second } => {
+                ErrorDisplay::PathPair {
+                    label: "source roots share one output folder name",
+                    first,
+                    second,
+                }
             },
             Self::CollidingOutputPath(path) => ErrorDisplay::LabeledPath {
                 label: "multiple RSD sources target one output path",
                 path,
             },
-            Self::OverlappingOutputRoot {
-                source,
-                output,
-            } => ErrorDisplay::PathPair {
-                label: "source and output trees overlap",
-                first: source,
-                second: output,
+            Self::OverlappingOutputRoot { source, output } => {
+                ErrorDisplay::PathPair {
+                    label: "source and output trees overlap",
+                    first: source,
+                    second: output,
+                }
             },
             Self::InvalidPath(path) => ErrorDisplay::LabeledPath {
                 label: "path is not safe for export",
@@ -379,10 +340,10 @@ impl RsdError {
             },
             Self::AllocationFailed(bytes) => {
                 ErrorDisplay::AllocationFailed(*bytes)
-            }
+            },
             Self::InvalidReport(message) | Self::ReportOverflow(message) => {
                 static_display(message)
-            }
+            },
             Self::WavTooLarge(bytes) => ErrorDisplay::WavTooLarge(*bytes),
             Self::UnalignedPayload {
                 encoding,
@@ -404,132 +365,42 @@ impl core::fmt::Display for RsdError {
     ) -> core::fmt::Result {
         match self.diagnostic_case() {
             ErrorDisplay::Static(message) => formatter.write_str(message),
-            ErrorDisplay::PathError {
-                path,
-                source,
-            } => write_path_error(
-                formatter, path, source,
-            ),
-            ErrorDisplay::LabeledPath {
-                label,
-                path,
-            } => write_labeled_path(
-                formatter, label, path,
-            ),
-            ErrorDisplay::PathPair {
-                label,
-                first,
-                second,
-            } => write_path_pair(
-                formatter, label, first, second,
-            ),
-            ErrorDisplay::Encoding(tag) => write_encoding_tag(
-                formatter, tag,
-            ),
-            ErrorDisplay::SignedValue {
-                label,
-                value,
-            } => write!(
-                formatter,
-                "{label}: {value}"
-            ),
-            ErrorDisplay::UnsignedValue {
-                label,
-                value,
-            } => write!(
-                formatter,
-                "{label}: {value}"
-            ),
+            ErrorDisplay::PathError { path, message } => {
+                write_path_error(formatter, path, &message)
+            },
+            ErrorDisplay::LabeledPath { label, path } => {
+                write_labeled_path(formatter, label, path)
+            },
+            ErrorDisplay::PathPair { label, first, second } => {
+                write_path_pair(formatter, label, first, second)
+            },
+            ErrorDisplay::Encoding(tag) => write_encoding_tag(formatter, tag),
+            ErrorDisplay::SignedValue { label, value } => {
+                write!(formatter, "{label}: {value}")
+            },
+            ErrorDisplay::UnsignedValue { label, value } => {
+                write!(formatter, "{label}: {value}")
+            },
             ErrorDisplay::AllocationFailed(bytes) => write!(
                 formatter,
                 "unable to reserve {bytes} bytes for RSD conversion"
             ),
-            ErrorDisplay::WavTooLarge(bytes) => write!(
-                formatter,
-                "WAV payload is too large: {bytes} bytes"
-            ),
+            ErrorDisplay::WavTooLarge(bytes) => {
+                write!(formatter, "WAV payload is too large: {bytes} bytes")
+            },
             ErrorDisplay::UnalignedPayload {
                 encoding,
                 bytes,
                 frame_size,
-            } => write_unaligned_payload(
-                formatter, encoding, bytes, frame_size,
-            ),
+            } => {
+                write_unaligned_payload(formatter, encoding, bytes, frame_size)
+            },
         }
     }
 }
-impl std::error::Error for RsdError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Self::Io {
-                source,
-                ..
-            } => Some(source),
-            Self::SourceAudio {
-                source,
-                ..
-            } => Some(source.as_ref()),
-            _ => None,
-        }
-    }
-}
+
+impl std::error::Error for RsdError {}
 
 #[cfg(test)]
-mod tests {
-    use std::error::Error as _;
-    use std::io;
-    use std::path::PathBuf;
-
-    use super::RsdError;
-
-    #[test]
-    fn io_error_escapes_source_control_characters() {
-        let error = RsdError::Io {
-            path: PathBuf::from("audio.rsd"),
-            source: io::Error::other("read\ninjected"),
-        };
-
-        let rendered = error.to_string();
-
-        assert!(
-            !rendered
-                .chars()
-                .any(char::is_control),
-            "diagnostic contains a control character: {rendered:?}"
-        );
-        assert!(rendered.contains(r"read\ninjected"));
-        assert!(
-            error
-                .source()
-                .is_some()
-        );
-    }
-
-    #[test]
-    fn source_audio_error_keeps_one_escape_layer() {
-        let inner = RsdError::Io {
-            path: PathBuf::from("inner.rsd"),
-            source: io::Error::other("read\ninjected"),
-        };
-        let error = RsdError::SourceAudio {
-            path: PathBuf::from("outer.rsd"),
-            source: Box::new(inner),
-        };
-
-        let rendered = error.to_string();
-
-        assert!(
-            !rendered
-                .chars()
-                .any(char::is_control),
-            "diagnostic contains a control character: {rendered:?}"
-        );
-        assert!(rendered.contains(r"read\ninjected"));
-        assert!(!rendered.contains(r"read\\ninjected"));
-        assert!(
-            error
-                .source()
-                .is_some()
-        );
-    }
-}
+#[path = "../../../../tests/formats/rsd/unit/domain/error/tests.rs"]
+mod tests;

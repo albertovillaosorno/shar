@@ -5,40 +5,57 @@
 
 ## Governing decision
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
+- [Spatial visibility, bounds, and culling
+  runtime](spatial-visibility-bounds-and-culling-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
+- [World render-entity and physics
+  runtime](world-render-entity-and-physics-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md)
+- [Native render-frame, view, and layer
+  runtime](native-render-frame-view-and-layer-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
+- [Transient VFX and breakable-presentation
+  runtime](transient-vfx-and-breakable-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native render-frame, view, and layer runtime](native-render-frame-view-and-layer-runtime.md)
+- [Road-network geometry and traffic
+  runtime](road-network-geometry-and-traffic-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md)
+- [Vehicle audio and avatar-sound
+  runtime](vehicle-audio-and-avatar-sound-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Road-network geometry and traffic runtime](road-network-geometry-and-traffic-runtime.md)
+- [Dialogue selection, queue, and playback
+  runtime](dialogue-selection-queue-and-playback-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Vehicle audio and avatar-sound runtime](vehicle-audio-and-avatar-sound-runtime.md)
+- [Spatial audio listener and positional-source
+  runtime](spatial-audio-listener-and-positional-source-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md)
+- [Gameplay audio source, residency, mix, and environment
+  runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md)
+- [Native audio device, resource, player, and tuning adapter
+  runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
+- [Native vehicle physics, control, damage, and presentation
+  runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
+- [Authored state-prop animation and event
+  runtime](authored-state-prop-animation-and-event-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+- [Local supersprint race session
+  runtime](local-supersprint-race-session-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md)
+- [Playable avatar, character controller, and footprint
+  runtime](playable-avatar-character-controller-and-footprint-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Local supersprint race session runtime](local-supersprint-race-session-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Native art authoring, style, and asset validation contract](native-art-authoring-style-and-asset-validation-contract.md)
+- [Native art authoring, style, and asset validation
+  contract](native-art-authoring-style-and-asset-validation-contract.md)
 
 ## Purpose
 
@@ -57,14 +74,36 @@ The required distribution matrix is:
 
 <!-- markdownlint-disable MD013 -->
 
-| Target identifier | Platform family | Native architecture | Product class | Presets |
-| :--- | :--- | :--- | :--- | :--- |
-| `windows-x64` | Windows | x64 | Desktop | Low through Ultra |
-| `linux-x64` | Linux | x64 | Desktop | Low through Ultra |
-| `macos-arm64` | macOS | ARM64 | Desktop | Low through Ultra |
-| `windows-arm64` | Windows | ARM64 | Desktop compatibility target | Low through Ultra |
-| `linux-arm64` | Linux | ARM64 | Desktop compatibility target | Low through Ultra |
-| `android-arm64` | Android | ARM64 | Mobile | Low only |
+- **Target identifier:** `windows-x64`
+  - **Platform family:** Windows
+  - **Native architecture:** x64
+  - **Product class:** Desktop
+  - **Presets:** Low through Ultra
+- **Target identifier:** `linux-x64`
+  - **Platform family:** Linux
+  - **Native architecture:** x64
+  - **Product class:** Desktop
+  - **Presets:** Low through Ultra
+- **Target identifier:** `macos-arm64`
+  - **Platform family:** macOS
+  - **Native architecture:** ARM64
+  - **Product class:** Desktop
+  - **Presets:** Low through Ultra
+- **Target identifier:** `windows-arm64`
+  - **Platform family:** Windows
+  - **Native architecture:** ARM64
+  - **Product class:** Desktop compatibility target
+  - **Presets:** Low through Ultra
+- **Target identifier:** `linux-arm64`
+  - **Platform family:** Linux
+  - **Native architecture:** ARM64
+  - **Product class:** Desktop compatibility target
+  - **Presets:** Low through Ultra
+- **Target identifier:** `android-arm64`
+  - **Platform family:** Android
+  - **Native architecture:** ARM64
+  - **Product class:** Mobile
+  - **Presets:** Low only
 
 <!-- markdownlint-enable MD013 -->
 
@@ -83,13 +122,23 @@ The five graphics presets are ordered and monotonic:
 
 <!-- markdownlint-disable MD013 -->
 
-| Preset | Contract |
-| :--- | :--- |
-| Low | Lowest supported native rendering configuration while preserving every gameplay-relevant visual and collision contract. Its art target remains comparable to the original game or a seventh-generation console presentation. |
-| Medium | A measured increase over Low in native texture, shadow, effects, filtering, post-processing, and view-distance quality. |
-| High | A measured increase over Medium with no simulation or content divergence. |
-| Epic | Unreal's high-end native scalability baseline with every selected group at or above High. |
-| Ultra | Maximum supported quality for the active platform and hardware, including every stable optional feature selected for that target. |
+- **Preset:** Low
+  - **Contract:** Lowest supported native rendering configuration while
+    preserving every gameplay-relevant visual and collision contract. Its art
+    target remains comparable to the original game or a seventh-generation
+    console presentation.
+- **Preset:** Medium
+  - **Contract:** A measured increase over Low in native texture, shadow,
+    effects, filtering, post-processing, and view-distance quality.
+- **Preset:** High
+  - **Contract:** A measured increase over Medium with no simulation or content
+    divergence.
+- **Preset:** Epic
+  - **Contract:** Unreal's high-end native scalability baseline with every
+    selected group at or above High.
+- **Preset:** Ultra
+  - **Contract:** Maximum supported quality for the active platform and
+    hardware, including every stable optional feature selected for that target.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -122,7 +171,8 @@ layout, deterministic concurrency, and removal of redundant work.
 Bounds, distance rules, per-view frusta, occlusion, LOD, HLOD, Nanite, and World
 Partition follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md).
+[Spatial visibility, bounds, and culling
+runtime](spatial-visibility-bounds-and-culling-runtime.md).
 Converted cell and partition artifacts may provide deterministic diagnostics,
 but quality policy cannot replace Unreal's renderer or hide gameplay-required
 content through a second runtime visibility tree.
@@ -130,7 +180,8 @@ content through a second runtime visibility tree.
 Actor/component composition, Chaos simulation, cooked collision, physical
 profiles, query surfaces, breakables, and measured ISM or HISM selection follow
 <!-- markdownlint-disable-next-line MD013 -->
-[World render-entity and physics runtime](world-render-entity-and-physics-runtime.md).
+[World render-entity and physics
+runtime](world-render-entity-and-physics-runtime.md).
 Quality may change rendering and validated solver cost, but it cannot remove
 required collision or physics, change entity identity, or alter accepted
 gameplay
@@ -139,16 +190,19 @@ results.
 Frame execution, local-player views, display policy, post processing, telemetry,
 and renderer-owned submission follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Native render-frame, view, and layer runtime](native-render-frame-view-and-layer-runtime.md).
+[Native render-frame, view, and layer
+runtime](native-render-frame-view-and-layer-runtime.md).
 Niagara systems, Effect Types, spawn counts, pooling, fragments, and cosmetic
 fallbacks follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md).
+[Transient VFX and breakable-presentation
+runtime](transient-vfx-and-breakable-presentation-runtime.md).
 
 Road spline fidelity, graph identity, legal connectivity, traffic-control
 semantics, route reachability, and deterministic path results follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Road-network geometry and traffic runtime](road-network-geometry-and-traffic-runtime.md).
+[Road-network geometry and traffic
+runtime](road-network-geometry-and-traffic-runtime.md).
 A quality preset may reduce road rendering or ambient traffic density within
 accepted policy, but it cannot change the canonical graph or required route
 semantics.
@@ -158,14 +212,18 @@ complexity, spatialization implementation, occlusion and reverb cost, update
 frequency, concurrency, voice count, virtualization, and ambient significance
 within
 <!-- markdownlint-disable-next-line MD013 -->
-[Vehicle audio and avatar-sound runtime](vehicle-audio-and-avatar-sound-runtime.md),
+[Vehicle audio and avatar-sound
+runtime](vehicle-audio-and-avatar-sound-runtime.md),
 <!-- markdownlint-disable-next-line MD013 -->
-[Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md),
+[Dialogue selection, queue, and playback
+runtime](dialogue-selection-queue-and-playback-runtime.md),
 <!-- markdownlint-disable-next-line MD013 -->
-[Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md),
+[Spatial audio listener and positional-source
+runtime](spatial-audio-listener-and-positional-source-runtime.md),
 and
 <!-- markdownlint-disable-next-line MD013 -->
-[Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md).
+[Gameplay audio source, residency, mix, and environment
+runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md).
 
 Quality policy may also change optional generic effects, residency and stream-
 cache budgets, Sound Class loading behavior, mix implementation, submix effect
@@ -176,7 +234,8 @@ Component, source admission, stream-cache, fade, output, modulation, and
 callback
 behavior follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md).
+[Native audio device, resource, player, and tuning adapter
+runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md).
 
 It cannot remove required dialogue, music, sequence audio, or gameplay cues;
 change deterministic selection; alter subtitles; reassign listener ownership;
@@ -191,7 +250,8 @@ skid and smoke density, distant traffic representation, optional audio layers,
 diagnostic detail, and native vehicle quality settings within validated parity
 tolerances under
 <!-- markdownlint-disable-next-line MD013 -->
-[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+[Native vehicle physics, control, damage, and presentation
+runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
 
 It cannot change canonical vehicle identity, required wheel or collision
 topology,
@@ -205,7 +265,8 @@ or gameplay outcomes.
 State-prop quality may reduce optional particles, secondary audio, distant
 animation evaluation, material cost, or decorative update frequency within
 <!-- markdownlint-disable-next-line MD013 -->
-[Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md).
+[Authored state-prop animation and event
+runtime](authored-state-prop-animation-and-event-runtime.md).
 It cannot change state identity, transition order, marker semantics, component
 visibility required for interaction, collision, persistence, or required
 feedback.
@@ -215,7 +276,8 @@ materials, animation-budget participation, footprint density, footprint
 lifetime,
 optional VFX, and distant ambient representation within
 <!-- markdownlint-disable-next-line MD013 -->
-[Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md).
+[Playable avatar, character controller, and footprint
+runtime](playable-avatar-character-controller-and-footprint-runtime.md).
 It cannot change input meaning, movement physics, collision, vehicle handoff,
 local-player isolation, interaction eligibility, camera ownership, mission
 state,
@@ -224,7 +286,8 @@ or required contact feedback.
 Supersprint quality may reduce optional crowd, particles, reflections, camera
 flourish, distant audio, and HUD decoration within
 <!-- markdownlint-disable-next-line MD013 -->
-[Local supersprint race session runtime](local-supersprint-race-session-runtime.md).
+[Local supersprint race session
+runtime](local-supersprint-race-session-runtime.md).
 It cannot change participant capacity, controller assignment, vehicle physics,
 route or checkpoint reachability, lap and clock semantics, artificial-
 intelligence rules, finish windows, high-score eligibility, or results.
@@ -243,7 +306,8 @@ kits, collision, LOD, HLOD, Nanite, native import, Data Validation, and
 read-back
 follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Native art authoring, style, and asset validation contract](native-art-authoring-style-and-asset-validation-contract.md).
+[Native art authoring, style, and asset validation
+contract](native-art-authoring-style-and-asset-validation-contract.md).
 
 Budgets are typed by asset class, screen role, platform, graphics preset,
 streaming scope, and expected instance count. Historical fixed polygon or
@@ -280,9 +344,14 @@ definitions.
 ## Platform lifecycle and memory evidence
 
 <!-- markdownlint-disable MD013 -->
-Process entry, capability snapshots, display recovery, suspension, restart, legal presentation, and terminal exit follow the [native platform bootstrap and error-recovery runtime](native-platform-bootstrap-and-error-recovery-runtime.md).
+Process entry, capability snapshots, display recovery, suspension, restart,
+legal presentation, and terminal exit follow the [native platform bootstrap and
+error-recovery
+runtime](native-platform-bootstrap-and-error-recovery-runtime.md).
 
-Target budgets, ownership scopes, pressure response, residency, leak verification, and packaged-memory evidence follow the [memory ownership, budget, and diagnostics runtime](memory-ownership-budget-and-diagnostics-runtime.md).
+Target budgets, ownership scopes, pressure response, residency, leak
+verification, and packaged-memory evidence follow the [memory ownership, budget,
+and diagnostics runtime](memory-ownership-budget-and-diagnostics-runtime.md).
 <!-- markdownlint-enable MD013 -->
 
 A quality preset may alter declared optional residency, cache size, and visual

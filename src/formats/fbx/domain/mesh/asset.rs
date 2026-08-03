@@ -1,7 +1,3 @@
-// File:
-//   - asset.rs
-// Path: src/formats/fbx/domain/mesh/asset.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,45 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure fbx domain rules for domain mesh asset.
+//   - Asset domain module.
 // - Must-Not:
-//   - Read files, parse generated indexes, invoke CLI code, or call writer
-//   - adapters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Value objects, invariant checks, and pure evidence-to-domain translation.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when asset contains two independently testable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another fbx module owns the same domain boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Normalized mesh asset ready for scene construction.
+//   - Asset domain module.
 // - Description:
-//   - Defines asset data and behavior for fbx domain mesh.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Imported through crate domain facades or sibling domain modules.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No filesystem paths, no external process calls, and no implicit IO
-//   - defaults.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-// - docs/adr/pipeline/unreal/unreal-manifest-and-package-taxonomy.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Normalized mesh asset ready for scene construction.
-//!
-//! This boundary keeps normalized mesh asset ready for scene construction
-//! explicit and returns deterministic results to fbx callers.
-// These exact file-local lints preserve explicit domain and binary contracts.
+//! Asset domain module.
+
 #![expect(
     clippy::module_name_repetitions,
     reason = "Tests verify these intentional explicit file-local contracts \
@@ -80,16 +61,11 @@ impl MeshAsset {
         mut groups: Vec<PrimitiveGroup>,
     ) -> Result<Self, MeshError> {
         let mesh_name = name.into();
-        if mesh_name
-            .trim()
-            .is_empty()
-        {
+        if mesh_name.trim().is_empty() {
             return Err(MeshError::MissingMeshName);
         }
         if mesh_name != mesh_name.trim()
-            || mesh_name
-                .chars()
-                .any(char::is_control)
+            || mesh_name.chars().any(char::is_control)
         {
             return Err(MeshError::NonCanonicalMeshName);
         }
@@ -99,19 +75,12 @@ impl MeshAsset {
         let mut group_indices = BTreeSet::new();
         for group in &groups {
             if !group_indices.insert(group.index) {
-                return Err(
-                    MeshError::DuplicatePrimitiveGroupIndex {
-                        index: group.index,
-                    },
-                );
+                return Err(MeshError::DuplicatePrimitiveGroupIndex {
+                    index: group.index,
+                });
             }
         }
         groups.sort_unstable_by_key(|group| group.index);
-        Ok(
-            Self {
-                name: mesh_name,
-                groups,
-            },
-        )
+        Ok(Self { name: mesh_name, groups })
     }
 }

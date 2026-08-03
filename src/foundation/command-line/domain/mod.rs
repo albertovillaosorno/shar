@@ -1,7 +1,3 @@
-// File:
-//   - domain.rs
-// Path: src/foundation/command-line/domain/mod.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,41 +6,31 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Process-neutral command outcomes, output chunks, and argument failures.
+//   - Domain domain module.
 // - Must-Not:
-//   - Read process state, write streams, or encode domain command policy.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Represent ordered output and success or failure status.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when one process-neutral value family becomes independent.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another domain module owns the same command result invariants.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Shared CLI domain model.
+//   - Domain domain module.
 // - Description:
-//   - Defines command results without depending on operating-system streams.
+//   - Implements the declared domain module responsibility for command line.
 // - Usage:
-//   - Returned by commands and consumed by the shared runner.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Output order is preserved and no newline is inserted implicitly.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Pure process-neutral values for shared CLI mechanisms.
-//!
-//! Domain commands decide content while adapters own process interaction.
+//! Domain domain module.
 
-/// Stable command completion status.
+/// Stable process-neutral completion state.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ExitStatus {
     /// The command completed successfully.
@@ -74,10 +60,7 @@ pub struct OutputChunk {
 impl OutputChunk {
     /// Creates one exact output chunk without adding a newline.
     #[must_use]
-    pub fn new(
-        stream: OutputStream,
-        text: impl Into<String>,
-    ) -> Self {
+    pub fn new(stream: OutputStream, text: impl Into<String>) -> Self {
         Self {
             stream,
             text: text.into(),
@@ -127,51 +110,29 @@ impl CommandOutcome {
 
     /// Appends exact standard-output text.
     #[must_use]
-    pub fn stdout(
-        mut self,
-        text: impl Into<String>,
-    ) -> Self {
+    pub fn stdout(mut self, text: impl Into<String>) -> Self {
         self.output
-            .push(
-                OutputChunk::new(
-                    OutputStream::Stdout,
-                    text,
-                ),
-            );
+            .push(OutputChunk::new(OutputStream::Stdout, text));
         self
     }
 
     /// Appends one standard-output line.
     #[must_use]
-    pub fn stdout_line(
-        self,
-        text: impl Into<String>,
-    ) -> Self {
+    pub fn stdout_line(self, text: impl Into<String>) -> Self {
         self.stdout(line(text))
     }
 
     /// Appends exact standard-error text.
     #[must_use]
-    pub fn stderr(
-        mut self,
-        text: impl Into<String>,
-    ) -> Self {
+    pub fn stderr(mut self, text: impl Into<String>) -> Self {
         self.output
-            .push(
-                OutputChunk::new(
-                    OutputStream::Stderr,
-                    text,
-                ),
-            );
+            .push(OutputChunk::new(OutputStream::Stderr, text));
         self
     }
 
     /// Appends one standard-error line.
     #[must_use]
-    pub fn stderr_line(
-        self,
-        text: impl Into<String>,
-    ) -> Self {
+    pub fn stderr_line(self, text: impl Into<String>) -> Self {
         self.stderr(line(text))
     }
 
@@ -189,10 +150,7 @@ impl CommandOutcome {
 
     /// Reports whether this is one failed command with one stderr line.
     #[must_use]
-    pub fn is_failure_with_stderr_line(
-        &self,
-        expected: &str,
-    ) -> bool {
+    pub fn is_failure_with_stderr_line(&self, expected: &str) -> bool {
         self.status == ExitStatus::Failure
             && matches!(
                 self.output.as_slice(),
@@ -214,9 +172,7 @@ impl ArgumentError {
     /// Creates an invalid-Unicode argument failure.
     #[must_use]
     pub const fn non_unicode(index: usize) -> Self {
-        Self {
-            index,
-        }
+        Self { index }
     }
 
     /// Returns the zero-based command argument index.
@@ -253,39 +209,5 @@ fn line(text: impl Into<String>) -> String {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::{CommandOutcome, ExitStatus, OutputStream};
-
-    #[test]
-    fn line_helpers_preserve_output_order_and_add_one_newline() {
-        let outcome = CommandOutcome::failure()
-            .stdout("raw")
-            .stderr_line("problem")
-            .stdout_line("done");
-        let expected = vec![
-            super::OutputChunk::new(
-                OutputStream::Stdout,
-                "raw",
-            ),
-            super::OutputChunk::new(
-                OutputStream::Stderr,
-                "problem
-",
-            ),
-            super::OutputChunk::new(
-                OutputStream::Stdout,
-                "done
-",
-            ),
-        ];
-
-        assert_eq!(
-            outcome.status(),
-            ExitStatus::Failure
-        );
-        assert_eq!(
-            outcome.output(),
-            expected.as_slice()
-        );
-    }
-}
+#[path = "../../../../tests/foundation/command-line/unit/domain/tests.rs"]
+mod tests;

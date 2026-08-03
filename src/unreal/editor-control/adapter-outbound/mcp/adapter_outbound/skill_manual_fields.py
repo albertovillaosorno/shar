@@ -1,7 +1,3 @@
-# File:
-#   - skill_manual_fields.py
-# Path: src/unreal/editor-control/adapter-outbound/mcp/adapter_outbound/skill_manual_fields.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,61 +6,46 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Stable human-owned field markers and generated-skill merge behavior.
+#   - Skill manual fields outbound adapter.
 # - Must-Not:
-#   - Access files, call Unreal, classify tools, or render live MCP metadata.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Rendering empty manual fields and preserving their exact authored content.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Marker parsing and field-schema evolution require separate versioning.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another adapter owns the same protected Markdown field contract.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Preserves manual guidance inside otherwise generated tool skills.
+#   - Skill manual fields outbound adapter.
 # - Description:
-#   - Fails closed on malformed, duplicate, missing, or unknown field markers.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Renderers emit the template; the filesystem store merges existing values.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - New skills start with five content placeholders and one review token.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: generated skill manual-field preservation contract
-#   - reason: field schema, marker parsing, and merge safety form one invariant
-#   - split: extract schema migration if protected fields ever change
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess before adding, renaming, or removing a manual field
-#
-"""Protected human-authored fields for generated Unreal MCP tool skills."""
+
+"""Skill manual fields outbound adapter."""
 
 from __future__ import annotations
 
 import re
 
-from mcp.adapter_outbound.skill_manual_field_schema import (
-    LEGACY_MANUAL_FIELDS,
-    LEGACY_MANUAL_KEYS,
-    MANUAL_FIELDS,
-    MANUAL_KEYS,
-    begin_marker,
-    end_marker,
-    expected_events,
-)
+from mcp.adapter_outbound.skill_manual_field_schema import LEGACY_MANUAL_FIELDS
+from mcp.adapter_outbound.skill_manual_field_schema import LEGACY_MANUAL_KEYS
+from mcp.adapter_outbound.skill_manual_field_schema import MANUAL_FIELDS
+from mcp.adapter_outbound.skill_manual_field_schema import MANUAL_KEYS
+from mcp.adapter_outbound.skill_manual_field_schema import begin_marker
+from mcp.adapter_outbound.skill_manual_field_schema import end_marker
+from mcp.adapter_outbound.skill_manual_field_schema import expected_events
+from mcp.adapter_outbound.skill_manual_review import MANUAL_REVIEW_FIELD_KEY
 from mcp.adapter_outbound.skill_manual_review import (
-    MANUAL_REVIEW_FIELD_KEY,
     refresh_manual_review_status,
-    render_manual_review_lines,
 )
+from mcp.adapter_outbound.skill_manual_review import render_manual_review_lines
 from mcp.domain.errors import fail_protocol
 
 _MANUAL_HEADING = "## Human-authored guidance"
@@ -91,6 +72,7 @@ def render_manual_section(
 
     Returns:
         Markdown lines for the complete human-authored guidance section.
+
     """
     resolved = values or {}
     unknown = frozenset(resolved) - MANUAL_KEYS
@@ -135,6 +117,7 @@ def merge_manual_fields(
 
     Returns:
         Fresh generated content with exact existing manual values restored.
+
     """
     generated_values = extract_manual_fields(
         generated_content,
@@ -185,6 +168,7 @@ def extract_manual_fields(
 
     Returns:
         Exact field contents keyed by stable field identity.
+
     """
     _check_marker_lines(content, context=context)
     markers = tuple(_MARKER_PATTERN.finditer(content))

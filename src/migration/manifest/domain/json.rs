@@ -1,7 +1,3 @@
-// File:
-//   - json.rs
-// Path: src/migration/manifest/domain/json.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Canonical JSON string escaping for game-manifest records.
+//   - Json domain module.
 // - Must-Not:
-//   - Parse manifest schemas or own record classification decisions.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Escaping caller-provided text into valid JSON string contents.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when escaping and parsing become independently reusable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another game-manifest module owns the same JSON string boundary.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Provides dependency-free canonical JSON string escaping.
+//   - Json domain module.
 // - Description:
-//   - Converts reserved and control characters without changing Unicode text.
+//   - Implements the declared domain module responsibility for manifest.
 // - Usage:
-//   - Called by manifest serializers before embedding string field values.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Non-control Unicode scalar values are preserved exactly.
-//
-// ADRs:
-// - docs/adr/pipeline/game-manifest-ledger.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Dependency-free JSON string escaping for manifest records.
-//!
-//! This module keeps the serializer valid for adversarial path-derived values
-//! while avoiding a broad serialization dependency at the narrow ledger edge.
+//! Json domain module.
 
 use super::{DirCount, KIND_TAXONOMY};
 
@@ -64,6 +49,7 @@ impl DirCount {
         line.push('}');
         line
     }
+
     /// Parses one canonical JSONL line produced by [`DirCount::to_jsonl`].
     /// Returns `None` for blank lines, comment lines (starting with `#`), or
     /// lines that do not match the canonical shape.
@@ -75,9 +61,7 @@ impl DirCount {
         if line.is_empty() || line.starts_with('#') {
             return None;
         }
-        let inner = line
-            .strip_prefix("{\"dir\":\"")?
-            .strip_suffix('}')?;
+        let inner = line.strip_prefix("{\"dir\":\"")?.strip_suffix('}')?;
         let (dir, rest) = inner.split_once("\",\"ext\":\"")?;
         let (extension, minimum_and_kind) = rest.split_once("\",\"min\":")?;
         let (minimum_token, kind_token) =
@@ -90,21 +74,17 @@ impl DirCount {
         {
             return None;
         }
-        let min_count = minimum_token
-            .parse::<usize>()
-            .ok()?;
+        let min_count = minimum_token.parse::<usize>().ok()?;
         let kind = unescape(kind_token.strip_suffix('"')?)?;
         if !KIND_TAXONOMY.contains(&kind.as_str()) {
             return None;
         }
-        Some(
-            Self {
-                dir: unescape(dir)?,
-                extension: unescape(extension)?,
-                min_count,
-                kind,
-            },
-        )
+        Some(Self {
+            dir: unescape(dir)?,
+            extension: unescape(extension)?,
+            min_count,
+            kind,
+        })
     }
 }
 
@@ -123,21 +103,11 @@ fn escape(value: &str) -> String {
             control if control <= '\u{1f}' => {
                 let code = u32::from(control);
                 escaped.push_str("\\u00");
-                escaped.push(
-                    char::from_digit(
-                        code >> 4,
-                        16_u32,
-                    )
-                    .unwrap_or('0'),
-                );
-                escaped.push(
-                    char::from_digit(
-                        code & 0x0f,
-                        16_u32,
-                    )
-                    .unwrap_or('0'),
-                );
-            }
+                escaped
+                    .push(char::from_digit(code >> 4, 16_u32).unwrap_or('0'));
+                escaped
+                    .push(char::from_digit(code & 0x0f, 16_u32).unwrap_or('0'));
+            },
             other => escaped.push(other),
         }
     }
@@ -187,7 +157,7 @@ fn unescape(value: &str) -> Option<String> {
                 } else {
                     output.push(char::from_u32(u32::from(first))?);
                 }
-            }
+            },
             _ => return None,
         }
     }
@@ -198,9 +168,7 @@ fn unescape(value: &str) -> Option<String> {
 fn read_hex_quad(characters: &mut std::str::Chars<'_>) -> Option<u16> {
     let mut value = 0_u16;
     for _ in 0_u8..4_u8 {
-        let digit = characters
-            .next()?
-            .to_digit(16_u32)?;
+        let digit = characters.next()?.to_digit(16_u32)?;
         value = value
             .checked_mul(16_u16)?
             .checked_add(u16::try_from(digit).ok()?)?;

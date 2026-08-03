@@ -1,0 +1,5 @@
+schema: shar-surface/v1
+path: src/foundation/json-text/Cargo.toml
+function: json-text
+kind: project
+authority: Cargo.toml

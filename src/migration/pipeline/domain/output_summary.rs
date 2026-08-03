@@ -1,7 +1,3 @@
-// File:
-//   - output_summary.rs
-// Path: src/migration/pipeline/domain/output_summary.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Process-neutral pipeline output inventory values.
+//   - Output summary domain module.
 // - Must-Not:
-//   - Traverse storage or decide command presentation formatting.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Represent total and named-directory file counts and byte totals.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when artifact families need independently versioned summaries.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another domain module owns the same output inventory values.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Pipeline output inventory domain values.
+//   - Output summary domain module.
 // - Description:
-//   - Separates output evidence from filesystem and CLI adapters.
+//   - Implements the declared domain module responsibility for pipeline.
 // - Usage:
-//   - Produced through an output-inventory port and rendered by the CLI.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Named directory summaries remain ordered by caller policy.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Process-neutral output inventory values.
-//!
-//! Storage traversal and presentation remain outside the domain.
+//! Output summary domain module.
+
 use std::path::PathBuf;
 
 /// File count for one caller-selected output directory.

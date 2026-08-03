@@ -6,22 +6,30 @@
 ## Governing decisions and specifications
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [HUD, radar, camera, and navigation parity](../../adr/unreal/ui/hud-radar-camera-and-navigation.md)
+- [HUD, radar, camera, and navigation
+  parity](../../adr/unreal/ui/hud-radar-camera-and-navigation.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
+- [Common UI front end and progress
+  projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
 - [UI parity boundary](../../adr/unreal/ui/ui-parity-boundary.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
+- [Common UI navigation, menu, and modal
+  runtime](common-ui-navigation-menu-and-modal-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Common UI navigation, menu, and modal runtime](common-ui-navigation-menu-and-modal-runtime.md)
+- [HUD feedback cue and presentation-primitives
+  runtime](hud-feedback-cue-and-presentation-primitives-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [HUD feedback cue and presentation-primitives runtime](hud-feedback-cue-and-presentation-primitives-runtime.md)
+- [Local split-screen minigame session UI
+  runtime](local-split-screen-minigame-session-ui-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Local split-screen minigame session UI runtime](local-split-screen-minigame-session-ui-runtime.md)
+- [Mission, interaction, interior, and notoriety
+  runtime](mission-interaction-and-notoriety-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Mission, interaction, interior, and notoriety runtime](mission-interaction-and-notoriety-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Semantic input, device, and haptics runtime](semantic-input-device-and-haptics-runtime.md)
+- [Semantic input, device, and haptics
+  runtime](semantic-input-device-and-haptics-runtime.md)
 - [Camera system runtime](camera-system-runtime.md)
 
 ## Purpose
@@ -64,18 +72,46 @@ actors, mission objects, save files, or physical controller keys directly.
 
 <!-- markdownlint-disable MD013 -->
 
-| Service | Lifetime | Authority |
-| :--- | :--- | :--- |
-| `USharInGameUiSubsystem` | Game instance | In-game screen routing, overlay catalog, transition leases, pause policy, and accepted flow revision. |
-| `USharPlayerHudSubsystem` | Local player | Per-player HUD projection, HUD visibility policy, focus, and local presentation revision. |
-| `USharInGameViewModelSubsystem` | Game instance | Immutable shared and per-player viewmodel construction from accepted domain snapshots. |
-| `USharUiNavigationSubsystem` | Game instance | Common UI layers, navigation transactions, history, modals, and asset leases. |
-| Application lifecycle service | Game instance | Gameplay, pause, loading, cinematic, frontend, and shutdown mode transitions. |
-| Mission service | Application | Mission stage, timers, objective state, failure, completion, restart, abort, and skip eligibility. |
-| Progression service | Application | Currency, collectibles, cards, level progress, tutorials, and unlock state. |
-| Notoriety service | World | Accepted notoriety value, warning state, pursuit state, and arrest result. |
-| Camera and navigation services | World and local player | Camera policy, route guidance, radar markers, expanded-map data, and safe map bounds. |
-| Device-configuration service | Application | Settings drafts, previews, commit, rollback, and device-local persistence. |
+- **Service:** `USharInGameUiSubsystem`
+  - **Lifetime:** Game instance
+  - **Authority:** In-game screen routing, overlay catalog, transition leases,
+    pause policy, and accepted flow revision.
+- **Service:** `USharPlayerHudSubsystem`
+  - **Lifetime:** Local player
+  - **Authority:** Per-player HUD projection, HUD visibility policy, focus, and
+    local presentation revision.
+- **Service:** `USharInGameViewModelSubsystem`
+  - **Lifetime:** Game instance
+  - **Authority:** Immutable shared and per-player viewmodel construction from
+    accepted domain snapshots.
+- **Service:** `USharUiNavigationSubsystem`
+  - **Lifetime:** Game instance
+  - **Authority:** Common UI layers, navigation transactions, history, modals,
+    and asset leases.
+- **Service:** Application lifecycle service
+  - **Lifetime:** Game instance
+  - **Authority:** Gameplay, pause, loading, cinematic, frontend, and shutdown
+    mode transitions.
+- **Service:** Mission service
+  - **Lifetime:** Application
+  - **Authority:** Mission stage, timers, objective state, failure, completion,
+    restart, abort, and skip eligibility.
+- **Service:** Progression service
+  - **Lifetime:** Application
+  - **Authority:** Currency, collectibles, cards, level progress, tutorials, and
+    unlock state.
+- **Service:** Notoriety service
+  - **Lifetime:** World
+  - **Authority:** Accepted notoriety value, warning state, pursuit state, and
+    arrest result.
+- **Service:** Camera and navigation services
+  - **Lifetime:** World and local player
+  - **Authority:** Camera policy, route guidance, radar markers, expanded-map
+    data, and safe map bounds.
+- **Service:** Device-configuration service
+  - **Lifetime:** Application
+  - **Authority:** Settings drafts, previews, commit, rollback, and device-local
+    persistence.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -153,20 +189,30 @@ frame when a source observation is available.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `OverlayId` | Canonical overlay identity. |
-| `WidgetClass` | Cooked Common UI or UMG widget class. |
-| `LayerId` | Per-player HUD, shared cinematic, or registered feature layer. |
-| `ViewModelSchemaId` | Accepted projection schema. |
-| `Priority` | Stable stacking priority. |
-| `MutualExclusionGroup` | Optional group that permits only one visible member. |
-| `CompactPolicyId` | Layout policy when several mission overlays coexist. |
-| `LifetimePolicyId` | Persistent, timed, observation-owned, or command-owned. |
-| `InputPolicyId` | Pass-through, action-only, or blocking. |
-| `RequiredBundles` | Presentation dependencies retained while visible. |
-| `AccessibilityProfileId` | Narration, contrast, motion, timing, and text policy. |
-| `FeatureOwnerId` | Base game or validated feature package. |
+- **Field:** `OverlayId`
+  - **Contract:** Canonical overlay identity.
+- **Field:** `WidgetClass`
+  - **Contract:** Cooked Common UI or UMG widget class.
+- **Field:** `LayerId`
+  - **Contract:** Per-player HUD, shared cinematic, or registered feature layer.
+- **Field:** `ViewModelSchemaId`
+  - **Contract:** Accepted projection schema.
+- **Field:** `Priority`
+  - **Contract:** Stable stacking priority.
+- **Field:** `MutualExclusionGroup`
+  - **Contract:** Optional group that permits only one visible member.
+- **Field:** `CompactPolicyId`
+  - **Contract:** Layout policy when several mission overlays coexist.
+- **Field:** `LifetimePolicyId`
+  - **Contract:** Persistent, timed, observation-owned, or command-owned.
+- **Field:** `InputPolicyId`
+  - **Contract:** Pass-through, action-only, or blocking.
+- **Field:** `RequiredBundles`
+  - **Contract:** Presentation dependencies retained while visible.
+- **Field:** `AccessibilityProfileId`
+  - **Contract:** Narration, contrast, motion, timing, and text policy.
+- **Field:** `FeatureOwnerId`
+  - **Contract:** Base game or validated feature package.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -381,7 +427,8 @@ from the active local-session definition, not from hardcoded widget names.
 The built-in local split-screen minigame uses the complete session, lobby,
 controller, loading, pause, summary, and teardown contract in
 <!-- markdownlint-disable-next-line MD013 -->
-[Local split-screen minigame session UI runtime](local-split-screen-minigame-session-ui-runtime.md).
+[Local split-screen minigame session UI
+runtime](local-split-screen-minigame-session-ui-runtime.md).
 Local split-screen identities remain separate from future network-session or
 server identities.
 

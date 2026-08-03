@@ -1,7 +1,3 @@
-// File:
-//   - SharPrimaryContentDefinition.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharContent/Private/Content/SharPrimaryContentDefinition.cpp
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,36 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Deterministic validation and Asset Manager identity for shared content.
+//   - Shar primary content definition composition module.
 // - Must-Not:
-//   - Load referenced assets, scan directories, or apply gameplay policy.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Pure validation of authored identity, dependencies, and provenance.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - A validation rule belongs only to one concrete content family.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another implementation owns the same cross-family invariants.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Implements shared native content identity and validation.
+//   - Shar primary content definition composition module.
 // - Description:
-//   - Rejects ambiguous definitions before import publication or activation.
+//   - Implements the declared composition module responsibility for project.
 // - Usage:
-//   - Called by Asset Manager consumers, tests, and Unreal Data Validation.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Validation performs no synchronous loads or mutable editor queries.
+//   - Invalid or missing inputs fail explicitly.
 //
-// ADRs:
-// - docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
-// - docs/adr/unreal/runtime/data-driven-gameplay-content-catalog.md
-//
-// Large file:
-//   - false
-//
+
+//! Shar primary content definition composition module.
 
 #include "Content/SharPrimaryContentDefinition.h"
 

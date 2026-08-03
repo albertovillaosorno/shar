@@ -20,7 +20,8 @@ workspace dependency graph.
 
 ## Repository Use And Scope
 
-`src/formats/fbx/Cargo.toml` declares Serde version 1 with the `derive` feature. SHAR
+`src/formats/fbx/Cargo.toml` declares Serde version 1 with the `derive` feature.
+SHAR
 uses Serde traits and derives to express typed serialization boundaries. Serde
 is a library dependency, not an author or owner of repository data, schemas, or
 independently authored Rust types.

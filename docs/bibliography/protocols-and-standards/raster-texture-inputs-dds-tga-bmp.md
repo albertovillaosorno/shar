@@ -98,16 +98,18 @@ verified subset until equivalent evidence exists.
 ### Verified sources
 
 - Microsoft (2020), *Programming Guide for DDS*.
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://learn.microsoft.com/en-us/windows/win32/direct3ddds/dx-graphics-dds-pguide>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://learn.microsoft.com/en-us/windows/win32/direct3ddds/dx-graphics-dds-pguide> <!-- markdownlint-disable-line MD013 -->
 - Microsoft, *BMP Format Overview*.
   <https://learn.microsoft.com/en-us/windows/win32/wic/bmp-format-overview>
 
 ## Source References
 
 - Microsoft (n.d.) *Programming Guide for DDS*. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://learn.microsoft.com/en-us/windows/win32/direct3ddds/dx-graphics-dds-pguide>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://learn.microsoft.com/en-us/windows/win32/direct3ddds/dx-graphics-dds-pguide> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 12 July 2026).
 - Microsoft (n.d.) *Bitmap Storage*. Available at:
   <https://learn.microsoft.com/en-us/windows/win32/gdi/bitmap-storage>

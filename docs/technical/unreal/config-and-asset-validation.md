@@ -6,18 +6,24 @@
 ## Governing decisions and specifications
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [C++-primary and Blueprint-compatible Unreal project](../../adr/unreal/project/cpp-primary-blueprint-compatible-project.md)
+- [C++-primary and Blueprint-compatible Unreal
+  project](../../adr/unreal/project/cpp-primary-blueprint-compatible-project.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Staged mesh import and world assembly](../../adr/unreal/import-adapters/staged-mesh-import-and-world-assembly.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Staged mesh import and world assembly](../../adr/unreal/import-adapters/staged-mesh-import-and-world-assembly.md)
+- [Native art authoring, style, and asset validation
+  contract](native-art-authoring-style-and-asset-validation-contract.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native art authoring, style, and asset validation contract](native-art-authoring-style-and-asset-validation-contract.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Native import, material rebuild, and world assembly](native-import-material-and-world-assembly.md)
+- [Native import, material rebuild, and world
+  assembly](native-import-material-and-world-assembly.md)
 - [Unreal gameplay content catalog](gameplay-content-catalog.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md)
+- [Native asset load request and streaming
+  runtime](native-asset-load-request-and-streaming-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Unreal platform, quality, and optimization contract](platform-quality-and-optimization.md)
+- [Unreal platform, quality, and optimization
+  contract](platform-quality-and-optimization.md)
 
 ## Purpose
 
@@ -169,7 +175,8 @@ Geometry and visual validation covers:
 
 Detailed authoring rules follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Native art authoring, style, and asset validation contract](native-art-authoring-style-and-asset-validation-contract.md).
+[Native art authoring, style, and asset validation
+contract](native-art-authoring-style-and-asset-validation-contract.md).
 
 ## Content-catalog rules
 

@@ -1,7 +1,3 @@
-// File:
-//   - declared_header_offset.rs
-// Path: tests/formats/rcf/declared_header_offset.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - The caller-visible declared RCF catalog-offset regression.
+//   - Declared header offset test module.
 // - Must-Not:
-//   - Read private assets or assert parser implementation details.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Minimal synthetic archive bytes and public parser assertions.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another independent catalog-location contract is added.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Declared catalog offsets no longer need a focused test target.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects non-default RCF catalog placement.
+//   - Declared header offset test module.
 // - Description:
-//   - Verifies that the public parser honors the file-info header position.
+//   - Implements the declared test module responsibility for rcf.
 // - Usage:
-//   - Run through the RCF crate integration test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No local files, generated assets, or external processes are required.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Caller-visible regression for declared RCF catalog placement.
-//!
-//! A minimal synthetic archive relocates its catalog while preserving every
-//! public container contract, proving that parsing follows the file-info word.
+//! Declared header offset test module.
 
 use rcf::ArchiveParser;
 use rcf::domain::ArchiveError;
@@ -105,103 +90,33 @@ fn reads_catalog_from_declared_header_offset() {
     let [first_entry] = entry_slice else {
         return;
     };
-    let rcf::domain::ArchiveEntry {
-        name,
-        ..
-    } = first_entry;
-    assert_eq!(
-        name,
-        "sound/file.rsd"
-    );
+    let rcf::domain::ArchiveEntry { name, .. } = first_entry;
+    assert_eq!(name, "sound/file.rsd");
 }
 
 fn build_archive() -> Result<Vec<u8>, ArchiveError> {
     let mut bytes = vec![0_u8; ARCHIVE_LENGTH];
-    write_bytes(
-        &mut bytes, 0, MAGIC,
-    )?;
-    write_byte(
-        &mut bytes,
-        FILE_INFO_VERSION_MAJOR_OFFSET,
-        1,
-    )?;
-    write_byte(
-        &mut bytes,
-        FILE_INFO_VERSION_MINOR_OFFSET,
-        2,
-    )?;
-    write_byte(
-        &mut bytes,
-        FILE_INFO_VALID_OFFSET,
-        1,
-    )?;
-    write_u32(
-        &mut bytes,
-        FILE_INFO_ALIGNMENT_OFFSET,
-        0x800,
-    )?;
-    write_u32(
-        &mut bytes,
-        FILE_INFO_HEADER_OFFSET,
-        CATALOG_OFFSET_U32,
-    )?;
-    write_u32(
-        &mut bytes,
-        CATALOG_OFFSET,
-        1,
-    )?;
-    write_u32(
-        &mut bytes,
-        CATALOG_NAME_TABLE_FIELD,
-        NAME_TABLE_OFFSET_U32,
-    )?;
-    write_u32(
-        &mut bytes,
-        CATALOG_PAYLOAD_FIELD,
-        PAYLOAD_OFFSET_U32,
-    )?;
-    write_u32(
-        &mut bytes,
-        INDEX_OFFSET,
-        RAW_NAME_HASH,
-    )?;
-    write_u32(
-        &mut bytes,
-        INDEX_PAYLOAD_FIELD,
-        PAYLOAD_OFFSET_U32,
-    )?;
-    write_u32(
-        &mut bytes,
-        INDEX_LENGTH_FIELD,
-        1,
-    )?;
-    write_u32(
-        &mut bytes,
-        NAME_TABLE_OFFSET,
-        1,
-    )?;
-    let raw_name_length = u32::try_from(RAW_NAME.len()).map_err(
-        |source| {
-            ArchiveError::invalid_archive(
-                format!("fixture name length does not fit u32: {source}"),
-            )
-        },
-    )?;
-    write_u32(
-        &mut bytes,
-        NAME_LENGTH_OFFSET,
-        raw_name_length,
-    )?;
-    write_bytes(
-        &mut bytes,
-        NAME_BYTES_OFFSET,
-        RAW_NAME,
-    )?;
-    write_byte(
-        &mut bytes,
-        PAYLOAD_OFFSET,
-        1,
-    )?;
+    write_bytes(&mut bytes, 0, MAGIC)?;
+    write_byte(&mut bytes, FILE_INFO_VERSION_MAJOR_OFFSET, 1)?;
+    write_byte(&mut bytes, FILE_INFO_VERSION_MINOR_OFFSET, 2)?;
+    write_byte(&mut bytes, FILE_INFO_VALID_OFFSET, 1)?;
+    write_u32(&mut bytes, FILE_INFO_ALIGNMENT_OFFSET, 0x800)?;
+    write_u32(&mut bytes, FILE_INFO_HEADER_OFFSET, CATALOG_OFFSET_U32)?;
+    write_u32(&mut bytes, CATALOG_OFFSET, 1)?;
+    write_u32(&mut bytes, CATALOG_NAME_TABLE_FIELD, NAME_TABLE_OFFSET_U32)?;
+    write_u32(&mut bytes, CATALOG_PAYLOAD_FIELD, PAYLOAD_OFFSET_U32)?;
+    write_u32(&mut bytes, INDEX_OFFSET, RAW_NAME_HASH)?;
+    write_u32(&mut bytes, INDEX_PAYLOAD_FIELD, PAYLOAD_OFFSET_U32)?;
+    write_u32(&mut bytes, INDEX_LENGTH_FIELD, 1)?;
+    write_u32(&mut bytes, NAME_TABLE_OFFSET, 1)?;
+    let raw_name_length = u32::try_from(RAW_NAME.len()).map_err(|source| {
+        ArchiveError::invalid_archive(format!(
+            "fixture name length does not fit u32: {source}"
+        ))
+    })?;
+    write_u32(&mut bytes, NAME_LENGTH_OFFSET, raw_name_length)?;
+    write_bytes(&mut bytes, NAME_BYTES_OFFSET, RAW_NAME)?;
+    write_byte(&mut bytes, PAYLOAD_OFFSET, 1)?;
     Ok(bytes)
 }
 
@@ -210,11 +125,9 @@ fn write_byte(
     offset: usize,
     value: u8,
 ) -> Result<(), ArchiveError> {
-    let target = bytes
-        .get_mut(offset)
-        .ok_or_else(
-            || ArchiveError::invalid_archive("fixture byte offset is invalid"),
-        )?;
+    let target = bytes.get_mut(offset).ok_or_else(|| {
+        ArchiveError::invalid_archive("fixture byte offset is invalid")
+    })?;
     *target = value;
     Ok(())
 }
@@ -224,11 +137,7 @@ fn write_u32(
     offset: usize,
     value: u32,
 ) -> Result<(), ArchiveError> {
-    write_bytes(
-        bytes,
-        offset,
-        &value.to_le_bytes(),
-    )
+    write_bytes(bytes, offset, &value.to_le_bytes())
 }
 
 fn write_bytes(
@@ -236,16 +145,12 @@ fn write_bytes(
     offset: usize,
     value: &[u8],
 ) -> Result<(), ArchiveError> {
-    let end = offset
-        .checked_add(value.len())
-        .ok_or_else(
-            || ArchiveError::invalid_archive("fixture range overflow"),
-        )?;
-    let target = bytes
-        .get_mut(offset..end)
-        .ok_or_else(
-            || ArchiveError::invalid_archive("fixture range is invalid"),
-        )?;
+    let end = offset.checked_add(value.len()).ok_or_else(|| {
+        ArchiveError::invalid_archive("fixture range overflow")
+    })?;
+    let target = bytes.get_mut(offset..end).ok_or_else(|| {
+        ArchiveError::invalid_archive("fixture range is invalid")
+    })?;
     target.copy_from_slice(value);
     Ok(())
 }
@@ -263,29 +168,25 @@ impl ArchiveByteReader for MemoryReader {
         length: u64,
     ) -> Result<Vec<u8>, ArchiveError> {
         let Ok(start) = usize::try_from(offset) else {
-            return Err(
-                ArchiveError::invalid_archive(
-                    "fixture offset does not fit usize",
-                ),
-            );
+            return Err(ArchiveError::invalid_archive(
+                "fixture offset does not fit usize",
+            ));
         };
         let Ok(count) = usize::try_from(length) else {
-            return Err(
-                ArchiveError::invalid_archive(
-                    "fixture length does not fit usize",
-                ),
-            );
+            return Err(ArchiveError::invalid_archive(
+                "fixture length does not fit usize",
+            ));
         };
         let Some(end) = start.checked_add(count) else {
-            return Err(
-                ArchiveError::invalid_archive("fixture range overflow"),
-            );
+            return Err(ArchiveError::invalid_archive(
+                "fixture range overflow",
+            ));
         };
         let bytes = &self.0;
         let Some(range) = bytes.get(start..end) else {
-            return Err(
-                ArchiveError::invalid_archive("fixture range exceeds bytes"),
-            );
+            return Err(ArchiveError::invalid_archive(
+                "fixture range exceeds bytes",
+            ));
         };
         Ok(range.to_owned())
     }

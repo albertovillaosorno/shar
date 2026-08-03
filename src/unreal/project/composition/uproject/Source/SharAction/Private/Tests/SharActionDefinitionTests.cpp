@@ -1,12 +1,34 @@
-// File: SharActionDefinitionTests.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharAction/Private/Tests/SharActionDefinitionTests.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: transient action and sequence definition validation tests only.
-// ADR: docs/adr/unreal/runtime/typed-state-tree-action-sequences.md
-// LARGE-FILE owner=SharAction; reason=two cohesive definition-validation scenarios;
-// split=separate sequence tests if parameter binding schemas expand;
-// validation=validate.sh SharAction plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar action definition tests composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar action definition tests composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar action definition tests composition module.
 
 #if WITH_DEV_AUTOMATION_TESTS
 
@@ -43,6 +65,7 @@ static void FillActionBase(USharActionDefinition& Definition)
     Definition.PreconditionsPolicyId = FName(TEXT("actor_ready_v1"));
     Definition.CancellationPolicyId = FName(TEXT("compensate_before_commit"));
     Definition.VerificationPolicyId = FName(TEXT("actor_at_slot_v1"));
+    // jig-ignore-next-line: exact syntax is indivisible
     Definition.PresentationPolicyId = FName(TEXT("vehicle_entry_presentation_v1"));
     Definition.ExecutorId = FName(TEXT("position_character_executor_v1"));
 

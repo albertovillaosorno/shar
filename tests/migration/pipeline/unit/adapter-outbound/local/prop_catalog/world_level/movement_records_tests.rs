@@ -1,8 +1,3 @@
-// File:
-//   - movement_records_tests.rs
-// Path: tests/migration/pipeline/unit/adapter-outbound/local/prop_catalog/world_level/movement_records_tests.rs
-//     movement_records_tests.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -11,27 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Synthetic non-mesh coordinate movement regression coverage.
+//   - Movement records tests test module.
 // - Must-Not:
-//   - Depend on extracted game files or manual FBX evidence.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Create isolated decoded locator, light, and physics fixtures.
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Verifies one movement reaches every currently decoded record family.
-//
-// ADRs:
-// - docs/adr/pipeline/unreal/world-assembly-from-normalized-chunks.md
-//
-// Large file:
-//   - false
+//   - Movement records tests test module.
+// - Description:
+//   - Implements the declared test module responsibility for pipeline.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Tests decoded coordinate movement without private or generated assets.
+//! Movement records tests test module.
 
 use std::fs;
 use std::path::PathBuf;
@@ -57,8 +54,7 @@ const SUBJECTS: &[CoordinateSubject] = &[
 const MOVEMENT: CoordinateMovement = CoordinateMovement::new(
     "fixture-movement",
     [
-        1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 10.0,
-        20.0, 30.0, 1.0,
+        1., 0., 0., 0., 0., 1., 0., 0., 0., 0., -1., 0., 10., 20., 30., 1.,
     ],
     SUBJECTS,
 );
@@ -72,41 +68,24 @@ struct Fixture {
 impl Fixture {
     /// Create one complete decoded coordinate fixture.
     fn create() -> Result<Self, String> {
-        let nonce = NONCE.fetch_add(
-            1,
-            Ordering::Relaxed,
-        );
-        let root = std::env::temp_dir().join(
-            format!(
-                "pipeline-movement-records-{}-{nonce}",
-                std::process::id()
-            ),
-        );
+        let nonce = NONCE.fetch_add(1, Ordering::Relaxed);
+        let root = std::env::temp_dir().join(format!(
+            "pipeline-movement-records-{}-{nonce}",
+            std::process::id()
+        ));
         match fs::remove_dir_all(&root) {
-            Ok(()) => {}
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Ok(()) => {},
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {},
             Err(error) => return Err(error.to_string()),
         }
-        write(
-            &root,
-            "components/srr_locator/camera.json",
-            locator_json(),
-        )?;
-        write(
-            &root,
-            "components/light/light.json",
-            light_json(),
-        )?;
+        write(&root, "components/srr_locator/camera.json", locator_json())?;
+        write(&root, "components/light/light.json", light_json())?;
         write(
             &root,
             "components/srr_static_phys_dsg/physics.json",
             physics_json(),
         )?;
-        Ok(
-            Self {
-                root,
-            },
-        )
+        Ok(Self { root })
     }
 }
 
@@ -120,96 +99,51 @@ impl Drop for Fixture {
 fn movement_reaches_locator_trigger_light_and_physics_records()
 -> Result<(), String> {
     let fixture = Fixture::create()?;
-    let records = collect_moved_records(
-        &fixture.root,
-        MOVEMENT,
-    )
-    .map_err(|error| error.to_string())?;
-    let counts = records
-        .iter()
-        .fold(
-            std::collections::BTreeMap::<&str, usize>::new(),
-            |mut counts, record| {
-                let count = counts
-                    .entry(&record.subject)
-                    .or_default();
-                *count = count.saturating_add(1);
-                counts
-            },
-        );
+    let records = collect_moved_records(&fixture.root, MOVEMENT)
+        .map_err(|error| error.to_string())?;
+    let counts = records.iter().fold(
+        std::collections::BTreeMap::<&str, usize>::new(),
+        |mut counts, record| {
+            let count = counts.entry(&record.subject).or_default();
+            *count = count.saturating_add(1);
+            counts
+        },
+    );
     for (subject, expected) in [
-        (
-            "camera", 4_usize,
-        ),
-        (
-            "trigger", 2_usize,
-        ),
-        (
-            "light", 2_usize,
-        ),
-        (
-            "collision",
-            4_usize,
-        ),
+        ("camera", 4_usize),
+        ("trigger", 2_usize),
+        ("light", 2_usize),
+        ("collision", 4_usize),
     ] {
-        if counts
-            .get(subject)
-            .copied()
-            != Some(expected)
-        {
-            return Err(
-                format!(
-                    "movement record count changed for {subject}: {counts:?}"
-                ),
-            );
+        if counts.get(subject).copied() != Some(expected) {
+            return Err(format!(
+                "movement record count changed for {subject}: {counts:?}"
+            ));
         }
     }
     let camera = records
         .iter()
-        .find(
-            |record| {
-                record.subject == "camera"
-                    && record
-                        .source_position
-                        .is_some()
-            },
-        )
+        .find(|record| {
+            record.subject == "camera" && record.source_position.is_some()
+        })
         .ok_or_else(|| String::from("camera movement record is missing"))?;
-    if camera.moved_position
-        != Some(
-            [
-                11.0, 22.0, 27.0,
-            ],
-        )
-    {
-        return Err(
-            format!(
-                "camera position moved incorrectly: {:?}",
-                camera.moved_position
-            ),
-        );
+    if camera.moved_position != Some([11., 22., 27.]) {
+        return Err(format!(
+            "camera position moved incorrectly: {:?}",
+            camera.moved_position
+        ));
     }
     let trigger_matrix = records
         .iter()
-        .find(
-            |record| {
-                record
-                    .moved_matrix
-                    .is_some()
-            },
-        )
+        .find(|record| record.moved_matrix.is_some())
         .ok_or_else(|| String::from("trigger matrix record is missing"))?;
     let moved_matrix = trigger_matrix
         .moved_matrix
         .ok_or_else(|| String::from("trigger matrix value is missing"))?;
-    if moved_matrix[12..15]
-        != [
-            14.0, 25.0, 24.0,
-        ]
-    {
-        return Err(
-            format!("trigger matrix moved incorrectly: {moved_matrix:?}"),
-        );
+    if moved_matrix[12..15] != [14., 25., 24.] {
+        return Err(format!(
+            "trigger matrix moved incorrectly: {moved_matrix:?}"
+        ));
     }
     Ok(())
 }
@@ -225,10 +159,7 @@ fn write(
         .parent()
         .ok_or_else(|| String::from("fixture parent is missing"))?;
     fs::create_dir_all(parent).map_err(|error| error.to_string())?;
-    fs::write(
-        path, value,
-    )
-    .map_err(|error| error.to_string())
+    fs::write(path, value).map_err(|error| error.to_string())
 }
 
 /// Synthetic camera locator with basis and trigger evidence.

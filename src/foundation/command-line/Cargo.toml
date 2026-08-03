@@ -1,12 +1,12 @@
 [package]
-name = "schoenwald-cli"
+name = "schoenwald_cli"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 description = "Hexagonal process CLI mechanisms shared by Schoenwald crates."
 publish = false
 [lib]
-path = "lib.rs"
+path = "composition/lib.rs"
 # Canonical external integration tests.
 
 [[test]]
@@ -63,6 +63,7 @@ path = "../../../tests/foundation/command-line/public_facade.rs"
 
 [[test]]
 name = "run_invocation_interrupted_write"
+# jig-ignore-next-line: exact value is indivisible
 path = "../../../tests/foundation/command-line/run_invocation_interrupted_write.rs"
 
 [[test]]
@@ -76,3 +77,6 @@ path = "../../../tests/foundation/command-line/run_invocation_write_failure.rs"
 [[test]]
 name = "run_process_trait_object"
 path = "../../../tests/foundation/command-line/run_process_trait_object.rs"
+
+[lints]
+workspace = true

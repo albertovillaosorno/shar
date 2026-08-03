@@ -1,7 +1,3 @@
-# File:
-#   - test_tool_outcome.py
-# Path: tests/unreal/editor-control/test_tool_outcome.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,50 +6,38 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Regression evidence for native MCP tool-result normalization.
+#   - Test tool outcome test module.
 # - Must-Not:
-#   - Open sockets, invoke Unreal, or parse toolset schemas.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Text, structured JSON, non-text content, and error fixtures.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Individual content block kinds require dedicated fixture families.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another test module owns the same tool-result contract.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Guards native Unreal MCP result normalization.
+#   - Test tool outcome test module.
 # - Description:
-#   - Proves malformed result blocks fail before application use.
+#   - Implements the declared test module responsibility for editor control.
 # - Usage:
-#   - Executed by pytest through the canonical validator workflow.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Requires a content array on every tool result.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: native MCP tool-result regression tests
-#   - reason: text, structured, non-text, and error cases share one boundary
-#   - split: split by content block kind when another family is implemented
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess on responsibility or line-count growth
-#
-"""Regression tests for native Unreal MCP tool outcomes."""
+
+"""Test tool outcome test module."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
-from mcp.domain.errors import ProtocolError, ToolCallError
+from mcp.domain.errors import ProtocolError
+from mcp.domain.errors import ToolCallError
 from mcp.domain.tool_outcome import parse_tool_outcome
+import pytest
 
 if TYPE_CHECKING:
     from mcp.domain.json_types import JsonObject

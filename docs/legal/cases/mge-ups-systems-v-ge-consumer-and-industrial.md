@@ -2,8 +2,6 @@
 
 > [Legal Research Disclaimer](../disclaimer.md) applies to this record.
 
-<!-- cspell:ignore MGE -->
-
 - Status: Published substituted Fifth Circuit opinion verified from a
   Fifth Circuit-filed public duplicate.
 - Court: United States Court of Appeals for the Fifth Circuit.
@@ -156,11 +154,13 @@ reasoning.
 
 - Justia (2010), *MGE UPS Systems, Inc. v. GE Consumer and Industrial, Inc.*,
   622 F.3d 361, substituted Fifth Circuit opinion. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://law.justia.com/cases/federal/appellate-courts/ca5/08-10521/08-10521-cv1.wpd-2011-03-16.html>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://law.justia.com/cases/federal/appellate-courts/ca5/08-10521/08-10521-cv1.wpd-2011-03-16.html> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 <!-- markdownlint-disable-next-line MD013 -->
-- [17 U.S.C. § 1201 tool-distribution research](../statutes/17-usc-1201-trafficking.md).
+- [17 U.S.C. § 1201 tool-distribution
+  research](../statutes/17-usc-1201-trafficking.md).
 - [Universal City Studios, Inc. v. Corley](universal-v-corley.md).
 - [MDY Industries, LLC v. Blizzard Entertainment, Inc.](mdy-v-blizzard.md).
 - [Software Interoperability](../doctrines/software-interoperability.md).

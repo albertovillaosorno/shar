@@ -1,7 +1,3 @@
-// File:
-//   - adapters.rs
-// Path: src/foundation/filesystem/composition/adapters.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,43 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Shared filesystem inbound and outbound adapter families.
+//   - Adapters composition module.
 // - Must-Not:
-//   - Own pure invariants or caller-specific application policy.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Separate local composition from concrete storage providers.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when one adapter family becomes independently versioned.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another facade owns the same adapter families.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Shared filesystem adapter facade.
+//   - Adapters composition module.
 // - Description:
-//   - Exposes driving composition and driven provider implementations.
+//   - Implements the declared responsibility for filesystem.
 // - Usage:
-//   - Imported by the public crate facade and integration tests.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Core layers select no concrete adapter.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Inbound and outbound adapters for shared filesystem mechanisms.
-//!
-//! Driving adapters compose use cases while driven adapters implement ports.
-#[path = "../adapter-outbound/mod.rs"]
-pub mod driven;
-#[path = "../adapter-inbound/mod.rs"]
-pub mod driving;
+//! Adapters composition module.
+
+/// Concrete outbound filesystem adapters.
+pub mod driven {
+    pub use crate::std_filesystem::StdFilesystem;
+}
+
+/// Inbound local filesystem composition surfaces.
+pub mod driving {
+    /// Local filesystem operations backed by the standard provider.
+    pub mod local {
+        pub use crate::local::{
+            canonicalize, create_dir_all, file_len, path_kind, read_bytes,
+            read_optional_utf8, read_utf8, regular_files, write_bytes,
+            write_text,
+        };
+    }
+}

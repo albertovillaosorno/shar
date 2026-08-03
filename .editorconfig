@@ -1,0 +1,73 @@
+root = true
+
+# EditorConfig owns only editor-level byte and whitespace invariants.
+# Language semantics and formatting belong to their dedicated tools.
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+tab_width = 2
+max_line_length = 80
+
+# Native and Python source use one explicit four-column indentation unit.
+[*.{c,cc,cpp,cxx,h,hpp,hxx,inl,py,pyi,pyw,rs}]
+indent_style = space
+indent_size = 4
+tab_width = 4
+max_line_length = 80
+
+# PowerShell follows the same source-code indentation contract.
+[*.ps1]
+indent_style = space
+indent_size = 4
+tab_width = 4
+max_line_length = 80
+
+# Structured data and web/configuration formats use two spaces.
+[*.{css,html,js,json,jsonc,jsx,less,mjs,scss,svelte}]
+indent_style = space
+indent_size = 2
+tab_width = 2
+max_line_length = 80
+
+[*.{toml,ts,tsx,vue,xml,yaml,yml}]
+indent_style = space
+indent_size = 2
+tab_width = 2
+max_line_length = 80
+
+# Documentation is English, LF-only, whitespace-clean, and hard-bounded.
+[*.{md,rst,txt}]
+indent_style = space
+indent_size = 2
+tab_width = 2
+max_line_length = 80
+spelling_language = en-US
+
+# CMake is source-like and intentionally uses four spaces.
+[CMakeLists.txt]
+indent_style = space
+indent_size = 4
+tab_width = 4
+max_line_length = 80
+
+[*.cmake]
+indent_style = space
+indent_size = 4
+tab_width = 4
+max_line_length = 80
+
+# Make recipe syntax requires hard tabs. This is the sole semantic exception
+# to the repository-wide spaces-only policy.
+[{Makefile,makefile,GNUmakefile}]
+indent_style = tab
+indent_size = tab
+tab_width = 4
+
+[*.mk]
+indent_style = tab
+indent_size = tab
+tab_width = 4

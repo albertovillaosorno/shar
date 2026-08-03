@@ -1,7 +1,3 @@
-// File:
-//   - binary_structural_guide_writer.rs
-// Path: tests/formats/fbx/binary_structural_guide_writer.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,23 +6,36 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Structural-guide FBX 7.7 byte and public validation regression coverage.
+//   - Binary structural guide writer test module.
 // - Must-Not:
-//   - Depend on extracted assets, Blender, Unreal, or network access.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic one-triangle payloads, paired writes, and marker inspection.
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Proves the one-mesh, one-material, four-UV writer contract.
+//   - Binary structural guide writer test module.
+// - Description:
+//   - Implements the declared test module responsibility for fbx.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
 //
-// Large file:
-//   - false
 
-//! Structural-guide FBX writer regression coverage.
+//! Binary structural guide writer test module.
+
+#![expect(
+    clippy::arithmetic_side_effects,
+    clippy::indexing_slicing,
+    // jig-ignore-next-line: exact syntax is indivisible
+    reason = "Structural-guide tests validate marker offsets before exact byte-range extraction."
+)]
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -37,70 +46,35 @@ use fbx::adapters::driven::binary_structural_guide_writer::{
     StructuralGuideFbxError, StructuralGuideFbxSummary, StructuralGuideMesh,
     write_binary_structural_guide_fbx,
 };
+use png as _;
+use schoenwald_filesystem as _;
+use serde as _;
+use serde_json as _;
+use shar_sha256 as _;
 
 const BINARY_MAGIC: &[u8; 23] = b"Kaydara FBX Binary  \x00\x1a\x00";
 
 fn guide_mesh() -> StructuralGuideMesh {
     StructuralGuideMesh {
-        positions: vec![
-            [
-                0.0, 0.0, 0.0,
-            ],
-            [
-                100.0, 0.0, 0.0,
-            ],
-            [
-                0.0, 100.0, 0.0,
-            ],
-        ],
-        normals: vec![
-            [
-                0.0, 0.0, 1.0
-            ];
-            3
-        ],
-        triangles: vec![
-            [
-                0, 1, 2,
-            ],
-        ],
+        positions: vec![[0., 0., 0.], [100., 0., 0.], [0., 100., 0.]],
+        normals: vec![[0., 0., 1.]; 3],
+        triangles: vec![[0, 1, 2]],
         atlas_uvs: vec![
-            [
-                0.000_610_351_56,
-                0.000_610_351_56,
-            ],
-            [
-                0.008_300_781,
-                0.000_610_351_56,
-            ],
-            [
-                0.000_610_351_56,
-                0.008_300_781,
-            ],
+            [0.000_610_351_56, 0.000_610_351_56],
+            [0.008_300_781, 0.000_610_351_56],
+            [0.000_610_351_56, 0.008_300_781],
         ],
-        source_uvs: vec![
-            [
-                0.0, 0.0,
-            ],
-            [
-                2.0, 0.0,
-            ],
-            [
-                0.0, 2.0,
-            ],
-        ],
+        source_uvs: vec![[0., 0.], [2., 0.], [0., 2.]],
         atlas_offsets: vec![[0.000_610_351_56; 2]; 3],
         atlas_scales: vec![[0.015_380_859; 2]; 3],
     }
 }
 
 fn output_path(label: &str) -> PathBuf {
-    std::env::temp_dir().join(
-        format!(
-            "fbx-structural-guide-{label}-{}.fbx",
-            std::process::id()
-        ),
-    )
+    std::env::temp_dir().join(format!(
+        "fbx-structural-guide-{label}-{}.fbx",
+        std::process::id()
+    ))
 }
 
 fn remove_if_present(path: &Path) -> Result<(), String> {
@@ -118,11 +92,7 @@ fn find_bytes(bytes: &[u8], token: &[u8]) -> Option<usize> {
 }
 
 fn contains(bytes: &[u8], token: &str) -> bool {
-    find_bytes(
-        bytes,
-        token.as_bytes(),
-    )
-    .is_some()
+    find_bytes(bytes, token.as_bytes()).is_some()
 }
 
 fn encoded_uv_payload(values: &[[f32; 2]]) -> Vec<u8> {
@@ -136,24 +106,20 @@ fn encoded_uv_payload(values: &[[f32; 2]]) -> Vec<u8> {
 fn encoded_vector(value: [f64; 3]) -> Vec<u8> {
     value
         .into_iter()
-        .flat_map(
-            |component| std::iter::once(b'D').chain(component.to_le_bytes()),
-        )
+        .flat_map(|component| {
+            std::iter::once(b'D').chain(component.to_le_bytes())
+        })
         .collect()
 }
 
 fn export_root_bytes(bytes: &[u8]) -> Result<&[u8], String> {
-    let start = find_bytes(
-        bytes,
-        b"SHAR_Export_Root",
-    )
-    .ok_or_else(|| "guide export root is missing".to_owned())?;
-    let end = find_bytes(
-        &bytes[start..],
-        b"Geometry",
-    )
-    .map(|relative| start + relative)
-    .ok_or_else(|| "guide geometry after export root is missing".to_owned())?;
+    let start = find_bytes(bytes, b"SHAR_Export_Root")
+        .ok_or_else(|| "guide export root is missing".to_owned())?;
+    let end = find_bytes(&bytes[start..], b"Geometry")
+        .map(|relative| start + relative)
+        .ok_or_else(|| {
+            "guide geometry after export root is missing".to_owned()
+        })?;
     Ok(&bytes[start..end])
 }
 
@@ -165,30 +131,20 @@ fn guide_is_deterministic_fbx_7700_with_four_uv_channels() -> Result<(), String>
     remove_if_present(&first)?;
     remove_if_present(&second)?;
     let mesh = guide_mesh();
-    let first_summary = write_binary_structural_guide_fbx(
-        &mesh, &first,
-    )
-    .map_err(|error| format!("first write failed: {error:?}"))?;
-    let second_summary = write_binary_structural_guide_fbx(
-        &mesh, &second,
-    )
-    .map_err(|error| format!("second write failed: {error:?}"))?;
+    let first_summary = write_binary_structural_guide_fbx(&mesh, &first)
+        .map_err(|error| format!("first write failed: {error:?}"))?;
+    let second_summary = write_binary_structural_guide_fbx(&mesh, &second)
+        .map_err(|error| format!("second write failed: {error:?}"))?;
     let expected = StructuralGuideFbxSummary {
         vertices: 3,
         triangles: 1,
-        bounds_min_meters: [
-            0.0, 0.0, 0.0,
-        ],
-        bounds_max_meters: [
-            100.0, 100.0, 0.0,
-        ],
+        bounds_min_meters: [0., 0., 0.],
+        bounds_max_meters: [100., 100., 0.],
     };
     if first_summary != expected || second_summary != expected {
-        return Err(
-            format!(
-                "unexpected summaries: {first_summary:?} {second_summary:?}"
-            ),
-        );
+        return Err(format!(
+            "unexpected summaries: {first_summary:?} {second_summary:?}"
+        ));
     }
     let first_bytes = fs::read(&first).map_err(|error| error.to_string())?;
     let second_bytes = fs::read(&second).map_err(|error| error.to_string())?;
@@ -216,34 +172,15 @@ fn guide_is_deterministic_fbx_7700_with_four_uv_channels() -> Result<(), String>
         STRUCTURAL_GUIDE_UV_NAMES[2],
         STRUCTURAL_GUIDE_UV_NAMES[3],
     ] {
-        if !contains(
-            &first_bytes,
-            required,
-        ) {
+        if !contains(&first_bytes, required) {
             return Err(format!("required FBX marker is missing: {required}"));
         }
     }
     let root = export_root_bytes(&first_bytes)?;
-    let identity_scale = encoded_vector(
-        [
-            1.0, 1.0, 1.0,
-        ],
-    );
-    let zero_rotation = encoded_vector(
-        [
-            0.0, 0.0, 0.0,
-        ],
-    );
-    let character_rotation = encoded_vector(
-        [
-            0.0, 180.0, 0.0,
-        ],
-    );
-    let world_reflection = encoded_vector(
-        [
-            -1.0, 1.0, 1.0,
-        ],
-    );
+    let identity_scale = encoded_vector([1., 1., 1.]);
+    let zero_rotation = encoded_vector([0., 0., 0.]);
+    let character_rotation = encoded_vector([0., 180., 0.]);
+    let world_reflection = encoded_vector([-1., 1., 1.]);
     if !root
         .windows(world_reflection.len())
         .any(|window| window == world_reflection)
@@ -252,7 +189,7 @@ fn guide_is_deterministic_fbx_7700_with_four_uv_channels() -> Result<(), String>
             .any(|window| window == zero_rotation)
     {
         return Err(
-            "guide root does not use the common world X reflection".to_owned(),
+            "guide root does not use the common world X reflection".to_owned()
         );
     }
     if root
@@ -268,42 +205,33 @@ fn guide_is_deterministic_fbx_7700_with_four_uv_channels() -> Result<(), String>
         );
     }
     let channel_values = [
-        mesh.atlas_uvs
-            .as_slice(),
-        mesh.source_uvs
-            .as_slice(),
-        mesh.atlas_offsets
-            .as_slice(),
-        mesh.atlas_scales
-            .as_slice(),
+        mesh.atlas_uvs.as_slice(),
+        mesh.source_uvs.as_slice(),
+        mesh.atlas_offsets.as_slice(),
+        mesh.atlas_scales.as_slice(),
     ];
     let mut previous_payload = None;
-    for (channel_name, values) in STRUCTURAL_GUIDE_UV_NAMES
-        .into_iter()
-        .zip(channel_values)
+    for (channel_name, values) in
+        STRUCTURAL_GUIDE_UV_NAMES.into_iter().zip(channel_values)
     {
-        let name_offset = find_bytes(
-            &first_bytes,
-            channel_name.as_bytes(),
-        )
-        .ok_or_else(|| format!("UV channel name is missing: {channel_name}"))?;
+        let name_offset = find_bytes(&first_bytes, channel_name.as_bytes())
+            .ok_or_else(|| {
+                format!("UV channel name is missing: {channel_name}")
+            })?;
         let payload = encoded_uv_payload(values);
-        let payload_offset = find_bytes(
-            &first_bytes,
-            &payload,
-        )
-        .ok_or_else(
-            || format!("UV channel payload is missing: {channel_name}"),
-        )?;
+        let payload_offset =
+            find_bytes(&first_bytes, &payload).ok_or_else(|| {
+                format!("UV channel payload is missing: {channel_name}")
+            })?;
         if payload_offset <= name_offset {
-            return Err(
-                format!("UV channel payload precedes its name: {channel_name}"),
-            );
+            return Err(format!(
+                "UV channel payload precedes its name: {channel_name}"
+            ));
         }
         if previous_payload.is_some_and(|previous| payload_offset <= previous) {
-            return Err(
-                format!("UV channel payload order changed at {channel_name}"),
-            );
+            return Err(format!(
+                "UV channel payload order changed at {channel_name}"
+            ));
         }
         previous_payload = Some(payload_offset);
     }
@@ -314,10 +242,7 @@ fn guide_is_deterministic_fbx_7700_with_four_uv_channels() -> Result<(), String>
         "Pose",
         "LimbNode",
     ] {
-        if contains(
-            &first_bytes,
-            forbidden,
-        ) {
+        if contains(&first_bytes, forbidden) {
             return Err(format!("forbidden FBX marker exists: {forbidden}"));
         }
     }
@@ -332,28 +257,18 @@ fn guide_omits_normal_layer_when_source_normals_are_incomplete()
     let path = output_path("without-normals");
     remove_if_present(&path)?;
     let mut mesh = guide_mesh();
-    mesh.normals
-        .clear();
-    write_binary_structural_guide_fbx(
-        &mesh, &path,
-    )
-    .map_err(|error| format!("normal-free write failed: {error:?}"))?;
+    mesh.normals.clear();
+    let _summary = write_binary_structural_guide_fbx(&mesh, &path)
+        .map_err(|error| format!("normal-free write failed: {error:?}"))?;
     let bytes = fs::read(&path)
         .map_err(|error| format!("normal-free read failed: {error}"))?;
-    for forbidden in [
-        "LayerElementNormal",
-        "Normals",
-    ] {
-        if contains(
-            &bytes, forbidden,
-        ) {
+    for forbidden in ["LayerElementNormal", "Normals"] {
+        if contains(&bytes, forbidden) {
             return Err(format!("normal-free guide contains {forbidden}"));
         }
     }
     for required in STRUCTURAL_GUIDE_UV_NAMES {
-        if !contains(
-            &bytes, required,
-        ) {
+        if !contains(&bytes, required) {
             return Err(format!("normal-free guide is missing {required}"));
         }
     }
@@ -366,12 +281,8 @@ fn guide_rejects_misaligned_uv_channel() -> Result<(), String> {
     let path = output_path("invalid-uv");
     remove_if_present(&path)?;
     let mut mesh = guide_mesh();
-    let _removed = mesh
-        .atlas_scales
-        .pop();
-    let result = write_binary_structural_guide_fbx(
-        &mesh, &path,
-    );
+    let _removed = mesh.atlas_scales.pop();
+    let result = write_binary_structural_guide_fbx(&mesh, &path);
     let expected = StructuralGuideFbxError::ChannelLengthMismatch {
         channel: STRUCTURAL_GUIDE_UV_NAMES[3],
         positions: 3,
@@ -391,17 +302,10 @@ fn guide_refuses_to_overwrite_existing_artifact() -> Result<(), String> {
     let path = output_path("existing");
     remove_if_present(&path)?;
     let mesh = guide_mesh();
-    let _summary = write_binary_structural_guide_fbx(
-        &mesh, &path,
-    )
-    .map_err(|error| format!("initial write failed: {error:?}"))?;
-    let result = write_binary_structural_guide_fbx(
-        &mesh, &path,
-    );
-    if !matches!(
-        result,
-        Err(StructuralGuideFbxError::OutputExists(_))
-    ) {
+    let _summary = write_binary_structural_guide_fbx(&mesh, &path)
+        .map_err(|error| format!("initial write failed: {error:?}"))?;
+    let result = write_binary_structural_guide_fbx(&mesh, &path);
+    if !matches!(result, Err(StructuralGuideFbxError::OutputExists(_))) {
         return Err(format!("unexpected overwrite result: {result:?}"));
     }
     remove_if_present(&path)?;

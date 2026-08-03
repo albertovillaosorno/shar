@@ -83,4 +83,5 @@ and the exact act remain necessary.
 - [17 U.S.C. § 301](../statutes/17-usc-301.md).
 - [Bowers v. Baystate Technologies, Inc.](bowers-v-baystate-technologies.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Software license reverse-engineering clauses](../contracts/software-license-reverse-engineering-clauses.md).
+- [Software license reverse-engineering
+  clauses](../contracts/software-license-reverse-engineering-clauses.md).

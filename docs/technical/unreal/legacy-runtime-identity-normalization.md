@@ -6,11 +6,14 @@
 ## Governing decisions
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+- [Data-driven Unreal gameplay content
+  catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Converted asset ingestion boundary](../../adr/unreal/import-adapters/converted-asset-ingestion-boundary.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Converted asset ingestion boundary](../../adr/unreal/import-adapters/converted-asset-ingestion-boundary.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Import review boundary](../../adr/unreal/import-adapters/import-review-boundary.md)
+- [Import review
+  boundary](../../adr/unreal/import-adapters/import-review-boundary.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 
 ## Purpose
@@ -27,13 +30,19 @@ chunk identifier, or string literal.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Conversion pipeline | Parse source values and emit normalized identity evidence. |
-| Gameplay catalog | Canonical gameplay and presentation identities. |
-| Import adapters | Create native assets and record source-to-native mappings. |
-| Runtime subsystems | Consume typed native identities and policies. |
-| Provenance records | Preserve source ordinal, name, hash, chunk, and mapping revision. |
+- **Authority:** Conversion pipeline
+  - **Responsibility:** Parse source values and emit normalized identity
+    evidence.
+- **Authority:** Gameplay catalog
+  - **Responsibility:** Canonical gameplay and presentation identities.
+- **Authority:** Import adapters
+  - **Responsibility:** Create native assets and record source-to-native
+    mappings.
+- **Authority:** Runtime subsystems
+  - **Responsibility:** Consume typed native identities and policies.
+- **Authority:** Provenance records
+  - **Responsibility:** Preserve source ordinal, name, hash, chunk, and mapping
+    revision.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -45,16 +54,26 @@ Every translated source identity produces one `FSharLegacyIdentityMapping` with:
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `SourceDomain` | Closed source family such as vehicle, character, particle, chunk, or callback. |
-| `SourceValue` | Exact numeric, bit-mask, or normalized textual value. |
-| `SourceName` | Optional exact source label retained as provenance. |
-| `CanonicalId` | Stable repository-owned native identity. |
-| `NativeType` | Expected data asset, gameplay tag, enum, class, or package type. |
-| `Availability` | Shipping, contextual, development, provenance-only, or rejected. |
-| `MappingRevision` | Immutable conversion-policy revision. |
-| `Evidence` | Package, manifest, or generated-record identity supporting the mapping. |
+- **Field:** `SourceDomain`
+  - **Contract:** Closed source family such as vehicle, character, particle,
+    chunk, or callback.
+- **Field:** `SourceValue`
+  - **Contract:** Exact numeric, bit-mask, or normalized textual value.
+- **Field:** `SourceName`
+  - **Contract:** Optional exact source label retained as provenance.
+- **Field:** `CanonicalId`
+  - **Contract:** Stable repository-owned native identity.
+- **Field:** `NativeType`
+  - **Contract:** Expected data asset, gameplay tag, enum, class, or package
+    type.
+- **Field:** `Availability`
+  - **Contract:** Shipping, contextual, development, provenance-only, or
+    rejected.
+- **Field:** `MappingRevision`
+  - **Contract:** Immutable conversion-policy revision.
+- **Field:** `Evidence`
+  - **Contract:** Package, manifest, or generated-record identity supporting the
+    mapping.
 
 <!-- markdownlint-enable MD013 -->
 

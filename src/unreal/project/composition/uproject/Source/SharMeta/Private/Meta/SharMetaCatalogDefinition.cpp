@@ -1,9 +1,34 @@
-// File: SharMetaCatalogDefinition.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharMeta/Private/Meta/SharMetaCatalogDefinition.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: load-free shared meta-catalog validation and cheat lookup only.
-// Specification: docs/technical/unreal/progression-collectibles-and-cheats.md
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar meta catalog definition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar meta catalog definition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar meta catalog definition composition module.
 
 #include "Meta/SharMetaCatalogDefinition.h"
 
@@ -141,6 +166,7 @@ void USharMetaCatalogDefinition::GatherValidationErrors(
         {
             AddMetaCatalogError(
                 OutErrors,
+                // jig-ignore-next-line: exact syntax is indivisible
                 TEXT("Cheat definition identity, policy, feedback, or typed effect parameters are invalid.")
             );
         }

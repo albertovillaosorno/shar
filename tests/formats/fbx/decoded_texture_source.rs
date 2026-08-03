@@ -1,7 +1,3 @@
-// File:
-//   - decoded_texture_source.rs
-// Path: tests/formats/fbx/decoded_texture_source.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for decoded FBX texture resolution boundaries.
+//   - Decoded texture source test module.
 // - Must-Not:
-//   - Read private assets, discover packages, or use fixed machine paths.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic shader JSON, texture bytes, and temporary directories.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Texture conversion introduces an external process or format adapter.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Decoded texture regressions move into shared adapter conformance tests.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects texture references and staging before scene serialization.
+//   - Decoded texture source test module.
 // - Description:
-//   - Exercises decoded shader-to-texture resolution with synthetic evidence.
+//   - Implements the declared test module responsibility for fbx.
 // - Usage:
-//   - Run through the fbx crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Temporary directories are process-unique and removed by each regression.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for decoded FBX texture resolution boundaries.
-//!
-//! Synthetic shader evidence verifies safe texture lookup without private data
-//! or machine-local dependency routes.
+//! Decoded texture source test module.
 
 use std::fs;
 use std::path::PathBuf;
@@ -59,23 +44,17 @@ use serde_json as _;
 use shar_sha256 as _;
 
 fn temp_root(label: &str) -> PathBuf {
-    std::env::temp_dir().join(
-        format!(
-            "fbx-decoded-texture-{label}-{}",
-            std::process::id()
-        ),
-    )
+    std::env::temp_dir().join(format!(
+        "fbx-decoded-texture-{label}-{}",
+        std::process::id()
+    ))
 }
 
 #[test]
 fn resolves_already_normalized_png_texture_extensions() {
     let root = temp_root("normalized-png");
-    let shader_dir = root
-        .join("components")
-        .join("shader");
-    let texture_dir = root
-        .join("components")
-        .join("texture");
+    let shader_dir = root.join("components").join("shader");
+    let texture_dir = root.join("components").join("texture");
     let output_dir = root.join("staged-textures");
     let shader_json = concat!(
         r#"{"name":"shader","params":[{"#,
@@ -84,41 +63,22 @@ fn resolves_already_normalized_png_texture_extensions() {
     );
     let setup_result = fs::create_dir_all(&shader_dir)
         .and_then(|()| fs::create_dir_all(&texture_dir))
-        .and_then(
-            |()| {
-                fs::write(
-                    shader_dir.join("shader.json"),
-                    shader_json,
-                )
-            },
-        )
-        .and_then(
-            |()| {
-                fs::write(
-                    texture_dir.join("ready.png"),
-                    b"png",
-                )
-            },
-        );
+        .and_then(|()| fs::write(shader_dir.join("shader.json"), shader_json))
+        .and_then(|()| fs::write(texture_dir.join("ready.png"), b"png"));
     assert!(setup_result.is_ok());
-    let source = DecodedComponentSource::new(
-        &root,
-        &output_dir,
-    );
+    let source = DecodedComponentSource::new(&root, &output_dir);
     let result = source.resolve_material("shader");
     let staged = fs::read(output_dir.join("ready.png"));
     let _cleanup_result = fs::remove_dir_all(&root);
 
     assert_eq!(
         result,
-        Ok(
-            fbx::domain::texture::MaterialBinding {
-                material_name: "shader".to_owned(),
-                texture_file_name: Some("ready.png".to_owned()),
-                semantics: fbx::domain::texture::MaterialSemantics::default(),
-                base_color_rgba8: [u8::MAX; 4],
-            }
-        )
+        Ok(fbx::domain::texture::MaterialBinding {
+            material_name: "shader".to_owned(),
+            texture_file_name: Some("ready.png".to_owned()),
+            semantics: fbx::domain::texture::MaterialSemantics::default(),
+            base_color_rgba8: [u8::MAX; 4],
+        })
     );
     assert!(staged.is_ok_and(|bytes| bytes == b"png"));
 }
@@ -126,12 +86,8 @@ fn resolves_already_normalized_png_texture_extensions() {
 #[test]
 fn rejects_texture_references_without_a_file_stem() {
     let root = temp_root("missing-texture-stem");
-    let shader_dir = root
-        .join("components")
-        .join("shader");
-    let texture_dir = root
-        .join("components")
-        .join("texture");
+    let shader_dir = root.join("components").join("shader");
+    let texture_dir = root.join("components").join("texture");
     let shader_json = concat!(
         r#"{"name":"shader","params":[{"#,
         r#""kind":"texture","param":"TEX","#,
@@ -139,45 +95,27 @@ fn rejects_texture_references_without_a_file_stem() {
     );
     let setup_result = fs::create_dir_all(&shader_dir)
         .and_then(|()| fs::create_dir_all(&texture_dir))
-        .and_then(
-            |()| {
-                fs::write(
-                    shader_dir.join("shader.json"),
-                    shader_json,
-                )
-            },
-        )
-        .and_then(
-            |()| {
-                fs::write(
-                    texture_dir.join(".png"),
-                    b"png",
-                )
-            },
-        );
+        .and_then(|()| fs::write(shader_dir.join("shader.json"), shader_json))
+        .and_then(|()| fs::write(texture_dir.join(".png"), b"png"));
     assert!(setup_result.is_ok());
-    let source = DecodedComponentSource::new(
-        &root,
-        root.join("staged-textures"),
-    );
+    let source =
+        DecodedComponentSource::new(&root, root.join("staged-textures"));
     let result = source.resolve_material("shader");
     let _cleanup_result = fs::remove_dir_all(&root);
 
     assert_eq!(
         result,
-        Err(DecodedComponentError::InvalidTextureReference(".bmp".to_owned()))
+        Err(DecodedComponentError::InvalidTextureReference(
+            ".bmp".to_owned()
+        ))
     );
 }
 
 #[test]
 fn accepts_textures_already_in_the_staging_directory() {
     let root = temp_root("already-staged");
-    let shader_dir = root
-        .join("components")
-        .join("shader");
-    let texture_dir = root
-        .join("components")
-        .join("texture");
+    let shader_dir = root.join("components").join("shader");
+    let texture_dir = root.join("components").join("texture");
     let shader_json = concat!(
         r#"{"name":"shader","params":[{"#,
         r#""kind":"texture","param":"TEX","#,
@@ -185,41 +123,22 @@ fn accepts_textures_already_in_the_staging_directory() {
     );
     let setup_result = fs::create_dir_all(&shader_dir)
         .and_then(|()| fs::create_dir_all(&texture_dir))
-        .and_then(
-            |()| {
-                fs::write(
-                    shader_dir.join("shader.json"),
-                    shader_json,
-                )
-            },
-        )
-        .and_then(
-            |()| {
-                fs::write(
-                    texture_dir.join("ready.png"),
-                    b"png",
-                )
-            },
-        );
+        .and_then(|()| fs::write(shader_dir.join("shader.json"), shader_json))
+        .and_then(|()| fs::write(texture_dir.join("ready.png"), b"png"));
     assert!(setup_result.is_ok());
-    let source = DecodedComponentSource::new(
-        &root,
-        &texture_dir,
-    );
+    let source = DecodedComponentSource::new(&root, &texture_dir);
     let result = source.resolve_material("shader");
     let retained = fs::read(texture_dir.join("ready.png"));
     let _cleanup_result = fs::remove_dir_all(&root);
 
     assert_eq!(
         result,
-        Ok(
-            fbx::domain::texture::MaterialBinding {
-                material_name: "shader".to_owned(),
-                texture_file_name: Some("ready.png".to_owned()),
-                semantics: fbx::domain::texture::MaterialSemantics::default(),
-                base_color_rgba8: [u8::MAX; 4],
-            }
-        )
+        Ok(fbx::domain::texture::MaterialBinding {
+            material_name: "shader".to_owned(),
+            texture_file_name: Some("ready.png".to_owned()),
+            semantics: fbx::domain::texture::MaterialSemantics::default(),
+            base_color_rgba8: [u8::MAX; 4],
+        })
     );
     assert!(retained.is_ok_and(|bytes| bytes == b"png"));
 }
@@ -227,12 +146,8 @@ fn accepts_textures_already_in_the_staging_directory() {
 #[test]
 fn resolves_mixed_case_bmp_texture_extensions() {
     let root = temp_root("mixed-case-bmp");
-    let shader_dir = root
-        .join("components")
-        .join("shader");
-    let texture_dir = root
-        .join("components")
-        .join("texture");
+    let shader_dir = root.join("components").join("shader");
+    let texture_dir = root.join("components").join("texture");
     let output_dir = root.join("staged-textures");
     let shader_json = concat!(
         r#"{"name":"shader","params":[{"#,
@@ -241,41 +156,22 @@ fn resolves_mixed_case_bmp_texture_extensions() {
     );
     let setup_result = fs::create_dir_all(&shader_dir)
         .and_then(|()| fs::create_dir_all(&texture_dir))
-        .and_then(
-            |()| {
-                fs::write(
-                    shader_dir.join("shader.json"),
-                    shader_json,
-                )
-            },
-        )
-        .and_then(
-            |()| {
-                fs::write(
-                    texture_dir.join("mixed.png"),
-                    b"png",
-                )
-            },
-        );
+        .and_then(|()| fs::write(shader_dir.join("shader.json"), shader_json))
+        .and_then(|()| fs::write(texture_dir.join("mixed.png"), b"png"));
     assert!(setup_result.is_ok());
-    let source = DecodedComponentSource::new(
-        &root,
-        &output_dir,
-    );
+    let source = DecodedComponentSource::new(&root, &output_dir);
     let result = source.resolve_material("shader");
     let staged = fs::read(output_dir.join("mixed.png"));
     let _cleanup_result = fs::remove_dir_all(&root);
 
     assert_eq!(
         result,
-        Ok(
-            fbx::domain::texture::MaterialBinding {
-                material_name: "shader".to_owned(),
-                texture_file_name: Some("mixed.png".to_owned()),
-                semantics: fbx::domain::texture::MaterialSemantics::default(),
-                base_color_rgba8: [u8::MAX; 4],
-            }
-        )
+        Ok(fbx::domain::texture::MaterialBinding {
+            material_name: "shader".to_owned(),
+            texture_file_name: Some("mixed.png".to_owned()),
+            semantics: fbx::domain::texture::MaterialSemantics::default(),
+            base_color_rgba8: [u8::MAX; 4],
+        })
     );
     assert!(staged.is_ok_and(|bytes| bytes == b"png"));
 }
@@ -283,48 +179,25 @@ fn resolves_mixed_case_bmp_texture_extensions() {
 #[test]
 fn rejects_texture_references_that_escape_the_texture_directory() {
     let root = temp_root("texture-path-traversal");
-    let shader_dir = root
-        .join("components")
-        .join("shader");
-    let escaped_texture = root
-        .join("components")
-        .join("escape.png");
+    let shader_dir = root.join("components").join("shader");
+    let escaped_texture = root.join("components").join("escape.png");
     let shader_json = concat!(
         r#"{"name":"shader","params":[{"#,
         r#""kind":"texture","param":"TEX","#,
         r#""value":"../escape.bmp"}]}"#,
     );
     let setup_result = fs::create_dir_all(&shader_dir)
-        .and_then(
-            |()| {
-                fs::write(
-                    shader_dir.join("shader.json"),
-                    shader_json,
-                )
-            },
-        )
-        .and_then(
-            |()| {
-                fs::write(
-                    &escaped_texture,
-                    b"outside",
-                )
-            },
-        );
+        .and_then(|()| fs::write(shader_dir.join("shader.json"), shader_json))
+        .and_then(|()| fs::write(&escaped_texture, b"outside"));
     assert!(setup_result.is_ok());
-    let source = DecodedComponentSource::new(
-        &root,
-        root.join("textures"),
-    );
+    let source = DecodedComponentSource::new(&root, root.join("textures"));
     let result = source.resolve_material("shader");
     let _cleanup_result = fs::remove_dir_all(&root);
 
     assert_eq!(
         result,
-        Err(
-            DecodedComponentError::InvalidTextureReference(
-                "../escape.bmp".to_owned()
-            )
-        )
+        Err(DecodedComponentError::InvalidTextureReference(
+            "../escape.bmp".to_owned()
+        ))
     );
 }

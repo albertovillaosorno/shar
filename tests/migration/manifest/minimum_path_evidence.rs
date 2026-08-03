@@ -1,7 +1,3 @@
-// File:
-//   - minimum_path_evidence.rs
-// Path: tests/migration/manifest/minimum_path_evidence.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Minimum-manifest application path-evidence regressions.
+//   - Minimum path evidence test module.
 // - Must-Not:
-//   - Access local game data or repository output directories.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - In-memory ports with synthetic safe and unsafe path snapshots.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another minimum-manifest evidence invariant needs isolation.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test owns the same minimum path-snapshot boundary.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects minimum generation from unsafe adapter evidence.
+//   - Minimum path evidence test module.
 // - Description:
-//   - Verifies invalid snapshots fail before manifest publication.
+//   - Implements the declared test module responsibility for manifest.
 // - Usage:
-//   - Executed through cargo test for the game-manifest crate.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Synthetic paths remain portable and deterministic.
-//
-// ADRs:
-// - docs/adr/pipeline/game-manifest-ledger.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Minimum-manifest path-evidence regression coverage.
-//!
-//! Invalid adapter snapshots must fail closed before publication.
+//! Minimum path evidence test module.
 
 use std::cell::RefCell;
 use std::io;
@@ -57,44 +43,28 @@ struct OutsideTree;
 struct AmbiguousTree;
 
 impl GameTree for AmbiguousTree {
-    fn kind(
-        &self,
-        _path: &Path,
-    ) -> io::Result<PathKind> {
+    fn kind(&self, _path: &Path) -> io::Result<PathKind> {
         Ok(PathKind::Directory)
     }
 
-    fn files(
-        &self,
-        root: &Path,
-    ) -> io::Result<Vec<PathBuf>> {
-        Ok(
-            vec![
-                root.join("alpha/first.p3d"),
-                root.join("agenda/second.p3d"),
-            ],
-        )
+    fn files(&self, root: &Path) -> io::Result<Vec<PathBuf>> {
+        Ok(vec![
+            root.join("alpha/first.p3d"),
+            root.join("agenda/second.p3d"),
+        ])
     }
 }
 
 impl GameTree for OutsideTree {
-    fn kind(
-        &self,
-        _path: &Path,
-    ) -> io::Result<PathKind> {
+    fn kind(&self, _path: &Path) -> io::Result<PathKind> {
         Ok(PathKind::Directory)
     }
 
-    fn files(
-        &self,
-        root: &Path,
-    ) -> io::Result<Vec<PathBuf>> {
-        Ok(
-            vec![
-                root.join("asset.p3d"),
-                PathBuf::from("outside/hidden.p3d"),
-            ],
-        )
+    fn files(&self, root: &Path) -> io::Result<Vec<PathBuf>> {
+        Ok(vec![
+            root.join("asset.p3d"),
+            PathBuf::from("outside/hidden.p3d"),
+        ])
     }
 }
 
@@ -104,21 +74,12 @@ struct MemoryStore {
 }
 
 impl TextArtifactStore for MemoryStore {
-    fn read_optional(
-        &self,
-        _path: &Path,
-    ) -> io::Result<Option<String>> {
+    fn read_optional(&self, _path: &Path) -> io::Result<Option<String>> {
         Ok(None)
     }
 
-    fn write(
-        &self,
-        _path: &Path,
-        text: &str,
-    ) -> io::Result<()> {
-        let _previous = self
-            .written
-            .replace(Some(text.to_owned()));
+    fn write(&self, _path: &Path, text: &str) -> io::Result<()> {
+        let _previous = self.written.replace(Some(text.to_owned()));
         Ok(())
     }
 }
@@ -126,34 +87,21 @@ impl TextArtifactStore for MemoryStore {
 #[test]
 fn generation_rejects_outside_root_evidence() {
     let store = MemoryStore::default();
-    let result = GenerateManifest::execute(
-        &OutsideTree,
-        &store,
-        Path::new("game"),
-    );
+    let result =
+        GenerateManifest::execute(&OutsideTree, &store, Path::new("game"));
 
     assert!(result.is_err());
-    assert!(
-        store
-            .written
-            .borrow()
-            .is_none()
-    );
+    assert!(store.written.borrow().is_none());
 }
 
 #[test]
 fn generation_disambiguates_colliding_obfuscated_coordinates() {
     let store = MemoryStore::default();
-    let result = GenerateManifest::execute(
-        &AmbiguousTree,
-        &store,
-        Path::new("game"),
-    );
+    let result =
+        GenerateManifest::execute(&AmbiguousTree, &store, Path::new("game"));
 
     assert!(result.is_ok());
-    let written = store
-        .written
-        .borrow();
+    let written = store.written.borrow();
     let Some(manifest) = written.as_ref() else {
         return;
     };

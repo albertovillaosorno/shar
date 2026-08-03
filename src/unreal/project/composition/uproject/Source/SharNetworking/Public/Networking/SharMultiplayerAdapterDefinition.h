@@ -1,12 +1,34 @@
-// File: SharMultiplayerAdapterDefinition.h
-// Path: src/unreal/project/composition/uproject/Source/SharNetworking/Public/Networking/SharMultiplayerAdapterDefinition.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: deferred mod-owned multiplayer declaration only; no transport or base-campaign multiplayer implementation.
-// ADR: docs/adr/modding/mod-owned-multiplayer-adapters-and-community-servers.md
-// LARGE-FILE owner=SharNetworking; reason=cohesive reflected multiplayer declaration schema;
-// split=extract package and target definitions if independently versioned assets appear;
-// validation=validate.sh SharNetworking plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar multiplayer adapter definition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar multiplayer adapter definition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar multiplayer adapter definition composition module.
 
 #pragma once
 

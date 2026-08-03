@@ -1,7 +1,3 @@
-# File:
-#   - test_json_rpc_request.py
-# Path: tests/unreal/editor-control/test_json_rpc_request.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,45 +6,35 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Regression evidence for strict JSON-RPC request construction.
+#   - Test json rpc request test module.
 # - Must-Not:
-#   - Open sockets, invoke Unreal, or depend on external services.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Verifying requests, notifications, and caller-owned parameters.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Request construction gains a second independent protocol contract.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another test module owns the same pure request-construction evidence.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Guards JSON-RPC request and notification object shape.
+#   - Test json rpc request test module.
 # - Description:
-#   - Proves the extracted request builder preserves transport behavior.
+#   - Implements the declared test module responsibility for editor control.
 # - Usage:
-#   - Executed by pytest through the canonical validator workflow.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Uses only deterministic in-memory JSON objects.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
-"""Regression tests for strict JSON-RPC request construction."""
+
+"""Test json rpc request test module."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from mcp.adapter_outbound.json_rpc_request import (
-    build_json_rpc_request,
-)
+from mcp.adapter_outbound.json_rpc_request import build_json_rpc_request
 
 if TYPE_CHECKING:
     from mcp.domain.json_types import JsonObject

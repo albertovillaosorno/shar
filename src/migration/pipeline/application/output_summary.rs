@@ -1,7 +1,3 @@
-// File:
-//   - output_summary.rs
-// Path: src/migration/pipeline/application/output_summary.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Application orchestration for pipeline output inventory.
+//   - Output summary application service.
 // - Must-Not:
-//   - Traverse storage or render command-line diagnostics.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Request output evidence through an explicit port.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when inventory policy gains another independent use case.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another application module owns the same inventory request.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Pipeline output-summary use case.
+//   - Output summary application service.
 // - Description:
-//   - Separates CLI presentation from filesystem evidence gathering.
+//   - Implements the declared application service responsibility for pipeline.
 // - Usage:
-//   - Called by driving adapters after successful pipeline execution.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Standard output directory families remain one explicit ordered
-//   - constant.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Application use case for output inventory evidence.
-//!
-//! The use case depends only on the output-inventory port.
+//! Output summary application service.
+
 use std::path::Path;
 
 use crate::domain::{OutputSummary, PipelineOutcome};
@@ -68,9 +54,6 @@ impl SummarizeOutput {
         inventory: &impl OutputInventory,
         root: &Path,
     ) -> PipelineOutcome<OutputSummary> {
-        inventory.summarize(
-            root,
-            STANDARD_OUTPUT_DIRECTORIES,
-        )
+        inventory.summarize(root, STANDARD_OUTPUT_DIRECTORIES)
     }
 }

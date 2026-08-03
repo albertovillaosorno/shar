@@ -84,4 +84,5 @@ verified from CourtListener duplicates.
 - [Vernor v. Autodesk, Inc](vernor-v-autodesk.md).
 - [17 U.S.C. § 117](../statutes/17-usc-117.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Lawful Copy And Local Game Modification](../doctrines/lawful-copy-and-local-game-modification.md).
+- [Lawful Copy And Local Game
+  Modification](../doctrines/lawful-copy-and-local-game-modification.md).

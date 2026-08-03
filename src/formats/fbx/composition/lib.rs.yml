@@ -1,0 +1,5 @@
+schema: shar-surface/v1
+path: src/formats/fbx/composition/lib.rs
+function: fbx
+kind: facade
+authority: composition/lib.rs

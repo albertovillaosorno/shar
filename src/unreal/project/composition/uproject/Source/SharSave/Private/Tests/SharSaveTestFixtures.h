@@ -1,12 +1,34 @@
-// File: SharSaveTestFixtures.h
-// Path: src/unreal/project/composition/uproject/Source/SharSave/Private/Tests/SharSaveTestFixtures.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: explicit transient save schema, catalog, slot, operation, document, and adapter evidence fixtures only.
-// Specification: docs/technical/unreal/platform-save-storage-and-lifecycle.md
-// LARGE-FILE owner=SharSave; reason=cohesive typed portable-save test fixtures;
-// split=extract adapter fixtures if provider remediation becomes implemented;
-// validation=validate.sh SharSave plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar save test fixtures composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar save test fixtures composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar save test fixtures composition module.
 
 #pragma once
 

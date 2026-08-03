@@ -1,9 +1,34 @@
-// File: SharCheatEffectLifecycleTests.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharCheats/Private/Tests/SharCheatEffectLifecycleTests.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: deterministic effect queue ordering and successful correlated postcondition lifecycle tests only.
-// Specification: docs/technical/unreal/progression-collectibles-and-cheats.md
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar cheat effect lifecycle tests composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar cheat effect lifecycle tests composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar cheat effect lifecycle tests composition module.
 
 #if WITH_DEV_AUTOMATION_TESTS
 

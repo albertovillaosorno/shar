@@ -7,15 +7,31 @@
 
 Normalized production audio uses uncompressed PCM WAV:
 
-<!-- markdownlint-disable MD013 -->
-| Family | Channels | Sample rate | Source depth | Loop metadata |
-| :--- | :--- | :--- | :--- | :--- |
-| Dialogue | Mono unless stereo is semantically required | 48 kHz | 24-bit PCM | No |
-| Ordinary SFX | Mono for positional, stereo for non-positional | 48 kHz | 24-bit PCM | Declared |
-| Vehicle loops | Mono layers or declared stereo | 48 kHz | 24-bit PCM | Exact loop points |
-| Music | Stereo | 48 kHz | 24-bit PCM | Segment and transition metadata |
-| UI | Mono or stereo | 48 kHz | 24-bit PCM | No unless declared |
-<!-- markdownlint-enable MD013 -->
+- **Family:** Dialogue
+  - **Channels:** Mono unless stereo is semantically required
+  - **Sample rate:** 48 kHz
+  - **Source depth:** 24-bit PCM
+  - **Loop metadata:** No
+- **Family:** Ordinary SFX
+  - **Channels:** Mono for positional, stereo for non-positional
+  - **Sample rate:** 48 kHz
+  - **Source depth:** 24-bit PCM
+  - **Loop metadata:** Declared
+- **Family:** Vehicle loops
+  - **Channels:** Mono layers or declared stereo
+  - **Sample rate:** 48 kHz
+  - **Source depth:** 24-bit PCM
+  - **Loop metadata:** Exact loop points
+- **Family:** Music
+  - **Channels:** Stereo
+  - **Sample rate:** 48 kHz
+  - **Source depth:** 24-bit PCM
+  - **Loop metadata:** Segment and transition metadata
+- **Family:** UI
+  - **Channels:** Mono or stereo
+  - **Sample rate:** 48 kHz
+  - **Source depth:** 24-bit PCM
+  - **Loop metadata:** No unless declared
 
 Final platform compression, streaming, seek tables, chunking, and cache policy
 are native cook outputs. Runtime never decodes proprietary source audio formats.

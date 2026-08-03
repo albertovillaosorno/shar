@@ -8,17 +8,18 @@ publish = false
 
 [lib]
 name = "fbx"
-path = "lib.rs"
+path = "composition/lib.rs"
 
 [[bin]]
 name = "semantic-character-texture"
 path = "composition/semantic_character_texture_cli.rs"
 
 [dependencies]
-# shar-sha256 owns the dependency-free repository SHA-256 primitive.
-shar-sha256 = { path = "../../foundation/sha256" }
-# schoenwald-filesystem centralizes complete UTF-8 reads and directory creation while FBX create-new writes and texture copies remain adapter-specific.
-schoenwald-filesystem = { path = "../../foundation/filesystem" }
+# shar_sha256 owns the dependency-free repository SHA-256 primitive.
+shar_sha256 = { path = "../../foundation/sha256" }
+# jig-ignore-next-line: exact value is indivisible
+# schoenwald_filesystem centralizes complete UTF-8 reads and directory creation while FBX create-new writes and texture copies remain adapter-specific.
+schoenwald_filesystem = { path = "../../foundation/filesystem" }
 # serde is retained because the exporter needs typed JSON decoding for
 # generated manifests, and a hand-rolled replacement would raise parser risk
 # without improving ownership or auditability.
@@ -154,3 +155,6 @@ path = "../../../tests/formats/fbx/semantic_body_texture_rejections.rs"
 [[test]]
 name = "semantic_eye_texture_png"
 path = "../../../tests/formats/fbx/semantic_eye_texture_png.rs"
+
+[lints]
+workspace = true

@@ -163,16 +163,19 @@ jurisdiction-specific review.
 
 - Justia (2024), *Hachette Book Group, Inc. v. Internet Archive*, 115 F.4th
   163, public-domain opinion duplicate. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://law.justia.com/cases/federal/appellate-courts/ca2/23-1260/23-1260-2024-09-04.html>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://law.justia.com/cases/federal/appellate-courts/ca2/23-1260/23-1260-2024-09-04.html> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - Association of American Publishers (2024), final-resolution announcement
   reporting that Internet Archive did not file a petition for Supreme Court
   review by the 2024-12-03 deadline. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://publishers.org/news/aap-celebrates-final-victory-in-infringement-case-against-internet-archive/>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://publishers.org/news/aap-celebrates-final-victory-in-infringement-case-against-internet-archive/> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - [17 U.S.C. § 107](../statutes/17-usc-107.md).
 - [17 U.S.C. § 109](../statutes/17-usc-109.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Copyright-Safe Publication Boundary](../repository/copyright-safe-publication-boundary.md).
+- [Copyright-Safe Publication
+  Boundary](../repository/copyright-safe-publication-boundary.md).

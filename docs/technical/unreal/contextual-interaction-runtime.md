@@ -2,19 +2,25 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Contextual interaction query and transaction boundary](../../adr/unreal/runtime/contextual-interaction-query-and-transaction.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Contextual interaction query and transaction boundary](../../adr/unreal/runtime/contextual-interaction-query-and-transaction.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Typed StateTree action sequences](../../adr/unreal/runtime/typed-state-tree-action-sequences.md)
+- [Typed StateTree action
+  sequences](../../adr/unreal/runtime/typed-state-tree-action-sequences.md)
 - [Typed action-sequence runtime](typed-action-sequence-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Mission world-entity and respawn runtime](mission-world-entity-and-respawn-runtime.md)
+- [Mission world-entity and respawn
+  runtime](mission-world-entity-and-respawn-runtime.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Transactional phone-booth vehicle retrieval](../../adr/unreal/runtime/transactional-phone-booth-vehicle-retrieval.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Transactional phone-booth vehicle retrieval](../../adr/unreal/runtime/transactional-phone-booth-vehicle-retrieval.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+- [Data-driven Unreal gameplay content
+  catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 
 ## Purpose
 
@@ -30,17 +36,32 @@ The runtime module owns these C++ types:
 
 <!-- markdownlint-disable MD013 -->
 
-| Type | Responsibility |
-| :--- | :--- |
-| `USharInteractionDefinition` | Primary data asset containing the stable interaction contract. |
-| `USharInteractionSourceComponent` | World-local source, authored slots, bounds, and current source revision. |
-| `USharInteractorComponent` | Character-local candidate collection and prompt projection. |
-| `USharInteractionSubsystem` | World authority for selection, reservations, transactions, and results. |
-| `ISharInteractionExecutor` | Typed application port implemented once per interaction kind. |
-| `FSharInteractionQuery` | Immutable query input for one interactor and one simulation frame. |
-| `FSharInteractionCandidate` | Evaluated candidate with no committed side effects. |
-| `FSharInteractionReservation` | Move-only reservation token with source and interactor revisions. |
-| `FSharInteractionResult` | Typed success, rejection, cancellation, or compensated-failure result. |
+- **Type:** `USharInteractionDefinition`
+  - **Responsibility:** Primary data asset containing the stable interaction
+    contract.
+- **Type:** `USharInteractionSourceComponent`
+  - **Responsibility:** World-local source, authored slots, bounds, and current
+    source revision.
+- **Type:** `USharInteractorComponent`
+  - **Responsibility:** Character-local candidate collection and prompt
+    projection.
+- **Type:** `USharInteractionSubsystem`
+  - **Responsibility:** World authority for selection, reservations,
+    transactions, and results.
+- **Type:** `ISharInteractionExecutor`
+  - **Responsibility:** Typed application port implemented once per interaction
+    kind.
+- **Type:** `FSharInteractionQuery`
+  - **Responsibility:** Immutable query input for one interactor and one
+    simulation frame.
+- **Type:** `FSharInteractionCandidate`
+  - **Responsibility:** Evaluated candidate with no committed side effects.
+- **Type:** `FSharInteractionReservation`
+  - **Responsibility:** Move-only reservation token with source and interactor
+    revisions.
+- **Type:** `FSharInteractionResult`
+  - **Responsibility:** Typed success, rejection, cancellation, or
+    compensated-failure result.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -54,22 +75,41 @@ Every `USharInteractionDefinition` contains:
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `InteractionId` | Globally unique canonical identifier. |
-| `InteractionTags` | Gameplay Tags that classify family, role, and authored context. |
-| `ExecutionKind` | Closed enum selecting one registered typed executor. |
-| `InputPolicy` | Manual press, automatic enter, automatic exit, or passive pickup. |
-| `Priority` | Signed authored priority used before distance and identity. |
-| `Prompt` | Localized text identity, icon identity, and accessibility description. |
-| `EligibilityPolicy` | Required and blocked tags, mission state, save state, and source state. |
-| `SlotPolicy` | Required character slot, facing tolerance, occupancy, and reservation mode. |
-| `PresentationPolicy` | Movement lock, camera, animation, audio, prop animation, and duration. |
-| `EffectPolicy` | Typed executor payload; never an arbitrary object path or script fragment. |
-| `PersistencePolicy` | None, session, level, profile, or permanent collection state. |
-| `CooldownPolicy` | No cooldown, fixed cooldown, or respawn definition identity. |
-| `CancellationPolicy` | Allowed phases and required compensation behavior. |
-| `VerificationPolicy` | Observable state that must confirm a successful commit. |
+- **Field:** `InteractionId`
+  - **Contract:** Globally unique canonical identifier.
+- **Field:** `InteractionTags`
+  - **Contract:** Gameplay Tags that classify family, role, and authored
+    context.
+- **Field:** `ExecutionKind`
+  - **Contract:** Closed enum selecting one registered typed executor.
+- **Field:** `InputPolicy`
+  - **Contract:** Manual press, automatic enter, automatic exit, or passive
+    pickup.
+- **Field:** `Priority`
+  - **Contract:** Signed authored priority used before distance and identity.
+- **Field:** `Prompt`
+  - **Contract:** Localized text identity, icon identity, and accessibility
+    description.
+- **Field:** `EligibilityPolicy`
+  - **Contract:** Required and blocked tags, mission state, save state, and
+    source state.
+- **Field:** `SlotPolicy`
+  - **Contract:** Required character slot, facing tolerance, occupancy, and
+    reservation mode.
+- **Field:** `PresentationPolicy`
+  - **Contract:** Movement lock, camera, animation, audio, prop animation, and
+    duration.
+- **Field:** `EffectPolicy`
+  - **Contract:** Typed executor payload; never an arbitrary object path or
+    script fragment.
+- **Field:** `PersistencePolicy`
+  - **Contract:** None, session, level, profile, or permanent collection state.
+- **Field:** `CooldownPolicy`
+  - **Contract:** No cooldown, fixed cooldown, or respawn definition identity.
+- **Field:** `CancellationPolicy`
+  - **Contract:** Allowed phases and required compensation behavior.
+- **Field:** `VerificationPolicy`
+  - **Contract:** Observable state that must confirm a successful commit.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -81,33 +121,82 @@ policies fail asset validation and cannot enter the runtime catalog.
 
 <!-- markdownlint-disable MD013 -->
 
-| Kind | Required behavior |
-| :--- | :--- |
-| `mission_dialogue` | Reserve the speaker, position the player when required, run dialogue, and publish the declared mission observation. |
-| `enter_interior` | Delegate the complete transition to the interior transaction port. |
-| `enter_vehicle` | Revalidate vehicle state, seat availability, mission restrictions, and current character state before entry. |
-| `summon_vehicle` | Open the phone-booth selection flow and delegate retrieval to the vehicle-retrieval transaction. |
-| `prop_attach` | Attach the declared prop to the validated character socket and publish the attachment result. |
-| `prop_toggle` | Move an authored prop animation toward the opposite stable endpoint. |
-| `prop_reverse` | Reverse the active authored prop animation without rebuilding its state. |
-| `prop_play_once` | Play from the declared start state to the terminal state once. |
-| `prop_play_loop` | Start or stop a cyclic animation through explicit state, not repeated input polling. |
-| `prop_auto_play` | Begin when the first eligible occupant enters and stop when the last eligible occupant exits. |
-| `prop_auto_in_out` | Animate toward the occupied state on enter and toward the idle state after the final exit. |
-| `destroy_prop` | Apply the declared damage transaction, wait for the authoritative destruction result, then publish mission and reward observations once. |
-| `vending_machine` | Play the authored character and prop sequence, commit the configured economy effect once, and enforce cooldown. |
-| `prank_phone` | Play the authored phone sequence and event result without entering vehicle-retrieval UI. |
-| `doorbell` | Play one doorbell event while respecting cooldown and source availability. |
-| `open_door` | Reserve the doorway, position the character, animate the door, and release only after passage or cancellation. |
-| `talk_food` | Run the declared conversation and food presentation without creating a collectible save row. |
-| `talk_collectible` | Run dialogue and then delegate the collectible grant to its typed port. |
-| `collectible` | Commit a one-time or respawnable pickup according to the definition. |
-| `repair_pickup` | Repair the active vehicle context and schedule the authored respawn. |
-| `nitro_pickup` | Delegate the charge grant to the vehicle capability port. |
-| `teleport` | Reserve both ends, validate the destination, transition atomically, and recover to the source on failure. |
-| `purchase_vehicle` | Quote the canonical offer, debit currency, grant ownership, and persist one atomic result. |
-| `purchase_costume` | Quote the canonical offer, debit currency, grant the costume, and persist one atomic result. |
-| `generic_event` | Publish only a schema-registered event payload with a declared consumer. |
+- **Kind:** `mission_dialogue`
+  - **Required behavior:** Reserve the speaker, position the player when
+    required, run dialogue, and publish the declared mission observation.
+- **Kind:** `enter_interior`
+  - **Required behavior:** Delegate the complete transition to the interior
+    transaction port.
+- **Kind:** `enter_vehicle`
+  - **Required behavior:** Revalidate vehicle state, seat availability, mission
+    restrictions, and current character state before entry.
+- **Kind:** `summon_vehicle`
+  - **Required behavior:** Open the phone-booth selection flow and delegate
+    retrieval to the vehicle-retrieval transaction.
+- **Kind:** `prop_attach`
+  - **Required behavior:** Attach the declared prop to the validated character
+    socket and publish the attachment result.
+- **Kind:** `prop_toggle`
+  - **Required behavior:** Move an authored prop animation toward the opposite
+    stable endpoint.
+- **Kind:** `prop_reverse`
+  - **Required behavior:** Reverse the active authored prop animation without
+    rebuilding its state.
+- **Kind:** `prop_play_once`
+  - **Required behavior:** Play from the declared start state to the terminal
+    state once.
+- **Kind:** `prop_play_loop`
+  - **Required behavior:** Start or stop a cyclic animation through explicit
+    state, not repeated input polling.
+- **Kind:** `prop_auto_play`
+  - **Required behavior:** Begin when the first eligible occupant enters and
+    stop when the last eligible occupant exits.
+- **Kind:** `prop_auto_in_out`
+  - **Required behavior:** Animate toward the occupied state on enter and toward
+    the idle state after the final exit.
+- **Kind:** `destroy_prop`
+  - **Required behavior:** Apply the declared damage transaction, wait for the
+    authoritative destruction result, then publish mission and reward
+    observations once.
+- **Kind:** `vending_machine`
+  - **Required behavior:** Play the authored character and prop sequence, commit
+    the configured economy effect once, and enforce cooldown.
+- **Kind:** `prank_phone`
+  - **Required behavior:** Play the authored phone sequence and event result
+    without entering vehicle-retrieval UI.
+- **Kind:** `doorbell`
+  - **Required behavior:** Play one doorbell event while respecting cooldown and
+    source availability.
+- **Kind:** `open_door`
+  - **Required behavior:** Reserve the doorway, position the character, animate
+    the door, and release only after passage or cancellation.
+- **Kind:** `talk_food`
+  - **Required behavior:** Run the declared conversation and food presentation
+    without creating a collectible save row.
+- **Kind:** `talk_collectible`
+  - **Required behavior:** Run dialogue and then delegate the collectible grant
+    to its typed port.
+- **Kind:** `collectible`
+  - **Required behavior:** Commit a one-time or respawnable pickup according to
+    the definition.
+- **Kind:** `repair_pickup`
+  - **Required behavior:** Repair the active vehicle context and schedule the
+    authored respawn.
+- **Kind:** `nitro_pickup`
+  - **Required behavior:** Delegate the charge grant to the vehicle capability
+    port.
+- **Kind:** `teleport`
+  - **Required behavior:** Reserve both ends, validate the destination,
+    transition atomically, and recover to the source on failure.
+- **Kind:** `purchase_vehicle`
+  - **Required behavior:** Quote the canonical offer, debit currency, grant
+    ownership, and persist one atomic result.
+- **Kind:** `purchase_costume`
+  - **Required behavior:** Quote the canonical offer, debit currency, grant the
+    costume, and persist one atomic result.
+- **Kind:** `generic_event`
+  - **Required behavior:** Publish only a schema-registered event payload with a
+    declared consumer.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -119,7 +208,8 @@ Each interactor maintains a bounded overlap set from interaction-source
 collision channels. Registration, participant identity, occupancy, enter/exit,
 and streaming teardown follow the
 <!-- markdownlint-disable-next-line MD013 -->
-[authored spatial placement and trigger runtime](authored-spatial-placement-and-trigger-runtime.md).
+[authored spatial placement and trigger
+runtime](authored-spatial-placement-and-trigger-runtime.md).
 There is no world-wide per-frame actor scan.
 
 For each query, the interactor supplies:
@@ -225,7 +315,8 @@ interval or runtime type switch. Cooldown, streaming, checkpoint, and
 restoration
 behavior follows the
 <!-- markdownlint-disable-next-line MD013 -->
-[mission world-entity and respawn runtime](mission-world-entity-and-respawn-runtime.md).
+[mission world-entity and respawn
+runtime](mission-world-entity-and-respawn-runtime.md).
 
 Alien-camera collectibles are adversarial destructible targets rather than
 passive overlaps. Destruction, currency reward, level-progress credit, visual

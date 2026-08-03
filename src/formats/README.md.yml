@@ -1,0 +1,4 @@
+schema: shar-boundary/v1
+path: src/formats/README.md
+boundary: src/formats
+authority: README.md

@@ -6,25 +6,34 @@
 ## Governing decisions
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Mass Entity ambient population](../../adr/unreal/runtime/mass-entity-ambient-population.md)
+- [Mass Entity ambient
+  population](../../adr/unreal/runtime/mass-entity-ambient-population.md)
 - [Pedestrian path runtime](pedestrian-path-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
+- [Playable avatar, character controller, and footprint
+  runtime](playable-avatar-character-controller-and-footprint-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+- [Native vehicle physics, control, damage, and presentation
+  runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 - [Presentation playback runtime](presentation-playback-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md)
+- [Dialogue selection, queue, and playback
+  runtime](dialogue-selection-queue-and-playback-runtime.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Native flying-hazard actors and StateTree execution](../../adr/unreal/runtime/native-flying-hazard-actors-and-state-trees.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native flying-hazard actors and StateTree execution](../../adr/unreal/runtime/native-flying-hazard-actors-and-state-trees.md)
+- [Flying-hazard and projectile
+  runtime](flying-hazard-and-projectile-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Flying-hazard and projectile runtime](flying-hazard-and-projectile-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
+- [Data-driven Unreal gameplay content
+  catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md) <!-- markdownlint-disable-line MD013 -->
 
 ## Purpose
 
@@ -85,22 +94,34 @@ population from visible sidewalks or loaded meshes.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `ZoneId` | Stable zone identity. |
-| `LevelId` | Owning level. |
-| `PlacementBounds` | Authored world-space bounds or path membership. |
-| `PedestrianPathIds` | Exact navigation and sidewalk paths. |
-| `ArchetypeGroupId` | Weighted group eligible in the zone. |
-| `TargetDensity` | Base disposable density before presentation scaling. |
-| `MinPlayerDistance` | Minimum safe spawn distance. |
-| `MaxActivationDistance` | Maximum activation distance. |
-| `RemovalDistance` | Distance after which disposable entities may be removed. |
-| `VisibilityGrace` | Off-screen duration before removal eligibility. |
-| `ConversationPolicyId` | Optional ambient conversation policy. |
-| `ThreatPolicyId` | Reaction and recovery policy. |
-| `RequiredLayers` | Exact Runtime Data Layers. |
-| `ExclusionVolumes` | Mission, traffic, interior, and unsafe spawn exclusions. |
+- **Field:** `ZoneId`
+  - **Contract:** Stable zone identity.
+- **Field:** `LevelId`
+  - **Contract:** Owning level.
+- **Field:** `PlacementBounds`
+  - **Contract:** Authored world-space bounds or path membership.
+- **Field:** `PedestrianPathIds`
+  - **Contract:** Exact navigation and sidewalk paths.
+- **Field:** `ArchetypeGroupId`
+  - **Contract:** Weighted group eligible in the zone.
+- **Field:** `TargetDensity`
+  - **Contract:** Base disposable density before presentation scaling.
+- **Field:** `MinPlayerDistance`
+  - **Contract:** Minimum safe spawn distance.
+- **Field:** `MaxActivationDistance`
+  - **Contract:** Maximum activation distance.
+- **Field:** `RemovalDistance`
+  - **Contract:** Distance after which disposable entities may be removed.
+- **Field:** `VisibilityGrace`
+  - **Contract:** Off-screen duration before removal eligibility.
+- **Field:** `ConversationPolicyId`
+  - **Contract:** Optional ambient conversation policy.
+- **Field:** `ThreatPolicyId`
+  - **Contract:** Reaction and recovery policy.
+- **Field:** `RequiredLayers`
+  - **Contract:** Exact Runtime Data Layers.
+- **Field:** `ExclusionVolumes`
+  - **Contract:** Mission, traffic, interior, and unsafe spawn exclusions.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -229,7 +250,8 @@ unit-labelled policy rather than fixed manager constants.
 Vehicle contacts and threat observations consume immutable collision and vehicle
 state from
 <!-- markdownlint-disable-next-line MD013 -->
-[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+[Native vehicle physics, control, damage, and presentation
+runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
 A pedestrian reaction cannot damage a vehicle, adjust notoriety, grant currency,
 or commit mission state without the owning typed transaction.
 
@@ -352,7 +374,8 @@ Conversation candidates require:
 A short reservation prevents a third entity from taking either participant.
 Eligibility publishes immutable participant and event context to
 <!-- markdownlint-disable-next-line MD013 -->
-[Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md),
+[Dialogue selection, queue, and playback
+runtime](dialogue-selection-queue-and-playback-runtime.md),
 which owns deterministic line matching, queueing, positional playback,
 subtitles,
 and completion observations.
@@ -386,7 +409,8 @@ Actor construction, character definitions, movement, artificial-intelligence and
 non-player-character controllers, collision, rendering, props, camera targets,
 and footprint presentation follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md).
+[Playable avatar, character controller, and footprint
+runtime](playable-avatar-character-controller-and-footprint-runtime.md).
 
 Promotion performs:
 

@@ -1,0 +1,4 @@
+schema: shar-boundary/v1
+path: src/unreal/asset-conversion/README.md
+boundary: src/unreal/asset-conversion
+authority: README.md

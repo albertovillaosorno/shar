@@ -5,22 +5,30 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
+- [Data-driven Unreal gameplay content
+  catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+- [Portable save storage and
+  lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+- [Native World Partition and Data
+  Layers](../../adr/pipeline/unreal/world-partition-and-data-layer-import.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native World Partition and Data Layers](../../adr/pipeline/unreal/world-partition-and-data-layer-import.md)
+- [Collector cards, coins, rewards, gags, and
+  wasps](../../adr/gameplay/collectibles/collectibles-rewards-gags-and-wasps.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Collector cards, coins, rewards, gags, and wasps](../../adr/gameplay/collectibles/collectibles-rewards-gags-and-wasps.md)
+- [Mission world-entity and respawn
+  runtime](mission-world-entity-and-respawn-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Mission world-entity and respawn runtime](mission-world-entity-and-respawn-runtime.md)
+- [World render-entity and physics
+  runtime](world-render-entity-and-physics-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md)
+- [Authored state-prop animation and event
+  runtime](authored-state-prop-animation-and-event-runtime.md)
 
 ## Purpose
 
@@ -36,14 +44,22 @@ idempotent state transactions.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| World-placement catalog | Stable world, layer, region, placement, and state-schema identities. |
-| Persistent-world subsystem | Read models, mutation validation, streaming projection, and lifecycle. |
-| Progression repository | Durable accepted world-state and reward transactions. |
-| World actors and components | Present the accepted state and request typed mutations. |
-| Save service | Serialize, migrate, validate, and commit portable world-state records. |
-| Import pipeline | Convert source regions and object evidence into stable native placements. |
+- **Authority:** World-placement catalog
+  - **Responsibility:** Stable world, layer, region, placement, and state-schema
+    identities.
+- **Authority:** Persistent-world subsystem
+  - **Responsibility:** Read models, mutation validation, streaming projection,
+    and lifecycle.
+- **Authority:** Progression repository
+  - **Responsibility:** Durable accepted world-state and reward transactions.
+- **Authority:** World actors and components
+  - **Responsibility:** Present the accepted state and request typed mutations.
+- **Authority:** Save service
+  - **Responsibility:** Serialize, migrate, validate, and commit portable
+    world-state records.
+- **Authority:** Import pipeline
+  - **Responsibility:** Convert source regions and object evidence into stable
+    native placements.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -56,15 +72,25 @@ The runtime module owns these C++ types:
 
 <!-- markdownlint-disable MD013 -->
 
-| Type | Responsibility |
-| :--- | :--- |
-| `USharPersistentWorldDefinition` | Immutable state schema, reset, respawn, and migration policy. |
-| `USharPersistentPlacementDefinition` | Stable world, layer, region, placement, actor, and reward binding. |
-| `USharPersistentWorldSubsystem` | World-scoped projection, request validation, and streaming integration. |
-| `ISharPersistentWorldRepository` | Portable accepted-state and revision port. |
-| `FSharPersistentObjectState` | Canonical placement, state value, revision, and transaction evidence. |
-| `FSharPersistentMutationRequest` | Placement, expected revision, transition, cause, and authority. |
-| `FSharPersistentMutationResult` | Closed success or failure result with accepted state. |
+- **Type:** `USharPersistentWorldDefinition`
+  - **Responsibility:** Immutable state schema, reset, respawn, and migration
+    policy.
+- **Type:** `USharPersistentPlacementDefinition`
+  - **Responsibility:** Stable world, layer, region, placement, actor, and
+    reward binding.
+- **Type:** `USharPersistentWorldSubsystem`
+  - **Responsibility:** World-scoped projection, request validation, and
+    streaming integration.
+- **Type:** `ISharPersistentWorldRepository`
+  - **Responsibility:** Portable accepted-state and revision port.
+- **Type:** `FSharPersistentObjectState`
+  - **Responsibility:** Canonical placement, state value, revision, and
+    transaction evidence.
+- **Type:** `FSharPersistentMutationRequest`
+  - **Responsibility:** Placement, expected revision, transition, cause, and
+    authority.
+- **Type:** `FSharPersistentMutationResult`
+  - **Responsibility:** Closed success or failure result with accepted state.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -121,13 +147,16 @@ Each definition selects one closed state schema. Initial schemas include:
 
 <!-- markdownlint-disable MD013 -->
 
-| Schema | States |
-| :--- | :--- |
-| `destructible` | `intact`, `damaged`, `destroyed` |
-| `removable` | `present`, `removed` |
-| `consumable` | `available`, `consumed` |
-| `variant` | Definition-owned closed variant identities. |
-| `staged_destructible` | Ordered authored damage or payout stages plus `destroyed`. |
+- **Schema:** `destructible`
+  - **States:** `intact`, `damaged`, `destroyed`
+- **Schema:** `removable`
+  - **States:** `present`, `removed`
+- **Schema:** `consumable`
+  - **States:** `available`, `consumed`
+- **Schema:** `variant`
+  - **States:** Definition-owned closed variant identities.
+- **Schema:** `staged_destructible`
+  - **States:** Ordered authored damage or payout stages plus `destroyed`.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -184,7 +213,8 @@ explicit definition and accepted reset transaction.
 Runtime Actor, component, Chaos-body, instance-index, and scene-registration
 state follows
 <!-- markdownlint-disable-next-line MD013 -->
-[World render-entity and physics runtime](world-render-entity-and-physics-runtime.md).
+[World render-entity and physics
+runtime](world-render-entity-and-physics-runtime.md).
 Persistence stores canonical placement and schema-owned state only. A body going
 to sleep, a primitive being culled, or an Actor unloading cannot mark a
 placement
@@ -282,7 +312,8 @@ mod may replace the session authority through the declared server-adapter port,
 but it must namespace server persistence and cannot reinterpret a base save. The
 adapter contract follows the
 <!-- markdownlint-disable-next-line MD013 -->
-[multiplayer adapter and community-server extension](../modding/multiplayer-adapter-and-community-server-extension.md).
+[multiplayer adapter and community-server
+extension](../modding/multiplayer-adapter-and-community-server-extension.md).
 
 ## Failure behavior
 

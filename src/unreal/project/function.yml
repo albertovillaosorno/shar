@@ -1,0 +1,20 @@
+schema: shar-function/v1
+identity:
+  id: project
+  path: src/unreal/project
+  domain: unreal
+architecture:
+  route: src/<domain>/<function>/<kind>/<part>
+  kinds:
+    - composition
+capabilities:
+  - math
+  - cpp
+  - python
+projects:
+tests:
+  root: tests/unreal/project
+ownership:
+  accountable: Alberto Villa Osorno
+validation:
+  mode: active

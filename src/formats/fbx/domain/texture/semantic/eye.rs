@@ -1,7 +1,3 @@
-// File:
-//   - eye.rs
-// Path: src/formats/fbx/domain/texture/semantic/eye.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,41 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - The public pure-domain facade for two-eye component and four-frame
-//   - texture animation analysis.
+//   - Eye domain module.
 // - Must-Not:
-//   - Invent eyelid geometry, change animation mechanisms, read files, or
-//   - encode output artifacts.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Focused component, frame, and result modules.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another eye-animation mechanism needs an independent public contract.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - The parent semantic facade can expose the same API directly.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Evidence-driven semantic eye analysis facade.
+//   - Eye domain module.
 // - Description:
-//   - Preserves source texture-frame blinking while exposing eight semantic eye
-//   - regions across two connected mesh components.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Called by repository-owned character texture artifact adapters.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Exactly two eye components and four monotonic closure frames are
-//   - required.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Evidence-driven semantic eye analysis.
+//! Eye domain module.
+
 #![expect(
     clippy::module_name_repetitions,
     reason = "Eye semantic types retain explicit names at the public domain \
@@ -80,25 +65,20 @@ pub fn analyze_eye_frames(
     output_size: u32,
 ) -> Result<EyeSemanticPlan, EyeTextureError> {
     let components = components::discover(group)?;
-    let analyzed = frames::analyze(
-        source_frames,
-        output_size,
-    )?;
+    let analyzed = frames::analyze(source_frames, output_size)?;
     let layers = layers::build(
         &analyzed.modern_frames[0],
         analyzed.pupil_color,
         analyzed.lid_color,
     )?;
-    Ok(
-        EyeSemanticPlan {
-            components,
-            frame_evidence: analyzed.evidence,
-            modern_frames: analyzed.modern_frames,
-            layers,
-            lid_color: analyzed.lid_color,
-            surface_color: analyzed.surface_color,
-            pupil_color: analyzed.pupil_color,
-            semantic_region_count: 8,
-        },
-    )
+    Ok(EyeSemanticPlan {
+        components,
+        frame_evidence: analyzed.evidence,
+        modern_frames: analyzed.modern_frames,
+        layers,
+        lid_color: analyzed.lid_color,
+        surface_color: analyzed.surface_color,
+        pupil_color: analyzed.pupil_color,
+        semantic_region_count: 8,
+    })
 }

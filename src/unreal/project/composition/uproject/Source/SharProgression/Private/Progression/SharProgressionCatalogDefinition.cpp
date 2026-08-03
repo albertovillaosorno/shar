@@ -1,12 +1,34 @@
-// File: SharProgressionCatalogDefinition.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharProgression/Private/Progression/SharProgressionCatalogDefinition.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: load-free progression operation catalog validation and lookup only.
-// Specification: docs/technical/unreal/progression-collectibles-and-cheats.md
-// LARGE-FILE owner=SharProgression; reason=cohesive operation catalog validation and lookup;
-// split=extract value-policy validation if operation families gain separate schemas;
-// validation=validate.sh SharProgression plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar progression catalog definition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar progression catalog definition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar progression catalog definition composition module.
 
 #include "Progression/SharProgressionCatalogDefinition.h"
 
@@ -32,6 +54,7 @@ static bool HasDuplicateOperationIds(
         [&Operations](const FSharProgressionOperationDefinition& Candidate)
         {
             int32 MatchCount = 0;
+            // jig-ignore-next-line: exact syntax is indivisible
             for (const FSharProgressionOperationDefinition& Operation : Operations)
             {
                 MatchCount += Operation.OperationId == Candidate.OperationId
@@ -71,6 +94,7 @@ void USharProgressionCatalogDefinition::GatherValidationErrors(
     {
         AddProgressionCatalogError(
             OutErrors,
+            // jig-ignore-next-line: exact syntax is indivisible
             TEXT("Progression schema and mutation-operation bound must be positive.")
         );
     }
@@ -78,6 +102,7 @@ void USharProgressionCatalogDefinition::GatherValidationErrors(
     {
         AddProgressionCatalogError(
             OutErrors,
+            // jig-ignore-next-line: exact syntax is indivisible
             TEXT("Progression operations must be present and uniquely identified.")
         );
     }

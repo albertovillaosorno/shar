@@ -1,7 +1,3 @@
-// File:
-//   - extract.rs
-// Path: tests/formats/p3d/extract.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,41 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for public Pure3D compression preparation invariants.
+//   - Extract test module.
 // - Must-Not:
-//   - Access private assets, perform filesystem discovery, or duplicate the
-//   - production decompressor.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic compressed byte streams and public preparation assertions.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another compression family requires independent fixtures.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Compression regressions no longer require a distinct test boundary.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects fail-closed P3DZ preparation.
+//   - Extract test module.
 // - Description:
-//   - Exercises public compressed-source preparation with synthetic streams.
+//   - Implements the declared test module responsibility for p3d.
 // - Usage:
-//   - Run through the p3d crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No local files, generated assets, or external processes are required.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for public `Pure3D` compression preparation invariants.
-//!
-//! Synthetic literal streams prove malformed `P3DZ` framing fails closed
-//! without relying on local game assets.
+//! Extract test module.
 
 use p3d::domain::prepare_p3d_bytes;
 use schoenwald_cli as _;
@@ -54,12 +38,7 @@ use shar_json_text as _;
 
 fn literal_p3dz(payload: &[u8]) -> Option<Vec<u8>> {
     let payload_len = u8::try_from(payload.len()).ok()?;
-    let compressed_size = u32::try_from(
-        payload
-            .len()
-            .checked_add(1)?,
-    )
-    .ok()?;
+    let compressed_size = u32::try_from(payload.len().checked_add(1)?).ok()?;
     let decompressed_size = u32::try_from(payload.len()).ok()?;
     let mut source = Vec::new();
     source.extend_from_slice(b"P3DZ");
@@ -72,9 +51,7 @@ fn literal_p3dz(payload: &[u8]) -> Option<Vec<u8>> {
 }
 
 const fn minimal_root() -> [u8; 12] {
-    [
-        0x50, 0x33, 0x44, 0xff, 12, 0, 0, 0, 12, 0, 0, 0,
-    ]
+    [0x50, 0x33, 0x44, 0xff, 12, 0, 0, 0, 12, 0, 0, 0]
 }
 
 #[test]
@@ -104,7 +81,9 @@ fn p3dz_rejects_trailing_compressed_block_bytes() -> Result<(), String> {
     if prepare_p3d_bytes(&source).is_err() {
         Ok(())
     } else {
-        Err(String::from("trailing compressed block bytes must be rejected"))
+        Err(String::from(
+            "trailing compressed block bytes must be rejected",
+        ))
     }
 }
 
@@ -143,10 +122,7 @@ fn p3dz_rejects_blocks_larger_than_declared_output() {
 
     let result = prepare_p3d_bytes(&source);
     assert_eq!(
-        result
-            .err()
-            .map(|error| error.to_string())
-            .as_deref(),
+        result.err().map(|error| error.to_string()).as_deref(),
         Some("P3DZ block exceeds declared output size")
     );
 }

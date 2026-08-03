@@ -1,7 +1,3 @@
-// File:
-//   - adapters.rs
-// Path: src/formats/rtf/composition/adapters.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,43 +6,33 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - RTF inbound and outbound adapter families.
+//   - Adapters composition module.
 // - Must-Not:
-//   - Own parser rules or application conversion policy.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Protocol translation and concrete external mechanisms.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when one adapter family becomes independently versioned.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another facade owns the same adapter families.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Adapter facade for RTF conversion.
+//   - Adapters composition module.
 // - Description:
-//   - Separates driving request handling from driven filesystem mechanisms.
+//   - Implements the declared composition module responsibility for rtf.
 // - Usage:
-//   - Imported by composition roots and integration tests.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No adapter is selected implicitly by the core layers.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Inbound and outbound adapters for RTF conversion.
-//!
-//! Driving adapters compose requests while driven adapters implement source and
-//! sink ports.
-#[path = "../adapter-outbound/mod.rs"]
+//! Adapters composition module.
+
+#[path = "adapter-outbound/mod.rs"]
 pub mod driven;
-#[path = "../adapter-inbound/mod.rs"]
+#[path = "adapter-inbound/mod.rs"]
 pub mod driving;
 
 pub use driven::{FileMarkdownSink, FileRtfSource};

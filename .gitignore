@@ -43,6 +43,7 @@ dependencies/
 
 # Repository-local toolchains and disposable Jig state.
 .dependencies/
+.logs/
 .temp/
 
 # ==============================================================================
@@ -86,11 +87,16 @@ src/unreal/project/composition/uproject/Plugins/
 src/unreal/project/composition/uproject/Content/SHAR/EditorOnly/StructuralGuide/
 
 # The canonical authored base world is an explicit publication exception. Its
+# jig-ignore-next-line: exact value is indivisible
 # World Partition actor/object packages must travel with the map as the island is
 # sculpted; unrelated generated Unreal packages remain ignored.
+# jig-ignore-next-line: exact value is indivisible
 !src/unreal/project/composition/uproject/Content/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld.umap
+# jig-ignore-next-line: exact value is indivisible
 !src/unreal/project/composition/uproject/Content/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld_HLOD0_Instancing.uasset
+# jig-ignore-next-line: exact value is indivisible
 !src/unreal/project/composition/uproject/Content/__ExternalActors__/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld/**/*.uasset
+# jig-ignore-next-line: exact value is indivisible
 !src/unreal/project/composition/uproject/Content/__ExternalObjects__/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld/**/*.uasset
 
 # ==============================================================================
@@ -274,6 +280,9 @@ build/
 # Rust Generated State
 # ==============================================================================
 target/
+# Canonical RMV domain tests use `target` as a semantic noun.
+!tests/formats/rmv/unit/domain/target/
+!tests/formats/rmv/unit/domain/target/**
 
 # ==============================================================================
 # Project Pipeline, Modding, & Local Evidence
@@ -317,12 +326,12 @@ fbx-assets/world-edited/
 
 # Copyrighted local evidence, tool drops, and research
 /assets/
-/tools/
 /docs/research/
 *.jpg
 *.jpeg
 *OriginalDisabled.ini
 
+# jig-ignore-next-line: exact value is indivisible
 # Generated inventory snapshots (promote intentionally by moving to docs or pipeline)
 /tree.json
 /tree*.json
@@ -373,14 +382,12 @@ sandboxes/
 # ==============================================================================
 # Private Files & Local Root Configurations
 # ==============================================================================
-.editorconfig
 .clang-tidy
 .editorignore
-.rustfmt.toml
-rust-toolchain.toml
 validate.ps1
 validate.sh
 SCHOENWALD.md
+# jig-ignore-next-line: exact value is indivisible
 src/unreal/project/composition/uproject/Scripts/validate_python_source_headers.py
 tests/unreal/project/repository_policy/*
 Directory.Build.props

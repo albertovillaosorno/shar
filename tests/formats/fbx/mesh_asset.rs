@@ -1,7 +1,3 @@
-// File:
-//   - mesh_asset.rs
-// Path: tests/formats/fbx/mesh_asset.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,43 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for normalized FBX mesh-asset invariants.
+//   - Mesh asset test module.
 // - Must-Not:
-//   - Access private assets, perform filesystem discovery, or duplicate domain
-//   - implementation logic.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic mesh aggregates and caller-visible domain assertions.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another aggregate requires an independent integration boundary.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Mesh-asset regressions no longer require a distinct test target.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects mesh aggregate validation before scene construction.
+//   - Mesh asset test module.
 // - Description:
-//   - Exercises public mesh-asset construction with synthetic evidence.
+//   - Implements the declared test module responsibility for fbx.
 // - Usage:
-//   - Run through the fbx crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No local files, generated assets, or external processes are required.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for normalized FBX mesh-asset invariants.
-//!
-//! Synthetic aggregates protect caller-visible validation without local assets.
+//! Mesh asset test module.
 
-// This integration target inherits serialization dependencies without
-// fixtures.
 use fbx::domain::mesh::{
     MeshAsset, MeshError, PrimitiveGroup, mesh_asset_to_geometry,
 };
@@ -60,168 +43,66 @@ fn primitive_group(index: usize) -> PrimitiveGroup {
     PrimitiveGroup {
         index,
         shader: format!("shader-{index}"),
-        positions: vec![
-            [
-                0.0, 0.0, 0.0,
-            ],
-            [
-                1.0, 0.0, 0.0,
-            ],
-            [
-                0.0, 1.0, 0.0,
-            ],
-        ],
+        positions: vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
         normals: Vec::new(),
         colors: Vec::new(),
         uvs: Vec::new(),
-        triangles: vec![
-            [
-                0, 1, 2,
-            ],
-        ],
+        triangles: vec![[0, 1, 2]],
     }
 }
 
 #[test]
 fn preserves_stable_group_identity_during_translation() {
-    let result = MeshAsset::new(
-        "mesh",
-        vec![primitive_group(7)],
-    )
-    .map(
-        |mesh| {
-            mesh_asset_to_geometry(&mesh)
-                .first()
-                .map(
-                    |geometry| {
-                        (
-                            geometry
-                                .id
-                                .clone(),
-                            geometry
-                                .polygons
-                                .first()
-                                .and_then(|polygon| polygon.material_slot),
-                        )
-                    },
-                )
-        },
-    );
-
-    assert_eq!(
-        result,
-        Ok(
-            Some(
-                (
-                    "mesh-geometry-7".to_owned(),
-                    Some(7)
-                )
+    let result = MeshAsset::new("mesh", vec![primitive_group(7)]).map(|mesh| {
+        mesh_asset_to_geometry(&mesh).first().map(|geometry| {
+            (
+                geometry.id.clone(),
+                geometry
+                    .polygons
+                    .first()
+                    .and_then(|polygon| polygon.material_slot),
             )
-        )
-    );
+        })
+    });
+
+    assert_eq!(result, Ok(Some(("mesh-geometry-7".to_owned(), Some(7)))));
 }
 
 #[test]
 fn preserves_uvs_during_geometry_translation() {
     let mut group = primitive_group(0);
-    group.uvs = vec![
-        [
-            0.0, 0.0,
-        ],
-        [
-            1.0, 0.0,
-        ],
-        [
-            0.0, 1.0,
-        ],
-    ];
-    let result = MeshAsset::new(
-        "mesh",
-        vec![group],
-    )
-    .map(
-        |mesh| {
-            mesh_asset_to_geometry(&mesh)
-                .first()
-                .and_then(
-                    |geometry| {
-                        geometry
-                            .uv_layers
-                            .first()
-                    },
-                )
-                .map(
-                    |layer| {
-                        layer
-                            .values
-                            .clone()
-                    },
-                )
-        },
-    );
+    group.uvs = vec![[0., 0.], [1., 0.], [0., 1.]];
+    let result = MeshAsset::new("mesh", vec![group]).map(|mesh| {
+        mesh_asset_to_geometry(&mesh)
+            .first()
+            .and_then(|geometry| geometry.uv_layers.first())
+            .map(|layer| layer.values.clone())
+    });
 
-    assert_eq!(
-        result,
-        Ok(
-            Some(
-                vec![
-                    [
-                        0.0, 0.0
-                    ],
-                    [
-                        1.0, 0.0
-                    ],
-                    [
-                        0.0, 1.0
-                    ],
-                ]
-            )
-        )
-    );
+    assert_eq!(result, Ok(Some(vec![[0., 0.], [1., 0.], [0., 1.],])));
 }
 
 #[test]
 fn rejects_duplicate_primitive_group_indices() {
-    let result = MeshAsset::new(
-        "mesh",
-        vec![
-            primitive_group(0),
-            primitive_group(0),
-        ],
-    );
+    let result =
+        MeshAsset::new("mesh", vec![primitive_group(0), primitive_group(0)]);
 
     assert_eq!(
         result,
-        Err(
-            MeshError::DuplicatePrimitiveGroupIndex {
-                index: 0
-            }
-        )
+        Err(MeshError::DuplicatePrimitiveGroupIndex { index: 0 })
     );
 }
 
 #[test]
 fn rejects_meshes_without_primitive_groups() {
-    let result = MeshAsset::new(
-        "mesh",
-        Vec::new(),
-    );
+    let result = MeshAsset::new("mesh", Vec::new());
 
-    assert_eq!(
-        result,
-        Err(MeshError::MissingPrimitiveGroups)
-    );
+    assert_eq!(result, Err(MeshError::MissingPrimitiveGroups));
 }
 
 #[test]
 fn rejects_blank_mesh_names() {
-    let result = MeshAsset::new(
-        "   ",
-        Vec::new(),
-    );
+    let result = MeshAsset::new("   ", Vec::new());
 
-    assert_eq!(
-        result,
-        Err(MeshError::MissingMeshName)
-    );
+    assert_eq!(result, Err(MeshError::MissingMeshName));
 }

@@ -110,17 +110,20 @@ sponsorship, endorsement, approval, or official support.
 
 - Justia (2015), *Adobe Systems, Inc. v. Christenson*, 809 F.3d 1071,
   public-domain opinion duplicate. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://law.justia.com/cases/federal/appellate-courts/ca9/12-17371/12-17371-2015-12-30.html>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://law.justia.com/cases/federal/appellate-courts/ca9/12-17371/12-17371-2015-12-30.html> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - United States Courts for the Ninth Circuit, *Copyright—Affirmative
   Defense—First Sale (17 U.S.C. § 109(a))*, revised December 2023 and last
   updated 13 July 2026. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://www.ce9.uscourts.gov/jury-instructions/civil/chapter-17/17-28-copyright-affirmative-defense-first-sale-17-u-s-c-109-a/>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://www.ce9.uscourts.gov/jury-instructions/civil/chapter-17/17-28-copyright-affirmative-defense-first-sale-17-u-s-c-109-a/> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - [17 U.S.C. § 109](../statutes/17-usc-109.md).
 - [Kirtsaeng v. John Wiley & Sons, Inc.](kirtsaeng-v-john-wiley.md).
 - [Vernor v. Autodesk, Inc.](vernor-v-autodesk.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Trademark And Compatibility Naming](../doctrines/trademark-and-compatibility-naming.md).
+- [Trademark And Compatibility
+  Naming](../doctrines/trademark-and-compatibility-naming.md).

@@ -1,7 +1,3 @@
-# File:
-#   - cli.py
-# Path: src/unreal/editor-control/adapter-inbound/mcp/adapter_inbound/cli.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,77 +6,53 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Terminal composition, execution dispatch, and result presentation.
+#   - Cli inbound adapter.
 # - Must-Not:
-#   - Implement MCP wire rules or native Unreal tool behavior.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Compose application services with driven adapters.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - The module gains two independently testable contracts.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module owns the same contract without a distinct invariant.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Exposes the native Unreal MCP translator as a CLI.
+#   - Cli inbound adapter.
 # - Description:
-#   - Maps validated terminal actions to application use cases.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Installed as the shar-unreal-mcp console command.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Writes machine-readable JSON and stable exit codes.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: terminal driving adapter
-#   - reason: dispatch, output, and exit codes form one operator interface
-#   - split: extract command handlers if another presentation surface is added
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess on responsibility or line-count growth
-#
-"""Driving terminal adapter for the native Unreal MCP translator."""
+
+"""Cli inbound adapter."""
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
+import sys
 from typing import TYPE_CHECKING
 
-from mcp.adapter_outbound.catalog_renderer import (
-    render_catalog_json,
-    render_catalog_markdown,
-    render_json,
-)
-from mcp.adapter_outbound.filesystem_skill_store import (
-    FilesystemSkillStore,
-)
-from mcp.adapter_outbound.skill_markdown_renderer import (
-    MarkdownSkillRenderer,
-)
-from mcp.adapter_outbound.streamable_http import (
-    StreamableHttpTransport,
-)
+from mcp.adapter_inbound.arguments import UsageError
+from mcp.adapter_inbound.arguments import is_help_action
+from mcp.adapter_inbound.arguments import parse_catalog_format
+from mcp.adapter_inbound.arguments import parse_invocation
+from mcp.adapter_inbound.arguments import parse_raw_call
+from mcp.adapter_inbound.arguments import parse_skill_output_path
+from mcp.adapter_inbound.arguments import parse_tool_call
+from mcp.adapter_inbound.arguments import require_operand_count
+from mcp.adapter_inbound.arguments import usage_text
+from mcp.adapter_outbound.catalog_renderer import render_catalog_json
+from mcp.adapter_outbound.catalog_renderer import render_catalog_markdown
+from mcp.adapter_outbound.catalog_renderer import render_json
+from mcp.adapter_outbound.filesystem_skill_store import FilesystemSkillStore
+from mcp.adapter_outbound.skill_markdown_renderer import MarkdownSkillRenderer
+from mcp.adapter_outbound.streamable_http import StreamableHttpTransport
 from mcp.adapter_outbound.unreal_mcp_version import (
     FilesystemUnrealMcpVersionProvider,
-)
-from mcp.adapter_inbound.arguments import (
-    UsageError,
-    is_help_action,
-    parse_catalog_format,
-    parse_invocation,
-    parse_raw_call,
-    parse_skill_output_path,
-    parse_tool_call,
-    require_operand_count,
-    usage_text,
 )
 from mcp.application.service import UnrealMcpTranslator
 from mcp.application.skill_export import UnrealSkillExporter
@@ -94,7 +66,9 @@ if TYPE_CHECKING:
 _EXIT_SUCCESS = 0
 _EXIT_FAILURE = 1
 _EXIT_USAGE = 2
-_PROJECT_DESCRIPTOR = Path("src/unreal/project/composition/uproject/shar.uproject")
+_PROJECT_DESCRIPTOR = (
+    Path("src/unreal/project/composition/uproject") / "shar.uproject"
+)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -105,6 +79,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     Returns:
         Zero on success, one on runtime failure, or two on invalid usage.
+
     """
     raw_arguments = tuple(sys.argv[1:] if argv is None else argv)
     try:

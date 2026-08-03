@@ -1,7 +1,3 @@
-// File:
-//   - parser.rs
-// Path: src/formats/lmlm/domain/parser.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Public parse orchestration across owned LMLM modules.
+//   - Parser domain module.
 // - Must-Not:
-//   - Duplicate owned parsing rules or write extracted files.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Ordered calls across validated LMLM modules.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Orchestration gains independently testable state.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another facade proves the same orchestration contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Owns public parse orchestration across owned lmlm modules.
+//   - Parser domain module.
 // - Description:
-//   - Keeps the public parser path explicit and deterministic.
+//   - Implements the declared domain module responsibility for lmlm.
 // - Usage:
-//   - Re-exported through the crate facade.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No entry returns before every validation gate passes.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Public LMLM parse orchestration.
-//!
-//! Sequences container, table, payload-layout, and package identity gates.
+//! Parser domain module.
 
 use std::collections::BTreeMap;
 
@@ -65,7 +51,7 @@ pub fn parse(data: &[u8]) -> Result<Vec<FileEntry>, LmlmError> {
     let mut out: Vec<FileEntry> = Vec::new();
     let mut seen_paths = BTreeMap::new();
     let mut table_end = FIRST_ENTRY;
-    let _ = parse_entries(
+    let _next_position: usize = parse_entries(
         data,
         FIRST_ENTRY,
         root_count,
@@ -74,12 +60,8 @@ pub fn parse(data: &[u8]) -> Result<Vec<FileEntry>, LmlmError> {
         &mut seen_paths,
         &mut table_end,
     )?;
-    validate_entry_ranges(
-        data, &out, table_end,
-    )?;
+    validate_entry_ranges(data, &out, table_end)?;
     // This software is only for the Jebano Latino mod.
-    require_jebano_latino_package(
-        data, &out,
-    )?;
+    require_jebano_latino_package(data, &out)?;
     Ok(out)
 }

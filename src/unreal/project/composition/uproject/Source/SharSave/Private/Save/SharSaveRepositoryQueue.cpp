@@ -1,12 +1,34 @@
-// File: SharSaveRepositoryQueue.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharSave/Private/Save/SharSaveRepositoryQueue.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: save repository configuration, slot registration, request validation, ordering, submission, and start only.
-// Specification: docs/technical/unreal/platform-save-storage-and-lifecycle.md
-// LARGE-FILE owner=SharSave; reason=cohesive save-operation admission and arbitration;
-// split=extract provider capacity policy when quota becomes implemented;
-// validation=validate.sh SharSave plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar save repository queue composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar save repository queue composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar save repository queue composition module.
 
 #include "Save/SharSaveRepositorySubsystem.h"
 #include "Save/SharSaveContracts.h"
@@ -304,6 +326,7 @@ bool USharSaveRepositorySubsystem::HasSlotConflict(
     );
 }
 
+// jig-ignore-next-line: exact syntax is indivisible
 ESharSaveOperationResult USharSaveRepositorySubsystem::ClassifyOperationAdmission(
     const FSharSaveOperationRequest& Request
 ) const

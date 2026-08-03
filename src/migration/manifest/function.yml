@@ -1,0 +1,21 @@
+schema: shar-function/v1
+identity:
+  id: manifest
+  path: src/migration/manifest
+  domain: migration
+architecture:
+  route: src/<domain>/<function>/<kind>/<part>
+  kinds:
+    - composition
+    - domain
+capabilities:
+  - math
+  - rust
+projects:
+  - Cargo.toml
+tests:
+  root: tests/migration/manifest
+ownership:
+  accountable: Alberto Villa Osorno
+validation:
+  mode: active

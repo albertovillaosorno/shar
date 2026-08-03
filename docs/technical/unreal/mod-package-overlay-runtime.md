@@ -6,13 +6,17 @@
 ## Governing decisions
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Validated game-feature mod overlays](../../adr/unreal/runtime/validated-game-feature-mod-overlays.md)
+- [Validated game-feature mod
+  overlays](../../adr/unreal/runtime/validated-game-feature-mod-overlays.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Local drop-in mod packages and AI skills](../../adr/modding/drop-in-mod-packages-and-ai-skills.md)
+- [Local drop-in mod packages and AI
+  skills](../../adr/modding/drop-in-mod-packages-and-ai-skills.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Local mod trust and distribution boundary](../../adr/modding/mod-safety-scanner-and-distribution.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
+- [Local mod trust and distribution
+  boundary](../../adr/modding/mod-safety-scanner-and-distribution.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md) <!-- markdownlint-disable-line MD013 -->
 
 ## Purpose
 
@@ -48,11 +52,17 @@ An accepted package declares one of three native projection classes.
 
 <!-- markdownlint-disable MD013 -->
 
-| Class | Runtime material | Portability |
-| :--- | :--- | :--- |
-| `data_overlay` | Structured semantic rows, tags, localization, tuning, definitions, and references. | Portable when every required capability resolves. |
-| `cooked_asset_overlay` | Target-cooked Unreal assets and Game Feature content. | Exact Unreal build, target, architecture, cook, and container compatibility required. |
-| `native_extension` | Executable module or library. | Inactive under this contract. |
+- **Class:** `data_overlay`
+  - **Runtime material:** Structured semantic rows, tags, localization, tuning,
+    definitions, and references.
+  - **Portability:** Portable when every required capability resolves.
+- **Class:** `cooked_asset_overlay`
+  - **Runtime material:** Target-cooked Unreal assets and Game Feature content.
+  - **Portability:** Exact Unreal build, target, architecture, cook, and
+    container compatibility required.
+- **Class:** `native_extension`
+  - **Runtime material:** Executable module or library.
+  - **Portability:** Inactive under this contract.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -66,25 +76,41 @@ or executable member as portable data.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `PackageId` | Canonical validated package identity. |
-| `PackageRevision` | Exact admitted package revision. |
-| `ProjectionClass` | Data overlay, cooked asset overlay, or native extension. |
-| `ProjectionRevision` | Deterministic normalized projection revision. |
-| `TargetId` | Required for target-specific material. |
-| `ArchitectureId` | Required for target-specific material. |
-| `UnrealVersion` | Exact compatible engine version for cooked content. |
-| `ProjectCookRevision` | Exact compatible project and cook contract. |
-| `GameFeatureId` | Optional canonical Game Feature projection identity. |
-| `PrimaryAssets` | Added or overridden semantic primary-asset rows. |
-| `RegistrySources` | Data Registry sources registered by the overlay. |
-| `WorldContent` | Level, Data Layer, placement, or World Partition additions. |
-| `LocalizationRows` | Canonical locale and text-key overlays. |
-| `AudioRows` | Canonical audio-state or presentation overlays. |
-| `RequiredPlugins` | Exact native plugin capabilities already present in the game. |
-| `LoadBundles` | Required definition, gameplay, presentation, audio, and world bundles. |
-| `ChangeSetHash` | Hash of the deterministic semantic change set. |
+- **Field:** `PackageId`
+  - **Contract:** Canonical validated package identity.
+- **Field:** `PackageRevision`
+  - **Contract:** Exact admitted package revision.
+- **Field:** `ProjectionClass`
+  - **Contract:** Data overlay, cooked asset overlay, or native extension.
+- **Field:** `ProjectionRevision`
+  - **Contract:** Deterministic normalized projection revision.
+- **Field:** `TargetId`
+  - **Contract:** Required for target-specific material.
+- **Field:** `ArchitectureId`
+  - **Contract:** Required for target-specific material.
+- **Field:** `UnrealVersion`
+  - **Contract:** Exact compatible engine version for cooked content.
+- **Field:** `ProjectCookRevision`
+  - **Contract:** Exact compatible project and cook contract.
+- **Field:** `GameFeatureId`
+  - **Contract:** Optional canonical Game Feature projection identity.
+- **Field:** `PrimaryAssets`
+  - **Contract:** Added or overridden semantic primary-asset rows.
+- **Field:** `RegistrySources`
+  - **Contract:** Data Registry sources registered by the overlay.
+- **Field:** `WorldContent`
+  - **Contract:** Level, Data Layer, placement, or World Partition additions.
+- **Field:** `LocalizationRows`
+  - **Contract:** Canonical locale and text-key overlays.
+- **Field:** `AudioRows`
+  - **Contract:** Canonical audio-state or presentation overlays.
+- **Field:** `RequiredPlugins`
+  - **Contract:** Exact native plugin capabilities already present in the game.
+- **Field:** `LoadBundles`
+  - **Contract:** Required definition, gameplay, presentation, audio, and world
+    bundles.
+- **Field:** `ChangeSetHash`
+  - **Contract:** Hash of the deterministic semantic change set.
 
 <!-- markdownlint-enable MD013 -->
 

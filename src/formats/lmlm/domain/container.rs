@@ -1,7 +1,3 @@
-// File:
-//   - container.rs
-// Path: src/formats/lmlm/domain/container.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,41 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Fixed LSPA header and root-block validation.
+//   - Container domain module.
 // - Must-Not:
-//   - Write extracted files or accept unchecked archive structure.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Operations required by this single LMLM responsibility.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - One contained invariant gains independent state or a distinct API.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another LMLM module proves the same invariant without distinction.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Owns fixed lspa header and root-block validation.
+//   - Container domain module.
 // - Description:
-//   - Keeps this parser responsibility deterministic and fail closed.
+//   - Implements the declared domain module responsibility for lmlm.
 // - Usage:
-//   - Imported only by parser orchestration.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Every structural range is bounded before interpretation.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Fixed container and root-block validation.
-//!
-//! Checks magic, version, flags, reservations, and the bounded root count.
+//! Container domain module.
 
-// Sibling parser modules share these contracts without exposing them publicly.
 #![expect(
     clippy::redundant_pub_crate,
     reason = "sibling parser modules require crate-visible contracts while \
@@ -67,67 +52,30 @@ pub(crate) fn validate_header(data: &[u8]) -> Result<(), LmlmError> {
         return Err(LmlmError::Truncated);
     };
     if observed != *MAGIC {
-        return Err(
-            LmlmError::BadMagic {
-                observed,
-            },
-        );
+        return Err(LmlmError::BadMagic { observed });
     }
-    let version = read_u32(
-        data,
-        VERSION_OFFSET,
-    )
-    .ok_or(LmlmError::Truncated)?;
+    let version = read_u32(data, VERSION_OFFSET).ok_or(LmlmError::Truncated)?;
     if version != VERSION {
-        return Err(
-            LmlmError::UnsupportedVersion {
-                offset: VERSION_OFFSET,
-                value: version,
-            },
-        );
+        return Err(LmlmError::UnsupportedVersion {
+            offset: VERSION_OFFSET,
+            value: version,
+        });
     }
-    let flags = read_u32(
-        data,
-        HEADER_FLAGS_OFFSET,
-    )
-    .ok_or(LmlmError::Truncated)?;
+    let flags =
+        read_u32(data, HEADER_FLAGS_OFFSET).ok_or(LmlmError::Truncated)?;
     if flags != HEADER_FLAGS {
-        return Err(
-            LmlmError::UnsupportedHeaderFlags {
-                offset: HEADER_FLAGS_OFFSET,
-                value: flags,
-            },
-        );
+        return Err(LmlmError::UnsupportedHeaderFlags {
+            offset: HEADER_FLAGS_OFFSET,
+            value: flags,
+        });
     }
-    for (start, len) in [
-        (
-            8, 4,
-        ),
-        (
-            0x10,
-            BLOCK.saturating_sub(0x10),
-        ),
-    ] {
-        if let Some((offset, value)) = first_nonzero_byte(
-            data, start, len,
-        )? {
-            return Err(
-                LmlmError::NonZeroReservedHeader {
-                    offset,
-                    value,
-                },
-            );
+    for (start, len) in [(8, 4), (0x10, BLOCK.saturating_sub(0x10))] {
+        if let Some((offset, value)) = first_nonzero_byte(data, start, len)? {
+            return Err(LmlmError::NonZeroReservedHeader { offset, value });
         }
     }
-    if let Some((offset, value)) = first_nonzero_byte(
-        data, BLOCK, BLOCK,
-    )? {
-        return Err(
-            LmlmError::NonZeroReservedContainerBlock {
-                offset,
-                value,
-            },
-        );
+    if let Some((offset, value)) = first_nonzero_byte(data, BLOCK, BLOCK)? {
+        return Err(LmlmError::NonZeroReservedContainerBlock { offset, value });
     }
     Ok(())
 }
@@ -135,31 +83,14 @@ pub(crate) fn validate_header(data: &[u8]) -> Result<(), LmlmError> {
 /// Validates the root block and returns its sibling-entry count.
 pub(crate) fn read_root_entry_count(data: &[u8]) -> Result<usize, LmlmError> {
     for (start, len) in [
-        (
-            ROOT_BLOCK, 2,
-        ),
-        (
-            ROOT_BLOCK.saturating_add(4),
-            BLOCK.saturating_sub(4),
-        ),
+        (ROOT_BLOCK, 2),
+        (ROOT_BLOCK.saturating_add(4), BLOCK.saturating_sub(4)),
     ] {
-        if let Some((offset, value)) = first_nonzero_byte(
-            data, start, len,
-        )? {
-            return Err(
-                LmlmError::NonZeroReservedRootBlock {
-                    offset,
-                    value,
-                },
-            );
+        if let Some((offset, value)) = first_nonzero_byte(data, start, len)? {
+            return Err(LmlmError::NonZeroReservedRootBlock { offset, value });
         }
     }
-    read_u16(
-        data,
-        checked_offset(
-            ROOT_BLOCK, 2,
-        )?,
-    )
-    .map(usize::from)
-    .ok_or(LmlmError::Truncated)
+    read_u16(data, checked_offset(ROOT_BLOCK, 2)?)
+        .map(usize::from)
+        .ok_or(LmlmError::Truncated)
 }

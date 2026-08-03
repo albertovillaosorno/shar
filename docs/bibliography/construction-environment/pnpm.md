@@ -57,9 +57,9 @@ The package metadata requires Node.js `>=22.13`. The managed Node.js v26.5.0
 runtime satisfies that floor. The reviewed pnpm package reports the MIT license,
 the canonical pnpm repository, and this package integrity:
 
-```text
-sha512-iNlHJNjy5sGGdEpVhMblnsrIaex7oV6ctM1ijo3HBmggskgdjuO1HqjaMjpzeAaKpYxVajcg0yt8IKBR0Ig2Og==
-```
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: package integrity hash is indivisible -->
+- `sha512-iNlHJNjy5sGGdEpVhMblnsrIaex7oV6ctM1ijo3HBmggskgdjuO1HqjaMjpzeAaKpYxVajcg0yt8IKBR0Ig2Og==` <!-- markdownlint-disable-line MD013 -->
 
 The managed compatibility entry point has SHA-256
 `67b035e322203961795e8e34ca63a08c37a4386eda94107fb3d28f3246d882ad`.

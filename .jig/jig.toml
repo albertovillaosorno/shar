@@ -1,0 +1,764 @@
+[jig]
+schema_version = 18
+
+[documentation]
+path_style = "lower-kebab"
+required_paths = ["docs/README.md"]
+roots = ["docs/"]
+
+[documentation.profile.general]
+decision_id = "none"
+kind = "markdown"
+paths = ["docs/"]
+section_mode = "required"
+sections = []
+
+[graphify]
+authority_roots = [".jig"]
+cache_root = ".cache/jig/graph"
+excluded_roots = []
+taxonomy_path = ".jig/taxonomy.json"
+
+[header]
+# jig-ignore-next-line: closed TOML parser requires one physical value
+adapters = ["cpp:cpp:slash-line", "h:cpp:slash-line", "py:python:python", "rs:rust:slash-line"]
+confidential = false
+copyright = "Copyright (c) 2026 Alberto Villa Osorno."
+exempt_paths = []
+extensions = ["cpp", "h", "py", "rs"]
+max_lines = 96
+# jig-ignore-next-line: closed TOML parser requires one physical value
+required_boundary_fields = ["Owns", "Must-Not", "Allows", "Split-When", "Merge-When", "Summary", "Description", "Usage", "Defaults"]
+require_module_summary = true
+
+[license]
+files = ["LICENSE-MIT"]
+spdx_expression = "MIT"
+
+[language]
+analyzed = ["rust"]
+present = ["cpp", "python", "rust"]
+
+[linters.applicability.clang-format]
+enabled = false
+# jig-ignore-next-line: exact value is indivisible
+reason = "Unreal C++ needs path-scoped engine-aware formatting unavailable in Jig schema 18."
+
+[linters.applicability.clang-tidy]
+enabled = false
+# jig-ignore-next-line: exact value is indivisible
+reason = "Unreal C++ analysis needs an Unreal Build Tool compile database not yet admitted locally."
+
+[linters.applicability.clippy-config]
+enabled = true
+reason = ".jig/lang/rust/clippy.toml matches the reviewed Jig authority."
+
+[linters.applicability.clippy-lints]
+enabled = true
+# jig-ignore-next-line: exact value is indivisible
+reason = "Every Rust package inherits the exact reviewed workspace Clippy matrix."
+
+[linters.applicability.coverage-py]
+enabled = false
+reason = "Coverage is not yet an admitted release gate for the incomplete port."
+
+[linters.applicability.csharp-global]
+enabled = false
+# jig-ignore-next-line: exact value is indivisible
+reason = "Unreal Build.cs files are build descriptors, not a standalone C# project."
+
+[linters.applicability.csharp-visualstudio]
+enabled = false
+# jig-ignore-next-line: exact value is indivisible
+reason = "Unreal Build Tool, not Visual Studio C# policy, governs Build.cs files."
+
+[linters.applicability.directory-build]
+enabled = false
+reason = "The repository has no standalone MSBuild project authority."
+
+[linters.applicability.editorconfig]
+enabled = true
+reason = ".editorconfig governs repository-authored text surfaces."
+
+[linters.applicability.msvc-cpp]
+enabled = false
+# jig-ignore-next-line: exact value is indivisible
+reason = "Unreal Build Tool owns compiler flags; a separate MSVC projection is not authoritative."
+
+[linters.applicability.pyright]
+enabled = false
+# jig-ignore-next-line: exact value is indivisible
+reason = "A pinned repository-local BasedPyright environment has not yet been admitted."
+
+[linters.applicability.pytest]
+enabled = false
+reason = "Pytest executes through the explicit validation.pytest native gate."
+
+[linters.applicability.ruff]
+enabled = false
+reason = "Ruff executes through the explicit validation.ruff native gate."
+
+[linters.applicability.rust-toolchain]
+enabled = true
+reason = "The repository pins Rust 1.97.1 for the workspace."
+
+[linters.applicability.rustc-lints]
+enabled = true
+# jig-ignore-next-line: exact value is indivisible
+reason = "Every Rust package inherits the exact reviewed workspace compiler matrix."
+
+[linters.applicability.rustfmt]
+enabled = true
+reason = "Pinned nightly rustfmt and the native gate govern every Rust target."
+
+[linters.applicability.typescript]
+enabled = false
+reason = "The repository contains no TypeScript product source."
+
+[linters.applicability.unreal]
+enabled = false
+# jig-ignore-next-line: exact value is indivisible
+reason = "Repository tests validate Unreal policy; no portable editor invocation is admitted yet."
+
+
+[linters.override.rustfmt_unformatted_paths]
+linter = "rustfmt"
+key = "error_on_unformatted"
+value = "false"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Canonical test path attributes are indivisible strings; all executable Rust remains formatted and line-limited."
+
+[linters.override.rustfmt_suffixed_floats]
+linter = "rustfmt"
+key = "float_literal_trailing_zero"
+value = "Never"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Nightly rustfmt otherwise emits underscore-grouped suffixed floats rejected by the reviewed Clippy matrix."
+
+[linters.override.clippy_absolute_paths]
+linter = "clippy-lints"
+key = "absolute_paths"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Qualified standard-library and crate paths make boundary ownership explicit in SHAR conversion code."
+
+[linters.override.clippy_arbitrary_source_item_ordering]
+linter = "clippy-lints"
+key = "arbitrary_source_item_ordering"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "SHAR preserves semantic field, enum, and module order because it documents binary and pipeline contracts."
+
+[linters.override.clippy_impl_trait_in_params]
+linter = "clippy-lints"
+key = "impl_trait_in_params"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "SHAR uses impl Trait intentionally for compact process-neutral public boundaries without naming one-use generics."
+
+[linters.override.clippy_missing_trait_methods]
+linter = "clippy-lints"
+key = "missing_trait_methods"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Implementing deprecated or optional default trait methods would add dead compatibility surface without behavior."
+
+[linters.override.clippy_renamed_function_params]
+linter = "clippy-lints"
+key = "renamed_function_params"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Descriptive trait-implementation parameter names are retained when they clarify filesystem and serialization behavior."
+
+[linters.override.clippy_self_named_module_files]
+linter = "clippy-lints"
+key = "self_named_module_files"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "SHAR keeps established flat module files alongside Jig kind directories; moving them would create unrelated API churn."
+
+[linters.override.clippy_inline_trait_bounds]
+linter = "clippy-lints"
+key = "inline_trait_bounds"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Inline bounds are retained for concise one-bound generic helpers and do not weaken type constraints."
+
+[linters.override.clippy_integer_division_remainder_used]
+linter = "clippy-lints"
+key = "integer_division_remainder_used"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "SHAR parsers and binary codecs use reviewed integer division and remainder as format-defined operations."
+
+[linters.override.clippy_min_ident_chars]
+linter = "clippy-lints"
+key = "min_ident_chars"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Short identifiers are retained in standard transforms, codecs, matrices, and coordinate formulas where notation is canonical."
+
+[linters.override.clippy_multiple_inherent_impl]
+linter = "clippy-lints"
+key = "multiple_inherent_impl"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Large domain types split inherent implementations by responsibility to keep each section reviewable."
+
+[linters.override.clippy_non_ascii_literal]
+linter = "clippy-lints"
+key = "non_ascii_literal"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "SHAR must preserve exact localized text, Unicode path aliases, and externally defined asset identities."
+
+[linters.override.clippy_semicolon_if_nothing_returned]
+linter = "clippy-lints"
+key = "semicolon_if_nothing_returned"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Rustfmt owns statement punctuation; expression-style unit arms remain readable and behaviorally identical."
+
+[linters.override.clippy_separated_literal_suffix]
+linter = "clippy-lints"
+key = "separated_literal_suffix"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "The repository uses underscore-separated numeric suffixes consistently with existing binary-format notation."
+
+[linters.override.clippy_single_char_lifetime_names]
+linter = "clippy-lints"
+key = "single_char_lifetime_names"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Single borrowed-input lifetimes remain conventional in local parser and renderer types."
+
+[linters.override.clippy_unused_trait_names]
+linter = "clippy-lints"
+key = "unused_trait_names"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Explicit trait imports document extension-method authority even when method resolution uses them anonymously."
+
+[linters.override.clippy_missing_asserts_for_indexing]
+linter = "clippy-lints"
+key = "missing_asserts_for_indexing"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "The stronger indexing_slicing policy remains enabled; this optimization lint duplicates length proofs from windows, exact slices, and guarded readers."
+
+[linters.override.clippy_wildcard_enum_match_arm]
+linter = "clippy-lints"
+key = "wildcard_enum_match_arm"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Fail-closed path handling and default None error sources intentionally cover future external and internal variants without granting behavior."
+
+[linters.override.clippy_assigning_clones]
+linter = "clippy-lints"
+key = "assigning_clones"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Clone assignment suggestions do not change correctness and can obscure deliberate replacement semantics."
+
+[linters.override.clippy_cognitive_complexity]
+linter = "clippy-lints"
+key = "cognitive_complexity"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Integration tests and deterministic format validators remain readable as one transaction despite heuristic complexity scores."
+
+[linters.override.clippy_default_numeric_fallback]
+linter = "clippy-lints"
+key = "default_numeric_fallback"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Numeric context fixes the intended type throughout SHAR binary-format and fixture expressions."
+
+[linters.override.clippy_doc_paragraphs_missing_punctuation]
+linter = "clippy-lints"
+key = "doc_paragraphs_missing_punctuation"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Wrapped Rust documentation remains readable without forcing punctuation onto continuation-line fragments."
+
+[linters.override.clippy_float_cmp]
+linter = "clippy-lints"
+key = "float_cmp"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Binary-format and transform tests intentionally compare exact representable constants and serialized values."
+
+[linters.override.clippy_let_underscore_untyped]
+linter = "clippy-lints"
+key = "let_underscore_untyped"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Discarded iterator and collection results are deliberate where only side effects or validation matter."
+
+[linters.override.clippy_match_same_arms]
+linter = "clippy-lints"
+key = "match_same_arms"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Explicit state combinations document policy even when two reviewed outcomes currently coincide."
+
+[linters.override.clippy_panic_in_result_fn]
+linter = "clippy-lints"
+key = "panic_in_result_fn"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Test assertions may coexist with Result-based fixture setup; production panic remains separately denied."
+
+[linters.override.clippy_partial_pub_fields]
+linter = "clippy-lints"
+key = "partial_pub_fields"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Aggregate visibility follows field ownership rather than forcing every field to share one public surface."
+
+[linters.override.clippy_shadow_reuse]
+linter = "clippy-lints"
+key = "shadow_reuse"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Narrow pattern bindings intentionally refine optional values without extending their lifetime."
+
+[linters.override.clippy_shadow_unrelated]
+linter = "clippy-lints"
+key = "shadow_unrelated"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Independent test evidence may reuse descriptive discard names without semantic ambiguity."
+
+[linters.override.clippy_struct_excessive_bools]
+linter = "clippy-lints"
+key = "struct_excessive_bools"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Manifest evidence mirrors independent external boolean facts rather than an artificial state machine."
+
+[linters.override.clippy_struct_field_names]
+linter = "clippy-lints"
+key = "struct_field_names"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Hash field suffixes preserve the public manifest vocabulary and artifact identity."
+
+[linters.override.clippy_suboptimal_flops]
+linter = "clippy-lints"
+key = "suboptimal_flops"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Reviewed matrix formulas preserve their documented evaluation order instead of target-dependent fused operations."
+
+[linters.override.clippy_too_many_lines]
+linter = "clippy-lints"
+key = "too_many_lines"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Deterministic serializers and integration tests keep one ordered transaction visible for auditability."
+
+[linters.override.clippy_unnecessary_trailing_comma]
+linter = "clippy-lints"
+key = "unnecessary_trailing_comma"
+value = "allow"
+# jig-ignore-next-line: exact value is indivisible
+reason = "Rustfmt owns punctuation; historical macro call commas do not affect behavior or readability."
+
+[rules]
+all_registered = true
+allow_disable = false
+unknown_rule = "deny"
+
+[cspell]
+config_path = ".jig/cspell/cspell.json"
+dictionary_root = ".jig/cspell"
+files = ["**/*.{cpp,cs,h,ini,json,jsonc,md,mdc,py,rs,toml,txt,yml,yaml}"]
+# jig-ignore-next-line: closed TOML parser requires one physical value
+ignore_paths = [".cache/**", ".dependencies/**", ".git/**", ".logs/**", ".temp/**", "Cargo.lock", "game/**", "src/unreal/project/composition/uproject/Content/**", "target/**", "tests/fixtures/**"]
+language = "en-US,en-GB"
+min_word_length = 3
+# jig-ignore-next-line: canonical schema URL is indivisible
+schema = "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json"
+version = "0.2"
+
+[cspell.dictionary.english]
+name = "custom-english"
+path = ".jig/cspell/english.txt"
+
+[cspell.dictionary.named-entities]
+name = "custom-named-entities"
+path = ".jig/cspell/named-entities.txt"
+
+[cspell.dictionary.technical]
+name = "custom-technical"
+path = ".jig/cspell/technical.txt"
+
+[tool.cspell]
+path = ".dependencies/jig/source/.dependencies/bin/cspell.cmd"
+version = "10.0.1"
+
+[tool.git]
+path = ".dependencies/jig/source/.dependencies/git/2.54.0.windows.1/bin/git.exe"
+version = "2.54.0.windows.1"
+
+[tool.markdownlint]
+path = ".dependencies/jig/source/.dependencies/bin/markdownlint-cli2.cmd"
+version = "0.23.0"
+
+[tool.pytest]
+path = ".dependencies/python/3.14.6/Scripts/pytest-jig.cmd"
+version = "9.1.1"
+
+[tool.ruff]
+path = ".dependencies/python/3.14.6/Scripts/ruff-jig.cmd"
+version = "0.15.21"
+
+[tool.rust_nightly_cargo]
+# jig-ignore-next-line: source-linked pinned tool path is indivisible
+path = ".dependencies/jig/source/.dependencies/rust/nightly-2026-07-14-x86_64-pc-windows-gnu/bin/cargo.exe"
+version = "1.99.0-nightly"
+
+[tool.rust_nightly_cargo_clippy]
+# jig-ignore-next-line: source-linked pinned tool path is indivisible
+path = ".dependencies/jig/source/.dependencies/rust/nightly-2026-07-14-x86_64-pc-windows-gnu/bin/cargo-clippy.exe"
+version = "0.1.99"
+
+[tool.rust_nightly_cargo_fmt]
+# jig-ignore-next-line: source-linked pinned tool path is indivisible
+path = ".dependencies/jig/source/.dependencies/rust/nightly-2026-07-14-x86_64-pc-windows-gnu/bin/cargo-fmt.exe"
+version = "1.9.0-nightly"
+
+[tool.rust_stable_cargo]
+# jig-ignore-next-line: source-linked pinned tool path is indivisible
+path = ".dependencies/jig/source/.dependencies/rust/stable-1.97.1-x86_64-pc-windows-gnu/bin/cargo.exe"
+version = "1.97.1"
+
+[version.cspell]
+current = "10.0.1"
+stable = "10.0.1"
+
+[version.cspell.projection.tool]
+kind = "tool"
+target = "cspell"
+template = "{version}"
+
+[version.git]
+current = "2.54.0.windows.1"
+stable = "2.54.0.windows.1"
+
+[version.git.projection.tool]
+kind = "tool"
+target = "git"
+template = "{version}"
+
+[version.markdownlint]
+current = "0.23.0"
+stable = "0.23.0"
+
+[version.markdownlint.projection.tool]
+kind = "tool"
+target = "markdownlint"
+template = "{version}"
+
+[version.pytest]
+current = "9.1.1"
+stable = "9.1.1"
+
+[version.pytest.projection.tool]
+kind = "tool"
+target = "pytest"
+template = "{version}"
+
+[version.ruff]
+current = "0.15.21"
+stable = "0.15.21"
+
+[version.ruff.projection.tool]
+kind = "tool"
+target = "ruff"
+template = "{version}"
+
+[version.rust-nightly]
+current = "1.99.0-nightly"
+stable = "1.99.0-nightly"
+
+[version.rust-nightly.projection.cargo_tool]
+kind = "tool"
+target = "rust_nightly_cargo"
+template = "{version}"
+
+[version.clippy-nightly]
+current = "0.1.99"
+stable = "0.1.99"
+
+[version.clippy-nightly.projection.cargo_clippy]
+kind = "tool"
+target = "rust_nightly_cargo_clippy"
+template = "{version}"
+
+[version.rust-stable]
+current = "1.97.1"
+stable = "1.97.1"
+
+[version.rust-stable.projection.cargo_rust_version]
+kind = "toml"
+path = "Cargo.toml"
+selector = "workspace.package.rust-version"
+template = "{version}"
+
+[version.rust-stable.projection.cargo_tool]
+kind = "tool"
+target = "rust_stable_cargo"
+template = "{version}"
+
+[version.rust-stable.projection.rust_toolchain]
+kind = "toml"
+path = ".jig/version/rust-toolchain.toml"
+selector = "toolchain.channel"
+template = "stable-{version}-x86_64-pc-windows-gnu"
+
+[version.rustfmt-nightly]
+current = "1.9.0-nightly"
+stable = "1.9.0-nightly"
+
+[version.rustfmt-nightly.projection.cargo_fmt]
+kind = "tool"
+target = "rust_nightly_cargo_fmt"
+template = "{version}"
+
+[validation.cspell]
+capability = "cspell"
+tool = "cspell"
+config_files = [".jig/cspell/cspell.json"]
+# jig-ignore-next-line: exact native argument vector
+args = ["lint", "--config", ".jig/cspell/cspell.json", "--no-progress", "--no-summary"]
+
+[validation.markdown]
+capability = "markdown"
+tool = "markdownlint"
+config_files = [".jig/file/markdown/.markdownlint-cli2.jsonc"]
+args = ["--config", ".jig/file/markdown/.markdownlint-cli2.jsonc"]
+
+[validation.pytest]
+capability = "pytest"
+tool = "pytest"
+config_files = [".jig/lang/python/pytest.ini"]
+# jig-ignore-next-line: exact bounded Python suite roots
+args = ["-q", "-c", ".jig/lang/python/pytest.ini", "tests/unreal/editor-control", "tests/unreal/project"]
+timeout_seconds = 3600
+
+[validation.ruff]
+capability = "ruff"
+tool = "ruff"
+config_files = [".jig/lang/python/ruff.toml"]
+args = ["check", "--config", ".jig/lang/python/ruff.toml", "."]
+
+[validation.rust_nightly_clippy]
+capability = "rust-clippy"
+tool = "rust_nightly_cargo_clippy"
+config_files = [".jig/lang/rust/clippy.toml", "Cargo.toml"]
+# jig-ignore-next-line: exact native argument vector
+args = ["--workspace", "--all-targets", "--all-features", "--", "-D", "warnings"]
+timeout_seconds = 3600
+
+[validation.rust_nightly_format]
+capability = "rustfmt"
+tool = "rust_nightly_cargo_fmt"
+config_files = [".jig/lang/rust/.rustfmt.toml"]
+# jig-ignore-next-line: exact native argument vector
+args = ["--all", "--", "--check", "--config-path", ".jig/lang/rust/.rustfmt.toml"]
+timeout_seconds = 3600
+
+[validation.rust_stable_check]
+capability = "rust-check"
+tool = "rust_stable_cargo"
+config_files = [".cargo/config.toml", "Cargo.toml"]
+args = ["check", "--workspace", "--all-features"]
+timeout_seconds = 3600
+
+[validation.rust_nightly_test]
+capability = "rust-test"
+tool = "rust_nightly_cargo"
+config_files = [".cargo/config.toml", "Cargo.toml"]
+args = ["test", "--workspace", "--all-targets", "--all-features"]
+timeout_seconds = 3600
+
+[portability]
+# jig-ignore-next-line: closed TOML parser requires one physical value
+forbidden_roots = [".jig-cache", ".turbo", "cache", "dependencies", "logs", "target", "temp", "tmp"]
+required_roots = [".cache", ".dependencies", ".logs", ".temp"]
+runtime_roots = [".cache", ".dependencies", ".logs", ".temp"]
+
+[portability.rust]
+cargo_config = ".cargo/config.toml"
+target_dir = ".cache/rust/target"
+
+[layout]
+adjacent_component_repetition = "deny"
+
+[repository]
+fixture_roots = ["tests/fixtures"]
+
+[rigor]
+conflict = "fail"
+mode = "additive"
+
+[taxonomy]
+required = true
+unknown_paths = "deny"
+overlapping_roles = "deny"
+one_role_per_path = true
+spaces_in_paths = "deny"
+
+[taxonomy.role.cargo_configuration]
+paths = [".cargo/"]
+
+[taxonomy.role.documentation]
+paths = ["docs/"]
+
+[taxonomy.role.game_manifest]
+paths = ["game/manifest.jsonl"]
+
+[taxonomy.role.github]
+paths = [".github/"]
+
+[taxonomy.role.jig_configuration]
+paths = [".jig/"]
+
+[taxonomy.role.root_governance]
+# jig-ignore-next-line: exact root governance inventory
+paths = [".editorconfig", ".env.example", ".gitattributes", ".gitignore", "AGENTS.md", "Cargo.lock", "Cargo.toml", "LICENSE-MIT", "README.md", "ROADMAP.md", "TODO.md"]
+
+[taxonomy.role.skills]
+paths = ["skills/"]
+
+[taxonomy.role.source]
+paths = ["src/"]
+
+[taxonomy.role.tests]
+paths = ["tests/"]
+
+[taxonomy.role.tools]
+paths = ["tools/"]
+
+[architecture.component.fbx]
+depends_on = ["schoenwald_filesystem", "shar_sha256"]
+
+[architecture.component.game_manifest]
+depends_on = ["schoenwald_cli", "schoenwald_filesystem"]
+
+[architecture.component.lmlm]
+depends_on = ["schoenwald_cli", "schoenwald_filesystem"]
+
+[architecture.component.p3d]
+depends_on = ["schoenwald_cli", "schoenwald_filesystem", "shar_json_text"]
+
+[architecture.component.pipeline]
+# jig-ignore-next-line: exact Cargo workspace dependency declaration
+depends_on = ["fbx", "game_manifest", "lmlm", "p3d", "rcf", "rmv", "rsd", "rtf", "schoenwald_cli", "schoenwald_filesystem", "shar_json_text", "shar_sha256"]
+
+[architecture.component.rcf]
+depends_on = ["schoenwald_cli", "schoenwald_filesystem"]
+
+[architecture.component.rmv]
+depends_on = ["schoenwald_cli", "schoenwald_filesystem", "shar_sha256"]
+
+[architecture.component.rsd]
+depends_on = ["schoenwald_cli", "schoenwald_filesystem"]
+
+[architecture.component.rtf]
+depends_on = ["schoenwald_cli", "schoenwald_filesystem"]
+
+[architecture.component.schoenwald_cli]
+depends_on = []
+
+[architecture.component.schoenwald_filesystem]
+depends_on = []
+
+[architecture.component.shar_json_text]
+depends_on = []
+
+[architecture.component.shar_sha256]
+depends_on = []
+
+[architecture.component.shar_unreal_conversion]
+depends_on = []
+
+[analysis]
+cache = "bounded"
+full_workspace = true
+incremental = true
+
+[code_ownership]
+default = "authored-production"
+exact_languages = []
+
+[code_ownership.override.generated_lock]
+authority = "cargo"
+kind = "generated"
+selectors = ["exact:Cargo.lock"]
+
+[code_ownership.override.generated_game_manifest]
+authority = "generate-manifest"
+kind = "generated"
+selectors = ["exact:game/manifest.jsonl"]
+
+[code_ownership.override.generated_jig_catalogs]
+authority = "jig"
+kind = "generated"
+selectors = ["exact:.jig/cspell/cspell.json", "exact:.jig/taxonomy.json"]
+
+[code_ownership.override.generated_jig_sidecars]
+authority = "jig"
+kind = "generated"
+# jig-ignore-next-line: complete generated sidecar basename inventory
+selectors = ["basename:Cargo.toml.yml", "basename:README.md.yml", "basename:lib.rs.yml"]
+
+[code_ownership.override.generated_unreal_mcp_skills]
+authority = "unreal-mcp-skill-export"
+kind = "generated"
+# jig-ignore-next-line: generated index plus generated capability subtree
+selectors = ["exact:skills/unreal/index.md", "prefix:skills/unreal/capabilities/"]
+
+[code_ownership.override.generated_unreal_test_fixtures]
+authority = "repository-fixture-builders"
+kind = "generated"
+selectors = ["prefix:tests/fixtures/"]
+
+[code_ownership.override.generated_p3d_fixtures]
+authority = "p3d-fixture-builder"
+kind = "generated"
+selectors = ["prefix:tests/formats/p3d/fixtures/"]
+
+[code_ownership.override.tests]
+kind = "test"
+# jig-ignore-next-line: executable test roots exclude generated fixture trees
+selectors = ["prefix:tests/formats/fbx/", "prefix:tests/formats/lmlm/", "prefix:tests/formats/p3d/unit/", "exact:tests/formats/p3d/chunk.rs", "exact:tests/formats/p3d/extract.rs", "exact:tests/formats/p3d/package.rs", "exact:tests/formats/p3d/reader.rs", "prefix:tests/formats/rcf/", "prefix:tests/formats/rmv/", "prefix:tests/formats/rsd/", "prefix:tests/formats/rtf/", "prefix:tests/foundation/", "prefix:tests/migration/", "prefix:tests/unreal/"]
+
+[commit]
+allowed_scopes = ["docs", "game-manifest", "jig", "layout", "repo"]
+allowed_trailers = ["BREAKING CHANGE"]
+# jig-ignore-next-line: complete Conventional Commit type vocabulary
+allowed_types = ["build", "chore", "ci", "docs", "feat", "fix", "perf", "refactor", "release", "revert", "style", "test"]
+allow_merge_commits = false
+allow_revert_type = true
+body_line_max_length = 80
+body_min_length = 1
+history_baseline = "ad1be1227c09d9d9e8d4257264cc31872996209a"
+required_trailers = []
+require_scope = true
+subject_max_length = 72
+
+[contribution]
+exact_form = true
+private_authoritative_review = true
+
+[git]
+required_hooks = ["commit-msg"]
+required_ignored_paths = []
+
+[git_attributes]
+# jig-ignore-next-line: exact binary publication extension inventory
+binary_extensions = ["7z", "a", "bmp", "dll", "dylib", "exe", "fbx", "gif", "gz", "ico", "jpeg", "jpg", "lib", "pdf", "png", "so", "uasset", "umap", "webp", "zip"]

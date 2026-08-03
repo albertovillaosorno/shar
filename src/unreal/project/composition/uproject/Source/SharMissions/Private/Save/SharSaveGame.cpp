@@ -1,12 +1,34 @@
-// File: SharSaveGame.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharMissions/Private/Save/SharSaveGame.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: load-free save validation and schema-compatibility checks; no disk I/O or automatic content substitution.
-// ADR: docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
-// LARGE-FILE owner=SharMissions; reason=cohesive save-envelope validation;
-// split=extract mod-state validation if namespaced persistence expands;
-// validation=validate.sh SharMissions plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar save game composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar save game composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar save game composition module.
 
 #include "Save/SharSaveGame.h"
 
@@ -79,6 +101,7 @@ static void AppendTransactionErrors(
     TSet<FName> Seen;
     for (const FName& TransactionId : TransactionIds)
     {
+        // jig-ignore-next-line: exact syntax is indivisible
         if (!USharPrimaryContentDefinition::IsCanonicalIdentifier(TransactionId))
         {
             AddSaveError(

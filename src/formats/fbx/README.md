@@ -42,20 +42,20 @@ src/formats/fbx/domain/<concept>/<concept>.rs
 src/formats/fbx/domain/<concept>/*.rs
   Real domain value objects, invariants, and pure translators.
 
-src/formats/fbx/application/
+src/formats/fbx/composition/application/
   Use cases, package-family profiles, planning, and reporting. Application code
   orchestrates domain translators through ports; it does not own translation
   modules and does not depend on adapters.
 
-src/formats/fbx/ports/
+src/formats/fbx/composition/ports/
   Inbound and outbound contracts: package index reader, component source,
   artifact target/sink, scene writer, validator.
 
-src/formats/fbx/adapter-inbound/
+src/formats/fbx/composition/adapter-inbound/
   Inbound adapters such as CLI parsing. They translate user input into
   application requests.
 
-src/formats/fbx/adapter-outbound/
+src/formats/fbx/composition/adapter-outbound/
   Outbound adapters such as generated package-index readers, decoded component
   sources, the canonical binary FBX 7.7 writer, and optional experimental
   Blender or Maya inspection-script generators. Those scripts are not

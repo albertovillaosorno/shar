@@ -1,12 +1,34 @@
-// File: SharLoadQueue.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharLoading/Private/Loading/SharLoadQueue.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: request validation, deterministic queue ordering, duplicate policy, and logical shared-dependency ownership only.
-// Specification: docs/technical/unreal/native-asset-load-request-and-streaming-runtime.md
-// LARGE-FILE owner=SharLoading; reason=cohesive load-request arbitration and shared-work accounting;
-// split=extract scope budgets if capacity becomes platform-dependent;
-// validation=validate.sh SharLoading plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar load queue composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar load queue composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar load queue composition module.
 
 #include "Loading/SharLoadCoordinatorSubsystem.h"
 

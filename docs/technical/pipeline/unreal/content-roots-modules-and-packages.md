@@ -79,31 +79,41 @@ folders.
 
 ## Canonical package examples
 
-<!-- markdownlint-disable MD013 -->
-```text
-/Game/SHAR/Data/PlatformProfiles/DA_PlatformProfile_windows_x8664
-/Game/SHAR/Data/Characters/homer/DA_Character_homer
-/Game/SHAR/Data/Characters/homer/DA_CharacterPresentation_homer_default
-/Game/SHAR/Art/Characters/homer/Meshes/SK_Character_homer_default
-/Game/SHAR/Art/Characters/homer/Materials/MI_Character_homer_body
-/Game/SHAR/Art/Characters/homer/Textures/T_Character_homer_body_BC
-/Game/SHAR/Data/Characters/AnimationLibraries/DA_CharacterAnimationLibrary_humanoid_common_v1
-/Game/SHAR/Art/Characters/Animations/humanoid_common_v1/Locomotion/A_humanoid_common_v1_locomotion_walk_forward
-/Game/SHAR/Data/Vehicles/family_sedan/DA_Vehicle_family_sedan
-/Game/SHAR/Art/Vehicles/family_sedan/Meshes/SK_Vehicle_family_sedan
-/Game/SHAR/Data/Missions/chapter_01/mission_01/DA_Mission_chapter_01_mission_01
-/Game/SHAR/Data/Actions/enter_vehicle_position/DA_Action_enter_vehicle_position
-/Game/SHAR/Data/ActionSequences/enter_vehicle/DA_ActionSequence_enter_vehicle
-/Game/SHAR/Data/Interactions/enter_family_sedan/DA_Interaction_enter_family_sedan
-/Game/SHAR/Data/ApplicationModes/front_end/DA_ApplicationMode_front_end
-/Game/SHAR/Data/SaveSchemas/portable_v1/DA_SaveSchema_portable_v1
-/Game/SHAR/Data/Progression/base/DA_ProgressionCatalog_base
-/Game/SHAR/Data/Meta/base/DA_MetaCatalog_base
-/Game/SHAR/Data/Frontend/base/DA_FrontendCatalog_base
-/Game/SHAR/Data/Presentations/kwik_e_mart_intro/DA_Presentation_kwik_e_mart_intro
-/Game/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld
-```
-<!-- markdownlint-enable MD013 -->
+- `/Game/SHAR/Data/PlatformProfiles/DA_PlatformProfile_windows_x8664`
+- `/Game/SHAR/Data/Characters/homer/DA_Character_homer`
+- `/Game/SHAR/Data/Characters/homer/DA_CharacterPresentation_homer_default`
+- `/Game/SHAR/Art/Characters/homer/Meshes/SK_Character_homer_default`
+- `/Game/SHAR/Art/Characters/homer/Materials/MI_Character_homer_body`
+- `/Game/SHAR/Art/Characters/homer/Textures/T_Character_homer_body_BC`
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Unreal asset path is indivisible -->
+- `/Game/SHAR/Data/Characters/AnimationLibraries/DA_CharacterAnimationLibrary_humanoid_common_v1` <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Unreal asset path is indivisible -->
+- `/Game/SHAR/Art/Characters/Animations/humanoid_common_v1/Locomotion/A_humanoid_common_v1_locomotion_walk_forward` <!-- markdownlint-disable-line MD013 -->
+- `/Game/SHAR/Data/Vehicles/family_sedan/DA_Vehicle_family_sedan`
+- `/Game/SHAR/Art/Vehicles/family_sedan/Meshes/SK_Vehicle_family_sedan`
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Unreal asset path is indivisible -->
+- `/Game/SHAR/Data/Missions/chapter_01/mission_01/DA_Mission_chapter_01_mission_01` <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Unreal asset path is indivisible -->
+- `/Game/SHAR/Data/Actions/enter_vehicle_position/DA_Action_enter_vehicle_position` <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Unreal asset path is indivisible -->
+- `/Game/SHAR/Data/ActionSequences/enter_vehicle/DA_ActionSequence_enter_vehicle` <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Unreal asset path is indivisible -->
+- `/Game/SHAR/Data/Interactions/enter_family_sedan/DA_Interaction_enter_family_sedan` <!-- markdownlint-disable-line MD013 -->
+- `/Game/SHAR/Data/ApplicationModes/front_end/DA_ApplicationMode_front_end`
+- `/Game/SHAR/Data/SaveSchemas/portable_v1/DA_SaveSchema_portable_v1`
+- `/Game/SHAR/Data/Progression/base/DA_ProgressionCatalog_base`
+- `/Game/SHAR/Data/Meta/base/DA_MetaCatalog_base`
+- `/Game/SHAR/Data/Frontend/base/DA_FrontendCatalog_base`
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Unreal asset path is indivisible -->
+- `/Game/SHAR/Data/Presentations/kwik_e_mart_intro/DA_Presentation_kwik_e_mart_intro` <!-- markdownlint-disable-line MD013 -->
+- `/Game/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld`
 
 Folder names use canonical identifiers. Object prefixes and role suffixes are
 fixed by the naming contract. A definition and its secondary assets may share a
@@ -126,16 +136,24 @@ lifecycle and mod replacement granularity.
 
 Every Primary Asset uses only these bundle names:
 
-<!-- markdownlint-disable MD013 -->
-| Bundle | Content | Typical load scope |
-| :--- | :--- | :--- |
-| `Definition` | Identity, metadata, dependencies, generated rows | Catalog and save migration |
-| `Gameplay` | Collision, abilities, AI, mission, interaction, physics | Active simulation |
-| `Presentation` | Meshes, materials, animation, UI, icons | Visible or previewed content |
-| `Audio` | Dialogue, music, SFX, MetaSounds | Audible scope |
-| `Cinematic` | Sequences, cameras, media | Active cinematic |
-| `EditorReview` | Review images and conformance evidence | Editor only |
-<!-- markdownlint-enable MD013 -->
+- **Bundle:** `Definition`
+  - **Content:** Identity, metadata, dependencies, generated rows
+  - **Typical load scope:** Catalog and save migration
+- **Bundle:** `Gameplay`
+  - **Content:** Collision, abilities, AI, mission, interaction, physics
+  - **Typical load scope:** Active simulation
+- **Bundle:** `Presentation`
+  - **Content:** Meshes, materials, animation, UI, icons
+  - **Typical load scope:** Visible or previewed content
+- **Bundle:** `Audio`
+  - **Content:** Dialogue, music, SFX, MetaSounds
+  - **Typical load scope:** Audible scope
+- **Bundle:** `Cinematic`
+  - **Content:** Sequences, cameras, media
+  - **Typical load scope:** Active cinematic
+- **Bundle:** `EditorReview`
+  - **Content:** Review images and conformance evidence
+  - **Typical load scope:** Editor only
 
 A new bundle requires an architecture decision. Importers may not invent bundle
 names per asset.

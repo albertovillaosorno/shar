@@ -102,8 +102,9 @@ distributed .NET components.
   latest
   release and SDK, and publishes the Windows x64 SDK archive URL and SHA-512.
   Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://builds.dotnet.microsoft.com/dotnet/release-metadata/11.0/releases.json>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://builds.dotnet.microsoft.com/dotnet/release-metadata/11.0/releases.json> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 14 July 2026).
 - .NET Foundation and contributors (n.d.) *.NET SDK official GitHub repository*.
   Available at: <https://github.com/dotnet/sdk> (Accessed: 14 July 2026).

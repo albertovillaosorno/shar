@@ -129,9 +129,11 @@ when their rights, owners, licenses, or distribution terms differ.
 
 <!-- markdownlint-disable MD013 -->
 
-| Component   | Version or date | Material type    | Included basis | Evidence  |
-| :---------- | :-------------- | :--------------- | :------------- | :-------- |
-| {Component} | {Value}         | {Code/docs/etc.} | {Why covered}  | {SRC-###} |
+- **Component:** {Component}
+  - **Version or date:** {Value}
+  - **Material type:** {Code/docs/etc.}
+  - **Included basis:** {Why covered}
+  - **Evidence:** {SRC-###}
 
 <!-- markdownlint-enable MD013 -->
 
@@ -141,9 +143,9 @@ Record exclusions to prevent accidental license or ownership spillover.
 
 <!-- markdownlint-disable MD013 -->
 
-| Excluded component | Reason excluded                      | Governing record or source |
-| :----------------- | :----------------------------------- | :------------------------- |
-| {Component}        | {Different subject, owner, or terms} | {Record or SRC-###}        |
+- **Excluded component:** {Component}
+  - **Reason excluded:** {Different subject, owner, or terms}
+  - **Governing record or source:** {Record or SRC-###}
 
 <!-- markdownlint-enable MD013 -->
 
@@ -154,9 +156,10 @@ and confusingly similar names.
 
 <!-- markdownlint-disable MD013 -->
 
-| Name or identifier | Relationship to subject       | Applicable dates | Evidence status      |
-| :----------------- | :---------------------------- | :--------------- | :------------------- |
-| {Name}             | {Alias/former name/fork/etc.} | {Dates}          | {Status and SRC-###} |
+- **Name or identifier:** {Name}
+  - **Relationship to subject:** {Alias/former name/fork/etc.}
+  - **Applicable dates:** {Dates}
+  - **Evidence status:** {Status and SRC-###}
 
 <!-- markdownlint-enable MD013 -->
 
@@ -215,9 +218,12 @@ one or more source identifiers. Distinguish confirmed history from inference.}
 
 <!-- markdownlint-disable MD013 -->
 
-| Date   | Event   | Version or branch | Responsible entity | Legal relevance | Evidence  |
-| :----- | :------ | :---------------- | :----------------- | :-------------- | :-------- |
-| {Date} | {Event} | {Version}         | {Entity}           | {Why material}  | {SRC-###} |
+- **Date:** {Date}
+  - **Event:** {Event}
+  - **Version or branch:** {Version}
+  - **Responsible entity:** {Entity}
+  - **Legal relevance:** {Why material}
+  - **Evidence:** {SRC-###}
 
 <!-- markdownlint-enable MD013 -->
 
@@ -225,9 +231,12 @@ one or more source identifiers. Distinguish confirmed history from inference.}
 
 <!-- markdownlint-disable MD013 -->
 
-| Reviewed version | Derived from  | Release date | Rights holder | Governing terms | Status          |
-| :--------------- | :------------ | :----------- | :------------ | :-------------- | :-------------- |
-| {Version}        | {Predecessor} | {Date}       | {Entity}      | {Instrument}    | {Verified/etc.} |
+- **Reviewed version:** {Version}
+  - **Derived from:** {Predecessor}
+  - **Release date:** {Date}
+  - **Rights holder:** {Entity}
+  - **Governing terms:** {Instrument}
+  - **Status:** {Verified/etc.}
 
 <!-- markdownlint-enable MD013 -->
 
@@ -245,15 +254,48 @@ Record each independently and cite the evidence for each statement.
 
 <!-- markdownlint-disable MD013 -->
 
-| Role                       | Person or entity | Applicable material | Applicable dates | Evidence  | Status   |
-| :------------------------- | :--------------- | :------------------ | :--------------- | :-------- | :------- |
-| Creator or original author | {Name}           | {Material}          | {Dates}          | {SRC-###} | {Status} |
-| Principal maintainer       | {Name}           | {Material}          | {Dates}          | {SRC-###} | {Status} |
-| Copyright claimant         | {Name}           | {Material}          | {Dates}          | {SRC-###} | {Status} |
-| Current rights holder      | {Name}           | {Material}          | {Dates}          | {SRC-###} | {Status} |
-| Licensor                   | {Name}           | {Material}          | {Dates}          | {SRC-###} | {Status} |
-| Publisher or distributor   | {Name}           | {Material}          | {Dates}          | {SRC-###} | {Status} |
-| Trademark owner            | {Name}           | {Mark}              | {Dates}          | {SRC-###} | {Status} |
+- **Role:** Creator or original author
+  - **Person or entity:** {Name}
+  - **Applicable material:** {Material}
+  - **Applicable dates:** {Dates}
+  - **Evidence:** {SRC-###}
+  - **Status:** {Status}
+- **Role:** Principal maintainer
+  - **Person or entity:** {Name}
+  - **Applicable material:** {Material}
+  - **Applicable dates:** {Dates}
+  - **Evidence:** {SRC-###}
+  - **Status:** {Status}
+- **Role:** Copyright claimant
+  - **Person or entity:** {Name}
+  - **Applicable material:** {Material}
+  - **Applicable dates:** {Dates}
+  - **Evidence:** {SRC-###}
+  - **Status:** {Status}
+- **Role:** Current rights holder
+  - **Person or entity:** {Name}
+  - **Applicable material:** {Material}
+  - **Applicable dates:** {Dates}
+  - **Evidence:** {SRC-###}
+  - **Status:** {Status}
+- **Role:** Licensor
+  - **Person or entity:** {Name}
+  - **Applicable material:** {Material}
+  - **Applicable dates:** {Dates}
+  - **Evidence:** {SRC-###}
+  - **Status:** {Status}
+- **Role:** Publisher or distributor
+  - **Person or entity:** {Name}
+  - **Applicable material:** {Material}
+  - **Applicable dates:** {Dates}
+  - **Evidence:** {SRC-###}
+  - **Status:** {Status}
+- **Role:** Trademark owner
+  - **Person or entity:** {Name}
+  - **Applicable material:** {Mark}
+  - **Applicable dates:** {Dates}
+  - **Evidence:** {SRC-###}
+  - **Status:** {Status}
 
 <!-- markdownlint-enable MD013 -->
 
@@ -275,9 +317,11 @@ inside an exact notice.
 
 <!-- markdownlint-disable MD013 -->
 
-| Attribution item | Exact text or reference            | Trigger   | Required location | Source    |
-| :--------------- | :--------------------------------- | :-------- | :---------------- | :-------- |
-| {Item}           | {Exact text or authoritative file} | {Trigger} | {Location}        | {SRC-###} |
+- **Attribution item:** {Item}
+  - **Exact text or reference:** {Exact text or authoritative file}
+  - **Trigger:** {Trigger}
+  - **Required location:** {Location}
+  - **Source:** {SRC-###}
 
 <!-- markdownlint-enable MD013 -->
 
@@ -304,9 +348,15 @@ Assign a stable identifier to every source used by this record.
 
 <!-- markdownlint-disable MD013 -->
 
-| Id      | Source class   | Author or issuer | Title   | Version/date | Locator    | Accessed | Integrity   | Status   |
-| :------ | :------------- | :--------------- | :------ | :----------- | :--------- | :------- | :---------- | :------- |
-| SRC-001 | {Primary/etc.} | {Name}           | {Title} | {Value}      | {URL/path} | {Date}   | {Hash/etc.} | {Status} |
+- **Id:** SRC-001
+  - **Source class:** {Primary/etc.}
+  - **Author or issuer:** {Name}
+  - **Title:** {Title}
+  - **Version/date:** {Value}
+  - **Locator:** {URL/path}
+  - **Accessed:** {Date}
+  - **Integrity:** {Hash/etc.}
+  - **Status:** {Status}
 
 <!-- markdownlint-enable MD013 -->
 
@@ -320,9 +370,12 @@ official identifier, effective date, amendment status, and official publication.
 
 <!-- markdownlint-disable MD013 -->
 
-| Claim id | Factual proposition        | Source ids | Pinpoint location   | Evidence label | Reviewer note |
-| :------- | :------------------------- | :--------- | :------------------ | :------------- | :------------ |
-| CLM-001  | {One testable proposition} | {SRC-###}  | {Page/section/line} | {Label}        | {Note}        |
+- **Claim id:** CLM-001
+  - **Factual proposition:** {One testable proposition}
+  - **Source ids:** {SRC-###}
+  - **Pinpoint location:** {Page/section/line}
+  - **Evidence label:** {Label}
+  - **Reviewer note:** {Note}
 
 <!-- markdownlint-enable MD013 -->
 
@@ -334,9 +387,11 @@ verification attempts when they affect confidence.
 
 <!-- markdownlint-disable MD013 -->
 
-| Source ids | Conflict or supersession | Resolution status     | Controlling basis      | Reviewer |
-| :--------- | :----------------------- | :-------------------- | :--------------------- | :------- |
-| {SRC-###}  | {Description}            | {Resolved/unresolved} | {Authority and reason} | {Name}   |
+- **Source ids:** {SRC-###}
+  - **Conflict or supersession:** {Description}
+  - **Resolution status:** {Resolved/unresolved}
+  - **Controlling basis:** {Authority and reason}
+  - **Reviewer:** {Name}
 
 <!-- markdownlint-enable MD013 -->
 
@@ -349,9 +404,13 @@ licensed broadly, or publicly accessible yet not licensed for copying.
 
 <!-- markdownlint-disable MD013 -->
 
-| Component   | Work type            | Claimed author | Claimed owner | Notice                | Status   | Evidence  |
-| :---------- | :------------------- | :------------- | :------------ | :-------------------- | :------- | :-------- |
-| {Component} | {Code/docs/art/etc.} | {Name}         | {Name}        | {Exact or none found} | {Status} | {SRC-###} |
+- **Component:** {Component}
+  - **Work type:** {Code/docs/art/etc.}
+  - **Claimed author:** {Name}
+  - **Claimed owner:** {Name}
+  - **Notice:** {Exact or none found}
+  - **Status:** {Status}
+  - **Evidence:** {SRC-###}
 
 <!-- markdownlint-enable MD013 -->
 
@@ -383,9 +442,13 @@ versions.
 
 <!-- markdownlint-disable MD013 -->
 
-| Material   | Instrument           | Version/date | Identifier            | Issuer   | Authoritative source | Status   |
-| :--------- | :------------------- | :----------- | :-------------------- | :------- | :------------------- | :------- |
-| {Material} | {License/terms/etc.} | {Value}      | {SPDX or official id} | {Entity} | {SRC-###}            | {Status} |
+- **Material:** {Material}
+  - **Instrument:** {License/terms/etc.}
+  - **Version/date:** {Value}
+  - **Identifier:** {SPDX or official id}
+  - **Issuer:** {Entity}
+  - **Authoritative source:** {SRC-###}
+  - **Status:** {Status}
 
 <!-- markdownlint-enable MD013 -->
 
@@ -406,19 +469,72 @@ versions.
 
 <!-- markdownlint-disable MD013 -->
 
-| Right or activity  | Expressly granted | Conditions   | Expressly reserved | Evidence  | Status   |
-| :----------------- | :---------------- | :----------- | :----------------- | :-------- | :------- |
-| Access or use      | {Yes/no/unclear}  | {Conditions} | {Reservations}     | {SRC-###} | {Status} |
-| Reproduction       | {Value}           | {Conditions} | {Reservations}     | {SRC-###} | {Status} |
-| Modification       | {Value}           | {Conditions} | {Reservations}     | {SRC-###} | {Status} |
-| Derivative works   | {Value}           | {Conditions} | {Reservations}     | {SRC-###} | {Status} |
-| Distribution       | {Value}           | {Conditions} | {Reservations}     | {SRC-###} | {Status} |
-| Public performance | {Value}           | {Conditions} | {Reservations}     | {SRC-###} | {Status} |
-| Public display     | {Value}           | {Conditions} | {Reservations}     | {SRC-###} | {Status} |
-| Sublicensing       | {Value}           | {Conditions} | {Reservations}     | {SRC-###} | {Status} |
-| Commercial use     | {Value}           | {Conditions} | {Reservations}     | {SRC-###} | {Status} |
-| Patent rights      | {Value}           | {Conditions} | {Reservations}     | {SRC-###} | {Status} |
-| Trademark rights   | {Value}           | {Conditions} | {Reservations}     | {SRC-###} | {Status} |
+- **Right or activity:** Access or use
+  - **Expressly granted:** {Yes/no/unclear}
+  - **Conditions:** {Conditions}
+  - **Expressly reserved:** {Reservations}
+  - **Evidence:** {SRC-###}
+  - **Status:** {Status}
+- **Right or activity:** Reproduction
+  - **Expressly granted:** {Value}
+  - **Conditions:** {Conditions}
+  - **Expressly reserved:** {Reservations}
+  - **Evidence:** {SRC-###}
+  - **Status:** {Status}
+- **Right or activity:** Modification
+  - **Expressly granted:** {Value}
+  - **Conditions:** {Conditions}
+  - **Expressly reserved:** {Reservations}
+  - **Evidence:** {SRC-###}
+  - **Status:** {Status}
+- **Right or activity:** Derivative works
+  - **Expressly granted:** {Value}
+  - **Conditions:** {Conditions}
+  - **Expressly reserved:** {Reservations}
+  - **Evidence:** {SRC-###}
+  - **Status:** {Status}
+- **Right or activity:** Distribution
+  - **Expressly granted:** {Value}
+  - **Conditions:** {Conditions}
+  - **Expressly reserved:** {Reservations}
+  - **Evidence:** {SRC-###}
+  - **Status:** {Status}
+- **Right or activity:** Public performance
+  - **Expressly granted:** {Value}
+  - **Conditions:** {Conditions}
+  - **Expressly reserved:** {Reservations}
+  - **Evidence:** {SRC-###}
+  - **Status:** {Status}
+- **Right or activity:** Public display
+  - **Expressly granted:** {Value}
+  - **Conditions:** {Conditions}
+  - **Expressly reserved:** {Reservations}
+  - **Evidence:** {SRC-###}
+  - **Status:** {Status}
+- **Right or activity:** Sublicensing
+  - **Expressly granted:** {Value}
+  - **Conditions:** {Conditions}
+  - **Expressly reserved:** {Reservations}
+  - **Evidence:** {SRC-###}
+  - **Status:** {Status}
+- **Right or activity:** Commercial use
+  - **Expressly granted:** {Value}
+  - **Conditions:** {Conditions}
+  - **Expressly reserved:** {Reservations}
+  - **Evidence:** {SRC-###}
+  - **Status:** {Status}
+- **Right or activity:** Patent rights
+  - **Expressly granted:** {Value}
+  - **Conditions:** {Conditions}
+  - **Expressly reserved:** {Reservations}
+  - **Evidence:** {SRC-###}
+  - **Status:** {Status}
+- **Right or activity:** Trademark rights
+  - **Expressly granted:** {Value}
+  - **Conditions:** {Conditions}
+  - **Expressly reserved:** {Reservations}
+  - **Evidence:** {SRC-###}
+  - **Status:** {Status}
 
 <!-- markdownlint-enable MD013 -->
 
@@ -426,16 +542,62 @@ versions.
 
 <!-- markdownlint-disable MD013 -->
 
-| Obligation                | Trigger   | Required act | Deadline | Delivery location | Evidence  | Status   |
-| :------------------------ | :-------- | :----------- | :------- | :---------------- | :-------- | :------- |
-| Preserve copyright notice | {Trigger} | {Act}        | {When}   | {Location}        | {SRC-###} | {Status} |
-| Include license text      | {Trigger} | {Act}        | {When}   | {Location}        | {SRC-###} | {Status} |
-| Disclose modifications    | {Trigger} | {Act}        | {When}   | {Location}        | {SRC-###} | {Status} |
-| Provide source or offer   | {Trigger} | {Act}        | {When}   | {Location}        | {SRC-###} | {Status} |
-| Provide attribution       | {Trigger} | {Act}        | {When}   | {Location}        | {SRC-###} | {Status} |
-| State changes             | {Trigger} | {Act}        | {When}   | {Location}        | {SRC-###} | {Status} |
-| Provide installation data | {Trigger} | {Act}        | {When}   | {Location}        | {SRC-###} | {Status} |
-| Preserve notices          | {Trigger} | {Act}        | {When}   | {Location}        | {SRC-###} | {Status} |
+- **Obligation:** Preserve copyright notice
+  - **Trigger:** {Trigger}
+  - **Required act:** {Act}
+  - **Deadline:** {When}
+  - **Delivery location:** {Location}
+  - **Evidence:** {SRC-###}
+  - **Status:** {Status}
+- **Obligation:** Include license text
+  - **Trigger:** {Trigger}
+  - **Required act:** {Act}
+  - **Deadline:** {When}
+  - **Delivery location:** {Location}
+  - **Evidence:** {SRC-###}
+  - **Status:** {Status}
+- **Obligation:** Disclose modifications
+  - **Trigger:** {Trigger}
+  - **Required act:** {Act}
+  - **Deadline:** {When}
+  - **Delivery location:** {Location}
+  - **Evidence:** {SRC-###}
+  - **Status:** {Status}
+- **Obligation:** Provide source or offer
+  - **Trigger:** {Trigger}
+  - **Required act:** {Act}
+  - **Deadline:** {When}
+  - **Delivery location:** {Location}
+  - **Evidence:** {SRC-###}
+  - **Status:** {Status}
+- **Obligation:** Provide attribution
+  - **Trigger:** {Trigger}
+  - **Required act:** {Act}
+  - **Deadline:** {When}
+  - **Delivery location:** {Location}
+  - **Evidence:** {SRC-###}
+  - **Status:** {Status}
+- **Obligation:** State changes
+  - **Trigger:** {Trigger}
+  - **Required act:** {Act}
+  - **Deadline:** {When}
+  - **Delivery location:** {Location}
+  - **Evidence:** {SRC-###}
+  - **Status:** {Status}
+- **Obligation:** Provide installation data
+  - **Trigger:** {Trigger}
+  - **Required act:** {Act}
+  - **Deadline:** {When}
+  - **Delivery location:** {Location}
+  - **Evidence:** {SRC-###}
+  - **Status:** {Status}
+- **Obligation:** Preserve notices
+  - **Trigger:** {Trigger}
+  - **Required act:** {Act}
+  - **Deadline:** {When}
+  - **Delivery location:** {Location}
+  - **Evidence:** {SRC-###}
+  - **Status:** {Status}
 
 <!-- markdownlint-enable MD013 -->
 
@@ -498,9 +660,11 @@ text.
 
 <!-- markdownlint-disable MD013 -->
 
-| Mark or branding element | Claimed owner | Registration or source | Repository use    | Permission status |
-| :----------------------- | :------------ | :--------------------- | :---------------- | :---------------- |
-| {Mark}                   | {Entity}      | {Record/SRC-###}       | {Nominative/etc.} | {Status}          |
+- **Mark or branding element:** {Mark}
+  - **Claimed owner:** {Entity}
+  - **Registration or source:** {Record/SRC-###}
+  - **Repository use:** {Nominative/etc.}
+  - **Permission status:** {Status}
 
 <!-- markdownlint-enable MD013 -->
 
@@ -547,15 +711,55 @@ binary, hosted, embedded, commercial, or modified distribution.
 
 <!-- markdownlint-disable MD013 -->
 
-| Scenario                   | Material involved | Triggering act | Status   | Required actions | Evidence  | Reviewer |
-| :------------------------- | :---------------- | :------------- | :------- | :--------------- | :-------- | :------- |
-| Internal development use   | {Material}        | {Act}          | {Status} | {Actions}        | {SRC-###} | {Name}   |
-| Source distribution        | {Material}        | {Act}          | {Status} | {Actions}        | {SRC-###} | {Name}   |
-| Binary distribution        | {Material}        | {Act}          | {Status} | {Actions}        | {SRC-###} | {Name}   |
-| Documentation distribution | {Material}        | {Act}          | {Status} | {Actions}        | {SRC-###} | {Name}   |
-| Hosted or network service  | {Material}        | {Act}          | {Status} | {Actions}        | {SRC-###} | {Name}   |
-| Modified redistribution    | {Material}        | {Act}          | {Status} | {Actions}        | {SRC-###} | {Name}   |
-| User-supplied integration  | {Material}        | {Act}          | {Status} | {Actions}        | {SRC-###} | {Name}   |
+- **Scenario:** Internal development use
+  - **Material involved:** {Material}
+  - **Triggering act:** {Act}
+  - **Status:** {Status}
+  - **Required actions:** {Actions}
+  - **Evidence:** {SRC-###}
+  - **Reviewer:** {Name}
+- **Scenario:** Source distribution
+  - **Material involved:** {Material}
+  - **Triggering act:** {Act}
+  - **Status:** {Status}
+  - **Required actions:** {Actions}
+  - **Evidence:** {SRC-###}
+  - **Reviewer:** {Name}
+- **Scenario:** Binary distribution
+  - **Material involved:** {Material}
+  - **Triggering act:** {Act}
+  - **Status:** {Status}
+  - **Required actions:** {Actions}
+  - **Evidence:** {SRC-###}
+  - **Reviewer:** {Name}
+- **Scenario:** Documentation distribution
+  - **Material involved:** {Material}
+  - **Triggering act:** {Act}
+  - **Status:** {Status}
+  - **Required actions:** {Actions}
+  - **Evidence:** {SRC-###}
+  - **Reviewer:** {Name}
+- **Scenario:** Hosted or network service
+  - **Material involved:** {Material}
+  - **Triggering act:** {Act}
+  - **Status:** {Status}
+  - **Required actions:** {Actions}
+  - **Evidence:** {SRC-###}
+  - **Reviewer:** {Name}
+- **Scenario:** Modified redistribution
+  - **Material involved:** {Material}
+  - **Triggering act:** {Act}
+  - **Status:** {Status}
+  - **Required actions:** {Actions}
+  - **Evidence:** {SRC-###}
+  - **Reviewer:** {Name}
+- **Scenario:** User-supplied integration
+  - **Material involved:** {Material}
+  - **Triggering act:** {Act}
+  - **Status:** {Status}
+  - **Required actions:** {Actions}
+  - **Evidence:** {SRC-###}
+  - **Reviewer:** {Name}
 
 <!-- markdownlint-enable MD013 -->
 
@@ -587,16 +791,54 @@ Use only these status values unless a governing ADR defines stricter values:
 
 <!-- markdownlint-disable MD013 -->
 
-| Notice artifact             | Required content | Trigger   | Destination               | Owner  | Verification |
-| :-------------------------- | :--------------- | :-------- | :------------------------ | :----- | :----------- |
-| License copy                | {Content/file}   | {Trigger} | {Source/binary/docs/etc.} | {Role} | {Status}     |
-| Copyright notice            | {Exact text}     | {Trigger} | {Location}                | {Role} | {Status}     |
-| Attribution notice          | {Exact text}     | {Trigger} | {Location}                | {Role} | {Status}     |
-| Modification notice         | {Exact text}     | {Trigger} | {Location}                | {Role} | {Status}     |
-| Source offer or source code | {Requirement}    | {Trigger} | {Location}                | {Role} | {Status}     |
-| Warranty disclaimer         | {Requirement}    | {Trigger} | {Location}                | {Role} | {Status}     |
-| Patent notice               | {Requirement}    | {Trigger} | {Location}                | {Role} | {Status}     |
-| Trademark notice            | {Requirement}    | {Trigger} | {Location}                | {Role} | {Status}     |
+- **Notice artifact:** License copy
+  - **Required content:** {Content/file}
+  - **Trigger:** {Trigger}
+  - **Destination:** {Source/binary/docs/etc.}
+  - **Owner:** {Role}
+  - **Verification:** {Status}
+- **Notice artifact:** Copyright notice
+  - **Required content:** {Exact text}
+  - **Trigger:** {Trigger}
+  - **Destination:** {Location}
+  - **Owner:** {Role}
+  - **Verification:** {Status}
+- **Notice artifact:** Attribution notice
+  - **Required content:** {Exact text}
+  - **Trigger:** {Trigger}
+  - **Destination:** {Location}
+  - **Owner:** {Role}
+  - **Verification:** {Status}
+- **Notice artifact:** Modification notice
+  - **Required content:** {Exact text}
+  - **Trigger:** {Trigger}
+  - **Destination:** {Location}
+  - **Owner:** {Role}
+  - **Verification:** {Status}
+- **Notice artifact:** Source offer or source code
+  - **Required content:** {Requirement}
+  - **Trigger:** {Trigger}
+  - **Destination:** {Location}
+  - **Owner:** {Role}
+  - **Verification:** {Status}
+- **Notice artifact:** Warranty disclaimer
+  - **Required content:** {Requirement}
+  - **Trigger:** {Trigger}
+  - **Destination:** {Location}
+  - **Owner:** {Role}
+  - **Verification:** {Status}
+- **Notice artifact:** Patent notice
+  - **Required content:** {Requirement}
+  - **Trigger:** {Trigger}
+  - **Destination:** {Location}
+  - **Owner:** {Role}
+  - **Verification:** {Status}
+- **Notice artifact:** Trademark notice
+  - **Required content:** {Requirement}
+  - **Trigger:** {Trigger}
+  - **Destination:** {Location}
+  - **Owner:** {Role}
+  - **Verification:** {Status}
 
 <!-- markdownlint-enable MD013 -->
 
@@ -770,9 +1012,12 @@ date.
 
 <!-- markdownlint-disable MD013 -->
 
-| Id    | Question or deficiency | Risk if unresolved | Owner  | Due date | Distribution effect     |
-| :---- | :--------------------- | :----------------- | :----- | :------- | :---------------------- |
-| Q-001 | {Question}             | {Risk}             | {Role} | {Date}   | {Block/condition/none}  |
+- **Id:** Q-001
+  - **Question or deficiency:** {Question}
+  - **Risk if unresolved:** {Risk}
+  - **Owner:** {Role}
+  - **Due date:** {Date}
+  - **Distribution effect:** {Block/condition/none}
 
 <!-- markdownlint-enable MD013 -->
 
@@ -812,12 +1057,30 @@ Re-review this record when any of the following occurs:
 
 <!-- markdownlint-disable MD013 -->
 
-| Review role            | Reviewer       | Date   | Scope   | Result   | Conditions   |
-| :--------------------- | :------------- | :----- | :------ | :------- | :----------- |
-| Technical provenance   | {Name}         | {Date} | {Scope} | {Result} | {Conditions} |
-| Licensing review       | {Name}         | {Date} | {Scope} | {Result} | {Conditions} |
-| Academic-source review | {Name}         | {Date} | {Scope} | {Result} | {Conditions} |
-| Legal review           | {Name/counsel} | {Date} | {Scope} | {Result} | {Conditions} |
+- **Review role:** Technical provenance
+  - **Reviewer:** {Name}
+  - **Date:** {Date}
+  - **Scope:** {Scope}
+  - **Result:** {Result}
+  - **Conditions:** {Conditions}
+- **Review role:** Licensing review
+  - **Reviewer:** {Name}
+  - **Date:** {Date}
+  - **Scope:** {Scope}
+  - **Result:** {Result}
+  - **Conditions:** {Conditions}
+- **Review role:** Academic-source review
+  - **Reviewer:** {Name}
+  - **Date:** {Date}
+  - **Scope:** {Scope}
+  - **Result:** {Result}
+  - **Conditions:** {Conditions}
+- **Review role:** Legal review
+  - **Reviewer:** {Name/counsel}
+  - **Date:** {Date}
+  - **Scope:** {Scope}
+  - **Result:** {Result}
+  - **Conditions:** {Conditions}
 
 <!-- markdownlint-enable MD013 -->
 
@@ -828,9 +1091,11 @@ waive obligations, establish privilege, or guarantee legal compliance.
 
 <!-- markdownlint-disable MD013 -->
 
-| Record version | Date         | Author | Change summary | Verification impact        |
-| :------------- | :----------- | :----- | :------------- | :------------------------- |
-| 0.1            | {YYYY-MM-DD} | {Name} | Initial draft  | Full verification required |
+- **Record version:** 0.1
+  - **Date:** {YYYY-MM-DD}
+  - **Author:** {Name}
+  - **Change summary:** Initial draft
+  - **Verification impact:** Full verification required
 
 <!-- markdownlint-enable MD013 -->
 

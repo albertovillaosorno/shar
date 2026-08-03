@@ -1,0 +1,5 @@
+schema: shar-surface/v1
+path: src/migration/pipeline/Cargo.toml
+function: pipeline
+kind: project
+authority: Cargo.toml

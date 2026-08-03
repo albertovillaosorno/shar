@@ -1,7 +1,3 @@
-// File:
-//   - triangle_source.rs
-// Path: src/formats/fbx/domain/texture/semantic/body/raster/triangle_source.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,37 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Exact source-texel transfer for patterned semantic charts.
+//   - Triangle source domain module.
 // - Must-Not:
-//   - Change topology, classify evidence, or filter source texture pixels.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Copying each source texel into an integer-multiple atlas block.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Filtering modes beyond deterministic nearest ownership are required.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Flat and source-sampled chart painters share one policy.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Patterned semantic chart texel-grid rasterizer.
+//   - Triangle source domain module.
 // - Description:
-//   - Preserves source texture boundaries exactly inside a modern atlas block.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Called only for charts projected through `source-uv`.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Every source texel expands to a complete square block.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Patterned semantic chart texel-grid rasterizer.
+//! Triangle source domain module.
+
 #![expect(
     clippy::indexing_slicing,
     reason = "Validated triangle and UV cardinalities bound source sampling \
@@ -79,9 +68,7 @@ pub(super) fn paint(
                         .ok_or(SemanticTextureError::NumericOverflow)?,
                 )
                 .ok_or(SemanticTextureError::NumericOverflow)?;
-            let color = source.pixel(
-                source_x, source_y,
-            )?;
+            let color = source.pixel(source_x, source_y)?;
             for offset_y in 0..placement.scale {
                 let y = destination_y
                     .checked_add(offset_y)
@@ -90,20 +77,14 @@ pub(super) fn paint(
                     let x = destination_x
                         .checked_add(offset_x)
                         .ok_or(SemanticTextureError::NumericOverflow)?;
-                    let index = coverage_index(
-                        atlas.width(),
-                        x,
-                        y,
-                    )?;
+                    let index = coverage_index(atlas.width(), x, y)?;
                     if !coverage[index] {
                         painted = painted
                             .checked_add(1)
                             .ok_or(SemanticTextureError::NumericOverflow)?;
                     }
                     coverage[index] = true;
-                    atlas.set_pixel(
-                        x, y, color,
-                    )?;
+                    atlas.set_pixel(x, y, color)?;
                 }
             }
         }

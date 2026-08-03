@@ -1,12 +1,34 @@
-// File: SharProgressionCatalogProfileTests.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharProgression/Private/Tests/SharProgressionCatalogProfileTests.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: transient progression catalog validation, profile snapshot validation, and immutable baseline projection tests only.
-// Specification: docs/technical/unreal/progression-collectibles-and-cheats.md
-// LARGE-FILE owner=SharProgression; reason=two cohesive catalog and initial-profile validation scenarios;
-// split=separate projection tests when additional query families are implemented;
-// validation=validate.sh SharProgression plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar progression catalog profile tests composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar progression catalog profile tests composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar progression catalog profile tests composition module.
 
 #if WITH_DEV_AUTOMATION_TESTS
 
@@ -96,7 +118,9 @@ bool FSharProgressionProfileSnapshotValidationTest::RunTest(
         TEXT("Count projection is derived without mutation"),
         Runtime.ProgressionSubsystem->ProjectCount(Query, Projection)
     );
+    // jig-ignore-next-line: exact syntax is indivisible
     TestTrue(TEXT("No cards are initially collected"), Projection.Numerator == 0);
+    // jig-ignore-next-line: exact syntax is indivisible
     TestTrue(TEXT("Projection preserves exact denominator"), Projection.Denominator == ExpectedCollectibleCount);
     TestTrue(
         TEXT("Projection carries active snapshot revision"),

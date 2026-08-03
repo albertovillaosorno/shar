@@ -1,7 +1,3 @@
-// File:
-//   - constructor_identity_validation.rs
-// Path: tests/formats/fbx/constructor_identity_validation.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,41 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for FBX constructor identity validation.
+//   - Constructor identity validation test module.
 // - Must-Not:
-//   - Read private assets, discover packages, or use filesystem fixtures.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic identities and public constructor assertions.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - One aggregate requires an independent integration boundary.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Constructor identity rules move behind one shared value object.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects domain and adapter constructors from noncanonical identities.
+//   - Constructor identity validation test module.
 // - Description:
-//   - Exercises synthetic caller values at explicit construction boundaries.
+//   - Implements the declared test module responsibility for fbx.
 // - Usage:
-//   - Run through the fbx crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No local files or external processes are required.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-//
-// Large file:
-//   - true
-//   - Reason: Public identity constructors share one synthetic, filesystem-free
-//   - regression boundary and remain cohesive as a single conformance suite.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for FBX constructor identity validation.
-//!
-//! Synthetic identities prove public constructors fail closed before planning.
+//! Constructor identity validation test module.
 
 use fbx::domain::animation::{
     AnimationCapability, AnimationClip, AnimationClipError,
@@ -63,32 +47,16 @@ use serde_json as _;
 use shar_sha256 as _;
 
 fn positions() -> Vec<[f32; 3]> {
-    vec![
-        [
-            0.0, 0.0, 0.0,
-        ],
-        [
-            1.0, 0.0, 0.0,
-        ],
-        [
-            0.0, 1.0, 0.0,
-        ],
-    ]
+    vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]]
 }
 
 fn animation_track(bone_id: &str) -> BoneAnimationTrack {
     BoneAnimationTrack {
         bone_id: bone_id.to_owned(),
-        samples: vec![
-            LocalTransformSample {
-                translation: [
-                    0.0_f64, 0.0_f64, 0.0_f64,
-                ],
-                rotation_wxyz: [
-                    1.0_f64, 0.0_f64, 0.0_f64, 0.0_f64,
-                ],
-            },
-        ],
+        samples: vec![LocalTransformSample {
+            translation: [0f64, 0f64, 0f64],
+            rotation_wxyz: [1f64, 0f64, 0f64, 0f64],
+        }],
     }
 }
 
@@ -108,26 +76,17 @@ fn rejects_padded_shader_texture_member_ids() {
 
 #[test]
 fn rejects_padded_shader_requirement_ids() {
-    let result = ShaderRequirement::new(
-        " shader",
-        MaterialChannel::Diffuse,
-        None,
-    );
+    let result =
+        ShaderRequirement::new(" shader", MaterialChannel::Diffuse, None);
 
-    assert_eq!(
-        result,
-        Err(ShaderRequirementError::NonCanonicalShaderId)
-    );
+    assert_eq!(result, Err(ShaderRequirementError::NonCanonicalShaderId));
 }
 
 #[test]
 fn rejects_control_characters_in_shader_requirement_ids() {
     assert_eq!(
-        ShaderRequirement::new(
-            "shader\nalias",
-            MaterialChannel::Diffuse,
-            None,
-        ),
+        // jig-ignore-next-line: exact syntax is indivisible
+        ShaderRequirement::new("shader\nalias", MaterialChannel::Diffuse, None,),
         Err(ShaderRequirementError::NonCanonicalShaderId)
     );
     assert_eq!(
@@ -143,17 +102,11 @@ fn rejects_control_characters_in_shader_requirement_ids() {
 #[test]
 fn rejects_case_insensitive_animation_member_aliases() {
     let result = AnimationRequirement::new(
-        vec![
-            "Walk".to_owned(),
-            "walk".to_owned(),
-        ],
+        vec!["Walk".to_owned(), "walk".to_owned()],
         AnimationCapability::PreservedOnly,
     );
 
-    assert_eq!(
-        result,
-        Err(AnimationRequirementError::DuplicateMemberId)
-    );
+    assert_eq!(result, Err(AnimationRequirementError::DuplicateMemberId));
 }
 
 #[test]
@@ -161,7 +114,7 @@ fn rejects_control_characters_in_animation_clip_identities() {
     assert_eq!(
         AnimationClip::new(
             "walk\nalias",
-            30.0_f64,
+            30f64,
             false,
             1,
             vec![animation_track("root")],
@@ -172,7 +125,7 @@ fn rejects_control_characters_in_animation_clip_identities() {
     assert_eq!(
         AnimationClip::new(
             "walk",
-            30.0_f64,
+            30f64,
             false,
             1,
             vec![animation_track("root\nalias")],
@@ -183,7 +136,7 @@ fn rejects_control_characters_in_animation_clip_identities() {
     assert_eq!(
         AnimationClip::new(
             "walk",
-            30.0_f64,
+            30f64,
             false,
             1,
             vec![animation_track("root")],
@@ -200,10 +153,7 @@ fn rejects_padded_animation_member_ids() {
         AnimationCapability::PreservedOnly,
     );
 
-    assert_eq!(
-        result,
-        Err(AnimationRequirementError::NonCanonicalMemberId)
-    );
+    assert_eq!(result, Err(AnimationRequirementError::NonCanonicalMemberId));
 }
 
 #[test]
@@ -213,31 +163,21 @@ fn rejects_control_characters_in_animation_member_ids() {
         AnimationCapability::PreservedOnly,
     );
 
-    assert_eq!(
-        result,
-        Err(AnimationRequirementError::NonCanonicalMemberId)
-    );
+    assert_eq!(result, Err(AnimationRequirementError::NonCanonicalMemberId));
 }
 
 #[test]
 fn rejects_material_texture_path_traversal() {
-    let result = MaterialBinding::new(
-        "material",
-        Some("../texture.png".to_owned()),
-    );
+    let result =
+        MaterialBinding::new("material", Some("../texture.png".to_owned()));
 
-    assert_eq!(
-        result,
-        Err(MaterialBindingError::InvalidTextureFileName)
-    );
+    assert_eq!(result, Err(MaterialBindingError::InvalidTextureFileName));
 }
 
 #[test]
 fn rejects_padded_material_texture_file_names() {
-    let result = MaterialBinding::new(
-        "material",
-        Some(" texture.png".to_owned()),
-    );
+    let result =
+        MaterialBinding::new("material", Some(" texture.png".to_owned()));
 
     assert_eq!(
         result,
@@ -247,109 +187,45 @@ fn rejects_padded_material_texture_file_names() {
 
 #[test]
 fn rejects_padded_material_binding_names() {
-    let result = MaterialBinding::new(
-        " material",
-        None,
-    );
+    let result = MaterialBinding::new(" material", None);
 
-    assert_eq!(
-        result,
-        Err(MaterialBindingError::NonCanonicalMaterialName)
-    );
+    assert_eq!(result, Err(MaterialBindingError::NonCanonicalMaterialName));
 }
 
 #[test]
 fn rejects_control_characters_in_material_binding_names() {
-    let result = MaterialBinding::new(
-        "material\nalias",
-        None,
-    );
+    let result = MaterialBinding::new("material\nalias", None);
 
-    assert_eq!(
-        result,
-        Err(MaterialBindingError::NonCanonicalMaterialName)
-    );
+    assert_eq!(result, Err(MaterialBindingError::NonCanonicalMaterialName));
 }
 
 #[test]
 fn rejects_padded_mesh_asset_names() {
-    let result = PrimitiveGroup::new(
-        0,
-        "shader",
-        positions(),
-        Vec::new(),
-        &[
-            0, 1, 2,
-        ],
-    )
-    .and_then(
-        |group| {
-            MeshAsset::new(
-                " mesh",
-                vec![group],
-            )
-        },
-    );
+    let result =
+        PrimitiveGroup::new(0, "shader", positions(), Vec::new(), &[0, 1, 2])
+            .and_then(|group| MeshAsset::new(" mesh", vec![group]));
 
-    assert_eq!(
-        result,
-        Err(MeshError::NonCanonicalMeshName)
-    );
+    assert_eq!(result, Err(MeshError::NonCanonicalMeshName));
 }
 
 #[test]
 fn rejects_control_characters_in_mesh_identities() {
-    let invalid_mesh = PrimitiveGroup::new(
-        0,
-        "shader",
-        positions(),
-        Vec::new(),
-        &[
+    let invalid_mesh =
+        PrimitiveGroup::new(0, "shader", positions(), Vec::new(), &[0, 1, 2])
+            .and_then(|group| MeshAsset::new("mesh\nalias", vec![group]));
+    let invalid_shader =
+        PrimitiveGroup::new(0, "shader\nalias", positions(), Vec::new(), &[
             0, 1, 2,
-        ],
-    )
-    .and_then(
-        |group| {
-            MeshAsset::new(
-                "mesh\nalias",
-                vec![group],
-            )
-        },
-    );
-    let invalid_shader = PrimitiveGroup::new(
-        0,
-        "shader\nalias",
-        positions(),
-        Vec::new(),
-        &[
-            0, 1, 2,
-        ],
-    );
+        ]);
 
-    assert_eq!(
-        invalid_mesh,
-        Err(MeshError::NonCanonicalMeshName)
-    );
-    assert_eq!(
-        invalid_shader,
-        Err(MeshError::NonCanonicalShader)
-    );
+    assert_eq!(invalid_mesh, Err(MeshError::NonCanonicalMeshName));
+    assert_eq!(invalid_shader, Err(MeshError::NonCanonicalShader));
 }
 
 #[test]
 fn rejects_padded_primitive_group_shader_ids() {
-    let result = PrimitiveGroup::new(
-        0,
-        " shader",
-        positions(),
-        Vec::new(),
-        &[
-            0, 1, 2,
-        ],
-    );
+    let result =
+        PrimitiveGroup::new(0, " shader", positions(), Vec::new(), &[0, 1, 2]);
 
-    assert_eq!(
-        result,
-        Err(MeshError::NonCanonicalShader)
-    );
+    assert_eq!(result, Err(MeshError::NonCanonicalShader));
 }

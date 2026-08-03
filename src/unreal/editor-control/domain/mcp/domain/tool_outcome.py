@@ -1,7 +1,3 @@
-# File:
-#   - tool_outcome.py
-# Path: src/unreal/editor-control/domain/mcp/domain/tool_outcome.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,43 +6,39 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Native MCP tool-result normalization and success semantics.
+#   - Tool outcome domain module.
 # - Must-Not:
-#   - Parse toolset schemas, open transports, or render terminal output.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Text projection, structured JSON preservation, and content validation.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Individual MCP content block kinds require independent validation.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another domain module owns the same result-normalization invariants.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Normalizes native Unreal MCP tool outcomes.
+#   - Tool outcome domain module.
 # - Description:
-#   - Preserves raw and structured results while validating content blocks.
+#   - Implements the declared domain module responsibility for editor control.
 # - Usage:
-#   - Called by the Streamable HTTP adapter after JSON-RPC validation.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Missing or malformed content fails closed.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-#
-# Large file:
-#   - false
-#
-"""Native Unreal MCP tool-result domain values."""
+
+"""Tool outcome domain module."""
 
 from __future__ import annotations
 
 from typing import NamedTuple
 
-from mcp.domain.errors import fail_protocol, fail_tool_call
-from mcp.domain.json_types import JsonObject, JsonValue, require_json_object
+from mcp.domain.errors import fail_protocol
+from mcp.domain.errors import fail_tool_call
+from mcp.domain.json_types import JsonObject
+from mcp.domain.json_types import JsonValue
+from mcp.domain.json_types import require_json_object
 
 _MAX_CONTENT_BLOCKS = 100_000
 _MAX_PROJECTED_TEXT_BYTES = 64 * 1_024 * 1_024
@@ -65,6 +57,7 @@ class ToolCallOutcome(NamedTuple):
 
         Returns:
             This outcome when the native call succeeded.
+
         """
         if self.is_error:
             message = (
@@ -81,6 +74,7 @@ def _escape_diagnostic_controls(value: str) -> str:
 
     Returns:
         Text with nonprintable characters represented by visible escapes.
+
     """
     return "".join(
         character
@@ -98,6 +92,7 @@ def parse_tool_outcome(value: object) -> ToolCallOutcome:
 
     Returns:
         A validated native tool outcome.
+
     """
     outcome = require_json_object(value, context="tools/call outcome")
     is_error = outcome.get("isError", False)

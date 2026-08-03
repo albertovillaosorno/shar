@@ -36,7 +36,8 @@ the operation.
 - [Read-only operations](execution/read-only-operations.md)
 - [Safe mutations](execution/safe-mutations.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Long-running and batch operations](execution/long-running-and-batch-operations.md)
+- [Long-running and batch
+  operations](execution/long-running-and-batch-operations.md)
 - [Programmatic tool scripts](execution/programmatic-tool-scripts.md)
 
 ### Assurance

@@ -1,7 +1,3 @@
-// File:
-//   - count_by_dir_ext.rs
-// Path: tests/migration/manifest/count_by_dir_ext.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Filesystem traversal regressions for game-manifest directory counts.
+//   - Count by dir ext test module.
 // - Must-Not:
-//   - Read licensed inputs or mutable repository output trees.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Process-local temporary directories and deterministic fixture files.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when platform-specific filesystem semantics require isolation.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another game-manifest test owns the same traversal boundary.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects deterministic directory and extension counting.
+//   - Count by dir ext test module.
 // - Description:
-//   - Builds synthetic trees to verify exclusions and bucket coordinates.
+//   - Implements the declared test module responsibility for manifest.
 // - Usage:
-//   - Executed through cargo test for the game-manifest crate.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Every fixture is removed when its test guard is dropped.
-//
-// ADRs:
-// - docs/adr/pipeline/game-manifest-ledger.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Filesystem traversal regression coverage.
-//!
-//! These tests create isolated synthetic trees and never inspect repository
-//! content, source containers, or generated outputs.
+//! Count by dir ext test module.
 
 use std::fs;
 use std::io::{self, ErrorKind};
@@ -63,19 +48,14 @@ struct FixtureRoot(PathBuf);
 
 impl FixtureRoot {
     fn new(label: &str) -> io::Result<Self> {
-        let sequence = NEXT_FIXTURE.fetch_add(
-            1,
-            Ordering::Relaxed,
-        );
-        let path = std::env::temp_dir().join(
-            format!(
-                "game-manifest-{label}-{}-{sequence}",
-                std::process::id()
-            ),
-        );
+        let sequence = NEXT_FIXTURE.fetch_add(1, Ordering::Relaxed);
+        let path = std::env::temp_dir().join(format!(
+            "game-manifest-{label}-{}-{sequence}",
+            std::process::id()
+        ));
         match fs::remove_dir_all(&path) {
-            Ok(()) => {}
-            Err(error) if error.kind() == ErrorKind::NotFound => {}
+            Ok(()) => {},
+            Err(error) if error.kind() == ErrorKind::NotFound => {},
             Err(error) => return Err(error),
         }
         fs::create_dir_all(&path)?;
@@ -95,30 +75,12 @@ impl Drop for FixtureRoot {
 
 fn nested_manifest_counts() -> io::Result<DirExtCounts> {
     let fixture = FixtureRoot::new("nested-manifests")?;
-    fs::write(
-        fixture
-            .path()
-            .join(MANIFEST_FILE_NAME),
-        b"root",
-    )?;
-    fs::write(
-        fixture
-            .path()
-            .join(EXPANDED_MANIFEST_FILE_NAME),
-        b"root",
-    )?;
-    let nested = fixture
-        .path()
-        .join("area");
+    fs::write(fixture.path().join(MANIFEST_FILE_NAME), b"root")?;
+    fs::write(fixture.path().join(EXPANDED_MANIFEST_FILE_NAME), b"root")?;
+    let nested = fixture.path().join("area");
     fs::create_dir_all(&nested)?;
-    fs::write(
-        nested.join(MANIFEST_FILE_NAME),
-        b"nested",
-    )?;
-    fs::write(
-        nested.join(EXPANDED_MANIFEST_FILE_NAME),
-        b"nested",
-    )?;
+    fs::write(nested.join(MANIFEST_FILE_NAME), b"nested")?;
+    fs::write(nested.join(EXPANDED_MANIFEST_FILE_NAME), b"nested")?;
     count_by_dir_ext(fixture.path())
 }
 
@@ -130,41 +92,16 @@ fn output_names_are_excluded_only_at_root() {
         return;
     };
 
-    assert_eq!(
-        counts.get(
-            &(
-                "aa".to_owned(),
-                "jsonl".to_owned()
-            )
-        ),
-        Some(&2)
-    );
-    assert!(
-        !counts.contains_key(
-            &(
-                String::new(),
-                "jsonl".to_owned()
-            )
-        )
-    );
+    assert_eq!(counts.get(&("aa".to_owned(), "jsonl".to_owned())), Some(&2));
+    assert!(!counts.contains_key(&(String::new(), "jsonl".to_owned())));
 }
 
 fn nested_optional_mod_counts() -> io::Result<DirExtCounts> {
     let fixture = FixtureRoot::new("nested-optional")?;
-    fs::write(
-        fixture
-            .path()
-            .join("language.lmlm"),
-        b"root",
-    )?;
-    let nested = fixture
-        .path()
-        .join("area");
+    fs::write(fixture.path().join("language.lmlm"), b"root")?;
+    let nested = fixture.path().join("area");
     fs::create_dir_all(&nested)?;
-    fs::write(
-        nested.join("content.lmlm"),
-        b"nested",
-    )?;
+    fs::write(nested.join("content.lmlm"), b"nested")?;
     count_by_dir_ext(fixture.path())
 }
 
@@ -176,41 +113,16 @@ fn optional_mods_are_excluded_only_at_root() {
         return;
     };
 
-    assert_eq!(
-        counts.get(
-            &(
-                "aa".to_owned(),
-                "lmlm".to_owned()
-            )
-        ),
-        Some(&1)
-    );
-    assert!(
-        !counts.contains_key(
-            &(
-                String::new(),
-                "lmlm".to_owned()
-            )
-        )
-    );
+    assert_eq!(counts.get(&("aa".to_owned(), "lmlm".to_owned())), Some(&1));
+    assert!(!counts.contains_key(&(String::new(), "lmlm".to_owned())));
 }
 
 fn nested_png_counts() -> io::Result<DirExtCounts> {
     let fixture = FixtureRoot::new("nested-png")?;
-    fs::write(
-        fixture
-            .path()
-            .join("generated.png"),
-        b"root",
-    )?;
-    let nested = fixture
-        .path()
-        .join("area");
+    fs::write(fixture.path().join("generated.png"), b"root")?;
+    let nested = fixture.path().join("area");
     fs::create_dir_all(&nested)?;
-    fs::write(
-        nested.join("texture.png"),
-        b"nested",
-    )?;
+    fs::write(nested.join("texture.png"), b"nested")?;
     count_by_dir_ext(fixture.path())
 }
 
@@ -221,66 +133,33 @@ fn generated_png_is_excluded_only_at_root() {
     let Some(counts) = result.ok() else {
         return;
     };
-    assert_eq!(
-        counts.get(
-            &(
-                "aa".to_owned(),
-                "png".to_owned()
-            )
-        ),
-        Some(&1)
-    );
-    assert!(
-        !counts.contains_key(
-            &(
-                String::new(),
-                "png".to_owned()
-            )
-        )
-    );
+    assert_eq!(counts.get(&("aa".to_owned(), "png".to_owned())), Some(&1));
+    assert!(!counts.contains_key(&(String::new(), "png".to_owned())));
 }
 
 #[test]
 fn duplicate_file_evidence_counts_once() {
     let root = Path::new("game");
-    let file = root
-        .join("art")
-        .join("model.p3d");
-    let counts = count_by_dir_ext_paths(
-        root,
-        &[
-            file.clone(),
-            file,
-        ],
-    );
+    let file = root.join("art").join("model.p3d");
+    let counts = count_by_dir_ext_paths(root, &[file.clone(), file]);
 
-    assert_eq!(
-        counts.get(
-            &(
-                "at".to_owned(),
-                "p3d".to_owned(),
-            ),
-        ),
-        Some(&1),
-    );
+    assert_eq!(counts.get(&("at".to_owned(), "p3d".to_owned(),),), Some(&1),);
 }
 
 #[test]
 fn outside_root_file_evidence_is_ignored() {
-    let counts = count_by_dir_ext_paths(
-        Path::new("game"),
-        &[PathBuf::from("other/model.p3d")],
-    );
+    let counts = count_by_dir_ext_paths(Path::new("game"), &[PathBuf::from(
+        "other/model.p3d",
+    )]);
 
     assert!(counts.is_empty());
 }
 
 #[test]
 fn parent_traversal_file_evidence_is_ignored() {
-    let counts = count_by_dir_ext_paths(
-        Path::new("game"),
-        &[PathBuf::from("game/area/../model.p3d")],
-    );
+    let counts = count_by_dir_ext_paths(Path::new("game"), &[PathBuf::from(
+        "game/area/../model.p3d",
+    )]);
 
     assert!(counts.is_empty());
 }
@@ -288,14 +167,8 @@ fn parent_traversal_file_evidence_is_ignored() {
 #[test]
 fn root_manifest_case_aliases_are_excluded() {
     let root = Path::new("game");
-    for file_name in [
-        "MANIFEST.JSONL",
-        "MANIFEST-EXPANDED.JSONL",
-    ] {
-        let counts = count_by_dir_ext_paths(
-            root,
-            &[root.join(file_name)],
-        );
+    for file_name in ["MANIFEST.JSONL", "MANIFEST-EXPANDED.JSONL"] {
+        let counts = count_by_dir_ext_paths(root, &[root.join(file_name)]);
 
         assert!(counts.is_empty());
     }
@@ -304,34 +177,18 @@ fn root_manifest_case_aliases_are_excluded() {
 #[test]
 fn colliding_obfuscated_directories_receive_stable_ordinals() {
     let root = Path::new("game");
-    let counts = count_by_dir_ext_paths(
-        root,
-        &[
-            root.join("alpha/first.p3d"),
-            root.join("agenda/second.p3d"),
-        ],
-    );
+    let counts = count_by_dir_ext_paths(root, &[
+        root.join("alpha/first.p3d"),
+        root.join("agenda/second.p3d"),
+    ]);
 
     assert_eq!(
-        counts.get(
-            &(
-                "aa~01".to_owned(),
-                "p3d".to_owned(),
-            ),
-        ),
+        counts.get(&("aa~01".to_owned(), "p3d".to_owned(),),),
         Some(&1),
     );
     assert_eq!(
-        counts.get(
-            &(
-                "aa~02".to_owned(),
-                "p3d".to_owned(),
-            ),
-        ),
+        counts.get(&("aa~02".to_owned(), "p3d".to_owned(),),),
         Some(&1),
     );
-    assert_eq!(
-        counts.len(),
-        2,
-    );
+    assert_eq!(counts.len(), 2,);
 }

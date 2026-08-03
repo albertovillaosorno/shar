@@ -1,7 +1,3 @@
-// File:
-//   - public_facade.rs
-// Path: tests/foundation/command-line/public_facade.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,57 +6,50 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for the crate-level public facade.
+//   - Public facade test module.
 // - Must-Not:
-//   - Import stable contracts through internal module paths.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Verify concrete adapters and their ports from the crate root.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another public facade family needs separate coverage.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - The crate no longer exposes shared CLI mechanisms.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Public facade regression.
+//   - Public facade test module.
 // - Description:
-//   - Proves stable CLI contracts have one shallow import surface.
+//   - Implements the declared test module responsibility for command line.
 // - Usage:
-//   - Executed by the schoenwald-cli integration test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Concrete process adapters satisfy their public ports.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for the shallow crate-level facade.
-//!
-//! Consumers must not need internal module paths for stable CLI contracts.
-
-use std::mem::size_of;
+//! Public facade test module.
 
 use schoenwald_cli::{
     ArgumentSource, EnvironmentArguments, OutputSink, RunInvocation,
     StandardStreams,
 };
 
-const fn assert_argument_source<T: ArgumentSource>() {}
+const fn assert_argument_source<T>()
+where
+    T: ArgumentSource,
+{
+}
 
-const fn assert_output_sink<T: OutputSink>() {}
+const fn assert_output_sink<T>()
+where
+    T: OutputSink,
+{
+}
 
 #[test]
 fn stable_contracts_are_available_from_the_crate_root() {
     assert_argument_source::<EnvironmentArguments>();
     assert_output_sink::<StandardStreams>();
-    assert_eq!(
-        size_of::<RunInvocation>(),
-        0
-    );
+    assert_eq!(size_of::<RunInvocation>(), 0);
 }

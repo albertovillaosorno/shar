@@ -1,7 +1,3 @@
-// File:
-//   - io_error_context.rs
-// Path: tests/foundation/filesystem/io_error_context.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for actionable adapter IO diagnostics.
+//   - Io error context test module.
 // - Must-Not:
-//   - Depend on localized operating-system error text.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Assert stable operation and path context around provider failures.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another diagnostic surface has independent error policy.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test target owns the same adapter context contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Filesystem IO context regression tests.
+//   - Io error context test module.
 // - Description:
-//   - Ensures native errors retain enough context for production diagnosis.
+//   - Implements the declared test module responsibility for filesystem.
 // - Usage:
-//   - Runs through the filesystem crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Assertions ignore localized source-error wording.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for actionable adapter IO diagnostics.
-//!
-//! Stable operation and path context must surround native source errors.
+//! Io error context test module.
 
 #[cfg(windows)]
 #[path = "support/junction.rs"]
@@ -58,16 +44,11 @@ use schoenwald_filesystem::adapters::driving::local;
 static CASE_ID: AtomicUsize = AtomicUsize::new(0);
 
 fn case_root(label: &str) -> PathBuf {
-    let id = CASE_ID.fetch_add(
-        1,
-        Ordering::Relaxed,
-    );
-    std::env::temp_dir().join(
-        format!(
-            "schoenwald-filesystem-context-{label}-{}-{id}",
-            std::process::id()
-        ),
-    )
+    let id = CASE_ID.fetch_add(1, Ordering::Relaxed);
+    std::env::temp_dir().join(format!(
+        "schoenwald-filesystem-context-{label}-{}-{id}",
+        std::process::id()
+    ))
 }
 
 fn require_context(
@@ -81,12 +62,10 @@ fn require_context(
     }
     let displayed_path = DiagnosticPath::new(path).to_string();
     if !rendered.contains(&displayed_path) {
-        return Err(
-            format!(
-                "missing path context: expected {displayed_path:?} in \
+        return Err(format!(
+            "missing path context: expected {displayed_path:?} in \
                  {rendered:?}"
-            ),
-        );
+        ));
     }
     Ok(())
 }
@@ -111,11 +90,7 @@ fn missing_read_error_includes_operation_and_path() -> Result<(), String> {
     let Err(error) = result else {
         return Err("missing path unexpectedly read bytes".to_owned());
     };
-    require_context(
-        &error,
-        "read file",
-        &path,
-    )?;
+    require_context(&error, "read file", &path)?;
     require_native_source(&error)
 }
 
@@ -123,18 +98,12 @@ fn missing_read_error_includes_operation_and_path() -> Result<(), String> {
 fn failed_write_error_includes_operation_and_path() -> Result<(), String> {
     let path = case_root("failed-write");
     fs::create_dir_all(&path).map_err(|error| error.to_string())?;
-    let result = local::write_bytes(
-        &path, b"payload", false,
-    );
+    let result = local::write_bytes(&path, b"payload", false);
     fs::remove_dir_all(&path).map_err(|error| error.to_string())?;
     let Err(error) = result else {
         return Err("directory unexpectedly accepted file bytes".to_owned());
     };
-    require_context(
-        &error,
-        "write file",
-        &path,
-    )
+    require_context(&error, "write file", &path)
 }
 
 #[test]
@@ -149,11 +118,7 @@ fn failed_directory_error_has_context() -> Result<(), String> {
     let Err(error) = result else {
         return Err("file ancestor allowed directory creation".to_owned());
     };
-    require_context(
-        &error,
-        "create directory tree",
-        &path,
-    )
+    require_context(&error, "create directory tree", &path)
 }
 
 #[test]
@@ -163,11 +128,7 @@ fn missing_length_error_includes_operation_and_path() -> Result<(), String> {
     let Err(error) = result else {
         return Err("missing path unexpectedly reported a length".to_owned());
     };
-    require_context(
-        &error,
-        "inspect file metadata",
-        &path,
-    )
+    require_context(&error, "inspect file metadata", &path)
 }
 
 #[test]
@@ -177,11 +138,7 @@ fn missing_canonical_error_has_context() -> Result<(), String> {
     let Err(error) = result else {
         return Err("missing path unexpectedly canonicalized".to_owned());
     };
-    require_context(
-        &error,
-        "canonicalize path",
-        &path,
-    )
+    require_context(&error, "canonicalize path", &path)
 }
 
 #[test]
@@ -191,11 +148,7 @@ fn missing_tree_error_includes_operation_and_path() -> Result<(), String> {
     let Err(error) = result else {
         return Err("missing root unexpectedly produced a tree".to_owned());
     };
-    require_context(
-        &error,
-        "inspect traversal root",
-        &path,
-    )
+    require_context(&error, "inspect traversal root", &path)
 }
 
 #[test]
@@ -209,11 +162,7 @@ fn directory_length_error_includes_operation_and_path() -> Result<(), String> {
     let Err(error) = result else {
         return Err("directory unexpectedly reported a file length".to_owned());
     };
-    require_context(
-        &error,
-        "inspect file metadata",
-        &path,
-    )
+    require_context(&error, "inspect file metadata", &path)
 }
 
 #[test]
@@ -227,11 +176,7 @@ fn file_traversal_error_includes_operation_and_path() -> Result<(), String> {
     let Err(error) = result else {
         return Err("file unexpectedly accepted as traversal root".to_owned());
     };
-    require_context(
-        &error,
-        "inspect traversal root",
-        &path,
-    )
+    require_context(&error, "inspect traversal root", &path)
 }
 
 #[cfg(windows)]
@@ -240,15 +185,9 @@ fn linked_access_error_includes_operation_and_path() -> Result<(), String> {
     let root = case_root("linked-access");
     let target = root.join("target");
     let link = root.join("link");
-    local::write_bytes(
-        &target.join("private.bin"),
-        b"private",
-        true,
-    )
-    .map_err(|error| error.to_string())?;
-    support::create_junction(
-        &link, &target,
-    )?;
+    local::write_bytes(&target.join("private.bin"), b"private", true)
+        .map_err(|error| error.to_string())?;
+    support::create_junction(&link, &target)?;
 
     let result = local::read_bytes(&link.join("private.bin"));
 
@@ -256,9 +195,5 @@ fn linked_access_error_includes_operation_and_path() -> Result<(), String> {
     let Err(error) = result else {
         return Err("linked access unexpectedly read bytes".to_owned());
     };
-    require_context(
-        &error,
-        "validate filesystem access",
-        &link,
-    )
+    require_context(&error, "validate filesystem access", &link)
 }

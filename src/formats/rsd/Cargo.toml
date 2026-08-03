@@ -3,18 +3,24 @@ name = "rsd"
 version.workspace = true
 edition = "2024"
 license = "MIT"
+# jig-ignore-next-line: exact value is indivisible
 description = "Exports Radical RSD audio files to WAV for local SHAR migration evidence."
 publish = false
 
 [dependencies]
-# schoenwald-cli centralizes process arguments, ordered diagnostics, newline handling, and exit-code mapping for the RSD driving adapter.
-schoenwald-cli = { path = "../../foundation/command-line" }
-# schoenwald-filesystem centralizes deterministic discovery, path inspection, canonical identities, and complete source reads before transactional publication.
-schoenwald-filesystem = { path = "../../foundation/filesystem" }
+# jig-ignore-next-line: exact value is indivisible
+# same-file provides safe cross-platform physical file identity for hard-link deduplication.
+same-file = "=1.0.6"
+# jig-ignore-next-line: exact value is indivisible
+# schoenwald_cli centralizes process arguments, ordered diagnostics, newline handling, and exit-code mapping for the RSD driving adapter.
+schoenwald_cli = { path = "../../foundation/command-line" }
+# jig-ignore-next-line: exact value is indivisible
+# schoenwald_filesystem centralizes deterministic discovery, path inspection, canonical identities, and complete source reads before transactional publication.
+schoenwald_filesystem = { path = "../../foundation/filesystem" }
 
 [lib]
 name = "rsd"
-path = "lib.rs"
+path = "composition/lib.rs"
 
 [[bin]]
 name = "rsd-export"
@@ -56,3 +62,6 @@ path = "../../../tests/formats/rsd/radp_state.rs"
 [[test]]
 name = "wav_validation"
 path = "../../../tests/formats/rsd/wav_validation.rs"
+
+[lints]
+workspace = true

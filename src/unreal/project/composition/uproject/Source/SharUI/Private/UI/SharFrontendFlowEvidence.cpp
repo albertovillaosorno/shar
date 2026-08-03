@@ -1,9 +1,34 @@
-// File: SharFrontendFlowEvidence.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharUI/Private/UI/SharFrontendFlowEvidence.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: correlated frontend readiness evidence validation and phase advancement only.
-// Specification: docs/technical/unreal/frontend-screen-flow-and-settings-runtime.md
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar frontend flow evidence composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar frontend flow evidence composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar frontend flow evidence composition module.
 
 #include "UI/SharFrontendFlowSubsystem.h"
 

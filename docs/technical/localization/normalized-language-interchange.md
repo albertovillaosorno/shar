@@ -6,7 +6,8 @@
 ## Governing decision
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Voice and language mod packages](../../adr/modding/voice-language-modding-suite.md)
+- [Voice and language mod
+  packages](../../adr/modding/voice-language-modding-suite.md)
 
 ## Purpose
 

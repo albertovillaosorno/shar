@@ -1,7 +1,3 @@
-// File:
-//   - adapters.rs
-// Path: src/foundation/command-line/composition/adapters.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,42 +6,33 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Shared CLI inbound and outbound adapter families.
+//   - Adapters composition module.
 // - Must-Not:
-//   - Own command policy or process-neutral domain values.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Separate current-process composition from process mechanisms.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when one adapter family becomes independently versioned.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another facade owns the same adapter families.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Shared CLI adapter facade.
+//   - Adapters composition module.
 // - Description:
-//   - Exposes driving process composition and driven process providers.
+//   - Implements the declared responsibility for command line.
 // - Usage:
-//   - Imported by the public crate facade and integration tests.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Core layers select no concrete adapter.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Inbound and outbound adapters for shared CLI mechanisms.
-//!
-//! Driving adapters compose use cases while driven adapters implement ports.
-#[path = "../adapter-outbound/mod.rs"]
+//! Adapters composition module.
+
+#[path = "adapter-outbound/mod.rs"]
 mod driven;
-#[path = "../adapter-inbound/mod.rs"]
+#[path = "adapter-inbound/mod.rs"]
 mod driving;
 
 pub use driven::{EnvironmentArguments, StandardStreams};

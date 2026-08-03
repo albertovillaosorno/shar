@@ -1,7 +1,3 @@
-// File:
-//   - read_destination.rs
-// Path: tests/foundation/filesystem/read_destination.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for explicit complete-file read destinations.
+//   - Read destination test module.
 // - Must-Not:
-//   - Depend on concrete storage or localized native failures.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Supply a permissive reader and assert application path rejection.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another read invariant needs unrelated fixtures.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test target owns the same complete-file destination contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Complete-file read destination regression tests.
+//   - Read destination test module.
 // - Description:
-//   - Prevents directory syntax from reaching file reader ports.
+//   - Implements the declared test module responsibility for filesystem.
 // - Usage:
-//   - Runs through the filesystem crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Complete-file reads require explicit file syntax.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for complete-file read destinations.
-//!
-//! Directory syntax must fail before a permissive reader port is called.
+//! Read destination test module.
+
 use std::io;
 use std::path::Path;
 
@@ -52,20 +39,14 @@ use schoenwald_filesystem::ports::FileReader;
 struct PermissiveReader;
 
 impl FileReader for PermissiveReader {
-    fn read_bytes(
-        &self,
-        _path: &Path,
-    ) -> io::Result<Vec<u8>> {
+    fn read_bytes(&self, _path: &Path) -> io::Result<Vec<u8>> {
         Ok(Vec::new())
     }
 }
 
 #[test]
 fn directory_syntax_read_destination_is_rejected() -> Result<(), String> {
-    let result = ReadFile::bytes(
-        &PermissiveReader,
-        Path::new("report/"),
-    );
+    let result = ReadFile::bytes(&PermissiveReader, Path::new("report/"));
 
     if result.is_ok() {
         return Err("directory syntax unexpectedly returned bytes".to_owned());

@@ -1,12 +1,34 @@
-// File: SharApplicationModeDefinition.h
-// Path: src/unreal/project/composition/uproject/Source/SharApplication/Public/Application/SharApplicationModeDefinition.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: immutable application-mode identity, graph, readiness, recovery, and ownership policy only.
-// Specification: docs/technical/unreal/application-lifecycle-and-mode-runtime.md
-// LARGE-FILE owner=SharApplication; reason=cohesive reflected mode-definition schema;
-// split=extract lease policy if ownership declarations become independently versioned assets;
-// validation=validate.sh SharApplication plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar application mode definition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar application mode definition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar application mode definition composition module.
 
 #pragma once
 

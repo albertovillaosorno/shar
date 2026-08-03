@@ -1,7 +1,3 @@
-// File:
-//   - file_len_destination.rs
-// Path: tests/foundation/filesystem/file_len_destination.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for explicit file-length destinations.
+//   - File len destination test module.
 // - Must-Not:
-//   - Depend on concrete storage or native metadata behavior.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Supply a permissive inspector and assert application path rejection.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another inspection invariant needs unrelated fixtures.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test target owns the same file-length destination contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - File-length destination regression tests.
+//   - File len destination test module.
 // - Description:
-//   - Prevents directory syntax from reaching file metadata ports.
+//   - Implements the declared test module responsibility for filesystem.
 // - Usage:
-//   - Runs through the filesystem crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - File-length queries require explicit file syntax.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for explicit file-length destinations.
-//!
-//! Directory syntax must fail before a permissive inspector port is called.
+//! File len destination test module.
+
 use std::io;
 use std::path::{Path, PathBuf};
 
@@ -53,38 +40,26 @@ use schoenwald_filesystem::ports::PathInspector;
 struct PermissiveInspector;
 
 impl PathInspector for PermissiveInspector {
-    fn path_kind(
-        &self,
-        _path: &Path,
-    ) -> io::Result<PathKind> {
+    fn path_kind(&self, _path: &Path) -> io::Result<PathKind> {
         Ok(PathKind::File)
     }
 
-    fn file_len(
-        &self,
-        _path: &Path,
-    ) -> io::Result<u64> {
+    fn file_len(&self, _path: &Path) -> io::Result<u64> {
         Ok(7)
     }
 
-    fn canonicalize(
-        &self,
-        path: &Path,
-    ) -> io::Result<PathBuf> {
+    fn canonicalize(&self, path: &Path) -> io::Result<PathBuf> {
         Ok(path.to_path_buf())
     }
 }
 
 #[test]
 fn directory_syntax_file_length_is_rejected() -> Result<(), String> {
-    let result = InspectPath::len(
-        &PermissiveInspector,
-        Path::new("report/"),
-    );
+    let result = InspectPath::len(&PermissiveInspector, Path::new("report/"));
 
     if result.is_ok() {
         return Err(
-            "directory syntax unexpectedly returned a length".to_owned(),
+            "directory syntax unexpectedly returned a length".to_owned()
         );
     }
     Ok(())

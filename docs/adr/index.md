@@ -11,10 +11,12 @@ repository reference must point to the current owning decision.
 ## Audio
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Latin American Spanish audio fallback](audio/lmlm-spanish-latam-audio-fallback.md)
+- [Latin American Spanish audio
+  fallback](audio/lmlm-spanish-latam-audio-fallback.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Platform-native audio cooking and streaming](audio/platform-native-audio-cooking-and-streaming.md)
+- [Platform-native audio cooking and
+  streaming](audio/platform-native-audio-cooking-and-streaming.md)
   — Accepted
 
 ## Cinematics
@@ -26,48 +28,60 @@ repository reference must point to the current owning decision.
 ## Engineering
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Minimal hexagonal architecture](engineering/architecture/minimal-hexagonal-architecture.md)
+- [Minimal hexagonal
+  architecture](engineering/architecture/minimal-hexagonal-architecture.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Portable core separation](engineering/architecture/project-core-separation.md)
+- [Portable core
+  separation](engineering/architecture/project-core-separation.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Single repository validation authority](engineering/quality/local-validation-configs.md)
+- [Single repository validation
+  authority](engineering/quality/local-validation-configs.md)
   — Accepted
 - [Repository quality policy](engineering/quality/repository-quality-policy.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Strict validation and linting](engineering/quality/strict-validation-and-linting.md)
+- [Strict validation and
+  linting](engineering/quality/strict-validation-and-linting.md)
   — Accepted
 
 ## FBX conversion
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Unsupported model evidence preservation](fbx/chunks/chunk-preservation-policy.md)
+- [Unsupported model evidence
+  preservation](fbx/chunks/chunk-preservation-policy.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Character semantic texture, rig, outfit, and prop contract](fbx/export/character-semantic-texture-rig-and-outfit-contract.md)
+- [Character semantic texture, rig, outfit, and prop
+  contract](fbx/export/character-semantic-texture-rig-and-outfit-contract.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [First-principles FBX output contract](fbx/export/fbx-output-contract-boundary.md)
+- [First-principles FBX output
+  contract](fbx/export/fbx-output-contract-boundary.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Semantic component and geographic placement contract](fbx/export/semantic-component-and-geographic-placement-contract.md)
+- [Semantic component and geographic placement
+  contract](fbx/export/semantic-component-and-geographic-placement-contract.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Package evidence discovery boundary](fbx/extraction/source-discovery-boundary.md)
+- [Package evidence discovery
+  boundary](fbx/extraction/source-discovery-boundary.md)
   — Accepted
 
 ## Gameplay
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Collector cards, coins, rewards, gags, and wasps](gameplay/collectibles/collectibles-rewards-gags-and-wasps.md)
+- [Collector cards, coins, rewards, gags, and
+  wasps](gameplay/collectibles/collectibles-rewards-gags-and-wasps.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Open sandbox chapters and world progression](gameplay/open-sandbox-chapters-and-world-progression.md)
+- [Open sandbox chapters and world
+  progression](gameplay/open-sandbox-chapters-and-world-progression.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Driving, traffic, and vehicle behavior parity](gameplay/vehicles/driving-traffic-and-vehicle-ai.md)
+- [Driving, traffic, and vehicle behavior
+  parity](gameplay/vehicles/driving-traffic-and-vehicle-ai.md)
   — Accepted
 
 ## Governance
@@ -75,32 +89,39 @@ repository reference must point to the current owning decision.
 - [AI-first repository communication](governance/ai-first-repository.md) —
   Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Decision and technical knowledge boundaries](governance/documentation-and-knowledge-boundaries.md)
+- [Decision and technical knowledge
+  boundaries](governance/documentation-and-knowledge-boundaries.md)
   — Accepted
 - [Issue-only collaboration](governance/issue-only-collaboration.md) — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Public automation and maintenance boundary](governance/public-automation-and-maintenance-boundary.md)
+- [Public automation and maintenance
+  boundary](governance/public-automation-and-maintenance-boundary.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Calendar versioning, Conventional Commits, and no releases](governance/versioning-commits-and-publication.md)
+- [Calendar versioning, Conventional Commits, and no
+  releases](governance/versioning-commits-and-publication.md)
   — Accepted
 
 ## Legal and publication
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Lawful local input and publication boundary](legal/lawful-local-input-and-publication-boundary.md)
+- [Lawful local input and publication
+  boundary](legal/lawful-local-input-and-publication-boundary.md)
   — Accepted
 
 ## Modding
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Local drop-in mod packages and AI skills](modding/drop-in-mod-packages-and-ai-skills.md)
+- [Local drop-in mod packages and AI
+  skills](modding/drop-in-mod-packages-and-ai-skills.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Local mod trust and distribution boundary](modding/mod-safety-scanner-and-distribution.md)
+- [Local mod trust and distribution
+  boundary](modding/mod-safety-scanner-and-distribution.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Mod-owned multiplayer adapters and community servers](modding/mod-owned-multiplayer-adapters-and-community-servers.md)
+- [Mod-owned multiplayer adapters and community
+  servers](modding/mod-owned-multiplayer-adapters-and-community-servers.md)
   — Accepted
 - [Voice and language mod packages](modding/voice-language-modding-suite.md) —
   Accepted
@@ -108,142 +129,184 @@ repository reference must point to the current owning decision.
 ## Pipeline
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Eleven-phase remake delivery roadmap](pipeline/eleven-phase-remake-delivery-roadmap.md)
+- [Eleven-phase remake delivery
+  roadmap](pipeline/eleven-phase-remake-delivery-roadmap.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Extraction provenance and manifest linkage](pipeline/extraction/extraction-provenance-and-manifest-linkage.md)
+- [Extraction provenance and manifest
+  linkage](pipeline/extraction/extraction-provenance-and-manifest-linkage.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Lossless fail-closed extraction](pipeline/extraction/lossless-extraction-contract.md)
+- [Lossless fail-closed
+  extraction](pipeline/extraction/lossless-extraction-contract.md)
   — Accepted
 - [Hexagonal scene export](pipeline/fbx/hexagonal-scene-export.md) — Accepted
 - [Game manifest as a completeness ledger](pipeline/game-manifest-ledger.md) —
   Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Minor-unit taxonomy and package value](pipeline/minor-unit-taxonomy-value-case.md)
+- [Minor-unit taxonomy and package
+  value](pipeline/minor-unit-taxonomy-value-case.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Orchestration, command-line, and language boundaries](pipeline/orchestration-cli-and-language-boundaries.md)
+- [Orchestration, command-line, and language
+  boundaries](pipeline/orchestration-cli-and-language-boundaries.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Retire legacy conversion bridges](pipeline/retire-legacy-language-and-p3d-fbx-bridges.md)
+- [Retire legacy conversion
+  bridges](pipeline/retire-legacy-language-and-p3d-fbx-bridges.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Background vista and occluder relocation](pipeline/unreal/background-vista-and-occluder-relocation.md)
+- [Background vista and occluder
+  relocation](pipeline/unreal/background-vista-and-occluder-relocation.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native asset translation without copy-paste](pipeline/unreal/native-asset-translation-and-no-copy-paste.md)
+- [Native asset translation without
+  copy-paste](pipeline/unreal/native-asset-translation-and-no-copy-paste.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Faithful seven-chapter open-world scope](pipeline/unreal/faithful-seven-chapter-open-world-scope.md)
+- [Faithful seven-chapter open-world
+  scope](pipeline/unreal/faithful-seven-chapter-open-world-scope.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [World assembly from normalized chunks](pipeline/unreal/world-assembly-from-normalized-chunks.md)
+- [World assembly from normalized
+  chunks](pipeline/unreal/world-assembly-from-normalized-chunks.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Faithful material normalization](pipeline/unreal/texture-superposition-shader.md)
+- [Faithful material
+  normalization](pipeline/unreal/texture-superposition-shader.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Unified open world and chapter projection](pipeline/unreal/unified-open-world-and-chapter-projection.md)
+- [Unified open world and chapter
+  projection](pipeline/unreal/unified-open-world-and-chapter-projection.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Unreal manifest and package taxonomy](pipeline/unreal/unreal-manifest-and-package-taxonomy.md)
+- [Unreal manifest and package
+  taxonomy](pipeline/unreal/unreal-manifest-and-package-taxonomy.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native world partition and data layers](pipeline/unreal/world-partition-and-data-layer-import.md)
+- [Native world partition and data
+  layers](pipeline/unreal/world-partition-and-data-layer-import.md)
   — Accepted
 
 ## Unreal
 
 - [Unreal asset-conversion boundary](unreal/architecture.md) — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [AAA-native content and gameplay foundation](unreal/architecture/aaa-native-content-and-gameplay-foundation.md)
+- [AAA-native content and gameplay
+  foundation](unreal/architecture/aaa-native-content-and-gameplay-foundation.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Minimal hexagonal native runtime](unreal/architecture/hexagonal-runtime-and-no-technical-debt.md)
+- [Minimal hexagonal native
+  runtime](unreal/architecture/hexagonal-runtime-and-no-technical-debt.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Blueprint-to-C++ authority taxonomy](unreal/authoring/blueprint-to-cpp-taxonomy.md)
+- [Blueprint-to-C++ authority
+  taxonomy](unreal/authoring/blueprint-to-cpp-taxonomy.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Deterministic editor change replay](unreal/authoring/change-replay-taxonomy.md)
+- [Deterministic editor change
+  replay](unreal/authoring/change-replay-taxonomy.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [UI and level authoring taxonomy](unreal/authoring/ui-and-level-authoring-taxonomy.md)
+- [UI and level authoring
+  taxonomy](unreal/authoring/ui-and-level-authoring-taxonomy.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Converted asset ingestion boundary](unreal/import-adapters/converted-asset-ingestion-boundary.md)
+- [Converted asset ingestion
+  boundary](unreal/import-adapters/converted-asset-ingestion-boundary.md)
   — Accepted
 - [Import review boundary](unreal/import-adapters/import-review-boundary.md) —
   Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Staged mesh import and world assembly](unreal/import-adapters/staged-mesh-import-and-world-assembly.md)
+- [Staged mesh import and world
+  assembly](unreal/import-adapters/staged-mesh-import-and-world-assembly.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native MCP tool projection and protected skill guidance](unreal/mcp/native-tool-cli-projection-and-skills.md)
+- [Native MCP tool projection and protected skill
+  guidance](unreal/mcp/native-tool-cli-projection-and-skills.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native Unreal MCP terminal bridge](unreal/mcp/native-unreal-mcp-terminal-bridge.md)
+- [Native Unreal MCP terminal
+  bridge](unreal/mcp/native-unreal-mcp-terminal-bridge.md)
+  — Accepted
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Upstream native plugin and additive extension boundary](unreal/mcp/upstream-native-plugin-and-additive-extension-boundary.md) <!-- markdownlint-disable-line MD013 -->
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Upstream native plugin and additive extension boundary](unreal/mcp/upstream-native-plugin-and-additive-extension-boundary.md)
+- [C++-primary and Blueprint-compatible Unreal
+  project](unreal/project/cpp-primary-blueprint-compatible-project.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [C++-primary and Blueprint-compatible Unreal project](unreal/project/cpp-primary-blueprint-compatible-project.md)
+- [Data-driven Unreal gameplay content
+  catalog](unreal/runtime/data-driven-gameplay-content-catalog.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Data-driven Unreal gameplay content catalog](unreal/runtime/data-driven-gameplay-content-catalog.md)
+- [Shared rig-family animation
+  libraries](unreal/runtime/shared-rig-family-animation-libraries.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Shared rig-family animation libraries](unreal/runtime/shared-rig-family-animation-libraries.md)
+- [Contextual interaction query and transaction
+  boundary](unreal/runtime/contextual-interaction-query-and-transaction.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Contextual interaction query and transaction boundary](unreal/runtime/contextual-interaction-query-and-transaction.md)
+- [Native flying-hazard actors and StateTree
+  execution](unreal/runtime/native-flying-hazard-actors-and-state-trees.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native flying-hazard actors and StateTree execution](unreal/runtime/native-flying-hazard-actors-and-state-trees.md)
+- [Typed StateTree action
+  sequences](unreal/runtime/typed-state-tree-action-sequences.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Typed StateTree action sequences](unreal/runtime/typed-state-tree-action-sequences.md)
+- [Event-driven music and
+  ambience](unreal/runtime/event-driven-music-and-ambience.md)
+  — Accepted
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Native gameplay audio, dialogue, and listener boundary](unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md) <!-- markdownlint-disable-line MD013 -->
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Event-driven music and ambience](unreal/runtime/event-driven-music-and-ambience.md)
+- [Mass Entity ambient
+  population](unreal/runtime/mass-entity-ambient-population.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native gameplay audio, dialogue, and listener boundary](unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md)
+- [State-driven missions, interactions, interiors, and
+  notoriety](unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Mass Entity ambient population](unreal/runtime/mass-entity-ambient-population.md)
-  — Accepted
-<!-- markdownlint-disable-next-line MD013 -->
-- [State-driven missions, interactions, interiors, and notoriety](unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
-  — Accepted
-<!-- markdownlint-disable-next-line MD013 -->
-- [Portable save storage and lifecycle](unreal/runtime/portable-save-storage-and-lifecycle.md)
+- [Portable save storage and
+  lifecycle](unreal/runtime/portable-save-storage-and-lifecycle.md)
   — Accepted
 - [Runtime parity boundary](unreal/runtime/remake-parity-boundary.md) — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Graphics quality presets and platform support](unreal/runtime/graphics-quality-presets-and-platform-support.md)
+- [Graphics quality presets and platform
+  support](unreal/runtime/graphics-quality-presets-and-platform-support.md)
+  — Accepted
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Shared runtime tagging, modding, and platform compatibility](unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md) <!-- markdownlint-disable-line MD013 -->
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Shared runtime tagging, modding, and platform compatibility](unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
+- [Transactional phone-booth vehicle
+  retrieval](unreal/runtime/transactional-phone-booth-vehicle-retrieval.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Transactional phone-booth vehicle retrieval](unreal/runtime/transactional-phone-booth-vehicle-retrieval.md)
-  — Accepted
-<!-- markdownlint-disable-next-line MD013 -->
-- [Validated game-feature mod overlays](unreal/runtime/validated-game-feature-mod-overlays.md)
+- [Validated game-feature mod
+  overlays](unreal/runtime/validated-game-feature-mod-overlays.md)
   — Accepted
 - [Runtime parity test boundary](unreal/runtime/runtime-parity-test-boundary.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Unreal support and bridge boundaries](unreal/support-and-bridge-boundaries.md)
+- [Unreal support and bridge
+  boundaries](unreal/support-and-bridge-boundaries.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [Common UI front end and progress projection](unreal/ui/common-ui-frontend-and-progress-projection.md)
+- [Common UI front end and progress
+  projection](unreal/ui/common-ui-frontend-and-progress-projection.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
-- [HUD, radar, camera, and navigation parity](unreal/ui/hud-radar-camera-and-navigation.md)
+- [HUD, radar, camera, and navigation
+  parity](unreal/ui/hud-radar-camera-and-navigation.md)
   — Accepted
 - [UI parity boundary](unreal/ui/ui-parity-boundary.md) — Accepted
 

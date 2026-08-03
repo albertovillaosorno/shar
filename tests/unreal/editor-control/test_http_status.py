@@ -1,7 +1,3 @@
-# File:
-#   - test_http_status.py
-# Path: tests/unreal/editor-control/test_http_status.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,47 +6,37 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Regression evidence for unsuccessful MCP HTTP status interpretation.
+#   - Test http status test module.
 # - Must-Not:
-#   - Open sockets, invoke Unreal, or test HTTP framing mechanics.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Verifying stable protocol failures from decoded response bodies.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - HTTP error interpretation gains a second independent protocol.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another test module owns the same pure status-translation evidence.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Guards HTTP-to-protocol failure translation.
+#   - Test http status test module.
 # - Description:
-#   - Proves the extracted status interpreter preserves failure behavior.
+#   - Implements the declared test module responsibility for editor control.
 # - Usage:
-#   - Executed by pytest through the canonical validator workflow.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Uses deterministic decoded JSON objects only.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
-"""Regression tests for unsuccessful MCP HTTP status interpretation."""
+
+"""Test http status test module."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
-from mcp.adapter_outbound.http_status import (
-    raise_http_status_error,
-)
+from mcp.adapter_outbound.http_status import raise_http_status_error
 from mcp.domain.errors import ProtocolError
+import pytest
 
 if TYPE_CHECKING:
     from mcp.domain.json_types import JsonObject
@@ -88,6 +74,7 @@ def test_oversized_rpc_error_uses_status_fallback(
 ) -> None:
     """An oversized server message cannot replace the stable HTTP status."""
     monkeypatch.setattr(
+        # jig-ignore-next-line: exact value is indivisible
         "mcp.adapter_outbound.response_validation._MAX_JSON_RPC_ERROR_MESSAGE_BYTES",
         4,
         raising=False,

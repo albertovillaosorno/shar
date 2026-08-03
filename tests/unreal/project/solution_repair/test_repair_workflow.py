@@ -1,7 +1,3 @@
-# File:
-#   - test_repair_workflow.py
-# Path: tests/unreal/project/solution_repair/test_repair_workflow.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,38 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Patch-only orchestration for existing generated solutions.
+#   - Test repair workflow test module.
 # - Must-Not:
-#   - Invoke live Unreal processes or depend on network services.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Deterministic local fixtures and observable assertions.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Regeneration orchestration needs separate integration tests.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module proves the same patch-only workflow.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Unit tests for patch-only project-file repair.
+#   - Test repair workflow test module.
 # - Description:
-#   - Proves missing-solution failure and successful local repair.
+#   - Implements the declared test module responsibility for project.
 # - Usage:
-#   - Run by pytest without resolving an Unreal installation.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Patch-only mode never removes caches or invokes UBT.
-#
-# ADRs:
-# - docs/adr/unreal/runtime/runtime-parity-test-boundary.md
-#
-# Large file:
-#   - false
+#   - Invalid or missing inputs fail explicitly.
 #
 
-
-"""Patch-only project repair workflow contracts."""
+"""Test repair workflow test module."""
 
 from __future__ import annotations
 

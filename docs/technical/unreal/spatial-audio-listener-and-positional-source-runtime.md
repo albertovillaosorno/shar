@@ -5,20 +5,27 @@
 
 ## Governing decisions and specifications
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Native gameplay audio, dialogue, and listener boundary](../../adr/unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native gameplay audio, dialogue, and listener boundary](../../adr/unreal/runtime/native-gameplay-audio-dialogue-and-listener-boundary.md)
+- [Native render-frame, view, and layer
+  runtime](native-render-frame-view-and-layer-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native render-frame, view, and layer runtime](native-render-frame-view-and-layer-runtime.md)
+- [Camera rig, preset, and arbitration
+  runtime](camera-rig-preset-and-arbitration-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Camera rig, preset, and arbitration runtime](camera-rig-preset-and-arbitration-runtime.md)
+- [Platform audio cooking and
+  streaming](platform-audio-cooking-and-streaming.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Platform audio cooking and streaming](platform-audio-cooking-and-streaming.md)
+- [Gameplay audio source, residency, mix, and environment
+  runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
+- [Native asset load request and streaming
+  runtime](native-asset-load-request-and-streaming-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md)
+- [Typed event and observation routing
+  runtime](typed-event-and-observation-routing-runtime.md)
 
 ## Purpose
 
@@ -63,16 +70,30 @@ native spatialization or the platform audio device.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Camera and view runtime | Owns accepted camera transforms, velocities, local-player views, and presentation-camera revisions. |
-| Participant and vehicle services | Own accepted focus anchors, controlled participants, transforms, and movement observations. |
-| Listener-policy catalog | Owns frontend, gameplay, cinematic, split-screen, accessibility, and platform listener rules. |
-| Spatial-audio subsystem | Validates listener candidates, selects the accepted mix policy, and projects listener state. |
-| Positional-source service | Validates source definitions, attachments, leases, updates, and teardown. |
-| Unreal Audio Engine | Owns listener consumption, spatialization, attenuation, occlusion, routing, concurrency, mixing, virtualization, and output. |
-| World-composition service | Owns source-region readiness, streaming, overlays, and teardown. |
-| Domain services | Own gameplay, missions, movement, damage, progression, and persistence. |
+- **Authority:** Camera and view runtime
+  - **Responsibility:** Owns accepted camera transforms, velocities,
+    local-player views, and presentation-camera revisions.
+- **Authority:** Participant and vehicle services
+  - **Responsibility:** Own accepted focus anchors, controlled participants,
+    transforms, and movement observations.
+- **Authority:** Listener-policy catalog
+  - **Responsibility:** Owns frontend, gameplay, cinematic, split-screen,
+    accessibility, and platform listener rules.
+- **Authority:** Spatial-audio subsystem
+  - **Responsibility:** Validates listener candidates, selects the accepted mix
+    policy, and projects listener state.
+- **Authority:** Positional-source service
+  - **Responsibility:** Validates source definitions, attachments, leases,
+    updates, and teardown.
+- **Authority:** Unreal Audio Engine
+  - **Responsibility:** Owns listener consumption, spatialization, attenuation,
+    occlusion, routing, concurrency, mixing, virtualization, and output.
+- **Authority:** World-composition service
+  - **Responsibility:** Owns source-region readiness, streaming, overlays, and
+    teardown.
+- **Authority:** Domain services
+  - **Responsibility:** Own gameplay, missions, movement, damage, progression,
+    and persistence.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -110,21 +131,41 @@ slots, sound-renderer handles, and callback order are not durable identity.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `PolicyId` | Canonical listener-policy identity. |
-| `ApplicationModes` | Frontend, loading, gameplay, pause, cinematic, capture, or recovery eligibility. |
-| `CandidateSources` | Accepted camera, participant, vehicle, cinematic, frontend, or fixed listener candidates. |
-| `SplitScreenMode` | Independent, shared, primary, weighted, focus-owner, or another registered platform strategy. |
-| `TransformPolicy` | Position, orientation, velocity, focus-anchor, and bounded offset rules. |
-| `CameraParticipantPolicy` | Relationship between camera and controlled participant for audible focus. |
-| `TransitionPolicy` | Crossfade, interpolation, snap, hold, and supersession behavior. |
-| `AttenuationScalePolicy` | Optional world, mode, accessibility, or platform scaling. |
-| `InteriorPolicy` | Interior, vehicle cabin, room, portal, and camera-volume mix behavior. |
-| `AccessibilityPolicy` | Mono, focus, reduced dynamic range, subtitle, and orientation alternatives. |
-| `PlatformPolicy` | Supported listener count, output device, latency, and fallback. |
-| `DiagnosticsPolicy` | Read-only inspection and capture permissions. |
-| `DefinitionRevision` | Immutable revision for stale-result rejection. |
+- **Field:** `PolicyId`
+  - **Contract:** Canonical listener-policy identity.
+- **Field:** `ApplicationModes`
+  - **Contract:** Frontend, loading, gameplay, pause, cinematic, capture, or
+    recovery eligibility.
+- **Field:** `CandidateSources`
+  - **Contract:** Accepted camera, participant, vehicle, cinematic, frontend, or
+    fixed listener candidates.
+- **Field:** `SplitScreenMode`
+  - **Contract:** Independent, shared, primary, weighted, focus-owner, or
+    another registered platform strategy.
+- **Field:** `TransformPolicy`
+  - **Contract:** Position, orientation, velocity, focus-anchor, and bounded
+    offset rules.
+- **Field:** `CameraParticipantPolicy`
+  - **Contract:** Relationship between camera and controlled participant for
+    audible focus.
+- **Field:** `TransitionPolicy`
+  - **Contract:** Crossfade, interpolation, snap, hold, and supersession
+    behavior.
+- **Field:** `AttenuationScalePolicy`
+  - **Contract:** Optional world, mode, accessibility, or platform scaling.
+- **Field:** `InteriorPolicy`
+  - **Contract:** Interior, vehicle cabin, room, portal, and camera-volume mix
+    behavior.
+- **Field:** `AccessibilityPolicy`
+  - **Contract:** Mono, focus, reduced dynamic range, subtitle, and orientation
+    alternatives.
+- **Field:** `PlatformPolicy`
+  - **Contract:** Supported listener count, output device, latency, and
+    fallback.
+- **Field:** `DiagnosticsPolicy`
+  - **Contract:** Read-only inspection and capture permissions.
+- **Field:** `DefinitionRevision`
+  - **Contract:** Immutable revision for stale-result rejection.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -286,23 +327,44 @@ required hard camera cut beyond policy.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `DefinitionId` | Canonical positional-source identity. |
-| `SoundSource` | Class-validated Sound Wave, Sound Cue, MetaSound, or dialogue source. |
-| `AttachmentPolicy` | Actor, component, socket, bone, world snapshot, spline, or fixed authored anchor. |
-| `AttenuationPolicy` | Required Sound Attenuation asset and optional bounded overrides. |
-| `ConcurrencyPolicy` | Native Sound Concurrency and project significance policy. |
-| `LifetimePolicy` | One-shot, finite, leased continuous, attached continuous, or owner-scoped persistent. |
-| `VelocityPolicy` | Component, movement observation, derived, fixed, or disabled Doppler evidence. |
-| `OcclusionPolicy` | Native asynchronous trace, portal, room, or declared plugin policy. |
-| `ReverbPolicy` | Audio-volume, attenuation-send, room, and submix behavior. |
-| `ListenerPolicy` | Local-player, shared, primary, cinematic, or global audibility. |
-| `VirtualizationPolicy` | Offscreen, inaudible, distance, pause, and resume behavior. |
-| `StreamingPolicy` | Asset bundles, preload, residency, and eviction. |
-| `NetworkPolicy` | Authority, replication, prediction, and local-only presentation. |
-| `QualityPolicy` | Platform variants and optional fallbacks. |
-| `DefinitionRevision` | Immutable revision for stale-result rejection. |
+- **Field:** `DefinitionId`
+  - **Contract:** Canonical positional-source identity.
+- **Field:** `SoundSource`
+  - **Contract:** Class-validated Sound Wave, Sound Cue, MetaSound, or dialogue
+    source.
+- **Field:** `AttachmentPolicy`
+  - **Contract:** Actor, component, socket, bone, world snapshot, spline, or
+    fixed authored anchor.
+- **Field:** `AttenuationPolicy`
+  - **Contract:** Required Sound Attenuation asset and optional bounded
+    overrides.
+- **Field:** `ConcurrencyPolicy`
+  - **Contract:** Native Sound Concurrency and project significance policy.
+- **Field:** `LifetimePolicy`
+  - **Contract:** One-shot, finite, leased continuous, attached continuous, or
+    owner-scoped persistent.
+- **Field:** `VelocityPolicy`
+  - **Contract:** Component, movement observation, derived, fixed, or disabled
+    Doppler evidence.
+- **Field:** `OcclusionPolicy`
+  - **Contract:** Native asynchronous trace, portal, room, or declared plugin
+    policy.
+- **Field:** `ReverbPolicy`
+  - **Contract:** Audio-volume, attenuation-send, room, and submix behavior.
+- **Field:** `ListenerPolicy`
+  - **Contract:** Local-player, shared, primary, cinematic, or global
+    audibility.
+- **Field:** `VirtualizationPolicy`
+  - **Contract:** Offscreen, inaudible, distance, pause, and resume behavior.
+- **Field:** `StreamingPolicy`
+  - **Contract:** Asset bundles, preload, residency, and eviction.
+- **Field:** `NetworkPolicy`
+  - **Contract:** Authority, replication, prediction, and local-only
+    presentation.
+- **Field:** `QualityPolicy`
+  - **Contract:** Platform variants and optional fallbacks.
+- **Field:** `DefinitionRevision`
+  - **Contract:** Immutable revision for stale-result rejection.
 
 <!-- markdownlint-enable MD013 -->
 

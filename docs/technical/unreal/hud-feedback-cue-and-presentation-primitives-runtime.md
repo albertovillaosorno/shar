@@ -6,19 +6,25 @@
 ## Governing decisions and specifications
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [HUD, radar, camera, and navigation parity](../../adr/unreal/ui/hud-radar-camera-and-navigation.md)
+- [HUD, radar, camera, and navigation
+  parity](../../adr/unreal/ui/hud-radar-camera-and-navigation.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Common UI front end and progress projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
+- [Common UI front end and progress
+  projection](../../adr/unreal/ui/common-ui-frontend-and-progress-projection.md)
 - [UI parity boundary](../../adr/unreal/ui/ui-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md)
+- [Typed event and observation routing
+  runtime](typed-event-and-observation-routing-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [In-game HUD, pause, and transition runtime](in-game-hud-pause-and-transition-runtime.md)
+- [In-game HUD, pause, and transition
+  runtime](in-game-hud-pause-and-transition-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Progression, collectibles, cheats, and credits](progression-collectibles-and-cheats.md)
+- [Progression, collectibles, cheats, and
+  credits](progression-collectibles-and-cheats.md)
 - [Race route and opponent runtime](race-route-and-opponent-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Semantic input, device, and haptics runtime](semantic-input-device-and-haptics-runtime.md)
+- [Semantic input, device, and haptics
+  runtime](semantic-input-device-and-haptics-runtime.md)
 
 ## Purpose
 
@@ -65,18 +71,35 @@ state.
 
 <!-- markdownlint-disable MD013 -->
 
-| Service | Authority |
-| :--- | :--- |
-| `USharPlayerHudFeedbackSubsystem` | Per-player cue queue, priority, coalescing, cancellation, and accepted presentation revision. |
-| `USharSharedHudFeedbackSubsystem` | Shared countdowns, viewport-wide banners, and cross-player mutual exclusion. |
-| `USharHudFeedbackViewModelSubsystem` | Immutable cue, numeric, slider, message, and radar projections. |
-| Typed observation router | Delivery of accepted gameplay observations with source identity and revision. |
-| Progression service | Cards, currency, gags, flying hazards, unlocks, and accepted completion state. |
-| Mission service | Objective identity, stage progress, countdown policy, and mission terminal state. |
-| Notoriety service | Warning, pursuit, arrest, fine, and accepted notoriety state. |
-| Navigation service | Radar focal point, route, icon membership, visibility, and projection revision. |
-| Input service | Semantic input leases and countdown-owned gameplay-input gating. |
-| Presentation primitive library | Pure evaluation of color, opacity, transform, clipping, and normalized values. |
+- **Service:** `USharPlayerHudFeedbackSubsystem`
+  - **Authority:** Per-player cue queue, priority, coalescing, cancellation, and
+    accepted presentation revision.
+- **Service:** `USharSharedHudFeedbackSubsystem`
+  - **Authority:** Shared countdowns, viewport-wide banners, and cross-player
+    mutual exclusion.
+- **Service:** `USharHudFeedbackViewModelSubsystem`
+  - **Authority:** Immutable cue, numeric, slider, message, and radar
+    projections.
+- **Service:** Typed observation router
+  - **Authority:** Delivery of accepted gameplay observations with source
+    identity and revision.
+- **Service:** Progression service
+  - **Authority:** Cards, currency, gags, flying hazards, unlocks, and accepted
+    completion state.
+- **Service:** Mission service
+  - **Authority:** Objective identity, stage progress, countdown policy, and
+    mission terminal state.
+- **Service:** Notoriety service
+  - **Authority:** Warning, pursuit, arrest, fine, and accepted notoriety state.
+- **Service:** Navigation service
+  - **Authority:** Radar focal point, route, icon membership, visibility, and
+    projection revision.
+- **Service:** Input service
+  - **Authority:** Semantic input leases and countdown-owned gameplay-input
+    gating.
+- **Service:** Presentation primitive library
+  - **Authority:** Pure evaluation of color, opacity, transform, clipping, and
+    normalized values.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -108,23 +131,37 @@ ignored.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `CueId` | Stable registered cue identity. |
-| `ChannelId` | Layout and arbitration channel. |
-| `Scope` | One local player, selected local players, or shared viewport. |
-| `Priority` | Deterministic scheduling priority. |
-| `ExclusionGroupId` | Optional mutual-exclusion group. |
-| `CoalescingPolicyId` | Replace, accumulate, merge, ignore duplicate, or queue. |
-| `MaximumQueued` | Validated bounded pending count. |
-| `LifetimePolicyId` | Enter, hold, exit, timeout, and cancellation behavior. |
-| `PresentationProfileId` | Widget, style, animation, layout, and safe-area policy. |
-| `AccessibilityProfileId` | Narration, reduced motion, contrast, timing, and haptic alternatives. |
-| `AudioPolicyId` | Optional cue, ducking, and concurrency behavior. |
-| `HapticPolicyId` | Optional semantic haptic pattern. |
-| `InputGatePolicyId` | Optional semantic gameplay-input lease. |
-| `RequiredBundles` | Art, font, audio, haptic, animation, and icon bundles. |
-| `FeatureOwnerId` | Base game or validated feature package. |
+- **Field:** `CueId`
+  - **Contract:** Stable registered cue identity.
+- **Field:** `ChannelId`
+  - **Contract:** Layout and arbitration channel.
+- **Field:** `Scope`
+  - **Contract:** One local player, selected local players, or shared viewport.
+- **Field:** `Priority`
+  - **Contract:** Deterministic scheduling priority.
+- **Field:** `ExclusionGroupId`
+  - **Contract:** Optional mutual-exclusion group.
+- **Field:** `CoalescingPolicyId`
+  - **Contract:** Replace, accumulate, merge, ignore duplicate, or queue.
+- **Field:** `MaximumQueued`
+  - **Contract:** Validated bounded pending count.
+- **Field:** `LifetimePolicyId`
+  - **Contract:** Enter, hold, exit, timeout, and cancellation behavior.
+- **Field:** `PresentationProfileId`
+  - **Contract:** Widget, style, animation, layout, and safe-area policy.
+- **Field:** `AccessibilityProfileId`
+  - **Contract:** Narration, reduced motion, contrast, timing, and haptic
+    alternatives.
+- **Field:** `AudioPolicyId`
+  - **Contract:** Optional cue, ducking, and concurrency behavior.
+- **Field:** `HapticPolicyId`
+  - **Contract:** Optional semantic haptic pattern.
+- **Field:** `InputGatePolicyId`
+  - **Contract:** Optional semantic gameplay-input lease.
+- **Field:** `RequiredBundles`
+  - **Contract:** Art, font, audio, haptic, animation, and icon bundles.
+- **Field:** `FeatureOwnerId`
+  - **Contract:** Base game or validated feature package.
 
 <!-- markdownlint-enable MD013 -->
 

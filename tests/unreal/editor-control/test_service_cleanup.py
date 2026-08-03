@@ -1,7 +1,3 @@
-# File:
-#   - test_service_cleanup.py
-# Path: tests/unreal/editor-control/test_service_cleanup.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,46 +6,41 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Application-session cleanup failure precedence tests.
+#   - Test service cleanup test module.
 # - Must-Not:
-#   - Open sockets, invoke Unreal, or depend on HTTP adapters.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Synthetic transport failures during context-manager exit.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Session lifecycle gains independently testable recovery policies.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another application test module owns cleanup precedence.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Preserves primary failures while retaining cleanup evidence.
+#   - Test service cleanup test module.
 # - Description:
-#   - Verifies close failures propagate only when no earlier failure exists.
+#   - Implements the declared test module responsibility for editor control.
 # - Usage:
-#   - Executed by pytest through the canonical validator workflow.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Uses one immutable synthetic MCP session.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-#
-# Large file:
-#   - false
-#
-"""Application cleanup failure precedence tests."""
+
+"""Test service cleanup test module."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING
+from typing import override
 
-import pytest
 from mcp.application.service import UnrealMcpTranslator
-from mcp.domain.errors import ProtocolError, ToolCallError
+from mcp.domain.errors import ProtocolError
+from mcp.domain.errors import ToolCallError
 from mcp.domain.session import McpSession
 from mcp.port_outbound.transport import McpTransport
+import pytest
 
 if TYPE_CHECKING:
     from mcp.domain.json_types import JsonObject

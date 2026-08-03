@@ -1,7 +1,3 @@
-// File:
-//   - escaping.rs
-// Path: src/foundation/json-text/domain/escaping.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,33 +6,31 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Lossless JSON string-content escaping shared by SHAR crates.
+//   - Escaping domain module.
 // - Must-Not:
-//   - Render documents, perform I/O, or interpret domain records.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Encode JSON delimiters, backslashes, and control characters.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Typed JSON document behavior needs a separate abstraction.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another portable crate owns the same string-format primitive.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Provides one panic-free JSON text escaping implementation.
-//
-// ADRs:
-// - docs/adr/engineering/architecture/project-core-separation.md
-//
-// Large file:
-//   - false
+//   - Escaping domain module.
+// - Description:
+//   - Implements the declared domain module responsibility for json text.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Portable JSON string-content escaping.
+//! Escaping domain module.
 
-/// Escape string content for insertion between JSON quotation marks.
+/// Escape one string for inclusion in a JSON string literal.
 #[must_use]
 pub fn escape(value: &str) -> String {
     let mut output = String::with_capacity(value.len());
@@ -45,16 +39,15 @@ pub fn escape(value: &str) -> String {
             '"' | '\\' => {
                 output.push('\\');
                 output.push(character);
-            }
+            },
             '\u{8}' => output.push_str("\\b"),
             '\u{c}' => output.push_str("\\f"),
             '\n' => output.push_str("\\n"),
             '\r' => output.push_str("\\r"),
             '\t' => output.push_str("\\t"),
-            control if control <= '\u{1f}' => push_control(
-                &mut output,
-                control,
-            ),
+            control if control <= '\u{1f}' => {
+                push_control(&mut output, control);
+            },
             other => output.push(other),
         }
     }
@@ -62,10 +55,7 @@ pub fn escape(value: &str) -> String {
 }
 
 /// Append one JSON Unicode escape for an unhandled C0 control.
-fn push_control(
-    output: &mut String,
-    control: char,
-) {
+fn push_control(output: &mut String, control: char) {
     let code = u32::from(control);
     output.push_str("\\u00");
     output.push(hex_digit(code >> 4));

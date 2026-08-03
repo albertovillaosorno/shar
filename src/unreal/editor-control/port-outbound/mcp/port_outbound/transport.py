@@ -1,7 +1,3 @@
-# File:
-#   - transport.py
-# Path: src/unreal/editor-control/port-outbound/mcp/port_outbound/transport.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,41 +6,34 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - The inbound application contract for MCP transport behavior.
+#   - Transport outbound port.
 # - Must-Not:
-#   - Contain HTTP, socket, retry, CLI, or Unreal implementations.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Typed operations required by translator use cases.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - The module gains two independently testable contracts.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module owns the same contract without a distinct invariant.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Defines the replaceable native MCP transport port.
+#   - Transport outbound port.
 # - Description:
-#   - Keeps protocol mechanics outside the application core.
+#   - Implements the declared outbound port responsibility for editor control.
 # - Usage:
-#   - Implemented by driven adapters and consumed by the service.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - No transport implementation is selected implicitly.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
-"""Transport port for the native Unreal MCP server."""
+
+"""Transport outbound port."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol
+from typing import Protocol
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from mcp.domain.json_types import JsonObject

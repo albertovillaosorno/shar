@@ -101,15 +101,20 @@ protected service features presents materially different facts.
 - Public.Resource.Org (n.d.), *Chamberlain Group, Inc. v. Skylink Technologies,
   Inc.*, 381 F.3d 1178 (Fed. Cir. 2004), public-domain reporter duplicate.
   Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://law.resource.org/pub/us/case/reporter/F3/381/381.F3d.1178.04-1118.html>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://law.resource.org/pub/us/case/reporter/F3/381/381.F3d.1178.04-1118.html> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 <!-- markdownlint-disable-next-line MD013 -->
-- [17 U.S.C. § 1201 tool-distribution research](../statutes/17-usc-1201-trafficking.md).
+- [17 U.S.C. § 1201 tool-distribution
+  research](../statutes/17-usc-1201-trafficking.md).
 - [MDY Industries, LLC v. Blizzard Entertainment, Inc.](mdy-v-blizzard.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Storage Technology Corp. v. Custom Hardware Engineering & Consulting, Inc.](storage-technology-v-custom-hardware.md).
+- [Storage Technology Corp. v. Custom Hardware Engineering & Consulting,
+  Inc.](storage-technology-v-custom-hardware.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Lexmark International, Inc. v. Static Control Components, Inc.](lexmark-v-static-control.md).
+- [Lexmark International, Inc. v. Static Control Components,
+  Inc.](lexmark-v-static-control.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Software interoperability research](../doctrines/software-interoperability.md).
+- [Software interoperability
+  research](../doctrines/software-interoperability.md).

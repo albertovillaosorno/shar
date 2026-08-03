@@ -1,7 +1,3 @@
-# File:
-#   - tool_identity.py
-# Path: src/unreal/editor-control/domain/mcp/domain/tool_identity.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,37 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Canonical native Unreal tool identities and invocation leaf names.
+#   - Tool identity domain module.
 # - Must-Not:
-#   - Import transport, command-line, filesystem, or Unreal implementation APIs.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Normalizing qualified and leaf tool names against one toolset identity.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Toolset and tool identity grammars gain independent native contracts.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another domain module owns the same identity invariant.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Keeps discovery identities and invocation names interoperable.
+#   - Tool identity domain module.
 # - Description:
-#   - Accepts copyable qualified names while emitting native call leaf names.
+#   - Implements the declared domain module responsibility for editor control.
 # - Usage:
-#   - Used by schema parsing and Toolset Registry invocation orchestration.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Qualified tools must belong to the explicitly selected toolset.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
-"""Native Unreal MCP tool identity normalization."""
+
+"""Tool identity domain module."""
 
 from __future__ import annotations
 
@@ -57,6 +45,7 @@ def validated_toolset_identity(value: str) -> str:
 
     Returns:
         The normalized bounded identity.
+
     """
     return _validated_identity(value, context="toolset name")
 
@@ -70,6 +59,7 @@ def canonical_tool_identity(toolset_name: str, tool_name: str) -> str:
 
     Returns:
         The canonical `<toolset>.<leaf>` tool identity.
+
     """
     toolset = validated_toolset_identity(toolset_name)
     tool = _validated_identity(tool_name, context="tool name")
@@ -96,6 +86,7 @@ def native_tool_leaf(toolset_name: str, tool_name: str) -> str:
 
     Returns:
         The native invocation leaf, or the unchanged name for global lookup.
+
     """
     tool = _validated_identity(tool_name, context="tool name")
     toolset = toolset_name.strip()

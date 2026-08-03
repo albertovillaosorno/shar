@@ -1,7 +1,3 @@
-# File:
-#   - skill_taxonomy.py
-# Path: src/unreal/editor-control/domain/mcp/domain/skill_taxonomy.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,49 +6,37 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Canonical routing from native Unreal toolset identity to skill category.
+#   - Skill taxonomy domain module.
 # - Must-Not:
-#   - Own category-specific identity lists, render Markdown, or access files.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Joining path segments and failing closed on missing taxonomy ownership.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Routing and slug generation evolve independently.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another domain module owns the same taxonomy aggregation contract.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Aggregates ordered Unreal MCP skill taxonomy assignments.
+#   - Skill taxonomy domain module.
 # - Description:
-#   - Keeps category-specific identities in separate SRP modules.
+#   - Implements the declared domain module responsibility for editor control.
 # - Usage:
-#   - Used by generated skill renderers and taxonomy coverage tests.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Unknown toolsets are rejected instead of becoming unclassified.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: native Unreal MCP skill taxonomy routing
-#   - reason: category aggregation and slug generation form one domain contract
-#   - split: extract slug generation if another consumer requires it
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess after every Unreal Engine or toolset plugin upgrade
-#
-"""Canonical routing for native Unreal MCP skill taxonomy."""
+
+"""Skill taxonomy domain module."""
 
 from __future__ import annotations
 
 import re
 
 from mcp.domain.errors import fail_protocol
-from mcp.domain.skill_categories import CATEGORIES, SkillCategory
+from mcp.domain.skill_categories import CATEGORIES
+from mcp.domain.skill_categories import SkillCategory
 from mcp.domain.skill_toolsets_animation import ANIMATION_TOOLSETS
 from mcp.domain.skill_toolsets_assets import ASSETS_TOOLSETS
 from mcp.domain.skill_toolsets_core import CORE_TOOLSETS

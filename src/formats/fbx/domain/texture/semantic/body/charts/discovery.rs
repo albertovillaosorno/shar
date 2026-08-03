@@ -1,7 +1,3 @@
-// File:
-//   - discovery.rs
-// Path: src/formats/fbx/domain/texture/semantic/body/charts/discovery.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,41 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Connected-component discovery for exact-color semantic body triangles.
+//   - Discovery domain module.
 // - Must-Not:
-//   - Split vertices, change topology, choose atlas rectangles, or rasterize.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Stable chart identities, complete vertex coverage checks, and projection
-//   - delegation.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Edge-based seam discovery becomes distinct from shared-vertex components.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Projection selection becomes the sole owner of chart discovery.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Connected flat-color semantic chart discovery.
+//   - Discovery domain module.
 // - Description:
-//   - Groups already uniform triangles by exact color, region, and
-//   - connectivity.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Called after strict semantic classification succeeds.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Every selected vertex must belong to exactly one discovered chart.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - true
-//   - Reason: keyed triangle grouping, connectivity, coverage, identity, and
-//   - projection delegation form one chart-discovery transaction.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Connected flat-color semantic chart discovery.
+//! Discovery domain module.
+
 #![expect(
     unused_results,
     reason = "Set insertion results are intentionally irrelevant after \
@@ -74,9 +59,7 @@ pub(super) fn discover(
 ) -> Result<Vec<ProjectedChart>, SemanticTextureError> {
     let mut charts = Vec::new();
     for (address, group_classification) in &classification.groups {
-        let (group, _influences) = selected_group(
-            character, *address,
-        )?;
+        let (group, _influences) = selected_group(character, *address)?;
         let discovered = discover_group(
             *address,
             group,
@@ -85,30 +68,13 @@ pub(super) fn discover(
         )?;
         charts.extend(discovered);
     }
-    charts.sort_by(
-        |left, right| {
-            left.region
-                .cmp(&right.region)
-                .then_with(
-                    || {
-                        left.group
-                            .cmp(&right.group)
-                    },
-                )
-                .then_with(
-                    || {
-                        left.source_color
-                            .cmp(&right.source_color)
-                    },
-                )
-                .then_with(
-                    || {
-                        left.triangle_indices
-                            .cmp(&right.triangle_indices)
-                    },
-                )
-        },
-    );
+    charts.sort_by(|left, right| {
+        left.region
+            .cmp(&right.region)
+            .then_with(|| left.group.cmp(&right.group))
+            .then_with(|| left.source_color.cmp(&right.source_color))
+            .then_with(|| left.triangle_indices.cmp(&right.triangle_indices))
+    });
     Ok(charts)
 }
 
@@ -119,93 +85,66 @@ fn discover_group(
     classification: &GroupClassification,
     address_mode: TextureAddressMode,
 ) -> Result<Vec<ProjectedChart>, SemanticTextureError> {
-    let mut by_key: BTreeMap<
-        (
-            BodyRegion,
-            Rgba8,
-        ),
-        Vec<usize>,
-    > = BTreeMap::new();
-    for (triangle, triangle_classification) in classification
-        .triangles
-        .iter()
-        .enumerate()
+    let mut by_key: BTreeMap<(BodyRegion, Rgba8), Vec<usize>> = BTreeMap::new();
+    for (triangle, triangle_classification) in
+        classification.triangles.iter().enumerate()
     {
         by_key
-            .entry(
-                (
-                    triangle_classification.region,
-                    triangle_classification.color,
-                ),
-            )
+            .entry((
+                triangle_classification.region,
+                triangle_classification.color,
+            ))
             .or_default()
             .push(triangle);
     }
     let mut charts = Vec::new();
     let mut covered_vertices = BTreeSet::new();
     for ((region, color), triangles) in by_key {
-        for (ordinal, component) in connected_components(
-            group, &triangles,
-        )?
-        .into_iter()
-        .enumerate()
+        for (ordinal, component) in connected_components(group, &triangles)?
+            .into_iter()
+            .enumerate()
         {
-            let vertices = component_vertices(
-                group, &component,
-            )?;
+            let vertices = component_vertices(group, &component)?;
             for vertex in &vertices {
                 if !covered_vertices.insert(*vertex) {
-                    return Err(
-                        SemanticTextureError::ConflictingVertexChart {
-                            group: address,
-                            vertex: *vertex,
-                        },
-                    );
+                    return Err(SemanticTextureError::ConflictingVertexChart {
+                        group: address,
+                        vertex: *vertex,
+                    });
                 }
             }
             let source_sampled_triangles = component
                 .iter()
                 .copied()
-                .filter(
-                    |triangle| {
-                        classification
-                            .triangles
-                            .get(*triangle)
-                            .is_some_and(|item| item.sample_source)
-                    },
-                )
+                .filter(|triangle| {
+                    classification
+                        .triangles
+                        .get(*triangle)
+                        .is_some_and(|item| item.sample_source)
+                })
                 .collect::<Vec<_>>();
-            let id = chart_id(
-                address, region, color, ordinal,
-            );
-            charts.push(
-                projection::project(
-                    projection::ProjectionRequest {
-                        id,
-                        address,
-                        region,
-                        source_color: color,
-                        source_sampled_triangles,
-                        address_mode,
-                    },
-                    group,
-                    component,
-                    vertices,
-                )?,
-            );
+            let id = chart_id(address, region, color, ordinal);
+            charts.push(projection::project(
+                projection::ProjectionRequest {
+                    id,
+                    address,
+                    region,
+                    source_color: color,
+                    source_sampled_triangles,
+                    address_mode,
+                },
+                group,
+                component,
+                vertices,
+            )?);
         }
     }
-    for vertex in 0..group
-        .positions
-        .len()
-    {
+    for vertex in 0..group.positions.len() {
         if !covered_vertices.contains(&vertex) {
-            return Err(
-                SemanticTextureError::UncoveredVertex {
-                    group: address,
-                    vertex,
-                },
-            );
+            return Err(SemanticTextureError::UncoveredVertex {
+                group: address,
+                vertex,
+            });
         }
     }
     Ok(charts)
@@ -225,16 +164,10 @@ fn connected_components(
         for index in indices {
             let vertex = usize::try_from(*index)
                 .map_err(|_error| SemanticTextureError::NumericOverflow)?;
-            by_vertex
-                .entry(vertex)
-                .or_default()
-                .push(*triangle);
+            by_vertex.entry(vertex).or_default().push(*triangle);
         }
     }
-    let mut pending = triangle_indices
-        .iter()
-        .copied()
-        .collect::<BTreeSet<_>>();
+    let mut pending = triangle_indices.iter().copied().collect::<BTreeSet<_>>();
     let mut components = Vec::new();
     while let Some(seed) = pending.pop_first() {
         let mut queue = VecDeque::from([seed]);
@@ -248,11 +181,7 @@ fn connected_components(
             for index in indices {
                 let vertex = usize::try_from(*index)
                     .map_err(|_error| SemanticTextureError::NumericOverflow)?;
-                for adjacent in by_vertex
-                    .get(&vertex)
-                    .into_iter()
-                    .flatten()
-                {
+                for adjacent in by_vertex.get(&vertex).into_iter().flatten() {
                     if pending.remove(adjacent) {
                         queue.push_back(*adjacent);
                     }
@@ -284,11 +213,7 @@ fn component_vertices(
             );
         }
     }
-    Ok(
-        vertices
-            .into_iter()
-            .collect(),
-    )
+    Ok(vertices.into_iter().collect())
 }
 
 /// Build one stable chart identity without source file names.

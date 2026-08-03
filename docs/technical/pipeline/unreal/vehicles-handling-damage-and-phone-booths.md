@@ -12,18 +12,16 @@ moving parts. Non-drivable decorative vehicles use Static Mesh definitions.
 
 ## Canonical placement
 
-<!-- markdownlint-disable MD013 -->
-```text
-/Game/SHAR/Data/Vehicles/<id>/DA_Vehicle_<id>
-/Game/SHAR/Data/Vehicles/<id>/DA_VehiclePresentation_<id>_<variant>
-/Game/SHAR/Art/Vehicles/<id>/Meshes/SK_Vehicle_<id>_<variant>
-/Game/SHAR/Art/Vehicles/<id>/Physics/PHYS_Vehicle_<id>_<variant>
-/Game/SHAR/Art/Vehicles/Shared/Animations/ABP_Vehicle_<vehicle_family>
-/Game/SHAR/Art/Vehicles/<id>/Damage/<damage_asset>
-/Game/SHAR/Art/Vehicles/<id>/Materials/MI_Vehicle_<id>_<surface_role>
-/Game/SHAR/Art/Vehicles/<id>/Textures/T_Vehicle_<id>_<surface_role>_<texture_role>
-```
-<!-- markdownlint-enable MD013 -->
+- `/Game/SHAR/Data/Vehicles/<id>/DA_Vehicle_<id>`
+- `/Game/SHAR/Data/Vehicles/<id>/DA_VehiclePresentation_<id>_<variant>`
+- `/Game/SHAR/Art/Vehicles/<id>/Meshes/SK_Vehicle_<id>_<variant>`
+- `/Game/SHAR/Art/Vehicles/<id>/Physics/PHYS_Vehicle_<id>_<variant>`
+- `/Game/SHAR/Art/Vehicles/Shared/Animations/ABP_Vehicle_<vehicle_family>`
+- `/Game/SHAR/Art/Vehicles/<id>/Damage/<damage_asset>`
+- `/Game/SHAR/Art/Vehicles/<id>/Materials/MI_Vehicle_<id>_<surface_role>`
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Unreal asset path is indivisible -->
+- `/Game/SHAR/Art/Vehicles/<id>/Textures/T_Vehicle_<id>_<surface_role>_<texture_role>` <!-- markdownlint-disable-line MD013 -->
 
 ## Normalized source package
 
@@ -52,14 +50,20 @@ The chassis and moving parts preserve watertight visible surfaces, stable
 normals, material semantics, and collision separation. `vehicle_standard_v1`
 requires:
 
-<!-- markdownlint-disable MD013 -->
-| LOD | Triangle target relative to LOD0 | Required preservation |
-| :--- | :--- | :--- |
-| 0 | 100 percent | Full body, cabin, wheels, lights, doors, and damage anchors |
-| 1 | at most 65 percent | Silhouette, wheel shape, windows, and major trim |
-| 2 | at most 35 percent | Silhouette, wheel motion, lights, and color identity |
-| 3 | at most 15 percent | Traffic-distance silhouette and emissive identity |
-<!-- markdownlint-enable MD013 -->
+- **LOD:** 0
+  - **Triangle target relative to LOD0:** 100 percent
+  - **Required preservation:** Full body, cabin, wheels, lights, doors, and
+    damage anchors
+- **LOD:** 1
+  - **Triangle target relative to LOD0:** at most 65 percent
+  - **Required preservation:** Silhouette, wheel shape, windows, and major trim
+- **LOD:** 2
+  - **Triangle target relative to LOD0:** at most 35 percent
+  - **Required preservation:** Silhouette, wheel motion, lights, and color
+    identity
+- **LOD:** 3
+  - **Triangle target relative to LOD0:** at most 15 percent
+  - **Required preservation:** Traffic-distance silhouette and emissive identity
 
 A vehicle presentation declares whether doors, hood, trunk, suspension,
 steering, or special parts are animated. An absent capability is explicit and

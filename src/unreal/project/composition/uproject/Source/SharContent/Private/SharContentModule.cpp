@@ -1,7 +1,3 @@
-// File:
-//   - SharContentModule.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharContent/Private/SharContentModule.cpp
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,35 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Registration of the reusable SHAR content module.
+//   - Shar content module composition module.
 // - Must-Not:
-//   - Create runtime state, load assets, or perform editor mutation.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - One default Unreal module registration.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Module startup gains independently testable lifecycle behavior.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another translation unit owns only this module registration.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Registers the SHAR content module.
+//   - Shar content module composition module.
 // - Description:
-//   - Exposes content-definition types without startup side effects.
+//   - Implements the declared composition module responsibility for project.
 // - Usage:
-//   - Linked into targets that consume SHAR Primary Asset definitions.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Uses Unreal's default module implementation.
+//   - Invalid or missing inputs fail explicitly.
 //
-// ADRs:
-// - docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
-//
-// Large file:
-//   - false
-//
+
+//! Shar content module composition module.
 
 #include "Modules/ModuleManager.h"
 

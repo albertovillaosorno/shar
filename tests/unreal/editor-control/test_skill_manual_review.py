@@ -1,7 +1,3 @@
-# File:
-#   - test_skill_manual_review.py
-# Path: tests/unreal/editor-control/test_skill_manual_review.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,54 +6,40 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Regression tests for manual-review revision migration and status.
+#   - Test skill manual review test module.
 # - Must-Not:
-#   - Test malformed marker parsing, filesystem replacement, or live Unreal.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Current, pre-marker, and legacy five-field generated skill fixtures.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Review status gains another independent lifecycle state.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Manual-field parser tests become the sole review-status owner.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Guards fail-safe version-aware manual guidance review state.
+#   - Test skill manual review test module.
 # - Description:
-#   - Proves legacy data survives and only exact revision matches are current.
+#   - Implements the declared test module responsibility for editor control.
 # - Usage:
-#   - Executed by pytest through the canonical validator workflow.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Legacy and new guidance require review until explicitly revalidated.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
-"""Manual-review revision migration and status regression tests."""
+
+"""Test skill manual review test module."""
 
 from __future__ import annotations
 
-from mcp.adapter_outbound.skill_manual_fields import (
-    merge_manual_fields,
-)
-from mcp.adapter_outbound.skill_manual_review import (
-    MANUAL_REVIEW_FIELD_KEY,
-    MANUAL_REVIEW_PLACEHOLDER,
-)
-
-from manual_skill_fixture import (
-    CURRENT_REVISION,
-    document,
-    legacy_document,
-    merge_and_extract,
-    replace_field,
-)
+from manual_skill_fixture import CURRENT_REVISION
+from manual_skill_fixture import document
+from manual_skill_fixture import legacy_document
+from manual_skill_fixture import merge_and_extract
+from manual_skill_fixture import replace_field
+from mcp.adapter_outbound.skill_manual_fields import merge_manual_fields
+from mcp.adapter_outbound.skill_manual_review import MANUAL_REVIEW_FIELD_KEY
+from mcp.adapter_outbound.skill_manual_review import MANUAL_REVIEW_PLACEHOLDER
 
 
 def test_merge_upgrades_pre_marker_file_with_placeholders() -> None:

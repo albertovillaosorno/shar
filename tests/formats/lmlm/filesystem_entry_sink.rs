@@ -1,7 +1,3 @@
-// File:
-//   - tests.rs
-// Path: tests/formats/lmlm/filesystem_entry_sink.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,46 +6,37 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Deterministic filesystem regressions for LMLM materialization.
+//   - Filesystem entry sink test module.
 // - Must-Not:
-//   - Read private archives or use implicit output locations.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic payloads and process-unique temporary directories.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - One materialization policy gains an independent fixture family.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another LMLM test module proves the same output invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Proves validated entries materialize without destructive side effects.
+//   - Filesystem entry sink test module.
 // - Description:
-//   - Exercises the public materialization adapter with synthetic entries.
+//   - Implements the declared test module responsibility for lmlm.
 // - Usage:
-//   - Compiled only by the lmlm library test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Temporary roots are removed before and after every regression.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Synthetic regressions for LMLM filesystem materialization.
-//!
-//! Uses deterministic process-local roots and public file-entry values without
-//! loading proprietary package content or exposing operator paths.
+//! Filesystem entry sink test module.
 
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::{fs, io};
 
 use lmlm::{FileEntry, materialize_entries};
+use schoenwald_cli as _;
+use schoenwald_filesystem as _;
 
 static NEXT_TEST_ROOT: AtomicU64 = AtomicU64::new(0);
 
@@ -62,25 +49,14 @@ fn remove_test_root(root: &Path) -> Result<(), String> {
 }
 
 fn test_root(label: &str) -> PathBuf {
-    let sequence = NEXT_TEST_ROOT.fetch_add(
-        1,
-        Ordering::Relaxed,
-    );
-    std::env::temp_dir().join(
-        format!(
-            "lmlm-{label}-{}-{sequence}",
-            std::process::id()
-        ),
-    )
+    let sequence = NEXT_TEST_ROOT.fetch_add(1, Ordering::Relaxed);
+    std::env::temp_dir()
+        .join(format!("lmlm-{label}-{}-{sequence}", std::process::id()))
 }
 
 #[test]
 fn rejects_empty_output_roots_before_writing() {
-    let result = materialize_entries(
-        b"",
-        &[],
-        Path::new(""),
-    );
+    let result = materialize_entries(b"", &[], Path::new(""));
 
     assert!(
         matches!(
@@ -107,15 +83,9 @@ fn rejects_case_colliding_destinations_before_writing() -> Result<(), String> {
             size: 1,
         },
     ];
-    let result = materialize_entries(
-        b"ab", &entries, &root,
-    );
-    let upper_exists = root
-        .join("Shared.bin")
-        .exists();
-    let lower_exists = root
-        .join("shared.bin")
-        .exists();
+    let result = materialize_entries(b"ab", &entries, &root);
+    let upper_exists = root.join("Shared.bin").exists();
+    let lower_exists = root.join("shared.bin").exists();
     remove_test_root(&root)?;
     match result {
         Err(error)
@@ -124,14 +94,12 @@ fn rejects_case_colliding_destinations_before_writing() -> Result<(), String> {
                 && !lower_exists =>
         {
             Ok(())
-        }
-        other => Err(
-            format!(
-                "case-colliding destinations must fail before writes, got \
+        },
+        other => Err(format!(
+            "case-colliding destinations must fail before writes, got \
                  {other:?}, upper_exists={upper_exists}, \
                  lower_exists={lower_exists}"
-            ),
-        ),
+        )),
     }
 }
 
@@ -151,12 +119,8 @@ fn rejects_duplicate_destinations_before_writing() -> Result<(), String> {
             size: 1,
         },
     ];
-    let result = materialize_entries(
-        b"ab", &entries, &root,
-    );
-    let destination_exists = root
-        .join("same.bin")
-        .exists();
+    let result = materialize_entries(b"ab", &entries, &root);
+    let destination_exists = root.join("same.bin").exists();
     remove_test_root(&root)?;
     match result {
         Err(error)
@@ -164,13 +128,11 @@ fn rejects_duplicate_destinations_before_writing() -> Result<(), String> {
                 && !destination_exists =>
         {
             Ok(())
-        }
-        other => Err(
-            format!(
-                "duplicate destinations must fail before writes, got \
+        },
+        other => Err(format!(
+            "duplicate destinations must fail before writes, got \
                  {other:?} and destination_exists={destination_exists}"
-            ),
-        ),
+        )),
     }
 }
 
@@ -181,31 +143,22 @@ fn rejects_paths_that_escape_the_output_root() -> Result<(), String> {
     let parent = root
         .parent()
         .ok_or_else(|| "test root must have a parent".to_owned())?;
-    let escape = parent.join(
-        format!(
-            "lmlm-escape-{}",
-            std::process::id()
-        ),
-    );
+    let escape = parent.join(format!("lmlm-escape-{}", std::process::id()));
     match fs::remove_file(&escape) {
-        Ok(()) => {}
-        Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+        Ok(()) => {},
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {},
         Err(error) => return Err(error.to_string()),
     }
     let escape_name = escape
         .file_name()
         .and_then(|name| name.to_str())
         .ok_or_else(|| "escape filename must be UTF-8".to_owned())?;
-    let entries = [
-        FileEntry {
-            path: format!("../{escape_name}"),
-            offset: 0,
-            size: 1,
-        },
-    ];
-    let result = materialize_entries(
-        b"x", &entries, &root,
-    );
+    let entries = [FileEntry {
+        path: format!("../{escape_name}"),
+        offset: 0,
+        size: 1,
+    }];
+    let result = materialize_entries(b"x", &entries, &root);
     let escaped = escape.exists();
     if escaped {
         fs::remove_file(&escape).map_err(|error| error.to_string())?;
@@ -216,13 +169,11 @@ fn rejects_paths_that_escape_the_output_root() -> Result<(), String> {
             if error.kind() == io::ErrorKind::InvalidInput && !escaped =>
         {
             Ok(())
-        }
-        other => Err(
-            format!(
-                "escaping path must fail without an external write, got \
+        },
+        other => Err(format!(
+            "escaping path must fail without an external write, got \
                  {other:?} and escaped={escaped}"
-            ),
-        ),
+        )),
     }
 }
 
@@ -231,11 +182,8 @@ fn preflights_parent_conflicts_before_writing() -> Result<(), String> {
     let root = test_root("parent-conflict");
     remove_test_root(&root)?;
     fs::create_dir_all(&root).map_err(|error| error.to_string())?;
-    fs::write(
-        root.join("blocked"),
-        b"not-a-directory",
-    )
-    .map_err(|error| error.to_string())?;
+    fs::write(root.join("blocked"), b"not-a-directory")
+        .map_err(|error| error.to_string())?;
     let entries = [
         FileEntry {
             path: "first.bin".to_owned(),
@@ -248,21 +196,15 @@ fn preflights_parent_conflicts_before_writing() -> Result<(), String> {
             size: 1,
         },
     ];
-    let result = materialize_entries(
-        b"ab", &entries, &root,
-    );
-    let first_exists = root
-        .join("first.bin")
-        .exists();
+    let result = materialize_entries(b"ab", &entries, &root);
+    let first_exists = root.join("first.bin").exists();
     remove_test_root(&root)?;
     match result {
         Err(_) if !first_exists => Ok(()),
-        other => Err(
-            format!(
-                "known parent conflict must fail before writes, got {other:?} \
+        other => Err(format!(
+            "known parent conflict must fail before writes, got {other:?} \
                  and first_exists={first_exists}"
-            ),
-        ),
+        )),
     }
 }
 
@@ -272,21 +214,13 @@ fn refuses_to_overwrite_existing_files() -> Result<(), String> {
     remove_test_root(&root)?;
     fs::create_dir_all(&root).map_err(|error| error.to_string())?;
     let destination = root.join("existing.bin");
-    fs::write(
-        &destination,
-        b"original",
-    )
-    .map_err(|error| error.to_string())?;
-    let entries = [
-        FileEntry {
-            path: "existing.bin".to_owned(),
-            offset: 0,
-            size: 3,
-        },
-    ];
-    let result = materialize_entries(
-        b"new", &entries, &root,
-    );
+    fs::write(&destination, b"original").map_err(|error| error.to_string())?;
+    let entries = [FileEntry {
+        path: "existing.bin".to_owned(),
+        offset: 0,
+        size: 3,
+    }];
+    let result = materialize_entries(b"new", &entries, &root);
     let content = fs::read(&destination).map_err(|error| error.to_string())?;
     remove_test_root(&root)?;
     match result {
@@ -295,13 +229,11 @@ fn refuses_to_overwrite_existing_files() -> Result<(), String> {
                 && content == b"original" =>
         {
             Ok(())
-        }
-        other => Err(
-            format!(
-                "existing destination must remain unchanged, got {other:?} \
+        },
+        other => Err(format!(
+            "existing destination must remain unchanged, got {other:?} \
                  and {content:?}"
-            ),
-        ),
+        )),
     }
 }
 

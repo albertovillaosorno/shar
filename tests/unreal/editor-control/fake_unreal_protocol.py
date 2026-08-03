@@ -1,7 +1,3 @@
-# File:
-#   - fake_unreal_protocol.py
-# Path: tests/unreal/editor-control/fake_unreal_protocol.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,58 +6,42 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Synthetic Unreal MCP HTTP request and response behavior.
+#   - Fake unreal protocol test module.
 # - Must-Not:
-#   - Start servers, manage fixture threads, or depend on Unreal binaries.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Deterministic JSON-RPC, session, pagination, Origin, and SSE fixtures.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Tool payload generation grows independently from HTTP framing.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another test adapter owns the same synthetic protocol contract.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Implements black-box native Unreal MCP wire behavior.
+#   - Fake unreal protocol test module.
 # - Description:
-#   - Models only protocol behavior exercised by translator regressions.
+#   - Implements the declared test module responsibility for editor control.
 # - Usage:
-#   - Installed as the handler for the synthetic loopback test server.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Uses protocol version 2025-11-25 and a deterministic session identity.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: synthetic Unreal MCP protocol handler
-#   - reason: request routing and response fixtures form one wire contract
-#   - split: extract tool payload fixtures if additional tool families are added
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess on any new protocol method or line-count growth
-#
-"""Synthetic Unreal MCP HTTP protocol behavior for black-box tests."""
+
+"""Fake unreal protocol test module."""
 
 from __future__ import annotations
 
-import json
 from http.server import BaseHTTPRequestHandler
+import json
 from time import sleep
-from typing import TYPE_CHECKING, cast
-
-from mcp.domain.json_types import (
-    JsonObject,
-    JsonValue,
-    require_json_object,
-)
+from typing import TYPE_CHECKING
+from typing import cast
 
 from fake_unreal_tools import tool_text
+from mcp.domain.json_types import JsonObject
+from mcp.domain.json_types import JsonValue
+from mcp.domain.json_types import require_json_object
 
 if TYPE_CHECKING:
     from fake_unreal_server import FakeUnrealHttpServer

@@ -1,7 +1,3 @@
-// File:
-//   - types.rs
-// Path: src/formats/fbx/domain/texture/semantic/eye/types.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Stable eye side, region, component, frame evidence, result, and failure
-//   - values.
+//   - Types domain module.
 // - Must-Not:
-//   - Discover connectivity, analyze pixels, scale frames, or invent animation.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Immutable evidence and modernized frame values.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Eye errors or manifest projection need independent public contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another eye module owns the same public result identities.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Semantic eye analysis values.
+//   - Types domain module.
 // - Description:
-//   - Exposes two-eye and four-frame evidence without changing source behavior.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Returned by the eye semantic facade and consumed by artifact adapters.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Two sides expose upper lid, lower lid, surface, and pupil or iris.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - true
-//   - Reason: result identities and their fail-closed validation errors form
-//   - one stable eye-analysis API.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Semantic eye analysis values and failure taxonomy.
+//! Types domain module.
+
 #![expect(
     missing_copy_implementations,
     reason = "Semantic errors intentionally remain non-Copy to preserve \

@@ -1,7 +1,3 @@
-// File:
-//   - error.rs
-// Path: src/formats/lmlm/domain/error.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,44 +6,31 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Typed public failures for LMLM parsing and structural validation.
+//   - Error domain module.
 // - Must-Not:
-//   - Parse archive bytes, traverse records, or write extracted files.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Stable diagnostic data and human-readable formatting.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - One error family becomes independently versioned or externally mapped.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another LMLM error module duplicates the same public failure contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Defines fail-closed parser diagnostics.
+//   - Error domain module.
 // - Description:
-//   - Preserves malformed-input evidence without panics or silent coercion.
+//   - Implements the declared domain module responsibility for lmlm.
 // - Usage:
-//   - Returned by the public parser and consumed by adapters and tests.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Errors retain paths, offsets, sizes, and unexpected values when known.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - true
-//   - Reason: The public error union and deterministic Display implementation
-//   - form one exhaustive versioned API contract and must change together.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Typed failures for the LMLM parser boundary.
-//!
-//! Each variant preserves deterministic evidence for one malformed container,
-//! record, path, payload, or package-identity condition.
+//! Error domain module.
 
-use crate::diagnostic::EscapedText;
+use crate::domain::diagnostic::EscapedText;
 
 /// Errors that can occur while reading an `.lmlm` archive.
 #[derive(Debug)]
@@ -240,72 +223,48 @@ impl LmlmError {
         formatter: &mut core::fmt::Formatter<'_>,
     ) -> Option<core::fmt::Result> {
         let result = match self {
-            Self::BadMagic {
-                observed,
-            } => {
+            Self::BadMagic { observed } => {
                 let observed_value = u32::from_be_bytes(*observed);
                 write!(
                     formatter,
                     "not an LSPA (.lmlm) archive; observed magic: \
                      {observed_value:#010x}"
                 )
-            }
-            Self::Truncated => write!(
-                formatter,
-                "archive is truncated or malformed"
-            ),
-            Self::UnsupportedVersion {
-                offset,
-                value,
-            } => write!(
+            },
+            Self::Truncated => {
+                write!(formatter, "archive is truncated or malformed")
+            },
+            Self::UnsupportedVersion { offset, value } => write!(
                 formatter,
                 "unsupported LSPA archive version at {offset:#x}: {value}"
             ),
-            Self::UnsupportedHeaderFlags {
-                offset,
-                value,
-            } => write!(
+            Self::UnsupportedHeaderFlags { offset, value } => write!(
                 formatter,
                 "unsupported LSPA archive header flags at {offset:#x}: \
                  {value:#010x}"
             ),
-            Self::NonZeroReservedHeader {
-                offset,
-                value,
-            } => write!(
+            Self::NonZeroReservedHeader { offset, value } => write!(
                 formatter,
                 "reserved LSPA header byte at {offset:#x} is nonzero: \
                  {value:#04x}"
             ),
-            Self::NonZeroReservedContainerBlock {
-                offset,
-                value,
-            } => {
+            Self::NonZeroReservedContainerBlock { offset, value } => {
                 write!(
                     formatter,
                     "reserved LSPA container byte at {offset:#x} is nonzero: \
                      {value:#04x}"
                 )
-            }
-            Self::NonZeroReservedRootBlock {
-                offset,
-                value,
-            } => write!(
+            },
+            Self::NonZeroReservedRootBlock { offset, value } => write!(
                 formatter,
                 "reserved LSPA root byte at {offset:#x} is nonzero: \
                  {value:#04x}"
             ),
-            Self::NonZeroUnclaimedData {
-                offset,
-                value,
-            } => write!(
+            Self::NonZeroUnclaimedData { offset, value } => write!(
                 formatter,
                 "unclaimed LSPA byte at {offset:#x} is nonzero: {value:#04x}"
             ),
-            Self::NonZeroTrailingData {
-                offset,
-                value,
-            } => write!(
+            Self::NonZeroTrailingData { offset, value } => write!(
                 formatter,
                 "trailing LSPA byte at {offset:#x} is nonzero: {value:#04x}"
             ),
@@ -324,56 +283,41 @@ impl LmlmError {
         formatter: &mut core::fmt::Formatter<'_>,
     ) -> Option<core::fmt::Result> {
         let result = match self {
-            Self::ExcessiveDirectoryDepth {
-                path,
-                depth,
-            } => {
+            Self::ExcessiveDirectoryDepth { path, depth } => {
                 write!(
                     formatter,
                     "archive directory nesting is too deep: {} at depth \
                      {depth}",
                     EscapedText::new(path)
                 )
-            }
-            Self::InvalidEntryKind {
-                offset,
-                value,
-            } => write!(
+            },
+            Self::InvalidEntryKind { offset, value } => write!(
                 formatter,
                 "unsupported LSPA entry kind at {offset:#x}: {value}"
             ),
-            Self::UnterminatedName {
-                offset,
-            } => write!(
+            Self::UnterminatedName { offset } => write!(
                 formatter,
                 "LSPA entry name at {offset:#x} has no UTF-16 terminator"
             ),
-            Self::NonZeroNamePadding {
-                offset,
-                value,
-            } => write!(
+            Self::NonZeroNamePadding { offset, value } => write!(
                 formatter,
                 "LSPA entry name padding at {offset:#x} is nonzero: \
                  {value:#04x}"
             ),
-            Self::NonZeroMetadataPadding {
-                offset,
-                value,
-            } => {
+            Self::NonZeroMetadataPadding { offset, value } => {
                 write!(
                     formatter,
                     "LSPA entry metadata padding at {offset:#x} is nonzero: \
                      {value:#04x}"
                 )
-            }
-            Self::UnsupportedDirectoryRecordControl {
-                offset,
-                value,
-            } => write!(
-                formatter,
-                "unsupported LSPA directory child-kind control at \
+            },
+            Self::UnsupportedDirectoryRecordControl { offset, value } => {
+                write!(
+                    formatter,
+                    "unsupported LSPA directory child-kind control at \
                  {offset:#x}: {value:#04x}"
-            ),
+                )
+            },
             Self::DirectoryRecordControlMismatch {
                 path,
                 offset,
@@ -385,36 +329,27 @@ impl LmlmError {
                  {offset:#x}: declared {declared}, expected {expected}",
                 EscapedText::new(path)
             ),
-            Self::UnsupportedFileRecordControl {
-                offset,
-                value,
-            } => {
+            Self::UnsupportedFileRecordControl { offset, value } => {
                 write!(
                     formatter,
                     "unsupported LSPA file transition control at {offset:#x}: \
                      {value:#04x}"
                 )
-            }
-            Self::NonZeroFileRecordPadding {
-                offset,
-                value,
-            } => {
+            },
+            Self::NonZeroFileRecordPadding { offset, value } => {
                 write!(
                     formatter,
                     "LSPA file transition padding at {offset:#x} is nonzero: \
                      {value:#04x}"
                 )
-            }
-            Self::InvalidNameEncoding {
-                offset,
-                message,
-            } => {
+            },
+            Self::InvalidNameEncoding { offset, message } => {
                 write!(
                     formatter,
                     "archive entry name at {offset:#x} is not valid UTF-16: {}",
                     EscapedText::new(message)
                 )
-            }
+            },
             _ => return None,
         };
         Some(result)
@@ -426,41 +361,30 @@ impl LmlmError {
         formatter: &mut core::fmt::Formatter<'_>,
     ) -> Option<core::fmt::Result> {
         let result = match self {
-            Self::EntryPayloadOverlapsTable {
-                path,
-                offset,
-                table_end,
-            } => {
+            Self::EntryPayloadOverlapsTable { path, offset, table_end } => {
                 write!(
                     formatter,
                     "archive entry payload overlaps the table: {} at \
                      {offset}, table ends at {table_end}",
                     EscapedText::new(path)
                 )
-            }
-            Self::UnalignedEntryOffset {
-                path,
-                offset,
-            } => {
+            },
+            Self::UnalignedEntryOffset { path, offset } => {
                 write!(
                     formatter,
                     "archive entry payload is not block aligned: {} at \
                      {offset}",
                     EscapedText::new(path)
                 )
-            }
-            Self::InvalidEntryRange {
-                path,
-                offset,
-                size,
-            } => {
+            },
+            Self::InvalidEntryRange { path, offset, size } => {
                 write!(
                     formatter,
                     "archive entry payload is out of bounds: {} at {offset} \
                      for {size} bytes",
                     EscapedText::new(path)
                 )
-            }
+            },
             Self::OverlappingEntryRanges {
                 first_path,
                 first_offset,
@@ -477,7 +401,7 @@ impl LmlmError {
                     EscapedText::new(first_path),
                     EscapedText::new(second_path)
                 )
-            }
+            },
             _ => return None,
         };
         Some(result)
@@ -489,24 +413,21 @@ impl LmlmError {
         formatter: &mut core::fmt::Formatter<'_>,
     ) -> Option<core::fmt::Result> {
         let result = match self {
-            Self::PathCollision {
-                first_path,
-                second_path,
-            } => {
+            Self::PathCollision { first_path, second_path } => {
                 write!(
                     formatter,
                     "archive paths collide on a portable filesystem: {} and {}",
                     EscapedText::new(first_path),
                     EscapedText::new(second_path)
                 )
-            }
+            },
             Self::UnsafePath(path) => {
                 write!(
                     formatter,
                     "unsafe path in archive: {}",
                     EscapedText::new(path)
                 )
-            }
+            },
             _ => return None,
         };
         Some(result)
@@ -537,71 +458,5 @@ impl core::fmt::Display for LmlmError {
 impl std::error::Error for LmlmError {}
 
 #[cfg(test)]
-mod tests {
-    use super::LmlmError;
-
-    #[test]
-    fn public_diagnostics_are_single_line() {
-        let errors = [
-            LmlmError::NonZeroReservedContainerBlock {
-                offset: 0x200,
-                value: 1,
-            },
-            LmlmError::NonZeroMetadataPadding {
-                offset: 0x800,
-                value: 2,
-            },
-            LmlmError::EntryPayloadOverlapsTable {
-                path: "entry.bin".to_owned(),
-                offset: 0x600,
-                table_end: 0xa00,
-            },
-            LmlmError::InvalidEntryRange {
-                path: "entry.bin".to_owned(),
-                offset: 0x1000,
-                size: 7,
-            },
-            LmlmError::PathCollision {
-                first_path: "Entry.bin".to_owned(),
-                second_path: "entry.bin".to_owned(),
-            },
-        ];
-
-        for error in errors {
-            let diagnostic = error.to_string();
-            assert!(
-                !diagnostic.contains(
-                    [
-                        '\n', '\r'
-                    ]
-                ),
-                "public diagnostic must remain single-line: {diagnostic:?}"
-            );
-        }
-    }
-
-    #[test]
-    fn public_diagnostics_escape_untrusted_control_characters() {
-        let errors = [
-            LmlmError::UnsafePath("bad\u{1b}[2J.bin".to_owned()),
-            LmlmError::InvalidNameEncoding {
-                offset: 0x600,
-                message: "bad\nencoding".to_owned(),
-            },
-            LmlmError::PathCollision {
-                first_path: "first\rpath".to_owned(),
-                second_path: "second\u{7}path".to_owned(),
-            },
-        ];
-
-        for error in errors {
-            let diagnostic = error.to_string();
-            assert!(
-                diagnostic
-                    .chars()
-                    .all(|character| !character.is_control()),
-                "public diagnostic exposed a control character: {diagnostic:?}"
-            );
-        }
-    }
-}
+#[path = "../../../../tests/formats/lmlm/unit/domain/error/tests.rs"]
+mod tests;

@@ -1,7 +1,3 @@
-// File:
-//   - schema.rs
-// Path: src/formats/p3d/contract/schema.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,44 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - p3d module behavior for schema.
+//   - Schema contract module.
 // - Must-Not:
-//   - Violate repository architecture, path, provenance, or output rules.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Operations required to validate and execute schema.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when schema contains two independently testable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another p3d module owns the same module boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Chunk id constant count.
+//   - Schema contract module.
 // - Description:
-//   - Defines schema data and behavior for p3d root.
+//   - Implements the declared contract module responsibility for p3d.
 // - Usage:
-//   - Used by p3d root code that needs schema.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No implicit output outside the repository is allowed.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - true
-//   - Reason: src/formats/p3d/schema.rs has 13380 effective lines after the
-//   - required
-//   - header and remains cohesive until a focused split lands.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Chunk id constant count.
-//!
-//! This boundary keeps chunk id constant count explicit and returns
-//! deterministic results to p3d callers.
+//! Schema contract module.
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 /// Schemafile.
 // The explicit schema file name distinguishes file summaries from field rows.
@@ -533,10 +515,8 @@ const FIELDS_2: &[SchemaField] = &[
     },
 ];
 /// Subchunks 3.
-const SUBCHUNKS_3: &[&str] = &[
-    "tlAnimationSizeChunk",
-    "tlAnimationGroupListChunk",
-];
+const SUBCHUNKS_3: &[&str] =
+    &["tlAnimationSizeChunk", "tlAnimationGroupListChunk"];
 /// Fields 3.
 const FIELDS_3: &[SchemaField] = &[
     SchemaField {
@@ -572,22 +552,13 @@ const FIELDS_4: &[SchemaField] = &[
         ty: "ULONG",
         name: "Version",
     },
-    SchemaField {
-        ty: "ULONG",
-        name: "PC",
-    },
-    SchemaField {
-        ty: "ULONG",
-        name: "PS2",
-    },
+    SchemaField { ty: "ULONG", name: "PC" },
+    SchemaField { ty: "ULONG", name: "PS2" },
     SchemaField {
         ty: "ULONG",
         name: "XBOX",
     },
-    SchemaField {
-        ty: "ULONG",
-        name: "GC",
-    },
+    SchemaField { ty: "ULONG", name: "GC" },
 ];
 /// Subchunks 5.
 const SUBCHUNKS_5: &[&str] = &[
@@ -757,12 +728,7 @@ const FIELDS_11: &[SchemaField] = &[
 /// Subchunks 12.
 const SUBCHUNKS_12: &[&str] = &[];
 /// Fields 12.
-const FIELDS_12: &[SchemaField] = &[
-    SchemaField {
-        ty: "tlBox",
-        name: "Box",
-    },
-];
+const FIELDS_12: &[SchemaField] = &[SchemaField { ty: "tlBox", name: "Box" }];
 /// Subchunks 13.
 const SUBCHUNKS_13: &[&str] = &[];
 /// Fields 13.
@@ -799,10 +765,7 @@ const FIELDS_13: &[SchemaField] = &[
         ty: "ULONG",
         name: "ZWrite",
     },
-    SchemaField {
-        ty: "ULONG",
-        name: "Fog",
-    },
+    SchemaField { ty: "ULONG", name: "Fog" },
     SchemaField {
         ty: "ULONG",
         name: "BillboardMode",
@@ -877,22 +840,10 @@ const FIELDS_16: &[SchemaField] = &[
         ty: "COLOUR",
         name: "Colour",
     },
-    SchemaField {
-        ty: "tlUV",
-        name: "Uv0",
-    },
-    SchemaField {
-        ty: "tlUV",
-        name: "Uv1",
-    },
-    SchemaField {
-        ty: "tlUV",
-        name: "Uv2",
-    },
-    SchemaField {
-        ty: "tlUV",
-        name: "Uv3",
-    },
+    SchemaField { ty: "tlUV", name: "Uv0" },
+    SchemaField { ty: "tlUV", name: "Uv1" },
+    SchemaField { ty: "tlUV", name: "Uv2" },
+    SchemaField { ty: "tlUV", name: "Uv3" },
     SchemaField {
         ty: "float",
         name: "Width",
@@ -934,10 +885,7 @@ const FIELDS_17: &[SchemaField] = &[
         ty: "ULONG",
         name: "ZWrite",
     },
-    SchemaField {
-        ty: "ULONG",
-        name: "Fog",
-    },
+    SchemaField { ty: "ULONG", name: "Fog" },
     SchemaField {
         ty: "ULONG",
         name: "NumQuads",
@@ -970,12 +918,10 @@ const FIELDS_18: &[SchemaField] = &[
 /// Subchunks 19.
 const SUBCHUNKS_19: &[&str] = &[];
 /// Fields 19.
-const FIELDS_19: &[SchemaField] = &[
-    SchemaField {
-        ty: "tlSphere",
-        name: "Sphere",
-    },
-];
+const FIELDS_19: &[SchemaField] = &[SchemaField {
+    ty: "tlSphere",
+    name: "Sphere",
+}];
 /// Subchunks 20.
 const SUBCHUNKS_20: &[&str] = &["tlCameraAnimChannelChunk16"];
 /// Fields 20.
@@ -1052,10 +998,7 @@ const FIELDS_28: &[SchemaField] = &[
         ty: "ULONG",
         name: "Version",
     },
-    SchemaField {
-        ty: "float",
-        name: "FOV",
-    },
+    SchemaField { ty: "float", name: "FOV" },
     SchemaField {
         ty: "float",
         name: "AspectRatio",
@@ -1092,18 +1035,9 @@ const FIELDS_28: &[SchemaField] = &[
         ty: "float",
         name: "LookZ",
     },
-    SchemaField {
-        ty: "float",
-        name: "UpX",
-    },
-    SchemaField {
-        ty: "float",
-        name: "UpY",
-    },
-    SchemaField {
-        ty: "float",
-        name: "UpZ",
-    },
+    SchemaField { ty: "float", name: "UpX" },
+    SchemaField { ty: "float", name: "UpY" },
+    SchemaField { ty: "float", name: "UpZ" },
 ];
 /// Subchunks 29.
 const SUBCHUNKS_29: &[&str] = &[];
@@ -1298,10 +1232,8 @@ const FIELDS_36: &[SchemaField] = &[
     },
 ];
 /// Subchunks 37.
-const SUBCHUNKS_37: &[&str] = &[
-    "tlQuaternionFormatChunk",
-    "tlChannelInterpolationModeChunk",
-];
+const SUBCHUNKS_37: &[&str] =
+    &["tlQuaternionFormatChunk", "tlChannelInterpolationModeChunk"];
 /// Fields 37.
 const FIELDS_37: &[SchemaField] = &[
     SchemaField {
@@ -1575,21 +1507,17 @@ const FIELDS_47: &[SchemaField] = &[
 /// Subchunks 48.
 const SUBCHUNKS_48: &[&str] = &["tlCollisionVolumeOwnerNameChunk"];
 /// Fields 48.
-const FIELDS_48: &[SchemaField] = &[
-    SchemaField {
-        ty: "ULONG",
-        name: "NumNames",
-    },
-];
+const FIELDS_48: &[SchemaField] = &[SchemaField {
+    ty: "ULONG",
+    name: "NumNames",
+}];
 /// Subchunks 49.
 const SUBCHUNKS_49: &[&str] = &[];
 /// Fields 49.
-const FIELDS_49: &[SchemaField] = &[
-    SchemaField {
-        ty: "string",
-        name: "Name",
-    },
-];
+const FIELDS_49: &[SchemaField] = &[SchemaField {
+    ty: "string",
+    name: "Name",
+}];
 /// Subchunks 50.
 const SUBCHUNKS_50: &[&str] = &[];
 /// Fields 50.
@@ -1638,21 +1566,17 @@ const FIELDS_51: &[SchemaField] = &[
 /// Subchunks 52.
 const SUBCHUNKS_52: &[&str] = &[];
 /// Fields 52.
-const FIELDS_52: &[SchemaField] = &[
-    SchemaField {
-        ty: "ULONG",
-        name: "Nothing",
-    },
-];
+const FIELDS_52: &[SchemaField] = &[SchemaField {
+    ty: "ULONG",
+    name: "Nothing",
+}];
 /// Subchunks 53.
 const SUBCHUNKS_53: &[&str] = &["tlCollisionVectorChunk"];
 /// Fields 53.
-const FIELDS_53: &[SchemaField] = &[
-    SchemaField {
-        ty: "float",
-        name: "SphereRadius",
-    },
-];
+const FIELDS_53: &[SchemaField] = &[SchemaField {
+    ty: "float",
+    name: "SphereRadius",
+}];
 /// Subchunks 54.
 const SUBCHUNKS_54: &[&str] = &["tlCollisionVectorChunk"];
 /// Fields 54.
@@ -1695,18 +1619,9 @@ const FIELDS_56: &[SchemaField] = &[];
 const SUBCHUNKS_57: &[&str] = &[];
 /// Fields 57.
 const FIELDS_57: &[SchemaField] = &[
-    SchemaField {
-        ty: "float",
-        name: "X",
-    },
-    SchemaField {
-        ty: "float",
-        name: "Y",
-    },
-    SchemaField {
-        ty: "float",
-        name: "Z",
-    },
+    SchemaField { ty: "float", name: "X" },
+    SchemaField { ty: "float", name: "Y" },
+    SchemaField { ty: "float", name: "Z" },
 ];
 /// Subchunks 58.
 const SUBCHUNKS_58: &[&str] = &[
@@ -1728,21 +1643,17 @@ const FIELDS_58: &[SchemaField] = &[
 /// Subchunks 59.
 const SUBCHUNKS_59: &[&str] = &["tlCompositeDrawableSkinChunk16"];
 /// Fields 59.
-const FIELDS_59: &[SchemaField] = &[
-    SchemaField {
-        ty: "ULONG",
-        name: "NumElements",
-    },
-];
+const FIELDS_59: &[SchemaField] = &[SchemaField {
+    ty: "ULONG",
+    name: "NumElements",
+}];
 /// Subchunks 60.
 const SUBCHUNKS_60: &[&str] = &["tlCompositeDrawablePropChunk16"];
 /// Fields 60.
-const FIELDS_60: &[SchemaField] = &[
-    SchemaField {
-        ty: "ULONG",
-        name: "NumElements",
-    },
-];
+const FIELDS_60: &[SchemaField] = &[SchemaField {
+    ty: "ULONG",
+    name: "NumElements",
+}];
 /// Subchunks 61.
 const SUBCHUNKS_61: &[&str] = &["tlCompositeDrawableSortOrderChunk16"];
 /// Fields 61.
@@ -1776,12 +1687,10 @@ const FIELDS_62: &[SchemaField] = &[
 /// Subchunks 63.
 const SUBCHUNKS_63: &[&str] = &["tlCompositeDrawableEffectChunk16"];
 /// Fields 63.
-const FIELDS_63: &[SchemaField] = &[
-    SchemaField {
-        ty: "ULONG",
-        name: "NumElements",
-    },
-];
+const FIELDS_63: &[SchemaField] = &[SchemaField {
+    ty: "ULONG",
+    name: "NumElements",
+}];
 /// Subchunks 64.
 const SUBCHUNKS_64: &[&str] = &["tlCompositeDrawableSortOrderChunk16"];
 /// Fields 64.
@@ -1802,17 +1711,13 @@ const FIELDS_64: &[SchemaField] = &[
 /// Subchunks 65.
 const SUBCHUNKS_65: &[&str] = &[];
 /// Fields 65.
-const FIELDS_65: &[SchemaField] = &[
-    SchemaField {
-        ty: "float",
-        name: "SortOrder",
-    },
-];
+const FIELDS_65: &[SchemaField] = &[SchemaField {
+    ty: "float",
+    name: "SortOrder",
+}];
 /// Subchunks 66.
-const SUBCHUNKS_66: &[&str] = &[
-    "tlCompoundMeshNodeChunk16",
-    "tlCompositeSkinPropList16",
-];
+const SUBCHUNKS_66: &[&str] =
+    &["tlCompoundMeshNodeChunk16", "tlCompositeSkinPropList16"];
 /// Fields 66.
 const FIELDS_66: &[SchemaField] = &[
     SchemaField {
@@ -1827,30 +1732,24 @@ const FIELDS_66: &[SchemaField] = &[
 /// Subchunks 67.
 const SUBCHUNKS_67: &[&str] = &[];
 /// Fields 67.
-const FIELDS_67: &[SchemaField] = &[
-    SchemaField {
-        ty: "ULONG",
-        name: "NumElements",
-    },
-];
+const FIELDS_67: &[SchemaField] = &[SchemaField {
+    ty: "ULONG",
+    name: "NumElements",
+}];
 /// Subchunks 68.
 const SUBCHUNKS_68: &[&str] = &[];
 /// Fields 68.
-const FIELDS_68: &[SchemaField] = &[
-    SchemaField {
-        ty: "ULONG",
-        name: "NumElements",
-    },
-];
+const FIELDS_68: &[SchemaField] = &[SchemaField {
+    ty: "ULONG",
+    name: "NumElements",
+}];
 /// Subchunks 69.
 const SUBCHUNKS_69: &[&str] = &[];
 /// Fields 69.
-const FIELDS_69: &[SchemaField] = &[
-    SchemaField {
-        ty: "string",
-        name: "Name",
-    },
-];
+const FIELDS_69: &[SchemaField] = &[SchemaField {
+    ty: "string",
+    name: "Name",
+}];
 /// Subchunks 70.
 const SUBCHUNKS_70: &[&str] = &[];
 /// Fields 70.
@@ -1953,12 +1852,10 @@ const SUBCHUNKS_76: &[&str] = &[
     "tlExportInfoNamedStringChunk16",
 ];
 /// Fields 76.
-const FIELDS_76: &[SchemaField] = &[
-    SchemaField {
-        ty: "string",
-        name: "Name",
-    },
-];
+const FIELDS_76: &[SchemaField] = &[SchemaField {
+    ty: "string",
+    name: "Name",
+}];
 /// Subchunks 77.
 const SUBCHUNKS_77: &[&str] = &["tlVertexOffsetExpressionChunk16"];
 /// Fields 77.
@@ -2153,12 +2050,10 @@ const FIELDS_83: &[SchemaField] = &[
 /// Subchunks 84.
 const SUBCHUNKS_84: &[&str] = &[];
 /// Fields 84.
-const FIELDS_84: &[SchemaField] = &[
-    SchemaField {
-        ty: "tlMatrix",
-        name: "Matrix",
-    },
-];
+const FIELDS_84: &[SchemaField] = &[SchemaField {
+    ty: "tlMatrix",
+    name: "Matrix",
+}];
 /// Subchunks 85.
 const SUBCHUNKS_85: &[&str] = &["tlWallChunk"];
 /// Fields 85.
@@ -2166,12 +2061,10 @@ const FIELDS_85: &[SchemaField] = &[];
 /// Subchunks 86.
 const SUBCHUNKS_86: &[&str] = &["tlWallChunk"];
 /// Fields 86.
-const FIELDS_86: &[SchemaField] = &[
-    SchemaField {
-        ty: "ULONG",
-        name: "NumWalls",
-    },
-];
+const FIELDS_86: &[SchemaField] = &[SchemaField {
+    ty: "ULONG",
+    name: "NumWalls",
+}];
 /// Subchunks 87.
 const SUBCHUNKS_87: &[&str] = &[
     "tlFlexibleJointParametersChunk",
@@ -2552,10 +2445,7 @@ const FIELDS_98: &[SchemaField] = &[
 const SUBCHUNKS_99: &[&str] = &[];
 /// Fields 99.
 const FIELDS_99: &[SchemaField] = &[
-    SchemaField {
-        ty: "ULONG",
-        name: "ID",
-    },
+    SchemaField { ty: "ULONG", name: "ID" },
     SchemaField {
         ty: "float",
         name: "Rotation",
@@ -2574,10 +2464,7 @@ const FIELDS_99: &[SchemaField] = &[
     },
 ];
 /// Subchunks 100.
-const SUBCHUNKS_100: &[&str] = &[
-    "texture",
-    "tlTextureGlyphListChunk",
-];
+const SUBCHUNKS_100: &[&str] = &["texture", "tlTextureGlyphListChunk"];
 /// Fields 100.
 const FIELDS_100: &[SchemaField] = &[
     SchemaField {
@@ -2627,10 +2514,7 @@ const FIELDS_101: &[SchemaField] = &[
     },
 ];
 /// Subchunks 102.
-const SUBCHUNKS_102: &[&str] = &[
-    "image",
-    "tlImageGlyphListChunk",
-];
+const SUBCHUNKS_102: &[&str] = &["image", "tlImageGlyphListChunk"];
 /// Fields 102.
 const FIELDS_102: &[SchemaField] = &[
     SchemaField {
@@ -2842,17 +2726,12 @@ const FIELDS_113: &[SchemaField] = &[
 /// Subchunks 114.
 const SUBCHUNKS_114: &[&str] = &[];
 /// Fields 114.
-const FIELDS_114: &[SchemaField] = &[
-    SchemaField {
-        ty: "string",
-        name: "FileName",
-    },
-];
+const FIELDS_114: &[SchemaField] = &[SchemaField {
+    ty: "string",
+    name: "FileName",
+}];
 /// Subchunks 115.
-const SUBCHUNKS_115: &[&str] = &[
-    "tlImageDataChunk",
-    "tlImageFileNameChunk",
-];
+const SUBCHUNKS_115: &[&str] = &["tlImageDataChunk", "tlImageFileNameChunk"];
 /// Fields 115.
 const FIELDS_115: &[SchemaField] = &[
     SchemaField {
@@ -2871,10 +2750,7 @@ const FIELDS_115: &[SchemaField] = &[
         ty: "ULONG",
         name: "Height",
     },
-    SchemaField {
-        ty: "ULONG",
-        name: "Bpp",
-    },
+    SchemaField { ty: "ULONG", name: "Bpp" },
     SchemaField {
         ty: "ULONG",
         name: "Palettized",
@@ -2912,10 +2788,7 @@ const FIELDS_116: &[SchemaField] = &[
         ty: "ULONG",
         name: "Depth",
     },
-    SchemaField {
-        ty: "ULONG",
-        name: "Bpp",
-    },
+    SchemaField { ty: "ULONG", name: "Bpp" },
     SchemaField {
         ty: "ULONG",
         name: "Palettized",
@@ -2930,10 +2803,7 @@ const FIELDS_116: &[SchemaField] = &[
     },
 ];
 /// Subchunks 117.
-const SUBCHUNKS_117: &[&str] = &[
-    "mesh",
-    "tlInstancesChunk",
-];
+const SUBCHUNKS_117: &[&str] = &["mesh", "tlInstancesChunk"];
 /// Fields 117.
 const FIELDS_117: &[SchemaField] = &[
     SchemaField {
@@ -2952,12 +2822,10 @@ const FIELDS_117: &[SchemaField] = &[
 /// Subchunks 118.
 const SUBCHUNKS_118: &[&str] = &["scenegraph"];
 /// Fields 118.
-const FIELDS_118: &[SchemaField] = &[
-    SchemaField {
-        ty: "string",
-        name: "Name",
-    },
-];
+const FIELDS_118: &[SchemaField] = &[SchemaField {
+    ty: "string",
+    name: "Name",
+}];
 /// Subchunks 119.
 const SUBCHUNKS_119: &[&str] = &[
     "tlAnimDSGWrapperChunk",
@@ -3022,11 +2890,8 @@ const FIELDS_121: &[SchemaField] = &[
     },
 ];
 /// Subchunks 122.
-const SUBCHUNKS_122: &[&str] = &[
-    "tlBBoxChunk",
-    "tlBSphereChunk",
-    "tlTerrainTypeChunk",
-];
+const SUBCHUNKS_122: &[&str] =
+    &["tlBBoxChunk", "tlBSphereChunk", "tlTerrainTypeChunk"];
 /// Fields 122.
 const FIELDS_122: &[SchemaField] = &[
     SchemaField {
@@ -3188,29 +3053,22 @@ const FIELDS_130: &[SchemaField] = &[
 /// Subchunks 131.
 const SUBCHUNKS_131: &[&str] = &[];
 /// Fields 131.
-const FIELDS_131: &[SchemaField] = &[
-    SchemaField {
-        ty: "tlPoint",
-        name: "Direction",
-    },
-];
+const FIELDS_131: &[SchemaField] = &[SchemaField {
+    ty: "tlPoint",
+    name: "Direction",
+}];
 /// Subchunks 132.
 const SUBCHUNKS_132: &[&str] = &[];
 /// Fields 132.
-const FIELDS_132: &[SchemaField] = &[
-    SchemaField {
-        ty: "tlPoint",
-        name: "Position",
-    },
-];
+const FIELDS_132: &[SchemaField] = &[SchemaField {
+    ty: "tlPoint",
+    name: "Position",
+}];
 /// Subchunks 133.
 const SUBCHUNKS_133: &[&str] = &[];
 /// Fields 133.
 const FIELDS_133: &[SchemaField] = &[
-    SchemaField {
-        ty: "float",
-        name: "Phi",
-    },
+    SchemaField { ty: "float", name: "Phi" },
     SchemaField {
         ty: "float",
         name: "Theta",
@@ -3227,21 +3085,17 @@ const FIELDS_133: &[SchemaField] = &[
 /// Subchunks 134.
 const SUBCHUNKS_134: &[&str] = &[];
 /// Fields 134.
-const FIELDS_134: &[SchemaField] = &[
-    SchemaField {
-        ty: "ULONG",
-        name: "Shadow",
-    },
-];
+const FIELDS_134: &[SchemaField] = &[SchemaField {
+    ty: "ULONG",
+    name: "Shadow",
+}];
 /// Subchunks 135.
 const SUBCHUNKS_135: &[&str] = &[];
 /// Fields 135.
-const FIELDS_135: &[SchemaField] = &[
-    SchemaField {
-        ty: "float",
-        name: "RotationY",
-    },
-];
+const FIELDS_135: &[SchemaField] = &[SchemaField {
+    ty: "float",
+    name: "RotationY",
+}];
 /// Subchunks 136.
 const SUBCHUNKS_136: &[&str] = &["tlLightDecayRangeRotationYChunk"];
 /// Fields 136.
@@ -3262,12 +3116,10 @@ const FIELDS_136: &[SchemaField] = &[
 /// Subchunks 137.
 const SUBCHUNKS_137: &[&str] = &["tlLightIlluminationTypeChunk"];
 /// Fields 137.
-const FIELDS_137: &[SchemaField] = &[
-    SchemaField {
-        ty: "ULONG",
-        name: "IlluminationType",
-    },
-];
+const FIELDS_137: &[SchemaField] = &[SchemaField {
+    ty: "ULONG",
+    name: "IlluminationType",
+}];
 /// Subchunks 138.
 const SUBCHUNKS_138: &[&str] = &[];
 /// Fields 138.
@@ -3345,12 +3197,10 @@ const FIELDS_141: &[SchemaField] = &[
 /// Subchunks 142.
 const SUBCHUNKS_142: &[&str] = &[];
 /// Fields 142.
-const FIELDS_142: &[SchemaField] = &[
-    SchemaField {
-        ty: "ULONG",
-        name: "CastShadow",
-    },
-];
+const FIELDS_142: &[SchemaField] = &[SchemaField {
+    ty: "ULONG",
+    name: "CastShadow",
+}];
 /// Subchunks 143.
 const SUBCHUNKS_143: &[&str] = &[
     "tlMultiControllerTracksChunk16",
@@ -3446,22 +3296,10 @@ const FIELDS_147: &[SchemaField] = &[
         ty: "COLOUR",
         name: "Colour",
     },
-    SchemaField {
-        ty: "tlUV",
-        name: "Uv0",
-    },
-    SchemaField {
-        ty: "tlUV",
-        name: "Uv1",
-    },
-    SchemaField {
-        ty: "tlUV",
-        name: "Uv2",
-    },
-    SchemaField {
-        ty: "tlUV",
-        name: "Uv3",
-    },
+    SchemaField { ty: "tlUV", name: "Uv0" },
+    SchemaField { ty: "tlUV", name: "Uv1" },
+    SchemaField { ty: "tlUV", name: "Uv2" },
+    SchemaField { ty: "tlUV", name: "Uv3" },
     SchemaField {
         ty: "tlUV",
         name: "UvOffset",
@@ -3503,10 +3341,7 @@ const FIELDS_148: &[SchemaField] = &[
         ty: "ULONG",
         name: "ZWrite",
     },
-    SchemaField {
-        ty: "ULONG",
-        name: "Fog",
-    },
+    SchemaField { ty: "ULONG", name: "Fog" },
     SchemaField {
         ty: "float",
         name: "SourceRadius",
@@ -3524,18 +3359,9 @@ const FIELDS_148: &[SchemaField] = &[
 const SUBCHUNKS_149: &[&str] = &[];
 /// Fields 149.
 const FIELDS_149: &[SchemaField] = &[
-    SchemaField {
-        ty: "float",
-        name: "X",
-    },
-    SchemaField {
-        ty: "float",
-        name: "Y",
-    },
-    SchemaField {
-        ty: "float",
-        name: "Z",
-    },
+    SchemaField { ty: "float", name: "X" },
+    SchemaField { ty: "float", name: "Y" },
+    SchemaField { ty: "float", name: "Z" },
 ];
 /// Subchunks 150.
 const SUBCHUNKS_150: &[&str] = &["tlOpticVectorV14Chunk"];
@@ -3599,10 +3425,8 @@ const FIELDS_150: &[SchemaField] = &[
     },
 ];
 /// Subchunks 151.
-const SUBCHUNKS_151: &[&str] = &[
-    "tlLensFlareV14Chunk",
-    "tlOpticVectorV14Chunk",
-];
+const SUBCHUNKS_151: &[&str] =
+    &["tlLensFlareV14Chunk", "tlOpticVectorV14Chunk"];
 /// Fields 151.
 const FIELDS_151: &[SchemaField] = &[
     SchemaField {
@@ -3734,30 +3558,24 @@ const FIELDS_155: &[SchemaField] = &[
 /// Subchunks 156.
 const SUBCHUNKS_156: &[&str] = &["animation"];
 /// Fields 156.
-const FIELDS_156: &[SchemaField] = &[
-    SchemaField {
-        ty: "ULONG",
-        name: "Version",
-    },
-];
+const FIELDS_156: &[SchemaField] = &[SchemaField {
+    ty: "ULONG",
+    name: "Version",
+}];
 /// Subchunks 157.
 const SUBCHUNKS_157: &[&str] = &["animation"];
 /// Fields 157.
-const FIELDS_157: &[SchemaField] = &[
-    SchemaField {
-        ty: "ULONG",
-        name: "Version",
-    },
-];
+const FIELDS_157: &[SchemaField] = &[SchemaField {
+    ty: "ULONG",
+    name: "Version",
+}];
 /// Subchunks 158.
 const SUBCHUNKS_158: &[&str] = &["animation"];
 /// Fields 158.
-const FIELDS_158: &[SchemaField] = &[
-    SchemaField {
-        ty: "ULONG",
-        name: "Version",
-    },
-];
+const FIELDS_158: &[SchemaField] = &[SchemaField {
+    ty: "ULONG",
+    name: "Version",
+}];
 /// Subchunks 159.
 const SUBCHUNKS_159: &[&str] = &[
     "tlParticleAnimationChunk",
@@ -3790,10 +3608,7 @@ const FIELDS_159: &[SchemaField] = &[
         ty: "ULONG",
         name: "ZWrite",
     },
-    SchemaField {
-        ty: "ULONG",
-        name: "Fog",
-    },
+    SchemaField { ty: "ULONG", name: "Fog" },
     SchemaField {
         ty: "ULONG",
         name: "MaxParticles",
@@ -3953,10 +3768,8 @@ const FIELDS_164: &[SchemaField] = &[
     },
 ];
 /// Subchunks 165.
-const SUBCHUNKS_165: &[&str] = &[
-    "tlPhysicsVectorChunk",
-    "tlPhysicsInertiaMatrixChunk",
-];
+const SUBCHUNKS_165: &[&str] =
+    &["tlPhysicsVectorChunk", "tlPhysicsInertiaMatrixChunk"];
 /// Fields 165.
 const FIELDS_165: &[SchemaField] = &[
     SchemaField {
@@ -3979,74 +3792,38 @@ const FIELDS_165: &[SchemaField] = &[
         ty: "float",
         name: "MinAngle",
     },
-    SchemaField {
-        ty: "ULONG",
-        name: "DOF",
-    },
+    SchemaField { ty: "ULONG", name: "DOF" },
 ];
 /// Subchunks 166.
 const SUBCHUNKS_166: &[&str] = &[];
 /// Fields 166.
 const FIELDS_166: &[SchemaField] = &[
-    SchemaField {
-        ty: "float",
-        name: "X",
-    },
-    SchemaField {
-        ty: "float",
-        name: "Y",
-    },
-    SchemaField {
-        ty: "float",
-        name: "Z",
-    },
+    SchemaField { ty: "float", name: "X" },
+    SchemaField { ty: "float", name: "Y" },
+    SchemaField { ty: "float", name: "Z" },
 ];
 /// Subchunks 167.
 const SUBCHUNKS_167: &[&str] = &[];
 /// Fields 167.
 const FIELDS_167: &[SchemaField] = &[
-    SchemaField {
-        ty: "float",
-        name: "XX",
-    },
-    SchemaField {
-        ty: "float",
-        name: "XY",
-    },
-    SchemaField {
-        ty: "float",
-        name: "XZ",
-    },
-    SchemaField {
-        ty: "float",
-        name: "YY",
-    },
-    SchemaField {
-        ty: "float",
-        name: "YZ",
-    },
-    SchemaField {
-        ty: "float",
-        name: "ZZ",
-    },
+    SchemaField { ty: "float", name: "XX" },
+    SchemaField { ty: "float", name: "XY" },
+    SchemaField { ty: "float", name: "XZ" },
+    SchemaField { ty: "float", name: "YY" },
+    SchemaField { ty: "float", name: "YZ" },
+    SchemaField { ty: "float", name: "ZZ" },
 ];
 /// Subchunks 168.
-const SUBCHUNKS_168: &[&str] = &[
-    "tlObjectAttributeChunk",
-    "tlCollisionObjectChunk",
-];
+const SUBCHUNKS_168: &[&str] =
+    &["tlObjectAttributeChunk", "tlCollisionObjectChunk"];
 /// Fields 168.
-const FIELDS_168: &[SchemaField] = &[
-    SchemaField {
-        ty: "string",
-        name: "Name",
-    },
-];
+const FIELDS_168: &[SchemaField] = &[SchemaField {
+    ty: "string",
+    name: "Name",
+}];
 /// Subchunks 169.
-const SUBCHUNKS_169: &[&str] = &[
-    "tlPoseJointListChunk16",
-    "tlPoseAnimMirroredChunk16",
-];
+const SUBCHUNKS_169: &[&str] =
+    &["tlPoseJointListChunk16", "tlPoseAnimMirroredChunk16"];
 /// Fields 169.
 const FIELDS_169: &[SchemaField] = &[
     SchemaField {
@@ -4090,12 +3867,10 @@ const FIELDS_170: &[SchemaField] = &[
 /// Subchunks 171.
 const SUBCHUNKS_171: &[&str] = &[];
 /// Fields 171.
-const FIELDS_171: &[SchemaField] = &[
-    SchemaField {
-        ty: "string",
-        name: "Name",
-    },
-];
+const FIELDS_171: &[SchemaField] = &[SchemaField {
+    ty: "string",
+    name: "Name",
+}];
 /// Subchunks 172.
 const SUBCHUNKS_172: &[&str] = &[
     "tlChannel1DOFChunk16",
@@ -4235,56 +4010,26 @@ const FIELDS_177: &[SchemaField] = &[
 const SUBCHUNKS_178: &[&str] = &[];
 /// Fields 178.
 const FIELDS_178: &[SchemaField] = &[
-    SchemaField {
-        ty: "float",
-        name: "X",
-    },
-    SchemaField {
-        ty: "float",
-        name: "Y",
-    },
-    SchemaField {
-        ty: "float",
-        name: "Z",
-    },
+    SchemaField { ty: "float", name: "X" },
+    SchemaField { ty: "float", name: "Y" },
+    SchemaField { ty: "float", name: "Z" },
 ];
 /// Subchunks 179.
 const SUBCHUNKS_179: &[&str] = &[];
 /// Fields 179.
 const FIELDS_179: &[SchemaField] = &[
-    SchemaField {
-        ty: "float",
-        name: "X",
-    },
-    SchemaField {
-        ty: "float",
-        name: "Y",
-    },
-    SchemaField {
-        ty: "float",
-        name: "Z",
-    },
+    SchemaField { ty: "float", name: "X" },
+    SchemaField { ty: "float", name: "Y" },
+    SchemaField { ty: "float", name: "Z" },
 ];
 /// Subchunks 180.
 const SUBCHUNKS_180: &[&str] = &[];
 /// Fields 180.
 const FIELDS_180: &[SchemaField] = &[
-    SchemaField {
-        ty: "float",
-        name: "W",
-    },
-    SchemaField {
-        ty: "float",
-        name: "X",
-    },
-    SchemaField {
-        ty: "float",
-        name: "Y",
-    },
-    SchemaField {
-        ty: "float",
-        name: "Z",
-    },
+    SchemaField { ty: "float", name: "W" },
+    SchemaField { ty: "float", name: "X" },
+    SchemaField { ty: "float", name: "Y" },
+    SchemaField { ty: "float", name: "Z" },
 ];
 /// Subchunks 181.
 const SUBCHUNKS_181: &[&str] = &[];
@@ -4359,12 +4104,10 @@ const FIELDS_182: &[SchemaField] = &[
 /// Subchunks 183.
 const SUBCHUNKS_183: &[&str] = &[];
 /// Fields 183.
-const FIELDS_183: &[SchemaField] = &[
-    SchemaField {
-        ty: "string",
-        name: "VertexShaderName",
-    },
-];
+const FIELDS_183: &[SchemaField] = &[SchemaField {
+    ty: "string",
+    name: "VertexShaderName",
+}];
 /// Subchunks 184.
 const SUBCHUNKS_184: &[&str] = &[];
 /// Fields 184.
@@ -4866,12 +4609,10 @@ const SUBCHUNKS_212: &[&str] = &[
     "tlScenegraphVisibilityChunk",
 ];
 /// Fields 212.
-const FIELDS_212: &[SchemaField] = &[
-    SchemaField {
-        ty: "ULONG",
-        name: "Joint",
-    },
-];
+const FIELDS_212: &[SchemaField] = &[SchemaField {
+    ty: "ULONG",
+    name: "Joint",
+}];
 /// Subchunks 213.
 const SUBCHUNKS_213: &[&str] = &["tlScenegraphSortOrderChunk"];
 /// Fields 213.
@@ -4918,12 +4659,10 @@ const FIELDS_215: &[SchemaField] = &[
 /// Subchunks 216.
 const SUBCHUNKS_216: &[&str] = &[];
 /// Fields 216.
-const FIELDS_216: &[SchemaField] = &[
-    SchemaField {
-        ty: "float",
-        name: "SortOrder",
-    },
-];
+const FIELDS_216: &[SchemaField] = &[SchemaField {
+    ty: "float",
+    name: "SortOrder",
+}];
 /// Subchunks 217.
 const SUBCHUNKS_217: &[&str] = &[
     "tlChannel1DOFChunk16",
@@ -4961,10 +4700,7 @@ const FIELDS_217: &[SchemaField] = &[
     },
 ];
 /// Subchunks 218.
-const SUBCHUNKS_218: &[&str] = &[
-    "tlScroobyPageChunk",
-    "tlScroobyScreenChunk",
-];
+const SUBCHUNKS_218: &[&str] = &["tlScroobyPageChunk", "tlScroobyScreenChunk"];
 /// Fields 218.
 const FIELDS_218: &[SchemaField] = &[
     SchemaField {
@@ -5095,12 +4831,10 @@ const FIELDS_222: &[SchemaField] = &[
 /// Subchunks 223.
 const SUBCHUNKS_223: &[&str] = &[];
 /// Fields 223.
-const FIELDS_223: &[SchemaField] = &[
-    SchemaField {
-        ty: "string",
-        name: "String",
-    },
-];
+const FIELDS_223: &[SchemaField] = &[SchemaField {
+    ty: "string",
+    name: "String",
+}];
 /// Subchunks 224.
 const SUBCHUNKS_224: &[&str] = &[
     "tlScroobyStringTextBibleChunk",
@@ -5767,10 +5501,7 @@ const FIELDS_250: &[SchemaField] = &[
         ty: "ULONG",
         name: "Parent",
     },
-    SchemaField {
-        ty: "ULONG",
-        name: "DOF",
-    },
+    SchemaField { ty: "ULONG", name: "DOF" },
     SchemaField {
         ty: "ULONG",
         name: "FreeAxes",
@@ -5816,12 +5547,10 @@ const FIELDS_251: &[SchemaField] = &[
 /// Subchunks 252.
 const SUBCHUNKS_252: &[&str] = &[];
 /// Fields 252.
-const FIELDS_252: &[SchemaField] = &[
-    SchemaField {
-        ty: "ULONG",
-        name: "PreserveBoneLengths",
-    },
-];
+const FIELDS_252: &[SchemaField] = &[SchemaField {
+    ty: "ULONG",
+    name: "PreserveBoneLengths",
+}];
 /// Subchunks 253.
 const SUBCHUNKS_253: &[&str] = &[
     "tlPrimGroupChunk",
@@ -6103,12 +5832,10 @@ const FIELDS_261: &[SchemaField] = &[
 /// Subchunks 262.
 const SUBCHUNKS_262: &[&str] = &[];
 /// Fields 262.
-const FIELDS_262: &[SchemaField] = &[
-    SchemaField {
-        ty: "string",
-        name: "ExtraAttribute",
-    },
-];
+const FIELDS_262: &[SchemaField] = &[SchemaField {
+    ty: "string",
+    name: "ExtraAttribute",
+}];
 /// Subchunks 263.
 const SUBCHUNKS_263: &[&str] = &["image"];
 /// Fields 263.
@@ -6290,10 +6017,8 @@ const FIELDS_269: &[SchemaField] = &[
     },
 ];
 /// Subchunks 270.
-const SUBCHUNKS_270: &[&str] = &[
-    "tlObjectAttributeChunk",
-    "tlCollisionObjectChunk",
-];
+const SUBCHUNKS_270: &[&str] =
+    &["tlObjectAttributeChunk", "tlCollisionObjectChunk"];
 /// Fields 270.
 const FIELDS_270: &[SchemaField] = &[
     SchemaField {
@@ -6356,10 +6081,7 @@ const SUBCHUNKS_273: &[&str] = &["tlEntityChannelChunk16"];
 /// Fields 273.
 const FIELDS_273: &[SchemaField] = &[];
 /// Subchunks 274.
-const SUBCHUNKS_274: &[&str] = &[
-    "image",
-    "tlVolumeImageChunk",
-];
+const SUBCHUNKS_274: &[&str] = &["image", "tlVolumeImageChunk"];
 /// Fields 274.
 const FIELDS_274: &[SchemaField] = &[
     SchemaField {
@@ -6378,10 +6100,7 @@ const FIELDS_274: &[SchemaField] = &[
         ty: "ULONG",
         name: "Height",
     },
-    SchemaField {
-        ty: "ULONG",
-        name: "Bpp",
-    },
+    SchemaField { ty: "ULONG", name: "Bpp" },
     SchemaField {
         ty: "ULONG",
         name: "AlphaDepth",
@@ -6646,10 +6365,7 @@ const FIELDS_285: &[SchemaField] = &[
 const SUBCHUNKS_286: &[&str] = &[];
 /// Fields 286.
 const FIELDS_286: &[SchemaField] = &[
-    SchemaField {
-        ty: "ULONG",
-        name: "ID",
-    },
+    SchemaField { ty: "ULONG", name: "ID" },
     SchemaField {
         ty: "float",
         name: "MinMagnitude",
@@ -6685,10 +6401,7 @@ const FIELDS_287: &[SchemaField] = &[
     },
 ];
 /// Subchunks 288.
-const SUBCHUNKS_288: &[&str] = &[
-    "tlWBTriggerVolumeChunk",
-    "tlWBSplineChunk",
-];
+const SUBCHUNKS_288: &[&str] = &["tlWBTriggerVolumeChunk", "tlWBSplineChunk"];
 /// Fields 288.
 const FIELDS_288: &[SchemaField] = &[
     SchemaField {
@@ -6748,10 +6461,7 @@ const FIELDS_289: &[SchemaField] = &[
         ty: "ULONG",
         name: "ReverseSense",
     },
-    SchemaField {
-        ty: "float",
-        name: "FOV",
-    },
+    SchemaField { ty: "float", name: "FOV" },
     SchemaField {
         ty: "tlPoint",
         name: "TargetOffset",
@@ -7144,8 +6854,8 @@ pub const SCHEMA_CHUNKS: &[ChunkDefinition] = &[
     ChunkDefinition {
         schema_key: "schema_0014",
         name: "tlEventDataImageChunk",
-        chunk_id_expr:
-            "Pure3D::Animation::ChannelData::EVENT_OBJECT_DATA_IMAGE",
+        // jig-ignore-next-line: exact syntax is indivisible
+        chunk_id_expr: "Pure3D::Animation::ChannelData::EVENT_OBJECT_DATA_IMAGE",
         subchunks: SUBCHUNKS_43,
         fields: FIELDS_43,
     },
@@ -7572,8 +7282,8 @@ pub const SCHEMA_CHUNKS: &[ChunkDefinition] = &[
     ChunkDefinition {
         schema_key: "schema_0031",
         name: "tlFrameControllerChunk",
-        chunk_id_expr:
-            "Pure3D::Animation::FrameControllerData::FRAME_CONTROLLER",
+        // jig-ignore-next-line: exact syntax is indivisible
+        chunk_id_expr: "Pure3D::Animation::FrameControllerData::FRAME_CONTROLLER",
         subchunks: SUBCHUNKS_104,
         fields: FIELDS_104,
     },
@@ -13305,7 +13015,7 @@ pub const CHUNK_ID_CONSTANTS: &[ChunkIdConstant] = &[
 
 /// Chunk constants by value.
 pub fn chunk_constants_by_value(
-    value: u32
+    value: u32,
 ) -> impl Iterator<Item = &'static ChunkIdConstant> {
     CHUNK_ID_CONSTANTS
         .iter()
@@ -13320,7 +13030,7 @@ pub fn first_chunk_constant(value: u32) -> Option<&'static ChunkIdConstant> {
 
 /// Schemas matching one generated chunk name in source order.
 pub fn schemas_by_chunk_name(
-    name: &str
+    name: &str,
 ) -> impl Iterator<Item = &'static ChunkDefinition> {
     SCHEMA_CHUNKS
         .iter()
@@ -13340,14 +13050,11 @@ pub fn schemas_by_chunk_name(
 pub fn schema_by_chunk_name(name: &str) -> Option<&'static ChunkDefinition> {
     let mut schemas = schemas_by_chunk_name(name);
     let schema = schemas.next()?;
-    schemas
-        .next()
-        .is_none()
-        .then_some(schema)
+    schemas.next().is_none().then_some(schema)
 }
 /// Schemas by key.
 pub fn schemas_by_key(
-    schema_key: &str
+    schema_key: &str,
 ) -> impl Iterator<Item = &'static ChunkDefinition> {
     SCHEMA_CHUNKS
         .iter()
@@ -13364,134 +13071,70 @@ pub fn schemas_by_key(
 )]
 #[must_use]
 pub fn schema_ref_for_kind(kind: &str) -> Option<&'static str> {
-    Some(
-        match kind {
-            "text_bible" => "text_bible",
-            "language" => "language",
-            "texture" => "texture",
-            "image_data" => "image",
-            "mesh" => "mesh",
-            "skin" => "skin",
-            "shader" => "shader",
-            "animation" => "animation",
-            "skeleton" => "skeleton",
-            "composite_drawable" => "composite_drawable",
-            "camera" => "camera",
-            "light" => "light",
-            "light_group" => "light_group",
-            "game_attr" => "game_attr",
-            "particle_system_factory" => "particle_system_factory",
-            "particle_system" => "particle_system",
-            "scenegraph" => "scenegraph",
-            "srr_road" => "road",
-            "srr_intersection" => "intersection",
-            "srr_road_segment_data" => "road_segment_data",
-            "srr_entity_dsg" => "entity_dsg",
-            "srr_static_phys_dsg" => "static_phys_dsg",
-            "srr_intersect_dsg" => "intersect_dsg",
-            "srr_tree_dsg" => "tree_dsg",
-            "srr_fence_dsg" => "fence_dsg",
-            "srr_anim_coll_dsg" => "anim_coll_dsg",
-            "srr_world_sphere_dsg" => "world_sphere_dsg",
-            "srr_anim_dsg" => "anim_dsg",
-            "locator" => "locator",
-            "sprite" => "sprite",
-            "quad_group" => "quad_group",
-            "multi_controller" => "multi_controller",
-            "history" => "history",
-            "export_info" => "export_info",
-            "animated_object_factory" => "animated_object_factory",
-            "animated_object" => "animated_object",
-            "vertex_expression_group" => "vertex_expression_group",
-            "vertex_expression_mixer" => "vertex_expression_mixer",
-            "texture_font" => "texture_font",
-            "scrooby_project" => "scrooby_project",
-            "frame_controller" => "frame_controller",
-            "frame_controller_variant_a" => "frame_controller_variant_a",
-            "frame_controller_variant_b" => "frame_controller_variant_b",
-            "vertex_anim_key" => "vertex_anim_key",
-            "simulation_collision_object" => "simulation_collision_object",
-            "simulation_physics_object" => "simulation_physics_object",
-            "state_prop" => "state_prop",
-            "srr_locator" => "locator",
-            "srr_ped_path" => "ped_path",
-            "srr_chunk_set" => "chunk_set",
-            "srr_attribute_table" => "attribute_table",
-            "srr_breakable_object" => "breakable_object",
-            "srr_inst_particle_system" => "inst_particle_system",
-            "srr_follow_cam" => "follow_cam",
-            "srr_dyna_phys_dsg" => "dyna_phys_dsg",
-            "srr_insta_entity_dsg" => "insta_entity_dsg",
-            "srr_insta_static_phys_dsg" => "insta_static_phys_dsg",
-            "srr_insta_anim_dyna_phys_dsg" => "insta_anim_dyna_phys_dsg",
-            "srr_lens_flare_dsg" => "lens_flare_dsg",
-            _ => return None,
-        },
-    )
+    Some(match kind {
+        "text_bible" => "text_bible",
+        "language" => "language",
+        "texture" => "texture",
+        "image_data" => "image",
+        "mesh" => "mesh",
+        "skin" => "skin",
+        "shader" => "shader",
+        "animation" => "animation",
+        "skeleton" => "skeleton",
+        "composite_drawable" => "composite_drawable",
+        "camera" => "camera",
+        "light" => "light",
+        "light_group" => "light_group",
+        "game_attr" => "game_attr",
+        "particle_system_factory" => "particle_system_factory",
+        "particle_system" => "particle_system",
+        "scenegraph" => "scenegraph",
+        "srr_road" => "road",
+        "srr_intersection" => "intersection",
+        "srr_road_segment_data" => "road_segment_data",
+        "srr_entity_dsg" => "entity_dsg",
+        "srr_static_phys_dsg" => "static_phys_dsg",
+        "srr_intersect_dsg" => "intersect_dsg",
+        "srr_tree_dsg" => "tree_dsg",
+        "srr_fence_dsg" => "fence_dsg",
+        "srr_anim_coll_dsg" => "anim_coll_dsg",
+        "srr_world_sphere_dsg" => "world_sphere_dsg",
+        "srr_anim_dsg" => "anim_dsg",
+        "locator" => "locator",
+        "sprite" => "sprite",
+        "quad_group" => "quad_group",
+        "multi_controller" => "multi_controller",
+        "history" => "history",
+        "export_info" => "export_info",
+        "animated_object_factory" => "animated_object_factory",
+        "animated_object" => "animated_object",
+        "vertex_expression_group" => "vertex_expression_group",
+        "vertex_expression_mixer" => "vertex_expression_mixer",
+        "texture_font" => "texture_font",
+        "scrooby_project" => "scrooby_project",
+        "frame_controller" => "frame_controller",
+        "frame_controller_variant_a" => "frame_controller_variant_a",
+        "frame_controller_variant_b" => "frame_controller_variant_b",
+        "vertex_anim_key" => "vertex_anim_key",
+        "simulation_collision_object" => "simulation_collision_object",
+        "simulation_physics_object" => "simulation_physics_object",
+        "state_prop" => "state_prop",
+        "srr_locator" => "locator",
+        "srr_ped_path" => "ped_path",
+        "srr_chunk_set" => "chunk_set",
+        "srr_attribute_table" => "attribute_table",
+        "srr_breakable_object" => "breakable_object",
+        "srr_inst_particle_system" => "inst_particle_system",
+        "srr_follow_cam" => "follow_cam",
+        "srr_dyna_phys_dsg" => "dyna_phys_dsg",
+        "srr_insta_entity_dsg" => "insta_entity_dsg",
+        "srr_insta_static_phys_dsg" => "insta_static_phys_dsg",
+        "srr_insta_anim_dyna_phys_dsg" => "insta_anim_dyna_phys_dsg",
+        "srr_lens_flare_dsg" => "lens_flare_dsg",
+        _ => return None,
+    })
 }
 
 #[cfg(test)]
-mod tests {
-    use super::{
-        CHUNK_ID_CONSTANT_COUNT, CHUNK_ID_CONSTANTS, SCHEMA_CHUNK_COUNT,
-        SCHEMA_FILE_COUNT, chunk_constants_by_value, schema_by_chunk_name,
-        schema_ref_for_kind, schemas_by_chunk_name,
-    };
-
-    #[test]
-    fn chunk_constants_have_complete_identity_metadata() {
-        for constant in CHUNK_ID_CONSTANTS {
-            assert!(
-                !constant
-                    .authority_key
-                    .is_empty()
-            );
-            assert!(
-                !constant
-                    .scope
-                    .is_empty()
-            );
-            assert!(
-                !constant
-                    .name
-                    .is_empty()
-            );
-        }
-    }
-
-    #[test]
-    fn singular_schema_lookup_rejects_ambiguous_names() {
-        assert!(schema_by_chunk_name("tlCompositeSkinProp").is_none());
-        assert_eq!(
-            schemas_by_chunk_name("tlCompositeSkinProp").count(),
-            2
-        );
-    }
-
-    #[test]
-    fn registry_covers_all_schema16_files() {
-        assert_eq!(
-            SCHEMA_FILE_COUNT,
-            88
-        );
-        assert_eq!(
-            SCHEMA_CHUNK_COUNT,
-            293
-        );
-        const { assert!(CHUNK_ID_CONSTANT_COUNT > 200) };
-        assert!(schema_by_chunk_name("texture").is_some());
-        assert!(schema_by_chunk_name("mesh").is_some());
-        assert!(schema_by_chunk_name("fence_dsg").is_some());
-        assert_eq!(
-            schema_ref_for_kind("mesh"),
-            Some("mesh")
-        );
-        assert!(
-            chunk_constants_by_value(0x03f0_0007).any(
-                |constant| constant
-                    .name
-                    .contains("FENCE")
-            )
-        );
-    }
-}
+#[path = "../../../../tests/formats/p3d/unit/contract/schema/tests.rs"]
+mod tests;

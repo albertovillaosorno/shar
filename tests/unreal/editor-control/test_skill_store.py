@@ -1,7 +1,3 @@
-# File:
-#   - test_skill_store.py
-# Path: tests/unreal/editor-control/test_skill_store.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,67 +6,48 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Regression tests for generated skill storage and export orchestration.
+#   - Test skill store test module.
 # - Must-Not:
-#   - Connect to Unreal, test taxonomy routing, or modify repository skills.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Temporary skill roots and a synthetic catalog source.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Filesystem and application orchestration need different fixtures.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another test module owns the same persistence contract.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Guards safe generated skill replacement and export reporting.
+#   - Test skill store test module.
 # - Description:
-#   - Proves manual workflow files survive complete generated replacement.
+#   - Implements the declared test module responsibility for editor control.
 # - Usage:
-#   - Executed by pytest through the canonical validator workflow.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Uses the complete synthetic 52-toolset catalog.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: generated Unreal skill persistence regression tests
-#   - reason: storage replacement and export reporting share one temp root
-#   - split: separate application orchestration if another store is introduced
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess after store ownership or export reporting changes
-#
-"""Regression tests for generated Unreal MCP skill persistence."""
+
+"""Test skill store test module."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
+from typing import cast
 
-import pytest
 from mcp.adapter_outbound.filesystem_skill_store import FilesystemSkillStore
-from mcp.adapter_outbound.skill_manual_review import (
-    MANUAL_REVIEW_PLACEHOLDER,
-)
-from mcp.adapter_outbound.skill_markdown_renderer import (
-    MarkdownSkillRenderer,
-)
+from mcp.adapter_outbound.skill_manual_review import MANUAL_REVIEW_PLACEHOLDER
+from mcp.adapter_outbound.skill_markdown_renderer import MarkdownSkillRenderer
 from mcp.application.skill_export import UnrealSkillExporter
 from mcp.domain.errors import ProtocolError
 from mcp.domain.skill_documents import interface_digest
 from mcp.domain.skill_revision import build_skill_revision
-
-from skill_catalog_fixture import (
-    EXPECTED_CATEGORY_COUNT,
-    EXPECTED_DOCUMENT_COUNT,
-    EXPECTED_TOOLSET_COUNT,
-    TEST_UNREAL_MCP_VERSION,
-    complete_catalog,
-)
+import pytest
+from skill_catalog_fixture import EXPECTED_CATEGORY_COUNT
+from skill_catalog_fixture import EXPECTED_DOCUMENT_COUNT
+from skill_catalog_fixture import EXPECTED_TOOLSET_COUNT
+from skill_catalog_fixture import TEST_UNREAL_MCP_VERSION
+from skill_catalog_fixture import complete_catalog
 
 if TYPE_CHECKING:
     from pathlib import Path

@@ -1,7 +1,3 @@
-// File:
-//   - artifact_store.rs
-// Path: src/unreal/asset-conversion/port-outbound/artifact_store.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,67 +6,46 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Persistence of deterministic conversion plans and reports.
+//   - Artifact store outbound port.
 // - Must-Not:
-//   - Contain filesystem, MCP, Unreal Editor, serialization, or process
-//   - implementations.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - A replaceable text-artifact storage contract for pipeline adapters.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Binary conversion artifacts require a distinct storage contract.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another port owns the same conversion-plan persistence boundary.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Conversion artifact storage port.
+//   - Artifact store outbound port.
 // - Description:
-//   - Defines the persistence seam for public-safe plans and reports.
+//   - Implements the declared responsibility for asset conversion.
 // - Usage:
-//   - Implemented by pipeline-owned adapters outside this crate.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No filesystem or storage implementation is selected implicitly.
-//
-// ADRs:
-// - docs/adr/unreal/architecture.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Persistence port for deterministic Unreal conversion artifacts.
-//!
-//! The port contains no filesystem or serialization implementation.
+//! Artifact store outbound port.
 
-/// Text artifact storage used by conversion orchestration.
+/// Storage boundary for deterministic conversion-plan artifacts.
 pub trait PlanStore {
     /// Read one UTF-8 conversion artifact.
     ///
     /// # Errors
     ///
     /// Returns an error when the adapter cannot read or decode the artifact.
-    fn read_text(
-        &self,
-        path: &str,
-    ) -> Result<String, String>;
+    fn read_text(&self, path: &str) -> Result<String, String>;
 
     /// Write one UTF-8 conversion artifact.
     ///
     /// # Errors
     ///
     /// Returns an error when the adapter cannot persist the artifact.
-    fn write_text(
-        &self,
-        path: &str,
-        text: &str,
-    ) -> Result<(), String>;
+    fn write_text(&self, path: &str, text: &str) -> Result<(), String>;
 
     /// Return true when the conversion artifact exists.
-    fn exists(
-        &self,
-        path: &str,
-    ) -> bool;
+    fn exists(&self, path: &str) -> bool;
 }

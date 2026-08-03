@@ -5,34 +5,46 @@
 
 ## Governing decisions and specifications
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Converted asset ingestion boundary](../../adr/unreal/import-adapters/converted-asset-ingestion-boundary.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Converted asset ingestion boundary](../../adr/unreal/import-adapters/converted-asset-ingestion-boundary.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Import review boundary](../../adr/unreal/import-adapters/import-review-boundary.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Staged mesh import and world assembly](../../adr/unreal/import-adapters/staged-mesh-import-and-world-assembly.md)
+- [Import review
+  boundary](../../adr/unreal/import-adapters/import-review-boundary.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Staged mesh import and world assembly](../../adr/unreal/import-adapters/staged-mesh-import-and-world-assembly.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
 - [Hexagonal scene export](../../adr/pipeline/fbx/hexagonal-scene-export.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Native import, material rebuild, and world assembly](native-import-material-and-world-assembly.md)
+- [Native import, material rebuild, and world
+  assembly](native-import-material-and-world-assembly.md)
 - [Unreal configuration and asset validation](config-and-asset-validation.md)
 - [Unreal gameplay content catalog](gameplay-content-catalog.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md)
+- [Playable avatar, character controller, and footprint
+  runtime](playable-avatar-character-controller-and-footprint-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
+- [Native vehicle physics, control, damage, and presentation
+  runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+- [World render-entity and physics
+  runtime](world-render-entity-and-physics-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
+- [Spatial visibility, bounds, and culling
+  runtime](spatial-visibility-bounds-and-culling-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Unreal platform, quality, and optimization contract](platform-quality-and-optimization.md)
+- [Unreal platform, quality, and optimization
+  contract](platform-quality-and-optimization.md)
 
 ## Purpose
 
@@ -92,18 +104,37 @@ separate accepted decision.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Visual direction | Defines approved style, silhouette, palette, readability, scene composition, and presentation intent. |
-| Content catalog | Owns stable character, vehicle, prop, location, billboard, card, gag, interior, material, and variant identities. |
-| Authoring definition | Declares asset class, source role, scale, axes, pivots, topology, UV, material, collision, LOD, rig, animation, socket, platform, and validation policy. |
-| Deterministic conversion pipeline | Converts reviewed evidence into bounded normalized interchange and metadata. |
-| Native import adapter | Creates or updates Unreal assets with explicit import profiles and accepted destinations. |
-| Native asset | Owns the imported geometry, skeleton, animation, material, texture, collision, LOD, and editor-visible state. |
-| Data Validation | Verifies naming, metadata, dependencies, budgets, compatibility, cycles, and project-specific rules. |
-| Runtime systems | Consume stable native asset identities and immutable definitions; they do not parse source scenes or authoring documents. |
-| Platform-quality policy | Owns platform compatibility, quality tiers, budgets, scalability, and acceptance evidence. |
-| Diagnostics | Observe immutable source, conversion, import, validation, dependency, and read-back results. |
+- **Authority:** Visual direction
+  - **Responsibility:** Defines approved style, silhouette, palette,
+    readability, scene composition, and presentation intent.
+- **Authority:** Content catalog
+  - **Responsibility:** Owns stable character, vehicle, prop, location,
+    billboard, card, gag, interior, material, and variant identities.
+- **Authority:** Authoring definition
+  - **Responsibility:** Declares asset class, source role, scale, axes, pivots,
+    topology, UV, material, collision, LOD, rig, animation, socket, platform,
+    and validation policy.
+- **Authority:** Deterministic conversion pipeline
+  - **Responsibility:** Converts reviewed evidence into bounded normalized
+    interchange and metadata.
+- **Authority:** Native import adapter
+  - **Responsibility:** Creates or updates Unreal assets with explicit import
+    profiles and accepted destinations.
+- **Authority:** Native asset
+  - **Responsibility:** Owns the imported geometry, skeleton, animation,
+    material, texture, collision, LOD, and editor-visible state.
+- **Authority:** Data Validation
+  - **Responsibility:** Verifies naming, metadata, dependencies, budgets,
+    compatibility, cycles, and project-specific rules.
+- **Authority:** Runtime systems
+  - **Responsibility:** Consume stable native asset identities and immutable
+    definitions; they do not parse source scenes or authoring documents.
+- **Authority:** Platform-quality policy
+  - **Responsibility:** Owns platform compatibility, quality tiers, budgets,
+    scalability, and acceptance evidence.
+- **Authority:** Diagnostics
+  - **Responsibility:** Observe immutable source, conversion, import,
+    validation, dependency, and read-back results.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -388,8 +419,9 @@ facility.
 ## Character animation authoring
 
 Character animation authoring follows
-<!-- markdownlint-disable-next-line MD013 -->
-[Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md).
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+[Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md). <!-- markdownlint-disable-line MD013 -->
 
 The authoring definition adds:
 
@@ -724,7 +756,8 @@ within declared tolerances.
 
 Native import follows
 <!-- markdownlint-disable-next-line MD013 -->
-[Native import, material rebuild, and world assembly](native-import-material-and-world-assembly.md).
+[Native import, material rebuild, and world
+assembly](native-import-material-and-world-assembly.md).
 
 The import profile records:
 

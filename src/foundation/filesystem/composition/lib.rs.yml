@@ -1,0 +1,5 @@
+schema: shar-surface/v1
+path: src/foundation/filesystem/composition/lib.rs
+function: filesystem
+kind: facade
+authority: composition/lib.rs

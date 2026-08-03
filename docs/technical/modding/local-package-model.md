@@ -6,11 +6,14 @@
 ## Governing decisions
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Local drop-in mod packages and AI skills](../../adr/modding/drop-in-mod-packages-and-ai-skills.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Mod-owned multiplayer adapters and community servers](../../adr/modding/mod-owned-multiplayer-adapters-and-community-servers.md)
+- [Local drop-in mod packages and AI
+  skills](../../adr/modding/drop-in-mod-packages-and-ai-skills.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Shared runtime tagging, modding, and platform compatibility](../../adr/unreal/runtime/shared-runtime-tagging-modding-and-platform-compatibility.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Mod-owned multiplayer adapters and community servers](../../adr/modding/mod-owned-multiplayer-adapters-and-community-servers.md) <!-- markdownlint-disable-line MD013 -->
 
 ## Purpose
 
@@ -24,26 +27,51 @@ A package declaration contains at least:
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `CanonicalId` | Stable lowercase package identity independent of storage. |
-| `ContractVersion` | Exact package-schema contract understood by the validator. |
-| `PackageRevision` | Deterministic revision of this package identity. |
-| `PackageKind` | `content` or `native`; mixed packages use the stricter native boundary. |
-| `Priority` | Explicit signed ordering value; never inferred from discovery order. |
-| `Dependencies` | Canonical package identities and accepted revision constraints. |
-| `Conflicts` | Canonical package identities that cannot be active together. |
-| `Supersedes` | Explicit replacement relationships. |
-| `RequiredCapabilities` | Gameplay, asset, runtime, and platform capabilities required for activation. |
-| `SupportedTargets` | Exact target identifiers required for native code or target-specific content. |
-| `Members` | Normalized member identities, lengths, hashes, media types, and roles. |
-| `Provenance` | Authorship, source, license, generation, and review evidence. |
-| `TrustLevel` | Declared trust boundary used by validation and activation policy. |
-| `MultiplayerCapabilities` | Optional server, client, transport, discovery, authority, and protocol declarations. |
-| `ServerPackageRoles` | Optional dedicated-server, listen-server, client, or shared package roles. |
-| `ProtocolRevision` | Exact optional multiplayer protocol revision. |
-| `NetworkSavePolicy` | None, ephemeral session, or namespaced mod-owned persistence. |
-| `NetworkAchievementPolicy` | Base-compatible, base-incompatible, or custom provider. |
+- **Field:** `CanonicalId`
+  - **Contract:** Stable lowercase package identity independent of storage.
+- **Field:** `ContractVersion`
+  - **Contract:** Exact package-schema contract understood by the validator.
+- **Field:** `PackageRevision`
+  - **Contract:** Deterministic revision of this package identity.
+- **Field:** `PackageKind`
+  - **Contract:** `content` or `native`; mixed packages use the stricter native
+    boundary.
+- **Field:** `Priority`
+  - **Contract:** Explicit signed ordering value; never inferred from discovery
+    order.
+- **Field:** `Dependencies`
+  - **Contract:** Canonical package identities and accepted revision
+    constraints.
+- **Field:** `Conflicts`
+  - **Contract:** Canonical package identities that cannot be active together.
+- **Field:** `Supersedes`
+  - **Contract:** Explicit replacement relationships.
+- **Field:** `RequiredCapabilities`
+  - **Contract:** Gameplay, asset, runtime, and platform capabilities required
+    for activation.
+- **Field:** `SupportedTargets`
+  - **Contract:** Exact target identifiers required for native code or
+    target-specific content.
+- **Field:** `Members`
+  - **Contract:** Normalized member identities, lengths, hashes, media types,
+    and roles.
+- **Field:** `Provenance`
+  - **Contract:** Authorship, source, license, generation, and review evidence.
+- **Field:** `TrustLevel`
+  - **Contract:** Declared trust boundary used by validation and activation
+    policy.
+- **Field:** `MultiplayerCapabilities`
+  - **Contract:** Optional server, client, transport, discovery, authority, and
+    protocol declarations.
+- **Field:** `ServerPackageRoles`
+  - **Contract:** Optional dedicated-server, listen-server, client, or shared
+    package roles.
+- **Field:** `ProtocolRevision`
+  - **Contract:** Exact optional multiplayer protocol revision.
+- **Field:** `NetworkSavePolicy`
+  - **Contract:** None, ephemeral session, or namespaced mod-owned persistence.
+- **Field:** `NetworkAchievementPolicy`
+  - **Contract:** Base-compatible, base-incompatible, or custom provider.
 
 <!-- markdownlint-enable MD013 -->
 

@@ -1,12 +1,34 @@
-// File: SharApplicationModeLifecycle.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharApplication/Private/Application/SharApplicationModeLifecycle.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: service evidence, readiness verification, atomic mode commit, recovery, terminal result, and release only.
-// Specification: docs/technical/unreal/application-lifecycle-and-mode-runtime.md
-// LARGE-FILE owner=SharApplication; reason=cohesive application-transition lifecycle and recovery;
-// split=extract diagnostics if transition evidence becomes persistent;
-// validation=validate.sh SharApplication plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar application mode lifecycle composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar application mode lifecycle composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar application mode lifecycle composition module.
 
 #include "Application/SharApplicationModeCoordinator.h"
 

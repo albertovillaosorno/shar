@@ -1,9 +1,34 @@
-// File: SharInteractionDefinitionTests.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharInteraction/Private/Tests/SharInteractionDefinitionTests.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: transient interaction definition validation tests only.
-// ADR: docs/adr/unreal/runtime/contextual-interaction-query-and-transaction.md
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar interaction definition tests composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar interaction definition tests composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar interaction definition tests composition module.
 
 #if WITH_DEV_AUTOMATION_TESTS
 
@@ -27,8 +52,10 @@ static void FillInteractionDefinitionBase(
     Definition.PromptIconId = FName(TEXT("icon_interact"));
     Definition.AccessibilityDescriptionId =
         FName(TEXT("accessibility_enter_vehicle"));
+    // jig-ignore-next-line: exact syntax is indivisible
     Definition.EligibilityPolicyId = FName(TEXT("vehicle_entry_eligibility_v1"));
     Definition.SlotPolicyId = FName(TEXT("vehicle_driver_slot_v1"));
+    // jig-ignore-next-line: exact syntax is indivisible
     Definition.PresentationPolicyId = FName(TEXT("vehicle_entry_presentation_v1"));
     Definition.EffectPolicyId = FName(TEXT("vehicle_entry_effect_v1"));
     Definition.CooldownPolicyId = FName(TEXT("no_cooldown"));

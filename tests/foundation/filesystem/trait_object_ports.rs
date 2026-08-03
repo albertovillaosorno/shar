@@ -1,7 +1,3 @@
-// File:
-//   - trait_object_ports.rs
-// Path: tests/foundation/filesystem/trait_object_ports.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for dynamically dispatched filesystem ports.
+//   - Trait object ports test module.
 // - Must-Not:
-//   - Depend on the standard adapter or caller-specific composition.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Exercise application use cases through trait-object references.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another dispatch model gains independent policy.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test file owns the same port-dispatch contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Trait-object port regression tests.
+//   - Trait object ports test module.
 // - Description:
-//   - Protects runtime adapter substitution at the application boundary.
+//   - Implements the declared test module responsibility for filesystem.
 // - Usage:
-//   - Runs through the filesystem crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Static and dynamic port references are equivalent.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for dynamically dispatched filesystem ports.
-//!
-//! Hexagonal application use cases must accept runtime-selected adapters.
+//! Trait object ports test module.
+
 use std::io;
 use std::path::{Path, PathBuf};
 
@@ -52,10 +39,7 @@ use schoenwald_filesystem::ports::TreeReader;
 struct EmptyTree;
 
 impl TreeReader for EmptyTree {
-    fn regular_files(
-        &self,
-        _root: &Path,
-    ) -> io::Result<Vec<PathBuf>> {
+    fn regular_files(&self, _root: &Path) -> io::Result<Vec<PathBuf>> {
         Ok(Vec::new())
     }
 }
@@ -63,11 +47,8 @@ impl TreeReader for EmptyTree {
 #[test]
 fn collection_accepts_trait_object_reader() -> Result<(), String> {
     let reader: &dyn TreeReader = &EmptyTree;
-    let files = CollectRegularFiles::execute(
-        reader,
-        Path::new("root"),
-    )
-    .map_err(|error| error.to_string())?;
+    let files = CollectRegularFiles::execute(reader, Path::new("root"))
+        .map_err(|error| error.to_string())?;
 
     if !files.is_empty() {
         return Err(format!("empty adapter returned files: {files:?}"));

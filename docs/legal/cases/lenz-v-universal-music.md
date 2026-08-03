@@ -81,4 +81,5 @@ evidence, and editing record before making consequential representations.
 - [17 U.S.C. § 107](../statutes/17-usc-107.md).
 - [17 U.S.C. § 512](../statutes/17-usc-512.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Gameplay video, streaming, and monetization](../platforms/gameplay-video-streaming-and-monetization.md).
+- [Gameplay video, streaming, and
+  monetization](../platforms/gameplay-video-streaming-and-monetization.md).

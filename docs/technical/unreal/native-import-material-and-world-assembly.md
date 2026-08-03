@@ -6,50 +6,72 @@
 
 ## Governing decisions
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Converted asset ingestion boundary](../../adr/unreal/import-adapters/converted-asset-ingestion-boundary.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Converted asset ingestion boundary](../../adr/unreal/import-adapters/converted-asset-ingestion-boundary.md)
+- [Import review
+  boundary](../../adr/unreal/import-adapters/import-review-boundary.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Staged mesh import and world assembly](../../adr/unreal/import-adapters/staged-mesh-import-and-world-assembly.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Import review boundary](../../adr/unreal/import-adapters/import-review-boundary.md)
+- [Spatial visibility, bounds, and culling
+  runtime](spatial-visibility-bounds-and-culling-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Staged mesh import and world assembly](../../adr/unreal/import-adapters/staged-mesh-import-and-world-assembly.md)
+- [World render-entity and physics
+  runtime](world-render-entity-and-physics-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md)
+- [Native cooked-asset construction and registration
+  runtime](native-cooked-asset-construction-and-registration-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
+- [Native render-frame, view, and layer
+  runtime](native-render-frame-view-and-layer-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native cooked-asset construction and registration runtime](native-cooked-asset-construction-and-registration-runtime.md)
+- [Transient VFX and breakable-presentation
+  runtime](transient-vfx-and-breakable-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native render-frame, view, and layer runtime](native-render-frame-view-and-layer-runtime.md)
+- [Road-network geometry and traffic
+  runtime](road-network-geometry-and-traffic-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md)
+- [Vehicle audio and avatar-sound
+  runtime](vehicle-audio-and-avatar-sound-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Road-network geometry and traffic runtime](road-network-geometry-and-traffic-runtime.md)
+- [Dialogue selection, queue, and playback
+  runtime](dialogue-selection-queue-and-playback-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Vehicle audio and avatar-sound runtime](vehicle-audio-and-avatar-sound-runtime.md)
+- [Spatial audio listener and positional-source
+  runtime](spatial-audio-listener-and-positional-source-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md)
+- [Gameplay audio source, residency, mix, and environment
+  runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md)
+- [Native audio device, resource, player, and tuning adapter
+  runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
+- [Authored state-prop animation and event
+  runtime](authored-state-prop-animation-and-event-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md)
+- [Local supersprint race session
+  runtime](local-supersprint-race-session-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md)
+- [Playable avatar, character controller, and footprint
+  runtime](playable-avatar-character-controller-and-footprint-runtime.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Local supersprint race session runtime](local-supersprint-race-session-runtime.md)
+- [Native vehicle physics, control, damage, and presentation
+  runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Native art authoring, style, and asset validation contract](native-art-authoring-style-and-asset-validation-contract.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Native asset translation without copy-paste](../../adr/pipeline/unreal/native-asset-translation-and-no-copy-paste.md)
+- [Native art authoring, style, and asset validation
+  contract](native-art-authoring-style-and-asset-validation-contract.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Native asset translation without copy-paste](../../adr/pipeline/unreal/native-asset-translation-and-no-copy-paste.md) <!-- markdownlint-disable-line MD013 -->
 
 ## Purpose
 
@@ -60,7 +82,8 @@ It does not change the binary FBX writer, package taxonomy, extraction behavior,
 or runtime gameplay contracts. Cooked runtime requests, package mounting, and
 source-decoder exclusion follow the
 <!-- markdownlint-disable-next-line MD013 -->
-[native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md).
+[native asset load request and streaming
+runtime](native-asset-load-request-and-streaming-runtime.md).
 
 ## Import transaction
 
@@ -82,7 +105,8 @@ native read-back matches the complete plan.
 
 The immutable plan is produced from
 <!-- markdownlint-disable-next-line MD013 -->
-[Native art authoring, style, and asset validation contract](native-art-authoring-style-and-asset-validation-contract.md).
+[Native art authoring, style, and asset validation
+contract](native-art-authoring-style-and-asset-validation-contract.md).
 It carries semantic asset identity, authoring revision, unit and axis policy,
 geometry and topology expectations, pivot and hierarchy roles, material and
 texture families, collision, LOD, Skeleton, animation, vehicle, world-kit,
@@ -138,12 +162,17 @@ native layout. Each mesh recipe declares one of these policies:
 
 <!-- markdownlint-disable MD013 -->
 
-| Policy | Contract |
-| :--- | :--- |
-| `preserve_validated` | Use a validated source UV channel without modification. |
-| `generate_destination` | Create a deterministic production UV channel and rebake textures. |
-| `preserve_and_generate_lightmap` | Preserve the material UV and generate a separate lightmap channel. |
-| `quarantine` | Reject the mesh because no valid deterministic destination exists. |
+- **Policy:** `preserve_validated`
+  - **Contract:** Use a validated source UV channel without modification.
+- **Policy:** `generate_destination`
+  - **Contract:** Create a deterministic production UV channel and rebake
+    textures.
+- **Policy:** `preserve_and_generate_lightmap`
+  - **Contract:** Preserve the material UV and generate a separate lightmap
+    channel.
+- **Policy:** `quarantine`
+  - **Contract:** Reject the mesh because no valid deterministic destination
+    exists.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -239,7 +268,8 @@ valid when additional geometry would not improve the approved presentation goal.
 Import maps approved component and placement identities to the closed native
 representation classes in
 <!-- markdownlint-disable-next-line MD013 -->
-[World render-entity and physics runtime](world-render-entity-and-physics-runtime.md).
+[World render-entity and physics
+runtime](world-render-entity-and-physics-runtime.md).
 The plan selects static mesh, native instancing, skeletal prop, rigid body,
 linear blocker, query surface, breakable composite, or registered composite.
 
@@ -257,7 +287,8 @@ primary
 asset and bundle metadata, soft-reference class constraints, dependency digests,
 platform variants, and fallback policy for
 <!-- markdownlint-disable-next-line MD013 -->
-[Native cooked-asset construction and registration runtime](native-cooked-asset-construction-and-registration-runtime.md).
+[Native cooked-asset construction and registration
+runtime](native-cooked-asset-construction-and-registration-runtime.md).
 
 No source wrapper, chunk handler, mutable listener callback, loader override,
 fixed global-entity registry, or source sub-loader is included in shipping
@@ -270,7 +301,8 @@ Systems, Emitters, Effect Types, typed parameter schemas, platform variants,
 scalability policy, Geometry Collections or replacement representations,
 fragment assets, and complete presentation fallbacks under
 <!-- markdownlint-disable-next-line MD013 -->
-[Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md).
+[Transient VFX and breakable-presentation
+runtime](transient-vfx-and-breakable-presentation-runtime.md).
 
 Read-back verifies every Niagara variable name and type, lifetime class,
 coordinate-space binding, pool-reset contract, quality fallback, breakable
@@ -286,7 +318,8 @@ and connectivity evidence into the immutable graph, spline, sample,
 spatial-index,
 overlay, and bundle assets defined by
 <!-- markdownlint-disable-next-line MD013 -->
-[Road-network geometry and traffic runtime](road-network-geometry-and-traffic-runtime.md).
+[Road-network geometry and traffic
+runtime](road-network-geometry-and-traffic-runtime.md).
 
 Road cooking validates finite curves, joins, directions, legal lane movements,
 intersection conflict groups, speed and density units, deterministic path
@@ -307,13 +340,15 @@ parameters, gear and pitch curves, shift envelopes, surface groups, damage,
 horn,
 door, overlay, attenuation, concurrency, mix, streaming, and platform policy for
 <!-- markdownlint-disable-next-line MD013 -->
-[Vehicle audio and avatar-sound runtime](vehicle-audio-and-avatar-sound-runtime.md).
+[Vehicle audio and avatar-sound
+runtime](vehicle-audio-and-avatar-sound-runtime.md).
 
 Dialogue import converts source metadata into stable line, conversation,
 selection-group, event-binding, participant-role, locale, subtitle, priority,
 probability, lifetime, positional, mouth, ducking, and fallback definitions for
 <!-- markdownlint-disable-next-line MD013 -->
-[Dialogue selection, queue, and playback runtime](dialogue-selection-queue-and-playback-runtime.md).
+[Dialogue selection, queue, and playback
+runtime](dialogue-selection-queue-and-playback-runtime.md).
 Every parsed source field is recorded as provenance and validated during import;
 shipping runtime never parses filenames, directory fragments, underscore counts,
 short character codes, event text, level, mission, role, or conversation order.
@@ -322,7 +357,8 @@ Spatial-audio import publishes listener policies, attenuation and concurrency
 assets, source definitions, attachment classes, split-screen policy, focus,
 occlusion, reverb, virtualization, streaming, and platform fallback for
 <!-- markdownlint-disable-next-line MD013 -->
-[Spatial audio listener and positional-source runtime](spatial-audio-listener-and-positional-source-runtime.md).
+[Spatial audio listener and positional-source
+runtime](spatial-audio-listener-and-positional-source-runtime.md).
 
 Gameplay-audio import also publishes canonical generic source definitions, typed
 parameters, deterministic optional-playback policy, collision-audio profiles,
@@ -330,7 +366,8 @@ Sound Classes, Sound Mixes, submixes, buses, modulation, concurrency, residency
 scopes, primary-asset bundles, environment definitions, Audio Volume bindings,
 reverb effects, platform fallbacks, and diagnostic metadata for
 <!-- markdownlint-disable-next-line MD013 -->
-[Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md).
+[Gameplay audio source, residency, mix, and environment
+runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md).
 
 Fixed source arrays, clip and stream player slots, custom file instances, sound
 memory regions, resource capture counts, cluster ordinals, maximum-resource
@@ -344,7 +381,8 @@ component lifecycle, Sound Class hierarchy, Sound Mix or modulation routing,
 submix graph, output policy, device recovery, and typed callback correlation are
 validated for
 <!-- markdownlint-disable-next-line MD013 -->
-[Native audio device, resource, player, and tuning adapter runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md).
+[Native audio device, resource, player, and tuning adapter
+runtime](native-audio-device-resource-player-and-tuning-adapter-runtime.md).
 Packaged runtime consumes native assets and immutable definitions rather than a
 translated custom renderer.
 
@@ -352,7 +390,8 @@ State-prop import converts source states, transitions, visibility, animation
 ranges, finite cycles, holds, event bindings, timing callbacks, component roles,
 and initial-state policy into immutable definitions for
 <!-- markdownlint-disable-next-line MD013 -->
-[Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md).
+[Authored state-prop animation and event
+runtime](authored-state-prop-animation-and-event-runtime.md).
 Source parallel arrays, frame-controller positions, event integers, callback
 integers, object factories, and listener slots remain provenance only.
 
@@ -361,23 +400,26 @@ animation references, movement profiles, collision, materials, variants, vehicle
 handoff policy, artificial-intelligence definitions, input contexts, attached
 props, camera targets, and footprint definitions for
 <!-- markdownlint-disable-next-line MD013 -->
-[Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md).
+[Playable avatar, character controller, and footprint
+runtime](playable-avatar-character-controller-and-footprint-runtime.md).
 Runtime does not construct model, animation, material, or texture paths from raw
 character-name prefixes and suffixes.
 
 Historical digital-content-creation animation scenes are private evidence
 handled
 through
-<!-- markdownlint-disable-next-line MD013 -->
-[Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md).
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+[Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md). <!-- markdownlint-disable-line MD013 -->
 Conversion records the exact character, Skeleton revision, source time unit,
 frame interval, animated track profile, root policy, curves, markers, clip role,
 pose purpose, variant predicates, choreography phases, and normalization recipe.
 It exports one bounded animation payload and imports one validated Animation
 Sequence against the declared native Skeleton. Catalog, Montage, Section, Slot,
 Sync Group, Pose Asset, and vehicle-handoff definitions are created only through
-<!-- markdownlint-disable-next-line MD013 -->
-[Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md).
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+[Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md). <!-- markdownlint-disable-line MD013 -->
 Source scene text, backup labels, editor metadata, private paths, unused nodes,
 raw curve dumps, historical batch commands, and animation-choice configuration
 syntax never enter the public repository or packaged runtime.
@@ -388,7 +430,8 @@ torque curves, transmission, differential, steering, brake, suspension, tire,
 center-of-mass, collision, damage, seat, hardpoint, material, light, audio, VFX,
 parked, traffic, pursuit, husk, reset, quality, and network policy for
 <!-- markdownlint-disable-next-line MD013 -->
-[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+[Native vehicle physics, control, damage, and presentation
+runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
 
 Hand-written tire and suspension force parameters, custom physics and traffic
 locomotion classes, wheel-array positions, pose drivers, raw controller
@@ -404,7 +447,8 @@ vehicles, artificial-intelligence policy, cameras, traps, HUD definitions,
 audio,
 high-score schemas, and retained bundles for
 <!-- markdownlint-disable-next-line MD013 -->
-[Local supersprint race session runtime](local-supersprint-race-session-runtime.md).
+[Local supersprint race session
+runtime](local-supersprint-race-session-runtime.md).
 Static character, vehicle, color, waypoint, and high-score arrays are provenance
 only.
 
@@ -421,8 +465,9 @@ claimed target.
 
 Historical level-building, world-building, and state-prop guides contribute only
 normalized technical facts under
-<!-- markdownlint-disable-next-line MD013 -->
-[Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md).
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+[Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md). <!-- markdownlint-disable-line MD013 -->
 Eligible facts include semantic component roles, world decomposition, tracks,
 terrain, landmarks, static, dynamic, animated, breakable, and stateful props,
 placement, pivots, collision, materials, animation intent, and naming evidence.
@@ -485,7 +530,8 @@ valid when their policy and fallback representation are declared.
 Converted bounds, cell occupancy, weighted partition, and convex-volume evidence
 follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md).
+[Spatial visibility, bounds, and culling
+runtime](spatial-visibility-bounds-and-culling-runtime.md).
 They support deterministic build validation and diagnostics; they do not replace
 Unreal's runtime renderer or become world-object identity.
 

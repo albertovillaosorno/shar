@@ -1,7 +1,3 @@
-# File:
-#   - test_script_generator.py
-# Path: tests/unreal/project/solution_repair/test_script_generator.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,38 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Repair behavior for generated ScriptGenerator SLNX mappings.
+#   - Test script generator test module.
 # - Must-Not:
-#   - Invoke live Unreal processes or depend on network services.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Deterministic local fixtures and observable assertions.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Another solution family needs independent repair coverage.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module proves the same SLNX repair contract.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Unit tests for ScriptGenerator solution repair.
+#   - Test script generator test module.
 # - Description:
-#   - Proves repair, preservation, BOM, and idempotence behavior.
+#   - Implements the declared test module responsibility for project.
 # - Usage:
-#   - Run by pytest against local synthetic SLNX fixtures.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Debug and Release mappings remain unchanged.
-#
-# ADRs:
-# - docs/adr/unreal/runtime/runtime-parity-test-boundary.md
-#
-# Large file:
-#   - false
+#   - Invalid or missing inputs fail explicitly.
 #
 
-
-"""ScriptGenerator SLNX configuration repair contracts."""
+"""Test script generator test module."""
 
 from __future__ import annotations
 

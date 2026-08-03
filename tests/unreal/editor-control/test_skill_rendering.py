@@ -1,7 +1,3 @@
-# File:
-#   - test_skill_rendering.py
-# Path: tests/unreal/editor-control/test_skill_rendering.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,77 +6,53 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Regression tests for taxonomy coverage and generated skill Markdown.
+#   - Test skill rendering test module.
 # - Must-Not:
-#   - Access files, connect to Unreal, or test persistence behavior.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Synthetic complete catalogs and fail-closed drift fixtures.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Taxonomy and Markdown rendering need independent fixture families.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another test module owns the same pure generation behavior.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Guards complete Unreal MCP capability routing and rendering.
+#   - Test skill rendering test module.
 # - Description:
-#   - Verifies capability identities appear without native prose.
+#   - Implements the declared test module responsibility for editor control.
 # - Usage:
-#   - Executed by pytest through the canonical validator workflow.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Uses one synthetic capability per known live toolset.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: generated skill taxonomy and rendering tests
-#   - reason: taxonomy coverage and root-index evidence share one pure fixture
-#   - split: separate taxonomy tests if another renderer is introduced
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess after taxonomy or Markdown schema changes
-#
-"""Regression tests for generated Unreal MCP skill Markdown."""
+
+"""Test skill rendering test module."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
 from mcp.adapter_outbound.catalog_renderer import render_catalog_markdown
 from mcp.adapter_outbound.skill_document_layout import tool_skill_path
 from mcp.adapter_outbound.skill_manual_field_schema import MANUAL_FIELDS
-from mcp.adapter_outbound.skill_manual_review import (
-    MANUAL_REVIEW_PLACEHOLDER,
-)
-from mcp.adapter_outbound.skill_markdown_policy import (
-    render_unbreakable_line,
-)
-from mcp.adapter_outbound.skill_markdown_renderer import (
-    MarkdownSkillRenderer,
-)
+from mcp.adapter_outbound.skill_manual_review import MANUAL_REVIEW_PLACEHOLDER
+from mcp.adapter_outbound.skill_markdown_policy import render_unbreakable_line
+from mcp.adapter_outbound.skill_markdown_renderer import MarkdownSkillRenderer
 from mcp.adapter_outbound.skill_schema_renderer import render_inputs
 from mcp.domain.errors import ProtocolError
-from mcp.domain.skill_taxonomy import (
-    CATEGORIES,
-    category_for_toolset,
-    known_toolset_names,
-)
-
-from skill_catalog_fixture import (
-    EXPECTED_CATEGORY_COUNT,
-    EXPECTED_DOCUMENT_COUNT,
-    EXPECTED_TOOLSET_COUNT,
-    SENTINEL_NATIVE_PROSE,
-    TEST_UNREAL_MCP_VERSION,
-    complete_catalog,
-    toolset,
-)
+from mcp.domain.skill_taxonomy import CATEGORIES
+from mcp.domain.skill_taxonomy import category_for_toolset
+from mcp.domain.skill_taxonomy import known_toolset_names
+import pytest
+from skill_catalog_fixture import EXPECTED_CATEGORY_COUNT
+from skill_catalog_fixture import EXPECTED_DOCUMENT_COUNT
+from skill_catalog_fixture import EXPECTED_TOOLSET_COUNT
+from skill_catalog_fixture import SENTINEL_NATIVE_PROSE
+from skill_catalog_fixture import TEST_UNREAL_MCP_VERSION
+from skill_catalog_fixture import complete_catalog
+from skill_catalog_fixture import toolset
 
 if TYPE_CHECKING:
     from mcp.domain.json_types import JsonObject
@@ -242,9 +214,9 @@ def test_renderer_keeps_generated_skills_technical_only() -> None:
     """General policy prose exposed by a native description is not rendered."""
     catalog = complete_catalog()
     first = catalog[0]
-    permission = "permiso"  # cspell:disable-line -- permiso
-    explicit = "explícito"  # cspell:disable-line -- explícito
-    user = "usuario"  # cspell:disable-line -- usuario
+    permission = "permiso"
+    explicit = "explícito"
+    user = "usuario"
     description = " ".join(
         (
             "Renames one native editor tag with TArray<Item> input.",
@@ -269,9 +241,9 @@ def test_renderer_keeps_generated_skills_technical_only() -> None:
     assert "permission from the user" not in skill
     assert "Copyright" not in skill
     assert "trademark" not in skill
-    assert "permiso" not in skill  # cspell:disable-line -- permiso
-    assert "explícito" not in skill  # cspell:disable-line -- explícito
-    assert "usuario" not in skill  # cspell:disable-line -- usuario
+    assert "permiso" not in skill
+    assert "explícito" not in skill
+    assert "usuario" not in skill
     assert "## Technical execution posture" in skill
     assert "Safety and approval" not in skill
 

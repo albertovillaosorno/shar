@@ -1,0 +1,5 @@
+schema: shar-surface/v1
+path: src/formats/p3d/composition/lib.rs
+function: p3d
+kind: facade
+authority: composition/lib.rs

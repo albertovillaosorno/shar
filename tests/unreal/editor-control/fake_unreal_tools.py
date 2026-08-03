@@ -1,7 +1,3 @@
-# File:
-#   - fake_unreal_tools.py
-# Path: tests/unreal/editor-control/fake_unreal_tools.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,37 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Synthetic Toolset Registry text and schema payloads.
+#   - Fake unreal tools test module.
 # - Must-Not:
-#   - Start HTTP servers, manage sessions, or implement request routing.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Deterministic public-safe responses for fake native tools.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Multiple independent synthetic toolset families are required.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - The protocol handler becomes the only consumer and remains bounded.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Supplies deterministic fake Unreal tool responses.
+#   - Fake unreal tools test module.
 # - Description:
-#   - Keeps tool payload fixtures separate from HTTP protocol mechanics.
+#   - Implements the declared test module responsibility for editor control.
 # - Usage:
-#   - Called by the synthetic Unreal MCP request handler.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Exposes one editor toolset and one synthetic asset tool.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
-"""Synthetic native Unreal MCP tool payloads."""
+
+"""Fake unreal tools test module."""
 
 from __future__ import annotations
 

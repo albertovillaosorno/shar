@@ -1,0 +1,13 @@
+# Compilation runs on stable. Validation runs on nightly, and every nightly
+# tool is invoked through its exact pinned path in jig.toml rather than
+# through this channel, so the two never depend on one another.
+#
+# Stable is the compilation channel because shipped behavior must not depend
+# on unstable language features; `unstable_features = "deny"` in Cargo.toml
+# enforces that in code, and this declaration enforces it in the toolchain.
+# Nightly is the validation channel because the strictest lints and the
+# rustfmt options this repository requires exist only there.
+[toolchain]
+channel = "stable-1.97.1-x86_64-pc-windows-gnu"
+components = ["clippy", "rustfmt"]
+profile = "minimal"

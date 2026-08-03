@@ -6,21 +6,37 @@
 ## Governing decisions and specifications
 
 <!-- markdownlint-disable MD013 -->
-- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md) <!-- markdownlint-disable-line MD013 -->
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
-- [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
-- [Lossless extraction contract](../../adr/pipeline/extraction/lossless-extraction-contract.md)
-- [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
-- [Native import, material rebuild, and world assembly](native-import-material-and-world-assembly.md)
-- [Native cooked-asset construction and registration runtime](native-cooked-asset-construction-and-registration-runtime.md)
-- [Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md)
-- [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
-- [Authored state-prop animation and event runtime](authored-state-prop-animation-and-event-runtime.md)
-- [Local supersprint race session runtime](local-supersprint-race-session-runtime.md)
-- [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
-- [Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md)
-- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
-- [Platform audio cooking and streaming](platform-audio-cooking-and-streaming.md)
+- [Runtime parity test
+  boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
+- [Lossless extraction
+  contract](../../adr/pipeline/extraction/lossless-extraction-contract.md)
+- [Application lifecycle and mode
+  runtime](application-lifecycle-and-mode-runtime.md)
+- [Native import, material rebuild, and world
+  assembly](native-import-material-and-world-assembly.md)
+- [Native cooked-asset construction and registration
+  runtime](native-cooked-asset-construction-and-registration-runtime.md)
+- [Spatial visibility, bounds, and culling
+  runtime](spatial-visibility-bounds-and-culling-runtime.md)
+- [World render-entity and physics
+  runtime](world-render-entity-and-physics-runtime.md)
+- [Authored state-prop animation and event
+  runtime](authored-state-prop-animation-and-event-runtime.md)
+- [Local supersprint race session
+  runtime](local-supersprint-race-session-runtime.md)
+- [Playable avatar, character controller, and footprint
+  runtime](playable-avatar-character-controller-and-footprint-runtime.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md) <!-- markdownlint-disable-line MD013 -->
+- [Native vehicle physics, control, damage, and presentation
+  runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+- [Platform audio cooking and
+  streaming](platform-audio-cooking-and-streaming.md)
 - [Platform cinematic media packaging](platform-cinematic-media-packaging.md)
 <!-- markdownlint-enable MD013 -->
 
@@ -40,18 +56,28 @@ formats are decoded only by the deterministic import pipeline.
 
 ## Ownership
 
-<!-- markdownlint-disable MD013 -->
-| Authority | Responsibility |
-| :--- | :--- |
-| Asset Manager | Primary-asset identity, bundles, dependency discovery, and policy. |
-| Streamable Manager | Asynchronous soft-object and bundle handles. |
-| Package adapter | Installed package, chunk, IoStore, and game-feature mounting. |
-| World runtime | World Partition, Runtime Data Layers, level instances, and actors. |
-| Feature runtime | Game-feature activation and teardown. |
-| Specialized subsystems | Audio, UI, media, camera, mission, and gameplay readiness. |
-| Import pipeline | Source parsing, conversion, provenance, and native asset creation. |
-| Loading coordinator | Typed request graph, barriers, results, progress, and recovery. |
-<!-- markdownlint-enable MD013 -->
+- **Authority:** Asset Manager
+  - **Responsibility:** Primary-asset identity, bundles, dependency discovery,
+    and policy.
+- **Authority:** Streamable Manager
+  - **Responsibility:** Asynchronous soft-object and bundle handles.
+- **Authority:** Package adapter
+  - **Responsibility:** Installed package, chunk, IoStore, and game-feature
+    mounting.
+- **Authority:** World runtime
+  - **Responsibility:** World Partition, Runtime Data Layers, level instances,
+    and actors.
+- **Authority:** Feature runtime
+  - **Responsibility:** Game-feature activation and teardown.
+- **Authority:** Specialized subsystems
+  - **Responsibility:** Audio, UI, media, camera, mission, and gameplay
+    readiness.
+- **Authority:** Import pipeline
+  - **Responsibility:** Source parsing, conversion, provenance, and native asset
+    creation.
+- **Authority:** Loading coordinator
+  - **Responsibility:** Typed request graph, barriers, results, progress, and
+    recovery.
 
 The loading coordinator does not parse source files, own gameplay state, or
 select mission and progression outcomes.
@@ -171,18 +197,24 @@ accepted owning transition.
 
 Every request reaches one terminal status:
 
-<!-- markdownlint-disable MD013 -->
-| Status | Meaning |
-| :--- | :--- |
-| `success` | All required assets and postconditions are ready. |
-| `unavailable` | Required package, asset, platform feature, or capability is absent. |
-| `rejected` | Scope, revision, permission, graph, or parameter validation failed. |
-| `failed` | Loading or verification began but could not complete safely. |
-| `timed_out` | The declared deadline elapsed and cleanup completed. |
-| `cancelled` | The owning request cancelled and released its private work. |
-| `superseded` | A newer accepted request replaced the pending request. |
-| `degraded` | Only explicitly optional presentation assets were unavailable. |
-<!-- markdownlint-enable MD013 -->
+- **Status:** `success`
+  - **Meaning:** All required assets and postconditions are ready.
+- **Status:** `unavailable`
+  - **Meaning:** Required package, asset, platform feature, or capability is
+    absent.
+- **Status:** `rejected`
+  - **Meaning:** Scope, revision, permission, graph, or parameter validation
+    failed.
+- **Status:** `failed`
+  - **Meaning:** Loading or verification began but could not complete safely.
+- **Status:** `timed_out`
+  - **Meaning:** The declared deadline elapsed and cleanup completed.
+- **Status:** `cancelled`
+  - **Meaning:** The owning request cancelled and released its private work.
+- **Status:** `superseded`
+  - **Meaning:** A newer accepted request replaced the pending request.
+- **Status:** `degraded`
+  - **Meaning:** Only explicitly optional presentation assets were unavailable.
 
 Every result identifies the verified final scope, loaded and released handles,
 failed node, typed reason, and diagnostic correlation identity.
@@ -266,19 +298,30 @@ an active world, object, audio stream, UI, or media source still depends on it.
 
 The following source families are import evidence, not shipping runtime loaders:
 
-<!-- markdownlint-disable MD013 -->
-| Source family | Native target |
-| :--- | :--- |
-| Generic scene packages | Cooked meshes, materials, animations, worlds, and Data Assets. |
-| Camera data chunks | Versioned camera preset assets and authored rig definitions. |
-| Locator chunks | Typed placements, triggers, Smart Objects, portals, and camera rails. |
-| Road, path, and intersection chunks | Native road graph, route, spline, and navigation assets. |
-| Choreography text | Typed action, animation, cinematic, and presentation definitions. |
-| Console script text | Validated developer-command definitions or rejected input. |
-| Legacy UI projects and icons | Common UI, UMG, Slate, texture, and material assets. |
-| Sound resource files | Native sound, dialogue, bank, cue, and streaming definitions. |
-| Source archives | Imported provenance and installed cooked package output. |
-<!-- markdownlint-enable MD013 -->
+- **Source family:** Generic scene packages
+  - **Native target:** Cooked meshes, materials, animations, worlds, and Data
+    Assets.
+- **Source family:** Camera data chunks
+  - **Native target:** Versioned camera preset assets and authored rig
+    definitions.
+- **Source family:** Locator chunks
+  - **Native target:** Typed placements, triggers, Smart Objects, portals, and
+    camera rails.
+- **Source family:** Road, path, and intersection chunks
+  - **Native target:** Native road graph, route, spline, and navigation assets.
+- **Source family:** Choreography text
+  - **Native target:** Typed action, animation, cinematic, and presentation
+    definitions.
+- **Source family:** Console script text
+  - **Native target:** Validated developer-command definitions or rejected
+    input.
+- **Source family:** Legacy UI projects and icons
+  - **Native target:** Common UI, UMG, Slate, texture, and material assets.
+- **Source family:** Sound resource files
+  - **Native target:** Native sound, dialogue, bank, cue, and streaming
+    definitions.
+- **Source family:** Source archives
+  - **Native target:** Imported provenance and installed cooked package output.
 
 The native runtime does not instantiate a source chunk handler to construct
 actors or gameplay services during play.
@@ -288,7 +331,8 @@ actors or gameplay services during play.
 A successful asset-load result transfers retained handles and immutable loaded
 object identities to
 <!-- markdownlint-disable-next-line MD013 -->
-[Native cooked-asset construction and registration runtime](native-cooked-asset-construction-and-registration-runtime.md).
+[Native cooked-asset construction and registration
+runtime](native-cooked-asset-construction-and-registration-runtime.md).
 The construction subsystem revalidates definition, bundle, world, placement, and
 feature revisions before preparing native objects.
 
@@ -299,7 +343,8 @@ only
 readiness evidence. Native physics-state construction, controller ownership,
 traffic or parking mode, damage, occupants, and world registration follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+[Native vehicle physics, control, damage, and presentation
+runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
 Asset readiness alone cannot activate, possess, simulate, damage, or publish a
 vehicle.
 
@@ -353,7 +398,8 @@ shape, activation policy, and verification evidence. Integer locator subtypes
 and nested source chunks remain provenance only. Registration, occupancy,
 enter/exit observations, domain adapters, and teardown follow the
 <!-- markdownlint-disable-next-line MD013 -->
-[authored spatial placement and trigger runtime](authored-spatial-placement-and-trigger-runtime.md).
+[authored spatial placement and trigger
+runtime](authored-spatial-placement-and-trigger-runtime.md).
 
 ## Roads, paths, and intersections
 
@@ -381,8 +427,9 @@ Character animation loading resolves one catalog revision and declared bundles
 for Skeleton, Animation Blueprint, Animation Sequences, Montages, Pose Assets,
 markers, curves, locomotion, actions, dialogue gestures, and vehicle-handoff
 variants under
-<!-- markdownlint-disable-next-line MD013 -->
-[Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md).
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+[Character animation clip catalog and vehicle-handoff choreography runtime](character-animation-clip-catalog-and-vehicle-handoff-choreography-runtime.md). <!-- markdownlint-disable-line MD013 -->
 A handoff cannot begin until its required character, vehicle, seat, door, phase,
 and fallback assets share one accepted request revision.
 
@@ -428,7 +475,8 @@ same world revision.
 
 World-entity construction and teardown follow
 <!-- markdownlint-disable-next-line MD013 -->
-[World render-entity and physics runtime](world-render-entity-and-physics-runtime.md).
+[World render-entity and physics
+runtime](world-render-entity-and-physics-runtime.md).
 A region becomes gameplay-ready only after required Actor/component composition,
 cooked collision, query surfaces, physical profiles, and simulation policy are
 validated. Unload disables new commands, records required state, unregisters

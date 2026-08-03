@@ -1,7 +1,3 @@
-// File:
-//   - expanded_backup_contract.rs
-// Path: tests/migration/manifest/expanded_backup_contract.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Expanded-manifest backup exclusion regressions.
+//   - Expanded backup contract test module.
 // - Must-Not:
-//   - Read licensed inputs or repository-local generated trees.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic Schoenwald-original backups and compiled generator execution.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when backup identity requires source-specific fixtures.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test owns backup exclusion across expanded sources.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects expanded generation from Schoenwald-original contamination.
+//   - Expanded backup contract test module.
 // - Description:
-//   - Verifies backups never become expanded manifest records or failures.
+//   - Implements the declared test module responsibility for manifest.
 // - Usage:
-//   - Executed through cargo test for the game-manifest crate.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Temporary fixtures are removed after each test.
-//
-// ADRs:
-// - docs/adr/pipeline/game-manifest-ledger.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Expanded-manifest backup exclusion regression coverage.
-//!
-//! Synthetic backups prove parity with the minimum scanner without reading
-//! repository-local source or output trees.
+//! Expanded backup contract test module.
 
 use std::fs;
 use std::io::{self, ErrorKind};
@@ -56,23 +41,15 @@ use schoenwald_filesystem as _;
 
 static NEXT_FIXTURE: AtomicU64 = AtomicU64::new(0);
 
-fn generate_with_backup() -> io::Result<(
-    std::process::Output,
-    String,
-)> {
-    let sequence = NEXT_FIXTURE.fetch_add(
-        1,
-        Ordering::Relaxed,
-    );
-    let root = std::env::temp_dir().join(
-        format!(
-            "game-manifest-expanded-backup-{}-{sequence}",
-            std::process::id()
-        ),
-    );
+fn generate_with_backup() -> io::Result<(std::process::Output, String)> {
+    let sequence = NEXT_FIXTURE.fetch_add(1, Ordering::Relaxed);
+    let root = std::env::temp_dir().join(format!(
+        "game-manifest-expanded-backup-{}-{sequence}",
+        std::process::id()
+    ));
     match fs::remove_dir_all(&root) {
-        Ok(()) => {}
-        Err(error) if error.kind() == ErrorKind::NotFound => {}
+        Ok(()) => {},
+        Err(error) if error.kind() == ErrorKind::NotFound => {},
         Err(error) => return Err(error),
     }
     let game = root.join("input");
@@ -80,14 +57,8 @@ fn generate_with_backup() -> io::Result<(
     let output_path = root.join("result.jsonl");
     fs::create_dir_all(&game)?;
     fs::create_dir_all(&extracted)?;
-    fs::write(
-        game.join("asset.p3d"),
-        b"fixture",
-    )?;
-    fs::write(
-        game.join("asset.p3d.schoenwald-original"),
-        b"backup",
-    )?;
+    fs::write(game.join("asset.p3d"), b"fixture")?;
+    fs::write(game.join("asset.p3d.schoenwald-original"), b"backup")?;
     let result = (|| {
         let output =
             Command::new(env!("CARGO_BIN_EXE_generate-expanded-manifest"))
@@ -96,30 +67,21 @@ fn generate_with_backup() -> io::Result<(
                 .arg(&output_path)
                 .output()?;
         let manifest = fs::read_to_string(output_path)?;
-        Ok(
-            (
-                output, manifest,
-            ),
-        )
+        Ok((output, manifest))
     })();
     drop(fs::remove_dir_all(&root));
     result
 }
 
 fn run_backup_only() -> io::Result<std::process::Output> {
-    let sequence = NEXT_FIXTURE.fetch_add(
-        1,
-        Ordering::Relaxed,
-    );
-    let root = std::env::temp_dir().join(
-        format!(
-            "game-manifest-expanded-backup-only-{}-{sequence}",
-            std::process::id()
-        ),
-    );
+    let sequence = NEXT_FIXTURE.fetch_add(1, Ordering::Relaxed);
+    let root = std::env::temp_dir().join(format!(
+        "game-manifest-expanded-backup-only-{}-{sequence}",
+        std::process::id()
+    ));
     match fs::remove_dir_all(&root) {
-        Ok(()) => {}
-        Err(error) if error.kind() == ErrorKind::NotFound => {}
+        Ok(()) => {},
+        Err(error) if error.kind() == ErrorKind::NotFound => {},
         Err(error) => return Err(error),
     }
     let game = root.join("input");
@@ -127,10 +89,7 @@ fn run_backup_only() -> io::Result<std::process::Output> {
     let output_path = root.join("result.jsonl");
     fs::create_dir_all(&game)?;
     fs::create_dir_all(&extracted)?;
-    fs::write(
-        game.join("asset.p3d.schoenwald-original"),
-        b"backup",
-    )?;
+    fs::write(game.join("asset.p3d.schoenwald-original"), b"backup")?;
     let result = Command::new(env!("CARGO_BIN_EXE_generate-expanded-manifest"))
         .arg(&game)
         .arg(&extracted)
@@ -147,11 +106,7 @@ fn expanded_generator_ignores_backup_files() {
     let Some((output, manifest)) = result.ok() else {
         return;
     };
-    assert!(
-        output
-            .status
-            .success()
-    );
+    assert!(output.status.success());
     assert!(!manifest.contains("asset.p3d.schoenwald-original"));
 }
 
@@ -162,30 +117,18 @@ fn expanded_generator_rejects_backup_only_game() {
     let Some(output) = result.ok() else {
         return;
     };
-    assert!(
-        !output
-            .status
-            .success()
-    );
+    assert!(!output.status.success());
 }
 
-fn run_extracted_backup_only() -> io::Result<(
-    std::process::Output,
-    bool,
-)> {
-    let sequence = NEXT_FIXTURE.fetch_add(
-        1,
-        Ordering::Relaxed,
-    );
-    let root = std::env::temp_dir().join(
-        format!(
-            "game-manifest-extracted-backup-only-{}-{sequence}",
-            std::process::id()
-        ),
-    );
+fn run_extracted_backup_only() -> io::Result<(std::process::Output, bool)> {
+    let sequence = NEXT_FIXTURE.fetch_add(1, Ordering::Relaxed);
+    let root = std::env::temp_dir().join(format!(
+        "game-manifest-extracted-backup-only-{}-{sequence}",
+        std::process::id()
+    ));
     match fs::remove_dir_all(&root) {
-        Ok(()) => {}
-        Err(error) if error.kind() == ErrorKind::NotFound => {}
+        Ok(()) => {},
+        Err(error) if error.kind() == ErrorKind::NotFound => {},
         Err(error) => return Err(error),
     }
     let game = root.join("input");
@@ -193,31 +136,15 @@ fn run_extracted_backup_only() -> io::Result<(
     let output_path = root.join("result.jsonl");
     fs::create_dir_all(&game)?;
     fs::create_dir_all(&extracted)?;
-    fs::write(
-        game.join("asset.p3d"),
-        b"fixture",
-    )?;
-    fs::write(
-        game.join("source.rcf"),
-        b"fixture",
-    )?;
-    fs::write(
-        extracted.join("asset.p3d.schoenwald-original"),
-        b"backup",
-    )?;
+    fs::write(game.join("asset.p3d"), b"fixture")?;
+    fs::write(game.join("source.rcf"), b"fixture")?;
+    fs::write(extracted.join("asset.p3d.schoenwald-original"), b"backup")?;
     let result = Command::new(env!("CARGO_BIN_EXE_generate-expanded-manifest"))
         .arg(&game)
         .arg(&extracted)
         .arg(&output_path)
         .output()
-        .map(
-            |output| {
-                (
-                    output,
-                    output_path.exists(),
-                )
-            },
-        );
+        .map(|output| (output, output_path.exists()));
     drop(fs::remove_dir_all(&root));
     result
 }
@@ -229,10 +156,6 @@ fn expanded_generator_rejects_extracted_backup_only_evidence() {
     let Some((output, output_exists)) = result.ok() else {
         return;
     };
-    assert!(
-        !output
-            .status
-            .success()
-    );
+    assert!(!output.status.success());
     assert!(!output_exists);
 }

@@ -1,7 +1,3 @@
-// File:
-//   - tree_ordering.rs
-// Path: tests/foundation/filesystem/tree_ordering.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for application-owned tree ordering.
+//   - Tree ordering test module.
 // - Must-Not:
-//   - Depend on the standard filesystem adapter or caller policy.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Supply adversarial port output and assert stable public ordering.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another tree invariant needs unrelated fixtures.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test file owns the same ordering contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Tree ordering regression tests.
+//   - Tree ordering test module.
 // - Description:
-//   - Ensures the application use case enforces its ordering promise.
+//   - Implements the declared test module responsibility for filesystem.
 // - Usage:
-//   - Runs through the filesystem crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Port output order is not trusted.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for application-owned tree ordering.
-//!
-//! The use case must not inherit nondeterministic provider ordering.
+//! Tree ordering test module.
+
 use std::io;
 use std::path::{Path, PathBuf};
 
@@ -52,30 +39,20 @@ use schoenwald_filesystem::ports::TreeReader;
 struct UnsortedTree;
 
 impl TreeReader for UnsortedTree {
-    fn regular_files(
-        &self,
-        _root: &Path,
-    ) -> io::Result<Vec<PathBuf>> {
-        Ok(
-            vec![
-                PathBuf::from("root/z.bin"),
-                PathBuf::from("root/a.bin"),
-            ],
-        )
+    fn regular_files(&self, _root: &Path) -> io::Result<Vec<PathBuf>> {
+        Ok(vec![
+            PathBuf::from("root/z.bin"),
+            PathBuf::from("root/a.bin"),
+        ])
     }
 }
 
 #[test]
 fn application_sorts_adversarial_port_output() -> Result<(), String> {
-    let actual = CollectRegularFiles::execute(
-        &UnsortedTree,
-        Path::new("root"),
-    )
-    .map_err(|error| error.to_string())?;
-    let expected = vec![
-        PathBuf::from("root/a.bin"),
-        PathBuf::from("root/z.bin"),
-    ];
+    let actual = CollectRegularFiles::execute(&UnsortedTree, Path::new("root"))
+        .map_err(|error| error.to_string())?;
+    let expected =
+        vec![PathBuf::from("root/a.bin"), PathBuf::from("root/z.bin")];
 
     if actual != expected {
         return Err(format!("tree snapshot was not sorted: {actual:?}"));

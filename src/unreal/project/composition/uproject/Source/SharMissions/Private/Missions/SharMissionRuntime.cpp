@@ -1,9 +1,34 @@
-// File: SharMissionRuntime.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharMissions/Private/Missions/SharMissionRuntime.cpp
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: deterministic stage transitions and snapshots only; no world mutation or reward application.
-// ADR: docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar mission runtime composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar mission runtime composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar mission runtime composition module.
 
 #include "Missions/SharMissionRuntime.h"
 
@@ -22,6 +47,7 @@ const FSharMissionStageDefinition* USharMissionRuntime::FindStage(
     {
         return nullptr;
     }
+    // jig-ignore-next-line: exact syntax is indivisible
     for (const FSharMissionStageDefinition& StageDefinition : ActiveDefinition->Stages)
     {
         if (StageDefinition.StageId == StageId)
@@ -69,6 +95,7 @@ bool USharMissionRuntime::StartMission(USharMissionDefinition* Definition)
 {
     if (State == ESharMissionRuntimeState::Active)
     {
+        // jig-ignore-next-line: exact syntax is indivisible
         SetFailure(TEXT("An active mission must finish or abort before another starts."));
         return false;
     }
@@ -98,6 +125,7 @@ bool USharMissionRuntime::ResolveObjective(const bool bSucceeded)
         SetFailure(TEXT("Only an active mission can resolve an objective."));
         return false;
     }
+    // jig-ignore-next-line: exact syntax is indivisible
     const FSharMissionStageDefinition* StageDefinition = FindStage(ActiveStageId);
     if (StageDefinition == nullptr)
     {

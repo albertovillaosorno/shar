@@ -1,7 +1,3 @@
-// File:
-//   - tree_portable_collision.rs
-// Path: tests/foundation/filesystem/tree_portable_collision.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for portable tree identity collisions.
+//   - Tree portable collision test module.
 // - Must-Not:
-//   - Depend on host case sensitivity or concrete filesystem storage.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Supply colliding port paths and assert fail-closed snapshots.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another portable identity rule needs unrelated fixtures.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test target owns the same tree collision contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Portable tree collision regression tests.
+//   - Tree portable collision test module.
 // - Description:
-//   - Prevents snapshots that cannot coexist on case-insensitive hosts.
+//   - Implements the declared test module responsibility for filesystem.
 // - Usage:
-//   - Runs through the filesystem crate test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Locale-independent uppercase identity defines collisions.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for portable tree identity collisions.
-//!
-//! Case aliases must not escape a host-independent tree snapshot.
+//! Tree portable collision test module.
+
 use std::io;
 use std::path::{Path, PathBuf};
 
@@ -52,35 +39,26 @@ use schoenwald_filesystem::ports::TreeReader;
 struct CaseCollidingTree;
 
 impl TreeReader for CaseCollidingTree {
-    fn regular_files(
-        &self,
-        _root: &Path,
-    ) -> io::Result<Vec<PathBuf>> {
-        Ok(
-            vec![
-                PathBuf::from("root/File.bin"),
-                PathBuf::from("root/file.bin"),
-            ],
-        )
+    fn regular_files(&self, _root: &Path) -> io::Result<Vec<PathBuf>> {
+        Ok(vec![
+            PathBuf::from("root/File.bin"),
+            PathBuf::from("root/file.bin"),
+        ])
     }
 }
 
 #[test]
 fn case_colliding_tree_entries_are_rejected() -> Result<(), String> {
-    let result = CollectRegularFiles::execute(
-        &CaseCollidingTree,
-        Path::new("root"),
-    );
+    let result =
+        CollectRegularFiles::execute(&CaseCollidingTree, Path::new("root"));
     let Err(error) = result else {
         return Err("case-colliding tree entries were accepted".to_owned());
     };
     if error.kind() != io::ErrorKind::InvalidData {
-        return Err(
-            format!(
-                "unexpected collision error kind: {:?}",
-                error.kind()
-            ),
-        );
+        return Err(format!(
+            "unexpected collision error kind: {:?}",
+            error.kind()
+        ));
     }
     Ok(())
 }

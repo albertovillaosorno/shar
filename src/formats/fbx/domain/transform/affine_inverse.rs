@@ -1,7 +1,3 @@
-// File:
-//   - affine_inverse.rs
-// Path: src/formats/fbx/domain/transform/affine_inverse.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,44 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure inversion of finite affine row-vector matrices.
+//   - Affine inverse domain module.
 // - Must-Not:
-//   - Read files, serialize FBX nodes, or choose scene object identities.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Checked three-by-three basis inversion and affine translation recovery.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - General projective inversion becomes a separate supported contract.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - The matrix module adopts affine inversion without formatter drift.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Inverts row-major row-vector affine matrices for FBX bind transforms.
+//   - Affine inverse domain module.
 // - Description:
-//   - Rejects non-finite, non-affine, and singular matrices before returning
-//   - an inverse that composes to identity in both multiplication orders.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Used by binary FBX cluster serialization and synthetic regressions.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Uses the transform domain's established one-thousandth affine tolerance.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Pure affine inversion for row-major row-vector matrices.
-//!
-//! The decoded transform domain stores translation in components 12 through
-//! 14. This helper preserves that convention and fails explicitly before an
-//! invalid bind matrix can reach a binary FBX cluster.
+//! Affine inverse domain module.
 
-/// Maximum tolerated deviation from the affine identity column.
 const AFFINE_TOLERANCE: f64 = 1e-3;
 
 /// Affine matrix inversion failure.
@@ -78,20 +60,14 @@ pub enum InverseError {
               order"
 )]
 pub fn invert_affine(matrix: &[f64; 16]) -> Result<[f64; 16], InverseError> {
-    if let Some(component) = matrix
-        .iter()
-        .position(|value| !value.is_finite())
+    if let Some(component) = matrix.iter().position(|value| !value.is_finite())
     {
-        return Err(
-            InverseError::NonFiniteComponent {
-                component,
-            },
-        );
+        return Err(InverseError::NonFiniteComponent { component });
     }
     if matrix[3].abs() > AFFINE_TOLERANCE
         || matrix[7].abs() > AFFINE_TOLERANCE
         || matrix[11].abs() > AFFINE_TOLERANCE
-        || (matrix[15] - 1.0).abs() > AFFINE_TOLERANCE
+        || (matrix[15] - 1.).abs() > AFFINE_TOLERANCE
     {
         return Err(InverseError::NotAffine);
     }
@@ -110,7 +86,7 @@ pub fn invert_affine(matrix: &[f64; 16]) -> Result<[f64; 16], InverseError> {
     if determinant.abs() <= AFFINE_TOLERANCE {
         return Err(InverseError::Singular);
     }
-    let reciprocal = 1.0_f64 / determinant;
+    let reciprocal = 1f64 / determinant;
     let inverse_basis = [
         (basis_11 * basis_22 - basis_12 * basis_21) * reciprocal,
         (basis_02 * basis_21 - basis_01 * basis_22) * reciprocal,
@@ -122,9 +98,7 @@ pub fn invert_affine(matrix: &[f64; 16]) -> Result<[f64; 16], InverseError> {
         (basis_01 * basis_20 - basis_00 * basis_21) * reciprocal,
         (basis_00 * basis_11 - basis_01 * basis_10) * reciprocal,
     ];
-    let translation = [
-        matrix[12], matrix[13], matrix[14],
-    ];
+    let translation = [matrix[12], matrix[13], matrix[14]];
     let inverse_translation = [
         -(translation[0] * inverse_basis[0]
             + translation[1] * inverse_basis[3]
@@ -136,24 +110,22 @@ pub fn invert_affine(matrix: &[f64; 16]) -> Result<[f64; 16], InverseError> {
             + translation[1] * inverse_basis[5]
             + translation[2] * inverse_basis[8]),
     ];
-    Ok(
-        [
-            inverse_basis[0],
-            inverse_basis[1],
-            inverse_basis[2],
-            0.0,
-            inverse_basis[3],
-            inverse_basis[4],
-            inverse_basis[5],
-            0.0,
-            inverse_basis[6],
-            inverse_basis[7],
-            inverse_basis[8],
-            0.0,
-            inverse_translation[0],
-            inverse_translation[1],
-            inverse_translation[2],
-            1.0,
-        ],
-    )
+    Ok([
+        inverse_basis[0],
+        inverse_basis[1],
+        inverse_basis[2],
+        0.,
+        inverse_basis[3],
+        inverse_basis[4],
+        inverse_basis[5],
+        0.,
+        inverse_basis[6],
+        inverse_basis[7],
+        inverse_basis[8],
+        0.,
+        inverse_translation[0],
+        inverse_translation[1],
+        inverse_translation[2],
+        1.,
+    ])
 }

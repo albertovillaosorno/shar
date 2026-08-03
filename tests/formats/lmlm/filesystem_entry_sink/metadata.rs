@@ -1,7 +1,3 @@
-// File:
-//   - metadata.rs
-// Path: tests/formats/lmlm/filesystem_entry_sink/metadata.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Output-root metadata error context regressions.
+//   - Metadata test module.
 // - Must-Not:
-//   - Read private archives or create filesystem state.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Invalid synthetic paths that fail before publication.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another metadata inspection family needs independent fixtures.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Metadata errors no longer carry output-root context.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Proves metadata failures identify the inspected output path.
+//   - Metadata test module.
 // - Description:
-//   - Exercises native path rejection before any directory is created.
+//   - Implements the declared test module responsibility for lmlm.
 // - Usage:
-//   - Compiled only by the LMLM filesystem sink test module.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Every scenario fails before filesystem mutation.
-//
-// ADRs:
-// - docs/adr/pipeline/extraction/extraction-provenance-and-manifest-linkage.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Output-root metadata error context regressions.
-//!
-//! Native inspection failures must retain escaped caller path evidence.
+//! Metadata test module.
 
 use std::io;
 use std::path::Path;
@@ -52,18 +38,12 @@ use crate::FileEntry;
 
 #[test]
 fn metadata_errors_include_the_output_root() {
-    let entries = [
-        FileEntry {
-            path: "file.bin".to_owned(),
-            offset: 0,
-            size: 1,
-        },
-    ];
-    let result = materialize_entries(
-        b"x",
-        &entries,
-        Path::new("bad\0root"),
-    );
+    let entries = [FileEntry {
+        path: "file.bin".to_owned(),
+        offset: 0,
+        size: 1,
+    }];
+    let result = materialize_entries(b"x", &entries, Path::new("bad\0root"));
 
     assert!(
         matches!(

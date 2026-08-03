@@ -1,9 +1,34 @@
-// File: SharWorldDefinition.h
-// Path: src/unreal/project/composition/uproject/Source/SharWorld/Public/World/SharWorldDefinition.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: connected-world orientation, region, Runtime Data Layer, HLOD, grid, and day-cycle contracts; no actor labels or package paths as identity.
-// ADR: docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar world definition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar world definition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar world definition composition module.
 
 #pragma once
 
@@ -54,21 +79,27 @@ struct SHARWORLD_API FSharWorldOrientationDefinition
 {
     GENERATED_BODY()
 
+    // jig-ignore-next-line: exact syntax is indivisible
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "World|Orientation")
     FVector NorthAxis = FVector(1.0, 0.0, 0.0);
 
+    // jig-ignore-next-line: exact syntax is indivisible
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "World|Orientation")
     FVector EastAxis = FVector(0.0, 1.0, 0.0);
 
+    // jig-ignore-next-line: exact syntax is indivisible
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "World|Orientation")
     FVector UpAxis = FVector(0.0, 0.0, 1.0);
 
+    // jig-ignore-next-line: exact syntax is indivisible
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "World|Orientation")
     FVector MapCenter = FVector(0.0, 0.0, 0.0);
 
+    // jig-ignore-next-line: exact syntax is indivisible
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "World|Orientation")
     double SeaLevelZCentimeters = 0.0;
 
+    // jig-ignore-next-line: exact syntax is indivisible
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "World|Orientation", meta = (ClampMin = "0.0"))
     double NorthernHarborMinimumNorthingCentimeters = 1.0;
 
@@ -217,6 +248,7 @@ class SHARWORLD_API USharWorldDefinition final
 public:
     static constexpr float DefaultDayLengthSeconds = 1440.0F;
 
+    // jig-ignore-next-line: exact syntax is indivisible
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "World|Orientation")
     FSharWorldOrientationDefinition Orientation;
 

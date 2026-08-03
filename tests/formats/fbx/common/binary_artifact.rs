@@ -1,7 +1,3 @@
-// File:
-//   - binary_artifact.rs
-// Path: tests/formats/fbx/common/binary_artifact.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Shared filesystem evidence helpers for binary FBX integration tests.
+//   - Binary artifact test module.
 // - Must-Not:
-//   - Construct domain fixtures, inspect private assets, or invoke Blender.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Reading paired temporary artifacts and removing them after assertions.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another test helper gains an independent lifecycle or evidence contract.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Binary FBX tests no longer share filesystem artifact handling.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Deduplicates deterministic paired-artifact reads for FBX regressions.
+//   - Binary artifact test module.
 // - Description:
-//   - Reads two generated files, reports read failures, and cleans both paths.
+//   - Implements the declared test module responsibility for fbx.
 // - Usage:
-//   - Imported by binary character and animation integration tests.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Returns no bytes after any failed read and still attempts cleanup.
-//
-// ADRs:
-// - docs/adr/fbx/export/fbx-output-contract-boundary.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Shared filesystem evidence helpers for binary FBX integration tests.
-//!
-//! The helper keeps paired deterministic artifact reads and cleanup behavior
-//! identical across static-character and animated-character regressions.
+//! Binary artifact test module.
 
 use std::fs;
 use std::path::Path;
@@ -54,10 +39,7 @@ pub(super) fn read_binary_pair(
     first_path: &Path,
     second_path: &Path,
     label: &str,
-) -> Option<(
-    Vec<u8>,
-    Vec<u8>,
-)> {
+) -> Option<(Vec<u8>, Vec<u8>)> {
     let first_result = fs::read(first_path);
     assert!(
         first_result.is_ok(),
@@ -78,9 +60,5 @@ pub(super) fn read_binary_pair(
         fs::remove_file(second_path).is_ok(),
         "second {label} temporary file should be removable"
     );
-    Some(
-        (
-            first, second,
-        ),
-    )
+    Some((first, second))
 }

@@ -5,30 +5,40 @@
 
 ## Governing decisions and specifications
 
-<!-- markdownlint-disable-next-line MD013 -->
-- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Staged mesh import and world assembly](../../adr/unreal/import-adapters/staged-mesh-import-and-world-assembly.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md) <!-- markdownlint-disable-line MD013 -->
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Staged mesh import and world assembly](../../adr/unreal/import-adapters/staged-mesh-import-and-world-assembly.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md) <!-- markdownlint-disable-line MD013 -->
 - [Animation clip timing](../fbx/animation/clip-timing.md)
 - [Animation rig model](../fbx/animation/rig-model.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native import, material rebuild, and world assembly](native-import-material-and-world-assembly.md)
+- [Native import, material rebuild, and world
+  assembly](native-import-material-and-world-assembly.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Playable avatar, character controller, and footprint runtime](playable-avatar-character-controller-and-footprint-runtime.md)
+- [Playable avatar, character controller, and footprint
+  runtime](playable-avatar-character-controller-and-footprint-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+- [Native vehicle physics, control, damage, and presentation
+  runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md)
+- [Native asset load request and streaming
+  runtime](native-asset-load-request-and-streaming-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md)
+- [Typed event and observation routing
+  runtime](typed-event-and-observation-routing-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Vehicle audio and avatar-sound runtime](vehicle-audio-and-avatar-sound-runtime.md)
+- [Vehicle audio and avatar-sound
+  runtime](vehicle-audio-and-avatar-sound-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md)
+- [Transient VFX and breakable-presentation
+  runtime](transient-vfx-and-breakable-presentation-runtime.md)
 
 ## Purpose
 
@@ -80,19 +90,39 @@ notify dispatcher, or root-motion solver requires a separate accepted decision.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Character definition | Declares compatible Skeleton, animation library, movement profile, interaction policy, and fallbacks. |
-| Shared animation library | Owns stable clip, pose, choreography, phase, marker, curve, variant, and compatibility identities. |
-| Import pipeline | Converts reviewed evidence into deterministic normalized animation payloads and native assets. |
-| Character animation adapter | Projects accepted movement, action, dialogue, damage, interaction, and lifecycle state into native animation inputs. |
-| Character Movement | Owns authoritative ordinary movement integration and accepted root-motion consumption. |
-| Vehicle-handoff application service | Owns access validation, seat reservation, door and occupant transactions, control transfer, cancellation, and terminal results. |
-| Vehicle runtime | Owns vehicle, seat, door, collision, physics, controller, and occupant revisions. |
-| Animation Blueprint | Owns native pose evaluation, state-machine transitions, blends, slots, montages, sync groups, and output pose. |
-| Typed-event boundary | Publishes immutable accepted animation markers and terminal observations. |
-| Audio and VFX services | Consume accepted markers and state observations for presentation. |
-| Diagnostics | Observe immutable catalog, playback, transition, marker, root-motion, handoff, loading, and failure snapshots. |
+- **Authority:** Character definition
+  - **Responsibility:** Declares compatible Skeleton, animation library,
+    movement profile, interaction policy, and fallbacks.
+- **Authority:** Shared animation library
+  - **Responsibility:** Owns stable clip, pose, choreography, phase, marker,
+    curve, variant, and compatibility identities.
+- **Authority:** Import pipeline
+  - **Responsibility:** Converts reviewed evidence into deterministic normalized
+    animation payloads and native assets.
+- **Authority:** Character animation adapter
+  - **Responsibility:** Projects accepted movement, action, dialogue, damage,
+    interaction, and lifecycle state into native animation inputs.
+- **Authority:** Character Movement
+  - **Responsibility:** Owns authoritative ordinary movement integration and
+    accepted root-motion consumption.
+- **Authority:** Vehicle-handoff application service
+  - **Responsibility:** Owns access validation, seat reservation, door and
+    occupant transactions, control transfer, cancellation, and terminal results.
+- **Authority:** Vehicle runtime
+  - **Responsibility:** Owns vehicle, seat, door, collision, physics,
+    controller, and occupant revisions.
+- **Authority:** Animation Blueprint
+  - **Responsibility:** Owns native pose evaluation, state-machine transitions,
+    blends, slots, montages, sync groups, and output pose.
+- **Authority:** Typed-event boundary
+  - **Responsibility:** Publishes immutable accepted animation markers and
+    terminal observations.
+- **Authority:** Audio and VFX services
+  - **Responsibility:** Consume accepted markers and state observations for
+    presentation.
+- **Authority:** Diagnostics
+  - **Responsibility:** Observe immutable catalog, playback, transition, marker,
+    root-motion, handoff, loading, and failure snapshots.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -187,8 +217,9 @@ role, markers, or variant predicates are ambiguous.
 ## Evidence intake
 
 Historical animation evidence is classified by
-<!-- markdownlint-disable-next-line MD013 -->
-[Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md).
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+[Historical source-document evidence classification and publication boundary](historical-source-document-evidence-classification-and-publication-boundary.md). <!-- markdownlint-disable-line MD013 -->
 
 For each scene, pose, batch, or configuration item, review records privately:
 

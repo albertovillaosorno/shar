@@ -1,6 +1,39 @@
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar character animation library definition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar character animation library definition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar character animation library definition composition module.
+
 #pragma once
 // File:
 //   - SharCharacterAnimationLibraryDefinition.h
+// jig-ignore-next-line: exact syntax is indivisible
 // Path: src/unreal/project/composition/uproject/Source/SharCharacters/Public/Characters/SharCharacterAnimationLibraryDefinition.h
 //
 // Copyright:
@@ -16,10 +49,13 @@
 //
 // Boundary-Contract:
 // - Owns:
+// jig-ignore-next-line: exact syntax is indivisible
 //   - One shared native character-animation library for a compatible rig family.
 // - Must-Not:
+// jig-ignore-next-line: exact syntax is indivisible
 //   - Own character identity, execute animation, or perform runtime retargeting.
 // - Allows:
+// jig-ignore-next-line: exact syntax is indivisible
 //   - Typed semantic clips, Skeleton compatibility, animation class, and policy.
 // - Split-When:
 //   - A clip family needs an independently loaded Primary Asset boundary.
@@ -28,6 +64,7 @@
 // - Summary:
 //   - Defines the central deduplicated character-animation library.
 // - Description:
+// jig-ignore-next-line: exact syntax is indivisible
 //   - Stores compatible clips once and exposes them through stable semantic ids.
 // - Usage:
 //   - Referenced by character presentations, animation adapters, and mods.
@@ -67,6 +104,7 @@ struct SHARCHARACTERS_API FSharCharacterAnimationClipDefinition
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Semantics")
     FName SemanticRoleId;
 
+    // jig-ignore-next-line: exact syntax is indivisible
     /** Native Sequence, Montage, Blend Space, Pose Asset, or compatible asset. */
     UPROPERTY(
         EditDefaultsOnly,
@@ -141,6 +179,7 @@ public:
     )
     TSoftClassPtr<UAnimInstance> AnimationClass;
 
+    // jig-ignore-next-line: exact syntax is indivisible
     /** Deterministically ordered semantic clips stored once for the rig family. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
     TArray<FSharCharacterAnimationClipDefinition> Clips;

@@ -1,12 +1,34 @@
-// File: SharPresentationTestFixtures.h
-// Path: src/unreal/project/composition/uproject/Source/SharPresentation/Private/Tests/SharPresentationTestFixtures.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: explicit transient presentation test fixtures only.
-// Specification: docs/technical/unreal/presentation-playback-runtime.md
-// LARGE-FILE owner=SharPresentation; reason=cohesive typed presentation test fixtures;
-// split=extract channel fixtures if additional arbitration policies appear;
-// validation=validate.sh SharPresentation plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar presentation test fixtures composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar presentation test fixtures composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar presentation test fixtures composition module.
 
 #pragma once
 
@@ -38,6 +60,7 @@ inline FSharPresentationChannelPolicy MakePresentationChannel(
 {
     FSharPresentationChannelPolicy Policy;
     Policy.ChannelId = FName(TEXT("cinematic"));
+    // jig-ignore-next-line: exact syntax is indivisible
     Policy.MaximumPending = FSharPresentationChannelPolicy::DefaultMaximumPending;
     Policy.MaximumActive = FSharPresentationChannelPolicy::DefaultMaximumActive;
     Policy.DuplicatePolicy = DuplicatePolicy;

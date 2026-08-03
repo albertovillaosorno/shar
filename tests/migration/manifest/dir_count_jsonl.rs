@@ -1,7 +1,3 @@
-// File:
-//   - dir_count_jsonl.rs
-// Path: tests/migration/manifest/dir_count_jsonl.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Canonical JSONL serialization regressions for manifest directory counts.
+//   - Dir count jsonl test module.
 // - Must-Not:
-//   - Depend on private local outputs or non-deterministic repository state.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Focused values and deterministic assertions for JSONL output.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when serialization and parsing need independent fixture support.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another game-manifest test owns the same JSONL serialization boundary.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects canonical manifest record serialization.
+//   - Dir count jsonl test module.
 // - Description:
-//   - Verifies caller-visible JSONL remains valid for adversarial field values.
+//   - Implements the declared test module responsibility for manifest.
 // - Usage:
-//   - Executed through cargo test for the game-manifest crate.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Fixtures remain deterministic and repository-local.
-//
-// ADRs:
-// - docs/adr/pipeline/game-manifest-ledger.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Canonical JSONL serialization regression coverage.
-//!
-//! These tests protect the public manifest row contract from malformed
-//! JSON when caller-provided field values contain reserved characters.
+//! Dir count jsonl test module.
 
 use game_manifest::DirCount;
 use schoenwald_cli as _;

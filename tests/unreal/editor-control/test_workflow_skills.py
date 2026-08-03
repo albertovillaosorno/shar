@@ -1,7 +1,3 @@
-# File:
-#   - test_workflow_skills.py
-# Path: tests/unreal/editor-control/test_workflow_skills.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,55 +6,37 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Structural and routing guards for manual Unreal MCP workflow skills.
+#   - Test workflow skills test module.
 # - Must-Not:
-#   - Connect to Unreal, validate generated capability prose, or edit files.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Checking exact workflow names, required sections, depth, and index links.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Workflow prose quality and generated routing require separate fixtures.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another test module owns the complete workflow-skill contract.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Prevents Unreal MCP workflows from degrading into basic notes.
+#   - Test workflow skills test module.
 # - Description:
-#   - Requires detailed SRP runbooks and complete central-index routing.
+#   - Implements the declared test module responsibility for editor control.
 # - Usage:
-#   - Executed by pytest through the canonical validator workflow.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Requires fourteen lifecycle runbooks with 120 lines and 600 words.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: manual Unreal MCP workflow regression guards
-#   - reason: exact workflow taxonomy and required sections share one contract
-#   - split: separate content-depth checks if workflow count grows materially
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess after workflow taxonomy or operator policy changes
-#
-"""Regression guards for detailed manual Unreal MCP workflow skills."""
+
+"""Test workflow skills test module."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from mcp.adapter_outbound.skill_markdown_renderer import (
-    MarkdownSkillRenderer,
-)
-
-from skill_catalog_fixture import (
-    TEST_UNREAL_MCP_VERSION,
-    complete_catalog,
-)
+from mcp.adapter_outbound.skill_markdown_renderer import MarkdownSkillRenderer
+from skill_catalog_fixture import TEST_UNREAL_MCP_VERSION
+from skill_catalog_fixture import complete_catalog
 
 _REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 _WORKFLOW_ROOT = _REPOSITORY_ROOT / "skills" / "unreal" / "workflows"

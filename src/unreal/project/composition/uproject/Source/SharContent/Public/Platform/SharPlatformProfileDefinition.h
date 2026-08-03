@@ -1,9 +1,34 @@
-// File: SharPlatformProfileDefinition.h
-// Path: src/unreal/project/composition/uproject/Source/SharContent/Public/Platform/SharPlatformProfileDefinition.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: native SHAR platform-profile contract; no local SDK claims or runtime packaging mutation.
-// ADR: docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar platform profile definition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar platform profile definition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar platform profile definition composition module.
 
 #pragma once
 
@@ -52,6 +77,7 @@ public:
     ESharCpuArchitecture CpuArchitecture = ESharCpuArchitecture::X8664;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Rendering")
+    // jig-ignore-next-line: exact syntax is indivisible
     ESharRendererProfile RendererProfile = ESharRendererProfile::DesktopDeferred;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Platform")

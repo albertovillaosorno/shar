@@ -1,7 +1,3 @@
-# File:
-#   - json_rpc_request.py
-# Path: src/unreal/editor-control/adapter-outbound/mcp/adapter_outbound/json_rpc_request.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,37 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Construction of strict JSON-RPC request and notification objects.
+#   - Json rpc request outbound adapter.
 # - Must-Not:
-#   - Perform HTTP exchanges, allocate sessions, or interpret responses.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Adding the protocol marker, method, parameters, and optional request id.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Request construction gains a second independently testable protocol.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module owns the same JSON-RPC construction invariant.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Builds transport-independent JSON-RPC request objects.
+#   - Json rpc request outbound adapter.
 # - Description:
-#   - Keeps protocol object construction outside the HTTP transport lifecycle.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Called by the Streamable HTTP transport before an exchange.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Emits JSON-RPC version 2.0 and omits ids for notifications.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
-"""Strict JSON-RPC request construction for the Unreal MCP client."""
+
+"""Json rpc request outbound adapter."""
 
 from __future__ import annotations
 
@@ -67,6 +55,7 @@ def build_json_rpc_request(
 
     Returns:
         A new JSON object with the protocol marker and optional id.
+
     """
     payload: JsonObject = {
         "jsonrpc": _JSON_RPC_VERSION,

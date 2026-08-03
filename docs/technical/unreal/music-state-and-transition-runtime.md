@@ -6,15 +6,20 @@
 ## Governing decisions
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Event-driven music and ambience](../../adr/unreal/runtime/event-driven-music-and-ambience.md)
+- [Event-driven music and
+  ambience](../../adr/unreal/runtime/event-driven-music-and-ambience.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Platform-native audio cooking and streaming](../../adr/audio/platform-native-audio-cooking-and-streaming.md)
+- [Platform-native audio cooking and
+  streaming](../../adr/audio/platform-native-audio-cooking-and-streaming.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
+- [Gameplay audio source, residency, mix, and environment
+  runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
+- [Application lifecycle and mode
+  runtime](application-lifecycle-and-mode-runtime.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md) <!-- markdownlint-disable-line MD013 -->
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 
 ## Purpose
@@ -45,15 +50,29 @@ The root gameplay catalog references:
 
 <!-- markdownlint-disable MD013 -->
 
-| Asset | Primary asset type | Purpose |
-| :--- | :--- | :--- |
-| Music catalog | `SharMusicCatalog` | Composition, state, profile, cue, and transition definitions. |
-| Level music profile | `SharMusicProfile` | Level-specific default, driving, interior, and special-event bindings. |
-| Music composition | `SharMusicComposition` | Canonical normalized composition and stem set. |
-| Music graph | `SharMusicGraph` | MetaSound or native graph used for layers and parameters. |
-| Music state table | `FSharMusicStateRow` | Semantic state, priority, persistence, and required composition. |
-| Music binding table | `FSharMusicBindingRow` | Context and event to state transition. |
-| Music transition table | `FSharMusicTransitionRow` | Quantization, fades, interruption, and fallback. |
+- **Asset:** Music catalog
+  - **Primary asset type:** `SharMusicCatalog`
+  - **Purpose:** Composition, state, profile, cue, and transition definitions.
+- **Asset:** Level music profile
+  - **Primary asset type:** `SharMusicProfile`
+  - **Purpose:** Level-specific default, driving, interior, and special-event
+    bindings.
+- **Asset:** Music composition
+  - **Primary asset type:** `SharMusicComposition`
+  - **Purpose:** Canonical normalized composition and stem set.
+- **Asset:** Music graph
+  - **Primary asset type:** `SharMusicGraph`
+  - **Purpose:** MetaSound or native graph used for layers and parameters.
+- **Asset:** Music state table
+  - **Primary asset type:** `FSharMusicStateRow`
+  - **Purpose:** Semantic state, priority, persistence, and required
+    composition.
+- **Asset:** Music binding table
+  - **Primary asset type:** `FSharMusicBindingRow`
+  - **Purpose:** Context and event to state transition.
+- **Asset:** Music transition table
+  - **Primary asset type:** `FSharMusicTransitionRow`
+  - **Purpose:** Quantization, fades, interruption, and fallback.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -84,19 +103,29 @@ are never composition identity.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `StateId` | Stable semantic state identity. |
-| `StateClass` | Frontend, level, interior, mission, race, alert, cinematic, pause, loading, or credits. |
-| `Priority` | Explicit signed priority. |
-| `CompositionId` | Required canonical composition. |
-| `EntrySectionId` | Declared entry section or marker. |
-| `LoopRegionId` | Declared loop region. |
-| `LayerParameters` | Deterministic stem and graph parameters. |
-| `Persistence` | Restart, resume, retain-under-overlay, or stop. |
-| `InterruptionPolicy` | Events allowed to replace or overlay the state. |
-| `FallbackStateId` | Exact fallback when optional content is unavailable. |
-| `Required` | Whether activation fails without this state. |
+- **Field:** `StateId`
+  - **Contract:** Stable semantic state identity.
+- **Field:** `StateClass`
+  - **Contract:** Frontend, level, interior, mission, race, alert, cinematic,
+    pause, loading, or credits.
+- **Field:** `Priority`
+  - **Contract:** Explicit signed priority.
+- **Field:** `CompositionId`
+  - **Contract:** Required canonical composition.
+- **Field:** `EntrySectionId`
+  - **Contract:** Declared entry section or marker.
+- **Field:** `LoopRegionId`
+  - **Contract:** Declared loop region.
+- **Field:** `LayerParameters`
+  - **Contract:** Deterministic stem and graph parameters.
+- **Field:** `Persistence`
+  - **Contract:** Restart, resume, retain-under-overlay, or stop.
+- **Field:** `InterruptionPolicy`
+  - **Contract:** Events allowed to replace or overlay the state.
+- **Field:** `FallbackStateId`
+  - **Contract:** Exact fallback when optional content is unavailable.
+- **Field:** `Required`
+  - **Contract:** Whether activation fails without this state.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -175,7 +204,8 @@ mission, race, interior, movie, or level transition.
 
 Music and ambience compositions use scope-owned bundles through
 <!-- markdownlint-disable-next-line MD013 -->
-[Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md).
+[Gameplay audio source, residency, mix, and environment
+runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md).
 Required frontend, level, mission, race, interior, stinger, and credits assets
 are
 ready before the owning state commits.
@@ -212,14 +242,28 @@ The verified base profiles define:
 
 <!-- markdownlint-disable MD013 -->
 
-| Level context | Canonical profile | Presentation direction |
-| :--- | :--- | :--- |
-| Level 1 | `music_profile_homer` | Orchestral comedy with a prominent low-brass motif. |
-| Levels 2 and 6 | `music_profile_bart` | Rock-focused profile with overdriven guitar. |
-| Level 3 | `music_profile_lisa` | Jazz-focused profile with prominent saxophone. |
-| Level 4 | `music_profile_marge` | Piano, string, and woodwind profile; driving reuses the declared suburban composition. |
-| Level 5 | `music_profile_apu` | South Asian-inspired profile with declared plucked and reed instrumentation. |
-| Level 7 | `music_profile_halloween` | Horror profile with organ and theremin presentation. |
+- **Level context:** Level 1
+  - **Canonical profile:** `music_profile_homer`
+  - **Presentation direction:** Orchestral comedy with a prominent low-brass
+    motif.
+- **Level context:** Levels 2 and 6
+  - **Canonical profile:** `music_profile_bart`
+  - **Presentation direction:** Rock-focused profile with overdriven guitar.
+- **Level context:** Level 3
+  - **Canonical profile:** `music_profile_lisa`
+  - **Presentation direction:** Jazz-focused profile with prominent saxophone.
+- **Level context:** Level 4
+  - **Canonical profile:** `music_profile_marge`
+  - **Presentation direction:** Piano, string, and woodwind profile; driving
+    reuses the declared suburban composition.
+- **Level context:** Level 5
+  - **Canonical profile:** `music_profile_apu`
+  - **Presentation direction:** South Asian-inspired profile with declared
+    plucked and reed instrumentation.
+- **Level context:** Level 7
+  - **Canonical profile:** `music_profile_halloween`
+  - **Presentation direction:** Horror profile with organ and theremin
+    presentation.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -233,34 +277,71 @@ A cue may bind the same composition to several states without duplicating audio.
 
 <!-- markdownlint-disable MD013 -->
 
-| Cue identity | Verified contexts |
-| :--- | :--- |
-| `cue_morning_chores` | `s_m_r_t`, `this_old_shanty`, `dial_b_for_blood`, Level 1 wager race, Level 2 wager race. |
-| `cue_homer_a_doh_go` | `petty_theft_homer`, `for_a_few_donuts_more`, `alien_autotopsy_part_2`. |
-| `cue_plowing_through` | `office_spaced`, `the_old_pirate_and_the_sea`, `flaming_tires`, Level 7 wager race. |
-| `cue_husky` | `blind_big_brother`, `beached_love`, Level 4 wager race. |
-| `cue_paranoid` | `flowers_by_irene`, `slithery_sleuthing`. |
-| `cue_hitting_the_streets` | `bonestorm_storm`, `weapons_of_mass_delinquency`, `clueless`. |
-| `cue_saving_springfield` | `the_fat_and_furious`, `return_of_the_nearly_dead`, `and_baby_makes_8`, `duff_for_me_duff_for_you`, `alien_autotopsy_part_3`. |
-| `cue_lightning_fast_wit` | `detention_deficit_disorder`, `getting_down_with_the_clown`. |
-| `cue_comic_book_theme` | `vox_nerduli`, `nerd_race_queen`. |
-| `cue_fresh_skid_marks` | `bart_n_frink`, second `from_outer_space` state, `full_metal_jackass`. |
-| `cue_cletus_theme` | `better_than_beef`, `bonfire_of_the_manatees`, `redneck_roundup`. |
-| `cue_heavy_drinker` | `monkey_see_monkey_doh`, `the_cola_wars`. |
-| `cue_frink_theme` | `cell_outs`, `lab_coat_caper`, `pocket_protector`. |
-| `cue_otto_theme` | `operation_hellfish`, `going_to_the_lu`. |
-| `cue_lisa_drive` | Level 3 free drive and `fishy_deals`. |
-| `cue_busy_body_housewife` | `ketchup_logic`, first `from_outer_space` state. |
-| `cue_wolves_stole_my_pills` | `wolves_stole_my_pills`. |
-| `cue_large_vehicle` | `eight_is_too_much`, `kinky_frinky`, Level 5 wager race. |
-| `cue_hindu_that_i_do` | `incriminating_caffeine`, `kwik_cash`. |
-| `cue_stop_what_you_are_doing` | second `better_than_beef` state, `this_little_piggy`, `curious_curator`. |
-| `cue_community_service` | final `weapons_of_mass_delinquency` state, `never_trust_a_snake`, `set_to_kill`. |
-| `cue_halls_balls` | `milking_the_pigs`, first `theres_something_about_monty` state, Level 6 wager race. |
-| `cue_kang_and_kodos` | `kang_and_kodos_strike_back`. |
-| `cue_evergreen_terror` | Level 7 free drive and `rigor_motors`. |
-| `cue_alien_probe` | `long_black_probes`, `alien_autotopsy_part_1`. |
-| `cue_town_hero` | second `theres_something_about_monty` state. |
+- **Cue identity:** `cue_morning_chores`
+  - **Verified contexts:** `s_m_r_t`, `this_old_shanty`, `dial_b_for_blood`,
+    Level 1 wager race, Level 2 wager race.
+- **Cue identity:** `cue_homer_a_doh_go`
+  - **Verified contexts:** `petty_theft_homer`, `for_a_few_donuts_more`,
+    `alien_autotopsy_part_2`.
+- **Cue identity:** `cue_plowing_through`
+  - **Verified contexts:** `office_spaced`, `the_old_pirate_and_the_sea`,
+    `flaming_tires`, Level 7 wager race.
+- **Cue identity:** `cue_husky`
+  - **Verified contexts:** `blind_big_brother`, `beached_love`, Level 4 wager
+    race.
+- **Cue identity:** `cue_paranoid`
+  - **Verified contexts:** `flowers_by_irene`, `slithery_sleuthing`.
+- **Cue identity:** `cue_hitting_the_streets`
+  - **Verified contexts:** `bonestorm_storm`, `weapons_of_mass_delinquency`,
+    `clueless`.
+- **Cue identity:** `cue_saving_springfield`
+  - **Verified contexts:** `the_fat_and_furious`, `return_of_the_nearly_dead`,
+    `and_baby_makes_8`, `duff_for_me_duff_for_you`, `alien_autotopsy_part_3`.
+- **Cue identity:** `cue_lightning_fast_wit`
+  - **Verified contexts:** `detention_deficit_disorder`,
+    `getting_down_with_the_clown`.
+- **Cue identity:** `cue_comic_book_theme`
+  - **Verified contexts:** `vox_nerduli`, `nerd_race_queen`.
+- **Cue identity:** `cue_fresh_skid_marks`
+  - **Verified contexts:** `bart_n_frink`, second `from_outer_space` state,
+    `full_metal_jackass`.
+- **Cue identity:** `cue_cletus_theme`
+  - **Verified contexts:** `better_than_beef`, `bonfire_of_the_manatees`,
+    `redneck_roundup`.
+- **Cue identity:** `cue_heavy_drinker`
+  - **Verified contexts:** `monkey_see_monkey_doh`, `the_cola_wars`.
+- **Cue identity:** `cue_frink_theme`
+  - **Verified contexts:** `cell_outs`, `lab_coat_caper`, `pocket_protector`.
+- **Cue identity:** `cue_otto_theme`
+  - **Verified contexts:** `operation_hellfish`, `going_to_the_lu`.
+- **Cue identity:** `cue_lisa_drive`
+  - **Verified contexts:** Level 3 free drive and `fishy_deals`.
+- **Cue identity:** `cue_busy_body_housewife`
+  - **Verified contexts:** `ketchup_logic`, first `from_outer_space` state.
+- **Cue identity:** `cue_wolves_stole_my_pills`
+  - **Verified contexts:** `wolves_stole_my_pills`.
+- **Cue identity:** `cue_large_vehicle`
+  - **Verified contexts:** `eight_is_too_much`, `kinky_frinky`, Level 5 wager
+    race.
+- **Cue identity:** `cue_hindu_that_i_do`
+  - **Verified contexts:** `incriminating_caffeine`, `kwik_cash`.
+- **Cue identity:** `cue_stop_what_you_are_doing`
+  - **Verified contexts:** second `better_than_beef` state, `this_little_piggy`,
+    `curious_curator`.
+- **Cue identity:** `cue_community_service`
+  - **Verified contexts:** final `weapons_of_mass_delinquency` state,
+    `never_trust_a_snake`, `set_to_kill`.
+- **Cue identity:** `cue_halls_balls`
+  - **Verified contexts:** `milking_the_pigs`, first
+    `theres_something_about_monty` state, Level 6 wager race.
+- **Cue identity:** `cue_kang_and_kodos`
+  - **Verified contexts:** `kang_and_kodos_strike_back`.
+- **Cue identity:** `cue_evergreen_terror`
+  - **Verified contexts:** Level 7 free drive and `rigor_motors`.
+- **Cue identity:** `cue_alien_probe`
+  - **Verified contexts:** `long_black_probes`, `alien_autotopsy_part_1`.
+- **Cue identity:** `cue_town_hero`
+  - **Verified contexts:** second `theres_something_about_monty` state.
 
 <!-- markdownlint-enable MD013 -->
 

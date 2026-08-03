@@ -1,7 +1,3 @@
-// File:
-//   - dilation.rs
-// Path: src/formats/fbx/domain/texture/semantic/body/raster/dilation.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - One-pixel-per-iteration edge dilation constrained to a chart's reserved
-//   - atlas cell.
+//   - Dilation domain module.
 // - Must-Not:
-//   - Paint original triangles, cross chart cells, change colors, or map UVs.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Checked eight-neighbor coverage expansion.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another padding filter becomes a supported texture contract.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Triangle coverage becomes the sole owner of chart padding.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Cell-bounded semantic chart edge dilation.
+//   - Dilation domain module.
 // - Description:
-//   - Extends exact chart color into the declared padding without atlas bleed.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Called after at least one original chart pixel is painted.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Each iteration reads a snapshot so expansion distance is exact.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - true
-//   - Reason: checked cell bounds, snapshot iteration, neighbor search, and
-//   - pixel writes form one deterministic padding behavior.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Deterministic chart-cell-bounded edge dilation.
+//! Dilation domain module.
+
 #![expect(
     clippy::default_numeric_fallback,
     clippy::indexing_slicing,
@@ -77,50 +63,26 @@ pub(super) fn apply(
     for _iteration in 0..padding {
         let snapshot = coverage.to_vec();
         let mut additions = Vec::new();
-        for y in chart
-            .public
-            .cell
-            .y..=bottom
-        {
-            for x in chart
-                .public
-                .cell
-                .x..=right
-            {
-                let index = coverage_index(
-                    atlas.width(),
-                    x,
-                    y,
-                )?;
+        for y in chart.public.cell.y..=bottom {
+            for x in chart.public.cell.x..=right {
+                let index = coverage_index(atlas.width(), x, y)?;
                 if snapshot[index] {
                     continue;
                 }
                 if has_covered_neighbor(
                     &snapshot,
                     atlas.width(),
-                    chart
-                        .public
-                        .cell,
+                    chart.public.cell,
                     x,
                     y,
                 )? {
-                    additions.push(
-                        (
-                            x, y, index,
-                        ),
-                    );
+                    additions.push((x, y, index));
                 }
             }
         }
         for (x, y, index) in additions {
             coverage[index] = true;
-            atlas.set_pixel(
-                x,
-                y,
-                chart
-                    .public
-                    .source_color,
-            )?;
+            atlas.set_pixel(x, y, chart.public.source_color)?;
         }
     }
     Ok(())
@@ -134,12 +96,8 @@ fn has_covered_neighbor(
     x: u32,
     y: u32,
 ) -> Result<bool, SemanticTextureError> {
-    let right = cell
-        .right()
-        .ok_or(SemanticTextureError::NumericOverflow)?;
-    let bottom = cell
-        .bottom()
-        .ok_or(SemanticTextureError::NumericOverflow)?;
+    let right = cell.right().ok_or(SemanticTextureError::NumericOverflow)?;
+    let bottom = cell.bottom().ok_or(SemanticTextureError::NumericOverflow)?;
     for offset_y in -1_i32..=1 {
         for offset_x in -1_i32..=1 {
             if offset_x == 0 && offset_y == 0 {
@@ -158,9 +116,7 @@ fn has_covered_neighbor(
             {
                 continue;
             }
-            if coverage[coverage_index(
-                width, neighbor_x, neighbor_y,
-            )?] {
+            if coverage[coverage_index(width, neighbor_x, neighbor_y)?] {
                 return Ok(true);
             }
         }

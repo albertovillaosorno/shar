@@ -5,33 +5,45 @@
 
 ## Governing decisions and specifications
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [State-driven missions, interactions, interiors, and notoriety](../../adr/unreal/runtime/state-driven-missions-interactions-and-notoriety.md)
+- [Data-driven Unreal gameplay content
+  catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+- [Typed StateTree action
+  sequences](../../adr/unreal/runtime/typed-state-tree-action-sequences.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Typed StateTree action sequences](../../adr/unreal/runtime/typed-state-tree-action-sequences.md)
+- [Portable save storage and
+  lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Portable save storage and lifecycle](../../adr/unreal/runtime/portable-save-storage-and-lifecycle.md)
+- [Mission, interaction, interior, and notoriety
+  runtime](mission-interaction-and-notoriety-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Open sandbox chapters and world progression](../../adr/gameplay/open-sandbox-chapters-and-world-progression.md)
+- [Mission briefing, result, and replay UI
+  runtime](mission-briefing-result-and-replay-ui-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Mission, interaction, interior, and notoriety runtime](mission-interaction-and-notoriety-runtime.md)
+- [Authored spatial placement and trigger
+  runtime](authored-spatial-placement-and-trigger-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Mission briefing, result, and replay UI runtime](mission-briefing-result-and-replay-ui-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Authored spatial placement and trigger runtime](authored-spatial-placement-and-trigger-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Mission world-entity and respawn runtime](mission-world-entity-and-respawn-runtime.md)
+- [Mission world-entity and respawn
+  runtime](mission-world-entity-and-respawn-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Presentation playback runtime](presentation-playback-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md)
+- [Native asset load request and streaming
+  runtime](native-asset-load-request-and-streaming-runtime.md)
 - [Race route and opponent runtime](race-route-and-opponent-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Typed event and observation routing runtime](typed-event-and-observation-routing-runtime.md)
+- [Typed event and observation routing
+  runtime](typed-event-and-observation-routing-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md)
+- [Historical core-design and dialogue evidence
+  normalization](historical-core-design-and-dialogue-evidence-normalization.md)
 
 ## Purpose
 
@@ -54,18 +66,36 @@ or presentation event.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Import pipeline | Parse source mission evidence and emit deterministic definitions. |
-| Mission catalog | Own mission, stage, objective, condition, offer, reward, and presentation identities. |
-| Mission session subsystem | Own one accepted mission session and its state transitions. |
-| Mission load coordinator | Resolve bundles, Data Layers, participants, and readiness barriers. |
-| StateTree adapter | Execute the shared hierarchical control graph from immutable session state. |
-| Objective adapters | Evaluate one registered objective schema from typed observations. |
-| Condition evaluators | Evaluate required, optional, failure, and recovery predicates. |
-| Progression service | Commit attempts, skips, results, rewards, completion, and best evidence. |
-| World adapters | Project actors, vehicles, characters, routes, placements, and effects. |
-| Presentation services | Project camera, HUD, dialogue, music, animation, and transition requests. |
+- **Authority:** Import pipeline
+  - **Responsibility:** Parse source mission evidence and emit deterministic
+    definitions.
+- **Authority:** Mission catalog
+  - **Responsibility:** Own mission, stage, objective, condition, offer, reward,
+    and presentation identities.
+- **Authority:** Mission session subsystem
+  - **Responsibility:** Own one accepted mission session and its state
+    transitions.
+- **Authority:** Mission load coordinator
+  - **Responsibility:** Resolve bundles, Data Layers, participants, and
+    readiness barriers.
+- **Authority:** StateTree adapter
+  - **Responsibility:** Execute the shared hierarchical control graph from
+    immutable session state.
+- **Authority:** Objective adapters
+  - **Responsibility:** Evaluate one registered objective schema from typed
+    observations.
+- **Authority:** Condition evaluators
+  - **Responsibility:** Evaluate required, optional, failure, and recovery
+    predicates.
+- **Authority:** Progression service
+  - **Responsibility:** Commit attempts, skips, results, rewards, completion,
+    and best evidence.
+- **Authority:** World adapters
+  - **Responsibility:** Project actors, vehicles, characters, routes,
+    placements, and effects.
+- **Authority:** Presentation services
+  - **Responsibility:** Project camera, HUD, dialogue, music, animation, and
+    transition requests.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -164,7 +194,8 @@ objective, or condition.
 External partner, licensor, publisher, or writer-facing mission frameworks
 follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Historical core-design and dialogue evidence normalization](historical-core-design-and-dialogue-evidence-normalization.md).
+[Historical core-design and dialogue evidence
+normalization](historical-core-design-and-dialogue-evidence-normalization.md).
 They are proposal sets, not source mission scripts and not runtime definitions.
 
 A proposal fact can contribute only after conversion resolves:
@@ -320,26 +351,48 @@ schemas reject readiness.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `MissionId` | Owning canonical mission identity. |
-| `StageId` | Stable mission-scoped stage identity. |
-| `SequenceOrdinal` | Dense zero-based stage order. |
-| `RootObjectiveId` | Exactly one registered objective binding. |
-| `ConditionIds` | Ordered required, failure, optional, and recovery conditions. |
-| `ParticipantBindingIds` | Characters, vehicles, AI, payloads, and world actors. |
-| `RouteAndWaypointIds` | Ordered route, checkpoint, destination, and recovery identities. |
-| `ActivationPredicate` | Mission, chapter, participant, inventory, and feature requirements. |
-| `LockRequirementIds` | Explicit vehicle, costume, reward, or progression requirements. |
-| `TimePolicyId` | Countdown, count-up, inherited, added, paused, or untimed policy. |
-| `LoadPlanId` | Stage-specific acquire and release plan. |
-| `CheckpointPolicyId` | Checkpoint creation and restore behavior. |
-| `SuccessTransitionId` | Declared successor or mission success. |
-| `FailureTransitionId` | Stage retry, mission retry, rollback, abort, or terminal failure. |
-| `PresentationProfileId` | HUD, camera, dialogue, countdown, music, and transition requests. |
-| `WorldPolicyId` | Traffic, population, notoriety, safe-zone, and control policy. |
-| `FinalPolicy` | Whether accepted success may terminate the mission. |
-| `BonusObjectiveStartIds` | Optional objectives activated at this stage revision. |
+- **Field:** `MissionId`
+  - **Contract:** Owning canonical mission identity.
+- **Field:** `StageId`
+  - **Contract:** Stable mission-scoped stage identity.
+- **Field:** `SequenceOrdinal`
+  - **Contract:** Dense zero-based stage order.
+- **Field:** `RootObjectiveId`
+  - **Contract:** Exactly one registered objective binding.
+- **Field:** `ConditionIds`
+  - **Contract:** Ordered required, failure, optional, and recovery conditions.
+- **Field:** `ParticipantBindingIds`
+  - **Contract:** Characters, vehicles, AI, payloads, and world actors.
+- **Field:** `RouteAndWaypointIds`
+  - **Contract:** Ordered route, checkpoint, destination, and recovery
+    identities.
+- **Field:** `ActivationPredicate`
+  - **Contract:** Mission, chapter, participant, inventory, and feature
+    requirements.
+- **Field:** `LockRequirementIds`
+  - **Contract:** Explicit vehicle, costume, reward, or progression
+    requirements.
+- **Field:** `TimePolicyId`
+  - **Contract:** Countdown, count-up, inherited, added, paused, or untimed
+    policy.
+- **Field:** `LoadPlanId`
+  - **Contract:** Stage-specific acquire and release plan.
+- **Field:** `CheckpointPolicyId`
+  - **Contract:** Checkpoint creation and restore behavior.
+- **Field:** `SuccessTransitionId`
+  - **Contract:** Declared successor or mission success.
+- **Field:** `FailureTransitionId`
+  - **Contract:** Stage retry, mission retry, rollback, abort, or terminal
+    failure.
+- **Field:** `PresentationProfileId`
+  - **Contract:** HUD, camera, dialogue, countdown, music, and transition
+    requests.
+- **Field:** `WorldPolicyId`
+  - **Contract:** Traffic, population, notoriety, safe-zone, and control policy.
+- **Field:** `FinalPolicy`
+  - **Contract:** Whether accepted success may terminate the mission.
+- **Field:** `BonusObjectiveStartIds`
+  - **Contract:** Optional objectives activated at this stage revision.
 
 <!-- markdownlint-enable MD013 -->
 

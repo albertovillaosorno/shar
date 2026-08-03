@@ -1,7 +1,3 @@
-// File:
-//   - escape.rs
-// Path: tests/foundation/json-text/escape.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,27 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression evidence for the shared JSON text escape contract.
+//   - Escape test module.
 // - Must-Not:
-//   - Test complete documents or duplicate the escaping implementation.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic delimiters, controls, and Unicode scalar values.
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Proves lossless JSON string-content escaping.
-//
-// ADRs:
-// - docs/adr/engineering/architecture/project-core-separation.md
-//
-// Large file:
-//   - false
+//   - Escape test module.
+// - Description:
+//   - Implements the declared test module responsibility for json text.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression evidence for shared JSON string-content escaping.
+//! Escape test module.
 
 #[test]
 fn preserves_text_and_escapes_all_json_controls() {

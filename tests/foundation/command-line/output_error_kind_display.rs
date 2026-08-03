@@ -1,7 +1,3 @@
-// File:
-//   - output_error_kind_display.rs
-// Path: tests/foundation/command-line/output_error_kind_display.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for I/O error kinds in output diagnostics.
+//   - Output error kind display test module.
 // - Must-Not:
-//   - Access operating-system arguments or streams.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Compare provider failures with identical messages and distinct kinds.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another provider-error display field needs independent coverage.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Output diagnostics no longer render provider failures.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Output-error kind display regression.
+//   - Output error kind display test module.
 // - Description:
-//   - Proves ordinary diagnostics distinguish provider failure categories.
+//   - Implements the declared test module responsibility for command line.
 // - Usage:
-//   - Executed by the schoenwald-cli integration test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Every provider failure uses the same human-readable message.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for provider I/O kinds in output-error text.
-//!
-//! Equal provider messages must not erase distinct failure categories.
+//! Output error kind display test module.
 
 #[path = "support/output_error.rs"]
 pub mod support;
@@ -66,10 +52,7 @@ impl ArgumentSource for EmptyArguments {
 struct DiagnosticProgram;
 
 impl CliProgram for DiagnosticProgram {
-    fn execute(
-        &self,
-        _arguments: &[String],
-    ) -> CommandOutcome {
+    fn execute(&self, _arguments: &[String]) -> CommandOutcome {
         CommandOutcome::failure().stderr("diagnostic")
     }
 }
@@ -80,31 +63,19 @@ struct MatchingMessageSink {
 }
 
 impl OutputSink for MatchingMessageSink {
-    fn write(
-        &mut self,
-        _stream: OutputStream,
-        _text: &str,
-    ) -> io::Result<()> {
-        Err(
-            io::Error::new(
-                self.kind, "blocked",
-            ),
-        )
+    fn write(&mut self, _stream: OutputStream, _text: &str) -> io::Result<()> {
+        Err(io::Error::new(self.kind, "blocked"))
     }
 }
 
 fn render_failure(kind: io::ErrorKind) -> String {
     let mut arguments = EmptyArguments;
-    let mut output = MatchingMessageSink {
-        kind,
-    };
-    output_error(
-        RunInvocation::execute(
-            &DiagnosticProgram,
-            &mut arguments,
-            &mut output,
-        ),
-    )
+    let mut output = MatchingMessageSink { kind };
+    output_error(RunInvocation::execute(
+        &DiagnosticProgram,
+        &mut arguments,
+        &mut output,
+    ))
     .to_string()
 }
 
@@ -136,11 +107,7 @@ const RAW_OS_ERROR_CODE: i32 = 5;
 struct RawOsErrorSink;
 
 impl OutputSink for RawOsErrorSink {
-    fn write(
-        &mut self,
-        _stream: OutputStream,
-        _text: &str,
-    ) -> io::Result<()> {
+    fn write(&mut self, _stream: OutputStream, _text: &str) -> io::Result<()> {
         Err(io::Error::from_raw_os_error(RAW_OS_ERROR_CODE))
     }
 }
@@ -150,18 +117,12 @@ fn display_retains_the_raw_operating_system_error_code() {
     let mut arguments = EmptyArguments;
     let mut output = RawOsErrorSink;
 
-    let error = output_error(
-        RunInvocation::execute(
-            &DiagnosticProgram,
-            &mut arguments,
-            &mut output,
-        ),
-    );
-    assert!(
-        error
-            .to_string()
-            .contains("[OS error code: 5]")
-    );
+    let error = output_error(RunInvocation::execute(
+        &DiagnosticProgram,
+        &mut arguments,
+        &mut output,
+    ));
+    assert!(error.to_string().contains("[OS error code: 5]"));
 }
 
 #[derive(Debug)]
@@ -188,20 +149,9 @@ impl std::error::Error for NestedRawOsError {
 struct NestedRawOsErrorSink;
 
 impl OutputSink for NestedRawOsErrorSink {
-    fn write(
-        &mut self,
-        _stream: OutputStream,
-        _text: &str,
-    ) -> io::Result<()> {
+    fn write(&mut self, _stream: OutputStream, _text: &str) -> io::Result<()> {
         let source = io::Error::from_raw_os_error(RAW_OS_ERROR_CODE);
-        Err(
-            io::Error::new(
-                source.kind(),
-                NestedRawOsError {
-                    source,
-                },
-            ),
-        )
+        Err(io::Error::new(source.kind(), NestedRawOsError { source }))
     }
 }
 
@@ -210,16 +160,10 @@ fn display_finds_raw_codes_in_provider_source_chains() {
     let mut arguments = EmptyArguments;
     let mut output = NestedRawOsErrorSink;
 
-    let error = output_error(
-        RunInvocation::execute(
-            &DiagnosticProgram,
-            &mut arguments,
-            &mut output,
-        ),
-    );
-    assert!(
-        error
-            .to_string()
-            .contains("[OS error code: 5]")
-    );
+    let error = output_error(RunInvocation::execute(
+        &DiagnosticProgram,
+        &mut arguments,
+        &mut output,
+    ));
+    assert!(error.to_string().contains("[OS error code: 5]"));
 }

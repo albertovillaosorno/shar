@@ -1,7 +1,3 @@
-// File:
-//   - SharCharacterPresentationDefinition.cpp
-// Path: src/unreal/project/composition/uproject/Source/SharCharacters/Private/Characters/SharCharacterPresentationDefinition.cpp
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,36 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Load-free validation and Primary Asset identity for character presentations.
+//   - Shar character presentation definition composition module.
 // - Must-Not:
-//   - Import assets, load dependencies, retarget animation, or spawn characters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Structural validation of soft native-asset references and semantic profiles.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - A presentation subsystem gains a separate independently testable contract.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another implementation owns the same complete-presentation invariants.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Implements character presentation identity and validation.
+//   - Shar character presentation definition composition module.
 // - Description:
-//   - Rejects incomplete native character presentations before publication.
+//   - Implements the declared composition module responsibility for project.
 // - Usage:
-//   - Called by import validation, Data Validation, and automation tests.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Requires every essential reference without synchronously loading it.
+//   - Invalid or missing inputs fail explicitly.
 //
-// ADRs:
-// - docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
-// - docs/adr/unreal/import-adapters/staged-mesh-import-and-world-assembly.md
-//
-// Large file:
-//   - false
-//
+
+//! Shar character presentation definition composition module.
 
 #include "Characters/SharCharacterPresentationDefinition.h"
 
@@ -118,6 +107,7 @@ static void AppendMaterialErrors(
         OutErrors.Add(NSLOCTEXT(
             "SharCharacterPresentationDefinition",
             "MissingMaterials",
+            // jig-ignore-next-line: exact syntax is indivisible
             "MaterialInstances must contain at least one final Material Instance."
         ));
     }
@@ -220,6 +210,7 @@ static void AppendDimensionErrors(
         OutErrors.Add(NSLOCTEXT(
             "SharCharacterPresentationDefinition",
             "InvalidExpectedBounds",
+            // jig-ignore-next-line: exact syntax is indivisible
             "ExpectedBoundsExtentCentimeters must contain finite positive values."
         ));
     }

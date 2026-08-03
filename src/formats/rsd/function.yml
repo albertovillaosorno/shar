@@ -1,0 +1,23 @@
+schema: shar-function/v1
+identity:
+  id: rsd
+  path: src/formats/rsd
+  domain: formats
+architecture:
+  route: src/<domain>/<function>/<kind>/<part>
+  kinds:
+    - application
+    - composition
+    - domain
+    - port-outbound
+capabilities:
+  - math
+  - rust
+projects:
+  - Cargo.toml
+tests:
+  root: tests/formats/rsd
+ownership:
+  accountable: Alberto Villa Osorno
+validation:
+  mode: active

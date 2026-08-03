@@ -1,12 +1,34 @@
-// File: SharCheatEffectSubsystem.h
-// Path: src/unreal/project/composition/uproject/Source/SharCheats/Public/Cheats/SharCheatEffectSubsystem.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: deterministic cheat-effect request arbitration, correlated postcondition evidence, enabled-state lifetime, and immutable observation only; gameplay execution and persistence remain external.
-// Specification: docs/technical/unreal/progression-collectibles-and-cheats.md
-// LARGE-FILE owner=SharCheats; reason=cohesive effect control-plane API and lifetime authority;
-// split=extract enabled-effect projection when query families expand;
-// validation=validate.sh SharCheats plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar cheat effect subsystem composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar cheat effect subsystem composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar cheat effect subsystem composition module.
 
 #pragma once
 

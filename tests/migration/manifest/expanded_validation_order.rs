@@ -1,7 +1,3 @@
-// File:
-//   - expanded_validation_order.rs
-// Path: tests/migration/manifest/expanded_validation_order.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Expanded-manifest validation and storage-access ordering regressions.
+//   - Expanded validation order test module.
 // - Must-Not:
-//   - Access local game data or repository output directories.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - In-memory ports that expose tree and storage access ordering.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another validation stage requires an independent fixture.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test owns the same expanded validation-order boundary.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects invalid expanded requests from premature output access.
+//   - Expanded validation order test module.
 // - Description:
-//   - Verifies source roots fail before existing output is inspected.
+//   - Implements the declared test module responsibility for manifest.
 // - Usage:
-//   - Executed through cargo test for the game-manifest crate.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Synthetic paths remain portable and deterministic.
-//
-// ADRs:
-// - docs/adr/pipeline/game-manifest-ledger.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Expanded-manifest validation-order regression coverage.
-//!
-//! Invalid source roots must fail before destination storage is consulted.
+//! Expanded validation order test module.
 
 use std::cell::Cell;
 use std::io;
@@ -57,17 +43,11 @@ use schoenwald_filesystem as _;
 struct MissingTree;
 
 impl GameTree for MissingTree {
-    fn kind(
-        &self,
-        _path: &Path,
-    ) -> io::Result<PathKind> {
+    fn kind(&self, _path: &Path) -> io::Result<PathKind> {
         Ok(PathKind::Missing)
     }
 
-    fn files(
-        &self,
-        _root: &Path,
-    ) -> io::Result<Vec<PathBuf>> {
+    fn files(&self, _root: &Path) -> io::Result<Vec<PathBuf>> {
         let error = io::Error::other("unexpected tree scan");
         Err(error)
     }
@@ -79,21 +59,13 @@ struct ReadObservingStore {
 }
 
 impl TextArtifactStore for ReadObservingStore {
-    fn read_optional(
-        &self,
-        _path: &Path,
-    ) -> io::Result<Option<String>> {
-        self.read
-            .set(true);
+    fn read_optional(&self, _path: &Path) -> io::Result<Option<String>> {
+        self.read.set(true);
         let error = io::Error::other("unexpected output read");
         Err(error)
     }
 
-    fn write(
-        &self,
-        _path: &Path,
-        _text: &str,
-    ) -> io::Result<()> {
+    fn write(&self, _path: &Path, _text: &str) -> io::Result<()> {
         Ok(())
     }
 }
@@ -110,8 +82,6 @@ fn missing_game_root_fails_before_output_read() {
     );
 
     assert!(result.is_err());
-    let was_read = store
-        .read
-        .get();
+    let was_read = store.read.get();
     assert!(!was_read);
 }

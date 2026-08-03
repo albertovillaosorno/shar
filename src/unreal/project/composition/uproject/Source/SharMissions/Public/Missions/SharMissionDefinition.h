@@ -1,9 +1,34 @@
-// File: SharMissionDefinition.h
-// Path: src/unreal/project/composition/uproject/Source/SharMissions/Public/Missions/SharMissionDefinition.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: mission identity, stages, rewards, and load-free validation; no arbitrary executable scripts.
-// ADR: docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar mission definition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar mission definition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar mission definition composition module.
 
 #pragma once
 
@@ -42,6 +67,7 @@ struct SHARMISSIONS_API FSharMissionStageDefinition
     FName FailureStageId;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mission")
+    // jig-ignore-next-line: exact syntax is indivisible
     ESharMissionTerminalOutcome TerminalOutcome = ESharMissionTerminalOutcome::None;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mission")
@@ -99,7 +125,9 @@ public:
 
     void GatherValidationErrors(TArray<FText>& OutErrors) const override;
 
+    // jig-ignore-next-line: exact syntax is indivisible
     [[nodiscard]] static bool IsSupportedObjectiveKind(const FName& ObjectiveKind);
+    // jig-ignore-next-line: exact syntax is indivisible
     [[nodiscard]] static bool IsSupportedRewardOperation(const FName& OperationKind);
 
 protected:

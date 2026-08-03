@@ -1,12 +1,34 @@
-// File: SharInteractionDefinition.h
-// Path: src/unreal/project/composition/uproject/Source/SharInteraction/Public/Interaction/SharInteractionDefinition.h
-// Copyright (c) 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
-// Boundary: immutable interaction identity, prompt, eligibility, execution, persistence, and verification policy only.
-// ADR: docs/adr/unreal/runtime/contextual-interaction-query-and-transaction.md
-// LARGE-FILE owner=SharInteraction; reason=cohesive reflected interaction definition;
-// split=extract prompt or slot policies if independently versioned assets appear;
-// validation=validate.sh SharInteraction plus Unreal automation; review=2027-01.
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Shar interaction definition composition module.
+// - Must-Not:
+//   - Own unrelated policy, persistence, or external effects.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
+// - Summary:
+//   - Shar interaction definition composition module.
+// - Description:
+//   - Implements the declared composition module responsibility for project.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
+//! Shar interaction definition composition module.
 
 #pragma once
 

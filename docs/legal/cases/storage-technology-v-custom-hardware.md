@@ -103,14 +103,17 @@ without resolving jurisdiction.
 - Public.Resource.Org (n.d.), *Storage Technology Corporation v. Custom Hardware
   Engineering & Consulting, Inc.*, 421 F.3d 1307 (Fed. Cir. 2005), public-domain
   reporter duplicate. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://law.resource.org/pub/us/case/reporter/F3/421/421.F3d.1307.04-1462.html>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://law.resource.org/pub/us/case/reporter/F3/421/421.F3d.1307.04-1462.html> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - [17 U.S.C. § 117](../statutes/17-usc-117.md).
 - [MAI Systems Corp. v. Peak Computer, Inc.](mai-systems-v-peak-computer.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [17 U.S.C. § 1201 tool-distribution research](../statutes/17-usc-1201-trafficking.md).
+- [17 U.S.C. § 1201 tool-distribution
+  research](../statutes/17-usc-1201-trafficking.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Chamberlain Group, Inc. v. Skylink Technologies, Inc.](chamberlain-v-skylink.md).
+- [Chamberlain Group, Inc. v. Skylink Technologies,
+  Inc.](chamberlain-v-skylink.md).
 <!-- markdownlint-disable-next-line MD013 -->
 - [MDY Industries, LLC v. Blizzard Entertainment, Inc.](mdy-v-blizzard.md).

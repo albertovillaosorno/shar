@@ -1,7 +1,3 @@
-# File:
-#   - test_domain.py
-# Path: tests/unreal/editor-control/test_domain.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,59 +6,45 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Regression tests for pure MCP translator domain contracts.
+#   - Test domain test module.
 # - Must-Not:
-#   - Open sockets, start Unreal, or inspect proprietary source.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Endpoint, catalog, schema, and outcome validation tests.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - The module gains two independently testable contracts.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module owns the same contract without a distinct invariant.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Guards fail-closed translator domain behavior.
+#   - Test domain test module.
 # - Description:
-#   - Exercises domain invariants without adapter dependencies.
+#   - Implements the declared test module responsibility for editor control.
 # - Usage:
-#   - Executed by pytest through the canonical validator workflow.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - All fixtures are synthetic and public-safe.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: pure domain regression tests
-#   - reason: endpoint, catalog, and outcome tests require no adapter fixtures
-#   - split: split by domain aggregate when any fixture family grows
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess on responsibility or line-count growth
-#
+
+"""Test domain test module."""
+
 from __future__ import annotations
 
 import json
 import sys
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
+from typing import cast
 
-import pytest
-from mcp.domain.catalog import (
-    parse_toolset_catalog,
-    parse_toolset_definition,
-)
+from mcp.domain.catalog import parse_toolset_catalog
+from mcp.domain.catalog import parse_toolset_definition
 from mcp.domain.endpoint import McpEndpoint
-from mcp.domain.errors import EndpointValidationError, ProtocolError
-from mcp.domain.json_types import (
-    normalize_json,
-    reject_duplicate_json_object,
-)
+from mcp.domain.errors import EndpointValidationError
+from mcp.domain.errors import ProtocolError
+from mcp.domain.json_types import normalize_json
+from mcp.domain.json_types import reject_duplicate_json_object
+import pytest
 
 if TYPE_CHECKING:
     from mcp.domain.json_types import JsonObject

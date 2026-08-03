@@ -1,0 +1,89 @@
+{
+  "$schema": "shar-taxonomy/v1",
+  "version": 1,
+  "architecture": {
+    "kinds": {
+      "adapter-inbound": "external-callers-to-inbound-ports",
+      "adapter-outbound": "outbound-ports-to-external-systems",
+      "application": "use-case-and-domain-coordination",
+      "composition": "runtime-wiring-and-policy",
+      "contract": "serialized-or-cross-process-representations",
+      "domain": "business-rules-and-domain-models",
+      "math": "equations-proofs-models-and-formal-notation",
+      "port-inbound": "typed-entry-contracts",
+      "port-outbound": "core-required-dependency-contracts"
+    }
+  },
+  "function_capabilities": {
+    "manifest": "<function>.jig",
+    "order": [
+      "math",
+      "cpp",
+      "python",
+      "rust"
+    ],
+    "required": [
+      "math"
+    ],
+    "surface_sidecars": "required",
+    "surfaces": {
+      "math": [],
+      "cpp": [],
+      "python": [],
+      "rust": [
+        "Cargo.toml",
+        "composition/lib.rs"
+      ]
+    },
+    "kind_surfaces": {
+      "math": [],
+      "cpp": [],
+      "python": [],
+      "rust": []
+    }
+  },
+  "function_projects": {
+    "cpp": [],
+    "python": [],
+    "rust": [
+      "Cargo.toml"
+    ]
+  },
+  "graph": {
+    "edge_lifecycle": [],
+    "edge_types": {
+      "depends-on": "required-by",
+      "required-by": "depends-on"
+    },
+    "field_order": [
+      "schema",
+      "identity",
+      "lifecycle",
+      "graph"
+    ],
+    "hub_kinds": [],
+    "node_kinds": [
+      "artifact"
+    ],
+    "required_groups": [],
+    "required_hubs": [],
+    "role_groups": []
+  },
+  "lifecycle": {
+    "mandatory_causal_route": [
+      "implementation"
+    ]
+  },
+  "source": {
+    "route": "src/<domain>/<function>/<kind>/<part>",
+    "manifest": "function.yml",
+    "parts_at_function_root": "forbidden",
+    "boundary_documents": [
+      "README.md"
+    ],
+    "boundary_sidecars": "required"
+  },
+  "tools": {
+    "route": "tools/<function>/<kind>/<part>"
+  }
+}

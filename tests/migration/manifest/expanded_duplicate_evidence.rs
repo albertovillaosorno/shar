@@ -1,7 +1,3 @@
-// File:
-//   - expanded_duplicate_evidence.rs
-// Path: tests/migration/manifest/expanded_duplicate_evidence.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Duplicate evidence regression coverage for expanded manifests.
+//   - Expanded duplicate evidence test module.
 // - Must-Not:
-//   - Access local game data or repository output directories.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - In-memory ports with repeated synthetic file paths.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when another expanded evidence invariant needs isolation.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another test owns the same duplicate expanded-row behavior.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects one-row-per-physical-path expanded coverage.
+//   - Expanded duplicate evidence test module.
 // - Description:
-//   - Verifies repeated adapter evidence cannot duplicate ledger rows.
+//   - Implements the declared test module responsibility for manifest.
 // - Usage:
-//   - Executed through cargo test for the game-manifest crate.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Synthetic paths remain portable and deterministic.
-//
-// ADRs:
-// - docs/adr/pipeline/game-manifest-ledger.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Expanded-manifest duplicate evidence regression coverage.
-//!
-//! Synthetic ports prove that repeated physical path evidence remains one row.
+//! Expanded duplicate evidence test module.
 
 use std::cell::RefCell;
 use std::io;
@@ -58,51 +44,30 @@ struct DuplicateTree;
 struct TraversingTree;
 
 impl GameTree for DuplicateTree {
-    fn kind(
-        &self,
-        path: &Path,
-    ) -> io::Result<PathKind> {
-        Ok(
-            if path == Path::new("game") {
-                PathKind::Directory
-            } else {
-                PathKind::Missing
-            },
-        )
+    fn kind(&self, path: &Path) -> io::Result<PathKind> {
+        Ok(if path == Path::new("game") {
+            PathKind::Directory
+        } else {
+            PathKind::Missing
+        })
     }
 
-    fn files(
-        &self,
-        root: &Path,
-    ) -> io::Result<Vec<PathBuf>> {
+    fn files(&self, root: &Path) -> io::Result<Vec<PathBuf>> {
         let path = root.join("art/model.p3d");
-        Ok(
-            vec![
-                path.clone(),
-                path,
-            ],
-        )
+        Ok(vec![path.clone(), path])
     }
 }
 
 impl GameTree for TraversingTree {
-    fn kind(
-        &self,
-        path: &Path,
-    ) -> io::Result<PathKind> {
-        Ok(
-            if path == Path::new("game") {
-                PathKind::Directory
-            } else {
-                PathKind::Missing
-            },
-        )
+    fn kind(&self, path: &Path) -> io::Result<PathKind> {
+        Ok(if path == Path::new("game") {
+            PathKind::Directory
+        } else {
+            PathKind::Missing
+        })
     }
 
-    fn files(
-        &self,
-        root: &Path,
-    ) -> io::Result<Vec<PathBuf>> {
+    fn files(&self, root: &Path) -> io::Result<Vec<PathBuf>> {
         Ok(vec![root.join("area/../model.p3d")])
     }
 }
@@ -113,21 +78,12 @@ struct MemoryStore {
 }
 
 impl TextArtifactStore for MemoryStore {
-    fn read_optional(
-        &self,
-        _path: &Path,
-    ) -> io::Result<Option<String>> {
+    fn read_optional(&self, _path: &Path) -> io::Result<Option<String>> {
         Ok(None)
     }
 
-    fn write(
-        &self,
-        _path: &Path,
-        text: &str,
-    ) -> io::Result<()> {
-        let _previous = self
-            .written
-            .replace(Some(text.to_owned()));
+    fn write(&self, _path: &Path, text: &str) -> io::Result<()> {
+        let _previous = self.written.replace(Some(text.to_owned()));
         Ok(())
     }
 }
@@ -143,12 +99,7 @@ fn expanded_duplicate_file_evidence_emits_one_record() {
         Path::new("output/expanded.jsonl"),
     );
 
-    assert_eq!(
-        report
-            .ok()
-            .map(|value| value.record_count),
-        Some(1)
-    );
+    assert_eq!(report.ok().map(|value| value.record_count), Some(1));
 }
 
 #[test]

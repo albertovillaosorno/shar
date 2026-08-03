@@ -1,7 +1,3 @@
-// File:
-//   - matrix.rs
-// Path: src/formats/fbx/domain/transform/matrix.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,47 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure fbx domain rules for domain transform matrix.
+//   - Matrix domain module.
 // - Must-Not:
-//   - Read files, parse generated indexes, invoke CLI code, or call writer
-//   - adapters.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Value objects, invariant checks, and pure evidence-to-domain translation.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when matrix contains two independently testable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another fbx module owns the same domain boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Row-major row-vector matrix composition and TRS decomposition.
+//   - Matrix domain module.
 // - Description:
-//   - Defines deterministic matrix behavior for fbx domain transform.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Imported through crate domain facades or sibling domain modules.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No filesystem paths, no external process calls, and no implicit IO
-//   - defaults.
-//
-// ADRs:
-// - docs/adr/pipeline/fbx/hexagonal-scene-export.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Row-major row-vector matrix composition and TRS decomposition.
-//!
-//! Decoded rest poses and FBX both store row-major matrices under the
-//! row-vector convention, with translation in components 12 through 14, so
-//! composition multiplies the local matrix by the parent global matrix
-//! without any transposition.
-// Matrix arithmetic operates on fixed 16-component arrays whose indices are
-// compile-time constants, so no arithmetic can leave the array bounds.
+//! Matrix domain module.
+
 #![expect(
     clippy::arithmetic_side_effects,
     reason = "Fixed-size matrix arithmetic uses constant indices and finite \
@@ -117,11 +96,8 @@ pub enum MatrixError {
 /// Widen one decoded row-major matrix to double precision.
 #[must_use]
 pub fn widen(matrix: &[f32; 16]) -> [f64; 16] {
-    let mut wide = [0.0_f64; 16];
-    for (target, value) in wide
-        .iter_mut()
-        .zip(matrix.iter())
-    {
+    let mut wide = [0f64; 16];
+    for (target, value) in wide.iter_mut().zip(matrix.iter()) {
         *target = f64::from(*value);
     }
     wide
@@ -129,14 +105,11 @@ pub fn widen(matrix: &[f32; 16]) -> [f64; 16] {
 
 /// Multiply two row-major row-vector matrices as `first` then `second`.
 #[must_use]
-pub fn multiply(
-    first: &[f64; 16],
-    second: &[f64; 16],
-) -> [f64; 16] {
-    let mut product = [0.0_f64; 16];
+pub fn multiply(first: &[f64; 16], second: &[f64; 16]) -> [f64; 16] {
+    let mut product = [0f64; 16];
     for row in 0..4 {
         for column in 0..4 {
-            let mut sum = 0.0;
+            let mut sum = 0.;
             for inner in 0..4 {
                 sum += first[row * 4 + inner] * second[inner * 4 + column];
             }
@@ -158,24 +131,18 @@ pub fn compose(parts: &TrsParts) -> [f64; 16] {
     let (sin_y, cos_y) = radians[1].sin_cos();
     let (sin_z, cos_z) = radians[2].sin_cos();
     let rotation_x = [
-        1.0, 0.0, 0.0, 0.0, 0.0, cos_x, sin_x, 0.0, 0.0, -sin_x, cos_x, 0.0,
-        0.0, 0.0, 0.0, 1.0,
+        1., 0., 0., 0., 0., cos_x, sin_x, 0., 0., -sin_x, cos_x, 0., 0., 0.,
+        0., 1.,
     ];
     let rotation_y = [
-        cos_y, 0.0, -sin_y, 0.0, 0.0, 1.0, 0.0, 0.0, sin_y, 0.0, cos_y, 0.0,
-        0.0, 0.0, 0.0, 1.0,
+        cos_y, 0., -sin_y, 0., 0., 1., 0., 0., sin_y, 0., cos_y, 0., 0., 0.,
+        0., 1.,
     ];
     let rotation_z = [
-        cos_z, sin_z, 0.0, 0.0, -sin_z, cos_z, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
-        0.0, 0.0, 0.0, 1.0,
+        cos_z, sin_z, 0., 0., -sin_z, cos_z, 0., 0., 0., 0., 1., 0., 0., 0.,
+        0., 1.,
     ];
-    let mut matrix = multiply(
-        &multiply(
-            &rotation_x,
-            &rotation_y,
-        ),
-        &rotation_z,
-    );
+    let mut matrix = multiply(&multiply(&rotation_x, &rotation_y), &rotation_z);
     for row in 0..3 {
         for column in 0..3 {
             matrix[row * 4 + column] *= parts.scale[row];
@@ -194,54 +161,38 @@ pub fn compose(parts: &TrsParts) -> [f64; 16] {
 /// Returns an error when the matrix is not finite, not affine, mirrored,
 /// degenerate, or sheared beyond tolerance.
 pub fn decompose(matrix: &[f64; 16]) -> Result<TrsParts, MatrixError> {
-    if let Some(component) = matrix
-        .iter()
-        .position(|value| !value.is_finite())
+    if let Some(component) = matrix.iter().position(|value| !value.is_finite())
     {
-        return Err(
-            MatrixError::NonFiniteComponent {
-                component,
-            },
-        );
+        return Err(MatrixError::NonFiniteComponent { component });
     }
     if matrix[3].abs() > ORTHONORMAL_TOLERANCE
         || matrix[7].abs() > ORTHONORMAL_TOLERANCE
         || matrix[11].abs() > ORTHONORMAL_TOLERANCE
-        || (matrix[15] - 1.0).abs() > ORTHONORMAL_TOLERANCE
+        || (matrix[15] - 1.).abs() > ORTHONORMAL_TOLERANCE
     {
         return Err(MatrixError::NotAffine);
     }
-    let mut scale = [0.0_f64; 3];
-    let mut basis = [[0.0_f64; 3]; 3];
+    let mut scale = [0f64; 3];
+    let mut basis = [[0f64; 3]; 3];
     for row in 0..3 {
-        let vector = [
-            matrix[row * 4],
-            matrix[row * 4 + 1],
-            matrix[row * 4 + 2],
-        ];
+        let vector =
+            [matrix[row * 4], matrix[row * 4 + 1], matrix[row * 4 + 2]];
         let length = (vector[0] * vector[0]
             + vector[1] * vector[1]
             + vector[2] * vector[2])
             .sqrt();
         if length <= ORTHONORMAL_TOLERANCE {
-            return Err(
-                MatrixError::DegenerateScale {
-                    row,
-                },
-            );
+            return Err(MatrixError::DegenerateScale { row });
         }
         scale[row] = length;
-        basis[row] = [
-            vector[0] / length,
-            vector[1] / length,
-            vector[2] / length,
-        ];
+        basis[row] =
+            [vector[0] / length, vector[1] / length, vector[2] / length];
     }
     let determinant = basis[0][0]
         * (basis[1][1] * basis[2][2] - basis[1][2] * basis[2][1])
         - basis[0][1] * (basis[1][0] * basis[2][2] - basis[1][2] * basis[2][0])
         + basis[0][2] * (basis[1][0] * basis[2][1] - basis[1][1] * basis[2][0]);
-    if determinant <= 0.0 {
+    if determinant <= 0. {
         return Err(MatrixError::NegativeDeterminant);
     }
     for row in 0..3 {
@@ -250,53 +201,37 @@ pub fn decompose(matrix: &[f64; 16]) -> Result<TrsParts, MatrixError> {
                 + basis[row][1] * basis[other][1]
                 + basis[row][2] * basis[other][2];
             let expected = if row == other {
-                1.0
+                1.
             } else {
-                0.0
+                0.
             };
             if (dot - expected).abs() > ORTHONORMAL_TOLERANCE {
                 return Err(MatrixError::NonOrthonormalRotation);
             }
         }
     }
-    Ok(
-        TrsParts {
-            translation: [
-                matrix[12], matrix[13], matrix[14],
-            ],
-            rotation_degrees: euler_degrees(&basis),
-            scale,
-        },
-    )
+    Ok(TrsParts {
+        translation: [matrix[12], matrix[13], matrix[14]],
+        rotation_degrees: euler_degrees(&basis),
+        scale,
+    })
 }
 
 /// Extract X-then-Y-then-Z euler angles in degrees from one rotation basis.
 fn euler_degrees(basis: &[[f64; 3]; 3]) -> [f64; 3] {
     let sin_y = -basis[0][2];
-    if sin_y.abs() < 1.0 - 1e-6 {
+    if sin_y.abs() < 1. - 1e-6 {
         [
-            basis[1][2]
-                .atan2(basis[2][2])
-                .to_degrees(),
-            sin_y
-                .asin()
-                .to_degrees(),
-            basis[0][1]
-                .atan2(basis[0][0])
-                .to_degrees(),
+            basis[1][2].atan2(basis[2][2]).to_degrees(),
+            sin_y.asin().to_degrees(),
+            basis[0][1].atan2(basis[0][0]).to_degrees(),
         ]
     } else {
-        let clamped = sin_y.clamp(
-            -1.0, 1.0,
-        );
+        let clamped = sin_y.clamp(-1., 1.);
         [
-            (basis[1][0] * clamped)
-                .atan2(basis[1][1])
-                .to_degrees(),
-            clamped
-                .asin()
-                .to_degrees(),
-            0.0,
+            (basis[1][0] * clamped).atan2(basis[1][1]).to_degrees(),
+            clamped.asin().to_degrees(),
+            0.,
         ]
     }
 }

@@ -95,14 +95,17 @@ a tool designed for that result.
 
 - Public.Resource.Org (n.d.), *Davidson & Associates, Inc. v. Jung*, 422 F.3d
   630 (8th Cir. 2005), public-domain reporter duplicate. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://law.resource.org/pub/us/case/reporter/F3/422/422.F3d.630.04-3654.html>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://law.resource.org/pub/us/case/reporter/F3/422/422.F3d.630.04-3654.html> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - [17 U.S.C. § 1201(f)](../statutes/17-usc-1201f.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [17 U.S.C. § 1201 tool-distribution research](../statutes/17-usc-1201-trafficking.md).
+- [17 U.S.C. § 1201 tool-distribution
+  research](../statutes/17-usc-1201-trafficking.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Software license reverse-engineering clauses](../contracts/software-license-reverse-engineering-clauses.md).
+- [Software license reverse-engineering
+  clauses](../contracts/software-license-reverse-engineering-clauses.md).
 - [Bowers v. Baystate Technologies, Inc.](bowers-v-baystate-technologies.md).
 - [Vault Corp. v. Quaid Software Ltd.](vault-v-quaid-software.md).
 <!-- markdownlint-disable-next-line MD013 -->

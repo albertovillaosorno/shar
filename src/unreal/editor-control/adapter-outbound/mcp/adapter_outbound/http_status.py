@@ -1,7 +1,3 @@
-# File:
-#   - http_status.py
-# Path: src/unreal/editor-control/adapter-outbound/mcp/adapter_outbound/http_status.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,48 +6,41 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Translation of unsuccessful MCP HTTP responses into protocol failures.
+#   - Http status outbound adapter.
 # - Must-Not:
-#   - Open connections, read response streams, or construct MCP requests.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Extracting a bounded JSON-RPC error message from an HTTP response body.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Status interpretation gains a second independent error protocol.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module owns the same HTTP-to-domain failure invariant.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Converts unsuccessful HTTP outcomes into typed protocol failures.
+#   - Http status outbound adapter.
 # - Description:
-#   - Separates response-status interpretation from wire exchange mechanics.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Called by the HTTP exchange client after decoding the response body.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Uses a stable fallback when no valid JSON-RPC error message exists.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
-"""HTTP status interpretation for native Unreal MCP exchanges."""
+
+"""Http status outbound adapter."""
 
 from __future__ import annotations
 
 from typing import Never
 
+from mcp.adapter_outbound.response_validation import matches_integer_request_id
 from mcp.adapter_outbound.response_validation import (
-    matches_integer_request_id,
     validated_json_rpc_error_message,
 )
 from mcp.domain.errors import fail_protocol
-from mcp.domain.json_types import JsonObject, require_json_object
+from mcp.domain.json_types import JsonObject
+from mcp.domain.json_types import require_json_object
 
 _JSON_RPC_VERSION = "2.0"
 _HTTP_SUCCESS_MINIMUM = 200
@@ -87,6 +76,7 @@ def raise_http_status_error(
         status: Unsuccessful HTTP status code.
         payload: Optional decoded JSON-RPC response body.
         request_id: Originating integer request identity, or `None`.
+
     """
     message = _validated_error_message(payload, request_id)
     if message is None:

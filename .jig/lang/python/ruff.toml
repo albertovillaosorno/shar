@@ -1,0 +1,118 @@
+required-version = "==0.15.21"
+target-version = "py314"
+line-length = 80
+indent-width = 4
+cache-dir = ".cache/ruff"
+respect-gitignore = false
+force-exclude = true
+unsafe-fixes = false
+show-fixes = true
+preview = true
+include = ["*.py", "*.pyi", "*.pyw", "**/pyproject.toml"]
+src = ["src", "tests"]
+exclude = [
+  ".cache",
+  ".dependencies",
+  ".git",
+  ".logs",
+  ".temp",
+  "target",
+  "**/__pycache__",
+]
+
+[lint]
+select = ["ALL"]
+preview = true
+explicit-preview-rules = false
+future-annotations = false
+typing-extensions = false
+fixable = ["ALL"]
+unfixable = []
+external = []
+allowed-confusables = []
+dummy-variable-rgx = "^_$"
+task-tags = []
+ignore = [
+  "missing-trailing-comma",
+  "incorrect-blank-line-before-class",
+  "multi-line-summary-first-line",
+  "multi-line-summary-second-line",
+  "single-line-implicit-string-concatenation",
+  "C901",
+  "DOC201",
+  "INP001",
+  "N999",
+  "PLR2004",
+  "TC002",
+  "TC003",
+]
+
+[lint.per-file-ignores]
+"tests/**/*.py" = ["ARG001", "ARG002", "D101", "D103", "D107", "PT011", "S101"]
+# jig-ignore-next-line: exact value is indivisible
+"src/unreal/project/composition/uproject/**/*.py" = ["implicit-namespace-package"]
+
+[lint.flake8-annotations]
+mypy-init-return = false
+suppress-dummy-args = false
+suppress-none-returning = false
+allow-star-arg-any = false
+
+[lint.flake8-bandit]
+check-typed-exception = true
+
+[lint.flake8-builtins]
+strict-checking = true
+
+[lint.flake8-pytest-style]
+fixture-parentheses = false
+mark-parentheses = false
+parametrize-names-type = "tuple"
+parametrize-values-type = "list"
+parametrize-values-row-type = "tuple"
+raises-require-match-for = ["*Error", "*Exception"]
+warns-require-match-for = ["*Warning"]
+
+[lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[lint.flake8-type-checking]
+strict = true
+
+[lint.isort]
+force-single-line = true
+force-sort-within-sections = true
+case-sensitive = true
+combine-as-imports = false
+split-on-trailing-comma = false
+order-by-type = false
+
+[lint.mccabe]
+max-complexity = 8
+
+[lint.pycodestyle]
+max-doc-length = 80
+ignore-overlong-task-comments = false
+
+[lint.pylint]
+allow-magic-value-types = []
+max-args = 6
+max-positional-args = 5
+max-bool-expr = 5
+max-branches = 10
+max-returns = 6
+max-locals = 15
+max-statements = 50
+max-statements-in-try = 10
+max-public-methods = 15
+max-nested-blocks = 4
+
+[format]
+preview = true
+indent-style = "space"
+quote-style = "double"
+nested-string-quote-style = "preferred"
+line-ending = "lf"
+skip-magic-trailing-comma = false
+docstring-code-format = true
+docstring-code-line-length = "dynamic"

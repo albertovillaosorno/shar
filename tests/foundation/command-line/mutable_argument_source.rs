@@ -1,7 +1,3 @@
-// File:
-//   - mutable_argument_source.rs
-// Path: tests/foundation/command-line/mutable_argument_source.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for ordinary mutable argument sources.
+//   - Mutable argument source test module.
 // - Must-Not:
-//   - Require interior mutability or process environment access.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Move a one-shot argument vector through exclusive port access.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another input-port receiver contract needs independent coverage.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Argument sources no longer own consumable input state.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Mutable argument-source regression.
+//   - Mutable argument source test module.
 // - Description:
-//   - Proves one-shot sources can consume state through the input port.
+//   - Implements the declared test module responsibility for command line.
 // - Usage:
-//   - Executed by the schoenwald-cli integration test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - The source supplies one argument and is invoked once.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for directly mutable argument sources.
-//!
-//! Sequential acquisition must not force runtime interior-mutability wrappers.
+//! Mutable argument source test module.
 
 use std::io;
 
@@ -65,10 +51,7 @@ impl ArgumentSource for OneShotArguments {
 struct EchoProgram;
 
 impl CliProgram for EchoProgram {
-    fn execute(
-        &self,
-        arguments: &[String],
-    ) -> CommandOutcome {
+    fn execute(&self, arguments: &[String]) -> CommandOutcome {
         CommandOutcome::success().stdout(arguments.join("|"))
     }
 }
@@ -80,13 +63,8 @@ struct VecOutput {
 }
 
 impl OutputSink for VecOutput {
-    fn write(
-        &mut self,
-        _stream: OutputStream,
-        text: &str,
-    ) -> io::Result<()> {
-        self.text
-            .push_str(text);
+    fn write(&mut self, _stream: OutputStream, text: &str) -> io::Result<()> {
+        self.text.push_str(text);
         Ok(())
     }
 }
@@ -98,25 +76,10 @@ fn invocation_accepts_a_consuming_argument_source() {
     };
     let mut output = VecOutput::default();
 
-    let result = RunInvocation::execute(
-        &EchoProgram,
-        &mut arguments,
-        &mut output,
-    );
+    let result =
+        RunInvocation::execute(&EchoProgram, &mut arguments, &mut output);
 
-    assert!(
-        matches!(
-            result,
-            Ok(ExitStatus::Success)
-        )
-    );
-    assert!(
-        arguments
-            .values
-            .is_empty()
-    );
-    assert_eq!(
-        output.text,
-        "alpha"
-    );
+    assert!(matches!(result, Ok(ExitStatus::Success)));
+    assert!(arguments.values.is_empty());
+    assert_eq!(output.text, "alpha");
 }

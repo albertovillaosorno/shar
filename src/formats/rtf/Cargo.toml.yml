@@ -1,0 +1,5 @@
+schema: shar-surface/v1
+path: src/formats/rtf/Cargo.toml
+function: rtf
+kind: project
+authority: Cargo.toml

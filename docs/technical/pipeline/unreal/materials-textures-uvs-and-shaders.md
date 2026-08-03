@@ -16,15 +16,27 @@ through validated Material Instances.
 
 ## UV channel contract
 
-<!-- markdownlint-disable MD013 -->
-| Channel | Skeletal mesh | Static mesh | Contract |
-| :--- | :--- | :--- | :--- |
-| `UV0` | Required | Required | Primary material coordinates; non-overlapping only when the recipe requires it. |
-| `UV1` | Optional | Required for baked-light fallback; otherwise reserved | Static lightmap coordinates when enabled. |
-| `UV2` | Optional | Optional | Registered detail, trim, decal, or terrain blend coordinates. |
-| `UV3` | Optional | Optional | Registered specialized profile only. |
-| `UV4+` | Rejected by default | Rejected by default | Requires a named validation profile and runtime consumer. |
-<!-- markdownlint-enable MD013 -->
+- **Channel:** `UV0`
+  - **Skeletal mesh:** Required
+  - **Static mesh:** Required
+  - **Contract:** Primary material coordinates; non-overlapping only when the
+    recipe requires it.
+- **Channel:** `UV1`
+  - **Skeletal mesh:** Optional
+  - **Static mesh:** Required for baked-light fallback; otherwise reserved
+  - **Contract:** Static lightmap coordinates when enabled.
+- **Channel:** `UV2`
+  - **Skeletal mesh:** Optional
+  - **Static mesh:** Optional
+  - **Contract:** Registered detail, trim, decal, or terrain blend coordinates.
+- **Channel:** `UV3`
+  - **Skeletal mesh:** Optional
+  - **Static mesh:** Optional
+  - **Contract:** Registered specialized profile only.
+- **Channel:** `UV4+`
+  - **Skeletal mesh:** Rejected by default
+  - **Static mesh:** Rejected by default
+  - **Contract:** Requires a named validation profile and runtime consumer.
 
 Each section declares its material semantic. Material slot order is validated
 but runtime code resolves semantics from the presentation definition, not a
@@ -64,16 +76,30 @@ Dimensions are powers of two for streamed world and 3D textures unless a
 declared UI or LUT profile requires otherwise. Maximum source dimensions are
 strict upper bounds, not mandatory allocations.
 
-<!-- markdownlint-disable MD013 -->
-| Profile | Base color maximum | Normal or ORM maximum | Typical use |
-| :--- | :--- | :--- | :--- |
-| `hero_4k` | 4096 | 4096 | Exceptional close-up character, vehicle, or landmark |
-| `hero_2k` | 2048 | 2048 | Playable character, principal vehicle, major prop |
-| `standard_2k` | 2048 | 2048 | Reusable world module or visible prop |
-| `standard_1k` | 1024 | 1024 | Ambient character, minor vehicle, medium prop |
-| `small_512` | 512 | 512 | Small prop, eye layer, decal, icon source |
-| `micro_256` | 256 | 256 | Tiny mask, lookup, distant or low-detail asset |
-<!-- markdownlint-enable MD013 -->
+- **Profile:** `hero_4k`
+  - **Base color maximum:** 4096
+  - **Normal or ORM maximum:** 4096
+  - **Typical use:** Exceptional close-up character, vehicle, or landmark
+- **Profile:** `hero_2k`
+  - **Base color maximum:** 2048
+  - **Normal or ORM maximum:** 2048
+  - **Typical use:** Playable character, principal vehicle, major prop
+- **Profile:** `standard_2k`
+  - **Base color maximum:** 2048
+  - **Normal or ORM maximum:** 2048
+  - **Typical use:** Reusable world module or visible prop
+- **Profile:** `standard_1k`
+  - **Base color maximum:** 1024
+  - **Normal or ORM maximum:** 1024
+  - **Typical use:** Ambient character, minor vehicle, medium prop
+- **Profile:** `small_512`
+  - **Base color maximum:** 512
+  - **Normal or ORM maximum:** 512
+  - **Typical use:** Small prop, eye layer, decal, icon source
+- **Profile:** `micro_256`
+  - **Base color maximum:** 256
+  - **Normal or ORM maximum:** 256
+  - **Typical use:** Tiny mask, lookup, distant or low-detail asset
 
 The default character body profile is `hero_2k`; eyes and small facial layers
 are `small_512` or `standard_1k`. Vehicle exteriors default to `hero_2k`. Unique

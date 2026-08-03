@@ -1,7 +1,3 @@
-# File:
-#   - test_arguments.py
-# Path: tests/unreal/project/project_generation/test_arguments.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,38 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Argument contracts for both Unreal project generators.
+#   - Test arguments test module.
 # - Must-Not:
-#   - Invoke live Unreal processes or depend on network services.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Deterministic local fixtures and observable assertions.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Another behavior belongs to a different tooling boundary.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another test module proves the same behavior contract.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Unit tests for Unreal project-generation arguments.
+#   - Test arguments test module.
 # - Description:
-#   - Locks workspace and solution commands to bounded tokens.
+#   - Implements the declared test module responsibility for project.
 # - Usage:
-#   - Run by pytest without launching UnrealBuildTool.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Tests use a synthetic portable project path.
-#
-# ADRs:
-# - docs/adr/unreal/runtime/runtime-parity-test-boundary.md
-#
-# Large file:
-#   - false
+#   - Invalid or missing inputs fail explicitly.
 #
 
-
-"""Command argument contracts for Unreal project-file generation."""
+"""Test arguments test module."""
 
 from __future__ import annotations
 

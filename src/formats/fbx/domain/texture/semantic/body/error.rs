@@ -1,7 +1,3 @@
-// File:
-//   - error.rs
-// Path: src/formats/fbx/domain/texture/semantic/body/error.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Fail-closed semantic body recipe, evidence, chart, and raster errors.
+//   - Error domain module.
 // - Must-Not:
-//   - Perform classification, mutate assets, or recover by guessing.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Typed failure context suitable for adapters and behavioral tests.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Raster or classification failures need independent public taxonomies.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another body module owns the same failure contract.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Semantic body planning failure taxonomy.
+//   - Error domain module.
 // - Description:
-//   - Keeps incomplete or ambiguous texture evidence observable.
+//   - Implements the declared domain module responsibility for fbx.
 // - Usage:
-//   - Returned by recipe validation and all body-planning stages.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No error is silently converted into a partial atlas.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-//
-// Large file:
-//   - true
-//   - Reason: one error taxonomy preserves deterministic context across every
-//   - stage of the semantic body transaction.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Fail-closed semantic body planning errors.
+//! Error domain module.
+
 use super::super::color::Rgba8;
 use super::super::image::RgbaImageError;
 use super::super::region::BodyRegion;

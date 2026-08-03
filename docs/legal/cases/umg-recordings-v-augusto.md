@@ -111,11 +111,13 @@ of the medium as ownership of copyright.
 
 - United States Court of Appeals for the Ninth Circuit (2011), *UMG Recordings,
   Inc. v. Augusto*, filed opinion, 628 F.3d 1175. Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://docs.justia.com/cases/federal/appellate-courts/ca9/08-55998/9122586101>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://docs.justia.com/cases/federal/appellate-courts/ca9/08-55998/9122586101> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - [17 U.S.C. § 109](../statutes/17-usc-109.md).
 - [Vernor v. Autodesk, Inc.](vernor-v-autodesk.md).
 - [Online assent](../contracts/online-assent.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [Lawful Copy And Local Game Modification](../doctrines/lawful-copy-and-local-game-modification.md).
+- [Lawful Copy And Local Game
+  Modification](../doctrines/lawful-copy-and-local-game-modification.md).

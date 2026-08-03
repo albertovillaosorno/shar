@@ -5,20 +5,27 @@
 
 ## Governing decisions and specifications
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Hexagonal Unreal runtime](../../adr/unreal/architecture/hexagonal-runtime-and-no-technical-debt.md)
+- [Application lifecycle and mode
+  runtime](application-lifecycle-and-mode-runtime.md)
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
+- [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md) <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD013 -->
-- [Application lifecycle and mode runtime](application-lifecycle-and-mode-runtime.md)
+- [Native asset load request and streaming
+  runtime](native-asset-load-request-and-streaming-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Graphics quality presets and platform support](../../adr/unreal/runtime/graphics-quality-presets-and-platform-support.md)
+- [Native cooked-asset construction and registration
+  runtime](native-cooked-asset-construction-and-registration-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native asset load request and streaming runtime](native-asset-load-request-and-streaming-runtime.md)
+- [Spatial visibility, bounds, and culling
+  runtime](spatial-visibility-bounds-and-culling-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native cooked-asset construction and registration runtime](native-cooked-asset-construction-and-registration-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [Spatial visibility, bounds, and culling runtime](spatial-visibility-bounds-and-culling-runtime.md)
-<!-- markdownlint-disable-next-line MD013 -->
-- [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
+- [World render-entity and physics
+  runtime](world-render-entity-and-physics-runtime.md)
 
 ## Purpose
 
@@ -65,17 +72,33 @@ renderer or a second game loop.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Engine frame loop | Advances worlds, tick groups, cameras, streaming, rendering, and platform presentation. |
-| Application-mode coordinator | Owns frontend, loading, gameplay, pause, media, recovery, and shutdown mode transitions. |
-| View coordinator | Projects accepted local-player and presentation-camera state into native views. |
-| World-composition service | Owns world, region, Data Layer, level-instance, and feature readiness. |
-| Renderer | Owns view families, visibility, draw submission, passes, shadows, translucency, post processing, and final output. |
-| Presentation service | Owns cosmetic overlays, fades, letterbox, media, world presentation, particles, and lens requests. |
-| Display-settings service | Owns accepted gamma, HDR, resolution, window mode, frame pacing, and quality policy. |
-| Telemetry service | Owns read-only CPU, GPU, frame, streaming, memory, and presentation measurements. |
-| Domain and application services | Own gameplay, missions, progression, persistence, and simulation results. |
+- **Authority:** Engine frame loop
+  - **Responsibility:** Advances worlds, tick groups, cameras, streaming,
+    rendering, and platform presentation.
+- **Authority:** Application-mode coordinator
+  - **Responsibility:** Owns frontend, loading, gameplay, pause, media,
+    recovery, and shutdown mode transitions.
+- **Authority:** View coordinator
+  - **Responsibility:** Projects accepted local-player and presentation-camera
+    state into native views.
+- **Authority:** World-composition service
+  - **Responsibility:** Owns world, region, Data Layer, level-instance, and
+    feature readiness.
+- **Authority:** Renderer
+  - **Responsibility:** Owns view families, visibility, draw submission, passes,
+    shadows, translucency, post processing, and final output.
+- **Authority:** Presentation service
+  - **Responsibility:** Owns cosmetic overlays, fades, letterbox, media, world
+    presentation, particles, and lens requests.
+- **Authority:** Display-settings service
+  - **Responsibility:** Owns accepted gamma, HDR, resolution, window mode, frame
+    pacing, and quality policy.
+- **Authority:** Telemetry service
+  - **Responsibility:** Owns read-only CPU, GPU, frame, streaming, memory, and
+    presentation measurements.
+- **Authority:** Domain and application services
+  - **Responsibility:** Own gameplay, missions, progression, persistence, and
+    simulation results.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -114,19 +137,32 @@ handles are not durable identity.
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `ScopeId` | Canonical frontend, loading, gameplay, pause, media, capture, diagnostic, or recovery scope identity. |
-| `ApplicationModes` | Accepted modes in which the scope may be active. |
-| `WorldPolicy` | Required or prohibited world and composition state. |
-| `ViewPolicy` | Eligible local-player, cinematic, capture, mirror, or diagnostic views. |
-| `PresentationPolicy` | UI, fade, media, sky, lens, particle, and post-process participation. |
-| `SimulationPolicy` | Whether gameplay simulation is active, paused, partially paused, or absent. |
-| `InputPolicy` | Input and focus ownership required by the scope. |
-| `AudioPolicy` | Mix, pause, ducking, and media behavior. |
-| `ReadinessPolicy` | Required assets, cameras, worlds, widgets, and renderer state. |
-| `QualityPolicy` | Platform and scalability applicability. |
-| `TeardownPolicy` | Cancellation, restoration, and release behavior. |
+- **Field:** `ScopeId`
+  - **Contract:** Canonical frontend, loading, gameplay, pause, media, capture,
+    diagnostic, or recovery scope identity.
+- **Field:** `ApplicationModes`
+  - **Contract:** Accepted modes in which the scope may be active.
+- **Field:** `WorldPolicy`
+  - **Contract:** Required or prohibited world and composition state.
+- **Field:** `ViewPolicy`
+  - **Contract:** Eligible local-player, cinematic, capture, mirror, or
+    diagnostic views.
+- **Field:** `PresentationPolicy`
+  - **Contract:** UI, fade, media, sky, lens, particle, and post-process
+    participation.
+- **Field:** `SimulationPolicy`
+  - **Contract:** Whether gameplay simulation is active, paused, partially
+    paused, or absent.
+- **Field:** `InputPolicy`
+  - **Contract:** Input and focus ownership required by the scope.
+- **Field:** `AudioPolicy`
+  - **Contract:** Mix, pause, ducking, and media behavior.
+- **Field:** `ReadinessPolicy`
+  - **Contract:** Required assets, cameras, worlds, widgets, and renderer state.
+- **Field:** `QualityPolicy`
+  - **Contract:** Platform and scalability applicability.
+- **Field:** `TeardownPolicy`
+  - **Contract:** Cancellation, restoration, and release behavior.
 
 <!-- markdownlint-enable MD013 -->
 

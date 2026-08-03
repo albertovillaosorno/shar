@@ -1,7 +1,3 @@
-# File:
-#   - skill_documents.py
-# Path: src/unreal/editor-control/domain/mcp/domain/skill_documents.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,42 +6,36 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Immutable generated-skill document and export report values.
+#   - Skill documents domain module.
 # - Must-Not:
-#   - Render Markdown, open files, connect to Unreal, or parse CLI input.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Carrying validated relative paths and complete text between layers.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Export reporting and document identity evolve independently.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another domain module owns the same immutable skill values.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Defines generated Unreal skill document values.
+#   - Skill documents domain module.
 # - Description:
-#   - Keeps application and adapters independent from filesystem details.
+#   - Implements the declared domain module responsibility for editor control.
 # - Usage:
-#   - Returned by renderers and persisted through skill document ports.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Documents are UTF-8 Markdown with repository-relative paths.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
-"""Immutable values for generated Unreal MCP skill documents."""
+
+"""Skill documents domain module."""
 
 from __future__ import annotations
 
 import hashlib
 import json
-from typing import TYPE_CHECKING, NamedTuple
+from typing import NamedTuple
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from mcp.domain.catalog import ToolsetDefinition

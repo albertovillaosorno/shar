@@ -1,7 +1,3 @@
-// File:
-//   - semantic_character_texture_cli.rs
-// Path: src/formats/fbx/composition/semantic_character_texture_cli.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,44 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Command-line composition and transactional filesystem publication for one
-//   - explicit semantic character texture request.
+//   - Semantic character texture cli composition module.
 // - Must-Not:
-//   - Discover assets, overwrite output, classify semantics, bulk-export
-//   - characters, or invoke external content-authoring applications.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - JSON request parsing, in-memory artifact building, hidden staging writes,
-//   - one directory rename, cleanup after failure, and summary output.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Publication policy becomes reusable by another artifact family.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another composition root owns the same command and transaction.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Transactional semantic character texture CLI.
+//   - Semantic character texture cli composition module.
 // - Description:
-//   - Publishes one external-texture FBX, one body texture, three eye images,
-//   - optional explicit material textures, and one manifest atomically.
+//   - Implements the declared composition module responsibility for fbx.
 // - Usage:
-//   - `semantic-character-texture <request.json> <new-output-directory>`.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Existing output or staging directories are rejected.
-//
-// ADRs:
-// - docs/adr/fbx/export/character-semantic-texture-rig-and-outfit-contract.md
-// - docs/adr/fbx/export/fbx-output-contract-boundary.md
-//
-// Large file:
-//   - true
-//   - Reason: CLI parsing, staging identity, write set, rename, cleanup, and
-//   - summary output form one bounded composition-root transaction.
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Transactional semantic character texture artifact CLI.
+//! Semantic character texture cli composition module.
+
 use std::env;
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -76,24 +58,18 @@ fn main() -> ExitCode {
         Ok(summary) => {
             println!("{summary}");
             ExitCode::SUCCESS
-        }
+        },
         Err(error) => {
             eprintln!("semantic-character-texture: {error}");
             ExitCode::FAILURE
-        }
+        },
     }
 }
 
 /// Parse arguments, build all bytes, and publish one new output directory.
 fn run() -> Result<String, String> {
-    let arguments = env::args_os()
-        .skip(1)
-        .collect::<Vec<_>>();
-    let [
-        request_argument,
-        output_argument,
-    ] = arguments.as_slice()
-    else {
+    let arguments = env::args_os().skip(1).collect::<Vec<_>>();
+    let [request_argument, output_argument] = arguments.as_slice() else {
         return Err(format!("usage: {USAGE}"));
     };
     let request_path = PathBuf::from(request_argument);
@@ -105,25 +81,21 @@ fn run() -> Result<String, String> {
             .map_err(|error| format!("request JSON failed: {error}"))?;
     let prepared = prepare_semantic_character(&request)
         .map_err(|error| format!("preparation failed: {error:?}"))?;
-    let _summary = publish_prepared_semantic_character(
-        &output_path,
-        &prepared,
-    )?;
+    let _summary =
+        publish_prepared_semantic_character(&output_path, &prepared)?;
     let artifacts = &prepared.artifacts;
-    serde_json::to_string(
-        &serde_json::json!({
-            "character_id": artifacts.summary.character_id,
-            "body_vertex_count": artifacts.summary.body_vertex_count,
-            "body_triangle_count": artifacts.summary.body_triangle_count,
-            "body_chart_count": artifacts.summary.body_chart_count,
-            "eye_region_count": artifacts.summary.eye_region_count,
-            "animation_count": artifacts.summary.animation_count,
-            "body_texture_size": artifacts.summary.body_texture_size,
-            "eye_frame_size": artifacts.summary.eye_frame_size,
-            "eye_profile_sha256": artifacts.eye_profile_sha256,
-            "fbx": format!("{}.fbx", artifacts.summary.character_id),
-            "output": output_path,
-        }),
-    )
+    serde_json::to_string(&serde_json::json!({
+        "character_id": artifacts.summary.character_id,
+        "body_vertex_count": artifacts.summary.body_vertex_count,
+        "body_triangle_count": artifacts.summary.body_triangle_count,
+        "body_chart_count": artifacts.summary.body_chart_count,
+        "eye_region_count": artifacts.summary.eye_region_count,
+        "animation_count": artifacts.summary.animation_count,
+        "body_texture_size": artifacts.summary.body_texture_size,
+        "eye_frame_size": artifacts.summary.eye_frame_size,
+        "eye_profile_sha256": artifacts.eye_profile_sha256,
+        "fbx": format!("{}.fbx", artifacts.summary.character_id),
+        "output": output_path,
+    }))
     .map_err(|error| format!("summary JSON failed: {error}"))
 }

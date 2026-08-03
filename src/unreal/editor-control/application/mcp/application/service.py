@@ -1,7 +1,3 @@
-# File:
-#   - service.py
-# Path: src/unreal/editor-control/application/mcp/application/service.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,57 +6,41 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Discovery, diagnosis, catalog, and invocation use cases.
+#   - Service application service.
 # - Must-Not:
-#   - Import HTTP, argparse, filesystem, or Unreal implementation APIs.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Domain rules orchestrated through the MCP transport port.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - The module gains two independently testable contracts.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another module owns the same contract without a distinct invariant.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Translates terminal intent into native MCP operations.
+#   - Service application service.
 # - Description:
-#   - Owns one bounded session and all application workflows.
+#   - Implements the declared responsibility for editor control.
 # - Usage:
-#   - Called by the driving CLI with a provided transport adapter.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - All calls require a successfully initialized session.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - true
-# LARGE-FILE:
-#   - owner: stateful translator application service
-#   - reason: session, discovery, and invocation share one client lifecycle
-#   - split: split discovery from invocation if their lifecycles diverge
-#   - validation: bash validate.sh --refresh-cache mcp/
-#   - review: reassess on responsibility or line-count growth
-#
-"""Application service for native Unreal MCP terminal workflows."""
+
+"""Service application service."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, NamedTuple, Self
+from typing import NamedTuple
+from typing import Self
+from typing import TYPE_CHECKING
 
-from mcp.domain.catalog import (
-    ToolsetDefinition,
-    parse_toolset_catalog,
-    parse_toolset_definition,
-)
-from mcp.domain.errors import (
-    UnrealMcpError,
-    fail_protocol,
-)
+from mcp.domain.catalog import ToolsetDefinition
+from mcp.domain.catalog import parse_toolset_catalog
+from mcp.domain.catalog import parse_toolset_definition
+from mcp.domain.errors import UnrealMcpError
+from mcp.domain.errors import fail_protocol
 from mcp.domain.tool_identity import native_tool_leaf
 
 if TYPE_CHECKING:
@@ -93,6 +73,7 @@ class DoctorReport(NamedTuple):
 
         Returns:
             `True` when all required native meta-tools are available.
+
         """
         return not self.missing_meta_tools and self.toolset_count > 0
 
@@ -105,6 +86,7 @@ class UnrealMcpTranslator:
 
         Args:
             transport: Driven adapter used for all protocol operations.
+
         """
         self._transport = transport
         self._session: McpSession | None = None
@@ -114,6 +96,7 @@ class UnrealMcpTranslator:
 
         Returns:
             This connected translator instance.
+
         """
         _ = self.connect()
         return self
@@ -133,6 +116,7 @@ class UnrealMcpTranslator:
 
         Raises:
             UnrealMcpError: The close failure when no primary failure exists.
+
         """
         del exception_type, traceback
         try:
@@ -147,6 +131,7 @@ class UnrealMcpTranslator:
 
         Returns:
             The active initialized session.
+
         """
         if self._session is None:
             self._session = self._transport.initialize()
@@ -165,6 +150,7 @@ class UnrealMcpTranslator:
 
         Returns:
             A complete readiness report for the connected native server.
+
         """
         session = self._require_session()
         self._transport.ping(session)
@@ -185,6 +171,7 @@ class UnrealMcpTranslator:
 
         Returns:
             Native toolset summaries in registry order.
+
         """
         outcome = self._transport.call_tool(
             self._require_session(),
@@ -218,6 +205,7 @@ class UnrealMcpTranslator:
 
         Returns:
             Every discoverable native toolset and its complete schema.
+
         """
         definitions: list[ToolsetDefinition] = []
         for summary in sorted(self.list_toolsets(), key=lambda item: item.name):

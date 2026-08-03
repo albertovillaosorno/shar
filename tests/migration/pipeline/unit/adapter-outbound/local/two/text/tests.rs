@@ -1,7 +1,3 @@
-// File:
-//   - tests.rs
-// Path: tests/migration/pipeline/unit/adapter-outbound/local/two/text/tests.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,43 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - The tests contract for pipeline phase two minor units language text.
+//   - Tests test module.
 // - Must-Not:
-//   - Violate repository architecture, path, provenance, or output rules.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Operations required to validate and execute tests.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when tests contains two independently testable contracts.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another pipeline module owns the same module boundary with no distinct
-//   - invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Tests for pipeline phase two minor units language text.
+//   - Tests test module.
 // - Description:
-//   - Defines tests data and behavior for pipeline phase two minor units
-//   - language text.
+//   - Implements the declared test module responsibility for pipeline.
 // - Usage:
-//   - Used by pipeline phase two minor units language text code that needs
-//   - tests.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - No implicit output outside the repository is allowed.
-//
-// ADRs:
-// - docs/adr/pipeline/minor-unit-taxonomy-value-case.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Tests for pipeline phase two minor units language text.
-//!
-//! This boundary keeps tests for pipeline phase two minor units language text
-//! explicit and returns deterministic results to pipeline callers.
+//! Tests test module.
+
 use super::classification::classify_text_key;
 
 #[test]
@@ -71,11 +54,7 @@ fn classifies_global_objectives_without_guessing_levels() {
 
 #[test]
 fn classifies_vehicle_and_costume_keys() {
-    assert_eq!(
-        // cspell:disable-next-line -- SEDANA
-        classify_text_key("SEDANA"),
-        "language/text/vehicles"
-    );
+    assert_eq!(classify_text_key("SEDANA"), "language/text/vehicles");
     assert_eq!(
         classify_text_key("H_DONUT"),
         "language/text/characters/homer"

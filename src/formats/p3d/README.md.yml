@@ -1,0 +1,4 @@
+schema: shar-boundary/v1
+path: src/formats/p3d/README.md
+boundary: src/formats/p3d
+authority: README.md

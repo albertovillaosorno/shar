@@ -1,7 +1,3 @@
-// File:
-//   - shar.cpp
-// Path: src/unreal/project/composition/uproject/Source/shar/shar.cpp
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,43 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Primary SHAR game-module registration through the public Unreal module
-//   - API.
+//   - Shar composition module.
 // - Must-Not:
-//   - Implement gameplay, asset import, editor automation, or engine internals.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - One primary module macro binding the authored SHAR runtime module to
-//   - startup.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Registration gains platform-specific or target-specific entry points.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another source file owns only the same primary module registration with
-//   - no distinct invariant.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Registers the SHAR runtime module entry point.
+//   - Shar composition module.
 // - Description:
-//   - Connects the explicit FSharGameModule extension point to the shar module
-//   - through Unreal's public module API.
+//   - Implements the declared composition module responsibility for project.
 // - Usage:
-//   - Compiled into SHAR game and editor targets to publish module startup
-//   - identity.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Registers exactly one primary game module and creates no runtime state.
-//
-// ADRs:
-// - docs/adr/unreal/project/cpp-primary-blueprint-compatible-project.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-// Registers the single authored SHAR runtime module with Unreal Engine while
-// keeping all gameplay and editor behavior behind later module boundaries.
+//! Shar composition module.
 
 #include "shar.h"
 

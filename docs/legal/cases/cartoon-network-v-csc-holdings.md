@@ -103,12 +103,14 @@ publication permission or eliminates possible secondary liability.
 - United States Court of Appeals for the Second Circuit (2008), *Cartoon Network
   LP, LLLP v. CSC Holdings, Inc.*, 536 F.3d 121, archived official opinion PDF.
   Available at:
-  <!-- markdownlint-disable-next-line MD013 -->
-  <https://web.archive.org/web/20110429050646if_/http://www.ca2.uscourts.gov/decisions/isysquery/339edb6b-4e83-47b5-8caa-4864e5504e8f/1/doc/07-1480-cv_opn.pdf>
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: external locator is indivisible -->
+  <https://web.archive.org/web/20110429050646if_/http://www.ca2.uscourts.gov/decisions/isysquery/339edb6b-4e83-47b5-8caa-4864e5504e8f/1/doc/07-1480-cv_opn.pdf> <!-- markdownlint-disable-line MD013 -->
   (Accessed: 16 July 2026).
 - [17 U.S.C. § 101](../statutes/17-usc-101.md).
 - [17 U.S.C. § 106](../statutes/17-usc-106.md).
 <!-- markdownlint-disable-next-line MD013 -->
-- [American Broadcasting Companies, Inc. v. Aereo, Inc.](american-broadcasting-v-aereo.md).
+- [American Broadcasting Companies, Inc. v. Aereo,
+  Inc.](american-broadcasting-v-aereo.md).
 - [MAI Systems Corp. v. Peak Computer, Inc.](mai-systems-v-peak-computer.md).
 - [Capitol Records, LLC v. ReDigi Inc.](capitol-records-v-redigi.md).

@@ -1,7 +1,3 @@
-// File:
-//   - argument_error_position.rs
-// Path: tests/foundation/command-line/argument_error_position.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,39 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for user-facing argument positions.
+//   - Argument error position test module.
 // - Must-Not:
-//   - Change the zero-based programmatic index contract.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Verify the first argument diagnostic through Display.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Another argument-error rendering behavior needs separate coverage.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Argument diagnostics no longer expose positions.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Argument position regression.
+//   - Argument error position test module.
 // - Description:
-//   - Proves human-facing diagnostics use one-based positions.
+//   - Implements the declared test module responsibility for command line.
 // - Usage:
-//   - Executed by the schoenwald-cli integration test target.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Internal indices remain zero-based.
-//
-// ADRs:
-// - docs/adr/pipeline/orchestration-cli-and-language-boundaries.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Regression coverage for human-facing argument positions.
-//!
-//! Diagnostics use one-based positions while accessors remain zero-based.
+//! Argument error position test module.
 
 use schoenwald_cli::ArgumentError;
 
@@ -50,14 +36,8 @@ use schoenwald_cli::ArgumentError;
 fn first_argument_is_rendered_as_position_one() {
     let error = ArgumentError::non_unicode(0);
 
-    assert_eq!(
-        error.to_string(),
-        "command argument 1 is not valid Unicode"
-    );
-    assert_eq!(
-        error.index(),
-        0
-    );
+    assert_eq!(error.to_string(), "command argument 1 is not valid Unicode");
+    assert_eq!(error.index(), 0);
 }
 
 #[test]

@@ -1,7 +1,3 @@
-// File:
-//   - path_helpers.rs
-// Path: tests/migration/manifest/path_helpers.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,40 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Pure path-token and obfuscation regressions for game-manifest.
+//   - Path helpers test module.
 // - Must-Not:
-//   - Depend on licensed inputs or mutable repository outputs.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Platform-independent Path fixtures and deterministic string assertions.
+//   - Inputs and outputs required by this module boundary.
 // - Split-When:
-//   - Split when filesystem traversal fixtures become necessary.
+//   - Split when one responsibility gains an independent lifecycle.
 // - Merge-When:
-//   - Another game-manifest test owns the same pure path helper boundary.
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Protects deterministic manifest path helpers.
+//   - Path helpers test module.
 // - Description:
-//   - Verifies extension and obfuscation helpers preserve canonical tokens.
+//   - Implements the declared test module responsibility for manifest.
 // - Usage:
-//   - Executed through cargo test for the game-manifest crate.
+//   - Used through the owning function boundary.
 // - Defaults:
-//   - Fixtures contain no proprietary names or local asset routes.
-//
-// ADRs:
-// - docs/adr/pipeline/game-manifest-ledger.md
-//
-// Large file:
-//   - false
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Deterministic path-helper regression coverage.
-//!
-//! These tests exercise pure helpers without reading private or generated
-//! repository content.
+//! Path helpers test module.
 
 use std::path::Path;
 
@@ -53,26 +38,15 @@ use schoenwald_filesystem as _;
 
 #[test]
 fn extension_of_treats_trailing_dot_as_missing() {
-    assert_eq!(
-        extension_of(Path::new("asset.")),
-        NO_EXTENSION
-    );
+    assert_eq!(extension_of(Path::new("asset.")), NO_EXTENSION);
 }
 
 #[test]
 fn extension_of_lowercases_unicode() {
-    assert_eq!(
-        // cspell:disable-next-line -- ÄBC
-        extension_of(Path::new("asset.ÄBC")),
-        // cspell:disable-next-line -- äbc
-        "äbc"
-    );
+    assert_eq!(extension_of(Path::new("asset.ÄBC")), "äbc");
 }
 
 #[test]
 fn obfuscate_component_lowercases_unicode() {
-    assert_eq!(
-        obfuscate_component("ÄZ"),
-        "äz"
-    );
+    assert_eq!(obfuscate_component("ÄZ"), "äz");
 }

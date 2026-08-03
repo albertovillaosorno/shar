@@ -6,18 +6,24 @@
 ## Governing decisions
 
 <!-- markdownlint-disable-next-line MD013 -->
-- [Data-driven Unreal gameplay content catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
+- [Data-driven Unreal gameplay content
+  catalog](../../adr/unreal/runtime/data-driven-gameplay-content-catalog.md)
 - [Runtime parity boundary](../../adr/unreal/runtime/remake-parity-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Runtime parity test boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
+- [Runtime parity test
+  boundary](../../adr/unreal/runtime/runtime-parity-test-boundary.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
+- [World render-entity and physics
+  runtime](world-render-entity-and-physics-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
+- [Native vehicle physics, control, damage, and presentation
+  runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md)
+- [Transient VFX and breakable-presentation
+  runtime](transient-vfx-and-breakable-presentation-runtime.md)
 <!-- markdownlint-disable-next-line MD013 -->
-- [Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
+- [Gameplay audio source, residency, mix, and environment
+  runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md)
 
 ## Purpose
 
@@ -30,13 +36,21 @@ physical-material profiles and typed response identities.
 
 <!-- markdownlint-disable MD013 -->
 
-| Authority | Responsibility |
-| :--- | :--- |
-| Gameplay catalog | Stable surface, collision class, physical profile, and response identities. |
-| Native physical material | Friction, restitution, density, and surface-type projection. |
-| Collision component | Shape, volume, mass override, channel, and per-instance state. |
-| Impact-response subsystem | Sound, Niagara, decal, animation, damage, and telemetry requests. |
-| Domain services | Damage, destruction, rewards, mission state, and persistence. |
+- **Authority:** Gameplay catalog
+  - **Responsibility:** Stable surface, collision class, physical profile, and
+    response identities.
+- **Authority:** Native physical material
+  - **Responsibility:** Friction, restitution, density, and surface-type
+    projection.
+- **Authority:** Collision component
+  - **Responsibility:** Shape, volume, mass override, channel, and per-instance
+    state.
+- **Authority:** Impact-response subsystem
+  - **Responsibility:** Sound, Niagara, decal, animation, damage, and telemetry
+    requests.
+- **Authority:** Domain services
+  - **Responsibility:** Damage, destruction, rewards, mission state, and
+    persistence.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -49,14 +63,23 @@ The runtime module owns these C++ types:
 
 <!-- markdownlint-disable MD013 -->
 
-| Type | Responsibility |
-| :--- | :--- |
-| `USharPhysicalMaterialProfile` | Immutable physical and presentation attributes for one canonical surface. |
-| `USharImpactResponseDefinition` | Typed response policy for one impact class and surface combination. |
-| `USharPhysicalMaterialCatalogSubsystem` | Validated identity lookup and revision checks. |
-| `USharImpactResponseSubsystem` | Bounded impact classification, request construction, deduplication, and publication. |
-| `FSharImpactObservation` | Immutable participants, surfaces, impulse, speed, normal, point, and context. |
-| `FSharImpactResult` | Closed response identities, domain request identities, and rejection reasons. |
+- **Type:** `USharPhysicalMaterialProfile`
+  - **Responsibility:** Immutable physical and presentation attributes for one
+    canonical surface.
+- **Type:** `USharImpactResponseDefinition`
+  - **Responsibility:** Typed response policy for one impact class and surface
+    combination.
+- **Type:** `USharPhysicalMaterialCatalogSubsystem`
+  - **Responsibility:** Validated identity lookup and revision checks.
+- **Type:** `USharImpactResponseSubsystem`
+  - **Responsibility:** Bounded impact classification, request construction,
+    deduplication, and publication.
+- **Type:** `FSharImpactObservation`
+  - **Responsibility:** Immutable participants, surfaces, impulse, speed,
+    normal, point, and context.
+- **Type:** `FSharImpactResult`
+  - **Responsibility:** Closed response identities, domain request identities,
+    and rejection reasons.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -69,18 +92,28 @@ Every `USharPhysicalMaterialProfile` contains:
 
 <!-- markdownlint-disable MD013 -->
 
-| Field | Contract |
-| :--- | :--- |
-| `PhysicalMaterialId` | Globally unique canonical identity. |
-| `SurfaceType` | Native surface projection used by collision queries. |
-| `Friction` | Finite non-negative coefficient within the approved policy range. |
-| `Restitution` | Finite coefficient clamped by the approved physics policy. |
-| `Density` | Optional positive density used when mass is volume-derived. |
-| `MassOverridePolicy` | None, explicit, or definition-driven override. |
-| `ImpactResponseSetId` | Typed sound, effect, decal, and animation response set. |
-| `DamageResponseId` | Optional typed domain-damage policy. |
-| `GameplayTags` | Surface, material, breakability, vehicle, character, and world tags. |
-| `DefinitionRevision` | Immutable revision used to reject stale instances. |
+- **Field:** `PhysicalMaterialId`
+  - **Contract:** Globally unique canonical identity.
+- **Field:** `SurfaceType`
+  - **Contract:** Native surface projection used by collision queries.
+- **Field:** `Friction`
+  - **Contract:** Finite non-negative coefficient within the approved policy
+    range.
+- **Field:** `Restitution`
+  - **Contract:** Finite coefficient clamped by the approved physics policy.
+- **Field:** `Density`
+  - **Contract:** Optional positive density used when mass is volume-derived.
+- **Field:** `MassOverridePolicy`
+  - **Contract:** None, explicit, or definition-driven override.
+- **Field:** `ImpactResponseSetId`
+  - **Contract:** Typed sound, effect, decal, and animation response set.
+- **Field:** `DamageResponseId`
+  - **Contract:** Optional typed domain-damage policy.
+- **Field:** `GameplayTags`
+  - **Contract:** Surface, material, breakability, vehicle, character, and world
+    tags.
+- **Field:** `DefinitionRevision`
+  - **Contract:** Immutable revision used to reject stale instances.
 
 <!-- markdownlint-enable MD013 -->
 
@@ -155,7 +188,8 @@ Chaos contact callbacks and primitive-component hit events are adapters. Their
 body, component, entity, solver-frame, and world revisions are normalized
 through
 <!-- markdownlint-disable-next-line MD013 -->
-[World render-entity and physics runtime](world-render-entity-and-physics-runtime.md)
+[World render-entity and physics
+runtime](world-render-entity-and-physics-runtime.md)
 before response selection. A raw pre-contact or post-contact callback cannot
 apply damage, delete an entity, grant a reward, or change persistence directly.
 
@@ -219,7 +253,8 @@ with:
 Source selection, loading, positional playback, parameter updates, concurrency,
 voice pressure, and terminal results follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Gameplay audio source, residency, mix, and environment runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md).
+[Gameplay audio source, residency, mix, and environment
+runtime](gameplay-audio-source-residency-mix-and-environment-runtime.md).
 
 Repeated physics contacts are rate-limited by canonical contact pair, response
 policy, physics revision, and deterministic time window. Raw sound strings,
@@ -239,7 +274,8 @@ Niagara and decal requests are presentation-only. Their typed parameter schema,
 coordinate space, lifetime, pooling, scalability, vehicle binding, local-player
 policy, and teardown follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md).
+[Transient VFX and breakable-presentation
+runtime](transient-vfx-and-breakable-presentation-runtime.md).
 
 Effects do not perform collision traces that redefine the impact surface. A
 decal
@@ -264,7 +300,8 @@ itself.
 On committed destruction, presentation may spawn fragments, sound, effects,
 decals, and camera interest according to the response definition and
 <!-- markdownlint-disable-next-line MD013 -->
-[Transient VFX and breakable-presentation runtime](transient-vfx-and-breakable-presentation-runtime.md).
+[Transient VFX and breakable-presentation
+runtime](transient-vfx-and-breakable-presentation-runtime.md).
 Pooling, queue pressure, fallback, completion, and cleanup cannot replay or
 reinterpret the domain result.
 
@@ -279,7 +316,8 @@ Native contact resolution, wheel and chassis observations, damage-zone
 classification, vehicle damage transactions, reset, destruction, husk
 presentation, and controller consequences follow
 <!-- markdownlint-disable-next-line MD013 -->
-[Native vehicle physics, control, damage, and presentation runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
+[Native vehicle physics, control, damage, and presentation
+runtime](native-vehicle-physics-control-damage-and-presentation-runtime.md).
 The impact subsystem cannot return a custom collision-solving answer or write
 the
 native contact manifold.

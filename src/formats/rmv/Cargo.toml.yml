@@ -1,0 +1,5 @@
+schema: shar-surface/v1
+path: src/formats/rmv/Cargo.toml
+function: rmv
+kind: project
+authority: Cargo.toml

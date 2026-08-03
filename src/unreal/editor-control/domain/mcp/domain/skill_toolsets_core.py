@@ -1,7 +1,3 @@
-# File:
-#   - skill_toolsets_core.py
-# Path: src/unreal/editor-control/domain/mcp/domain/skill_toolsets_core.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,36 +6,29 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Native Unreal MCP toolset identities for 00 core and governance.
+#   - Skill toolsets core domain module.
 # - Must-Not:
-#   - Categorize other domains, render Markdown, access files, or invoke tools.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Keeping one category assignment independently reviewable.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - The category gains two unrelated capability families.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - The taxonomy removes this category boundary.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Defines 00 core and governance toolset identities.
+#   - Skill toolsets core domain module.
 # - Description:
-#   - Supplies path segments to the canonical taxonomy aggregator.
+#   - Implements the declared domain module responsibility for editor control.
 # - Usage:
-#   - Imported only by skill_taxonomy.py.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Contains exact live Toolset Registry identities.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-tool-cli-projection-and-skills.md
-#
-# Large file:
-#   - false
-#
-"""00 core and governance native Unreal MCP toolset identities."""
+
+"""Skill toolsets core domain module."""
 
 from __future__ import annotations
 

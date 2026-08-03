@@ -1,7 +1,3 @@
-# File:
-#   - test_http_request.py
-# Path: tests/unreal/editor-control/test_http_request.py
-#
 # Copyright:
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -10,48 +6,41 @@
 #   - false
 # License-File:
 #   - LICENSE-MIT
-# Path-Rule:
-#   - All paths in this header are repository-root relative.
 #
 # Boundary-Contract:
 # - Owns:
-#   - Regression evidence for bounded MCP JSON request serialization.
+#   - Test http request test module.
 # - Must-Not:
-#   - Open sockets, invoke Unreal, or inspect response behavior.
+#   - Own unrelated policy, persistence, or external effects.
 # - Allows:
-#   - Compact JSON, UTF-8 byte, and limit-validation fixtures.
+#   - Inputs and outputs required by this module boundary.
 # - Split-When:
-#   - Streaming or compressed request bodies are introduced.
+#   - Split when one responsibility gains an independent lifecycle.
 # - Merge-When:
-#   - Another test module owns the same request byte-limit contract.
+#   - Merge when another module owns the identical responsibility.
 # - Summary:
-#   - Guards bounded native MCP request encoding.
+#   - Test http request test module.
 # - Description:
-#   - Proves request ceilings operate on serialized UTF-8 bytes.
+#   - Implements the declared test module responsibility for editor control.
 # - Usage:
-#   - Executed by pytest through the canonical validator workflow.
+#   - Used through the owning function boundary.
 # - Defaults:
-#   - Uses deliberately small byte ceilings for deterministic tests.
+#   - Invalid or missing inputs fail explicitly.
 #
-# ADRs:
-# - docs/adr/unreal/mcp/native-unreal-mcp-terminal-bridge.md
-#
-# Large file:
-#   - false
-#
-"""Regression tests for bounded native MCP HTTP request encoding."""
+
+"""Test http request test module."""
 
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
+from typing import cast
 
+from mcp.adapter_outbound.http_request import encode_json_request
+from mcp.adapter_outbound.http_request import validate_max_request_bytes
+from mcp.domain.errors import ConfigurationError
+from mcp.domain.errors import TransportError
 import pytest
-from mcp.adapter_outbound.http_request import (
-    encode_json_request,
-    validate_max_request_bytes,
-)
-from mcp.domain.errors import ConfigurationError, TransportError
 
 if TYPE_CHECKING:
     from mcp.domain.json_types import JsonObject

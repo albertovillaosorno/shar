@@ -1,7 +1,3 @@
-// File:
-//   - binary_material_variants.rs
-// Path: tests/formats/fbx/binary_material_variants.rs
-//
 // Copyright:
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
@@ -10,25 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-// Path-Rule:
-//   - All paths in this header are repository-root relative.
 //
 // Boundary-Contract:
 // - Owns:
-//   - Regression coverage for shared source shaders with different geometry
-//   - semantics.
+//   - Binary material variants test module.
 // - Must-Not:
-//   - Depend on private assets, generated catalogs, or installed DCC software.
+//   - Own unrelated policy, persistence, or external effects.
 // - Allows:
-//   - Synthetic static geometry and binary material-name assertions.
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - Split when one responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Proves light geometry cannot make sibling body geometry emissive.
-//
-// Large file:
-//   - false
+//   - Binary material variants test module.
+// - Description:
+//   - Implements the declared test module responsibility for fbx.
+// - Usage:
+//   - Used through the owning function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
 //
 
-//! Shared-source material variant regression coverage.
+//! Binary material variants test module.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -46,47 +46,20 @@ fn mesh(name: &str) -> Result<MeshAsset, String> {
     let group = PrimitiveGroup::new(
         0,
         "shared_m",
-        vec![
-            [
-                0.0, 0.0, 0.0,
-            ],
-            [
-                1.0, 0.0, 0.0,
-            ],
-            [
-                0.0, 1.0, 0.0,
-            ],
-        ],
-        vec![
-            [
-                0.0, 0.0,
-            ],
-            [
-                1.0, 0.0,
-            ],
-            [
-                0.0, 1.0,
-            ],
-        ],
-        &[
-            0, 1, 2,
-        ],
+        vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
+        vec![[0., 0.], [1., 0.], [0., 1.]],
+        &[0, 1, 2],
     )
     .map_err(|error| format!("primitive group failed: {error:?}"))?;
-    MeshAsset::new(
-        name,
-        vec![group],
-    )
-    .map_err(|error| format!("mesh failed: {error:?}"))
+    MeshAsset::new(name, vec![group])
+        .map_err(|error| format!("mesh failed: {error:?}"))
 }
 
 fn output_path() -> PathBuf {
-    std::env::temp_dir().join(
-        format!(
-            "fbx-binary-material-variants-{}.fbx",
-            std::process::id()
-        ),
-    )
+    std::env::temp_dir().join(format!(
+        "fbx-binary-material-variants-{}.fbx",
+        std::process::id()
+    ))
 }
 
 fn remove_if_present(path: &Path) -> Result<(), String> {
@@ -97,10 +70,7 @@ fn remove_if_present(path: &Path) -> Result<(), String> {
     }
 }
 
-fn contains_token(
-    bytes: &[u8],
-    token: &str,
-) -> bool {
+fn contains_token(bytes: &[u8], token: &str) -> bool {
     bytes
         .windows(token.len())
         .any(|window| window == token.as_bytes())
@@ -111,34 +81,24 @@ fn shared_shader_creates_isolated_light_material_variant() -> Result<(), String>
 {
     let path = output_path();
     remove_if_present(&path)?;
-    let material = MaterialBinding::new(
-        "shared_m", None,
-    )
-    .map_err(|error| format!("material failed: {error:?}"))?;
+    let material = MaterialBinding::new("shared_m", None)
+        .map_err(|error| format!("material failed: {error:?}"))?;
     let summary = write_binary_model_fbx(
         "material-variants",
-        &[
-            mesh("vehicle-body")?,
-            mesh("lightsShape")?,
-        ],
+        &[mesh("vehicle-body")?, mesh("lightsShape")?],
         &[material],
         &path,
     )
     .map_err(|error| format!("FBX write failed: {error:?}"))?;
     if summary.materials != 2 {
-        return Err(
-            format!(
-                "shared shader did not split into two semantic variants: \
+        return Err(format!(
+            "shared shader did not split into two semantic variants: \
                  {summary:?}"
-            ),
-        );
+        ));
     }
     let bytes =
         fs::read(&path).map_err(|error| format!("FBX read failed: {error}"))?;
-    if !contains_token(
-        &bytes,
-        "shared_m__light-emitter",
-    ) {
+    if !contains_token(&bytes, "shared_m__light-emitter") {
         return Err("light material variant identity is missing".to_owned());
     }
     remove_if_present(&path)?;
