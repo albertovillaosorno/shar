@@ -35,6 +35,8 @@ pub mod index;
 pub mod plan;
 /// Typed package selectors.
 pub mod selector;
+/// Unreal import-manifest planning.
+pub mod unreal_manifest;
 
 // Re-exporting the domain-qualified names keeps downstream imports explicit
 // while preserving one public package boundary instead of exposing file layout.
@@ -52,3 +54,7 @@ pub use plan::{
     PhaseThreePackagePlanner, UnrealNativePlan, UnrealTargetKind,
 };
 pub use selector::PhaseThreePackageSelector;
+pub use unreal_manifest::{
+    UNREAL_IMPORT_MANIFEST_SCHEMA, UNREAL_IMPORT_SUMMARY_SCHEMA,
+    UnrealImportManifest, UnrealSourceEvidence,
+};

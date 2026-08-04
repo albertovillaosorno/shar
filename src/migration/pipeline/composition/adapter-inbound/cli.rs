@@ -55,7 +55,8 @@ const USAGE: &str = concat!(
     "extract-game|extract-game-resume|export-movies|",
     "export-lmlm|manifest-minor-units|",
     "metadata-fill-minor-units|edit-minor-unit-metadata|",
-    "index-minor-units|audit-minor-units [game-root] [extracted-root] | ",
+    "index-minor-units|audit-minor-units|prepare-unreal ",
+    "[game-root] [extracted-root] | ",
     "plan-fbx-package [index-jsonl] [selector] [output-dir] | ",
     "fbx-export-characters [index-jsonl] [output-dir] [base-root] | ",
     "fbx-export-wasp-camera [index-jsonl] [output-dir] [base-root] | ",
@@ -285,6 +286,7 @@ fn is_known_command(command: &str) -> bool {
             | "edit-minor-unit-metadata"
             | "index-minor-units"
             | "audit-minor-units"
+            | "prepare-unreal"
             | "plan-fbx-package"
             | "fbx-export-characters"
             | "fbx-export-wasp-camera"
@@ -321,7 +323,11 @@ fn run_pipeline_command(command: &str, arguments: &[String]) -> CommandOutcome {
     let extracted_root = arguments
         .get(1)
         .map_or_else(|| PathBuf::from("extracted"), PathBuf::from);
-    let summary_root = extracted_root.clone();
+    let summary_root = if command == "prepare-unreal" {
+        PathBuf::from("unreal-staging")
+    } else {
+        extracted_root.clone()
+    };
     let config = PipelineConfig {
         game_root,
         extracted_root,
@@ -350,6 +356,7 @@ fn run_pipeline_command(command: &str, arguments: &[String]) -> CommandOutcome {
         "audit-minor-units" => {
             one_stage(application.audit_minor_units(&config.extracted_root))
         },
+        "prepare-unreal" => application.prepare_unreal(&config),
         _ => application.run(&config),
     };
     render_result(result, &summary_root)

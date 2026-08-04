@@ -47,6 +47,7 @@ mod progress;
 mod prop_catalog;
 mod run_registry;
 mod two;
+mod unreal_prepare;
 mod vehicle_catalog;
 mod wasp_camera;
 mod wrench;
@@ -118,6 +119,21 @@ impl PipelineOperations for LocalPipeline {
         extracted_root: &Path,
     ) -> PipelineOutcome<StageReport> {
         two::units::audit_minor_units::audit_minor_units(extracted_root)
+    }
+
+    fn prepare_unreal(
+        &self,
+        config: &PipelineConfig,
+    ) -> PipelineOutcome<PipelineReport> {
+        let audit = two::units::audit_minor_units::audit_minor_units(
+            &config.extracted_root,
+        )?;
+        let index =
+            two::units::index::write_minor_unit_index(&config.extracted_root)?;
+        let staging = unreal_prepare::prepare_unreal(config)?;
+        Ok(PipelineReport {
+            stages: vec![audit, index, staging],
+        })
     }
 
     fn write_fbx_manifest(

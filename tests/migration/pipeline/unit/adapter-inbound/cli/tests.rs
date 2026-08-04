@@ -108,3 +108,14 @@ fn unknown_command_returns_name_and_usage() -> Result<(), String> {
     }
     Ok(())
 }
+
+#[test]
+fn prepare_unreal_is_a_known_pipeline_command() -> Result<(), String> {
+    if !super::is_known_command("prepare-unreal") {
+        return Err("prepare-unreal must be recognized by the CLI".to_owned());
+    }
+    if !USAGE.contains("prepare-unreal") {
+        return Err("prepare-unreal must appear in canonical usage".to_owned());
+    }
+    Ok(())
+}

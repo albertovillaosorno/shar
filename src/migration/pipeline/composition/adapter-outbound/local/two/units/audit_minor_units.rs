@@ -35,6 +35,7 @@ use std::path::Path;
 use schoenwald_filesystem::adapters::driving::local::{
     read_utf8 as local_read_utf8, write_text as local_write_text,
 };
+use shar_sha256::digest_hex;
 
 use super::metadata_fill::read_string_field;
 use super::taxonomy;
@@ -129,7 +130,12 @@ pub(in crate::adapters::driven::local) fn audit_minor_units(
         }
     }
 
-    let report = audit_summary_json(rows, failures.len(), error_rows);
+    let report = audit_summary_json(
+        rows,
+        failures.len(),
+        error_rows,
+        &digest_hex(manifest.as_bytes()),
+    );
     let audit_path = taxonomy::audit_path(extracted_root);
     local_write_text(&audit_path, &report, true)
         .map_err(io_error(&audit_path))?;
@@ -178,11 +184,15 @@ fn audit_summary_json(
     rows: usize,
     failures: usize,
     error_rows: usize,
+    manifest_sha256: &str,
 ) -> String {
     format!(
-        "{{\"schema\":\"shar-schoenwald.minor-unit-audit.v1\",\"rows\":{rows},\
-         \"failures\":{failures},\"error_rows\":{error_rows}}}
-"
+        concat!(
+            "{{\"schema\":\"shar-schoenwald.minor-unit-audit.v2\",",
+            "\"rows\":{},\"failures\":{},\"error_rows\":{},",
+            "\"manifest_sha256\":\"{}\"}}\n"
+        ),
+        rows, failures, error_rows, manifest_sha256,
     )
 }
 
