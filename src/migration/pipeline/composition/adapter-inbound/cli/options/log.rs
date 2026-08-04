@@ -35,7 +35,7 @@ use std::path::{Path, PathBuf};
 use schoenwald_filesystem::resolve_under;
 
 /// Stable latest-run log relative to the pipeline working directory.
-pub(super) const DEFAULT_LOG_FILE: &str = "logs/pipeline/latest.jsonl";
+pub(super) const DEFAULT_LOG_FILE: &str = ".logs/pipeline/latest.jsonl";
 
 /// One parsed logging selector and its consumed argument count.
 pub(super) struct ParsedLogOption {

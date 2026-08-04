@@ -43,11 +43,11 @@ Operators may acknowledge intentional parallel work with `--allow-concurrent`.
 This is a scoped concurrency mode rather than a global mutex bypass: every
 process still receives its own run identifier, heartbeat, state record, and
 cancellation route. Unless the caller explicitly selects a log path, concurrent
-runs use independent logs under `logs/pipeline/runs/<run-id>.jsonl`. The
+runs use independent logs under `.logs/pipeline/runs/<run-id>.jsonl`. The
 optional `--run-label` value supplies a portable display identity without
 replacing the stable run identifier.
 
-Registry state is derived and ignored under `temp/pipeline/runtime/`. Active
+Registry state is derived and ignored under `.temp/pipeline/runtime/`. Active
 processes refresh a heartbeat once per second. Records and abandoned exclusive
 leases without a live heartbeat are eligible for deterministic cleanup after two
 minutes, preventing a crashed process from permanently blocking later commands.

@@ -49,7 +49,7 @@ fn concurrent_run_label_and_default_log_isolation_are_explicit()
     if parsed.run_label().as_deref() != Some("world-b") {
         return Err(String::from("run label was not preserved"));
     }
-    let expected = PathBuf::from("logs")
+    let expected = PathBuf::from(".logs")
         .join("pipeline")
         .join("runs")
         .join("run-test.jsonl");
@@ -66,9 +66,9 @@ fn concurrent_run_label_and_default_log_isolation_are_explicit()
 fn explicit_concurrent_log_path_is_preserved() -> Result<(), String> {
     let parsed = parse_common_arguments(&[
         String::from("--allow-concurrent"),
-        String::from("--log=logs/custom/shared.jsonl"),
+        String::from("--log=.logs/custom/shared.jsonl"),
     ])?;
-    let expected = Some(PathBuf::from("logs/custom/shared.jsonl"));
+    let expected = Some(PathBuf::from(".logs/custom/shared.jsonl"));
     if parsed.log_file_for_run("run-test") != expected {
         return Err(String::from("explicit concurrent log path changed"));
     }

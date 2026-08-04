@@ -36,6 +36,7 @@ use std::sync::Mutex;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use super::model::{RunMode, RunSnapshot};
+use super::storage::RegistryStorage;
 use super::{RunRegistry, check_cancellation};
 
 /// Serialize tests because the production registry has one process-wide
@@ -79,6 +80,12 @@ impl Drop for TestRegistry {
     fn drop(&mut self) {
         drop(fs::remove_dir_all(&self.root));
     }
+}
+
+#[test]
+fn default_registry_root_is_hidden_runtime_state() {
+    let storage = RegistryStorage::for_current_workspace();
+    assert_eq!(storage.root(), PathBuf::from(".temp/pipeline/runtime"));
 }
 
 /// Acquire the serialized registry-test lane.
@@ -143,7 +150,7 @@ fn explicit_concurrent_start_can_join_an_existing_derived_lease()
 -> Result<(), String> {
     let _lane = test_lane()?;
     let fixture = TestRegistry::new("concurrent")?;
-    let now = super::storage::RegistryStorage::now_unix_ms()?;
+    let now = RegistryStorage::now_unix_ms()?;
     let existing = RunSnapshot::new(
         String::from("run-existing"),
         42,
