@@ -83,12 +83,12 @@ mod cases {
         assert_eq!(
             parse_common_arguments(&[
                 String::from("--verbosity=minimal"),
-                String::from("--log=logs/custom/run.jsonl"),
+                String::from("--log=.logs/custom/run.jsonl"),
             ],),
             Ok(ParsedArguments {
                 positionals: Vec::new(),
                 verbosity: ProgressVerbosity::Minimal,
-                log_file: Some(PathBuf::from("logs/custom/run.jsonl")),
+                log_file: Some(PathBuf::from(".logs/custom/run.jsonl")),
                 logging_explicit: true,
                 embed_textures: false,
                 run: RunOptions::default(),
@@ -148,11 +148,11 @@ mod cases {
     fn repeated_log_selectors_are_rejected() {
         for arguments in [
             vec![
-                String::from("--log=logs/first.jsonl"),
-                String::from("--log=logs/second.jsonl"),
+                String::from("--log=.logs/first.jsonl"),
+                String::from("--log=.logs/second.jsonl"),
             ],
             vec![
-                String::from("--log=logs/run.jsonl"),
+                String::from("--log=.logs/run.jsonl"),
                 String::from("--no-log"),
             ],
             vec![
@@ -196,12 +196,13 @@ mod cases {
     #[test]
     fn log_paths_are_lexically_normalized() -> Result<(), String> {
         let parsed = parse_common_arguments(&[String::from(
-            "--log=logs/./pipeline//run.jsonl",
+            "--log=.logs/./pipeline//run.jsonl",
         )])?;
         let Some(actual) = parsed.log_file else {
             return Err(String::from("normalized log path is missing"));
         };
-        let expected = PathBuf::from("logs").join("pipeline").join("run.jsonl");
+        let expected =
+            PathBuf::from(".logs").join("pipeline").join("run.jsonl");
         let actual_identity = actual.into_os_string();
         let expected_identity = expected.into_os_string();
         if actual_identity != expected_identity {
@@ -229,8 +230,8 @@ mod cases {
     #[test]
     fn directory_shaped_log_paths_are_rejected() {
         for arguments in
-            [vec![String::from("--log=logs/")], vec![String::from(
-                "--log=logs\\",
+            [vec![String::from("--log=.logs/")], vec![String::from(
+                "--log=.logs\\",
             )]]
         {
             assert!(parse_common_arguments(&arguments).is_err_and(

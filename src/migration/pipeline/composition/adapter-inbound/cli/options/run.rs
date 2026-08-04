@@ -68,7 +68,7 @@ impl RunOptions {
             && configured.is_some()
         {
             Some(
-                PathBuf::from("logs")
+                PathBuf::from(".logs")
                     .join("pipeline")
                     .join("runs")
                     .join(format!("{run_id}.jsonl")),

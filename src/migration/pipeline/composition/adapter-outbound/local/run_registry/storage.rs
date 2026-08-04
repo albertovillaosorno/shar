@@ -46,7 +46,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use super::model::RunSnapshot;
 
 /// Derived registry root relative to the pipeline working directory.
-const DEFAULT_ROOT: &str = "temp/pipeline/runtime";
+const DEFAULT_ROOT: &str = ".temp/pipeline/runtime";
 /// Per-run state file.
 const STATE_FILE: &str = "state.json";
 /// Lease age after which a crashed process record may be pruned.

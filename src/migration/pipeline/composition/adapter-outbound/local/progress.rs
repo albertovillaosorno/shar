@@ -116,6 +116,8 @@ pub(super) struct StageProgress {
     started: Instant,
     /// Last live render instant used by the throttle.
     last_render: Instant,
+    /// Whether the owning stage reached its explicit success boundary.
+    finished: bool,
 }
 
 impl StageProgress {
@@ -164,6 +166,7 @@ impl StageProgress {
             done: 0,
             started: now,
             last_render: now.checked_sub(RENDER_INTERVAL).unwrap_or(now),
+            finished: false,
         }
     }
 
@@ -173,6 +176,15 @@ impl StageProgress {
     /// tool remains identifiable from the terminal and diagnostic log.
     pub(super) fn advance(&mut self, item: &str) {
         self.done = self.done.saturating_add(1);
+        let now = Instant::now();
+        let checkpoint_due =
+            now.duration_since(self.last_render) >= RENDER_INTERVAL;
+        let complete =
+            self.total.is_some_and(|item_total| self.done >= item_total);
+        if !checkpoint_due && !complete && self.done != 1 {
+            return;
+        }
+        self.last_render = now;
         drop(update_current_progress(
             &self.stage,
             Some(self.done),
@@ -185,15 +197,6 @@ impl StageProgress {
         if state.verbosity() != Verbosity::Detailed {
             return;
         }
-        let now = Instant::now();
-        let render_due =
-            now.duration_since(self.last_render) >= RENDER_INTERVAL;
-        let complete =
-            self.total.is_some_and(|item_total| self.done >= item_total);
-        if !render_due && !complete && self.done != 1 {
-            return;
-        }
-        self.last_render = now;
         let elapsed = self.started.elapsed();
         let display_item = shorten_item(item);
         let line = progress_line(
@@ -221,6 +224,7 @@ impl StageProgress {
 
     /// Finish the stage and render its closing summary.
     pub(super) fn finish(mut self) {
+        self.finished = true;
         let Some(state) = STATE.get() else {
             return;
         };
@@ -259,6 +263,49 @@ impl StageProgress {
         append_event(&format!(
             concat!(
                 "{{\"event\":\"end\",",
+                "\"stage\":\"{}\",",
+                "\"done\":{},",
+                "\"total\":{},",
+                "\"elapsed_seconds\":{}}}"
+            ),
+            escape_json(&self.stage),
+            self.done,
+            optional_total_json(self.total),
+            elapsed,
+        ));
+    }
+}
+
+impl Drop for StageProgress {
+    fn drop(&mut self) {
+        if self.finished {
+            return;
+        }
+        let Some(state) = STATE.get() else {
+            return;
+        };
+        let elapsed = self.started.elapsed().as_secs();
+        if state.verbosity() == Verbosity::Detailed {
+            terminal::clear_live();
+        }
+        match self.total {
+            Some(item_total) => terminal::line(&format!(
+                "[{}] aborted: {}/{} items after {}",
+                self.stage,
+                self.done,
+                item_total,
+                format_duration(elapsed),
+            )),
+            None => terminal::line(&format!(
+                "[{}] aborted: {} items after {}",
+                self.stage,
+                self.done,
+                format_duration(elapsed),
+            )),
+        }
+        append_event(&format!(
+            concat!(
+                "{{\"event\":\"aborted\",",
                 "\"stage\":\"{}\",",
                 "\"done\":{},",
                 "\"total\":{},",
