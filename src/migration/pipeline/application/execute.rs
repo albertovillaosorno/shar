@@ -153,6 +153,18 @@ where
         self.provider.audit_minor_units(extracted_root)
     }
 
+    /// Audits, indexes, and prepares canonical Unreal staging output.
+    ///
+    /// # Errors
+    ///
+    /// Returns the provider's validated pipeline failure.
+    pub fn prepare_unreal(
+        &self,
+        config: &PipelineConfig,
+    ) -> PipelineOutcome<PipelineReport> {
+        self.provider.prepare_unreal(config)
+    }
+
     /// Writes one selected phase-three FBX manifest.
     ///
     /// # Errors

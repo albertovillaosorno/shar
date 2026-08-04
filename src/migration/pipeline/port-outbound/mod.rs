@@ -138,6 +138,16 @@ pub trait PipelineOperations {
         extracted_root: &Path,
     ) -> PipelineOutcome<StageReport>;
 
+    /// Audits, indexes, and prepares canonical Unreal staging output.
+    ///
+    /// # Errors
+    ///
+    /// Returns a validated pipeline failure.
+    fn prepare_unreal(
+        &self,
+        config: &PipelineConfig,
+    ) -> PipelineOutcome<PipelineReport>;
+
     /// Writes one selected phase-three FBX manifest.
     ///
     /// # Errors

@@ -46,6 +46,8 @@ pub use domain::{
     PackageMemberRef, PackageRole, PhaseThreePackageIndex,
     PhaseThreePackagePlan, PhaseThreePackagePlanner, PhaseThreePackageRow,
     PhaseThreePackageSelector, PipelineConfig, PipelineError, PipelineOutcome,
-    PipelineReport, StageReport, UnrealNativePlan, UnrealTargetKind,
+    PipelineReport, StageReport, UNREAL_IMPORT_MANIFEST_SCHEMA,
+    UNREAL_IMPORT_SUMMARY_SCHEMA, UnrealImportManifest, UnrealNativePlan,
+    UnrealSourceEvidence, UnrealTargetKind,
 };
 pub use ports::{OutputInventory, PipelineOperations};

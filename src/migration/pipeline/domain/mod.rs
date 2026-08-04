@@ -45,7 +45,9 @@ pub use package::{
     ConversionFamily, FbxModelPlan, PackageMemberRef, PackageRole,
     PhaseThreePackageIndex, PhaseThreePackageMember, PhaseThreePackagePlan,
     PhaseThreePackagePlanner, PhaseThreePackageRow, PhaseThreePackageSelector,
-    UnrealNativePlan, UnrealTargetKind,
+    UNREAL_IMPORT_MANIFEST_SCHEMA, UNREAL_IMPORT_SUMMARY_SCHEMA,
+    UnrealImportManifest, UnrealNativePlan, UnrealSourceEvidence,
+    UnrealTargetKind,
 };
 pub use pipeline::{
     PipelineConfig, PipelineError, PipelineOutcome, PipelineReport, StageReport,
