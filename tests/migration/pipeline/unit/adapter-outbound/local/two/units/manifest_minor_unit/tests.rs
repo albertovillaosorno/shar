@@ -130,6 +130,51 @@ fn run_report_presence_case() -> Result<(), String> {
 }
 
 #[test]
+fn manifest_ignores_non_asset_installation_files() {
+    assert_eq!(run_non_asset_installation_file_case(), Ok(()));
+}
+
+/// Run one manifest case containing non-asset installation files.
+fn run_non_asset_installation_file_case() -> Result<(), String> {
+    let case = case_root("non-asset-installation-files");
+    let game_root = case.join("game");
+    let extracted_root = case.join("extracted");
+    write_sample(&game_root, "copy/disc_one.iso", b"disc image")?;
+    write_sample(&game_root, "Simpsons.exe", b"executable")?;
+    write_sample(&game_root, "binkw32.dll", b"runtime library")?;
+    write_sample(&game_root, "Simpsons.ico", b"application icon")?;
+    write_sample(&game_root, "scripts/sample.mfk", b"sample script")?;
+    fs::create_dir_all(&extracted_root).map_err(|error| error.to_string())?;
+
+    let report = write_manifest_minor_units(&game_root, &extracted_root)
+        .map_err(|error| error.to_string())?;
+    let manifest = fs::read_to_string(
+        extracted_root.join("minor-unit").join("manifest.jsonl"),
+    )
+    .map_err(|error| error.to_string())?;
+    fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+
+    for extension in ["dll", "exe", "ico", "iso"] {
+        let field = format!("\"file_extension\":\"{extension}\"");
+        if manifest.contains(&field) {
+            return Err(format!(
+                "non-asset installation file entered the manifest: {extension}"
+            ));
+        }
+    }
+    if !manifest.contains("game/scripts/sample.mfk") {
+        return Err(String::from("legitimate game input was omitted"));
+    }
+    if report.files != 1 {
+        return Err(format!(
+            "expected one unit after installation-file exclusions, got {}",
+            report.files
+        ));
+    }
+    Ok(())
+}
+
+#[test]
 fn manifest_is_independent_of_file_creation_order() {
     assert_eq!(run_creation_order_case(), Ok(()));
 }
