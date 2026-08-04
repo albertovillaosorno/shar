@@ -62,6 +62,19 @@ pub(super) fn extract_lmlm(
     extracted_root: &Path,
 ) -> PipelineOutcome<StageReport> {
     let output_root = extracted_root.join("lmlm");
+    let archives = files_with_extension(game_root, "lmlm")?;
+    if archives.is_empty() {
+        if output_root.exists() {
+            fs::remove_dir_all(&output_root).map_err(io_error(&output_root))?;
+        }
+        return Ok(StageReport {
+            name: "lmlm",
+            files: 0,
+            bytes: 0,
+            note: "optional LMLM package not present; no output written"
+                .to_owned(),
+        });
+    }
     if output_root.exists() {
         fs::remove_dir_all(&output_root).map_err(io_error(&output_root))?;
     }
@@ -78,7 +91,7 @@ pub(super) fn extract_lmlm(
     let mut files_written = 0usize;
     let mut bytes_written = 0u64;
     let mut records = Vec::new();
-    for archive in files_with_extension(game_root, "lmlm")? {
+    for archive in archives {
         let data = local_read_bytes(&archive).map_err(io_error(&archive))?;
         let entries = parse_lmlm(&data).map_err(|error| {
             PipelineError::new(format!("{}: {error}", archive.display()))
@@ -445,3 +458,8 @@ fn write_bytes(path: &Path, bytes: &[u8]) -> PipelineOutcome<()> {
 fn io_error(path: &Path) -> impl FnOnce(std::io::Error) -> PipelineError + '_ {
     move |error| PipelineError::new(format!("{}: {error}", path.display()))
 }
+
+#[cfg(test)]
+// jig-ignore-next-line: exact syntax is indivisible
+#[path = "../../../../../../../tests/migration/pipeline/unit/adapter-outbound/local/one/lmlm_stage/tests.rs"]
+mod tests;

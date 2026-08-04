@@ -460,7 +460,10 @@ fn convert_one_rsd(input: &Path, output: &Path) -> PipelineOutcome<u64> {
 
 /// Is movie decodable by ffmpeg.
 const fn is_movie_decodable_by_ffmpeg(kind: MovieKind) -> bool {
-    matches!(kind, MovieKind::BinkV1 | MovieKind::BinkV2)
+    matches!(
+        kind,
+        MovieKind::BinkV1 | MovieKind::BinkV2 | MovieKind::XboxXmvLike
+    )
 }
 
 /// Require ffmpeg.
@@ -1614,3 +1617,8 @@ fn normalize_sound_scripts(
 // jig-ignore-next-line: exact syntax is indivisible
 #[path = "../../../../../../../tests/migration/pipeline/unit/adapter-outbound/local/one/extract/component_ledger_tests.rs"]
 mod component_ledger_tests;
+
+#[cfg(test)]
+// jig-ignore-next-line: exact syntax is indivisible
+#[path = "../../../../../../../tests/migration/pipeline/unit/adapter-outbound/local/one/extract/movie_decoding_tests.rs"]
+mod movie_decoding_tests;

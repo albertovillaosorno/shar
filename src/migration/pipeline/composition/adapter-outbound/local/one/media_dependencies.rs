@@ -41,7 +41,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 /// Keeps portable media tools outside Git but inside the repository tree.
-const REPO_FFMPEG_DIR: &str = "dependencies/ffmpeg";
+const REPO_FFMPEG_DIR: &str = ".dependencies/ffmpeg";
 /// Downloads the full Windows build because the essentials build omits HAP.
 const FFMPEG_FULL_BUILD_URL: &str =
     "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full.7z";
@@ -76,7 +76,7 @@ pub(super) fn ensure_ffmpeg_dependency() -> Result<(), String> {
             .map_err(|error| {
                 format!(
                     "movie export requires {executable} in PATH or \
-                         dependencies/ffmpeg/bin: {error}"
+                         .dependencies/ffmpeg/bin: {error}"
                 )
             })?;
         if !output.status.success() {
@@ -88,7 +88,7 @@ pub(super) fn ensure_ffmpeg_dependency() -> Result<(), String> {
     if !media_tool_has_hap_encoder(&media_tool_path("ffmpeg"))? {
         return Err(concat!(
             "movie export requires an ffmpeg build with the HAP encoder; ",
-            "the pipeline installs one under dependencies/ffmpeg unless ",
+            "the pipeline installs one under .dependencies/ffmpeg unless ",
             "SHAR_UNREAL_FFMPEG_DIR overrides the tool directory"
         )
         .to_owned());
@@ -282,3 +282,8 @@ fn repo_ffmpeg_bin_dir() -> PathBuf {
 fn path_error(path: &Path) -> impl FnOnce(std::io::Error) -> String + '_ {
     move |error| format!("{}: {error}", path.display())
 }
+
+#[cfg(test)]
+// jig-ignore-next-line: exact syntax is indivisible
+#[path = "../../../../../../../tests/migration/pipeline/unit/adapter-outbound/local/one/media_dependencies/tests.rs"]
+mod tests;

@@ -87,6 +87,7 @@ bik
 BINK
 Bink
 bink
+binkw
 binop
 binormal
 BINORMALLIST

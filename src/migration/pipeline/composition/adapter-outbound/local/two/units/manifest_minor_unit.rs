@@ -359,6 +359,7 @@ fn collect_files(root: &Path) -> PipelineOutcome<Vec<PathBuf>> {
 /// Should skip local game file.
 fn should_skip_local_game_file(relative: &Path, extension: &str) -> bool {
     relative == Path::new("manifest.jsonl")
+        || matches!(extension, "dll" | "exe" | "ico" | "iso")
         || extension == "png"
         || extension == "schoenwald-original"
 }
