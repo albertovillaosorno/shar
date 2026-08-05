@@ -58,6 +58,18 @@ Both names are aliases. They report every replacement, addition, and skip with a
 relative output path, normalized byte count, and SHA-256 evidence without
 modifying the game or extraction roots.
 
+When either supported package is present, commands that can apply it require
+explicit approval after review:
+
+```text
+pipeline extract-game game extracted --approve-optional-mods
+pipeline extract-game-resume game extracted --approve-optional-mods
+pipeline export-lmlm game extracted --approve-optional-mods
+```
+
+The flag is rejected by read-only and unrelated commands. It is unnecessary
+when no optional package is present.
+
 ## Deterministic Unreal staging
 
 After extraction, indexing, and audit succeed, the pipeline can generate the
