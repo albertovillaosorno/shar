@@ -408,7 +408,7 @@ pub(super) fn claim_normalized_output(
     let key = portable_identity(Path::new(normalized_output));
     if let Some(first) = claimed.get(&key) {
         return Err(PipelineError::new(format!(
-            "{policy} output conflict: {first:?} and {source:?} both map to {key:?}"
+            "{policy} output conflict: {first:?} and {source:?} both map              to {key:?}"
         )));
     }
     let _previous = claimed.insert(key, source.to_owned());
