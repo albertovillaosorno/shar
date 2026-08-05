@@ -57,6 +57,10 @@ WORLD_OBJECTS_IGNORE_RULE = (
     "!src/unreal/project/composition/uproject/Content/__ExternalObjects__/SHAR/Maps/OpenWorld/"
     f"{WORLD_NAME}/**/*.uasset"
 )
+WORLD_HLOD_IGNORE_RULE = (
+    "!src/unreal/project/composition/uproject/Content/SHAR/Maps/OpenWorld/"
+    f"{WORLD_NAME}_HLOD0_Instancing.uasset"
+)
 WORLD_LFS_RULE = (
     "src/unreal/project/composition/uproject/Content/SHAR/Maps/OpenWorld/"
     f"{WORLD_NAME}.umap "
@@ -86,7 +90,38 @@ def test_structural_guide_content_is_never_cooked() -> None:
     )
 
 
-def test_structural_guide_is_local_and_world_is_lfs_published() -> None:
+def test_empty_world_shell_retains_only_world_data_layers() -> None:
+    content_root = PROJECT_ROOT / "Content"
+    actor_root = (
+        content_root
+        / "__ExternalActors__/SHAR/Maps/OpenWorld"
+        / WORLD_NAME
+    )
+    object_root = (
+        content_root
+        / "__ExternalObjects__/SHAR/Maps/OpenWorld"
+        / WORLD_NAME
+    )
+    map_root = content_root / "SHAR/Maps/OpenWorld"
+
+    actor_packages = sorted(
+        path for path in actor_root.rglob("*.uasset") if path.is_file()
+    )
+    object_packages = sorted(
+        path for path in object_root.rglob("*.uasset") if path.is_file()
+    ) if object_root.exists() else []
+    hlod_packages = sorted(
+        path for path in map_root.glob(f"{WORLD_NAME}_HLOD*.uasset")
+        if path.is_file()
+    )
+
+    assert len(actor_packages) == 1
+    assert b"WorldDataLayers" in actor_packages[0].read_bytes()
+    assert object_packages == []
+    assert hlod_packages == []
+
+
+def test_only_empty_world_shell_is_lfs_published() -> None:
     ignore_rules = set(
         (REPOSITORY_ROOT / ".gitignore")
         .read_text(encoding="utf-8")
@@ -100,6 +135,10 @@ def test_structural_guide_is_local_and_world_is_lfs_published() -> None:
 
     assert GUIDE_IGNORE_RULE in ignore_rules
     assert WORLD_MAP_IGNORE_RULE in ignore_rules
-    assert WORLD_ACTORS_IGNORE_RULE in ignore_rules
-    assert WORLD_OBJECTS_IGNORE_RULE in ignore_rules
+    assert WORLD_ACTORS_IGNORE_RULE not in ignore_rules
+    assert WORLD_OBJECTS_IGNORE_RULE not in ignore_rules
+    assert WORLD_HLOD_IGNORE_RULE not in ignore_rules
     assert WORLD_LFS_RULE in attribute_rules
+    assert not any("__ExternalActors__" in rule for rule in attribute_rules)
+    assert not any("__ExternalObjects__" in rule for rule in attribute_rules)
+    assert not any("_HLOD" in rule for rule in attribute_rules)
