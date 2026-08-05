@@ -107,7 +107,7 @@ impl CliProgram for PipelineCli {
                 return CommandOutcome::failure()
                     .stderr_line(format!("invalid arguments: {error}"))
                     .stderr_line(USAGE);
-            },
+            }
         };
         if parsed.embed_textures && command != "fbx-export" {
             return CommandOutcome::failure().stderr_line(
@@ -126,7 +126,7 @@ fn run_active_command(arguments: &[String]) -> CommandOutcome {
     match RunRegistry::current_workspace().active_lines() {
         Ok(lines) if lines.is_empty() => {
             CommandOutcome::success().stdout_line("no active pipeline runs")
-        },
+        }
         Ok(lines) => lines
             .into_iter()
             .fold(CommandOutcome::success(), CommandOutcome::stdout_line),
@@ -146,7 +146,7 @@ fn run_cancel_command(arguments: &[String]) -> CommandOutcome {
     match RunRegistry::current_workspace().request_cancel(target) {
         Ok(requested) if requested.is_empty() => {
             CommandOutcome::success().stdout_line("no active pipeline runs")
-        },
+        }
         Ok(requested) => requested.into_iter().fold(
             CommandOutcome::success(),
             |outcome, run_id| {
@@ -198,10 +198,7 @@ fn dispatch_known_command(
     command: &str,
     parsed: &ParsedArguments,
 ) -> CommandOutcome {
-    if matches!(
-        command,
-        "preview-optional-mods" | "dry-run-optional-mods"
-    ) {
+    if matches!(command, "preview-optional-mods" | "dry-run-optional-mods") {
         return run_optional_mod_preview(&parsed.positionals);
     }
     if command == "plan-fbx-package" {
@@ -232,9 +229,12 @@ fn dispatch_known_command(
         return run_structural_guide(&parsed.positionals);
     }
     if command == "fbx-export" {
-        return run_fbx_export(&parsed.positionals, FbxExportOptions {
-            embed_textures: parsed.embed_textures,
-        });
+        return run_fbx_export(
+            &parsed.positionals,
+            FbxExportOptions {
+                embed_textures: parsed.embed_textures,
+            },
+        );
     }
     run_pipeline_command(command, &parsed.positionals)
 }
@@ -270,7 +270,7 @@ fn render_setup_failure(
         Ok(()) => outcome,
         Err(error) => {
             outcome.stderr_line(format!("pipeline run cleanup failed: {error}"))
-        },
+        }
     }
 }
 
@@ -337,7 +337,7 @@ fn run_optional_mod_preview(arguments: &[String]) -> CommandOutcome {
     match application.preview_optional_mods(&game_root, &extracted_root) {
         Ok(preview) => {
             CommandOutcome::success().stdout_line(preview.json().to_owned())
-        },
+        }
         Err(error) => CommandOutcome::failure()
             .stderr_line(format!("optional-mod preview failed: {error}")),
     }
@@ -374,7 +374,7 @@ fn run_pipeline_command(command: &str, arguments: &[String]) -> CommandOutcome {
                 &config.game_root,
                 &config.extracted_root,
             ))
-        },
+        }
         "metadata-fill-minor-units" => one_stage(
             application.fill_minor_unit_metadata(&config.extracted_root),
         ),
@@ -383,10 +383,10 @@ fn run_pipeline_command(command: &str, arguments: &[String]) -> CommandOutcome {
         ),
         "index-minor-units" => {
             one_stage(application.index_minor_units(&config.extracted_root))
-        },
+        }
         "audit-minor-units" => {
             one_stage(application.audit_minor_units(&config.extracted_root))
-        },
+        }
         "prepare-unreal" => application.prepare_unreal(&config),
         _ => application.run(&config),
     };
@@ -412,7 +412,7 @@ fn run_fbx_manifest(arguments: &[String]) -> CommandOutcome {
         Err(error) => {
             return CommandOutcome::failure()
                 .stderr_line(format!("invalid selector: {error}"));
-        },
+        }
     };
     let provider = LocalPipeline;
     let application = PipelineService::new(&provider);
@@ -641,7 +641,7 @@ fn run_fbx_export(
         Err(error) => {
             return CommandOutcome::failure()
                 .stderr_line(format!("invalid selector: {error}"));
-        },
+        }
     };
     let provider = LocalPipeline;
     let application = PipelineService::new(&provider);
@@ -666,7 +666,9 @@ fn missing_argument(name: &str) -> CommandOutcome {
 fn one_stage(
     result: Result<StageReport, PipelineError>,
 ) -> Result<PipelineReport, PipelineError> {
-    result.map(|stage| PipelineReport { stages: vec![stage] })
+    result.map(|stage| PipelineReport {
+        stages: vec![stage],
+    })
 }
 
 /// Renders one pipeline result and optional output inventory.
@@ -716,6 +718,7 @@ fn render_success(
 }
 
 #[cfg(test)]
+#[rustfmt::skip]
 // jig-ignore-next-line: exact syntax is indivisible
 #[path = "../../../../../tests/migration/pipeline/unit/adapter-inbound/cli/tests.rs"]
 mod tests;

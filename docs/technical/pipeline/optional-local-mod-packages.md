@@ -96,7 +96,8 @@ role, package-relative source identity, action, reason, predicted output path,
 normalized byte count, and SHA-256 digest when it would write output.
 
 The action is one of `replace`, `add`, or `skip`. Skipped members have no output
-path or digest and carry a stable policy reason. Paths remain repository-relative
+path or digest and carry a stable policy reason. Paths remain
+repository-relative
 and the document never exposes the local package location or payload bytes.
 
 Preview is read-only with respect to the game and extraction roots. Voice media
@@ -123,9 +124,11 @@ package set changes.
 
 ## Verification
 
-The policy is covered by unit tests for no package, either alias, both aliases,
+The policy is covered by unit tests for no package, either alias, both
+aliases,
 unknown aliases, existing-only remaster replacement, skipped remaster additions,
-Latino media classification, read-only empty previews, canonical CLI aliases, and
+Latino media classification, read-only empty previews, canonical CLI aliases,
+and
 extra-argument rejection.
 
 The maximum supported local snapshot was extracted successfully on 2026-08-04

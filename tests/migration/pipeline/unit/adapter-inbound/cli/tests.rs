@@ -141,13 +141,19 @@ fn optional_mod_preview_rejects_extra_positionals() -> Result<(), String> {
         "extra".to_owned(),
     ]);
     if outcome.status() != ExitStatus::Failure {
-        return Err("extra optional-mod preview positional must fail".to_owned());
+        return Err(
+            "extra optional-mod preview positional must fail".to_owned()
+        );
     }
     let [diagnostic] = outcome.output() else {
-        return Err("extra preview positional must emit one diagnostic".to_owned());
+        return Err(
+            "extra preview positional must emit one diagnostic".to_owned()
+        );
     };
-    if diagnostic.text() != "unexpected positional argument: extra
-" {
+    if diagnostic.text()
+        != "unexpected positional argument: extra
+"
+    {
         return Err(format!(
             "unexpected preview positional diagnostic: {:?}",
             diagnostic.text()
