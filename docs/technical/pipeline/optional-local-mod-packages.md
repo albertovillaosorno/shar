@@ -152,6 +152,12 @@ duplicate identity, case-insensitive collision, unsupported alias, symlinked
 package, escaped output, or attempted Latino overwrite fails before successful
 stage completion.
 
+Every supported replacement or addition claims its portable repository-relative
+output before conversion, output-directory creation, or writing. Two entries
+that normalize to the same output fail with a diagnostic containing both exact
+package-relative source entries and the contested output identity. The failed
+request leaves earlier candidates unpublished.
+
 All packages are parsed before package writes begin. The full extraction remains
 a clean generated build and is regenerated from the source installation when a
 package set changes.
@@ -163,7 +169,8 @@ aliases,
 unknown aliases, existing-only remaster replacement, skipped remaster additions,
 Latino media classification, read-only empty previews, canonical CLI aliases,
 command-scoped exact-token approval, malformed and stale-token rejection,
-pre-parse and pre-mutation approval failure, and extra-argument rejection.
+pre-parse and pre-mutation approval failure, pre-conversion output-conflict
+rejection with both source identities, and extra-argument rejection.
 
 The maximum supported local snapshot was extracted successfully on 2026-08-04
 with all locally supplied official languages and both tested packages. The run
