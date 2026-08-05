@@ -30,12 +30,6 @@
 *.zip binary
 # End binary file types governed by Jig
 
-# Canonical authored World Partition map publication
+# Canonical empty World Partition map shell.
 # jig-ignore-next-line: exact value is indivisible
 src/unreal/project/composition/uproject/Content/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld.umap filter=lfs diff=lfs merge=lfs -text
-# jig-ignore-next-line: exact value is indivisible
-src/unreal/project/composition/uproject/Content/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld_HLOD0_Instancing.uasset filter=lfs diff=lfs merge=lfs -text
-# jig-ignore-next-line: exact value is indivisible
-src/unreal/project/composition/uproject/Content/__ExternalActors__/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld/** filter=lfs diff=lfs merge=lfs -text
-# jig-ignore-next-line: exact value is indivisible
-src/unreal/project/composition/uproject/Content/__ExternalObjects__/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld/** filter=lfs diff=lfs merge=lfs -text
