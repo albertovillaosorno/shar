@@ -29,30 +29,23 @@
 //   - Every package is structurally validated before preview evidence is built.
 //
 
-#![expect(
-    clippy::create_dir,
-    reason = "Single-directory creation is required to claim one unique preview workspace atomically."
-)]
-
 //! Read-only optional-package planning and canonical preview rendering.
 
 use std::collections::{BTreeMap, BTreeSet};
-use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicU64, Ordering};
 
 use lmlm::{FileEntry, entry_bytes, parse as parse_lmlm};
 use rmv::Sha256;
-use schoenwald_filesystem::adapters::driving::local::create_dir_all as local_create_dir_all;
 use serde::Serialize;
 
 use super::optional_mods::{
-    OptionalModArchive, OptionalModRole, discover_optional_mods, existing_file_index,
-    is_latino_audio_path, is_latino_movie_path, portable_identity,
-    read_optional_mod_bytes, relative_output, remaster_relative_path,
+    OptionalModArchive, OptionalModRole, create_optional_mod_work_root,
+    discover_optional_mods, existing_file_index, is_latino_audio_path,
+    is_latino_movie_path, portable_identity, read_optional_mod_bytes,
+    relative_output, remaster_relative_path,
 };
 use super::{
-    PipelineOutcome, decode_lmlm_movie_audio, io_error, lmlm_entry_path, rsd_bytes_to_wav,
+    PipelineOutcome, decode_lmlm_movie_audio, lmlm_entry_path, rsd_bytes_to_wav,
 };
 use crate::adapters::driven::check_cancellation;
 use crate::domain::{OPTIONAL_MOD_PREVIEW_SCHEMA, OptionalModPreview, PipelineError};
@@ -126,11 +119,6 @@ struct ParsedArchive {
     entries: Vec<FileEntry>,
 }
 
-/// Per-process nonce for collision-free temporary preview roots.
-static NEXT_PREVIEW_ROOT: AtomicU64 = AtomicU64::new(0);
-/// Maximum existing temporary roots skipped before failing closed.
-const MAX_PREVIEW_ROOT_ATTEMPTS: usize = 1_024;
-
 /// Builds a canonical read-only preview for zero, one, or both packages.
 pub(in crate::adapters::driven::local) fn preview_optional_mods(
     game_root: &Path,
@@ -147,46 +135,20 @@ pub(in crate::adapters::driven::local) fn preview_optional_mods(
     } else {
         BTreeMap::new()
     };
-    let work_root = create_preview_work_root()?;
+    let work_root = create_optional_mod_work_root("preview")?;
     let result = build_preview(
         &parsed,
         extracted_root,
         &generated_mod_root,
         &base_files,
-        &work_root,
+        work_root.path(),
     );
-    let cleanup = fs::remove_dir_all(&work_root).map_err(io_error(&work_root));
+    let cleanup = work_root.cleanup();
     match (result, cleanup) {
         (Ok(preview), Ok(())) => Ok(preview),
         (Err(error), _) => Err(error),
         (Ok(_preview), Err(error)) => Err(error),
     }
-}
-
-pub(super) fn create_preview_work_root() -> PipelineOutcome<PathBuf> {
-    let parent = std::env::temp_dir().join("shar-schoenwald");
-    local_create_dir_all(&parent).map_err(io_error(&parent))?;
-    let metadata = fs::symlink_metadata(&parent).map_err(io_error(&parent))?;
-    if !metadata.is_dir() || metadata.file_type().is_symlink() {
-        return Err(PipelineError::new(
-            "optional-mod preview temporary parent must be a real directory",
-        ));
-    }
-    for _attempt in 0..MAX_PREVIEW_ROOT_ATTEMPTS {
-        let sequence = NEXT_PREVIEW_ROOT.fetch_add(1, Ordering::Relaxed);
-        let candidate = parent.join(format!(
-            "lmlm-preview-{}-{sequence}",
-            std::process::id()
-        ));
-        match fs::create_dir(&candidate) {
-            Ok(()) => return Ok(candidate),
-            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {},
-            Err(error) => return Err(io_error(&candidate)(error)),
-        }
-    }
-    Err(PipelineError::new(
-        "failed to allocate a unique optional-mod preview workspace",
-    ))
 }
 
 fn parse_archives(
