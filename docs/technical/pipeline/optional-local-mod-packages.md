@@ -1,7 +1,7 @@
 # Optional local mod packages
 
 - Status: Active
-- Last reviewed: 2026-08-04
+- Last reviewed: 2026-08-05
 
 ## Governing decision
 
@@ -79,6 +79,37 @@ launcher resources, and every other non-audio member are skipped.
 - Generated records contain relative paths, byte counts, roles, and SHA-256
   evidence without publishing local package locations.
 
+## Read-only preview
+
+Use either canonical command to inspect the supported local package set before
+running extraction:
+
+```text
+pipeline preview-optional-mods game extracted --no-log
+pipeline dry-run-optional-mods game extracted --no-log
+```
+
+The two command names are aliases and produce byte-identical JSON. The document
+uses schema `shar-schoenwald.optional-mod-preview.v1` and records every package
+member in deterministic package-table order. Each member reports its alias,
+role, package-relative source identity, action, reason, predicted output path,
+normalized byte count, and SHA-256 digest when it would write output.
+
+The action is one of `replace`, `add`, or `skip`. Skipped members have no output
+path or digest and carry a stable policy reason. Paths remain repository-relative
+and the document never exposes the local package location or payload bytes.
+
+Preview is read-only with respect to the game and extraction roots. Voice media
+is normalized in memory. Cinematic audio is decoded only in a temporary working
+directory so that its predicted byte count and digest match extraction exactly;
+the temporary directory is removed before command completion.
+
+The maximum supported local snapshot was previewed on 2026-08-05. Both aliases
+reported 1,572 package members: 1,530 writes and 42 skips. Every predicted write
+matched the existing extraction manifest exactly by source identity, output,
+normalized byte count, and SHA-256 digest. A complete before-and-after hash of
+the optional extraction tree was unchanged.
+
 ## Failure behavior
 
 An invalid container, unsafe path, unsupported root control, duplicate identity,
@@ -94,7 +125,8 @@ package set changes.
 
 The policy is covered by unit tests for no package, either alias, both aliases,
 unknown aliases, existing-only remaster replacement, skipped remaster additions,
-and Latino media classification.
+Latino media classification, read-only empty previews, canonical CLI aliases, and
+extra-argument rejection.
 
 The maximum supported local snapshot was extracted successfully on 2026-08-04
 with all locally supplied official languages and both tested packages. The run
