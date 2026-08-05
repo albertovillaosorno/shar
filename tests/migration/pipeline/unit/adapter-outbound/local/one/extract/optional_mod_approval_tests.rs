@@ -67,7 +67,7 @@ fn unapproved_packages_fail_before_output_mutation() -> Result<(), String> {
         game_root: game_root.clone(),
         extracted_root,
         clean_extracted: true,
-        approve_optional_mods: false,
+        optional_mod_approval: None,
     };
     let clean_error = match ExtractGameAssets::run(&clean_config) {
         Ok(_report) => {
@@ -75,7 +75,7 @@ fn unapproved_packages_fail_before_output_mutation() -> Result<(), String> {
         }
         Err(error) => error.to_string(),
     };
-    if !clean_error.contains("require explicit approval")
+    if !clean_error.contains("approval token")
         || fs::read(&sentinel).map_err(|error| error.to_string())?
             != b"preserved"
     {
@@ -84,12 +84,29 @@ fn unapproved_packages_fail_before_output_mutation() -> Result<(), String> {
         );
     }
 
+    let stale_config = PipelineConfig {
+        game_root: game_root.clone(),
+        extracted_root: clean_config.extracted_root,
+        clean_extracted: true,
+        optional_mod_approval: Some("0".repeat(64)),
+    };
+    let stale_error = match ExtractGameAssets::run(&stale_config) {
+        Ok(_report) => return Err("stale package token succeeded".to_owned()),
+        Err(error) => error.to_string(),
+    };
+    if !stale_error.contains("does not match")
+        || fs::read(&sentinel).map_err(|error| error.to_string())?
+            != b"preserved"
+    {
+        return Err("stale token mutated extraction output".to_owned());
+    }
+
     let isolated_root = root.join("isolated");
     let isolated_config = PipelineConfig {
         game_root,
         extracted_root: isolated_root.clone(),
         clean_extracted: false,
-        approve_optional_mods: false,
+        optional_mod_approval: None,
     };
     if ExtractGameAssets::export_lmlm_only(&isolated_config).is_ok()
         || isolated_root.exists()

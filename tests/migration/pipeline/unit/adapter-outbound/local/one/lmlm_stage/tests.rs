@@ -40,7 +40,8 @@ use rmv::Sha256;
 use super::optional_mods::{
     OptionalModRole, apply_remaster, create_optional_mod_work_root,
     discover_optional_mods, existing_file_index, is_latino_audio_path,
-    is_latino_movie_path, optional_workspace_error,
+    is_latino_movie_path, optional_mod_approval_token,
+    optional_workspace_error,
 };
 use super::{extract_lmlm, preview_optional_mods};
 
@@ -58,7 +59,7 @@ fn missing_optional_lmlm_creates_no_output() -> Result<(), String> {
     fs::write(stale_output.join("manifest.json"), b"stale")
         .map_err(|error| error.to_string())?;
 
-    let report = extract_lmlm(&game_root, &extracted_root, false)
+    let report = extract_lmlm(&game_root, &extracted_root, None)
         .map_err(|error| error.to_string())?;
 
     if report.name != "lmlm" || report.files != 0 || report.bytes != 0 {
@@ -136,13 +137,13 @@ fn direct_optional_stage_requires_approval() -> Result<(), String> {
     fs::write(mods_root.join("m.lmlm"), b"fixture")
         .map_err(|error| error.to_string())?;
 
-    let error = match extract_lmlm(&game_root, &extracted_root, false) {
+    let error = match extract_lmlm(&game_root, &extracted_root, None) {
         Ok(_report) => {
             return Err("direct optional stage bypassed approval".to_owned());
         }
         Err(error) => error.to_string(),
     };
-    if !error.contains("require explicit approval") || extracted_root.exists() {
+    if !error.contains("approval token") || extracted_root.exists() {
         return Err("direct stage approval failure mutated output".to_owned());
     }
     fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
@@ -168,12 +169,18 @@ fn corrupt_optional_package_diagnostics_use_public_aliases()
         .and_then(|value| value.to_str())
         .ok_or_else(|| "fixture path lacks a portable name".to_owned())?;
 
-    let extract_error = match extract_lmlm(&game_root, &extracted_root, true) {
-        Ok(_report) => {
-            return Err("corrupt extraction package succeeded".to_owned());
-        }
-        Err(error) => error.to_string(),
-    };
+    let corrupt_token = optional_mod_approval_token([(
+        OptionalModRole::Remaster,
+        b"not an archive".as_slice(),
+    )])
+    .ok_or_else(|| "corrupt package token was missing".to_owned())?;
+    let extract_error =
+        match extract_lmlm(&game_root, &extracted_root, Some(&corrupt_token)) {
+            Ok(_report) => {
+                return Err("corrupt extraction package succeeded".to_owned());
+            }
+            Err(error) => error.to_string(),
+        };
     let preview_error = match preview_optional_mods(&game_root, &extracted_root)
     {
         Ok(_preview) => {
@@ -418,7 +425,11 @@ fn preview_matches_extracted_remaster_evidence() -> Result<(), String> {
         return Err("preview wrote the predicted remaster output".to_owned());
     }
 
-    let report = extract_lmlm(&game_root, &extracted_root, true)
+    let approval = preview
+        .approval_token()
+        .ok_or_else(|| "remaster preview token was missing".to_owned())?
+        .to_owned();
+    let report = extract_lmlm(&game_root, &extracted_root, Some(&approval))
         .map_err(|error| error.to_string())?;
     if report.files != 2 {
         return Err(format!(
@@ -582,7 +593,11 @@ fn preview_matches_extracted_latino_voice_evidence() -> Result<(), String> {
         );
     }
 
-    let report = extract_lmlm(&game_root, &extracted_root, true)
+    let approval = preview
+        .approval_token()
+        .ok_or_else(|| "voice preview token was missing".to_owned())?
+        .to_owned();
+    let report = extract_lmlm(&game_root, &extracted_root, Some(&approval))
         .map_err(|error| error.to_string())?;
     if report.files != 2 {
         return Err(format!(

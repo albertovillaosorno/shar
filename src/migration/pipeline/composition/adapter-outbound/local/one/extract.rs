@@ -122,7 +122,7 @@ impl ExtractGameAssets {
         guard_paths(&config.game_root, &config.extracted_root)?;
         require_optional_mod_approval(
             &config.game_root,
-            config.approve_optional_mods,
+            config.optional_mod_approval.as_deref(),
         )?;
         if config.clean_extracted && config.extracted_root.exists() {
             remove_generated_tree(&config.extracted_root).map_err(|error| {
@@ -161,7 +161,7 @@ impl ExtractGameAssets {
         report.stages.push(extract_lmlm(
             &config.game_root,
             &config.extracted_root,
-            config.approve_optional_mods,
+            config.optional_mod_approval.as_deref(),
         )?);
         check_cancellation()?;
         progress.advance("convert rsd audio");
@@ -230,7 +230,7 @@ impl ExtractGameAssets {
         guard_paths(&config.game_root, &config.extracted_root)?;
         require_optional_mod_approval(
             &config.game_root,
-            config.approve_optional_mods,
+            config.optional_mod_approval.as_deref(),
         )?;
         fs::create_dir_all(&config.extracted_root)
             .map_err(io_error(&config.extracted_root))?;
@@ -238,7 +238,7 @@ impl ExtractGameAssets {
         report.stages.push(extract_lmlm(
             &config.game_root,
             &config.extracted_root,
-            config.approve_optional_mods,
+            config.optional_mod_approval.as_deref(),
         )?);
         Ok(report)
     }

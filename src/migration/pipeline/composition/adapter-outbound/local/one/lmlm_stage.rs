@@ -60,13 +60,13 @@ use optional_mods::{
     OptionalModCounts, OptionalModRole, apply_remaster,
     create_optional_mod_work_root, discover_optional_mods, existing_file_index,
     is_latino_audio_path, is_latino_movie_path, read_optional_mod_bytes,
-    require_discovered_optional_mod_approval,
+    require_package_byte_approval,
 };
 
 /// Rejects optional package application without caller approval.
 pub(in crate::adapters::driven::local) fn require_optional_mod_approval(
     game_root: &Path,
-    approved: bool,
+    approved: Option<&str>,
 ) -> PipelineOutcome<()> {
     optional_mods::require_optional_mod_approval(game_root, approved)
 }
@@ -78,12 +78,12 @@ type PipelineOutcome<T> = Result<T, PipelineError>;
 pub(super) fn extract_lmlm(
     game_root: &Path,
     extracted_root: &Path,
-    approved: bool,
+    approved: Option<&str>,
 ) -> PipelineOutcome<StageReport> {
     let output_root = extracted_root.join("lmlm");
     let archives = discover_optional_mods(game_root)?;
-    require_discovered_optional_mod_approval(&archives, approved)?;
     if archives.is_empty() {
+        require_package_byte_approval(std::iter::empty(), approved)?;
         if output_root.exists() {
             fs::remove_dir_all(&output_root).map_err(io_error(&output_root))?;
         }
@@ -94,11 +94,24 @@ pub(super) fn extract_lmlm(
             note: "no supported optional LMLM packages present".to_owned(),
         });
     }
-    let parsed_archives = archives
+    let loaded_archives = archives
         .into_iter()
         .map(|archive| {
             check_cancellation()?;
             let data = read_optional_mod_bytes(&archive)?;
+            Ok((archive, data))
+        })
+        .collect::<PipelineOutcome<Vec<_>>>()?;
+    require_package_byte_approval(
+        loaded_archives
+            .iter()
+            .map(|(archive, data)| (archive.role, data.as_slice())),
+        approved,
+    )?;
+    let parsed_archives = loaded_archives
+        .into_iter()
+        .map(|(archive, data)| {
+            check_cancellation()?;
             let entries = parse_lmlm(&data).map_err(|error| {
                 PipelineError::new(format!("{}: {error}", archive.role.alias()))
             })?;

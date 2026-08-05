@@ -214,27 +214,45 @@ pub(super) fn optional_mod_approval_token<'a>(
     (count != 0).then(|| Sha256::digest(&evidence).hex())
 }
 
-/// Rejects one discovered package set without explicit caller approval.
-pub(super) fn require_discovered_optional_mod_approval(
-    archives: &[OptionalModArchive],
-    approved: bool,
+/// Verifies approval against one exact ordered package byte set.
+pub(super) fn require_package_byte_approval<'a>(
+    packages: impl IntoIterator<Item = (OptionalModRole, &'a [u8])>,
+    approved: Option<&str>,
 ) -> PipelineOutcome<()> {
-    if !archives.is_empty() && !approved {
-        return Err(PipelineError::new(concat!(
-            "optional packages require explicit approval; run a preview ",
-            "and retry with --approve-optional-mods"
-        )));
+    match (optional_mod_approval_token(packages), approved) {
+        (None, None) => Ok(()),
+        (Some(_actual), None) => Err(PipelineError::new(concat!(
+            "optional packages require an approval token from the current ",
+            "preview"
+        ))),
+        (Some(actual), Some(expected)) if actual == expected => Ok(()),
+        (_, Some(_)) => Err(PipelineError::new(concat!(
+            "optional package approval token does not match the current ",
+            "package set; rerun the preview"
+        ))),
     }
-    Ok(())
 }
 
-/// Discovers packages and rejects them without explicit caller approval.
+/// Discovers packages and verifies their exact bytes before mutation.
 pub(super) fn require_optional_mod_approval(
     game_root: &Path,
-    approved: bool,
+    approved: Option<&str>,
 ) -> PipelineOutcome<()> {
     let archives = discover_optional_mods(game_root)?;
-    require_discovered_optional_mod_approval(&archives, approved)
+    let packages = archives
+        .iter()
+        .map(|archive| {
+            check_cancellation()?;
+            let bytes = read_optional_mod_bytes(archive)?;
+            Ok((archive.role, bytes))
+        })
+        .collect::<PipelineOutcome<Vec<_>>>()?;
+    require_package_byte_approval(
+        packages
+            .iter()
+            .map(|(role, bytes)| (*role, bytes.as_slice())),
+        approved,
+    )
 }
 
 /// Counters produced by one package application.

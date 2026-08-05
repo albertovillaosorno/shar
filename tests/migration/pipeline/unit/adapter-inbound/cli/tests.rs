@@ -135,7 +135,7 @@ fn optional_mod_approval_is_limited_to_mutating_commands() -> Result<(), String>
     }
     let outcome = PipelineCli.execute(&[
         "preview-optional-mods".to_owned(),
-        "--approve-optional-mods".to_owned(),
+        format!("--approve-optional-mods={}", "a".repeat(64)),
         "--no-log".to_owned(),
     ]);
     if outcome.status() != ExitStatus::Failure {
