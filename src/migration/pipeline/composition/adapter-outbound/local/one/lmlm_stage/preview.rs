@@ -43,15 +43,13 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use lmlm::{FileEntry, entry_bytes, parse as parse_lmlm};
 use rmv::Sha256;
-use schoenwald_filesystem::adapters::driving::local::{
-    create_dir_all as local_create_dir_all, read_bytes as local_read_bytes,
-};
+use schoenwald_filesystem::adapters::driving::local::create_dir_all as local_create_dir_all;
 use serde::Serialize;
 
 use super::optional_mods::{
     OptionalModArchive, OptionalModRole, discover_optional_mods, existing_file_index,
-    is_latino_audio_path, is_latino_movie_path, portable_identity, relative_output,
-    remaster_relative_path,
+    is_latino_audio_path, is_latino_movie_path, portable_identity,
+    read_optional_mod_bytes, relative_output, remaster_relative_path,
 };
 use super::{
     PipelineOutcome, decode_lmlm_movie_audio, io_error, lmlm_entry_path, rsd_bytes_to_wav,
@@ -198,7 +196,7 @@ fn parse_archives(
         .into_iter()
         .map(|archive| {
             check_cancellation()?;
-            let data = local_read_bytes(&archive.path).map_err(io_error(&archive.path))?;
+            let data = read_optional_mod_bytes(&archive)?;
             let entries = parse_lmlm(&data).map_err(|error| {
                 PipelineError::new(format!("{}: {error}", archive.role.alias()))
             })?;
