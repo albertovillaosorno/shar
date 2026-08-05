@@ -280,7 +280,9 @@ pub(super) fn existing_file_index(
                 "case-insensitive collision in extracted base files",
             ));
         }
-        let _previous = files.insert(key, path);
+        if source_keys.contains(&key) {
+            let _previous = files.insert(key, path);
+        }
     }
     Ok(files)
 }
