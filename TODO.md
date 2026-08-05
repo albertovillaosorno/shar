@@ -81,6 +81,8 @@ Current task list. Project phases and dated progress are recorded in
 
 - [ ] Define deterministic mod identity, dependencies, priority, compatibility,
   supersession, and conflict rules.
+  - [x] Detect duplicate normalized output paths before conversion or writing.
+  - [x] Reject ambiguous outputs and report both exact source entries.
 - [ ] Support validated replacement and extension packages for assets and data.
 - [ ] Keep the unmodified faithful port as the default base-game package.
 - [ ] Use one normalized desktop and Android mod import contract.
