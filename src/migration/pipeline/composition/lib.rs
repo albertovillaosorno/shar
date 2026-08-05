@@ -34,9 +34,11 @@
 pub mod adapters;
 #[path = "../application/mod.rs"]
 pub mod application;
+#[rustfmt::skip]
 #[path = "../domain/mod.rs"]
 pub mod domain;
 mod package_index;
+#[rustfmt::skip]
 #[path = "../port-outbound/mod.rs"]
 pub mod ports;
 

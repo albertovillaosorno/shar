@@ -30,6 +30,7 @@
 
 //! Adapter outbound outbound adapter.
 
+#[rustfmt::skip]
 mod local;
 mod output_inventory;
 
