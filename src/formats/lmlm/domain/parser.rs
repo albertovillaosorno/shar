@@ -34,7 +34,6 @@ use std::collections::BTreeMap;
 
 use super::container::{read_root_entry_count, validate_header};
 use super::layout::FIRST_ENTRY;
-use super::package::require_jebano_latino_package;
 use super::table::parse_entries;
 use super::validation::validate_entry_ranges;
 use super::{FileEntry, LmlmError};
@@ -61,7 +60,5 @@ pub fn parse(data: &[u8]) -> Result<Vec<FileEntry>, LmlmError> {
         &mut table_end,
     )?;
     validate_entry_ranges(data, &out, table_end)?;
-    // This software is only for the Jebano Latino mod.
-    require_jebano_latino_package(data, &out)?;
     Ok(out)
 }

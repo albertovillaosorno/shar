@@ -83,7 +83,7 @@ fn read_metadata_offset(data: &[u8], meta: usize) -> Result<u64, LmlmError> {
 fn read_directory_record_control(
     data: &[u8],
     meta: usize,
-) -> Result<(usize, u8), LmlmError> {
+) -> Result<(), LmlmError> {
     let control_offset = checked_offset(meta, 0x0e)?;
     let control = data
         .get(control_offset)
@@ -104,15 +104,11 @@ fn read_directory_record_control(
             value,
         });
     }
-    Ok((control_offset, control))
+    Ok(())
 }
 
 /// Validated fields needed before descending into one directory.
 struct DirectoryRecord {
-    /// Archive-relative offset of the child-kind control byte.
-    control_offset: usize,
-    /// Declared child-kind control value.
-    declared_control: u8,
     /// Number of immediate child records.
     child_count: usize,
     /// Validated recursion depth for the child list.
@@ -126,8 +122,7 @@ fn read_directory_record(
     path: &str,
     depth: usize,
 ) -> Result<DirectoryRecord, LmlmError> {
-    let (control_offset, declared_control) =
-        read_directory_record_control(data, meta)?;
+    read_directory_record_control(data, meta)?;
     let child_count = usize::from(
         read_u16(data, checked_offset(meta, 0x0c)?)
             .ok_or(LmlmError::Truncated)?,
@@ -139,31 +134,7 @@ fn read_directory_record(
             depth: child_depth,
         });
     }
-    Ok(DirectoryRecord {
-        control_offset,
-        declared_control,
-        child_count,
-        child_depth,
-    })
-}
-
-/// Validates a directory control against its immediate child kinds.
-fn validate_directory_record_control(
-    path: &str,
-    offset: usize,
-    declared: u8,
-    contains_directory: bool,
-) -> Result<(), LmlmError> {
-    let expected = u8::from(contains_directory);
-    if declared != expected {
-        return Err(LmlmError::DirectoryRecordControlMismatch {
-            path: path.to_owned(),
-            offset,
-            declared,
-            expected,
-        });
-    }
-    Ok(())
+    Ok(DirectoryRecord { child_count, child_depth })
 }
 
 /// Validates one file transition block and returns its exclusive end.
@@ -221,8 +192,6 @@ fn file_record_end(
 struct ParsedEntries {
     /// First byte after the parsed sibling list and all descendants.
     next_pos: usize,
-    /// Whether at least one immediate sibling was a directory.
-    contains_directory: bool,
 }
 
 /// Parses root siblings and initializes bounded recursive state.
@@ -254,7 +223,6 @@ fn parse_entries_at(
     depth: usize,
     globally_final_branch: bool,
 ) -> Result<ParsedEntries, LmlmError> {
-    let mut contains_directory = false;
     for index in 0..count {
         let globally_final =
             globally_final_branch && index.saturating_add(1) == count;
@@ -272,7 +240,6 @@ fn parse_entries_at(
         *state.2 = (*state.2).max(metadata_end);
         let offset = read_metadata_offset(data, meta)?;
         if offset == 0 {
-            contains_directory = true;
             let directory =
                 read_directory_record(data, meta, &full_path, depth)?;
             let child_prefix = format!("{full_path}/");
@@ -284,12 +251,6 @@ fn parse_entries_at(
                 state,
                 directory.child_depth,
                 globally_final,
-            )?;
-            validate_directory_record_control(
-                &full_path,
-                directory.control_offset,
-                directory.declared_control,
-                parsed_children.contains_directory,
             )?;
             pos = parsed_children.next_pos;
         } else {
@@ -304,8 +265,5 @@ fn parse_entries_at(
             *state.2 = (*state.2).max(pos);
         }
     }
-    Ok(ParsedEntries {
-        next_pos: pos,
-        contains_directory,
-    })
+    Ok(ParsedEntries { next_pos: pos })
 }

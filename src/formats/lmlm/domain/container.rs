@@ -84,11 +84,19 @@ pub(crate) fn validate_header(data: &[u8]) -> Result<(), LmlmError> {
 pub(crate) fn read_root_entry_count(data: &[u8]) -> Result<usize, LmlmError> {
     for (start, len) in [
         (ROOT_BLOCK, 2),
-        (ROOT_BLOCK.saturating_add(4), BLOCK.saturating_sub(4)),
+        (ROOT_BLOCK.saturating_add(8), BLOCK.saturating_sub(8)),
     ] {
         if let Some((offset, value)) = first_nonzero_byte(data, start, len)? {
             return Err(LmlmError::NonZeroReservedRootBlock { offset, value });
         }
+    }
+    let flags_offset = checked_offset(ROOT_BLOCK, 4)?;
+    let flags = read_u32(data, flags_offset).ok_or(LmlmError::Truncated)?;
+    if flags > 1 {
+        return Err(LmlmError::UnsupportedRootFlags {
+            offset: flags_offset,
+            value: flags,
+        });
     }
     read_u16(data, checked_offset(ROOT_BLOCK, 2)?)
         .map(usize::from)

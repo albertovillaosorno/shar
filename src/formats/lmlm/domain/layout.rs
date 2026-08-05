@@ -58,9 +58,3 @@ pub(crate) const VERSION: u32 = 5;
 pub(crate) const HEADER_FLAGS_OFFSET: usize = 0x0c;
 /// Supported LSPA container flags.
 pub(crate) const HEADER_FLAGS: u32 = 0x0200_0000;
-/// Root metadata entry that owns the supported package identity.
-pub(crate) const PACKAGE_METADATA_PATH: &str = "Meta.ini";
-/// LF marker pins extraction to the one local package this parser was built
-/// for.
-pub(crate) const JEBANO_TITLE_LF: &[u8] =
-    b"[Miscellaneous]\nTitle=The Simpsons: Hit & Run - Version Latino";

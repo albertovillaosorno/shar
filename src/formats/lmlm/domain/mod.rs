@@ -37,7 +37,6 @@ mod entry;
 mod error;
 mod layout;
 mod name;
-mod package;
 mod parser;
 mod payload;
 mod table;
