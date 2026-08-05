@@ -30,6 +30,7 @@
 
 //! Lmlm stage outbound adapter.
 
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -58,8 +59,9 @@ pub(in crate::adapters::driven::local) use preview::preview_optional_mods;
 
 use optional_mods::{
     OptionalModCounts, OptionalModRole, apply_remaster,
-    create_optional_mod_work_root, discover_optional_mods, existing_file_index,
-    is_latino_audio_path, is_latino_movie_path, read_optional_mod_bytes,
+    claim_normalized_output, create_optional_mod_work_root,
+    discover_optional_mods, existing_file_index, is_latino_audio_path,
+    is_latino_movie_path, read_optional_mod_bytes,
     require_package_byte_approval,
 };
 
@@ -221,6 +223,35 @@ fn extract_latino_media(
     records: &mut Vec<String>,
 ) -> PipelineOutcome<OptionalModCounts> {
     let latino_root = output_root.join("latino");
+    let mut claimed_outputs = BTreeMap::new();
+    for entry in entries {
+        check_cancellation()?;
+        let _bytes = entry_bytes(data, entry).ok_or_else(|| {
+            PipelineError::new(format!(
+                "{}: LMLM entry out of bounds",
+                entry.path
+            ))
+        })?;
+        let destination = if is_latino_audio_path(&entry.path) {
+            Some(
+                lmlm_entry_path(&latino_root, &entry.path)
+                    .with_extension("wav"),
+            )
+        } else if is_latino_movie_path(&entry.path) {
+            Some(latino_movie_destination(&latino_root, &entry.path))
+        } else {
+            None
+        };
+        if let Some(destination) = destination {
+            let output = relative_output(extracted_root, &destination)?;
+            claim_normalized_output(
+                &mut claimed_outputs,
+                &output,
+                &entry.path,
+                "Latino",
+            )?;
+        }
+    }
     local_create_dir_all(&latino_root).map_err(io_error(&latino_root))?;
     let mut counts = OptionalModCounts::default();
     let mut progress = StageProgress::begin("latino members", entries.len());
@@ -301,6 +332,18 @@ fn rsd_bytes_to_wav(bytes: &[u8], source: &str) -> PipelineOutcome<Vec<u8>> {
         .map_err(|error| PipelineError::new(format!("{source}: {error}")))
 }
 
+/// Builds the deterministic output for one Latino cinematic audio stream.
+fn latino_movie_destination(output_root: &Path, entry_path: &str) -> PathBuf {
+    let stem = Path::new(entry_path)
+        .file_stem()
+        .and_then(|value| value.to_str())
+        .unwrap_or("movie");
+    output_root
+        .join("movies")
+        .join(stem)
+        .join("audio_track_01.wav")
+}
+
 /// Exports only the first audio stream from one Latino cinematic.
 fn export_lmlm_movie_audio(
     work_root: &Path,
@@ -320,14 +363,7 @@ fn export_lmlm_movie_audio(
         ));
         return Ok((0, 0));
     };
-    let stem = Path::new(entry_path)
-        .file_stem()
-        .and_then(|value| value.to_str())
-        .unwrap_or("movie");
-    let destination = output_root
-        .join("movies")
-        .join(stem)
-        .join("audio_track_01.wav");
+    let destination = latino_movie_destination(output_root, entry_path);
     write_lmlm_wav(
         &destination,
         &wav,
