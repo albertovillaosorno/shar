@@ -57,6 +57,7 @@ pub(in crate::adapters::driven::local) use preview::preview_optional_mods;
 use optional_mods::{
     OptionalModCounts, OptionalModRole, apply_remaster, discover_optional_mods,
     existing_file_index, is_latino_audio_path, is_latino_movie_path,
+    read_optional_mod_bytes,
 };
 
 /// Result.
@@ -84,9 +85,9 @@ pub(super) fn extract_lmlm(
         .into_iter()
         .map(|archive| {
             check_cancellation()?;
-            let data = local_read_bytes(&archive.path).map_err(io_error(&archive.path))?;
+            let data = read_optional_mod_bytes(&archive)?;
             let entries = parse_lmlm(&data).map_err(|error| {
-                PipelineError::new(format!("{}: {error}", archive.path.display()))
+                PipelineError::new(format!("{}: {error}", archive.role.alias()))
             })?;
             Ok((archive, data, entries))
         })

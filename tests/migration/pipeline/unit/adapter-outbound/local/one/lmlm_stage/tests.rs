@@ -119,6 +119,44 @@ fn missing_optional_lmlm_preview_is_read_only() -> Result<(), String> {
 }
 
 #[test]
+fn corrupt_optional_package_diagnostics_use_public_aliases() -> Result<(), String> {
+    let case = temp_root("corrupt-diagnostic");
+    if case.exists() {
+        fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    }
+    let game_root = case.join("game");
+    let extracted_root = case.join("extracted");
+    let mods_root = game_root.join("mods");
+    fs::create_dir_all(&mods_root).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&extracted_root).map_err(|error| error.to_string())?;
+    fs::write(mods_root.join("m.lmlm"), b"not an archive")
+        .map_err(|error| error.to_string())?;
+    let private_fragment = case
+        .file_name()
+        .and_then(|value| value.to_str())
+        .ok_or_else(|| "fixture path lacks a portable name".to_owned())?;
+
+    let extract_error = match extract_lmlm(&game_root, &extracted_root) {
+        Ok(_report) => return Err("corrupt extraction package succeeded".to_owned()),
+        Err(error) => error.to_string(),
+    };
+    let preview_error = match preview_optional_mods(&game_root, &extracted_root) {
+        Ok(_preview) => return Err("corrupt preview package succeeded".to_owned()),
+        Err(error) => error.to_string(),
+    };
+    for error in [&extract_error, &preview_error] {
+        if !error.contains("m.lmlm") || error.contains(private_fragment) {
+            return Err(format!("package diagnostic is not public-safe: {error}"));
+        }
+    }
+    if extracted_root.join("lmlm").exists() {
+        return Err("corrupt package changed extraction output".to_owned());
+    }
+    fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+#[test]
 fn preview_workspaces_are_unique_and_independently_owned() -> Result<(), String> {
     let first = create_preview_work_root().map_err(|error| error.to_string())?;
     let second = create_preview_work_root().map_err(|error| error.to_string())?;

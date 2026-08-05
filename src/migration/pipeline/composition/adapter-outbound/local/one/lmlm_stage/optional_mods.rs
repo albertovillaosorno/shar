@@ -37,6 +37,7 @@ use std::path::{Path, PathBuf};
 
 use lmlm::{FileEntry, entry_bytes};
 use rmv::Sha256;
+use schoenwald_filesystem::adapters::driving::local::read_bytes as local_read_bytes;
 
 use super::{PipelineOutcome, io_error, write_bytes};
 use crate::adapters::driven::check_cancellation;
@@ -89,6 +90,19 @@ pub(super) struct OptionalModArchive {
     pub(super) role: OptionalModRole,
     /// Package path under the local mods directory.
     pub(super) path: PathBuf,
+}
+
+/// Reads one discovered package without exposing its local location.
+pub(super) fn read_optional_mod_bytes(
+    archive: &OptionalModArchive,
+) -> PipelineOutcome<Vec<u8>> {
+    local_read_bytes(&archive.path).map_err(|error| {
+        PipelineError::new(format!(
+            "{}: optional package read failed ({:?})",
+            archive.role.alias(),
+            error.kind()
+        ))
+    })
 }
 
 /// Counters produced by one package application.
