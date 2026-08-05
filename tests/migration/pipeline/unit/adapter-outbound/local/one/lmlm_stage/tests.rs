@@ -36,7 +36,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 use lmlm::FileEntry;
 
-use super::extract_lmlm;
+use super::{extract_lmlm, preview_optional_mods};
 use super::optional_mods::{
     OptionalModRole, apply_remaster, discover_optional_mods,
     existing_file_index, is_latino_audio_path, is_latino_movie_path,
@@ -72,6 +72,46 @@ fn missing_optional_lmlm_creates_no_output() -> Result<(), String> {
         return Err(String::from(
             "missing optional LMLM package left synthetic output behind",
         ));
+    }
+    fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+#[test]
+fn missing_optional_lmlm_preview_is_read_only() -> Result<(), String> {
+    let case = temp_root("preview-missing");
+    if case.exists() {
+        fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    }
+    let game_root = case.join("game");
+    let extracted_root = case.join("extracted");
+    fs::create_dir_all(&game_root).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&extracted_root).map_err(|error| error.to_string())?;
+    let sentinel = extracted_root.join("sentinel.txt");
+    fs::write(&sentinel, b"unchanged").map_err(|error| error.to_string())?;
+
+    let preview = preview_optional_mods(&game_root, &extracted_root)
+        .map_err(|error| error.to_string())?;
+    if preview.package_count() != 0
+        || preview.write_count() != 0
+        || preview.skip_count() != 0
+        || preview.normalized_bytes() != 0
+    {
+        return Err("empty preview reported package changes".to_owned());
+    }
+    let document: serde_json::Value = serde_json::from_str(preview.json())
+        .map_err(|error| error.to_string())?;
+    if document.get("schema").and_then(serde_json::Value::as_str)
+        != Some("shar-schoenwald.optional-mod-preview.v1")
+        || document.get("dry_run").and_then(serde_json::Value::as_bool)
+            != Some(true)
+    {
+        return Err("empty preview did not use the canonical schema".to_owned());
+    }
+    if fs::read(&sentinel).map_err(|error| error.to_string())? != b"unchanged"
+        || extracted_root.join("lmlm").exists()
+    {
+        return Err("optional-mod preview changed extraction output".to_owned());
     }
     fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
     Ok(())

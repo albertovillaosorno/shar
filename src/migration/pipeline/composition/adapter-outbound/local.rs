@@ -33,7 +33,7 @@
 use std::path::Path;
 
 use crate::domain::{
-    PhaseThreePackageSelector, PipelineConfig, PipelineOutcome, PipelineReport,
+    OptionalModPreview, PhaseThreePackageSelector, PipelineConfig, PipelineOutcome, PipelineReport,
     StageReport,
 };
 use crate::ports::{FbxExportOptions, PipelineOperations};
@@ -69,18 +69,20 @@ impl PipelineOperations for LocalPipeline {
         one::extract::ExtractGameAssets::run(config)
     }
 
-    fn export_movies(
-        &self,
-        config: &PipelineConfig,
-    ) -> PipelineOutcome<PipelineReport> {
+    fn export_movies(&self, config: &PipelineConfig) -> PipelineOutcome<PipelineReport> {
         one::extract::ExtractGameAssets::export_movies_only(config)
     }
 
-    fn export_lmlm(
-        &self,
-        config: &PipelineConfig,
-    ) -> PipelineOutcome<PipelineReport> {
+    fn export_lmlm(&self, config: &PipelineConfig) -> PipelineOutcome<PipelineReport> {
         one::extract::ExtractGameAssets::export_lmlm_only(config)
+    }
+
+    fn preview_optional_mods(
+        &self,
+        game_root: &Path,
+        extracted_root: &Path,
+    ) -> PipelineOutcome<OptionalModPreview> {
+        one::preview_optional_mods(game_root, extracted_root)
     }
 
     fn manifest_minor_units(
@@ -88,49 +90,28 @@ impl PipelineOperations for LocalPipeline {
         game_root: &Path,
         extracted_root: &Path,
     ) -> PipelineOutcome<StageReport> {
-        two::units::manifest_minor_unit::write_manifest_minor_units(
-            game_root,
-            extracted_root,
-        )
+        two::units::manifest_minor_unit::write_manifest_minor_units(game_root, extracted_root)
     }
 
-    fn fill_minor_unit_metadata(
-        &self,
-        extracted_root: &Path,
-    ) -> PipelineOutcome<StageReport> {
+    fn fill_minor_unit_metadata(&self, extracted_root: &Path) -> PipelineOutcome<StageReport> {
         two::units::metadata_fill::fill_minor_unit_metadata(extracted_root)
     }
 
-    fn edit_minor_unit_metadata(
-        &self,
-        extracted_root: &Path,
-    ) -> PipelineOutcome<StageReport> {
+    fn edit_minor_unit_metadata(&self, extracted_root: &Path) -> PipelineOutcome<StageReport> {
         two::units::editor::edit_minor_unit_metadata(extracted_root)
     }
 
-    fn index_minor_units(
-        &self,
-        extracted_root: &Path,
-    ) -> PipelineOutcome<StageReport> {
+    fn index_minor_units(&self, extracted_root: &Path) -> PipelineOutcome<StageReport> {
         two::units::index::write_minor_unit_index(extracted_root)
     }
 
-    fn audit_minor_units(
-        &self,
-        extracted_root: &Path,
-    ) -> PipelineOutcome<StageReport> {
+    fn audit_minor_units(&self, extracted_root: &Path) -> PipelineOutcome<StageReport> {
         two::units::audit_minor_units::audit_minor_units(extracted_root)
     }
 
-    fn prepare_unreal(
-        &self,
-        config: &PipelineConfig,
-    ) -> PipelineOutcome<PipelineReport> {
-        let audit = two::units::audit_minor_units::audit_minor_units(
-            &config.extracted_root,
-        )?;
-        let index =
-            two::units::index::write_minor_unit_index(&config.extracted_root)?;
+    fn prepare_unreal(&self, config: &PipelineConfig) -> PipelineOutcome<PipelineReport> {
+        let audit = two::units::audit_minor_units::audit_minor_units(&config.extracted_root)?;
+        let index = two::units::index::write_minor_unit_index(&config.extracted_root)?;
         let staging = unreal_prepare::prepare_unreal(config)?;
         Ok(PipelineReport {
             stages: vec![audit, index, staging],
@@ -143,9 +124,7 @@ impl PipelineOperations for LocalPipeline {
         selector: &PhaseThreePackageSelector,
         output_dir: &Path,
     ) -> PipelineOutcome<StageReport> {
-        fbx_manifest::write_phase_three_fbx_manifest(
-            index_path, selector, output_dir,
-        )
+        fbx_manifest::write_phase_three_fbx_manifest(index_path, selector, output_dir)
     }
 
     fn export_character_catalog(
@@ -154,9 +133,7 @@ impl PipelineOperations for LocalPipeline {
         output_dir: &Path,
         base_root: &Path,
     ) -> PipelineOutcome<StageReport> {
-        character_catalog::export_character_catalog(
-            index_path, output_dir, base_root,
-        )
+        character_catalog::export_character_catalog(index_path, output_dir, base_root)
     }
 
     fn export_wasp_camera(
@@ -192,9 +169,7 @@ impl PipelineOperations for LocalPipeline {
         game_root: &Path,
         output_dir: &Path,
     ) -> PipelineOutcome<StageReport> {
-        vehicle_catalog::export_vehicle_catalog(
-            index_path, game_root, output_dir,
-        )
+        vehicle_catalog::export_vehicle_catalog(index_path, game_root, output_dir)
     }
 
     fn export_world_prop_catalog(
@@ -203,9 +178,7 @@ impl PipelineOperations for LocalPipeline {
         game_root: &Path,
         output_dir: &Path,
     ) -> PipelineOutcome<StageReport> {
-        prop_catalog::export_world_prop_catalog(
-            index_path, game_root, output_dir,
-        )
+        prop_catalog::export_world_prop_catalog(index_path, game_root, output_dir)
     }
 
     fn export_world_master(
@@ -215,12 +188,7 @@ impl PipelineOperations for LocalPipeline {
         coordinate_root: &Path,
         output_dir: &Path,
     ) -> PipelineOutcome<StageReport> {
-        prop_catalog::export_world_master(
-            index_path,
-            game_root,
-            coordinate_root,
-            output_dir,
-        )
+        prop_catalog::export_world_master(index_path, game_root, coordinate_root, output_dir)
     }
 
     fn export_structural_guide(
@@ -230,12 +198,7 @@ impl PipelineOperations for LocalPipeline {
         coordinate_root: &Path,
         output_dir: &Path,
     ) -> PipelineOutcome<StageReport> {
-        prop_catalog::export_structural_guide(
-            index_path,
-            game_root,
-            coordinate_root,
-            output_dir,
-        )
+        prop_catalog::export_structural_guide(index_path, game_root, coordinate_root, output_dir)
     }
 
     fn export_fbx_package(
@@ -246,8 +209,6 @@ impl PipelineOperations for LocalPipeline {
         base_root: &Path,
         options: FbxExportOptions,
     ) -> PipelineOutcome<StageReport> {
-        fbx_export::export_fbx_package(
-            index_path, selector, output_dir, base_root, options,
-        )
+        fbx_export::export_fbx_package(index_path, selector, output_dir, base_root, options)
     }
 }

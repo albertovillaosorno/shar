@@ -103,15 +103,12 @@ pub(super) struct OptionalModCounts {
 }
 
 /// Discovers only direct canonical aliases under `game/mods`.
-pub(super) fn discover_optional_mods(
-    game_root: &Path,
-) -> PipelineOutcome<Vec<OptionalModArchive>> {
+pub(super) fn discover_optional_mods(game_root: &Path) -> PipelineOutcome<Vec<OptionalModArchive>> {
     let mods_root = game_root.join("mods");
     if !mods_root.exists() {
         return Ok(Vec::new());
     }
-    let metadata =
-        fs::symlink_metadata(&mods_root).map_err(io_error(&mods_root))?;
+    let metadata = fs::symlink_metadata(&mods_root).map_err(io_error(&mods_root))?;
     if !metadata.is_dir() || metadata.file_type().is_symlink() {
         return Err(PipelineError::new("game/mods must be a real directory"));
     }
@@ -132,9 +129,7 @@ pub(super) fn discover_optional_mods(
         let file_name = path
             .file_name()
             .and_then(|value| value.to_str())
-            .ok_or_else(|| {
-                PipelineError::new("optional package name is not UTF-8")
-            })?
+            .ok_or_else(|| PipelineError::new("optional package name is not UTF-8"))?
             .to_ascii_lowercase();
         let role = match file_name.as_str() {
             REMASTER_ALIAS => OptionalModRole::Remaster,
@@ -144,7 +139,7 @@ pub(super) fn discover_optional_mods(
                     "unsupported optional LMLM filename: {file_name}; \
                      use m.lmlm or j.lmlm"
                 )));
-            },
+            }
         };
         if !roles.insert(role.order()) {
             return Err(PipelineError::new(format!(
@@ -167,9 +162,9 @@ pub(super) fn existing_file_index(
     let mut files = BTreeMap::new();
     let mut source_keys = BTreeSet::new();
     for path in collect_files(game_root)? {
-        let relative = path.strip_prefix(game_root).map_err(|_error| {
-            PipelineError::new("failed to relativize base source file")
-        })?;
+        let relative = path
+            .strip_prefix(game_root)
+            .map_err(|_error| PipelineError::new("failed to relativize base source file"))?;
         if is_excluded_game_path(relative) {
             continue;
         }
@@ -187,9 +182,9 @@ pub(super) fn existing_file_index(
         if path.starts_with(generated_mod_root) {
             continue;
         }
-        let relative = path.strip_prefix(extracted_root).map_err(|_error| {
-            PipelineError::new("failed to relativize extracted base file")
-        })?;
+        let relative = path
+            .strip_prefix(extracted_root)
+            .map_err(|_error| PipelineError::new("failed to relativize extracted base file"))?;
         let key = portable_identity(relative);
         if !extracted_keys.insert(key.clone()) {
             return Err(PipelineError::new(
@@ -208,8 +203,7 @@ fn is_excluded_game_path(relative: &Path) -> bool {
         .next()
         .and_then(|component| component.as_os_str().to_str());
     if first.is_some_and(|value| {
-        value.eq_ignore_ascii_case("mods")
-            || value.eq_ignore_ascii_case("extracted")
+        value.eq_ignore_ascii_case("mods") || value.eq_ignore_ascii_case("extracted")
     }) {
         return true;
     }
@@ -251,10 +245,7 @@ pub(super) fn apply_remaster(
             ));
         }
         let bytes = entry_bytes(data, entry).ok_or_else(|| {
-            PipelineError::new(format!(
-                "{}: LMLM entry out of bounds",
-                entry.path
-            ))
+            PipelineError::new(format!("{}: LMLM entry out of bounds", entry.path))
         })?;
         write_bytes(destination, bytes)?;
         counts.written = counts.written.saturating_add(1);
@@ -280,7 +271,7 @@ pub(super) fn apply_remaster(
 }
 
 /// Removes the loader wrapper without depending on release title or version.
-fn remaster_relative_path(entry_path: &str) -> Option<String> {
+pub(super) fn remaster_relative_path(entry_path: &str) -> Option<String> {
     let (first, remainder) = entry_path.split_once('/')?;
     if first.eq_ignore_ascii_case("customfiles") && !remainder.is_empty() {
         return Some(remainder.to_owned());
@@ -325,19 +316,18 @@ pub(super) fn is_latino_movie_path(entry_path: &str) -> bool {
         && directory.eq_ignore_ascii_case("movies")
         && !file.is_empty()
         && segments.next().is_none()
-        && (string_has_extension(file, "bik")
-            || string_has_extension(file, "rmv"))
+        && (string_has_extension(file, "bik") || string_has_extension(file, "rmv"))
 }
 
 /// Stable case-insensitive relative identity.
-fn portable_identity(path: &Path) -> String {
+pub(super) fn portable_identity(path: &Path) -> String {
     path.to_string_lossy()
         .replace('\\', "/")
         .to_ascii_lowercase()
 }
 
 /// Public-safe generated path relative to the extraction root.
-fn relative_output(root: &Path, path: &Path) -> PipelineOutcome<String> {
+pub(super) fn relative_output(root: &Path, path: &Path) -> PipelineOutcome<String> {
     path.strip_prefix(root)
         .map(portable_identity)
         .map_err(|_error| PipelineError::new("output escaped extraction root"))

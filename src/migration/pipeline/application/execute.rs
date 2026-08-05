@@ -33,7 +33,7 @@
 use std::path::Path;
 
 use crate::domain::{
-    PhaseThreePackageSelector, PipelineConfig, PipelineOutcome, PipelineReport,
+    OptionalModPreview, PhaseThreePackageSelector, PipelineConfig, PipelineOutcome, PipelineReport,
     StageReport,
 };
 use crate::ports::{FbxExportOptions, PipelineOperations};
@@ -60,10 +60,7 @@ where
     /// # Errors
     ///
     /// Returns the provider's validated pipeline failure.
-    pub fn run(
-        &self,
-        config: &PipelineConfig,
-    ) -> PipelineOutcome<PipelineReport> {
+    pub fn run(&self, config: &PipelineConfig) -> PipelineOutcome<PipelineReport> {
         self.provider.run(config)
     }
 
@@ -72,10 +69,7 @@ where
     /// # Errors
     ///
     /// Returns the provider's validated pipeline failure.
-    pub fn export_movies(
-        &self,
-        config: &PipelineConfig,
-    ) -> PipelineOutcome<PipelineReport> {
+    pub fn export_movies(&self, config: &PipelineConfig) -> PipelineOutcome<PipelineReport> {
         self.provider.export_movies(config)
     }
 
@@ -84,11 +78,22 @@ where
     /// # Errors
     ///
     /// Returns the provider's validated pipeline failure.
-    pub fn export_lmlm(
-        &self,
-        config: &PipelineConfig,
-    ) -> PipelineOutcome<PipelineReport> {
+    pub fn export_lmlm(&self, config: &PipelineConfig) -> PipelineOutcome<PipelineReport> {
         self.provider.export_lmlm(config)
+    }
+
+    /// Previews supported optional packages without persistent writes.
+    ///
+    /// # Errors
+    ///
+    /// Returns the provider's validated preview failure.
+    pub fn preview_optional_mods(
+        &self,
+        game_root: &Path,
+        extracted_root: &Path,
+    ) -> PipelineOutcome<OptionalModPreview> {
+        self.provider
+            .preview_optional_mods(game_root, extracted_root)
     }
 
     /// Writes the phase-two minor-unit manifest.
@@ -110,10 +115,7 @@ where
     /// # Errors
     ///
     /// Returns the provider's validated pipeline failure.
-    pub fn fill_minor_unit_metadata(
-        &self,
-        extracted_root: &Path,
-    ) -> PipelineOutcome<StageReport> {
+    pub fn fill_minor_unit_metadata(&self, extracted_root: &Path) -> PipelineOutcome<StageReport> {
         self.provider.fill_minor_unit_metadata(extracted_root)
     }
 
@@ -122,10 +124,7 @@ where
     /// # Errors
     ///
     /// Returns the provider's validated pipeline failure.
-    pub fn edit_minor_unit_metadata(
-        &self,
-        extracted_root: &Path,
-    ) -> PipelineOutcome<StageReport> {
+    pub fn edit_minor_unit_metadata(&self, extracted_root: &Path) -> PipelineOutcome<StageReport> {
         self.provider.edit_minor_unit_metadata(extracted_root)
     }
 
@@ -134,10 +133,7 @@ where
     /// # Errors
     ///
     /// Returns the provider's validated pipeline failure.
-    pub fn index_minor_units(
-        &self,
-        extracted_root: &Path,
-    ) -> PipelineOutcome<StageReport> {
+    pub fn index_minor_units(&self, extracted_root: &Path) -> PipelineOutcome<StageReport> {
         self.provider.index_minor_units(extracted_root)
     }
 
@@ -146,10 +142,7 @@ where
     /// # Errors
     ///
     /// Returns the provider's validated pipeline failure.
-    pub fn audit_minor_units(
-        &self,
-        extracted_root: &Path,
-    ) -> PipelineOutcome<StageReport> {
+    pub fn audit_minor_units(&self, extracted_root: &Path) -> PipelineOutcome<StageReport> {
         self.provider.audit_minor_units(extracted_root)
     }
 
@@ -158,10 +151,7 @@ where
     /// # Errors
     ///
     /// Returns the provider's validated pipeline failure.
-    pub fn prepare_unreal(
-        &self,
-        config: &PipelineConfig,
-    ) -> PipelineOutcome<PipelineReport> {
+    pub fn prepare_unreal(&self, config: &PipelineConfig) -> PipelineOutcome<PipelineReport> {
         self.provider.prepare_unreal(config)
     }
 
@@ -282,12 +272,8 @@ where
         coordinate_root: &Path,
         output_dir: &Path,
     ) -> PipelineOutcome<StageReport> {
-        self.provider.export_world_master(
-            index_path,
-            game_root,
-            coordinate_root,
-            output_dir,
-        )
+        self.provider
+            .export_world_master(index_path, game_root, coordinate_root, output_dir)
     }
 
     /// Exports one canonical one-mesh Unreal structural guide.
@@ -302,12 +288,8 @@ where
         coordinate_root: &Path,
         output_dir: &Path,
     ) -> PipelineOutcome<StageReport> {
-        self.provider.export_structural_guide(
-            index_path,
-            game_root,
-            coordinate_root,
-            output_dir,
-        )
+        self.provider
+            .export_structural_guide(index_path, game_root, coordinate_root, output_dir)
     }
 
     /// Exports one selected phase-three package as an FBX artifact.
@@ -323,8 +305,7 @@ where
         base_root: &Path,
         options: FbxExportOptions,
     ) -> PipelineOutcome<StageReport> {
-        self.provider.export_fbx_package(
-            index_path, selector, output_dir, base_root, options,
-        )
+        self.provider
+            .export_fbx_package(index_path, selector, output_dir, base_root, options)
     }
 }

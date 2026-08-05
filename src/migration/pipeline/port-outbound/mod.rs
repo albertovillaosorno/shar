@@ -33,7 +33,7 @@
 use std::path::Path;
 
 use crate::domain::{
-    OutputSummary, PhaseThreePackageSelector, PipelineConfig, PipelineOutcome,
+    OptionalModPreview, OutputSummary, PhaseThreePackageSelector, PipelineConfig, PipelineOutcome,
     PipelineReport, StageReport,
 };
 
@@ -72,20 +72,25 @@ pub trait PipelineOperations {
     /// # Errors
     ///
     /// Returns a validated pipeline failure.
-    fn export_movies(
-        &self,
-        config: &PipelineConfig,
-    ) -> PipelineOutcome<PipelineReport>;
+    fn export_movies(&self, config: &PipelineConfig) -> PipelineOutcome<PipelineReport>;
 
     /// Exports only LMLM packages.
     ///
     /// # Errors
     ///
     /// Returns a validated pipeline failure.
-    fn export_lmlm(
+    fn export_lmlm(&self, config: &PipelineConfig) -> PipelineOutcome<PipelineReport>;
+
+    /// Previews every supported optional package without persistent writes.
+    ///
+    /// # Errors
+    ///
+    /// Returns a validated failure when package or source evidence is invalid.
+    fn preview_optional_mods(
         &self,
-        config: &PipelineConfig,
-    ) -> PipelineOutcome<PipelineReport>;
+        game_root: &Path,
+        extracted_root: &Path,
+    ) -> PipelineOutcome<OptionalModPreview>;
 
     /// Writes the phase-two minor-unit manifest.
     ///
@@ -103,50 +108,35 @@ pub trait PipelineOperations {
     /// # Errors
     ///
     /// Returns a validated pipeline failure.
-    fn fill_minor_unit_metadata(
-        &self,
-        extracted_root: &Path,
-    ) -> PipelineOutcome<StageReport>;
+    fn fill_minor_unit_metadata(&self, extracted_root: &Path) -> PipelineOutcome<StageReport>;
 
     /// Applies deterministic minor-unit metadata edits.
     ///
     /// # Errors
     ///
     /// Returns a validated pipeline failure.
-    fn edit_minor_unit_metadata(
-        &self,
-        extracted_root: &Path,
-    ) -> PipelineOutcome<StageReport>;
+    fn edit_minor_unit_metadata(&self, extracted_root: &Path) -> PipelineOutcome<StageReport>;
 
     /// Writes the minor-unit package index.
     ///
     /// # Errors
     ///
     /// Returns a validated pipeline failure.
-    fn index_minor_units(
-        &self,
-        extracted_root: &Path,
-    ) -> PipelineOutcome<StageReport>;
+    fn index_minor_units(&self, extracted_root: &Path) -> PipelineOutcome<StageReport>;
 
     /// Audits the minor-unit manifest and package evidence.
     ///
     /// # Errors
     ///
     /// Returns a validated pipeline failure.
-    fn audit_minor_units(
-        &self,
-        extracted_root: &Path,
-    ) -> PipelineOutcome<StageReport>;
+    fn audit_minor_units(&self, extracted_root: &Path) -> PipelineOutcome<StageReport>;
 
     /// Audits, indexes, and prepares canonical Unreal staging output.
     ///
     /// # Errors
     ///
     /// Returns a validated pipeline failure.
-    fn prepare_unreal(
-        &self,
-        config: &PipelineConfig,
-    ) -> PipelineOutcome<PipelineReport>;
+    fn prepare_unreal(&self, config: &PipelineConfig) -> PipelineOutcome<PipelineReport>;
 
     /// Writes one selected phase-three FBX manifest.
     ///

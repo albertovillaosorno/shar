@@ -31,6 +31,7 @@
 //! Domain domain module.
 
 mod json;
+mod optional_mod_preview;
 mod output_summary;
 pub mod package;
 mod pipeline;
@@ -39,15 +40,12 @@ mod pipeline;
 pub(crate) fn escape_json(value: &str) -> String {
     json::escape(value)
 }
+pub use optional_mod_preview::{OPTIONAL_MOD_PREVIEW_SCHEMA, OptionalModPreview};
 pub use output_summary::{DirectorySummary, OutputSummary};
 pub use package::{
-    ConversionFamily, FbxModelPlan, PackageMemberRef, PackageRole,
-    PhaseThreePackageIndex, PhaseThreePackageMember, PhaseThreePackagePlan,
-    PhaseThreePackagePlanner, PhaseThreePackageRow, PhaseThreePackageSelector,
-    UNREAL_IMPORT_MANIFEST_SCHEMA, UNREAL_IMPORT_SUMMARY_SCHEMA,
-    UnrealImportManifest, UnrealNativePlan, UnrealSourceEvidence,
-    UnrealTargetKind,
+    ConversionFamily, FbxModelPlan, PackageMemberRef, PackageRole, PhaseThreePackageIndex,
+    PhaseThreePackageMember, PhaseThreePackagePlan, PhaseThreePackagePlanner, PhaseThreePackageRow,
+    PhaseThreePackageSelector, UNREAL_IMPORT_MANIFEST_SCHEMA, UNREAL_IMPORT_SUMMARY_SCHEMA,
+    UnrealImportManifest, UnrealNativePlan, UnrealSourceEvidence, UnrealTargetKind,
 };
-pub use pipeline::{
-    PipelineConfig, PipelineError, PipelineOutcome, PipelineReport, StageReport,
-};
+pub use pipeline::{PipelineConfig, PipelineError, PipelineOutcome, PipelineReport, StageReport};
