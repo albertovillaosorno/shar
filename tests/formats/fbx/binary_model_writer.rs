@@ -42,8 +42,7 @@ use std::path::{Path, PathBuf};
 
 use fbx::adapters::driven::binary_character_writer::{
     CharacterBinaryFbxError, CharacterBinaryFbxSummary, ModelExportRootPolicy,
-    ModelUvPolicy, write_binary_model_fbx,
-    write_binary_model_fbx_with_policies,
+    write_binary_model_fbx, write_binary_model_fbx_with_policies,
 };
 use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 use fbx::domain::texture::MaterialBinding;
@@ -221,7 +220,6 @@ fn world_reflection_is_shared_by_exterior_and_interior() -> Result<(), String> {
         "exterior-root-model",
         std::slice::from_ref(&mesh),
         std::slice::from_ref(&material),
-        ModelUvPolicy::Preserve,
         ModelExportRootPolicy::ReflectX,
         &exterior_path,
     )
@@ -230,7 +228,6 @@ fn world_reflection_is_shared_by_exterior_and_interior() -> Result<(), String> {
         "interior-root-model",
         &[mesh],
         &[material],
-        ModelUvPolicy::Preserve,
         ModelExportRootPolicy::ReflectX,
         &interior_path,
     )

@@ -35,7 +35,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use fbx::adapters::driven::binary_character_writer::{
-    ModelExportRootPolicy, ModelUvPolicy, write_binary_model_fbx_with_policies,
+    ModelExportRootPolicy, write_binary_model_fbx_with_policies,
 };
 use fbx::adapters::driven::decoded_component_source::read_mesh_for_analysis;
 use fbx::domain::mesh::MeshAsset;
@@ -62,26 +62,21 @@ use super::inventory::{
 };
 use super::islands::split_distant_islands;
 use super::layout::{
-    MapBounds, apply_placement, collection_bounds, placement_for_scope,
-    record_group_bounds, validate_group_bounds,
+    MapBounds, collection_bounds, placement_for_scope, record_group_bounds,
+    validate_group_bounds,
 };
 use super::model::{
     ExportedWorldCollection, WorldFbxRecord, WorldInteriorRecord,
     WorldPackageRecord, WorldSurfaceSemanticCounts,
 };
-use super::movement::{
-    apply_interior_ownership_movement, apply_package_movement,
-};
-use super::movement_model::WorldCoordinateMovementRecord;
 use super::transform::{bake_mesh, identity, mesh_bounds, translation};
 use crate::domain::PipelineError;
 
 /// Source-to-FBX X reflection shared by every world and review FBX.
 const WORLD_ROOT_POLICY: ModelExportRootPolicy =
     ModelExportRootPolicy::ReflectX;
-/// Preserve authored UVs because the shared root owns the horizontal basis
-/// conversion. Additional U mirroring would reverse signs and displays twice.
-const WORLD_UV_POLICY: ModelUvPolicy = ModelUvPolicy::Preserve;
+/// Preserve source geometry and authored UVs; only the FBX root converts
+/// the source X basis for Unreal import.
 use crate::domain::package::PhaseThreePackageRow;
 
 /// Mutable content maps shared by all packages in one level.
@@ -231,7 +226,6 @@ pub(super) fn export_world_collection(
 
     let mut records = Vec::with_capacity(packages.len());
     let mut pending_interiors = Vec::<PendingInterior>::new();
-    let mut coordinate_movements = Vec::<WorldCoordinateMovementRecord>::new();
     let mut all_textures = BTreeMap::<String, PreparedTexture>::new();
     let mut aggregate_semantics = WorldSurfaceSemanticCounts::default();
     let mut map_bounds = BTreeMap::<&'static str, MapBounds>::new();
@@ -252,15 +246,13 @@ pub(super) fn export_world_collection(
         let mut ownership_meshes = Vec::new();
         let ownership_target =
             is_interior(package).then_some(&mut ownership_meshes);
-        if let Some(movement) = append_package(
+        append_package(
             &scope,
             package,
             &append_context,
             &mut package_content,
             ownership_target,
-        )? {
-            coordinate_movements.push(movement);
-        }
+        )?;
         merge_textures(
             &mut all_textures,
             package_content.textures.values().cloned().collect(),
@@ -269,16 +261,13 @@ pub(super) fn export_world_collection(
             PipelineError::new("world package record is missing")
         })?;
         let placement = placement_for_scope(&scope)?;
-        apply_placement(&mut package_content.meshes, placement)?;
-        apply_placement(&mut ownership_meshes, placement)?;
         if !record.interior {
             record_group_bounds(
                 &mut map_bounds,
                 placement,
                 collection_bounds(&package_content.meshes),
             );
-            record.map_group = placement.group.map(str::to_owned);
-            record.map_offset = placement.offset;
+            record.map_group = Some(placement.group.to_owned());
         }
         let (independent, breakable, interactable) =
             world_object_semantic_counts(&package_content.meshes);
@@ -310,7 +299,6 @@ pub(super) fn export_world_collection(
                 &format!("review/{stem}.review.fbx"),
                 &mut review_content,
                 output_root,
-                WORLD_UV_POLICY,
                 WORLD_ROOT_POLICY,
             )?;
             if let Some(artifact) = record.review_fbx.as_ref() {
@@ -350,7 +338,6 @@ pub(super) fn export_world_collection(
             &world_relative_path,
             &mut package_content,
             output_root,
-            WORLD_UV_POLICY,
             WORLD_ROOT_POLICY,
         )?;
         if let Some(artifact) = record.world_fbx.as_ref() {
@@ -385,7 +372,6 @@ pub(super) fn export_world_collection(
         ExportedWorldCollection {
             packages: records,
             interiors,
-            coordinate_movements,
             textures,
             surface_semantics: aggregate_semantics,
         },
@@ -522,7 +508,6 @@ fn publish_fused_interiors(
             &format!("{folder}/{base_name}.fbx"),
             &mut base,
             output_root,
-            WORLD_UV_POLICY,
             WORLD_ROOT_POLICY,
         )?
         .ok_or_else(|| {
@@ -540,7 +525,6 @@ fn publish_fused_interiors(
                 &format!("{folder}/{overlay_name}.fbx"),
                 &mut overlay,
                 output_root,
-                WORLD_UV_POLICY,
                 WORLD_ROOT_POLICY,
             )?
             .ok_or_else(|| {
@@ -625,7 +609,6 @@ fn write_content_fbx(
     relative_path: &str,
     content: &mut MasterContent,
     output_root: &Path,
-    uv_policy: ModelUvPolicy,
     root_policy: ModelExportRootPolicy,
 ) -> Result<Option<WorldFbxRecord>, PipelineError> {
     if content.meshes.is_empty() {
@@ -651,7 +634,6 @@ fn write_content_fbx(
         scene_name,
         &content.meshes,
         &content.materials.values().cloned().collect::<Vec<_>>(),
-        uv_policy,
         root_policy,
         &path,
     )
@@ -692,19 +674,13 @@ fn package_file_stem(
 }
 
 /// Load and append every recovered mesh from one normalized package.
-#[expect(
-    clippy::too_many_lines,
-    reason = "Canonical geometry, coordinate joins, collision records, \
-              material               authority, and package counters must \
-              remain one append invariant."
-)]
 fn append_package(
     level: &str,
     package: &PhaseThreePackageRow,
     append_context: &PackageAppendContext<'_>,
     package_content: &mut MasterContent,
     ownership_meshes: Option<&mut Vec<MeshAsset>>,
-) -> Result<Option<WorldCoordinateMovementRecord>, PipelineError> {
+) -> Result<(), PipelineError> {
     let relative = relative_art_root(package)?;
     let package_root = append_context.canonical_root.join(&relative);
     let reference_root = append_context
@@ -734,13 +710,11 @@ fn append_package(
         discarded_collision_triangles: 0,
         interior: is_interior(package),
         map_group: None,
-        map_offset: [0, 0, 0],
-        coordinate_movement: None,
         review_similarity_groups: 0,
         world_fbx: None,
         review_fbx: None,
     });
-    let mut collisions = load_intersect_meshes(
+    let collisions = load_intersect_meshes(
         &package_root,
         reference_root.as_deref(),
         &package.package_id,
@@ -757,25 +731,8 @@ fn append_package(
             collisions.discarded_triangles;
     }
     if sources.is_empty() {
-        capture_interior_ownership_meshes(
-            &package.package_id,
-            package_content,
-            ownership_meshes,
-        )?;
-        let movement = apply_package_movement(
-            level,
-            is_interior(package),
-            &package.package_id,
-            &package_root,
-            &mut package_content.meshes,
-            &mut collisions.meshes,
-        )?;
-        record_movement_identity(
-            package_content,
-            package_index,
-            movement.as_ref(),
-        )?;
-        return Ok(movement);
+        capture_interior_ownership_meshes(package_content, ownership_meshes);
+        return Ok(());
     }
     let package_scratch = append_context.scratch_root.join(&package.package_id);
     let (mut meshes, discarded_degenerate_triangles) =
@@ -819,52 +776,18 @@ fn append_package(
             ))
         })?;
     }
-    capture_interior_ownership_meshes(
-        &package.package_id,
-        package_content,
-        ownership_meshes,
-    )?;
-    let movement = apply_package_movement(
-        level,
-        is_interior(package),
-        &package.package_id,
-        &package_root,
-        &mut package_content.meshes,
-        &mut collisions.meshes,
-    )?;
-    record_movement_identity(
-        package_content,
-        package_index,
-        movement.as_ref(),
-    )?;
-    Ok(movement)
+    capture_interior_ownership_meshes(package_content, ownership_meshes);
+    Ok(())
 }
 
-/// Capture exact reviewed interior geometry before the final Unreal raise.
+/// Capture source-authored interior geometry for fusion ownership decisions.
 fn capture_interior_ownership_meshes(
-    package_id: &str,
     package_content: &MasterContent,
     ownership_meshes: Option<&mut Vec<MeshAsset>>,
-) -> Result<(), PipelineError> {
-    let Some(ownership_meshes) = ownership_meshes else {
-        return Ok(());
-    };
-    *ownership_meshes = package_content.meshes.clone();
-    apply_interior_ownership_movement(package_id, ownership_meshes)
-}
-
-/// Preserve one package movement identity beside its transformed evidence.
-fn record_movement_identity(
-    content: &mut MasterContent,
-    package_index: usize,
-    movement: Option<&WorldCoordinateMovementRecord>,
-) -> Result<(), PipelineError> {
-    let package = content
-        .packages
-        .get_mut(package_index)
-        .ok_or_else(|| PipelineError::new("world package record is missing"))?;
-    package.coordinate_movement = movement.map(|record| record.id.clone());
-    Ok(())
+) {
+    if let Some(ownership_meshes) = ownership_meshes {
+        *ownership_meshes = package_content.meshes.clone();
+    }
 }
 
 /// Load one package's render meshes under the analysis sanitation policy.

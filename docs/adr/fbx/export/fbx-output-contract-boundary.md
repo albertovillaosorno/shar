@@ -2,72 +2,64 @@
 
 - Status: Accepted
 - Decision date: 2026-07-12
+- Last reviewed: 2026-08-03
 - Scope: Canonical model interchange output
 
 ## Context
 
-The project needs a deterministic interchange artifact for Unreal ingestion
-without depending on manual repair or an external content-authoring application.
+The project needs deterministic interchange artifacts for Unreal ingestion
+without manual repair or an external content-authoring application.
+
+Past experiments added heuristic UV mirrors, map placement matrices, interior
+movement matrices, and a global world-height raise. Those changes were not
+owned by original source evidence and could conceal decoder or writer defects.
 
 ## Decision
 
 Canonical model output is binary FBX 7.7 generated directly by the
-repository-owned writer from the canonical scene domain. Blender and Maya are
-not used for generation, conversion, repair, validation, or acceptance.
+repository-owned writer from validated source packages. Blender and Maya are not
+used for generation, conversion, repair, validation, or acceptance.
 
-Output is deterministic, self-contained for supported package profiles, and
-explicit about unsupported capabilities. ASCII FBX and authoring-file formats
-are not canonical outputs.
+The writer preserves source topology, positions, normals, UV coordinates,
+vertex colors, materials, texture identities, pivots, rigs, animation data, and
+source-authored transforms. It must not apply name-based UV mirroring, artistic
+repositioning, map offsets, interior offsets, global height adjustments, or
+other inferred corrections.
 
-Engine-independent semantic preparation belongs to the canonical scene and FBX
-phase before serialization. Character UV and texture modernization, semantic eye
-ownership, complete outfit and prop-bearing variants, non-destructive
-rig-display metadata, vehicle moving parts, world components, pivots,
-transforms, and geographic placements must therefore be present in FBX
-evidence. Native Unreal import cannot discover those separations for the first
-time. Character animation
-behavior remains unchanged in this phase.
+The only world-wide orientation operation is the declared FBX export-root basis
+conversion. World FBXs use one `SHAR_Export_Root` with `ReflectX` so Unreal can
+interpret the original coordinate basis consistently. Geometry remains
+unchanged below that root, and import actors use identity location, rotation,
+and scale.
 
-Legacy helpers that invoke external content-authoring applications are outside
-the supported workflow and must be retired rather than used as evidence.
+ASCII FBX and authoring-file formats are not canonical outputs. Unsupported
+source capabilities fail explicitly instead of being approximated silently.
 
 ### Editor-only structural-guide profile
 
-The structural guide is an opt-in FBX 7.7 profile of the same repository-owned
-binary writer. It emits one combined mesh under the shared world `ReflectX`
-export root, one material, one external texture reference, and four named
-per-polygon-vertex UV layers. It must not change the ordinary character,
-vehicle,
-prop, or separated-world byte path.
+The structural guide is an optional FBX 7.7 view of the same source-authored
+world geometry. It combines normal-import world FBXs under the same `ReflectX`
+root, preserves source positions and UVs, excludes isolated review galleries,
+and adds no guide-only placement or height policy.
 
-This profile optimizes Unreal editor inspection rather than shipping fidelity.
-The guide concatenates every normal-import world FBX mesh after ordinary world
-movement, repair, height, and export policy have been applied. Exterior and
-interior FBXs share the same `ReflectX` root and preserve authored UVs, so the
-guide clones positions, normals, UVs, and triangle winding without evaluating,
-flattening, or re-expressing source roots. The guide must not center, raise,
-filter narrative or Halloween content, or add guide-only geometry. Isolated
-review FBXs remain excluded because they are not part of the normal import set.
-Final atlas coordinates in imported UV0, source-UV audit evidence, and artifact
-hashes remain strict. UV0 must sample the assigned atlas rectangle directly in
-Unreal; it must never expose the entire atlas to every surface. The exact
-80-meter datum belongs to every normal world FBX, and the source-to-FBX X
-reflection belongs to every world FBX. Alpha is flattened to opaque RGB and
-dynamic shader behavior is omitted. Source vertex colors are baked
-exactly when uniform for a material/wrap identity; otherwise one deterministic
-source-texture-wide average is used and counted in the manifest. The
-approximation is acceptable only because the guide is explicitly excluded from
-runtime, collision, gameplay, and shipping-render authority.
+Its atlas is editor inspection evidence, not runtime material authority. The
+guide may approximate presentation only where its manifest records the exact
+limitation. It cannot become terrain, collision, gameplay, navigation, or
+shipping-render authority.
 
 ## Consequences
 
 - The repository owns serialization correctness.
-- Validation uses repository-owned checks and clean Unreal ingestion evidence.
-- Manual scene repair cannot hide writer defects.
-- External application availability is not a prerequisite.
+- Source evidence, not manual editing, determines FBX content.
+- Unreal receives the original map as FBX rather than a replacement Landscape.
+- UV and spatial differences expose decoder or writer defects instead of being
+  hidden by heuristic corrections.
+- External content-authoring applications are not pipeline dependencies.
 
 ## Rejected alternatives
 
 - Exporting through Blender or Maya.
-- Display in one review application as conformance proof.
-- Multiple canonical model formats.
+- Name-based UV correction.
+- Reviewed per-package map or interior movement matrices.
+- A fixed global world-height adjustment.
+- Rebuilding the original world as an Unreal Landscape.

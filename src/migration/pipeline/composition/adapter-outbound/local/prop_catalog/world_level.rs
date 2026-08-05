@@ -55,10 +55,6 @@ mod inventory;
 mod islands;
 mod layout;
 mod model;
-mod movement;
-mod movement_catalog;
-mod movement_model;
-mod movement_records;
 mod scenegraph;
 mod structural_guide;
 mod transform;
@@ -97,17 +93,13 @@ pub(in crate::adapters::driven::local) fn export_world_master(
                 bytes,
                 note: format!(
                     concat!(
-                        "published {} normal-import FBX files across {} ",
-                        "orientation-preserving connected zone families, \
-                             {} ",
-                        "fused interior bases, {} Halloween-only \
-                             overlays, ",
-                        "and {} isolated review FBX files from {} ",
-                        "main-level packages; every coordinate includes \
-                             the ",
-                        "80 meter canonical global height offset, with {} \
-                             authored ",
-                        "placements and {} excluded collision meshes"
+                        "published {} source-authored FBX files across {} ",
+                        "narrative families, {} fused interior bases, {} ",
+                        "Halloween-only overlays, and {} isolated review FBX ",
+                        "files from {} main-level packages; no map, interior, ",
+                        "height, or UV corrections were applied; {} source ",
+                        "placements were preserved and {} collision meshes ",
+                        "were excluded"
                     ),
                     counts.normal_world_fbx_files,
                     counts.narrative_map_groups,

@@ -30,7 +30,6 @@
 
 //! Domain domain module.
 
-pub mod coordinate_movement;
 mod json;
 mod output_summary;
 pub mod package;

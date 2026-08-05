@@ -34,15 +34,13 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use fbx::adapters::driven::binary_character_writer::{
-    ModelExportRootPolicy, ModelUvPolicy,
-};
+use fbx::adapters::driven::binary_character_writer::ModelExportRootPolicy;
 use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 use fbx::domain::texture::MaterialBinding;
 use shar_sha256::digest_hex;
 
 use super::{
-    MasterContent, PreparedTexture, WORLD_ROOT_POLICY, WORLD_UV_POLICY,
+    MasterContent, PreparedTexture, WORLD_ROOT_POLICY,
     append_world_fbx_to_guide, write_content_fbx,
 };
 
@@ -124,7 +122,6 @@ fn nested_fbx_publishes_adjacent_external_textures() -> Result<(), String> {
             relative,
             &mut content,
             &root,
-            ModelUvPolicy::Preserve,
             ModelExportRootPolicy::ReflectX,
         )
         .map_err(|error| error.to_string())?
@@ -232,5 +229,4 @@ fn guide_append_preserves_interior_world_fbx_geometry_exactly()
 #[test]
 fn world_fbx_policy_reflects_x_once_and_preserves_authored_uvs() {
     assert_eq!(WORLD_ROOT_POLICY, ModelExportRootPolicy::ReflectX);
-    assert_eq!(WORLD_UV_POLICY, ModelUvPolicy::Preserve);
 }

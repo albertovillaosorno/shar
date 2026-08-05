@@ -31,7 +31,7 @@
 //! Tests unit tests.
 
 use super::super::model::AtlasAssignment;
-use super::{WORLD_HEIGHT_METERS, atlas_uv, validate_world_fbx_bounds};
+use super::{atlas_uv, validate_world_fbx_bounds};
 
 fn assignment(repeat: f32) -> AtlasAssignment {
     AtlasAssignment {
@@ -57,11 +57,26 @@ fn imported_uv_zero_clamps_to_its_atlas_tile() {
 }
 
 #[test]
-fn world_height_is_validated_without_being_modified() -> Result<(), String> {
-    let positions = [[-10., 79., -20.], [10., WORLD_HEIGHT_METERS, 20.], [
-        0., 81., 0.,
-    ]];
+fn source_world_bounds_reject_non_finite_first_position() -> Result<(), String>
+{
+    let result = validate_world_fbx_bounds(&[[f32::NAN, 0., 0.]]);
+    let Err(error) = result else {
+        return Err("non-finite first positions must fail".to_owned());
+    };
+    if !error.to_string().contains("non-finite") {
+        return Err(format!("unexpected bounds failure: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn source_world_bounds_are_validated_without_extent_or_height_policy()
+-> Result<(), String> {
+    let positions =
+        [[-20_000., -500., 30_000.], [40_000., 12_000., -10_000.], [
+            0., 0., 0.,
+        ]];
     validate_world_fbx_bounds(&positions).map_err(|error| error.to_string())?;
-    assert_eq!(positions[1], [10., 80., 20.,]);
+    assert_eq!(positions[0], [-20_000., -500., 30_000.]);
     Ok(())
 }

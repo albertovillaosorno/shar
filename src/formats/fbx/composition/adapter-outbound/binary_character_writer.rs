@@ -49,7 +49,6 @@ use super::binary_fbx_storage::persist_binary_fbx;
 use super::binary_identity::{
     BinaryIdentityError, GeometryIds, bone_ids, cluster_id, geometry_ids,
 };
-use super::binary_uv_policy::mirrors_u;
 use crate::domain::animation::AnimationClip;
 use crate::domain::character::{CharacterAsset, SkinnedPart};
 use crate::domain::mesh::{MeshAsset, PrimitiveGroup};
@@ -135,15 +134,6 @@ enum BinarySceneKind {
     Static,
 }
 
-/// Horizontal UV correction policy for static-model FBX publication.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ModelUvPolicy {
-    /// Apply conservative identity-backed correction to oriented graphics.
-    Selective,
-    /// Preserve every authored U coordinate exactly.
-    Preserve,
-}
-
 /// Export-root orientation policy for static-model FBX publication.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ModelExportRootPolicy {
@@ -195,19 +185,6 @@ impl ModelExportRootPolicy {
     }
 }
 
-impl ModelUvPolicy {
-    /// Return whether one geometry group should mirror its U coordinates.
-    fn mirrors_u(
-        self,
-        mesh_name: &str,
-        material_name: &str,
-        texture_file_name: Option<&str>,
-    ) -> bool {
-        matches!(self, Self::Selective)
-            && mirrors_u(mesh_name, material_name, texture_file_name)
-    }
-}
-
 impl BinarySceneKind {
     /// Return whether the scene owns skeleton, skin, pose, and animation data.
     const fn is_skinned(self) -> bool {
@@ -237,15 +214,12 @@ struct BinaryGroup<'character> {
     used_bones: Vec<String>,
     /// Stable key of the exact material semantic variant.
     material_key: String,
-    /// Whether source-backed decal evidence requires horizontal UV correction.
-    mirror_u: bool,
 }
 
 /// Flatten aggregate parts into binary-writer geometry groups.
 fn binary_groups<'character>(
     character: &'character CharacterAsset,
     material_plan: &MaterialPlan<'_>,
-    uv_policy: ModelUvPolicy,
 ) -> Result<Vec<BinaryGroup<'character>>, CharacterBinaryFbxError> {
     let mut groups = Vec::new();
     for part in &character.parts {
@@ -287,11 +261,6 @@ fn binary_groups<'character>(
                 influences,
                 used_bones,
                 material_key,
-                mirror_u: uv_policy.mirrors_u(
-                    &part.mesh.name,
-                    &source_binding.material_name,
-                    source_binding.texture_file_name.as_deref(),
-                ),
             });
         }
     }
@@ -426,38 +395,16 @@ pub fn write_binary_model_fbx(
     materials: &[MaterialBinding],
     path: &Path,
 ) -> Result<CharacterBinaryFbxSummary, CharacterBinaryFbxError> {
-    write_binary_model_fbx_with_uv_policy(
-        asset_name,
-        meshes,
-        materials,
-        ModelUvPolicy::Selective,
-        path,
-    )
-}
-
-/// Write one static model with an explicit horizontal UV policy.
-///
-/// # Errors
-///
-/// Returns the same failures as [`write_binary_model_fbx`].
-pub fn write_binary_model_fbx_with_uv_policy(
-    asset_name: &str,
-    meshes: &[MeshAsset],
-    materials: &[MaterialBinding],
-    uv_policy: ModelUvPolicy,
-    path: &Path,
-) -> Result<CharacterBinaryFbxSummary, CharacterBinaryFbxError> {
     write_binary_model_fbx_with_policies(
         asset_name,
         meshes,
         materials,
-        uv_policy,
         ModelExportRootPolicy::RotateY180,
         path,
     )
 }
 
-/// Write one static model with explicit UV and export-root policies.
+/// Write one static model with an explicit export-root policy.
 ///
 /// # Errors
 ///
@@ -466,7 +413,6 @@ pub fn write_binary_model_fbx_with_policies(
     asset_name: &str,
     meshes: &[MeshAsset],
     materials: &[MaterialBinding],
-    uv_policy: ModelUvPolicy,
     root_policy: ModelExportRootPolicy,
     path: &Path,
 ) -> Result<CharacterBinaryFbxSummary, CharacterBinaryFbxError> {
@@ -491,7 +437,6 @@ pub fn write_binary_model_fbx_with_policies(
         CharacterTextureStorage::External,
         &[],
         BinarySceneKind::Static,
-        uv_policy,
         root_policy,
     )?;
     let bytes = encode_binary_document(&document.nodes).map_err(|error| {
@@ -545,7 +490,6 @@ fn write_binary_character_fbx_with_storage(
         texture_storage,
         animations,
         BinarySceneKind::Skinned,
-        ModelUvPolicy::Selective,
         ModelExportRootPolicy::RotateY180,
     )?;
     let bytes = encode_binary_document(&document.nodes).map_err(|error| {
@@ -558,11 +502,6 @@ fn write_binary_character_fbx_with_storage(
 }
 
 /// Build one internal typed character FBX document.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "One typed document boundary keeps texture, animation, scene, \
-              UV,               and export-root policies aligned"
-)]
 fn build_character_document(
     character: &CharacterAsset,
     materials: &[MaterialBinding],
@@ -570,7 +509,6 @@ fn build_character_document(
     texture_storage: CharacterTextureStorage,
     animations: &[AnimationClip],
     scene_kind: BinarySceneKind,
-    uv_policy: ModelUvPolicy,
     root_policy: ModelExportRootPolicy,
 ) -> Result<CharacterFbxDocument, CharacterBinaryFbxError> {
     let material_plan = material_slots(character, materials)
@@ -586,7 +524,7 @@ fn build_character_document(
     } else {
         Vec::new()
     };
-    let groups = binary_groups(character, &material_plan, uv_policy)?;
+    let groups = binary_groups(character, &material_plan)?;
     let bone_ordinals: BTreeMap<&str, usize> = character
         .bones
         .iter()
@@ -1188,7 +1126,7 @@ fn geometry_node(
         children.push(normal_layer(group)?);
     }
     if group.has_uvs() {
-        children.push(uv_layer(group, flattened.mirror_u)?);
+        children.push(uv_layer(group)?);
     }
     if group.has_colors() {
         children.push(color_layer(group)?);
@@ -1250,28 +1188,19 @@ fn normal_layer(
     ))
 }
 
-/// Convert one `Pure3D` UV under one source-backed horizontal policy.
-fn source_uv_to_fbx(uv: [f32; 2], mirror_u: bool) -> [f64; 2] {
-    let u = f64::from(uv[0]);
-    [
-        if mirror_u {
-            1. - u
-        } else {
-            u
-        },
-        f64::from(uv[1]),
-    ]
+/// Convert one `Pure3D` UV without altering either authored coordinate.
+fn source_uv_to_fbx(uv: [f32; 2]) -> [f64; 2] {
+    [f64::from(uv[0]), f64::from(uv[1])]
 }
 
-/// Build one primary UV layer with conservative decal-only correction.
+/// Build one primary UV layer from authored source coordinates.
 fn uv_layer(
     group: &PrimitiveGroup,
-    mirror_u: bool,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
     let coordinates = group
         .uvs
         .iter()
-        .flat_map(|uv| source_uv_to_fbx(*uv, mirror_u))
+        .flat_map(|uv| source_uv_to_fbx(*uv))
         .collect();
     let indices = uv_indices(group)
         .into_iter()

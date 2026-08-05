@@ -44,12 +44,6 @@ use super::atlas::surface_key;
 use super::model::{AtlasBuild, GuideSourceCounts};
 use crate::domain::PipelineError;
 
-/// Canonical source-space world-height datum already owned by normal FBXs.
-const WORLD_HEIGHT_METERS: f32 =
-    super::super::movement::WORLD_HEIGHT_OFFSET_METERS;
-/// World half-extent represented by the 4,032-meter Landscape contract.
-const WORLD_HALF_EXTENT_METERS: f32 = 2_016.;
-
 /// Concatenate the evaluated source-FBX geometry without further spatial
 /// changes.
 pub(super) fn build(
@@ -254,23 +248,14 @@ fn validate_world_fbx_bounds(
     positions: &[[f32; 3]],
 ) -> Result<(), PipelineError> {
     let (low, high) = bounds(positions)?;
-    if low[0] < -WORLD_HALF_EXTENT_METERS
-        || high[0] > WORLD_HALF_EXTENT_METERS
-        || low[2] < -WORLD_HALF_EXTENT_METERS
-        || high[2] > WORLD_HALF_EXTENT_METERS
+    if low
+        .into_iter()
+        .zip(high)
+        .any(|(minimum, maximum)| minimum > maximum)
     {
-        return Err(PipelineError::new(format!(
-            "combined world FBX exceeds Landscape bounds: \
-                     [{},{}]-[{},{}]",
-            low[0], low[2], high[0], high[2]
-        )));
-    }
-    if !(low[1] <= WORLD_HEIGHT_METERS && high[1] >= WORLD_HEIGHT_METERS) {
-        return Err(PipelineError::new(format!(
-            "combined world FBX does not retain the 80-meter datum: \
-                     {}..{}",
-            low[1], high[1]
-        )));
+        return Err(PipelineError::new(
+            "combined world FBX bounds are inverted",
+        ));
     }
     Ok(())
 }
@@ -281,6 +266,11 @@ fn bounds(
     let Some(first) = positions.first().copied() else {
         return Err(PipelineError::new("structural-guide bounds are empty"));
     };
+    if first.iter().any(|component| !component.is_finite()) {
+        return Err(PipelineError::new(
+            "combined world FBX position is non-finite",
+        ));
+    }
     let mut low = first;
     let mut high = first;
     for position in positions.iter().skip(1) {

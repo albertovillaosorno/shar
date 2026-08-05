@@ -33,7 +33,6 @@
 use fbx::adapters::driven::binary_character_writer::CharacterBinaryFbxSummary;
 
 use super::super::model::TextureRecord;
-use super::movement_model::WorldCoordinateMovementRecord;
 
 /// One written static FBX artifact at the shared world origin.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -65,10 +64,6 @@ pub(super) struct WorldPackageRecord {
     pub(super) interior: bool,
     /// Stable connected zone-family identity.
     pub(super) map_group: Option<String>,
-    /// Baked source-space map translation in whole source units.
-    pub(super) map_offset: [i16; 3],
-    /// Optional package-level coordinate movement identity.
-    pub(super) coordinate_movement: Option<String>,
     /// Number of canonical source meshes considered.
     pub(super) source_meshes: usize,
     /// Number of rejected degenerate render triangles.
@@ -133,8 +128,6 @@ pub(super) struct ExportedWorldCollection {
     pub(super) packages: Vec<WorldPackageRecord>,
     /// Fused canonical interiors plus additive Halloween overlays.
     pub(super) interiors: Vec<WorldInteriorRecord>,
-    /// Package movements and transformed non-mesh coordinate evidence.
-    pub(super) coordinate_movements: Vec<WorldCoordinateMovementRecord>,
     /// Deduplicated shared texture authority.
     pub(super) textures: Vec<TextureRecord>,
     /// Overlapping semantic surface counts.

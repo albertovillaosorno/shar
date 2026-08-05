@@ -37,7 +37,6 @@ use fbx::domain::mesh::MeshAsset;
 use shar_sha256::digest_hex;
 
 use crate::domain::PipelineError;
-use crate::domain::coordinate_movement::CoordinateMatrix;
 
 /// One stable source-backed interior family.
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
@@ -142,501 +141,15 @@ pub(super) fn is_halloween_package(package_id: &str) -> bool {
     )
 }
 
-/// Resolve one reviewed source-space movement, including the final height.
-#[must_use]
-pub(super) fn movement_for_package(
-    package_id: &str,
-) -> Option<(&'static str, CoordinateMatrix)> {
-    reviewed_movement_for_package(package_id)
-        .map(|(id, matrix)| (id, apply_canonical_world_height(matrix)))
-}
-
-/// Resolve the reviewed movement before the Unreal datum presentation raise.
-#[expect(
-    clippy::excessive_precision,
-    clippy::too_many_lines,
-    clippy::unreadable_literal,
-    reason = "reviewed matrix decimals preserve operator-derived evidence \
-              exactly"
-)]
-#[must_use]
-pub(super) fn reviewed_movement_for_package(
-    package_id: &str,
-) -> Option<(&'static str, CoordinateMatrix)> {
-    let (id, matrix) = match package_id {
-        "extracted-art-l1i00" => Some((
-            "interior-i00-level-01-reviewed-placement-and-global-height",
-            [
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                0f32,
-                -1f32,
-                0f32,
-                559.171508789_f32,
-                68.039663406_f32,
-                -943.929138184_f32,
-                1f32,
-            ],
-        )),
-        "extracted-art-l1i01" => Some((
-            "interior-i01-level-01-reviewed-placement-and-global-height",
-            [
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                0f32,
-                -1f32,
-                0f32,
-                289.275665283_f32,
-                68.569345566_f32,
-                -609.082275391_f32,
-                1f32,
-            ],
-        )),
-        "extracted-art-l1i02" => Some((
-            "interior-i02-level-01-reviewed-placement-and-global-height",
-            [
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                169.568115234_f32,
-                66.762950989_f32,
-                314.965209961_f32,
-                1f32,
-            ],
-        )),
-        "extracted-art-l2i03" => Some((
-            "interior-i03-level-02-reviewed-placement-and-global-height",
-            [
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                -432.246429443_f32,
-                70.251951309_f32,
-                7580.905761719_f32,
-                1f32,
-            ],
-        )),
-        "extracted-art-l2i04" => Some((
-            "interior-i04-level-02-reviewed-placement-and-global-height",
-            [
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                0f32,
-                -1f32,
-                0f32,
-                7276.824218750_f32,
-                70.512592407_f32,
-                -741.648315430_f32,
-                1f32,
-            ],
-        )),
-        "extracted-art-l3i05" => Some((
-            "interior-i05-level-03-reviewed-placement-and-global-height",
-            [
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                -387.678131104_f32,
-                70.453786942_f32,
-                16651.007812500_f32,
-                1f32,
-            ],
-        )),
-        "extracted-art-l3i06" => Some((
-            "interior-i06-level-03-reviewed-placement-and-global-height",
-            [
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                -892.374633789_f32,
-                83.478519531_f32,
-                16660.835937500_f32,
-                1f32,
-            ],
-        )),
-        "extracted-art-l4i00" => Some((
-            "interior-i00-level-04-reviewed-placement-and-global-height",
-            [
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                0f32,
-                -1f32,
-                0f32,
-                559.171020508_f32,
-                68.039663406_f32,
-                -943.929138184_f32,
-                1f32,
-            ],
-        )),
-        "extracted-art-l4i01" => Some((
-            "interior-i01-level-04-reviewed-placement-and-global-height",
-            [
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                0f32,
-                -1f32,
-                0f32,
-                289.275665283_f32,
-                68.569345566_f32,
-                -609.082275391_f32,
-                1f32,
-            ],
-        )),
-        "extracted-art-l4i02" => Some((
-            "interior-i02-level-04-reviewed-placement-and-global-height",
-            [
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                169.568115234_f32,
-                66.763021561_f32,
-                314.964569092_f32,
-                1f32,
-            ],
-        )),
-        "extracted-art-l4i07" => Some((
-            "interior-i07-level-04-reviewed-placement-and-global-height",
-            [
-                -1f32,
-                0f32,
-                0f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                -723.226440430_f32,
-                70.065055939_f32,
-                252.888824463_f32,
-                1f32,
-            ],
-        )),
-        "extracted-art-l5i03" => Some((
-            "interior-i03-level-05-reviewed-placement-and-global-height",
-            [
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                -432.246429443_f32,
-                70.251951309_f32,
-                7580.905273438_f32,
-                1f32,
-            ],
-        )),
-        "extracted-art-l5i04" => Some((
-            "interior-i04-level-05-reviewed-placement-and-global-height",
-            [
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                0f32,
-                -1f32,
-                0f32,
-                7276.824218750_f32,
-                70.512592407_f32,
-                -741.648315430_f32,
-                1f32,
-            ],
-        )),
-        "extracted-art-l6i05" => Some((
-            "interior-i05-level-06-reviewed-placement-and-global-height",
-            [
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                -387.678131104_f32,
-                70.453786942_f32,
-                16651.007812500_f32,
-                1f32,
-            ],
-        )),
-        "extracted-art-l6i06" => Some((
-            "interior-i06-level-06-reviewed-placement-and-global-height",
-            [
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                -892.374633789_f32,
-                83.478519531_f32,
-                16660.835937500_f32,
-                1f32,
-            ],
-        )),
-        "extracted-art-l7i00" => Some((
-            "interior-i00-level-07-reviewed-placement-and-global-height",
-            [
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                0f32,
-                -1f32,
-                0f32,
-                559.170532227_f32,
-                68.039663406_f32,
-                -943.929138184_f32,
-                1f32,
-            ],
-        )),
-        "extracted-art-l7i01" => Some((
-            "interior-i01-level-07-reviewed-placement-and-global-height",
-            [
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                0f32,
-                -1f32,
-                0f32,
-                289.275177002_f32,
-                68.573124023_f32,
-                -609.082275391_f32,
-                1f32,
-            ],
-        )),
-        "extracted-art-l7i02" => Some((
-            "interior-i02-level-07-reviewed-placement-and-global-height",
-            [
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                169.568115234_f32,
-                66.762950989_f32,
-                314.964202881_f32,
-                1f32,
-            ],
-        )),
-        "extracted-art-l7i07" => Some((
-            "interior-i07-level-07-reviewed-placement-and-global-height",
-            [
-                -1f32,
-                0f32,
-                0f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                0f32,
-                0f32,
-                0f32,
-                1f32,
-                0f32,
-                -723.225952148_f32,
-                70.065055939_f32,
-                252.888824463_f32,
-                1f32,
-            ],
-        )),
-        _ => None,
-    }?;
-    Some((
-        id,
-        correct_source_x_basis(normalize_recurring_family_origin(
-            package_id, matrix,
-        )),
-    ))
-}
-
-/// Remove the original recurring-family map displacement from one interior.
-///
-/// The source stores Zone 2 at an 8,192-meter X displacement and Zone 3 at a
-/// 16,384-meter X displacement. The reviewed matrices include those source
-/// coordinates, while the connected native world already owns family placement.
-/// Remove the source displacement in the translated axis selected by each
-/// reviewed interior orientation before the common FBX basis conversion.
-fn normalize_recurring_family_origin(
-    package_id: &str,
-    mut matrix: CoordinateMatrix,
-) -> CoordinateMatrix {
-    match package_id {
-        "extracted-art-l2i03" | "extracted-art-l5i03" => {
-            matrix[14] -= 8_192.;
-        },
-        "extracted-art-l2i04" | "extracted-art-l5i04" => {
-            matrix[12] -= 8_192.;
-        },
-        "extracted-art-l3i05"
-        | "extracted-art-l3i06"
-        | "extracted-art-l6i05"
-        | "extracted-art-l6i06" => {
-            matrix[14] -= 16_384.;
-        },
-        _ => {},
-    }
-    matrix
-}
-
-/// Pre-compose one reviewed matrix with the source-to-FBX X reflection.
-///
-/// The operator review scene uses Blender package coordinates, while production
-/// meshes remain in the source coordinate basis until the shared FBX export
-/// root performs its final X reflection. Negating the source-X row preserves
-/// the reviewed placement after that common import conversion.
-fn correct_source_x_basis(mut matrix: CoordinateMatrix) -> CoordinateMatrix {
-    for component in &mut matrix[..4] {
-        *component = -*component;
-    }
-    matrix
-}
-
-/// Replace the superseded reviewed reference height with the canonical datum.
-///
-/// The historical matrices remain unchanged as placement evidence. Publication
-/// subtracts their embedded 43.396-meter reference and bakes exactly 80.0
-/// meters into geometry and every decoded coordinate family.
-fn apply_canonical_world_height(
-    mut matrix: CoordinateMatrix,
-) -> CoordinateMatrix {
-    matrix[13] += super::movement::WORLD_HEIGHT_OFFSET_METERS
-        - super::movement::LEGACY_REVIEWED_HEIGHT_OFFSET_METERS;
-    matrix
-}
-
 /// Quantized orientation-independent world-space triangle identity.
 #[cfg(test)]
 pub(super) type InteriorTriangleKey = [[i64; 3]; 3];
 
-/// Maximum reviewed placement noise accepted for duplicate ownership.
+/// Maximum source decoding tolerance accepted for duplicate ownership.
 const INTERIOR_DUPLICATE_TOLERANCE_METERS: f32 = 0.005;
 /// Coarse cell size used to query owned planar surface coverage.
 const INTERIOR_SURFACE_BUCKET_METERS: f32 = 5.;
-/// One triangle in final reviewed world coordinates.
+/// One triangle in source-authored coordinates.
 type InteriorTriangle = [[f32; 3]; 3];
 /// Coarse centroid bucket used to bound tolerant duplicate searches.
 type InteriorTriangleBucket = [i64; 3];
@@ -657,7 +170,7 @@ pub(super) struct InteriorGeometryOwnership {
 }
 
 impl InteriorGeometryOwnership {
-    /// Claim one triangle unless reviewed geometry already owns its surface.
+    /// Claim one triangle unless source geometry already owns its surface.
     fn claim(
         &mut self,
         positions: &[[f32; 3]],
@@ -736,9 +249,9 @@ impl InteriorGeometryOwnership {
 /// Retain only triangles not already owned by one fused interior publication.
 ///
 /// Material, UV, normal, color, and source mesh identity remain attached to
-/// every retained triangle. Ownership compares final reviewed geometry within a
-/// five-millimeter tolerance, which covers the measured Blender placement noise
-/// without making names, materials, UVs, or vertex ordering authoritative.
+/// every retained triangle. Ownership compares final source geometry within a
+/// five-millimeter tolerance, which covers numeric decoding and serialization
+/// variation without making names, materials, UVs, or ordering authoritative.
 ///
 /// # Errors
 ///
@@ -753,12 +266,10 @@ pub(super) fn retain_unowned_triangles(
     retain_unowned_triangles_with_ownership(mesh, &ownership_mesh, owned)
 }
 
-/// Retain final-datum triangles using an exact pre-datum ownership mesh.
+/// Retain source triangles using an exact ownership mesh.
 ///
-/// The ownership mesh is cloned before the 80-meter Unreal alignment raise
-/// and transformed with the previously reviewed matrix. This preserves every
-/// established fusion decision while the retained mesh keeps its final raised
-/// coordinates.
+/// The ownership mesh is cloned from the unmodified source-space package.
+/// Fusion decisions therefore compare the same coordinates that are exported.
 ///
 /// # Errors
 ///
@@ -816,7 +327,7 @@ pub(super) fn retain_unowned_triangles_with_ownership(
     Ok((Some(mesh), removed_triangles))
 }
 
-/// Resolve one triangle from the exact reviewed ownership positions.
+/// Resolve one triangle from the exact source ownership positions.
 fn triangle_points(
     positions: &[[f32; 3]],
     triangle: &[u32; 3],
@@ -842,7 +353,7 @@ fn triangle_bucket(triangle: &InteriorTriangle) -> InteriorTriangleBucket {
     point_bucket(triangle_centroid(triangle))
 }
 
-/// Return one triangle centroid in reviewed world coordinates.
+/// Return one triangle centroid in source coordinates.
 fn triangle_centroid(triangle: &InteriorTriangle) -> [f32; 3] {
     let mut centroid = [0f32; 3];
     for point in triangle {
@@ -864,7 +375,7 @@ fn triangle_surface_samples(triangle: &InteriorTriangle) -> [[f32; 3]; 4] {
     ]
 }
 
-/// Return the midpoint between two reviewed world-space points.
+/// Return the midpoint between two source-space points.
 const fn midpoint(left: [f32; 3], right: [f32; 3]) -> [f32; 3] {
     let [left_x, left_y, left_z] = left;
     let [right_x, right_y, right_z] = right;
@@ -875,7 +386,7 @@ const fn midpoint(left: [f32; 3], right: [f32; 3]) -> [f32; 3] {
     ]
 }
 
-/// Return one coarse bucket for a reviewed world-space point.
+/// Return one coarse bucket for a source-space point.
 #[expect(
     clippy::as_conversions,
     clippy::cast_possible_truncation,
@@ -1036,7 +547,7 @@ fn point_is_inside_triangle(
         && first_weight + second_weight <= 1. + tolerance
 }
 
-/// Subtract one reviewed world-space point from another.
+/// Subtract one source-space point from another.
 fn subtract(left: [f32; 3], right: [f32; 3]) -> [f32; 3] {
     let [left_x, left_y, left_z] = left;
     let [right_x, right_y, right_z] = right;
@@ -1070,8 +581,8 @@ fn point_plane_distance(
     dot(subtract(point, plane_point), plane_normal).abs()
 }
 
-/// Compare triangles independent of corner order within reviewed placement
-/// noise.
+/// Compare triangles independent of corner order within source decoding
+/// tolerance.
 fn triangles_within_tolerance(
     left: &InteriorTriangle,
     right: &InteriorTriangle,

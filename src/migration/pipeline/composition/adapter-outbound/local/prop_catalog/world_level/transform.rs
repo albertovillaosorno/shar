@@ -31,21 +31,58 @@
 //! Transform outbound adapter.
 
 #![expect(
+    clippy::arithmetic_side_effects,
     clippy::indexing_slicing,
-    reason = "Fixed-size matrix and coordinate arrays use bounded indices."
+    reason = "Fixed-size source matrix math uses bounded 4x4 indices."
 )]
 
 use fbx::domain::mesh::MeshAsset;
 
 use crate::domain::PipelineError;
-use crate::domain::coordinate_movement::CoordinateMatrix;
-pub(super) use crate::domain::coordinate_movement::{
-    identity_matrix as identity, matrix_key, multiply_matrices as multiply,
-    translation_matrix as translation,
-};
 
 /// Row-major row-vector affine transform.
-pub(super) type Matrix = CoordinateMatrix;
+pub(super) type Matrix = [f32; 16];
+
+/// Return one affine identity matrix.
+#[must_use]
+pub(super) const fn identity() -> Matrix {
+    [
+        1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.,
+    ]
+}
+
+/// Build one source-authored translation matrix.
+#[must_use]
+pub(super) const fn translation(value: [f32; 3]) -> Matrix {
+    let mut matrix = identity();
+    matrix[12] = value[0];
+    matrix[13] = value[1];
+    matrix[14] = value[2];
+    matrix
+}
+
+/// Multiply row-vector matrices as `first` followed by `second`.
+#[must_use]
+pub(super) fn multiply(first: &Matrix, second: &Matrix) -> Matrix {
+    let mut product = [0f32; 16];
+    for row in 0..4 {
+        for column in 0..4 {
+            let mut sum = 0f32;
+            for inner in 0..4 {
+                sum = first[row * 4 + inner]
+                    .mul_add(second[inner * 4 + column], sum);
+            }
+            product[row * 4 + column] = sum;
+        }
+    }
+    product
+}
+
+/// Stable source-matrix identity for placement deduplication.
+#[must_use]
+pub(super) fn matrix_key(matrix: &Matrix) -> [u32; 16] {
+    matrix.map(f32::to_bits)
+}
 
 /// Transform one mesh in place and assign its final unique scene identity.
 ///
