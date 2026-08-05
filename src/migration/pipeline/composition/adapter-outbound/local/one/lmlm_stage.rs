@@ -30,39 +30,41 @@
 
 //! Lmlm stage outbound adapter.
 
-use std::collections::BTreeSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use lmlm::{entry_bytes, parse as parse_lmlm};
+use lmlm::{FileEntry, entry_bytes, parse as parse_lmlm};
 use rmv::Sha256;
 use rsd::RsdAudio;
 use schoenwald_filesystem::adapters::driving::local::{
-    create_dir_all as local_create_dir_all, file_len as local_file_len,
-    read_bytes as local_read_bytes, write_bytes as local_write_bytes,
+    create_dir_all as local_create_dir_all, read_bytes as local_read_bytes,
+    write_bytes as local_write_bytes,
 };
 
 use super::media_dependencies::{ensure_ffmpeg_dependency, media_tool_path};
-use crate::adapters::driven::local::filesystem::collect_files;
+use crate::adapters::driven::check_cancellation;
+use crate::adapters::driven::local::progress::StageProgress;
 use crate::domain::{PipelineError, StageReport, escape_json as json_escape};
+
+#[path = "lmlm_stage/optional_mods.rs"]
+mod optional_mods;
+
+use optional_mods::{
+    OptionalModCounts, OptionalModRole, apply_remaster, discover_optional_mods,
+    existing_file_index, is_latino_audio_path, is_latino_movie_path,
+};
 
 /// Result.
 type PipelineOutcome<T> = Result<T, PipelineError>;
 
-/// Extract lmlm.
-// One transaction validates, deduplicates, and stages the archive output.
-#[expect(
-    clippy::too_many_lines,
-    reason = "LMLM extraction preserves archive validation, deduplication, \
-              and staged output ordering in one transaction."
-)]
+/// Applies zero, one, or both supported local packages.
 pub(super) fn extract_lmlm(
     game_root: &Path,
     extracted_root: &Path,
 ) -> PipelineOutcome<StageReport> {
     let output_root = extracted_root.join("lmlm");
-    let archives = files_with_extension(game_root, "lmlm")?;
+    let archives = discover_optional_mods(game_root)?;
     if archives.is_empty() {
         if output_root.exists() {
             fs::remove_dir_all(&output_root).map_err(io_error(&output_root))?;
@@ -71,15 +73,32 @@ pub(super) fn extract_lmlm(
             name: "lmlm",
             files: 0,
             bytes: 0,
-            note: "optional LMLM package not present; no output written"
-                .to_owned(),
+            note: "no supported optional LMLM packages present".to_owned(),
         });
     }
+    let parsed_archives = archives
+        .into_iter()
+        .map(|archive| {
+            check_cancellation()?;
+            let data = local_read_bytes(&archive.path)
+                .map_err(io_error(&archive.path))?;
+            let entries = parse_lmlm(&data).map_err(|error| {
+                PipelineError::new(format!(
+                    "{}: {error}",
+                    archive.path.display()
+                ))
+            })?;
+            Ok((archive, data, entries))
+        })
+        .collect::<PipelineOutcome<Vec<_>>>()?;
+
     if output_root.exists() {
         fs::remove_dir_all(&output_root).map_err(io_error(&output_root))?;
     }
     local_create_dir_all(&output_root).map_err(io_error(&output_root))?;
-    let mut known_wav_hashes = BTreeSet::new();
+    let base_files =
+        existing_file_index(game_root, extracted_root, &output_root)?;
+
     let work_root = std::env::temp_dir()
         .join("shar-schoenwald")
         .join("lmlm-pipeline");
@@ -88,92 +107,56 @@ pub(super) fn extract_lmlm(
     }
     local_create_dir_all(&work_root).map_err(io_error(&work_root))?;
 
-    let mut files_written = 0usize;
-    let mut bytes_written = 0u64;
-    let mut records = Vec::new();
-    for archive in archives {
-        let data = local_read_bytes(&archive).map_err(io_error(&archive))?;
-        let entries = parse_lmlm(&data).map_err(|error| {
-            PipelineError::new(format!("{}: {error}", archive.display()))
-        })?;
-        for entry in &entries {
-            let lower = entry.path.to_ascii_lowercase();
-            let bytes = entry_bytes(&data, entry).ok_or_else(|| {
-                PipelineError::new(format!(
-                    "{}: LMLM entry out of bounds",
-                    entry.path
-                ))
-            })?;
-            if entry_extension_is(&entry.path, "ini") {
-                if lower == "customtext/customtext.ini" {
-                    let destination =
-                        lmlm_entry_path(&output_root, &entry.path);
-                    write_bytes(&destination, bytes)?;
-                    files_written = files_written.saturating_add(1);
-                    bytes_written = bytes_written.saturating_add(
-                        u64::try_from(bytes.len()).unwrap_or(u64::MAX),
-                    );
-                    records.push(format!(
-                        concat!(
-                            "{{\"kind\":\"ini\",",
-                            "\"source\":\"{}\",",
-                            "\"output\":\"{}\",",
-                            "\"bytes\":{}}}",
-                        ),
-                        json_escape(&entry.path),
-                        json_escape(&destination.display().to_string()),
-                        bytes.len()
-                    ));
-                }
-                continue;
-            }
-            if entry_extension_is(&entry.path, "rsd") {
-                let wav = rsd_bytes_to_wav(bytes, &entry.path)?;
-                let destination = lmlm_entry_path(&output_root, &entry.path)
-                    .with_extension("wav");
-                write_lmlm_wav(
-                    &destination,
-                    &wav,
-                    &entry.path,
-                    "rsd_audio_override",
-                    None,
-                    &mut records,
-                )?;
-                files_written = files_written.saturating_add(1);
-                bytes_written = bytes_written.saturating_add(
-                    u64::try_from(wav.len()).unwrap_or(u64::MAX),
-                );
-                continue;
-            }
-            if !lmlm_is_fmv_or_intro(&lower) {
-                continue;
-            }
-            if entry_extension_is(&entry.path, "rmv") {
-                let (movie_files, movie_bytes) = export_lmlm_movie_audio(
-                    &work_root,
-                    &output_root,
-                    &entry.path,
-                    bytes,
-                    &mut known_wav_hashes,
-                    extracted_root,
-                    &mut records,
-                )?;
-                files_written = files_written.saturating_add(movie_files);
-                bytes_written = bytes_written.saturating_add(movie_bytes);
-            }
+    let mut files_written = 0_usize;
+    let mut bytes_written = 0_u64;
+    let mut package_records = Vec::new();
+    let mut member_records = Vec::new();
+    for (archive, data, entries) in parsed_archives {
+        check_cancellation()?;
+        let counts = match archive.role {
+            OptionalModRole::Remaster => apply_remaster(
+                &data,
+                &entries,
+                extracted_root,
+                &base_files,
+                &mut member_records,
+            )?,
+            OptionalModRole::Latino => extract_latino_media(
+                &data,
+                &entries,
+                &work_root,
+                &output_root,
+                extracted_root,
+                &mut member_records,
+            )?,
+        };
+        if counts.written == 0 {
+            return Err(PipelineError::new(format!(
+                "{} contains no supported {} payload",
+                archive.role.alias(),
+                archive.role.label()
+            )));
         }
+        files_written = files_written.saturating_add(counts.written);
+        bytes_written = bytes_written.saturating_add(counts.bytes);
+        package_records.push(package_record(archive.role, counts));
     }
     drop(fs::remove_dir_all(&work_root));
+
     let manifest = format!(
         concat!(
-            "{{\"schema\":\"shar-schoenwald.lmlm-extract.v1\",",
-            "\"scope\":\"jebano_latino_local_review_overrides\",",
-            "\"audio_language_fields_apply_to\":\"audio_records_only\",",
-            "\"dedupe_basis\":\"movie_audio_track_override_only_exact_",
-            "match_against_non_lmlm_extracted_wavs\",",
-            "\"records\":[{}]}}\n",
+            "{{\"schema\":\"shar-schoenwald.optional-mod-extract.v2\",",
+            "\"aliases\":{{\"m.lmlm\":\"remaster\",",
+            "\"j.lmlm\":\"latino\"}},",
+            "\"remaster_policy\":\"replace existing base files only; ",
+            "skip every additional member\",",
+            "\"latino_policy\":\"add voice WAV and cinematic-audio WAV ",
+            "only; never replace base output\",",
+            "\"packages\":[{}],",
+            "\"records\":[{}]}}\n"
         ),
-        records.join(",")
+        package_records.join(","),
+        member_records.join(",")
     );
     let manifest_path = output_root.join("manifest.json");
     write_bytes(&manifest_path, manifest.as_bytes())?;
@@ -184,25 +167,85 @@ pub(super) fn extract_lmlm(
         name: "lmlm",
         files: files_written,
         bytes: bytes_written,
-        note: "Jebano Latino LMLM inspected in-process; CustomText INI, \
-                   all RSD WAV overrides, and unique Spanish LatAm FMV/intro \
-                   movie WAV overrides written under extracted/lmlm; LMLM \
-                   video frames are intentionally not exported"
+        note: "supported optional packages applied by alias and role policy"
             .to_owned(),
     })
 }
 
-/// Lmlm is fmv or intro.
-fn lmlm_is_fmv_or_intro(lower_path: &str) -> bool {
-    lower_path.contains("fmv") || lower_path.contains("intro")
+/// Renders one deterministic package summary.
+fn package_record(role: OptionalModRole, counts: OptionalModCounts) -> String {
+    format!(
+        concat!(
+            "{{\"alias\":\"{}\",",
+            "\"role\":\"{}\",",
+            "\"written\":{},",
+            "\"skipped\":{},",
+            "\"bytes\":{}}}"
+        ),
+        role.alias(),
+        role.label(),
+        counts.written,
+        counts.skipped,
+        counts.bytes
+    )
 }
 
-/// Lmlm entry path.
-fn entry_extension_is(path: &str, expected: &str) -> bool {
-    Path::new(path)
-        .extension()
-        .and_then(|value| value.to_str())
-        .is_some_and(|extension| extension.eq_ignore_ascii_case(expected))
+/// Converts only Latino dialogue and cinematic audio into isolated WAV output.
+fn extract_latino_media(
+    data: &[u8],
+    entries: &[FileEntry],
+    work_root: &Path,
+    output_root: &Path,
+    extracted_root: &Path,
+    records: &mut Vec<String>,
+) -> PipelineOutcome<OptionalModCounts> {
+    let latino_root = output_root.join("latino");
+    local_create_dir_all(&latino_root).map_err(io_error(&latino_root))?;
+    let mut counts = OptionalModCounts::default();
+    let mut progress = StageProgress::begin("latino members", entries.len());
+    for (index, entry) in entries.iter().enumerate() {
+        check_cancellation()?;
+        progress.advance(&format!("member {}", index.saturating_add(1)));
+        let bytes = entry_bytes(data, entry).ok_or_else(|| {
+            PipelineError::new(format!(
+                "{}: LMLM entry out of bounds",
+                entry.path
+            ))
+        })?;
+        if is_latino_audio_path(&entry.path) {
+            let wav = rsd_bytes_to_wav(bytes, &entry.path)?;
+            let destination = lmlm_entry_path(&latino_root, &entry.path)
+                .with_extension("wav");
+            write_lmlm_wav(
+                &destination,
+                &wav,
+                &entry.path,
+                "latino_voice_audio",
+                None,
+                extracted_root,
+                records,
+            )?;
+            counts.written = counts.written.saturating_add(1);
+            counts.bytes = counts
+                .bytes
+                .saturating_add(u64::try_from(wav.len()).unwrap_or(u64::MAX));
+        } else if is_latino_movie_path(&entry.path) {
+            let (movie_files, movie_bytes) = export_lmlm_movie_audio(
+                work_root,
+                &latino_root,
+                &entry.path,
+                bytes,
+                extracted_root,
+                records,
+            )?;
+            counts.written = counts.written.saturating_add(movie_files);
+            counts.bytes = counts.bytes.saturating_add(movie_bytes);
+        } else {
+            counts.skipped = counts.skipped.saturating_add(1);
+        }
+    }
+    progress.finish();
+    Ok(counts)
 }
 
 /// Build a normalized output path for one LMLM entry.
@@ -214,34 +257,16 @@ fn lmlm_entry_path(root: &Path, entry_path: &str) -> PathBuf {
     destination
 }
 
-/// Non lmlm wav hash exists.
-fn non_lmlm_wav_hash_exists(
-    extracted_root: &Path,
-    hash: &str,
-    byte_len: usize,
-) -> PipelineOutcome<bool> {
-    let lmlm_root = extracted_root.join("lmlm");
-    for file in collect_files(extracted_root)? {
-        if file.starts_with(&lmlm_root) {
-            continue;
-        }
-        let is_wav = file
-            .extension()
-            .and_then(|value| value.to_str())
-            .is_some_and(|value| value.eq_ignore_ascii_case("wav"));
-        if !is_wav {
-            continue;
-        }
-        let file_length = local_file_len(&file).map_err(io_error(&file))?;
-        if file_length != u64::try_from(byte_len).unwrap_or(u64::MAX) {
-            continue;
-        }
-        let bytes = local_read_bytes(&file).map_err(io_error(&file))?;
-        if Sha256::digest(&bytes).hex() == hash {
-            return Ok(true);
-        }
-    }
-    Ok(false)
+/// Public-safe generated path relative to the extraction root.
+fn relative_output(root: &Path, path: &Path) -> PipelineOutcome<String> {
+    path.strip_prefix(root)
+        .map(|relative| {
+            relative
+                .to_string_lossy()
+                .replace('\\', "/")
+                .to_ascii_lowercase()
+        })
+        .map_err(|_error| PipelineError::new("output escaped extraction root"))
 }
 
 /// Rsd bytes to wav.
@@ -255,150 +280,109 @@ fn rsd_bytes_to_wav(bytes: &[u8], source: &str) -> PipelineOutcome<Vec<u8>> {
         .map_err(|error| PipelineError::new(format!("{source}: {error}")))
 }
 
-/// Export lmlm movie audio.
-// Movie audio remains one ordered demux, deduplication, and staging flow.
+/// Exports only the first audio stream from one Latino cinematic.
 fn export_lmlm_movie_audio(
     work_root: &Path,
     output_root: &Path,
     entry_path: &str,
     movie_bytes: &[u8],
-    known_wav_hashes: &mut BTreeSet<String>,
     extracted_root: &Path,
     records: &mut Vec<String>,
 ) -> PipelineOutcome<(usize, u64)> {
     ensure_ffmpeg_dependency().map_err(PipelineError::new)?;
-    let stem = Path::new(entry_path)
+    let source_path = Path::new(entry_path);
+    let stem = source_path
         .file_stem()
         .and_then(|value| value.to_str())
         .unwrap_or("movie");
-    let temp_movie = work_root.join(format!("{stem}.rmv"));
+    let extension = source_path
+        .extension()
+        .and_then(|value| value.to_str())
+        .unwrap_or("bik");
+    let temp_movie = work_root.join(format!("{stem}.{extension}"));
     write_bytes(&temp_movie, movie_bytes)?;
     let audio_count = ffprobe_audio_stream_count(&temp_movie)?;
     if audio_count == 0 {
         records.push(format!(
-            "{{\"kind\":\"movie_audio\",\"source\":\"{}\",\"status\":\"\
-                 skipped_no_audio\"}}",
+            "{{\"kind\":\"latino_cinematic_audio\",\"source\":\"{}\",\
+             \"status\":\"skipped_no_audio\"}}",
             json_escape(entry_path)
         ));
         return Ok((0, 0));
     }
-    let source_stream_index: usize = if audio_count >= 4 {
-        3
-    } else {
-        0
-    };
-    let temp_wav = work_root.join(format!("{stem}_audio_track_04.wav"));
-    let stream = format!("0:a:{source_stream_index}");
+
+    let temp_wav = work_root.join(format!("{stem}_audio_track_01.wav"));
     let status = Command::new(media_tool_path("ffmpeg"))
         .args(["-y", "-hide_banner", "-loglevel", "error"])
         .arg("-i")
         .arg(&temp_movie)
-        .args(["-vn", "-map"])
-        .arg(&stream)
-        .args(["-acodec", "pcm_s16le"])
+        .args(["-vn", "-map", "0:a:0", "-acodec", "pcm_s16le"])
         .arg(&temp_wav)
         .status()
         .map_err(|error| {
             PipelineError::new(format!(
-                "failed to run ffmpeg for LMLM movie audio \
-                         {entry_path}: {error}"
+                "failed to export Latino cinematic audio for \
+                 {entry_path}: {error}"
             ))
         })?;
     if !status.success() {
         return Err(PipelineError::new(format!(
-            "ffmpeg failed to export LMLM movie audio for {entry_path}"
+            "ffmpeg failed to export Latino cinematic audio for {entry_path}"
         )));
     }
     let wav = local_read_bytes(&temp_wav).map_err(io_error(&temp_wav))?;
     let destination = output_root
         .join("movies")
         .join(stem)
-        .join("audio_track_04.wav");
-    let written = write_lmlm_unique_wav(
+        .join("audio_track_01.wav");
+    write_lmlm_wav(
         &destination,
         &wav,
-        known_wav_hashes,
-        extracted_root,
         entry_path,
-        "movie_audio_track_override",
-        Some(source_stream_index.saturating_add(1)),
+        "latino_cinematic_audio",
+        Some(1),
+        extracted_root,
         records,
     )?;
-    if written {
-        Ok((1, u64::try_from(wav.len()).unwrap_or(u64::MAX)))
-    } else {
-        Ok((0, 0))
-    }
+    Ok((1, u64::try_from(wav.len()).unwrap_or(u64::MAX)))
 }
 
-/// Write lmlm wav.
+/// Writes one normalized Latino WAV and its public-safe evidence record.
 fn write_lmlm_wav(
     destination: &Path,
     wav: &[u8],
     source: &str,
     kind: &str,
     source_audio_stream_ordinal: Option<usize>,
+    extracted_root: &Path,
     records: &mut Vec<String>,
 ) -> PipelineOutcome<()> {
+    if destination.exists() {
+        return Err(PipelineError::new(
+            "Latino package would overwrite generated output",
+        ));
+    }
     write_bytes(destination, wav)?;
     records.push(format!(
-        "{{\"kind\":\"{}\",\"source\":\"{}\",\"output\":\"{}\",\"status\":\
-             \"written\",\"bytes\":{},\"language\":\"spanish_latam\",\"\
-             game_track_number\":4,\"source_audio_stream_ordinal\":{}}}",
+        concat!(
+            "{{\"kind\":\"{}\",",
+            "\"source\":\"{}\",",
+            "\"output\":\"{}\",",
+            "\"status\":\"written\",",
+            "\"bytes\":{},",
+            "\"sha256\":\"{}\",",
+            "\"language\":\"spanish_latam\",",
+            "\"source_audio_stream_ordinal\":{}}}"
+        ),
         kind,
         json_escape(source),
-        json_escape(&destination.display().to_string()),
+        json_escape(&relative_output(extracted_root, destination)?),
         wav.len(),
+        Sha256::digest(wav).hex(),
         source_audio_stream_ordinal
             .map_or_else(|| "null".to_owned(), |value| value.to_string())
     ));
     Ok(())
-}
-
-/// Write lmlm unique wav.
-// This scoped expectation preserves a documented boundary with explicit
-// validation.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "Each argument is a separate provenance boundary for extracted \
-              files; grouping would obscure the audit contract."
-)]
-fn write_lmlm_unique_wav(
-    destination: &Path,
-    wav: &[u8],
-    known_wav_hashes: &mut BTreeSet<String>,
-    extracted_root: &Path,
-    source: &str,
-    kind: &str,
-    source_audio_stream_ordinal: Option<usize>,
-    records: &mut Vec<String>,
-) -> PipelineOutcome<bool> {
-    let hash = Sha256::digest(wav).hex();
-    let duplicate_in_lmlm = !known_wav_hashes.insert(hash.clone());
-    let duplicate_in_extracted =
-        non_lmlm_wav_hash_exists(extracted_root, &hash, wav.len())?;
-    let is_unique = !duplicate_in_lmlm && !duplicate_in_extracted;
-    let status = if is_unique {
-        "written"
-    } else {
-        "skipped_duplicate"
-    };
-    if is_unique {
-        write_bytes(destination, wav)?;
-    }
-    records.push(format!(
-        "{{\"kind\":\"{}\",\"source\":\"{}\",\"output\":\"{}\",\"status\":\
-             \"{}\",\"bytes\":{},\"language\":\"spanish_latam\",\"\
-             game_track_number\":4,\"source_audio_stream_ordinal\":{}}}",
-        kind,
-        json_escape(source),
-        json_escape(&destination.display().to_string()),
-        status,
-        wav.len(),
-        source_audio_stream_ordinal
-            .map_or_else(|| "null".to_owned(), |value| value.to_string())
-    ));
-    Ok(is_unique)
 }
 
 /// Ffprobe audio stream count.
@@ -432,21 +416,6 @@ fn ffprobe_audio_stream_count(input: &Path) -> PipelineOutcome<usize> {
         .lines()
         .filter(|line| !line.trim().is_empty())
         .count())
-}
-
-/// Files with extension.
-fn files_with_extension(
-    root: &Path,
-    extension: &str,
-) -> PipelineOutcome<Vec<PathBuf>> {
-    Ok(collect_files(root)?
-        .into_iter()
-        .filter(|path| {
-            path.extension()
-                .and_then(|value| value.to_str())
-                .is_some_and(|value| value.eq_ignore_ascii_case(extension))
-        })
-        .collect())
 }
 
 /// Write bytes.

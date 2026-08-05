@@ -153,6 +153,11 @@ impl ExtractGameAssets {
             .stages
             .push(extract_rcf(&config.game_root, &config.extracted_root)?);
         check_cancellation()?;
+        progress.advance("apply optional mod packages");
+        report
+            .stages
+            .push(extract_lmlm(&config.game_root, &config.extracted_root)?);
+        check_cancellation()?;
         progress.advance("convert rsd audio");
         report
             .stages
@@ -167,11 +172,6 @@ impl ExtractGameAssets {
         report
             .stages
             .push(extract_movies(&config.game_root, &config.extracted_root)?);
-        check_cancellation()?;
-        progress.advance("extract optional language package");
-        report
-            .stages
-            .push(extract_lmlm(&config.game_root, &config.extracted_root)?);
         check_cancellation()?;
         progress.advance("decode p3d packages");
         report
