@@ -145,6 +145,13 @@ package set, a malformed manifest, a missing manifest in existing optional
 output, or schema v2 requires a clean `extract-game` run. This prevents stale
 remaster replacements outside `extracted/lmlm` from surviving a package change.
 
+The maximum supported local snapshot was transition-validated on 2026-08-05.
+A complete schema-v2 output with 1,531 files was rejected without changing its
+tree. A schema-v3 output then accepted same-token reapplication and retained
+1,530 non-manifest files totaling 229,408,835 bytes. Every payload path, size,
+and SHA-256 matched the prior isolated output, and all 1,530 manifest records
+matched the preview.
+
 The maximum supported local snapshot was token-validated on 2026-08-05. A
 syntactically valid but stale token failed without creating its requested output
 root. The exact preview token then produced 1,502 files totaling 195,366,070
