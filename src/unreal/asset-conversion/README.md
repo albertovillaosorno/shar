@@ -6,6 +6,7 @@
 Its only accepted source families are:
 
 - normalized JSON records;
+- explicit decoded image interchange;
 - PCM WAV audio;
 - HAP video packages and synchronized audio metadata; and
 - canonical binary FBX 7.7 models and animation.

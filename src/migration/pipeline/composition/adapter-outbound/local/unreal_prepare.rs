@@ -41,6 +41,7 @@ use schoenwald_filesystem::adapters::driving::local::{
 };
 use serde_json::{Map, Value};
 use shar_sha256::digest_hex;
+use shar_unreal_conversion::domain::PlanBundle;
 
 use crate::adapters::driven::check_cancellation;
 use crate::adapters::driven::local::progress::StageProgress;
@@ -56,8 +57,22 @@ pub(super) const UNREAL_STAGING_ROOT: &str = "unreal-staging";
 const MANIFEST_FILE: &str = "manifest.jsonl";
 /// Canonical import-summary filename.
 const SUMMARY_FILE: &str = "summary.json";
+/// Canonical generated plan directory.
+const PLAN_ROOT: &str = "plans";
+/// Canonical generated plan-bundle index filename.
+const PLAN_INDEX_FILE: &str = "plans/index.json";
 /// Complete set of files published by one prepare-unreal transaction.
-const PUBLISHED_FILES: [&str; 2] = [MANIFEST_FILE, SUMMARY_FILE];
+const PUBLISHED_FILES: [&str; 9] = [
+    MANIFEST_FILE,
+    SUMMARY_FILE,
+    PLAN_INDEX_FILE,
+    "plans/asset-import-plan.json",
+    "plans/asset-construction-plan.json",
+    "plans/world-assembly-plan.json",
+    "plans/runtime-binding-plan.json",
+    "plans/validation-plan.json",
+    "plans/package-plan.json",
+];
 /// Expected successful minor-unit audit schema.
 const AUDIT_SCHEMA: &str = "shar-schoenwald.minor-unit-audit.v2";
 
@@ -71,12 +86,15 @@ pub(super) fn prepare_unreal(
     let index_path = minor_unit_root.join("index.jsonl");
     let manifest_text = read_utf8(&manifest_path)?;
     validate_audit(&audit_path, &manifest_text)?;
-    let index = PhaseThreePackageIndex::read(&index_path).map_err(|error| {
-        PipelineError::new(format!(
-            "Unreal package-index intake failed: {error}"
-        ))
-    })?;
+    let index = PhaseThreePackageIndex::read_for_unreal(&index_path).map_err(
+        |error| {
+            PipelineError::new(format!(
+                "Unreal package-index intake failed: {error}"
+            ))
+        },
+    )?;
     let evidence = source_evidence(&manifest_text, config)?;
+    let evidence = retain_importable_evidence(&index, evidence);
     let unreal_manifest = UnrealImportManifest::build(&index, evidence)
         .map_err(|error| {
             PipelineError::new(format!(
@@ -86,19 +104,33 @@ pub(super) fn prepare_unreal(
     let manifest_jsonl = unreal_manifest.to_jsonl();
     let summary_json = unreal_manifest.summary_json();
     validate_rendered_output(&manifest_jsonl, &summary_json)?;
-    publish_staging(&manifest_jsonl, &summary_json)?;
+    let manifest_revision = digest_hex(manifest_jsonl.as_bytes());
+    let plan_bundle =
+        unreal_manifest
+            .plan_bundle(&manifest_revision)
+            .map_err(|error| {
+                PipelineError::new(format!(
+                    "Unreal plan generation failed: {error}"
+                ))
+            })?;
+    publish_staging(&manifest_jsonl, &summary_json, &plan_bundle)?;
     Ok(StageReport {
         name: "prepare-unreal",
         files: PUBLISHED_FILES.len(),
-        bytes: u64::try_from(
-            manifest_jsonl.len().saturating_add(summary_json.len()),
-        )
-        .unwrap_or(u64::MAX),
+        bytes: published_byte_count(
+            &manifest_jsonl,
+            &summary_json,
+            &plan_bundle,
+        ),
         note: format!(
-            "verified {} sources across {} semantic packages and published {}",
+            concat!(
+                "verified {} sources across {} semantic packages and ",
+                "published {} with plan bundle {}"
+            ),
             unreal_manifest.source_count(),
             unreal_manifest.package_count(),
             UNREAL_STAGING_ROOT,
+            plan_bundle.index_revision(),
         ),
     })
 }
@@ -220,6 +252,27 @@ fn source_evidence(
     }
     progress.finish();
     Ok(evidence)
+}
+
+fn retain_importable_evidence(
+    index: &PhaseThreePackageIndex,
+    evidence: Vec<UnrealSourceEvidence>,
+) -> Vec<UnrealSourceEvidence> {
+    let importable_ids = index
+        .packages()
+        .iter()
+        .flat_map(crate::domain::PhaseThreePackageRow::members)
+        .map(|member| member.id.as_str())
+        .collect::<BTreeSet<_>>();
+    retain_source_ids(evidence, &importable_ids)
+}
+
+fn retain_source_ids(
+    mut evidence: Vec<UnrealSourceEvidence>,
+    importable_ids: &BTreeSet<&str>,
+) -> Vec<UnrealSourceEvidence> {
+    evidence.retain(|source| importable_ids.contains(source.id.as_str()));
+    evidence
 }
 
 fn resolve_source_path(
@@ -576,7 +629,31 @@ fn validate_rendered_source_counts(
     }
 }
 
-fn publish_staging(manifest: &str, summary: &str) -> PipelineOutcome<()> {
+fn published_byte_count(
+    manifest: &str,
+    summary: &str,
+    plans: &PlanBundle,
+) -> u64 {
+    let plan_bytes = plans
+        .artifacts()
+        .iter()
+        .fold(plans.index_json().len(), |total, artifact| {
+            total.saturating_add(artifact.json.len())
+        });
+    u64::try_from(
+        manifest
+            .len()
+            .saturating_add(summary.len())
+            .saturating_add(plan_bytes),
+    )
+    .unwrap_or(u64::MAX)
+}
+
+fn publish_staging(
+    manifest: &str,
+    summary: &str,
+    plans: &PlanBundle,
+) -> PipelineOutcome<()> {
     let destination = PathBuf::from(UNREAL_STAGING_ROOT);
     let transaction_root = PathBuf::from(".temp")
         .join("pipeline")
@@ -590,12 +667,20 @@ fn publish_staging(manifest: &str, summary: &str) -> PipelineOutcome<()> {
     remove_generated_directory(&staging)?;
     remove_generated_directory(&backup)?;
     fs::create_dir_all(&staging).map_err(io_error(&staging))?;
-    let manifest_path = staging.join(MANIFEST_FILE);
-    let summary_path = staging.join(SUMMARY_FILE);
-    fs::write(&manifest_path, manifest).map_err(io_error(&manifest_path))?;
-    fs::write(&summary_path, summary).map_err(io_error(&summary_path))?;
-    verify_staged_file(&manifest_path, manifest.as_bytes())?;
-    verify_staged_file(&summary_path, summary.as_bytes())?;
+    let plan_root = staging.join(PLAN_ROOT);
+    fs::create_dir_all(&plan_root).map_err(io_error(&plan_root))?;
+    write_staged_file(&staging, MANIFEST_FILE, manifest)?;
+    write_staged_file(&staging, SUMMARY_FILE, summary)?;
+    write_staged_file(&staging, PLAN_INDEX_FILE, plans.index_json())?;
+    for artifact in plans.artifacts() {
+        let relative_path = format!("{PLAN_ROOT}/{}", artifact.filename);
+        if !PUBLISHED_FILES.contains(&relative_path.as_str()) {
+            return Err(PipelineError::new(format!(
+                "Unreal plan publication path is not declared: {relative_path}"
+            )));
+        }
+        write_staged_file(&staging, &relative_path, &artifact.json)?;
+    }
 
     let had_destination = destination.exists();
     if had_destination {
@@ -620,6 +705,17 @@ fn publish_staging(manifest: &str, summary: &str) -> PipelineOutcome<()> {
         remove_generated_directory(&backup)?;
     }
     Ok(())
+}
+
+fn write_staged_file(
+    root: &Path,
+    relative_path: &str,
+    content: &str,
+) -> PipelineOutcome<()> {
+    validate_relative_path(relative_path)?;
+    let path = root.join(relative_path);
+    fs::write(&path, content).map_err(io_error(&path))?;
+    verify_staged_file(&path, content.as_bytes())
 }
 
 fn verify_staged_file(path: &Path, expected: &[u8]) -> PipelineOutcome<()> {

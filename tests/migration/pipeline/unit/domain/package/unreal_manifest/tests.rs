@@ -30,6 +30,9 @@
 
 //! Unreal import-manifest domain tests.
 
+use shar_sha256::digest_hex;
+use shar_unreal_conversion::domain::PlanFamily;
+
 use super::{UnrealImportManifest, UnrealSourceEvidence};
 use crate::domain::package::PhaseThreePackageIndex;
 
@@ -102,6 +105,43 @@ fn builds_deterministic_direct_texture_import() -> Result<(), String> {
     }
     if manifest.package_count() != 1 || manifest.source_count() != 1 {
         return Err("manifest counts do not match the fixture".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn emits_complete_deterministic_plan_bundle() -> Result<(), String> {
+    let manifest = UnrealImportManifest::build(&index()?, vec![evidence()])?;
+    let manifest_jsonl = manifest.to_jsonl();
+    let revision = digest_hex(manifest_jsonl.as_bytes());
+    let first = manifest.plan_bundle(&revision)?;
+    let second = manifest.plan_bundle(&revision)?;
+    if first != second {
+        return Err("plan bundle is not deterministic".to_owned());
+    }
+    if first.artifacts().len() != PlanFamily::all().len() {
+        return Err("plan bundle is missing canonical families".to_owned());
+    }
+    let import = first
+        .artifacts()
+        .iter()
+        .find(|artifact| artifact.family == PlanFamily::AssetImport)
+        .ok_or_else(|| "asset import plan is missing".to_owned())?;
+    if import.operation_count != 1
+        || !import.json.contains(r#""source_format":"image""#)
+        || !import.json.contains(r#""readiness":"ready""#)
+    {
+        return Err("direct texture evidence did not become one ready import"
+            .to_owned());
+    }
+    for family in PlanFamily::all() {
+        if !first
+            .artifacts()
+            .iter()
+            .any(|artifact| artifact.family == family)
+        {
+            return Err(format!("missing plan family: {}", family.plan_id()));
+        }
     }
     Ok(())
 }

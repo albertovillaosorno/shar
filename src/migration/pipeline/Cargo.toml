@@ -39,6 +39,9 @@ fbx = { path = "../../formats/fbx" }
 # jig-ignore-next-line: exact value is indivisible
 # shar_sha256 provides deterministic artifact identities without duplicating cryptographic primitives across adapters.
 shar_sha256 = { path = "../../foundation/sha256" }
+# shar_unreal_conversion owns deterministic Unreal plan families and
+# canonical plan rendering.
+shar_unreal_conversion = { path = "../../unreal/asset-conversion" }
 
 # jig-ignore-next-line: exact value is indivisible
 # serde derives typed deterministic structural-guide manifest and layout records.

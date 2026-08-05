@@ -47,6 +47,7 @@ use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
 use shar_sha256 as _;
+use shar_unreal_conversion as _;
 
 #[test]
 fn public_files_reject_machine_specific_home_paths() -> Result<(), String> {

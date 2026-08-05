@@ -9,25 +9,31 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Domain domain module.
+//   - Unreal asset-conversion domain facade.
 // - Must-Not:
-//   - Own unrelated policy, persistence, or external effects.
+//   - Own persistence, transport, or live editor effects.
 // - Allows:
-//   - Inputs and outputs required by this module boundary.
+//   - Public deterministic conversion-plan values.
 // - Split-When:
-//   - Split when one responsibility gains an independent lifecycle.
+//   - Split when another domain responsibility gains a lifecycle.
 // - Merge-When:
-//   - Merge when another module owns the identical responsibility.
+//   - Merge when another module owns identical domain exports.
 // - Summary:
-//   - Domain domain module.
+//   - Unreal asset-conversion domain facade.
 // - Description:
-//   - Implements the declared responsibility for asset conversion.
+//   - Exposes canonical plan schemas, values, and bundle construction.
 // - Usage:
-//   - Used through the owning function boundary.
+//   - Consumed by pipeline orchestration and plan application adapters.
 // - Defaults:
-//   - Invalid or missing inputs fail explicitly.
+//   - Only validated plan bundles are public.
 //
 
-//! Domain domain module.
+//! Unreal asset-conversion domain facade.
 
-pub mod conversion_plan;
+mod conversion_plan;
+
+pub use conversion_plan::{
+    ConversionPlan, NativeAssetFamily, OperationReadiness, PlanArtifact,
+    PlanBundle, PlanContext, PlanDependency, PlanFamily, SourceFormat,
+    UNREAL_PLAN_BUNDLE_SCHEMA, UNREAL_PLAN_SCHEMA,
+};

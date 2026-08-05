@@ -376,7 +376,7 @@ config_path = ".jig/cspell/cspell.json"
 dictionary_root = ".jig/cspell"
 files = ["**/*.{cpp,cs,h,ini,json,jsonc,md,mdc,py,rs,toml,txt,yml,yaml}"]
 # jig-ignore-next-line: closed TOML parser requires one physical value
-ignore_paths = [".cache/**", ".dependencies/**", ".git/**", ".logs/**", ".temp/**", "Cargo.lock", "game/**", "src/unreal/project/composition/uproject/Content/**", "target/**", "tests/fixtures/**"]
+ignore_paths = [".cache/**", ".dependencies/**", ".git/**", ".logs/**", ".temp/**", "Cargo.lock", "extracted/**", "game/**", "src/unreal/project/composition/uproject/Content/**", "target/**", "tests/fixtures/**", "unreal-staging/**"]
 language = "en-US,en-GB"
 min_word_length = 3
 # jig-ignore-next-line: canonical schema URL is indivisible
@@ -588,8 +588,10 @@ timeout_seconds = 3600
 [portability]
 # jig-ignore-next-line: closed TOML parser requires one physical value
 forbidden_roots = [".jig-cache", ".turbo", "cache", "dependencies", "logs", "target", "temp", "tmp"]
-required_roots = [".cache", ".dependencies", ".logs", ".temp"]
-runtime_roots = [".cache", ".dependencies", ".logs", ".temp"]
+# jig-ignore-next-line: closed TOML parser requires one physical value
+required_roots = [".cache", ".dependencies", ".logs", ".temp", "extracted", "unreal-staging"]
+# jig-ignore-next-line: closed TOML parser requires one physical value
+runtime_roots = [".cache", ".dependencies", ".logs", ".temp", "extracted", "unreal-staging"]
 
 [portability.rust]
 cargo_config = ".cargo/config.toml"
@@ -657,7 +659,7 @@ depends_on = ["schoenwald_cli", "schoenwald_filesystem", "shar_json_text"]
 
 [architecture.component.pipeline]
 # jig-ignore-next-line: exact Cargo workspace dependency declaration
-depends_on = ["fbx", "game_manifest", "lmlm", "p3d", "rcf", "rmv", "rsd", "rtf", "schoenwald_cli", "schoenwald_filesystem", "shar_json_text", "shar_sha256"]
+depends_on = ["fbx", "game_manifest", "lmlm", "p3d", "rcf", "rmv", "rsd", "rtf", "schoenwald_cli", "schoenwald_filesystem", "shar_json_text", "shar_sha256", "shar_unreal_conversion"]
 
 [architecture.component.rcf]
 depends_on = ["schoenwald_cli", "schoenwald_filesystem"]
@@ -684,7 +686,7 @@ depends_on = []
 depends_on = []
 
 [architecture.component.shar_unreal_conversion]
-depends_on = []
+depends_on = ["shar_json_text", "shar_sha256"]
 
 [analysis]
 cache = "bounded"

@@ -46,9 +46,11 @@
     "../../.logs/**",
     "../../.temp/**",
     "../../Cargo.lock",
+    "../../extracted/**",
     "../../game/**",
     "../../src/unreal/project/composition/uproject/Content/**",
     "../../target/**",
-    "../../tests/fixtures/**"
+    "../../tests/fixtures/**",
+    "../../unreal-staging/**"
   ]
 }

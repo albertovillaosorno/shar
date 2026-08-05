@@ -5,6 +5,10 @@ edition = "2024"
 license = "MIT"
 publish = false
 
+[dependencies]
+shar_json_text = { path = "../../foundation/json-text" }
+shar_sha256 = { path = "../../foundation/sha256" }
+
 [lib]
 path = "composition/lib.rs"
 

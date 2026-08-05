@@ -124,6 +124,7 @@ dependencies = [
  "serde",
  "serde_json",
  "shar_sha256",
+ "shar_unreal_conversion",
 ]
 
 [[package]]
@@ -262,6 +263,10 @@ version = "26.7.0"
 [[package]]
 name = "shar_unreal_conversion"
 version = "26.7.0"
+dependencies = [
+ "shar_json_text",
+ "shar_sha256",
+]
 
 [[package]]
 name = "simd-adler32"

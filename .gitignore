@@ -39,7 +39,6 @@ cache/
 temp/
 tmp/
 logs/
-dependencies/
 
 # Repository-local toolchains and disposable Jig state.
 .dependencies/
@@ -81,23 +80,13 @@ src/unreal/project/composition/uproject/Plugins/
 *.uasset
 *.umap
 
-# Local editor-only structural guide. The source FBX and imported Static Mesh
-# exist inside the Unreal project for manual Landscape tracing but never ship or
-# enter version control.
+# Local editor-only structural-guide imports remain generated and untracked.
 src/unreal/project/composition/uproject/Content/SHAR/EditorOnly/StructuralGuide/
 
-# The canonical authored base world is an explicit publication exception. Its
-# jig-ignore-next-line: exact value is indivisible
-# World Partition actor/object packages must travel with the map as the island is
-# sculpted; unrelated generated Unreal packages remain ignored.
+# The empty World Partition map shell is the only tracked binary map package.
+# Source-authored FBX imports and their actor packages are generated locally.
 # jig-ignore-next-line: exact value is indivisible
 !src/unreal/project/composition/uproject/Content/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld.umap
-# jig-ignore-next-line: exact value is indivisible
-!src/unreal/project/composition/uproject/Content/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld_HLOD0_Instancing.uasset
-# jig-ignore-next-line: exact value is indivisible
-!src/unreal/project/composition/uproject/Content/__ExternalActors__/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld/**/*.uasset
-# jig-ignore-next-line: exact value is indivisible
-!src/unreal/project/composition/uproject/Content/__ExternalObjects__/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld/**/*.uasset
 
 # ==============================================================================
 # Visual Studio, Rider, & .NET Environment
@@ -293,6 +282,7 @@ target/
 !/game/manifest.jsonl
 no-git/
 extracted/
+unreal-staging/
 fbx-assets/
 # Local Blender re-exports used only to derive per-FBX Rust repairs.
 fbx-assets/world-edited/
