@@ -46,6 +46,18 @@ support only, does not include download links, and does not claim authorship of
 either mod. See the [optional local mod package
 contract](docs/technical/pipeline/optional-local-mod-packages.md).
 
+Before extraction, either read-only command prints the exact supported package
+changes as deterministic JSON:
+
+```text
+pipeline preview-optional-mods game extracted --no-log
+pipeline dry-run-optional-mods game extracted --no-log
+```
+
+Both names are aliases. They report every replacement, addition, and skip with a
+relative output path, normalized byte count, and SHA-256 evidence without
+modifying the game or extraction roots.
+
 ## Deterministic Unreal staging
 
 After extraction, indexing, and audit succeed, the pipeline can generate the
