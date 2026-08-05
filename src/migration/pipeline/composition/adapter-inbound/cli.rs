@@ -55,7 +55,8 @@ const USAGE: &str = concat!(
     "extract-game|extract-game-resume|export-movies|",
     "export-lmlm|manifest-minor-units|",
     "metadata-fill-minor-units|edit-minor-unit-metadata|",
-    "index-minor-units|audit-minor-units|prepare-unreal ",
+    "index-minor-units|audit-minor-units|prepare-unreal|",
+    "preview-optional-mods|dry-run-optional-mods ",
     "[game-root] [extracted-root] | ",
     "plan-fbx-package [index-jsonl] [selector] [output-dir] | ",
     "fbx-export-characters [index-jsonl] [output-dir] [base-root] | ",
@@ -197,6 +198,12 @@ fn dispatch_known_command(
     command: &str,
     parsed: &ParsedArguments,
 ) -> CommandOutcome {
+    if matches!(
+        command,
+        "preview-optional-mods" | "dry-run-optional-mods"
+    ) {
+        return run_optional_mod_preview(&parsed.positionals);
+    }
     if command == "plan-fbx-package" {
         return run_fbx_manifest(&parsed.positionals);
     }
@@ -287,6 +294,8 @@ fn is_known_command(command: &str) -> bool {
             | "index-minor-units"
             | "audit-minor-units"
             | "prepare-unreal"
+            | "preview-optional-mods"
+            | "dry-run-optional-mods"
             | "plan-fbx-package"
             | "fbx-export-characters"
             | "fbx-export-wasp-camera"
@@ -310,6 +319,28 @@ fn reject_extra_positionals(
         CommandOutcome::failure()
             .stderr_line(format!("unexpected positional argument: {argument}")),
     )
+}
+
+/// Previews supported optional packages without extraction writes.
+fn run_optional_mod_preview(arguments: &[String]) -> CommandOutcome {
+    if let Some(outcome) = reject_extra_positionals(arguments, 2) {
+        return outcome;
+    }
+    let game_root = arguments
+        .first()
+        .map_or_else(|| PathBuf::from("game"), PathBuf::from);
+    let extracted_root = arguments
+        .get(1)
+        .map_or_else(|| PathBuf::from("extracted"), PathBuf::from);
+    let provider = LocalPipeline;
+    let application = PipelineService::new(&provider);
+    match application.preview_optional_mods(&game_root, &extracted_root) {
+        Ok(preview) => {
+            CommandOutcome::success().stdout_line(preview.json().to_owned())
+        },
+        Err(error) => CommandOutcome::failure()
+            .stderr_line(format!("optional-mod preview failed: {error}")),
+    }
 }
 
 /// Runs one command that uses the standard game and extracted roots.
