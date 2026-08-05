@@ -37,6 +37,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use lmlm::FileEntry;
 
 use super::{extract_lmlm, preview_optional_mods};
+use super::preview::create_preview_work_root;
 use super::optional_mods::{
     OptionalModRole, apply_remaster, discover_optional_mods,
     existing_file_index, is_latino_audio_path, is_latino_movie_path,
@@ -114,6 +115,25 @@ fn missing_optional_lmlm_preview_is_read_only() -> Result<(), String> {
         return Err("optional-mod preview changed extraction output".to_owned());
     }
     fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+#[test]
+fn preview_workspaces_are_unique_and_independently_owned() -> Result<(), String> {
+    let first = create_preview_work_root().map_err(|error| error.to_string())?;
+    let second = create_preview_work_root().map_err(|error| error.to_string())?;
+    if first == second || !first.is_dir() || !second.is_dir() {
+        return Err("preview workspaces were not unique real directories".to_owned());
+    }
+    fs::write(first.join("first.txt"), b"first")
+        .map_err(|error| error.to_string())?;
+    fs::write(second.join("second.txt"), b"second")
+        .map_err(|error| error.to_string())?;
+    fs::remove_dir_all(&first).map_err(|error| error.to_string())?;
+    if !second.join("second.txt").is_file() {
+        return Err("cleaning one preview workspace affected another".to_owned());
+    }
+    fs::remove_dir_all(&second).map_err(|error| error.to_string())?;
     Ok(())
 }
 
