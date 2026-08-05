@@ -187,7 +187,203 @@ fn optional_package_workspaces_are_unique_and_self_cleaning() -> Result<(), Stri
     Ok(())
 }
 
+const LMLM_BLOCK: usize = 0x200;
+const LMLM_ROOT_BLOCK: usize = 0x400;
+const LMLM_FIRST_ENTRY: usize = 0x600;
+const LMLM_PAYLOAD_OFFSET: usize = 0x1800;
+
+fn copy_lmlm_fixture_bytes(
+    archive: &mut [u8],
+    start: usize,
+    bytes: &[u8],
+) -> Result<(), String> {
+    let end = start
+        .checked_add(bytes.len())
+        .ok_or_else(|| "LMLM fixture range overflowed".to_owned())?;
+    let target = archive
+        .get_mut(start..end)
+        .ok_or_else(|| "LMLM fixture range was out of bounds".to_owned())?;
+    target.copy_from_slice(bytes);
+    Ok(())
+}
+
+fn write_lmlm_entry_name(
+    archive: &mut [u8],
+    position: usize,
+    name: &str,
+) -> Result<(), String> {
+    copy_lmlm_fixture_bytes(archive, position, &2_u16.to_le_bytes())?;
+    let mut encoded_name = Vec::new();
+    for unit in name.encode_utf16() {
+        encoded_name.extend_from_slice(&unit.to_le_bytes());
+    }
+    encoded_name.extend_from_slice(&0_u16.to_le_bytes());
+    if encoded_name.len() > LMLM_BLOCK.saturating_sub(2) {
+        return Err("LMLM fixture name exceeded one structural block".to_owned());
+    }
+    copy_lmlm_fixture_bytes(
+        archive,
+        position.saturating_add(2),
+        &encoded_name,
+    )
+}
+
+fn write_lmlm_directory(
+    archive: &mut [u8],
+    position: usize,
+    name: &str,
+    contains_directory: bool,
+) -> Result<(), String> {
+    write_lmlm_entry_name(archive, position, name)?;
+    let metadata = position.saturating_add(LMLM_BLOCK);
+    copy_lmlm_fixture_bytes(
+        archive,
+        metadata.saturating_add(0x0c),
+        &1_u16.to_le_bytes(),
+    )?;
+    copy_lmlm_fixture_bytes(
+        archive,
+        metadata.saturating_add(0x0e),
+        &[u8::from(contains_directory)],
+    )
+}
+
+fn write_lmlm_file(
+    archive: &mut [u8],
+    position: usize,
+    name: &str,
+    payload: &[u8],
+) -> Result<(), String> {
+    write_lmlm_entry_name(archive, position, name)?;
+    let metadata = position.saturating_add(LMLM_BLOCK);
+    copy_lmlm_fixture_bytes(
+        archive,
+        metadata.saturating_add(0x0c),
+        &u64::try_from(payload.len())
+            .map_err(|_error| "LMLM payload length did not fit u64".to_owned())?
+            .to_le_bytes(),
+    )?;
+    copy_lmlm_fixture_bytes(
+        archive,
+        metadata.saturating_add(0x14),
+        &u64::try_from(LMLM_PAYLOAD_OFFSET)
+            .map_err(|_error| "LMLM payload offset did not fit u64".to_owned())?
+            .to_le_bytes(),
+    )
+}
+
+fn single_file_lmlm(payload: &[u8]) -> Result<Vec<u8>, String> {
+    let archive_len = LMLM_PAYLOAD_OFFSET
+        .checked_add(payload.len())
+        .ok_or_else(|| "LMLM fixture length overflowed".to_owned())?;
+    let mut archive = vec![0_u8; archive_len];
+    copy_lmlm_fixture_bytes(&mut archive, 0, b"LSPA")?;
+    copy_lmlm_fixture_bytes(&mut archive, 4, &5_u32.to_le_bytes())?;
+    copy_lmlm_fixture_bytes(
+        &mut archive,
+        0x0c,
+        &0x0200_0000_u32.to_le_bytes(),
+    )?;
+    copy_lmlm_fixture_bytes(
+        &mut archive,
+        LMLM_ROOT_BLOCK.saturating_add(2),
+        &1_u16.to_le_bytes(),
+    )?;
+    write_lmlm_directory(
+        &mut archive,
+        LMLM_FIRST_ENTRY,
+        "CustomFiles",
+        true,
+    )?;
+    let art_position = LMLM_FIRST_ENTRY.saturating_add(LMLM_BLOCK * 2);
+    write_lmlm_directory(&mut archive, art_position, "art", false)?;
+    let file_position = art_position.saturating_add(LMLM_BLOCK * 2);
+    write_lmlm_file(&mut archive, file_position, "base.p3d", payload)?;
+    copy_lmlm_fixture_bytes(
+        &mut archive,
+        LMLM_PAYLOAD_OFFSET,
+        payload,
+    )?;
+    Ok(archive)
+}
+
 static NEXT_FIXTURE: AtomicUsize = AtomicUsize::new(0);
+
+#[test]
+fn preview_matches_extracted_remaster_evidence() -> Result<(), String> {
+    let case = temp_root("preview-extract-parity");
+    if case.exists() {
+        fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    }
+    let game_root = case.join("game");
+    let extracted_root = case.join("extracted");
+    let source = game_root.join("art").join("base.p3d");
+    let source_parent = source
+        .parent()
+        .ok_or_else(|| "source fixture path has no parent".to_owned())?;
+    let mods_root = game_root.join("mods");
+    fs::create_dir_all(source_parent).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&mods_root).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&extracted_root).map_err(|error| error.to_string())?;
+    fs::write(&source, b"source-old").map_err(|error| error.to_string())?;
+    let replacement = b"replacement-bytes";
+    let archive = single_file_lmlm(replacement)?;
+    fs::write(mods_root.join("m.lmlm"), archive)
+        .map_err(|error| error.to_string())?;
+
+    let preview = preview_optional_mods(&game_root, &extracted_root)
+        .map_err(|error| error.to_string())?;
+    let preview_json: serde_json::Value = serde_json::from_str(preview.json())
+        .map_err(|error| error.to_string())?;
+    let preview_changes = preview_json
+        .get("changes")
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| "preview changes were not an array".to_owned())?;
+    let [preview_change] = preview_changes.as_slice() else {
+        return Err("single-member preview emitted an unexpected change count".to_owned());
+    };
+    if extracted_root.join("art").join("base.p3d").exists() {
+        return Err("preview wrote the predicted remaster output".to_owned());
+    }
+
+    let report = extract_lmlm(&game_root, &extracted_root)
+        .map_err(|error| error.to_string())?;
+    if report.files != 2 {
+        return Err(format!("unexpected extraction file count: {}", report.files));
+    }
+    let manifest: serde_json::Value = serde_json::from_slice(
+        &fs::read(extracted_root.join("lmlm").join("manifest.json"))
+            .map_err(|error| error.to_string())?,
+    )
+    .map_err(|error| error.to_string())?;
+    let records = manifest
+        .get("records")
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| "extraction records were not an array".to_owned())?;
+    let [record] = records.as_slice() else {
+        return Err("single-member extraction emitted an unexpected record count".to_owned());
+    };
+    for field in ["source", "output", "sha256"] {
+        if preview_change.get(field) != record.get(field) {
+            return Err(format!("preview and extraction differ for {field}"));
+        }
+    }
+    if preview_change.get("normalized_bytes") != record.get("bytes") {
+        return Err("preview and extraction differ for normalized bytes".to_owned());
+    }
+    if preview_change.get("action").and_then(serde_json::Value::as_str)
+        != Some("replace")
+        || fs::read(extracted_root.join("art").join("base.p3d"))
+            .map_err(|error| error.to_string())?
+            != replacement
+        || fs::read(&source).map_err(|error| error.to_string())?
+            != b"source-old"
+    {
+        return Err("remaster preview/extraction parity contract failed".to_owned());
+    }
+    fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    Ok(())
+}
 
 #[test]
 fn canonical_aliases_support_one_both_or_neither() -> Result<(), String> {
