@@ -35,6 +35,7 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use lmlm::FileEntry;
+use rmv::Sha256;
 
 use super::optional_mods::{
     OptionalModRole, apply_remaster, create_optional_mod_work_root,
@@ -97,15 +98,19 @@ fn missing_optional_lmlm_preview_is_read_only() -> Result<(), String> {
         || preview.write_count() != 0
         || preview.skip_count() != 0
         || preview.normalized_bytes() != 0
+        || preview.approval_token().is_some()
     {
         return Err("empty preview reported package changes".to_owned());
     }
     let document: serde_json::Value = serde_json::from_str(preview.json())
         .map_err(|error| error.to_string())?;
     if document.get("schema").and_then(serde_json::Value::as_str)
-        != Some("shar-schoenwald.optional-mod-preview.v1")
+        != Some("shar-schoenwald.optional-mod-preview.v2")
         || document.get("dry_run").and_then(serde_json::Value::as_bool)
             != Some(true)
+        || !document
+            .get("approval_token")
+            .is_some_and(serde_json::Value::is_null)
     {
         return Err("empty preview did not use the canonical schema".to_owned());
     }
@@ -458,6 +463,74 @@ fn preview_matches_extracted_remaster_evidence() -> Result<(), String> {
     {
         return Err(
             "remaster preview/extraction parity contract failed".to_owned()
+        );
+    }
+    fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+#[test]
+fn preview_token_tracks_exact_package_bytes() -> Result<(), String> {
+    let case = temp_root("preview-approval-token");
+    if case.exists() {
+        fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    }
+    let game_root = case.join("game");
+    let source = game_root.join("art").join("base.p3d");
+    let source_parent = source
+        .parent()
+        .ok_or_else(|| "token fixture source has no parent".to_owned())?;
+    let mods_root = game_root.join("mods");
+    let extracted_root = case.join("extracted");
+    fs::create_dir_all(source_parent).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&mods_root).map_err(|error| error.to_string())?;
+    fs::write(&source, b"source").map_err(|error| error.to_string())?;
+
+    let first_archive = single_file_lmlm("art", "base.p3d", b"first")?;
+    fs::write(mods_root.join("m.lmlm"), &first_archive)
+        .map_err(|error| error.to_string())?;
+    let first = preview_optional_mods(&game_root, &extracted_root)
+        .map_err(|error| error.to_string())?;
+    let first_token = first
+        .approval_token()
+        .ok_or_else(|| "package preview omitted approval token".to_owned())?
+        .to_owned();
+    let first_json: serde_json::Value = serde_json::from_str(first.json())
+        .map_err(|error| error.to_string())?;
+    let packages = first_json
+        .get("packages")
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| "preview packages were not an array".to_owned())?;
+    let [package] = packages.as_slice() else {
+        return Err(
+            "token preview emitted an unexpected package count".to_owned()
+        );
+    };
+    if first_token.len() != 64
+        || !first_token.bytes().all(|byte| byte.is_ascii_hexdigit())
+        || package
+            .get("package_bytes")
+            .and_then(serde_json::Value::as_u64)
+            != u64::try_from(first_archive.len()).ok()
+        || package
+            .get("package_sha256")
+            .and_then(serde_json::Value::as_str)
+            != Some(Sha256::digest(&first_archive).hex().as_str())
+    {
+        return Err("preview package identity evidence was invalid".to_owned());
+    }
+
+    let second_archive = single_file_lmlm("art", "base.p3d", b"second")?;
+    fs::write(mods_root.join("m.lmlm"), second_archive)
+        .map_err(|error| error.to_string())?;
+    let second = preview_optional_mods(&game_root, &extracted_root)
+        .map_err(|error| error.to_string())?;
+    let second_token = second
+        .approval_token()
+        .ok_or_else(|| "changed package preview omitted token".to_owned())?;
+    if second_token == first_token {
+        return Err(
+            "package payload change preserved approval token".to_owned()
         );
     }
     fs::remove_dir_all(&case).map_err(|error| error.to_string())?;

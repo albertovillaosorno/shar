@@ -41,8 +41,8 @@ use serde::Serialize;
 use super::optional_mods::{
     OptionalModArchive, OptionalModRole, create_optional_mod_work_root,
     discover_optional_mods, existing_file_index, is_latino_audio_path,
-    is_latino_movie_path, portable_identity, read_optional_mod_bytes,
-    relative_output, remaster_relative_path,
+    is_latino_movie_path, optional_mod_approval_token, portable_identity,
+    read_optional_mod_bytes, relative_output, remaster_relative_path,
 };
 use super::{
     PipelineOutcome, decode_lmlm_movie_audio, lmlm_entry_path, rsd_bytes_to_wav,
@@ -82,6 +82,8 @@ struct PreviewChange {
 struct PreviewPackage {
     alias: &'static str,
     role: &'static str,
+    package_bytes: u64,
+    package_sha256: String,
     members: usize,
     would_write: usize,
     would_skip: usize,
@@ -109,6 +111,7 @@ struct PreviewDocument {
     schema: &'static str,
     dry_run: bool,
     aliases: PreviewAliases,
+    approval_token: Option<String>,
     packages: Vec<PreviewPackage>,
     changes: Vec<PreviewChange>,
     summary: PreviewSummary,
@@ -180,6 +183,11 @@ fn build_preview(
     base_files: &BTreeMap<String, PathBuf>,
     work_root: &Path,
 ) -> PipelineOutcome<OptionalModPreview> {
+    let approval_token = optional_mod_approval_token(
+        parsed
+            .iter()
+            .map(|item| (item.archive.role, item.data.as_slice())),
+    );
     let mut packages = Vec::new();
     let mut changes = Vec::new();
     for parsed_archive in parsed {
@@ -213,6 +221,8 @@ fn build_preview(
         packages.push(PreviewPackage {
             alias: archive.role.alias(),
             role: archive.role.label(),
+            package_bytes: u64::try_from(data.len()).unwrap_or(u64::MAX),
+            package_sha256: Sha256::digest(data).hex(),
             members: entries.len(),
             would_write: writes,
             would_skip: skips,
@@ -220,7 +230,7 @@ fn build_preview(
         });
         changes.extend(package_changes);
     }
-    render_preview(packages, changes)
+    render_preview(packages, changes, approval_token)
 }
 
 fn preview_remaster(
@@ -397,6 +407,7 @@ fn checked_normalized_bytes(changes: &[PreviewChange]) -> PipelineOutcome<u64> {
 fn render_preview(
     packages: Vec<PreviewPackage>,
     changes: Vec<PreviewChange>,
+    approval_token: Option<String>,
 ) -> PipelineOutcome<OptionalModPreview> {
     let writes = changes
         .iter()
@@ -411,6 +422,7 @@ fn render_preview(
             remaster: "remaster",
             latino: "latino",
         },
+        approval_token: approval_token.clone(),
         summary: PreviewSummary {
             packages: packages.len(),
             would_write: writes,
@@ -431,5 +443,6 @@ fn render_preview(
         document.summary.would_write,
         document.summary.would_skip,
         document.summary.normalized_bytes,
+        approval_token,
     ))
 }

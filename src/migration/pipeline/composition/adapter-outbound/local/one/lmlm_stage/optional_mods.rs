@@ -195,6 +195,25 @@ pub(super) fn read_optional_mod_bytes(
     })
 }
 
+/// Computes a public-safe identity for one ordered package byte set.
+pub(super) fn optional_mod_approval_token<'a>(
+    packages: impl IntoIterator<Item = (OptionalModRole, &'a [u8])>,
+) -> Option<String> {
+    let mut evidence = Vec::new();
+    evidence.extend_from_slice(b"shar-schoenwald.optional-mod-approval.v1\n");
+    let mut count = 0_usize;
+    for (role, bytes) in packages {
+        count = count.saturating_add(1);
+        evidence.extend_from_slice(role.alias().as_bytes());
+        evidence.push(0);
+        evidence.extend_from_slice(bytes.len().to_string().as_bytes());
+        evidence.push(0);
+        evidence.extend_from_slice(Sha256::digest(bytes).hex().as_bytes());
+        evidence.push(b'\n');
+    }
+    (count != 0).then(|| Sha256::digest(&evidence).hex())
+}
+
 /// Rejects one discovered package set without explicit caller approval.
 pub(super) fn require_discovered_optional_mod_approval(
     archives: &[OptionalModArchive],
