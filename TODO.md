@@ -86,7 +86,7 @@ Current task list. Project phases and dated progress are recorded in
 - [ ] Use one normalized desktop and Android mod import contract.
 - [ ] Keep native-code mods behind an explicit trust boundary.
 - [ ] Validate schemas, paths, integrity, limits, references, and load order.
-- [ ] Add preview and dry-run commands that show exactly what a mod changes.
+- [x] Add preview and dry-run commands that show exactly what a mod changes.
 - [ ] Finish user-facing and AI-agent modding skills.
 - [ ] Require approval before replacing content or activating packages.
 
