@@ -57,13 +57,17 @@ instructions.
   <https://www.youtube.com/watch?v=lA1k-SZ02gg> (Accessed: 4 August 2026).
 - Muckluck (2025) *Remastering The Simpsons: Hit & Run #2 - BIG changes!*.
   <!-- markdownlint-disable-next-line MD044 -->
-  <!-- cspell:disable-next-line -->
+  <!-- cspell:disable -->
   YouTube video `QXDT5j9fhkk`. Available at:
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- cspell:enable -->
   <https://www.youtube.com/watch?v=QXDT5j9fhkk> (Accessed: 4 August 2026).
 - Muckluck (2025) *I've finished remastering The Simpsons: Hit & Run!*.
   <!-- markdownlint-disable-next-line MD044 -->
-  <!-- cspell:disable-next-line -->
+  <!-- cspell:disable -->
   YouTube video `nlwo65uSTP8`. Available at:
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- cspell:enable -->
   <https://www.youtube.com/watch?v=nlwo65uSTP8> (Accessed: 4 August 2026).
 
 ## Maintainer Notes
