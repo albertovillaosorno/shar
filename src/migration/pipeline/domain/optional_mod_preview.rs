@@ -32,7 +32,7 @@
 
 /// Versioned schema for the canonical optional-mod dry-run document.
 pub const OPTIONAL_MOD_PREVIEW_SCHEMA: &str =
-    "shar-schoenwald.optional-mod-preview.v1";
+    "shar-schoenwald.optional-mod-preview.v2";
 
 /// Deterministic dry-run result for the supported local package set.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -47,6 +47,8 @@ pub struct OptionalModPreview {
     skips: usize,
     /// Total normalized bytes that would be written.
     normalized_bytes: u64,
+    /// Exact package-set token accepted by a mutating invocation.
+    approval_token: Option<String>,
 }
 
 impl OptionalModPreview {
@@ -58,6 +60,7 @@ impl OptionalModPreview {
         writes: usize,
         skips: usize,
         normalized_bytes: u64,
+        approval_token: Option<String>,
     ) -> Self {
         Self {
             json,
@@ -65,6 +68,7 @@ impl OptionalModPreview {
             writes,
             skips,
             normalized_bytes,
+            approval_token,
         }
     }
 
@@ -96,5 +100,11 @@ impl OptionalModPreview {
     #[must_use]
     pub const fn normalized_bytes(&self) -> u64 {
         self.normalized_bytes
+    }
+
+    /// Returns the token that approves this exact package byte set.
+    #[must_use]
+    pub fn approval_token(&self) -> Option<&str> {
+        self.approval_token.as_deref()
     }
 }
