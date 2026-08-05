@@ -195,12 +195,15 @@ pub(super) fn parse_common_arguments(
                     "--approve-optional-mods may be specified only once",
                 ));
             }
-            let value = arguments.get(index.saturating_add(1)).ok_or_else(|| {
-                String::from("--approve-optional-mods requires a preview token")
-            })?;
+            let value =
+                arguments.get(index.saturating_add(1)).ok_or_else(|| {
+                    String::from(
+                        "--approve-optional-mods requires a preview token",
+                    )
+                })?;
             if value.starts_with('-') {
                 return Err(format!(
-                    "--approve-optional-mods requires a preview token before                      {value}"
+                    "--approve-optional-mods requires a preview token                      before {value}"
                 ));
             }
             parsed.optional_mod_approval = Some(parse_approval_token(value)?);
@@ -251,9 +254,10 @@ fn parse_approval_token(value: &str) -> Result<String, String> {
     if valid {
         Ok(value.to_owned())
     } else {
-        Err(String::from(
-            "--approve-optional-mods requires a 64-character lowercase              hexadecimal preview token",
-        ))
+        Err(String::from(concat!(
+            "--approve-optional-mods requires a 64-character lowercase ",
+            "hexadecimal preview token"
+        )))
     }
 }
 

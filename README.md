@@ -63,7 +63,7 @@ current preview into the command that may apply it:
 
 ```text
 pipeline extract-game game extracted --approve-optional-mods <approval-token>
-pipeline extract-game-resume game extracted --approve-optional-mods <approval-token>
+pipeline extract-game-resume game extracted \n  --approve-optional-mods <approval-token>
 pipeline export-lmlm game extracted --approve-optional-mods <approval-token>
 ```
 

@@ -94,24 +94,26 @@ pub(in crate::adapters::driven::local) fn ensure_optional_mod_transition(
             ))
         })?;
     if !output_metadata.is_dir() || output_metadata.file_type().is_symlink() {
-        return Err(PipelineError::new(
-            "existing optional output must be a real directory; run clean              extract-game",
-        ));
+        return Err(PipelineError::new(concat!(
+            "existing optional output must be a real directory; ",
+            "run clean extract-game"
+        )));
     }
     let manifest_path = output_root.join("manifest.json");
-    let manifest_metadata = fs::symlink_metadata(&manifest_path).map_err(
-        |_error| {
-            PipelineError::new(
-                "existing optional output has no verifiable manifest; run                  clean extract-game",
-            )
-        },
-    )?;
+    let manifest_metadata =
+        fs::symlink_metadata(&manifest_path).map_err(|_error| {
+            PipelineError::new(concat!(
+                "existing optional output has no verifiable manifest; ",
+                "run clean extract-game"
+            ))
+        })?;
     if !manifest_metadata.is_file()
         || manifest_metadata.file_type().is_symlink()
     {
-        return Err(PipelineError::new(
-            "existing optional manifest must be a real file; run clean              extract-game",
-        ));
+        return Err(PipelineError::new(concat!(
+            "existing optional manifest must be a real file; ",
+            "run clean extract-game"
+        )));
     }
     let bytes = local_read_bytes(&manifest_path).map_err(|error| {
         PipelineError::new(format!(
@@ -128,25 +130,28 @@ pub(in crate::adapters::driven::local) fn ensure_optional_mod_transition(
     if document.get("schema").and_then(serde_json::Value::as_str)
         != Some(OPTIONAL_MOD_EXTRACT_SCHEMA)
     {
-        return Err(PipelineError::new(
-            "existing optional manifest cannot verify package continuity; run              clean extract-game",
-        ));
+        return Err(PipelineError::new(concat!(
+            "existing optional manifest cannot verify package continuity; ",
+            "run clean extract-game"
+        )));
     }
     let previous = match document.get("approval_token") {
         Some(value) if value.is_null() => None,
         Some(value) => value.as_str(),
         None => {
-            return Err(PipelineError::new(
-                "existing optional manifest omits package identity; run clean                  extract-game",
-            ));
+            return Err(PipelineError::new(concat!(
+                "existing optional manifest omits package identity; ",
+                "run clean extract-game"
+            )));
         }
     };
     if previous == current_token {
         Ok(())
     } else {
-        Err(PipelineError::new(
-            "optional package set changed; run clean extract-game before              continuing",
-        ))
+        Err(PipelineError::new(concat!(
+            "optional package set changed; run clean extract-game ",
+            "before continuing"
+        )))
     }
 }
 
