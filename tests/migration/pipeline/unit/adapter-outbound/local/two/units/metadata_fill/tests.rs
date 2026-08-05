@@ -30,6 +30,7 @@
 
 //! Tests unit tests.
 
+use super::super::metadata::metadata_needs_header;
 use super::compute_id;
 
 #[test]
@@ -87,4 +88,30 @@ fn id_suffix_is_uuid_shaped() {
     let suffix = id.strip_prefix("image-");
     assert_eq!(suffix.map(str::len), Some(36));
     assert_eq!(suffix.map(|value| value.matches('-').count()), Some(4));
+}
+
+#[test]
+fn only_content_classified_json_requires_header_inspection() {
+    assert!(metadata_needs_header(
+        "json",
+        "extracted/scripts/mission.json"
+    ));
+    assert!(metadata_needs_header(
+        "jsonl",
+        "extracted/art/package.jsonl"
+    ));
+    for path in [
+        "extracted/art/model/components/000001.json",
+        "extracted/art/model/components.jsonl",
+        "extracted/movies/intro/decode-report.json",
+        "extracted/movies/intro/source-video.ffprobe.json",
+        "extracted/movies/intro/manifest.json",
+        "extracted/lmlm/manifest.json",
+    ] {
+        let extension = path.rsplit_once('.').map_or("", |(_, value)| value);
+        assert!(!metadata_needs_header(extension, path));
+    }
+    for extension in ["wav", "png", "mov", "tsv", "ini", "md", "bin"] {
+        assert!(!metadata_needs_header(extension, "extracted/example/unit"));
+    }
 }

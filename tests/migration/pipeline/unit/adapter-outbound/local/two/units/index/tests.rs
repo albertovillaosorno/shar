@@ -32,11 +32,42 @@
 
 use std::collections::BTreeSet;
 
+use super::super::index_render::render_index_jsonl;
 use super::{
     MinorUnitId, MinorUnitPackage, MinorUnitRole, PackageCategory, PackageId,
     PackageMember, category_from_root, package_root, role_from_fields,
     subcategory_from_root, validate_package_coverage,
 };
+
+#[test]
+fn error_packages_publish_only_the_error_role() -> Result<(), String> {
+    let mut package =
+        package_from_id("extracted-lmlm-latino-customfiles-apu", vec![
+            member_with_fields(
+                "latino-audio",
+                MinorUnitRole::Audio,
+                "audio",
+                "audio-override",
+                "none",
+            )?,
+        ]);
+    package.category = PackageCategory::Error;
+    package.subcategory = "error/unclassified".to_owned();
+
+    let rendered = render_index_jsonl(&[package]);
+    for required in [
+        "\"audio_ids\":[]",
+        "\"error_ids\":[\"latino-audio\"]",
+        "\"role\":\"error\"",
+    ] {
+        if !rendered.contains(required) {
+            return Err(format!(
+                "missing fail-closed role evidence: {required}"
+            ));
+        }
+    }
+    Ok(())
+}
 
 #[test]
 fn package_ids_collapse_separator_runs() {

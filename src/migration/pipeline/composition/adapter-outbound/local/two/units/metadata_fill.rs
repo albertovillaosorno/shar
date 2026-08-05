@@ -40,6 +40,7 @@ use super::editor::edit_minor_unit_metadata;
 use super::manifest_minor_unit::render_row;
 use super::metadata::{MinorUnitMetadata, classify_minor_unit};
 use super::taxonomy;
+use crate::adapters::driven::check_cancellation;
 use crate::domain::{PipelineError, StageReport};
 
 /// Result.
@@ -62,6 +63,7 @@ pub(in crate::adapters::driven::local) fn fill_minor_unit_metadata(
     let mut changed = 0usize;
 
     for (line_index, line) in input.lines().enumerate() {
+        check_cancellation()?;
         if line.trim().is_empty() {
             continue;
         }

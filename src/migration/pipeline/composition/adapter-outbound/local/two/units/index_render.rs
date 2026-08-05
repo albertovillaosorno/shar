@@ -138,17 +138,29 @@ fn ids_json(package: &MinorUnitPackage, role: Option<MinorUnitRole>) -> String {
         .members
         .iter()
         .filter(|member| {
-            if role == Some(MinorUnitRole::Error)
-                && package.category == PackageCategory::Error
-            {
-                true
-            } else {
-                role.is_none_or(|wanted| member.role == wanted)
-            }
+            role.is_none_or(|wanted| {
+                effective_role(package, member.role) == wanted
+            })
         })
         .map(|member| member.id.as_str())
         .collect::<Vec<_>>();
     string_array_json(&ids)
+}
+
+/// Return the only public role one package member may expose.
+///
+/// A package that fails closed is wholly non-importable. Its members retain
+/// their source roles internally for classification evidence, while every
+/// published role mirror routes them exclusively through the error bucket.
+const fn effective_role(
+    package: &MinorUnitPackage,
+    role: MinorUnitRole,
+) -> MinorUnitRole {
+    if matches!(package.category, PackageCategory::Error) {
+        MinorUnitRole::Error
+    } else {
+        role
+    }
 }
 
 /// Render the derived text key id array.
@@ -175,7 +187,7 @@ fn members_json(package: &MinorUnitPackage) -> String {
                 "\"kind\":\"{}\",\"source_chunk_kind\":\"{}\"}}"
             ),
             json_escape(member.id.as_str()),
-            member.role.as_str(),
+            effective_role(package, member.role).as_str(),
             json_escape(&member.path),
             json_escape(&member.type_),
             json_escape(&member.kind),
