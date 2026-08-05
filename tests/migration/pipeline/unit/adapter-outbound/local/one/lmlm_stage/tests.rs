@@ -57,7 +57,7 @@ fn missing_optional_lmlm_creates_no_output() -> Result<(), String> {
     fs::write(stale_output.join("manifest.json"), b"stale")
         .map_err(|error| error.to_string())?;
 
-    let report = extract_lmlm(&game_root, &extracted_root)
+    let report = extract_lmlm(&game_root, &extracted_root, false)
         .map_err(|error| error.to_string())?;
 
     if report.name != "lmlm" || report.files != 0 || report.bytes != 0 {
@@ -119,6 +119,32 @@ fn missing_optional_lmlm_preview_is_read_only() -> Result<(), String> {
 }
 
 #[test]
+fn direct_optional_stage_requires_approval() -> Result<(), String> {
+    let case = temp_root("direct-approval");
+    if case.exists() {
+        fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    }
+    let game_root = case.join("game");
+    let mods_root = game_root.join("mods");
+    let extracted_root = case.join("extracted");
+    fs::create_dir_all(&mods_root).map_err(|error| error.to_string())?;
+    fs::write(mods_root.join("m.lmlm"), b"fixture")
+        .map_err(|error| error.to_string())?;
+
+    let error = match extract_lmlm(&game_root, &extracted_root, false) {
+        Ok(_report) => {
+            return Err("direct optional stage bypassed approval".to_owned());
+        }
+        Err(error) => error.to_string(),
+    };
+    if !error.contains("require explicit approval") || extracted_root.exists() {
+        return Err("direct stage approval failure mutated output".to_owned());
+    }
+    fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+#[test]
 fn corrupt_optional_package_diagnostics_use_public_aliases()
 -> Result<(), String> {
     let case = temp_root("corrupt-diagnostic");
@@ -137,7 +163,7 @@ fn corrupt_optional_package_diagnostics_use_public_aliases()
         .and_then(|value| value.to_str())
         .ok_or_else(|| "fixture path lacks a portable name".to_owned())?;
 
-    let extract_error = match extract_lmlm(&game_root, &extracted_root) {
+    let extract_error = match extract_lmlm(&game_root, &extracted_root, true) {
         Ok(_report) => {
             return Err("corrupt extraction package succeeded".to_owned());
         }
@@ -387,7 +413,7 @@ fn preview_matches_extracted_remaster_evidence() -> Result<(), String> {
         return Err("preview wrote the predicted remaster output".to_owned());
     }
 
-    let report = extract_lmlm(&game_root, &extracted_root)
+    let report = extract_lmlm(&game_root, &extracted_root, true)
         .map_err(|error| error.to_string())?;
     if report.files != 2 {
         return Err(format!(
@@ -483,7 +509,7 @@ fn preview_matches_extracted_latino_voice_evidence() -> Result<(), String> {
         );
     }
 
-    let report = extract_lmlm(&game_root, &extracted_root)
+    let report = extract_lmlm(&game_root, &extracted_root, true)
         .map_err(|error| error.to_string())?;
     if report.files != 2 {
         return Err(format!(

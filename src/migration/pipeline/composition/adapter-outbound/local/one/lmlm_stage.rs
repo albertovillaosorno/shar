@@ -60,6 +60,7 @@ use optional_mods::{
     OptionalModCounts, OptionalModRole, apply_remaster,
     create_optional_mod_work_root, discover_optional_mods, existing_file_index,
     is_latino_audio_path, is_latino_movie_path, read_optional_mod_bytes,
+    require_discovered_optional_mod_approval,
 };
 
 /// Rejects optional package application without caller approval.
@@ -77,9 +78,11 @@ type PipelineOutcome<T> = Result<T, PipelineError>;
 pub(super) fn extract_lmlm(
     game_root: &Path,
     extracted_root: &Path,
+    approved: bool,
 ) -> PipelineOutcome<StageReport> {
     let output_root = extracted_root.join("lmlm");
     let archives = discover_optional_mods(game_root)?;
+    require_discovered_optional_mod_approval(&archives, approved)?;
     if archives.is_empty() {
         if output_root.exists() {
             fs::remove_dir_all(&output_root).map_err(io_error(&output_root))?;

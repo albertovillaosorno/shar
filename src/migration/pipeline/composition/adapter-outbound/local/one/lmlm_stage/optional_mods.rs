@@ -195,12 +195,11 @@ pub(super) fn read_optional_mod_bytes(
     })
 }
 
-/// Rejects package application without explicit caller approval.
-pub(super) fn require_optional_mod_approval(
-    game_root: &Path,
+/// Rejects one discovered package set without explicit caller approval.
+pub(super) fn require_discovered_optional_mod_approval(
+    archives: &[OptionalModArchive],
     approved: bool,
 ) -> PipelineOutcome<()> {
-    let archives = discover_optional_mods(game_root)?;
     if !archives.is_empty() && !approved {
         return Err(PipelineError::new(concat!(
             "optional packages require explicit approval; run a preview ",
@@ -208,6 +207,15 @@ pub(super) fn require_optional_mod_approval(
         )));
     }
     Ok(())
+}
+
+/// Discovers packages and rejects them without explicit caller approval.
+pub(super) fn require_optional_mod_approval(
+    game_root: &Path,
+    approved: bool,
+) -> PipelineOutcome<()> {
+    let archives = discover_optional_mods(game_root)?;
+    require_discovered_optional_mod_approval(&archives, approved)
 }
 
 /// Counters produced by one package application.

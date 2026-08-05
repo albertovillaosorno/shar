@@ -158,9 +158,11 @@ impl ExtractGameAssets {
             .push(extract_rcf(&config.game_root, &config.extracted_root)?);
         check_cancellation()?;
         progress.advance("apply optional mod packages");
-        report
-            .stages
-            .push(extract_lmlm(&config.game_root, &config.extracted_root)?);
+        report.stages.push(extract_lmlm(
+            &config.game_root,
+            &config.extracted_root,
+            config.approve_optional_mods,
+        )?);
         check_cancellation()?;
         progress.advance("convert rsd audio");
         report
@@ -233,9 +235,11 @@ impl ExtractGameAssets {
         fs::create_dir_all(&config.extracted_root)
             .map_err(io_error(&config.extracted_root))?;
         let mut report = PipelineReport::default();
-        report
-            .stages
-            .push(extract_lmlm(&config.game_root, &config.extracted_root)?);
+        report.stages.push(extract_lmlm(
+            &config.game_root,
+            &config.extracted_root,
+            config.approve_optional_mods,
+        )?);
         Ok(report)
     }
 }
