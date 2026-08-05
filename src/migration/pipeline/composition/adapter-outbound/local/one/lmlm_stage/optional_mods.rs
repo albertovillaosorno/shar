@@ -104,6 +104,17 @@ pub(super) struct OptionalModArchive {
     pub(super) path: PathBuf,
 }
 
+/// Builds one public-safe temporary-workspace diagnostic.
+pub(super) fn optional_workspace_error(
+    action: &str,
+    error: &std::io::Error,
+) -> PipelineError {
+    PipelineError::new(format!(
+        "optional-package workspace {action} failed ({:?})",
+        error.kind()
+    ))
+}
+
 /// One uniquely owned temporary optional-package workspace.
 #[derive(Debug)]
 pub(super) struct OptionalModWorkRoot {
@@ -119,7 +130,8 @@ impl OptionalModWorkRoot {
 
     /// Removes the workspace and reports cleanup failures.
     pub(super) fn cleanup(mut self) -> PipelineOutcome<()> {
-        fs::remove_dir_all(&self.path).map_err(io_error(&self.path))?;
+        fs::remove_dir_all(&self.path)
+            .map_err(|error| optional_workspace_error("cleanup", &error))?;
         self.cleaned = true;
         Ok(())
     }
@@ -138,8 +150,10 @@ pub(super) fn create_optional_mod_work_root(
     label: &str,
 ) -> PipelineOutcome<OptionalModWorkRoot> {
     let parent = std::env::temp_dir().join("shar-schoenwald");
-    local_create_dir_all(&parent).map_err(io_error(&parent))?;
-    let metadata = fs::symlink_metadata(&parent).map_err(io_error(&parent))?;
+    local_create_dir_all(&parent)
+        .map_err(|error| optional_workspace_error("parent creation", &error))?;
+    let metadata = fs::symlink_metadata(&parent)
+        .map_err(|error| optional_workspace_error("parent inspection", &error))?;
     if !metadata.is_dir() || metadata.file_type().is_symlink() {
         return Err(PipelineError::new(
             "optional-package temporary parent must be a real directory",
@@ -159,7 +173,9 @@ pub(super) fn create_optional_mod_work_root(
                 });
             },
             Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {},
-            Err(error) => return Err(io_error(&candidate)(error)),
+            Err(error) => {
+                return Err(optional_workspace_error("allocation", &error));
+            },
         }
     }
     Err(PipelineError::new(
