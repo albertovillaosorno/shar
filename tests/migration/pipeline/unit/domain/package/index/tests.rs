@@ -83,6 +83,35 @@ fn text_keys_field(
     )
 }
 
+fn error_row() -> &'static str {
+    concat!(
+        "{\"package_id\":\"pkg-error\",",
+        "\"package_root\":\"pkg-error\",",
+        "\"package_category\":\"error\",",
+        "\"package_subcategory\":\"error\",",
+        "\"unit_count\":1,\"text_key_count\":0,",
+        "\"unit_ids\":[\"error-a\"],",
+        "\"world_ids\":[],\"texture_ids\":[],",
+        "\"material_ids\":[],\"model_ids\":[],",
+        "\"physics_ids\":[],\"animation_ids\":[],",
+        "\"scene_ids\":[],\"locator_ids\":[],",
+        "\"camera_ids\":[],\"light_ids\":[],",
+        "\"particle_ids\":[],\"controller_ids\":[],",
+        "\"audio_ids\":[],\"movie_ids\":[],",
+        "\"script_ids\":[],\"text_ids\":[],",
+        "\"ui_ids\":[],\"metadata_ids\":[],",
+        "\"error_ids\":[\"error-a\"],",
+        "\"source_unit_ids\":[],\"text_key_ids\":[],",
+        "\"members\":[{\"id\":\"error-a\",",
+        "\"role\":\"error\",",
+        "\"path\":\"extracted/error.bin\",",
+        "\"type\":\"metadata\",",
+        "\"kind\":\"unclassified\",",
+        "\"source_chunk_kind\":\"none\"}],",
+        "\"text_keys\":[]}"
+    )
+}
+
 fn sample_row() -> &'static str {
     concat!(
         "{\"package_id\":\"pkg-car\",",
@@ -113,6 +142,73 @@ fn sample_row() -> &'static str {
         "\"source_chunk_kind\":\"mesh\"}],",
         "\"text_keys\":[]}",
     )
+}
+
+#[test]
+fn unreal_intake_validates_and_excludes_error_evidence() -> Result<(), String> {
+    let contents = format!("{}\n{}", sample_row(), error_row());
+    let index = PhaseThreePackageIndex::from_jsonl_for_unreal(&contents)
+        .map_err(|error| error.to_string())?;
+    if index.packages().len() != 1 || index.find_package("pkg-car").is_none() {
+        return Err(
+            "Unreal intake should preserve the importable package".to_owned()
+        );
+    }
+    if index.find_package("pkg-error").is_some() {
+        return Err(
+            "Unreal intake must exclude fail-closed error evidence".to_owned()
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn unreal_intake_rejects_malformed_error_evidence() {
+    let malformed =
+        error_row().replace("\"role\":\"error\"", "\"role\":\"metadata\"");
+    assert!(PhaseThreePackageIndex::from_jsonl_for_unreal(&malformed).is_err());
+}
+
+#[test]
+fn unreal_intake_requires_at_least_one_importable_package() {
+    assert!(
+        PhaseThreePackageIndex::from_jsonl_for_unreal(error_row()).is_err()
+    );
+}
+
+#[test]
+fn unreal_intake_rejects_dependencies_on_excluded_error_evidence() {
+    let derived = sample_row()
+        .replace("pkg-car", "pkg-derived")
+        .replace(
+            "\"package_category\":\"cars\"",
+            "\"package_category\":\"language\"",
+        )
+        .replace("cars/character-rigs/homer-v", "language/derived/text")
+        .replace("\"unit_count\":2", "\"unit_count\":0")
+        .replace("\"text_key_count\":0", "\"text_key_count\":1")
+        .replace(
+            "\"unit_ids\":[\"texture-a\",\"model-a\"]",
+            "\"unit_ids\":[]",
+        )
+        .replace(SAMPLE_MEMBERS_FIELD, EMPTY_MEMBERS_FIELD)
+        .replace("\"texture_ids\":[\"texture-a\"]", "\"texture_ids\":[]")
+        .replace("\"model_ids\":[\"model-a\"]", "\"model_ids\":[]")
+        .replace(
+            "\"source_unit_ids\":[]",
+            "\"source_unit_ids\":[\"error-a\"]",
+        )
+        .replace("\"text_key_ids\":[]", "\"text_key_ids\":[\"text-a\"]")
+        .replace(
+            "\"text_keys\":[]",
+            &text_keys_field("text-a", "error-a", "language/derived/text"),
+        );
+    let contents = format!(
+        "{derived}
+{}",
+        error_row()
+    );
+    assert!(PhaseThreePackageIndex::from_jsonl_for_unreal(&contents).is_err());
 }
 
 #[test]

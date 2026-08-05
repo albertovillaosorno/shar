@@ -137,15 +137,19 @@ pub(super) fn classify_minor_unit(
     let route = RouteSignature::from_manifest_path(manifest_path);
     let ext = file_extension.to_ascii_lowercase();
 
-    let header = manifest_path
-        .strip_prefix("extracted/")
-        .map(|relative| extracted_root.join(relative))
-        .filter(|unit_path| unit_path.is_file())
-        .map_or_else(
-            || Ok(Vec::new()),
-            |unit_path| read_prefix(&unit_path, 4096),
-        )?;
-    let header_text = String::from_utf8_lossy(&header).to_ascii_lowercase();
+    let header_text = if metadata_needs_header(&ext, manifest_path) {
+        let header = manifest_path
+            .strip_prefix("extracted/")
+            .map(|relative| extracted_root.join(relative))
+            .filter(|unit_path| unit_path.is_file())
+            .map_or_else(
+                || Ok(Vec::new()),
+                |unit_path| read_prefix(&unit_path, 4096),
+            )?;
+        String::from_utf8_lossy(&header).to_ascii_lowercase()
+    } else {
+        String::new()
+    };
 
     if route.has(RouteFeature::MovieVideo) && ext == "mov" {
         apply_classification(
@@ -347,6 +351,33 @@ impl RouteSignature {
             "game-root"
         }
     }
+}
+
+/// Return whether classification needs to inspect one file header.
+///
+/// Only normalized JSON families use content signatures. Binary media and
+/// decoded images are classified entirely from their route and extension, so
+/// opening them would add I/O without contributing evidence.
+pub(super) fn metadata_needs_header(
+    extension: &str,
+    manifest_path: &str,
+) -> bool {
+    if !matches!(extension, "json" | "jsonl") {
+        return false;
+    }
+    let route = RouteSignature::from_manifest_path(manifest_path);
+    if route.has(RouteFeature::P3dComponent) || route.leaf == "components.jsonl"
+    {
+        return false;
+    }
+    if route.leaf == "decode-report.json"
+        || route.leaf == "source-video.ffprobe.json"
+    {
+        return false;
+    }
+    !(route.leaf == "manifest.json"
+        && (route.has(RouteFeature::MoviePackage)
+            || route.has(RouteFeature::Lmlm)))
 }
 
 /// Classify image.

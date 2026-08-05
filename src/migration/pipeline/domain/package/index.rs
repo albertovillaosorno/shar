@@ -228,6 +228,22 @@ pub struct PhaseThreePackageMember {
     pub source_chunk_kind: String,
 }
 
+/// Controls whether package-index intake accepts fail-closed evidence rows.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum PackageIntakeMode {
+    /// Every row must be directly eligible for phase-three planning.
+    ImportableOnly,
+    /// Error rows are validated but excluded from the resulting index.
+    UnrealEvidence,
+}
+
+impl PackageIntakeMode {
+    /// Return whether canonical error evidence is permitted during parsing.
+    const fn allows_error_evidence(self) -> bool {
+        matches!(self, Self::UnrealEvidence)
+    }
+}
+
 /// One phase-three package row read from the generated package index.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PhaseThreePackageRow {
@@ -709,11 +725,12 @@ fn validate_declared_counts(
 /// Validate package identity and routing taxonomy.
 fn validate_package_identity(
     row: &PhaseThreePackageRow,
+    mode: PackageIntakeMode,
 ) -> Result<(), PackageIntakeError> {
     validate_required_scalars(row)?;
     validate_package_root(&row.package_root)?;
     validate_root_identity(row)?;
-    validate_category(row)?;
+    validate_category(row, mode)?;
     validate_subcategory(&row.subcategory)?;
     if !is_canonical_slug(&row.package_id) {
         return Err(PackageIntakeError::new(
@@ -805,8 +822,11 @@ fn validate_root_identity(
 /// Reject unresolved or unsupported package categories.
 fn validate_category(
     row: &PhaseThreePackageRow,
+    mode: PackageIntakeMode,
 ) -> Result<(), PackageIntakeError> {
-    if is_supported_category(&row.category) {
+    if is_supported_category(&row.category)
+        || (mode.allows_error_evidence() && row.category == "error")
+    {
         return Ok(());
     }
     Err(PackageIntakeError::new(format!(
@@ -931,10 +951,38 @@ fn validate_role_assignments(
 /// Enforce fail-closed member presence and derived provenance.
 fn validate_package_members(
     row: &PhaseThreePackageRow,
+    mode: PackageIntakeMode,
 ) -> Result<(), PackageIntakeError> {
+    if row.category == "error" {
+        if !mode.allows_error_evidence() {
+            return Err(PackageIntakeError::new(
+                "package row contains error-role members",
+            ));
+        }
+        if !row.has_error_ids()
+            || row.ids_for_role(PackageRole::Error) != row.unit_ids
+        {
+            return Err(PackageIntakeError::new(concat!(
+                "error package must route every physical member ",
+                "through error_ids"
+            )));
+        }
+        if !row.text_key_ids.is_empty() || !row.source_unit_ids.is_empty() {
+            return Err(PackageIntakeError::new(
+                "error package must not publish derived members",
+            ));
+        }
+        if row.subcategory != "error" && !row.subcategory.starts_with("error/")
+        {
+            return Err(PackageIntakeError::new(
+                "error package must use the error taxonomy",
+            ));
+        }
+        return Ok(());
+    }
     if row.has_error_ids() {
         return Err(PackageIntakeError::new(
-            "package row contains error-role members",
+            "successful package row contains error-role members",
         ));
     }
     if row.unit_ids.is_empty() && row.text_key_ids.is_empty() {
@@ -958,6 +1006,14 @@ impl PhaseThreePackageRow {
     /// Returns an error when the row is not the canonical package-index JSONL
     /// schema emitted by phase two.
     pub fn from_json_line(line: &str) -> Result<Self, PackageIntakeError> {
+        Self::from_json_line_with_mode(line, PackageIntakeMode::ImportableOnly)
+    }
+
+    /// Parse one canonical row under a caller-selected intake mode.
+    fn from_json_line_with_mode(
+        line: &str,
+        mode: PackageIntakeMode,
+    ) -> Result<Self, PackageIntakeError> {
         if line.trim() != line {
             return Err(PackageIntakeError::new(
                 "package row contains outer whitespace",
@@ -968,11 +1024,11 @@ impl PhaseThreePackageRow {
         let mut row = parse_package_fields(line, role_ids)?;
         row.members = validate_member_mirrors(line, &row)?;
         validate_declared_counts(line, &row)?;
-        validate_package_identity(&row)?;
+        validate_package_identity(&row, mode)?;
         validate_identifier_arrays(&row)?;
         validate_text_key_mirrors(line, &row)?;
         validate_role_assignments(&row)?;
-        validate_package_members(&row)?;
+        validate_package_members(&row, mode)?;
         Ok(row)
     }
 
@@ -1092,6 +1148,33 @@ impl PackageIndexBuilder {
         })
     }
 
+    /// Finish an Unreal-facing index after excluding canonical error evidence.
+    fn finish_unreal_evidence(
+        self,
+    ) -> Result<PhaseThreePackageIndex, PackageIntakeError> {
+        let packages = self
+            .packages
+            .into_iter()
+            .filter(|package| package.category != "error")
+            .collect::<Vec<_>>();
+        if packages.is_empty() {
+            return Err(PackageIntakeError::new(
+                "package index contains no importable rows",
+            ));
+        }
+        let physical_ids = packages
+            .iter()
+            .flat_map(|package| package.unit_ids.iter().cloned())
+            .collect::<std::collections::BTreeSet<_>>();
+        validate_source_coverage(&packages, &physical_ids)?;
+        let by_id = packages
+            .iter()
+            .enumerate()
+            .map(|(index, package)| (package.package_id.clone(), index))
+            .collect();
+        Ok(PhaseThreePackageIndex { packages, by_id })
+    }
+
     /// Reject duplicate ids and descending canonical row order.
     fn validate_package_id(
         &self,
@@ -1174,6 +1257,22 @@ impl PhaseThreePackageIndex {
     /// Returns an error when any row is malformed or package ids are
     /// duplicated.
     pub fn from_jsonl(contents: &str) -> Result<Self, PackageIntakeError> {
+        Self::from_jsonl_with_mode(contents, PackageIntakeMode::ImportableOnly)
+    }
+
+    /// Parse an Unreal-facing index while retaining fail-closed rows only as
+    /// validation evidence.
+    pub(crate) fn from_jsonl_for_unreal(
+        contents: &str,
+    ) -> Result<Self, PackageIntakeError> {
+        Self::from_jsonl_with_mode(contents, PackageIntakeMode::UnrealEvidence)
+    }
+
+    /// Parse generated JSONL under one explicit intake mode.
+    fn from_jsonl_with_mode(
+        contents: &str,
+        mode: PackageIntakeMode,
+    ) -> Result<Self, PackageIntakeError> {
         let mut builder = PackageIndexBuilder::default();
         for (line_index, line) in contents.lines().enumerate() {
             if line.trim().is_empty() {
@@ -1182,17 +1281,21 @@ impl PhaseThreePackageIndex {
                     line_index.saturating_add(1)
                 )));
             }
-            let row = PhaseThreePackageRow::from_json_line(line).map_err(
-                |error| {
-                    PackageIntakeError::new(format!(
-                        "failed to parse package row {}: {error}",
-                        line_index.saturating_add(1)
-                    ))
-                },
-            )?;
+            let row =
+                PhaseThreePackageRow::from_json_line_with_mode(line, mode)
+                    .map_err(|error| {
+                        PackageIntakeError::new(format!(
+                            "failed to parse package row {}: {error}",
+                            line_index.saturating_add(1)
+                        ))
+                    })?;
             builder.push(row)?;
         }
-        builder.finish()
+        if mode.allows_error_evidence() {
+            builder.finish_unreal_evidence()
+        } else {
+            builder.finish()
+        }
     }
 
     /// Return all packages in deterministic index order.
