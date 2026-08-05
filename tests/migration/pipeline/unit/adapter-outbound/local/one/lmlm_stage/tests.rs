@@ -670,8 +670,7 @@ fn preview_matches_extracted_latino_voice_evidence() -> Result<(), String> {
 }
 
 #[test]
-fn optional_transition_requires_matching_current_manifest() -> Result<(), String>
-{
+fn optional_transition_matches_current_manifest() -> Result<(), String> {
     let root = temp_root("optional-transition");
     if root.exists() {
         fs::remove_dir_all(&root).map_err(|error| error.to_string())?;

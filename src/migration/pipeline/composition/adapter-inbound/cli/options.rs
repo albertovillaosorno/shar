@@ -203,7 +203,11 @@ pub(super) fn parse_common_arguments(
                 })?;
             if value.starts_with('-') {
                 return Err(format!(
-                    "--approve-optional-mods requires a preview token                      before {value}"
+                    concat!(
+                        "--approve-optional-mods requires a preview token ",
+                        "before {}"
+                    ),
+                    value
                 ));
             }
             parsed.optional_mod_approval = Some(parse_approval_token(value)?);

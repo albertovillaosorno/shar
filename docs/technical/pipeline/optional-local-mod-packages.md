@@ -121,9 +121,10 @@ After reviewing the preview, the caller must pass its exact `approval_token`
 before any supported package can be applied:
 
 ```text
-pipeline extract-game game extracted --approve-optional-mods <approval-token>
-pipeline extract-game-resume game extracted \n  --approve-optional-mods <approval-token>
-pipeline export-lmlm game extracted --approve-optional-mods <approval-token>
+TOKEN=<approval-token>
+pipeline extract-game game extracted --approve-optional-mods "$TOKEN"
+pipeline extract-game-resume game extracted --approve-optional-mods "$TOKEN"
+pipeline export-lmlm game extracted --approve-optional-mods "$TOKEN"
 ```
 
 Approval is scoped to one process invocation. It is not stored or accepted by
