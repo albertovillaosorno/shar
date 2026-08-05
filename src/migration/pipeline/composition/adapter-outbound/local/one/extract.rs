@@ -53,7 +53,7 @@ use schoenwald_filesystem::resolve_under;
 use super::super::two::units::manifest_minor_unit as mum;
 use super::cleanup::remove_generated_tree;
 use super::json_output::validate_generated_text_file;
-use super::lmlm_stage::extract_lmlm;
+use super::lmlm_stage::{extract_lmlm, require_optional_mod_approval};
 use super::media_dependencies::{ensure_ffmpeg_dependency, media_tool_path};
 use super::{rms, spt};
 use crate::adapters::driven::check_cancellation;
@@ -120,6 +120,10 @@ impl ExtractGameAssets {
         config: &PipelineConfig,
     ) -> PipelineOutcome<PipelineReport> {
         guard_paths(&config.game_root, &config.extracted_root)?;
+        require_optional_mod_approval(
+            &config.game_root,
+            config.approve_optional_mods,
+        )?;
         if config.clean_extracted && config.extracted_root.exists() {
             remove_generated_tree(&config.extracted_root).map_err(|error| {
                 PipelineError::new(format!(
@@ -222,6 +226,10 @@ impl ExtractGameAssets {
         config: &PipelineConfig,
     ) -> PipelineOutcome<PipelineReport> {
         guard_paths(&config.game_root, &config.extracted_root)?;
+        require_optional_mod_approval(
+            &config.game_root,
+            config.approve_optional_mods,
+        )?;
         fs::create_dir_all(&config.extracted_root)
             .map_err(io_error(&config.extracted_root))?;
         let mut report = PipelineReport::default();
@@ -442,7 +450,7 @@ fn convert_one_rsd(input: &Path, output: &Path) -> PipelineOutcome<u64> {
             return fs::metadata(output)
                 .map(|metadata| metadata.len())
                 .map_err(io_error(output));
-        },
+        }
         Err(error) => return Err(io_error(input)(error)),
     };
     let audio = RsdAudio::parse(&bytes).map_err(|error| {
@@ -1127,7 +1135,7 @@ fn component_ledger_files_exist(output: &Path) -> bool {
             .filter_map(|component| match component {
                 Component::Normal(value) => {
                     Some(value.to_string_lossy().to_ascii_lowercase())
-                },
+                }
                 _ => None,
             })
             .collect::<Vec<_>>()
@@ -1200,10 +1208,10 @@ fn find_unique_top_level_json_value<'a>(
                 if bytes.get(cursor) == Some(&b'}') {
                     return None;
                 }
-            },
+            }
             Some(b'}') if cursor == bytes.len().saturating_sub(1) => {
                 return found;
-            },
+            }
             _ => return None,
         }
     }
@@ -1224,7 +1232,7 @@ fn parse_component_json_string(
         match byte {
             b'"' => {
                 return Some((output, cursor.saturating_add(1)));
-            },
+            }
             b'\\' => {
                 cursor = cursor.saturating_add(1);
                 let escaped = bytes.get(cursor).copied()?;
@@ -1239,7 +1247,7 @@ fn parse_component_json_string(
                     b't' => output.push('\t'),
                     _ => return None,
                 }
-            },
+            }
             control if control <= 0x1f => return None,
             _ if byte.is_ascii() => output.push(char::from(byte)),
             _ => {
@@ -1248,7 +1256,7 @@ fn parse_component_json_string(
                 output.push(character);
                 cursor = cursor.saturating_add(character.len_utf8());
                 continue;
-            },
+            }
         }
         cursor = cursor.saturating_add(1);
     }
@@ -1284,19 +1292,19 @@ fn skip_component_json_value(line: &str, start: usize) -> Option<usize> {
             b'{' => object_depth = object_depth.saturating_add(1),
             b'}' if object_depth > 0 => {
                 object_depth = object_depth.saturating_sub(1);
-            },
+            }
             b'[' => array_depth = array_depth.saturating_add(1),
             b']' if array_depth > 0 => {
                 array_depth = array_depth.saturating_sub(1);
-            },
+            }
             b',' | b'}' if object_depth == 0 && array_depth == 0 => {
                 if container_value {
                     return Some(cursor);
                 }
                 let value = line.get(start..cursor)?.trim();
                 return json_primitive_is_valid(value).then_some(cursor);
-            },
-            _ => {},
+            }
+            _ => {}
         }
         cursor = cursor.saturating_add(1);
     }
@@ -1318,13 +1326,13 @@ fn json_number_is_valid(value: &str) -> bool {
             if matches!(bytes.get(cursor), Some(b'0'..=b'9')) {
                 return false;
             }
-        },
+        }
         Some(b'1'..=b'9') => {
             cursor = cursor.saturating_add(1);
             while matches!(bytes.get(cursor), Some(b'0'..=b'9')) {
                 cursor = cursor.saturating_add(1);
             }
-        },
+        }
         _ => return false,
     }
     if bytes.get(cursor) == Some(&b'.') {
@@ -1622,3 +1630,8 @@ mod component_ledger_tests;
 // jig-ignore-next-line: exact syntax is indivisible
 #[path = "../../../../../../../tests/migration/pipeline/unit/adapter-outbound/local/one/extract/movie_decoding_tests.rs"]
 mod movie_decoding_tests;
+
+#[cfg(test)]
+// jig-ignore-next-line: exact syntax is indivisible
+#[path = "../../../../../../../tests/migration/pipeline/unit/adapter-outbound/local/one/extract/optional_mod_approval_tests.rs"]
+mod optional_mod_approval_tests;

@@ -54,6 +54,7 @@ mod cases {
                 log_file: Some(PathBuf::from(DEFAULT_LOG_FILE)),
                 logging_explicit: false,
                 embed_textures: false,
+                approve_optional_mods: false,
                 run: RunOptions::default(),
             },)
         );
@@ -73,6 +74,7 @@ mod cases {
                 log_file: None,
                 logging_explicit: true,
                 embed_textures: false,
+                approve_optional_mods: false,
                 run: RunOptions::default(),
             },)
         );
@@ -91,6 +93,7 @@ mod cases {
                 log_file: Some(PathBuf::from(".logs/custom/run.jsonl")),
                 logging_explicit: true,
                 embed_textures: false,
+                approve_optional_mods: false,
                 run: RunOptions::default(),
             },)
         );
@@ -109,9 +112,40 @@ mod cases {
                 log_file: Some(PathBuf::from(DEFAULT_LOG_FILE)),
                 logging_explicit: false,
                 embed_textures: false,
+                approve_optional_mods: false,
                 run: RunOptions::default(),
             },)
         );
+    }
+
+    #[test]
+    fn optional_mod_approval_is_explicit_and_single_use() -> Result<(), String>
+    {
+        let parsed = parse_common_arguments(&[
+            String::from("--approve-optional-mods"),
+            String::from("game"),
+        ])?;
+        if !parsed.approve_optional_mods
+            || parsed.positionals != [String::from("game")]
+        {
+            return Err(String::from(
+                "optional package approval was not preserved",
+            ));
+        }
+        let repeated = parse_common_arguments(&[
+            String::from("--approve-optional-mods"),
+            String::from("--approve-optional-mods"),
+        ]);
+        if repeated
+            != Err(String::from(
+                "--approve-optional-mods may be specified only once",
+            ))
+        {
+            return Err(String::from(
+                "repeated optional package approval did not fail",
+            ));
+        }
+        Ok(())
     }
 
     #[test]
@@ -229,11 +263,10 @@ mod cases {
 
     #[test]
     fn directory_shaped_log_paths_are_rejected() {
-        for arguments in
-            [vec![String::from("--log=.logs/")], vec![String::from(
-                "--log=.logs\\",
-            )]]
-        {
+        for arguments in [
+            vec![String::from("--log=.logs/")],
+            vec![String::from("--log=.logs\\")],
+        ] {
             assert!(parse_common_arguments(&arguments).is_err_and(
                 |error| error == "--log path must identify a file",
             ));
@@ -242,10 +275,10 @@ mod cases {
 
     #[test]
     fn whitespace_only_log_paths_are_rejected() {
-        for arguments in [vec![String::from("--log=   ")], vec![
-            String::from("--log"),
-            String::from("   "),
-        ]] {
+        for arguments in [
+            vec![String::from("--log=   ")],
+            vec![String::from("--log"), String::from("   ")],
+        ] {
             assert!(
                 parse_common_arguments(&arguments).is_err_and(
                     |error| error == "--log path must not be blank",

@@ -121,6 +121,41 @@ fn prepare_unreal_is_a_known_pipeline_command() -> Result<(), String> {
 }
 
 #[test]
+fn optional_mod_approval_is_limited_to_mutating_commands() -> Result<(), String>
+{
+    for command in ["extract-game", "extract-game-resume", "export-lmlm"] {
+        if !super::command_accepts_optional_mod_approval(command) {
+            return Err(format!("{command} must accept optional approval"));
+        }
+    }
+    for command in ["preview-optional-mods", "prepare-unreal"] {
+        if super::command_accepts_optional_mod_approval(command) {
+            return Err(format!("{command} must reject optional approval"));
+        }
+    }
+    let outcome = PipelineCli.execute(&[
+        "preview-optional-mods".to_owned(),
+        "--approve-optional-mods".to_owned(),
+        "--no-log".to_owned(),
+    ]);
+    if outcome.status() != ExitStatus::Failure {
+        return Err("preview accepted mutating approval flag".to_owned());
+    }
+    let expected = concat!(
+        "--approve-optional-mods requires extract-game, ",
+        "extract-game-resume, or export-lmlm",
+    );
+    if !outcome
+        .output()
+        .iter()
+        .any(|chunk| chunk.text().contains(expected))
+    {
+        return Err("approval rejection diagnostic was missing".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
 fn optional_mod_preview_aliases_are_known_commands() -> Result<(), String> {
     for command in ["preview-optional-mods", "dry-run-optional-mods"] {
         if !super::is_known_command(command) {

@@ -52,6 +52,8 @@ pub(super) struct ParsedArguments {
     pub(super) logging_explicit: bool,
     /// Whether `fbx-export` should embed compatibility texture payloads.
     pub(super) embed_textures: bool,
+    /// Whether the caller explicitly approved applying optional packages.
+    pub(super) approve_optional_mods: bool,
     /// Cooperative process-registry selectors.
     run: RunOptions,
 }
@@ -85,6 +87,7 @@ impl Default for ParsedArguments {
             log_file: Some(PathBuf::from(DEFAULT_LOG_FILE)),
             logging_explicit: false,
             embed_textures: false,
+            approve_optional_mods: false,
             run: RunOptions::default(),
         }
     }
@@ -116,6 +119,7 @@ pub(super) fn parse_common_arguments(
     let mut parsed = ParsedArguments::default();
     let mut verbosity_selected = false;
     let mut logging_selected = false;
+    let mut approval_selected = false;
     let mut parse_options = true;
     let mut index = 0usize;
     while let Some(argument) = arguments.get(index) {
@@ -182,6 +186,17 @@ pub(super) fn parse_common_arguments(
         }
         if parse_options && argument == "--embed-textures" {
             parsed.embed_textures = true;
+            index = index.saturating_add(1);
+            continue;
+        }
+        if parse_options && argument == "--approve-optional-mods" {
+            if approval_selected {
+                return Err(String::from(
+                    "--approve-optional-mods may be specified only once",
+                ));
+            }
+            parsed.approve_optional_mods = true;
+            approval_selected = true;
             index = index.saturating_add(1);
             continue;
         }
