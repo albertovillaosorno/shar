@@ -251,12 +251,17 @@ fn remaster_replaces_only_existing_base_files() -> Result<(), String> {
         .parent()
         .ok_or_else(|| "fixture path has no parent".to_owned())?;
     fs::create_dir_all(parent).map_err(|error| error.to_string())?;
-    fs::create_dir_all(&extracted).map_err(|error| error.to_string())?;
+    let derived = extracted.join("art").join("derived.p3d");
+    let derived_parent = derived
+        .parent()
+        .ok_or_else(|| "derived fixture path has no parent".to_owned())?;
+    fs::create_dir_all(derived_parent).map_err(|error| error.to_string())?;
     fs::write(&original, b"old").map_err(|error| error.to_string())?;
+    fs::write(&derived, b"derived-old").map_err(|error| error.to_string())?;
     let base_files =
         existing_file_index(&game, &extracted, &extracted.join("lmlm"))
             .map_err(|error| error.to_string())?;
-    let data = [b'n'; 128];
+    let data = [b'n'; 192];
     let entries = vec![
         FileEntry {
             path: "CustomFiles/art/base.p3d".to_owned(),
@@ -266,6 +271,11 @@ fn remaster_replaces_only_existing_base_files() -> Result<(), String> {
         FileEntry {
             path: "CustomFiles/art/extra.p3d".to_owned(),
             offset: 64,
+            size: 64,
+        },
+        FileEntry {
+            path: "CustomFiles/art/derived.p3d".to_owned(),
+            offset: 128,
             size: 64,
         },
     ];
@@ -282,7 +292,13 @@ fn remaster_replaces_only_existing_base_files() -> Result<(), String> {
     if extracted.join("art").join("extra.p3d").exists() {
         return Err("remaster created an additional file".to_owned());
     }
-    if counts.written != 1 || counts.skipped != 1 || records.len() != 1 {
+    if fs::read(&original).map_err(|error| error.to_string())? != b"old" {
+        return Err("remaster modified the source installation".to_owned());
+    }
+    if fs::read(&derived).map_err(|error| error.to_string())? != b"derived-old" {
+        return Err("remaster modified an extracted-only identity".to_owned());
+    }
+    if counts.written != 1 || counts.skipped != 2 || records.len() != 1 {
         return Err(format!("unexpected remaster counts: {counts:?}"));
     }
     fs::remove_dir_all(root).map_err(|error| error.to_string())?;
