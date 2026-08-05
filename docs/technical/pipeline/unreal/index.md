@@ -30,6 +30,7 @@ Read and implement these documents in order:
 <!-- markdownlint-disable-next-line MD013 -->
 1. [Identity, naming, revisions, and import
    plans](identity-naming-revisions-and-import-plans.md)
+1. [Generated Unreal plan bundle](generated-plan-bundle.md)
 <!-- markdownlint-disable-next-line MD013 -->
 1. [Materials, textures, UVs, and
    shaders](materials-textures-uvs-and-shaders.md)
@@ -80,9 +81,10 @@ Read and implement these documents in order:
   Unreal-native baseline; vendor upscalers are optional capability adapters.
 - Generated `.uasset` and `.umap` files remain untracked by default. The
   canonical authored World Partition map
-  `/Game/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld`, its HLOD configuration asset,
-  and its External Actor/Object packages are the accepted publication
-  exception and use Git LFS. Tiny synthetic normalized inputs may be tracked
+  `/Game/SHAR/Maps/OpenWorld/W_SHAR_OpenWorld` is the sole Git LFS map
+  exception. Its empty authored shell retains one minimal `WorldDataLayers`
+  external-actor package; generated geography actors, external objects, and
+  HLOD packages remain absent. Tiny synthetic normalized inputs may be tracked
   only in the declared fixture directory.
 
 ## Change control

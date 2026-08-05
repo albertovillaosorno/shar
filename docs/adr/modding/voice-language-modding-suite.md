@@ -12,9 +12,14 @@ make localized content harder to validate consistently.
 
 ## Decision
 
-Voice and language mods use the same deterministic package identity, provenance,
-compatibility, fallback, preview, and validation model as other supported data
-and asset packages.
+Voice and language mods use deterministic package identity, provenance,
+compatibility, fallback, preview, and validation. Stable local aliases select
+supported behavior without hardcoding release titles or versions.
+
+The remaster role may replace only identities present in the unmodified source
+installation. Members without an original identity remain optional and are
+skipped. The Latino role may add only isolated Latin-American voice and
+cinematic audio and cannot overwrite base or remaster output.
 
 ## Consequences
 
@@ -23,6 +28,9 @@ and asset packages.
 - Locale fallback remains explicit and testable instead of depending on loose
   replacement-file discovery.
 - Invalid localized packages fail before partial audio or text activation.
+- Either supported package, both packages, or no package remains valid.
+- The repository provides compatibility only and does not redistribute or claim
+  authorship of third-party packages.
 
 ## Rejected alternatives
 

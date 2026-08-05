@@ -171,6 +171,7 @@ Proprietary products studied only as compatibility and historical subjects.
 Secondary navigation and acquisition-provenance references.
 
 - [Jebano Latin Spanish Mod Tutorial][jebano-tutorial]
+- [Muckluck Remaster Video Series][muckluck-remaster-series]
 - [The Simpsons Hit And Run Wiki][shar-wiki]
 
 ## Interoperability Formats
@@ -216,6 +217,8 @@ Independently studied proprietary and unresolved format families.
   validation-tooling/llvm-clang-and-clang-tidy.md
 [jebano-tutorial]:
   research-sources/jebano-youtube-latin-spanish-mod-tutorial.md
+[muckluck-remaster-series]:
+  research-sources/muckluck-remaster-video-series.md
 [shar-wiki]:
   research-sources/simpsons-hit-and-run-fandom-wiki.md
 [lmlm-lspa]:
@@ -256,7 +259,7 @@ assessment.
 
 ## Current Coverage
 
-- Active subject records: 78.
+- Active subject records: 79.
 - Template records: 1.
-- Review date: 2026-07-14.
+- Review date: 2026-08-04.
 - Legal conclusions: not provided by this index.
