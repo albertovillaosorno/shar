@@ -9,44 +9,45 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Layout outbound adapter.
+//   - Source-authored world grouping and aggregate-bound validation.
 // - Must-Not:
-//   - Own unrelated policy, persistence, or external effects.
+//   - Translate, rotate, scale, recenter, or otherwise alter source geometry.
 // - Allows:
-//   - Inputs and outputs required by this module boundary.
+//   - Inputs: exported package scopes and source-space mesh bounds.
+//   - Outputs: narrative grouping metadata and validated aggregate bounds.
+//   - Side effects: none.
 // - Split-When:
-//   - Split when one responsibility gains an independent lifecycle.
+//   - Split when another grouping scheme gains an independent lifecycle.
 // - Merge-When:
-//   - Merge when another module owns the identical responsibility.
+//   - Merge when another module owns identical source-space grouping policy.
 // - Summary:
-//   - Layout outbound adapter.
+//   - Source-preserving world layout metadata.
 // - Description:
-//   - Implements the declared outbound adapter responsibility for pipeline.
+//   - Groups recurring narrative levels without baking artificial placement
+//     offsets into their source-authored geometry.
 // - Usage:
-//   - Used through the owning function boundary.
+//   - Used by world FBX export for catalog metadata and bounds validation.
 // - Defaults:
-//   - Invalid or missing inputs fail explicitly.
+//   - Unknown scopes and malformed bounds fail explicitly.
 //
 
-//! Layout outbound adapter.
+//! Source-preserving world layout metadata.
 
 use std::collections::BTreeMap;
 
 use fbx::domain::mesh::MeshAsset;
 
-use super::transform::{bake_mesh, mesh_bounds, translation};
+use super::transform::mesh_bounds;
 use crate::domain::PipelineError;
 
-/// One scope's baked placement within a recurring exterior family.
+/// One scope's recurring narrative-family identity.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(super) struct MapPlacement {
-    /// Stable connected zone-family identity.
-    pub(super) group: Option<&'static str>,
-    /// Baked source-space translation in whole source units.
-    pub(super) offset: [i16; 3],
+    /// Stable recurring narrative-family identity.
+    pub(super) group: &'static str,
 }
 
-/// One post-placement map-group axis-aligned bound.
+/// One source-space map-group axis-aligned bound.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub(super) struct MapBounds {
     /// Minimum position on each source-space axis.
@@ -55,54 +56,25 @@ pub(super) struct MapBounds {
     pub(super) high: [f32; 3],
 }
 
-/// Resolve one exported package scope into exactly one map placement.
+/// Resolve one exported package scope into exactly one narrative family.
 ///
 /// # Errors
 ///
-/// Returns an error when a narrative level has no declared map group.
+/// Returns an error when a narrative level has no declared family.
 pub(super) fn placement_for_scope(
     scope: &str,
 ) -> Result<MapPlacement, PipelineError> {
-    let placement = match scope {
-        "level-01" | "level-04" | "level-07" => MapPlacement {
-            group: Some("map-01-04-07"),
-            offset: [0, 0, 0],
-        },
-        "level-02" | "level-05" => MapPlacement {
-            group: Some("map-02-05"),
-            offset: [0, 0, 0],
-        },
-        "level-03" | "level-06" => MapPlacement {
-            group: Some("map-03-06"),
-            offset: [0, 0, 0],
-        },
+    let group = match scope {
+        "level-01" | "level-04" | "level-07" => "map-01-04-07",
+        "level-02" | "level-05" => "map-02-05",
+        "level-03" | "level-06" => "map-03-06",
         _ => {
             return Err(PipelineError::new(format!(
-                "world scope has no declared map layout: {scope}"
+                "world scope has no declared narrative family: {scope}"
             )));
         },
     };
-    Ok(placement)
-}
-
-/// Bake one scope placement into all normally imported package meshes.
-///
-/// # Errors
-///
-/// Returns an error when one translated mesh becomes invalid.
-pub(super) fn apply_placement(
-    meshes: &mut [MeshAsset],
-    placement: MapPlacement,
-) -> Result<(), PipelineError> {
-    if placement.offset == [0, 0, 0] {
-        return Ok(());
-    }
-    let matrix = translation(placement.offset.map(f32::from));
-    for mesh in meshes {
-        let name = mesh.name.clone();
-        bake_mesh(mesh, &matrix, name)?;
-    }
-    Ok(())
+    Ok(MapPlacement { group })
 }
 
 /// Return one aggregate bound for a non-empty mesh collection.
@@ -119,30 +91,25 @@ pub(super) fn collection_bounds(meshes: &[MeshAsset]) -> Option<MapBounds> {
     aggregate
 }
 
-/// Merge one package bound into its narrative map group.
+/// Merge one source-space package bound into its narrative family.
 pub(super) fn record_group_bounds(
     bounds: &mut BTreeMap<&'static str, MapBounds>,
     placement: MapPlacement,
     package_bounds: Option<MapBounds>,
 ) {
-    let Some(group) = placement.group else {
-        return;
-    };
     let Some(package) = package_bounds else {
         return;
     };
     let _entry = bounds
-        .entry(group)
+        .entry(placement.group)
         .and_modify(|current| {
             *current = merge_bounds(*current, package);
         })
         .or_insert(package);
 }
 
-/// Validate that every recorded zone-family bound is finite and ordered.
-///
-/// Connected zone families may overlap at authored seams, so overlap is no
-/// longer rejected. Only malformed aggregate bounds fail.
+/// Validate that every source-space narrative-family bound is finite and
+/// ordered.
 ///
 /// # Errors
 ///
@@ -154,7 +121,7 @@ pub(super) fn validate_group_bounds(
         for (low, high) in bound.low.iter().zip(&bound.high) {
             if !low.is_finite() || !high.is_finite() || low > high {
                 return Err(PipelineError::new(format!(
-                    "world map group has invalid bounds: {name}"
+                    "world narrative family has invalid bounds: {name}"
                 )));
             }
         }

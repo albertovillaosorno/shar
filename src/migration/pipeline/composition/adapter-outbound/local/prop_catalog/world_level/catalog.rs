@@ -41,14 +41,9 @@ use super::model::{
     ExportedWorldCollection, WorldCollectionCounts, WorldFbxRecord,
     WorldInteriorRecord, WorldPackageRecord, WorldSurfaceSemanticCounts,
 };
-use super::movement_catalog::coordinate_movements_value;
 use crate::domain::PipelineError;
 
 /// Aggregate complete publication counts from one world collection.
-#[expect(
-    clippy::too_many_lines,
-    reason = "World counts must stay aligned with one collection."
-)]
 pub(super) fn counts(
     source_packages: usize,
     collection: &ExportedWorldCollection,
@@ -172,13 +167,8 @@ pub(super) fn write_catalogs(
 ) -> Result<(), PipelineError> {
     let catalog = catalog_value(counts, collection);
     let transforms = transforms_value(collection);
-    let movements = coordinate_movements_value(collection);
     write_json(&output_root.join("world.catalog.json"), &catalog)?;
-    write_json(&output_root.join("world.transforms.json"), &transforms)?;
-    write_json(
-        &output_root.join("world.coordinate-movements.json"),
-        &movements,
-    )
+    write_json(&output_root.join("world.transforms.json"), &transforms)
 }
 
 /// Render the complete separated world collection catalog.
@@ -187,77 +177,49 @@ fn catalog_value(
     collection: &ExportedWorldCollection,
 ) -> Value {
     json!({
-        "schema": "shar.world-package-collection.v4",
-        "status": "reviewed-world-and-fused-interior-baseline",
+        "schema": "shar.world-package-collection.v5",
+        "status": "source-authored-fbx-baseline",
         "boundary": {
             "canonical_model_authority": concat!(
-                "topology, materials, UVs, colors, identities, and textures ",
-                "come from original game P3D packages"
+                "topology, positions, materials, UVs, colors, identities, ",
+                "and textures come from original game P3D packages"
+            ),
+            "source_spatial_contract": concat!(
+                "world and interior geometry retains source-authored spatial ",
+                "coordinates; export never changes the center of, raises, ",
+                "translates, rotates, scales, or stitches narrative maps"
+            ),
+            "fbx_axis_contract": concat!(
+                "SHAR_Export_Root reflects source X exactly once for the ",
+                "FBX-to-Unreal basis conversion; no geometry correction is ",
+                "baked into package meshes"
+            ),
+            "uv_contract": concat!(
+                "every authored U and V value is preserved without heuristic ",
+                "mirroring, clamping, or remapping"
             ),
             "collision_exclusion": concat!(
                 "source collision indices are counted for audit but no ",
                 "collision geometry or collision material enters any FBX"
             ),
-            "private_coordinate_reference": concat!(
-                "an operator-supplied untracked package set may contribute ",
-                "only scene matrices and topology-verified coordinates"
-            ),
-            "three_zone_layout": concat!(
-                "levels 1, 4, and 7 share map-01-04-07; levels 2 and 5 share ",
-                "map-02-05; levels 3 and 6 share map-03-06; reviewed family ",
-                "placement preserves exterior handedness and adds an exact ",
-                "80 meter global height offset; connected zone bounds may ",
-                "overlap at authored seams"
-            ),
-            "root_import_contract": concat!(
-                "only seven-level world FBXs enter the stage; reviewed ",
-                "coordinates are baked and no per-file offset is added"
+            "narrative_groups": concat!(
+                "map group labels describe recurring story families only and ",
+                "never imply coordinate offsets or assembly transforms"
             ),
             "review_isolation": concat!(
                 "definition-only galleries live below review/ and remain ",
                 "excluded from normal world imports"
             ),
-            "interior_transform_policy": concat!(
-                "interior packages preserve authored UVs, exclude collision, ",
-                "use reviewed package-specific world placement including ",
-                "height, fuse by stable identity, and publish Level 7 ",
-                "Halloween geometry only when it is absent from the canonical ",
-                "base"
-            ),
-            "object_semantics": concat!(
-                "source-backed breakable and interactable owners plus ",
-                "spatially separated items remain selectable Blender objects"
-            ),
-            "coordinate_movement": concat!(
-                "named package movements apply reviewed placement and the ",
-                "global 80 meter height offset to geometry, collision, ",
-                "doors, objects, spawns, missions, triggers, cameras, ",
-                "locators, and lights"
-            ),
-            "manual_evidence": concat!(
-                "operator-authored FBX comparisons define reviewed movement ",
-                "constants but are never read or modified by production export"
+            "interior_policy": concat!(
+                "interior packages preserve source coordinates and authored ",
+                "UVs, fuse by stable identity, and publish Level 7 Halloween ",
+                "geometry only when absent from the canonical base"
             )
         },
         "map_groups": [
-            {
-                "id": "map-01-04-07",
-                "levels": [1, 4, 7],
-                "movement": "zone-01-levels-01-04-07-height",
-                "height_policy": "add-80-meters"
-            },
-            {
-                "id": "map-02-05",
-                "levels": [2, 5],
-                "movement": "zone-02-levels-02-05-placement-and-height",
-                "height_policy": "add-80-meters"
-            },
-            {
-                "id": "map-03-06",
-                "levels": [3, 6],
-                "movement": "zone-03-levels-03-06-placement-and-height",
-                "height_policy": "add-80-meters"
-            }
+            {"id": "map-01-04-07", "levels": [1, 4, 7]},
+            {"id": "map-02-05", "levels": [2, 5]},
+            {"id": "map-03-06", "levels": [3, 6]}
         ],
         "counts": counts_value(counts),
         "surface_semantics": semantics_value(collection.surface_semantics),
@@ -285,12 +247,12 @@ fn catalog_value(
 fn transforms_value(collection: &ExportedWorldCollection) -> Value {
     let files = transform_files(collection);
     json!({
-        "schema": "shar.world-package-transforms.v6",
+        "schema": "shar.world-package-transforms.v7",
         "shared_origin": [0.0_f64, 0.0_f64, 0.0_f64],
         "import_contract": concat!(
-            "import generated seven-level FBXs with no per-file placement ",
-            "offsets; preserve each importer-created SHAR_Export_Root axis ",
-            "conversion"
+            "import generated FBXs at identity placement and preserve each ",
+            "importer-created SHAR_Export_Root basis conversion; source ",
+            "coordinates remain untouched"
         ),
         "authored_root": {
             "name": "SHAR_Export_Root",
@@ -344,12 +306,11 @@ fn transform_file_value(
         "subcategory": package.subcategory,
         "interior": package.interior,
         "map_group": package.map_group,
-        "baked_map_offset": package.map_offset,
-        "coordinate_movement": package.coordinate_movement,
-        "coordinates_baked": true,
-        "additional_translation": [0.0_f64, 0.0_f64, 0.0_f64],
-        "additional_rotation_degrees": [0.0_f64, 0.0_f64, 0.0_f64],
-        "additional_scale": [1.0_f64, 1.0_f64, 1.0_f64]
+        "source_coordinates_preserved": true,
+        "fbx_root_policy": "ReflectX",
+        "import_location": [0.0_f64, 0.0_f64, 0.0_f64],
+        "import_rotation_degrees": [0.0_f64, 0.0_f64, 0.0_f64],
+        "import_scale": [1.0_f64, 1.0_f64, 1.0_f64]
     })
 }
 
@@ -366,11 +327,11 @@ fn interior_transform_file_value(
         "interior_name": interior.name,
         "interior_role": role,
         "source_package_ids": interior.source_package_ids,
-        "coordinates_baked": true,
-        "global_height_meters": 80.0_f64,
-        "additional_translation": [0.0_f64, 0.0_f64, 0.0_f64],
-        "additional_rotation_degrees": [0.0_f64, 0.0_f64, 0.0_f64],
-        "additional_scale": [1.0_f64, 1.0_f64, 1.0_f64]
+        "source_coordinates_preserved": true,
+        "fbx_root_policy": "ReflectX",
+        "import_location": [0.0_f64, 0.0_f64, 0.0_f64],
+        "import_rotation_degrees": [0.0_f64, 0.0_f64, 0.0_f64],
+        "import_scale": [1.0_f64, 1.0_f64, 1.0_f64]
     })
 }
 
@@ -440,8 +401,7 @@ fn package_value(package: &WorldPackageRecord) -> Value {
         "coordinate_reference": package.coordinate_reference,
         "interior": package.interior,
         "map_group": package.map_group,
-        "map_offset": package.map_offset,
-        "coordinate_movement": package.coordinate_movement,
+        "source_coordinates_preserved": true,
         "source_meshes": package.source_meshes,
         "discarded_degenerate_triangles": package
             .discarded_degenerate_triangles,

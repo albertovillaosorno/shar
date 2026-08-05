@@ -2,105 +2,58 @@
 
 - Status: Accepted
 - Decision date: 2026-07-12
+- Last reviewed: 2026-08-03
 - Scope: World reconstruction
 
 ## Context
 
-World reconstruction must preserve observable structure without importing
-proprietary editor projects or source-engine runtime organization. Normalized
-world evidence therefore needs one deterministic native assembly boundary.
+World reconstruction must preserve observable structure without importing a
+proprietary editor project or inventing a replacement terrain model.
 
 ## Decision
 
-Faithful world assembly consumes validated semantic FBX components, terrain,
-placement records, geographic taxonomy, transforms, bounds, and assembly
-relationships produced from normalized world packages. Those records reconstruct
-the one native geographic world deterministically without copying proprietary
-editor projects or preserving source-engine runtime structures.
+The Unreal world consumes deterministic FBX packages generated from decoded
+original geometry and source-authored placement evidence. The pipeline preserves
+source positions, transforms, pivots, UVs, materials, textures, and package
+identity.
 
-The seven main levels form three recurring exterior families: Levels 1, 4, and 7
-share Zone 1; Levels 2 and 5 share Zone 2; Levels 3 and 6 share Zone 3. Reviewed
-horizontal affine movements connect Zones 2 and 3 to Zone 1. Exterior, region,
-zone, race, door, and interior FBXs all emit the same source-to-FBX X-axis
-`ReflectX` root and preserve authored UVs. Coordinate records continue to
-describe canonical source-space movement; reviewed interior matrices remain
-placement authority rather than a separate FBX-root policy.
+Narrative levels may share stable family labels for catalog, streaming, mission,
+and progression purposes. Those labels are metadata only. They do not translate,
+recenter, stitch, or otherwise move geometry.
 
-A final `80.0` meter source-height translation applies after every exterior
-and interior placement without exception. It is the sole canonical Unreal
-world datum and is baked directly into every generated FBX and coordinate
-record. The complete movement boundary covers
-render geometry, collision evidence, doors, object placement, character and
-object spawns, mission placement, triggers, cameras, locators, and lights. In
-source coordinates height is Y; generated Blender evidence projects that same
-translation onto Blender Z. This translation is additive and does not normalize
-the world's minimum elevation to zero. Measured Blender bounds increase by
-exactly `80.0` on both Z limits after `f32` storage; any later
-ground-to-zero operation is a distinct transformation.
+World, race, road, prop, door, and interior FBXs use one source-to-FBX
+`ReflectX` export root. The root performs the explicit coordinate-basis
+conversion exactly once. Package geometry receives no additional location,
+rotation, scale, height, or UV correction.
 
-The operator may use an ignored Blender scene to review placement, but that
-scene is comparison evidence rather than production authority. The pipeline
-records only solved source-dependent affine matrices and verifies regenerated
-geometry against the reviewed scene. Bonus and auxiliary packages do not enter
-the seven-level world stage.
+The original world is imported as FBX geometry. The base port does not replace
+it with an Unreal Landscape or a manually sculpted terrain surface.
 
-Later manual FBX corrections use an ignored relative-path mirror and become
-committed source-dependent Rust algorithms, never replacement FBX authority.
-Selection prefers exact path, exact stem, and a unique prefix before accepting a
-structural fingerprint whose weakest dimension is at or above 99 percent.
-Exact identity matches still require the registered source fingerprint.
-Ambiguous or stale matches block publication. Blender ordering and
-serialization drift are not authored changes.
+Interior packages retain their source-authored coordinates. Stable interior
+identity may combine equivalent package content and may separate Level 7
+Halloween additions from the canonical base, but fusion cannot depend on a
+reviewed movement matrix. Duplicate ownership compares source-space triangles
+within a bounded decoding tolerance while retained triangles preserve original
+presentation data.
 
-Each of the 19 interior source packages has one reviewed full-XYZ source-space
-movement, including height, and is grouped into one of eight stable interior
-identities. The reviewed matrices remain placement authority, but the source's
-artificial 8,192-meter Zone 2 and 16,384-meter Zone 3 family displacements are
-cancelled before the shared world FBX basis conversion because the connected
-native world already owns family placement. Ordinary recurring copies are then
-transformed into the same reviewed world space and fused into one canonical base
-FBX per identity. Source collision remains excluded.
-
-Elementary School (`i00`), Kwik-E-Mart (`i01`), Simpsons House (`i02`), and
-Bart's Room (`i07`) additionally publish one Level 7 Halloween overlay. The
-overlay contains only world-space triangles absent from the canonical base.
-Triangle ownership uses spatial centroid, vertex, and surface buckets with a
-bounded five-millimeter comparison derived from measured review-placement noise.
-Exact triangles are duplicates. An alternate diagonal is a duplicate only when
-all candidate vertices are already owned and its centroid plus all three edge
-midpoints remain covered by owned coplanar triangles; an uncovered planar span
-is retained as new geometry. Source names, materials, UVs, normals, vertex
-indices,
-and triangle ordering are not ownership authority; retained triangles preserve
-their original presentation. This prevents a mixed Halloween mesh from repeating
-ordinary walls, floors, furniture, or fixtures without collapsing genuinely
-different geometry.
-Buildings, houses, windows, doors, linked interiors, landmarks, roads, props,
-and mission anchors retain stable identities and coordinates. Campaign levels
-project state over the assembled geography rather than owning alternate copies
-of the same physical location.
+Collision evidence remains separate from render FBX output. Doors, mission
+anchors, cameras, locators, lights, triggers, and other non-mesh records
+preserve their decoded source coordinates and are not adjusted by a shared
+registry.
 
 ## Consequences
 
-- Validated normalized world packages and their semantic FBX placement evidence
-  are the sole production inputs to faithful native world assembly.
-- The resulting world is independently authored and can be regenerated from one
-  terrain and component assembly without proprietary editor projects or
-  source-engine runtime structures.
-- Three family-level exterior transforms replace artificial map spacing,
-  preserve handedness, and apply the canonical height before the shared world
-  source-to-FBX X reflection.
-- Interior identity, reviewed placement, tolerant duplicate collapse, additive
-  Halloween ownership, exact global height, and collision exclusion remain
-  independently testable from exterior world assembly.
-- Ignored review scenes and derived editing FBXs may be deleted without changing
-  production regeneration authority.
-- Geographic identities support map-like mission and mod editing.
-- Missing component, transform, coordinate, interior-link, or assembly evidence
-  fails before an incomplete native world is accepted.
+- Generated FBX is the canonical Unreal world-ingestion boundary.
+- Source-authored coordinates remain inspectable and reproducible.
+- No map offsets, interior movement matrices, fixed height raise, or UV mirror
+  can hide conversion errors.
+- Narrative grouping and World Partition streaming do not alter map geometry.
+- Missing or contradictory source evidence fails before publication.
 
 ## Rejected alternatives
 
 - Importing or copying a proprietary editor project.
-- Preserving source-engine runtime structures as the native architecture.
-- Completing faithful world assembly through undocumented manual placement.
+- Rebuilding the map as an Unreal Landscape.
+- Undocumented manual placement.
+- Operator-reviewed affine corrections as production authority.
+- Per-file actor transforms that compensate for incorrect FBX output.

@@ -30,7 +30,7 @@
 
 //! Uv conversion tests unit tests.
 
-use super::{ModelUvPolicy, source_uv_to_fbx};
+use super::source_uv_to_fbx;
 
 /// Assert exact deterministic UV components without float comparison.
 fn assert_uv_bits(actual: [f64; 2], expected: [f64; 2]) {
@@ -38,30 +38,9 @@ fn assert_uv_bits(actual: [f64; 2], expected: [f64; 2]) {
 }
 
 #[test]
-fn preserves_source_u_without_decal_evidence() {
-    assert_uv_bits(source_uv_to_fbx([0.25_f32, 0.75_f32], false), [
+fn preserves_authored_uv_coordinates_exactly() {
+    assert_uv_bits(source_uv_to_fbx([0.25_f32, 0.75_f32]), [
         0.25_f64, 0.75_f64,
     ]);
-}
-
-#[test]
-fn mirrors_only_selected_decal_u_without_changing_v() {
-    assert_uv_bits(source_uv_to_fbx([0.25_f32, 0.75_f32], true), [
-        0.75_f64, 0.75_f64,
-    ]);
-    assert_uv_bits(source_uv_to_fbx([2f32, -1f32], true), [-1f64, -1f64]);
-}
-
-#[test]
-fn preserve_policy_disables_even_evidence_backed_graphic_mirroring() {
-    assert!(ModelUvPolicy::Selective.mirrors_u(
-        "kwik-e-mart-sign",
-        "kwik-e-mart-sign_m",
-        Some("kwik-e-mart-sign.png"),
-    ));
-    assert!(!ModelUvPolicy::Preserve.mirrors_u(
-        "kwik-e-mart-sign",
-        "kwik-e-mart-sign_m",
-        Some("kwik-e-mart-sign.png"),
-    ));
+    assert_uv_bits(source_uv_to_fbx([2f32, -1f32]), [2f64, -1f64]);
 }

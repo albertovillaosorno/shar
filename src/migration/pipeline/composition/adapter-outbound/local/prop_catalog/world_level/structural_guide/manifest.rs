@@ -41,8 +41,8 @@ use super::model::GuideSourceCounts;
 use crate::domain::PipelineError;
 
 pub(super) const SOURCE_GEOMETRY_POLICY: &str = concat!(
-    "concatenate evaluated normal-world FBX mesh channels under one ",
-    "shared ReflectX root without root re-expression",
+    "concatenate source-authored normal-world FBX mesh channels under one ",
+    "shared ReflectX root without spatial or UV correction",
 );
 
 #[derive(Serialize)]
@@ -57,7 +57,6 @@ struct Manifest<'hashes> {
     spatial_changes: SpatialChanges,
     world_fbx_scene: WorldFbxScene,
     unreal_import: UnrealImport,
-    world_height: WorldHeight,
     mesh: Mesh,
     uv_channels: UvChannels,
     atlas: Atlas,
@@ -101,13 +100,6 @@ struct UnrealImport {
     location: [f32; 3],
     rotation: [f32; 3],
     scale: [f32; 3],
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct WorldHeight {
-    meters: f32,
-    owned_by_normal_world_fbx: bool,
 }
 
 #[derive(Serialize)]
@@ -178,7 +170,7 @@ pub(super) fn render(
     layout_sha256: &str,
 ) -> Result<Vec<u8>, PipelineError> {
     let manifest = Manifest {
-        schema_version: 4,
+        schema_version: 5,
         asset_name: STRUCTURAL_GUIDE_ASSET_NAME,
         fbx_version: "7.7",
         source_canonical: true,
@@ -212,10 +204,6 @@ pub(super) fn render(
             location: [0., 0., 0.],
             rotation: [0., 0., 0.],
             scale: [1., 1., 1.],
-        },
-        world_height: WorldHeight {
-            meters: super::super::movement::WORLD_HEIGHT_OFFSET_METERS,
-            owned_by_normal_world_fbx: true,
         },
         mesh: Mesh {
             object_count: 1,

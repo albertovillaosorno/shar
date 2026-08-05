@@ -43,8 +43,6 @@ mod binary_fbx_storage;
 mod binary_identity;
 /// Canonical one-mesh FBX 7.7 structural-guide writer.
 pub mod binary_structural_guide_writer;
-/// Conservative horizontal UV correction policy.
-mod binary_uv_policy;
 /// Decoded skeletal animation source adapter.
 pub mod decoded_animation_source;
 /// Decoded billboard quad-group source adapter.

@@ -369,7 +369,7 @@ fn validate_manifest(value: &serde_json::Value) -> Result<(), PipelineError> {
         || value
             .get("schemaVersion")
             .and_then(serde_json::Value::as_u64)
-            != Some(4)
+            != Some(5)
         || value.get("assetName").and_then(serde_json::Value::as_str)
             != Some(STRUCTURAL_GUIDE_ASSET_NAME)
         || value.get("fbxVersion").and_then(serde_json::Value::as_str)
@@ -444,14 +444,6 @@ fn validate_manifest(value: &serde_json::Value) -> Result<(), PipelineError> {
             .pointer("/unrealImport/forceFrontXAxis")
             .and_then(serde_json::Value::as_bool)
             != Some(false)
-        || value
-            .pointer("/worldHeight/meters")
-            .and_then(serde_json::Value::as_f64)
-            != Some(80.)
-        || value
-            .pointer("/worldHeight/ownedByNormalWorldFbx")
-            .and_then(serde_json::Value::as_bool)
-            != Some(true)
         || value
             .pointer("/mesh/objectCount")
             .and_then(serde_json::Value::as_u64)

@@ -9,34 +9,33 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Tests unit tests.
+//   - Source-preserving world layout tests.
 // - Must-Not:
-//   - Own production behavior or broaden the tested API surface.
+//   - Transform geometry or broaden production APIs.
 // - Allows:
-//   - Private test fixtures and assertions for the owning source module.
+//   - Pure family-grouping and bounds-validation assertions.
 // - Split-When:
-//   - Split when an independent fixture family gains separate ownership.
+//   - Split when another grouping fixture gains independent ownership.
 // - Merge-When:
-//   - Merge when another test module owns the identical evidence.
+//   - Merge when another module owns identical layout evidence.
 // - Summary:
-//   - Tests unit tests.
+//   - Source-preserving world layout tests.
 // - Description:
-//   - Preserves unit-test access through a test-only path module.
+//   - Proves recurring levels share metadata without artificial offsets.
 // - Usage:
-//   - Included only by the owning source module under cfg(test).
+//   - Included only by the owning layout module under cfg(test).
 // - Defaults:
-//   - Test setup and assertions fail explicitly.
+//   - Unknown scopes and malformed bounds fail explicitly.
 //
 
-//! Tests unit tests.
+//! Source-preserving world layout tests.
 
 use std::collections::BTreeMap;
 
 use super::{MapBounds, placement_for_scope, validate_group_bounds};
 
 #[test]
-fn recurring_levels_share_groups_without_artificial_offsets()
--> Result<(), String> {
+fn recurring_levels_share_groups_without_offsets() -> Result<(), String> {
     for (levels, group) in [
         (&["level-01", "level-04", "level-07"][..], "map-01-04-07"),
         (&["level-02", "level-05"][..], "map-02-05"),
@@ -45,8 +44,8 @@ fn recurring_levels_share_groups_without_artificial_offsets()
         for level in levels {
             let placement = placement_for_scope(level)
                 .map_err(|error| error.to_string())?;
-            if placement.group != Some(group) || placement.offset != [0, 0, 0] {
-                return Err(format!("invalid zone grouping for {level}"));
+            if placement.group != group {
+                return Err(format!("invalid narrative family for {level}"));
             }
         }
     }
@@ -54,8 +53,7 @@ fn recurring_levels_share_groups_without_artificial_offsets()
 }
 
 #[test]
-fn connected_overlap_is_allowed_but_invalid_bounds_fail() -> Result<(), String>
-{
+fn source_overlap_is_allowed_but_invalid_bounds_fail() -> Result<(), String> {
     let mut bounds = BTreeMap::new();
     let _ = bounds.insert("map-01-04-07", MapBounds {
         low: [0., 0., 0.],
@@ -71,7 +69,7 @@ fn connected_overlap_is_allowed_but_invalid_bounds_fail() -> Result<(), String>
         high: [4., 10., 10.],
     });
     if validate_group_bounds(&bounds).is_ok() {
-        return Err(String::from("inverted bounds were accepted"));
+        return Err("inverted bounds were accepted".to_owned());
     }
     Ok(())
 }

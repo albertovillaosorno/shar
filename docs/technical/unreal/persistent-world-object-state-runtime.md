@@ -112,8 +112,9 @@ Every persistent object has one canonical `PlacementId`. Its definition binds:
 - optional progression or reward transaction definition; and
 - definition revision.
 
-Identity is generated from reviewed placement data. Actor discovery order,
-package load order, streaming order, array index, truncated hash, or display
+Identity is generated from decoded source placement evidence. Actor discovery
+order, package load order, streaming order, array index, truncated hash, or
+display
 name
 cannot select durable state.
 

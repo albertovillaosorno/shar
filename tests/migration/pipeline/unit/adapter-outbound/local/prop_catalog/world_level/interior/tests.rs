@@ -34,15 +34,11 @@ use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 
 use super::{
     InteriorGeometryOwnership, geometry_key, identity_for_package,
-    is_halloween_package, movement_for_package, retain_unowned_triangles,
-    reviewed_movement_for_package,
-};
-use crate::adapters::driven::local::prop_catalog::world_level::movement::{
-    LEGACY_REVIEWED_HEIGHT_OFFSET_METERS, WORLD_HEIGHT_OFFSET_METERS,
+    is_halloween_package, retain_unowned_triangles,
 };
 
 #[test]
-fn all_nineteen_source_packages_have_reviewed_movements() {
+fn all_nineteen_source_packages_have_stable_interior_identities() {
     let packages = [
         "extracted-art-l1i00",
         "extracted-art-l1i01",
@@ -67,7 +63,6 @@ fn all_nineteen_source_packages_have_reviewed_movements() {
     assert_eq!(packages.len(), 19);
     for package in packages {
         assert!(identity_for_package(package).is_some(), "{package}");
-        assert!(movement_for_package(package).is_some(), "{package}");
     }
 }
 
@@ -79,90 +74,6 @@ fn only_level_seven_halloween_packages_are_overlays() {
     assert!(is_halloween_package("extracted-art-l7i07"));
     assert!(!is_halloween_package("extracted-art-l4i07"));
     assert!(!is_halloween_package("extracted-art-l6i06"));
-}
-
-#[test]
-fn kwik_e_mart_reviewed_movement_preserves_fbx_import_basis()
--> Result<(), String> {
-    let (_, matrix) =
-        movement_for_package("extracted-art-l4i01").ok_or_else(|| {
-            String::from("Level 4 Kwik-E-Mart movement is missing")
-        })?;
-    let source = [492.979_58_f32, -20.000_023_f32, -307.126_68_f32];
-    let moved = [
-        source[0].mul_add(
-            matrix[0],
-            source[1]
-                .mul_add(matrix[4], source[2].mul_add(matrix[8], matrix[12])),
-        ),
-        source[0].mul_add(
-            matrix[1],
-            source[1]
-                .mul_add(matrix[5], source[2].mul_add(matrix[9], matrix[13])),
-        ),
-        source[0].mul_add(
-            matrix[2],
-            source[1]
-                .mul_add(matrix[6], source[2].mul_add(matrix[10], matrix[14])),
-        ),
-    ];
-    let blender_import = [-moved[0], moved[2], moved[1]];
-    let expected = [
-        203.703_92_f32,
-        -301.955_6_f32,
-        5.173_32_f32 + WORLD_HEIGHT_OFFSET_METERS,
-    ];
-    if blender_import
-        .iter()
-        .zip(expected)
-        .any(|(actual, wanted)| (*actual - wanted).abs() > 0.001)
-    {
-        return Err(format!(
-            "Kwik-E-Mart import basis changed: {blender_import:?}"
-        ));
-    }
-    let (_, level_one_matrix) = movement_for_package("extracted-art-l1i01")
-        .ok_or_else(|| {
-            String::from("Level 1 Kwik-E-Mart movement is missing")
-        })?;
-    if level_one_matrix
-        .iter()
-        .zip(matrix)
-        .any(|(left, right)| (*left - right).abs() > 0.000_001)
-    {
-        return Err(String::from(
-            "Level 1 and Level 4 Kwik-E-Mart placements diverged",
-        ));
-    }
-    Ok(())
-}
-
-#[test]
-fn recurring_interior_family_origins_are_cancelled() -> Result<(), String> {
-    for (package, translation_index, expected) in [
-        ("extracted-art-l2i03", 14_usize, -611.094_24_f32),
-        ("extracted-art-l2i04", 12_usize, -915.175_8_f32),
-        ("extracted-art-l3i05", 14_usize, 267.007_8_f32),
-        ("extracted-art-l3i06", 14_usize, 276.835_94_f32),
-        ("extracted-art-l5i03", 14_usize, -611.094_7_f32),
-        ("extracted-art-l5i04", 12_usize, -915.175_8_f32),
-        ("extracted-art-l6i05", 14_usize, 267.007_8_f32),
-        ("extracted-art-l6i06", 14_usize, 276.835_94_f32),
-    ] {
-        let (_, matrix) = movement_for_package(package).ok_or_else(|| {
-            format!("interior movement is missing: {package}")
-        })?;
-        let actual = *matrix.get(translation_index).ok_or_else(|| {
-            format!("interior translation index is missing: {package}")
-        })?;
-        if (actual - expected).abs() > 0.001 {
-            return Err(format!(
-                "recurring family origin remained for {package}: \
-                     {actual} != {expected}"
-            ));
-        }
-    }
-    Ok(())
 }
 
 #[test]
@@ -210,29 +121,6 @@ fn geometry_key_ignores_vertex_order_but_preserves_position()
         return Err(String::from(
             "world placement did not change the geometry key",
         ));
-    }
-    Ok(())
-}
-
-#[test]
-fn final_movement_uses_only_the_canonical_world_height() -> Result<(), String> {
-    let (_, reviewed) = reviewed_movement_for_package("extracted-art-l1i00")
-        .ok_or_else(|| String::from("reviewed movement is missing"))?;
-    let (_, final_matrix) = movement_for_package("extracted-art-l1i00")
-        .ok_or_else(|| String::from("final movement is missing"))?;
-    for (index, (reviewed_value, final_value)) in
-        reviewed.into_iter().zip(final_matrix).enumerate()
-    {
-        let expected_delta = if index == 13 {
-            WORLD_HEIGHT_OFFSET_METERS - LEGACY_REVIEWED_HEIGHT_OFFSET_METERS
-        } else {
-            0.
-        };
-        if (final_value - reviewed_value - expected_delta).abs() > 0.000_01 {
-            return Err(format!(
-                "movement component {index} changed unexpectedly"
-            ));
-        }
     }
     Ok(())
 }
