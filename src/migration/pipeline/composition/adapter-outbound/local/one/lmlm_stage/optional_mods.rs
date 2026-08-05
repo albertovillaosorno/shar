@@ -29,11 +29,6 @@
 //   - Unknown package aliases fail closed.
 //
 
-#![expect(
-    clippy::create_dir,
-    reason = "Single-directory creation is required to claim unique optional-package workspaces atomically."
-)]
-
 //! Supported optional-mod discovery and remaster overlay policy.
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -146,14 +141,19 @@ impl Drop for OptionalModWorkRoot {
 }
 
 /// Atomically claims one unique temporary optional-package workspace.
+#[expect(
+    clippy::create_dir,
+    reason = "Unique workspace ownership needs atomic directory creation."
+)]
 pub(super) fn create_optional_mod_work_root(
     label: &str,
 ) -> PipelineOutcome<OptionalModWorkRoot> {
     let parent = std::env::temp_dir().join("shar-schoenwald");
     local_create_dir_all(&parent)
         .map_err(|error| optional_workspace_error("parent creation", &error))?;
-    let metadata = fs::symlink_metadata(&parent)
-        .map_err(|error| optional_workspace_error("parent inspection", &error))?;
+    let metadata = fs::symlink_metadata(&parent).map_err(|error| {
+        optional_workspace_error("parent inspection", &error)
+    })?;
     if !metadata.is_dir() || metadata.file_type().is_symlink() {
         return Err(PipelineError::new(
             "optional-package temporary parent must be a real directory",
@@ -161,21 +161,20 @@ pub(super) fn create_optional_mod_work_root(
     }
     for _attempt in 0..MAX_WORK_ROOT_ATTEMPTS {
         let sequence = NEXT_WORK_ROOT.fetch_add(1, Ordering::Relaxed);
-        let candidate = parent.join(format!(
-            "lmlm-{label}-{}-{sequence}",
-            std::process::id()
-        ));
+        let candidate = parent
+            .join(format!("lmlm-{label}-{}-{sequence}", std::process::id()));
         match fs::create_dir(&candidate) {
             Ok(()) => {
                 return Ok(OptionalModWorkRoot {
                     path: candidate,
                     cleaned: false,
                 });
-            },
-            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {},
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
+            }
             Err(error) => {
                 return Err(optional_workspace_error("allocation", &error));
-            },
+            }
         }
     }
     Err(PipelineError::new(
@@ -208,12 +207,15 @@ pub(super) struct OptionalModCounts {
 }
 
 /// Discovers only direct canonical aliases under `game/mods`.
-pub(super) fn discover_optional_mods(game_root: &Path) -> PipelineOutcome<Vec<OptionalModArchive>> {
+pub(super) fn discover_optional_mods(
+    game_root: &Path,
+) -> PipelineOutcome<Vec<OptionalModArchive>> {
     let mods_root = game_root.join("mods");
     if !mods_root.exists() {
         return Ok(Vec::new());
     }
-    let metadata = fs::symlink_metadata(&mods_root).map_err(io_error(&mods_root))?;
+    let metadata =
+        fs::symlink_metadata(&mods_root).map_err(io_error(&mods_root))?;
     if !metadata.is_dir() || metadata.file_type().is_symlink() {
         return Err(PipelineError::new("game/mods must be a real directory"));
     }
@@ -234,7 +236,9 @@ pub(super) fn discover_optional_mods(game_root: &Path) -> PipelineOutcome<Vec<Op
         let file_name = path
             .file_name()
             .and_then(|value| value.to_str())
-            .ok_or_else(|| PipelineError::new("optional package name is not UTF-8"))?
+            .ok_or_else(|| {
+                PipelineError::new("optional package name is not UTF-8")
+            })?
             .to_ascii_lowercase();
         let role = match file_name.as_str() {
             REMASTER_ALIAS => OptionalModRole::Remaster,
@@ -267,9 +271,9 @@ pub(super) fn existing_file_index(
     let mut files = BTreeMap::new();
     let mut source_keys = BTreeSet::new();
     for path in collect_files(game_root)? {
-        let relative = path
-            .strip_prefix(game_root)
-            .map_err(|_error| PipelineError::new("failed to relativize base source file"))?;
+        let relative = path.strip_prefix(game_root).map_err(|_error| {
+            PipelineError::new("failed to relativize base source file")
+        })?;
         if is_excluded_game_path(relative) {
             continue;
         }
@@ -287,9 +291,9 @@ pub(super) fn existing_file_index(
         if path.starts_with(generated_mod_root) {
             continue;
         }
-        let relative = path
-            .strip_prefix(extracted_root)
-            .map_err(|_error| PipelineError::new("failed to relativize extracted base file"))?;
+        let relative = path.strip_prefix(extracted_root).map_err(|_error| {
+            PipelineError::new("failed to relativize extracted base file")
+        })?;
         let key = portable_identity(relative);
         if !extracted_keys.insert(key.clone()) {
             return Err(PipelineError::new(
@@ -310,7 +314,8 @@ fn is_excluded_game_path(relative: &Path) -> bool {
         .next()
         .and_then(|component| component.as_os_str().to_str());
     if first.is_some_and(|value| {
-        value.eq_ignore_ascii_case("mods") || value.eq_ignore_ascii_case("extracted")
+        value.eq_ignore_ascii_case("mods")
+            || value.eq_ignore_ascii_case("extracted")
     }) {
         return true;
     }
@@ -352,7 +357,10 @@ pub(super) fn apply_remaster(
             ));
         }
         let bytes = entry_bytes(data, entry).ok_or_else(|| {
-            PipelineError::new(format!("{}: LMLM entry out of bounds", entry.path))
+            PipelineError::new(format!(
+                "{}: LMLM entry out of bounds",
+                entry.path
+            ))
         })?;
         write_bytes(destination, bytes)?;
         counts.written = counts.written.saturating_add(1);
@@ -423,7 +431,8 @@ pub(super) fn is_latino_movie_path(entry_path: &str) -> bool {
         && directory.eq_ignore_ascii_case("movies")
         && !file.is_empty()
         && segments.next().is_none()
-        && (string_has_extension(file, "bik") || string_has_extension(file, "rmv"))
+        && (string_has_extension(file, "bik")
+            || string_has_extension(file, "rmv"))
 }
 
 /// Stable case-insensitive relative identity.
@@ -434,7 +443,10 @@ pub(super) fn portable_identity(path: &Path) -> String {
 }
 
 /// Public-safe generated path relative to the extraction root.
-pub(super) fn relative_output(root: &Path, path: &Path) -> PipelineOutcome<String> {
+pub(super) fn relative_output(
+    root: &Path,
+    path: &Path,
+) -> PipelineOutcome<String> {
     path.strip_prefix(root)
         .map(portable_identity)
         .map_err(|_error| PipelineError::new("output escaped extraction root"))

@@ -48,7 +48,9 @@ use super::{
     PipelineOutcome, decode_lmlm_movie_audio, lmlm_entry_path, rsd_bytes_to_wav,
 };
 use crate::adapters::driven::check_cancellation;
-use crate::domain::{OPTIONAL_MOD_PREVIEW_SCHEMA, OptionalModPreview, PipelineError};
+use crate::domain::{
+    OPTIONAL_MOD_PREVIEW_SCHEMA, OptionalModPreview, PipelineError,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -162,7 +164,11 @@ fn parse_archives(
             let entries = parse_lmlm(&data).map_err(|error| {
                 PipelineError::new(format!("{}: {error}", archive.role.alias()))
             })?;
-            Ok(ParsedArchive { archive, data, entries })
+            Ok(ParsedArchive {
+                archive,
+                data,
+                entries,
+            })
         })
         .collect()
 }
@@ -182,9 +188,13 @@ fn build_preview(
         let entries = &parsed_archive.entries;
         let data = &parsed_archive.data;
         let package_changes = match archive.role {
-            OptionalModRole::Remaster => {
-                preview_remaster(archive.role, data, entries, extracted_root, base_files)?
-            }
+            OptionalModRole::Remaster => preview_remaster(
+                archive.role,
+                data,
+                entries,
+                extracted_root,
+                base_files,
+            )?,
             OptionalModRole::Latino => preview_latino(
                 archive.role,
                 data,
@@ -267,7 +277,8 @@ fn preview_latino(
         if is_latino_audio_path(&entry.path) {
             let source = required_entry_bytes(data, entry)?;
             let wav = rsd_bytes_to_wav(source, &entry.path)?;
-            let destination = lmlm_entry_path(&output_root, &entry.path).with_extension("wav");
+            let destination = lmlm_entry_path(&output_root, &entry.path)
+                .with_extension("wav");
             push_unique_output(
                 &mut claimed_outputs,
                 &destination,
@@ -283,7 +294,9 @@ fn preview_latino(
             ));
         } else if is_latino_movie_path(&entry.path) {
             let source = required_entry_bytes(data, entry)?;
-            let Some(wav) = decode_lmlm_movie_audio(work_root, &entry.path, source)? else {
+            let Some(wav) =
+                decode_lmlm_movie_audio(work_root, &entry.path, source)?
+            else {
                 changes.push(skipped_change(role, entry, "no_audio_stream"));
                 continue;
             };
@@ -319,8 +332,9 @@ fn required_entry_bytes<'archive>(
     data: &'archive [u8],
     entry: &FileEntry,
 ) -> PipelineOutcome<&'archive [u8]> {
-    entry_bytes(data, entry)
-        .ok_or_else(|| PipelineError::new(format!("{}: LMLM entry out of bounds", entry.path)))
+    entry_bytes(data, entry).ok_or_else(|| {
+        PipelineError::new(format!("{}: LMLM entry out of bounds", entry.path))
+    })
 }
 
 fn push_unique_output(
@@ -335,7 +349,11 @@ fn push_unique_output(
     }
 }
 
-fn skipped_change(role: OptionalModRole, entry: &FileEntry, reason: &'static str) -> PreviewChange {
+fn skipped_change(
+    role: OptionalModRole,
+    entry: &FileEntry,
+    reason: &'static str,
+) -> PreviewChange {
     PreviewChange {
         alias: role.alias(),
         role: role.label(),
@@ -370,9 +388,9 @@ fn writing_change(
 
 fn checked_normalized_bytes(changes: &[PreviewChange]) -> PipelineOutcome<u64> {
     changes.iter().try_fold(0_u64, |total, change| {
-        total
-            .checked_add(change.normalized_bytes)
-            .ok_or_else(|| PipelineError::new("optional-mod preview bytes overflowed"))
+        total.checked_add(change.normalized_bytes).ok_or_else(|| {
+            PipelineError::new("optional-mod preview bytes overflowed")
+        })
     })
 }
 
@@ -403,7 +421,9 @@ fn render_preview(
         changes,
     };
     let json = serde_json::to_string(&document).map_err(|error| {
-        PipelineError::new(format!("failed to render optional-mod preview: {error}"))
+        PipelineError::new(format!(
+            "failed to render optional-mod preview: {error}"
+        ))
     })?;
     Ok(OptionalModPreview::new(
         json,

@@ -47,8 +47,10 @@ use crate::adapters::driven::check_cancellation;
 use crate::adapters::driven::local::progress::StageProgress;
 use crate::domain::{PipelineError, StageReport, escape_json as json_escape};
 
+#[rustfmt::skip]
 #[path = "lmlm_stage/optional_mods.rs"]
 mod optional_mods;
+#[rustfmt::skip]
 #[path = "lmlm_stage/preview.rs"]
 mod preview;
 
@@ -97,7 +99,8 @@ pub(super) fn extract_lmlm(
         fs::remove_dir_all(&output_root).map_err(io_error(&output_root))?;
     }
     local_create_dir_all(&output_root).map_err(io_error(&output_root))?;
-    let base_files = existing_file_index(game_root, extracted_root, &output_root)?;
+    let base_files =
+        existing_file_index(game_root, extracted_root, &output_root)?;
 
     let work_root = create_optional_mod_work_root("extract")?;
 
@@ -155,12 +158,14 @@ pub(super) fn extract_lmlm(
     let manifest_path = output_root.join("manifest.json");
     write_bytes(&manifest_path, manifest.as_bytes())?;
     files_written = files_written.saturating_add(1);
-    bytes_written = bytes_written.saturating_add(u64::try_from(manifest.len()).unwrap_or(u64::MAX));
+    bytes_written = bytes_written
+        .saturating_add(u64::try_from(manifest.len()).unwrap_or(u64::MAX));
     Ok(StageReport {
         name: "lmlm",
         files: files_written,
         bytes: bytes_written,
-        note: "supported optional packages applied by alias and role policy".to_owned(),
+        note: "supported optional packages applied by alias and role policy"
+            .to_owned(),
     })
 }
 
@@ -199,11 +204,15 @@ fn extract_latino_media(
         check_cancellation()?;
         progress.advance(&format!("member {}", index.saturating_add(1)));
         let bytes = entry_bytes(data, entry).ok_or_else(|| {
-            PipelineError::new(format!("{}: LMLM entry out of bounds", entry.path))
+            PipelineError::new(format!(
+                "{}: LMLM entry out of bounds",
+                entry.path
+            ))
         })?;
         if is_latino_audio_path(&entry.path) {
             let wav = rsd_bytes_to_wav(bytes, &entry.path)?;
-            let destination = lmlm_entry_path(&latino_root, &entry.path).with_extension("wav");
+            let destination = lmlm_entry_path(&latino_root, &entry.path)
+                .with_extension("wav");
             write_lmlm_wav(
                 &destination,
                 &wav,
@@ -259,8 +268,8 @@ fn relative_output(root: &Path, path: &Path) -> PipelineOutcome<String> {
 
 /// Rsd bytes to wav.
 fn rsd_bytes_to_wav(bytes: &[u8], source: &str) -> PipelineOutcome<Vec<u8>> {
-    let audio =
-        RsdAudio::parse(bytes).map_err(|error| PipelineError::new(format!("{source}: {error}")))?;
+    let audio = RsdAudio::parse(bytes)
+        .map_err(|error| PipelineError::new(format!("{source}: {error}")))?;
     let wav = audio
         .to_wav()
         .map_err(|error| PipelineError::new(format!("{source}: {error}")))?;
@@ -277,7 +286,9 @@ fn export_lmlm_movie_audio(
     extracted_root: &Path,
     records: &mut Vec<String>,
 ) -> PipelineOutcome<(usize, u64)> {
-    let Some(wav) = decode_lmlm_movie_audio(work_root, entry_path, movie_bytes)? else {
+    let Some(wav) =
+        decode_lmlm_movie_audio(work_root, entry_path, movie_bytes)?
+    else {
         records.push(format!(
             "{{\"kind\":\"latino_cinematic_audio\",\"source\":\"{}\",\
              \"status\":\"skipped_no_audio\"}}",
@@ -382,7 +393,8 @@ fn write_lmlm_wav(
         json_escape(&relative_output(extracted_root, destination)?),
         wav.len(),
         Sha256::digest(wav).hex(),
-        source_audio_stream_ordinal.map_or_else(|| "null".to_owned(), |value| value.to_string())
+        source_audio_stream_ordinal
+            .map_or_else(|| "null".to_owned(), |value| value.to_string())
     ));
     Ok(())
 }
@@ -431,6 +443,7 @@ fn io_error(path: &Path) -> impl FnOnce(std::io::Error) -> PipelineError + '_ {
 }
 
 #[cfg(test)]
+#[rustfmt::skip]
 // jig-ignore-next-line: exact syntax is indivisible
 #[path = "../../../../../../../tests/migration/pipeline/unit/adapter-outbound/local/one/lmlm_stage/tests.rs"]
 mod tests;

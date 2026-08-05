@@ -36,12 +36,12 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 use lmlm::FileEntry;
 
-use super::{extract_lmlm, preview_optional_mods};
 use super::optional_mods::{
     OptionalModRole, apply_remaster, create_optional_mod_work_root,
     discover_optional_mods, existing_file_index, is_latino_audio_path,
     is_latino_movie_path, optional_workspace_error,
 };
+use super::{extract_lmlm, preview_optional_mods};
 
 #[test]
 fn missing_optional_lmlm_creates_no_output() -> Result<(), String> {
@@ -119,7 +119,8 @@ fn missing_optional_lmlm_preview_is_read_only() -> Result<(), String> {
 }
 
 #[test]
-fn corrupt_optional_package_diagnostics_use_public_aliases() -> Result<(), String> {
+fn corrupt_optional_package_diagnostics_use_public_aliases()
+-> Result<(), String> {
     let case = temp_root("corrupt-diagnostic");
     if case.exists() {
         fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
@@ -137,16 +138,23 @@ fn corrupt_optional_package_diagnostics_use_public_aliases() -> Result<(), Strin
         .ok_or_else(|| "fixture path lacks a portable name".to_owned())?;
 
     let extract_error = match extract_lmlm(&game_root, &extracted_root) {
-        Ok(_report) => return Err("corrupt extraction package succeeded".to_owned()),
+        Ok(_report) => {
+            return Err("corrupt extraction package succeeded".to_owned());
+        }
         Err(error) => error.to_string(),
     };
-    let preview_error = match preview_optional_mods(&game_root, &extracted_root) {
-        Ok(_preview) => return Err("corrupt preview package succeeded".to_owned()),
+    let preview_error = match preview_optional_mods(&game_root, &extracted_root)
+    {
+        Ok(_preview) => {
+            return Err("corrupt preview package succeeded".to_owned());
+        }
         Err(error) => error.to_string(),
     };
     for error in [&extract_error, &preview_error] {
         if !error.contains("m.lmlm") || error.contains(private_fragment) {
-            return Err(format!("package diagnostic is not public-safe: {error}"));
+            return Err(format!(
+                "package diagnostic is not public-safe: {error}"
+            ));
         }
     }
     if extracted_root.join("lmlm").exists() {
@@ -175,15 +183,21 @@ fn optional_workspace_diagnostics_hide_local_paths() -> Result<(), String> {
 }
 
 #[test]
-fn optional_package_workspaces_are_unique_and_self_cleaning() -> Result<(), String> {
+fn optional_package_workspaces_are_unique_and_self_cleaning()
+-> Result<(), String> {
     let first = create_optional_mod_work_root("preview")
         .map_err(|error| error.to_string())?;
     let second = create_optional_mod_work_root("preview")
         .map_err(|error| error.to_string())?;
     let first_path = first.path().to_path_buf();
     let second_path = second.path().to_path_buf();
-    if first_path == second_path || !first_path.is_dir() || !second_path.is_dir() {
-        return Err("preview workspaces were not unique real directories".to_owned());
+    if first_path == second_path
+        || !first_path.is_dir()
+        || !second_path.is_dir()
+    {
+        return Err(
+            "preview workspaces were not unique real directories".to_owned()
+        );
     }
     fs::write(first_path.join("first.txt"), b"first")
         .map_err(|error| error.to_string())?;
@@ -191,7 +205,9 @@ fn optional_package_workspaces_are_unique_and_self_cleaning() -> Result<(), Stri
         .map_err(|error| error.to_string())?;
     first.cleanup().map_err(|error| error.to_string())?;
     if !second_path.join("second.txt").is_file() {
-        return Err("cleaning one preview workspace affected another".to_owned());
+        return Err(
+            "cleaning one preview workspace affected another".to_owned()
+        );
     }
     second.cleanup().map_err(|error| error.to_string())?;
 
@@ -200,7 +216,9 @@ fn optional_package_workspaces_are_unique_and_self_cleaning() -> Result<(), Stri
     let abandoned_path = abandoned.path().to_path_buf();
     drop(abandoned);
     if abandoned_path.exists() {
-        return Err("abandoned optional-package workspace was not cleaned".to_owned());
+        return Err(
+            "abandoned optional-package workspace was not cleaned".to_owned()
+        );
     }
     Ok(())
 }
@@ -237,13 +255,11 @@ fn write_lmlm_entry_name(
     }
     encoded_name.extend_from_slice(&0_u16.to_le_bytes());
     if encoded_name.len() > LMLM_BLOCK.saturating_sub(2) {
-        return Err("LMLM fixture name exceeded one structural block".to_owned());
+        return Err(
+            "LMLM fixture name exceeded one structural block".to_owned()
+        );
     }
-    copy_lmlm_fixture_bytes(
-        archive,
-        position.saturating_add(2),
-        &encoded_name,
-    )
+    copy_lmlm_fixture_bytes(archive, position.saturating_add(2), &encoded_name)
 }
 
 fn write_lmlm_directory(
@@ -311,21 +327,12 @@ fn single_file_lmlm(
         LMLM_ROOT_BLOCK.saturating_add(2),
         &1_u16.to_le_bytes(),
     )?;
-    write_lmlm_directory(
-        &mut archive,
-        LMLM_FIRST_ENTRY,
-        "CustomFiles",
-        true,
-    )?;
+    write_lmlm_directory(&mut archive, LMLM_FIRST_ENTRY, "CustomFiles", true)?;
     let art_position = LMLM_FIRST_ENTRY.saturating_add(LMLM_BLOCK * 2);
     write_lmlm_directory(&mut archive, art_position, directory, false)?;
     let file_position = art_position.saturating_add(LMLM_BLOCK * 2);
     write_lmlm_file(&mut archive, file_position, file_name, payload)?;
-    copy_lmlm_fixture_bytes(
-        &mut archive,
-        LMLM_PAYLOAD_OFFSET,
-        payload,
-    )?;
+    copy_lmlm_fixture_bytes(&mut archive, LMLM_PAYLOAD_OFFSET, payload)?;
     Ok(archive)
 }
 
@@ -373,7 +380,8 @@ fn preview_matches_extracted_remaster_evidence() -> Result<(), String> {
         .and_then(serde_json::Value::as_array)
         .ok_or_else(|| "preview changes were not an array".to_owned())?;
     let [preview_change] = preview_changes.as_slice() else {
-        return Err("single-member preview emitted an unexpected change count".to_owned());
+        return Err("single-member preview emitted an unexpected change count"
+            .to_owned());
     };
     if extracted_root.join("art").join("base.p3d").exists() {
         return Err("preview wrote the predicted remaster output".to_owned());
@@ -382,7 +390,10 @@ fn preview_matches_extracted_remaster_evidence() -> Result<(), String> {
     let report = extract_lmlm(&game_root, &extracted_root)
         .map_err(|error| error.to_string())?;
     if report.files != 2 {
-        return Err(format!("unexpected extraction file count: {}", report.files));
+        return Err(format!(
+            "unexpected extraction file count: {}",
+            report.files
+        ));
     }
     let manifest: serde_json::Value = serde_json::from_slice(
         &fs::read(extracted_root.join("lmlm").join("manifest.json"))
@@ -394,7 +405,10 @@ fn preview_matches_extracted_remaster_evidence() -> Result<(), String> {
         .and_then(serde_json::Value::as_array)
         .ok_or_else(|| "extraction records were not an array".to_owned())?;
     let [record] = records.as_slice() else {
-        return Err("single-member extraction emitted an unexpected record count".to_owned());
+        return Err(
+            "single-member extraction emitted an unexpected record count"
+                .to_owned(),
+        );
     };
     for field in ["source", "output", "sha256"] {
         if preview_change.get(field) != record.get(field) {
@@ -402,9 +416,13 @@ fn preview_matches_extracted_remaster_evidence() -> Result<(), String> {
         }
     }
     if preview_change.get("normalized_bytes") != record.get("bytes") {
-        return Err("preview and extraction differ for normalized bytes".to_owned());
+        return Err(
+            "preview and extraction differ for normalized bytes".to_owned()
+        );
     }
-    if preview_change.get("action").and_then(serde_json::Value::as_str)
+    if preview_change
+        .get("action")
+        .and_then(serde_json::Value::as_str)
         != Some("replace")
         || fs::read(extracted_root.join("art").join("base.p3d"))
             .map_err(|error| error.to_string())?
@@ -412,7 +430,9 @@ fn preview_matches_extracted_remaster_evidence() -> Result<(), String> {
         || fs::read(&source).map_err(|error| error.to_string())?
             != b"source-old"
     {
-        return Err("remaster preview/extraction parity contract failed".to_owned());
+        return Err(
+            "remaster preview/extraction parity contract failed".to_owned()
+        );
     }
     fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
     Ok(())
@@ -443,7 +463,8 @@ fn preview_matches_extracted_latino_voice_evidence() -> Result<(), String> {
         .and_then(serde_json::Value::as_array)
         .ok_or_else(|| "Latino preview changes were not an array".to_owned())?;
     let [preview_change] = preview_changes.as_slice() else {
-        return Err("single-voice preview emitted an unexpected change count".to_owned());
+        return Err("single-voice preview emitted an unexpected change count"
+            .to_owned());
     };
     let output = preview_change
         .get("output")
@@ -457,7 +478,9 @@ fn preview_matches_extracted_latino_voice_evidence() -> Result<(), String> {
             != Some("add")
         || extracted_root.join(expected_output).exists()
     {
-        return Err("Latino preview did not describe one read-only add".to_owned());
+        return Err(
+            "Latino preview did not describe one read-only add".to_owned()
+        );
     }
 
     let report = extract_lmlm(&game_root, &extracted_root)
@@ -476,9 +499,14 @@ fn preview_matches_extracted_latino_voice_evidence() -> Result<(), String> {
     let records = manifest
         .get("records")
         .and_then(serde_json::Value::as_array)
-        .ok_or_else(|| "Latino extraction records were not an array".to_owned())?;
+        .ok_or_else(|| {
+            "Latino extraction records were not an array".to_owned()
+        })?;
     let [record] = records.as_slice() else {
-        return Err("single-voice extraction emitted an unexpected record count".to_owned());
+        return Err(
+            "single-voice extraction emitted an unexpected record count"
+                .to_owned(),
+        );
     };
     for field in ["source", "output", "sha256"] {
         if preview_change.get(field) != record.get(field) {
@@ -489,7 +517,8 @@ fn preview_matches_extracted_latino_voice_evidence() -> Result<(), String> {
     }
     if preview_change.get("normalized_bytes") != record.get("bytes") {
         return Err(
-            "Latino preview and extraction differ for normalized bytes".to_owned()
+            "Latino preview and extraction differ for normalized bytes"
+                .to_owned(),
         );
     }
     let wav = fs::read(extracted_root.join(expected_output))
@@ -497,7 +526,9 @@ fn preview_matches_extracted_latino_voice_evidence() -> Result<(), String> {
     if !wav.starts_with(b"RIFF")
         || wav.get(8..12).is_none_or(|tag| tag != b"WAVE")
     {
-        return Err("Latino extraction did not publish a canonical WAV".to_owned());
+        return Err(
+            "Latino extraction did not publish a canonical WAV".to_owned()
+        );
     }
     fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
     Ok(())
@@ -509,10 +540,11 @@ fn canonical_aliases_support_one_both_or_neither() -> Result<(), String> {
         ("none", Vec::<&str>::new(), Vec::<OptionalModRole>::new()),
         ("m", vec!["m.lmlm"], vec![OptionalModRole::Remaster]),
         ("j", vec!["j.lmlm"], vec![OptionalModRole::Latino]),
-        ("both", vec!["j.lmlm", "m.lmlm"], vec![
-            OptionalModRole::Remaster,
-            OptionalModRole::Latino,
-        ]),
+        (
+            "both",
+            vec!["j.lmlm", "m.lmlm"],
+            vec![OptionalModRole::Remaster, OptionalModRole::Latino],
+        ),
     ];
     for (label, names, expected) in cases {
         let root = temp_root(label);
@@ -545,7 +577,7 @@ fn unknown_lmlm_alias_fails_closed() -> Result<(), String> {
     let error = match discover_optional_mods(&root) {
         Ok(_archives) => {
             return Err("unknown alias unexpectedly succeeded".to_owned());
-        },
+        }
         Err(error) => error.to_string(),
     };
     if !error.contains("use m.lmlm or j.lmlm") {
@@ -609,7 +641,8 @@ fn remaster_replaces_only_existing_base_files() -> Result<(), String> {
     if fs::read(&original).map_err(|error| error.to_string())? != b"old" {
         return Err("remaster modified the source installation".to_owned());
     }
-    if fs::read(&derived).map_err(|error| error.to_string())? != b"derived-old" {
+    if fs::read(&derived).map_err(|error| error.to_string())? != b"derived-old"
+    {
         return Err("remaster modified an extracted-only identity".to_owned());
     }
     if counts.written != 1 || counts.skipped != 2 || records.len() != 1 {

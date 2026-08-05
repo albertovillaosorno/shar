@@ -30,6 +30,7 @@
 
 //! Adapter inbound inbound adapter.
 
+#[rustfmt::skip]
 mod cli;
 
 pub use cli::{PipelineCli, run_env};
