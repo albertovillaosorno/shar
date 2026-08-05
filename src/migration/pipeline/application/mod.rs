@@ -30,6 +30,7 @@
 
 //! Application application service.
 
+#[rustfmt::skip]
 mod execute;
 mod output_summary;
 

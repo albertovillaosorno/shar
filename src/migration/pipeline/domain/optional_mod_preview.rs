@@ -31,7 +31,8 @@
 //! Public-safe optional-mod preview result.
 
 /// Versioned schema for the canonical optional-mod dry-run document.
-pub const OPTIONAL_MOD_PREVIEW_SCHEMA: &str = "shar-schoenwald.optional-mod-preview.v1";
+pub const OPTIONAL_MOD_PREVIEW_SCHEMA: &str =
+    "shar-schoenwald.optional-mod-preview.v1";
 
 /// Deterministic dry-run result for the supported local package set.
 #[derive(Debug, Clone, PartialEq, Eq)]
