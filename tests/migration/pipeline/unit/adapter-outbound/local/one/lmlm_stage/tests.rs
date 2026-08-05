@@ -40,7 +40,7 @@ use super::{extract_lmlm, preview_optional_mods};
 use super::optional_mods::{
     OptionalModRole, apply_remaster, create_optional_mod_work_root,
     discover_optional_mods, existing_file_index, is_latino_audio_path,
-    is_latino_movie_path,
+    is_latino_movie_path, optional_workspace_error,
 };
 
 #[test]
@@ -153,6 +153,24 @@ fn corrupt_optional_package_diagnostics_use_public_aliases() -> Result<(), Strin
         return Err("corrupt package changed extraction output".to_owned());
     }
     fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+#[test]
+fn optional_workspace_diagnostics_hide_local_paths() -> Result<(), String> {
+    let private_fragment = "private-workstation-root";
+    let error = std::io::Error::other(format!(
+        "{private_fragment}/temporary/lmlm-preview"
+    ));
+    let rendered = optional_workspace_error("allocation", &error).to_string();
+    if rendered.contains(private_fragment)
+        || !rendered.contains("allocation")
+        || !rendered.contains("Other")
+    {
+        return Err(format!(
+            "workspace diagnostic was not public-safe: {rendered}"
+        ));
+    }
     Ok(())
 }
 
