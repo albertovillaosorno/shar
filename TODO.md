@@ -88,7 +88,7 @@ Current task list. Project phases and dated progress are recorded in
 - [ ] Validate schemas, paths, integrity, limits, references, and load order.
 - [x] Add preview and dry-run commands that show exactly what a mod changes.
 - [ ] Finish user-facing and AI-agent modding skills.
-- [ ] Require approval before replacing content or activating packages.
+- [x] Require approval before replacing content or activating packages.
 
 ## Platforms and packaging
 
