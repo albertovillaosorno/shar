@@ -30,17 +30,52 @@
 
 //! Prepare-Unreal adapter unit tests.
 
+use std::collections::BTreeSet;
 use std::fs;
 
 use shar_sha256::digest_hex;
 
 use super::{
-    MANIFEST_FILE, PUBLISHED_FILES, SUMMARY_FILE, validate_audit,
-    validate_relative_path, validate_rendered_output,
+    MANIFEST_FILE, PLAN_INDEX_FILE, PUBLISHED_FILES, SUMMARY_FILE,
+    retain_source_ids, validate_audit, validate_relative_path,
+    validate_rendered_output,
 };
 use crate::domain::{
     UNREAL_IMPORT_MANIFEST_SCHEMA, UNREAL_IMPORT_SUMMARY_SCHEMA,
+    UnrealSourceEvidence,
 };
+
+fn source(id: &str) -> UnrealSourceEvidence {
+    UnrealSourceEvidence {
+        id: id.to_owned(),
+        path: format!("extracted/{id}.bin"),
+        file_extension: "bin".to_owned(),
+        unit_type: "metadata".to_owned(),
+        subtype: "none".to_owned(),
+        kind: "test".to_owned(),
+        function: "test".to_owned(),
+        schema: "none".to_owned(),
+        origin: "test".to_owned(),
+        source_path: "none".to_owned(),
+        source_chunk_kind: "none".to_owned(),
+        size_bytes: 0,
+        sha256: "0".repeat(64),
+        unreal_import_relation: "none".to_owned(),
+        future_normalization: "none".to_owned(),
+    }
+}
+
+#[test]
+fn excludes_fail_closed_source_evidence_from_import_planning() {
+    let evidence = vec![source("keep"), source("error")];
+    let importable = BTreeSet::from(["keep"]);
+    let retained = retain_source_ids(evidence, &importable);
+    assert_eq!(retained.len(), 1);
+    assert_eq!(
+        retained.first().map(|source| source.id.as_str()),
+        Some("keep")
+    );
+}
 
 fn clean_audit(manifest: &str, rows: usize) -> String {
     format!(
@@ -56,11 +91,23 @@ fn clean_audit(manifest: &str, rows: usize) -> String {
 
 #[test]
 fn stage_report_counts_exact_published_files() -> Result<(), String> {
-    if PUBLISHED_FILES != [MANIFEST_FILE, SUMMARY_FILE] {
+    if PUBLISHED_FILES
+        != [
+            MANIFEST_FILE,
+            SUMMARY_FILE,
+            PLAN_INDEX_FILE,
+            "plans/asset-import-plan.json",
+            "plans/asset-construction-plan.json",
+            "plans/world-assembly-plan.json",
+            "plans/runtime-binding-plan.json",
+            "plans/validation-plan.json",
+            "plans/package-plan.json",
+        ]
+    {
         return Err("prepare-unreal publication inventory drifted".to_owned());
     }
-    if PUBLISHED_FILES.len() != 2 {
-        return Err("prepare-unreal must report exactly two files".to_owned());
+    if PUBLISHED_FILES.len() != 9 {
+        return Err("prepare-unreal must report exactly nine files".to_owned());
     }
     Ok(())
 }

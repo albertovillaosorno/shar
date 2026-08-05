@@ -30,6 +30,8 @@
 
 //! Asset conversion lib.rs.
 
+mod conversion_plan;
+
 #[path = "../domain/mod.rs"]
 pub mod domain;
 /// Conversion artifact-storage ports.

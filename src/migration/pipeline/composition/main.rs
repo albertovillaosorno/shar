@@ -45,6 +45,7 @@ use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
 use shar_sha256 as _;
+use shar_unreal_conversion as _;
 
 fn main() -> ExitCode {
     pipeline::adapters::driving::run_env()

@@ -89,63 +89,63 @@ pub struct UnrealSourceEvidence {
 /// Complete deterministic Unreal import manifest.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct UnrealImportManifest {
-    pub(super) packages: Vec<UnrealPackageRecord>,
-    pub(super) sources: Vec<UnrealSourceRecord>,
-    pub(super) summary: UnrealImportSummary,
+    pub(crate) packages: Vec<UnrealPackageRecord>,
+    pub(crate) sources: Vec<UnrealSourceRecord>,
+    pub(crate) summary: UnrealImportSummary,
 }
 
 /// Aggregate import-manifest counters.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
-pub(super) struct UnrealImportSummary {
-    pub(super) packages: usize,
-    pub(super) sources: usize,
-    pub(super) direct_imports: usize,
-    pub(super) requires_fbx: usize,
-    pub(super) requires_editor_factory: usize,
-    pub(super) metadata_only: usize,
+pub(crate) struct UnrealImportSummary {
+    pub(crate) packages: usize,
+    pub(crate) sources: usize,
+    pub(crate) direct_imports: usize,
+    pub(crate) requires_fbx: usize,
+    pub(crate) requires_editor_factory: usize,
+    pub(crate) metadata_only: usize,
 }
 
 /// One semantic package plan for Unreal staging.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub(super) struct UnrealPackageRecord {
-    pub(super) package_id: String,
-    pub(super) package_root: String,
-    pub(super) category: String,
-    pub(super) subcategory: String,
-    pub(super) conversion_family: &'static str,
-    pub(super) disposition: &'static str,
-    pub(super) target_kind: &'static str,
-    pub(super) importer: &'static str,
-    pub(super) import_profile: &'static str,
-    pub(super) package_path: String,
-    pub(super) asset_name: String,
-    pub(super) expected_staged_files: Vec<String>,
-    pub(super) expected_unreal_objects: Vec<String>,
-    pub(super) source_count: usize,
-    pub(super) source_unit_ids: Vec<String>,
-    pub(super) text_key_ids: Vec<String>,
-    pub(super) reason: Option<&'static str>,
+pub(crate) struct UnrealPackageRecord {
+    pub(crate) package_id: String,
+    pub(crate) package_root: String,
+    pub(crate) category: String,
+    pub(crate) subcategory: String,
+    pub(crate) conversion_family: &'static str,
+    pub(crate) disposition: &'static str,
+    pub(crate) target_kind: &'static str,
+    pub(crate) importer: &'static str,
+    pub(crate) import_profile: &'static str,
+    pub(crate) package_path: String,
+    pub(crate) asset_name: String,
+    pub(crate) expected_staged_files: Vec<String>,
+    pub(crate) expected_unreal_objects: Vec<String>,
+    pub(crate) source_count: usize,
+    pub(crate) source_unit_ids: Vec<String>,
+    pub(crate) text_key_ids: Vec<String>,
+    pub(crate) reason: Option<&'static str>,
 }
 
 /// One verified source member assigned to a semantic package.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub(super) struct UnrealSourceRecord {
-    pub(super) package_id: String,
-    pub(super) id: String,
-    pub(super) role: PackageRole,
-    pub(super) evidence: UnrealSourceEvidence,
-    pub(super) direct_import: Option<DirectImportRecord>,
+pub(crate) struct UnrealSourceRecord {
+    pub(crate) package_id: String,
+    pub(crate) id: String,
+    pub(crate) role: PackageRole,
+    pub(crate) evidence: UnrealSourceEvidence,
+    pub(crate) direct_import: Option<DirectImportRecord>,
 }
 
 /// Direct editor import task for one already normalized source file.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub(super) struct DirectImportRecord {
-    pub(super) importer: &'static str,
-    pub(super) import_profile: &'static str,
-    pub(super) target_class: &'static str,
-    pub(super) package_path: String,
-    pub(super) asset_name: String,
-    pub(super) object_path: String,
+pub(crate) struct DirectImportRecord {
+    pub(crate) importer: &'static str,
+    pub(crate) import_profile: &'static str,
+    pub(crate) target_class: &'static str,
+    pub(crate) package_path: String,
+    pub(crate) asset_name: String,
+    pub(crate) object_path: String,
 }
 
 /// Stable policy selected for one package plan.
@@ -569,7 +569,7 @@ fn unreal_name(value: &str) -> String {
     output
 }
 
-fn object_path(package_path: &str, asset_name: &str) -> String {
+pub(crate) fn object_path(package_path: &str, asset_name: &str) -> String {
     format!("{package_path}/{asset_name}.{asset_name}")
 }
 
