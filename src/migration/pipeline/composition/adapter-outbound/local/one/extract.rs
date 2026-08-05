@@ -53,7 +53,9 @@ use schoenwald_filesystem::resolve_under;
 use super::super::two::units::manifest_minor_unit as mum;
 use super::cleanup::remove_generated_tree;
 use super::json_output::validate_generated_text_file;
-use super::lmlm_stage::{extract_lmlm, require_optional_mod_approval};
+use super::lmlm_stage::{
+    ensure_optional_mod_transition, extract_lmlm, require_optional_mod_approval,
+};
 use super::media_dependencies::{ensure_ffmpeg_dependency, media_tool_path};
 use super::{rms, spt};
 use crate::adapters::driven::check_cancellation;
@@ -120,10 +122,16 @@ impl ExtractGameAssets {
         config: &PipelineConfig,
     ) -> PipelineOutcome<PipelineReport> {
         guard_paths(&config.game_root, &config.extracted_root)?;
-        require_optional_mod_approval(
+        let current_optional_token = require_optional_mod_approval(
             &config.game_root,
             config.optional_mod_approval.as_deref(),
         )?;
+        if !config.clean_extracted {
+            ensure_optional_mod_transition(
+                &config.extracted_root,
+                current_optional_token.as_deref(),
+            )?;
+        }
         if config.clean_extracted && config.extracted_root.exists() {
             remove_generated_tree(&config.extracted_root).map_err(|error| {
                 PipelineError::new(format!(
@@ -228,9 +236,13 @@ impl ExtractGameAssets {
         config: &PipelineConfig,
     ) -> PipelineOutcome<PipelineReport> {
         guard_paths(&config.game_root, &config.extracted_root)?;
-        require_optional_mod_approval(
+        let current_optional_token = require_optional_mod_approval(
             &config.game_root,
             config.optional_mod_approval.as_deref(),
+        )?;
+        ensure_optional_mod_transition(
+            &config.extracted_root,
+            current_optional_token.as_deref(),
         )?;
         fs::create_dir_all(&config.extracted_root)
             .map_err(io_error(&config.extracted_root))?;
