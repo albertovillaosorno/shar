@@ -58,17 +58,18 @@ Both names are aliases. They report every replacement, addition, and skip with a
 relative output path, normalized byte count, and SHA-256 evidence without
 modifying the game or extraction roots.
 
-When either supported package is present, commands that can apply it require
-explicit approval after review:
+When either supported package is present, copy the `approval_token` from the
+current preview into the command that may apply it:
 
 ```text
-pipeline extract-game game extracted --approve-optional-mods
-pipeline extract-game-resume game extracted --approve-optional-mods
-pipeline export-lmlm game extracted --approve-optional-mods
+pipeline extract-game game extracted --approve-optional-mods <approval-token>
+pipeline extract-game-resume game extracted --approve-optional-mods <approval-token>
+pipeline export-lmlm game extracted --approve-optional-mods <approval-token>
 ```
 
-The flag is rejected by read-only and unrelated commands. It is unnecessary
-when no optional package is present.
+The token approves the exact ordered package byte set from that preview. A
+missing, malformed, stale, or package-free token fails before output mutation.
+The option is rejected by read-only and unrelated commands.
 
 ## Deterministic Unreal staging
 
