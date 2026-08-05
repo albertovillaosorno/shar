@@ -90,10 +90,14 @@ pipeline dry-run-optional-mods game extracted --no-log
 ```
 
 The two command names are aliases and produce byte-identical JSON. The document
-uses schema `shar-schoenwald.optional-mod-preview.v1` and records every package
+uses schema `shar-schoenwald.optional-mod-preview.v2` and records every package
 member in deterministic package-table order. Each member reports its alias,
 role, package-relative source identity, action, reason, predicted output path,
 normalized byte count, and SHA-256 digest when it would write output.
+
+Each package summary also reports `package_bytes` and `package_sha256`. The
+top-level `approval_token` identifies the ordered aliases, exact byte counts,
+and exact package hashes. It is `null` when no supported package is present.
 
 The action is one of `replace`, `add`, or `skip`. Skipped members have no output
 path or digest and carry a stable policy reason. Paths remain
@@ -113,23 +117,25 @@ the optional extraction tree was unchanged.
 
 ## Explicit approval
 
-After reviewing the preview, the caller must opt in before any supported
-package can be applied:
+After reviewing the preview, the caller must pass its exact `approval_token`
+before any supported package can be applied:
 
 ```text
-pipeline extract-game game extracted --approve-optional-mods
-pipeline extract-game-resume game extracted --approve-optional-mods
-pipeline export-lmlm game extracted --approve-optional-mods
+pipeline extract-game game extracted --approve-optional-mods <approval-token>
+pipeline extract-game-resume game extracted --approve-optional-mods <approval-token>
+pipeline export-lmlm game extracted --approve-optional-mods <approval-token>
 ```
 
-Approval is scoped to one process invocation. It is not stored, inferred from a
-previous preview, or accepted by read-only and unrelated commands. When no
-optional package is present, extraction keeps the base behavior and does not
-require the flag.
+Approval is scoped to one process invocation. It is not stored or accepted by
+read-only and unrelated commands. The token must be 64 lowercase hexadecimal
+characters and may also use the `--approve-optional-mods=<approval-token>` form.
+When no optional package is present, no token is accepted or required.
 
-The approval preflight runs before clean extraction removes existing generated
-output and before the package-only command creates its output root. Missing
-approval therefore cannot partially clean, activate, or publish package output.
+The preflight reads the current package bytes and compares their derived token
+before clean extraction removes generated output or the package-only command
+creates its output root. The package stage repeats the comparison against the
+bytes it just loaded before parsing them. Any package addition, removal, alias
+change, byte-count change, or hash change requires a new preview and token.
 
 ## Failure behavior
 
@@ -148,8 +154,8 @@ The policy is covered by unit tests for no package, either alias, both
 aliases,
 unknown aliases, existing-only remaster replacement, skipped remaster additions,
 Latino media classification, read-only empty previews, canonical CLI aliases,
-command-scoped approval, pre-mutation approval failure, and extra-argument
-rejection.
+command-scoped exact-token approval, malformed and stale-token rejection,
+pre-parse and pre-mutation approval failure, and extra-argument rejection.
 
 The maximum supported local snapshot was extracted successfully on 2026-08-04
 with all locally supplied official languages and both tested packages. The run
