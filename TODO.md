@@ -83,6 +83,7 @@ Current task list. Project phases and dated progress are recorded in
   supersession, and conflict rules.
   - [x] Detect duplicate normalized output paths before conversion or writing.
   - [x] Reject ambiguous outputs and report both exact source entries.
+  - [x] Require clean extraction when the optional package set changes.
 - [ ] Support validated replacement and extension packages for assets and data.
 - [ ] Keep the unmodified faithful port as the default base-game package.
 - [ ] Use one normalized desktop and Android mod import contract.

@@ -137,6 +137,14 @@ creates its output root. The package stage repeats the comparison against the
 bytes it just loaded before parsing them. Any package addition, removal, alias
 change, byte-count change, or hash change requires a new preview and token.
 
+Successful package application publishes extraction manifest schema
+`shar-schoenwald.optional-mod-extract.v3` with the approved token. Resume and
+package-only reapplication compare that stored token before any extraction
+stage begins. The same exact package set may be repeated; a changed or removed
+package set, a malformed manifest, a missing manifest in existing optional
+output, or schema v2 requires a clean `extract-game` run. This prevents stale
+remaster replacements outside `extracted/lmlm` from surviving a package change.
+
 The maximum supported local snapshot was token-validated on 2026-08-05. A
 syntactically valid but stale token failed without creating its requested output
 root. The exact preview token then produced 1,502 files totaling 195,366,070
@@ -169,8 +177,9 @@ aliases,
 unknown aliases, existing-only remaster replacement, skipped remaster additions,
 Latino media classification, read-only empty previews, canonical CLI aliases,
 command-scoped exact-token approval, malformed and stale-token rejection,
-pre-parse and pre-mutation approval failure, pre-conversion output-conflict
-rejection with both source identities, and extra-argument rejection.
+pre-parse and pre-mutation approval failure, package-removal and legacy-state
+resume rejection, pre-conversion output-conflict rejection with both source
+identities, and extra-argument rejection.
 
 The maximum supported local snapshot was extracted successfully on 2026-08-04
 with all locally supplied official languages and both tested packages. The run
