@@ -55,9 +55,9 @@ mod preview;
 pub(in crate::adapters::driven::local) use preview::preview_optional_mods;
 
 use optional_mods::{
-    OptionalModCounts, OptionalModRole, apply_remaster, discover_optional_mods,
-    existing_file_index, is_latino_audio_path, is_latino_movie_path,
-    read_optional_mod_bytes,
+    OptionalModCounts, OptionalModRole, apply_remaster,
+    create_optional_mod_work_root, discover_optional_mods, existing_file_index,
+    is_latino_audio_path, is_latino_movie_path, read_optional_mod_bytes,
 };
 
 /// Result.
@@ -99,13 +99,7 @@ pub(super) fn extract_lmlm(
     local_create_dir_all(&output_root).map_err(io_error(&output_root))?;
     let base_files = existing_file_index(game_root, extracted_root, &output_root)?;
 
-    let work_root = std::env::temp_dir()
-        .join("shar-schoenwald")
-        .join("lmlm-pipeline");
-    if work_root.exists() {
-        fs::remove_dir_all(&work_root).map_err(io_error(&work_root))?;
-    }
-    local_create_dir_all(&work_root).map_err(io_error(&work_root))?;
+    let work_root = create_optional_mod_work_root("extract")?;
 
     let mut files_written = 0_usize;
     let mut bytes_written = 0_u64;
@@ -124,7 +118,7 @@ pub(super) fn extract_lmlm(
             OptionalModRole::Latino => extract_latino_media(
                 &data,
                 &entries,
-                &work_root,
+                work_root.path(),
                 &output_root,
                 extracted_root,
                 &mut member_records,
@@ -141,7 +135,7 @@ pub(super) fn extract_lmlm(
         bytes_written = bytes_written.saturating_add(counts.bytes);
         package_records.push(package_record(archive.role, counts));
     }
-    drop(fs::remove_dir_all(&work_root));
+    work_root.cleanup()?;
 
     let manifest = format!(
         concat!(

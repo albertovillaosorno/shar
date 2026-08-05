@@ -29,15 +29,23 @@
 //   - Unknown package aliases fail closed.
 //
 
+#![expect(
+    clippy::create_dir,
+    reason = "Single-directory creation is required to claim unique optional-package workspaces atomically."
+)]
+
 //! Supported optional-mod discovery and remaster overlay policy.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use lmlm::{FileEntry, entry_bytes};
 use rmv::Sha256;
-use schoenwald_filesystem::adapters::driving::local::read_bytes as local_read_bytes;
+use schoenwald_filesystem::adapters::driving::local::{
+    create_dir_all as local_create_dir_all, read_bytes as local_read_bytes,
+};
 
 use super::{PipelineOutcome, io_error, write_bytes};
 use crate::adapters::driven::check_cancellation;
@@ -47,6 +55,10 @@ use crate::domain::{PipelineError, escape_json as json_escape};
 
 const REMASTER_ALIAS: &str = "m.lmlm";
 const LATINO_ALIAS: &str = "j.lmlm";
+/// Per-process nonce for collision-free optional-package work roots.
+static NEXT_WORK_ROOT: AtomicU64 = AtomicU64::new(0);
+/// Maximum existing work roots skipped before failing closed.
+const MAX_WORK_ROOT_ATTEMPTS: usize = 1_024;
 
 /// Behavior selected by one stable local filename.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -90,6 +102,69 @@ pub(super) struct OptionalModArchive {
     pub(super) role: OptionalModRole,
     /// Package path under the local mods directory.
     pub(super) path: PathBuf,
+}
+
+/// One uniquely owned temporary optional-package workspace.
+#[derive(Debug)]
+pub(super) struct OptionalModWorkRoot {
+    path: PathBuf,
+    cleaned: bool,
+}
+
+impl OptionalModWorkRoot {
+    /// Returns the uniquely claimed workspace path.
+    pub(super) fn path(&self) -> &Path {
+        &self.path
+    }
+
+    /// Removes the workspace and reports cleanup failures.
+    pub(super) fn cleanup(mut self) -> PipelineOutcome<()> {
+        fs::remove_dir_all(&self.path).map_err(io_error(&self.path))?;
+        self.cleaned = true;
+        Ok(())
+    }
+}
+
+impl Drop for OptionalModWorkRoot {
+    fn drop(&mut self) {
+        if !self.cleaned {
+            drop(fs::remove_dir_all(&self.path));
+        }
+    }
+}
+
+/// Atomically claims one unique temporary optional-package workspace.
+pub(super) fn create_optional_mod_work_root(
+    label: &str,
+) -> PipelineOutcome<OptionalModWorkRoot> {
+    let parent = std::env::temp_dir().join("shar-schoenwald");
+    local_create_dir_all(&parent).map_err(io_error(&parent))?;
+    let metadata = fs::symlink_metadata(&parent).map_err(io_error(&parent))?;
+    if !metadata.is_dir() || metadata.file_type().is_symlink() {
+        return Err(PipelineError::new(
+            "optional-package temporary parent must be a real directory",
+        ));
+    }
+    for _attempt in 0..MAX_WORK_ROOT_ATTEMPTS {
+        let sequence = NEXT_WORK_ROOT.fetch_add(1, Ordering::Relaxed);
+        let candidate = parent.join(format!(
+            "lmlm-{label}-{}-{sequence}",
+            std::process::id()
+        ));
+        match fs::create_dir(&candidate) {
+            Ok(()) => {
+                return Ok(OptionalModWorkRoot {
+                    path: candidate,
+                    cleaned: false,
+                });
+            },
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {},
+            Err(error) => return Err(io_error(&candidate)(error)),
+        }
+    }
+    Err(PipelineError::new(
+        "failed to allocate a unique optional-package workspace",
+    ))
 }
 
 /// Reads one discovered package without exposing its local location.

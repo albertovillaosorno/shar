@@ -37,10 +37,10 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use lmlm::FileEntry;
 
 use super::{extract_lmlm, preview_optional_mods};
-use super::preview::create_preview_work_root;
 use super::optional_mods::{
-    OptionalModRole, apply_remaster, discover_optional_mods,
-    existing_file_index, is_latino_audio_path, is_latino_movie_path,
+    OptionalModRole, apply_remaster, create_optional_mod_work_root,
+    discover_optional_mods, existing_file_index, is_latino_audio_path,
+    is_latino_movie_path,
 };
 
 #[test]
@@ -157,21 +157,33 @@ fn corrupt_optional_package_diagnostics_use_public_aliases() -> Result<(), Strin
 }
 
 #[test]
-fn preview_workspaces_are_unique_and_independently_owned() -> Result<(), String> {
-    let first = create_preview_work_root().map_err(|error| error.to_string())?;
-    let second = create_preview_work_root().map_err(|error| error.to_string())?;
-    if first == second || !first.is_dir() || !second.is_dir() {
+fn optional_package_workspaces_are_unique_and_self_cleaning() -> Result<(), String> {
+    let first = create_optional_mod_work_root("preview")
+        .map_err(|error| error.to_string())?;
+    let second = create_optional_mod_work_root("preview")
+        .map_err(|error| error.to_string())?;
+    let first_path = first.path().to_path_buf();
+    let second_path = second.path().to_path_buf();
+    if first_path == second_path || !first_path.is_dir() || !second_path.is_dir() {
         return Err("preview workspaces were not unique real directories".to_owned());
     }
-    fs::write(first.join("first.txt"), b"first")
+    fs::write(first_path.join("first.txt"), b"first")
         .map_err(|error| error.to_string())?;
-    fs::write(second.join("second.txt"), b"second")
+    fs::write(second_path.join("second.txt"), b"second")
         .map_err(|error| error.to_string())?;
-    fs::remove_dir_all(&first).map_err(|error| error.to_string())?;
-    if !second.join("second.txt").is_file() {
+    first.cleanup().map_err(|error| error.to_string())?;
+    if !second_path.join("second.txt").is_file() {
         return Err("cleaning one preview workspace affected another".to_owned());
     }
-    fs::remove_dir_all(&second).map_err(|error| error.to_string())?;
+    second.cleanup().map_err(|error| error.to_string())?;
+
+    let abandoned = create_optional_mod_work_root("extract")
+        .map_err(|error| error.to_string())?;
+    let abandoned_path = abandoned.path().to_path_buf();
+    drop(abandoned);
+    if abandoned_path.exists() {
+        return Err("abandoned optional-package workspace was not cleaned".to_owned());
+    }
     Ok(())
 }
 
