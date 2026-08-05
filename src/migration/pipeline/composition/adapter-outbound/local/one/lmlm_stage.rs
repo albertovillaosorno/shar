@@ -62,6 +62,14 @@ use optional_mods::{
     is_latino_audio_path, is_latino_movie_path, read_optional_mod_bytes,
 };
 
+/// Rejects optional package application without caller approval.
+pub(in crate::adapters::driven::local) fn require_optional_mod_approval(
+    game_root: &Path,
+    approved: bool,
+) -> PipelineOutcome<()> {
+    optional_mods::require_optional_mod_approval(game_root, approved)
+}
+
 /// Result.
 type PipelineOutcome<T> = Result<T, PipelineError>;
 

@@ -41,6 +41,8 @@ pub struct PipelineConfig {
     pub extracted_root: PathBuf,
     /// Whether existing extracted output is removed before execution.
     pub clean_extracted: bool,
+    /// Whether the caller explicitly approved applying optional packages.
+    pub approve_optional_mods: bool,
 }
 
 /// Complete ordered report for one pipeline execution.
@@ -100,7 +102,9 @@ impl PipelineError {
     /// Creates one pipeline failure from a public-safe message.
     #[must_use]
     pub(crate) fn new(message: impl Into<String>) -> Self {
-        Self { message: message.into() }
+        Self {
+            message: message.into(),
+        }
     }
 }
 

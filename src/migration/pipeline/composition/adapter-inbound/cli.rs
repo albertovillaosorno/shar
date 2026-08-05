@@ -72,7 +72,7 @@ const USAGE: &str = concat!(
     "fbx-export [index-jsonl] [selector] [output-dir] [base-root] ",
     "[--embed-textures (legacy compatibility)] ",
     "[--verbosity detailed|minimal] ",
-    "[--log <path>|--no-log] ",
+    "[--log <path>|--no-log] [--approve-optional-mods] ",
     "[--run-label <portable-label>] [--allow-concurrent]",
 );
 
@@ -114,8 +114,24 @@ impl CliProgram for PipelineCli {
                 "invalid arguments: --embed-textures requires fbx-export",
             );
         }
+        if parsed.approve_optional_mods
+            && !command_accepts_optional_mod_approval(command)
+        {
+            return CommandOutcome::failure().stderr_line(concat!(
+                "invalid arguments: --approve-optional-mods requires ",
+                "extract-game, extract-game-resume, or export-lmlm"
+            ));
+        }
         run_registered_command(command, &parsed)
     }
+}
+
+/// Returns whether one command may apply approved optional packages.
+fn command_accepts_optional_mod_approval(command: &str) -> bool {
+    matches!(
+        command,
+        "extract-game" | "extract-game-resume" | "export-lmlm"
+    )
 }
 
 /// List every active pipeline process with progress and timing evidence.
@@ -236,7 +252,11 @@ fn dispatch_known_command(
             },
         );
     }
-    run_pipeline_command(command, &parsed.positionals)
+    run_pipeline_command(
+        command,
+        &parsed.positionals,
+        parsed.approve_optional_mods,
+    )
 }
 
 /// Render one blocked start with active-run evidence and safe next commands.
@@ -344,7 +364,11 @@ fn run_optional_mod_preview(arguments: &[String]) -> CommandOutcome {
 }
 
 /// Runs one command that uses the standard game and extracted roots.
-fn run_pipeline_command(command: &str, arguments: &[String]) -> CommandOutcome {
+fn run_pipeline_command(
+    command: &str,
+    arguments: &[String],
+    approve_optional_mods: bool,
+) -> CommandOutcome {
     if let Some(outcome) = reject_extra_positionals(arguments, 2) {
         return outcome;
     }
@@ -363,6 +387,7 @@ fn run_pipeline_command(command: &str, arguments: &[String]) -> CommandOutcome {
         game_root,
         extracted_root,
         clean_extracted: command == "extract-game",
+        approve_optional_mods,
     };
     let provider = LocalPipeline;
     let application = PipelineService::new(&provider);

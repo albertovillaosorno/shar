@@ -195,6 +195,21 @@ pub(super) fn read_optional_mod_bytes(
     })
 }
 
+/// Rejects package application without explicit caller approval.
+pub(super) fn require_optional_mod_approval(
+    game_root: &Path,
+    approved: bool,
+) -> PipelineOutcome<()> {
+    let archives = discover_optional_mods(game_root)?;
+    if !archives.is_empty() && !approved {
+        return Err(PipelineError::new(concat!(
+            "optional packages require explicit approval; run a preview ",
+            "and retry with --approve-optional-mods"
+        )));
+    }
+    Ok(())
+}
+
 /// Counters produced by one package application.
 #[derive(Debug, Default, Clone, Copy)]
 pub(super) struct OptionalModCounts {
