@@ -71,6 +71,10 @@ The token approves the exact ordered package byte set from that preview. A
 missing, malformed, stale, or package-free token fails before output mutation.
 The option is rejected by read-only and unrelated commands.
 
+Resume and package-only reapplication may repeat only the token already recorded
+by extraction manifest schema v3. Adding, removing, or changing a package—or
+encountering an older manifest—requires a clean `extract-game` invocation.
+
 ## Deterministic Unreal staging
 
 After extraction, indexing, and audit succeed, the pipeline can generate the
