@@ -290,7 +290,11 @@ fn write_lmlm_file(
     )
 }
 
-fn single_file_lmlm(payload: &[u8]) -> Result<Vec<u8>, String> {
+fn single_file_lmlm(
+    directory: &str,
+    file_name: &str,
+    payload: &[u8],
+) -> Result<Vec<u8>, String> {
     let archive_len = LMLM_PAYLOAD_OFFSET
         .checked_add(payload.len())
         .ok_or_else(|| "LMLM fixture length overflowed".to_owned())?;
@@ -314,15 +318,26 @@ fn single_file_lmlm(payload: &[u8]) -> Result<Vec<u8>, String> {
         true,
     )?;
     let art_position = LMLM_FIRST_ENTRY.saturating_add(LMLM_BLOCK * 2);
-    write_lmlm_directory(&mut archive, art_position, "art", false)?;
+    write_lmlm_directory(&mut archive, art_position, directory, false)?;
     let file_position = art_position.saturating_add(LMLM_BLOCK * 2);
-    write_lmlm_file(&mut archive, file_position, "base.p3d", payload)?;
+    write_lmlm_file(&mut archive, file_position, file_name, payload)?;
     copy_lmlm_fixture_bytes(
         &mut archive,
         LMLM_PAYLOAD_OFFSET,
         payload,
     )?;
     Ok(archive)
+}
+
+fn compact_pcm_rsd(payload: &[u8]) -> Result<Vec<u8>, String> {
+    let mut data = vec![0_u8; 0x80];
+    copy_lmlm_fixture_bytes(&mut data, 0, b"RSD4")?;
+    copy_lmlm_fixture_bytes(&mut data, 4, b"PCM ")?;
+    copy_lmlm_fixture_bytes(&mut data, 8, &1_u32.to_le_bytes())?;
+    copy_lmlm_fixture_bytes(&mut data, 12, &16_u32.to_le_bytes())?;
+    copy_lmlm_fixture_bytes(&mut data, 16, &24_000_u32.to_le_bytes())?;
+    data.extend_from_slice(payload);
+    Ok(data)
 }
 
 static NEXT_FIXTURE: AtomicUsize = AtomicUsize::new(0);
@@ -345,7 +360,7 @@ fn preview_matches_extracted_remaster_evidence() -> Result<(), String> {
     fs::create_dir_all(&extracted_root).map_err(|error| error.to_string())?;
     fs::write(&source, b"source-old").map_err(|error| error.to_string())?;
     let replacement = b"replacement-bytes";
-    let archive = single_file_lmlm(replacement)?;
+    let archive = single_file_lmlm("art", "base.p3d", replacement)?;
     fs::write(mods_root.join("m.lmlm"), archive)
         .map_err(|error| error.to_string())?;
 
@@ -398,6 +413,91 @@ fn preview_matches_extracted_remaster_evidence() -> Result<(), String> {
             != b"source-old"
     {
         return Err("remaster preview/extraction parity contract failed".to_owned());
+    }
+    fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+#[test]
+fn preview_matches_extracted_latino_voice_evidence() -> Result<(), String> {
+    let case = temp_root("preview-latino-voice-parity");
+    if case.exists() {
+        fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    }
+    let game_root = case.join("game");
+    let extracted_root = case.join("extracted");
+    let mods_root = game_root.join("mods");
+    fs::create_dir_all(&mods_root).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&extracted_root).map_err(|error| error.to_string())?;
+    let rsd = compact_pcm_rsd(&[1, 0, 2, 0])?;
+    let archive = single_file_lmlm("homer", "line.rsd", &rsd)?;
+    fs::write(mods_root.join("j.lmlm"), archive)
+        .map_err(|error| error.to_string())?;
+
+    let preview = preview_optional_mods(&game_root, &extracted_root)
+        .map_err(|error| error.to_string())?;
+    let preview_json: serde_json::Value = serde_json::from_str(preview.json())
+        .map_err(|error| error.to_string())?;
+    let preview_changes = preview_json
+        .get("changes")
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| "Latino preview changes were not an array".to_owned())?;
+    let [preview_change] = preview_changes.as_slice() else {
+        return Err("single-voice preview emitted an unexpected change count".to_owned());
+    };
+    let output = preview_change
+        .get("output")
+        .and_then(serde_json::Value::as_str)
+        .ok_or_else(|| "Latino preview omitted its output path".to_owned())?;
+    let expected_output = "lmlm/latino/customfiles/homer/line.wav";
+    if output != expected_output
+        || preview_change
+            .get("action")
+            .and_then(serde_json::Value::as_str)
+            != Some("add")
+        || extracted_root.join(expected_output).exists()
+    {
+        return Err("Latino preview did not describe one read-only add".to_owned());
+    }
+
+    let report = extract_lmlm(&game_root, &extracted_root)
+        .map_err(|error| error.to_string())?;
+    if report.files != 2 {
+        return Err(format!(
+            "unexpected Latino extraction file count: {}",
+            report.files
+        ));
+    }
+    let manifest: serde_json::Value = serde_json::from_slice(
+        &fs::read(extracted_root.join("lmlm").join("manifest.json"))
+            .map_err(|error| error.to_string())?,
+    )
+    .map_err(|error| error.to_string())?;
+    let records = manifest
+        .get("records")
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| "Latino extraction records were not an array".to_owned())?;
+    let [record] = records.as_slice() else {
+        return Err("single-voice extraction emitted an unexpected record count".to_owned());
+    };
+    for field in ["source", "output", "sha256"] {
+        if preview_change.get(field) != record.get(field) {
+            return Err(format!(
+                "Latino preview and extraction differ for {field}"
+            ));
+        }
+    }
+    if preview_change.get("normalized_bytes") != record.get("bytes") {
+        return Err(
+            "Latino preview and extraction differ for normalized bytes".to_owned()
+        );
+    }
+    let wav = fs::read(extracted_root.join(expected_output))
+        .map_err(|error| error.to_string())?;
+    if !wav.starts_with(b"RIFF")
+        || wav.get(8..12).is_none_or(|tag| tag != b"WAVE")
+    {
+        return Err("Latino extraction did not publish a canonical WAV".to_owned());
     }
     fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
     Ok(())
