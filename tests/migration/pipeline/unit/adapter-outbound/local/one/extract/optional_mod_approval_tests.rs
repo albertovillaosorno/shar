@@ -119,3 +119,52 @@ fn unapproved_packages_fail_before_output_mutation() -> Result<(), String> {
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     Ok(())
 }
+
+#[test]
+fn resume_rejects_removed_package_set_before_any_stage() -> Result<(), String> {
+    let root = case_root("removed-package-resume");
+    if root.exists() {
+        fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    }
+    let game_root = root.join("game");
+    let extracted_root = root.join("extracted");
+    let output_root = extracted_root.join("lmlm");
+    fs::create_dir_all(&game_root).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&output_root).map_err(|error| error.to_string())?;
+    let manifest = output_root.join("manifest.json");
+    fs::write(
+        &manifest,
+        format!(
+            concat!(
+                "{{\"schema\":",
+                "\"shar-schoenwald.optional-mod-extract.v3\",",
+                "\"approval_token\":\"{}\"}}"
+            ),
+            "a".repeat(64)
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let sentinel = extracted_root.join("sentinel.txt");
+    fs::write(&sentinel, b"preserved").map_err(|error| error.to_string())?;
+    let config = PipelineConfig {
+        game_root,
+        extracted_root,
+        clean_extracted: false,
+        optional_mod_approval: None,
+    };
+    let error = match ExtractGameAssets::run(&config) {
+        Ok(_report) => return Err("removed package set resumed".to_owned()),
+        Err(error) => error.to_string(),
+    };
+    if !error.contains("package set changed")
+        || fs::read(&sentinel).map_err(|error| error.to_string())?
+            != b"preserved"
+        || !manifest.is_file()
+    {
+        return Err(
+            "resume mutated output before transition rejection".to_owned()
+        );
+    }
+    fs::remove_dir_all(root).map_err(|error| error.to_string())?;
+    Ok(())
+}

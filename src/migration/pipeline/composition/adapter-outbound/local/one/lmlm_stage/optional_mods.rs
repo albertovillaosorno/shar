@@ -214,12 +214,12 @@ pub(super) fn optional_mod_approval_token<'a>(
     (count != 0).then(|| Sha256::digest(&evidence).hex())
 }
 
-/// Verifies approval against one exact ordered package byte set.
-pub(super) fn require_package_byte_approval<'a>(
-    packages: impl IntoIterator<Item = (OptionalModRole, &'a [u8])>,
+/// Verifies one derived package token against caller approval.
+fn require_optional_mod_token(
+    actual: Option<&str>,
     approved: Option<&str>,
 ) -> PipelineOutcome<()> {
-    match (optional_mod_approval_token(packages), approved) {
+    match (actual, approved) {
         (None, None) => Ok(()),
         (Some(_actual), None) => Err(PipelineError::new(concat!(
             "optional packages require an approval token from the current ",
@@ -233,11 +233,21 @@ pub(super) fn require_package_byte_approval<'a>(
     }
 }
 
+/// Verifies approval against one exact ordered package byte set.
+pub(super) fn require_package_byte_approval<'a>(
+    packages: impl IntoIterator<Item = (OptionalModRole, &'a [u8])>,
+    approved: Option<&str>,
+) -> PipelineOutcome<Option<String>> {
+    let actual = optional_mod_approval_token(packages);
+    require_optional_mod_token(actual.as_deref(), approved)?;
+    Ok(actual)
+}
+
 /// Discovers packages and verifies their exact bytes before mutation.
 pub(super) fn require_optional_mod_approval(
     game_root: &Path,
     approved: Option<&str>,
-) -> PipelineOutcome<()> {
+) -> PipelineOutcome<Option<String>> {
     let archives = discover_optional_mods(game_root)?;
     let packages = archives
         .iter()

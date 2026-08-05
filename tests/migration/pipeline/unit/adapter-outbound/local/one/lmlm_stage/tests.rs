@@ -43,7 +43,10 @@ use super::optional_mods::{
     is_latino_movie_path, optional_mod_approval_token,
     optional_workspace_error,
 };
-use super::{extract_latino_media, extract_lmlm, preview_optional_mods};
+use super::{
+    ensure_optional_mod_transition, extract_latino_media, extract_lmlm,
+    preview_optional_mods,
+};
 
 #[test]
 fn missing_optional_lmlm_creates_no_output() -> Result<(), String> {
@@ -56,8 +59,15 @@ fn missing_optional_lmlm_creates_no_output() -> Result<(), String> {
     let stale_output = extracted_root.join("lmlm");
     fs::create_dir_all(&game_root).map_err(|error| error.to_string())?;
     fs::create_dir_all(&stale_output).map_err(|error| error.to_string())?;
-    fs::write(stale_output.join("manifest.json"), b"stale")
-        .map_err(|error| error.to_string())?;
+    fs::write(
+        stale_output.join("manifest.json"),
+        concat!(
+            "{\"schema\":",
+            "\"shar-schoenwald.optional-mod-extract.v3\",",
+            "\"approval_token\":null}"
+        ),
+    )
+    .map_err(|error| error.to_string())?;
 
     let report = extract_lmlm(&game_root, &extracted_root, None)
         .map_err(|error| error.to_string())?;
@@ -442,6 +452,17 @@ fn preview_matches_extracted_remaster_evidence() -> Result<(), String> {
             .map_err(|error| error.to_string())?,
     )
     .map_err(|error| error.to_string())?;
+    if manifest.get("schema").and_then(serde_json::Value::as_str)
+        != Some("shar-schoenwald.optional-mod-extract.v3")
+        || manifest
+            .get("approval_token")
+            .and_then(serde_json::Value::as_str)
+            != Some(approval.as_str())
+    {
+        return Err(
+            "extraction manifest lost approved package identity".to_owned()
+        );
+    }
     let records = manifest
         .get("records")
         .and_then(serde_json::Value::as_array)
@@ -645,6 +666,60 @@ fn preview_matches_extracted_latino_voice_evidence() -> Result<(), String> {
         );
     }
     fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+#[test]
+fn optional_transition_requires_matching_current_manifest() -> Result<(), String>
+{
+    let root = temp_root("optional-transition");
+    if root.exists() {
+        fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    }
+    let extracted = root.join("extracted");
+    let output_root = extracted.join("lmlm");
+    let manifest = output_root.join("manifest.json");
+    fs::create_dir_all(&output_root).map_err(|error| error.to_string())?;
+    let token = "a".repeat(64);
+    fs::write(
+        &manifest,
+        format!(
+            concat!(
+                "{{\"schema\":",
+                "\"shar-schoenwald.optional-mod-extract.v3\",",
+                "\"approval_token\":\"{}\"}}"
+            ),
+            token
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    ensure_optional_mod_transition(&extracted, Some(&token))
+        .map_err(|error| error.to_string())?;
+
+    let changed =
+        ensure_optional_mod_transition(&extracted, Some(&"b".repeat(64)));
+    if !changed
+        .is_err_and(|error| error.to_string().contains("package set changed"))
+    {
+        return Err(
+            "changed package token did not require clean extraction".to_owned()
+        );
+    }
+
+    fs::write(
+        &manifest,
+        "{\"schema\":\"shar-schoenwald.optional-mod-extract.v2\"}",
+    )
+    .map_err(|error| error.to_string())?;
+    let legacy = ensure_optional_mod_transition(&extracted, Some(&token));
+    if !legacy.is_err_and(|error| {
+        error
+            .to_string()
+            .contains("cannot verify package continuity")
+    }) {
+        return Err("legacy optional manifest was accepted".to_owned());
+    }
+    fs::remove_dir_all(root).map_err(|error| error.to_string())?;
     Ok(())
 }
 

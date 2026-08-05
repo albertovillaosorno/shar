@@ -69,8 +69,85 @@ use optional_mods::{
 pub(in crate::adapters::driven::local) fn require_optional_mod_approval(
     game_root: &Path,
     approved: Option<&str>,
-) -> PipelineOutcome<()> {
+) -> PipelineOutcome<Option<String>> {
     optional_mods::require_optional_mod_approval(game_root, approved)
+}
+
+/// Current optional-package extraction manifest schema.
+const OPTIONAL_MOD_EXTRACT_SCHEMA: &str =
+    "shar-schoenwald.optional-mod-extract.v3";
+
+/// Rejects non-clean transitions from an unknown or different package set.
+pub(in crate::adapters::driven::local) fn ensure_optional_mod_transition(
+    extracted_root: &Path,
+    current_token: Option<&str>,
+) -> PipelineOutcome<()> {
+    let output_root = extracted_root.join("lmlm");
+    if !output_root.exists() {
+        return Ok(());
+    }
+    let output_metadata =
+        fs::symlink_metadata(&output_root).map_err(|error| {
+            PipelineError::new(format!(
+                "failed to inspect existing optional output ({:?})",
+                error.kind()
+            ))
+        })?;
+    if !output_metadata.is_dir() || output_metadata.file_type().is_symlink() {
+        return Err(PipelineError::new(
+            "existing optional output must be a real directory; run clean              extract-game",
+        ));
+    }
+    let manifest_path = output_root.join("manifest.json");
+    let manifest_metadata = fs::symlink_metadata(&manifest_path).map_err(
+        |_error| {
+            PipelineError::new(
+                "existing optional output has no verifiable manifest; run                  clean extract-game",
+            )
+        },
+    )?;
+    if !manifest_metadata.is_file()
+        || manifest_metadata.file_type().is_symlink()
+    {
+        return Err(PipelineError::new(
+            "existing optional manifest must be a real file; run clean              extract-game",
+        ));
+    }
+    let bytes = local_read_bytes(&manifest_path).map_err(|error| {
+        PipelineError::new(format!(
+            "failed to read existing optional manifest ({:?})",
+            error.kind()
+        ))
+    })?;
+    let document: serde_json::Value =
+        serde_json::from_slice(&bytes).map_err(|_error| {
+            PipelineError::new(
+                "existing optional manifest is invalid; run clean extract-game",
+            )
+        })?;
+    if document.get("schema").and_then(serde_json::Value::as_str)
+        != Some(OPTIONAL_MOD_EXTRACT_SCHEMA)
+    {
+        return Err(PipelineError::new(
+            "existing optional manifest cannot verify package continuity; run              clean extract-game",
+        ));
+    }
+    let previous = match document.get("approval_token") {
+        Some(value) if value.is_null() => None,
+        Some(value) => value.as_str(),
+        None => {
+            return Err(PipelineError::new(
+                "existing optional manifest omits package identity; run clean                  extract-game",
+            ));
+        }
+    };
+    if previous == current_token {
+        Ok(())
+    } else {
+        Err(PipelineError::new(
+            "optional package set changed; run clean extract-game before              continuing",
+        ))
+    }
 }
 
 /// Result.
@@ -85,7 +162,9 @@ pub(super) fn extract_lmlm(
     let output_root = extracted_root.join("lmlm");
     let archives = discover_optional_mods(game_root)?;
     if archives.is_empty() {
-        require_package_byte_approval(std::iter::empty(), approved)?;
+        let actual =
+            require_package_byte_approval(std::iter::empty(), approved)?;
+        ensure_optional_mod_transition(extracted_root, actual.as_deref())?;
         if output_root.exists() {
             fs::remove_dir_all(&output_root).map_err(io_error(&output_root))?;
         }
@@ -104,12 +183,13 @@ pub(super) fn extract_lmlm(
             Ok((archive, data))
         })
         .collect::<PipelineOutcome<Vec<_>>>()?;
-    require_package_byte_approval(
+    let actual_token = require_package_byte_approval(
         loaded_archives
             .iter()
             .map(|(archive, data)| (archive.role, data.as_slice())),
         approved,
     )?;
+    ensure_optional_mod_transition(extracted_root, actual_token.as_deref())?;
     let parsed_archives = loaded_archives
         .into_iter()
         .map(|(archive, data)| {
@@ -168,7 +248,8 @@ pub(super) fn extract_lmlm(
 
     let manifest = format!(
         concat!(
-            "{{\"schema\":\"shar-schoenwald.optional-mod-extract.v2\",",
+            "{{\"schema\":\"{}\",",
+            "\"approval_token\":\"{}\",",
             "\"aliases\":{{\"m.lmlm\":\"remaster\",",
             "\"j.lmlm\":\"latino\"}},",
             "\"remaster_policy\":\"replace existing base files only; ",
@@ -178,6 +259,10 @@ pub(super) fn extract_lmlm(
             "\"packages\":[{}],",
             "\"records\":[{}]}}\n"
         ),
+        OPTIONAL_MOD_EXTRACT_SCHEMA,
+        actual_token.as_deref().ok_or_else(|| {
+            PipelineError::new("approved package set omitted its identity")
+        })?,
         package_records.join(","),
         member_records.join(",")
     );
