@@ -54,7 +54,7 @@ mod cases {
                 log_file: Some(PathBuf::from(DEFAULT_LOG_FILE)),
                 logging_explicit: false,
                 embed_textures: false,
-                approve_optional_mods: false,
+                optional_mod_approval: None,
                 run: RunOptions::default(),
             },)
         );
@@ -74,7 +74,7 @@ mod cases {
                 log_file: None,
                 logging_explicit: true,
                 embed_textures: false,
-                approve_optional_mods: false,
+                optional_mod_approval: None,
                 run: RunOptions::default(),
             },)
         );
@@ -93,7 +93,7 @@ mod cases {
                 log_file: Some(PathBuf::from(".logs/custom/run.jsonl")),
                 logging_explicit: true,
                 embed_textures: false,
-                approve_optional_mods: false,
+                optional_mod_approval: None,
                 run: RunOptions::default(),
             },)
         );
@@ -112,29 +112,39 @@ mod cases {
                 log_file: Some(PathBuf::from(DEFAULT_LOG_FILE)),
                 logging_explicit: false,
                 embed_textures: false,
-                approve_optional_mods: false,
+                optional_mod_approval: None,
                 run: RunOptions::default(),
             },)
         );
     }
 
     #[test]
-    fn optional_mod_approval_is_explicit_and_single_use() -> Result<(), String>
-    {
+    fn optional_mod_approval_requires_one_exact_token() -> Result<(), String> {
+        let token = "a".repeat(64);
         let parsed = parse_common_arguments(&[
             String::from("--approve-optional-mods"),
+            token.clone(),
             String::from("game"),
         ])?;
-        if !parsed.approve_optional_mods
+        if parsed.optional_mod_approval.as_deref() != Some(token.as_str())
             || parsed.positionals != [String::from("game")]
         {
             return Err(String::from(
-                "optional package approval was not preserved",
+                "optional package token was not preserved",
+            ));
+        }
+        let equals = parse_common_arguments(&[format!(
+            "--approve-optional-mods={token}"
+        )])?;
+        if equals.optional_mod_approval.as_deref() != Some(token.as_str()) {
+            return Err(String::from(
+                "equals-form package token was not preserved",
             ));
         }
         let repeated = parse_common_arguments(&[
+            format!("--approve-optional-mods={token}"),
             String::from("--approve-optional-mods"),
-            String::from("--approve-optional-mods"),
+            token,
         ]);
         if repeated
             != Err(String::from(
@@ -142,10 +152,26 @@ mod cases {
             ))
         {
             return Err(String::from(
-                "repeated optional package approval did not fail",
+                "repeated optional package token did not fail",
             ));
         }
         Ok(())
+    }
+
+    #[test]
+    fn optional_mod_approval_rejects_missing_or_noncanonical_tokens() {
+        let uppercase = "A".repeat(64);
+        for arguments in [
+            vec![String::from("--approve-optional-mods")],
+            vec![
+                String::from("--approve-optional-mods"),
+                String::from("--no-log"),
+            ],
+            vec![format!("--approve-optional-mods={uppercase}")],
+            vec![String::from("--approve-optional-mods=abc")],
+        ] {
+            assert!(parse_common_arguments(&arguments).is_err());
+        }
     }
 
     #[test]

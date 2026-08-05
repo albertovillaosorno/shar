@@ -72,7 +72,8 @@ const USAGE: &str = concat!(
     "fbx-export [index-jsonl] [selector] [output-dir] [base-root] ",
     "[--embed-textures (legacy compatibility)] ",
     "[--verbosity detailed|minimal] ",
-    "[--log <path>|--no-log] [--approve-optional-mods] ",
+    "[--log <path>|--no-log] ",
+    "[--approve-optional-mods <preview-token>] ",
     "[--run-label <portable-label>] [--allow-concurrent]",
 );
 
@@ -114,7 +115,7 @@ impl CliProgram for PipelineCli {
                 "invalid arguments: --embed-textures requires fbx-export",
             );
         }
-        if parsed.approve_optional_mods
+        if parsed.optional_mod_approval.is_some()
             && !command_accepts_optional_mod_approval(command)
         {
             return CommandOutcome::failure().stderr_line(concat!(
@@ -255,7 +256,7 @@ fn dispatch_known_command(
     run_pipeline_command(
         command,
         &parsed.positionals,
-        parsed.approve_optional_mods,
+        parsed.optional_mod_approval.clone(),
     )
 }
 
@@ -367,7 +368,7 @@ fn run_optional_mod_preview(arguments: &[String]) -> CommandOutcome {
 fn run_pipeline_command(
     command: &str,
     arguments: &[String],
-    approve_optional_mods: bool,
+    optional_mod_approval: Option<String>,
 ) -> CommandOutcome {
     if let Some(outcome) = reject_extra_positionals(arguments, 2) {
         return outcome;
@@ -387,7 +388,7 @@ fn run_pipeline_command(
         game_root,
         extracted_root,
         clean_extracted: command == "extract-game",
-        approve_optional_mods,
+        optional_mod_approval,
     };
     let provider = LocalPipeline;
     let application = PipelineService::new(&provider);
