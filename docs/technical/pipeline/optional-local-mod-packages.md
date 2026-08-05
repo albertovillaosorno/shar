@@ -137,6 +137,14 @@ creates its output root. The package stage repeats the comparison against the
 bytes it just loaded before parsing them. Any package addition, removal, alias
 change, byte-count change, or hash change requires a new preview and token.
 
+The maximum supported local snapshot was token-validated on 2026-08-05. A
+syntactically valid but stale token failed without creating its requested output
+root. The exact preview token then produced 1,502 files totaling 195,366,070
+bytes in an isolated output. Every relative path, byte count, and file SHA-256
+matched the previously published optional extraction tree, and all 1,530 write
+records matched the preview. Package hashes and the aggregate token were also
+recomputed independently from the local container bytes.
+
 ## Failure behavior
 
 Missing approval, an invalid container, unsafe path, unsupported root control,
