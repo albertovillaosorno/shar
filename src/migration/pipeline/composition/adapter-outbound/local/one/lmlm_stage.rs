@@ -49,6 +49,10 @@ use crate::domain::{PipelineError, StageReport, escape_json as json_escape};
 
 #[path = "lmlm_stage/optional_mods.rs"]
 mod optional_mods;
+#[path = "lmlm_stage/preview.rs"]
+mod preview;
+
+pub(in crate::adapters::driven::local) use preview::preview_optional_mods;
 
 use optional_mods::{
     OptionalModCounts, OptionalModRole, apply_remaster, discover_optional_mods,
@@ -80,13 +84,9 @@ pub(super) fn extract_lmlm(
         .into_iter()
         .map(|archive| {
             check_cancellation()?;
-            let data = local_read_bytes(&archive.path)
-                .map_err(io_error(&archive.path))?;
+            let data = local_read_bytes(&archive.path).map_err(io_error(&archive.path))?;
             let entries = parse_lmlm(&data).map_err(|error| {
-                PipelineError::new(format!(
-                    "{}: {error}",
-                    archive.path.display()
-                ))
+                PipelineError::new(format!("{}: {error}", archive.path.display()))
             })?;
             Ok((archive, data, entries))
         })
@@ -96,8 +96,7 @@ pub(super) fn extract_lmlm(
         fs::remove_dir_all(&output_root).map_err(io_error(&output_root))?;
     }
     local_create_dir_all(&output_root).map_err(io_error(&output_root))?;
-    let base_files =
-        existing_file_index(game_root, extracted_root, &output_root)?;
+    let base_files = existing_file_index(game_root, extracted_root, &output_root)?;
 
     let work_root = std::env::temp_dir()
         .join("shar-schoenwald")
@@ -161,14 +160,12 @@ pub(super) fn extract_lmlm(
     let manifest_path = output_root.join("manifest.json");
     write_bytes(&manifest_path, manifest.as_bytes())?;
     files_written = files_written.saturating_add(1);
-    bytes_written = bytes_written
-        .saturating_add(u64::try_from(manifest.len()).unwrap_or(u64::MAX));
+    bytes_written = bytes_written.saturating_add(u64::try_from(manifest.len()).unwrap_or(u64::MAX));
     Ok(StageReport {
         name: "lmlm",
         files: files_written,
         bytes: bytes_written,
-        note: "supported optional packages applied by alias and role policy"
-            .to_owned(),
+        note: "supported optional packages applied by alias and role policy".to_owned(),
     })
 }
 
@@ -207,15 +204,11 @@ fn extract_latino_media(
         check_cancellation()?;
         progress.advance(&format!("member {}", index.saturating_add(1)));
         let bytes = entry_bytes(data, entry).ok_or_else(|| {
-            PipelineError::new(format!(
-                "{}: LMLM entry out of bounds",
-                entry.path
-            ))
+            PipelineError::new(format!("{}: LMLM entry out of bounds", entry.path))
         })?;
         if is_latino_audio_path(&entry.path) {
             let wav = rsd_bytes_to_wav(bytes, &entry.path)?;
-            let destination = lmlm_entry_path(&latino_root, &entry.path)
-                .with_extension("wav");
+            let destination = lmlm_entry_path(&latino_root, &entry.path).with_extension("wav");
             write_lmlm_wav(
                 &destination,
                 &wav,
@@ -271,8 +264,8 @@ fn relative_output(root: &Path, path: &Path) -> PipelineOutcome<String> {
 
 /// Rsd bytes to wav.
 fn rsd_bytes_to_wav(bytes: &[u8], source: &str) -> PipelineOutcome<Vec<u8>> {
-    let audio = RsdAudio::parse(bytes)
-        .map_err(|error| PipelineError::new(format!("{source}: {error}")))?;
+    let audio =
+        RsdAudio::parse(bytes).map_err(|error| PipelineError::new(format!("{source}: {error}")))?;
     let wav = audio
         .to_wav()
         .map_err(|error| PipelineError::new(format!("{source}: {error}")))?;
@@ -289,48 +282,18 @@ fn export_lmlm_movie_audio(
     extracted_root: &Path,
     records: &mut Vec<String>,
 ) -> PipelineOutcome<(usize, u64)> {
-    ensure_ffmpeg_dependency().map_err(PipelineError::new)?;
-    let source_path = Path::new(entry_path);
-    let stem = source_path
-        .file_stem()
-        .and_then(|value| value.to_str())
-        .unwrap_or("movie");
-    let extension = source_path
-        .extension()
-        .and_then(|value| value.to_str())
-        .unwrap_or("bik");
-    let temp_movie = work_root.join(format!("{stem}.{extension}"));
-    write_bytes(&temp_movie, movie_bytes)?;
-    let audio_count = ffprobe_audio_stream_count(&temp_movie)?;
-    if audio_count == 0 {
+    let Some(wav) = decode_lmlm_movie_audio(work_root, entry_path, movie_bytes)? else {
         records.push(format!(
             "{{\"kind\":\"latino_cinematic_audio\",\"source\":\"{}\",\
              \"status\":\"skipped_no_audio\"}}",
             json_escape(entry_path)
         ));
         return Ok((0, 0));
-    }
-
-    let temp_wav = work_root.join(format!("{stem}_audio_track_01.wav"));
-    let status = Command::new(media_tool_path("ffmpeg"))
-        .args(["-y", "-hide_banner", "-loglevel", "error"])
-        .arg("-i")
-        .arg(&temp_movie)
-        .args(["-vn", "-map", "0:a:0", "-acodec", "pcm_s16le"])
-        .arg(&temp_wav)
-        .status()
-        .map_err(|error| {
-            PipelineError::new(format!(
-                "failed to export Latino cinematic audio for \
-                 {entry_path}: {error}"
-            ))
-        })?;
-    if !status.success() {
-        return Err(PipelineError::new(format!(
-            "ffmpeg failed to export Latino cinematic audio for {entry_path}"
-        )));
-    }
-    let wav = local_read_bytes(&temp_wav).map_err(io_error(&temp_wav))?;
+    };
+    let stem = Path::new(entry_path)
+        .file_stem()
+        .and_then(|value| value.to_str())
+        .unwrap_or("movie");
     let destination = output_root
         .join("movies")
         .join(stem)
@@ -345,6 +308,51 @@ fn export_lmlm_movie_audio(
         records,
     )?;
     Ok((1, u64::try_from(wav.len()).unwrap_or(u64::MAX)))
+}
+
+/// Decodes the first cinematic audio stream without publishing output.
+fn decode_lmlm_movie_audio(
+    work_root: &Path,
+    entry_path: &str,
+    movie_bytes: &[u8],
+) -> PipelineOutcome<Option<Vec<u8>>> {
+    ensure_ffmpeg_dependency().map_err(PipelineError::new)?;
+    let source_path = Path::new(entry_path);
+    let stem = source_path
+        .file_stem()
+        .and_then(|value| value.to_str())
+        .unwrap_or("movie");
+    let extension = source_path
+        .extension()
+        .and_then(|value| value.to_str())
+        .unwrap_or("bik");
+    let temp_movie = work_root.join(format!("{stem}.{extension}"));
+    write_bytes(&temp_movie, movie_bytes)?;
+    if ffprobe_audio_stream_count(&temp_movie)? == 0 {
+        return Ok(None);
+    }
+    let temp_wav = work_root.join(format!("{stem}_audio_track_01.wav"));
+    let status = Command::new(media_tool_path("ffmpeg"))
+        .args(["-y", "-hide_banner", "-loglevel", "error"])
+        .arg("-i")
+        .arg(&temp_movie)
+        .args(["-vn", "-map", "0:a:0", "-acodec", "pcm_s16le"])
+        .arg(&temp_wav)
+        .status()
+        .map_err(|error| {
+            PipelineError::new(format!(
+                "failed to decode Latino cinematic audio for \
+                 {entry_path}: {error}"
+            ))
+        })?;
+    if !status.success() {
+        return Err(PipelineError::new(format!(
+            "ffmpeg failed to decode Latino cinematic audio for {entry_path}"
+        )));
+    }
+    local_read_bytes(&temp_wav)
+        .map(Some)
+        .map_err(io_error(&temp_wav))
 }
 
 /// Writes one normalized Latino WAV and its public-safe evidence record.
@@ -379,8 +387,7 @@ fn write_lmlm_wav(
         json_escape(&relative_output(extracted_root, destination)?),
         wav.len(),
         Sha256::digest(wav).hex(),
-        source_audio_stream_ordinal
-            .map_or_else(|| "null".to_owned(), |value| value.to_string())
+        source_audio_stream_ordinal.map_or_else(|| "null".to_owned(), |value| value.to_string())
     ));
     Ok(())
 }
