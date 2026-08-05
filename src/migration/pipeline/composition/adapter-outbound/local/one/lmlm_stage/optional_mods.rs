@@ -388,6 +388,23 @@ fn is_excluded_game_path(relative: &Path) -> bool {
         })
 }
 
+/// Claims one normalized public output and names both conflicting sources.
+pub(super) fn claim_normalized_output(
+    claimed: &mut BTreeMap<String, String>,
+    normalized_output: &str,
+    source: &str,
+    policy: &str,
+) -> PipelineOutcome<()> {
+    let key = portable_identity(Path::new(normalized_output));
+    if let Some(first) = claimed.get(&key) {
+        return Err(PipelineError::new(format!(
+            "{policy} output conflict: {first:?} and {source:?} both map to {key:?}"
+        )));
+    }
+    let _previous = claimed.insert(key, source.to_owned());
+    Ok(())
+}
+
 /// Applies only remaster members that target a pre-existing base file.
 pub(super) fn apply_remaster(
     data: &[u8],
@@ -396,8 +413,32 @@ pub(super) fn apply_remaster(
     base_files: &BTreeMap<String, PathBuf>,
     records: &mut Vec<String>,
 ) -> PipelineOutcome<OptionalModCounts> {
+    let mut claimed_outputs = BTreeMap::new();
+    for entry in entries {
+        check_cancellation()?;
+        let Some(relative) = remaster_relative_path(&entry.path) else {
+            continue;
+        };
+        let key = portable_identity(Path::new(&relative));
+        let Some(destination) = base_files.get(&key) else {
+            continue;
+        };
+        let output = relative_output(extracted_root, destination)?;
+        claim_normalized_output(
+            &mut claimed_outputs,
+            &output,
+            &entry.path,
+            "remaster",
+        )?;
+        let _bytes = entry_bytes(data, entry).ok_or_else(|| {
+            PipelineError::new(format!(
+                "{}: LMLM entry out of bounds",
+                entry.path
+            ))
+        })?;
+    }
+
     let mut counts = OptionalModCounts::default();
-    let mut claimed_outputs = BTreeSet::new();
     let mut progress = StageProgress::begin("remaster members", entries.len());
     for (index, entry) in entries.iter().enumerate() {
         check_cancellation()?;
@@ -411,11 +452,6 @@ pub(super) fn apply_remaster(
             counts.skipped = counts.skipped.saturating_add(1);
             continue;
         };
-        if !claimed_outputs.insert(key) {
-            return Err(PipelineError::new(
-                "remaster maps multiple members to one base file",
-            ));
-        }
         let bytes = entry_bytes(data, entry).ok_or_else(|| {
             PipelineError::new(format!(
                 "{}: LMLM entry out of bounds",

@@ -31,7 +31,7 @@
 
 //! Read-only optional-package planning and canonical preview rendering.
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use lmlm::{FileEntry, entry_bytes, parse as parse_lmlm};
@@ -39,13 +39,15 @@ use rmv::Sha256;
 use serde::Serialize;
 
 use super::optional_mods::{
-    OptionalModArchive, OptionalModRole, create_optional_mod_work_root,
-    discover_optional_mods, existing_file_index, is_latino_audio_path,
-    is_latino_movie_path, optional_mod_approval_token, portable_identity,
-    read_optional_mod_bytes, relative_output, remaster_relative_path,
+    OptionalModArchive, OptionalModRole, claim_normalized_output,
+    create_optional_mod_work_root, discover_optional_mods, existing_file_index,
+    is_latino_audio_path, is_latino_movie_path, optional_mod_approval_token,
+    portable_identity, read_optional_mod_bytes, relative_output,
+    remaster_relative_path,
 };
 use super::{
-    PipelineOutcome, decode_lmlm_movie_audio, lmlm_entry_path, rsd_bytes_to_wav,
+    PipelineOutcome, decode_lmlm_movie_audio, latino_movie_destination,
+    lmlm_entry_path, rsd_bytes_to_wav,
 };
 use crate::adapters::driven::check_cancellation;
 use crate::domain::{
@@ -240,7 +242,25 @@ fn preview_remaster(
     extracted_root: &Path,
     base_files: &BTreeMap<String, PathBuf>,
 ) -> PipelineOutcome<Vec<PreviewChange>> {
-    let mut claimed_outputs = BTreeSet::new();
+    let mut claimed_outputs = BTreeMap::new();
+    for entry in entries {
+        check_cancellation()?;
+        let Some(relative) = remaster_relative_path(&entry.path) else {
+            continue;
+        };
+        let key = portable_identity(Path::new(&relative));
+        let Some(destination) = base_files.get(&key) else {
+            continue;
+        };
+        let output = relative_output(extracted_root, destination)?;
+        claim_normalized_output(
+            &mut claimed_outputs,
+            &output,
+            &entry.path,
+            "remaster",
+        )?;
+        let _bytes = required_entry_bytes(data, entry)?;
+    }
     let mut changes = Vec::new();
     for entry in entries {
         check_cancellation()?;
@@ -253,11 +273,6 @@ fn preview_remaster(
             changes.push(skipped_change(role, entry, "not_base_identity"));
             continue;
         };
-        if !claimed_outputs.insert(key) {
-            return Err(PipelineError::new(
-                "remaster maps multiple members to one base file",
-            ));
-        }
         let bytes = required_entry_bytes(data, entry)?;
         changes.push(writing_change(
             role,
@@ -280,7 +295,30 @@ fn preview_latino(
     work_root: &Path,
 ) -> PipelineOutcome<Vec<PreviewChange>> {
     let output_root = generated_mod_root.join("latino");
-    let mut claimed_outputs = BTreeSet::new();
+    let mut claimed_outputs = BTreeMap::new();
+    for entry in entries {
+        check_cancellation()?;
+        let _source = required_entry_bytes(data, entry)?;
+        let destination = if is_latino_audio_path(&entry.path) {
+            Some(
+                lmlm_entry_path(&output_root, &entry.path)
+                    .with_extension("wav"),
+            )
+        } else if is_latino_movie_path(&entry.path) {
+            Some(latino_movie_destination(&output_root, &entry.path))
+        } else {
+            None
+        };
+        if let Some(destination) = destination {
+            let output = relative_output(extracted_root, &destination)?;
+            claim_normalized_output(
+                &mut claimed_outputs,
+                &output,
+                &entry.path,
+                "Latino",
+            )?;
+        }
+    }
     let mut changes = Vec::new();
     for entry in entries {
         check_cancellation()?;
@@ -289,11 +327,6 @@ fn preview_latino(
             let wav = rsd_bytes_to_wav(source, &entry.path)?;
             let destination = lmlm_entry_path(&output_root, &entry.path)
                 .with_extension("wav");
-            push_unique_output(
-                &mut claimed_outputs,
-                &destination,
-                "Latino package maps multiple members to one voice output",
-            )?;
             changes.push(writing_change(
                 role,
                 entry,
@@ -310,19 +343,8 @@ fn preview_latino(
                 changes.push(skipped_change(role, entry, "no_audio_stream"));
                 continue;
             };
-            let stem = Path::new(&entry.path)
-                .file_stem()
-                .and_then(|value| value.to_str())
-                .unwrap_or("movie");
-            let destination = output_root
-                .join("movies")
-                .join(stem)
-                .join("audio_track_01.wav");
-            push_unique_output(
-                &mut claimed_outputs,
-                &destination,
-                "Latino package maps multiple members to one movie output",
-            )?;
+            let destination =
+                latino_movie_destination(&output_root, &entry.path);
             changes.push(writing_change(
                 role,
                 entry,
@@ -345,18 +367,6 @@ fn required_entry_bytes<'archive>(
     entry_bytes(data, entry).ok_or_else(|| {
         PipelineError::new(format!("{}: LMLM entry out of bounds", entry.path))
     })
-}
-
-fn push_unique_output(
-    claimed: &mut BTreeSet<String>,
-    destination: &Path,
-    message: &'static str,
-) -> PipelineOutcome<()> {
-    if claimed.insert(portable_identity(destination)) {
-        Ok(())
-    } else {
-        Err(PipelineError::new(message))
-    }
 }
 
 fn skipped_change(

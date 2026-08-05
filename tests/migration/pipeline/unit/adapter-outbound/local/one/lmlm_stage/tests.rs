@@ -43,7 +43,7 @@ use super::optional_mods::{
     is_latino_movie_path, optional_mod_approval_token,
     optional_workspace_error,
 };
-use super::{extract_lmlm, preview_optional_mods};
+use super::{extract_latino_media, extract_lmlm, preview_optional_mods};
 
 #[test]
 fn missing_optional_lmlm_creates_no_output() -> Result<(), String> {
@@ -763,6 +763,122 @@ fn remaster_replaces_only_existing_base_files() -> Result<(), String> {
         return Err(format!("unexpected remaster counts: {counts:?}"));
     }
     fs::remove_dir_all(root).map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+#[test]
+fn remaster_output_conflicts_fail_before_writing() -> Result<(), String> {
+    let root = temp_root("remaster-output-conflict");
+    if root.exists() {
+        fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    }
+    let game = root.join("game");
+    let extracted = root.join("extracted");
+    let original = game.join("art").join("base.p3d");
+    let parent = original
+        .parent()
+        .ok_or_else(|| "conflict fixture path has no parent".to_owned())?;
+    fs::create_dir_all(parent).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&extracted).map_err(|error| error.to_string())?;
+    fs::write(&original, b"source-old").map_err(|error| error.to_string())?;
+    let base_files =
+        existing_file_index(&game, &extracted, &extracted.join("lmlm"))
+            .map_err(|error| error.to_string())?;
+    let first = "CustomFiles/art/base.p3d";
+    let second = "Mods/wrapper/CustomFiles/art/base.p3d";
+    let entries = [
+        FileEntry {
+            path: first.to_owned(),
+            offset: 0,
+            size: 64,
+        },
+        FileEntry {
+            path: second.to_owned(),
+            offset: 64,
+            size: 64,
+        },
+    ];
+    let data = [b'n'; 128];
+    let mut records = Vec::new();
+    let error = match apply_remaster(
+        &data,
+        &entries,
+        &extracted,
+        &base_files,
+        &mut records,
+    ) {
+        Ok(_counts) => {
+            return Err("remaster output conflict succeeded".to_owned());
+        }
+        Err(error) => error.to_string(),
+    };
+    if !error.contains(first)
+        || !error.contains(second)
+        || !error.contains("art/base.p3d")
+        || extracted.join("art").join("base.p3d").exists()
+        || !records.is_empty()
+        || fs::read(&original).map_err(|error| error.to_string())?
+            != b"source-old"
+    {
+        return Err(format!(
+            "remaster conflict was not preflighted atomically: {error}"
+        ));
+    }
+    fs::remove_dir_all(root).map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+#[test]
+fn latino_output_conflicts_fail_before_conversion() -> Result<(), String> {
+    let root = temp_root("latino-output-conflict");
+    if root.exists() {
+        fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    }
+    let extracted = root.join("extracted");
+    let output_root = extracted.join("lmlm");
+    let work_root = create_optional_mod_work_root("collision-test")
+        .map_err(|error| error.to_string())?;
+    let first = "CustomFiles/movies/intro.rmv";
+    let second = "CustomFiles/movies/intro.bik";
+    let entries = [
+        FileEntry {
+            path: first.to_owned(),
+            offset: 0,
+            size: 64,
+        },
+        FileEntry {
+            path: second.to_owned(),
+            offset: 64,
+            size: 64,
+        },
+    ];
+    let data = [0_u8; 128];
+    let mut records = Vec::new();
+    let result = extract_latino_media(
+        &data,
+        &entries,
+        work_root.path(),
+        &output_root,
+        &extracted,
+        &mut records,
+    );
+    work_root.cleanup().map_err(|error| error.to_string())?;
+    let error = match result {
+        Ok(_counts) => {
+            return Err("Latino output conflict succeeded".to_owned());
+        }
+        Err(error) => error.to_string(),
+    };
+    if !error.contains(first)
+        || !error.contains(second)
+        || !error.contains("lmlm/latino/movies/intro/audio_track_01.wav")
+        || output_root.exists()
+        || !records.is_empty()
+    {
+        return Err(format!(
+            "Latino conflict was not preflighted atomically: {error}"
+        ));
+    }
     Ok(())
 }
 
