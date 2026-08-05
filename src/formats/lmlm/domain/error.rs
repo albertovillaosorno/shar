@@ -77,6 +77,13 @@ pub enum LmlmError {
         /// Unexpected byte value.
         value: u8,
     },
+    /// The root block declares unsupported control flags.
+    UnsupportedRootFlags {
+        /// Archive-relative flags-field offset.
+        offset: usize,
+        /// Unsupported root flags.
+        value: u32,
+    },
     /// The archive contains nonzero bytes outside declared payloads.
     NonZeroUnclaimedData {
         /// Archive-relative byte offset.
@@ -212,8 +219,6 @@ pub enum LmlmError {
     },
     /// An entry name contained a path component that escapes the archive root.
     UnsafePath(String),
-    /// The archive is not the supported Jebano Latino package.
-    UnsupportedPackage,
 }
 
 impl LmlmError {
@@ -260,6 +265,10 @@ impl LmlmError {
                 "reserved LSPA root byte at {offset:#x} is nonzero: \
                  {value:#04x}"
             ),
+            Self::UnsupportedRootFlags { offset, value } => write!(
+                formatter,
+                "unsupported LSPA root flags at {offset:#x}: {value:#010x}"
+            ),
             Self::NonZeroUnclaimedData { offset, value } => write!(
                 formatter,
                 "unclaimed LSPA byte at {offset:#x} is nonzero: {value:#04x}"
@@ -267,10 +276,6 @@ impl LmlmError {
             Self::NonZeroTrailingData { offset, value } => write!(
                 formatter,
                 "trailing LSPA byte at {offset:#x} is nonzero: {value:#04x}"
-            ),
-            Self::UnsupportedPackage => write!(
-                formatter,
-                "archive is not the supported Jebano Latino package"
             ),
             _ => return None,
         };
@@ -318,17 +323,6 @@ impl LmlmError {
                  {offset:#x}: {value:#04x}"
                 )
             },
-            Self::DirectoryRecordControlMismatch {
-                path,
-                offset,
-                declared,
-                expected,
-            } => write!(
-                formatter,
-                "LSPA directory child-kind control mismatch for {} at \
-                 {offset:#x}: declared {declared}, expected {expected}",
-                EscapedText::new(path)
-            ),
             Self::UnsupportedFileRecordControl { offset, value } => {
                 write!(
                     formatter,

@@ -30,12 +30,14 @@
 
 //! Tests test module.
 
-use super::layout::{BLOCK, FIRST_ENTRY, JEBANO_TITLE_LF, MAGIC, ROOT_BLOCK};
+use super::layout::{BLOCK, FIRST_ENTRY, MAGIC, ROOT_BLOCK};
 use super::{LmlmError, parse};
 
 const ARCHIVE_LEN: usize = 0x4000;
 const META_OFFSET: usize = 0x3000;
 const TEST_ENTRY: usize = FIRST_ENTRY + BLOCK * 3;
+const FIXTURE_METADATA: &[u8] = b"[Miscellaneous]
+Title=Fixture Package";
 
 fn copy_fixture_bytes(archive: &mut [u8], start: usize, bytes: &[u8]) -> bool {
     let Some(end) = start.checked_add(bytes.len()) else {
@@ -46,18 +48,6 @@ fn copy_fixture_bytes(archive: &mut [u8], start: usize, bytes: &[u8]) -> bool {
     };
     target.copy_from_slice(bytes);
     true
-}
-
-fn with_crlf(bytes: &[u8]) -> Vec<u8> {
-    let mut converted = Vec::with_capacity(bytes.len().saturating_add(1));
-    for byte in bytes {
-        if *byte == b'\n' {
-            converted.extend_from_slice(b"\r\n");
-        } else {
-            converted.push(*byte);
-        }
-    }
-    converted
 }
 
 fn write_file_entry(
@@ -189,8 +179,8 @@ fn wrong_magic_reports_the_observed_bytes() -> Result<(), String> {
 }
 
 #[test]
-fn empty_container_reports_unsupported_package() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+fn empty_container_is_structurally_valid() -> Result<(), String> {
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     let Some(unused) = archive.get_mut(FIRST_ENTRY..) else {
         return Err("fixture unused archive range must fit".to_owned());
     };
@@ -203,16 +193,16 @@ fn empty_container_reports_unsupported_package() -> Result<(), String> {
         return Err("fixture root-count range must fit".to_owned());
     }
     match parse(&archive) {
-        Err(LmlmError::UnsupportedPackage) => Ok(()),
+        Ok(entries) if entries.is_empty() => Ok(()),
         other => Err(format!(
-            "empty LSPA container must be unsupported, got {other:?}"
+            "empty LSPA container must parse without entries, got {other:?}"
         )),
     }
 }
 
 #[test]
 fn rejects_nonzero_unclaimed_archive_bytes() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     let unclaimed_offset = 0x2000;
     if !copy_fixture_bytes(&mut archive, unclaimed_offset, &[1]) {
         return Err("fixture unclaimed byte must fit".to_owned());
@@ -231,7 +221,7 @@ fn rejects_nonzero_unclaimed_archive_bytes() -> Result<(), String> {
 
 #[test]
 fn rejects_nonzero_trailing_archive_padding() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     let trailing_offset = archive
         .len()
         .checked_sub(1)
@@ -253,7 +243,7 @@ fn rejects_nonzero_trailing_archive_padding() -> Result<(), String> {
 
 #[test]
 fn rejects_payloads_inside_the_entry_table() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(
         &mut archive,
         ROOT_BLOCK.saturating_add(2),
@@ -276,7 +266,7 @@ fn rejects_payloads_inside_the_entry_table() -> Result<(), String> {
 
 #[test]
 fn accepts_final_payload_immediately_after_metadata() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(
         &mut archive,
         ROOT_BLOCK.saturating_add(2),
@@ -309,7 +299,7 @@ fn accepts_final_payload_immediately_after_metadata() -> Result<(), String> {
 
 #[test]
 fn rejects_unaligned_payload_offsets() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(
         &mut archive,
         ROOT_BLOCK.saturating_add(2),
@@ -332,7 +322,7 @@ fn rejects_unaligned_payload_offsets() -> Result<(), String> {
 
 #[test]
 fn accepts_supported_file_record_control_flag() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     let control_offset = FIRST_ENTRY.saturating_add(BLOCK.saturating_mul(2));
     if !copy_fixture_bytes(&mut archive, control_offset, &[1]) {
         return Err("fixture file transition control must fit".to_owned());
@@ -344,7 +334,7 @@ fn accepts_supported_file_record_control_flag() -> Result<(), String> {
 
 #[test]
 fn rejects_unsupported_file_record_control() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     let control_offset = FIRST_ENTRY.saturating_add(BLOCK.saturating_mul(2));
     if !copy_fixture_bytes(&mut archive, control_offset, &[2]) {
         return Err("fixture file transition control must fit".to_owned());
@@ -363,7 +353,7 @@ fn rejects_unsupported_file_record_control() -> Result<(), String> {
 
 #[test]
 fn rejects_nonzero_file_record_control_padding() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     let padding_offset = FIRST_ENTRY
         .saturating_add(BLOCK.saturating_mul(2))
         .saturating_add(1);
@@ -385,7 +375,7 @@ fn rejects_nonzero_file_record_control_padding() -> Result<(), String> {
 #[test]
 fn accepts_directory_control_for_immediate_subdirectory() -> Result<(), String>
 {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(
         &mut archive,
         ROOT_BLOCK.saturating_add(2),
@@ -408,7 +398,7 @@ fn accepts_directory_control_for_immediate_subdirectory() -> Result<(), String>
 
 #[test]
 fn rejects_unsupported_directory_record_control() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(
         &mut archive,
         ROOT_BLOCK.saturating_add(2),
@@ -434,7 +424,7 @@ fn rejects_unsupported_directory_record_control() -> Result<(), String> {
 
 #[test]
 fn rejects_nonzero_directory_record_padding() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(
         &mut archive,
         ROOT_BLOCK.saturating_add(2),
@@ -458,8 +448,8 @@ fn rejects_nonzero_directory_record_padding() -> Result<(), String> {
 }
 
 #[test]
-fn rejects_directory_control_missing_subdirectory() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+fn accepts_zero_directory_control_with_subdirectory() -> Result<(), String> {
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(
         &mut archive,
         ROOT_BLOCK.saturating_add(2),
@@ -475,23 +465,14 @@ fn rejects_directory_control_missing_subdirectory() -> Result<(), String> {
         0,
         false,
     )?;
-    let control_offset = TEST_ENTRY.saturating_add(BLOCK).saturating_add(0x0e);
-    match parse(&archive) {
-        Err(LmlmError::DirectoryRecordControlMismatch {
-            path,
-            offset,
-            declared: 0,
-            expected: 1,
-        }) if path == "parent" && offset == control_offset => Ok(()),
-        other => {
-            Err(format!("missing subdirectory control must fail: {other:?}"))
-        },
-    }
+    parse(&archive)
+        .map(|_entries| ())
+        .map_err(|error| format!("zero directory control must parse: {error}"))
 }
 
 #[test]
-fn rejects_directory_control_without_subdirectory() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+fn accepts_one_directory_control_with_file_child() -> Result<(), String> {
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(
         &mut archive,
         ROOT_BLOCK.saturating_add(2),
@@ -507,24 +488,15 @@ fn rejects_directory_control_without_subdirectory() -> Result<(), String> {
         0x3200,
         1,
     )?;
-    let control_offset = TEST_ENTRY.saturating_add(BLOCK).saturating_add(0x0e);
-    match parse(&archive) {
-        Err(LmlmError::DirectoryRecordControlMismatch {
-            path,
-            offset,
-            declared: 1,
-            expected: 0,
-        }) if path == "parent" && offset == control_offset => Ok(()),
-        other => Err(format!(
-            "spurious subdirectory control must fail: {other:?}"
-        )),
-    }
+    parse(&archive)
+        .map(|_entries| ())
+        .map_err(|error| format!("one directory control must parse: {error}"))
 }
 
 #[test]
 fn rejects_nonzero_reserved_metadata_bytes() -> Result<(), String> {
     for relative_offset in [0, 0x0b] {
-        let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+        let mut archive = empty_archive_with(FIXTURE_METADATA);
         let metadata_offset = FIRST_ENTRY
             .saturating_add(BLOCK)
             .saturating_add(relative_offset);
@@ -547,7 +519,7 @@ fn rejects_nonzero_reserved_metadata_bytes() -> Result<(), String> {
 
 #[test]
 fn rejects_nonzero_metadata_padding() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(
         &mut archive,
         ROOT_BLOCK.saturating_add(2),
@@ -574,7 +546,7 @@ fn rejects_nonzero_metadata_padding() -> Result<(), String> {
 
 #[test]
 fn rejects_nonzero_name_padding() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(
         &mut archive,
         ROOT_BLOCK.saturating_add(2),
@@ -599,7 +571,7 @@ fn rejects_nonzero_name_padding() -> Result<(), String> {
 
 #[test]
 fn rejects_unterminated_entry_names() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(
         &mut archive,
         ROOT_BLOCK.saturating_add(2),
@@ -643,7 +615,7 @@ fn rejects_unterminated_entry_names() -> Result<(), String> {
 
 #[test]
 fn rejects_invalid_entry_kind() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(&mut archive, FIRST_ENTRY, &3_u16.to_le_bytes()) {
         return Err("fixture entry kind must fit".to_owned());
     }
@@ -658,7 +630,7 @@ fn rejects_invalid_entry_kind() -> Result<(), String> {
 
 #[test]
 fn rejects_nonzero_reserved_root_bytes() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(&mut archive, ROOT_BLOCK, &[1]) {
         return Err("fixture reserved root byte must fit".to_owned());
     }
@@ -676,7 +648,7 @@ fn rejects_nonzero_reserved_root_bytes() -> Result<(), String> {
 
 #[test]
 fn rejects_nonzero_reserved_container_block() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(&mut archive, BLOCK, &[1]) {
         return Err("fixture reserved block byte must fit".to_owned());
     }
@@ -694,7 +666,7 @@ fn rejects_nonzero_reserved_container_block() -> Result<(), String> {
 
 #[test]
 fn rejects_nonzero_reserved_header_bytes() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(&mut archive, 8, &[1]) {
         return Err("fixture reserved header byte must fit".to_owned());
     }
@@ -708,7 +680,7 @@ fn rejects_nonzero_reserved_header_bytes() -> Result<(), String> {
 
 #[test]
 fn rejects_unsupported_header_flags() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(&mut archive, 0x0c, &0_u32.to_le_bytes()) {
         return Err("fixture header flags range must fit".to_owned());
     }
@@ -724,7 +696,7 @@ fn rejects_unsupported_header_flags() -> Result<(), String> {
 
 #[test]
 fn rejects_unsupported_archive_version() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(&mut archive, 4, &4_u32.to_le_bytes()) {
         return Err("fixture version range must fit".to_owned());
     }
@@ -738,7 +710,7 @@ fn rejects_unsupported_archive_version() -> Result<(), String> {
 
 #[test]
 fn rejects_excessive_directory_nesting() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     archive.resize(0x22000, 0);
     let meta_metadata = FIRST_ENTRY.saturating_add(BLOCK);
     if !copy_fixture_bytes(
@@ -748,12 +720,12 @@ fn rejects_excessive_directory_nesting() -> Result<(), String> {
     ) {
         return Err("fixture metadata offset must fit".to_owned());
     }
-    let old_meta_end = META_OFFSET.saturating_add(JEBANO_TITLE_LF.len());
+    let old_meta_end = META_OFFSET.saturating_add(FIXTURE_METADATA.len());
     let Some(old_meta) = archive.get_mut(META_OFFSET..old_meta_end) else {
         return Err("fixture old metadata range must fit".to_owned());
     };
     old_meta.fill(0);
-    if !copy_fixture_bytes(&mut archive, 0x20000, JEBANO_TITLE_LF) {
+    if !copy_fixture_bytes(&mut archive, 0x20000, FIXTURE_METADATA) {
         return Err("fixture relocated metadata must fit".to_owned());
     }
     if !copy_fixture_bytes(
@@ -781,7 +753,7 @@ fn rejects_excessive_directory_nesting() -> Result<(), String> {
 fn rejects_overlong_portable_paths() -> Result<(), String> {
     let directory = "d".repeat(130);
     let file = "f".repeat(130);
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(
         &mut archive,
         ROOT_BLOCK.saturating_add(2),
@@ -812,7 +784,7 @@ fn accepts_portable_unicode_paths_with_long_utf8_encodings()
     let directory = "é".repeat(70);
     let file = "é".repeat(70);
     let expected = format!("{directory}/{file}");
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(
         &mut archive,
         ROOT_BLOCK.saturating_add(2),
@@ -842,7 +814,7 @@ fn accepts_portable_unicode_paths_with_long_utf8_encodings()
 fn accepts_astral_unicode_components_within_the_utf16_limit()
 -> Result<(), String> {
     let name = "😀".repeat(64);
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(
         &mut archive,
         ROOT_BLOCK.saturating_add(2),
@@ -863,7 +835,7 @@ fn accepts_astral_unicode_components_within_the_utf16_limit()
 #[test]
 fn rejects_unicode_path_modifiers() -> Result<(), String> {
     let name = "report\u{202e}cod.exe";
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(
         &mut archive,
         ROOT_BLOCK.saturating_add(2),
@@ -888,7 +860,7 @@ fn rejects_extended_windows_reserved_aliases() -> Result<(), String> {
         "CON .txt",
         "AUX..txt",
     ] {
-        let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+        let mut archive = empty_archive_with(FIXTURE_METADATA);
         if !copy_fixture_bytes(
             &mut archive,
             ROOT_BLOCK.saturating_add(2),
@@ -921,7 +893,7 @@ fn rejects_nonportable_entry_names() -> Result<(), String> {
         "trailing ",
         "control\u{1}.bin",
     ] {
-        let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+        let mut archive = empty_archive_with(FIXTURE_METADATA);
         if !copy_fixture_bytes(
             &mut archive,
             ROOT_BLOCK.saturating_add(2),
@@ -945,7 +917,7 @@ fn rejects_nonportable_entry_names() -> Result<(), String> {
 
 #[test]
 fn rejects_portable_path_collisions() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(
         &mut archive,
         ROOT_BLOCK.saturating_add(2),
@@ -971,7 +943,7 @@ fn rejects_portable_path_collisions() -> Result<(), String> {
 
 #[test]
 fn rejects_unicode_case_equivalent_path_collisions() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(
         &mut archive,
         ROOT_BLOCK.saturating_add(2),
@@ -998,7 +970,7 @@ fn rejects_unicode_case_equivalent_path_collisions() -> Result<(), String> {
 
 #[test]
 fn rejects_overlapping_payload_ranges() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(
         &mut archive,
         ROOT_BLOCK.saturating_add(2),
@@ -1030,7 +1002,7 @@ fn rejects_overlapping_payload_ranges() -> Result<(), String> {
 
 #[test]
 fn rejects_payload_past_archive_end() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(
         &mut archive,
         ROOT_BLOCK.saturating_add(2),
@@ -1069,7 +1041,7 @@ fn rejects_payload_past_archive_end() -> Result<(), String> {
 
 #[test]
 fn rejects_invalid_utf16_entry_name() -> Result<(), String> {
-    let mut archive = empty_archive_with(JEBANO_TITLE_LF);
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(
         &mut archive,
         ROOT_BLOCK.saturating_add(2),
@@ -1121,75 +1093,50 @@ fn rejects_invalid_utf16_entry_name() -> Result<(), String> {
 }
 
 #[test]
-fn accepts_exact_jebano_title_with_lf_or_crlf() {
-    assert!(parse(&empty_archive_with(JEBANO_TITLE_LF)).is_ok());
-    assert!(parse(&empty_archive_with(&with_crlf(JEBANO_TITLE_LF))).is_ok());
-}
-
-#[test]
-fn rejects_package_title_prefix_spoofs() {
-    let mut marker = JEBANO_TITLE_LF.to_vec();
-    marker.extend_from_slice(
-        b"Evil
-",
-    );
-    let archive = empty_archive_with(&marker);
-    assert!(matches!(
-        parse(&archive),
-        Err(LmlmError::UnsupportedPackage)
-    ));
-}
-
-#[test]
-fn rejects_conflicting_duplicate_package_titles() {
-    let mut metadata = JEBANO_TITLE_LF.to_vec();
-    metadata.extend_from_slice(b"\nTitle=Different Package");
-    let archive = empty_archive_with(&metadata);
-    assert!(matches!(
-        parse(&archive),
-        Err(LmlmError::UnsupportedPackage)
-    ));
-}
-
-#[test]
-fn rejects_title_marker_outside_metadata_entry() -> Result<(), String> {
-    let mut archive = empty_archive_with(
-        b"[Miscellaneous]
-Title=Another Mod",
-    );
+fn accepts_supported_root_overlay_flag() -> Result<(), String> {
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(
         &mut archive,
-        ROOT_BLOCK.saturating_add(2),
-        &2_u16.to_le_bytes(),
+        ROOT_BLOCK.saturating_add(4),
+        &1_u32.to_le_bytes(),
     ) {
-        return Err("fixture root-count range must fit".to_owned());
+        return Err("fixture root flags must fit".to_owned());
     }
-    write_file_entry(
+    parse(&archive)
+        .map(|_entries| ())
+        .map_err(|error| format!("supported root flag must parse: {error}"))
+}
+
+#[test]
+fn rejects_unknown_root_overlay_flags() -> Result<(), String> {
+    let mut archive = empty_archive_with(FIXTURE_METADATA);
+    if !copy_fixture_bytes(
         &mut archive,
-        TEST_ENTRY,
-        "decoy.bin",
-        0x3200,
-        u64::try_from(JEBANO_TITLE_LF.len()).unwrap_or(u64::MAX),
-    )?;
-    if !copy_fixture_bytes(&mut archive, 0x3200, JEBANO_TITLE_LF) {
-        return Err("fixture decoy payload must fit".to_owned());
+        ROOT_BLOCK.saturating_add(4),
+        &2_u32.to_le_bytes(),
+    ) {
+        return Err("fixture root flags must fit".to_owned());
     }
     match parse(&archive) {
-        Err(LmlmError::UnsupportedPackage) => Ok(()),
-        other => Err(format!(
-            "non-metadata package marker must fail, got {other:?}"
-        )),
+        Err(LmlmError::UnsupportedRootFlags { offset, value })
+            if offset == ROOT_BLOCK.saturating_add(4) && value == 2 =>
+        {
+            Ok(())
+        },
+        other => Err(format!("unknown root flags must fail, got {other:?}")),
     }
 }
 
 #[test]
-fn rejects_other_lspa_packages() {
-    let archive = empty_archive_with(
+fn metadata_title_is_not_a_parser_identity_boundary() {
+    let first = empty_archive_with(
         b"[Miscellaneous]
-Title=Another Mod",
+Title=Package A",
     );
-    assert!(matches!(
-        parse(&archive),
-        Err(LmlmError::UnsupportedPackage)
-    ));
+    let second = empty_archive_with(
+        b"[Miscellaneous]
+Title=Package B",
+    );
+    assert!(parse(&first).is_ok());
+    assert!(parse(&second).is_ok());
 }
