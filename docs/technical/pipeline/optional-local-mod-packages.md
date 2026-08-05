@@ -111,12 +111,32 @@ matched the existing extraction manifest exactly by source identity, output,
 normalized byte count, and SHA-256 digest. A complete before-and-after hash of
 the optional extraction tree was unchanged.
 
+## Explicit approval
+
+After reviewing the preview, the caller must opt in before any supported
+package can be applied:
+
+```text
+pipeline extract-game game extracted --approve-optional-mods
+pipeline extract-game-resume game extracted --approve-optional-mods
+pipeline export-lmlm game extracted --approve-optional-mods
+```
+
+Approval is scoped to one process invocation. It is not stored, inferred from a
+previous preview, or accepted by read-only and unrelated commands. When no
+optional package is present, extraction keeps the base behavior and does not
+require the flag.
+
+The approval preflight runs before clean extraction removes existing generated
+output and before the package-only command creates its output root. Missing
+approval therefore cannot partially clean, activate, or publish package output.
+
 ## Failure behavior
 
-An invalid container, unsafe path, unsupported root control, duplicate identity,
-case-insensitive collision, unsupported alias, symlinked package, escaped
-output,
-or attempted Latino overwrite fails before successful stage completion.
+Missing approval, an invalid container, unsafe path, unsupported root control,
+duplicate identity, case-insensitive collision, unsupported alias, symlinked
+package, escaped output, or attempted Latino overwrite fails before successful
+stage completion.
 
 All packages are parsed before package writes begin. The full extraction remains
 a clean generated build and is regenerated from the source installation when a
@@ -128,8 +148,8 @@ The policy is covered by unit tests for no package, either alias, both
 aliases,
 unknown aliases, existing-only remaster replacement, skipped remaster additions,
 Latino media classification, read-only empty previews, canonical CLI aliases,
-and
-extra-argument rejection.
+command-scoped approval, pre-mutation approval failure, and extra-argument
+rejection.
 
 The maximum supported local snapshot was extracted successfully on 2026-08-04
 with all locally supplied official languages and both tested packages. The run
