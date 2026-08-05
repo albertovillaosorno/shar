@@ -62,9 +62,10 @@ When either supported package is present, copy the `approval_token` from the
 current preview into the command that may apply it:
 
 ```text
-pipeline extract-game game extracted --approve-optional-mods <approval-token>
-pipeline extract-game-resume game extracted \n  --approve-optional-mods <approval-token>
-pipeline export-lmlm game extracted --approve-optional-mods <approval-token>
+TOKEN=<approval-token>
+pipeline extract-game game extracted --approve-optional-mods "$TOKEN"
+pipeline extract-game-resume game extracted --approve-optional-mods "$TOKEN"
+pipeline export-lmlm game extracted --approve-optional-mods "$TOKEN"
 ```
 
 The token approves the exact ordered package byte set from that preview. A
