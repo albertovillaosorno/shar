@@ -728,10 +728,8 @@ fn render_success(
         SummarizeOutput::execute(&FilesystemOutputInventory, output_root)
     {
         outcome = outcome.stderr_line(format!(
-            "output: {} files={} bytes={}",
-            summary.root.display(),
-            summary.files,
-            summary.bytes
+            "output: files={} bytes={}",
+            summary.files, summary.bytes
         ));
         for directory in summary.directories {
             outcome = outcome.stderr_line(format!(

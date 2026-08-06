@@ -63,6 +63,20 @@ fn validate_directory_name(name: &str) -> PipelineOutcome<()> {
     validation.map_err(|error| PipelineError::new(error.to_string()))
 }
 
+/// Builds one public-safe output-inventory I/O diagnostic.
+fn inventory_io_error(action: &str, error: &std::io::Error) -> PipelineError {
+    PipelineError::new(format!("{action} failed ({:?})", error.kind()))
+}
+
+/// Returns one public file label without its physical ancestors.
+fn public_output_file(file: &Path) -> String {
+    file.file_name()
+        .and_then(|value| value.to_str())
+        .filter(|value| !value.is_empty())
+        .unwrap_or("unnamed-file")
+        .to_owned()
+}
+
 /// Inventory one validated caller-selected output directory.
 fn summarize_named_directory(
     root: &Path,
@@ -73,24 +87,20 @@ fn summarize_named_directory(
     let files = match path_kind(&directory) {
         Ok(PathKind::Directory) => regular_files(&directory)
             .map_err(|error| {
-                PipelineError::new(format!(
-                    "failed to inventory {}: {error}",
-                    directory.display()
-                ))
+                inventory_io_error(&format!("inventory output/{name}"), &error)
             })?
             .len(),
         Ok(PathKind::Missing) => 0,
         Ok(PathKind::File | PathKind::Other) => {
             return Err(PipelineError::new(format!(
-                "named output is not a directory: {}",
-                directory.display()
+                "output/{name} is not a directory"
             )));
         },
         Err(error) => {
-            return Err(PipelineError::new(format!(
-                "failed to inspect {}: {error}",
-                directory.display()
-            )));
+            return Err(inventory_io_error(
+                &format!("inspect output/{name}"),
+                &error,
+            ));
         },
     };
     Ok(DirectorySummary { name, files })
@@ -105,7 +115,7 @@ fn checked_byte_total(
     total.checked_add(length).ok_or_else(|| {
         PipelineError::new(format!(
             "output byte total overflowed at {}",
-            file.display()
+            public_output_file(file),
         ))
     })
 }
@@ -131,33 +141,26 @@ impl OutputInventory for FilesystemOutputInventory {
             }
         }
         let root_kind = path_kind(root).map_err(|error| {
-            PipelineError::new(format!(
-                "failed to inspect {}: {error}",
-                root.display()
-            ))
+            inventory_io_error("inspect output root", &error)
         })?;
         let files = match root_kind {
             PathKind::Directory => regular_files(root).map_err(|error| {
-                PipelineError::new(format!(
-                    "failed to inventory {}: {error}",
-                    root.display()
-                ))
+                inventory_io_error("inventory output root", &error)
             })?,
             PathKind::Missing => Vec::new(),
             PathKind::File | PathKind::Other => {
-                return Err(PipelineError::new(format!(
-                    "output root is not a directory: {}",
-                    root.display()
-                )));
+                return Err(PipelineError::new(
+                    "output root is not a directory",
+                ));
             },
         };
         let mut bytes = 0u64;
         for file in &files {
             let length = file_len(file).map_err(|error| {
-                PipelineError::new(format!(
-                    "failed to inspect {}: {error}",
-                    file.display()
-                ))
+                inventory_io_error(
+                    &format!("inspect output/{}", public_output_file(file)),
+                    &error,
+                )
             })?;
             bytes = checked_byte_total(bytes, length, file)?;
         }

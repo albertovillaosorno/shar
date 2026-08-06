@@ -36,6 +36,7 @@ mod cases {
 
     use super::super::{
         FilesystemOutputInventory, OutputInventory, checked_byte_total,
+        inventory_io_error,
     };
 
     const RESERVED_HOST_ALIAS: &[&str] = &["CON"];
@@ -44,10 +45,25 @@ mod cases {
 
     #[test]
     fn rejects_output_byte_total_overflow() -> Result<(), String> {
-        let result = checked_byte_total(u64::MAX, 1, Path::new("overflow.bin"));
+        let result = checked_byte_total(
+            u64::MAX,
+            1,
+            Path::new("private-root/overflow.bin"),
+        );
         if result.is_ok() {
             return Err(String::from(
                 "output byte total overflow was accepted",
+            ));
+        }
+        let rendered = result
+            .map_err(|error| error.to_string())
+            .err()
+            .ok_or_else(|| "overflow diagnostic missing".to_owned())?;
+        if rendered.contains("private-root")
+            || !rendered.contains("overflow.bin")
+        {
+            return Err(format!(
+                "overflow diagnostic leaked its root: {rendered}"
             ));
         }
         Ok(())
@@ -85,11 +101,17 @@ mod cases {
         let result = FilesystemOutputInventory.summarize(&root, &[]);
         fs::remove_file(&root).map_err(|error| error.to_string())?;
 
-        if result.is_ok() {
-            return Err(
+        let rendered = result
+            .map_err(|error| error.to_string())
+            .err()
+            .ok_or_else(|| {
                 "a regular file must not be accepted as an output root"
-                    .to_owned(),
-            );
+                    .to_owned()
+            })?;
+        if rendered.contains(&root.to_string_lossy().to_string())
+            || rendered != "output root is not a directory"
+        {
+            return Err(format!("output-root diagnostic leaked: {rendered}"));
         }
         Ok(())
     }
@@ -112,11 +134,17 @@ mod cases {
         let result = FilesystemOutputInventory.summarize(&root, &["artifacts"]);
         fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
 
-        if result.is_ok() {
-            return Err(
+        let rendered = result
+            .map_err(|error| error.to_string())
+            .err()
+            .ok_or_else(|| {
                 "a named output directory file collision must be rejected"
-                    .to_owned(),
-            );
+                    .to_owned()
+            })?;
+        if rendered.contains(&root.to_string_lossy().to_string())
+            || rendered != "output/artifacts is not a directory"
+        {
+            return Err(format!("named-output diagnostic leaked: {rendered}"));
         }
         Ok(())
     }
@@ -221,6 +249,20 @@ mod cases {
 
         if result.is_ok() {
             return Err("duplicate named outputs must be rejected".to_owned());
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn inventory_io_diagnostics_hide_raw_error_text() -> Result<(), String> {
+        let private_fragment = "private-workstation-output-root";
+        let error = std::io::Error::other(private_fragment);
+        let rendered =
+            inventory_io_error("inspect output root", &error).to_string();
+        if rendered.contains(private_fragment)
+            || rendered != "inspect output root failed (Other)"
+        {
+            return Err(format!("inventory diagnostic leaked: {rendered}"));
         }
         Ok(())
     }

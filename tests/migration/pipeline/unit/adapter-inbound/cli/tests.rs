@@ -30,9 +30,13 @@
 
 //! Tests unit tests.
 
+use std::fs;
+
 use schoenwald_cli::{CliProgram, ExitStatus, OutputStream};
 
-use super::{PipelineCli, USAGE};
+use crate::domain::PipelineReport;
+
+use super::{PipelineCli, USAGE, render_success};
 
 #[test]
 fn manifest_rejects_extra_positionals() -> Result<(), String> {
@@ -193,6 +197,35 @@ fn optional_mod_preview_rejects_extra_positionals() -> Result<(), String> {
             "unexpected preview positional diagnostic: {:?}",
             diagnostic.text()
         ));
+    }
+    Ok(())
+}
+
+
+#[test]
+fn successful_output_summary_hides_the_physical_root() -> Result<(), String> {
+    let private_fragment = "private-workstation-output-summary";
+    let root = std::env::temp_dir().join(format!(
+        "{private_fragment}-{}",
+        std::process::id(),
+    ));
+    if root.exists() {
+        fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    }
+    fs::create_dir_all(&root).map_err(|error| error.to_string())?;
+    fs::write(root.join("evidence.bin"), b"evidence")
+        .map_err(|error| error.to_string())?;
+    let outcome = render_success(PipelineReport::default(), &root);
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let rendered = outcome
+        .output()
+        .iter()
+        .map(schoenwald_cli::OutputChunk::text)
+        .collect::<String>();
+    if rendered.contains(private_fragment)
+        || !rendered.contains("output: files=1 bytes=8")
+    {
+        return Err(format!("output summary leaked its root: {rendered}"));
     }
     Ok(())
 }
