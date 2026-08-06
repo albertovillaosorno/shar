@@ -219,10 +219,15 @@ fn upstream_revision_changes_cascade_through_the_bundle() -> Result<(), String>
 
 #[test]
 fn rejects_unsafe_paths_and_destination_collisions() -> Result<(), String> {
+    let private_path = "C:/private/audio.wav";
     let mut unsafe_operation = wav_operation();
-    unsafe_operation.source_path = "C:/private/audio.wav".to_owned();
-    if PlanBundle::build(&context(), vec![unsafe_operation]).is_ok() {
+    unsafe_operation.source_path = private_path.to_owned();
+    let Err(path_error) = PlanBundle::build(&context(), vec![unsafe_operation])
+    else {
         return Err("absolute source path was accepted".to_owned());
+    };
+    if path_error.contains(private_path) {
+        return Err(format!("source-path diagnostic leaked: {path_error}"));
     }
     let first = wav_operation();
     let mut second = json_operation();
@@ -249,6 +254,171 @@ fn rejects_uppercase_revisions_and_unsorted_dependencies() -> Result<(), String>
     ];
     if PlanBundle::build(&context(), vec![dependency, dependent]).is_ok() {
         return Err("unsorted dependencies were accepted".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_source_target_and_readiness_mismatches() -> Result<(), String> {
+    let mut wrong_family = wav_operation();
+    wrong_family.target_family = NativeAssetFamily::Texture;
+    let Err(family_error) = PlanBundle::build(&context(), vec![wrong_family])
+    else {
+        return Err("WAV evidence was accepted as a texture".to_owned());
+    };
+    if !family_error.contains("target family") {
+        return Err(format!("unexpected family failure: {family_error}"));
+    }
+
+    let mut wrong_readiness = wav_operation();
+    wrong_readiness.readiness = OperationReadiness::RequiresConversion;
+    let Err(readiness_error) =
+        PlanBundle::build(&context(), vec![wrong_readiness])
+    else {
+        return Err(
+            "ready WAV evidence was accepted as pending conversion".to_owned()
+        );
+    };
+    if !readiness_error.contains("operation readiness") {
+        return Err(format!("unexpected readiness failure: {readiness_error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn target_class_participates_in_operation_identity() -> Result<(), String> {
+    let baseline = wav_operation();
+    let mut changed = baseline.clone();
+    changed.target_class = "SoundCue".to_owned();
+    if baseline.operation_id() == changed.operation_id() {
+        return Err("target class did not affect operation identity".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_noncanonical_dependencies_and_destinations() -> Result<(), String> {
+    let mut dependency = wav_operation();
+    dependency.dependencies = vec!["audio-source".to_owned()];
+    let Err(dependency_error) = PlanBundle::build(&context(), vec![dependency])
+    else {
+        return Err("noncanonical operation dependency was accepted".to_owned());
+    };
+    if !dependency_error.contains("dependency identity") {
+        return Err(format!(
+            "unexpected dependency failure: {dependency_error}"
+        ));
+    }
+
+    for destination in [
+        "/Game/Generated/SHAR/audio/bad name/bad name.bad name",
+        "/Game/Generated/SHAR/audio/bad.name/bad.name",
+        "/Game/Generated/SHAR/audio/good.bad",
+    ] {
+        let mut operation = wav_operation();
+        operation.destination = destination.to_owned();
+        if PlanBundle::build(&context(), vec![operation]).is_ok() {
+            return Err(format!(
+                "noncanonical Unreal destination was accepted: {destination}"
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_cyclic_operation_dependencies() -> Result<(), String> {
+    let mut first = wav_operation();
+    first.source_identity = "audio-source-a".to_owned();
+    first.destination =
+        "/Game/Generated/SHAR/audio/source_a/source_a.source_a".to_owned();
+    let mut second = wav_operation();
+    second.source_identity = "audio-source-b".to_owned();
+    second.destination =
+        "/Game/Generated/SHAR/audio/source_b/source_b.source_b".to_owned();
+    let first_id = first.operation_id();
+    let second_id = second.operation_id();
+    first.dependencies = vec![second_id];
+    second.dependencies = vec![first_id];
+
+    let Err(error) = PlanBundle::build(&context(), vec![first, second]) else {
+        return Err("cyclic operation dependencies were accepted".to_owned());
+    };
+    if !error.contains("dependency graph contains a cycle") {
+        return Err(format!("unexpected cycle failure: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_path_shaped_identities_without_echoing_them() -> Result<(), String> {
+    let private_identity = "C:/private/operator/package";
+    let mut operation = wav_operation();
+    operation.package_identity = private_identity.to_owned();
+    let Err(error) = PlanBundle::build(&context(), vec![operation]) else {
+        return Err("path-shaped package identity was accepted".to_owned());
+    };
+    if error.contains(private_identity) {
+        return Err(format!("identity diagnostic leaked: {error}"));
+    }
+    if !error.contains("invalid package identity") {
+        return Err(format!("unexpected identity failure: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_dependencies_on_later_plan_families() -> Result<(), String> {
+    let construction = json_operation();
+    let mut import = wav_operation();
+    import.dependencies = vec![construction.operation_id()];
+    let Err(error) = PlanBundle::build(&context(), vec![import, construction])
+    else {
+        return Err("import operation depended on construction".to_owned());
+    };
+    if !error.contains("later plan family") {
+        return Err(format!("unexpected family-order failure: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rendered_validation_names_the_enforced_destination_guard()
+-> Result<(), String> {
+    let bundle = PlanBundle::build(&context(), vec![wav_operation()])?;
+    for artifact in bundle.artifacts() {
+        if !artifact
+            .json
+            .contains("case-insensitive-destinations-unique")
+        {
+            return Err(format!(
+                "{} omits the destination collision guard",
+                artifact.family.plan_id()
+            ));
+        }
+        if artifact.json.contains("case-insensitive-identities-unique") {
+            return Err(format!(
+                "{} claims an unenforced identity guard",
+                artifact.family.plan_id()
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_control_characters_in_portable_source_paths() -> Result<(), String> {
+    for source_path in
+        ["extracted/audio/clip\n.wav", "extracted/audio/clip\0.wav"]
+    {
+        let mut operation = wav_operation();
+        operation.source_path = source_path.to_owned();
+        let Err(error) = PlanBundle::build(&context(), vec![operation]) else {
+            return Err("control-bearing source path was accepted".to_owned());
+        };
+        if error.contains(source_path) {
+            return Err(format!("source-path diagnostic leaked: {error}"));
+        }
     }
     Ok(())
 }

@@ -30,7 +30,7 @@
 
 //! Canonical Unreal plan hashing and rendering orchestration.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use shar_sha256::digest_hex;
 
@@ -153,14 +153,57 @@ fn validate_operation_set(operations: &[ConversionPlan]) -> Result<(), String> {
             ));
         }
     }
+    let operation_families = operations
+        .iter()
+        .map(|operation| (operation.operation_id(), operation.family()))
+        .collect::<BTreeMap<_, _>>();
     for operation in operations {
         for dependency in &operation.dependencies {
-            if !operation_ids.contains(dependency) {
+            let Some(dependency_family) = operation_families.get(dependency)
+            else {
                 return Err(format!(
                     "operation {} depends on unknown operation {dependency}",
                     operation.operation_id()
                 ));
+            };
+            if *dependency_family > operation.family() {
+                return Err(
+                    "operation depends on a later plan family".to_owned()
+                );
             }
+        }
+    }
+    validate_acyclic_dependencies(operations)
+}
+
+fn validate_acyclic_dependencies(
+    operations: &[ConversionPlan],
+) -> Result<(), String> {
+    let mut remaining = operations
+        .iter()
+        .map(|operation| {
+            (operation.operation_id(), operation.dependencies.as_slice())
+        })
+        .collect::<BTreeMap<_, _>>();
+    let mut completed = BTreeSet::new();
+    while !remaining.is_empty() {
+        let ready = remaining
+            .iter()
+            .filter(|(_operation_id, dependencies)| {
+                dependencies
+                    .iter()
+                    .all(|dependency| completed.contains(dependency))
+            })
+            .map(|(operation_id, _dependencies)| operation_id.clone())
+            .collect::<Vec<_>>();
+        if ready.is_empty() {
+            return Err(
+                "operation dependency graph contains a cycle".to_owned()
+            );
+        }
+        for operation_id in ready {
+            let _removed = remaining.remove(&operation_id);
+            let _inserted = completed.insert(operation_id);
         }
     }
     Ok(())
