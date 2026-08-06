@@ -81,6 +81,14 @@ class ToolsetDefinition(NamedTuple):
     tools: tuple[ToolDefinition, ...]
     raw_schema: JsonObject
 
+    def require_tool(self, tool_name: str) -> ToolDefinition:
+        """Return one exact tool definition or fail closed."""
+        identity = canonical_tool_identity(self.name, tool_name)
+        for tool in self.tools:
+            if tool.name == identity:
+                return tool
+        fail_protocol(f"toolset {self.name}: requested tool is not available")
+
 
 def parse_toolset_catalog(text: str) -> tuple[ToolsetSummary, ...]:
     """Parse the native qualified-header toolset catalog.

@@ -60,6 +60,20 @@ When the field still contains `[FILL_ME]`, build arguments from the live schema.
 Do not replace the placeholder until the call succeeds and its postcondition is
 independently verified.
 
+## Translator enforcement
+
+The terminal translator refreshes the live toolset definition before every
+`call` and validates the supplied JSON object before invoking Unreal's native
+`call_tool` meta-tool. Structural failures therefore stop before editor
+mutation. The gate covers required fields, JSON types, nested objects and
+arrays, enums, constants, patterns, supported bounds, additional-property
+policy, and supported composition assertions.
+
+The validator does not apply defaults or guess values. An unsupported schema
+assertion fails closed and requires translator support; it must not be bypassed
+through `raw-call`. Native semantic rules still apply after structural
+validation, so independently verify editor state and postconditions.
+
 ## Build the top-level object
 
 1. Start from `{}`.

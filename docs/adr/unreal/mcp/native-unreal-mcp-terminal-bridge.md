@@ -14,15 +14,18 @@ read-back, a successful response can conceal stale schemas or incorrect state.
 
 AI agents connect to Unreal through the official native inbound MCP server. The
 repository-owned terminal translator is an MCP client, not a server; it uses
-loopback-only live discovery, serialized state changes, bounded calls, and
-independent postcondition verification.
+loopback-only live discovery, fail-closed validation of arguments against the
+current native input schema, serialized state changes, bounded calls, and
+independent postcondition verification. Unsupported schema assertions stop the
+call before the native mutation meta-tool runs.
 
 ## Consequences
 
 - AI control remains an outbound repository client connected to the official
   native inbound server on loopback.
-- Live discovery and bounded serialized calls prevent stale catalog assumptions
-  and concurrent editor mutation races.
+- Live discovery, structural argument validation, and bounded serialized calls
+  prevent stale catalog assumptions, malformed native requests, and concurrent
+  editor mutation races.
 - Transport success is insufficient; each consequential call requires an
   independent postcondition check.
 

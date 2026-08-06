@@ -36,6 +36,7 @@ from typing import NamedTuple
 from typing import Self
 from typing import TYPE_CHECKING
 
+from mcp.domain.argument_schema import validate_tool_arguments
 from mcp.domain.catalog import ToolsetDefinition
 from mcp.domain.catalog import parse_toolset_catalog
 from mcp.domain.catalog import parse_toolset_definition
@@ -46,6 +47,7 @@ from mcp.domain.tool_identity import native_tool_leaf
 if TYPE_CHECKING:
     from types import TracebackType
 
+    from mcp.domain.catalog import ToolDefinition
     from mcp.domain.catalog import ToolsetSummary
     from mcp.domain.json_types import JsonObject
     from mcp.domain.session import McpSession
@@ -239,6 +241,15 @@ class UnrealMcpTranslator:
         """
         normalized_toolset = toolset_name.strip()
         native_name = native_tool_leaf(normalized_toolset, tool_name)
+        tool = self._resolve_tool_definition(
+            normalized_toolset,
+            tool_name,
+        )
+        validate_tool_arguments(
+            tool.input_schema,
+            arguments,
+            context=f"tool {tool.name} arguments",
+        )
         params: JsonObject = {
             "tool_name": native_name,
             "arguments": arguments,
@@ -250,6 +261,26 @@ class UnrealMcpTranslator:
             "call_tool",
             params,
         ).require_success()
+
+    def _resolve_tool_definition(
+        self,
+        toolset_name: str,
+        tool_name: str,
+    ) -> ToolDefinition:
+        if toolset_name:
+            return self.describe_toolset(toolset_name).require_tool(tool_name)
+        requested = native_tool_leaf("", tool_name)
+        matches = tuple(
+            tool
+            for definition in self.discover_catalog()
+            for tool in definition.tools
+            if tool.name == requested or tool.name.rsplit(".", 1)[-1] == requested
+        )
+        if len(matches) != 1:
+            fail_protocol(
+                "global tool lookup must resolve to exactly one live schema"
+            )
+        return matches[0]
 
     def raw_call(
         self,
@@ -266,11 +297,14 @@ class UnrealMcpTranslator:
             The successful normalized native tool outcome.
 
         """
-        if not tool_name.strip():
+        normalized_name = tool_name.strip()
+        if not normalized_name:
             fail_protocol("top-level tool name must not be empty")
+        if normalized_name == "call_tool":
+            fail_protocol("raw call cannot invoke the native mutation meta-tool")
         return self._transport.call_tool(
             self._require_session(),
-            tool_name,
+            normalized_name,
             arguments,
         ).require_success()
 

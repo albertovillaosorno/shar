@@ -114,6 +114,17 @@ class _RetryCleanupTransport(_CleanupTransport):
         self.closed = True
 
 
+def test_raw_call_rejects_native_mutation_meta_tool_programmatically() -> None:
+    transport = _CleanupTransport(ProtocolError("close failed"))
+    translator = UnrealMcpTranslator(transport)
+
+    with pytest.raises(ProtocolError, match="mutation meta-tool"):
+        _ = translator.raw_call(
+            "call_tool",
+            {"tool_name": "create_asset", "arguments": {"name": "Asset"}},
+        )
+
+
 def test_failed_close_retains_session_for_retry() -> None:
     transport = _RetryCleanupTransport()
     translator = UnrealMcpTranslator(transport)

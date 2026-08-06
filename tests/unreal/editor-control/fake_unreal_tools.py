@@ -71,7 +71,15 @@ def _editor_schema() -> JsonObject:
                 "description": "Create one synthetic asset.",
                 "inputSchema": {
                     "type": "object",
-                    "properties": {"name": {"type": "string"}},
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "minLength": 1,
+                            "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+                        }
+                    },
+                    "required": ["name"],
+                    "additionalProperties": False,
                 },
                 "outputSchema": {"type": "object"},
             }
