@@ -112,17 +112,36 @@ _FAMILY_REQUIREMENTS: dict[str, set[str]] = {
 }
 
 
-def build_plan_bundle(*, with_import_operation: bool = False) -> dict[str, str]:
+def build_plan_bundle(
+    *,
+    with_import_operation: bool = False,
+    import_source_revision: str | None = None,
+    with_texture_operation: bool = False,
+    texture_source_revision: str | None = None,
+    with_construction_operation: bool = False,
+    construction_source_path: str = "manifest.jsonl",
+    construction_source_revision: str | None = None,
+) -> dict[str, str]:
     """Return one canonical six-plan bundle keyed by filename."""
     revisions: dict[str, str] = {}
     files: dict[str, str] = {}
     entries: list[JsonValue] = []
     for plan_id, filename, dependency_ids in _PLAN_SPECS:
-        operations = (
-            [_wav_operation()]
-            if with_import_operation and plan_id == "asset-import-plan"
-            else []
-        )
+        operations: list[JsonValue] = []
+        if with_import_operation and plan_id == "asset-import-plan":
+            operations.append(_wav_operation(import_source_revision or "b" * 64))
+        if with_texture_operation and plan_id == "asset-import-plan":
+            operations.append(
+                _texture_operation(texture_source_revision or "c" * 64)
+            )
+        if with_construction_operation and plan_id == "asset-construction-plan":
+            operations.append(
+                _json_operation(
+                    construction_source_path,
+                    construction_source_revision
+                    or str(_CONTEXT["source_manifest_revision"]),
+                )
+            )
         dependencies = [
             OrderedDict(
                 (
@@ -169,9 +188,19 @@ def write_plan_bundle(
     root: Path,
     *,
     with_import_operation: bool = False,
+    import_source_revision: str | None = None,
+    with_texture_operation: bool = False,
+    texture_source_revision: str | None = None,
+    with_construction_operation: bool = False,
 ) -> dict[str, str]:
     """Write one canonical synthetic bundle and return its texts."""
-    files = build_plan_bundle(with_import_operation=with_import_operation)
+    files = build_plan_bundle(
+        with_import_operation=with_import_operation,
+        import_source_revision=import_source_revision,
+        with_texture_operation=with_texture_operation,
+        texture_source_revision=texture_source_revision,
+        with_construction_operation=with_construction_operation,
+    )
     root.mkdir(parents=True)
     for filename, text in files.items():
         _ = (root / filename).write_text(text, encoding="utf-8", newline="\n")
@@ -211,7 +240,7 @@ def _plan_body(
     )
 
 
-def _wav_operation() -> OrderedDict[str, JsonValue]:
+def _wav_operation(source_revision: str) -> OrderedDict[str, JsonValue]:
     fields: OrderedDict[str, JsonValue] = OrderedDict(
         (
             ("operation_id", ""),
@@ -220,7 +249,7 @@ def _wav_operation() -> OrderedDict[str, JsonValue]:
             ("source_format", "wav"),
             ("target_family", "audio"),
             ("source_path", "extracted/dialog/audio.wav"),
-            ("source_revision", "b" * 64),
+            ("source_revision", source_revision),
             (
                 "destination",
                 "/Game/Generated/SHAR/dialog/dialog/audio_source.audio_source",
@@ -230,6 +259,95 @@ def _wav_operation() -> OrderedDict[str, JsonValue]:
             ("import_profile", "shar-audio-v1"),
             ("dependencies", []),
             ("readiness", "ready"),
+            ("world_owned", False),
+            ("runtime_bound", True),
+        )
+    )
+    preimage = "\n".join(
+        str(fields[field])
+        for field in (
+            "package_identity",
+            "source_identity",
+            "source_format",
+            "target_family",
+            "source_path",
+            "source_revision",
+            "destination",
+            "target_class",
+            "importer",
+            "import_profile",
+        )
+    )
+    fields["operation_id"] = f"operation-{_digest(preimage)[:16]}"
+    return fields
+
+
+def _texture_operation(
+    source_revision: str,
+) -> OrderedDict[str, JsonValue]:
+    fields: OrderedDict[str, JsonValue] = OrderedDict(
+        (
+            ("operation_id", ""),
+            ("package_identity", "texture-package"),
+            ("source_identity", "texture-source"),
+            ("source_format", "image"),
+            ("target_family", "texture"),
+            ("source_path", "extracted/texture/image.png"),
+            ("source_revision", source_revision),
+            (
+                "destination",
+                "/Game/Generated/SHAR/test/texture_image.texture_image",
+            ),
+            ("target_class", "Texture2D"),
+            ("importer", "texture-factory"),
+            ("import_profile", "shar-texture-v1"),
+            ("dependencies", []),
+            ("readiness", "ready"),
+            ("world_owned", False),
+            ("runtime_bound", True),
+        )
+    )
+    preimage = "\n".join(
+        str(fields[field])
+        for field in (
+            "package_identity",
+            "source_identity",
+            "source_format",
+            "target_family",
+            "source_path",
+            "source_revision",
+            "destination",
+            "target_class",
+            "importer",
+            "import_profile",
+        )
+    )
+    fields["operation_id"] = f"operation-{_digest(preimage)[:16]}"
+    return fields
+
+
+def _json_operation(
+    source_path: str,
+    source_revision: str,
+) -> OrderedDict[str, JsonValue]:
+    fields: OrderedDict[str, JsonValue] = OrderedDict(
+        (
+            ("operation_id", ""),
+            ("package_identity", "structured-package"),
+            ("source_identity", "structured-package-normalized-json"),
+            ("source_format", "json"),
+            ("target_family", "structured-data"),
+            ("source_path", source_path),
+            ("source_revision", source_revision),
+            (
+                "destination",
+                "/Game/Generated/SHAR/data/structured_package.structured_package",
+            ),
+            ("target_class", "DataAsset"),
+            ("importer", "shar-data-asset-factory"),
+            ("import_profile", "shar-data-asset-v1"),
+            ("dependencies", []),
+            ("readiness", "requires-editor-factory"),
             ("world_owned", False),
             ("runtime_bound", True),
         )

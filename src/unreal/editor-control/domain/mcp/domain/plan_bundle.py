@@ -173,6 +173,27 @@ class PlanSummary(NamedTuple):
     operation_count: int
 
 
+class PlanOperation(NamedTuple):
+    """One fully validated generated Unreal operation."""
+
+    plan_id: str
+    operation_id: str
+    package_identity: str
+    source_identity: str
+    source_format: str
+    target_family: str
+    source_path: str
+    source_revision: str
+    destination: str
+    target_class: str
+    importer: str
+    import_profile: str
+    dependencies: tuple[str, ...]
+    readiness: str
+    world_owned: bool
+    runtime_bound: bool
+
+
 class PlanBundleReport(NamedTuple):
     """Independent preflight evidence for one complete plan bundle."""
 
@@ -207,11 +228,26 @@ class PlanBundleReport(NamedTuple):
         }
 
 
+class ValidatedPlanBundle(NamedTuple):
+    """Canonical report and typed operations from one accepted bundle."""
+
+    report: PlanBundleReport
+    operations: tuple[PlanOperation, ...]
+
+
 def validate_plan_bundle(
     index_text: str,
     plan_texts: dict[str, str],
 ) -> PlanBundleReport:
     """Validate one complete seven-file plan bundle from canonical text."""
+    return parse_plan_bundle(index_text, plan_texts).report
+
+
+def parse_plan_bundle(
+    index_text: str,
+    plan_texts: dict[str, str],
+) -> ValidatedPlanBundle:
+    """Parse one complete canonical bundle into immutable typed evidence."""
     index = _parse_document(index_text, context="plan bundle index")
     _require_exact_fields(index, _INDEX_FIELDS, context="plan bundle index")
     if _text(index, "schema", context="plan bundle index") != _BUNDLE_SCHEMA:
@@ -261,6 +297,7 @@ def validate_plan_bundle(
         fail_protocol("plan bundle file inventory is not exact")
 
     all_operations: list[tuple[str, JsonObject]] = []
+    typed_operations: list[PlanOperation] = []
     readiness = Counter[str]()
     for summary, (_plan_id, _filename, dependency_ids) in zip(
         summaries,
@@ -276,7 +313,9 @@ def validate_plan_bundle(
         )
         for operation in operations:
             all_operations.append((summary.plan_id, operation))
-            readiness[_text(operation, "readiness", context="plan operation")] += 1
+            typed = _typed_operation(summary.plan_id, operation)
+            typed_operations.append(typed)
+            readiness[typed.readiness] += 1
 
     _validate_operation_set(all_operations)
     canonical_index = _canonical_index(index, revision=index_revision)
@@ -286,7 +325,7 @@ def validate_plan_bundle(
     if _digest(preimage) != index_revision:
         fail_protocol("plan bundle index revision does not match its body")
 
-    return PlanBundleReport(
+    report = PlanBundleReport(
         revision=index_revision,
         source_manifest_revision=context[0],
         engine_contract_revision=context[1],
@@ -295,6 +334,50 @@ def validate_plan_bundle(
         operation_count=sum(item.operation_count for item in summaries),
         readiness_counts=dict(readiness),
         plans=tuple(summaries),
+    )
+    return ValidatedPlanBundle(report, tuple(typed_operations))
+
+
+def _typed_operation(plan_id: str, operation: JsonObject) -> PlanOperation:
+    return PlanOperation(
+        plan_id=plan_id,
+        operation_id=_text(operation, "operation_id", context="plan operation"),
+        package_identity=_text(
+            operation,
+            "package_identity",
+            context="plan operation",
+        ),
+        source_identity=_text(
+            operation,
+            "source_identity",
+            context="plan operation",
+        ),
+        source_format=_text(operation, "source_format", context="plan operation"),
+        target_family=_text(operation, "target_family", context="plan operation"),
+        source_path=_text(operation, "source_path", context="plan operation"),
+        source_revision=_text(
+            operation,
+            "source_revision",
+            context="plan operation",
+        ),
+        destination=_text(operation, "destination", context="plan operation"),
+        target_class=_text(operation, "target_class", context="plan operation"),
+        importer=_text(operation, "importer", context="plan operation"),
+        import_profile=_text(
+            operation,
+            "import_profile",
+            context="plan operation",
+        ),
+        dependencies=tuple(
+            _string_array(operation, "dependencies", context="plan operation")
+        ),
+        readiness=_text(operation, "readiness", context="plan operation"),
+        world_owned=_boolean(operation, "world_owned", context="plan operation"),
+        runtime_bound=_boolean(
+            operation,
+            "runtime_bound",
+            context="plan operation",
+        ),
     )
 
 
@@ -354,7 +437,11 @@ def _validate_plan(
     outputs = _array(plan, "outputs", context="plan envelope")
     expected_outputs: list[str] = []
     for operation in operations:
-        _validate_operation(operation, plan_id=summary.plan_id)
+        _validate_operation(
+            operation,
+            plan_id=summary.plan_id,
+            source_manifest_revision=expected_context[0],
+        )
         expected_outputs.append(
             _text(operation, "destination", context="plan operation")
         )
@@ -370,7 +457,12 @@ def _validate_plan(
     return operations
 
 
-def _validate_operation(operation: JsonObject, *, plan_id: str) -> None:
+def _validate_operation(
+    operation: JsonObject,
+    *,
+    plan_id: str,
+    source_manifest_revision: str,
+) -> None:
     _require_exact_fields(operation, _OPERATION_FIELDS, context="plan operation")
     operation_id = _text(operation, "operation_id", context="plan operation")
     if _OPERATION_ID.fullmatch(operation_id) is None:
@@ -438,6 +530,11 @@ def _validate_operation(operation: JsonObject, *, plan_id: str) -> None:
         fail_protocol("plan operation source contract is inconsistent")
     if plan_id != expected_plan:
         fail_protocol("plan operation is assigned to the wrong plan family")
+    if source_format == "json" and (
+        source_path != "manifest.jsonl"
+        or source_revision != source_manifest_revision
+    ):
+        fail_protocol("construction operation source evidence is not canonical")
 
     preimage = "\n".join(
         (
