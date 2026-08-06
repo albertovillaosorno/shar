@@ -48,9 +48,12 @@ struct Symbol {
 }
 
 /// To json.
-pub(super) fn to_json(input: &Path) -> io::Result<String> {
+pub(super) fn to_json(
+    input: &Path,
+    source_identity: &str,
+) -> io::Result<String> {
     let bytes = local::read_bytes(input)?;
-    Ok(bytes_to_json(&bytes, &input.display().to_string()))
+    Ok(bytes_to_json(&bytes, source_identity))
 }
 
 /// Bytes to json.
