@@ -40,6 +40,7 @@ from mcp.adapter_inbound.arguments import UsageError
 from mcp.adapter_inbound.arguments import is_help_action
 from mcp.adapter_inbound.arguments import parse_catalog_format
 from mcp.adapter_inbound.arguments import parse_invocation
+from mcp.adapter_inbound.arguments import parse_plan_root
 from mcp.adapter_inbound.arguments import parse_raw_call
 from mcp.adapter_inbound.arguments import parse_skill_output_path
 from mcp.adapter_inbound.arguments import parse_tool_call
@@ -49,6 +50,7 @@ from mcp.adapter_outbound.catalog_renderer import render_catalog_json
 from mcp.adapter_outbound.catalog_renderer import render_catalog_markdown
 from mcp.adapter_outbound.catalog_renderer import render_json
 from mcp.adapter_outbound.filesystem_skill_store import FilesystemSkillStore
+from mcp.adapter_outbound.plan_bundle_reader import FilesystemPlanBundleReader
 from mcp.adapter_outbound.skill_markdown_renderer import MarkdownSkillRenderer
 from mcp.adapter_outbound.streamable_http import StreamableHttpTransport
 from mcp.adapter_outbound.unreal_mcp_version import (
@@ -88,6 +90,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             _write_stdout(usage_text())
             return _EXIT_SUCCESS
         _validate_action_operands(invocation)
+        if invocation.action == "plan-preflight":
+            return _run_plan_preflight(parse_plan_root(invocation.operands))
         return _run(invocation)
     except UsageError as error:
         _write_stderr(f"error: {error}\n\n{usage_text()}")
@@ -104,6 +108,9 @@ def _validate_action_operands(invocation: CliInvocation) -> None:
     if action in {"doctor", "toolsets"}:
         require_operand_count(action, operands, expected=0)
         return
+    if action == "plan-preflight":
+        _ = parse_plan_root(operands)
+        return
     if action == "describe":
         require_operand_count(action, operands, expected=1)
         return
@@ -117,6 +124,12 @@ def _validate_action_operands(invocation: CliInvocation) -> None:
         _ = parse_skill_output_path(operands)
         return
     _ = parse_catalog_format(operands)
+
+
+def _run_plan_preflight(root: Path) -> int:
+    report = FilesystemPlanBundleReader(root).read()
+    _write_stdout(render_json(report.to_json()))
+    return _EXIT_SUCCESS
 
 
 def _run(invocation: CliInvocation) -> int:
