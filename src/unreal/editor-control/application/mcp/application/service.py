@@ -202,6 +202,21 @@ class UnrealMcpTranslator:
         ).require_success()
         return parse_toolset_definition(normalized_name, outcome.text)
 
+    def describe_available_toolsets(
+        self,
+        required_names: tuple[str, ...],
+    ) -> tuple[ToolsetDefinition, ...]:
+        """Describe only required toolsets that exist in the live registry."""
+        requested = tuple(sorted(set(required_names)))
+        if not requested:
+            return ()
+        available = {summary.name for summary in self.list_toolsets()}
+        return tuple(
+            self.describe_toolset(name)
+            for name in requested
+            if name in available
+        )
+
     def discover_catalog(self) -> tuple[ToolsetDefinition, ...]:
         """Return a stable complete catalog sorted by toolset name.
 
