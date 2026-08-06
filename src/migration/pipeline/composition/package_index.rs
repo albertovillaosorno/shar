@@ -25,7 +25,7 @@
 // - Usage:
 //   - Compiled by the Pipeline composition root.
 // - Defaults:
-//   - Read failures retain escaped path and operating-system evidence.
+//   - Read failures expose only the public action and error class.
 //
 
 //! Package-index filesystem intake.
@@ -59,12 +59,20 @@ impl PhaseThreePackageIndex {
     }
 }
 
-/// Read one package-index artifact with escaped path evidence on failure.
+/// Read one package-index artifact without exposing its physical path.
 fn read_contents(path: &Path) -> Result<String, PackageIntakeError> {
-    fs::read_to_string(path).map_err(|error| {
-        PackageIntakeError::new(format!(
-            "failed to read package index {}: {error}",
-            path.display()
-        ))
-    })
+    fs::read_to_string(path).map_err(|error| package_index_io_error(&error))
 }
+
+/// Builds one public-safe package-index intake diagnostic.
+fn package_index_io_error(error: &std::io::Error) -> PackageIntakeError {
+    PackageIntakeError::new(format!(
+        "failed to read package index ({:?})",
+        error.kind(),
+    ))
+}
+
+#[cfg(test)]
+// jig-ignore-next-line: exact syntax is indivisible
+#[path = "../../../../tests/migration/pipeline/unit/composition/package_index_tests.rs"]
+mod tests;
