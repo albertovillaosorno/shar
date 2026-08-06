@@ -1,7 +1,7 @@
 # Synthetic Unreal character-pipeline transport fixture
 
 - Status: Active
-- Last reviewed: 2026-07-18
+- Last reviewed: 2026-08-06
 
 ## Purpose
 
@@ -37,7 +37,7 @@ Current SHA-256 digests:
 77233971822a36a4e01ca42daa07e6a50574f7c7dc6a4a51c91b0928916eeb1e  SM_unreal_fixture_triangle.fbx
 0c1cdacf6d41ca1a607be2e2a41b18707cc531bcf64326a3dcfbe0dd3892170b  T_unreal_fixture_triangle_BC.png
 b2c4c0608f6c78f147d92c3cc0d176f29f9933e0f20b6092edf957e21cc8d538  unreal-import-plan.json
-3ae21c1748932fe83f9cd97804fd9a6fb85cb1e36c06e753730c392d5fed5a4b  expected-native-read-back.json
+34850f18e3725e8f79a0a3a0f53fd35aa71601acf6fe74b9bed138930853750c  expected-native-read-back.json
 ```
 
 ## Native test destination
@@ -46,6 +46,21 @@ Editor automation imports into `/Game/SHAR/Tests/Generated`. Generated `.uasset`
 and `.umap` files remain ignored. A clean test deletes that native test root,
 imports the fixture, validates the asset, reads it back, compares the expected
 contract, and deletes the generated result.
+
+## Verified native read-back
+
+A clean Unreal MCP transaction on 2026-08-06 imported the FBX with the native
+`StaticMeshTools.import_file` command, read the generated object, and deleted
+the generated asset. `ObjectTools.get_class` returned
+`/Script/Engine.StaticMesh`; the mesh tools returned three vertices, one
+triangle, one LOD, the `fixture_material` slot, and bounds with an extent of
+`[50.0, 0.0, 50.0]` centimeters. A second existence check confirmed that the
+asset was absent after deletion.
+
+The current native tool catalog does not expose a Static Mesh UV-channel count,
+so the one-channel expectation remains a fixture contract awaiting an explicit
+read-back tool. It must not be reported as native evidence until that tool
+exists and the clean transaction verifies it.
 
 The fixture cannot be promoted into shipping content and cannot be used as
 visual fallback art.

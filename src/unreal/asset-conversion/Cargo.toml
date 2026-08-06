@@ -9,8 +9,16 @@ publish = false
 shar_json_text = { path = "../../foundation/json-text" }
 shar_sha256 = { path = "../../foundation/sha256" }
 
+[dev-dependencies]
+# serde_json validates repository-owned import-plan and read-back fixtures.
+serde_json = "1"
+
 [lib]
 path = "composition/lib.rs"
+
+[[test]]
+name = "fixture_contract"
+path = "../../../tests/unreal/asset-conversion/fixture_contract.rs"
 
 [lints]
 workspace = true

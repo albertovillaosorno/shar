@@ -264,6 +264,7 @@ version = "26.7.0"
 name = "shar_unreal_conversion"
 version = "26.7.0"
 dependencies = [
+ "serde_json",
  "shar_json_text",
  "shar_sha256",
 ]
