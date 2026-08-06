@@ -52,16 +52,22 @@ const SEVEN_ZIP_REDUCED_URL: &str = "https://www.7-zip.org/a/7zr.exe";
 pub(super) fn media_tool_path(name: &str) -> PathBuf {
     if let Ok(dir) = std::env::var("SHAR_UNREAL_FFMPEG_DIR") {
         let local = PathBuf::from(dir).join(media_tool_file_name(name));
-        if local.exists() {
+        if is_regular_media_tool(&local) {
             return local;
         }
     }
     let dependency_tool =
         repo_ffmpeg_bin_dir().join(media_tool_file_name(name));
-    if dependency_tool.exists() {
+    if is_regular_media_tool(&dependency_tool) {
         return dependency_tool;
     }
     PathBuf::from(name)
+}
+
+/// Returns whether one media tool candidate is a direct regular file.
+fn is_regular_media_tool(path: &Path) -> bool {
+    fs::symlink_metadata(path)
+        .is_ok_and(|metadata| metadata.file_type().is_file())
 }
 
 /// Ensures movie export has ffmpeg, ffprobe, and the HAP encoder.
@@ -74,9 +80,9 @@ pub(super) fn ensure_ffmpeg_dependency() -> Result<(), String> {
             .arg("-version")
             .output()
             .map_err(|error| {
-                format!(
-                    "movie export requires {executable} in PATH or \
-                         .dependencies/ffmpeg/bin: {error}"
+                dependency_io_error(
+                    &format!("start {executable} dependency check"),
+                    &error,
                 )
             })?;
         if !output.status.success() {
@@ -124,9 +130,12 @@ fn install_repo_ffmpeg_dependency() -> Result<(), String> {
     let staging_dir = root.join("staging");
     let bootstrap_dir = root.join("bootstrap");
     let bin_dir = repo_ffmpeg_bin_dir();
-    fs::create_dir_all(&download_dir).map_err(path_error(&download_dir))?;
-    fs::create_dir_all(&bootstrap_dir).map_err(path_error(&bootstrap_dir))?;
-    fs::create_dir_all(&bin_dir).map_err(path_error(&bin_dir))?;
+    fs::create_dir_all(&download_dir)
+        .map_err(dependency_path_error("create download cache"))?;
+    fs::create_dir_all(&bootstrap_dir)
+        .map_err(dependency_path_error("create bootstrap cache"))?;
+    fs::create_dir_all(&bin_dir)
+        .map_err(dependency_path_error("create media tool cache"))?;
 
     let seven_zip = bootstrap_dir.join("7zr.exe");
     download_file(SEVEN_ZIP_REDUCED_URL, &seven_zip, "7-Zip extractor")?;
@@ -134,9 +143,11 @@ fn install_repo_ffmpeg_dependency() -> Result<(), String> {
     download_file(FFMPEG_FULL_BUILD_URL, &archive, "ffmpeg full build")?;
 
     if staging_dir.exists() {
-        fs::remove_dir_all(&staging_dir).map_err(path_error(&staging_dir))?;
+        fs::remove_dir_all(&staging_dir)
+            .map_err(dependency_path_error("reset media staging"))?;
     }
-    fs::create_dir_all(&staging_dir).map_err(path_error(&staging_dir))?;
+    fs::create_dir_all(&staging_dir)
+        .map_err(dependency_path_error("create media staging"))?;
     let output_dir = format!("-o{}", staging_dir.display());
     let status = Command::new(&seven_zip)
         .arg("x")
@@ -145,7 +156,7 @@ fn install_repo_ffmpeg_dependency() -> Result<(), String> {
         .arg(&archive)
         .status()
         .map_err(|error| {
-            format!("failed to run repository-local 7zr extractor: {error}")
+            dependency_io_error("run repository-local 7zr extractor", &error)
         })?;
     if !status.success() {
         return Err(
@@ -178,10 +189,12 @@ fn download_file(url: &str, target: &Path, label: &str) -> Result<(), String> {
     let parent = target
         .parent()
         .ok_or_else(|| format!("{label} has no parent directory"))?;
-    fs::create_dir_all(parent).map_err(path_error(parent))?;
+    fs::create_dir_all(parent)
+        .map_err(dependency_path_error("create download parent"))?;
     let partial = target.with_extension("part");
     if partial.exists() {
-        fs::remove_file(&partial).map_err(path_error(&partial))?;
+        fs::remove_file(&partial)
+            .map_err(dependency_path_error("remove stale partial download"))?;
     }
     let status = Command::new("curl")
         .arg("-L")
@@ -192,14 +205,18 @@ fn download_file(url: &str, target: &Path, label: &str) -> Result<(), String> {
         .arg(&partial)
         .arg(url)
         .status()
-        .map_err(|error| format!("curl failed for {label}: {error}"))?;
+        .map_err(|error| {
+            dependency_io_error(&format!("run curl for {label}"), &error)
+        })?;
     if !status.success() {
         return Err(format!("failed to download {label} from {url}"));
     }
     if target.exists() {
-        fs::remove_file(target).map_err(path_error(target))?;
+        fs::remove_file(target)
+            .map_err(dependency_path_error("replace downloaded artifact"))?;
     }
-    fs::rename(&partial, target).map_err(path_error(target))?;
+    fs::rename(&partial, target)
+        .map_err(dependency_path_error("publish downloaded artifact"))?;
     Ok(())
 }
 
@@ -211,7 +228,8 @@ fn copy_dependency_tool(
 ) -> Result<(), String> {
     let source = find_file_named(staging_dir, file_name)?;
     let target = bin_dir.join(file_name);
-    let _bytes = fs::copy(&source, &target).map_err(path_error(&target))?;
+    let _bytes = fs::copy(&source, &target)
+        .map_err(dependency_path_error("publish media tool"))?;
     Ok(())
 }
 
@@ -220,12 +238,16 @@ fn find_file_named(root: &Path, file_name: &str) -> Result<PathBuf, String> {
     let mut stack = vec![root.to_path_buf()];
     while let Some(current) = stack.pop() {
         let entries = fs::read_dir(&current)
-            .map_err(path_error(&current))?
+            .map_err(dependency_path_error("read media archive directory"))?
             .collect::<Result<Vec<_>, _>>()
-            .map_err(path_error(&current))?;
+            .map_err(dependency_path_error("read media archive directory"))?;
         for entry in entries {
             let path = entry.path();
-            let file_type = entry.file_type().map_err(path_error(&path))?;
+            let file_type = entry
+                .file_type()
+                .map_err(dependency_path_error(
+                    "inspect media archive entry",
+                ))?;
             if file_type.is_dir() {
                 stack.push(path);
             } else if file_type.is_file()
@@ -249,10 +271,7 @@ fn media_tool_has_hap_encoder(ffmpeg: &Path) -> Result<bool, String> {
         .arg("-encoders")
         .output()
         .map_err(|error| {
-            format!(
-                "ffmpeg encoder check failed for {}: {error}",
-                ffmpeg.display()
-            )
+            dependency_io_error("run ffmpeg encoder check", &error)
         })?;
     if !output.status.success() {
         return Ok(false);
@@ -277,10 +296,16 @@ fn repo_ffmpeg_bin_dir() -> PathBuf {
     PathBuf::from(REPO_FFMPEG_DIR).join("bin")
 }
 
-/// Captures the path in filesystem errors so dependency failures are
-/// actionable.
-fn path_error(path: &Path) -> impl FnOnce(std::io::Error) -> String + '_ {
-    move |error| format!("{}: {error}", path.display())
+/// Builds one public-safe dependency I/O diagnostic.
+fn dependency_io_error(action: &str, error: &std::io::Error) -> String {
+    format!("{action} failed ({:?})", error.kind())
+}
+
+/// Adapts one filesystem operation to a public-safe dependency diagnostic.
+fn dependency_path_error(
+    action: &'static str,
+) -> impl FnOnce(std::io::Error) -> String {
+    move |error| dependency_io_error(action, &error)
 }
 
 #[cfg(test)]
