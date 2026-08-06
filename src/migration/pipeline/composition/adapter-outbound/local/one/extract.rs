@@ -611,15 +611,11 @@ fn require_ffmpeg() -> PipelineOutcome<()> {
 
 /// Exports one decoded movie package through `FFmpeg` and validates outputs.
 // The complete media transaction must remain ordered and fail closed.
-#[expect(
-    clippy::too_many_lines,
-    reason = "Movie export is one fail-closed decode and publication \
-              transaction."
-)]
 fn export_movie_with_ffmpeg(
     record: &MovieRecord,
     plan: &UnrealHapPackagePlan,
 ) -> PipelineOutcome<()> {
+    let public_source = portable_path_text(&record.relative_path);
     let legacy_frames = plan.movie_directory.join("frames");
     if legacy_frames.exists() {
         fs::remove_dir_all(&legacy_frames).map_err(io_error(&legacy_frames))?;
@@ -636,7 +632,10 @@ fn export_movie_with_ffmpeg(
         fs::remove_file(&plan.hap_video_path)
             .map_err(io_error(&plan.hap_video_path))?;
     }
-    let source_probe = ffprobe_video_stream_json(&record.source_path)?;
+    let source_probe = ffprobe_video_stream_json(
+        &record.source_path,
+        &public_source,
+    )?;
     write_bytes(
         &plan.movie_directory.join("source-video.ffprobe.json"),
         source_probe.as_bytes(),
@@ -657,22 +656,24 @@ fn export_movie_with_ffmpeg(
         .arg(&plan.hap_video_path)
         .status()
         .map_err(|error| {
-            PipelineError::new(format!(
-                "failed to run ffmpeg HAP export for {}: {error}",
-                record.source_path.display()
-            ))
+            movie_tool_io_error(
+                "run ffmpeg HAP export",
+                &public_source,
+                &error,
+            )
         })?;
     if !video_status.success() {
         return Err(PipelineError::new(format!(
-            "ffmpeg failed to export HAP video from {}",
-            record.source_path.display()
+            "ffmpeg failed to export HAP video from {public_source}"
         )));
     }
-    let audio_tracks = ffprobe_audio_stream_count(&record.source_path)?;
+    let audio_tracks = ffprobe_audio_stream_count(
+        &record.source_path,
+        &public_source,
+    )?;
     if audio_tracks == 0 {
         return Err(PipelineError::new(format!(
-            "ffprobe found no audio streams in {}",
-            record.source_path.display()
+            "ffprobe found no audio streams in {public_source}"
         )));
     }
     for index in 0..audio_tracks {
@@ -690,42 +691,46 @@ fn export_movie_with_ffmpeg(
             .arg(&output_wav)
             .status()
             .map_err(|error| {
-                PipelineError::new(format!(
-                    "failed to run ffmpeg audio export for {}: {error}",
-                    record.source_path.display()
-                ))
+                movie_tool_io_error(
+                    "run ffmpeg audio export",
+                    &public_source,
+                    &error,
+                )
             })?;
         if !track_status.success() {
             return Err(PipelineError::new(format!(
-                "ffmpeg failed to export audio stream {} from {}",
+                concat!(
+                    "ffmpeg failed to export audio stream {} ",
+                    "from {}"
+                ),
                 index,
-                record.source_path.display()
+                public_source,
             )));
         }
     }
-    let (_fps, frame_rate_fraction) = ffprobe_video_fps(&record.source_path)?;
-    let report = format!(
-        concat!(
-            "{{\"schema\":\"shar-schoenwald.rmv-hap-export.v1\",",
-            "\"video_codec\":\"hap\",",
-            "\"hap_format\":\"{}\",",
-            "\"video_path\":\"{}\",",
-            "\"audio_tracks\":{},",
-            "\"source_probe\":\"{}\",",
-            "\"decoder\":\"ffmpeg\"}}
-"
-        ),
-        plan.hap_format,
-        json_escape(&plan.hap_video_path.display().to_string()),
-        audio_tracks,
-        "source-video.ffprobe.json"
-    );
+    let (_fps, frame_rate_fraction) = ffprobe_video_fps(
+        &record.source_path,
+        &public_source,
+    )?;
+    let report = render_movie_decode_report(plan, audio_tracks)?;
     write_bytes(
         &plan.movie_directory.join("decode-report.json"),
         report.as_bytes(),
     )?;
     write_movie_timing(&plan.movie_directory, &frame_rate_fraction)?;
     Ok(())
+}
+
+/// Builds one public-safe external movie-tool diagnostic.
+fn movie_tool_io_error(
+    action: &str,
+    public_source: &str,
+    error: &std::io::Error,
+) -> PipelineError {
+    PipelineError::new(format!(
+        "{action} for {public_source} failed ({:?})",
+        error.kind(),
+    ))
 }
 
 /// Returns whether all required runtime movie outputs are non-empty.
@@ -745,7 +750,10 @@ fn movie_outputs_complete(plan: &UnrealHapPackagePlan) -> bool {
 }
 
 /// Ffprobe video stream json.
-fn ffprobe_video_stream_json(input: &Path) -> PipelineOutcome<String> {
+fn ffprobe_video_stream_json(
+    input: &Path,
+    public_source: &str,
+) -> PipelineOutcome<String> {
     let output = Command::new(media_tool_path("ffprobe"))
         .args([
             "-v",
@@ -763,27 +771,30 @@ fn ffprobe_video_stream_json(input: &Path) -> PipelineOutcome<String> {
         .arg(input)
         .output()
         .map_err(|error| {
-            PipelineError::new(format!(
-                "failed to run ffprobe for {}: {error}",
-                input.display()
-            ))
+            movie_tool_io_error("run ffprobe", public_source, &error)
         })?;
     if !output.status.success() {
         return Err(PipelineError::new(format!(
-            "ffprobe failed for {}",
-            input.display()
+            "ffprobe failed for {public_source}"
         )));
     }
     String::from_utf8(output.stdout).map_err(|error| {
         PipelineError::new(format!(
-            "ffprobe returned non-UTF-8 video metadata for {}: {error}",
-            input.display()
+            concat!(
+                "ffprobe returned non-UTF-8 video metadata for ",
+                "{}: {}"
+            ),
+            public_source,
+            error,
         ))
     })
 }
 
 /// Ffprobe video fps.
-fn ffprobe_video_fps(input: &Path) -> PipelineOutcome<(f64, String)> {
+fn ffprobe_video_fps(
+    input: &Path,
+    public_source: &str,
+) -> PipelineOutcome<(f64, String)> {
     let output = Command::new(media_tool_path("ffprobe"))
         .args([
             "-v",
@@ -798,15 +809,11 @@ fn ffprobe_video_fps(input: &Path) -> PipelineOutcome<(f64, String)> {
         .arg(input)
         .output()
         .map_err(|error| {
-            PipelineError::new(format!(
-                "failed to run ffprobe for {}: {error}",
-                input.display()
-            ))
+            movie_tool_io_error("run ffprobe", public_source, &error)
         })?;
     if !output.status.success() {
         return Err(PipelineError::new(format!(
-            "ffprobe failed for {}",
-            input.display()
+            "ffprobe failed for {public_source}"
         )));
     }
     let fraction = String::from_utf8_lossy(&output.stdout)
@@ -834,7 +841,10 @@ fn parse_frame_rate_fraction(value: &str) -> f64 {
 }
 
 /// Ffprobe audio stream count.
-fn ffprobe_audio_stream_count(input: &Path) -> PipelineOutcome<usize> {
+fn ffprobe_audio_stream_count(
+    input: &Path,
+    public_source: &str,
+) -> PipelineOutcome<usize> {
     let output = Command::new(media_tool_path("ffprobe"))
         .args([
             "-v",
@@ -849,15 +859,11 @@ fn ffprobe_audio_stream_count(input: &Path) -> PipelineOutcome<usize> {
         .arg(input)
         .output()
         .map_err(|error| {
-            PipelineError::new(format!(
-                "failed to run ffprobe for {}: {error}",
-                input.display()
-            ))
+            movie_tool_io_error("run ffprobe", public_source, &error)
         })?;
     if !output.status.success() {
         return Err(PipelineError::new(format!(
-            "ffprobe failed for {}",
-            input.display()
+            "ffprobe failed for {public_source}"
         )));
     }
     Ok(String::from_utf8_lossy(&output.stdout)
@@ -950,6 +956,119 @@ fn extract_movies(
     })
 }
 
+
+/// Renders one public-safe movie decode report.
+fn render_movie_decode_report(
+    plan: &UnrealHapPackagePlan,
+    audio_tracks: usize,
+) -> PipelineOutcome<String> {
+    Ok(format!(
+        concat!(
+            "{{\"schema\":\"shar-schoenwald.rmv-hap-export.v1\",",
+            "\"video_codec\":\"hap\",",
+            "\"hap_format\":\"{}\",",
+            "\"video_path\":\"{}\",",
+            "\"audio_tracks\":{},",
+            "\"source_probe\":\"source-video.ffprobe.json\",",
+            "\"decoder\":\"ffmpeg\"}}\n"
+        ),
+        plan.hap_format,
+        json_escape(&movie_package_relative_path(
+            plan,
+            &plan.hap_video_path,
+        )?),
+        audio_tracks,
+    ))
+}
+
+/// Renders one deterministic public-safe Unreal HAP package manifest.
+fn render_movie_package_manifest(
+    game_root: &Path,
+    record: &MovieRecord,
+    logical_relative: &Path,
+    plan: &UnrealHapPackagePlan,
+    fps: f64,
+    frame_rate_fraction: &str,
+) -> PipelineOutcome<String> {
+    Ok(format!(
+        concat!(
+            "{{\"schema\":\"shar-schoenwald.rmv-unreal-hap-package.v1\",",
+            "\"logical_path\":\"{}\",",
+            "\"selected_source\":\"{}\",",
+            "\"kind\":\"{}\",",
+            "\"fps\":{},",
+            "\"frame_rate_fraction\":\"{}\",",
+            "\"bytes\":{},",
+            "\"sha256\":\"{}\",",
+            "\"provenance\":\"{}\",",
+            "\"target\":\"{}\",",
+            "\"transcode_policy\":\"preserve source resolution and cadence; \
+             encode HAP Q for runtime media\",",
+            "\"supersede_rule\":\"movies/user/<name>.rmv supersedes \
+             movies/<name>.rmv\",",
+            "\"movie_directory\":\".\",",
+            "\"hap_video_path\":\"{}\",",
+            "\"video_extension\":\"{}\",",
+            "\"video_codec\":\"hap\",",
+            "\"hap_format\":\"{}\",",
+            "\"audio_track_pattern\":\"{}\",",
+            "\"timing_manifest_path\":\"{}\",",
+            "\"source_probe_path\":\"source-video.ffprobe.json\",",
+            "\"optional_bk2_path\":\"{}\"}}\n"
+        ),
+        json_escape(&portable_path_text(logical_relative)),
+        json_escape(&relative_manifest_path_text(
+            game_root,
+            game_root,
+            &record.source_path,
+        )?),
+        record.kind.label(),
+        fps,
+        json_escape(frame_rate_fraction),
+        record.bytes,
+        record.hash.hex(),
+        json_escape(&record.provenance.summary()),
+        plan.target.label(),
+        json_escape(&movie_package_relative_path(
+            plan,
+            &plan.hap_video_path,
+        )?),
+        plan.video_extension,
+        plan.hap_format,
+        json_escape(&movie_package_relative_path(
+            plan,
+            &plan.audio_track_pattern,
+        )?),
+        json_escape(&movie_package_relative_path(
+            plan,
+            &plan.timing_manifest_path,
+        )?),
+        json_escape(&movie_package_relative_path(
+            plan,
+            &plan.optional_bk2_path,
+        )?),
+    ))
+}
+
+/// Returns one path relative to the movie package that owns it.
+fn movie_package_relative_path(
+    plan: &UnrealHapPackagePlan,
+    path: &Path,
+) -> PipelineOutcome<String> {
+    let relative = path.strip_prefix(&plan.movie_directory).map_err(|_error| {
+        PipelineError::new("movie artifact escaped its package directory")
+    })?;
+    if relative.as_os_str().is_empty() {
+        return Ok(".".to_owned());
+    }
+    Ok(portable_path_text(relative))
+}
+
+/// Renders one path with stable separators for public evidence.
+fn portable_path_text(path: &Path) -> String {
+    path.to_string_lossy().replace(char::from(92), "/")
+}
+
 /// Writes one deterministic Unreal HAP package plan and its evidence files.
 // One serializer owns canonical field order and obsolete-artifact cleanup.
 fn write_movie_package_plan(
@@ -979,56 +1098,19 @@ fn write_movie_package_plan(
         fs::remove_file(&legacy_mezzanine)
             .map_err(io_error(&legacy_mezzanine))?;
     }
-    let (fps, frame_rate_fraction) = ffprobe_video_fps(&record.source_path)?;
-    let manifest = format!(
-        concat!(
-            "{{\"schema\":\"shar-schoenwald.rmv-unreal-hap-package.v1\",",
-            "\"logical_path\":\"{}\",",
-            "\"selected_source\":\"{}\",",
-            "\"kind\":\"{}\",",
-            "\"fps\":{},",
-            "\"frame_rate_fraction\":\"{}\",",
-            "\"bytes\":{},",
-            "\"sha256\":\"{}\",",
-            "\"provenance\":\"{}\",",
-            "\"target\":\"{}\",",
-            "\"transcode_policy\":\"preserve source resolution and cadence; \
-             encode HAP Q for runtime media\",",
-            "\"supersede_rule\":\"movies/user/<name>.rmv supersedes \
-             movies/<name>.rmv\",",
-            "\"movie_directory\":\"{}\",",
-            "\"hap_video_path\":\"{}\",",
-            "\"video_extension\":\"{}\",",
-            "\"video_codec\":\"hap\",",
-            "\"hap_format\":\"{}\",",
-            "\"audio_track_pattern\":\"{}\",",
-            "\"timing_manifest_path\":\"{}\",",
-            "\"source_probe_path\":\"{}\",",
-            "\"optional_bk2_path\":\"{}\"}}
-"
-        ),
-        json_escape(&logical_relative.to_string_lossy()),
-        json_escape(&relative_manifest_path_text(
-            game_root,
-            game_root,
-            &record.source_path
-        )?),
-        record.kind.label(),
+    let public_source = portable_path_text(logical_relative);
+    let (fps, frame_rate_fraction) = ffprobe_video_fps(
+        &record.source_path,
+        &public_source,
+    )?;
+    let manifest = render_movie_package_manifest(
+        game_root,
+        record,
+        logical_relative,
+        plan,
         fps,
-        json_escape(&frame_rate_fraction),
-        record.bytes,
-        record.hash.hex(),
-        json_escape(&record.provenance.summary()),
-        plan.target.label(),
-        json_escape(&plan.movie_directory.to_string_lossy()),
-        json_escape(&plan.hap_video_path.to_string_lossy()),
-        plan.video_extension,
-        plan.hap_format,
-        json_escape(&plan.audio_track_pattern.to_string_lossy()),
-        json_escape(&plan.timing_manifest_path.to_string_lossy()),
-        "source-video.ffprobe.json",
-        json_escape(&plan.optional_bk2_path.to_string_lossy())
-    );
+        &frame_rate_fraction,
+    )?;
     write_bytes(&plan.manifest_path, manifest.as_bytes())?;
     let timing = format!(
         concat!(
@@ -1684,7 +1766,7 @@ fn relative_manifest_path_text(
             PipelineError::new("failed to relativize extracted path")
         })?
     };
-    Ok(relative.to_string_lossy().replace(char::from(92), "/"))
+    Ok(portable_path_text(relative))
 }
 
 /// Sums file lengths at stage boundaries so reports never infer size from
@@ -1696,6 +1778,29 @@ fn sum_file_lengths(root: &Path) -> PipelineOutcome<u64> {
             .saturating_add(local_file_len(&path).map_err(io_error(&path))?);
     }
     Ok(bytes)
+}
+
+/// Returns one public relative identity for a normalized sound script.
+fn sound_script_source(
+    extracted_root: &Path,
+    input: &Path,
+) -> PipelineOutcome<String> {
+    let relative = input.strip_prefix(extracted_root).map_err(|_error| {
+        PipelineError::new("sound script escaped the extraction root")
+    })?;
+    Ok(portable_path_text(relative))
+}
+
+/// Adapts one sound-script read failure to a public-safe diagnostic.
+fn sound_script_read_error(
+    source_identity: &str,
+) -> impl FnOnce(std::io::Error) -> PipelineError + '_ {
+    move |error| {
+        PipelineError::new(format!(
+            "failed to read sound script {source_identity} ({:?})",
+            error.kind(),
+        ))
+    }
 }
 
 /// Normalize sound scripts.
@@ -1717,7 +1822,9 @@ fn normalize_sound_scripts(
             continue;
         }
         let output = input.with_extension("json");
-        let json = spt::to_json(&input).map_err(io_error(&input))?;
+        let source_identity = sound_script_source(extracted_root, &input)?;
+        let json = spt::to_json(&input, &source_identity)
+            .map_err(sound_script_read_error(&source_identity))?;
         write_bytes(&output, json.as_bytes())?;
         fs::remove_file(&input).map_err(io_error(&input))?;
         files = files.saturating_add(1);
@@ -1731,7 +1838,9 @@ fn normalize_sound_scripts(
             continue;
         }
         let output = input.with_extension("json");
-        let json = rms::to_json(&input).map_err(io_error(&input))?;
+        let source_identity = sound_script_source(extracted_root, &input)?;
+        let json = rms::to_json(&input, &source_identity)
+            .map_err(sound_script_read_error(&source_identity))?;
         write_bytes(&output, json.as_bytes())?;
         fs::remove_file(&input).map_err(io_error(&input))?;
         files = files.saturating_add(1);

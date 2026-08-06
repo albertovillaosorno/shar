@@ -38,7 +38,10 @@ use schoenwald_filesystem::adapters::driving::local;
 use crate::domain::escape_json as json_escape;
 
 /// To json.
-pub(super) fn to_json(input: &Path) -> io::Result<String> {
+pub(super) fn to_json(
+    input: &Path,
+    source_identity: &str,
+) -> io::Result<String> {
     let text = local::read_utf8(input)?;
     let mut objects = Vec::new();
     let mut current_kind = String::new();
@@ -80,7 +83,7 @@ pub(super) fn to_json(input: &Path) -> io::Result<String> {
             "\"object_count\":{},",
             "\"objects\":[{}]}}\n"
         ),
-        json_escape(&input.display().to_string()),
+        json_escape(source_identity),
         objects.len(),
         objects.join(",")
     ))
@@ -139,3 +142,8 @@ fn sound_command_json(line: &str) -> String {
         json_escape(line)
     )
 }
+
+#[cfg(test)]
+// jig-ignore-next-line: exact syntax is indivisible
+#[path = "../../../../../../../tests/migration/pipeline/unit/adapter-outbound/local/one/spt/tests.rs"]
+mod tests;
