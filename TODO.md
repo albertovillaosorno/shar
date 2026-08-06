@@ -23,7 +23,7 @@ Current task list. Project phases and dated progress are recorded in
 - [ ] Adopt Jig as the canonical repository validator.
 - [ ] Keep Jig source-linked from `.dependencies/jig/source`.
 - [ ] Complete the tracked `.jig/` policy, taxonomy, adapters, and projections.
-- [ ] Run a clean exhaustive Jig validation.
+- [x] Run a clean exhaustive Jig validation.
 - [ ] Document the local Jig installation and decide later whether CI is useful.
 
 ## Source extraction and conversion
@@ -104,7 +104,7 @@ Current task list. Project phases and dated progress are recorded in
   time.
 - [ ] Optimize only from measured evidence without removing original behavior.
 - [ ] Run the complete pipeline in dependency order.
-- [ ] Resume safely after interruption without accepting stale partial output.
+- [x] Resume safely after interruption without accepting stale partial output.
 - [ ] Report progress, failures, provenance, and final artifacts.
 
 ## Final verification

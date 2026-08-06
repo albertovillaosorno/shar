@@ -76,6 +76,14 @@ Resume and package-only reapplication may repeat only the token already recorded
 by extraction manifest schema v3. Adding, removing, or changing a package—or
 encountering an older manifest—requires a clean `extract-game` invocation.
 
+Complete clean and resume extraction runs rebuild all ten stages below an
+isolated sibling candidate. The accepted extraction root changes only after the
+candidate, minor-unit manifest, and run report all succeed. A later invocation
+recovers an interrupted rename before validating package approval or continuity;
+a live transaction holds an exclusive file lease and cannot be mistaken for an
+abandoned run. See the [recoverable extraction publication
+contract](docs/technical/pipeline/recoverable-extraction-publication.md).
+
 ## Deterministic Unreal staging
 
 After extraction, indexing, and audit succeed, the pipeline can generate the

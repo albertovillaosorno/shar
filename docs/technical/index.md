@@ -57,6 +57,8 @@ proprietary external formats.
   pipeline](pipeline/deterministic-conversion-pipeline.md)
 - [Evidence and identity model](pipeline/evidence-and-identity-model.md)
 - [Optional local mod packages](pipeline/optional-local-mod-packages.md)
+- [Recoverable extraction
+  publication](pipeline/recoverable-extraction-publication.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Character capability
   evidence](pipeline/extraction/character-capability-evidence.md)
