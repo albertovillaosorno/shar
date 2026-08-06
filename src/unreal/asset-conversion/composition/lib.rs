@@ -30,6 +30,9 @@
 
 //! Asset conversion lib.rs.
 
+#[cfg(test)]
+use serde_json as _;
+
 mod conversion_plan;
 
 #[path = "../domain/mod.rs"]
