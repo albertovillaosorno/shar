@@ -484,7 +484,7 @@ fn decode_lmlm_movie_audio(
         .unwrap_or("bik");
     let temp_movie = work_root.join(format!("{stem}.{extension}"));
     write_bytes(&temp_movie, movie_bytes)?;
-    if ffprobe_audio_stream_count(&temp_movie)? == 0 {
+    if ffprobe_audio_stream_count(&temp_movie, entry_path)? == 0 {
         return Ok(None);
     }
     let temp_wav = work_root.join(format!("{stem}_audio_track_01.wav"));
@@ -496,19 +496,24 @@ fn decode_lmlm_movie_audio(
         .arg(&temp_wav)
         .status()
         .map_err(|error| {
-            PipelineError::new(format!(
-                "failed to decode Latino cinematic audio for \
-                 {entry_path}: {error}"
-            ))
+            optional_movie_tool_error(
+                "decode Latino cinematic audio",
+                entry_path,
+                &error,
+            )
         })?;
     if !status.success() {
         return Err(PipelineError::new(format!(
             "ffmpeg failed to decode Latino cinematic audio for {entry_path}"
         )));
     }
-    local_read_bytes(&temp_wav)
-        .map(Some)
-        .map_err(io_error(&temp_wav))
+    local_read_bytes(&temp_wav).map(Some).map_err(|error| {
+        optional_movie_tool_error(
+            "read decoded Latino cinematic audio",
+            entry_path,
+            &error,
+        )
+    })
 }
 
 /// Writes one normalized Latino WAV and its public-safe evidence record.
@@ -549,8 +554,23 @@ fn write_lmlm_wav(
     Ok(())
 }
 
+/// Builds one public-safe optional-movie tool diagnostic.
+fn optional_movie_tool_error(
+    action: &str,
+    public_source: &str,
+    error: &std::io::Error,
+) -> PipelineError {
+    PipelineError::new(format!(
+        "{action} for {public_source} failed ({:?})",
+        error.kind(),
+    ))
+}
+
 /// Ffprobe audio stream count.
-fn ffprobe_audio_stream_count(input: &Path) -> PipelineOutcome<usize> {
+fn ffprobe_audio_stream_count(
+    input: &Path,
+    public_source: &str,
+) -> PipelineOutcome<usize> {
     let output = Command::new(media_tool_path("ffprobe"))
         .args([
             "-v",
@@ -565,15 +585,11 @@ fn ffprobe_audio_stream_count(input: &Path) -> PipelineOutcome<usize> {
         .arg(input)
         .output()
         .map_err(|error| {
-            PipelineError::new(format!(
-                "failed to run ffprobe for {}: {error}",
-                input.display()
-            ))
+            optional_movie_tool_error("run ffprobe", public_source, &error)
         })?;
     if !output.status.success() {
         return Err(PipelineError::new(format!(
-            "ffprobe failed for {}",
-            input.display()
+            "ffprobe failed for {public_source}"
         )));
     }
     Ok(String::from_utf8_lossy(&output.stdout)
