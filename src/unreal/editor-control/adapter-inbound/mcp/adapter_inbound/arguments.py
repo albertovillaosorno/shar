@@ -180,6 +180,8 @@ def parse_raw_call(operands: tuple[str, ...]) -> tuple[str, JsonObject]:
     if not operands:
         _fail_usage("raw-call requires TOOL")
     arguments = _parse_arguments_option(operands[1:])
+    if operands[0].strip() == "call_tool":
+        _fail_usage("raw-call cannot invoke call_tool; use call")
     return operands[0], arguments
 
 

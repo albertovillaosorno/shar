@@ -179,6 +179,25 @@ def test_cli_rejects_non_finite_timeout_before_session(
         assert not captured.out
 
 
+def test_cli_rejects_raw_call_mutation_bypass_before_session(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = main(
+        (
+            "--endpoint",
+            "http://127.0.0.1:65534/mcp",
+            "raw-call",
+            "call_tool",
+            "--arguments",
+            '{"tool_name":"create_asset","arguments":{"name":"Asset"}}',
+        )
+    )
+    captured = capsys.readouterr()
+    assert exit_code == 2
+    assert "cannot invoke call_tool" in captured.err
+    assert not captured.out
+
+
 def test_cli_rejects_invalid_operands_before_session(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
@@ -351,6 +370,84 @@ def test_cli_describe_call_and_markdown_catalog(
         assert (
             "`EditorToolset.EditorToolset.create_asset`" in catalog_output.out
         )
+
+
+def test_cli_validates_live_schema_before_native_call(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Invalid payloads stop after describe and never reach `call_tool`."""
+    invalid_arguments = (
+        "{}",
+        '{"name":42}',
+        '{"name":"Asset","unexpected":true}',
+    )
+    for arguments in invalid_arguments:
+        with FakeUnrealServer() as server:
+            code = main(
+                (
+                    "--endpoint",
+                    server.endpoint,
+                    "call",
+                    "EditorToolset",
+                    "EditorToolset.create_asset",
+                    "--arguments",
+                    arguments,
+                )
+            )
+        captured = capsys.readouterr()
+        assert code == 1
+        assert "error:" in captured.err
+        assert not captured.out
+        meta_tools = tuple(
+            request["params"]["arguments"]["tool_name"]
+            for request in server.requests
+            if request.get("method") == "tools/call"
+            and isinstance(request.get("params"), dict)
+            and request["params"].get("name") == "call_tool"
+        )
+        assert meta_tools == ()
+        described = tuple(
+            request["params"]["arguments"].get("toolset_name")
+            for request in server.requests
+            if request.get("method") == "tools/call"
+            and isinstance(request.get("params"), dict)
+            and request["params"].get("name") == "describe_toolset"
+        )
+        assert described == ("EditorToolset",)
+        assert server.session_closed
+
+
+def test_cli_global_lookup_validates_one_unique_live_schema(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Global lookup remains available only when discovery is unambiguous."""
+    with FakeUnrealServer() as server:
+        code = main(
+            (
+                "--endpoint",
+                server.endpoint,
+                "call",
+                "",
+                "create_asset",
+                "--arguments",
+                '{"name":"Asset"}',
+            )
+        )
+    captured = capsys.readouterr()
+    assert code == 0
+    assert "native-ok:create_asset" in captured.out
+    assert not captured.err
+    meta_tools = tuple(
+        request["params"]["name"]
+        for request in server.requests
+        if request.get("method") == "tools/call"
+        and isinstance(request.get("params"), dict)
+    )
+    assert meta_tools == (
+        "list_toolsets",
+        "describe_toolset",
+        "call_tool",
+    )
 
 
 def test_cli_rejects_unsafe_skill_output_before_network(
