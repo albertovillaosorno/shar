@@ -12,7 +12,7 @@ License-File:
 # Generated Unreal plan bundle
 
 - Status: Active
-- Last reviewed: 2026-08-04
+- Last reviewed: 2026-08-06
 
 ## Purpose
 
@@ -38,7 +38,37 @@ content, writes into a transaction-specific staging directory, verifies each
 file, and atomically replaces the accepted `unreal-staging/` root only after the
 complete publication succeeds.
 
-`unreal-staging/` is generated, disposable, and ignored by Git.
+`unreal-staging/` is generated, disposable, and ignored by Git. Every
+published plan targets Unreal Engine 5.8.1 exactly; changing the engine patch
+version requires a deliberate contract revision and regenerated evidence.
+
+## Generated FBX catalog
+
+Model operations use the ignored `fbx-assets/` root as their only generated FBX
+authority:
+
+```text
+fbx-assets/
+├── catalog.jsonl
+└── packages/
+    └── <package_name>/
+        └── <package_name>.fbx
+```
+
+The JSONL header uses schema `shar-schoenwald.fbx-catalog.v1`, record type
+`header`, status `complete`, and the exact package count. Each `fbx` record
+contains the canonical package identity, path relative to `fbx-assets/`, byte
+count, lowercase SHA-256 digest, and binary FBX version `7700`. The JSONL uses
+UTF-8, LF line endings, no blank records, and one final LF.
+
+An absent root is not treated as an error: model operations remain
+`requires-conversion`. Once the root exists, it is an all-or-nothing assertion.
+The verifier rejects missing or unclaimed packages, duplicate identities or
+paths, unsafe paths, symbolic links and reparse boundaries, unknown files,
+noncanonical fields, stale sizes or hashes, invalid binary headers, and any FBX
+version other than 7.7. A verified complete catalog promotes every corresponding
+model operation to `ready` and uses the generated FBX digest as its source
+revision. A partial catalog never produces a mixed ready/pending bundle.
 
 ## Published files
 
@@ -74,7 +104,8 @@ The aggregate plans accept only verified normalized inputs:
 - PCM WAV files become ready sound-wave import operations;
 - verified HAP media files become ready media-source import operations;
 - deterministic binary FBX 7.7 destinations become model-import operations that
-  remain blocked until conversion publishes the declared file; and
+  remain blocked until the complete generated catalog verifies every declared
+  file, then become ready with the verified FBX digest; and
 - normalized JSON evidence becomes native-construction operations that remain
   blocked until the declared repository-owned editor factory is available.
 
@@ -120,6 +151,6 @@ plan revisions, and bundle revision.
 
 Generation fails before publication when it encounters an unsafe path, invalid
 or uppercase digest, duplicate operation identity, unknown dependency,
-case-insensitive destination collision, unsupported direct-import extension, or
-undeclared output path. Interrupted or failed generation leaves the previous
-accepted root unchanged.
+case-insensitive destination collision, unsupported direct-import extension,
+undeclared output path, or an existing generated FBX catalog that is not exact.
+Interrupted or failed generation leaves the previous accepted root unchanged.

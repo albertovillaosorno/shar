@@ -98,7 +98,10 @@ A successful run atomically publishes nine ignored files under
 asset import, asset construction, world assembly, runtime binding, validation,
 and package plans. Operations distinguish verified inputs that are ready from
 FBX inputs that still require conversion and normalized JSON inputs that require
-a repository-owned native editor factory.
+a repository-owned native editor factory. When ignored `fbx-assets/` exists,
+`prepare-unreal` accepts it only as a complete exact catalog with verified
+binary FBX 7.7 headers, byte counts, hashes, paths, and inventory; otherwise the
+entire catalog is rejected before plan publication.
 
 This command plans and validates work; it does not mutate the Unreal project.
 Native application remains a separate transactional stage launched and observed
