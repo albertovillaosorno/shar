@@ -6,6 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Generated FBX catalog adapter tests.
+// - Must-Not:
+//   - Read proprietary assets or contact Unreal Editor.
+// - Allows:
+//   - Synthetic binary FBX files and isolated filesystem fixtures.
+// - Split-When:
+//   - Split when catalog schemas gain independent test lifecycles.
+// - Merge-When:
+//   - Merge when another adapter test owns identical catalog evidence.
+// - Summary:
+//   - Generated FBX catalog adapter tests.
+// - Description:
+//   - Proves complete inventory, digest, version, and link validation.
+// - Usage:
+//   - Included only by the owning local adapter under cfg(test).
+// - Defaults:
+//   - Partial, stale, linked, or malformed catalogs fail closed.
+//
+
+//! Generated FBX catalog adapter tests.
 
 use std::fs;
 use std::path::{Path, PathBuf};
