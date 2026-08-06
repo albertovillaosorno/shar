@@ -50,8 +50,8 @@ pub use package::{
     PhaseThreePackageIndex, PhaseThreePackageMember, PhaseThreePackagePlan,
     PhaseThreePackagePlanner, PhaseThreePackageRow, PhaseThreePackageSelector,
     UNREAL_IMPORT_MANIFEST_SCHEMA, UNREAL_IMPORT_SUMMARY_SCHEMA,
-    UnrealImportManifest, UnrealNativePlan, UnrealSourceEvidence,
-    UnrealTargetKind,
+    UnrealFbxArtifactEvidence, UnrealImportManifest, UnrealNativePlan,
+    UnrealSourceEvidence, UnrealTargetKind,
 };
 pub use pipeline::{
     PipelineConfig, PipelineError, PipelineOutcome, PipelineReport, StageReport,

@@ -86,6 +86,21 @@ pub struct UnrealSourceEvidence {
     pub future_normalization: String,
 }
 
+/// Verified generated FBX artifact supplied by the filesystem adapter.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct UnrealFbxArtifactEvidence {
+    /// Semantic package that owns the generated model artifact.
+    pub package_id: String,
+    /// Canonical repository-relative generated FBX path.
+    pub path: String,
+    /// Exact generated file size.
+    pub size_bytes: u64,
+    /// Exact lowercase SHA-256 digest of the generated FBX bytes.
+    pub sha256: String,
+    /// Binary FBX file version read from the file header.
+    pub fbx_version: u32,
+}
+
 /// Complete deterministic Unreal import manifest.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct UnrealImportManifest {
@@ -352,7 +367,9 @@ fn add_package_outputs(
 ) -> Result<(), String> {
     match family {
         ConversionFamily::FbxModel => {
-            let staged = format!("fbx/{package_name}/{package_name}.fbx");
+            let staged = format!(
+                "fbx-assets/packages/{package_name}/{package_name}.fbx"
+            );
             claim_path(staged_paths, &staged, "staged file")?;
             staged_files.push(staged);
             let object = object_path(package_path, package_name);
