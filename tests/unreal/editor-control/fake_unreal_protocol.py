@@ -38,7 +38,7 @@ from time import sleep
 from typing import TYPE_CHECKING
 from typing import cast
 
-from fake_unreal_tools import tool_text
+from fake_unreal_tools import tool_result
 from mcp.domain.json_types import JsonObject
 from mcp.domain.json_types import JsonValue
 from mcp.domain.json_types import require_json_object
@@ -217,15 +217,20 @@ class FakeUnrealRequestHandler(BaseHTTPRequestHandler):
             _ = server.cancel_event.wait(timeout=2.0)
             if server.cancel_event.is_set():
                 return
-        text = tool_text(
+        text, structured = tool_result(
             tool_name,
             arguments,
             empty_toolsets=server.behavior.empty_toolsets,
+            plan_execution=server.behavior.plan_execution,
+            assets=server.assets,
+            dirty_assets=server.dirty_assets,
         )
         result: JsonObject = {
             "content": [{"type": "text", "text": text}],
             "isError": False,
         }
+        if structured is not None:
+            result["structuredContent"] = structured
         progress: JsonObject = {
             "jsonrpc": "2.0",
             "method": "notifications/progress",

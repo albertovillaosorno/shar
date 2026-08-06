@@ -62,6 +62,7 @@ class FakeUnrealBehavior(NamedTuple):
     malformed_initialize_result: bool = False
     redirect_ping: bool = False
     plain_error_ping: bool = False
+    plan_execution: bool = False
 
 
 class FakeUnrealServer:
@@ -75,6 +76,7 @@ class FakeUnrealServer:
         delay_tool_calls: bool = False,
         cancellation_delay_seconds: float = 0.0,
         empty_toolsets: bool = False,
+        plan_execution: bool = False,
     ) -> None:
         """Create a stopped server with deterministic behavior."""
         behavior = FakeUnrealBehavior(
@@ -83,6 +85,7 @@ class FakeUnrealServer:
             delay_tool_calls=delay_tool_calls,
             cancellation_delay_seconds=cancellation_delay_seconds,
             empty_toolsets=empty_toolsets,
+            plan_execution=plan_execution,
         )
         self._server = FakeUnrealHttpServer(
             ("127.0.0.1", 0),
@@ -201,6 +204,16 @@ class FakeUnrealServer:
         return tuple(self._server.cancelled_request_ids)
 
     @property
+    def assets(self) -> dict[str, str]:
+        """A snapshot of synthetic native package classes."""
+        return dict(self._server.assets)
+
+    @property
+    def dirty_assets(self) -> frozenset[str]:
+        """A snapshot of synthetic dirty package paths."""
+        return frozenset(self._server.dirty_assets)
+
+    @property
     def session_closed(self) -> bool:
         """Whether the client deleted its session.
 
@@ -219,6 +232,8 @@ class FakeUnrealHttpServer(ThreadingHTTPServer):
     cancelled_request_ids: list[object]
     cancel_event: Event
     behavior: FakeUnrealBehavior
+    assets: dict[str, str]
+    dirty_assets: set[str]
 
     def __init__(
         self,
@@ -232,3 +247,5 @@ class FakeUnrealHttpServer(ThreadingHTTPServer):
         self.cancelled_request_ids = []
         self.cancel_event = Event()
         self.behavior = behavior
+        self.assets = {}
+        self.dirty_assets = set()
