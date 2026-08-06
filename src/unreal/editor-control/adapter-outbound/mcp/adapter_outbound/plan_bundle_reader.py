@@ -38,7 +38,8 @@ from pathlib import Path
 
 from mcp.domain.errors import fail_protocol
 from mcp.domain.plan_bundle import PlanBundleReport
-from mcp.domain.plan_bundle import validate_plan_bundle
+from mcp.domain.plan_bundle import ValidatedPlanBundle
+from mcp.domain.plan_bundle import parse_plan_bundle
 
 _INDEX_FILE = "index.json"
 _PLAN_FILES = frozenset(
@@ -65,7 +66,11 @@ class FilesystemPlanBundleReader:
         self._root = root
 
     def read(self) -> PlanBundleReport:
-        """Read exactly seven regular files and validate their canonical body."""
+        """Read exactly seven regular files and return the public report."""
+        return self.read_bundle().report
+
+    def read_bundle(self) -> ValidatedPlanBundle:
+        """Read exactly seven regular files into immutable validated evidence."""
         root = self._root.absolute()
         _validate_existing_directory_chain(root)
         metadata = _metadata(root)
@@ -90,7 +95,7 @@ class FilesystemPlanBundleReader:
             if total_bytes > _MAX_BUNDLE_BYTES:
                 fail_protocol("generated plan bundle exceeds its size limit")
             plan_texts[filename] = text
-        return validate_plan_bundle(index_text, plan_texts)
+        return parse_plan_bundle(index_text, plan_texts)
 
 
 def _exact_inventory(root: Path) -> dict[str, Path]:

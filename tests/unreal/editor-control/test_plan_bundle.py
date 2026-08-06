@@ -42,6 +42,7 @@ import pytest
 from mcp.adapter_inbound.cli import main
 from mcp.adapter_outbound.plan_bundle_reader import FilesystemPlanBundleReader
 from mcp.domain.errors import ProtocolError
+from mcp.domain.plan_bundle import parse_plan_bundle
 from mcp.domain.plan_bundle import validate_plan_bundle
 from plan_bundle_fixture import build_plan_bundle
 from plan_bundle_fixture import write_plan_bundle
@@ -50,8 +51,16 @@ from plan_bundle_fixture import write_plan_bundle
 def _split_bundle(
     *,
     with_import_operation: bool = False,
+    with_construction_operation: bool = False,
+    construction_source_path: str = "manifest.jsonl",
+    construction_source_revision: str | None = None,
 ) -> tuple[str, dict[str, str]]:
-    files = build_plan_bundle(with_import_operation=with_import_operation)
+    files = build_plan_bundle(
+        with_import_operation=with_import_operation,
+        with_construction_operation=with_construction_operation,
+        construction_source_path=construction_source_path,
+        construction_source_revision=construction_source_revision,
+    )
     index = files.pop("index.json")
     return index, files
 
@@ -78,9 +87,17 @@ def test_domain_accepts_canonical_six_plan_bundle() -> None:
 
 def test_domain_validates_nonempty_operation_identity_and_readiness() -> None:
     index, plans = _split_bundle(with_import_operation=True)
-    report = validate_plan_bundle(index, plans)
+    bundle = parse_plan_bundle(index, plans)
+    report = bundle.report
     assert report.operation_count == 1
     assert report.readiness_counts == {"ready": 1}
+    assert len(bundle.operations) == 1
+    operation = bundle.operations[0]
+    assert operation.plan_id == "asset-import-plan"
+    assert operation.source_path == "extracted/dialog/audio.wav"
+    assert operation.destination.endswith(".audio_source")
+    assert operation.dependencies == ()
+    assert operation.readiness == "ready"
 
     invalid_identity = dict(plans)
     invalid_identity["asset-import-plan.json"] = invalid_identity[
@@ -95,6 +112,30 @@ def test_domain_validates_nonempty_operation_identity_and_readiness() -> None:
     ].replace('"readiness":"ready"', '"readiness":"requires-conversion"', 1)
     with pytest.raises(ProtocolError, match="source contract"):
         validate_plan_bundle(index, invalid_readiness)
+
+
+def test_domain_requires_canonical_construction_manifest_evidence() -> None:
+    index, plans = _split_bundle(with_construction_operation=True)
+    bundle = parse_plan_bundle(index, plans)
+    assert len(bundle.operations) == 1
+    operation = bundle.operations[0]
+    assert operation.plan_id == "asset-construction-plan"
+    assert operation.source_path == "manifest.jsonl"
+    assert operation.source_revision == bundle.report.source_manifest_revision
+
+    invalid_bundles = (
+        _split_bundle(
+            with_construction_operation=True,
+            construction_source_path="other.jsonl",
+        ),
+        _split_bundle(
+            with_construction_operation=True,
+            construction_source_revision="d" * 64,
+        ),
+    )
+    for invalid_index, invalid_plans in invalid_bundles:
+        with pytest.raises(ProtocolError, match="source evidence"):
+            parse_plan_bundle(invalid_index, invalid_plans)
 
 
 @pytest.mark.parametrize(
@@ -132,9 +173,12 @@ def test_domain_rejects_stale_partial_or_noncanonical_bundle(
 def test_reader_accepts_exact_regular_file_inventory(tmp_path: Path) -> None:
     root = tmp_path / "plans"
     _ = write_plan_bundle(root)
-    report = FilesystemPlanBundleReader(root).read()
-    assert report.operation_count == 0
-    assert report.revision
+    reader = FilesystemPlanBundleReader(root)
+    bundle = reader.read_bundle()
+    assert bundle.report.operation_count == 0
+    assert bundle.report.revision
+    assert bundle.operations == ()
+    assert reader.read() == bundle.report
 
 
 def test_reader_rejects_extra_file_without_exposing_physical_root(
@@ -183,6 +227,32 @@ def test_cli_preflight_is_local_and_opens_no_mcp_transport(
     payload = json.loads(captured.out)
     assert payload["operationCount"] == 0
     assert payload["targetEngineVersion"] == "5.8.1"
+    assert not captured.err
+
+
+def test_cli_execution_preflight_is_local_and_complete_for_empty_bundle(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    root = tmp_path / "plans"
+    _ = write_plan_bundle(root)
+    monkeypatch.chdir(tmp_path)
+
+    class _ForbiddenTransport:
+        def __init__(self, *_args: object, **_kwargs: object) -> None:
+            raise AssertionError("execution preflight opened an MCP transport")
+
+    monkeypatch.setattr(
+        "mcp.adapter_inbound.cli.StreamableHttpTransport",
+        _ForbiddenTransport,
+    )
+    assert main(("plan-execution-preflight", "--root", "plans")) == 0
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert payload["execution"]["complete"] is True
+    assert payload["execution"]["operationCount"] == 0
+    assert payload["sources"]["uniqueSourceCount"] == 0
     assert not captured.err
 
 
