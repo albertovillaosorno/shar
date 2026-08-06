@@ -61,6 +61,7 @@ atrfstart
 ATTACHMENTPOINT
 atv
 atx
+autodesk
 autor
 auxx
 AVX
@@ -1262,6 +1263,7 @@ Validationf
 VDPM
 Vec
 vec
+venv
 Ver
 versionless
 VERTEXOFFSET
@@ -1276,6 +1278,7 @@ viewmodel
 viewmodels
 VINPUT
 visibleend
+vnd
 votetruc
 VRS
 vsconfig
