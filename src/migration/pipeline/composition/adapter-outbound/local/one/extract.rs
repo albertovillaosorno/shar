@@ -51,7 +51,7 @@ use schoenwald_filesystem::adapters::driving::local::{
 use schoenwald_filesystem::resolve_under;
 
 use super::super::two::units::manifest_minor_unit as mum;
-use super::cleanup::remove_generated_tree;
+use super::extraction_transaction::ExtractionTransaction;
 use super::json_output::validate_generated_text_file;
 use super::lmlm_stage::{
     ensure_optional_mod_transition, extract_lmlm, require_optional_mod_approval,
@@ -122,89 +122,40 @@ impl ExtractGameAssets {
         config: &PipelineConfig,
     ) -> PipelineOutcome<PipelineReport> {
         guard_paths(&config.game_root, &config.extracted_root)?;
-        let current_optional_token = require_optional_mod_approval(
-            &config.game_root,
-            config.optional_mod_approval.as_deref(),
-        )?;
-        if !config.clean_extracted {
-            ensure_optional_mod_transition(
-                &config.extracted_root,
-                current_optional_token.as_deref(),
+        let transaction = ExtractionTransaction::begin(&config.extracted_root)?;
+        let result = (|| {
+            let current_optional_token = require_optional_mod_approval(
+                &config.game_root,
+                config.optional_mod_approval.as_deref(),
             )?;
+            if !config.clean_extracted {
+                ensure_optional_mod_transition(
+                    &config.extracted_root,
+                    current_optional_token.as_deref(),
+                )?;
+            }
+            let mut staged_config = config.clone();
+            staged_config.extracted_root =
+                transaction.staging_root().to_path_buf();
+            staged_config.clean_extracted = false;
+            run_staged_extraction(&staged_config)
+        })();
+        match result {
+            Ok(report) => {
+                transaction.publish()?;
+                Ok(report)
+            }
+            Err(failure) => match transaction.abort() {
+                Ok(()) => Err(failure),
+                Err(recovery) => Err(PipelineError::new(format!(
+                    concat!(
+                        "{}; extraction transaction recovery failed: ",
+                        "{}"
+                    ),
+                    failure, recovery
+                ))),
+            },
         }
-        if config.clean_extracted && config.extracted_root.exists() {
-            remove_generated_tree(&config.extracted_root).map_err(|error| {
-                PipelineError::new(format!(
-                    "failed to clean {}: {error}",
-                    config.extracted_root.display()
-                ))
-            })?;
-        }
-        fs::create_dir_all(&config.extracted_root)
-            .map_err(io_error(&config.extracted_root))?;
-
-        let mut progress = StageProgress::begin(
-            "pipeline stages",
-            FULL_EXTRACTION_STAGE_COUNT,
-        );
-        let mut report = PipelineReport::default();
-
-        check_cancellation()?;
-        progress.advance("verify game manifest");
-        report
-            .stages
-            .push(verify_manifest(&config.game_root, &config.extracted_root)?);
-        check_cancellation()?;
-        progress.advance("convert readme");
-        report
-            .stages
-            .push(convert_readme(&config.game_root, &config.extracted_root)?);
-        check_cancellation()?;
-        progress.advance("extract rcf archives");
-        report
-            .stages
-            .push(extract_rcf(&config.game_root, &config.extracted_root)?);
-        check_cancellation()?;
-        progress.advance("apply optional mod packages");
-        report.stages.push(extract_lmlm(
-            &config.game_root,
-            &config.extracted_root,
-            config.optional_mod_approval.as_deref(),
-        )?);
-        check_cancellation()?;
-        progress.advance("convert rsd audio");
-        report
-            .stages
-            .push(convert_rsd(&config.game_root, &config.extracted_root)?);
-        check_cancellation()?;
-        progress.advance("normalize sound scripts");
-        report
-            .stages
-            .push(normalize_sound_scripts(&config.extracted_root)?);
-        check_cancellation()?;
-        progress.advance("export movies");
-        report
-            .stages
-            .push(extract_movies(&config.game_root, &config.extracted_root)?);
-        check_cancellation()?;
-        progress.advance("decode p3d packages");
-        report
-            .stages
-            .push(extract_p3d(&config.game_root, &config.extracted_root)?);
-        check_cancellation()?;
-        progress.advance("verify normalized outputs");
-        report
-            .stages
-            .push(assert_normalized(&config.extracted_root)?);
-        check_cancellation()?;
-        progress.advance("write minor-unit manifest");
-        report.stages.push(mum::write_manifest_minor_units(
-            &config.game_root,
-            &config.extracted_root,
-        )?);
-        write_pipeline_report(&config.extracted_root, &report)?;
-        progress.finish();
-        Ok(report)
     }
 
     /// Export movies only.
@@ -254,6 +205,74 @@ impl ExtractGameAssets {
         )?);
         Ok(report)
     }
+}
+
+/// Run every ordered extraction stage below one isolated candidate root.
+fn run_staged_extraction(
+    config: &PipelineConfig,
+) -> PipelineOutcome<PipelineReport> {
+    fs::create_dir_all(&config.extracted_root)
+        .map_err(io_error(&config.extracted_root))?;
+    let mut progress =
+        StageProgress::begin("pipeline stages", FULL_EXTRACTION_STAGE_COUNT);
+    let mut report = PipelineReport::default();
+
+    check_cancellation()?;
+    progress.advance("verify game manifest");
+    report
+        .stages
+        .push(verify_manifest(&config.game_root, &config.extracted_root)?);
+    check_cancellation()?;
+    progress.advance("convert readme");
+    report
+        .stages
+        .push(convert_readme(&config.game_root, &config.extracted_root)?);
+    check_cancellation()?;
+    progress.advance("extract rcf archives");
+    report
+        .stages
+        .push(extract_rcf(&config.game_root, &config.extracted_root)?);
+    check_cancellation()?;
+    progress.advance("apply optional mod packages");
+    report.stages.push(extract_lmlm(
+        &config.game_root,
+        &config.extracted_root,
+        config.optional_mod_approval.as_deref(),
+    )?);
+    check_cancellation()?;
+    progress.advance("convert rsd audio");
+    report
+        .stages
+        .push(convert_rsd(&config.game_root, &config.extracted_root)?);
+    check_cancellation()?;
+    progress.advance("normalize sound scripts");
+    report
+        .stages
+        .push(normalize_sound_scripts(&config.extracted_root)?);
+    check_cancellation()?;
+    progress.advance("export movies");
+    report
+        .stages
+        .push(extract_movies(&config.game_root, &config.extracted_root)?);
+    check_cancellation()?;
+    progress.advance("decode p3d packages");
+    report
+        .stages
+        .push(extract_p3d(&config.game_root, &config.extracted_root)?);
+    check_cancellation()?;
+    progress.advance("verify normalized outputs");
+    report
+        .stages
+        .push(assert_normalized(&config.extracted_root)?);
+    check_cancellation()?;
+    progress.advance("write minor-unit manifest");
+    report.stages.push(mum::write_manifest_minor_units(
+        &config.game_root,
+        &config.extracted_root,
+    )?);
+    write_pipeline_report(&config.extracted_root, &report)?;
+    progress.finish();
+    Ok(report)
 }
 
 /// Guard paths.
@@ -1651,3 +1670,8 @@ mod movie_decoding_tests;
 // jig-ignore-next-line: exact syntax is indivisible
 #[path = "../../../../../../../tests/migration/pipeline/unit/adapter-outbound/local/one/extract/optional_mod_approval_tests.rs"]
 mod optional_mod_approval_tests;
+
+#[cfg(test)]
+// jig-ignore-next-line: exact syntax is indivisible
+#[path = "../../../../../../../tests/migration/pipeline/unit/adapter-outbound/local/one/extract/transaction_tests.rs"]
+mod transaction_tests;

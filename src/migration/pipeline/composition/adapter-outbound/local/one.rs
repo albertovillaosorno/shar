@@ -33,6 +33,7 @@
 mod cleanup;
 /// Pub mod extract module.
 pub(in crate::adapters::driven::local) mod extract;
+mod extraction_transaction;
 /// Generated JSON validation.
 mod json_output;
 /// Lmlm stage.
