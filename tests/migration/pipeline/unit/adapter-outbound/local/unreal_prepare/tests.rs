@@ -37,7 +37,10 @@ use shar_sha256::digest_hex;
 
 use super::{
     MANIFEST_FILE, PLAN_INDEX_FILE, PUBLISHED_FILES, SUMMARY_FILE,
-    retain_source_ids, validate_audit, validate_relative_path,
+    ensure_generated_directory, prepare_io_error, publication_error,
+    read_utf8, retain_source_ids,
+    validate_audit, validate_generated_chain, validate_public_identifier,
+    validate_publication_inventory, validate_relative_path,
     validate_rendered_output,
 };
 use crate::domain::{
@@ -139,7 +142,15 @@ fn rejects_stale_audit_and_escaping_paths() -> Result<(), String> {
     if !stale {
         return Err("stale audit must fail".to_owned());
     }
-    for unsafe_path in ["", "../escape", "a/../escape", r"a\escape"] {
+    for unsafe_path in [
+        "",
+        "../escape",
+        "a/../escape",
+        r"a\escape",
+        "artifact.json:stream",
+        "artifact\n.json",
+        "artifact\0.json",
+    ] {
         if validate_relative_path(unsafe_path).is_ok() {
             return Err(format!("unsafe path was accepted: {unsafe_path}"));
         }
@@ -234,6 +245,332 @@ fn rejects_rendered_source_for_unknown_package() -> Result<(), String> {
     };
     if !error.to_string().contains("undeclared package") {
         return Err(format!("unexpected package failure: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn prepare_io_diagnostics_hide_paths_and_raw_error_text()
+-> Result<(), String> {
+    let private_fragment = "private-workstation-unreal-prepare";
+    let error = std::io::Error::other(private_fragment);
+    let rendered =
+        prepare_io_error("read Unreal source evidence", &error).to_string();
+    if rendered.contains(private_fragment)
+        || rendered != "read Unreal source evidence failed (Other)"
+    {
+        return Err(format!("prepare diagnostic leaked: {rendered}"));
+    }
+
+    let missing = std::env::temp_dir()
+        .join(private_fragment)
+        .join("missing-manifest.jsonl");
+    let Err(read_error) = read_utf8(&missing, "read minor-unit manifest")
+    else {
+        return Err("missing manifest was accepted".to_owned());
+    };
+    let read_error = read_error.to_string();
+    if read_error.contains(private_fragment)
+        || read_error != "read minor-unit manifest failed (NotFound)"
+    {
+        return Err(format!("manifest diagnostic leaked: {read_error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn relative_path_diagnostics_do_not_echo_rejected_values()
+-> Result<(), String> {
+    let private_path = "private-workstation/../escape";
+    let Err(error) = validate_relative_path(private_path) else {
+        return Err("escaping path was accepted".to_owned());
+    };
+    let error = error.to_string();
+    if error.contains(private_path)
+        || error != "unsafe minor-unit relative path"
+    {
+        return Err(format!("relative-path diagnostic leaked: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn publication_failure_reports_failed_rollback_without_raw_text()
+-> Result<(), String> {
+    let publish = std::io::Error::new(
+        std::io::ErrorKind::PermissionDenied,
+        "private-publish-path",
+    );
+    let rollback = std::io::Error::new(
+        std::io::ErrorKind::AlreadyExists,
+        "private-backup-path",
+    );
+    let rendered = publication_error(&publish, Some(&rollback)).to_string();
+    let expected = concat!(
+        "publish Unreal staging root failed (PermissionDenied); ",
+        "restore previous Unreal staging root failed (AlreadyExists)"
+    );
+    if rendered != expected
+        || rendered.contains("private-publish-path")
+        || rendered.contains("private-backup-path")
+    {
+        return Err(format!("rollback diagnostic is unsafe: {rendered}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn generated_transaction_chain_rejects_non_directory_ancestors()
+-> Result<(), String> {
+    let private_fragment = format!(
+        "private-unreal-chain-{}",
+        std::process::id()
+    );
+    let root = std::env::temp_dir().join(&private_fragment);
+    let directory = root.join("directory");
+    let file = root.join("not-a-directory");
+    if root.exists() {
+        fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    }
+    fs::create_dir_all(&directory).map_err(|error| error.to_string())?;
+    fs::write(&file, b"not a directory").map_err(|error| error.to_string())?;
+    let result = validate_generated_chain(&[
+        root.as_path(),
+        directory.as_path(),
+        file.as_path(),
+    ]);
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err(
+            "non-directory transaction ancestor was accepted".to_owned(),
+        );
+    };
+    let rendered = error.to_string();
+    if rendered.contains(&private_fragment)
+        || rendered != "generated staging path is not a regular directory"
+    {
+        return Err(format!("transaction-chain diagnostic leaked: {rendered}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn generated_directory_creation_stops_at_unsafe_parent()
+-> Result<(), String> {
+    let private_fragment = format!(
+        "private-unreal-create-{}",
+        std::process::id()
+    );
+    let root = std::env::temp_dir().join(&private_fragment);
+    let blocked = root.join("blocked");
+    let child = blocked.join("child");
+    if root.exists() {
+        fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    }
+    fs::create_dir_all(&root).map_err(|error| error.to_string())?;
+    fs::write(&blocked, b"not a directory")
+        .map_err(|error| error.to_string())?;
+    let result = ensure_generated_directory(
+        &blocked,
+        "create generated child",
+    );
+    let child_exists = child.exists();
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err("unsafe parent was accepted".to_owned());
+    };
+    let rendered = error.to_string();
+    if child_exists
+        || rendered.contains(&private_fragment)
+        || rendered != "generated staging path is not a regular directory"
+    {
+        return Err(format!("unsafe parent handling failed: {rendered}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_rendered_package_with_unknown_disposition() -> Result<(), String> {
+    let private_disposition = "C:/private/import-policy";
+    let (manifest, summary) = rendered_fixture(1, "pkg");
+    let manifest = manifest.replace(
+        "direct-editor-import",
+        private_disposition,
+    );
+    let Err(error) = validate_rendered_output(&manifest, &summary) else {
+        return Err("unknown package disposition was accepted".to_owned());
+    };
+    let rendered = error.to_string();
+    if !rendered.contains("unsupported disposition")
+        || rendered.contains(private_disposition)
+    {
+        return Err(format!("unexpected disposition failure: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_rendered_source_with_non_object_direct_import(
+) -> Result<(), String> {
+    let (manifest, summary) = rendered_fixture(1, "pkg");
+    let manifest = manifest.replace(
+        "\"direct_import\":{}",
+        "\"direct_import\":\"invalid\"",
+    );
+    let Err(error) = validate_rendered_output(&manifest, &summary) else {
+        return Err("non-object direct-import contract was accepted".to_owned());
+    };
+    if !error.to_string().contains("non-object direct_import") {
+        return Err(format!("unexpected direct-import failure: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_noncanonical_rendered_ids_without_echoing_them()
+-> Result<(), String> {
+    let private_id = "C:/private/package";
+    let (manifest, summary) = rendered_fixture(1, "pkg");
+    let manifest = manifest.replace(
+        "\"package_id\":\"pkg\"",
+        &format!("\"package_id\":\"{private_id}\""),
+    );
+    let Err(error) = validate_rendered_output(&manifest, &summary) else {
+        return Err("path-shaped rendered package id was accepted".to_owned());
+    };
+    let rendered = error.to_string();
+    if rendered.contains(private_id)
+        || !rendered.contains("package id is not canonical")
+    {
+        return Err(format!("rendered-id diagnostic leaked: {rendered}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_rendered_packages_without_sources() -> Result<(), String> {
+    let (manifest, summary) = rendered_fixture(1, "pkg");
+    let mut rewritten = manifest
+        .lines()
+        .map(|line| {
+            if line.contains("\"record_type\":\"package\"") {
+                line.replace(
+                    "\"source_count\":1",
+                    "\"source_count\":0",
+                )
+            } else {
+                line.to_owned()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+    rewritten.push('\n');
+    let manifest = rewritten;
+    let Err(error) = validate_rendered_output(&manifest, &summary) else {
+        return Err("source-less rendered package was accepted".to_owned());
+    };
+    if !error.to_string().contains("declares no source") {
+        return Err(format!("unexpected empty-package failure: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn publication_inventory_requires_every_declared_file() -> Result<(), String> {
+    let exact = PUBLISHED_FILES
+        .iter()
+        .map(|path| (*path).to_owned())
+        .collect::<BTreeSet<_>>();
+    validate_publication_inventory(&exact)
+        .map_err(|error| error.to_string())?;
+
+    let mut missing = exact;
+    let _removed = missing.remove("plans/package-plan.json");
+    if validate_publication_inventory(&missing).is_ok() {
+        return Err("incomplete publication inventory was accepted".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn publication_inventory_rejects_undeclared_files() -> Result<(), String> {
+    let mut paths = PUBLISHED_FILES
+        .iter()
+        .map(|path| (*path).to_owned())
+        .collect::<BTreeSet<_>>();
+    let _inserted = paths.insert("plans/undeclared.json".to_owned());
+    let Err(error) = validate_publication_inventory(&paths) else {
+        return Err("extra publication file was accepted".to_owned());
+    };
+    if error.to_string() != "Unreal staging publication inventory is not exact"
+    {
+        return Err(format!("unexpected inventory failure: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn public_identifier_guard_rejects_path_shaped_values() -> Result<(), String> {
+    let private_id = "C:/private/minor-unit";
+    let Err(error) =
+        validate_public_identifier(private_id, "minor-unit source id")
+    else {
+        return Err("path-shaped minor-unit id was accepted".to_owned());
+    };
+    let rendered = error.to_string();
+    if rendered.contains(private_id)
+        || rendered != "rendered Unreal minor-unit source id is not canonical"
+    {
+        return Err(format!("minor-unit id diagnostic leaked: {rendered}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn audit_schema_failure_does_not_echo_rejected_value() -> Result<(), String> {
+    let private_schema = "C:/private/audit-schema";
+    let manifest = "one\n";
+    let path = std::env::temp_dir().join(format!(
+        "shar-unreal-schema-audit-{}.json",
+        std::process::id()
+    ));
+    let audit = clean_audit(manifest, 1).replace(
+        "shar-schoenwald.minor-unit-audit.v2",
+        private_schema,
+    );
+    fs::write(&path, audit).map_err(|error| error.to_string())?;
+    let result = validate_audit(&path, manifest);
+    fs::remove_file(&path).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err("unsupported audit schema was accepted".to_owned());
+    };
+    let rendered = error.to_string();
+    if rendered.contains(private_schema)
+        || rendered != "minor-unit audit schema is not supported"
+    {
+        return Err(format!("audit-schema diagnostic leaked: {rendered}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rendered_record_type_failure_does_not_echo_rejected_value()
+-> Result<(), String> {
+    let private_type = "C:/private/record-type";
+    let (manifest, summary) = rendered_fixture(1, "pkg");
+    let manifest = manifest.replacen(
+        "\"record_type\":\"package\"",
+        &format!("\"record_type\":\"{private_type}\""),
+        1,
+    );
+    let Err(error) = validate_rendered_output(&manifest, &summary) else {
+        return Err("unsupported record type was accepted".to_owned());
+    };
+    let rendered = error.to_string();
+    if rendered.contains(private_type)
+        || !rendered.contains("unsupported record type")
+    {
+        return Err(format!("record-type diagnostic leaked: {rendered}"));
     }
     Ok(())
 }

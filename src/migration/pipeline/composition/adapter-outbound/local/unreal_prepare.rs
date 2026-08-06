@@ -84,7 +84,8 @@ pub(super) fn prepare_unreal(
     let manifest_path = minor_unit_root.join("manifest.jsonl");
     let audit_path = minor_unit_root.join("audit.json");
     let index_path = minor_unit_root.join("index.jsonl");
-    let manifest_text = read_utf8(&manifest_path)?;
+    let manifest_text =
+        read_utf8(&manifest_path, "read minor-unit manifest")?;
     validate_audit(&audit_path, &manifest_text)?;
     let index = PhaseThreePackageIndex::read_for_unreal(&index_path).map_err(
         |error| {
@@ -136,7 +137,7 @@ pub(super) fn prepare_unreal(
 }
 
 fn validate_audit(path: &Path, manifest: &str) -> PipelineOutcome<()> {
-    let text = read_utf8(path)?;
+    let text = read_utf8(path, "read minor-unit audit")?;
     let audit = parse_object(&text, "minor-unit audit")?;
     let schema = required_string(&audit, "schema", "minor-unit audit")?;
     let rows = required_u64(&audit, "rows", "minor-unit audit")?;
@@ -145,9 +146,9 @@ fn validate_audit(path: &Path, manifest: &str) -> PipelineOutcome<()> {
     let audited_sha256 =
         required_string(&audit, "manifest_sha256", "minor-unit audit")?;
     if schema != AUDIT_SCHEMA {
-        return Err(PipelineError::new(format!(
-            "minor-unit audit schema is not supported: {schema}"
-        )));
+        return Err(PipelineError::new(
+            "minor-unit audit schema is not supported",
+        ));
     }
     if failures != 0 || error_rows != 0 {
         return Err(PipelineError::new(format!(
@@ -199,16 +200,18 @@ fn source_evidence(
         let row =
             parse_object(line, &format!("minor-unit line {line_number}"))?;
         let id = manifest_string(&row, "id", line_number)?;
+        validate_public_identifier(&id, "minor-unit source id")?;
         if !ids.insert(id.clone()) {
             return Err(PipelineError::new(format!(
                 "minor-unit manifest has duplicate id {id}"
             )));
         }
         let path = manifest_string(&row, "path", line_number)?;
-        progress.advance(&path);
         let expected_size = manifest_u64(&row, "size_bytes", line_number)?;
         let resolved = resolve_source_path(config, &path)?;
-        let bytes = local_read_bytes(&resolved).map_err(io_error(&resolved))?;
+        progress.advance(&id);
+        let bytes = local_read_bytes(&resolved)
+            .map_err(path_error("read Unreal source evidence"))?;
         let actual_size = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
         if actual_size != expected_size {
             return Err(PipelineError::new(format!(
@@ -284,10 +287,9 @@ fn resolve_source_path(
             .file_name()
             .and_then(|value| value.to_str())
             .ok_or_else(|| {
-                PipelineError::new(format!(
-                    "pipeline root has no portable basename: {}",
-                    root.display()
-                ))
+                PipelineError::new(
+                    "pipeline root has no portable basename",
+                )
             })?;
         let prefix = format!("{root_name}/");
         if let Some(relative) = manifest_path.strip_prefix(&prefix) {
@@ -295,22 +297,24 @@ fn resolve_source_path(
             return Ok(root.join(relative));
         }
     }
-    Err(PipelineError::new(format!(
-        "minor-unit path is outside configured roots: {manifest_path}"
-    )))
+    Err(PipelineError::new(
+        "minor-unit path is outside configured roots",
+    ))
 }
 
 fn validate_relative_path(path: &str) -> PipelineOutcome<()> {
     if path.is_empty()
         || path.starts_with('/')
         || path.contains(char::from(92))
+        || path.contains(':')
+        || path.chars().any(char::is_control)
         || path
             .split('/')
             .any(|part| part.is_empty() || part == "." || part == "..")
     {
-        return Err(PipelineError::new(format!(
-            "unsafe minor-unit relative path: {path}"
-        )));
+        return Err(PipelineError::new(
+            "unsafe minor-unit relative path",
+        ));
     }
     Ok(())
 }
@@ -443,9 +447,9 @@ fn validate_rendered_output(
                     &mut actual,
                 )?;
             },
-            record_type => {
+            _unsupported => {
                 return Err(PipelineError::new(format!(
-                    "{label} has unsupported record type {record_type}"
+                    "{label} has an unsupported record type"
                 )));
             },
         }
@@ -551,15 +555,22 @@ fn validate_rendered_package(
     counts: &mut RenderedCounts,
 ) -> PipelineOutcome<()> {
     let package_id = required_string(record, "package_id", label)?;
+    validate_public_identifier(&package_id, "package id")?;
     if !package_ids.insert(package_id.clone()) {
         return Err(PipelineError::new(format!(
             "{label} duplicates package id {package_id}"
         )));
     }
     let source_count = required_u64(record, "source_count", label)?;
+    if source_count == 0 {
+        return Err(PipelineError::new(
+            "Unreal package declares no source records",
+        ));
+    }
     let _ = expected_sources.insert(package_id, source_count);
     counts.packages = counts.packages.saturating_add(1);
     match required_string(record, "disposition", label)?.as_str() {
+        "direct-editor-import" => {},
         "requires-fbx" => {
             counts.requires_fbx = counts.requires_fbx.saturating_add(1);
         },
@@ -570,7 +581,11 @@ fn validate_rendered_package(
         "metadata-only" => {
             counts.metadata_only = counts.metadata_only.saturating_add(1);
         },
-        _ => {},
+        _unsupported => {
+            return Err(PipelineError::new(format!(
+                "{label} has an unsupported disposition"
+            )));
+        },
     }
     Ok(())
 }
@@ -584,12 +599,14 @@ fn validate_rendered_source(
     counts: &mut RenderedCounts,
 ) -> PipelineOutcome<()> {
     let package_id = required_string(record, "package_id", label)?;
+    validate_public_identifier(&package_id, "source package id")?;
     if !package_ids.contains(&package_id) {
         return Err(PipelineError::new(format!(
             "{label} references undeclared package {package_id}"
         )));
     }
     let source_id = required_string(record, "id", label)?;
+    validate_public_identifier(&source_id, "source id")?;
     if !source_ids.insert(source_id.clone()) {
         return Err(PipelineError::new(format!(
             "{label} duplicates source id {source_id}"
@@ -598,11 +615,36 @@ fn validate_rendered_source(
     let package_sources = actual_sources.entry(package_id).or_default();
     *package_sources = package_sources.saturating_add(1);
     counts.sources = counts.sources.saturating_add(1);
-    if record
-        .get("direct_import")
-        .is_some_and(|value| !value.is_null())
+    match record.get("direct_import") {
+        None | Some(Value::Null) => {},
+        Some(Value::Object(_direct_import)) => {
+            counts.direct_imports = counts.direct_imports.saturating_add(1);
+        },
+        Some(_invalid) => {
+            return Err(PipelineError::new(format!(
+                "{label} has a non-object direct_import contract"
+            )));
+        },
+    }
+    Ok(())
+}
+
+fn validate_public_identifier(
+    value: &str,
+    label: &str,
+) -> PipelineOutcome<()> {
+    let bytes = value.as_bytes();
+    if bytes.is_empty()
+        || !bytes.first().is_some_and(u8::is_ascii_alphanumeric)
+        || !bytes.last().is_some_and(u8::is_ascii_alphanumeric)
+        || bytes.windows(2).any(|pair| pair == b"--")
+        || !bytes.iter().copied().all(|byte| {
+            byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-'
+        })
     {
-        counts.direct_imports = counts.direct_imports.saturating_add(1);
+        return Err(PipelineError::new(format!(
+            "rendered Unreal {label} is not canonical"
+        )));
     }
     Ok(())
 }
@@ -655,54 +697,92 @@ fn publish_staging(
     plans: &PlanBundle,
 ) -> PipelineOutcome<()> {
     let destination = PathBuf::from(UNREAL_STAGING_ROOT);
-    let transaction_root = PathBuf::from(".temp")
-        .join("pipeline")
-        .join("unreal-prepare");
+    let temporary_root = PathBuf::from(".temp");
+    let pipeline_root = temporary_root.join("pipeline");
+    let transaction_root = pipeline_root.join("unreal-prepare");
     let staging =
         transaction_root.join(format!("staging-{}", std::process::id()));
     let backup =
         transaction_root.join(format!("backup-{}", std::process::id()));
-    fs::create_dir_all(&transaction_root)
-        .map_err(io_error(&transaction_root))?;
+    ensure_generated_directory(
+        &temporary_root,
+        "create Unreal temporary root",
+    )?;
+    ensure_generated_directory(
+        &pipeline_root,
+        "create Unreal pipeline root",
+    )?;
+    ensure_generated_directory(
+        &transaction_root,
+        "create Unreal transaction root",
+    )?;
+    validate_generated_chain(&[
+        temporary_root.as_path(),
+        pipeline_root.as_path(),
+        transaction_root.as_path(),
+    ])?;
     remove_generated_directory(&staging)?;
     remove_generated_directory(&backup)?;
-    fs::create_dir_all(&staging).map_err(io_error(&staging))?;
+    fs::create_dir_all(&staging)
+        .map_err(path_error("create Unreal staging directory"))?;
     let plan_root = staging.join(PLAN_ROOT);
-    fs::create_dir_all(&plan_root).map_err(io_error(&plan_root))?;
-    write_staged_file(&staging, MANIFEST_FILE, manifest)?;
-    write_staged_file(&staging, SUMMARY_FILE, summary)?;
-    write_staged_file(&staging, PLAN_INDEX_FILE, plans.index_json())?;
+    fs::create_dir_all(&plan_root)
+        .map_err(path_error("create Unreal plan directory"))?;
+    let mut published_paths = BTreeSet::new();
+    for (relative_path, content) in [
+        (MANIFEST_FILE, manifest),
+        (SUMMARY_FILE, summary),
+        (PLAN_INDEX_FILE, plans.index_json()),
+    ] {
+        write_staged_file(&staging, relative_path, content)?;
+        let _inserted = published_paths.insert(relative_path.to_owned());
+    }
     for artifact in plans.artifacts() {
         let relative_path = format!("{PLAN_ROOT}/{}", artifact.filename);
         if !PUBLISHED_FILES.contains(&relative_path.as_str()) {
-            return Err(PipelineError::new(format!(
-                "Unreal plan publication path is not declared: {relative_path}"
-            )));
+            return Err(PipelineError::new(
+                "Unreal plan publication path is not declared",
+            ));
+        }
+        if !published_paths.insert(relative_path.clone()) {
+            return Err(PipelineError::new(
+                "Unreal staging publication path is duplicated",
+            ));
         }
         write_staged_file(&staging, &relative_path, &artifact.json)?;
     }
+    validate_publication_inventory(&published_paths)?;
 
     let had_destination = destination.exists();
     if had_destination {
         validate_generated_directory(&destination)?;
         fs::rename(&destination, &backup).map_err(|error| {
-            PipelineError::new(format!(
-                "failed to back up {}: {error}",
-                destination.display()
-            ))
+            prepare_io_error("back up Unreal staging root", &error)
         })?;
     }
     if let Err(error) = fs::rename(&staging, &destination) {
-        if had_destination {
-            drop(fs::rename(&backup, &destination));
-        }
-        return Err(PipelineError::new(format!(
-            "failed to publish {}: {error}",
-            destination.display()
-        )));
+        let rollback_error = had_destination
+            .then(|| fs::rename(&backup, &destination).err())
+            .flatten();
+        return Err(publication_error(&error, rollback_error.as_ref()));
     }
     if had_destination {
         remove_generated_directory(&backup)?;
+    }
+    Ok(())
+}
+
+fn validate_publication_inventory(
+    published_paths: &BTreeSet<String>,
+) -> PipelineOutcome<()> {
+    let expected = PUBLISHED_FILES
+        .iter()
+        .map(|path| (*path).to_owned())
+        .collect::<BTreeSet<_>>();
+    if *published_paths != expected {
+        return Err(PipelineError::new(
+            "Unreal staging publication inventory is not exact",
+        ));
     }
     Ok(())
 }
@@ -714,16 +794,21 @@ fn write_staged_file(
 ) -> PipelineOutcome<()> {
     validate_relative_path(relative_path)?;
     let path = root.join(relative_path);
-    fs::write(&path, content).map_err(io_error(&path))?;
-    verify_staged_file(&path, content.as_bytes())
+    fs::write(&path, content)
+        .map_err(path_error("write Unreal staged file"))?;
+    verify_staged_file(&path, relative_path, content.as_bytes())
 }
 
-fn verify_staged_file(path: &Path, expected: &[u8]) -> PipelineOutcome<()> {
-    let actual = local_read_bytes(path).map_err(io_error(path))?;
+fn verify_staged_file(
+    path: &Path,
+    public_path: &str,
+    expected: &[u8],
+) -> PipelineOutcome<()> {
+    let actual = local_read_bytes(path)
+        .map_err(path_error("read Unreal staged file"))?;
     if actual != expected {
         return Err(PipelineError::new(format!(
-            "staged output verification failed for {}",
-            path.display()
+            "staged output verification failed for {public_path}"
         )));
     }
     Ok(())
@@ -734,37 +819,92 @@ fn remove_generated_directory(path: &Path) -> PipelineOutcome<()> {
         return Ok(());
     }
     validate_generated_directory(path)?;
-    fs::remove_dir_all(path).map_err(io_error(path))
+    fs::remove_dir_all(path)
+        .map_err(path_error("remove generated Unreal directory"))
+}
+
+fn ensure_generated_directory(
+    path: &Path,
+    create_action: &'static str,
+) -> PipelineOutcome<()> {
+    match fs::symlink_metadata(path) {
+        Ok(_metadata) => validate_generated_directory(path),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            fs::create_dir_all(path).map_err(path_error(create_action))?;
+            validate_generated_directory(path)
+        },
+        Err(error) => Err(prepare_io_error(
+            "inspect generated Unreal directory",
+            &error,
+        )),
+    }
+}
+
+fn validate_generated_chain(paths: &[&Path]) -> PipelineOutcome<()> {
+    for path in paths {
+        validate_generated_directory(path)?;
+    }
+    Ok(())
 }
 
 fn validate_generated_directory(path: &Path) -> PipelineOutcome<()> {
-    let metadata = fs::symlink_metadata(path).map_err(io_error(path))?;
+    let metadata = fs::symlink_metadata(path)
+        .map_err(path_error("inspect generated Unreal directory"))?;
     if !metadata.is_dir() || metadata.file_type().is_symlink() {
-        return Err(PipelineError::new(format!(
-            "generated staging path is not a regular directory: {}",
-            path.display()
-        )));
+        return Err(PipelineError::new(
+            "generated staging path is not a regular directory",
+        ));
     }
     #[cfg(windows)]
     {
         use std::os::windows::fs::MetadataExt as _;
         const REPARSE_POINT: u32 = 0x400;
         if metadata.file_attributes() & REPARSE_POINT != 0 {
-            return Err(PipelineError::new(format!(
-                "generated staging path is a reparse boundary: {}",
-                path.display()
-            )));
+            return Err(PipelineError::new(
+                "generated staging path is a reparse boundary",
+            ));
         }
     }
     Ok(())
 }
 
-fn read_utf8(path: &Path) -> PipelineOutcome<String> {
-    local_read_utf8(path).map_err(io_error(path))
+fn read_utf8(path: &Path, action: &'static str) -> PipelineOutcome<String> {
+    local_read_utf8(path).map_err(path_error(action))
 }
 
-fn io_error(path: &Path) -> impl FnOnce(std::io::Error) -> PipelineError + '_ {
-    move |error| PipelineError::new(format!("{}: {error}", path.display()))
+fn prepare_io_error(action: &str, error: &std::io::Error) -> PipelineError {
+    PipelineError::new(format!("{action} failed ({:?})", error.kind()))
+}
+
+fn publication_error(
+    publish_error: &std::io::Error,
+    rollback_error: Option<&std::io::Error>,
+) -> PipelineError {
+    let message = rollback_error.map_or_else(
+        || {
+            format!(
+                "publish Unreal staging root failed ({:?})",
+                publish_error.kind()
+            )
+        },
+        |error| {
+            format!(
+                concat!(
+                    "publish Unreal staging root failed ({:?}); ",
+                    "restore previous Unreal staging root failed ({:?})"
+                ),
+                publish_error.kind(),
+                error.kind()
+            )
+        },
+    );
+    PipelineError::new(message)
+}
+
+fn path_error(
+    action: &'static str,
+) -> impl FnOnce(std::io::Error) -> PipelineError {
+    move |error| prepare_io_error(action, &error)
 }
 
 #[cfg(test)]
