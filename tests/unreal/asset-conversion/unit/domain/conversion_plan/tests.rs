@@ -40,7 +40,7 @@ fn context() -> PlanContext {
     PlanContext {
         source_manifest_revision: "a".repeat(64),
         engine_contract_revision: "shar-unreal-porting-contract-v1".to_owned(),
-        target_engine_version: "5.8".to_owned(),
+        target_engine_version: "5.8.1".to_owned(),
         target_platform: "editor".to_owned(),
     }
 }
@@ -91,6 +91,33 @@ fn json_operation() -> ConversionPlan {
     }
 }
 
+fn fbx_operation(readiness: OperationReadiness) -> ConversionPlan {
+    ConversionPlan {
+        package_identity: "model-package".to_owned(),
+        source_identity: "model-package-fbx".to_owned(),
+        source_format: SourceFormat::Fbx,
+        target_family: NativeAssetFamily::Model,
+        source_path: concat!(
+            "fbx-assets/packages/model_package/",
+            "model_package.fbx"
+        )
+        .to_owned(),
+        source_revision: "d".repeat(64),
+        destination: concat!(
+            "/Game/Generated/SHAR/models/model_package/",
+            "model_package.model_package"
+        )
+        .to_owned(),
+        target_class: "StaticMesh".to_owned(),
+        importer: "asset-tools-fbx".to_owned(),
+        import_profile: "shar-fbx-v1".to_owned(),
+        dependencies: Vec::new(),
+        readiness,
+        world_owned: true,
+        runtime_bound: true,
+    }
+}
+
 #[test]
 fn builds_all_plan_families_with_stable_revisions() -> Result<(), String> {
     let first =
@@ -117,6 +144,7 @@ fn builds_all_plan_families_with_stable_revisions() -> Result<(), String> {
         return Err("operations were assigned to the wrong family".to_owned());
     }
     if !import.json.contains(UNREAL_PLAN_SCHEMA)
+        || !import.json.contains(r#""target_engine_version":"5.8.1""#)
         || !first.index_json().contains(UNREAL_PLAN_BUNDLE_SCHEMA)
         || first.index_revision().len() != 64
     {
@@ -281,6 +309,36 @@ fn rejects_source_target_and_readiness_mismatches() -> Result<(), String> {
     };
     if !readiness_error.contains("operation readiness") {
         return Err(format!("unexpected readiness failure: {readiness_error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn accepts_pending_and_verified_fbx_readiness() -> Result<(), String> {
+    for readiness in [
+        OperationReadiness::RequiresConversion,
+        OperationReadiness::Ready,
+    ] {
+        let bundle = PlanBundle::build(&context(), vec![fbx_operation(readiness)])?;
+        let import = bundle
+            .artifacts()
+            .iter()
+            .find(|artifact| artifact.family == PlanFamily::AssetImport)
+            .ok_or_else(|| "FBX import plan is missing".to_owned())?;
+        if import.operation_count != 1
+            || !import
+                .json
+                .contains(&format!(r#""readiness":"{}""#, readiness.as_str()))
+        {
+            return Err(format!(
+                "FBX readiness was not preserved: {}",
+                readiness.as_str()
+            ));
+        }
+    }
+    let invalid = fbx_operation(OperationReadiness::RequiresEditorFactory);
+    if PlanBundle::build(&context(), vec![invalid]).is_ok() {
+        return Err("FBX evidence accepted editor-factory readiness".to_owned());
     }
     Ok(())
 }

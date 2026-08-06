@@ -33,7 +33,9 @@
 use shar_sha256::digest_hex;
 use shar_unreal_conversion::domain::PlanFamily;
 
-use super::{UnrealImportManifest, UnrealSourceEvidence};
+use super::{
+    UnrealFbxArtifactEvidence, UnrealImportManifest, UnrealSourceEvidence,
+};
 use crate::domain::package::PhaseThreePackageIndex;
 
 fn index() -> Result<PhaseThreePackageIndex, String> {
@@ -70,6 +72,69 @@ fn index_with_member_path(
     let row = row.replace("extracted/ui/icon.png", member_path);
     PhaseThreePackageIndex::from_jsonl(&format!("{row}\n"))
         .map_err(|error| error.to_string())
+}
+
+fn model_index() -> Result<PhaseThreePackageIndex, String> {
+    let row = concat!(
+        "{\"package_id\":\"extracted-art-cars-model\",",
+        "\"package_root\":\"extracted/art/cars/model\",",
+        "\"package_category\":\"cars\",",
+        "\"package_subcategory\":\"cars/traffic/model\",",
+        "\"unit_count\":1,\"text_key_count\":0,",
+        "\"unit_ids\":[\"model-a\"],\"world_ids\":[],",
+        "\"texture_ids\":[],\"material_ids\":[],",
+        "\"model_ids\":[\"model-a\"],\"physics_ids\":[],",
+        "\"animation_ids\":[],\"scene_ids\":[],",
+        "\"locator_ids\":[],\"camera_ids\":[],",
+        "\"light_ids\":[],\"particle_ids\":[],",
+        "\"controller_ids\":[],\"audio_ids\":[],",
+        "\"movie_ids\":[],\"script_ids\":[],",
+        "\"text_ids\":[],\"ui_ids\":[],",
+        "\"metadata_ids\":[],\"error_ids\":[],",
+        "\"source_unit_ids\":[],\"text_key_ids\":[],",
+        "\"members\":[{\"id\":\"model-a\",",
+        "\"role\":\"model\",",
+        "\"path\":\"extracted/art/cars/model/model.json\",",
+        "\"type\":\"model\",\"kind\":\"runtime-asset\",",
+        "\"source_chunk_kind\":\"mesh\"}],",
+        "\"text_keys\":[]}",
+    );
+    PhaseThreePackageIndex::from_jsonl(&format!("{row}\n"))
+        .map_err(|error| error.to_string())
+}
+
+fn model_evidence() -> UnrealSourceEvidence {
+    UnrealSourceEvidence {
+        id: "model-a".to_owned(),
+        path: "extracted/art/cars/model/model.json".to_owned(),
+        file_extension: "json".to_owned(),
+        unit_type: "model".to_owned(),
+        subtype: "mesh".to_owned(),
+        kind: "runtime-asset".to_owned(),
+        function: "model evidence".to_owned(),
+        schema: "model-v1".to_owned(),
+        origin: "p3d-package".to_owned(),
+        source_path: "extracted/art/cars/model/model.p3d".to_owned(),
+        source_chunk_kind: "mesh".to_owned(),
+        size_bytes: 4,
+        sha256: "b".repeat(64),
+        unreal_import_relation: "import-after-conversion".to_owned(),
+        future_normalization: "model-to-fbx".to_owned(),
+    }
+}
+
+fn verified_model_fbx() -> UnrealFbxArtifactEvidence {
+    UnrealFbxArtifactEvidence {
+        package_id: "extracted-art-cars-model".to_owned(),
+        path: concat!(
+            "fbx-assets/packages/extracted_art_cars_model/",
+            "extracted_art_cars_model.fbx"
+        )
+        .to_owned(),
+        size_bytes: 27,
+        sha256: "c".repeat(64),
+        fbx_version: 7700,
+    }
 }
 
 fn evidence() -> UnrealSourceEvidence {
@@ -148,6 +213,103 @@ fn emits_complete_deterministic_plan_bundle() -> Result<(), String> {
             .any(|artifact| artifact.family == family)
         {
             return Err(format!("missing plan family: {}", family.plan_id()));
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn complete_fbx_catalog_promotes_model_import_to_ready() -> Result<(), String> {
+    let manifest = UnrealImportManifest::build(
+        &model_index()?,
+        vec![model_evidence()],
+    )?;
+    let revision = digest_hex(manifest.to_jsonl().as_bytes());
+    let pending = manifest.plan_bundle(&revision)?;
+    let verified = manifest.plan_bundle_with_complete_fbx_catalog(
+        &revision,
+        &[verified_model_fbx()],
+    )?;
+    let pending_json = &pending
+        .artifacts()
+        .iter()
+        .find(|artifact| artifact.family == PlanFamily::AssetImport)
+        .ok_or_else(|| "pending model import plan is missing".to_owned())?
+        .json;
+    let verified_json = &verified
+        .artifacts()
+        .iter()
+        .find(|artifact| artifact.family == PlanFamily::AssetImport)
+        .ok_or_else(|| "verified model import plan is missing".to_owned())?
+        .json;
+    if !pending_json.contains(r#""readiness":"requires-conversion""#)
+        || !verified_json.contains(r#""readiness":"ready""#)
+        || !verified_json.contains(&format!(
+            r#""source_revision":"{}""#,
+            "c".repeat(64)
+        ))
+        || !verified_json.contains(r#""target_engine_version":"5.8.1""#)
+    {
+        return Err(
+            "verified FBX evidence did not promote the model plan".to_owned()
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn complete_fbx_catalog_rejects_missing_and_unclaimed_packages()
+-> Result<(), String> {
+    let manifest = UnrealImportManifest::build(
+        &model_index()?,
+        vec![model_evidence()],
+    )?;
+    let revision = digest_hex(manifest.to_jsonl().as_bytes());
+    if manifest
+        .plan_bundle_with_complete_fbx_catalog(&revision, &[])
+        .is_ok()
+    {
+        return Err("partial FBX catalog was accepted".to_owned());
+    }
+    let mut extra = verified_model_fbx();
+    extra.package_id = "unclaimed-model".to_owned();
+    if manifest
+        .plan_bundle_with_complete_fbx_catalog(
+            &revision,
+            &[verified_model_fbx(), extra],
+        )
+        .is_ok()
+    {
+        return Err("unclaimed FBX catalog package was accepted".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn complete_fbx_catalog_rejects_stale_artifact_contract()
+-> Result<(), String> {
+    let manifest = UnrealImportManifest::build(
+        &model_index()?,
+        vec![model_evidence()],
+    )?;
+    let revision = digest_hex(manifest.to_jsonl().as_bytes());
+    for mutate in ["path", "digest", "version", "size"] {
+        let mut artifact = verified_model_fbx();
+        match mutate {
+            "path" => {
+                artifact.path =
+                    "fbx-assets/packages/other/other.fbx".to_owned();
+            },
+            "digest" => artifact.sha256 = "C".repeat(64),
+            "version" => artifact.fbx_version = 7400,
+            "size" => artifact.size_bytes = 26,
+            _ => return Err("unknown FBX mutation".to_owned()),
+        }
+        if manifest
+            .plan_bundle_with_complete_fbx_catalog(&revision, &[artifact])
+            .is_ok()
+        {
+            return Err(format!("stale FBX {mutate} was accepted"));
         }
     }
     Ok(())

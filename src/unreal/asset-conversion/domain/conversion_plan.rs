@@ -384,29 +384,30 @@ fn validate_source_contract(
     target_family: NativeAssetFamily,
     readiness: OperationReadiness,
 ) -> Result<(), String> {
-    let (expected_family, expected_readiness) = match source_format {
-        SourceFormat::Json => (
-            NativeAssetFamily::StructuredData,
-            OperationReadiness::RequiresEditorFactory,
-        ),
-        SourceFormat::Image => {
-            (NativeAssetFamily::Texture, OperationReadiness::Ready)
-        },
-        SourceFormat::Wav => {
-            (NativeAssetFamily::Audio, OperationReadiness::Ready)
-        },
-        SourceFormat::Hap => {
-            (NativeAssetFamily::Media, OperationReadiness::Ready)
-        },
-        SourceFormat::Fbx => (
-            NativeAssetFamily::Model,
-            OperationReadiness::RequiresConversion,
-        ),
+    let expected_family = match source_format {
+        SourceFormat::Fbx => NativeAssetFamily::Model,
+        SourceFormat::Wav => NativeAssetFamily::Audio,
+        SourceFormat::Image => NativeAssetFamily::Texture,
+        SourceFormat::Hap => NativeAssetFamily::Media,
+        SourceFormat::Json => NativeAssetFamily::StructuredData,
     };
     if target_family != expected_family {
         return Err("source format does not match target family".to_owned());
     }
-    if readiness != expected_readiness {
+    let readiness_matches = match source_format {
+        SourceFormat::Fbx => matches!(
+            readiness,
+            OperationReadiness::Ready
+                | OperationReadiness::RequiresConversion
+        ),
+        SourceFormat::Wav | SourceFormat::Image | SourceFormat::Hap => {
+            readiness == OperationReadiness::Ready
+        },
+        SourceFormat::Json => {
+            readiness == OperationReadiness::RequiresEditorFactory
+        },
+    };
+    if !readiness_matches {
         return Err(
             "source format does not match operation readiness".to_owned()
         );
