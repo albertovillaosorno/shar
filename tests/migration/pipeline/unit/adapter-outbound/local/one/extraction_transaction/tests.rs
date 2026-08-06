@@ -230,6 +230,54 @@ fn malformed_state_fails_without_mutation() -> TestResult {
 }
 
 #[test]
+fn invalid_destination_does_not_create_its_parent() -> TestResult {
+    let root = case_root("invalid-destination-parent");
+    prepare_root(&root)?;
+    let would_be_parent = root.join("must-not-exist");
+    let destination = would_be_parent.join("..");
+
+    let error = match TransactionPaths::new(&destination) {
+        Ok(_paths) => {
+            return Err(
+                "parent-only destination unexpectedly passed".to_owned(),
+            );
+        }
+        Err(error) => error.to_string(),
+    };
+    if !error.contains("no final path segment") {
+        return Err(format!("unexpected invalid-destination error: {error}"));
+    }
+    require_missing(&would_be_parent)?;
+    cleanup(&root)
+}
+
+#[test]
+fn symlinked_parent_prefix_fails_without_external_creation() -> TestResult {
+    let root = case_root("symlinked-parent-prefix");
+    prepare_root(&root)?;
+    let target = root.join("target");
+    let link = root.join("link");
+    fs::create_dir_all(&target).map_err(|error| error.to_string())?;
+    create_directory_link(&target, &link)?;
+    let destination = link.join("created-through-link").join("extracted");
+
+    let error = match ExtractionTransaction::begin(&destination) {
+        Ok(_transaction) => {
+            return Err(
+                "symlinked parent prefix unexpectedly succeeded".to_owned(),
+            );
+        }
+        Err(error) => error.to_string(),
+    };
+    if !error.contains("create extraction parent") {
+        return Err(format!("unexpected symlink-prefix error: {error}"));
+    }
+    require_missing(&target.join("created-through-link"))?;
+    remove_directory_link(&link)?;
+    cleanup(&root)
+}
+
+#[test]
 fn relative_output_uses_portable_sibling_names() -> TestResult {
     let paths = TransactionPaths::new(Path::new("extracted"))
         .map_err(|error| error.to_string())?;
@@ -244,6 +292,27 @@ fn relative_output_uses_portable_sibling_names() -> TestResult {
         ));
     }
     Ok(())
+}
+
+#[cfg(unix)]
+fn create_directory_link(target: &Path, link: &Path) -> TestResult {
+    std::os::unix::fs::symlink(target, link).map_err(|error| error.to_string())
+}
+
+#[cfg(windows)]
+fn create_directory_link(target: &Path, link: &Path) -> TestResult {
+    std::os::windows::fs::symlink_dir(target, link)
+        .map_err(|error| error.to_string())
+}
+
+#[cfg(unix)]
+fn remove_directory_link(link: &Path) -> TestResult {
+    fs::remove_file(link).map_err(|error| error.to_string())
+}
+
+#[cfg(windows)]
+fn remove_directory_link(link: &Path) -> TestResult {
+    fs::remove_dir(link).map_err(|error| error.to_string())
 }
 
 fn case_root(label: &str) -> PathBuf {
