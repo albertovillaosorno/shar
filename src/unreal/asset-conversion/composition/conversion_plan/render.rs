@@ -163,7 +163,7 @@ fn operation_json(operation: &ConversionPlan) -> String {
 
 fn validation_json(family: PlanFamily, operation_count: usize) -> String {
     let mut requirements = vec![
-        "case-insensitive-identities-unique".to_owned(),
+        "case-insensitive-destinations-unique".to_owned(),
         "generated-root-confined".to_owned(),
         "revision-matches-canonical-body".to_owned(),
         "schema-supported".to_owned(),

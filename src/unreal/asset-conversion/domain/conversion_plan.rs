@@ -244,7 +244,7 @@ pub struct ConversionPlan {
 impl ConversionPlan {
     pub(crate) fn identity_preimage(&self) -> String {
         format!(
-            "{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}",
+            "{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}",
             self.package_identity,
             self.source_identity,
             self.source_format.as_str(),
@@ -252,6 +252,7 @@ impl ConversionPlan {
             self.source_path,
             self.source_revision,
             self.destination,
+            self.target_class,
             self.importer,
             self.import_profile,
         )
@@ -272,6 +273,11 @@ impl ConversionPlan {
         validate_identity(&self.source_identity, "source identity")?;
         validate_portable_path(&self.source_path)?;
         validate_sha256(&self.source_revision, "source revision")?;
+        validate_source_contract(
+            self.source_format,
+            self.target_family,
+            self.readiness,
+        )?;
         validate_destination(&self.destination)?;
         validate_identity(&self.target_class, "target class")?;
         validate_identity(&self.importer, "importer")?;
@@ -359,7 +365,7 @@ fn validate_dependencies(
 ) -> Result<(), String> {
     let mut previous: Option<&str> = None;
     for dependency in dependencies {
-        validate_identity(dependency, "operation dependency")?;
+        validate_operation_id(dependency)?;
         if dependency == own_identity {
             return Err("operation cannot depend on itself".to_owned());
         }
@@ -373,14 +379,63 @@ fn validate_dependencies(
     Ok(())
 }
 
+fn validate_source_contract(
+    source_format: SourceFormat,
+    target_family: NativeAssetFamily,
+    readiness: OperationReadiness,
+) -> Result<(), String> {
+    let (expected_family, expected_readiness) = match source_format {
+        SourceFormat::Json => (
+            NativeAssetFamily::StructuredData,
+            OperationReadiness::RequiresEditorFactory,
+        ),
+        SourceFormat::Image => {
+            (NativeAssetFamily::Texture, OperationReadiness::Ready)
+        },
+        SourceFormat::Wav => {
+            (NativeAssetFamily::Audio, OperationReadiness::Ready)
+        },
+        SourceFormat::Hap => {
+            (NativeAssetFamily::Media, OperationReadiness::Ready)
+        },
+        SourceFormat::Fbx => (
+            NativeAssetFamily::Model,
+            OperationReadiness::RequiresConversion,
+        ),
+    };
+    if target_family != expected_family {
+        return Err("source format does not match target family".to_owned());
+    }
+    if readiness != expected_readiness {
+        return Err(
+            "source format does not match operation readiness".to_owned()
+        );
+    }
+    Ok(())
+}
+
+fn validate_operation_id(value: &str) -> Result<(), String> {
+    let Some(digest) = value.strip_prefix("operation-") else {
+        return Err("invalid operation dependency identity".to_owned());
+    };
+    if digest.len() != 16
+        || !digest
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || matches!(byte, b'a'..=b'f'))
+    {
+        return Err("invalid operation dependency identity".to_owned());
+    }
+    Ok(())
+}
+
 fn validate_identity(value: &str, label: &str) -> Result<(), String> {
     if value.is_empty()
         || value.len() > 240
-        || !value.is_ascii()
-        || value.chars().any(char::is_control)
-        || value.trim() != value
+        || !value.bytes().all(|byte| {
+            byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.')
+        })
     {
-        return Err(format!("invalid {label}: {value}"));
+        return Err(format!("invalid {label}"));
     }
     Ok(())
 }
@@ -390,11 +445,12 @@ fn validate_portable_path(path: &str) -> Result<(), String> {
         || path.starts_with('/')
         || path.contains(char::from(92))
         || path.contains(':')
+        || path.chars().any(char::is_control)
         || path
             .split('/')
             .any(|part| part.is_empty() || part == "." || part == "..")
     {
-        return Err(format!("unsafe conversion source path: {path}"));
+        return Err("unsafe conversion source path".to_owned());
     }
     Ok(())
 }
@@ -405,7 +461,7 @@ fn validate_sha256(value: &str, label: &str) -> Result<(), String> {
             .bytes()
             .all(|byte| byte.is_ascii_digit() || matches!(byte, b'a'..=b'f'))
     {
-        return Err(format!("invalid {label}: {value}"));
+        return Err(format!("invalid {label}"));
     }
     Ok(())
 }
@@ -416,20 +472,39 @@ fn validate_destination(path: &str) -> Result<(), String> {
         || path.contains("//")
         || path.chars().any(char::is_control)
     {
-        return Err(format!("unsafe Unreal destination: {path}"));
+        return Err("unsafe Unreal destination".to_owned());
     }
     let Some((package, object)) = path.rsplit_once('.') else {
-        return Err(format!("Unreal destination has no object name: {path}"));
+        return Err("Unreal destination has no object name".to_owned());
     };
+    if package.contains('.') {
+        return Err(
+            "Unreal destination contains an invalid package name".to_owned()
+        );
+    }
     let Some((_parent, asset)) = package.rsplit_once('/') else {
-        return Err(format!("Unreal destination has no package: {path}"));
+        return Err("Unreal destination has no package".to_owned());
     };
-    if object != asset {
-        return Err(format!(
-            "Unreal destination object does not match package: {path}"
-        ));
+    for segment in package.split('/').filter(|segment| !segment.is_empty()) {
+        if !is_unreal_name(segment) {
+            return Err(
+                "Unreal destination contains an invalid segment".to_owned()
+            );
+        }
+    }
+    if !is_unreal_name(object) || object != asset {
+        return Err(
+            "Unreal destination object does not match package".to_owned()
+        );
     }
     Ok(())
+}
+
+fn is_unreal_name(value: &str) -> bool {
+    !value.is_empty()
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'_')
 }
 
 #[cfg(test)]
