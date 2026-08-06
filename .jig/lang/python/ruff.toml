@@ -17,6 +17,8 @@ exclude = [
   ".logs",
   ".temp",
   "target",
+  "**/.venv",
+  "**/venv",
   "**/__pycache__",
 ]
 
