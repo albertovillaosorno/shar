@@ -47,6 +47,7 @@ mod progress;
 mod prop_catalog;
 mod run_registry;
 mod two;
+mod unreal_fbx_catalog;
 mod unreal_plans;
 mod unreal_prepare;
 mod vehicle_catalog;

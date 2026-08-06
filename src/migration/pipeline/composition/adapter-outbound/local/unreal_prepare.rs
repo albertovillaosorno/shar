@@ -45,6 +45,10 @@ use shar_unreal_conversion::domain::PlanBundle;
 
 use crate::adapters::driven::check_cancellation;
 use crate::adapters::driven::local::progress::StageProgress;
+use super::unreal_fbx_catalog::{
+    FBX_CATALOG_ROOT, verified_fbx_catalog,
+};
+
 use crate::domain::{
     PhaseThreePackageIndex, PipelineConfig, PipelineError, PipelineOutcome,
     StageReport, UNREAL_IMPORT_MANIFEST_SCHEMA, UNREAL_IMPORT_SUMMARY_SCHEMA,
@@ -106,14 +110,22 @@ pub(super) fn prepare_unreal(
     let summary_json = unreal_manifest.summary_json();
     validate_rendered_output(&manifest_jsonl, &summary_json)?;
     let manifest_revision = digest_hex(manifest_jsonl.as_bytes());
-    let plan_bundle =
-        unreal_manifest
-            .plan_bundle(&manifest_revision)
-            .map_err(|error| {
-                PipelineError::new(format!(
-                    "Unreal plan generation failed: {error}"
-                ))
-            })?;
+    let fbx_catalog = verified_fbx_catalog(Path::new(FBX_CATALOG_ROOT))?;
+    let verified_fbx_count = fbx_catalog.as_ref().map_or(0, Vec::len);
+    let plan_bundle = fbx_catalog.as_deref().map_or_else(
+        || unreal_manifest.plan_bundle(&manifest_revision),
+        |catalog| {
+            unreal_manifest.plan_bundle_with_complete_fbx_catalog(
+                &manifest_revision,
+                catalog,
+            )
+        },
+    )
+    .map_err(|error| {
+        PipelineError::new(format!(
+            "Unreal plan generation failed: {error}"
+        ))
+    })?;
     publish_staging(&manifest_jsonl, &summary_json, &plan_bundle)?;
     Ok(StageReport {
         name: "prepare-unreal",
@@ -125,11 +137,12 @@ pub(super) fn prepare_unreal(
         ),
         note: format!(
             concat!(
-                "verified {} sources across {} semantic packages and ",
-                "published {} with plan bundle {}"
+                "verified {} sources across {} semantic packages and {} ",
+                "generated FBX artifacts; published {} with plan bundle {}"
             ),
             unreal_manifest.source_count(),
             unreal_manifest.package_count(),
+            verified_fbx_count,
             UNREAL_STAGING_ROOT,
             plan_bundle.index_revision(),
         ),
