@@ -58,6 +58,9 @@ _KNOWN_ACTIONS = frozenset(
         "catalog",
         "describe",
         "doctor",
+        "plan-apply",
+        "plan-capabilities",
+        "plan-execution-preflight",
         "plan-preflight",
         "raw-call",
         "skills",
@@ -68,6 +71,11 @@ _HELP_ACTIONS = frozenset({"--help", "-h", "help"})
 _USAGE = """Usage:
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS] doctor
   shar-unreal-mcp plan-preflight [--root RELATIVE_PATH]
+  shar-unreal-mcp plan-execution-preflight [--root RELATIVE_PATH]
+  shar-unreal-mcp [--endpoint URL] [--timeout SECONDS]
+    plan-capabilities [--root RELATIVE_PATH]
+  shar-unreal-mcp [--endpoint URL] [--timeout SECONDS]
+    plan-apply [--root RELATIVE_PATH]
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS] toolsets
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS] describe TOOLSET
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS]

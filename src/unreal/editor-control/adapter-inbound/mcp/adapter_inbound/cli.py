@@ -51,14 +51,21 @@ from mcp.adapter_outbound.catalog_renderer import render_catalog_markdown
 from mcp.adapter_outbound.catalog_renderer import render_json
 from mcp.adapter_outbound.filesystem_skill_store import FilesystemSkillStore
 from mcp.adapter_outbound.plan_bundle_reader import FilesystemPlanBundleReader
+from mcp.adapter_outbound.plan_source_verifier import (
+    FilesystemPlanSourceVerifier,
+)
 from mcp.adapter_outbound.skill_markdown_renderer import MarkdownSkillRenderer
 from mcp.adapter_outbound.streamable_http import StreamableHttpTransport
 from mcp.adapter_outbound.unreal_mcp_version import (
     FilesystemUnrealMcpVersionProvider,
 )
+from mcp.application.plan_application import apply_import_plan
 from mcp.application.service import UnrealMcpTranslator
 from mcp.application.skill_export import UnrealSkillExporter
 from mcp.domain.errors import UnrealMcpError
+from mcp.domain.plan_capabilities import audit_plan_capabilities
+from mcp.domain.plan_capabilities import required_toolsets
+from mcp.domain.plan_execution import compile_execution_plan
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -92,6 +99,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         _validate_action_operands(invocation)
         if invocation.action == "plan-preflight":
             return _run_plan_preflight(parse_plan_root(invocation.operands))
+        if invocation.action == "plan-execution-preflight":
+            return _run_plan_execution_preflight(
+                parse_plan_root(invocation.operands)
+            )
+        if invocation.action == "plan-capabilities":
+            return _run_plan_capabilities(
+                invocation,
+                parse_plan_root(invocation.operands),
+            )
+        if invocation.action == "plan-apply":
+            return _run_plan_apply(
+                invocation,
+                parse_plan_root(invocation.operands),
+            )
         return _run(invocation)
     except UsageError as error:
         _write_stderr(f"error: {error}\n\n{usage_text()}")
@@ -108,7 +129,12 @@ def _validate_action_operands(invocation: CliInvocation) -> None:
     if action in {"doctor", "toolsets"}:
         require_operand_count(action, operands, expected=0)
         return
-    if action == "plan-preflight":
+    if action in {
+        "plan-apply",
+        "plan-capabilities",
+        "plan-execution-preflight",
+        "plan-preflight",
+    }:
         _ = parse_plan_root(operands)
         return
     if action == "describe":
@@ -129,6 +155,111 @@ def _validate_action_operands(invocation: CliInvocation) -> None:
 def _run_plan_preflight(root: Path) -> int:
     report = FilesystemPlanBundleReader(root).read()
     _write_stdout(render_json(report.to_json()))
+    return _EXIT_SUCCESS
+
+
+def _run_plan_execution_preflight(root: Path) -> int:
+    bundle = FilesystemPlanBundleReader(root).read_bundle()
+    sources = FilesystemPlanSourceVerifier(Path("."), root).verify(bundle)
+    execution = compile_execution_plan(bundle)
+    _write_stdout(
+        render_json(
+            {
+                "bundle": bundle.report.to_json(),
+                "execution": execution.report.to_json(),
+                "sources": sources.report.to_json(),
+            }
+        )
+    )
+    return _EXIT_SUCCESS if execution.report.complete else _EXIT_FAILURE
+
+
+def _run_plan_capabilities(
+    invocation: CliInvocation,
+    root: Path,
+) -> int:
+    bundle = FilesystemPlanBundleReader(root).read_bundle()
+    sources = FilesystemPlanSourceVerifier(Path("."), root).verify(bundle)
+    execution = compile_execution_plan(bundle)
+    transport = StreamableHttpTransport(
+        invocation.endpoint,
+        timeout_seconds=invocation.timeout_seconds,
+    )
+    with UnrealMcpTranslator(transport) as translator:
+        definitions = translator.describe_available_toolsets(
+            required_toolsets(execution)
+        )
+    capabilities = audit_plan_capabilities(execution, definitions)
+    _write_stdout(
+        render_json(
+            {
+                "bundle": bundle.report.to_json(),
+                "capabilities": capabilities.to_json(),
+                "execution": execution.report.to_json(),
+                "sources": sources.report.to_json(),
+            }
+        )
+    )
+    return _EXIT_SUCCESS if capabilities.complete else _EXIT_FAILURE
+
+
+def _run_plan_apply(
+    invocation: CliInvocation,
+    root: Path,
+) -> int:
+    bundle = FilesystemPlanBundleReader(root).read_bundle()
+    sources = FilesystemPlanSourceVerifier(Path("."), root).verify(bundle)
+    execution = compile_execution_plan(bundle)
+    if not execution.report.complete:
+        _write_stdout(
+            render_json(
+                {
+                    "bundle": bundle.report.to_json(),
+                    "execution": execution.report.to_json(),
+                    "sources": sources.report.to_json(),
+                }
+            )
+        )
+        return _EXIT_FAILURE
+
+    transport = StreamableHttpTransport(
+        invocation.endpoint,
+        timeout_seconds=invocation.timeout_seconds,
+    )
+    with UnrealMcpTranslator(transport) as translator:
+        definitions = translator.describe_available_toolsets(
+            required_toolsets(execution)
+        )
+        capabilities = audit_plan_capabilities(execution, definitions)
+        if not capabilities.complete:
+            _write_stdout(
+                render_json(
+                    {
+                        "bundle": bundle.report.to_json(),
+                        "capabilities": capabilities.to_json(),
+                        "execution": execution.report.to_json(),
+                        "sources": sources.report.to_json(),
+                    }
+                )
+            )
+            return _EXIT_FAILURE
+        application = apply_import_plan(
+            translator,
+            execution,
+            capabilities,
+            sources.by_operation,
+        )
+    _write_stdout(
+        render_json(
+            {
+                "application": application.to_json(),
+                "bundle": bundle.report.to_json(),
+                "capabilities": capabilities.to_json(),
+                "execution": execution.report.to_json(),
+                "sources": sources.report.to_json(),
+            }
+        )
+    )
     return _EXIT_SUCCESS
 
 
