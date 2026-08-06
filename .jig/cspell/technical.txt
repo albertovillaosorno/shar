@@ -490,6 +490,7 @@ interactor
 intercardinal
 Interp
 interp
+isjunction
 isort
 isreserved
 istruck
@@ -1306,6 +1307,7 @@ windowshape
 Windsheild
 windsheild
 windsheildt
+winerror
 WITCHCAR
 witchcar
 worktree

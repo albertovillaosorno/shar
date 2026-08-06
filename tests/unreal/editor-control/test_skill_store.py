@@ -32,6 +32,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING
 from typing import cast
 
@@ -62,6 +63,63 @@ class _SyntheticTranslator:
 
     def discover_catalog(self) -> tuple[ToolsetDefinition, ...]:
         return self._catalog
+
+
+def _create_directory_link(target: Path, link: Path) -> None:
+    try:
+        link.symlink_to(target, target_is_directory=True)
+    except OSError as error:
+        if os.name == "nt" and getattr(error, "winerror", None) == 1314:
+            pytest.skip("directory symlinks require Windows developer mode")
+        raise
+
+
+def test_filesystem_store_rejects_linked_output_root_without_external_mutation(
+    tmp_path: Path,
+) -> None:
+    """A linked output root cannot redirect generated publication."""
+    external = tmp_path / "external"
+    external.mkdir()
+    sentinel = external / "sentinel.md"
+    _ = sentinel.write_text("preserve external data\n", encoding="utf-8")
+    parent = tmp_path / "generated"
+    parent.mkdir()
+    output_root = parent / "unreal"
+    _create_directory_link(external, output_root)
+    documents = MarkdownSkillRenderer(TEST_UNREAL_MCP_VERSION).render(
+        complete_catalog()
+    )
+
+    with pytest.raises(ProtocolError, match="link or reparse point"):
+        FilesystemSkillStore(output_root).replace(documents)
+
+    assert sentinel.read_text(encoding="utf-8") == "preserve external data\n"
+    assert not (external / "index.md").exists()
+    assert not (external / "capabilities").exists()
+
+
+def test_filesystem_store_rejects_linked_capability_tree_without_cleanup(
+    tmp_path: Path,
+) -> None:
+    """Generated cleanup cannot traverse a linked capabilities directory."""
+    output_root = tmp_path / "skills" / "unreal"
+    output_root.mkdir(parents=True)
+    external = tmp_path / "external-capabilities"
+    external.mkdir()
+    sentinel = external / "stale.md"
+    _ = sentinel.write_text("preserve external capability\n", encoding="utf-8")
+    _create_directory_link(external, output_root / "capabilities")
+    documents = MarkdownSkillRenderer(TEST_UNREAL_MCP_VERSION).render(
+        complete_catalog()
+    )
+
+    with pytest.raises(ProtocolError, match="link or reparse point"):
+        FilesystemSkillStore(output_root).replace(documents)
+
+    assert sentinel.read_text(encoding="utf-8") == (
+        "preserve external capability\n"
+    )
+    assert not (output_root / "index.md").exists()
 
 
 def test_filesystem_store_preserves_manual_skills_and_removes_stale_files(

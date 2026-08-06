@@ -47,6 +47,12 @@ from mcp.adapter_outbound.skill_manual_review import manual_review_state
 from mcp.adapter_outbound.skill_native_identity import (
     extract_native_tool_identity,
 )
+from mcp.adapter_outbound.skill_output_path import ensure_output_root
+from mcp.adapter_outbound.skill_output_path import ensure_owned_directory
+from mcp.adapter_outbound.skill_output_path import validate_existing_output_surface
+from mcp.adapter_outbound.skill_output_path import validate_regular_file
+from mcp.adapter_outbound.skill_output_path import validate_regular_target
+from mcp.adapter_outbound.skill_output_path import validate_temporary_target
 from mcp.domain.errors import fail_protocol
 
 if TYPE_CHECKING:
@@ -71,9 +77,11 @@ class FilesystemSkillStore:
     def replace(self, documents: tuple[SkillDocument, ...]) -> None:
         """Persist a complete generated document set."""
         targets = _checked_targets(documents)
+        validate_existing_output_surface(self._output_root)
         merged_targets = self._merge_existing_manual_fields(targets)
         finalized_targets = self._finalize_manual_review_summary(merged_targets)
-        self._output_root.mkdir(parents=True, exist_ok=True)
+        ensure_output_root(self._output_root)
+        validate_existing_output_surface(self._output_root)
         self._remove_stale_capability_files(frozenset(finalized_targets))
         for relative_path, content in sorted(finalized_targets.items()):
             self._write_atomic(relative_path, content)
@@ -191,10 +199,16 @@ class FilesystemSkillStore:
 
     def _write_atomic(self, relative_path: str, content: str) -> None:
         target = self._output_root.joinpath(*PurePosixPath(relative_path).parts)
-        target.parent.mkdir(parents=True, exist_ok=True)
+        ensure_owned_directory(self._output_root, target.parent)
+        validate_regular_target(target)
         temporary = target.with_name(f".{target.name}.tmp")
-        _ = temporary.write_text(content, encoding="utf-8", newline="\n")
-        _ = temporary.replace(target)
+        validate_temporary_target(temporary)
+        try:
+            _ = temporary.write_text(content, encoding="utf-8", newline="\n")
+            validate_regular_file(temporary, "generated skill temporary file")
+            _ = temporary.replace(target)
+        except OSError as error:
+            fail_protocol("failed to publish generated skill", cause=error)
 
     def _remove_empty_capability_directories(self) -> None:
         capabilities_root = self._output_root / _CAPABILITIES_ROOT
