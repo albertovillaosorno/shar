@@ -34,12 +34,248 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use super::ExtractGameAssets;
+use super::super::extraction_transaction::ExtractionTransaction;
+use super::{ExtractGameAssets, guard_paths};
 use crate::domain::PipelineConfig;
 
 static CASE_ID: AtomicUsize = AtomicUsize::new(0);
 
 type TestResult = Result<(), String>;
+
+#[test]
+fn partial_lmlm_recovery_precedes_package_approval() -> TestResult {
+    let root = case_root("partial-lmlm-recovery-before-approval");
+    prepare_root(&root)?;
+    let game_root = root.join("game");
+    let mods_root = game_root.join("mods");
+    let extracted_root = root.join("extracted");
+    fs::create_dir_all(&mods_root).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&extracted_root).map_err(|error| error.to_string())?;
+    fs::write(mods_root.join("m.lmlm"), b"fixture")
+        .map_err(|error| error.to_string())?;
+    let sentinel = extracted_root.join("accepted.txt");
+    fs::write(&sentinel, b"accepted").map_err(|error| error.to_string())?;
+    let paths = transaction_paths(&extracted_root)?;
+    write_transaction_state(&paths.state)?;
+    fs::rename(&extracted_root, &paths.backup)
+        .map_err(|error| error.to_string())?;
+    fs::create_dir_all(&paths.staging).map_err(|error| error.to_string())?;
+    fs::write(paths.staging.join("partial.txt"), b"partial")
+        .map_err(|error| error.to_string())?;
+    let config = PipelineConfig {
+        game_root,
+        extracted_root: extracted_root.clone(),
+        clean_extracted: true,
+        optional_mod_approval: None,
+    };
+
+    let error = match ExtractGameAssets::export_lmlm_only(&config) {
+        Ok(_report) => {
+            return Err("unapproved partial package export passed".to_owned());
+        }
+        Err(error) => error.to_string(),
+    };
+    if !error.contains("approval token") {
+        return Err(format!("unexpected package approval error: {error}"));
+    }
+    require_restored_accepted_output(&extracted_root, &sentinel)?;
+    require_transaction_absent(&extracted_root)?;
+    fs::remove_dir_all(root).map_err(|error| error.to_string())
+}
+
+#[test]
+fn partial_export_respects_active_full_transaction_lease() -> TestResult {
+    let root = case_root("partial-export-active-lease");
+    prepare_root(&root)?;
+    let game_root = root.join("game");
+    let extracted_root = root.join("extracted");
+    fs::create_dir_all(&game_root).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&extracted_root).map_err(|error| error.to_string())?;
+    let sentinel = extracted_root.join("accepted.txt");
+    fs::write(&sentinel, b"accepted").map_err(|error| error.to_string())?;
+    let transaction = ExtractionTransaction::begin(&extracted_root)
+        .map_err(|error| error.to_string())?;
+    let config = PipelineConfig {
+        game_root,
+        extracted_root: extracted_root.clone(),
+        clean_extracted: true,
+        optional_mod_approval: None,
+    };
+
+    let error = match ExtractGameAssets::export_movies_only(&config) {
+        Ok(_report) => {
+            return Err("partial export bypassed active lease".to_owned());
+        }
+        Err(error) => error.to_string(),
+    };
+    if !error.contains("active extraction transaction") {
+        return Err(format!("unexpected active-lease error: {error}"));
+    }
+    let bytes = fs::read(&sentinel).map_err(|error| error.to_string())?;
+    if bytes != b"accepted" {
+        return Err("lease contention changed accepted output".to_owned());
+    }
+    transaction.abort().map_err(|error| error.to_string())?;
+    require_transaction_absent(&extracted_root)?;
+    fs::remove_dir_all(root).map_err(|error| error.to_string())
+}
+
+#[test]
+fn partial_export_recovers_interrupted_full_transaction() -> TestResult {
+    let root = case_root("partial-export-recovery");
+    prepare_root(&root)?;
+    let game_root = root.join("game");
+    let extracted_root = root.join("extracted");
+    fs::create_dir_all(&game_root).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&extracted_root).map_err(|error| error.to_string())?;
+    let sentinel = extracted_root.join("accepted.txt");
+    fs::write(&sentinel, b"accepted").map_err(|error| error.to_string())?;
+    let paths = transaction_paths(&extracted_root)?;
+    write_transaction_state(&paths.state)?;
+    fs::rename(&extracted_root, &paths.backup)
+        .map_err(|error| error.to_string())?;
+    fs::create_dir_all(&paths.staging).map_err(|error| error.to_string())?;
+    fs::write(paths.staging.join("partial.txt"), b"partial")
+        .map_err(|error| error.to_string())?;
+    let config = PipelineConfig {
+        game_root,
+        extracted_root: extracted_root.clone(),
+        clean_extracted: true,
+        optional_mod_approval: None,
+    };
+
+    let error = match ExtractGameAssets::export_movies_only(&config) {
+        Ok(_report) => {
+            return Err("empty movie export unexpectedly passed".to_owned());
+        }
+        Err(error) => error.to_string(),
+    };
+    if !error.contains("no .rmv movie inputs") {
+        return Err(format!("unexpected post-recovery error: {error}"));
+    }
+    require_restored_accepted_output(&extracted_root, &sentinel)?;
+    require_transaction_absent(&extracted_root)?;
+    fs::remove_dir_all(root).map_err(|error| error.to_string())
+}
+
+#[test]
+fn partial_export_rejects_symlinked_parent_prefix() -> TestResult {
+    let root = case_root("partial-export-symlink-prefix");
+    prepare_root(&root)?;
+    let game_root = root.join("game");
+    let target = root.join("target");
+    let link = root.join("link");
+    fs::create_dir_all(&game_root).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&target).map_err(|error| error.to_string())?;
+    create_directory_link(&target, &link)?;
+    let extracted_root = link.join("created-through-link").join("extracted");
+    let config = PipelineConfig {
+        game_root,
+        extracted_root,
+        clean_extracted: true,
+        optional_mod_approval: None,
+    };
+
+    let error = match ExtractGameAssets::export_movies_only(&config) {
+        Ok(_report) => {
+            return Err(
+                "symlinked partial output unexpectedly passed".to_owned(),
+            );
+        }
+        Err(error) => error.to_string(),
+    };
+    if !error.contains("output path failed (InvalidInput)") {
+        return Err(format!("unexpected symlink-prefix error: {error}"));
+    }
+    if target.join("created-through-link").exists() {
+        return Err("partial export created output through a link".to_owned());
+    }
+    remove_directory_link(&link)?;
+    fs::remove_dir_all(root).map_err(|error| error.to_string())
+}
+
+#[test]
+fn existing_output_file_is_rejected_before_lock_creation() -> TestResult {
+    let root = case_root("output-file-before-lock");
+    prepare_root(&root)?;
+    let game_root = root.join("game");
+    let extracted_root = root.join("extracted");
+    fs::create_dir_all(&game_root).map_err(|error| error.to_string())?;
+    fs::write(&extracted_root, b"original")
+        .map_err(|error| error.to_string())?;
+    let lock = root.join(".extracted.pipeline-lock");
+
+    let error = match guard_paths(&game_root, &extracted_root) {
+        Ok(_identity) => {
+            return Err("output file unexpectedly passed".to_owned());
+        }
+        Err(error) => error.to_string(),
+    };
+    if !error.contains("output must be a directory") {
+        return Err(format!("unexpected output-file error: {error}"));
+    }
+    let bytes = fs::read(&extracted_root).map_err(|error| error.to_string())?;
+    if bytes != b"original" {
+        return Err("output file changed during validation".to_owned());
+    }
+    if lock.exists() {
+        return Err("output-file validation created a lock".to_owned());
+    }
+    fs::remove_dir_all(root).map_err(|error| error.to_string())
+}
+
+#[test]
+fn missing_parent_components_normalize_without_side_effects() -> TestResult {
+    let root = case_root("missing-parent-normalization");
+    prepare_root(&root)?;
+    let game_root = root.join("game");
+    let missing = root.join("missing");
+    fs::create_dir_all(&game_root).map_err(|error| error.to_string())?;
+    let extracted_root = missing.join("..").join("output");
+
+    let identity = guard_paths(&game_root, &extracted_root)
+        .map_err(|error| error.to_string())?;
+    let expected = fs::canonicalize(&root)
+        .map_err(|error| error.to_string())?
+        .join("output");
+    if identity != expected {
+        return Err(format!(
+            "unexpected normalized output identity: {}",
+            identity.display()
+        ));
+    }
+    if missing.exists() || expected.exists() {
+        return Err("path validation created a discarded component".to_owned());
+    }
+    fs::remove_dir_all(root).map_err(|error| error.to_string())
+}
+
+#[test]
+fn canonical_output_inside_game_is_rejected_before_creation() -> TestResult {
+    let root = case_root("canonical-output-containment");
+    prepare_root(&root)?;
+    let game_root = root.join("game");
+    let detour = root.join("detour");
+    fs::create_dir_all(&game_root).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&detour).map_err(|error| error.to_string())?;
+    let extracted_root = detour.join("..").join("game").join("generated");
+
+    let error = match guard_paths(&game_root, &extracted_root) {
+        Ok(_identity) => {
+            return Err(
+                "canonical in-game output unexpectedly passed".to_owned(),
+            );
+        }
+        Err(error) => error.to_string(),
+    };
+    if !error.contains("refusing to write inside game") {
+        return Err(format!("unexpected containment error: {error}"));
+    }
+    if game_root.join("generated").exists() {
+        return Err("containment guard created an in-game output".to_owned());
+    }
+    fs::remove_dir_all(root).map_err(|error| error.to_string())
+}
 
 #[test]
 fn failed_clean_and_resume_runs_preserve_accepted_output() -> TestResult {
@@ -190,6 +426,27 @@ fn require_restored_accepted_output(
     } else {
         Err("resume recovery did not restore accepted output".to_owned())
     }
+}
+
+#[cfg(unix)]
+fn create_directory_link(target: &Path, link: &Path) -> TestResult {
+    std::os::unix::fs::symlink(target, link).map_err(|error| error.to_string())
+}
+
+#[cfg(windows)]
+fn create_directory_link(target: &Path, link: &Path) -> TestResult {
+    std::os::windows::fs::symlink_dir(target, link)
+        .map_err(|error| error.to_string())
+}
+
+#[cfg(unix)]
+fn remove_directory_link(link: &Path) -> TestResult {
+    fs::remove_file(link).map_err(|error| error.to_string())
+}
+
+#[cfg(windows)]
+fn remove_directory_link(link: &Path) -> TestResult {
+    fs::remove_dir(link).map_err(|error| error.to_string())
 }
 
 fn case_root(label: &str) -> PathBuf {

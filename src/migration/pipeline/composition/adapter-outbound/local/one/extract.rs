@@ -31,6 +31,7 @@
 //! Extract outbound adapter.
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::path::{Component, Path, PathBuf};
 use std::process::Command;
@@ -46,12 +47,15 @@ use rmv::{
 };
 use rsd::RsdAudio;
 use schoenwald_filesystem::adapters::driving::local::{
-    file_len as local_file_len, write_bytes as local_write_bytes,
+    create_dir_all as local_create_dir_all, file_len as local_file_len,
+    path_kind as local_path_kind, write_bytes as local_write_bytes,
 };
-use schoenwald_filesystem::resolve_under;
+use schoenwald_filesystem::{PathKind, resolve_under};
 
 use super::super::two::units::manifest_minor_unit as mum;
-use super::extraction_transaction::ExtractionTransaction;
+use super::extraction_transaction::{
+    ExtractionOutputLease, ExtractionTransaction,
+};
 use super::json_output::validate_generated_text_file;
 use super::lmlm_stage::{
     ensure_optional_mod_transition, extract_lmlm, require_optional_mod_approval,
@@ -121,8 +125,9 @@ impl ExtractGameAssets {
     pub(in crate::adapters::driven::local) fn run(
         config: &PipelineConfig,
     ) -> PipelineOutcome<PipelineReport> {
-        guard_paths(&config.game_root, &config.extracted_root)?;
-        let transaction = ExtractionTransaction::begin(&config.extracted_root)?;
+        let extracted_root =
+            guard_paths(&config.game_root, &config.extracted_root)?;
+        let transaction = ExtractionTransaction::begin(&extracted_root)?;
         let result = (|| {
             let current_optional_token = require_optional_mod_approval(
                 &config.game_root,
@@ -130,7 +135,7 @@ impl ExtractGameAssets {
             )?;
             if !config.clean_extracted {
                 ensure_optional_mod_transition(
-                    &config.extracted_root,
+                    &extracted_root,
                     current_optional_token.as_deref(),
                 )?;
             }
@@ -167,13 +172,15 @@ impl ExtractGameAssets {
     pub(in crate::adapters::driven::local) fn export_movies_only(
         config: &PipelineConfig,
     ) -> PipelineOutcome<PipelineReport> {
-        guard_paths(&config.game_root, &config.extracted_root)?;
-        fs::create_dir_all(&config.extracted_root)
-            .map_err(io_error(&config.extracted_root))?;
+        let extracted_root =
+            guard_paths(&config.game_root, &config.extracted_root)?;
+        let _output_lease = ExtractionOutputLease::acquire(&extracted_root)?;
+        local_create_dir_all(&extracted_root)
+            .map_err(io_error(&extracted_root))?;
         let mut report = PipelineReport::default();
         report
             .stages
-            .push(extract_movies(&config.game_root, &config.extracted_root)?);
+            .push(extract_movies(&config.game_root, &extracted_root)?);
         Ok(report)
     }
 
@@ -186,21 +193,23 @@ impl ExtractGameAssets {
     pub(in crate::adapters::driven::local) fn export_lmlm_only(
         config: &PipelineConfig,
     ) -> PipelineOutcome<PipelineReport> {
-        guard_paths(&config.game_root, &config.extracted_root)?;
+        let extracted_root =
+            guard_paths(&config.game_root, &config.extracted_root)?;
+        let _output_lease = ExtractionOutputLease::acquire(&extracted_root)?;
         let current_optional_token = require_optional_mod_approval(
             &config.game_root,
             config.optional_mod_approval.as_deref(),
         )?;
         ensure_optional_mod_transition(
-            &config.extracted_root,
+            &extracted_root,
             current_optional_token.as_deref(),
         )?;
-        fs::create_dir_all(&config.extracted_root)
-            .map_err(io_error(&config.extracted_root))?;
+        local_create_dir_all(&extracted_root)
+            .map_err(io_error(&extracted_root))?;
         let mut report = PipelineReport::default();
         report.stages.push(extract_lmlm(
             &config.game_root,
-            &config.extracted_root,
+            &extracted_root,
             config.optional_mod_approval.as_deref(),
         )?);
         Ok(report)
@@ -211,7 +220,7 @@ impl ExtractGameAssets {
 fn run_staged_extraction(
     config: &PipelineConfig,
 ) -> PipelineOutcome<PipelineReport> {
-    fs::create_dir_all(&config.extracted_root)
+    local_create_dir_all(&config.extracted_root)
         .map_err(io_error(&config.extracted_root))?;
     let mut progress =
         StageProgress::begin("pipeline stages", FULL_EXTRACTION_STAGE_COUNT);
@@ -276,20 +285,106 @@ fn run_staged_extraction(
 }
 
 /// Guard paths.
-fn guard_paths(game_root: &Path, extracted_root: &Path) -> PipelineOutcome<()> {
-    if !game_root.exists() {
+fn guard_paths(
+    game_root: &Path,
+    extracted_root: &Path,
+) -> PipelineOutcome<PathBuf> {
+    if !game_root.is_dir() {
         return Err(PipelineError::new(format!(
             "game root does not exist: {}",
             game_root.display()
         )));
     }
-    if extracted_root == game_root || extracted_root.starts_with(game_root) {
+    let game_identity =
+        fs::canonicalize(game_root).map_err(io_error(game_root))?;
+    let output_kind = local_path_kind(extracted_root).map_err(|error| {
+        PipelineError::new(format!(
+            "validate extraction output path failed ({:?})",
+            error.kind()
+        ))
+    })?;
+    if output_kind == PathKind::File {
         return Err(PipelineError::new(
-            "refusing to write inside game/; use the root extracted/ \
-                 output directory",
+            "extraction output must be a directory",
         ));
     }
-    Ok(())
+    if output_kind == PathKind::Other {
+        return Err(PipelineError::new(
+            "extraction output must not be a link or special file",
+        ));
+    }
+    let output_identity = resolve_target_identity(extracted_root)?;
+    if output_identity == game_identity
+        || output_identity.starts_with(&game_identity)
+    {
+        return Err(PipelineError::new(concat!(
+            "refusing to write inside game/; use the root extracted/ ",
+            "output directory"
+        )));
+    }
+    Ok(output_identity)
+}
+
+/// Resolve one output identity without requiring its final components to exist.
+fn resolve_target_identity(path: &Path) -> PipelineOutcome<PathBuf> {
+    if path.as_os_str().is_empty() {
+        return Err(PipelineError::new("extraction output path is empty"));
+    }
+    let absolute = if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        std::env::current_dir()
+            .map_err(|error| {
+                PipelineError::new(format!(
+                    "resolve extraction output failed ({:?})",
+                    error.kind()
+                ))
+            })?
+            .join(path)
+    };
+    let mut existing = absolute.as_path();
+    let mut suffix = Vec::<OsString>::new();
+    loop {
+        match fs::canonicalize(existing) {
+            Ok(mut identity) => {
+                for component in suffix.iter().rev() {
+                    if component == OsStr::new(".") {
+                        continue;
+                    }
+                    if component == OsStr::new("..") {
+                        if !identity.pop() {
+                            return Err(PipelineError::new(
+                                "extraction output path escapes its root",
+                            ));
+                        }
+                    } else {
+                        identity.push(component);
+                    }
+                }
+                return Ok(identity);
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                let Some(name) = existing.file_name() else {
+                    return Err(PipelineError::new(
+                        "extraction output path cannot be resolved",
+                    ));
+                };
+                suffix.push(name.to_os_string());
+                let Some(parent) = existing.parent() else {
+                    return Err(PipelineError::new(
+                        "extraction output path cannot be resolved",
+                    ));
+                };
+                existing = parent;
+            }
+            Err(error) => {
+                return Err(PipelineError::new(format!(
+                    "resolve extraction output failed ({:?})",
+                    error.kind()
+                )));
+            }
+        }
+    }
 }
 
 /// Io error.
@@ -863,7 +958,7 @@ fn write_movie_package_plan(
     logical_relative: &Path,
     plan: &UnrealHapPackagePlan,
 ) -> PipelineOutcome<()> {
-    fs::create_dir_all(&plan.movie_directory)
+    local_create_dir_all(&plan.movie_directory)
         .map_err(io_error(&plan.movie_directory))?;
     let legacy_metadata = plan.movie_directory.join("metadata.json");
     if legacy_metadata.exists() {

@@ -38,6 +38,7 @@ use std::path::{Path, PathBuf};
 
 use super::cleanup::remove_generated_tree;
 use crate::domain::{PipelineError, PipelineOutcome};
+use schoenwald_filesystem::adapters::driving::local as local_filesystem;
 
 const STATE_BYTES: &[u8] =
     b"{\"schema\":\"shar-schoenwald.extraction-transaction.v1\"}\n";
@@ -47,6 +48,12 @@ const STATE_BYTES: &[u8] =
 pub(super) struct ExtractionTransaction {
     paths: TransactionPaths,
     _lease: StateLease,
+}
+
+#[derive(Debug)]
+pub(super) struct ExtractionOutputLease {
+    paths: TransactionPaths,
+    lease: StateLease,
 }
 
 #[derive(Debug)]
@@ -63,9 +70,9 @@ struct TransactionPaths {
     lock: PathBuf,
 }
 
-impl ExtractionTransaction {
-    /// Recover any interrupted publication and create one empty candidate root.
-    pub(super) fn begin(destination: &Path) -> PipelineOutcome<Self> {
+impl ExtractionOutputLease {
+    /// Serialize one output root and recover an interrupted full publication.
+    pub(super) fn acquire(destination: &Path) -> PipelineOutcome<Self> {
         let paths = TransactionPaths::new(destination)?;
         let lease = acquire_transaction_lease(&paths.lock)?;
         recover_interrupted(&paths)?;
@@ -76,8 +83,21 @@ impl ExtractionTransaction {
         ensure_missing(&paths.staging, "extraction staging")?;
         ensure_missing(&paths.backup, "extraction backup")?;
         ensure_missing(&paths.state, "extraction transaction state")?;
+        Ok(Self { paths, lease })
+    }
+
+    fn into_parts(self) -> (TransactionPaths, StateLease) {
+        (self.paths, self.lease)
+    }
+}
+
+impl ExtractionTransaction {
+    /// Recover any interrupted publication and create one empty candidate root.
+    pub(super) fn begin(destination: &Path) -> PipelineOutcome<Self> {
+        let output_lease = ExtractionOutputLease::acquire(destination)?;
+        let (paths, lease) = output_lease.into_parts();
         write_state(&paths.state)?;
-        if let Err(error) = fs::create_dir_all(&paths.staging) {
+        if let Err(error) = local_filesystem::create_dir_all(&paths.staging) {
             let failure = io_failure("create extraction staging", &error);
             return Err(cleanup_state_failure(&paths.state, failure));
         }
@@ -119,16 +139,19 @@ impl ExtractionTransaction {
 
 impl TransactionPaths {
     fn new(destination: &Path) -> PipelineOutcome<Self> {
+        let name = destination.file_name().ok_or_else(|| {
+            PipelineError::new("extraction output has no final path segment")
+        })?;
         let parent = destination
             .parent()
             .filter(|candidate| !candidate.as_os_str().is_empty())
             .unwrap_or_else(|| Path::new("."));
-        fs::create_dir_all(parent)
-            .map_err(|error| io_failure("create extraction parent", &error))?;
+        if parent != Path::new(".") {
+            local_filesystem::create_dir_all(parent).map_err(|error| {
+                io_failure("create extraction parent", &error)
+            })?;
+        }
         ensure_real_directory(parent, "extraction parent")?;
-        let name = destination.file_name().ok_or_else(|| {
-            PipelineError::new("extraction output has no final path segment")
-        })?;
         Ok(Self {
             destination: destination.to_path_buf(),
             staging: sibling_path(parent, name, ".pipeline-staging"),
