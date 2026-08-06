@@ -37,6 +37,12 @@ use super::{UnrealImportManifest, UnrealSourceEvidence};
 use crate::domain::package::PhaseThreePackageIndex;
 
 fn index() -> Result<PhaseThreePackageIndex, String> {
+    index_with_member_path("extracted/ui/icon.png")
+}
+
+fn index_with_member_path(
+    member_path: &str,
+) -> Result<PhaseThreePackageIndex, String> {
     let row = concat!(
         "{\"package_id\":\"extracted-ui-icon\",",
         "\"package_root\":\"extracted/ui/icon\",",
@@ -61,6 +67,7 @@ fn index() -> Result<PhaseThreePackageIndex, String> {
         "\"source_chunk_kind\":\"image\"}],",
         "\"text_keys\":[]}",
     );
+    let row = row.replace("extracted/ui/icon.png", member_path);
     PhaseThreePackageIndex::from_jsonl(&format!("{row}\n"))
         .map_err(|error| error.to_string())
 }
@@ -248,6 +255,158 @@ fn rejects_source_extension_that_disagrees_with_path() -> Result<(), String> {
     };
     if !error.contains("extension disagrees") {
         return Err(format!("unexpected extension failure: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_nonportable_source_and_provenance_paths() -> Result<(), String> {
+    for unsafe_path in [
+        "/private/icon.png",
+        "C:/private/icon.png",
+        "extracted/../private/icon.png",
+        r"extracted\private\icon.png",
+    ] {
+        let mut source = evidence();
+        source.path = unsafe_path.to_owned();
+        let result = UnrealImportManifest::build(&index()?, vec![source]);
+        let Err(error) = result else {
+            return Err(format!(
+                "unsafe source path was accepted: {unsafe_path}"
+            ));
+        };
+        if error != "unsafe Unreal source path"
+            || error.contains(unsafe_path)
+        {
+            return Err(format!("unexpected source-path failure: {error}"));
+        }
+    }
+
+    for unsafe_path in [
+        "/private/source.p3d",
+        "D:/private/source.p3d",
+        "source/../../private/source.p3d",
+        r"source\private\source.p3d",
+    ] {
+        let mut source = evidence();
+        source.source_path = unsafe_path.to_owned();
+        let result = UnrealImportManifest::build(&index()?, vec![source]);
+        let Err(error) = result else {
+            return Err(format!(
+                "unsafe provenance path was accepted: {unsafe_path}"
+            ));
+        };
+        if error != "unsafe Unreal source provenance path"
+            || error.contains(unsafe_path)
+        {
+            return Err(format!("unexpected provenance-path failure: {error}"));
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_noncanonical_source_identity_without_echoing_it()
+-> Result<(), String> {
+    let private_id = "C:/private/source";
+    let mut source = evidence();
+    source.id = private_id.to_owned();
+    let Err(error) = UnrealImportManifest::build(&index()?, vec![source]) else {
+        return Err("path-shaped source identity was accepted".to_owned());
+    };
+    if error.contains(private_id)
+        || error != "Unreal source evidence id is not canonical"
+    {
+        return Err(format!("source identity diagnostic leaked: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_noncanonical_source_extension() -> Result<(), String> {
+    for extension in ["PNG", "p.ng", "png/extra", ""] {
+        let mut source = evidence();
+        source.file_extension = extension.to_owned();
+        let Err(error) = UnrealImportManifest::build(&index()?, vec![source])
+        else {
+            return Err(format!(
+                "noncanonical source extension was accepted: {extension:?}"
+            ));
+        };
+        if error != "Unreal source evidence extension is not canonical" {
+            return Err(format!("unexpected extension failure: {error}"));
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_uppercase_path_extension_even_when_evidence_matches()
+-> Result<(), String> {
+    let mut source = evidence();
+    source.path = "extracted/ui/icon.PNG".to_owned();
+    source.file_extension = "png".to_owned();
+    let uppercase_index = index_with_member_path("extracted/ui/icon.PNG")?;
+    let Err(error) = UnrealImportManifest::build(&uppercase_index, vec![source])
+    else {
+        return Err("uppercase source path extension was accepted".to_owned());
+    };
+    if !error.contains("extension disagrees") {
+        return Err(format!("unexpected path-extension failure: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn object_path_validation_covers_asset_package_segment()
+-> Result<(), String> {
+    let invalid = "/Game/Generated/SHAR/ui/bad name/bad name.bad name";
+    let Err(error) = super::validate_unreal_object_path(invalid) else {
+        return Err("invalid asset package segment was accepted".to_owned());
+    };
+    if error.contains(invalid) || error != "unsafe Unreal package segment" {
+        return Err(format!("object-path diagnostic leaked: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn object_path_validation_does_not_echo_rejected_paths()
+-> Result<(), String> {
+    for (invalid, expected) in [
+        ("C:/private/object.asset", "unsafe Unreal package path"),
+        (
+            "/Game/Generated/SHAR/ui/good.bad",
+            "Unreal object name does not match package",
+        ),
+    ] {
+        let Err(error) = super::validate_unreal_object_path(invalid) else {
+            return Err(format!("invalid object path was accepted: {invalid}"));
+        };
+        if error.contains(invalid) || error != expected {
+            return Err(format!("object-path diagnostic leaked: {error}"));
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn collision_diagnostic_does_not_echo_rejected_path() -> Result<(), String> {
+    use std::collections::BTreeSet;
+
+    let private_path = "C:/private/collision";
+    let mut paths = BTreeSet::from([private_path.to_ascii_lowercase()]);
+    let Err(error) = super::claim_path(
+        &mut paths,
+        private_path,
+        "Unreal object",
+    ) else {
+        return Err("case-insensitive collision was accepted".to_owned());
+    };
+    if error.contains(private_path)
+        || error != "case-insensitive Unreal object collision"
+    {
+        return Err(format!("collision diagnostic leaked: {error}"));
     }
     Ok(())
 }

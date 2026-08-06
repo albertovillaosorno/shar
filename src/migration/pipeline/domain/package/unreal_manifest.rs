@@ -171,6 +171,7 @@ impl UnrealImportManifest {
     ) -> Result<Self, String> {
         let mut evidence_by_id = BTreeMap::new();
         for source in evidence {
+            validate_source_identity(&source.id)?;
             if evidence_by_id.insert(source.id.clone(), source).is_some() {
                 return Err("duplicate Unreal source evidence id".to_owned());
             }
@@ -379,10 +380,41 @@ fn add_package_outputs(
     Ok(())
 }
 
+fn validate_source_identity(value: &str) -> Result<(), String> {
+    let bytes = value.as_bytes();
+    if bytes.is_empty()
+        || !bytes.first().is_some_and(u8::is_ascii_alphanumeric)
+        || !bytes.last().is_some_and(u8::is_ascii_alphanumeric)
+        || bytes.windows(2).any(|pair| pair == b"--")
+        || !bytes.iter().copied().all(|byte| {
+            byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-'
+        })
+    {
+        return Err("Unreal source evidence id is not canonical".to_owned());
+    }
+    Ok(())
+}
+
+fn validate_source_extension(value: &str) -> Result<(), String> {
+    if value.is_empty()
+        || value.len() > 16
+        || !value
+            .bytes()
+            .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit())
+    {
+        return Err(
+            "Unreal source evidence extension is not canonical".to_owned()
+        );
+    }
+    Ok(())
+}
+
 fn validate_source_match(
     member: &PhaseThreePackageMember,
     source: &UnrealSourceEvidence,
 ) -> Result<(), String> {
+    validate_portable_source_path(&source.path, "path")?;
+    validate_portable_source_path(&source.source_path, "provenance path")?;
     if member.path != source.path
         || member.unit_type != source.unit_type
         || member.kind != source.kind
@@ -393,11 +425,12 @@ fn validate_source_match(
             member.id
         ));
     }
+    validate_source_extension(&source.file_extension)?;
     let path_extension = Path::new(&source.path)
         .extension()
         .and_then(|value| value.to_str())
         .unwrap_or_default();
-    if !path_extension.eq_ignore_ascii_case(&source.file_extension) {
+    if path_extension != source.file_extension {
         return Err(format!(
             "source {} file extension disagrees with its path",
             source.id
@@ -410,6 +443,24 @@ fn validate_source_match(
             .all(|byte| byte.is_ascii_digit() || matches!(byte, b'a'..=b'f'))
     {
         return Err(format!("source {} has an invalid SHA-256", source.id));
+    }
+    Ok(())
+}
+
+fn validate_portable_source_path(
+    path: &str,
+    label: &str,
+) -> Result<(), String> {
+    if path.is_empty()
+        || path.starts_with('/')
+        || path.contains(char::from(92))
+        || path.contains(':')
+        || path.chars().any(char::is_control)
+        || path
+            .split('/')
+            .any(|part| part.is_empty() || part == "." || part == "..")
+    {
+        return Err(format!("unsafe Unreal source {label}"));
     }
     Ok(())
 }
@@ -581,7 +632,7 @@ fn claim_path(
     if paths.insert(path.to_ascii_lowercase()) {
         Ok(())
     } else {
-        Err(format!("case-insensitive {label} collision: {path}"))
+        Err(format!("case-insensitive {label} collision"))
     }
 }
 
@@ -591,14 +642,14 @@ fn validate_unreal_package_path(path: &str) -> Result<(), String> {
         || path.contains("//")
         || path.chars().any(char::is_control)
     {
-        return Err(format!("unsafe Unreal package path: {path}"));
+        return Err("unsafe Unreal package path".to_owned());
     }
     for segment in path.split('/').filter(|segment| !segment.is_empty()) {
         if !segment
             .bytes()
             .all(|byte| byte.is_ascii_alphanumeric() || byte == b'_')
         {
-            return Err(format!("unsafe Unreal package segment: {segment}"));
+            return Err("unsafe Unreal package segment".to_owned());
         }
     }
     Ok(())
@@ -606,19 +657,19 @@ fn validate_unreal_package_path(path: &str) -> Result<(), String> {
 
 fn validate_unreal_object_path(path: &str) -> Result<(), String> {
     if path.len() > MAX_UNREAL_OBJECT_PATH_BYTES {
-        return Err(format!("Unreal object path exceeds limit: {path}"));
+        return Err("Unreal object path exceeds limit".to_owned());
     }
     let Some((package, object)) = path.rsplit_once('.') else {
-        return Err(format!("Unreal object path has no object name: {path}"));
+        return Err("Unreal object path has no object name".to_owned());
     };
-    let Some((parent, asset)) = package.rsplit_once('/') else {
-        return Err(format!("Unreal object path has no package: {path}"));
+    let Some((_parent, asset)) = package.rsplit_once('/') else {
+        return Err("Unreal object path has no package".to_owned());
     };
-    validate_unreal_package_path(parent)?;
+    validate_unreal_package_path(package)?;
     if object != asset {
-        return Err(format!(
-            "Unreal object name does not match package: {path}"
-        ));
+        return Err(
+            "Unreal object name does not match package".to_owned()
+        );
     }
     Ok(())
 }
