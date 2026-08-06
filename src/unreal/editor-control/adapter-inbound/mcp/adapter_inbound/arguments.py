@@ -53,11 +53,21 @@ from mcp.domain.json_types import require_json_object
 _DEFAULT_TIMEOUT_SECONDS = 30.0
 _TWO_OPTION_PARTS = 2
 _KNOWN_ACTIONS = frozenset(
-    {"call", "catalog", "describe", "doctor", "raw-call", "skills", "toolsets"}
+    {
+        "call",
+        "catalog",
+        "describe",
+        "doctor",
+        "plan-preflight",
+        "raw-call",
+        "skills",
+        "toolsets",
+    }
 )
 _HELP_ACTIONS = frozenset({"--help", "-h", "help"})
 _USAGE = """Usage:
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS] doctor
+  shar-unreal-mcp plan-preflight [--root RELATIVE_PATH]
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS] toolsets
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS] describe TOOLSET
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS]
@@ -202,6 +212,20 @@ def parse_catalog_format(operands: tuple[str, ...]) -> str:
     return output_format
 
 
+def parse_plan_root(operands: tuple[str, ...]) -> Path:
+    """Parse one repository-relative generated plan directory.
+
+    Returns:
+        A safe child path used only for read-only bundle preflight.
+
+    """
+    if not operands:
+        return Path("unreal-staging/plans")
+    if len(operands) != _TWO_OPTION_PARTS or operands[0] != "--root":
+        _fail_usage("plan-preflight accepts only --root RELATIVE_PATH")
+    return _portable_relative_child(operands[1], label="plan root")
+
+
 def parse_skill_output_path(operands: tuple[str, ...]) -> Path:
     """Parse the repository-relative Unreal skill output directory.
 
@@ -213,7 +237,10 @@ def parse_skill_output_path(operands: tuple[str, ...]) -> Path:
         return Path("skills/unreal")
     if len(operands) != _TWO_OPTION_PARTS or operands[0] != "--output":
         _fail_usage("skills accepts only --output RELATIVE_PATH")
-    raw_path = operands[1]
+    return _portable_relative_child(operands[1], label="skills output")
+
+
+def _portable_relative_child(raw_path: str, *, label: str) -> Path:
     output_path = Path(raw_path)
     posix_path = PurePosixPath(raw_path)
     windows_path = PureWindowsPath(raw_path)
@@ -223,11 +250,11 @@ def parse_skill_output_path(operands: tuple[str, ...]) -> Path:
         or ".." in posix_path.parts
         or ".." in windows_path.parts
     ):
-        _fail_usage("skills output must be a repository-relative child path")
+        _fail_usage(f"{label} must be a repository-relative child path")
     if any(ntpath.isreserved(segment) for segment in windows_path.parts):
-        _fail_usage("skills output must use a portable path")
+        _fail_usage(f"{label} must use a portable path")
     if output_path == Path() or not output_path.parts:
-        _fail_usage("skills output must not be the repository root")
+        _fail_usage(f"{label} must not be the repository root")
     return output_path
 
 

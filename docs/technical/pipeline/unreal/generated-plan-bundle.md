@@ -96,6 +96,27 @@ their exact
 prerequisite revisions, expected outputs, ordered operations, and required
 validation gates.
 
+## Consumer preflight
+
+Before any editor-control workflow may consume the generated plans, run:
+
+```text
+shar-unreal-mcp plan-preflight
+```
+
+The command is read-only and local. It opens no MCP session. It requires exactly
+`plans/index.json` plus the six declared plan files as direct regular files,
+rejects symbolic links and reparse boundaries, enforces bounded UTF-8 input and
+canonical one-line JSON with LF termination, and independently recalculates
+every plan revision and the bundle revision using the canonical Rust hashing
+contract.
+
+Preflight also validates exact plan order, filenames, dependency revisions,
+operation identities, source/readiness mappings, generated destinations,
+outputs, validation requirements, case-insensitive collisions, dependency
+family order, and cycle freedom. A successful report is intake evidence only; it
+does not authorize mutation or replace native semantic read-back.
+
 ## Source projections
 
 The aggregate plans accept only verified normalized inputs:

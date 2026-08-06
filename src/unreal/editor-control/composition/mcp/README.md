@@ -62,6 +62,7 @@ After installing the package in the repository Python environment:
 
 ```text
 shar-unreal-mcp doctor
+shar-unreal-mcp plan-preflight
 shar-unreal-mcp toolsets
 shar-unreal-mcp describe EditorToolset.EditorAppToolset
 shar-unreal-mcp call \
@@ -72,13 +73,23 @@ shar-unreal-mcp skills
 ```
 
 The default endpoint is `http://127.0.0.1:8000/mcp`. Only loopback HTTP
-endpoints are accepted. Every command creates an MCP session, performs bounded
-work, and closes the session.
+endpoints are accepted. Network commands create one MCP session, perform bounded
+work, and close the session. `plan-preflight` is intentionally local: it reads
+`unreal-staging/plans/` by default and completes before any transport is built.
 
 The `call` command accepts either the native leaf name or the fully qualified
 tool identity shown by `describe` and the generated skills. Qualified names are
 validated against the selected toolset and converted to the leaf name required
-by Unreal's `call_tool` meta-tool.
+by Unreal's `call_tool` meta-tool. Before that meta-tool can run, the translator
+refreshes the live tool definition and validates the complete argument object.
+Required fields, JSON types, nested objects and arrays, enums, constants,
+patterns, supported bounds, additional-property policy, and supported
+composition assertions fail locally when they do not match. Unsupported
+assertion keywords and ambiguous global lookup fail closed rather than bypassing
+validation. This structural gate does not infer defaults or replace Unreal's
+semantic and postcondition checks. `raw-call` remains available for top-level
+non-mutating protocol tools, but it explicitly rejects the native `call_tool`
+meta-tool so it cannot bypass schema validation.
 
 The `skills` command discovers every live toolset and schema, verifies explicit
 taxonomy ownership, and safely replaces only `skills/unreal/index.md` and
@@ -94,7 +105,9 @@ to public SemVer `1.0.0`. The Python package CalVer remains separate and is not
 part of skill review identity. Mismatched or legacy guidance is marked **Review
 required** without data loss. The central index records the Unreal MCP version,
 revision, and exact status counts. Malformed or unknown markers fail before
-cleanup or writes.
+cleanup or writes. Existing output ancestors, the generated index, and the
+capability tree must also be direct regular filesystem entries; symlinks,
+junctions, and reparse boundaries fail before cleanup or replacement.
 
 The generated tree contains one mandatory central index and exactly one skill
 per native tool. Paths are derived from native names, such as
