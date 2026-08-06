@@ -45,7 +45,7 @@ use super::optional_mods::{
 };
 use super::{
     ensure_optional_mod_transition, extract_latino_media, extract_lmlm,
-    preview_optional_mods,
+    optional_movie_tool_error, preview_optional_mods,
 };
 
 #[test]
@@ -209,6 +209,28 @@ fn corrupt_optional_package_diagnostics_use_public_aliases()
         return Err("corrupt package changed extraction output".to_owned());
     }
     fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+#[test]
+fn optional_movie_tool_diagnostics_hide_temporary_paths(
+) -> Result<(), String> {
+    let private_fragment = "private-workstation-optional-movie";
+    let error = std::io::Error::other(private_fragment);
+    let rendered = optional_movie_tool_error(
+        "run ffprobe",
+        "CustomFiles/movies/intro.rmv",
+        &error,
+    )
+    .to_string();
+    if rendered.contains(private_fragment)
+        || !rendered.contains("CustomFiles/movies/intro.rmv")
+        || !rendered.contains("Other")
+    {
+        return Err(format!(
+            "optional movie diagnostic was not public-safe: {rendered}"
+        ));
+    }
     Ok(())
 }
 
