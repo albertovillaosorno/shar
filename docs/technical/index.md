@@ -56,6 +56,7 @@ proprietary external formats.
 - [Deterministic conversion
   pipeline](pipeline/deterministic-conversion-pipeline.md)
 - [Evidence and identity model](pipeline/evidence-and-identity-model.md)
+- [Movie package evidence](pipeline/movie-package-evidence.md)
 - [Optional local mod packages](pipeline/optional-local-mod-packages.md)
 - [Recoverable extraction
   publication](pipeline/recoverable-extraction-publication.md)

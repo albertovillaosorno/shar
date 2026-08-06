@@ -43,6 +43,9 @@ Current task list. Project phases and dated progress are recorded in
   imports.
 - [ ] Preserve original audio, cinematics, localization, UI, mission, and tuning
   data in deterministic normalized forms.
+  - [x] Keep movie package manifests and decode reports independent of local
+    source, extraction, and transaction paths.
+  - [x] Keep movie-tool diagnostics on logical identities and error classes.
 
 ## Unreal assets
 
