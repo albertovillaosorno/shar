@@ -1,7 +1,7 @@
 # Unreal pipeline contract index
 
 - Status: Active
-- Last reviewed: 2026-07-18
+- Last reviewed: 2026-08-06
 - Delivery authority: Phase 6 native content and Phase 7 runtime handoff
 
 ## Purpose
@@ -64,6 +64,10 @@ Read and implement these documents in order:
   softly.
 - Runtime never loads by concatenated path, filename convention, or folder scan.
 - Import plans are deterministic UTF-8 JSON and contain no machine-local paths.
+- Import plans target Unreal Engine 5.8.1 exactly until a versioned contract
+  change deliberately selects another engine patch.
+- A generated FBX root is optional while conversion is pending, but once present
+  it must be a complete, exact, independently verified catalog.
 - Final native assets use Unreal coordinates: centimeters, positive X forward,
   positive Z up, and applied transforms.
 - UV channels are mesh data. Semantic region metadata is separate typed data; a

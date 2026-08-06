@@ -91,10 +91,18 @@ not establish package acceptance. Package evidence, domain translation,
 capability reports, the binary writer, and canonical validation remain
 authoritative.
 
-The character package lane remains incomplete until the full local catalog under
-`fbx-assets/characters/` contains one self-contained FBX per package, one
-deterministic manifest, and passing conformance evidence. Phase 4 then proceeds
-through props, vehicles, and world pieces in that order.
+Phase 4 remains incomplete until one consolidated ignored catalog under
+`fbx-assets/` contains every model-like package required by the package index,
+not only representative characters. Canonical artifacts live at
+`fbx-assets/packages/<package_name>/<package_name>.fbx`; `catalog.jsonl` records
+the exact package identity, path, size, SHA-256 digest, and binary FBX 7.7
+version. Publication is all-or-nothing across characters, animations, props,
+vehicles, world pieces, interiors, mission geometry, UI models, and cinematics.
+
+Individual family exporters remain useful implementation lanes, but their local
+success is not Phase 4 completion evidence. The accepted catalog must match the
+complete Unreal manifest inventory and pass independent binary read-back before
+model operations become ready for native import.
 
 ## Non-goals
 

@@ -29,7 +29,7 @@ This crate must never contain:
 - project INI or build-configuration parsing; or
 - generated editor scripts as the source of truth.
 
-Phase 5 owns terminal access to the unchanged Unreal Engine 5.8 native MCP
+Phase 5 owns terminal access to the unchanged Unreal Engine 5.8.1 native MCP
 server. Phase 6 uses this crate to create deterministic conversion plans, and a
 separate terminal client applies those plans through discovered native tools.
 
@@ -48,8 +48,9 @@ Unreal session. `pipeline` is the intended caller and orchestration owner.
 
 A published operation is accepted only when all of these conditions hold:
 
-- the source format maps to its one supported native family and readiness
-  state;
+- the source format maps to its supported native family and readiness state;
+  FBX permits `requires-conversion` until absent output is generated and `ready`
+  only after complete catalog verification;
 - the destination is a canonical object path under `/Game/Generated/SHAR/`;
 - the expected target class participates in the stable operation identity;
 - operation dependencies use canonical operation identities, are acyclic, and
