@@ -30,6 +30,7 @@
 
 //! Generated FBX catalog adapter tests.
 
+use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -44,6 +45,8 @@ const RELATIVE_FBX: &str = concat!(
     "packages/extracted_art_cars_model/",
     "extracted_art_cars_model.fbx"
 );
+const RELATIVE_TEXTURE: &str =
+    concat!("packages/extracted_art_cars_model/textures/", "paint.png");
 
 struct TempRoot(PathBuf);
 
@@ -95,23 +98,63 @@ fn write_catalog(
     fs::write(&artifact, bytes).map_err(|error| error.to_string())?;
     let catalog = format!(
         concat!(
-            "{{\"schema\":\"shar-schoenwald.fbx-catalog.v1\",",
+            "{{\"schema\":\"shar-schoenwald.fbx-catalog.v2\",",
             "\"record_type\":\"header\",",
             "\"status\":\"complete\",",
-            "\"package_count\":{}}}
-",
-            "{{\"schema\":\"shar-schoenwald.fbx-catalog.v1\",",
+            "\"package_count\":{},\"file_count\":1}}\n",
+            "{{\"schema\":\"shar-schoenwald.fbx-catalog.v2\",",
             "\"record_type\":\"fbx\",",
             "\"package_id\":\"{}\",",
             "\"path\":\"{}\",",
             "\"size_bytes\":{},",
             "\"sha256\":\"{}\",",
-            "\"fbx_version\":{}}}
-"
+            "\"fbx_version\":{}}}\n"
         ),
         header_count, PACKAGE_ID, row_path, row_size, row_digest, row_version,
     );
-    fs::write(root.join("catalog.jsonl"), catalog).map_err(|error| error.to_string())
+    fs::write(root.join("catalog.jsonl"), catalog)
+        .map_err(|error| error.to_string())
+}
+
+fn png_bytes() -> Vec<u8> {
+    let mut bytes = vec![0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+    bytes.extend_from_slice(b"verified-texture-fixture");
+    bytes
+}
+
+fn append_texture_record(
+    root: &Path,
+    package_id: &str,
+    row_path: &str,
+    row_size: u64,
+    row_digest: &str,
+    bytes: &[u8],
+) -> Result<(), String> {
+    let artifact = root.join(row_path);
+    let parent = artifact
+        .parent()
+        .ok_or_else(|| "texture fixture has no parent".to_owned())?;
+    fs::create_dir_all(parent).map_err(|error| error.to_string())?;
+    fs::write(&artifact, bytes).map_err(|error| error.to_string())?;
+
+    let catalog_path = root.join("catalog.jsonl");
+    let mut catalog =
+        fs::read_to_string(&catalog_path).map_err(|error| error.to_string())?;
+    catalog = catalog.replacen("\"file_count\":1", "\"file_count\":2", 1);
+    write!(
+        &mut catalog,
+        concat!(
+            "{{\"schema\":\"shar-schoenwald.fbx-catalog.v2\",",
+            "\"record_type\":\"texture\",",
+            "\"package_id\":\"{}\",",
+            "\"path\":\"{}\",",
+            "\"size_bytes\":{},",
+            "\"sha256\":\"{}\"}}\n"
+        ),
+        package_id, row_path, row_size, row_digest,
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(catalog_path, catalog).map_err(|error| error.to_string())
 }
 
 fn write_valid_catalog(root: &Path) -> Result<Vec<u8>, String> {
@@ -163,6 +206,114 @@ fn verifies_complete_binary_fbx_catalog() -> Result<(), String> {
 }
 
 #[test]
+fn verifies_external_texture_provenance_without_promoting_it()
+-> Result<(), String> {
+    let root = TempRoot::new("external-texture")?;
+    let fbx = write_valid_catalog(root.path())?;
+    let texture = png_bytes();
+    append_texture_record(
+        root.path(),
+        PACKAGE_ID,
+        RELATIVE_TEXTURE,
+        u64::try_from(texture.len()).unwrap_or(u64::MAX),
+        &digest_hex(&texture),
+        &texture,
+    )?;
+
+    let evidence = verified_fbx_catalog(root.path())
+        .map_err(|error| error.to_string())?
+        .ok_or_else(|| {
+            "catalog with texture provenance was not returned".to_owned()
+        })?;
+    let artifact = evidence
+        .first()
+        .ok_or_else(|| "texture catalog returned no FBX evidence".to_owned())?;
+    if evidence.len() != 1
+        || artifact.path != format!("fbx-assets/{RELATIVE_FBX}")
+        || artifact.sha256 != digest_hex(&fbx)
+    {
+        return Err(
+            "texture provenance changed promoted FBX evidence".to_owned()
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_stale_or_non_png_texture_evidence() -> Result<(), String> {
+    for mutation in ["size", "digest", "magic"] {
+        let root = TempRoot::new(mutation)?;
+        let _fbx = write_valid_catalog(root.path())?;
+        let texture = if mutation == "magic" {
+            b"not-a-png-texture".to_vec()
+        } else {
+            png_bytes()
+        };
+        let size = if mutation == "size" {
+            u64::try_from(texture.len())
+                .unwrap_or(u64::MAX)
+                .saturating_add(1)
+        } else {
+            u64::try_from(texture.len()).unwrap_or(u64::MAX)
+        };
+        let digest = if mutation == "digest" {
+            "0".repeat(64)
+        } else {
+            digest_hex(&texture)
+        };
+        append_texture_record(
+            root.path(),
+            PACKAGE_ID,
+            RELATIVE_TEXTURE,
+            size,
+            &digest,
+            &texture,
+        )?;
+        if verified_fbx_catalog(root.path()).is_ok() {
+            return Err(format!(
+                "invalid FBX texture evidence was accepted: {mutation}"
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_texture_path_or_owner_drift() -> Result<(), String> {
+    let wrong_path = TempRoot::new("texture-path")?;
+    let _fbx = write_valid_catalog(wrong_path.path())?;
+    let texture = png_bytes();
+    append_texture_record(
+        wrong_path.path(),
+        PACKAGE_ID,
+        "packages/other/textures/paint.png",
+        u64::try_from(texture.len()).unwrap_or(u64::MAX),
+        &digest_hex(&texture),
+        &texture,
+    )?;
+    if verified_fbx_catalog(wrong_path.path()).is_ok() {
+        return Err("texture outside its package was accepted".to_owned());
+    }
+
+    let orphan = TempRoot::new("texture-owner")?;
+    let _fbx = write_valid_catalog(orphan.path())?;
+    append_texture_record(
+        orphan.path(),
+        "orphan-package",
+        "packages/orphan_package/textures/paint.png",
+        u64::try_from(texture.len()).unwrap_or(u64::MAX),
+        &digest_hex(&texture),
+        &texture,
+    )?;
+    if verified_fbx_catalog(orphan.path()).is_ok() {
+        return Err(
+            "texture without an FBX package owner was accepted".to_owned()
+        );
+    }
+    Ok(())
+}
+
+#[test]
 fn rejects_partial_and_inexact_catalog_inventory() -> Result<(), String> {
     let partial = TempRoot::new("partial")?;
     let bytes = fbx_bytes(FBX_VERSION);
@@ -185,6 +336,17 @@ fn rejects_partial_and_inexact_catalog_inventory() -> Result<(), String> {
         .map_err(|error| error.to_string())?;
     if verified_fbx_catalog(extra.path()).is_ok() {
         return Err("unexpected FBX catalog file was accepted".to_owned());
+    }
+
+    let stale_files = TempRoot::new("stale-file-count")?;
+    let _bytes = write_valid_catalog(stale_files.path())?;
+    let catalog_path = stale_files.path().join("catalog.jsonl");
+    let catalog = fs::read_to_string(&catalog_path)
+        .map_err(|error| error.to_string())?
+        .replacen("\"file_count\":1", "\"file_count\":2", 1);
+    fs::write(&catalog_path, catalog).map_err(|error| error.to_string())?;
+    if verified_fbx_catalog(stale_files.path()).is_ok() {
+        return Err("stale FBX catalog file count was accepted".to_owned());
     }
     Ok(())
 }
@@ -263,6 +425,20 @@ fn rejects_noncanonical_catalog_path_and_fields() -> Result<(), String> {
     if verified_fbx_catalog(unknown.path()).is_ok() {
         return Err("unknown FBX catalog field was accepted".to_owned());
     }
+
+    let old_schema = TempRoot::new("old-schema")?;
+    let _bytes = write_valid_catalog(old_schema.path())?;
+    let catalog_path = old_schema.path().join("catalog.jsonl");
+    let catalog = fs::read_to_string(&catalog_path)
+        .map_err(|error| error.to_string())?
+        .replace(
+            "shar-schoenwald.fbx-catalog.v2",
+            "shar-schoenwald.fbx-catalog.v1",
+        );
+    fs::write(&catalog_path, catalog).map_err(|error| error.to_string())?;
+    if verified_fbx_catalog(old_schema.path()).is_ok() {
+        return Err("stale FBX catalog schema was accepted".to_owned());
+    }
     Ok(())
 }
 
@@ -272,7 +448,8 @@ fn rejects_noncanonical_jsonl_line_endings() -> Result<(), String> {
         let root = TempRoot::new(mutation)?;
         let _bytes = write_valid_catalog(root.path())?;
         let catalog_path = root.path().join("catalog.jsonl");
-        let mut catalog = fs::read_to_string(&catalog_path).map_err(|error| error.to_string())?;
+        let mut catalog = fs::read_to_string(&catalog_path)
+            .map_err(|error| error.to_string())?;
         if mutation == "missing-final-lf" {
             let _removed = catalog.pop();
         } else {
@@ -320,10 +497,10 @@ fn rejects_symbolic_linked_fbx_artifacts() -> Result<(), String> {
     create_file_link(&target, &artifact)?;
     let catalog = format!(
         concat!(
-            "{{\"schema\":\"shar-schoenwald.fbx-catalog.v1\",",
+            "{{\"schema\":\"shar-schoenwald.fbx-catalog.v2\",",
             "\"record_type\":\"header\",",
-            "\"status\":\"complete\",\"package_count\":1}}\n",
-            "{{\"schema\":\"shar-schoenwald.fbx-catalog.v1\",",
+            "\"status\":\"complete\",\"package_count\":1,\"file_count\":1}}\n",
+            "{{\"schema\":\"shar-schoenwald.fbx-catalog.v2\",",
             "\"record_type\":\"fbx\",\"package_id\":\"{}\",",
             "\"path\":\"{}\",\"size_bytes\":{},",
             "\"sha256\":\"{}\",\"fbx_version\":{}}}\n"
@@ -334,9 +511,16 @@ fn rejects_symbolic_linked_fbx_artifacts() -> Result<(), String> {
         digest_hex(&bytes),
         FBX_VERSION,
     );
-    fs::write(root.path().join("catalog.jsonl"), catalog).map_err(|error| error.to_string())?;
-    if verified_fbx_catalog(root.path()).is_ok() {
+    fs::write(root.path().join("catalog.jsonl"), catalog)
+        .map_err(|error| error.to_string())?;
+    let Err(error) = verified_fbx_catalog(root.path()) else {
         return Err("symbolic-linked FBX artifact was accepted".to_owned());
+    };
+    let diagnostic = error.to_string();
+    if !diagnostic.contains("symbolic link")
+        && !diagnostic.contains("reparse point")
+    {
+        return Err("symlink fixture failed for the wrong reason".to_owned());
     }
     Ok(())
 }
@@ -348,5 +532,6 @@ fn create_file_link(target: &Path, link: &Path) -> Result<(), String> {
 
 #[cfg(windows)]
 fn create_file_link(target: &Path, link: &Path) -> Result<(), String> {
-    std::os::windows::fs::symlink_file(target, link).map_err(|error| error.to_string())
+    std::os::windows::fs::symlink_file(target, link)
+        .map_err(|error| error.to_string())
 }

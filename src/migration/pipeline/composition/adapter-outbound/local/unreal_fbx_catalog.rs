@@ -13,7 +13,7 @@
 // - Must-Not:
 //   - Generate FBX bytes, mutate extraction, or accept partial catalogs.
 // - Allows:
-//   - Validate catalog JSONL, inventory, hashes, and binary FBX headers.
+//   - Validate catalog JSONL, inventory, hashes, FBX headers, and PNG evidence.
 // - Split-When:
 //   - Split when catalog publication gains an independent lifecycle.
 // - Merge-When:
@@ -38,12 +38,15 @@ use std::path::{Path, PathBuf};
 use serde_json::{Map, Value};
 use shar_sha256::digest_hex;
 
-use crate::domain::{PipelineError, PipelineOutcome, UnrealFbxArtifactEvidence};
+use crate::domain::{
+    PipelineError, PipelineOutcome, UnrealFbxArtifactEvidence,
+};
 
 /// Canonical generated FBX catalog root.
 pub(super) const FBX_CATALOG_ROOT: &str = "fbx-assets";
 const CATALOG_FILE: &str = "catalog.jsonl";
-const CATALOG_SCHEMA: &str = "shar-schoenwald.fbx-catalog.v1";
+const CATALOG_SCHEMA: &str = "shar-schoenwald.fbx-catalog.v2";
+const PNG_MAGIC: &[u8] = &[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 const FBX_VERSION: u32 = 7700;
 const FBX_HEADER_SIZE: usize = 27;
 const FBX_MAGIC: &[u8] = b"Kaydara FBX Binary  \0\x1a\0";
@@ -60,10 +63,10 @@ pub(super) fn verified_fbx_catalog(
     match fs::symlink_metadata(root) {
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
             return Ok(None);
-        }
+        },
         Err(error) => {
             return Err(io_error("inspect generated FBX catalog root", &error));
-        }
+        },
         Ok(metadata) => validate_directory_metadata(&metadata)?,
     }
 
@@ -81,27 +84,46 @@ pub(super) fn verified_fbx_catalog(
         .next()
         .ok_or_else(|| PipelineError::new("generated FBX catalog is empty"))?;
     if header_line.trim().is_empty() {
-        return Err(PipelineError::new("generated FBX catalog header is blank"));
+        return Err(PipelineError::new(
+            "generated FBX catalog header is blank",
+        ));
     }
     let header = parse_object(header_line, "generated FBX catalog header")?;
     require_exact_fields(
         &header,
-        &["schema", "record_type", "status", "package_count"],
+        &[
+            "schema",
+            "record_type",
+            "status",
+            "package_count",
+            "file_count",
+        ],
         "generated FBX catalog header",
     )?;
-    if required_string(&header, "schema", "generated FBX catalog header")? != CATALOG_SCHEMA
-        || required_string(&header, "record_type", "generated FBX catalog header")? != "header"
-        || required_string(&header, "status", "generated FBX catalog header")? != "complete"
+    if required_string(&header, "schema", "generated FBX catalog header")?
+        != CATALOG_SCHEMA
+        || required_string(
+            &header,
+            "record_type",
+            "generated FBX catalog header",
+        )? != "header"
+        || required_string(&header, "status", "generated FBX catalog header")?
+            != "complete"
     {
         return Err(PipelineError::new(
             "generated FBX catalog header is not canonical",
         ));
     }
-    let declared_count = required_u64(&header, "package_count", "generated FBX catalog header")?;
+    let declared_package_count =
+        required_u64(&header, "package_count", "generated FBX catalog header")?;
+    let declared_file_count =
+        required_u64(&header, "file_count", "generated FBX catalog header")?;
 
     let mut package_ids = BTreeSet::new();
+    let mut texture_package_ids = BTreeSet::new();
     let mut paths = BTreeSet::new();
     let mut evidence = Vec::new();
+    let mut record_count = 0_u64;
     for (offset, line) in lines.enumerate() {
         let line_number = offset.saturating_add(2);
         if line.trim().is_empty() {
@@ -109,65 +131,110 @@ pub(super) fn verified_fbx_catalog(
                 "generated FBX catalog line {line_number} is blank"
             )));
         }
+        record_count = record_count.saturating_add(1);
         let label = format!("generated FBX catalog line {line_number}");
         let row = parse_object(line, &label)?;
-        require_exact_fields(
-            &row,
-            &[
-                "schema",
-                "record_type",
-                "package_id",
-                "path",
-                "size_bytes",
-                "sha256",
-                "fbx_version",
-            ],
-            &label,
-        )?;
-        if required_string(&row, "schema", &label)? != CATALOG_SCHEMA
-            || required_string(&row, "record_type", &label)? != "fbx"
-        {
+        if required_string(&row, "schema", &label)? != CATALOG_SCHEMA {
             return Err(PipelineError::new(format!(
-                "{label} is not a canonical FBX record"
+                "{label} uses an unsupported catalog schema"
             )));
         }
-        let package_id = required_string(&row, "package_id", &label)?;
-        validate_public_identifier(&package_id)?;
-        if !package_ids.insert(package_id.clone()) {
-            return Err(PipelineError::new(
-                "generated FBX catalog contains a duplicate package",
-            ));
+        let record_type = required_string(&row, "record_type", &label)?;
+        match record_type.as_str() {
+            "fbx" => {
+                require_exact_fields(
+                    &row,
+                    &[
+                        "schema",
+                        "record_type",
+                        "package_id",
+                        "path",
+                        "size_bytes",
+                        "sha256",
+                        "fbx_version",
+                    ],
+                    &label,
+                )?;
+                let package_id = required_string(&row, "package_id", &label)?;
+                validate_public_identifier(&package_id)?;
+                if !package_ids.insert(package_id.clone()) {
+                    return Err(PipelineError::new(
+                        "generated FBX catalog contains a duplicate package",
+                    ));
+                }
+                let relative_path = required_string(&row, "path", &label)?;
+                validate_fbx_catalog_path(&package_id, &relative_path)?;
+                claim_catalog_path(&mut paths, &relative_path)?;
+                let size_bytes = required_u64(&row, "size_bytes", &label)?;
+                let expected_sha256 = required_string(&row, "sha256", &label)?;
+                validate_digest(&expected_sha256)?;
+                let declared_version =
+                    required_u64(&row, "fbx_version", &label)?;
+                if declared_version != u64::from(FBX_VERSION) {
+                    return Err(PipelineError::new(
+                        "generated FBX catalog declares an unsupported version",
+                    ));
+                }
+                evidence.push(verify_fbx(
+                    root,
+                    &package_id,
+                    &relative_path,
+                    size_bytes,
+                    &expected_sha256,
+                )?);
+            },
+            "texture" => {
+                require_exact_fields(
+                    &row,
+                    &[
+                        "schema",
+                        "record_type",
+                        "package_id",
+                        "path",
+                        "size_bytes",
+                        "sha256",
+                    ],
+                    &label,
+                )?;
+                let package_id = required_string(&row, "package_id", &label)?;
+                validate_public_identifier(&package_id)?;
+                let _inserted = texture_package_ids.insert(package_id.clone());
+                let relative_path = required_string(&row, "path", &label)?;
+                validate_texture_catalog_path(&package_id, &relative_path)?;
+                claim_catalog_path(&mut paths, &relative_path)?;
+                let size_bytes = required_u64(&row, "size_bytes", &label)?;
+                let expected_sha256 = required_string(&row, "sha256", &label)?;
+                validate_digest(&expected_sha256)?;
+                verify_texture(
+                    root,
+                    &relative_path,
+                    size_bytes,
+                    &expected_sha256,
+                )?;
+            },
+            _ => {
+                return Err(PipelineError::new(format!(
+                    "{label} has an unsupported record type"
+                )));
+            },
         }
-        let relative_path = required_string(&row, "path", &label)?;
-        validate_catalog_path(&package_id, &relative_path)?;
-        if !paths.insert(relative_path.clone()) {
-            return Err(PipelineError::new(
-                "generated FBX catalog contains a duplicate path",
-            ));
-        }
-        let size_bytes = required_u64(&row, "size_bytes", &label)?;
-        let expected_sha256 = required_string(&row, "sha256", &label)?;
-        validate_digest(&expected_sha256)?;
-        let declared_version = required_u64(&row, "fbx_version", &label)?;
-        if declared_version != u64::from(FBX_VERSION) {
-            return Err(PipelineError::new(
-                "generated FBX catalog declares an unsupported version",
-            ));
-        }
-        let artifact = verify_fbx(
-            root,
-            &package_id,
-            &relative_path,
-            size_bytes,
-            &expected_sha256,
-        )?;
-        evidence.push(artifact);
     }
 
-    let actual_count = u64::try_from(evidence.len()).unwrap_or(u64::MAX);
-    if declared_count != actual_count {
+    let actual_package_count =
+        u64::try_from(evidence.len()).unwrap_or(u64::MAX);
+    if declared_package_count != actual_package_count {
         return Err(PipelineError::new(
             "generated FBX catalog package count is stale",
+        ));
+    }
+    if declared_file_count != record_count {
+        return Err(PipelineError::new(
+            "generated FBX catalog file count is stale",
+        ));
+    }
+    if !texture_package_ids.is_subset(&package_ids) {
+        return Err(PipelineError::new(
+            "generated FBX texture has no owning package",
         ));
     }
     verify_inventory(root, &paths)?;
@@ -185,7 +252,8 @@ fn verify_fbx(
     let path = root.join(relative_path);
     validate_regular_file(&path, "generated FBX artifact")?;
     validate_ancestor_chain(root, &path)?;
-    let bytes = fs::read(&path).map_err(|error| io_error("read generated FBX artifact", &error))?;
+    let bytes = fs::read(&path)
+        .map_err(|error| io_error("read generated FBX artifact", &error))?;
     let actual_size = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
     if actual_size != expected_size {
         return Err(PipelineError::new(
@@ -208,18 +276,54 @@ fn verify_fbx(
     })
 }
 
+fn verify_texture(
+    root: &Path,
+    relative_path: &str,
+    expected_size: u64,
+    expected_sha256: &str,
+) -> PipelineOutcome<()> {
+    let path = root.join(relative_path);
+    validate_regular_file(&path, "generated FBX texture")?;
+    validate_ancestor_chain(root, &path)?;
+    let bytes = fs::read(&path)
+        .map_err(|error| io_error("read generated FBX texture", &error))?;
+    let actual_size = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
+    if actual_size != expected_size {
+        return Err(PipelineError::new(
+            "generated FBX texture size does not match its catalog",
+        ));
+    }
+    if digest_hex(&bytes) != expected_sha256 {
+        return Err(PipelineError::new(
+            "generated FBX texture digest does not match its catalog",
+        ));
+    }
+    if !bytes.starts_with(PNG_MAGIC) {
+        return Err(PipelineError::new(
+            "generated FBX texture is not a PNG artifact",
+        ));
+    }
+    Ok(())
+}
+
 fn binary_fbx_version(bytes: &[u8]) -> PipelineOutcome<u32> {
     if bytes.len() < FBX_HEADER_SIZE || !bytes.starts_with(FBX_MAGIC) {
         return Err(PipelineError::new(
             "generated FBX artifact has an invalid binary header",
         ));
     }
-    let version_slice = bytes
-        .get(FBX_MAGIC.len()..FBX_HEADER_SIZE)
-        .ok_or_else(|| PipelineError::new("generated FBX artifact has an invalid version field"))?;
-    let version_bytes: [u8; 4] = version_slice.try_into().map_err(|_error| {
-        PipelineError::new("generated FBX artifact has an invalid version field")
-    })?;
+    let version_slice =
+        bytes.get(FBX_MAGIC.len()..FBX_HEADER_SIZE).ok_or_else(|| {
+            PipelineError::new(
+                "generated FBX artifact has an invalid version field",
+            )
+        })?;
+    let version_bytes: [u8; 4] =
+        version_slice.try_into().map_err(|_error| {
+            PipelineError::new(
+                "generated FBX artifact has an invalid version field",
+            )
+        })?;
     let version = u32::from_le_bytes(version_bytes);
     if version != FBX_VERSION {
         return Err(PipelineError::new(
@@ -229,13 +333,51 @@ fn binary_fbx_version(bytes: &[u8]) -> PipelineOutcome<u32> {
     Ok(version)
 }
 
-fn validate_catalog_path(package_id: &str, relative_path: &str) -> PipelineOutcome<()> {
+fn validate_fbx_catalog_path(
+    package_id: &str,
+    relative_path: &str,
+) -> PipelineOutcome<()> {
     validate_relative_path(relative_path)?;
     let package_name = package_id.replace('-', "_");
     let expected = format!("packages/{package_name}/{package_name}.fbx");
     if relative_path != expected {
         return Err(PipelineError::new(
             "generated FBX catalog path does not match its package identity",
+        ));
+    }
+    Ok(())
+}
+
+fn validate_texture_catalog_path(
+    package_id: &str,
+    relative_path: &str,
+) -> PipelineOutcome<()> {
+    validate_relative_path(relative_path)?;
+    let package_name = package_id.replace('-', "_");
+    let prefix = format!("packages/{package_name}/textures/");
+    let Some(file_name) = relative_path.strip_prefix(&prefix) else {
+        return Err(PipelineError::new(
+            "generated FBX texture path does not match its package identity",
+        ));
+    };
+    let extension_is_png = Path::new(file_name)
+        .extension()
+        .is_some_and(|extension| extension == "png");
+    if file_name.is_empty() || file_name.contains('/') || !extension_is_png {
+        return Err(PipelineError::new(
+            "generated FBX texture path is not canonical",
+        ));
+    }
+    Ok(())
+}
+
+fn claim_catalog_path(
+    paths: &mut BTreeSet<String>,
+    relative_path: &str,
+) -> PipelineOutcome<()> {
+    if !paths.insert(relative_path.to_owned()) {
+        return Err(PipelineError::new(
+            "generated FBX catalog contains a duplicate path",
         ));
     }
     Ok(())
@@ -262,10 +404,9 @@ fn validate_public_identifier(value: &str) -> PipelineOutcome<()> {
         || !bytes.first().is_some_and(u8::is_ascii_alphanumeric)
         || !bytes.last().is_some_and(u8::is_ascii_alphanumeric)
         || bytes.windows(2).any(|pair| pair == b"--")
-        || !bytes
-            .iter()
-            .copied()
-            .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-')
+        || !bytes.iter().copied().all(|byte| {
+            byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-'
+        })
     {
         return Err(PipelineError::new(
             "generated FBX package identity is not canonical",
@@ -287,7 +428,10 @@ fn validate_digest(value: &str) -> PipelineOutcome<()> {
     Ok(())
 }
 
-fn verify_inventory(root: &Path, declared_paths: &BTreeSet<String>) -> PipelineOutcome<()> {
+fn verify_inventory(
+    root: &Path,
+    declared_paths: &BTreeSet<String>,
+) -> PipelineOutcome<()> {
     let mut actual = BTreeSet::new();
     collect_inventory(root, root, &mut actual)?;
     let mut expected = declared_paths.clone();
@@ -306,13 +450,16 @@ fn collect_inventory(
     inventory: &mut BTreeSet<String>,
 ) -> PipelineOutcome<()> {
     validate_directory(directory, "generated FBX catalog directory")?;
-    let entries =
-        fs::read_dir(directory).map_err(|error| io_error("list generated FBX catalog", &error))?;
+    let entries = fs::read_dir(directory)
+        .map_err(|error| io_error("list generated FBX catalog", &error))?;
     for entry in entries {
-        let entry = entry.map_err(|error| io_error("read generated FBX catalog entry", &error))?;
+        let entry = entry.map_err(|error| {
+            io_error("read generated FBX catalog entry", &error)
+        })?;
         let path = entry.path();
-        let metadata = fs::symlink_metadata(&path)
-            .map_err(|error| io_error("inspect generated FBX catalog entry", &error))?;
+        let metadata = fs::symlink_metadata(&path).map_err(|error| {
+            io_error("inspect generated FBX catalog entry", &error)
+        })?;
         reject_reparse_or_symlink(&metadata)?;
         if metadata.is_dir() {
             collect_inventory(root, &path, inventory)?;
@@ -333,9 +480,9 @@ fn collect_inventory(
 }
 
 fn validate_ancestor_chain(root: &Path, path: &Path) -> PipelineOutcome<()> {
-    let relative = path
-        .strip_prefix(root)
-        .map_err(|_error| PipelineError::new("generated FBX artifact escaped its catalog root"))?;
+    let relative = path.strip_prefix(root).map_err(|_error| {
+        PipelineError::new("generated FBX artifact escaped its catalog root")
+    })?;
     let mut current = PathBuf::from(root);
     let mut components = relative.components().peekable();
     while let Some(component) = components.next() {
@@ -348,13 +495,15 @@ fn validate_ancestor_chain(root: &Path, path: &Path) -> PipelineOutcome<()> {
 }
 
 fn portable_relative_path(root: &Path, path: &Path) -> PipelineOutcome<String> {
-    let relative = path
-        .strip_prefix(root)
-        .map_err(|_error| PipelineError::new("generated FBX inventory escaped its catalog root"))?;
+    let relative = path.strip_prefix(root).map_err(|_error| {
+        PipelineError::new("generated FBX inventory escaped its catalog root")
+    })?;
     let mut parts = Vec::new();
     for component in relative.components() {
         let part = component.as_os_str().to_str().ok_or_else(|| {
-            PipelineError::new("generated FBX inventory path is not portable UTF-8")
+            PipelineError::new(
+                "generated FBX inventory path is not portable UTF-8",
+            )
         })?;
         parts.push(part);
     }
@@ -366,8 +515,9 @@ fn portable_relative_path(root: &Path, path: &Path) -> PipelineOutcome<String> {
 fn validate_directory(path: &Path, label: &str) -> PipelineOutcome<()> {
     let metadata = fs::symlink_metadata(path)
         .map_err(|error| io_error("inspect generated FBX directory", &error))?;
-    validate_directory_metadata(&metadata)
-        .map_err(|_error| PipelineError::new(format!("{label} is not a regular directory")))
+    validate_directory_metadata(&metadata).map_err(|_error| {
+        PipelineError::new(format!("{label} is not a regular directory"))
+    })
 }
 
 fn validate_directory_metadata(metadata: &fs::Metadata) -> PipelineOutcome<()> {
@@ -385,7 +535,9 @@ fn validate_regular_file(path: &Path, label: &str) -> PipelineOutcome<()> {
         .map_err(|error| io_error("inspect generated FBX file", &error))?;
     reject_reparse_or_symlink(&metadata)?;
     if !metadata.is_file() {
-        return Err(PipelineError::new(format!("{label} is not a regular file")));
+        return Err(PipelineError::new(format!(
+            "{label} is not a regular file"
+        )));
     }
     Ok(())
 }
@@ -409,13 +561,16 @@ fn reject_reparse_or_symlink(metadata: &fs::Metadata) -> PipelineOutcome<()> {
     Ok(())
 }
 
-fn parse_object(json: &str, label: &str) -> PipelineOutcome<Map<String, Value>> {
-    let value = serde_json::from_str::<Value>(json)
-        .map_err(|_error| PipelineError::new(format!("{label} contains invalid JSON")))?;
-    value
-        .as_object()
-        .cloned()
-        .ok_or_else(|| PipelineError::new(format!("{label} must be a JSON object")))
+fn parse_object(
+    json: &str,
+    label: &str,
+) -> PipelineOutcome<Map<String, Value>> {
+    let value = serde_json::from_str::<Value>(json).map_err(|_error| {
+        PipelineError::new(format!("{label} contains invalid JSON"))
+    })?;
+    value.as_object().cloned().ok_or_else(|| {
+        PipelineError::new(format!("{label} must be a JSON object"))
+    })
 }
 
 fn require_exact_fields(
@@ -442,12 +597,22 @@ fn required_string(
         .get(field)
         .and_then(Value::as_str)
         .map(ToOwned::to_owned)
-        .ok_or_else(|| PipelineError::new(format!("{label} is missing string field {field}")))
+        .ok_or_else(|| {
+            PipelineError::new(format!(
+                "{label} is missing string field {field}"
+            ))
+        })
 }
 
-fn required_u64(object: &Map<String, Value>, field: &str, label: &str) -> PipelineOutcome<u64> {
+fn required_u64(
+    object: &Map<String, Value>,
+    field: &str,
+    label: &str,
+) -> PipelineOutcome<u64> {
     object.get(field).and_then(Value::as_u64).ok_or_else(|| {
-        PipelineError::new(format!("{label} is missing unsigned integer field {field}"))
+        PipelineError::new(format!(
+            "{label} is missing unsigned integer field {field}"
+        ))
     })
 }
 
