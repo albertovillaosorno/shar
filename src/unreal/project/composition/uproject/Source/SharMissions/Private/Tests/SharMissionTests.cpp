@@ -41,6 +41,22 @@ static constexpr int32 FailureStageOrder = 2;
 static constexpr int32 FixtureRewardQuantity = 100;
 static constexpr int32 InvalidStageOrder = 7;
 
+static FSharObjectivePolicyRow MakeObjectivePolicy(
+    const TCHAR* PolicyId,
+    const TCHAR* ObjectiveKind,
+    const TCHAR* StartTrigger,
+    const TCHAR* CompletionRule
+)
+{
+    FSharObjectivePolicyRow Policy;
+    Policy.PolicyId = FName(PolicyId);
+    Policy.ObjectiveKind = FName(ObjectiveKind);
+    Policy.StartTrigger = FName(StartTrigger);
+    Policy.CompletionRule = FName(CompletionRule);
+    Policy.RecoveryRule = FName(TEXT("restart_stage"));
+    return Policy;
+}
+
 static void FillMissionBase(USharMissionDefinition& Mission)
 {
     Mission.CanonicalId = FName(TEXT("mission_fixture"));
@@ -53,10 +69,36 @@ static void FillMissionBase(USharMissionDefinition& Mission)
     Mission.MissionClassId = FName(TEXT("story"));
     Mission.InitialStageId = FName(TEXT("start"));
 
+    FSharObjectivePolicyRow StartPolicy = MakeObjectivePolicy(
+        TEXT("start_objective"),
+        TEXT("talk"),
+        TEXT("interaction"),
+        TEXT("dialogue_completed")
+    );
+    StartPolicy.TargetIds = {FName(TEXT("mission_giver"))};
+    Mission.ObjectivePolicies.Add(StartPolicy);
+    Mission.ObjectivePolicies.Add(
+        MakeObjectivePolicy(
+            TEXT("complete_objective"),
+            TEXT("action_sequence"),
+            TEXT("immediate"),
+            TEXT("sequence_completed")
+        )
+    );
+    Mission.ObjectivePolicies.Add(
+        MakeObjectivePolicy(
+            TEXT("failed_objective"),
+            TEXT("action_sequence"),
+            TEXT("immediate"),
+            TEXT("sequence_completed")
+        )
+    );
+
     FSharMissionStageDefinition Start;
     Start.StageId = FName(TEXT("start"));
     Start.Order = 0;
     Start.ObjectiveKind = FName(TEXT("talk"));
+    Start.ObjectivePolicyId = FName(TEXT("start_objective"));
     Start.SuccessStageId = FName(TEXT("complete"));
     Start.FailureStageId = FName(TEXT("failed"));
     Start.bCheckpoint = true;
@@ -66,6 +108,7 @@ static void FillMissionBase(USharMissionDefinition& Mission)
     Complete.StageId = FName(TEXT("complete"));
     Complete.Order = 1;
     Complete.ObjectiveKind = FName(TEXT("action_sequence"));
+    Complete.ObjectivePolicyId = FName(TEXT("complete_objective"));
     Complete.TerminalOutcome = ESharMissionTerminalOutcome::Success;
     Mission.Stages.Add(Complete);
 
@@ -73,6 +116,7 @@ static void FillMissionBase(USharMissionDefinition& Mission)
     Failed.StageId = FName(TEXT("failed"));
     Failed.Order = FailureStageOrder;
     Failed.ObjectiveKind = FName(TEXT("action_sequence"));
+    Failed.ObjectivePolicyId = FName(TEXT("failed_objective"));
     Failed.TerminalOutcome = ESharMissionTerminalOutcome::Failure;
     Mission.Stages.Add(Failed);
 
@@ -120,6 +164,20 @@ bool FSharMissionDefinitionValidationTest::RunTest(const FString& Parameters)
     Mission->GatherValidationErrors(Errors);
     // jig-ignore-next-line: exact syntax is indivisible
     TestFalse(TEXT("Malformed mission definition is rejected"), Errors.IsEmpty());
+
+    auto* MissingPolicy = NewObject<USharMissionDefinition>();
+    FillMissionBase(*MissingPolicy);
+    MissingPolicy->Stages[0].ObjectivePolicyId = FName(TEXT("missing_policy"));
+    Errors.Reset();
+    MissingPolicy->GatherValidationErrors(Errors);
+    TestFalse(TEXT("Unknown objective policy is rejected"), Errors.IsEmpty());
+
+    auto* MismatchedPolicy = NewObject<USharMissionDefinition>();
+    FillMissionBase(*MismatchedPolicy);
+    MismatchedPolicy->ObjectivePolicies[0].ObjectiveKind = FName(TEXT("race"));
+    Errors.Reset();
+    MismatchedPolicy->GatherValidationErrors(Errors);
+    TestFalse(TEXT("Mismatched objective policy is rejected"), Errors.IsEmpty());
     return true;
 }
 

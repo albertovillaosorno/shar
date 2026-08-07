@@ -73,9 +73,180 @@ static bool ContainsStage(
     );
 }
 
+static const FSharObjectivePolicyRow* FindObjectivePolicy(
+    const TArray<FSharObjectivePolicyRow>& Policies,
+    const FName& PolicyId
+)
+{
+    return Policies.FindByPredicate(
+        [&PolicyId](const FSharObjectivePolicyRow& Policy)
+        {
+            return Policy.PolicyId == PolicyId;
+        }
+    );
+}
+
+static bool IsSupportedObjectiveStartTrigger(const FName& Trigger)
+{
+    const TArray<FName> SupportedTriggers = {
+        FName(TEXT("immediate")),
+        FName(TEXT("proximity")),
+        FName(TEXT("interaction")),
+        FName(TEXT("dialogue_completion")),
+        FName(TEXT("explicit_signal")),
+    };
+    return ContainsName(SupportedTriggers, Trigger);
+}
+
+static bool IsSupportedObjectiveRecoveryRule(const FName& RecoveryRule)
+{
+    if (RecoveryRule.IsNone())
+    {
+        return true;
+    }
+    const TArray<FName> SupportedRules = {
+        FName(TEXT("restart_stage")),
+        FName(TEXT("restart_mission")),
+        FName(TEXT("restore_checkpoint")),
+        FName(TEXT("return_to_free_roam")),
+    };
+    return ContainsName(SupportedRules, RecoveryRule);
+}
+
+static void AppendOptionalCanonicalIdentityError(
+    const FName& Value,
+    const TCHAR* Message,
+    TArray<FText>& OutErrors
+)
+{
+    if (
+        !Value.IsNone()
+        && !USharPrimaryContentDefinition::IsCanonicalIdentifier(Value)
+    )
+    {
+        AddMissionError(OutErrors, Message);
+    }
+}
+
+static void AppendObjectivePolicyErrors(
+    const FSharObjectivePolicyRow& Policy,
+    TSet<FName>& SeenPolicyIds,
+    TArray<FText>& OutErrors
+)
+{
+    if (!USharPrimaryContentDefinition::IsCanonicalIdentifier(Policy.PolicyId))
+    {
+        AddMissionError(
+            OutErrors,
+            TEXT("Every objective policy requires a canonical identity.")
+        );
+    }
+    if (SeenPolicyIds.Contains(Policy.PolicyId))
+    {
+        AddMissionError(
+            OutErrors,
+            TEXT("Objective policy identities must be unique.")
+        );
+    }
+    SeenPolicyIds.Add(Policy.PolicyId);
+    if (!USharMissionDefinition::IsSupportedObjectiveKind(Policy.ObjectiveKind))
+    {
+        AddMissionError(
+            OutErrors,
+            TEXT("Objective policy uses an unsupported objective kind.")
+        );
+    }
+    if (!IsSupportedObjectiveStartTrigger(Policy.StartTrigger))
+    {
+        AddMissionError(
+            OutErrors,
+            TEXT("Objective policy uses an unsupported start trigger.")
+        );
+    }
+    if (!USharPrimaryContentDefinition::IsCanonicalIdentifier(
+        Policy.CompletionRule
+    ))
+    {
+        AddMissionError(
+            OutErrors,
+            TEXT("Objective policy requires a canonical completion rule.")
+        );
+    }
+    AppendOptionalCanonicalIdentityError(
+        Policy.FailureRule,
+        TEXT("Objective policy failure rule must be canonical."),
+        OutErrors
+    );
+    if (!IsSupportedObjectiveRecoveryRule(Policy.RecoveryRule))
+    {
+        AddMissionError(
+            OutErrors,
+            TEXT("Objective policy uses an unsupported recovery rule.")
+        );
+    }
+    AppendOptionalCanonicalIdentityError(
+        Policy.RouteId,
+        TEXT("Objective policy route identity must be canonical."),
+        OutErrors
+    );
+    AppendOptionalCanonicalIdentityError(
+        Policy.NotorietyPolicyId,
+        TEXT("Objective notoriety policy identity must be canonical."),
+        OutErrors
+    );
+    AppendOptionalCanonicalIdentityError(
+        Policy.CatchUpProfileId,
+        TEXT("Objective catch-up profile identity must be canonical."),
+        OutErrors
+    );
+    AppendOptionalCanonicalIdentityError(
+        Policy.DropSequenceId,
+        TEXT("Objective drop sequence identity must be canonical."),
+        OutErrors
+    );
+    AppendOptionalCanonicalIdentityError(
+        Policy.PresentationProfileId,
+        TEXT("Objective presentation profile identity must be canonical."),
+        OutErrors
+    );
+
+    TSet<FName> SeenTargetIds;
+    for (const FName& TargetId : Policy.TargetIds)
+    {
+        if (!USharPrimaryContentDefinition::IsCanonicalIdentifier(TargetId))
+        {
+            AddMissionError(
+                OutErrors,
+                TEXT("Objective target identities must be canonical.")
+            );
+        }
+        if (SeenTargetIds.Contains(TargetId))
+        {
+            AddMissionError(
+                OutErrors,
+                TEXT("Objective target identities must be unique.")
+            );
+        }
+        SeenTargetIds.Add(TargetId);
+    }
+}
+
+static void AppendObjectivePoliciesErrors(
+    const TArray<FSharObjectivePolicyRow>& Policies,
+    TArray<FText>& OutErrors
+)
+{
+    TSet<FName> SeenPolicyIds;
+    for (const FSharObjectivePolicyRow& Policy : Policies)
+    {
+        AppendObjectivePolicyErrors(Policy, SeenPolicyIds, OutErrors);
+    }
+}
+
 static void AppendStageIdentityErrors(
     const FSharMissionStageDefinition& Stage,
     const int32 ExpectedOrder,
+    const TArray<FSharObjectivePolicyRow>& ObjectivePolicies,
     TSet<FName>& SeenStageIds,
     TArray<FText>& OutErrors
 )
@@ -109,6 +280,35 @@ static void AppendStageIdentityErrors(
         AddMissionError(
             OutErrors,
             TEXT("Mission stage uses an unsupported objective kind.")
+        );
+    }
+    if (!USharPrimaryContentDefinition::IsCanonicalIdentifier(
+        Stage.ObjectivePolicyId
+    ))
+    {
+        AddMissionError(
+            OutErrors,
+            TEXT("Mission stage requires a canonical objective policy id.")
+        );
+        return;
+    }
+    const FSharObjectivePolicyRow* Policy = FindObjectivePolicy(
+        ObjectivePolicies,
+        Stage.ObjectivePolicyId
+    );
+    if (Policy == nullptr)
+    {
+        AddMissionError(
+            OutErrors,
+            TEXT("Mission stage references an unknown objective policy.")
+        );
+        return;
+    }
+    if (Policy->ObjectiveKind != Stage.ObjectiveKind)
+    {
+        AddMissionError(
+            OutErrors,
+            TEXT("Mission stage objective kind disagrees with its policy.")
         );
     }
 }
@@ -376,6 +576,8 @@ void USharMissionDefinition::GatherValidationErrors(
         );
     }
 
+    AppendObjectivePoliciesErrors(ObjectivePolicies, OutErrors);
+
     TSet<FName> SeenStageIds;
     int32 ExpectedOrder = 0;
     for (const FSharMissionStageDefinition& Stage : Stages)
@@ -383,6 +585,7 @@ void USharMissionDefinition::GatherValidationErrors(
         AppendStageIdentityErrors(
             Stage,
             ExpectedOrder,
+            ObjectivePolicies,
             SeenStageIds,
             OutErrors
         );
