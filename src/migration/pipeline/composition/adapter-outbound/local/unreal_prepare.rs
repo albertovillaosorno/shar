@@ -50,6 +50,8 @@ use crate::domain::{
     MISSION_SCRIPT_SCHEMA, PhaseThreePackageIndex, PipelineConfig,
     PipelineError, PipelineOutcome, StageReport, UNREAL_IMPORT_MANIFEST_SCHEMA,
     UNREAL_IMPORT_SUMMARY_SCHEMA, UnrealImportManifest, UnrealSourceEvidence,
+    preflight_mission_condition_commands, preflight_mission_conditions,
+    preflight_mission_objective_commands, preflight_mission_objectives,
     preflight_mission_script,
 };
 
@@ -300,11 +302,33 @@ fn validate_normalized_mission_source(
     let text = std::str::from_utf8(bytes).map_err(|_error| {
         PipelineError::new("normalized mission source is not valid UTF-8")
     })?;
-    preflight_mission_script(text)
-        .map(|_evidence| ())
+    let evidence = preflight_mission_script(text).map_err(|error| {
+        PipelineError::new(format!(
+            "mission semantic preflight failed: {error}"
+        ))
+    })?;
+    drop(preflight_mission_objectives(&evidence).map_err(|error| {
+        PipelineError::new(format!(
+            "mission objective preflight failed: {error}"
+        ))
+    })?);
+    drop(
+        preflight_mission_objective_commands(&evidence).map_err(|error| {
+            PipelineError::new(format!(
+                "mission objective command preflight failed: {error}"
+            ))
+        })?,
+    );
+    drop(preflight_mission_conditions(&evidence).map_err(|error| {
+        PipelineError::new(format!(
+            "mission condition preflight failed: {error}"
+        ))
+    })?);
+    preflight_mission_condition_commands(&evidence)
+        .map(|_report| ())
         .map_err(|error| {
             PipelineError::new(format!(
-                "mission semantic preflight failed: {error}"
+                "mission condition command preflight failed: {error}"
             ))
         })
 }

@@ -47,13 +47,18 @@ pub use optional_mod_preview::{
 pub use output_summary::{DirectorySummary, OutputSummary};
 pub use package::{
     ConversionFamily, FbxModelPlan, MISSION_SCRIPT_SCHEMA,
-    MissionCommandInvocation, MissionScriptEvidence, PackageMemberRef,
+    MissionCommandInvocation, MissionConditionBinding,
+    MissionConditionCommandBinding, MissionConditionCommandReport,
+    MissionConditionReport, MissionContextAdaptation, MissionObjectiveBinding,
+    MissionObjectiveReport, MissionScriptEvidence, PackageMemberRef,
     PackageRole, PhaseThreePackageIndex, PhaseThreePackageMember,
     PhaseThreePackagePlan, PhaseThreePackagePlanner, PhaseThreePackageRow,
     PhaseThreePackageSelector, UNREAL_IMPORT_MANIFEST_SCHEMA,
     UNREAL_IMPORT_SUMMARY_SCHEMA, UnrealFbxArtifactEvidence,
     UnrealImportManifest, UnrealNativePlan, UnrealSourceEvidence,
-    UnrealTargetKind, preflight_mission_script,
+    UnrealTargetKind, preflight_mission_condition_commands,
+    preflight_mission_conditions, preflight_mission_objective_commands,
+    preflight_mission_objectives, preflight_mission_script,
 };
 pub use pipeline::{
     PipelineConfig, PipelineError, PipelineOutcome, PipelineReport, StageReport,

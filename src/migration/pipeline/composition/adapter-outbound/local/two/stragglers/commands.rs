@@ -31,6 +31,7 @@
 //! Commands outbound adapter.
 
 use std::collections::BTreeMap;
+use std::path::Path;
 
 use super::json::{JsonObject, json_string};
 
@@ -38,7 +39,12 @@ mod context;
 
 /// Append summary.
 // Ordered command evidence shares one accumulated summary map.
-pub(super) fn append_summary(json: &mut JsonObject, text: &str, ext: &str) {
+pub(super) fn append_summary(
+    json: &mut JsonObject,
+    text: &str,
+    ext: &str,
+    relative: &Path,
+) {
     let mut counts = BTreeMap::<String, usize>::new();
     let mut statements = 0usize;
     let mut load_p3d = 0usize;
@@ -96,22 +102,30 @@ pub(super) fn append_summary(json: &mut JsonObject, text: &str, ext: &str) {
     }
 
     let context_command_count = context::command_count(&invocations);
-    let context_findings = if ext == "mfk" {
-        context::validate(&invocations)
+    let context_validation = if ext == "mfk" {
+        context::validate(relative, &invocations)
     } else {
-        Vec::new()
+        context::validate(Path::new(""), &[])
     };
     json.number(
         "context_command_count",
         u64::try_from(context_command_count).unwrap_or(u64::MAX),
     );
     json.number(
+        "context_adaptation_count",
+        u64::try_from(context_validation.adaptations.len()).unwrap_or(u64::MAX),
+    );
+    json.raw_json(
+        "context_adaptations",
+        &context::adaptations_json(&context_validation.adaptations),
+    );
+    json.number(
         "context_finding_count",
-        u64::try_from(context_findings.len()).unwrap_or(u64::MAX),
+        u64::try_from(context_validation.findings.len()).unwrap_or(u64::MAX),
     );
     json.raw_json(
         "context_findings",
-        &context::findings_json(&context_findings),
+        &context::findings_json(&context_validation.findings),
     );
 
     json.number(
@@ -156,7 +170,7 @@ pub(super) fn schema_for(ext: &str) -> &'static str {
     if ext == "con" {
         "shar-schoenwald.straggler.config-script.v2"
     } else {
-        "shar-schoenwald.straggler.mission-script.v2"
+        "shar-schoenwald.straggler.mission-script.v3"
     }
 }
 

@@ -41,6 +41,8 @@ fn document() -> Value {
         "route_class": "mission",
         "source_bytes": 128,
         "context_command_count": 4,
+        "context_adaptation_count": 0,
+        "context_adaptations": [],
         "context_finding_count": 0,
         "context_findings": [],
         "statement_count": 4,
@@ -135,7 +137,7 @@ fn rejected_error(
 }
 
 #[test]
-fn accepts_exact_clean_v2_evidence() -> Result<(), String> {
+fn accepts_exact_clean_v3_evidence() -> Result<(), String> {
     let evidence = preflight_mission_script(&text(&document())?)?;
     if evidence.source_bytes() != 128 || evidence.statement_count() != 4 {
         return Err("mission source summary changed".to_owned());
@@ -164,7 +166,7 @@ fn rejects_stale_schema_before_semantic_mapping() -> Result<(), String> {
     set_pointer(
         &mut value,
         "/schema",
-        Value::String("shar-schoenwald.straggler.mission-script.v1".to_owned()),
+        Value::String("shar-schoenwald.straggler.mission-script.v2".to_owned()),
     )?;
     let error = rejected_error(&value, "stale schema was accepted")?;
     if !error.contains("schema") {
@@ -279,6 +281,145 @@ fn rejects_non_tab_control_characters_in_source_evidence() -> Result<(), String>
         rejected_error(&value, "NUL-bearing mission evidence was accepted")?;
     if !error.contains("statement evidence") {
         return Err(format!("unexpected control-character error: {error}"));
+    }
+    Ok(())
+}
+
+fn reviewed_l2_adaptation_document() -> Value {
+    let source_statements = (1..=72)
+        .map(|ordinal| format!("Statement{ordinal}();"))
+        .collect::<Vec<_>>();
+    json!({
+        "schema": MISSION_SCRIPT_SCHEMA,
+        "source_extension": "mfk",
+        "route_class": "mission",
+        "source_bytes": 512,
+        "context_command_count": 5,
+        "context_adaptation_count": 1,
+        "context_adaptations": [{
+            "ordinal": 70,
+            "command": "closecondition",
+            "code": "legacy-l2-m6sdi-ignore-orphan-condition-close-v1"
+        }],
+        "context_finding_count": 0,
+        "context_findings": [],
+        "statement_count": 72,
+        "unique_command_count": 7,
+        "load_p3d_reference_count": 0,
+        "mission_flow_command_count": 0,
+        "vehicle_physics_command_count": 0,
+        "semantic_family": "mission-script",
+        "command_counts": {
+            "addstage": 1,
+            "addstagemusicchange": 1,
+            "closecondition": 1,
+            "closemission": 1,
+            "closestage": 1,
+            "selectmission": 1,
+            "setstagemusicalwayson": 1
+        },
+        "source_statements": source_statements,
+        "p3d_references": [],
+        "command_invocations": [
+            {
+                "ordinal": 1,
+                "name": "selectmission",
+                "args_raw": "\"m6sd\"",
+                "semantic_role": "mission-script",
+                "arguments": ["m6sd"]
+            },
+            {
+                "ordinal": 2,
+                "name": "addstage",
+                "args_raw": "0",
+                "semantic_role": "mission-stage",
+                "arguments": ["0"]
+            },
+            {
+                "ordinal": 68,
+                "name": "addstagemusicchange",
+                "args_raw": "",
+                "semantic_role": "mission-stage",
+                "arguments": []
+            },
+            {
+                "ordinal": 69,
+                "name": "setstagemusicalwayson",
+                "args_raw": "",
+                "semantic_role": "mission-stage",
+                "arguments": []
+            },
+            {
+                "ordinal": 70,
+                "name": "closecondition",
+                "args_raw": "",
+                "semantic_role": "mission-stage",
+                "arguments": []
+            },
+            {
+                "ordinal": 71,
+                "name": "closestage",
+                "args_raw": "",
+                "semantic_role": "mission-stage",
+                "arguments": []
+            },
+            {
+                "ordinal": 72,
+                "name": "closemission",
+                "args_raw": "",
+                "semantic_role": "mission-script",
+                "arguments": []
+            }
+        ]
+    })
+}
+
+#[test]
+fn accepts_exact_reviewed_context_adaptation_as_typed_evidence()
+-> Result<(), String> {
+    let evidence =
+        preflight_mission_script(&text(&reviewed_l2_adaptation_document())?)?;
+    let [adaptation] = evidence.adaptations() else {
+        return Err("reviewed adaptation count changed".to_owned());
+    };
+    if adaptation.ordinal() != 70
+        || adaptation.command() != "closecondition"
+        || adaptation.code()
+            != "legacy-l2-m6sdi-ignore-orphan-condition-close-v1"
+    {
+        return Err("typed reviewed adaptation changed".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_declared_adaptation_when_reviewed_fingerprint_drifts()
+-> Result<(), String> {
+    let mut value = reviewed_l2_adaptation_document();
+    set_pointer(
+        &mut value,
+        "/command_invocations/3/name",
+        json!("setstagemusicnotalwayson"),
+    )?;
+    set_pointer(
+        &mut value,
+        "/command_counts",
+        json!({
+            "addstage": 1,
+            "addstagemusicchange": 1,
+            "closecondition": 1,
+            "closemission": 1,
+            "closestage": 1,
+            "selectmission": 1,
+            "setstagemusicnotalwayson": 1
+        }),
+    )?;
+    let error = rejected_error(
+        &value,
+        "drifted reviewed adaptation fingerprint was accepted",
+    )?;
+    if !error.contains("not reviewed") {
+        return Err(format!("unexpected adaptation-drift error: {error}"));
     }
     Ok(())
 }

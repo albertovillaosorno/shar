@@ -100,6 +100,8 @@ fn clean_mission_json(with_finding: bool) -> Result<Vec<u8>, String> {
         "route_class": "mission",
         "source_bytes": 64,
         "context_command_count": 2,
+        "context_adaptation_count": 0,
+        "context_adaptations": [],
         "context_finding_count": finding_count,
         "context_findings": findings,
         "statement_count": 2,
@@ -135,7 +137,7 @@ fn clean_mission_json(with_finding: bool) -> Result<Vec<u8>, String> {
 }
 
 #[test]
-fn mission_semantic_gate_accepts_clean_v2_and_bypasses_other_kinds()
+fn mission_semantic_gate_accepts_clean_v3_and_bypasses_other_kinds()
 -> Result<(), String> {
     let clean = clean_mission_json(false)?;
     validate_normalized_mission_source(
@@ -162,7 +164,7 @@ fn mission_semantic_gate_rejects_stale_schema_and_context_findings()
     let clean = clean_mission_json(false)?;
     let stale = validate_normalized_mission_source(
         "mission-script",
-        "shar-schoenwald.straggler.mission-script.v1",
+        "shar-schoenwald.straggler.mission-script.v2",
         "json",
         "game-straggler-normalize",
         &clean,

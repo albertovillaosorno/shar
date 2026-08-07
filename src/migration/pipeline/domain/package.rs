@@ -31,6 +31,10 @@
 //! Package domain module.
 
 pub mod index;
+/// Reviewed mission condition alias preflight.
+pub mod mission_condition;
+/// Reviewed mission objective alias preflight.
+pub mod mission_objective;
 /// Normalized mission-script semantic preflight.
 pub mod mission_script;
 /// Package conversion planner.
@@ -51,9 +55,19 @@ pub use index::{
     PackageMemberRef, PackageRole, PhaseThreePackageIndex,
     PhaseThreePackageMember, PhaseThreePackageRow,
 };
+pub use mission_condition::{
+    MissionConditionBinding, MissionConditionCommandBinding,
+    MissionConditionCommandReport, MissionConditionReport,
+    preflight_mission_condition_commands, preflight_mission_conditions,
+};
+pub use mission_objective::{
+    MissionObjectiveBinding, MissionObjectiveCommandBinding,
+    MissionObjectiveCommandReport, MissionObjectiveReport,
+    preflight_mission_objective_commands, preflight_mission_objectives,
+};
 pub use mission_script::{
-    MISSION_SCRIPT_SCHEMA, MissionCommandInvocation, MissionScriptEvidence,
-    preflight_mission_script,
+    MISSION_SCRIPT_SCHEMA, MissionCommandInvocation, MissionContextAdaptation,
+    MissionScriptEvidence, preflight_mission_script,
 };
 pub use plan::{
     ConversionFamily, FbxModelPlan, PhaseThreePackagePlan,

@@ -223,7 +223,9 @@ fn semantic_json_from_text(
     );
 
     match ext {
-        "mfk" | "con" => commands::append_summary(&mut json, text, ext),
+        "mfk" | "con" => {
+            commands::append_summary(&mut json, text, ext, relative)
+        },
         "pag" | "scr" | "prj" => scrooby::append_summary(&mut json, text),
         "cho" => choreography::append_summary(&mut json, text),
         "txt" | "e" | "f" | "g" | "i" | "s" | "x" => {
