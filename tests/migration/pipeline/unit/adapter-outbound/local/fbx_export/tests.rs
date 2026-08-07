@@ -32,7 +32,8 @@
 
 use super::{
     GENERAL_CHARACTER_ANIMATION_SUBCATEGORY, animation_subcategory_candidates,
-    deferred_material_identity, normalized_texture_png_file_name,
+    deferred_material_identity, fbx_io_error, normalized_texture_png_file_name,
+    single_package_staging_path,
 };
 
 #[test]
@@ -94,4 +95,23 @@ fn character_animation_candidates_use_general_bank_for_other_models() {
         animation_subcategory_candidates("characters/homer/base-model"),
         vec![GENERAL_CHARACTER_ANIMATION_SUBCATEGORY.to_owned()]
     );
+}
+
+#[test]
+fn package_staging_is_a_hidden_sibling_of_the_final_package() {
+    let root = std::path::Path::new("generated/fbx");
+    assert_eq!(
+        single_package_staging_path(root, "extracted-art-h2h-flag"),
+        root.join(".extracted-art-h2h-flag.fbx-staging")
+    );
+}
+
+#[test]
+fn fbx_io_diagnostics_hide_physical_error_text() {
+    let private_fragment = "private-workstation/fbx/staging/file.fbx";
+    let error = std::io::Error::other(private_fragment);
+    let rendered =
+        fbx_io_error("read canonical FBX source", &error).to_string();
+    assert_eq!(rendered, "read canonical FBX source failed (Other)");
+    assert!(!rendered.contains(private_fragment));
 }

@@ -100,6 +100,49 @@ impl DecodedComponentSource {
             Some(texture_source),
         )
     }
+
+    /// Resolve one shader from the exact path published by the package index.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the indexed shader or any referenced local texture
+    /// violates the decoded material contract.
+    pub fn resolve_indexed_material(
+        &self,
+        shader_path: &Path,
+    ) -> Result<MaterialBinding, DecodedComponentError> {
+        let shader: DecodedShader = read_json(shader_path)?;
+        let material_name = decoded_material_identity(&shader.name);
+        ensure_shader_evidence(&shader, &material_name)?;
+        resolve_material_document(
+            &self.package_root,
+            &self.texture_output_dir,
+            &shader,
+            None,
+        )
+    }
+
+    /// Resolve one indexed shader with an exact external PNG payload source.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the indexed shader, external texture, or staging
+    /// operation violates the decoded material contract.
+    pub fn resolve_indexed_material_with_external_texture(
+        &self,
+        shader_path: &Path,
+        texture_source: &Path,
+    ) -> Result<MaterialBinding, DecodedComponentError> {
+        let shader: DecodedShader = read_json(shader_path)?;
+        let material_name = decoded_material_identity(&shader.name);
+        ensure_shader_evidence(&shader, &material_name)?;
+        resolve_material_document(
+            &self.package_root,
+            &self.texture_output_dir,
+            &shader,
+            Some(texture_source),
+        )
+    }
 }
 
 impl ComponentSource for DecodedComponentSource {
@@ -235,22 +278,39 @@ pub fn read_mesh_for_analysis(
     mesh_member_id: &str,
 ) -> Result<(MeshAsset, usize), DecodedComponentError> {
     let path = component_path(package_root, "mesh", mesh_member_id, "json")?;
-    decode_mesh_document(&path, mesh_member_id, true)
+    decode_mesh_document(&path, Some(mesh_member_id), true)
 }
 
-/// Read one decoded mesh from an explicit component path.
+/// Read one decoded mesh from an exact package-index path.
+///
+/// The generated package index owns the physical path while the decoded mesh
+/// document owns its authored geometry identity. This intentionally does not
+/// reconstruct a component path from the index member UUID or require the file
+/// stem to equal the authored mesh name.
+///
+/// # Errors
+///
+/// Returns an error when the indexed document violates the decoded mesh
+/// contract.
+pub fn read_indexed_mesh(
+    path: &Path,
+) -> Result<MeshAsset, DecodedComponentError> {
+    decode_mesh_document(path, None, false).map(|(mesh, _discarded)| mesh)
+}
+
+/// Read one decoded mesh from an explicit component path and authored identity.
 pub(super) fn read_mesh(
     path: &Path,
     requested_id: &str,
 ) -> Result<MeshAsset, DecodedComponentError> {
-    decode_mesh_document(path, requested_id, false)
+    decode_mesh_document(path, Some(requested_id), false)
         .map(|(mesh, _discarded)| mesh)
 }
 
 /// Decode one mesh document with explicit topology sanitation behavior.
 fn decode_mesh_document(
     path: &Path,
-    requested_id: &str,
+    requested_id: Option<&str>,
     discard_repeated_vertices: bool,
 ) -> Result<(MeshAsset, usize), DecodedComponentError> {
     let decoded: DecodedMesh = read_json(path)?;
@@ -276,7 +336,7 @@ fn decode_mesh_document(
 /// Validate mesh schema, identity, and declared primitive-group count.
 fn validate_decoded_mesh(
     decoded: &DecodedMesh,
-    requested_id: &str,
+    requested_id: Option<&str>,
 ) -> Result<String, DecodedComponentError> {
     if decoded.schema != "mesh" {
         return Err(DecodedComponentError::Mesh(MeshError::UnsupportedSchema(
@@ -284,7 +344,9 @@ fn validate_decoded_mesh(
         )));
     }
     let decoded_name = decoded_mesh_identity(&decoded.name);
-    if decoded_name != requested_id {
+    if let Some(requested_id) = requested_id
+        && decoded_name != requested_id
+    {
         return Err(DecodedComponentError::MeshIdentityMismatch {
             requested: requested_id.to_owned(),
             decoded: decoded.name.clone(),
@@ -481,10 +543,25 @@ fn resolve_material_from_source(
     let shader_path = shader_component_path(package_root, shader_name)?;
     let shader: DecodedShader = read_json(&shader_path)?;
     ensure_shader_evidence(&shader, shader_name)?;
+    resolve_material_document(
+        package_root,
+        output_texture_dir,
+        &shader,
+        external_texture_source,
+    )
+}
+
+/// Resolve one already validated decoded shader and stage its local texture.
+fn resolve_material_document(
+    package_root: &Path,
+    output_texture_dir: &Path,
+    shader: &DecodedShader,
+    external_texture_source: Option<&Path>,
+) -> Result<MaterialBinding, DecodedComponentError> {
     let material_name = decoded_material_identity(&shader.name);
-    let semantics = decoded_shader_semantics(&shader);
-    let base_color = decoded_shader_base_color(&shader);
-    let Some(texture_reference) = texture_name(&shader)? else {
+    let semantics = decoded_shader_semantics(shader);
+    let base_color = decoded_shader_base_color(shader);
+    let Some(texture_reference) = texture_name(shader)? else {
         return MaterialBinding::new(material_name, None)
             .map(|binding| {
                 binding
@@ -817,7 +894,7 @@ fn decoded_shader_semantics(shader: &DecodedShader) -> MaterialSemantics {
         .platform_shader_name
         .as_deref()
         .unwrap_or("")
-        .trim_end_matches(' ')
+        .trim_end_matches('\0')
         .to_ascii_lowercase();
     let reflective = shader_family.contains("spheremap")
         || shader.params.iter().any(|parameter| {

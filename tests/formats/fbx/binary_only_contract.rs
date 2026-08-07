@@ -40,6 +40,10 @@ use shar_sha256 as _;
 const DRIVEN_MODULE: &str = include_str!(
     "../../../src/formats/fbx/composition/adapter-outbound/mod.rs",
 );
+const BINARY_CHARACTER_WRITER: &str = include_str!(
+    // jig-ignore-next-line: exact source contract path is indivisible
+    "../../../src/formats/fbx/composition/adapter-outbound/binary_character_writer.rs",
+);
 const PIPELINE_EXPORT: &str = include_str!(
     // jig-ignore-next-line: exact source contract path is indivisible
     "../../../src/migration/pipeline/composition/adapter-outbound/local/fbx_export.rs",
@@ -68,6 +72,7 @@ const SEMANTIC_TEXTURE_PUBLICATION: &str = include_str!(
 fn exposes_only_binary_fbx_7700() -> Result<(), String> {
     let contract_sources = [
         DRIVEN_MODULE,
+        BINARY_CHARACTER_WRITER,
         PIPELINE_EXPORT,
         PIPELINE_CLI,
         PIPELINE_OPTIONS,
