@@ -21,7 +21,7 @@
 // - Summary:
 //   - Shar native import automation tests.
 // - Description:
-//   - Exercises WAV and FileMediaSource lifecycle behavior in the editor.
+//   - Exercises FBX/WAV validation and FileMediaSource lifecycle behavior.
 // - Usage:
 //   - Used through the SharImportEditor module and its native toolset boundary.
 // - Defaults:
@@ -98,6 +98,34 @@ bool FSharImportValidationTest::RunTest(const FString& Parameters)
             USharImportToolset::StaticClass()
         )
     );
+    TestTrue(
+        TEXT("Canonical generated FBX request passes"),
+        UE::SharImportEditor::Private::ValidateStaticMeshRequest(
+            TEXT("C:/SHAR/verified.fbx"),
+            TEXT("/Game/Generated/SHAR/models/static"),
+            TEXT("reviewed_mesh"),
+            Error
+        )
+    );
+    TestFalse(
+        TEXT("Non-FBX static source is rejected"),
+        UE::SharImportEditor::Private::ValidateStaticMeshRequest(
+            TEXT("C:/SHAR/verified.obj"),
+            TEXT("/Game/Generated/SHAR/models/static"),
+            TEXT("reviewed_mesh"),
+            Error
+        )
+    );
+    TestFalse(
+        TEXT("Relative static source is rejected"),
+        UE::SharImportEditor::Private::ValidateStaticMeshRequest(
+            TEXT("verified.fbx"),
+            TEXT("/Game/Generated/SHAR/models/static"),
+            TEXT("reviewed_mesh"),
+            Error
+        )
+    );
+
     TestTrue(
         TEXT("Canonical generated WAV request passes"),
         UE::SharImportEditor::Private::ValidateSoundWaveRequest(
