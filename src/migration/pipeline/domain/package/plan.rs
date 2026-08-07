@@ -155,7 +155,7 @@ impl PhaseThreePackagePlanner {
         if package.has_error_ids() || metadata_only_package(package) {
             return metadata_plan(package);
         }
-        if package.has_model_components() && fbx_category(&package.category) {
+        if package.has_fbx_geometry() && fbx_category(&package.category) {
             return fbx_plan(package);
         }
         unreal_plan(package)

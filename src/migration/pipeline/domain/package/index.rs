@@ -1076,6 +1076,16 @@ impl PhaseThreePackageRow {
         .any(|role| !self.ids_for_role(role).is_empty())
     }
 
+    /// True when this package owns geometry that can anchor one FBX import.
+    /// Scene, locator, camera, animation, and physics evidence may accompany
+    /// geometry but cannot independently materialize a `StaticMesh` package.
+    #[must_use]
+    pub fn has_fbx_geometry(&self) -> bool {
+        [PackageRole::Model, PackageRole::World]
+            .into_iter()
+            .any(|role| !self.ids_for_role(role).is_empty())
+    }
+
     /// True when this package contains ids that phase three must reject before
     /// generating a conversion plan.
     #[must_use]
