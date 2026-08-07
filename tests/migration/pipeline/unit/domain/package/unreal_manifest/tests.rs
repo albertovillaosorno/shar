@@ -95,7 +95,7 @@ fn model_index() -> Result<PhaseThreePackageIndex, String> {
         "\"members\":[{\"id\":\"model-a\",",
         "\"role\":\"model\",",
         "\"path\":\"extracted/art/cars/model/model.json\",",
-        "\"type\":\"model\",\"kind\":\"runtime-asset\",",
+        "\"type\":\"model\",\"kind\":\"p3d-mesh\",",
         "\"source_chunk_kind\":\"mesh\"}],",
         "\"text_keys\":[]}",
     );
@@ -110,7 +110,7 @@ fn model_evidence() -> UnrealSourceEvidence {
         file_extension: "json".to_owned(),
         unit_type: "model".to_owned(),
         subtype: "mesh".to_owned(),
-        kind: "runtime-asset".to_owned(),
+        kind: "p3d-mesh".to_owned(),
         function: "model evidence".to_owned(),
         schema: "model-v1".to_owned(),
         origin: "p3d-package".to_owned(),
@@ -121,6 +121,77 @@ fn model_evidence() -> UnrealSourceEvidence {
         unreal_import_relation: "import-after-conversion".to_owned(),
         future_normalization: "model-to-fbx".to_owned(),
     }
+}
+
+fn composite_model_index() -> Result<PhaseThreePackageIndex, String> {
+    let row = concat!(
+        "{\"package_id\":\"extracted-art-ui-model\",",
+        "\"package_root\":\"extracted/art/ui/model\",",
+        "\"package_category\":\"ui-resources\",",
+        "\"package_subcategory\":\"ui-resources/frontend-scenes/model\",",
+        "\"unit_count\":2,\"text_key_count\":0,",
+        "\"unit_ids\":[\"model-a\",\"camera-a\"],\"world_ids\":[],",
+        "\"texture_ids\":[],\"material_ids\":[],",
+        "\"model_ids\":[\"model-a\"],\"physics_ids\":[],",
+        "\"animation_ids\":[],\"scene_ids\":[],",
+        "\"locator_ids\":[],\"camera_ids\":[\"camera-a\"],",
+        "\"light_ids\":[],\"particle_ids\":[],",
+        "\"controller_ids\":[],\"audio_ids\":[],",
+        "\"movie_ids\":[],\"script_ids\":[],",
+        "\"text_ids\":[],\"ui_ids\":[],",
+        "\"metadata_ids\":[],\"error_ids\":[],",
+        "\"source_unit_ids\":[],\"text_key_ids\":[],",
+        "\"members\":[",
+        "{\"id\":\"model-a\",\"role\":\"model\",",
+        "\"path\":\"extracted/art/ui/model/model.json\",",
+        "\"type\":\"model\",\"kind\":\"p3d-mesh\",",
+        "\"source_chunk_kind\":\"mesh\"},",
+        "{\"id\":\"camera-a\",\"role\":\"camera\",",
+        "\"path\":\"extracted/art/ui/model/camera.json\",",
+        "\"type\":\"camera\",\"kind\":\"p3d-camera\",",
+        "\"source_chunk_kind\":\"camera\"}],\"text_keys\":[]}",
+    );
+    PhaseThreePackageIndex::from_jsonl(&format!("{row}\n"))
+        .map_err(|error| error.to_string())
+}
+
+fn composite_model_evidence() -> Vec<UnrealSourceEvidence> {
+    vec![
+        UnrealSourceEvidence {
+            id: "model-a".to_owned(),
+            path: "extracted/art/ui/model/model.json".to_owned(),
+            file_extension: "json".to_owned(),
+            unit_type: "model".to_owned(),
+            subtype: "mesh".to_owned(),
+            kind: "p3d-mesh".to_owned(),
+            function: "model evidence".to_owned(),
+            schema: "mesh".to_owned(),
+            origin: "p3d-package".to_owned(),
+            source_path: "extracted/art/ui/model/model.p3d".to_owned(),
+            source_chunk_kind: "mesh".to_owned(),
+            size_bytes: 4,
+            sha256: "b".repeat(64),
+            unreal_import_relation: "import-after-conversion".to_owned(),
+            future_normalization: "model-to-fbx".to_owned(),
+        },
+        UnrealSourceEvidence {
+            id: "camera-a".to_owned(),
+            path: "extracted/art/ui/model/camera.json".to_owned(),
+            file_extension: "json".to_owned(),
+            unit_type: "camera".to_owned(),
+            subtype: "camera".to_owned(),
+            kind: "p3d-camera".to_owned(),
+            function: "camera evidence".to_owned(),
+            schema: "camera".to_owned(),
+            origin: "p3d-package".to_owned(),
+            source_path: "extracted/art/ui/model/model.p3d".to_owned(),
+            source_chunk_kind: "camera".to_owned(),
+            size_bytes: 4,
+            sha256: "d".repeat(64),
+            unreal_import_relation: "semantic-companion".to_owned(),
+            future_normalization: "camera-native".to_owned(),
+        },
+    ]
 }
 
 fn verified_model_fbx() -> UnrealFbxArtifactEvidence {
@@ -214,6 +285,32 @@ fn emits_complete_deterministic_plan_bundle() -> Result<(), String> {
         {
             return Err(format!("missing plan family: {}", family.plan_id()));
         }
+    }
+    Ok(())
+}
+
+#[test]
+fn composite_geometry_reserves_no_false_static_mesh() -> Result<(), String> {
+    let manifest = UnrealImportManifest::build(
+        &composite_model_index()?,
+        composite_model_evidence(),
+    )?;
+    let json = manifest.to_jsonl();
+    let summary = manifest.summary_json();
+    for expected in [
+        "\"disposition\":\"requires-semantic-conversion\"",
+        "\"target_kind\":\"CompositeModel\"",
+        "\"expected_staged_files\":[]",
+        "\"expected_unreal_objects\":[]",
+    ] {
+        if !json.contains(expected) {
+            return Err(format!("composite model manifest lost: {expected}"));
+        }
+    }
+    if !summary.contains("\"requires_fbx\":0")
+        || !summary.contains("\"requires_semantic_conversion\":1")
+    {
+        return Err(format!("composite summary is wrong: {summary}"));
     }
     Ok(())
 }
@@ -355,6 +452,23 @@ fn direct_policy_without_compatible_source_requires_factory()
     if policy.reason.is_none() {
         return Err(
             "factory fallback must explain why direct import failed".to_owned()
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn skeletal_fbx_policy_requires_companion_aware_transaction()
+-> Result<(), String> {
+    let policy =
+        super::fbx_policy(crate::domain::package::FbxTargetKind::SkeletalMesh);
+    if policy.disposition != "requires-semantic-conversion"
+        || policy.target_kind != "SkeletalMeshBundle"
+        || policy.importer != "semantic-converter"
+        || policy.import_profile != "shar-fbx-skeletal-bundle-v1"
+    {
+        return Err(
+            "skeletal FBX bypassed companion-aware conversion".to_owned()
         );
     }
     Ok(())

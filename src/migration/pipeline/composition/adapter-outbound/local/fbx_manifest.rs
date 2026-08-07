@@ -37,7 +37,7 @@ use schoenwald_filesystem::adapters::driving::local::{
 };
 
 use crate::domain::package::{
-    ConversionFamily, FbxModelPlan, PhaseThreePackageIndex,
+    ConversionFamily, FbxModelPlan, FbxTargetKind, PhaseThreePackageIndex,
     PhaseThreePackagePlanner, PhaseThreePackageSelector,
 };
 use crate::domain::{PipelineError, StageReport, escape_json};
@@ -49,6 +49,8 @@ pub(super) struct PhaseThreeFbxManifest {
     pub package_id: String,
     /// Stable package subcategory.
     pub subcategory: String,
+    /// Direct Unreal mesh representation for this complete FBX package.
+    pub target_kind: FbxTargetKind,
     /// Output FBX file name requested from the later FBX engine.
     pub output_fbx: String,
     /// Model ids needed by the generic FBX engine.
@@ -78,6 +80,7 @@ impl PhaseThreeFbxManifest {
         Self {
             package_id: plan.package_id.clone(),
             subcategory: plan.subcategory.clone(),
+            target_kind: plan.target_kind,
             output_fbx: format!("{}.fbx", stable_file_stem(&plan.subcategory)),
             model_ids: plan.model_ids.clone(),
             world_ids: plan.world_ids.clone(),
@@ -99,6 +102,12 @@ impl PhaseThreeFbxManifest {
         push_string_field(&mut json, "package_id", &self.package_id, true);
         push_string_field(&mut json, "subcategory", &self.subcategory, true);
         push_string_field(&mut json, "conversion_family", "fbx-model", true);
+        push_string_field(
+            &mut json,
+            "target_kind",
+            fbx_target_name(self.target_kind),
+            true,
+        );
         push_string_field(&mut json, "output_fbx", &self.output_fbx, true);
         push_array_field(&mut json, "model_ids", &self.model_ids, true);
         push_array_field(&mut json, "world_ids", &self.world_ids, true);
@@ -142,7 +151,7 @@ pub(super) fn write_phase_three_fbx_manifest(
     selector: &PhaseThreePackageSelector,
     output_dir: &Path,
 ) -> Result<StageReport, PipelineError> {
-    let index = PhaseThreePackageIndex::read(index_path)
+    let index = PhaseThreePackageIndex::read_for_unreal(index_path)
         .map_err(|error| PipelineError::new(error.to_string()))?;
     let package = selector
         .resolve(&index)
@@ -159,6 +168,12 @@ pub(super) fn write_phase_three_fbx_manifest(
             "missing FBX plan for selected package",
         ));
     };
+    if fbx_plan.target_kind == FbxTargetKind::SemanticSplit {
+        return Err(PipelineError::new(format!(
+            "selected package requires semantic splitting before FBX export: {}",
+            package.package_id
+        )));
+    }
     let manifest = PhaseThreeFbxManifest::from_plan(&fbx_plan);
     let path = manifest.write_to(output_dir)?;
     Ok(StageReport {
@@ -195,6 +210,15 @@ pub(super) fn stable_file_stem(subcategory: &str) -> String {
         .collect::<String>()
         .trim_matches('-')
         .to_owned()
+}
+
+/// Render one stable FBX target identity.
+const fn fbx_target_name(target: FbxTargetKind) -> &'static str {
+    match target {
+        FbxTargetKind::StaticMesh => "StaticMesh",
+        FbxTargetKind::SkeletalMesh => "SkeletalMesh",
+        FbxTargetKind::SemanticSplit => "SemanticSplit",
+    }
 }
 
 /// Supports the `push_string_field` operation within this deterministic

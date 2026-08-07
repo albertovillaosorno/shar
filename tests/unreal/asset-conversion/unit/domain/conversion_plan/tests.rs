@@ -110,7 +110,7 @@ fn fbx_operation(readiness: OperationReadiness) -> ConversionPlan {
         .to_owned(),
         target_class: "StaticMesh".to_owned(),
         importer: "asset-tools-fbx".to_owned(),
-        import_profile: "shar-fbx-v1".to_owned(),
+        import_profile: "shar-fbx-static-v1".to_owned(),
         dependencies: Vec::new(),
         readiness,
         world_owned: true,

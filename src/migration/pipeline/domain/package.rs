@@ -70,7 +70,7 @@ pub use mission_script::{
     MissionScriptEvidence, preflight_mission_script,
 };
 pub use plan::{
-    ConversionFamily, FbxModelPlan, PhaseThreePackagePlan,
+    ConversionFamily, FbxModelPlan, FbxTargetKind, PhaseThreePackagePlan,
     PhaseThreePackagePlanner, UnrealNativePlan, UnrealTargetKind,
 };
 pub use selector::PhaseThreePackageSelector;

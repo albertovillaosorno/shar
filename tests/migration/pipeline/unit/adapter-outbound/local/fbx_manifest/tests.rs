@@ -31,13 +31,14 @@
 //! Tests unit tests.
 
 use super::PhaseThreeFbxManifest;
-use crate::domain::package::FbxModelPlan;
+use crate::domain::package::{FbxModelPlan, FbxTargetKind};
 
 #[test]
 fn renders_generic_fbx_manifest() -> Result<(), String> {
     let manifest = PhaseThreeFbxManifest::from_plan(&FbxModelPlan {
         package_id: "pkg".to_owned(),
         subcategory: "props/wrench".to_owned(),
+        target_kind: FbxTargetKind::StaticMesh,
         model_ids: vec!["model-a".to_owned()],
         world_ids: Vec::new(),
         scene_ids: Vec::new(),
@@ -49,6 +50,9 @@ fn renders_generic_fbx_manifest() -> Result<(), String> {
         physics_ids: Vec::new(),
     });
     let json = manifest.to_json();
+    if !json.contains("\"target_kind\": \"StaticMesh\"") {
+        return Err("manifest should expose the direct FBX target".to_owned());
+    }
     if !json.contains("\"output_fbx\": \"props-wrench.fbx\"") {
         return Err("manifest should expose stable FBX name".to_owned());
     }

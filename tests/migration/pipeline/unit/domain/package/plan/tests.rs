@@ -32,7 +32,9 @@
 
 // cspell:ignore gvuglogo
 
-use super::{ConversionFamily, PhaseThreePackagePlanner, UnrealTargetKind};
+use super::{
+    ConversionFamily, FbxTargetKind, PhaseThreePackagePlanner, UnrealTargetKind,
+};
 use crate::domain::package::index::PhaseThreePackageRow;
 
 fn row(
@@ -90,6 +92,85 @@ fn row_with_kind(
     json = json.replace("\"members\":[]", &member);
     PhaseThreePackageRow::from_json_line(&json)
         .map_err(|error| error.to_string())
+}
+
+fn row_with_exact_member(
+    category: &str,
+    subcategory: &str,
+    role_field: &str,
+    kind: &str,
+    source_chunk_kind: &str,
+) -> Result<PhaseThreePackageRow, String> {
+    let mut json = concat!(
+        "{\"package_id\":\"pkg\",\"package_root\":\"pkg\",",
+        "\"package_category\":\"CATEGORY\",",
+        "\"package_subcategory\":\"SUBCATEGORY\",",
+        "\"unit_count\":1,\"text_key_count\":0,",
+        "\"unit_ids\":[\"unit-a\"],\"world_ids\":[],",
+        "\"texture_ids\":[],\"material_ids\":[],",
+        "\"model_ids\":[],\"physics_ids\":[],",
+        "\"animation_ids\":[],\"scene_ids\":[],",
+        "\"locator_ids\":[],\"camera_ids\":[],",
+        "\"light_ids\":[],\"particle_ids\":[],",
+        "\"controller_ids\":[],\"audio_ids\":[],",
+        "\"movie_ids\":[],\"script_ids\":[],",
+        "\"text_ids\":[],\"ui_ids\":[],",
+        "\"metadata_ids\":[],\"error_ids\":[],",
+        "\"source_unit_ids\":[],\"text_key_ids\":[],",
+        "\"members\":[],\"text_keys\":[]}",
+    )
+    .replace("SUBCATEGORY", subcategory)
+    .replace("CATEGORY", category);
+    let empty_field = format!("\"{role_field}\":[]");
+    let filled_field = format!("\"{role_field}\":[\"unit-a\"]");
+    json = json.replace(&empty_field, &filled_field);
+    let role = role_field
+        .strip_suffix("_ids")
+        .ok_or_else(|| format!("invalid role field: {role_field}"))?;
+    let member = format!(
+        concat!(
+            "\"members\":[{{",
+            "\"id\":\"unit-a\",\"role\":\"{}\",",
+            "\"path\":\"extracted/unit-a.json\",",
+            "\"type\":\"test\",\"kind\":\"{}\",",
+            "\"source_chunk_kind\":\"{}\"}}]"
+        ),
+        role, kind, source_chunk_kind,
+    );
+    json = json.replace("\"members\":[]", &member);
+    PhaseThreePackageRow::from_json_line(&json)
+        .map_err(|error| error.to_string())
+}
+
+fn single_skeletal_row() -> Result<PhaseThreePackageRow, String> {
+    let row = concat!(
+        "{\"package_id\":\"pkg\",\"package_root\":\"pkg\",",
+        "\"package_category\":\"characters\",",
+        "\"package_subcategory\":\"characters/cletus/base-model\",",
+        "\"unit_count\":3,\"text_key_count\":0,",
+        "\"unit_ids\":[\"composite-a\",\"skin-a\",\"skeleton-a\"],",
+        "\"world_ids\":[],\"texture_ids\":[],\"material_ids\":[],",
+        "\"model_ids\":[\"composite-a\",\"skin-a\"],",
+        "\"physics_ids\":[],\"animation_ids\":[\"skeleton-a\"],",
+        "\"scene_ids\":[],\"locator_ids\":[],\"camera_ids\":[],",
+        "\"light_ids\":[],\"particle_ids\":[],\"controller_ids\":[],",
+        "\"audio_ids\":[],\"movie_ids\":[],\"script_ids\":[],",
+        "\"text_ids\":[],\"ui_ids\":[],\"metadata_ids\":[],",
+        "\"error_ids\":[],\"source_unit_ids\":[],\"text_key_ids\":[],",
+        "\"members\":[",
+        "{\"id\":\"composite-a\",\"role\":\"model\",",
+        "\"path\":\"extracted/composite.json\",\"type\":\"model\",",
+        "\"kind\":\"p3d-composite-drawable\",",
+        "\"source_chunk_kind\":\"composite_drawable\"},",
+        "{\"id\":\"skin-a\",\"role\":\"model\",",
+        "\"path\":\"extracted/skin.json\",\"type\":\"model\",",
+        "\"kind\":\"p3d-skin\",\"source_chunk_kind\":\"skin\"},",
+        "{\"id\":\"skeleton-a\",\"role\":\"animation\",",
+        "\"path\":\"extracted/skeleton.json\",\"type\":\"animation\",",
+        "\"kind\":\"p3d-skeleton\",",
+        "\"source_chunk_kind\":\"skeleton\"}],\"text_keys\":[]}",
+    );
+    PhaseThreePackageRow::from_json_line(row).map_err(|error| error.to_string())
 }
 
 fn row_with_model_and_companion(
@@ -189,6 +270,58 @@ fn routes_non_geometry_scene_evidence_to_semantic_conversion()
                 "non-geometry {role_field} should remain semantic source"
             ));
         }
+    }
+    Ok(())
+}
+
+#[test]
+fn classifies_exact_single_static_mesh_target() -> Result<(), String> {
+    let package = row_with_exact_member(
+        "ui-resources",
+        "ui-resources/frontend-scenes/hud-maps/l1",
+        "model_ids",
+        "p3d-mesh",
+        "mesh",
+    )?;
+    let plan = PhaseThreePackagePlanner::plan(&package);
+    let Some(fbx) = plan.fbx else {
+        return Err("single static mesh should produce an FBX plan".to_owned());
+    };
+    if fbx.target_kind != FbxTargetKind::StaticMesh {
+        return Err(format!("unexpected static target: {:?}", fbx.target_kind));
+    }
+    Ok(())
+}
+
+#[test]
+fn classifies_exact_single_skeletal_mesh_target() -> Result<(), String> {
+    let plan = PhaseThreePackagePlanner::plan(&single_skeletal_row()?);
+    let Some(fbx) = plan.fbx else {
+        return Err(
+            "single skeletal mesh should produce an FBX plan".to_owned()
+        );
+    };
+    if fbx.target_kind != FbxTargetKind::SkeletalMesh {
+        return Err(format!(
+            "unexpected skeletal target: {:?}",
+            fbx.target_kind
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn requires_semantic_split_for_geometry_companions() -> Result<(), String> {
+    let package = row_with_model_and_companion("camera_ids")?;
+    let plan = PhaseThreePackagePlanner::plan(&package);
+    let Some(fbx) = plan.fbx else {
+        return Err("geometry companion should retain an FBX plan".to_owned());
+    };
+    if fbx.target_kind != FbxTargetKind::SemanticSplit {
+        return Err(format!(
+            "geometry companion bypassed split: {:?}",
+            fbx.target_kind
+        ));
     }
     Ok(())
 }

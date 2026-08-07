@@ -70,6 +70,18 @@ pub enum UnrealTargetKind {
     Metadata,
 }
 
+/// Unreal representation that one FBX package can materialize directly.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum FbxTargetKind {
+    /// One complete static-mesh asset with no unresolved companion semantics.
+    StaticMesh,
+    /// One complete skeletal-mesh asset with no animation or runtime
+    /// companions.
+    SkeletalMesh,
+    /// Geometry exists, but the package must split into multiple native assets.
+    SemanticSplit,
+}
+
 /// `FBX` planning output for model-like packages.
 // The suffix keeps this value distinct from the adapter that executes the plan
 // and from the package row that provides its validated source identifiers.
@@ -84,6 +96,8 @@ pub struct FbxModelPlan {
     pub package_id: String,
     /// Stable package subcategory used to derive output identity.
     pub subcategory: String,
+    /// Direct Unreal representation or explicit semantic-split requirement.
+    pub target_kind: FbxTargetKind,
     /// Model ids to hand to the FBX adapter.
     pub model_ids: Vec<String>,
     /// World ids to hand to terrain/world FBX adapters.
@@ -206,6 +220,7 @@ fn fbx_plan(package: &PhaseThreePackageRow) -> PhaseThreePackagePlan {
         fbx: Some(FbxModelPlan {
             package_id: package.package_id.clone(),
             subcategory: package.subcategory.clone(),
+            target_kind: fbx_target_kind(package),
             model_ids: package.ids_for_role(PackageRole::Model).to_vec(),
             world_ids: package.ids_for_role(PackageRole::World).to_vec(),
             scene_ids: package.ids_for_role(PackageRole::Scene).to_vec(),
@@ -220,6 +235,96 @@ fn fbx_plan(package: &PhaseThreePackageRow) -> PhaseThreePackagePlan {
         }),
         unreal: None,
     }
+}
+
+/// Select the only direct Unreal mesh representation justified by evidence.
+fn fbx_target_kind(package: &PhaseThreePackageRow) -> FbxTargetKind {
+    if single_static_mesh_package(package) {
+        return FbxTargetKind::StaticMesh;
+    }
+    if single_skeletal_mesh_package(package) {
+        return FbxTargetKind::SkeletalMesh;
+    }
+    FbxTargetKind::SemanticSplit
+}
+
+/// Require a package to contain only one static-mesh asset surface.
+fn single_static_mesh_package(package: &PhaseThreePackageRow) -> bool {
+    let mut has_mesh = false;
+    package.members().iter().all(|member| match member.role {
+        PackageRole::Model => {
+            let exact =
+                member.kind == "p3d-mesh" && member.source_chunk_kind == "mesh";
+            has_mesh |= exact;
+            exact
+        },
+        PackageRole::Material => {
+            member.kind == "p3d-shader" && member.source_chunk_kind == "shader"
+        },
+        PackageRole::Texture => {
+            member.kind == "p3d-texture"
+                && matches!(
+                    member.source_chunk_kind.as_str(),
+                    "none" | "texture"
+                )
+        },
+        PackageRole::Metadata => metadata_member_is_non_runtime(member),
+        _ => false,
+    }) && has_mesh
+}
+
+/// Require a package to contain only one skeletal-mesh asset surface.
+fn single_skeletal_mesh_package(package: &PhaseThreePackageRow) -> bool {
+    let mut has_skin = false;
+    let mut has_skeleton = false;
+    let mut has_composite = false;
+    package.members().iter().all(|member| match member.role {
+        PackageRole::Model => {
+            match (member.kind.as_str(), member.source_chunk_kind.as_str()) {
+                ("p3d-skin", "skin") => {
+                    has_skin = true;
+                    true
+                },
+                ("p3d-composite-drawable", "composite_drawable") => {
+                    has_composite = true;
+                    true
+                },
+                ("p3d-mesh", "mesh") => true,
+                _ => false,
+            }
+        },
+        PackageRole::Animation
+            if member.kind == "p3d-skeleton"
+                && member.source_chunk_kind == "skeleton" =>
+        {
+            has_skeleton = true;
+            true
+        },
+        PackageRole::Material => {
+            member.kind == "p3d-shader" && member.source_chunk_kind == "shader"
+        },
+        PackageRole::Texture => {
+            member.kind == "p3d-texture"
+                && matches!(
+                    member.source_chunk_kind.as_str(),
+                    "none" | "texture"
+                )
+        },
+        PackageRole::Metadata => metadata_member_is_non_runtime(member),
+        _ => false,
+    }) && has_skin
+        && has_skeleton
+        && has_composite
+}
+
+/// Return whether metadata carries no additional runtime representation.
+fn metadata_member_is_non_runtime(
+    member: &super::index::PhaseThreePackageMember,
+) -> bool {
+    matches!(
+        (member.kind.as_str(), member.source_chunk_kind.as_str()),
+        ("package-manifest", "none") | ("p3d-export-info", "export_info")
+    )
 }
 
 /// Builds an Unreal-native plan for packages outside the FBX boundary.
