@@ -34,8 +34,14 @@ Current task list. Project phases and dated progress are recorded in
   - [x] Require actual model or world geometry before a package can reserve an
     FBX-backed `StaticMesh`; keep scene, locator, camera, animation, and physics
     evidence as companions only when geometry exists.
+  - [x] Emit explicit FBX polygon smoothing metadata whenever authored normals
+    exist, and prove the representative static import no longer warns about
+    missing smoothing groups.
+  - [x] Version the FBX catalog verifier for exact external PNG provenance
+    without treating sidecars as independently promotable model inputs.
   - [ ] Publish the complete verified package-level FBX catalog for every
-    geometry-backed package before promoting any FBX plan to ready.
+    manifest package currently classified `requires-fbx` before promoting any
+    of those plans to ready.
 - [ ] Preserve source topology, UVs, materials, textures, pivots, rigs,
   animations, placements, and transforms without artistic edits.
 - [ ] Correct only conversion errors where generated output differs from the
@@ -64,6 +70,9 @@ Current task list. Project phases and dated progress are recorded in
     static-mesh import routes while reporting every readiness blocker.
   - [x] Register and test a project-owned PostEngineInit ToolsetRegistry module
     for synchronous WAV import without replacement or implicit save.
+  - [x] Route reviewed static FBX through the project-owned import toolset with
+    authored normals, one combined StaticMesh target, no auxiliary asset import,
+    and no replacement or implicit save.
   - [x] Import HAP MOV payloads beneath `Content/Movies`, create native
     FileMediaSource assets, verify both effects, and compensate them together.
   - [x] Audit only required live Toolset schemas for import, explicit save, and
@@ -73,6 +82,9 @@ Current task list. Project phases and dated progress are recorded in
   - [ ] Implement and execute the complete serialized package transaction loop
     for every operation family.
 - [ ] Import meshes, skeletons, physics assets, and animations correctly.
+  - [x] Verify a representative skeletal FBX with authored-normal import creates
+    a SkeletalMesh and separate Skeleton without smoothing or zero-normal
+    warnings; keep the route blocked until the companion transaction owns both.
 - [ ] Recreate materials only as required to match the original presentation.
 - [ ] Import original textures without repainting, upscaling, or redesigning
   them.
@@ -99,8 +111,8 @@ Current task list. Project phases and dated progress are recorded in
       path-and-command-window adaptations and independently revalidate their
       fingerprints during semantic preflight.
     - [x] Close the observed objective and condition alias registries plus exact
-      objective/condition-scoped command arities against the repository mission
-      corpus, failing unknown aliases, scopes, or arity drift.
+      objective/condition-scoped command argument counts against the repository mission
+      corpus, failing unknown aliases, scopes, or argument-count drift.
     - [ ] Map every reviewed participant, route, timing, load, checkpoint,
       presentation, reward, transition, and typed objective/condition parameter
       reference.

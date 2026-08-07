@@ -58,23 +58,33 @@ fbx-assets/
 ├── catalog.jsonl
 └── packages/
     └── <package_name>/
-        └── <package_name>.fbx
+        ├── <package_name>.fbx
+        └── textures/
+            └── <texture_name>.png
 ```
 
-The JSONL header uses schema `shar-schoenwald.fbx-catalog.v1`, record type
-`header`, status `complete`, and the exact package count. Each `fbx` record
-contains the canonical package identity, path relative to `fbx-assets/`, byte
-count, lowercase SHA-256 digest, and binary FBX version `7700`. The JSONL uses
-UTF-8, LF line endings, no blank records, and one final LF.
+The JSONL header uses schema `shar-schoenwald.fbx-catalog.v2`, record type
+`header`, status `complete`, the exact FBX package count, and the exact declared
+artifact file count. Each `fbx` record contains the canonical package identity,
+path relative to `fbx-assets/`, byte count, lowercase SHA-256 digest, and binary
+FBX version `7700`. Optional `texture` records carry the owning package, exact
+`textures/*.png` path, byte count, and lowercase SHA-256 digest. Texture records
+are verified provenance for the external FBX package; they do not replace the
+separate Unreal `Texture2D` operations and do not independently promote model
+readiness. The JSONL uses UTF-8, LF line endings, no blank records, and one final
+LF.
 
 An absent root is not treated as an error: model operations remain
 `requires-conversion`. Once the root exists, it is an all-or-nothing assertion.
-The verifier rejects missing or unclaimed packages, duplicate identities or
-paths, unsafe paths, symbolic links and reparse boundaries, unknown files,
-noncanonical fields, stale sizes or hashes, invalid binary headers, and any FBX
-version other than 7.7. A verified complete catalog promotes every corresponding
-model operation to `ready` and uses the generated FBX digest as its source
-revision. A partial catalog never produces a mixed ready/pending bundle.
+The verifier rejects missing or unclaimed packages, orphan texture records,
+duplicate paths, unsafe paths, symbolic links and reparse boundaries, unknown
+files, noncanonical fields, stale sizes or hashes, non-PNG texture evidence,
+invalid binary headers, and any FBX version other than 7.7. A verified complete
+catalog must correspond exactly to every manifest package whose disposition is
+`requires-fbx`; it promotes those model operations to `ready` and uses only the
+generated FBX digest as each model source revision. Skeletal and composite
+semantic blockers do not claim catalog entries. A partial catalog never produces
+a mixed ready/pending bundle.
 
 ## Published files
 
