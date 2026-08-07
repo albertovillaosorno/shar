@@ -38,7 +38,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
 use super::{
-    ConversionFamily, PackageRole, PhaseThreePackageIndex,
+    ConversionFamily, FbxTargetKind, PackageRole, PhaseThreePackageIndex,
     PhaseThreePackageMember, PhaseThreePackagePlanner, UnrealTargetKind,
 };
 
@@ -202,6 +202,7 @@ impl UnrealImportManifest {
             let plan = PhaseThreePackagePlanner::plan(package);
             let mut policy = package_policy(
                 plan.family,
+                plan.fbx.as_ref().map(|fbx| fbx.target_kind),
                 plan.unreal.as_ref().map(|unreal| unreal.target_kind),
             );
             let package_name = unreal_name(&package.package_id);
@@ -367,7 +368,7 @@ fn add_package_outputs(
     summary: &mut UnrealImportSummary,
 ) -> Result<(), String> {
     match family {
-        ConversionFamily::FbxModel => {
+        ConversionFamily::FbxModel if disposition == "requires-fbx" => {
             let staged = format!(
                 "fbx-assets/packages/{package_name}/{package_name}.fbx"
             );
@@ -377,6 +378,15 @@ fn add_package_outputs(
             claim_path(object_paths, &object, "Unreal object")?;
             unreal_objects.push(object);
             summary.requires_fbx = summary.requires_fbx.saturating_add(1);
+        },
+        ConversionFamily::FbxModel
+            if disposition == "requires-semantic-conversion" =>
+        {
+            summary.requires_semantic_conversion =
+                summary.requires_semantic_conversion.saturating_add(1);
+        },
+        ConversionFamily::FbxModel => {
+            return Err("unsupported FBX package disposition".to_owned());
         },
         ConversionFamily::UnrealNative if disposition == "metadata-only" => {
             summary.metadata_only = summary.metadata_only.saturating_add(1);
@@ -491,16 +501,12 @@ fn validate_portable_source_path(
 
 fn package_policy(
     family: ConversionFamily,
+    fbx_target: Option<FbxTargetKind>,
     target: Option<UnrealTargetKind>,
 ) -> PackagePolicy {
     match family {
-        ConversionFamily::FbxModel => PackagePolicy {
-            conversion_family: "fbx-model",
-            disposition: "requires-fbx",
-            target_kind: "StaticMesh",
-            importer: "asset-tools-fbx",
-            import_profile: "shar-fbx-v1",
-            reason: Some("model package requires deterministic FBX export"),
+        ConversionFamily::FbxModel => {
+            fbx_policy(fbx_target.unwrap_or(FbxTargetKind::SemanticSplit))
         },
         ConversionFamily::DoNotImport => PackagePolicy {
             conversion_family: "do-not-import",
@@ -511,6 +517,42 @@ fn package_policy(
             reason: Some("package contains traceability metadata only"),
         },
         ConversionFamily::UnrealNative => native_policy(target),
+    }
+}
+
+/// Select direct FBX import only when one package maps to one mesh asset.
+const fn fbx_policy(target: FbxTargetKind) -> PackagePolicy {
+    match target {
+        FbxTargetKind::StaticMesh => PackagePolicy {
+            conversion_family: "fbx-model",
+            disposition: "requires-fbx",
+            target_kind: "StaticMesh",
+            importer: "asset-tools-fbx",
+            import_profile: "shar-fbx-static-v1",
+            reason: Some(
+                "single static-mesh package requires deterministic FBX export",
+            ),
+        },
+        FbxTargetKind::SkeletalMesh => PackagePolicy {
+            conversion_family: "fbx-model",
+            disposition: "requires-semantic-conversion",
+            target_kind: "SkeletalMeshBundle",
+            importer: "semantic-converter",
+            import_profile: "shar-fbx-skeletal-bundle-v1",
+            reason: Some(
+                "skeletal FBX import must own its companion Skeleton transaction",
+            ),
+        },
+        FbxTargetKind::SemanticSplit => PackagePolicy {
+            conversion_family: "fbx-model",
+            disposition: "requires-semantic-conversion",
+            target_kind: "CompositeModel",
+            importer: "semantic-converter",
+            import_profile: "shar-fbx-semantic-split-v1",
+            reason: Some(
+                "geometry package requires deterministic native asset splitting",
+            ),
+        },
     }
 }
 
