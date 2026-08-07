@@ -28,6 +28,8 @@
 //   - Test setup and assertions fail explicitly.
 //
 
+// cspell:ignore selectmission closemission addstage closestage addobjective
+// cspell:ignore closeobjective
 //! Tests unit tests.
 
 use std::path::Path;
@@ -58,4 +60,29 @@ fn rejects_undefined_windows_1252_text_stragglers() {
         result.is_err(),
         "bytes Windows-1252 leaves undefined must fail closed"
     );
+}
+
+#[test]
+fn mission_v2_renderer_matches_semantic_preflight() -> Result<(), String> {
+    let source = concat!(
+        "SelectMission(\"m1\");\n",
+        "AddStage(0);\n",
+        "AddObjective(\"goto\");\n",
+        "CloseObjective();\n",
+        "CloseStage();\n",
+        "CloseMission();\n",
+    );
+    let rendered = super::semantic_json_from_text(
+        Path::new("scripts/missions/level01/m1i.mfk"),
+        "mfk",
+        source.as_bytes(),
+        source,
+    );
+    let evidence = crate::domain::preflight_mission_script(&rendered)?;
+    if evidence.statement_count() != 6 || evidence.invocations().len() != 6 {
+        return Err(
+            "rendered mission evidence changed during preflight".to_owned()
+        );
+    }
+    Ok(())
 }

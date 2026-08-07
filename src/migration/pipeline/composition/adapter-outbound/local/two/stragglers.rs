@@ -199,14 +199,27 @@ fn semantic_json_for(
 ) -> PipelineOutcome<String> {
     let bytes = local_read_bytes(source).map_err(io_error(source))?;
     let decoded_text = decode_straggler_text(&bytes, relative, ext)?;
-    let text = decoded_text.as_ref();
+    Ok(semantic_json_from_text(
+        relative,
+        ext,
+        &bytes,
+        decoded_text.as_ref(),
+    ))
+}
+
+fn semantic_json_from_text(
+    relative: &Path,
+    ext: &str,
+    source_bytes: &[u8],
+    text: &str,
+) -> String {
     let mut json = JsonObject::new();
     json.field("schema", schema_for(ext));
     json.field("source_extension", ext);
     json.field("route_class", route_class(relative, ext));
     json.number(
         "source_bytes",
-        u64::try_from(bytes.len()).unwrap_or(u64::MAX),
+        u64::try_from(source_bytes.len()).unwrap_or(u64::MAX),
     );
 
     match ext {
@@ -216,7 +229,7 @@ fn semantic_json_for(
         "txt" | "e" | "f" | "g" | "i" | "s" | "x" => {
             textbible::append_summary(&mut json, text, ext);
         },
-        "typ" => sound_type::append_summary(&mut json, &bytes),
+        "typ" => sound_type::append_summary(&mut json, source_bytes),
         "err" => error_log::append_summary(&mut json, text),
         _ => json.number(
             "line_count",
@@ -228,7 +241,7 @@ fn semantic_json_for(
         ),
     }
 
-    Ok(json.finish())
+    json.finish()
 }
 
 /// Decode one text straggler without replacing malformed source bytes.

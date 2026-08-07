@@ -1,0 +1,232 @@
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Mission and config command parser unit tests.
+// - Must-Not:
+//   - Read repository game data or mutate generated extraction evidence.
+// - Allows:
+//   - Synthetic command statements with quotes, comments, and nested calls.
+// - Split-When:
+//   - Split when mission and vehicle command grammars become independent.
+// - Merge-When:
+//   - Merge when command parsing no longer has an independent contract.
+// - Summary:
+//   - Command parser tests.
+// - Description:
+//   - Proves canonical argument extraction before semantic compilation.
+// - Usage:
+//   - Included only by the command adapter under cfg(test).
+// - Defaults:
+//   - Trailing comments and delimiters never enter command arguments.
+//
+
+//! Command parser unit tests.
+
+use super::{parse_call, split_arguments};
+
+#[test]
+fn strips_trailing_line_comments_from_call_arguments() -> Result<(), String> {
+    let statement = r#"AddBonusMission("sr1"); // street race"#;
+    let Some((command, raw)) = parse_call(statement) else {
+        return Err("commented command was not parsed".to_owned());
+    };
+    if command != "AddBonusMission" || raw != r#""sr1""# {
+        return Err(format!("unexpected parsed call: {command}({raw})"));
+    }
+    if split_arguments(&raw) != ["sr1"] {
+        return Err("comment entered AddBonusMission arguments".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn preserves_backslashes_and_strips_reward_comments() -> Result<(), String> {
+    let statement = r#"BindReward("plowk_v", "art\cars\plowk_v.p3d", "car", "forsale", 1, 150, "simpson" ); // Barney"#;
+    let Some((command, raw)) = parse_call(statement) else {
+        return Err("reward command was not parsed".to_owned());
+    };
+    if command != "BindReward" {
+        return Err("reward command identity changed".to_owned());
+    }
+    let args = split_arguments(&raw);
+    let expected = [
+        "plowk_v",
+        "art\\cars\\plowk_v.p3d",
+        "car",
+        "forsale",
+        "1",
+        "150",
+        "simpson",
+    ];
+    if args != expected {
+        return Err(format!("reward arguments changed: {args:?}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn uses_matching_parenthesis_outside_quoted_text() -> Result<(), String> {
+    let statement = r#"Command("literal ) text", Nested(1, 2)); // note"#;
+    let Some((_command, raw)) = parse_call(statement) else {
+        return Err("nested command was not parsed".to_owned());
+    };
+    if raw != r#""literal ) text", Nested(1, 2)"# {
+        return Err(format!("matching parenthesis was wrong: {raw}"));
+    }
+    Ok(())
+}
+
+fn invocation(
+    ordinal: usize,
+    name: &str,
+    arguments: &[&str],
+) -> super::CommandInvocation {
+    super::CommandInvocation {
+        ordinal,
+        name: name.to_owned(),
+        args_raw: arguments.join(", "),
+        arguments: arguments.iter().map(|value| (*value).to_owned()).collect(),
+        semantic_role: "mission-script".to_owned(),
+    }
+}
+
+#[test]
+fn preserves_nested_argument_groups() -> Result<(), String> {
+    let args = split_arguments(r#""literal", Nested(1, 2), "tail""#);
+    if args != ["literal", "Nested(1, 2)", "tail"] {
+        return Err(format!("nested arguments split incorrectly: {args:?}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn accepts_balanced_reviewed_mission_context() -> Result<(), String> {
+    let invocations = [
+        invocation(1, "selectmission", &["m1"]),
+        invocation(2, "addstage", &["0"]),
+        invocation(3, "addobjective", &["goto"]),
+        invocation(4, "closeobjective", &[]),
+        invocation(5, "addcondition", &["timeout"]),
+        invocation(6, "closecondition", &[]),
+        invocation(7, "closestage", &[]),
+        invocation(8, "closemission", &[]),
+    ];
+    let findings = super::context::validate(&invocations);
+    if super::context::findings_json(&findings) != "[]" {
+        return Err("balanced mission context produced a finding".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn reports_orphan_condition_close_without_cascade() -> Result<(), String> {
+    let invocations = [
+        invocation(1, "selectmission", &["m6"]),
+        invocation(2, "addstage", &["0"]),
+        invocation(3, "closecondition", &[]),
+        invocation(4, "closestage", &[]),
+        invocation(5, "closemission", &[]),
+    ];
+    let findings =
+        super::context::findings_json(&super::context::validate(&invocations));
+    if !findings.contains("condition-close-without-open-condition") {
+        return Err("orphan condition close was not reported".to_owned());
+    }
+    if findings.matches("code").count() != 1 {
+        return Err(format!("orphan close cascaded findings: {findings}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn resynchronizes_stage_close_with_open_condition() -> Result<(), String> {
+    let invocations = [
+        invocation(1, "selectmission", &["m7"]),
+        invocation(2, "addstage", &["0"]),
+        invocation(3, "addcondition", &["keepbarrel", "2"]),
+        invocation(4, "closestage", &[]),
+        invocation(5, "addstage", &["0"]),
+        invocation(6, "addobjective", &["goto"]),
+        invocation(7, "closeobjective", &[]),
+        invocation(8, "closestage", &[]),
+        invocation(9, "closemission", &[]),
+    ];
+    let findings =
+        super::context::findings_json(&super::context::validate(&invocations));
+    if !findings.contains("stage-close-with-open-context") {
+        return Err("open condition at stage close was not reported".to_owned());
+    }
+    if findings.matches("code").count() != 1 {
+        return Err(format!(
+            "stage-close resync cascaded findings: {findings}"
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn reports_reviewed_context_arity_drift() -> Result<(), String> {
+    let invocations = [
+        invocation(1, "selectmission", &["m1", "unexpected"]),
+        invocation(2, "closemission", &[]),
+    ];
+    let findings =
+        super::context::findings_json(&super::context::validate(&invocations));
+    if !findings.contains("invalid-context-command-arity") {
+        return Err("reviewed command arity drift was not reported".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn renders_context_evidence_for_balanced_mission_script() -> Result<(), String>
+{
+    let source = concat!(
+        "SelectMission(\"m1\");\n",
+        "AddStage(0);\n",
+        "AddObjective(\"goto\");\n",
+        "CloseObjective();\n",
+        "CloseStage();\n",
+        "CloseMission();\n",
+    );
+    let mut json = super::super::json::JsonObject::new();
+    super::append_summary(&mut json, source, "mfk");
+    let rendered = json.finish();
+    if !rendered.contains("\"context_command_count\":6")
+        || !rendered.contains("\"context_finding_count\":0")
+        || !rendered.contains("\"context_findings\":[]")
+    {
+        return Err(format!("context evidence is incomplete: {rendered}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn renders_structural_findings_without_repairing_source() -> Result<(), String>
+{
+    let source = concat!(
+        "SelectMission(\"m7\");\n",
+        "AddStage(0);\n",
+        "AddCondition(\"keepbarrel\", 2);\n",
+        "CloseStage();\n",
+        "CloseMission();\n",
+    );
+    let mut json = super::super::json::JsonObject::new();
+    super::append_summary(&mut json, source, "mfk");
+    let rendered = json.finish();
+    if !rendered.contains("\"context_finding_count\":1")
+        || !rendered.contains("stage-close-with-open-context")
+        || !rendered.contains("\"command\":\"closestage\"")
+    {
+        return Err(format!("structural finding was not rendered: {rendered}"));
+    }
+    Ok(())
+}
