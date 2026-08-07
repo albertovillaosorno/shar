@@ -54,10 +54,10 @@ struct SHARWORLD_API FSharSpatialTransformDefinition
     static constexpr double DefaultScaleComponent = 1.0;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Transform")
-    FVector Location;
+    FVector Location = FVector::ZeroVector;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Transform")
-    FVector RotationEulerDegrees;
+    FVector RotationEulerDegrees = FVector::ZeroVector;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Transform")
     FVector Scale = FVector(
@@ -82,7 +82,7 @@ struct SHARWORLD_API FSharSpatialVolumeDefinition
     FSharSpatialTransformDefinition LocalTransform;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Shape")
-    FVector Dimensions;
+    FVector Dimensions = FVector::ZeroVector;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Query")
     FName QueryChannelId;

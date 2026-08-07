@@ -129,6 +129,23 @@ bool FSharSpatialDefinitionValidationTest::RunTest(
 )
 {
     (void)Parameters;
+    const FSharSpatialTransformDefinition DefaultTransform;
+    const FSharSpatialVolumeDefinition DefaultVolume;
+    TestEqual(
+        TEXT("Default spatial location is zero"),
+        DefaultTransform.Location,
+        FVector::ZeroVector
+    );
+    TestEqual(
+        TEXT("Default spatial rotation is zero"),
+        DefaultTransform.RotationEulerDegrees,
+        FVector::ZeroVector
+    );
+    TestEqual(
+        TEXT("Default spatial volume dimensions are zero"),
+        DefaultVolume.Dimensions,
+        FVector::ZeroVector
+    );
     auto* Definition = NewObject<USharSpatialPlacementDefinition>();
     FillPlacementBase(*Definition);
 
