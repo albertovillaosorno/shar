@@ -157,6 +157,27 @@ Runtime packages never execute source mission scripts, register a source
 command console, parse positional argument arrays, or create gameplay
 objects while interpreting source text.
 
+### Current semantic intake gate
+
+Normalized source commands enter the compiler boundary only through
+`shar-schoenwald.straggler.mission-script.v3`. The intake preflight validates
+its exact JSON shape, routing identity, source summary, command histogram,
+strictly increasing ordinals, reviewed context-command count, and structural
+findings. Any context finding blocks semantic compilation before Unreal planning;
+unknown gameplay commands remain unmapped rather than becoming runtime APIs.
+Version 3 additionally carries reviewed compatibility adaptations and requires
+independent fingerprint validation for each one. The repository corpus acceptance
+test renders the real normalized JSON for every non-empty mission MFK and passes
+it through structural, objective-alias, objective-scope, condition-alias, and
+condition-scope preflight before semantic compilation is allowed.
+
+`FSharMissionStageDefinition` additionally binds an `ObjectivePolicyId` to one
+reflected `FSharObjectivePolicyRow`. Definition validation rejects missing or
+duplicate policy identities, unsupported objective kinds and start/recovery
+rules, noncanonical references or targets, unknown stage policy references, and
+stage/policy objective-kind disagreement. This is a destination contract for the
+future compiler, not evidence that legacy objective aliases are already mapped.
+
 ## Conversion command registry
 
 Every recognized source command maps to one registered conversion

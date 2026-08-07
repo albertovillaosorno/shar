@@ -31,6 +31,11 @@ Current task list. Project phases and dated progress are recorded in
 - [ ] Validate a user-supplied lawful source installation.
 - [ ] Preserve original asset identities, package relationships, and ordering.
 - [ ] Complete deterministic conversion of original models to binary FBX 7.7.
+  - [x] Require actual model or world geometry before a package can reserve an
+    FBX-backed `StaticMesh`; keep scene, locator, camera, animation, and physics
+    evidence as companions only when geometry exists.
+  - [ ] Publish the complete verified package-level FBX catalog for every
+    geometry-backed package before promoting any FBX plan to ready.
 - [ ] Preserve source topology, UVs, materials, textures, pivots, rigs,
   animations, placements, and transforms without artistic edits.
 - [ ] Correct only conversion errors where generated output differs from the
@@ -51,12 +56,59 @@ Current task list. Project phases and dated progress are recorded in
 
 - [ ] Generate a public-safe deterministic Unreal import manifest.
 - [ ] Apply conversion plans through tested native Unreal MCP commands.
+  - [x] Parse accepted bundles into immutable typed operations without changing
+    their canonical revisions.
+  - [x] Verify applicable source files, roots, links, sizes, and SHA-256 before
+    native execution planning.
+  - [x] Compile reviewed texture, SoundWave, FileMediaSource, and ready
+    static-mesh import routes while reporting every readiness blocker.
+  - [x] Register and test a project-owned PostEngineInit ToolsetRegistry module
+    for synchronous WAV import without replacement or implicit save.
+  - [x] Import HAP MOV payloads beneath `Content/Movies`, create native
+    FileMediaSource assets, verify both effects, and compensate them together.
+  - [x] Audit only required live Toolset schemas for import, explicit save, and
+    independent asset read-back without invoking mutations.
+  - [x] Apply complete reviewed direct-import plans with global destination
+    absence checks, explicit save, independent read-back, and reverse rollback.
+  - [ ] Implement and execute the complete serialized package transaction loop
+    for every operation family.
 - [ ] Import meshes, skeletons, physics assets, and animations correctly.
 - [ ] Recreate materials only as required to match the original presentation.
 - [ ] Import original textures without repainting, upscaling, or redesigning
   them.
 - [ ] Convert original camera, mission, vehicle, gameplay, UI, and tuning data
   into native Unreal assets.
+  - [x] Stop treating unresolved normalized source as a generic `DataAsset` or
+    one bespoke StateTree per source bundle; publish
+    `requires-semantic-conversion` until a deterministic domain compiler emits
+    a concrete target. Plan-bundle v2 now carries the aggregate semantic blocker
+    count in its revision and execution completeness gate.
+  - [ ] Compile normalized mission-script bundles into typed `SharMission`
+    definitions and bindings for the shared mission StateTree contract.
+    - [x] Version normalized MFK command evidence to v3, strip trailing source
+      comments from arguments, preserve nested calls, and publish deterministic
+      mission/stage/objective/condition context findings plus reviewed
+      compatibility adaptations.
+    - [x] Fail semantic intake before Unreal planning on stale mission evidence,
+      inconsistent command summaries, noncanonical ordinals, or unresolved
+      context findings.
+    - [x] Require every reflected mission stage to bind one validated objective
+      policy row with explicit start, completion, failure, recovery, route,
+      target, notoriety, catch-up, drop, and presentation identities.
+    - [x] Resolve the two observed legacy context defects through exact
+      path-and-command-window adaptations and independently revalidate their
+      fingerprints during semantic preflight.
+    - [x] Close the observed objective and condition alias registries plus exact
+      objective/condition-scoped command arities against the repository mission
+      corpus, failing unknown aliases, scopes, or arity drift.
+    - [ ] Map every reviewed participant, route, timing, load, checkpoint,
+      presentation, reward, transition, and typed objective/condition parameter
+      reference.
+    - [ ] Emit lossless `USharMissionDefinition` assets only after the complete
+      mission graph passes reference and topology validation.
+  - [ ] Compile remaining normalized UI, font, localization, tuning, and other
+    structured evidence into concrete Unreal types before enabling their editor
+    factories.
 - [ ] Convert original audio, cinematics, and localization into native Unreal
   assets.
 - [ ] Preserve source world placement through Unreal streaming and partitioning

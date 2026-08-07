@@ -17,7 +17,13 @@ repository-owned terminal translator is an MCP client, not a server; it uses
 loopback-only live discovery, fail-closed validation of arguments against the
 current native input schema, serialized state changes, bounded calls, and
 independent postcondition verification. Unsupported schema assertions stop the
-call before the native mutation meta-tool runs.
+call before the native mutation meta-tool runs. Generated-plan capability audits
+use only registry listing and selective toolset description; they cannot invoke
+native leaf tools or mutate editor state. Project-owned editor extensions may
+register narrow `UToolsetDefinition` classes at `PostEngineInit`. WAV and HAP
+imports are the first such extensions. Package persistence, external movie
+payload rollback, and postcondition policy remain in the repository client
+rather than inside one opaque native leaf tool.
 
 ## Consequences
 
@@ -28,6 +34,8 @@ call before the native mutation meta-tool runs.
   editor mutation races.
 - Transport success is insufficient; each consequential call requires an
   independent postcondition check.
+- A media asset and its deterministic `Content/Movies` payload form one logical
+  transaction even though Unreal persists them through different mechanisms.
 
 ## Rejected alternatives
 

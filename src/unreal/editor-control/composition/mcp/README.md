@@ -63,6 +63,9 @@ After installing the package in the repository Python environment:
 ```text
 shar-unreal-mcp doctor
 shar-unreal-mcp plan-preflight
+shar-unreal-mcp plan-execution-preflight
+shar-unreal-mcp plan-capabilities
+shar-unreal-mcp plan-apply
 shar-unreal-mcp toolsets
 shar-unreal-mcp describe EditorToolset.EditorAppToolset
 shar-unreal-mcp call \
@@ -74,8 +77,62 @@ shar-unreal-mcp skills
 
 The default endpoint is `http://127.0.0.1:8000/mcp`. Only loopback HTTP
 endpoints are accepted. Network commands create one MCP session, perform bounded
-work, and close the session. `plan-preflight` is intentionally local: it reads
-`unreal-staging/plans/` by default and completes before any transport is built.
+work, and close the session.
+
+Generated-plan application is divided into four fail-closed gates:
+
+- `plan-preflight` is local and verifies the exact seven-file bundle, canonical
+  revisions, operation identities, dependencies, destinations, and readiness;
+- `plan-execution-preflight` remains local, additionally verifies every
+  applicable physical source and SHA-256, then compiles only reviewed native
+  import routes; and
+- `plan-capabilities` repeats both local gates, opens one MCP session, and uses
+  only `list_toolsets` plus `describe_toolset` to validate the exact live input
+  and output schemas needed for import, save, existence, class, dirty-state
+  read-back, and compensating deletion. It never invokes the native `call_tool`
+  mutation meta-tool; and
+- `plan-apply` refuses incomplete local evidence before constructing transport,
+  repeats the live capability audit, verifies every destination is absent, then
+  performs serialized import, class read-back, explicit save, and clean-state
+  verification. Media operations also verify their deterministic external movie
+  payload. Any failure deletes only effects created by that transaction in
+  reverse order and verifies their absence.
+
+All four read `unreal-staging/plans/` by default. The execution, capability, and
+application commands return failure while any emitted operation remains
+conversion-blocked, factory-blocked, or lacks a reviewed native route. They
+never report or execute a partial subset as a complete plan. Import-manifest v2
+may additionally classify normalized packages as
+`requires-semantic-conversion`; those packages intentionally emit no operation
+until a deterministic domain compiler produces a concrete Unreal target, so
+they remain upstream completion blockers rather than MCP mutation work. Bundle
+index v2 carries their aggregate `semantic_blocker_count`; execution preflight
+requires that count to be zero before it can report a complete plan, even when
+no operations were emitted.
+
+The current reviewed compiler maps decoded images to
+`TextureTools.import_file`, PCM WAV files to the project-owned
+`SharImportToolset.ImportSoundWave`, verified HAP MOV files to
+`SharImportToolset.ImportFileMediaSource`, and ready static-mesh FBX operations
+to `StaticMeshTools.import_file`. The editor-only SHAR toolset loads after engine
+initialization and registers through ToolsetRegistry. WAV uses an automated
+`USoundFactory` task. HAP copies verified bytes transactionally beneath
+`Content/Movies/Generated/SHAR/`, creates a `UFileMediaSource`, and stores the
+matching `./Movies/Generated/SHAR/...` path. Both routes refuse replacement and
+leave package save and read-back to `plan-apply`; media rollback deletes the
+external payload before the asset. Static-mesh material and texture import
+remain false because those assets are planned independently. Repository-owned
+JSON semantic compilers and concrete factories, world assembly, runtime binding,
+validation, cook, and packaging remain explicit blocked work until their
+complete native routes exist. Generic or abstract `DataAsset` creation is not a
+substitute for compiling normalized source into the project-owned typed runtime
+contract. Source
+verification reads generated files without following links,
+streams SHA-256 from stable file descriptors, and keeps physical paths out of
+public reports. If an import response is lost after the asset appears,
+`plan-apply` treats that destination as created and compensates it. A lost delete
+response is accepted only when independent existence read-back proves the asset
+is already absent.
 
 The `call` command accepts either the native leaf name or the fully qualified
 tool identity shown by `describe` and the generated skills. Qualified names are

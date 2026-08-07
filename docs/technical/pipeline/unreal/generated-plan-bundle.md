@@ -44,6 +44,12 @@ version requires a deliberate contract revision and regenerated evidence.
 
 ## Generated FBX catalog
 
+Only packages with actual model or world geometry may emit model operations.
+Scene, locator, camera, animation, and physics evidence can accompany that
+geometry in the FBX plan, but none can independently reserve a `StaticMesh`.
+Non-geometry packages remain at their concrete native target or
+`requires-semantic-conversion` boundary instead of producing placeholder FBX.
+
 Model operations use the ignored `fbx-assets/` root as their only generated FBX
 authority:
 
@@ -98,24 +104,75 @@ validation gates.
 
 ## Consumer preflight
 
-Before any editor-control workflow may consume the generated plans, run:
+Before any editor-control workflow may consume the generated plans, run the
+three gates in increasing order:
 
 ```text
 shar-unreal-mcp plan-preflight
+shar-unreal-mcp plan-execution-preflight
+shar-unreal-mcp plan-capabilities
+shar-unreal-mcp plan-apply
 ```
 
-The command is read-only and local. It opens no MCP session. It requires exactly
-`plans/index.json` plus the six declared plan files as direct regular files,
-rejects symbolic links and reparse boundaries, enforces bounded UTF-8 input and
-canonical one-line JSON with LF termination, and independently recalculates
-every plan revision and the bundle revision using the canonical Rust hashing
-contract.
+`plan-preflight` is read-only and local. It opens no MCP session. It requires
+exactly `plans/index.json` plus the six declared plan files as direct regular
+files, rejects symbolic links and reparse boundaries, enforces bounded UTF-8
+input and canonical one-line JSON with LF termination, and independently
+recalculates every plan revision and the bundle revision using the canonical
+Rust hashing contract.
 
-Preflight also validates exact plan order, filenames, dependency revisions,
+The first gate also validates exact plan order, filenames, dependency revisions,
 operation identities, source/readiness mappings, generated destinations,
 outputs, validation requirements, case-insensitive collisions, dependency
-family order, and cycle freedom. A successful report is intake evidence only; it
-does not authorize mutation or replace native semantic read-back.
+family order, and cycle freedom. Construction operations must reference exactly
+`unreal-staging/manifest.jsonl` through the portable `manifest.jsonl` source and
+must repeat the bundle source-manifest revision.
+
+`plan-execution-preflight` remains local. It verifies every applicable source as
+a regular non-linked file beneath its declared generated root, streams SHA-256
+from a stable file descriptor, detects size or identity changes during the read,
+deduplicates shared source evidence, and compiles only exact reviewed native
+routes. Operations still in `requires-conversion` are counted but not opened.
+
+`plan-capabilities` reruns both local gates before connecting to Unreal. It lists
+the live Toolset Registry and describes only toolsets required by compiled
+routes. It validates exact input and output schemas for native import, explicit
+save, existence, class, dirty-state read-back, and compensating deletion without
+invoking `call_tool`.
+
+Ready PCM WAV operations compile to the project editor toolset
+`SharImportEditor.SharImportToolset.ImportSoundWave`. That toolset is loaded at
+`PostEngineInit`, validates generated destinations, uses a synchronous automated
+`USoundFactory` import task without replacement or implicit save, and returns
+the imported Unreal object paths. Capability preflight still requires its live
+schema before any SoundWave mutation.
+
+Ready HAP operations compile to
+`SharImportEditor.SharImportToolset.ImportFileMediaSource`. Each operation owns
+both a generated `UFileMediaSource` package and one deterministic external MOV
+payload beneath `Content/Movies/Generated/SHAR/`. The tool copies verified bytes
+to a same-directory temporary file, publishes without replacement, stores the
+matching project-relative `./Movies/Generated/SHAR/...` path, and leaves the
+package dirty for explicit save. Capability preflight requires import, payload
+existence, stored-path read-back, and payload deletion schemas before mutation.
+
+`plan-apply` refuses an incomplete execution report before transport creation.
+For a complete plan it repeats the capability audit, checks every destination is
+absent before mutation, and applies imports serially. Each imported package must
+exist, expose the planned class, save explicitly, and report clean afterward.
+Media imports additionally require the exact stored relative path and external
+payload. A failure compensates every effect created by that transaction in
+reverse order; movie payloads are deleted before their assets. Every absence is
+independently verified. Preexisting destinations or payloads are never adopted
+or deleted. An ambiguous import timeout is probed for either created effect
+before rollback.
+
+A gate succeeds as complete only when every operation has verified source bytes,
+a reviewed route, and compatible live capabilities. Unsupported families and
+readiness blockers remain visible in aggregate counts; no command treats or
+executes a partial subset as completion evidence. Successful direct-import
+application still does not complete repository-owned factories, world assembly,
+runtime binding, validation, cook, or package families.
 
 ## Source projections
 
@@ -127,13 +184,44 @@ The aggregate plans accept only verified normalized inputs:
 - deterministic binary FBX 7.7 destinations become model-import operations that
   remain blocked until the complete generated catalog verifies every declared
   file, then become ready with the verified FBX digest; and
-- normalized JSON evidence becomes native-construction operations that remain
-  blocked until the declared repository-owned editor factory is available.
+- normalized JSON evidence with a concrete Unreal target becomes a
+  native-construction operation that remains blocked until the declared
+  repository-owned editor factory is available; and
+- normalized source that still requires domain interpretation remains a
+  `requires-semantic-conversion` package disposition in import manifest v2 and
+  emits no plan operation until a deterministic compiler produces a concrete
+  Unreal target.
 
 Every operation has a stable identity derived from canonical source and target
 fields. Source paths are portable relative paths. Source revisions are lowercase
 SHA-256 digests. Destinations are confined to `/Game/Generated/SHAR/` and are
 rejected on case-insensitive collision.
+
+## Package dispositions versus operation readiness
+
+Import manifest v2 separates package classification from executable work.
+Packages may be `direct-editor-import`, `requires-fbx`,
+`requires-editor-factory`, `requires-semantic-conversion`, or `metadata-only`.
+The summary publishes `requires_semantic_conversion` independently from editor
+factory counts.
+
+`requires-semantic-conversion` means normalized evidence exists, but the
+repository has not yet compiled it into the concrete typed Unreal definition
+required by the accepted runtime contract. Such a package reserves no Unreal
+object, declares no generic `DataAsset`, and emits no asset-construction
+operation. Mission-script bundles are one example: they must compile into typed
+mission definitions and bindings for the shared mission StateTree contract,
+not one ad hoc StateTree or abstract data asset per source bundle.
+
+Only after semantic compilation produces a concrete target can the resulting
+work enter an operation plan and acquire operation readiness.
+
+Plan-bundle index v2 carries `semantic_blocker_count` as aggregate completion
+evidence. The count participates in the bundle revision and is validated by the
+local consumer before any MCP transport exists. Execution preflight therefore
+reports `complete=false` whenever the count is nonzero, including a bundle with
+zero emitted operations. This keeps unresolved semantic work visible without
+inventing a fake operation or a fourth operation-readiness state.
 
 ## Readiness states
 
