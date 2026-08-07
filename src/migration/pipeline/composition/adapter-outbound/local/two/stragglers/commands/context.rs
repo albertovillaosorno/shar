@@ -30,8 +30,12 @@
 
 //! Mission command context validation.
 
+use std::path::Path;
+
 use super::super::json::json_string;
 use super::CommandInvocation;
+
+mod compatibility;
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 struct MissionContextState {
@@ -46,6 +50,11 @@ pub(super) struct ContextFinding {
     ordinal: usize,
     command: &'static str,
     code: &'static str,
+}
+
+pub(super) struct ContextValidation {
+    pub(super) findings: Vec<ContextFinding>,
+    pub(super) adaptations: Vec<compatibility::ContextAdaptation>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -129,6 +138,7 @@ fn apply_command(
     command: ContextCommand,
     state: &mut MissionContextState,
     findings: &mut Vec<ContextFinding>,
+    adaptations: &[compatibility::ContextAdaptation],
 ) {
     match command {
         ContextCommand::SelectMission => {
@@ -264,7 +274,12 @@ fn apply_command(
             state.condition = true;
         },
         ContextCommand::CloseCondition => {
-            if !state.condition {
+            if !state.condition
+                && !compatibility::ignores_orphan_condition_close(
+                    adaptations,
+                    invocation.ordinal,
+                )
+            {
                 push_finding(
                     findings,
                     invocation,
@@ -278,18 +293,35 @@ fn apply_command(
 }
 
 pub(super) fn validate(
+    relative: &Path,
     invocations: &[CommandInvocation],
-) -> Vec<ContextFinding> {
+) -> ContextValidation {
+    let adaptations =
+        compatibility::reviewed_adaptations(relative, invocations);
     let mut state = MissionContextState::default();
     let mut findings = Vec::new();
     for invocation in invocations {
+        if state.condition
+            && compatibility::closes_condition_before_stage_complete(
+                &adaptations,
+                invocation.ordinal,
+            )
+        {
+            state.condition = false;
+        }
         let Some((command, minimum, maximum)) =
             command_contract(&invocation.name)
         else {
             continue;
         };
         validate_arity(invocation, command, minimum, maximum, &mut findings);
-        apply_command(invocation, command, &mut state, &mut findings);
+        apply_command(
+            invocation,
+            command,
+            &mut state,
+            &mut findings,
+            &adaptations,
+        );
     }
     if state.mission || state.stage || state.objective || state.condition {
         findings.push(ContextFinding {
@@ -300,7 +332,7 @@ pub(super) fn validate(
             code: "unclosed-mission-context",
         });
     }
-    findings
+    ContextValidation { findings, adaptations }
 }
 
 pub(super) fn findings_json(findings: &[ContextFinding]) -> String {
@@ -319,4 +351,10 @@ pub(super) fn findings_json(findings: &[ContextFinding]) -> String {
     }
     out.push(']');
     out
+}
+
+pub(super) fn adaptations_json(
+    adaptations: &[compatibility::ContextAdaptation],
+) -> String {
+    compatibility::adaptations_json(adaptations)
 }

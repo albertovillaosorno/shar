@@ -30,6 +30,8 @@
 
 //! Command parser unit tests.
 
+use std::path::Path;
+
 use super::{parse_call, split_arguments};
 
 #[test]
@@ -119,7 +121,11 @@ fn accepts_balanced_reviewed_mission_context() -> Result<(), String> {
         invocation(7, "closestage", &[]),
         invocation(8, "closemission", &[]),
     ];
-    let findings = super::context::validate(&invocations);
+    let findings = super::context::validate(
+        Path::new("scripts/missions/test.mfk"),
+        &invocations,
+    )
+    .findings;
     if super::context::findings_json(&findings) != "[]" {
         return Err("balanced mission context produced a finding".to_owned());
     }
@@ -129,14 +135,19 @@ fn accepts_balanced_reviewed_mission_context() -> Result<(), String> {
 #[test]
 fn reports_orphan_condition_close_without_cascade() -> Result<(), String> {
     let invocations = [
-        invocation(1, "selectmission", &["m6"]),
+        invocation(1, "selectmission", &["m6sd"]),
         invocation(2, "addstage", &["0"]),
         invocation(3, "closecondition", &[]),
         invocation(4, "closestage", &[]),
         invocation(5, "closemission", &[]),
     ];
-    let findings =
-        super::context::findings_json(&super::context::validate(&invocations));
+    let findings = super::context::findings_json(
+        &super::context::validate(
+            Path::new("scripts/missions/test.mfk"),
+            &invocations,
+        )
+        .findings,
+    );
     if !findings.contains("condition-close-without-open-condition") {
         return Err("orphan condition close was not reported".to_owned());
     }
@@ -159,8 +170,13 @@ fn resynchronizes_stage_close_with_open_condition() -> Result<(), String> {
         invocation(8, "closestage", &[]),
         invocation(9, "closemission", &[]),
     ];
-    let findings =
-        super::context::findings_json(&super::context::validate(&invocations));
+    let findings = super::context::findings_json(
+        &super::context::validate(
+            Path::new("scripts/missions/test.mfk"),
+            &invocations,
+        )
+        .findings,
+    );
     if !findings.contains("stage-close-with-open-context") {
         return Err("open condition at stage close was not reported".to_owned());
     }
@@ -178,8 +194,13 @@ fn reports_reviewed_context_arity_drift() -> Result<(), String> {
         invocation(1, "selectmission", &["m1", "unexpected"]),
         invocation(2, "closemission", &[]),
     ];
-    let findings =
-        super::context::findings_json(&super::context::validate(&invocations));
+    let findings = super::context::findings_json(
+        &super::context::validate(
+            Path::new("scripts/missions/test.mfk"),
+            &invocations,
+        )
+        .findings,
+    );
     if !findings.contains("invalid-context-command-arity") {
         return Err("reviewed command arity drift was not reported".to_owned());
     }
@@ -198,9 +219,16 @@ fn renders_context_evidence_for_balanced_mission_script() -> Result<(), String>
         "CloseMission();\n",
     );
     let mut json = super::super::json::JsonObject::new();
-    super::append_summary(&mut json, source, "mfk");
+    super::append_summary(
+        &mut json,
+        source,
+        "mfk",
+        Path::new("scripts/missions/test.mfk"),
+    );
     let rendered = json.finish();
     if !rendered.contains("\"context_command_count\":6")
+        || !rendered.contains("\"context_adaptation_count\":0")
+        || !rendered.contains("\"context_adaptations\":[]")
         || !rendered.contains("\"context_finding_count\":0")
         || !rendered.contains("\"context_findings\":[]")
     {
@@ -220,13 +248,99 @@ fn renders_structural_findings_without_repairing_source() -> Result<(), String>
         "CloseMission();\n",
     );
     let mut json = super::super::json::JsonObject::new();
-    super::append_summary(&mut json, source, "mfk");
+    super::append_summary(
+        &mut json,
+        source,
+        "mfk",
+        Path::new("scripts/missions/test.mfk"),
+    );
     let rendered = json.finish();
     if !rendered.contains("\"context_finding_count\":1")
         || !rendered.contains("stage-close-with-open-context")
         || !rendered.contains("\"command\":\"closestage\"")
     {
         return Err(format!("structural finding was not rendered: {rendered}"));
+    }
+    Ok(())
+}
+#[test]
+fn adapts_only_exact_reviewed_legacy_context_windows() -> Result<(), String> {
+    let l2 = [
+        invocation(1, "selectmission", &["m6sd"]),
+        invocation(2, "addstage", &["0"]),
+        invocation(68, "addstagemusicchange", &[]),
+        invocation(69, "setstagemusicalwayson", &[]),
+        invocation(70, "closecondition", &[]),
+        invocation(71, "closestage", &[]),
+        invocation(72, "closemission", &[]),
+    ];
+    let adapted = super::context::validate(
+        Path::new("scripts/missions/level02/m6sdi.mfk"),
+        &l2,
+    );
+    if !adapted.findings.is_empty()
+        || super::context::adaptations_json(&adapted.adaptations)
+            != "[{\"ordinal\":70,\"command\":\"closecondition\",\"code\":\"legacy-l2-m6sdi-ignore-orphan-condition-close-v1\"}]"
+    {
+        return Err("reviewed level02 mission adaptation changed".to_owned());
+    }
+    let wrong_path = super::context::validate(
+        Path::new("scripts/missions/level02/other.mfk"),
+        &l2,
+    );
+    if super::context::findings_json(&wrong_path.findings)
+        .matches("condition-close-without-open-condition")
+        .count()
+        != 1
+        || !wrong_path.adaptations.is_empty()
+    {
+        return Err(
+            "legacy adaptation escaped its exact logical path".to_owned()
+        );
+    }
+
+    let l7 = [
+        invocation(1, "selectmission", &["m7"]),
+        invocation(2, "addstage", &["0"]),
+        invocation(112, "stagestartmusicevent", &["L7_drama"]),
+        invocation(113, "addcondition", &["keepbarrel", "2"]),
+        invocation(114, "showstagecomplete", &[]),
+        invocation(115, "closestage", &[]),
+        invocation(116, "closemission", &[]),
+    ];
+    let adapted = super::context::validate(
+        Path::new("scripts/missions/level07/m7i.mfk"),
+        &l7,
+    );
+    if !adapted.findings.is_empty()
+        || super::context::adaptations_json(&adapted.adaptations)
+            != "[{\"ordinal\":114,\"command\":\"showstagecomplete\",\"code\":\"legacy-l7-m7i-close-keepbarrel-before-stage-complete-v1\"}]"
+    {
+        return Err("reviewed level07 mission adaptation changed".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn adaptation_fingerprint_drift_fails_closed() -> Result<(), String> {
+    let drifted = [
+        invocation(1, "selectmission", &["m7"]),
+        invocation(2, "addstage", &["0"]),
+        invocation(112, "stagestartmusicevent", &["L7_drama"]),
+        invocation(113, "addcondition", &["keepbarrel", "3"]),
+        invocation(114, "showstagecomplete", &[]),
+        invocation(115, "closestage", &[]),
+        invocation(116, "closemission", &[]),
+    ];
+    let validation = super::context::validate(
+        Path::new("scripts/missions/level07/m7i.mfk"),
+        &drifted,
+    );
+    let findings = super::context::findings_json(&validation.findings);
+    if !validation.adaptations.is_empty()
+        || !findings.contains("stage-close-with-open-context")
+    {
+        return Err("drifted legacy adaptation did not fail closed".to_owned());
     }
     Ok(())
 }

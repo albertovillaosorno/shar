@@ -32,13 +32,13 @@
 // cspell:ignore closeobjective addcondition closecondition
 //! Normalized mission-script semantic preflight.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use serde::Deserialize;
 
 /// Exact normalized mission-script schema accepted by semantic compilation.
 pub const MISSION_SCRIPT_SCHEMA: &str =
-    "shar-schoenwald.straggler.mission-script.v2";
+    "shar-schoenwald.straggler.mission-script.v3";
 
 const CONTEXT_COMMANDS: [&str; 8] = [
     "selectmission",
@@ -93,11 +93,40 @@ impl MissionCommandInvocation {
     }
 }
 
+/// One reviewed structural compatibility adaptation retained as evidence.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct MissionContextAdaptation {
+    ordinal: usize,
+    command: String,
+    code: String,
+}
+
+impl MissionContextAdaptation {
+    /// Return the source statement ordinal where adaptation takes effect.
+    #[must_use]
+    pub const fn ordinal(&self) -> usize {
+        self.ordinal
+    }
+
+    /// Return the context command where adaptation takes effect.
+    #[must_use]
+    pub fn command(&self) -> &str {
+        &self.command
+    }
+
+    /// Return the versioned reviewed compatibility identity.
+    #[must_use]
+    pub fn code(&self) -> &str {
+        &self.code
+    }
+}
+
 /// Structurally clean normalized mission-script evidence.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MissionScriptEvidence {
     source_bytes: u64,
     statement_count: usize,
+    adaptations: Vec<MissionContextAdaptation>,
     invocations: Vec<MissionCommandInvocation>,
 }
 
@@ -112,6 +141,12 @@ impl MissionScriptEvidence {
     #[must_use]
     pub const fn statement_count(&self) -> usize {
         self.statement_count
+    }
+
+    /// Return reviewed structural adaptations in source order.
+    #[must_use]
+    pub fn adaptations(&self) -> &[MissionContextAdaptation] {
+        &self.adaptations
     }
 
     /// Return canonical command invocations in source order.
@@ -129,6 +164,8 @@ struct MissionScriptDocument {
     route_class: String,
     source_bytes: u64,
     context_command_count: usize,
+    context_adaptation_count: usize,
+    context_adaptations: Vec<MissionContextAdaptationDocument>,
     context_finding_count: usize,
     context_findings: Vec<MissionContextFinding>,
     statement_count: usize,
@@ -146,6 +183,14 @@ struct MissionScriptDocument {
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct MissionContextFinding {
+    ordinal: usize,
+    command: String,
+    code: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct MissionContextAdaptationDocument {
     ordinal: usize,
     command: String,
     code: String,
@@ -181,6 +226,15 @@ pub fn preflight_mission_script(
     Ok(MissionScriptEvidence {
         source_bytes: document.source_bytes,
         statement_count: document.statement_count,
+        adaptations: document
+            .context_adaptations
+            .into_iter()
+            .map(|adaptation| MissionContextAdaptation {
+                ordinal: adaptation.ordinal,
+                command: adaptation.command,
+                code: adaptation.code,
+            })
+            .collect(),
         invocations: document
             .command_invocations
             .into_iter()
@@ -220,6 +274,29 @@ fn validate_identity(document: &MissionScriptDocument) -> Result<(), String> {
 fn validate_context_evidence(
     document: &MissionScriptDocument,
 ) -> Result<(), String> {
+    if document.context_adaptation_count != document.context_adaptations.len() {
+        return Err(
+            "mission context adaptation count is inconsistent".to_owned()
+        );
+    }
+    let mut previous_adaptation_ordinal = 0usize;
+    let mut seen_adaptation_codes = BTreeSet::new();
+    for adaptation in &document.context_adaptations {
+        if adaptation.ordinal == 0
+            || adaptation.ordinal <= previous_adaptation_ordinal
+            || adaptation.command.is_empty()
+            || adaptation.code.is_empty()
+        {
+            return Err("mission context adaptation is malformed".to_owned());
+        }
+        if !seen_adaptation_codes.insert(adaptation.code.as_str()) {
+            return Err(
+                "mission context adaptation identity is duplicated".to_owned()
+            );
+        }
+        validate_context_adaptation(document, adaptation)?;
+        previous_adaptation_ordinal = adaptation.ordinal;
+    }
     if document.context_finding_count != document.context_findings.len() {
         return Err("mission context finding count is inconsistent".to_owned());
     }
@@ -248,6 +325,65 @@ fn validate_context_evidence(
         return Err("mission context command count is inconsistent".to_owned());
     }
     Ok(())
+}
+
+fn validate_context_adaptation(
+    document: &MissionScriptDocument,
+    adaptation: &MissionContextAdaptationDocument,
+) -> Result<(), String> {
+    let valid = match adaptation.code.as_str() {
+        "legacy-l2-m6sdi-ignore-orphan-condition-close-v1" => {
+            adaptation.ordinal == 70
+                && adaptation.command == "closecondition"
+                && matches_invocation(document, 1, "selectmission", &["m6sd"])
+                && matches_invocation(document, 68, "addstagemusicchange", &[])
+                && matches_invocation(document, 69, "setstagemusicalwayson", &[
+                ])
+                && matches_invocation(document, 70, "closecondition", &[])
+                && matches_invocation(document, 71, "closestage", &[])
+        },
+        "legacy-l7-m7i-close-keepbarrel-before-stage-complete-v1" => {
+            adaptation.ordinal == 114
+                && adaptation.command == "showstagecomplete"
+                && matches_invocation(document, 1, "selectmission", &["m7"])
+                && matches_invocation(document, 112, "stagestartmusicevent", &[
+                    "L7_drama",
+                ])
+                && matches_invocation(document, 113, "addcondition", &[
+                    "keepbarrel",
+                    "2",
+                ])
+                && matches_invocation(document, 114, "showstagecomplete", &[])
+                && matches_invocation(document, 115, "closestage", &[])
+        },
+        _ => false,
+    };
+    if valid {
+        Ok(())
+    } else {
+        Err(
+            "mission context adaptation is not reviewed for this evidence"
+                .to_owned(),
+        )
+    }
+}
+
+fn matches_invocation(
+    document: &MissionScriptDocument,
+    ordinal: usize,
+    name: &str,
+    arguments: &[&str],
+) -> bool {
+    document.command_invocations.iter().any(|invocation| {
+        invocation.ordinal == ordinal
+            && invocation.name == name
+            && invocation.arguments.len() == arguments.len()
+            && invocation
+                .arguments
+                .iter()
+                .zip(arguments.iter())
+                .all(|(actual, expected)| actual == expected)
+    })
 }
 
 fn validate_source_evidence(
