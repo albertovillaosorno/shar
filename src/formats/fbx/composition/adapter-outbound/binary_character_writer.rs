@@ -1192,6 +1192,7 @@ fn geometry_node(
     ];
     if group.has_normals() {
         children.push(normal_layer(group)?);
+        children.push(smoothing_layer(group));
     }
     if group.has_uvs() {
         children.push(uv_layer(group)?);
@@ -1254,6 +1255,28 @@ fn normal_layer(
             )]),
         ],
     ))
+}
+
+/// Build one authored-normal smoothing group for every source triangle.
+///
+/// `PrimitiveGroup` owns one normal per control point. A source hard edge is
+/// therefore already represented by split control points; assigning one
+/// smoothing-group bit to every polygon preserves that topology while giving
+/// FBX importers the explicit smoothing metadata they require.
+fn smoothing_layer(group: &PrimitiveGroup) -> BinaryNode {
+    BinaryNode::new(
+        "LayerElementSmoothing",
+        vec![BinaryProperty::I32(0)],
+        vec![
+            i32_node("Version", 102),
+            string_node("Name", ""),
+            string_node("MappingInformationType", "ByPolygon"),
+            string_node("ReferenceInformationType", "Direct"),
+            BinaryNode::leaf("Smoothing", vec![BinaryProperty::I32Array(
+                vec![1; group.triangles.len()],
+            )]),
+        ],
+    )
 }
 
 /// Convert one `Pure3D` UV without altering either authored coordinate.
@@ -1349,6 +1372,7 @@ fn layer_node(group: &PrimitiveGroup) -> BinaryNode {
     let mut elements = vec![i32_node("Version", 100)];
     if group.has_normals() {
         elements.push(layer_element("LayerElementNormal"));
+        elements.push(layer_element("LayerElementSmoothing"));
     }
     if group.has_uvs() {
         elements.push(layer_element("LayerElementUV"));

@@ -178,7 +178,14 @@ fn static_model_is_deterministic_and_has_no_rig_objects() -> Result<(), String>
     if !first_bytes.starts_with(BINARY_MAGIC) {
         return Err("static FBX binary magic is missing".to_owned());
     }
-    for required in ["Geometry", "Model", "Material", "ColorSet_1"] {
+    for required in [
+        "Geometry",
+        "Model",
+        "Material",
+        "ColorSet_1",
+        "LayerElementSmoothing",
+        "Smoothing",
+    ] {
         if !contains_token(&first_bytes, required) {
             return Err(format!("static FBX is missing {required}"));
         }

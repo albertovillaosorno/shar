@@ -171,6 +171,8 @@ fn guide_is_deterministic_fbx_7700_with_four_uv_channels() -> Result<(), String>
         STRUCTURAL_GUIDE_UV_NAMES[1],
         STRUCTURAL_GUIDE_UV_NAMES[2],
         STRUCTURAL_GUIDE_UV_NAMES[3],
+        "LayerElementSmoothing",
+        "Smoothing",
     ] {
         if !contains(&first_bytes, required) {
             return Err(format!("required FBX marker is missing: {required}"));
@@ -262,7 +264,12 @@ fn guide_omits_normal_layer_when_source_normals_are_incomplete()
         .map_err(|error| format!("normal-free write failed: {error:?}"))?;
     let bytes = fs::read(&path)
         .map_err(|error| format!("normal-free read failed: {error}"))?;
-    for forbidden in ["LayerElementNormal", "Normals"] {
+    for forbidden in [
+        "LayerElementNormal",
+        "Normals",
+        "LayerElementSmoothing",
+        "Smoothing",
+    ] {
         if contains(&bytes, forbidden) {
             return Err(format!("normal-free guide contains {forbidden}"));
         }
