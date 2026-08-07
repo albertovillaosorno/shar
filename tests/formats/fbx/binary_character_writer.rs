@@ -175,6 +175,23 @@ fn f64_array_token(values: &[f64]) -> Option<Vec<u8>> {
     Some(token)
 }
 
+/// Encode one exact uncompressed FBX integer-array property payload.
+fn i32_array_token(values: &[i32]) -> Option<Vec<u8>> {
+    let count = u32::try_from(values.len()).ok()?;
+    let payload_byte_count = values.len().checked_mul(size_of::<i32>())?;
+    let encoded_byte_count = u32::try_from(payload_byte_count).ok()?;
+    let mut token = Vec::new();
+    token.push(b'i');
+    token.extend_from_slice(&count.to_le_bytes());
+    token.extend_from_slice(&0_u32.to_le_bytes());
+    token.extend_from_slice(&encoded_byte_count.to_le_bytes());
+    for value in values {
+        token.extend_from_slice(&value.to_le_bytes());
+    }
+    Some(token)
+}
+
+/// Count exact byte-window matches.
 /// Count exact byte-window matches.
 fn byte_window_count(haystack: &[u8], needle: &[u8]) -> usize {
     if needle.is_empty() {
@@ -372,12 +389,34 @@ fn writes_deterministic_binary_fbx_7700_with_standard_footer() {
     );
     for token in [
         b"LayerElementColor".as_slice(),
+        b"LayerElementSmoothing".as_slice(),
+        b"Smoothing".as_slice(),
         b"ColorSet_1".as_slice(),
         b"ColorIndex".as_slice(),
     ] {
         assert!(
             first.windows(token.len()).any(|window| window == token),
             "missing binary vertex-color token: {token:?}"
+        );
+    }
+    let smoothing = i32_array_token(&[1]);
+    assert!(smoothing.is_some(), "smoothing token should encode");
+    if let Some(smoothing) = smoothing {
+        assert!(
+            first
+                .windows(smoothing.len())
+                .any(|window| window == smoothing),
+            "binary FBX missing polygon smoothing-group payload",
+        );
+    }
+    let smoothing = i32_array_token(&[1]);
+    assert!(smoothing.is_some(), "smoothing token should encode");
+    if let Some(smoothing) = smoothing {
+        assert!(
+            first
+                .windows(smoothing.len())
+                .any(|window| window == smoothing),
+            "binary FBX missing polygon smoothing-group payload",
         );
     }
     assert!(

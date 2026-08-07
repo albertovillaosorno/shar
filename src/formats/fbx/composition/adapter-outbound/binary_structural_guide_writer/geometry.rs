@@ -75,6 +75,7 @@ pub(super) fn geometry_node(
     ];
     if !mesh.normals.is_empty() {
         children.push(normal_layer(mesh)?);
+        children.push(smoothing_layer(mesh));
     }
     for (typed_index, (name, values)) in STRUCTURAL_GUIDE_UV_NAMES
         .into_iter()
@@ -123,6 +124,22 @@ fn normal_layer(
     ))
 }
 
+fn smoothing_layer(mesh: &StructuralGuideMesh) -> BinaryNode {
+    BinaryNode::new(
+        "LayerElementSmoothing",
+        vec![BinaryProperty::I32(0)],
+        vec![
+            i32_node("Version", 102),
+            string_node("Name", ""),
+            string_node("MappingInformationType", "ByPolygon"),
+            string_node("ReferenceInformationType", "Direct"),
+            BinaryNode::leaf("Smoothing", vec![BinaryProperty::I32Array(
+                vec![1; mesh.triangles.len()],
+            )]),
+        ],
+    )
+}
+
 fn uv_layer(
     typed_index: usize,
     name: &str,
@@ -165,6 +182,7 @@ fn layer_nodes(include_normals: bool) -> Vec<BinaryNode> {
     let mut primary = vec![i32_node("Version", 100)];
     if include_normals {
         primary.push(layer_element("LayerElementNormal", 0));
+        primary.push(layer_element("LayerElementSmoothing", 0));
     }
     primary.extend([
         layer_element("LayerElementUV", 0),
