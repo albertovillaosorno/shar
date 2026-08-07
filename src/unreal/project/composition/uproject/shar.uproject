@@ -108,6 +108,11 @@
       "Name": "SharUI",
       "Type": "Runtime",
       "LoadingPhase": "Default"
+    },
+    {
+      "Name": "SharImportEditor",
+      "Type": "Editor",
+      "LoadingPhase": "PostEngineInit"
     }
   ],
   "Plugins": [
@@ -137,6 +142,10 @@
     {
       "Name": "MCPClientToolset",
       "Enabled": false
+    },
+    {
+      "Name": "ToolsetRegistry",
+      "Enabled": true
     },
     {
       "Name": "ModelContextProtocol",
