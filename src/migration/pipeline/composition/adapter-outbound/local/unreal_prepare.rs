@@ -47,9 +47,10 @@ use super::unreal_fbx_catalog::{FBX_CATALOG_ROOT, verified_fbx_catalog};
 use crate::adapters::driven::check_cancellation;
 use crate::adapters::driven::local::progress::StageProgress;
 use crate::domain::{
-    PhaseThreePackageIndex, PipelineConfig, PipelineError, PipelineOutcome,
-    StageReport, UNREAL_IMPORT_MANIFEST_SCHEMA, UNREAL_IMPORT_SUMMARY_SCHEMA,
-    UnrealImportManifest, UnrealSourceEvidence,
+    MISSION_SCRIPT_SCHEMA, PhaseThreePackageIndex, PipelineConfig,
+    PipelineError, PipelineOutcome, StageReport, UNREAL_IMPORT_MANIFEST_SCHEMA,
+    UNREAL_IMPORT_SUMMARY_SCHEMA, UnrealImportManifest, UnrealSourceEvidence,
+    preflight_mission_script,
 };
 
 /// Canonical generated Unreal staging root.
@@ -230,20 +231,28 @@ fn source_evidence(
                  actual={actual_size}"
             )));
         }
+        let file_extension =
+            manifest_string(&row, "file_extension", line_number)?;
+        let kind = manifest_string(&row, "kind", line_number)?;
+        let schema = manifest_string(&row, "schema", line_number)?;
+        let origin = manifest_string(&row, "origin", line_number)?;
+        validate_normalized_mission_source(
+            &kind,
+            &schema,
+            &file_extension,
+            &origin,
+            &bytes,
+        )?;
         evidence.push(UnrealSourceEvidence {
             id,
             path,
-            file_extension: manifest_string(
-                &row,
-                "file_extension",
-                line_number,
-            )?,
+            file_extension,
             unit_type: manifest_string(&row, "type", line_number)?,
             subtype: manifest_string(&row, "subtype", line_number)?,
-            kind: manifest_string(&row, "kind", line_number)?,
+            kind,
             function: manifest_string(&row, "function", line_number)?,
-            schema: manifest_string(&row, "schema", line_number)?,
-            origin: manifest_string(&row, "origin", line_number)?,
+            schema,
+            origin,
             source_path: manifest_string(&row, "source_path", line_number)?,
             source_chunk_kind: manifest_string(
                 &row,
@@ -266,6 +275,38 @@ fn source_evidence(
     }
     progress.finish();
     Ok(evidence)
+}
+
+fn validate_normalized_mission_source(
+    kind: &str,
+    schema: &str,
+    file_extension: &str,
+    origin: &str,
+    bytes: &[u8],
+) -> PipelineOutcome<()> {
+    if kind != "mission-script" {
+        return Ok(());
+    }
+    if schema != MISSION_SCRIPT_SCHEMA {
+        return Err(PipelineError::new(
+            "normalized mission source schema is stale",
+        ));
+    }
+    if file_extension != "json" || origin != "game-straggler-normalize" {
+        return Err(PipelineError::new(
+            "normalized mission source routing identity is invalid",
+        ));
+    }
+    let text = std::str::from_utf8(bytes).map_err(|_error| {
+        PipelineError::new("normalized mission source is not valid UTF-8")
+    })?;
+    preflight_mission_script(text)
+        .map(|_evidence| ())
+        .map_err(|error| {
+            PipelineError::new(format!(
+                "mission semantic preflight failed: {error}"
+            ))
+        })
 }
 
 fn retain_importable_evidence(

@@ -31,6 +31,8 @@
 //! Package domain module.
 
 pub mod index;
+/// Normalized mission-script semantic preflight.
+pub mod mission_script;
 /// Package conversion planner.
 pub mod plan;
 /// Typed package selectors.
@@ -48,6 +50,10 @@ pub mod unreal_manifest;
 pub use index::{
     PackageMemberRef, PackageRole, PhaseThreePackageIndex,
     PhaseThreePackageMember, PhaseThreePackageRow,
+};
+pub use mission_script::{
+    MISSION_SCRIPT_SCHEMA, MissionCommandInvocation, MissionScriptEvidence,
+    preflight_mission_script,
 };
 pub use plan::{
     ConversionFamily, FbxModelPlan, PhaseThreePackagePlan,
