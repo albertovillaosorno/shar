@@ -107,7 +107,7 @@ def test_compiles_exact_texture_and_static_mesh_routes() -> None:
         target_family="model",
         target_class="StaticMesh",
         importer="asset-tools-fbx",
-        import_profile="shar-fbx-v1",
+        import_profile="shar-fbx-static-v1",
     )
     compiled = compile_execution_plan(_bundle(texture, mesh))
     assert compiled.report.complete
@@ -121,13 +121,12 @@ def test_compiles_exact_texture_and_static_mesh_routes() -> None:
         "folder_path": "/Game/Generated/SHAR/test",
         "source_file": "C:/verified/source.png",
     }
+    assert mesh_step.toolset_name == "SharImportEditor.SharImportToolset"
+    assert mesh_step.tool_name == "SharImportEditor.SharImportToolset.ImportStaticMesh"
     assert mesh_step.arguments("C:/verified/source.fbx") == {
-        "asset_name": "asset_0000000000000002",
-        "combine_meshes": True,
-        "folder_path": "/Game/Generated/SHAR/test",
-        "import_materials": False,
-        "import_textures": False,
-        "source_file": "C:/verified/source.fbx",
+        "assetName": "asset_0000000000000002",
+        "folderPath": "/Game/Generated/SHAR/test",
+        "sourceFile": "C:/verified/source.fbx",
     }
 
 
@@ -138,7 +137,7 @@ def test_reports_blockers_without_partial_success() -> None:
         target_family="model",
         target_class="StaticMesh",
         importer="asset-tools-fbx",
-        import_profile="shar-fbx-v1",
+        import_profile="shar-fbx-static-v1",
         readiness="requires-conversion",
     )
     audio = _operation(

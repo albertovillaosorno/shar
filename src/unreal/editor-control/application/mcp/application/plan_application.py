@@ -34,14 +34,17 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping
 from pathlib import Path
 from typing import NamedTuple
 from typing import Protocol
 
 from mcp.domain.errors import fail_protocol
+from mcp.domain.json_types import DuplicateJsonKeyError
 from mcp.domain.json_types import JsonObject
 from mcp.domain.json_types import normalize_json
+from mcp.domain.json_types import reject_duplicate_json_object
 from mcp.domain.json_types import require_json_object
 from mcp.domain.plan_capabilities import PlanCapabilityReport
 from mcp.domain.plan_execution import CompiledExecutionPlan
@@ -311,7 +314,11 @@ def _require_nonempty_import_result(
     )
     if not isinstance(value, list) or not value:
         fail_protocol("native import result contains no created assets")
-    if step.route_id in {"file-media-source-hap-v1", "sound-wave-wav-v1"}:
+    if step.route_id in {
+        "file-media-source-hap-v1",
+        "sound-wave-wav-v1",
+        "static-mesh-fbx-v1",
+    }:
         if step.destination not in value:
             fail_protocol("native SHAR import omitted its planned destination")
         if any(not isinstance(item, str) or not item for item in value):
@@ -380,4 +387,21 @@ def _structured_result(
     context: str,
 ) -> JsonObject:
     _ = outcome.require_success()
-    return require_json_object(outcome.structured_content, context=context)
+    value = outcome.structured_content
+    if value is None:
+        if not outcome.text:
+            fail_protocol(f"{context}: result omitted JSON content")
+        try:
+            value = json.loads(
+                outcome.text,
+                object_pairs_hook=reject_duplicate_json_object,
+                parse_constant=lambda _: fail_protocol(
+                    f"{context}: non-finite JSON number is not supported"
+                ),
+            )
+        except DuplicateJsonKeyError as error:
+            fail_protocol(str(error), cause=error)
+        except (json.JSONDecodeError, UnicodeError) as error:
+            fail_protocol(f"{context}: text result is not valid JSON", cause=error)
+    normalized = normalize_json(value, context=context)
+    return require_json_object(normalized, context=context)

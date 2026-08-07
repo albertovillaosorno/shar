@@ -122,7 +122,7 @@ def test_cli_plan_apply_rejects_incomplete_plan_before_transport(
         destination="/Game/Generated/SHAR/test/model.model",
         target_class="StaticMesh",
         importer="asset-tools-fbx",
-        import_profile="shar-fbx-v1",
+        import_profile="shar-fbx-static-v1",
         dependencies=(),
         readiness="requires-conversion",
         world_owned=False,
@@ -249,6 +249,62 @@ def test_cli_plan_apply_completes_one_texture_over_streamable_http(
         "exists",
         "exists",
         "import_file",
+        "exists",
+        "get_asset_class",
+        "save_assets",
+        "is_dirty",
+    )
+    assert "delete" not in native_leaves
+
+
+def test_cli_plan_apply_completes_one_static_mesh_over_streamable_http(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    source_bytes = b"Kaydara FBX Binary synthetic-static-source"
+    source_revision = hashlib.sha256(source_bytes).hexdigest()
+    plan_root = tmp_path / "unreal-staging" / "plans"
+    _ = write_plan_bundle(
+        plan_root,
+        with_static_mesh_operation=True,
+        static_mesh_source_revision=source_revision,
+    )
+    source = tmp_path / "fbx-assets" / "static" / "model.fbx"
+    source.parent.mkdir(parents=True)
+    source.write_bytes(source_bytes)
+    monkeypatch.chdir(tmp_path)
+
+    with FakeUnrealServer(plan_execution=True) as server:
+        code = main((
+            "--endpoint",
+            server.endpoint,
+            "plan-apply",
+        ))
+
+    captured = capsys.readouterr()
+    assert code == 0, captured.err or captured.out
+    payload = json.loads(captured.out)
+    assert payload["application"]["importedCount"] == 1
+    assert payload["application"]["savedCount"] == 1
+    assert payload["application"]["verifiedCount"] == 1
+    package_path = "/Game/Generated/SHAR/models/static/model"
+    assert server.assets == {package_path: "StaticMesh"}
+    assert server.dirty_assets == frozenset()
+    assert not captured.err
+    assert server.session_closed
+
+    native_leaves = tuple(
+        request["params"]["arguments"].get("tool_name")
+        for request in server.requests
+        if request.get("method") == "tools/call"
+        and isinstance(request.get("params"), dict)
+        and request["params"].get("name") == "call_tool"
+    )
+    assert native_leaves == (
+        "exists",
+        "exists",
+        "ImportStaticMesh",
         "exists",
         "get_asset_class",
         "save_assets",

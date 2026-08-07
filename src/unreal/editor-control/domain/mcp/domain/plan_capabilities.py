@@ -219,7 +219,11 @@ def _import_requirement(step: NativeImportStep) -> NativeToolRequirement:
     extension = extension_by_route[step.route_id]
     output: JsonObject = (
         {"returnValue": [step.destination]}
-        if step.route_id in {"file-media-source-hap-v1", "sound-wave-wav-v1"}
+        if step.route_id in {
+            "file-media-source-hap-v1",
+            "sound-wave-wav-v1",
+            "static-mesh-fbx-v1",
+        }
         else {"returnValue": []}
     )
     return NativeToolRequirement(
