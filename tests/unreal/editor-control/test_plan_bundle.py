@@ -34,10 +34,8 @@ from __future__ import annotations
 
 import json
 import os
-import re
 from pathlib import Path
-
-import pytest
+import re
 
 from mcp.adapter_inbound.cli import main
 from mcp.adapter_outbound.plan_bundle_reader import FilesystemPlanBundleReader
@@ -46,6 +44,7 @@ from mcp.domain.plan_bundle import parse_plan_bundle
 from mcp.domain.plan_bundle import validate_plan_bundle
 from plan_bundle_fixture import build_plan_bundle
 from plan_bundle_fixture import write_plan_bundle
+import pytest
 
 
 def _split_bundle(
@@ -54,12 +53,14 @@ def _split_bundle(
     with_construction_operation: bool = False,
     construction_source_path: str = "manifest.jsonl",
     construction_source_revision: str | None = None,
+    semantic_blocker_count: int = 0,
 ) -> tuple[str, dict[str, str]]:
     files = build_plan_bundle(
         with_import_operation=with_import_operation,
         with_construction_operation=with_construction_operation,
         construction_source_path=construction_source_path,
         construction_source_revision=construction_source_revision,
+        semantic_blocker_count=semantic_blocker_count,
     )
     index = files.pop("index.json")
     return index, files
@@ -83,6 +84,17 @@ def test_domain_accepts_canonical_six_plan_bundle() -> None:
     assert report.target_platform == "editor"
     assert len(report.plans) == 6
     assert report.to_json()["revision"] == report.revision
+
+
+def test_domain_preserves_semantic_blockers_in_bundle_identity() -> None:
+    baseline_index, baseline_plans = _split_bundle()
+    blocked_index, blocked_plans = _split_bundle(semantic_blocker_count=3)
+    baseline = parse_plan_bundle(baseline_index, baseline_plans)
+    blocked = parse_plan_bundle(blocked_index, blocked_plans)
+    assert baseline.report.semantic_blocker_count == 0
+    assert blocked.report.semantic_blocker_count == 3
+    assert blocked.report.to_json()["semanticBlockerCount"] == 3
+    assert blocked.report.revision != baseline.report.revision
 
 
 def test_domain_validates_nonempty_operation_identity_and_readiness() -> None:
@@ -161,7 +173,9 @@ def test_domain_rejects_stale_partial_or_noncanonical_bundle(
     elif mutation == "whitespace":
         index = index.replace('{"schema"', '{ "schema"', 1)
     elif mutation == "engine":
-        index = index.replace('"target_engine_version":"5.8.1"', '"target_engine_version":"5.8.0"')
+        index = index.replace(
+            '"target_engine_version":"5.8.1"', '"target_engine_version":"5.8.0"'
+        )
     elif mutation == "extra-field":
         index = index.replace('{"schema"', '{"unexpected":true,"schema"', 1)
     elif mutation == "missing-plan":
@@ -187,7 +201,9 @@ def test_reader_rejects_extra_file_without_exposing_physical_root(
     root = tmp_path / "plans"
     _ = write_plan_bundle(root)
     _ = (root / "unexpected.json").write_text("{}\n", encoding="utf-8")
-    with pytest.raises(ProtocolError, match="inventory is not exact") as captured:
+    with pytest.raises(
+        ProtocolError, match="inventory is not exact"
+    ) as captured:
         FilesystemPlanBundleReader(root).read()
     assert str(root) not in str(captured.value)
 
@@ -214,9 +230,11 @@ def test_cli_preflight_is_local_and_opens_no_mcp_transport(
     _ = write_plan_bundle(root)
     monkeypatch.chdir(tmp_path)
 
+    failure = "plan preflight opened an MCP transport"
+
     class _ForbiddenTransport:
         def __init__(self, *_args: object, **_kwargs: object) -> None:
-            raise AssertionError("plan preflight opened an MCP transport")
+            raise AssertionError(failure)
 
     monkeypatch.setattr(
         "mcp.adapter_inbound.cli.StreamableHttpTransport",
@@ -239,9 +257,11 @@ def test_cli_execution_preflight_is_local_and_complete_for_empty_bundle(
     _ = write_plan_bundle(root)
     monkeypatch.chdir(tmp_path)
 
+    failure = "execution preflight opened an MCP transport"
+
     class _ForbiddenTransport:
         def __init__(self, *_args: object, **_kwargs: object) -> None:
-            raise AssertionError("execution preflight opened an MCP transport")
+            raise AssertionError(failure)
 
     monkeypatch.setattr(
         "mcp.adapter_inbound.cli.StreamableHttpTransport",

@@ -36,13 +36,14 @@ import hashlib
 import os
 from pathlib import Path
 
-import pytest
-
-from mcp.adapter_outbound.plan_source_verifier import FilesystemPlanSourceVerifier
+from mcp.adapter_outbound.plan_source_verifier import (
+    FilesystemPlanSourceVerifier,
+)
 from mcp.domain.errors import ProtocolError
 from mcp.domain.plan_bundle import PlanBundleReport
 from mcp.domain.plan_bundle import PlanOperation
 from mcp.domain.plan_bundle import ValidatedPlanBundle
+import pytest
 
 
 def _digest(payload: bytes) -> str:
@@ -59,9 +60,13 @@ def _operation(
 ) -> PlanOperation:
     source_format = "json" if plan_id == "asset-construction-plan" else "image"
     target_family = "structured-data" if source_format == "json" else "texture"
-    target_class = "DataAsset" if source_format == "json" else "Texture2D"
-    importer = "shar-data-asset-factory" if source_format == "json" else "texture-factory"
-    import_profile = "shar-data-asset-v1" if source_format == "json" else "shar-texture-v1"
+    target_class = "WidgetBlueprint" if source_format == "json" else "Texture2D"
+    importer = (
+        "shar-ui-factory" if source_format == "json" else "texture-factory"
+    )
+    import_profile = (
+        "shar-ui-v1" if source_format == "json" else "shar-texture-v1"
+    )
     asset_name = operation_id.removeprefix("operation-")
     return PlanOperation(
         plan_id=plan_id,
@@ -98,6 +103,7 @@ def _bundle(*operations: PlanOperation) -> ValidatedPlanBundle:
         engine_contract_revision="shar-unreal-porting-contract-v1",
         target_engine_version="5.8.1",
         target_platform="editor",
+        semantic_blocker_count=0,
         operation_count=len(operations),
         readiness_counts={},
         plans=(),
@@ -121,7 +127,9 @@ def _create_file_link(target: Path, link: Path) -> None:
         raise
 
 
-def test_verifies_unique_sources_and_reuses_shared_manifest(tmp_path: Path) -> None:
+def test_verifies_unique_sources_and_reuses_shared_manifest(
+    tmp_path: Path,
+) -> None:
     repository, plan_root = _roots(tmp_path)
     image = repository / "extracted" / "image.png"
     image.parent.mkdir()
@@ -166,7 +174,9 @@ def test_verifies_unique_sources_and_reuses_shared_manifest(tmp_path: Path) -> N
     )
     assert verified.report.verified_operation_count == 3
     assert verified.report.unique_source_count == 2
-    assert verified.report.unique_source_bytes == len(image_bytes) + len(manifest_bytes)
+    assert verified.report.unique_source_bytes == len(image_bytes) + len(
+        manifest_bytes
+    )
     assert verified.report.skipped_conversion_count == 1
     assert verified.by_operation[operations[0].operation_id] == image
     assert verified.by_operation[operations[1].operation_id] == manifest

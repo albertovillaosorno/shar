@@ -40,6 +40,7 @@ from mcp.domain.plan_bundle import PlanOperation
 from mcp.domain.plan_bundle import ValidatedPlanBundle
 from mcp.domain.plan_capabilities import audit_plan_capabilities
 from mcp.domain.plan_capabilities import required_toolsets
+from mcp.domain.plan_execution import CompiledExecutionPlan
 from mcp.domain.plan_execution import compile_execution_plan
 
 _ASSET_TOOLSET = "editor_toolset.toolsets.asset.AssetTools"
@@ -72,7 +73,9 @@ def _tool(
     )
 
 
-def _toolsets(*, omit: str = "", incompatible_import: bool = False) -> tuple[ToolsetDefinition, ...]:
+def _toolsets(
+    *, omit: str = "", incompatible_import: bool = False
+) -> tuple[ToolsetDefinition, ...]:
     text = {"type": "string"}
     boolean = {"type": "boolean"}
     output_boolean = _object_schema({"returnValue": boolean}, "returnValue")
@@ -160,7 +163,7 @@ def _toolsets(*, omit: str = "", incompatible_import: bool = False) -> tuple[Too
     return asset_definition, texture_definition
 
 
-def _compiled_texture():
+def _compiled_texture() -> CompiledExecutionPlan:
     operation = PlanOperation(
         plan_id="asset-import-plan",
         operation_id="operation-0000000000000001",
@@ -185,6 +188,7 @@ def _compiled_texture():
         engine_contract_revision="shar-unreal-porting-contract-v1",
         target_engine_version="5.8.1",
         target_platform="editor",
+        semantic_blocker_count=0,
         operation_count=1,
         readiness_counts={"ready": 1},
         plans=(),

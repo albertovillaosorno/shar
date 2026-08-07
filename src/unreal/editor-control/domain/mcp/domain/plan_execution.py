@@ -58,6 +58,13 @@ _AUDIO_ROUTE = (
     "sound-wave-factory",
     "shar-audio-v1",
 )
+_MEDIA_ROUTE = (
+    "hap",
+    "FileMediaSource",
+    "media-source-movie",
+    "shar-hap-movie-v1",
+)
+_IMPORT_TOOLSET = "SharImportEditor.SharImportToolset"
 
 
 class NativeImportStep(NamedTuple):
@@ -74,12 +81,18 @@ class NativeImportStep(NamedTuple):
     asset_name: str
     toolset_name: str
     tool_name: str
+    external_payload_path: str | None
+
+    @property
+    def has_external_payload(self) -> bool:
+        """Whether this import publishes one file outside its asset package."""
+        return self.external_payload_path is not None
 
     def arguments(self, source_file: str) -> JsonObject:
         """Build exact native arguments for one verified physical source."""
         if not source_file:
             fail_protocol("native import source file must not be empty")
-        if self.route_id == "sound-wave-wav-v1":
+        if self.route_id in {"file-media-source-hap-v1", "sound-wave-wav-v1"}:
             return {
                 "assetName": self.asset_name,
                 "folderPath": self.folder_path,
@@ -91,13 +104,11 @@ class NativeImportStep(NamedTuple):
             "source_file": source_file,
         }
         if self.route_id == "static-mesh-fbx-v1":
-            arguments.update(
-                {
-                    "combine_meshes": True,
-                    "import_materials": False,
-                    "import_textures": False,
-                }
-            )
+            arguments.update({
+                "combine_meshes": True,
+                "import_materials": False,
+                "import_textures": False,
+            })
         return arguments
 
 
@@ -107,6 +118,7 @@ class PlanExecutionReport(NamedTuple):
     bundle_revision: str
     operation_count: int
     compiled_count: int
+    semantic_blocker_count: int
     blocked_readiness: dict[str, int]
     unsupported_routes: dict[str, int]
     route_counts: dict[str, int]
@@ -116,6 +128,7 @@ class PlanExecutionReport(NamedTuple):
         """Whether every operation has one reviewed executable route."""
         return (
             self.compiled_count == self.operation_count
+            and self.semantic_blocker_count == 0
             and not self.blocked_readiness
             and not self.unsupported_routes
         )
@@ -129,6 +142,7 @@ class PlanExecutionReport(NamedTuple):
             "complete": self.complete,
             "operationCount": self.operation_count,
             "routeCounts": dict(sorted(self.route_counts.items())),
+            "semanticBlockerCount": self.semantic_blocker_count,
             "unsupportedRoutes": dict(sorted(self.unsupported_routes.items())),
         }
 
@@ -140,7 +154,9 @@ class CompiledExecutionPlan(NamedTuple):
     imports: tuple[NativeImportStep, ...]
 
 
-def compile_execution_plan(bundle: ValidatedPlanBundle) -> CompiledExecutionPlan:
+def compile_execution_plan(
+    bundle: ValidatedPlanBundle,
+) -> CompiledExecutionPlan:
     """Compile every operation or classify its exact blocking reason."""
     imports: list[NativeImportStep] = []
     blocked = Counter[str]()
@@ -160,6 +176,7 @@ def compile_execution_plan(bundle: ValidatedPlanBundle) -> CompiledExecutionPlan
         bundle_revision=bundle.report.revision,
         operation_count=len(bundle.operations),
         compiled_count=len(imports),
+        semantic_blocker_count=bundle.report.semantic_blocker_count,
         blocked_readiness=dict(blocked),
         unsupported_routes=dict(unsupported),
         route_counts=dict(routes),
@@ -174,14 +191,19 @@ def _compile_ready_import(operation: PlanOperation) -> NativeImportStep | None:
         operation.importer,
         operation.import_profile,
     )
+    external_payload_path: str | None = None
     if route == _TEXTURE_ROUTE:
         route_id = "texture-image-v1"
         toolset = "editor_toolset.toolsets.texture.TextureTools"
         tool = f"{toolset}.import_file"
     elif route == _AUDIO_ROUTE:
         route_id = "sound-wave-wav-v1"
-        toolset = "SharImportEditor.SharImportToolset"
+        toolset = _IMPORT_TOOLSET
         tool = f"{toolset}.ImportSoundWave"
+    elif route == _MEDIA_ROUTE:
+        route_id = "file-media-source-hap-v1"
+        toolset = _IMPORT_TOOLSET
+        tool = f"{toolset}.ImportFileMediaSource"
     elif route == _STATIC_MESH_ROUTE:
         route_id = "static-mesh-fbx-v1"
         toolset = "editor_toolset.toolsets.static_mesh.StaticMeshTools"
@@ -194,6 +216,13 @@ def _compile_ready_import(operation: PlanOperation) -> NativeImportStep | None:
     folder_path, slash, asset_name = package_path.rpartition("/")
     if not slash or object_name != asset_name:
         fail_protocol("compiled import destination is not canonical")
+    if route == _MEDIA_ROUTE:
+        relative_package = package_path.removeprefix("/Game/Generated/SHAR/")
+        if relative_package == package_path or not relative_package:
+            fail_protocol("compiled media destination escaped generated root")
+        external_payload_path = (
+            f"./Movies/Generated/SHAR/{relative_package}.mov"
+        )
     return NativeImportStep(
         operation_id=operation.operation_id,
         route_id=route_id,
@@ -206,15 +235,12 @@ def _compile_ready_import(operation: PlanOperation) -> NativeImportStep | None:
         asset_name=asset_name,
         toolset_name=toolset,
         tool_name=tool,
+        external_payload_path=external_payload_path,
     )
 
 
 def _route_key(operation: PlanOperation) -> str:
-    return "/".join(
-        (
-            operation.source_format,
-            operation.target_class,
-            operation.importer,
-            operation.import_profile,
-        )
+    return (
+        f"{operation.source_format}/{operation.target_class}/"
+        f"{operation.importer}/{operation.import_profile}"
     )

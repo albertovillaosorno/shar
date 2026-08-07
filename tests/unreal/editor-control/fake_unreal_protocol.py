@@ -224,6 +224,7 @@ class FakeUnrealRequestHandler(BaseHTTPRequestHandler):
             plan_execution=server.behavior.plan_execution,
             assets=server.assets,
             dirty_assets=server.dirty_assets,
+            media_payloads=server.media_payloads,
         )
         result: JsonObject = {
             "content": [{"type": "text", "text": text}],
@@ -242,8 +243,8 @@ class FakeUnrealRequestHandler(BaseHTTPRequestHandler):
             "result": result,
         }
         body = (
-            f"data: {json.dumps(progress, separators=(',', ':'))}\n\n"
-            f"data: {json.dumps(final, separators=(',', ':'))}\n"
+            f"data: {json.dumps(progress, separators=(",", ":"))}\n\n"
+            f"data: {json.dumps(final, separators=(",", ":"))}\n"
         ).encode()
         self.send_response(_HTTP_OK)
         self.send_header("Content-Type", "text/event-stream")

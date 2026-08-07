@@ -32,14 +32,14 @@
 
 from __future__ import annotations
 
+from collections import Counter
+from collections import OrderedDict
 import hashlib
 import json
 import re
-import unicodedata
-from collections import Counter
-from collections import OrderedDict
 from typing import NamedTuple
 from typing import cast
+import unicodedata
 
 from mcp.domain.errors import fail_protocol
 from mcp.domain.json_types import JsonObject
@@ -49,7 +49,7 @@ from mcp.domain.json_types import reject_duplicate_json_object
 from mcp.domain.json_types import require_json_object
 
 _PLAN_SCHEMA = "shar-schoenwald.unreal-plan.v1"
-_BUNDLE_SCHEMA = "shar-schoenwald.unreal-plan-bundle.v1"
+_BUNDLE_SCHEMA = "shar-schoenwald.unreal-plan-bundle.v2"
 _TARGET_ENGINE_VERSION = "5.8.1"
 _TARGET_PLATFORM = "editor"
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
@@ -130,6 +130,7 @@ _INDEX_FIELDS = (
     "engine_contract_revision",
     "target_engine_version",
     "target_platform",
+    "semantic_blocker_count",
     "plans",
 )
 _PLAN_FIELDS = (
@@ -202,6 +203,7 @@ class PlanBundleReport(NamedTuple):
     engine_contract_revision: str
     target_engine_version: str
     target_platform: str
+    semantic_blocker_count: int
     operation_count: int
     readiness_counts: dict[str, int]
     plans: tuple[PlanSummary, ...]
@@ -222,6 +224,7 @@ class PlanBundleReport(NamedTuple):
             ],
             "readinessCounts": dict(sorted(self.readiness_counts.items())),
             "revision": self.revision,
+            "semanticBlockerCount": self.semantic_blocker_count,
             "sourceManifestRevision": self.source_manifest_revision,
             "targetEngineVersion": self.target_engine_version,
             "targetPlatform": self.target_platform,
@@ -243,7 +246,7 @@ def validate_plan_bundle(
     return parse_plan_bundle(index_text, plan_texts).report
 
 
-def parse_plan_bundle(
+def parse_plan_bundle(  # noqa: PLR0914 - closed schema parser
     index_text: str,
     plan_texts: dict[str, str],
 ) -> ValidatedPlanBundle:
@@ -253,7 +256,14 @@ def parse_plan_bundle(
     if _text(index, "schema", context="plan bundle index") != _BUNDLE_SCHEMA:
         fail_protocol("plan bundle index schema is not supported")
     context = _bundle_context(index, label="plan bundle index")
-    index_revision = _sha256_field(index, "revision", context="plan bundle index")
+    index_revision = _sha256_field(
+        index, "revision", context="plan bundle index"
+    )
+    semantic_blocker_count = _nonnegative_integer(
+        index,
+        "semantic_blocker_count",
+        context="plan bundle index",
+    )
     raw_entries = _array(index, "plans", context="plan bundle index")
     if len(raw_entries) != len(_PLAN_SPECS):
         fail_protocol("plan bundle index does not contain exactly six plans")
@@ -261,7 +271,7 @@ def parse_plan_bundle(
     summaries: list[PlanSummary] = []
     revision_by_id: dict[str, str] = {}
     expected_files: set[str] = set()
-    for position, ((plan_id, filename, _dependencies), raw_entry) in enumerate(
+    for position, ((plan_id, filename, _), raw_entry) in enumerate(
         zip(_PLAN_SPECS, raw_entries, strict=True)
     ):
         entry = require_json_object(
@@ -273,9 +283,15 @@ def parse_plan_bundle(
             ("plan_id", "revision", "filename", "operation_count"),
             context="plan bundle index entry",
         )
-        if _text(entry, "plan_id", context="plan bundle index entry") != plan_id:
+        if (
+            _text(entry, "plan_id", context="plan bundle index entry")
+            != plan_id
+        ):
             fail_protocol("plan bundle index plan order is not canonical")
-        if _text(entry, "filename", context="plan bundle index entry") != filename:
+        if (
+            _text(entry, "filename", context="plan bundle index entry")
+            != filename
+        ):
             fail_protocol("plan bundle index filename is not canonical")
         revision = _sha256_field(
             entry,
@@ -299,7 +315,7 @@ def parse_plan_bundle(
     all_operations: list[tuple[str, JsonObject]] = []
     typed_operations: list[PlanOperation] = []
     readiness = Counter[str]()
-    for summary, (_plan_id, _filename, dependency_ids) in zip(
+    for summary, (_, _, dependency_ids) in zip(
         summaries,
         _PLAN_SPECS,
         strict=True,
@@ -331,6 +347,7 @@ def parse_plan_bundle(
         engine_contract_revision=context[1],
         target_engine_version=context[2],
         target_platform=context[3],
+        semantic_blocker_count=semantic_blocker_count,
         operation_count=sum(item.operation_count for item in summaries),
         readiness_counts=dict(readiness),
         plans=tuple(summaries),
@@ -352,8 +369,12 @@ def _typed_operation(plan_id: str, operation: JsonObject) -> PlanOperation:
             "source_identity",
             context="plan operation",
         ),
-        source_format=_text(operation, "source_format", context="plan operation"),
-        target_family=_text(operation, "target_family", context="plan operation"),
+        source_format=_text(
+            operation, "source_format", context="plan operation"
+        ),
+        target_family=_text(
+            operation, "target_family", context="plan operation"
+        ),
         source_path=_text(operation, "source_path", context="plan operation"),
         source_revision=_text(
             operation,
@@ -372,7 +393,9 @@ def _typed_operation(plan_id: str, operation: JsonObject) -> PlanOperation:
             _string_array(operation, "dependencies", context="plan operation")
         ),
         readiness=_text(operation, "readiness", context="plan operation"),
-        world_owned=_boolean(operation, "world_owned", context="plan operation"),
+        world_owned=_boolean(
+            operation, "world_owned", context="plan operation"
+        ),
         runtime_bound=_boolean(
             operation,
             "runtime_bound",
@@ -381,7 +404,7 @@ def _typed_operation(plan_id: str, operation: JsonObject) -> PlanOperation:
     )
 
 
-def _validate_plan(
+def _validate_plan(  # noqa: PLR0912 - complete envelope validation
     text: str,
     *,
     summary: PlanSummary,
@@ -418,13 +441,19 @@ def _validate_plan(
             ("plan_id", "revision"),
             context="plan dependency",
         )
-        if _text(dependency, "plan_id", context="plan dependency") != expected_id:
+        if (
+            _text(dependency, "plan_id", context="plan dependency")
+            != expected_id
+        ):
             fail_protocol("plan dependencies are not canonical")
-        if _sha256_field(
-            dependency,
-            "revision",
-            context="plan dependency",
-        ) != revision_by_id[expected_id]:
+        if (
+            _sha256_field(
+                dependency,
+                "revision",
+                context="plan dependency",
+            )
+            != revision_by_id[expected_id]
+        ):
             fail_protocol("plan dependency revision is stale")
 
     raw_operations = _array(plan, "operations", context="plan envelope")
@@ -457,13 +486,15 @@ def _validate_plan(
     return operations
 
 
-def _validate_operation(
+def _validate_operation(  # noqa: PLR0914 - atomic operation contract
     operation: JsonObject,
     *,
     plan_id: str,
     source_manifest_revision: str,
 ) -> None:
-    _require_exact_fields(operation, _OPERATION_FIELDS, context="plan operation")
+    _require_exact_fields(
+        operation, _OPERATION_FIELDS, context="plan operation"
+    )
     operation_id = _text(operation, "operation_id", context="plan operation")
     if _OPERATION_ID.fullmatch(operation_id) is None:
         fail_protocol("plan operation identity is not canonical")
@@ -513,7 +544,11 @@ def _validate_operation(
     _boolean(operation, "runtime_bound", context="plan operation")
 
     expected = {
-        "json": ("structured-data", {"requires-editor-factory"}, "asset-construction-plan"),
+        "json": (
+            "structured-data",
+            {"requires-editor-factory"},
+            "asset-construction-plan",
+        ),
         "image": ("texture", {"ready"}, "asset-import-plan"),
         "wav": ("audio", {"ready"}, "asset-import-plan"),
         "hap": ("media", {"ready"}, "asset-import-plan"),
@@ -536,20 +571,19 @@ def _validate_operation(
     ):
         fail_protocol("construction operation source evidence is not canonical")
 
-    preimage = "\n".join(
-        (
-            package_identity,
-            source_identity,
-            source_format,
-            target_family,
-            source_path,
-            source_revision,
-            destination,
-            target_class,
-            importer,
-            import_profile,
-        )
-    )
+    separator = chr(10)
+    preimage = separator.join((
+        package_identity,
+        source_identity,
+        source_format,
+        target_family,
+        source_path,
+        source_revision,
+        destination,
+        target_class,
+        importer,
+        import_profile,
+    ))
     if operation_id != f"operation-{_digest(preimage)[:16]}":
         fail_protocol("plan operation identity does not match its evidence")
 
@@ -564,18 +598,23 @@ def _validate_plan_requirements(plan: JsonObject, summary: PlanSummary) -> None:
         ("operation_count", "requirements"),
         context="plan validation",
     )
-    if _nonnegative_integer(
-        validation,
-        "operation_count",
-        context="plan validation",
-    ) != summary.operation_count:
+    if (
+        _nonnegative_integer(
+            validation,
+            "operation_count",
+            context="plan validation",
+        )
+        != summary.operation_count
+    ):
         fail_protocol("plan validation operation count is stale")
     requirements = _string_array(
         validation,
         "requirements",
         context="plan validation",
     )
-    expected = sorted(_BASE_REQUIREMENTS | _FAMILY_REQUIREMENTS[summary.plan_id])
+    expected = sorted(
+        _BASE_REQUIREMENTS | _FAMILY_REQUIREMENTS[summary.plan_id]
+    )
     if requirements != expected:
         fail_protocol("plan validation requirements are not canonical")
 
@@ -585,13 +624,18 @@ def _validate_operation_set(
 ) -> None:
     ids: dict[str, str] = {}
     destinations: set[str] = set()
-    by_plan: dict[str, list[str]] = {plan_id: [] for plan_id, _file, _deps in _PLAN_SPECS}
+    by_plan: dict[str, list[str]] = {
+        plan_id: [] for plan_id, _file, _deps in _PLAN_SPECS
+    }
     dependency_map: dict[str, tuple[str, ...]] = {}
     family_order = {
-        plan_id: index for index, (plan_id, _file, _deps) in enumerate(_PLAN_SPECS)
+        plan_id: index
+        for index, (plan_id, _file, _deps) in enumerate(_PLAN_SPECS)
     }
     for plan_id, operation in operations:
-        operation_id = _text(operation, "operation_id", context="plan operation")
+        operation_id = _text(
+            operation, "operation_id", context="plan operation"
+        )
         if operation_id in ids:
             fail_protocol("plan bundle contains a duplicate operation identity")
         ids[operation_id] = plan_id
@@ -638,60 +682,66 @@ def _validate_acyclic_dependencies(
 
 def _canonical_index(index: JsonObject, *, revision: str) -> str:
     plans = [
-        OrderedDict(
+        OrderedDict((
+            ("plan_id", _text(entry, "plan_id", context="plan index entry")),
+            ("revision", _text(entry, "revision", context="plan index entry")),
+            ("filename", _text(entry, "filename", context="plan index entry")),
             (
-                ("plan_id", _text(entry, "plan_id", context="plan index entry")),
-                ("revision", _text(entry, "revision", context="plan index entry")),
-                ("filename", _text(entry, "filename", context="plan index entry")),
-                (
+                "operation_count",
+                _nonnegative_integer(
+                    entry,
                     "operation_count",
-                    _nonnegative_integer(
-                        entry,
-                        "operation_count",
-                        context="plan index entry",
-                    ),
+                    context="plan index entry",
                 ),
-            )
-        )
+            ),
+        ))
         for entry in (
             require_json_object(value, context="plan index entry")
             for value in _array(index, "plans", context="plan bundle index")
         )
     ]
-    payload = OrderedDict(
+    payload = OrderedDict((
+        ("schema", _text(index, "schema", context="plan bundle index")),
+        ("revision", revision),
         (
-            ("schema", _text(index, "schema", context="plan bundle index")),
-            ("revision", revision),
-            (
-                "source_manifest_revision",
-                _text(index, "source_manifest_revision", context="plan bundle index"),
+            "source_manifest_revision",
+            _text(
+                index, "source_manifest_revision", context="plan bundle index"
             ),
-            (
-                "engine_contract_revision",
-                _text(index, "engine_contract_revision", context="plan bundle index"),
+        ),
+        (
+            "engine_contract_revision",
+            _text(
+                index, "engine_contract_revision", context="plan bundle index"
             ),
-            (
-                "target_engine_version",
-                _text(index, "target_engine_version", context="plan bundle index"),
+        ),
+        (
+            "target_engine_version",
+            _text(index, "target_engine_version", context="plan bundle index"),
+        ),
+        (
+            "target_platform",
+            _text(index, "target_platform", context="plan bundle index"),
+        ),
+        (
+            "semantic_blocker_count",
+            _nonnegative_integer(
+                index,
+                "semantic_blocker_count",
+                context="plan bundle index",
             ),
-            (
-                "target_platform",
-                _text(index, "target_platform", context="plan bundle index"),
-            ),
-            ("plans", plans),
-        )
-    )
+        ),
+        ("plans", plans),
+    ))
     return _canonical(payload)
 
 
 def _canonical_plan(plan: JsonObject, *, revision: str) -> str:
     dependencies = [
-        OrderedDict(
-            (
-                ("plan_id", _text(item, "plan_id", context="plan dependency")),
-                ("revision", _text(item, "revision", context="plan dependency")),
-            )
-        )
+        OrderedDict((
+            ("plan_id", _text(item, "plan_id", context="plan dependency")),
+            ("revision", _text(item, "revision", context="plan dependency")),
+        ))
         for item in (
             require_json_object(value, context="plan dependency")
             for value in _array(plan, "dependencies", context="plan envelope")
@@ -708,53 +758,49 @@ def _canonical_plan(plan: JsonObject, *, revision: str) -> str:
         plan.get("validation"),
         context="plan validation",
     )
-    validation_payload = OrderedDict(
+    validation_payload = OrderedDict((
         (
-            (
+            "operation_count",
+            _nonnegative_integer(
+                validation,
                 "operation_count",
-                _nonnegative_integer(
-                    validation,
-                    "operation_count",
-                    context="plan validation",
-                ),
+                context="plan validation",
             ),
-            (
-                "requirements",
-                _string_array(
-                    validation,
-                    "requirements",
-                    context="plan validation",
-                ),
-            ),
-        )
-    )
-    payload = OrderedDict(
+        ),
         (
-            ("schema", _text(plan, "schema", context="plan envelope")),
-            ("plan_id", _text(plan, "plan_id", context="plan envelope")),
-            ("revision", revision),
-            (
-                "source_manifest_revision",
-                _text(plan, "source_manifest_revision", context="plan envelope"),
+            "requirements",
+            _string_array(
+                validation,
+                "requirements",
+                context="plan validation",
             ),
-            (
-                "engine_contract_revision",
-                _text(plan, "engine_contract_revision", context="plan envelope"),
-            ),
-            (
-                "target_engine_version",
-                _text(plan, "target_engine_version", context="plan envelope"),
-            ),
-            (
-                "target_platform",
-                _text(plan, "target_platform", context="plan envelope"),
-            ),
-            ("dependencies", dependencies),
-            ("outputs", _string_array(plan, "outputs", context="plan envelope")),
-            ("operations", operations),
-            ("validation", validation_payload),
-        )
-    )
+        ),
+    ))
+    payload = OrderedDict((
+        ("schema", _text(plan, "schema", context="plan envelope")),
+        ("plan_id", _text(plan, "plan_id", context="plan envelope")),
+        ("revision", revision),
+        (
+            "source_manifest_revision",
+            _text(plan, "source_manifest_revision", context="plan envelope"),
+        ),
+        (
+            "engine_contract_revision",
+            _text(plan, "engine_contract_revision", context="plan envelope"),
+        ),
+        (
+            "target_engine_version",
+            _text(plan, "target_engine_version", context="plan envelope"),
+        ),
+        (
+            "target_platform",
+            _text(plan, "target_platform", context="plan envelope"),
+        ),
+        ("dependencies", dependencies),
+        ("outputs", _string_array(plan, "outputs", context="plan envelope")),
+        ("operations", operations),
+        ("validation", validation_payload),
+    ))
     return _canonical(payload)
 
 
@@ -765,7 +811,7 @@ def _parse_document(text: str, *, context: str) -> JsonObject:
         parsed = json.loads(
             text,
             object_pairs_hook=reject_duplicate_json_object,
-            parse_constant=lambda _value: fail_protocol(
+            parse_constant=lambda _: fail_protocol(
                 f"{context}: non-finite JSON number is not supported"
             ),
         )
@@ -862,14 +908,11 @@ def _boolean(value: JsonObject, field: str, *, context: str) -> bool:
 
 
 def _validate_portable_path(value: str) -> None:
-    if (
-        not value
-        or value.startswith("/")
-        or "\\" in value
-        or ":" in value
-        or any(unicodedata.category(character) == "Cc" for character in value)
-        or any(part in {"", ".", ".."} for part in value.split("/"))
-    ):
+    if not value or value.startswith("/") or "\\" in value or ":" in value:
+        fail_protocol("plan operation source path is unsafe")
+    if any(unicodedata.category(character) == "Cc" for character in value):
+        fail_protocol("plan operation source path is unsafe")
+    if any(part in {"", ".", ".."} for part in value.split("/")):
         fail_protocol("plan operation source path is unsafe")
 
 
@@ -884,12 +927,16 @@ def _validate_destination(value: str) -> None:
         fail_protocol("plan operation destination is unsafe")
     package, separator, object_name = value.rpartition(".")
     if not separator or "." in package:
-        fail_protocol("plan operation destination is not a complete object path")
-    _parent, slash, asset_name = package.rpartition("/")
+        fail_protocol(
+            "plan operation destination is not a complete object path"
+        )
+    _, slash, asset_name = package.rpartition("/")
     if not slash or object_name != asset_name:
         fail_protocol("plan operation object name does not match its package")
     segments = tuple(part for part in package.split("/") if part)
-    if not segments or any(_UNREAL_NAME.fullmatch(part) is None for part in segments):
+    if not segments or any(
+        _UNREAL_NAME.fullmatch(part) is None for part in segments
+    ):
         fail_protocol("plan operation destination contains an invalid segment")
 
 

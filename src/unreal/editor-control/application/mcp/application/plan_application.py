@@ -30,6 +30,8 @@
 
 """Serialized native application of one complete reviewed Unreal import plan."""
 
+# cspell:ignore BLE
+
 from __future__ import annotations
 
 from collections.abc import Mapping
@@ -47,6 +49,7 @@ from mcp.domain.plan_execution import NativeImportStep
 from mcp.domain.tool_outcome import ToolCallOutcome
 
 _ASSET_TOOLSET = "editor_toolset.toolsets.asset.AssetTools"
+_IMPORT_TOOLSET = "SharImportEditor.SharImportToolset"
 
 
 class NativePlanClient(Protocol):
@@ -89,46 +92,21 @@ def apply_import_plan(
     """Apply one complete import plan or compensate every created asset."""
     _require_application_ready(compiled, capabilities, source_paths)
     for step in compiled.imports:
-        if _exists(client, step.package_path):
-            fail_protocol("native import destination already exists")
+        _require_step_absent(client, step, changed=False)
 
     created: list[NativeImportStep] = []
     saved_count = 0
     verified_count = 0
     try:
         for step in compiled.imports:
-            if _exists(client, step.package_path):
-                fail_protocol("native import destination changed before import")
+            _require_step_absent(client, step, changed=True)
             source = source_paths[step.operation_id].absolute()
-            try:
-                outcome = client.call_tool(
-                    step.toolset_name,
-                    step.tool_name,
-                    step.arguments(str(source)),
-                )
-            except BaseException as import_error:
-                try:
-                    if _exists(client, step.package_path):
-                        created.append(step)
-                except BaseException:
-                    import_error.add_note(
-                        "native import outcome and destination state are both unknown"
-                    )
-                raise
+            outcome = _invoke_import(client, step, source, created)
             created.append(step)
-            _require_nonempty_import_result(outcome, step)
-            if not _exists(client, step.package_path):
-                fail_protocol("native import did not publish its destination")
-            actual_class = _asset_class(client, step.package_path)
-            if actual_class != step.target_class:
-                fail_protocol("native import produced an unexpected asset class")
+            _verify_and_save_import(client, outcome, step)
             verified_count += 1
-            if not _save(client, step.package_path):
-                fail_protocol("native import asset save returned false")
             saved_count += 1
-            if _is_dirty(client, step.package_path):
-                fail_protocol("native import asset remained dirty after save")
-    except BaseException as error:
+    except Exception as error:
         _compensate(client, created, error)
         raise
 
@@ -138,6 +116,91 @@ def apply_import_plan(
         saved_count=saved_count,
         verified_count=verified_count,
     )
+
+
+def _require_step_absent(
+    client: NativePlanClient,
+    step: NativeImportStep,
+    *,
+    changed: bool,
+) -> None:
+    if _exists(client, step.package_path):
+        message = (
+            "native import destination changed before import"
+            if changed
+            else "native import destination already exists"
+        )
+        fail_protocol(message)
+    if step.has_external_payload and _payload_exists(client, step):
+        message = (
+            "native import external payload changed before import"
+            if changed
+            else "native import external payload already exists"
+        )
+        fail_protocol(message)
+
+
+def _invoke_import(
+    client: NativePlanClient,
+    step: NativeImportStep,
+    source: Path,
+    created: list[NativeImportStep],
+) -> ToolCallOutcome:
+    try:
+        return client.call_tool(
+            step.toolset_name,
+            step.tool_name,
+            step.arguments(str(source)),
+        )
+    except Exception as import_error:
+        try:
+            if _step_effect_exists(client, step):
+                created.append(step)
+        except Exception:  # noqa: BLE001
+            import_error.add_note(
+                "native import outcome and destination state are both unknown"
+            )
+        raise
+
+
+def _step_effect_exists(
+    client: NativePlanClient,
+    step: NativeImportStep,
+) -> bool:
+    if _exists(client, step.package_path):
+        return True
+    return step.has_external_payload and _payload_exists(client, step)
+
+
+def _verify_and_save_import(
+    client: NativePlanClient,
+    outcome: ToolCallOutcome,
+    step: NativeImportStep,
+) -> None:
+    _require_nonempty_import_result(outcome, step)
+    if not _exists(client, step.package_path):
+        fail_protocol("native import did not publish its destination")
+    actual_class = _asset_class(client, step.package_path)
+    if actual_class != step.target_class:
+        fail_protocol("native import produced an unexpected asset class")
+    if step.has_external_payload:
+        _verify_media_payload(client, step)
+    if not _save(client, step.package_path):
+        fail_protocol("native import asset save returned false")
+    if _is_dirty(client, step.package_path):
+        fail_protocol("native import asset remained dirty after save")
+
+
+def _verify_media_payload(
+    client: NativePlanClient,
+    step: NativeImportStep,
+) -> None:
+    if _payload_path(client, step) != step.external_payload_path:
+        fail_protocol(
+            "native media import published an unexpected payload path"
+        )
+    if not _payload_exists(client, step):
+        fail_protocol("native media import omitted its external payload")
 
 
 def _require_application_ready(
@@ -155,7 +218,9 @@ def _require_application_ready(
     if not required_ids or not required_ids.issubset(source_paths):
         fail_protocol("native import source evidence is incomplete")
     if len(required_ids) != len(compiled.imports):
-        fail_protocol("native import plan contains duplicate operation identities")
+        fail_protocol(
+            "native import plan contains duplicate operation identities"
+        )
 
 
 def _exists(client: NativePlanClient, package_path: str) -> bool:
@@ -205,7 +270,7 @@ def _delete(client: NativePlanClient, package_path: str) -> None:
             f"{_ASSET_TOOLSET}.delete",
             {"path": package_path},
         )
-    except BaseException:
+    except Exception:
         if not _exists(client, package_path):
             return
         raise
@@ -216,13 +281,18 @@ def _delete(client: NativePlanClient, package_path: str) -> None:
 def _compensate(
     client: NativePlanClient,
     created: list[NativeImportStep],
-    primary_error: BaseException,
+    primary_error: Exception,
 ) -> None:
     failures = 0
     for step in reversed(created):
+        if step.has_external_payload:
+            try:
+                _delete_payload(client, step)
+            except Exception:  # noqa: BLE001
+                failures += 1
         try:
             _delete(client, step.package_path)
-        except BaseException:
+        except Exception:  # noqa: BLE001
             failures += 1
     if failures:
         primary_error.add_note(
@@ -241,15 +311,59 @@ def _require_nonempty_import_result(
     )
     if not isinstance(value, list) or not value:
         fail_protocol("native import result contains no created assets")
-    if step.route_id == "sound-wave-wav-v1":
+    if step.route_id in {"file-media-source-hap-v1", "sound-wave-wav-v1"}:
         if step.destination not in value:
-            fail_protocol("native audio import omitted its planned destination")
+            fail_protocol("native SHAR import omitted its planned destination")
         if any(not isinstance(item, str) or not item for item in value):
-            fail_protocol("native audio import returned an invalid object path")
+            fail_protocol("native SHAR import returned an invalid object path")
         return
     for item in value:
         if not isinstance(item, dict):
             fail_protocol("native import result contains a non-object asset")
+
+
+def _payload_arguments(step: NativeImportStep) -> JsonObject:
+    if not step.has_external_payload:
+        fail_protocol("native import has no external payload")
+    return {"assetPath": step.destination}
+
+
+def _payload_exists(client: NativePlanClient, step: NativeImportStep) -> bool:
+    outcome = client.call_tool(
+        _IMPORT_TOOLSET,
+        f"{_IMPORT_TOOLSET}.FileMediaSourcePayloadExists",
+        _payload_arguments(step),
+    )
+    return _return_boolean(outcome, context="media payload existence result")
+
+
+def _payload_path(client: NativePlanClient, step: NativeImportStep) -> str:
+    outcome = client.call_tool(
+        _IMPORT_TOOLSET,
+        f"{_IMPORT_TOOLSET}.GetFileMediaSourcePath",
+        _payload_arguments(step),
+    )
+    result = _structured_result(outcome, context="media payload path result")
+    value = result.get("returnValue")
+    if not isinstance(value, str) or not value:
+        fail_protocol("media payload path result is not non-empty text")
+    return value
+
+
+def _delete_payload(client: NativePlanClient, step: NativeImportStep) -> None:
+    try:
+        outcome = client.call_tool(
+            _IMPORT_TOOLSET,
+            f"{_IMPORT_TOOLSET}.DeleteFileMediaSourcePayload",
+            _payload_arguments(step),
+        )
+        _ = _return_boolean(outcome, context="media payload delete result")
+    except Exception:
+        if not _payload_exists(client, step):
+            return
+        raise
+    if _payload_exists(client, step):
+        fail_protocol("compensating delete left the media payload present")
 
 
 def _return_boolean(outcome: ToolCallOutcome, *, context: str) -> bool:

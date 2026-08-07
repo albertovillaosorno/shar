@@ -32,6 +32,7 @@
 
 from __future__ import annotations
 
+# ruff: noqa: PLR0913
 from mcp.domain.plan_bundle import PlanBundleReport
 from mcp.domain.plan_bundle import PlanOperation
 from mcp.domain.plan_bundle import ValidatedPlanBundle
@@ -73,13 +74,17 @@ def _operation(
     )
 
 
-def _bundle(*operations: PlanOperation) -> ValidatedPlanBundle:
+def _bundle(
+    *operations: PlanOperation,
+    semantic_blocker_count: int = 0,
+) -> ValidatedPlanBundle:
     report = PlanBundleReport(
         revision="b" * 64,
         source_manifest_revision="c" * 64,
         engine_contract_revision="shar-unreal-porting-contract-v1",
         target_engine_version="5.8.1",
         target_platform="editor",
+        semantic_blocker_count=semantic_blocker_count,
         operation_count=len(operations),
         readiness_counts={},
         plans=(),
@@ -126,7 +131,7 @@ def test_compiles_exact_texture_and_static_mesh_routes() -> None:
     }
 
 
-def test_reports_readiness_and_missing_native_routes_without_partial_success() -> None:
+def test_reports_blockers_without_partial_success() -> None:
     blocked_fbx = _operation(
         operation_id="operation-0000000000000003",
         source_format="fbx",
@@ -156,36 +161,59 @@ def test_reports_readiness_and_missing_native_routes_without_partial_success() -
         operation_id="operation-0000000000000006",
         source_format="json",
         target_family="structured-data",
-        target_class="DataAsset",
-        importer="shar-data-asset-factory",
-        import_profile="shar-data-asset-v1",
+        target_class="WidgetBlueprint",
+        importer="shar-ui-factory",
+        import_profile="shar-ui-v1",
         readiness="requires-editor-factory",
     )
     compiled = compile_execution_plan(
         _bundle(blocked_fbx, audio, media, construction)
     )
     assert not compiled.report.complete
-    assert len(compiled.imports) == 1
-    audio_step = compiled.imports[0]
+    assert len(compiled.imports) == 2
+    audio_step, media_step = compiled.imports
     assert audio_step.route_id == "sound-wave-wav-v1"
     assert audio_step.toolset_name == "SharImportEditor.SharImportToolset"
     assert audio_step.tool_name.endswith(".ImportSoundWave")
     assert audio_step.target_class == "SoundWave"
+    assert audio_step.external_payload_path is None
     assert audio_step.arguments("C:/verified/source.wav") == {
         "assetName": "asset_0000000000000004",
         "folderPath": "/Game/Generated/SHAR/test",
         "sourceFile": "C:/verified/source.wav",
     }
-    assert compiled.report.route_counts == {"sound-wave-wav-v1": 1}
+    assert media_step.route_id == "file-media-source-hap-v1"
+    assert media_step.tool_name.endswith(".ImportFileMediaSource")
+    assert media_step.target_class == "FileMediaSource"
+    assert media_step.external_payload_path == (
+        "./Movies/Generated/SHAR/test/asset_0000000000000005.mov"
+    )
+    assert media_step.arguments("C:/verified/source.mov") == {
+        "assetName": "asset_0000000000000005",
+        "folderPath": "/Game/Generated/SHAR/test",
+        "sourceFile": "C:/verified/source.mov",
+    }
+    assert compiled.report.route_counts == {
+        "file-media-source-hap-v1": 1,
+        "sound-wave-wav-v1": 1,
+    }
     assert compiled.report.blocked_readiness == {
         "requires-conversion": 1,
         "requires-editor-factory": 1,
     }
-    assert compiled.report.unsupported_routes == {
-        "hap/FileMediaSource/media-source-movie/shar-hap-movie-v1": 1,
-    }
+    assert compiled.report.unsupported_routes == {}
     public = compiled.report.to_json()
     rendered = str(public)
     assert "C:/verified" not in rendered
     assert "extracted/" not in rendered
     assert public["complete"] is False
+
+
+def test_semantic_blockers_prevent_false_complete_empty_bundle() -> None:
+    compiled = compile_execution_plan(_bundle(semantic_blocker_count=1))
+    assert compiled.imports == ()
+    assert compiled.report.operation_count == 0
+    assert compiled.report.compiled_count == 0
+    assert compiled.report.semantic_blocker_count == 1
+    assert compiled.report.complete is False
+    assert compiled.report.to_json()["semanticBlockerCount"] == 1
