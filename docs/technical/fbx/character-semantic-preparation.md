@@ -49,11 +49,11 @@ The existing character writer preserves and serializes:
 
 - source polygon and vertex counts;
 - authored mesh partitions;
-- materials and embedded texture evidence;
+- materials and deterministic external texture references;
 - skeleton hierarchy and transforms;
 - skin clusters and weights;
 - animation curves and source-rate timing; and
-- one self-contained character presentation per FBX artifact.
+- one deterministic character presentation package per FBX artifact.
 
 These capabilities are transport behavior. A successful FBX import alone does
 not prove semantic preparation conformance.

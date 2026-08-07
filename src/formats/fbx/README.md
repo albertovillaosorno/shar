@@ -78,12 +78,15 @@ Phase 3 package id
 
 ## Character writer status
 
-The character writer implements geometry, materials, embedded textures, authored
-mesh partitions, skeleton hierarchy, skinning, native animation curves,
-source-rate key timing, and deterministic binary output. Repository-owned
-synthetic fixtures and binary-contract tests verify those implemented semantics.
-The writer does not forcibly fuse separate source meshes, so a character may
-legitimately retain multiple authored mesh partitions.
+The character writer implements geometry, materials, authored mesh partitions,
+explicit polygon smoothing when authored normals exist, skeleton hierarchy,
+skinning, native animation curves, source-rate key timing, and deterministic
+binary output. It supports both external texture references and an explicit
+compatibility mode for embedded texture payloads; canonical production package
+export keeps textures external. Repository-owned synthetic fixtures and binary-
+contract tests verify those implemented semantics. The writer does not forcibly
+fuse separate source meshes, so a character may legitimately retain multiple
+authored mesh partitions.
 
 Optional Blender or Maya scripts remain experimental inspection aids. Results
 observed in those applications do not replace repository-owned validation and do
@@ -92,17 +95,20 @@ capability reports, the binary writer, and canonical validation remain
 authoritative.
 
 Phase 4 remains incomplete until one consolidated ignored catalog under
-`fbx-assets/` contains every model-like package required by the package index,
-not only representative characters. Canonical artifacts live at
-`fbx-assets/packages/<package_name>/<package_name>.fbx`; `catalog.jsonl` records
-the exact package identity, path, size, SHA-256 digest, and binary FBX 7.7
-version. Publication is all-or-nothing across characters, animations, props,
-vehicles, world pieces, interiors, mission geometry, UI models, and cinematics.
+`fbx-assets/` contains every manifest package currently classified
+`requires-fbx`, not only representative examples. Canonical artifacts live at
+`fbx-assets/packages/<package_name>/<package_name>.fbx`, with deterministic
+external PNG evidence below each package's `textures/` directory when present.
+The v2 `catalog.jsonl` records exact FBX package identities plus every declared
+artifact path, size, and SHA-256 digest; FBX rows also pin binary version 7.7.
+Publication is all-or-nothing across the manifest packages currently eligible
+for direct FBX conversion. Skeletal bundles and composite geometry remain outside
+that catalog until their companion-aware or semantic conversion contracts exist.
 
 Individual family exporters remain useful implementation lanes, but their local
 success is not Phase 4 completion evidence. The accepted catalog must match the
-complete Unreal manifest inventory and pass independent binary read-back before
-model operations become ready for native import.
+complete `requires-fbx` manifest inventory and pass independent binary read-back
+before those model operations become ready for native import.
 
 ## Non-goals
 

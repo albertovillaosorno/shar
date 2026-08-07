@@ -18,13 +18,16 @@ coordinates, normals, tangents, and binormals.
 
 Surface channels are canonical arrays associated with validated mesh vertices or
 polygon corners. One coordinate-conversion boundary transforms orientation and
-handedness consistently across positions and surface vectors.
+handedness consistently across positions and surface vectors. When authored
+normals exist, binary FBX output also emits explicit polygon smoothing metadata.
+The smoothing layer is omitted with the normal layer when normals are absent.
 
 ## Invariants
 
 - Required channels match the owning geometry cardinality.
 - Texture-coordinate channel identity and order are stable.
 - Surface vectors are finite and use one declared coordinate convention.
+- Explicit FBX smoothing accompanies authored normals and does not replace them.
 
 ## Failure behavior
 
@@ -36,3 +39,5 @@ handedness consistently across positions and surface vectors.
 - Channel-cardinality tests cover vertex and polygon-corner ownership.
 - Coordinate tests verify consistent orientation across all vector families.
 - Read-back tests compare channel names and ordering.
+- Binary-contract tests require polygon smoothing metadata when normals exist and
+  reject it from incomplete-normal output.
