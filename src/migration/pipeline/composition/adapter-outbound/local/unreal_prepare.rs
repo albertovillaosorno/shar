@@ -43,12 +43,9 @@ use serde_json::{Map, Value};
 use shar_sha256::digest_hex;
 use shar_unreal_conversion::domain::PlanBundle;
 
+use super::unreal_fbx_catalog::{FBX_CATALOG_ROOT, verified_fbx_catalog};
 use crate::adapters::driven::check_cancellation;
 use crate::adapters::driven::local::progress::StageProgress;
-use super::unreal_fbx_catalog::{
-    FBX_CATALOG_ROOT, verified_fbx_catalog,
-};
-
 use crate::domain::{
     PhaseThreePackageIndex, PipelineConfig, PipelineError, PipelineOutcome,
     StageReport, UNREAL_IMPORT_MANIFEST_SCHEMA, UNREAL_IMPORT_SUMMARY_SCHEMA,
@@ -88,8 +85,7 @@ pub(super) fn prepare_unreal(
     let manifest_path = minor_unit_root.join("manifest.jsonl");
     let audit_path = minor_unit_root.join("audit.json");
     let index_path = minor_unit_root.join("index.jsonl");
-    let manifest_text =
-        read_utf8(&manifest_path, "read minor-unit manifest")?;
+    let manifest_text = read_utf8(&manifest_path, "read minor-unit manifest")?;
     validate_audit(&audit_path, &manifest_text)?;
     let index = PhaseThreePackageIndex::read_for_unreal(&index_path).map_err(
         |error| {
@@ -112,20 +108,22 @@ pub(super) fn prepare_unreal(
     let manifest_revision = digest_hex(manifest_jsonl.as_bytes());
     let fbx_catalog = verified_fbx_catalog(Path::new(FBX_CATALOG_ROOT))?;
     let verified_fbx_count = fbx_catalog.as_ref().map_or(0, Vec::len);
-    let plan_bundle = fbx_catalog.as_deref().map_or_else(
-        || unreal_manifest.plan_bundle(&manifest_revision),
-        |catalog| {
-            unreal_manifest.plan_bundle_with_complete_fbx_catalog(
-                &manifest_revision,
-                catalog,
-            )
-        },
-    )
-    .map_err(|error| {
-        PipelineError::new(format!(
-            "Unreal plan generation failed: {error}"
-        ))
-    })?;
+    let plan_bundle = fbx_catalog
+        .as_deref()
+        .map_or_else(
+            || unreal_manifest.plan_bundle(&manifest_revision),
+            |catalog| {
+                unreal_manifest.plan_bundle_with_complete_fbx_catalog(
+                    &manifest_revision,
+                    catalog,
+                )
+            },
+        )
+        .map_err(|error| {
+            PipelineError::new(format!(
+                "Unreal plan generation failed: {error}"
+            ))
+        })?;
     publish_staging(&manifest_jsonl, &summary_json, &plan_bundle)?;
     Ok(StageReport {
         name: "prepare-unreal",
@@ -300,9 +298,7 @@ fn resolve_source_path(
             .file_name()
             .and_then(|value| value.to_str())
             .ok_or_else(|| {
-                PipelineError::new(
-                    "pipeline root has no portable basename",
-                )
+                PipelineError::new("pipeline root has no portable basename")
             })?;
         let prefix = format!("{root_name}/");
         if let Some(relative) = manifest_path.strip_prefix(&prefix) {
@@ -325,9 +321,7 @@ fn validate_relative_path(path: &str) -> PipelineOutcome<()> {
             .split('/')
             .any(|part| part.is_empty() || part == "." || part == "..")
     {
-        return Err(PipelineError::new(
-            "unsafe minor-unit relative path",
-        ));
+        return Err(PipelineError::new("unsafe minor-unit relative path"));
     }
     Ok(())
 }
@@ -484,6 +478,7 @@ struct RenderedCounts {
     direct_imports: u64,
     requires_fbx: u64,
     requires_editor_factory: u64,
+    requires_semantic_conversion: u64,
     metadata_only: u64,
 }
 
@@ -520,6 +515,10 @@ fn declared_rendered_counts(
         ("direct_import_count", "direct_imports"),
         ("requires_fbx_count", "requires_fbx"),
         ("requires_editor_factory_count", "requires_editor_factory"),
+        (
+            "requires_semantic_conversion_count",
+            "requires_semantic_conversion",
+        ),
         ("metadata_only_count", "metadata_only"),
     ];
     for (header_field, summary_field) in fields {
@@ -550,6 +549,11 @@ fn declared_rendered_counts(
         requires_editor_factory: required_u64(
             header,
             "requires_editor_factory_count",
+            "Unreal header",
+        )?,
+        requires_semantic_conversion: required_u64(
+            header,
+            "requires_semantic_conversion_count",
             "Unreal header",
         )?,
         metadata_only: required_u64(
@@ -590,6 +594,10 @@ fn validate_rendered_package(
         "requires-editor-factory" => {
             counts.requires_editor_factory =
                 counts.requires_editor_factory.saturating_add(1);
+        },
+        "requires-semantic-conversion" => {
+            counts.requires_semantic_conversion =
+                counts.requires_semantic_conversion.saturating_add(1);
         },
         "metadata-only" => {
             counts.metadata_only = counts.metadata_only.saturating_add(1);
@@ -642,10 +650,7 @@ fn validate_rendered_source(
     Ok(())
 }
 
-fn validate_public_identifier(
-    value: &str,
-    label: &str,
-) -> PipelineOutcome<()> {
+fn validate_public_identifier(value: &str, label: &str) -> PipelineOutcome<()> {
     let bytes = value.as_bytes();
     if bytes.is_empty()
         || !bytes.first().is_some_and(u8::is_ascii_alphanumeric)
@@ -721,10 +726,7 @@ fn publish_staging(
         &temporary_root,
         "create Unreal temporary root",
     )?;
-    ensure_generated_directory(
-        &pipeline_root,
-        "create Unreal pipeline root",
-    )?;
+    ensure_generated_directory(&pipeline_root, "create Unreal pipeline root")?;
     ensure_generated_directory(
         &transaction_root,
         "create Unreal transaction root",

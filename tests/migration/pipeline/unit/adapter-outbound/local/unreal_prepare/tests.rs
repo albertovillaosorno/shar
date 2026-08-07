@@ -37,11 +37,10 @@ use shar_sha256::digest_hex;
 
 use super::{
     MANIFEST_FILE, PLAN_INDEX_FILE, PUBLISHED_FILES, SUMMARY_FILE,
-    ensure_generated_directory, prepare_io_error, publication_error,
-    read_utf8, retain_source_ids,
-    validate_audit, validate_generated_chain, validate_public_identifier,
-    validate_publication_inventory, validate_relative_path,
-    validate_rendered_output,
+    ensure_generated_directory, prepare_io_error, publication_error, read_utf8,
+    retain_source_ids, validate_audit, validate_generated_chain,
+    validate_public_identifier, validate_publication_inventory,
+    validate_relative_path, validate_rendered_output,
 };
 use crate::domain::{
     UNREAL_IMPORT_MANIFEST_SCHEMA, UNREAL_IMPORT_SUMMARY_SCHEMA,
@@ -189,6 +188,7 @@ fn rendered_fixture(
             "\"package_count\":{},\"source_count\":1,",
             "\"direct_import_count\":1,\"requires_fbx_count\":0,",
             "\"requires_editor_factory_count\":0,",
+            "\"requires_semantic_conversion_count\":0,",
             "\"metadata_only_count\":0}}\n",
             "{{\"schema\":\"{}\",\"record_type\":\"package\",",
             "\"package_id\":\"pkg\",",
@@ -209,6 +209,7 @@ fn rendered_fixture(
             "{{\"schema\":\"{}\",\"packages\":{},",
             "\"sources\":1,\"direct_imports\":1,",
             "\"requires_fbx\":0,\"requires_editor_factory\":0,",
+            "\"requires_semantic_conversion\":0,",
             "\"metadata_only\":0}}\n"
         ),
         UNREAL_IMPORT_SUMMARY_SCHEMA, package_count,
@@ -250,8 +251,8 @@ fn rejects_rendered_source_for_unknown_package() -> Result<(), String> {
 }
 
 #[test]
-fn prepare_io_diagnostics_hide_paths_and_raw_error_text()
--> Result<(), String> {
+fn prepare_io_diagnostics_hide_paths_and_raw_error_text() -> Result<(), String>
+{
     let private_fragment = "private-workstation-unreal-prepare";
     let error = std::io::Error::other(private_fragment);
     let rendered =
@@ -279,8 +280,8 @@ fn prepare_io_diagnostics_hide_paths_and_raw_error_text()
 }
 
 #[test]
-fn relative_path_diagnostics_do_not_echo_rejected_values()
--> Result<(), String> {
+fn relative_path_diagnostics_do_not_echo_rejected_values() -> Result<(), String>
+{
     let private_path = "private-workstation/../escape";
     let Err(error) = validate_relative_path(private_path) else {
         return Err("escaping path was accepted".to_owned());
@@ -322,10 +323,8 @@ fn publication_failure_reports_failed_rollback_without_raw_text()
 #[test]
 fn generated_transaction_chain_rejects_non_directory_ancestors()
 -> Result<(), String> {
-    let private_fragment = format!(
-        "private-unreal-chain-{}",
-        std::process::id()
-    );
+    let private_fragment =
+        format!("private-unreal-chain-{}", std::process::id());
     let root = std::env::temp_dir().join(&private_fragment);
     let directory = root.join("directory");
     let file = root.join("not-a-directory");
@@ -342,7 +341,7 @@ fn generated_transaction_chain_rejects_non_directory_ancestors()
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     let Err(error) = result else {
         return Err(
-            "non-directory transaction ancestor was accepted".to_owned(),
+            "non-directory transaction ancestor was accepted".to_owned()
         );
     };
     let rendered = error.to_string();
@@ -355,12 +354,9 @@ fn generated_transaction_chain_rejects_non_directory_ancestors()
 }
 
 #[test]
-fn generated_directory_creation_stops_at_unsafe_parent()
--> Result<(), String> {
-    let private_fragment = format!(
-        "private-unreal-create-{}",
-        std::process::id()
-    );
+fn generated_directory_creation_stops_at_unsafe_parent() -> Result<(), String> {
+    let private_fragment =
+        format!("private-unreal-create-{}", std::process::id());
     let root = std::env::temp_dir().join(&private_fragment);
     let blocked = root.join("blocked");
     let child = blocked.join("child");
@@ -370,10 +366,7 @@ fn generated_directory_creation_stops_at_unsafe_parent()
     fs::create_dir_all(&root).map_err(|error| error.to_string())?;
     fs::write(&blocked, b"not a directory")
         .map_err(|error| error.to_string())?;
-    let result = ensure_generated_directory(
-        &blocked,
-        "create generated child",
-    );
+    let result = ensure_generated_directory(&blocked, "create generated child");
     let child_exists = child.exists();
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     let Err(error) = result else {
@@ -393,10 +386,8 @@ fn generated_directory_creation_stops_at_unsafe_parent()
 fn rejects_rendered_package_with_unknown_disposition() -> Result<(), String> {
     let private_disposition = "C:/private/import-policy";
     let (manifest, summary) = rendered_fixture(1, "pkg");
-    let manifest = manifest.replace(
-        "direct-editor-import",
-        private_disposition,
-    );
+    let manifest =
+        manifest.replace("direct-editor-import", private_disposition);
     let Err(error) = validate_rendered_output(&manifest, &summary) else {
         return Err("unknown package disposition was accepted".to_owned());
     };
@@ -410,13 +401,11 @@ fn rejects_rendered_package_with_unknown_disposition() -> Result<(), String> {
 }
 
 #[test]
-fn rejects_rendered_source_with_non_object_direct_import(
-) -> Result<(), String> {
+fn rejects_rendered_source_with_non_object_direct_import() -> Result<(), String>
+{
     let (manifest, summary) = rendered_fixture(1, "pkg");
-    let manifest = manifest.replace(
-        "\"direct_import\":{}",
-        "\"direct_import\":\"invalid\"",
-    );
+    let manifest = manifest
+        .replace("\"direct_import\":{}", "\"direct_import\":\"invalid\"");
     let Err(error) = validate_rendered_output(&manifest, &summary) else {
         return Err("non-object direct-import contract was accepted".to_owned());
     };
@@ -427,8 +416,7 @@ fn rejects_rendered_source_with_non_object_direct_import(
 }
 
 #[test]
-fn rejects_noncanonical_rendered_ids_without_echoing_them()
--> Result<(), String> {
+fn rejects_noncanonical_rendered_ids_without_echo() -> Result<(), String> {
     let private_id = "C:/private/package";
     let (manifest, summary) = rendered_fixture(1, "pkg");
     let manifest = manifest.replace(
@@ -454,10 +442,7 @@ fn rejects_rendered_packages_without_sources() -> Result<(), String> {
         .lines()
         .map(|line| {
             if line.contains("\"record_type\":\"package\"") {
-                line.replace(
-                    "\"source_count\":1",
-                    "\"source_count\":0",
-                )
+                line.replace("\"source_count\":1", "\"source_count\":0")
             } else {
                 line.to_owned()
             }
@@ -534,10 +519,8 @@ fn audit_schema_failure_does_not_echo_rejected_value() -> Result<(), String> {
         "shar-unreal-schema-audit-{}.json",
         std::process::id()
     ));
-    let audit = clean_audit(manifest, 1).replace(
-        "shar-schoenwald.minor-unit-audit.v2",
-        private_schema,
-    );
+    let audit = clean_audit(manifest, 1)
+        .replace("shar-schoenwald.minor-unit-audit.v2", private_schema);
     fs::write(&path, audit).map_err(|error| error.to_string())?;
     let result = validate_audit(&path, manifest);
     fs::remove_file(&path).map_err(|error| error.to_string())?;

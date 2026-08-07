@@ -30,6 +30,8 @@
 
 //! Tests unit tests.
 
+// cspell:ignore gvuglogo
+
 use super::{ConversionFamily, PhaseThreePackagePlanner, UnrealTargetKind};
 use crate::domain::package::index::PhaseThreePackageRow;
 
@@ -37,6 +39,15 @@ fn row(
     category: &str,
     subcategory: &str,
     role_field: &str,
+) -> Result<PhaseThreePackageRow, String> {
+    row_with_kind(category, subcategory, role_field, "test")
+}
+
+fn row_with_kind(
+    category: &str,
+    subcategory: &str,
+    role_field: &str,
+    kind: &str,
 ) -> Result<PhaseThreePackageRow, String> {
     let mut json = concat!(
         "{\"package_id\":\"pkg\",\"package_root\":\"pkg\",",
@@ -71,10 +82,10 @@ fn row(
             "\"role\":\"{}\",",
             "\"path\":\"extracted/unit-a.bin\",",
             "\"type\":\"test\",",
-            "\"kind\":\"test\",",
+            "\"kind\":\"{}\",",
             "\"source_chunk_kind\":\"test\"}}]"
         ),
-        role,
+        role, kind,
     );
     json = json.replace("\"members\":[]", &member);
     PhaseThreePackageRow::from_json_line(&json)
@@ -206,6 +217,175 @@ fn routes_metadata_only_packages_to_do_not_import() -> Result<(), String> {
     };
     if unreal.target_kind != UnrealTargetKind::Metadata {
         return Err("metadata package should target metadata".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn routes_movie_payloads_to_media_sources() -> Result<(), String> {
+    let package = row("movies", "movies/story/fmv4", "movie_ids")?;
+    let plan = PhaseThreePackagePlanner::plan(&package);
+    let Some(unreal) = plan.unreal else {
+        return Err("movie package should produce an Unreal plan".to_owned());
+    };
+    if unreal.target_kind != UnrealTargetKind::MediaSource {
+        return Err("movie payload should target a media source".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn keeps_video_less_movie_metadata_non_media() -> Result<(), String> {
+    let package = row("movies", "movies/logos/gvuglogo", "text_ids")?;
+    let plan = PhaseThreePackagePlanner::plan(&package);
+    let Some(unreal) = plan.unreal else {
+        return Err("movie metadata should produce an Unreal plan".to_owned());
+    };
+    if unreal.target_kind != UnrealTargetKind::Metadata {
+        return Err(
+            "movie metadata without video should remain traceability metadata"
+                .to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn routes_derived_language_keys_to_string_tables() -> Result<(), String> {
+    let json = concat!(
+        "{\"package_id\":\"derived-language\",",
+        "\"package_root\":\"derived/language\",",
+        "\"package_category\":\"language\",",
+        "\"package_subcategory\":\"language/text/system\",",
+        "\"unit_count\":0,\"text_key_count\":1,",
+        "\"unit_ids\":[],\"world_ids\":[],",
+        "\"texture_ids\":[],\"material_ids\":[],",
+        "\"model_ids\":[],\"physics_ids\":[],",
+        "\"animation_ids\":[],\"scene_ids\":[],",
+        "\"locator_ids\":[],\"camera_ids\":[],",
+        "\"light_ids\":[],\"particle_ids\":[],",
+        "\"controller_ids\":[],\"audio_ids\":[],",
+        "\"movie_ids\":[],\"script_ids\":[],",
+        "\"text_ids\":[],\"ui_ids\":[],",
+        "\"metadata_ids\":[],\"error_ids\":[],",
+        "\"source_unit_ids\":[\"source-a\"],",
+        "\"text_key_ids\":[\"text-a\"],",
+        "\"members\":[],",
+        "\"text_keys\":[{",
+        "\"id\":\"text-a\",",
+        "\"key\":\"HELLO\",",
+        "\"source_unit_id\":\"source-a\",",
+        "\"subcategory\":\"language/text/system\"}]}"
+    );
+    let package = PhaseThreePackageRow::from_json_line(json)
+        .map_err(|error| error.to_string())?;
+    let plan = PhaseThreePackagePlanner::plan(&package);
+    let Some(unreal) = plan.unreal else {
+        return Err(
+            "derived language package should produce an Unreal plan".to_owned()
+        );
+    };
+    if unreal.target_kind != UnrealTargetKind::StringTable {
+        return Err(
+            "derived language keys should target StringTable".to_owned()
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn routes_physical_language_layouts_to_user_interface() -> Result<(), String> {
+    let package = row("language", "language/ui-text/scene-layouts", "ui_ids")?;
+    let plan = PhaseThreePackagePlanner::plan(&package);
+    let Some(unreal) = plan.unreal else {
+        return Err("language layout should produce an Unreal plan".to_owned());
+    };
+    if unreal.target_kind != UnrealTargetKind::UserInterface {
+        return Err("physical language layout should target UI".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn defers_mission_scripts_for_semantic_compilation() -> Result<(), String> {
+    let package =
+        row("mission-scripts", "missions/level-01/scripts", "script_ids")?;
+    let plan = PhaseThreePackagePlanner::plan(&package);
+    let Some(unreal) = plan.unreal else {
+        return Err(
+            "mission script bundle should produce an Unreal plan".to_owned()
+        );
+    };
+    if unreal.target_kind != UnrealTargetKind::SemanticSource {
+        return Err(
+            "mission script bundle must await semantic compilation".to_owned()
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn routes_texture_font_resources_to_fonts() -> Result<(), String> {
+    let package = row_with_kind(
+        "ui-resources",
+        "ui-resources/fonts/fonts/font0-16",
+        "ui_ids",
+        "p3d-texture-font",
+    )?;
+    let plan = PhaseThreePackagePlanner::plan(&package);
+    let Some(unreal) = plan.unreal else {
+        return Err("font resource should produce an Unreal plan".to_owned());
+    };
+    if unreal.target_kind != UnrealTargetKind::Font {
+        return Err("texture-font evidence should target Font".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn routes_ui_text_bibles_to_string_tables() -> Result<(), String> {
+    let package = row_with_kind(
+        "ui-resources",
+        "ui-resources/language/art-assets/sprite-layouts/txtbible-srr2",
+        "text_ids",
+        "p3d-text-bible",
+    )?;
+    let plan = PhaseThreePackagePlanner::plan(&package);
+    let Some(unreal) = plan.unreal else {
+        return Err("text bible should produce an Unreal plan".to_owned());
+    };
+    if unreal.target_kind != UnrealTargetKind::StringTable {
+        return Err("text-bible evidence should target StringTable".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn routes_cinematic_audio_to_sound_waves() -> Result<(), String> {
+    let package =
+        row("cinematics", "cinematics/nis-audio/spanish", "audio_ids")?;
+    let plan = PhaseThreePackagePlanner::plan(&package);
+    let Some(unreal) = plan.unreal else {
+        return Err("cinematic audio should produce an Unreal plan".to_owned());
+    };
+    if unreal.target_kind != UnrealTargetKind::SoundWave {
+        return Err("cinematic audio should target SoundWave".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn routes_character_texture_companions_to_textures() -> Result<(), String> {
+    let package = row("characters", "characters/rig/common", "texture_ids")?;
+    let plan = PhaseThreePackagePlanner::plan(&package);
+    let Some(unreal) = plan.unreal else {
+        return Err("character texture package should produce an Unreal plan"
+            .to_owned());
+    };
+    if unreal.target_kind != UnrealTargetKind::Texture {
+        return Err(
+            "character texture companion should target Texture2D".to_owned()
+        );
     }
     Ok(())
 }

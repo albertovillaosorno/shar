@@ -34,7 +34,7 @@
 pub const UNREAL_PLAN_SCHEMA: &str = "shar-schoenwald.unreal-plan.v1";
 /// Schema for the compact plan-bundle index.
 pub const UNREAL_PLAN_BUNDLE_SCHEMA: &str =
-    "shar-schoenwald.unreal-plan-bundle.v1";
+    "shar-schoenwald.unreal-plan-bundle.v2";
 
 /// Normalized source representation accepted by Unreal conversion.
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
@@ -335,6 +335,7 @@ pub struct PlanArtifact {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PlanBundle {
     pub(crate) artifacts: Vec<PlanArtifact>,
+    pub(crate) semantic_blocker_count: usize,
     pub(crate) index_revision: String,
     pub(crate) index_json: String,
 }
@@ -344,6 +345,12 @@ impl PlanBundle {
     #[must_use]
     pub fn artifacts(&self) -> &[PlanArtifact] {
         &self.artifacts
+    }
+
+    /// Return the unresolved semantic-source package count.
+    #[must_use]
+    pub const fn semantic_blocker_count(&self) -> usize {
+        self.semantic_blocker_count
     }
 
     /// Return the bundle-index revision.
@@ -397,8 +404,7 @@ fn validate_source_contract(
     let readiness_matches = match source_format {
         SourceFormat::Fbx => matches!(
             readiness,
-            OperationReadiness::Ready
-                | OperationReadiness::RequiresConversion
+            OperationReadiness::Ready | OperationReadiness::RequiresConversion
         ),
         SourceFormat::Wav | SourceFormat::Image | SourceFormat::Hap => {
             readiness == OperationReadiness::Ready

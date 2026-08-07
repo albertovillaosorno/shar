@@ -166,7 +166,7 @@ fn builds_deterministic_direct_texture_import() -> Result<(), String> {
         return Err("manifest serialization is not deterministic".to_owned());
     }
     for expected in [
-        "shar-schoenwald.unreal-import-manifest.v1",
+        "shar-schoenwald.unreal-import-manifest.v2",
         "\"direct_import_count\":1",
         "\"target_class\":\"Texture2D\"",
         "/Game/Generated/SHAR/ui_images/extracted_ui_icon/texture_a.texture_a",
@@ -220,16 +220,14 @@ fn emits_complete_deterministic_plan_bundle() -> Result<(), String> {
 
 #[test]
 fn complete_fbx_catalog_promotes_model_import_to_ready() -> Result<(), String> {
-    let manifest = UnrealImportManifest::build(
-        &model_index()?,
-        vec![model_evidence()],
-    )?;
+    let manifest =
+        UnrealImportManifest::build(&model_index()?, vec![model_evidence()])?;
     let revision = digest_hex(manifest.to_jsonl().as_bytes());
     let pending = manifest.plan_bundle(&revision)?;
-    let verified = manifest.plan_bundle_with_complete_fbx_catalog(
-        &revision,
-        &[verified_model_fbx()],
-    )?;
+    let verified = manifest
+        .plan_bundle_with_complete_fbx_catalog(&revision, &[
+            verified_model_fbx(),
+        ])?;
     let pending_json = &pending
         .artifacts()
         .iter()
@@ -244,10 +242,8 @@ fn complete_fbx_catalog_promotes_model_import_to_ready() -> Result<(), String> {
         .json;
     if !pending_json.contains(r#""readiness":"requires-conversion""#)
         || !verified_json.contains(r#""readiness":"ready""#)
-        || !verified_json.contains(&format!(
-            r#""source_revision":"{}""#,
-            "c".repeat(64)
-        ))
+        || !verified_json
+            .contains(&format!(r#""source_revision":"{}""#, "c".repeat(64)))
         || !verified_json.contains(r#""target_engine_version":"5.8.1""#)
     {
         return Err(
@@ -260,10 +256,8 @@ fn complete_fbx_catalog_promotes_model_import_to_ready() -> Result<(), String> {
 #[test]
 fn complete_fbx_catalog_rejects_missing_and_unclaimed_packages()
 -> Result<(), String> {
-    let manifest = UnrealImportManifest::build(
-        &model_index()?,
-        vec![model_evidence()],
-    )?;
+    let manifest =
+        UnrealImportManifest::build(&model_index()?, vec![model_evidence()])?;
     let revision = digest_hex(manifest.to_jsonl().as_bytes());
     if manifest
         .plan_bundle_with_complete_fbx_catalog(&revision, &[])
@@ -274,10 +268,10 @@ fn complete_fbx_catalog_rejects_missing_and_unclaimed_packages()
     let mut extra = verified_model_fbx();
     extra.package_id = "unclaimed-model".to_owned();
     if manifest
-        .plan_bundle_with_complete_fbx_catalog(
-            &revision,
-            &[verified_model_fbx(), extra],
-        )
+        .plan_bundle_with_complete_fbx_catalog(&revision, &[
+            verified_model_fbx(),
+            extra,
+        ])
         .is_ok()
     {
         return Err("unclaimed FBX catalog package was accepted".to_owned());
@@ -286,12 +280,10 @@ fn complete_fbx_catalog_rejects_missing_and_unclaimed_packages()
 }
 
 #[test]
-fn complete_fbx_catalog_rejects_stale_artifact_contract()
--> Result<(), String> {
-    let manifest = UnrealImportManifest::build(
-        &model_index()?,
-        vec![model_evidence()],
-    )?;
+fn complete_fbx_catalog_rejects_stale_artifact_contract() -> Result<(), String>
+{
+    let manifest =
+        UnrealImportManifest::build(&model_index()?, vec![model_evidence()])?;
     let revision = digest_hex(manifest.to_jsonl().as_bytes());
     for mutate in ["path", "digest", "version", "size"] {
         let mut artifact = verified_model_fbx();
@@ -369,6 +361,57 @@ fn direct_policy_without_compatible_source_requires_factory()
 }
 
 #[test]
+fn semantic_source_policy_requires_upstream_compilation() -> Result<(), String>
+{
+    let policy = super::native_policy(Some(
+        crate::domain::package::UnrealTargetKind::SemanticSource,
+    ));
+    if policy.disposition != "requires-semantic-conversion"
+        || policy.target_kind != "SemanticSource"
+        || policy.importer != "semantic-converter"
+        || policy.reason.is_none()
+    {
+        return Err("unexpected semantic-source policy".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn semantic_source_reserves_no_unreal_object() -> Result<(), String> {
+    use std::collections::BTreeSet;
+
+    let policy = super::native_policy(Some(
+        crate::domain::package::UnrealTargetKind::SemanticSource,
+    ));
+    let mut staged_files = Vec::new();
+    let mut unreal_objects = Vec::new();
+    let mut staged_paths = BTreeSet::new();
+    let mut object_paths = BTreeSet::new();
+    let mut summary = super::UnrealImportSummary::default();
+    super::add_package_outputs(
+        crate::domain::package::ConversionFamily::UnrealNative,
+        policy.disposition,
+        "package",
+        "/Game/Generated/SHAR/missions/package",
+        &mut staged_files,
+        &mut unreal_objects,
+        &mut staged_paths,
+        &mut object_paths,
+        &mut summary,
+    )?;
+    if !staged_files.is_empty()
+        || !unreal_objects.is_empty()
+        || summary.requires_semantic_conversion != 1
+        || summary.requires_editor_factory != 0
+    {
+        return Err(
+            "semantic source incorrectly reserved an Unreal asset".to_owned()
+        );
+    }
+    Ok(())
+}
+
+#[test]
 fn factory_policy_keeps_primary_object_with_direct_companion()
 -> Result<(), String> {
     use std::collections::BTreeSet;
@@ -437,9 +480,7 @@ fn rejects_nonportable_source_and_provenance_paths() -> Result<(), String> {
                 "unsafe source path was accepted: {unsafe_path}"
             ));
         };
-        if error != "unsafe Unreal source path"
-            || error.contains(unsafe_path)
-        {
+        if error != "unsafe Unreal source path" || error.contains(unsafe_path) {
             return Err(format!("unexpected source-path failure: {error}"));
         }
     }
@@ -473,7 +514,8 @@ fn rejects_noncanonical_source_identity_without_echoing_it()
     let private_id = "C:/private/source";
     let mut source = evidence();
     source.id = private_id.to_owned();
-    let Err(error) = UnrealImportManifest::build(&index()?, vec![source]) else {
+    let Err(error) = UnrealImportManifest::build(&index()?, vec![source])
+    else {
         return Err("path-shaped source identity was accepted".to_owned());
     };
     if error.contains(private_id)
@@ -509,7 +551,8 @@ fn rejects_uppercase_path_extension_even_when_evidence_matches()
     source.path = "extracted/ui/icon.PNG".to_owned();
     source.file_extension = "png".to_owned();
     let uppercase_index = index_with_member_path("extracted/ui/icon.PNG")?;
-    let Err(error) = UnrealImportManifest::build(&uppercase_index, vec![source])
+    let Err(error) =
+        UnrealImportManifest::build(&uppercase_index, vec![source])
     else {
         return Err("uppercase source path extension was accepted".to_owned());
     };
@@ -520,8 +563,7 @@ fn rejects_uppercase_path_extension_even_when_evidence_matches()
 }
 
 #[test]
-fn object_path_validation_covers_asset_package_segment()
--> Result<(), String> {
+fn object_path_validation_covers_asset_package_segment() -> Result<(), String> {
     let invalid = "/Game/Generated/SHAR/ui/bad name/bad name.bad name";
     let Err(error) = super::validate_unreal_object_path(invalid) else {
         return Err("invalid asset package segment was accepted".to_owned());
@@ -533,8 +575,7 @@ fn object_path_validation_covers_asset_package_segment()
 }
 
 #[test]
-fn object_path_validation_does_not_echo_rejected_paths()
--> Result<(), String> {
+fn object_path_validation_does_not_echo_rejected_paths() -> Result<(), String> {
     for (invalid, expected) in [
         ("C:/private/object.asset", "unsafe Unreal package path"),
         (
@@ -558,11 +599,9 @@ fn collision_diagnostic_does_not_echo_rejected_path() -> Result<(), String> {
 
     let private_path = "C:/private/collision";
     let mut paths = BTreeSet::from([private_path.to_ascii_lowercase()]);
-    let Err(error) = super::claim_path(
-        &mut paths,
-        private_path,
-        "Unreal object",
-    ) else {
+    let Err(error) =
+        super::claim_path(&mut paths, private_path, "Unreal object")
+    else {
         return Err("case-insensitive collision was accepted".to_owned());
     };
     if error.contains(private_path)

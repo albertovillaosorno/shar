@@ -54,6 +54,7 @@ pub(super) fn manifest_jsonl(manifest: &UnrealImportManifest) -> String {
             "\"package_count\":{},\"source_count\":{},",
             "\"direct_import_count\":{},\"requires_fbx_count\":{},",
             "\"requires_editor_factory_count\":{},",
+            "\"requires_semantic_conversion_count\":{},",
             "\"metadata_only_count\":{}}}",
             "\n{}"
         ),
@@ -63,6 +64,7 @@ pub(super) fn manifest_jsonl(manifest: &UnrealImportManifest) -> String {
         summary.direct_imports,
         summary.requires_fbx,
         summary.requires_editor_factory,
+        summary.requires_semantic_conversion,
         summary.metadata_only,
         body,
     )
@@ -75,6 +77,7 @@ pub(super) fn summary_json(manifest: &UnrealImportManifest) -> String {
             "{{\"schema\":\"{}\",\"packages\":{},",
             "\"sources\":{},\"direct_imports\":{},",
             "\"requires_fbx\":{},\"requires_editor_factory\":{},",
+            "\"requires_semantic_conversion\":{},",
             "\"metadata_only\":{}}}\n"
         ),
         UNREAL_IMPORT_SUMMARY_SCHEMA,
@@ -83,6 +86,7 @@ pub(super) fn summary_json(manifest: &UnrealImportManifest) -> String {
         summary.direct_imports,
         summary.requires_fbx,
         summary.requires_editor_factory,
+        summary.requires_semantic_conversion,
         summary.metadata_only,
     )
 }

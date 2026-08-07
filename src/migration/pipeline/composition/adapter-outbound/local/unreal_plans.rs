@@ -118,11 +118,10 @@ impl UnrealImportManifest {
             }
         }
         if !fbx_by_package.is_empty() {
-            return Err(
-                "generated FBX catalog contains an unclaimed package".to_owned()
-            );
+            return Err("generated FBX catalog contains an unclaimed package"
+                .to_owned());
         }
-        PlanBundle::build(
+        PlanBundle::build_with_semantic_blockers(
             &PlanContext {
                 source_manifest_revision: manifest_revision.to_owned(),
                 engine_contract_revision: ENGINE_CONTRACT_REVISION.to_owned(),
@@ -130,6 +129,7 @@ impl UnrealImportManifest {
                 target_platform: TARGET_PLATFORM.to_owned(),
             },
             operations,
+            self.summary.requires_semantic_conversion,
         )
     }
 }
@@ -195,7 +195,9 @@ fn package_operation<'catalog>(
         "requires-editor-factory" => {
             Ok(Some(construction_operation(package, manifest_revision)))
         },
-        "direct-editor-import" | "metadata-only" => Ok(None),
+        "direct-editor-import"
+        | "metadata-only"
+        | "requires-semantic-conversion" => Ok(None),
         disposition => {
             Err(format!("unsupported package disposition: {disposition}"))
         },
@@ -291,16 +293,19 @@ fn validate_fbx_evidence(
             byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-'
         })
     {
-        return Err("generated FBX package identity is not canonical".to_owned());
+        return Err(
+            "generated FBX package identity is not canonical".to_owned()
+        );
     }
     if evidence.path.is_empty()
         || evidence.path.starts_with('/')
         || evidence.path.contains(char::from(92))
         || evidence.path.contains(':')
         || evidence.path.chars().any(char::is_control)
-        || evidence.path.split('/').any(|part| {
-            part.is_empty() || part == "." || part == ".."
-        })
+        || evidence
+            .path
+            .split('/')
+            .any(|part| part.is_empty() || part == "." || part == "..")
     {
         return Err("generated FBX catalog path is unsafe".to_owned());
     }
@@ -308,9 +313,10 @@ fn validate_fbx_evidence(
         return Err("generated FBX artifact is too small".to_owned());
     }
     if evidence.sha256.len() != 64
-        || !evidence.sha256.bytes().all(|byte| {
-            byte.is_ascii_digit() || matches!(byte, b'a'..=b'f')
-        })
+        || !evidence
+            .sha256
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || matches!(byte, b'a'..=b'f'))
     {
         return Err("generated FBX digest is not canonical".to_owned());
     }
