@@ -157,6 +157,39 @@ bool FSharMissionDefinitionValidationTest::RunTest(const FString& Parameters)
     Mission->GatherValidationErrors(Errors);
     TestTrue(TEXT("Valid mission definition passes"), Errors.IsEmpty());
 
+    const TArray<FName> DocumentedSourceObjectiveKinds = {
+        FName(TEXT("travel")),
+        FName(TEXT("dialogue")),
+        FName(TEXT("talk")),
+        FName(TEXT("race")),
+        FName(TEXT("enter_vehicle")),
+        FName(TEXT("timer")),
+        FName(TEXT("enter_interior")),
+        FName(TEXT("destroy")),
+        FName(TEXT("deliver")),
+        FName(TEXT("avoid")),
+        FName(TEXT("dumped_collectible")),
+        FName(TEXT("wager_entry")),
+        FName(TEXT("follow")),
+        FName(TEXT("buy_vehicle")),
+        FName(TEXT("cinematic")),
+        FName(TEXT("exit_interior")),
+        FName(TEXT("buy_costume")),
+        FName(TEXT("item_pickup")),
+        FName(TEXT("boss_phase")),
+    };
+    for (const FName& ObjectiveKind : DocumentedSourceObjectiveKinds)
+    {
+        TestTrue(
+            TEXT("Documented source objective kind is accepted"),
+            USharMissionDefinition::IsSupportedObjectiveKind(ObjectiveKind)
+        );
+    }
+    TestFalse(
+        TEXT("Legacy dummy objective is not a runtime kind"),
+        USharMissionDefinition::IsSupportedObjectiveKind(FName(TEXT("dummy")))
+    );
+
     Mission->Stages.Last().Order = InvalidStageOrder;
     Mission->Stages.Last().ObjectiveKind =
         FName(TEXT("execute_arbitrary_script"));

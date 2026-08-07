@@ -507,10 +507,16 @@ bool USharMissionDefinition::IsSupportedObjectiveKind(
 {
     const TArray<FName> SupportedKinds = {
         FName(TEXT("talk")),
+        FName(TEXT("dialogue")),
+        FName(TEXT("cinematic")),
         FName(TEXT("enter_vehicle")),
         FName(TEXT("exit_vehicle")),
+        FName(TEXT("enter_interior")),
+        FName(TEXT("exit_interior")),
         FName(TEXT("travel")),
         FName(TEXT("collect")),
+        FName(TEXT("item_pickup")),
+        FName(TEXT("dumped_collectible")),
         FName(TEXT("deliver")),
         FName(TEXT("destroy")),
         FName(TEXT("hit_and_collect")),
@@ -518,10 +524,14 @@ bool USharMissionDefinition::IsSupportedObjectiveKind(
         FName(TEXT("follow_and_collect")),
         FName(TEXT("race")),
         FName(TEXT("time_trial")),
+        FName(TEXT("wager_entry")),
+        FName(TEXT("timer")),
         FName(TEXT("avoid")),
         FName(TEXT("protect")),
         FName(TEXT("interact")),
         FName(TEXT("boss_phase")),
+        FName(TEXT("buy_vehicle")),
+        FName(TEXT("buy_costume")),
         FName(TEXT("action_sequence")),
     };
     return ContainsName(SupportedKinds, ObjectiveKind);
