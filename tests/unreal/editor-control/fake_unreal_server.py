@@ -214,6 +214,11 @@ class FakeUnrealServer:
         return frozenset(self._server.dirty_assets)
 
     @property
+    def media_payloads(self) -> dict[str, str]:
+        """A snapshot of external movie payloads keyed by object path."""
+        return dict(self._server.media_payloads)
+
+    @property
     def session_closed(self) -> bool:
         """Whether the client deleted its session.
 
@@ -234,6 +239,7 @@ class FakeUnrealHttpServer(ThreadingHTTPServer):
     behavior: FakeUnrealBehavior
     assets: dict[str, str]
     dirty_assets: set[str]
+    media_payloads: dict[str, str]
 
     def __init__(
         self,
@@ -249,3 +255,4 @@ class FakeUnrealHttpServer(ThreadingHTTPServer):
         self.behavior = behavior
         self.assets = {}
         self.dirty_assets = set()
+        self.media_payloads = {}

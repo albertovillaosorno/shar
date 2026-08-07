@@ -32,11 +32,10 @@
 
 from __future__ import annotations
 
+# ruff: noqa: EM101, PLC0415, PLR6301, TRY003
 import hashlib
 import json
 from pathlib import Path
-
-import pytest
 
 from fake_unreal_server import FakeUnrealServer
 from mcp.adapter_inbound.cli import main
@@ -44,6 +43,7 @@ from mcp.adapter_outbound.streamable_http import StreamableHttpTransport
 from mcp.application.service import UnrealMcpTranslator
 from mcp.domain.endpoint import McpEndpoint
 from plan_bundle_fixture import write_plan_bundle
+import pytest
 
 
 def test_translator_describes_only_available_required_toolsets() -> None:
@@ -53,12 +53,10 @@ def test_translator_describes_only_available_required_toolsets() -> None:
             timeout_seconds=2.0,
         )
         with UnrealMcpTranslator(transport) as translator:
-            definitions = translator.describe_available_toolsets(
-                (
-                    "EditorToolset.EditorToolset",
-                    "MissingToolset.MissingToolset",
-                )
-            )
+            definitions = translator.describe_available_toolsets((
+                "EditorToolset.EditorToolset",
+                "MissingToolset.MissingToolset",
+            ))
     assert tuple(item.name for item in definitions) == (
         "EditorToolset.EditorToolset",
     )
@@ -80,15 +78,13 @@ def test_cli_capability_audit_opens_no_mutation_for_empty_bundle(
     _ = write_plan_bundle(tmp_path / "plans")
     monkeypatch.chdir(tmp_path)
     with FakeUnrealServer() as server:
-        code = main(
-            (
-                "--endpoint",
-                server.endpoint,
-                "plan-capabilities",
-                "--root",
-                "plans",
-            )
-        )
+        code = main((
+            "--endpoint",
+            server.endpoint,
+            "plan-capabilities",
+            "--root",
+            "plans",
+        ))
     captured = capsys.readouterr()
     assert code == 0
     payload = json.loads(captured.out)
@@ -97,8 +93,7 @@ def test_cli_capability_audit_opens_no_mutation_for_empty_bundle(
     assert payload["sources"]["verifiedOperationCount"] == 0
     assert not captured.err
     assert all(
-        request.get("method") != "tools/call"
-        for request in server.requests
+        request.get("method") != "tools/call" for request in server.requests
     )
     assert server.session_closed
 
@@ -139,6 +134,7 @@ def test_cli_plan_apply_rejects_incomplete_plan_before_transport(
         engine_contract_revision="shar-unreal-porting-contract-v1",
         target_engine_version="5.8.1",
         target_platform="editor",
+        semantic_blocker_count=0,
         operation_count=1,
         readiness_counts={"requires-conversion": 1},
         plans=(),
@@ -185,15 +181,13 @@ def test_cli_plan_apply_rejects_incomplete_plan_before_transport(
         "mcp.adapter_inbound.cli.StreamableHttpTransport",
         _ForbiddenTransport,
     )
-    code = main(
-        (
-            "--endpoint",
-            "http://127.0.0.1:65534/mcp",
-            "plan-apply",
-            "--root",
-            "plans",
-        )
-    )
+    code = main((
+        "--endpoint",
+        "http://127.0.0.1:65534/mcp",
+        "plan-apply",
+        "--root",
+        "plans",
+    ))
     captured = capsys.readouterr()
     assert code == 1
     payload = json.loads(captured.out)
@@ -223,13 +217,11 @@ def test_cli_plan_apply_completes_one_texture_over_streamable_http(
     monkeypatch.chdir(tmp_path)
 
     with FakeUnrealServer(plan_execution=True) as server:
-        code = main(
-            (
-                "--endpoint",
-                server.endpoint,
-                "plan-apply",
-            )
-        )
+        code = main((
+            "--endpoint",
+            server.endpoint,
+            "plan-apply",
+        ))
 
     captured = capsys.readouterr()
     assert code == 0
@@ -284,13 +276,11 @@ def test_cli_plan_apply_completes_one_sound_wave_over_streamable_http(
     monkeypatch.chdir(tmp_path)
 
     with FakeUnrealServer(plan_execution=True) as server:
-        code = main(
-            (
-                "--endpoint",
-                server.endpoint,
-                "plan-apply",
-            )
-        )
+        code = main((
+            "--endpoint",
+            server.endpoint,
+            "plan-apply",
+        ))
 
     captured = capsys.readouterr()
     assert code == 0, captured.err or captured.out
@@ -317,6 +307,69 @@ def test_cli_plan_apply_completes_one_sound_wave_over_streamable_http(
         "ImportSoundWave",
         "exists",
         "get_asset_class",
+        "save_assets",
+        "is_dirty",
+    )
+
+
+def test_cli_plan_apply_completes_one_file_media_source_over_http(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    source_bytes = b"synthetic-hap-mov-source"
+    source_revision = hashlib.sha256(source_bytes).hexdigest()
+    plan_root = tmp_path / "unreal-staging" / "plans"
+    _ = write_plan_bundle(
+        plan_root,
+        with_media_operation=True,
+        media_source_revision=source_revision,
+    )
+    source = tmp_path / "extracted" / "movies" / "intro" / "movie.mov"
+    source.parent.mkdir(parents=True)
+    source.write_bytes(source_bytes)
+    monkeypatch.chdir(tmp_path)
+
+    with FakeUnrealServer(plan_execution=True) as server:
+        code = main((
+            "--endpoint",
+            server.endpoint,
+            "plan-apply",
+        ))
+
+    captured = capsys.readouterr()
+    assert code == 0, captured.err or captured.out
+    payload = json.loads(captured.out)
+    assert payload["application"]["importedCount"] == 1
+    assert payload["application"]["savedCount"] == 1
+    assert payload["application"]["verifiedCount"] == 1
+    package_path = "/Game/Generated/SHAR/movies/intro/intro_movie"
+    object_path = f"{package_path}.intro_movie"
+    assert server.assets == {package_path: "FileMediaSource"}
+    assert server.media_payloads == {
+        object_path: "./Movies/Generated/SHAR/movies/intro/intro_movie.mov"
+    }
+    assert server.dirty_assets == frozenset()
+    assert not captured.err
+    assert server.session_closed
+
+    native_leaves = tuple(
+        request["params"]["arguments"].get("tool_name")
+        for request in server.requests
+        if request.get("method") == "tools/call"
+        and isinstance(request.get("params"), dict)
+        and request["params"].get("name") == "call_tool"
+    )
+    assert native_leaves == (
+        "exists",
+        "FileMediaSourcePayloadExists",
+        "exists",
+        "FileMediaSourcePayloadExists",
+        "ImportFileMediaSource",
+        "exists",
+        "get_asset_class",
+        "GetFileMediaSourcePath",
+        "FileMediaSourcePayloadExists",
         "save_assets",
         "is_dirty",
     )

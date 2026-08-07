@@ -32,6 +32,7 @@
 
 from __future__ import annotations
 
+# ruff: noqa: EM101, EM102, PLR0911, PLR0912, PLR0913, TRY003
 import json
 
 from mcp.domain.json_types import JsonObject
@@ -51,6 +52,7 @@ def tool_result(
     plan_execution: bool,
     assets: dict[str, str],
     dirty_assets: set[str],
+    media_payloads: dict[str, str],
 ) -> tuple[str, JsonValue | None]:
     """Return deterministic text and optional structured content."""
     if plan_execution:
@@ -59,6 +61,7 @@ def tool_result(
             arguments,
             assets=assets,
             dirty_assets=dirty_assets,
+            media_payloads=media_payloads,
         )
     return tool_text(
         tool_name,
@@ -96,14 +99,15 @@ def _plan_tool_result(
     *,
     assets: dict[str, str],
     dirty_assets: set[str],
+    media_payloads: dict[str, str],
 ) -> tuple[str, JsonValue | None]:
     if tool_name == "list_toolsets":
-        return (
+        catalog = (
             f"- {_ASSET_TOOLSET}: Synthetic assets\n"
             f"- {_TEXTURE_TOOLSET}: Synthetic textures\n"
-            f"- {_IMPORT_TOOLSET}: Synthetic SHAR imports\n",
-            None,
+            f"- {_IMPORT_TOOLSET}: Synthetic SHAR imports\n"
         )
+        return catalog, None
     if tool_name == "describe_toolset":
         toolset = arguments.get("toolset_name")
         schema = _plan_schema(toolset)
@@ -120,6 +124,7 @@ def _plan_tool_result(
         native_arguments,
         assets=assets,
         dirty_assets=dirty_assets,
+        media_payloads=media_payloads,
     )
     return json.dumps(structured, separators=(",", ":")), structured
 
@@ -130,30 +135,59 @@ def _plan_native_call(
     *,
     assets: dict[str, str],
     dirty_assets: set[str],
+    media_payloads: dict[str, str],
 ) -> JsonObject:
     if native_name == "exists":
         return {"returnValue": str(arguments["path"]) in assets}
-    if native_name in {"import_file", "ImportSoundWave"}:
-        is_sound_wave = native_name == "ImportSoundWave"
-        asset_name = str(
-            arguments["assetName"] if is_sound_wave else arguments["asset_name"]
-        )
+    import_tools = {
+        "ImportFileMediaSource",
+        "ImportSoundWave",
+        "import_file",
+    }
+    if native_name in import_tools:
+        is_shar_import = native_name != "import_file"
+        is_media = native_name == "ImportFileMediaSource"
+        asset_key = "assetName" if is_shar_import else "asset_name"
+        asset_name = str(arguments[asset_key])
         folder_path = str(
             arguments["folderPath"]
-            if is_sound_wave
+            if is_shar_import
             else arguments["folder_path"]
         )
-        package_path = "/".join((folder_path, asset_name))
-        target_class = "SoundWave" if is_sound_wave else "Texture2D"
+        package_path = f"{folder_path}/{asset_name}"
+        target_class = (
+            "FileMediaSource"
+            if is_media
+            else "SoundWave"
+            if native_name == "ImportSoundWave"
+            else "Texture2D"
+        )
         assets[package_path] = target_class
         dirty_assets.add(package_path)
-        if is_sound_wave:
-            return {"returnValue": [f"{package_path}.{asset_name}"]}
+        if is_shar_import:
+            object_path = f"{package_path}.{asset_name}"
+            if is_media:
+                relative_package = package_path.removeprefix(
+                    "/Game/Generated/SHAR/"
+                )
+                media_payloads[object_path] = (
+                    f"./Movies/Generated/SHAR/{relative_package}.mov"
+                )
+            return {"returnValue": [object_path]}
         return {
             "returnValue": [
                 {"assetClass": target_class, "packagePath": package_path}
             ]
         }
+    if native_name == "FileMediaSourcePayloadExists":
+        return {"returnValue": str(arguments["assetPath"]) in media_payloads}
+    if native_name == "GetFileMediaSourcePath":
+        asset_path = str(arguments["assetPath"])
+        return {"returnValue": media_payloads.get(asset_path, "")}
+    if native_name == "DeleteFileMediaSourcePayload":
+        asset_path = str(arguments["assetPath"])
+        existed = media_payloads.pop(asset_path, None) is not None
+        return {"returnValue": existed}
     if native_name == "get_asset_class":
         return {"returnValue": assets[str(arguments["asset_path"])]}
     if native_name == "save_assets":
@@ -306,6 +340,56 @@ def _import_schema() -> JsonObject:
         "description": "Synthetic SHAR generated content import.",
         "tools": [
             {
+                "name": "DeleteFileMediaSourcePayload",
+                "description": "Delete one synthetic movie payload.",
+                "inputSchema": _object_schema({"assetPath": text}, "assetPath"),
+                "outputSchema": _object_schema(
+                    {"returnValue": {"type": "boolean"}},
+                    "returnValue",
+                ),
+            },
+            {
+                "name": "FileMediaSourcePayloadExists",
+                "description": "Test synthetic movie payload existence.",
+                "inputSchema": _object_schema({"assetPath": text}, "assetPath"),
+                "outputSchema": _object_schema(
+                    {"returnValue": {"type": "boolean"}},
+                    "returnValue",
+                ),
+            },
+            {
+                "name": "GetFileMediaSourcePath",
+                "description": "Return one synthetic movie payload path.",
+                "inputSchema": _object_schema({"assetPath": text}, "assetPath"),
+                "outputSchema": _object_schema(
+                    {"returnValue": text},
+                    "returnValue",
+                ),
+            },
+            {
+                "name": "ImportFileMediaSource",
+                "description": "Import one synthetic FileMediaSource.",
+                "inputSchema": _object_schema(
+                    {
+                        "assetName": text,
+                        "folderPath": text,
+                        "sourceFile": text,
+                    },
+                    "assetName",
+                    "folderPath",
+                    "sourceFile",
+                ),
+                "outputSchema": _object_schema(
+                    {
+                        "returnValue": {
+                            "type": "array",
+                            "items": text,
+                        }
+                    },
+                    "returnValue",
+                ),
+            },
+            {
                 "name": "ImportSoundWave",
                 "description": "Import one synthetic SoundWave.",
                 "inputSchema": _object_schema(
@@ -327,7 +411,7 @@ def _import_schema() -> JsonObject:
                     },
                     "returnValue",
                 ),
-            }
+            },
         ],
     }
 

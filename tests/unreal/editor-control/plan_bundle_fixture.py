@@ -32,20 +32,20 @@
 
 from __future__ import annotations
 
+# ruff: noqa: PLR0913
+from collections import OrderedDict
 import hashlib
 import json
-from collections import OrderedDict
 from pathlib import Path
+
 from mcp.domain.json_types import JsonValue
 
-_CONTEXT = OrderedDict(
-    (
-        ("source_manifest_revision", "a" * 64),
-        ("engine_contract_revision", "shar-unreal-porting-contract-v1"),
-        ("target_engine_version", "5.8.1"),
-        ("target_platform", "editor"),
-    )
-)
+_CONTEXT = OrderedDict((
+    ("source_manifest_revision", "a" * 64),
+    ("engine_contract_revision", "shar-unreal-porting-contract-v1"),
+    ("target_engine_version", "5.8.1"),
+    ("target_platform", "editor"),
+))
 _PLAN_SPECS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
     ("asset-import-plan", "asset-import-plan.json", ()),
     (
@@ -118,9 +118,12 @@ def build_plan_bundle(
     import_source_revision: str | None = None,
     with_texture_operation: bool = False,
     texture_source_revision: str | None = None,
+    with_media_operation: bool = False,
+    media_source_revision: str | None = None,
     with_construction_operation: bool = False,
     construction_source_path: str = "manifest.jsonl",
     construction_source_revision: str | None = None,
+    semantic_blocker_count: int = 0,
 ) -> dict[str, str]:
     """Return one canonical six-plan bundle keyed by filename."""
     revisions: dict[str, str] = {}
@@ -129,10 +132,16 @@ def build_plan_bundle(
     for plan_id, filename, dependency_ids in _PLAN_SPECS:
         operations: list[JsonValue] = []
         if with_import_operation and plan_id == "asset-import-plan":
-            operations.append(_wav_operation(import_source_revision or "b" * 64))
+            operations.append(
+                _wav_operation(import_source_revision or "b" * 64)
+            )
         if with_texture_operation and plan_id == "asset-import-plan":
             operations.append(
                 _texture_operation(texture_source_revision or "c" * 64)
+            )
+        if with_media_operation and plan_id == "asset-import-plan":
+            operations.append(
+                _media_operation(media_source_revision or "d" * 64)
             )
         if with_construction_operation and plan_id == "asset-construction-plan":
             operations.append(
@@ -143,12 +152,10 @@ def build_plan_bundle(
                 )
             )
         dependencies = [
-            OrderedDict(
-                (
-                    ("plan_id", dependency_id),
-                    ("revision", revisions[dependency_id]),
-                )
-            )
+            OrderedDict((
+                ("plan_id", dependency_id),
+                ("revision", revisions[dependency_id]),
+            ))
             for dependency_id in dependency_ids
         ]
         body = _plan_body(
@@ -167,20 +174,25 @@ def build_plan_bundle(
         )
         files[filename] = f"{_canonical(rendered)}\n"
         entries.append(
-            OrderedDict(
-                (
-                    ("plan_id", plan_id),
-                    ("revision", revision),
-                    ("filename", filename),
-                    ("operation_count", len(operations)),
-                )
-            )
+            OrderedDict((
+                ("plan_id", plan_id),
+                ("revision", revision),
+                ("filename", filename),
+                ("operation_count", len(operations)),
+            ))
         )
-    index_body = _index_body(revision="", plans=entries)
-    index_revision = _digest(_canonical(index_body))
-    files["index.json"] = (
-        f"{_canonical(_index_body(revision=index_revision, plans=entries))}\n"
+    index_body = _index_body(
+        revision="",
+        semantic_blocker_count=semantic_blocker_count,
+        plans=entries,
     )
+    index_revision = _digest(_canonical(index_body))
+    rendered_index = _index_body(
+        revision=index_revision,
+        semantic_blocker_count=semantic_blocker_count,
+        plans=entries,
+    )
+    files["index.json"] = _canonical(rendered_index) + chr(10)
     return files
 
 
@@ -191,7 +203,10 @@ def write_plan_bundle(
     import_source_revision: str | None = None,
     with_texture_operation: bool = False,
     texture_source_revision: str | None = None,
+    with_media_operation: bool = False,
+    media_source_revision: str | None = None,
     with_construction_operation: bool = False,
+    semantic_blocker_count: int = 0,
 ) -> dict[str, str]:
     """Write one canonical synthetic bundle and return its texts."""
     files = build_plan_bundle(
@@ -199,7 +214,10 @@ def write_plan_bundle(
         import_source_revision=import_source_revision,
         with_texture_operation=with_texture_operation,
         texture_source_revision=texture_source_revision,
+        with_media_operation=with_media_operation,
+        media_source_revision=media_source_revision,
         with_construction_operation=with_construction_operation,
+        semantic_blocker_count=semantic_blocker_count,
     )
     root.mkdir(parents=True)
     for filename, text in files.items():
@@ -215,54 +233,48 @@ def _plan_body(
     operations: list[JsonValue],
 ) -> OrderedDict[str, JsonValue]:
     requirements = sorted(_BASE_REQUIREMENTS | _FAMILY_REQUIREMENTS[plan_id])
-    return OrderedDict(
+    return OrderedDict((
+        ("schema", "shar-schoenwald.unreal-plan.v1"),
+        ("plan_id", plan_id),
+        ("revision", revision),
+        *_CONTEXT.items(),
+        ("dependencies", dependencies),
         (
-            ("schema", "shar-schoenwald.unreal-plan.v1"),
-            ("plan_id", plan_id),
-            ("revision", revision),
-            *_CONTEXT.items(),
-            ("dependencies", dependencies),
-            (
-                "outputs",
-                [operation["destination"] for operation in operations],
-            ),
-            ("operations", operations),
-            (
-                "validation",
-                OrderedDict(
-                    (
-                        ("operation_count", len(operations)),
-                        ("requirements", requirements),
-                    )
-                ),
-            ),
-        )
-    )
+            "outputs",
+            [operation["destination"] for operation in operations],
+        ),
+        ("operations", operations),
+        (
+            "validation",
+            OrderedDict((
+                ("operation_count", len(operations)),
+                ("requirements", requirements),
+            )),
+        ),
+    ))
 
 
 def _wav_operation(source_revision: str) -> OrderedDict[str, JsonValue]:
-    fields: OrderedDict[str, JsonValue] = OrderedDict(
+    fields: OrderedDict[str, JsonValue] = OrderedDict((
+        ("operation_id", ""),
+        ("package_identity", "dialog-package"),
+        ("source_identity", "audio-source"),
+        ("source_format", "wav"),
+        ("target_family", "audio"),
+        ("source_path", "extracted/dialog/audio.wav"),
+        ("source_revision", source_revision),
         (
-            ("operation_id", ""),
-            ("package_identity", "dialog-package"),
-            ("source_identity", "audio-source"),
-            ("source_format", "wav"),
-            ("target_family", "audio"),
-            ("source_path", "extracted/dialog/audio.wav"),
-            ("source_revision", source_revision),
-            (
-                "destination",
-                "/Game/Generated/SHAR/dialog/dialog/audio_source.audio_source",
-            ),
-            ("target_class", "SoundWave"),
-            ("importer", "sound-wave-factory"),
-            ("import_profile", "shar-audio-v1"),
-            ("dependencies", []),
-            ("readiness", "ready"),
-            ("world_owned", False),
-            ("runtime_bound", True),
-        )
-    )
+            "destination",
+            "/Game/Generated/SHAR/dialog/dialog/audio_source.audio_source",
+        ),
+        ("target_class", "SoundWave"),
+        ("importer", "sound-wave-factory"),
+        ("import_profile", "shar-audio-v1"),
+        ("dependencies", []),
+        ("readiness", "ready"),
+        ("world_owned", False),
+        ("runtime_bound", True),
+    ))
     preimage = "\n".join(
         str(fields[field])
         for field in (
@@ -285,28 +297,66 @@ def _wav_operation(source_revision: str) -> OrderedDict[str, JsonValue]:
 def _texture_operation(
     source_revision: str,
 ) -> OrderedDict[str, JsonValue]:
-    fields: OrderedDict[str, JsonValue] = OrderedDict(
+    fields: OrderedDict[str, JsonValue] = OrderedDict((
+        ("operation_id", ""),
+        ("package_identity", "texture-package"),
+        ("source_identity", "texture-source"),
+        ("source_format", "image"),
+        ("target_family", "texture"),
+        ("source_path", "extracted/texture/image.png"),
+        ("source_revision", source_revision),
         (
-            ("operation_id", ""),
-            ("package_identity", "texture-package"),
-            ("source_identity", "texture-source"),
-            ("source_format", "image"),
-            ("target_family", "texture"),
-            ("source_path", "extracted/texture/image.png"),
-            ("source_revision", source_revision),
-            (
-                "destination",
-                "/Game/Generated/SHAR/test/texture_image.texture_image",
-            ),
-            ("target_class", "Texture2D"),
-            ("importer", "texture-factory"),
-            ("import_profile", "shar-texture-v1"),
-            ("dependencies", []),
-            ("readiness", "ready"),
-            ("world_owned", False),
-            ("runtime_bound", True),
+            "destination",
+            "/Game/Generated/SHAR/test/texture_image.texture_image",
+        ),
+        ("target_class", "Texture2D"),
+        ("importer", "texture-factory"),
+        ("import_profile", "shar-texture-v1"),
+        ("dependencies", []),
+        ("readiness", "ready"),
+        ("world_owned", False),
+        ("runtime_bound", True),
+    ))
+    preimage = "\n".join(
+        str(fields[field])
+        for field in (
+            "package_identity",
+            "source_identity",
+            "source_format",
+            "target_family",
+            "source_path",
+            "source_revision",
+            "destination",
+            "target_class",
+            "importer",
+            "import_profile",
         )
     )
+    fields["operation_id"] = f"operation-{_digest(preimage)[:16]}"
+    return fields
+
+
+def _media_operation(source_revision: str) -> OrderedDict[str, JsonValue]:
+    fields: OrderedDict[str, JsonValue] = OrderedDict((
+        ("operation_id", ""),
+        ("package_identity", "intro-movie-package"),
+        ("source_identity", "intro-movie-source"),
+        ("source_format", "hap"),
+        ("target_family", "media"),
+        ("source_path", "extracted/movies/intro/movie.mov"),
+        ("source_revision", source_revision),
+        (
+            "destination",
+            "/Game/Generated/SHAR/movies/intro/intro_movie.intro_movie",
+        ),
+        ("target_class", "FileMediaSource"),
+        ("importer", "media-source-movie"),
+        ("import_profile", "shar-hap-movie-v1"),
+        ("dependencies", []),
+        ("readiness", "ready"),
+        ("world_owned", False),
+        ("runtime_bound", True),
+    ))
     preimage = "\n".join(
         str(fields[field])
         for field in (
@@ -330,28 +380,26 @@ def _json_operation(
     source_path: str,
     source_revision: str,
 ) -> OrderedDict[str, JsonValue]:
-    fields: OrderedDict[str, JsonValue] = OrderedDict(
+    fields: OrderedDict[str, JsonValue] = OrderedDict((
+        ("operation_id", ""),
+        ("package_identity", "structured-package"),
+        ("source_identity", "structured-package-normalized-json"),
+        ("source_format", "json"),
+        ("target_family", "structured-data"),
+        ("source_path", source_path),
+        ("source_revision", source_revision),
         (
-            ("operation_id", ""),
-            ("package_identity", "structured-package"),
-            ("source_identity", "structured-package-normalized-json"),
-            ("source_format", "json"),
-            ("target_family", "structured-data"),
-            ("source_path", source_path),
-            ("source_revision", source_revision),
-            (
-                "destination",
-                "/Game/Generated/SHAR/data/structured_package.structured_package",
-            ),
-            ("target_class", "DataAsset"),
-            ("importer", "shar-data-asset-factory"),
-            ("import_profile", "shar-data-asset-v1"),
-            ("dependencies", []),
-            ("readiness", "requires-editor-factory"),
-            ("world_owned", False),
-            ("runtime_bound", True),
-        )
-    )
+            "destination",
+            "/Game/Generated/SHAR/data/structured_package.structured_package",
+        ),
+        ("target_class", "WidgetBlueprint"),
+        ("importer", "shar-ui-factory"),
+        ("import_profile", "shar-ui-v1"),
+        ("dependencies", []),
+        ("readiness", "requires-editor-factory"),
+        ("world_owned", False),
+        ("runtime_bound", True),
+    ))
     preimage = "\n".join(
         str(fields[field])
         for field in (
@@ -374,16 +422,16 @@ def _json_operation(
 def _index_body(
     *,
     revision: str,
+    semantic_blocker_count: int,
     plans: list[JsonValue],
 ) -> OrderedDict[str, JsonValue]:
-    return OrderedDict(
-        (
-            ("schema", "shar-schoenwald.unreal-plan-bundle.v1"),
-            ("revision", revision),
-            *_CONTEXT.items(),
-            ("plans", plans),
-        )
-    )
+    return OrderedDict((
+        ("schema", "shar-schoenwald.unreal-plan-bundle.v2"),
+        ("revision", revision),
+        *_CONTEXT.items(),
+        ("semantic_blocker_count", semantic_blocker_count),
+        ("plans", plans),
+    ))
 
 
 def _canonical(value: JsonValue) -> str:

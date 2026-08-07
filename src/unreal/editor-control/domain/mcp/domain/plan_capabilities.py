@@ -37,11 +37,13 @@ from typing import NamedTuple
 from mcp.domain.argument_schema import validate_tool_arguments
 from mcp.domain.catalog import ToolsetDefinition
 from mcp.domain.errors import ProtocolError
+from mcp.domain.errors import fail_protocol
 from mcp.domain.json_types import JsonObject
 from mcp.domain.plan_execution import CompiledExecutionPlan
 from mcp.domain.plan_execution import NativeImportStep
 
 _ASSET_TOOLSET = "editor_toolset.toolsets.asset.AssetTools"
+_IMPORT_TOOLSET = "SharImportEditor.SharImportToolset"
 
 
 class NativeToolRequirement(NamedTuple):
@@ -71,7 +73,7 @@ class PlanCapabilityReport(NamedTuple):
 
     @property
     def complete(self) -> bool:
-        """Whether both plan coverage and the live native surface are complete."""
+        """Whether plan coverage and the native surface are complete."""
         return self.plan_complete and self.native_surface_complete
 
     def to_json(self) -> JsonObject:
@@ -92,12 +94,9 @@ class PlanCapabilityReport(NamedTuple):
 def required_toolsets(compiled: CompiledExecutionPlan) -> tuple[str, ...]:
     """Return exact live toolset identities needed by compiled imports."""
     return tuple(
-        sorted(
-            {
-                requirement.toolset_name
-                for requirement in _requirements(compiled)
-            }
-        )
+        sorted({
+            requirement.toolset_name for requirement in _requirements(compiled)
+        })
     )
 
 
@@ -105,7 +104,7 @@ def audit_plan_capabilities(
     compiled: CompiledExecutionPlan,
     toolsets: tuple[ToolsetDefinition, ...],
 ) -> PlanCapabilityReport:
-    """Check every required native input and output schema without invocation."""
+    """Check required native schemas without invoking tools."""
     definitions = {definition.name: definition for definition in toolsets}
     requirements = _requirements(compiled)
     missing: list[str] = []
@@ -117,7 +116,11 @@ def audit_plan_capabilities(
             missing.append(requirement.tool_name)
             continue
         tool = next(
-            (item for item in definition.tools if item.name == requirement.tool_name),
+            (
+                item
+                for item in definition.tools
+                if item.name == requirement.tool_name
+            ),
             None,
         )
         if tool is None:
@@ -130,10 +133,9 @@ def audit_plan_capabilities(
                 requirement.input_example,
                 context=f"tool {tool.name} input schema",
             )
-            if tool.output_schema is None:
-                raise ProtocolError("native tool has no output schema")
+            output_schema = _require_output_schema(tool.output_schema)
             validate_tool_arguments(
-                tool.output_schema,
+                output_schema,
                 requirement.output_example,
                 context=f"tool {tool.name} output schema",
             )
@@ -150,6 +152,12 @@ def audit_plan_capabilities(
     )
 
 
+def _require_output_schema(schema: JsonObject | None) -> JsonObject:
+    if schema is None:
+        fail_protocol("native tool has no output schema")
+    return schema
+
+
 def _requirements(
     compiled: CompiledExecutionPlan,
 ) -> tuple[NativeToolRequirement, ...]:
@@ -162,46 +170,48 @@ def _requirements(
         _import_requirement(step)
         for _route, step in sorted(first_by_route.items())
     ]
+    media_step = first_by_route.get("file-media-source-hap-v1")
+    if media_step is not None:
+        requirements.extend(_media_payload_requirements(media_step))
     example_path = compiled.imports[0].package_path
-    requirements.extend(
-        (
-            NativeToolRequirement(
-                _ASSET_TOOLSET,
-                f"{_ASSET_TOOLSET}.delete",
-                {"path": example_path},
-                {"returnValue": True},
-            ),
-            NativeToolRequirement(
-                _ASSET_TOOLSET,
-                f"{_ASSET_TOOLSET}.exists",
-                {"path": example_path},
-                {"returnValue": True},
-            ),
-            NativeToolRequirement(
-                _ASSET_TOOLSET,
-                f"{_ASSET_TOOLSET}.get_asset_class",
-                {"asset_path": example_path},
-                {"returnValue": "Texture2D"},
-            ),
-            NativeToolRequirement(
-                _ASSET_TOOLSET,
-                f"{_ASSET_TOOLSET}.is_dirty",
-                {"asset_path": example_path},
-                {"returnValue": False},
-            ),
-            NativeToolRequirement(
-                _ASSET_TOOLSET,
-                f"{_ASSET_TOOLSET}.save_assets",
-                {"asset_paths": [example_path]},
-                {"returnValue": True},
-            ),
-        )
-    )
+    requirements.extend((
+        NativeToolRequirement(
+            _ASSET_TOOLSET,
+            f"{_ASSET_TOOLSET}.delete",
+            {"path": example_path},
+            {"returnValue": True},
+        ),
+        NativeToolRequirement(
+            _ASSET_TOOLSET,
+            f"{_ASSET_TOOLSET}.exists",
+            {"path": example_path},
+            {"returnValue": True},
+        ),
+        NativeToolRequirement(
+            _ASSET_TOOLSET,
+            f"{_ASSET_TOOLSET}.get_asset_class",
+            {"asset_path": example_path},
+            {"returnValue": "Texture2D"},
+        ),
+        NativeToolRequirement(
+            _ASSET_TOOLSET,
+            f"{_ASSET_TOOLSET}.is_dirty",
+            {"asset_path": example_path},
+            {"returnValue": False},
+        ),
+        NativeToolRequirement(
+            _ASSET_TOOLSET,
+            f"{_ASSET_TOOLSET}.save_assets",
+            {"asset_paths": [example_path]},
+            {"returnValue": True},
+        ),
+    ))
     return tuple(sorted(requirements, key=lambda item: item.tool_name))
 
 
 def _import_requirement(step: NativeImportStep) -> NativeToolRequirement:
     extension_by_route = {
+        "file-media-source-hap-v1": "mov",
         "sound-wave-wav-v1": "wav",
         "static-mesh-fbx-v1": "fbx",
         "texture-image-v1": "png",
@@ -209,7 +219,7 @@ def _import_requirement(step: NativeImportStep) -> NativeToolRequirement:
     extension = extension_by_route[step.route_id]
     output: JsonObject = (
         {"returnValue": [step.destination]}
-        if step.route_id == "sound-wave-wav-v1"
+        if step.route_id in {"file-media-source-hap-v1", "sound-wave-wav-v1"}
         else {"returnValue": []}
     )
     return NativeToolRequirement(
@@ -217,4 +227,33 @@ def _import_requirement(step: NativeImportStep) -> NativeToolRequirement:
         tool_name=step.tool_name,
         input_example=step.arguments(f"C:/SHAR/verified-source.{extension}"),
         output_example=output,
+    )
+
+
+def _media_payload_requirements(
+    step: NativeImportStep,
+) -> tuple[NativeToolRequirement, ...]:
+    """Return read-back and cleanup contracts for packaged movie bytes."""
+    if step.external_payload_path is None:
+        fail_protocol("media import has no external payload identity")
+    arguments: JsonObject = {"assetPath": step.destination}
+    return (
+        NativeToolRequirement(
+            _IMPORT_TOOLSET,
+            f"{_IMPORT_TOOLSET}.DeleteFileMediaSourcePayload",
+            arguments,
+            {"returnValue": True},
+        ),
+        NativeToolRequirement(
+            _IMPORT_TOOLSET,
+            f"{_IMPORT_TOOLSET}.FileMediaSourcePayloadExists",
+            arguments,
+            {"returnValue": True},
+        ),
+        NativeToolRequirement(
+            _IMPORT_TOOLSET,
+            f"{_IMPORT_TOOLSET}.GetFileMediaSourcePath",
+            arguments,
+            {"returnValue": step.external_payload_path},
+        ),
     )
