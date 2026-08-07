@@ -62,6 +62,29 @@ def _outcome(return_value: JsonValue) -> ToolCallOutcome:
     )
 
 
+class _TextOutcomeClient:
+    def __init__(self, text: str) -> None:
+        self.text = text
+        self.calls: list[tuple[str, JsonObject]] = []
+
+    def call_tool(
+        self,
+        toolset_name: str,
+        tool_name: str,
+        arguments: JsonObject,
+    ) -> ToolCallOutcome:
+        del toolset_name
+        self.calls.append((tool_name, arguments))
+        return ToolCallOutcome(
+            raw={
+                "content": [{"type": "text", "text": self.text}],
+            },
+            text=self.text,
+            structured_content=None,
+            is_error=False,
+        )
+
+
 class _SyntheticClient:
     def __init__(
         self,
@@ -89,15 +112,16 @@ class _SyntheticClient:
         leaf = tool_name.rsplit(".", 1)[-1]
         if leaf == "exists":
             return _outcome(str(arguments["path"]) in self.assets)
-        if leaf in {"ImportFileMediaSource", "import_file"}:
+        if leaf in {"ImportFileMediaSource", "ImportStaticMesh", "import_file"}:
             self.import_count += 1
+            is_native = leaf != "import_file"
             is_media = leaf == "ImportFileMediaSource"
             asset_name = str(
-                arguments["assetName"] if is_media else arguments["asset_name"]
+                arguments["assetName"] if is_native else arguments["asset_name"]
             )
             folder_path = str(
                 arguments["folderPath"]
-                if is_media
+                if is_native
                 else arguments["folder_path"]
             )
             package_path = f"{folder_path}/{asset_name}"
@@ -106,11 +130,13 @@ class _SyntheticClient:
                 if self.import_count == self.wrong_class_on_import
                 else "FileMediaSource"
                 if is_media
+                else "StaticMesh"
+                if leaf == "ImportStaticMesh"
                 else "Texture2D"
             )
             self.assets[package_path] = target_class
+            object_path = f"{package_path}.{asset_name}"
             if is_media:
-                object_path = f"{package_path}.{asset_name}"
                 relative_package = package_path.removeprefix(
                     "/Game/Generated/SHAR/"
                 )
@@ -119,7 +145,7 @@ class _SyntheticClient:
                 )
             if self.import_count == self.raise_after_import:
                 raise TimeoutError("synthetic lost import response")
-            if is_media:
+            if is_native:
                 return _outcome([object_path])
             return _outcome([{"packagePath": package_path}])
         if leaf == "FileMediaSourcePayloadExists":
@@ -163,6 +189,30 @@ def _operation(index: int, *, readiness: str = "ready") -> PlanOperation:
         import_profile="shar-texture-v1",
         dependencies=(),
         readiness=readiness,
+        world_owned=False,
+        runtime_bound=True,
+    )
+
+
+def _static_mesh_operation(index: int) -> PlanOperation:
+    asset_name = f"model_{index}"
+    return PlanOperation(
+        plan_id="asset-import-plan",
+        operation_id=f"operation-{index:016x}",
+        package_identity=f"model-package-{index}",
+        source_identity=f"model-source-{index}",
+        source_format="fbx",
+        target_family="model",
+        source_path=f"fbx-assets/{asset_name}.fbx",
+        source_revision=f"{index:064x}",
+        destination=(
+            f"/Game/Generated/SHAR/models/static/{asset_name}.{asset_name}"
+        ),
+        target_class="StaticMesh",
+        importer="asset-tools-fbx",
+        import_profile="shar-fbx-static-v1",
+        dependencies=(),
+        readiness="ready",
         world_owned=False,
         runtime_bound=True,
     )
@@ -223,7 +273,13 @@ def _sources(
 ) -> dict[str, Path]:
     result: dict[str, Path] = {}
     for step in compiled.imports:
-        extension = "mov" if step.has_external_payload else "png"
+        extension = (
+            "mov"
+            if step.has_external_payload
+            else "fbx"
+            if step.route_id == "static-mesh-fbx-v1"
+            else "png"
+        )
         source = tmp_path / f"{step.operation_id}.{extension}"
         source.write_bytes(b"fixture")
         result[step.operation_id] = source
@@ -253,6 +309,66 @@ def test_applies_complete_plan_with_independent_save_and_readback(
     assert leaves.count("get_asset_class") == 2
     assert leaves.count("is_dirty") == 2
     assert "delete" not in leaves
+
+
+@pytest.mark.parametrize(
+    ("text", "message"),
+    (
+        ("not-json", "text result is not valid JSON"),
+        (
+            '{"returnValue":false,"returnValue":true}',
+            "duplicate JSON key",
+        ),
+    ),
+)
+def test_rejects_invalid_text_wrapped_result_before_import(
+    tmp_path: Path,
+    text: str,
+    message: str,
+) -> None:
+    compiled = _compiled(_static_mesh_operation(8))
+    client = _TextOutcomeClient(text)
+    with pytest.raises(ProtocolError, match=message):
+        apply_import_plan(
+            client,
+            compiled,
+            _capabilities(compiled),
+            _sources(tmp_path, compiled),
+        )
+    assert tuple(name.rsplit(".", 1)[-1] for name, _ in client.calls) == (
+        "exists",
+    )
+
+
+def test_applies_static_mesh_through_owned_native_import(
+    tmp_path: Path,
+) -> None:
+    compiled = _compiled(_static_mesh_operation(9))
+    client = _SyntheticClient()
+    sources = _sources(tmp_path, compiled)
+    report = apply_import_plan(
+        client,
+        compiled,
+        _capabilities(compiled),
+        sources,
+    )
+    step = compiled.imports[0]
+    assert report.imported_count == 1
+    assert report.saved_count == 1
+    assert report.verified_count == 1
+    assert client.assets == {step.package_path: "StaticMesh"}
+    native_calls = [
+        arguments
+        for name, arguments in client.calls
+        if name.rsplit(".", 1)[-1] == "ImportStaticMesh"
+    ]
+    assert native_calls == [
+        {
+            "assetName": step.asset_name,
+            "folderPath": step.folder_path,
+            "sourceFile": str(sources[step.operation_id]),
+        }
+    ]
 
 
 def test_rejects_incomplete_plan_before_any_native_call(tmp_path: Path) -> None:

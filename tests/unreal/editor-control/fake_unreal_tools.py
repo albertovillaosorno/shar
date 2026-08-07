@@ -126,7 +126,7 @@ def _plan_tool_result(
         dirty_assets=dirty_assets,
         media_payloads=media_payloads,
     )
-    return json.dumps(structured, separators=(",", ":")), structured
+    return json.dumps(structured, separators=(",", ":")), None
 
 
 def _plan_native_call(
@@ -142,6 +142,7 @@ def _plan_native_call(
     import_tools = {
         "ImportFileMediaSource",
         "ImportSoundWave",
+        "ImportStaticMesh",
         "import_file",
     }
     if native_name in import_tools:
@@ -160,6 +161,8 @@ def _plan_native_call(
             if is_media
             else "SoundWave"
             if native_name == "ImportSoundWave"
+            else "StaticMesh"
+            if native_name == "ImportStaticMesh"
             else "Texture2D"
         )
         assets[package_path] = target_class
@@ -369,6 +372,29 @@ def _import_schema() -> JsonObject:
             {
                 "name": "ImportFileMediaSource",
                 "description": "Import one synthetic FileMediaSource.",
+                "inputSchema": _object_schema(
+                    {
+                        "assetName": text,
+                        "folderPath": text,
+                        "sourceFile": text,
+                    },
+                    "assetName",
+                    "folderPath",
+                    "sourceFile",
+                ),
+                "outputSchema": _object_schema(
+                    {
+                        "returnValue": {
+                            "type": "array",
+                            "items": text,
+                        }
+                    },
+                    "returnValue",
+                ),
+            },
+            {
+                "name": "ImportStaticMesh",
+                "description": "Import one synthetic StaticMesh.",
                 "inputSchema": _object_schema(
                     {
                         "assetName": text,

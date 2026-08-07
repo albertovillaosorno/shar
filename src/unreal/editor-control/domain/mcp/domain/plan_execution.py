@@ -25,7 +25,7 @@
 # - Usage:
 #   - Called after canonical bundle preflight and before source or tool checks.
 # - Defaults:
-#   - Only exact reviewed Texture2D and StaticMesh import routes compile.
+#   - Only exact reviewed native import routes compile.
 #
 
 """Deterministic compilation of validated plans into native import steps."""
@@ -50,7 +50,7 @@ _STATIC_MESH_ROUTE = (
     "fbx",
     "StaticMesh",
     "asset-tools-fbx",
-    "shar-fbx-v1",
+    "shar-fbx-static-v1",
 )
 _AUDIO_ROUTE = (
     "wav",
@@ -92,7 +92,11 @@ class NativeImportStep(NamedTuple):
         """Build exact native arguments for one verified physical source."""
         if not source_file:
             fail_protocol("native import source file must not be empty")
-        if self.route_id in {"file-media-source-hap-v1", "sound-wave-wav-v1"}:
+        if self.route_id in {
+            "file-media-source-hap-v1",
+            "sound-wave-wav-v1",
+            "static-mesh-fbx-v1",
+        }:
             return {
                 "assetName": self.asset_name,
                 "folderPath": self.folder_path,
@@ -103,12 +107,6 @@ class NativeImportStep(NamedTuple):
             "folder_path": self.folder_path,
             "source_file": source_file,
         }
-        if self.route_id == "static-mesh-fbx-v1":
-            arguments.update({
-                "combine_meshes": True,
-                "import_materials": False,
-                "import_textures": False,
-            })
         return arguments
 
 
@@ -206,8 +204,8 @@ def _compile_ready_import(operation: PlanOperation) -> NativeImportStep | None:
         tool = f"{toolset}.ImportFileMediaSource"
     elif route == _STATIC_MESH_ROUTE:
         route_id = "static-mesh-fbx-v1"
-        toolset = "editor_toolset.toolsets.static_mesh.StaticMeshTools"
-        tool = f"{toolset}.import_file"
+        toolset = _IMPORT_TOOLSET
+        tool = f"{toolset}.ImportStaticMesh"
     else:
         return None
     package_path, separator, object_name = operation.destination.rpartition(".")

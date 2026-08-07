@@ -45,6 +45,7 @@ from mcp.domain.plan_execution import compile_execution_plan
 
 _ASSET_TOOLSET = "editor_toolset.toolsets.asset.AssetTools"
 _TEXTURE_TOOLSET = "editor_toolset.toolsets.texture.TextureTools"
+_IMPORT_TOOLSET = "SharImportEditor.SharImportToolset"
 
 
 def _object_schema(
@@ -148,6 +149,29 @@ def _toolsets(
         ),
         import_output,
     )
+    static_import = _tool(
+        _IMPORT_TOOLSET,
+        "ImportStaticMesh",
+        _object_schema(
+            {
+                "assetName": text,
+                "folderPath": text,
+                "sourceFile": text,
+            },
+            "assetName",
+            "folderPath",
+            "sourceFile",
+        ),
+        _object_schema(
+            {
+                "returnValue": {
+                    "type": "array",
+                    "items": text,
+                }
+            },
+            "returnValue",
+        ),
+    )
     asset_definition = ToolsetDefinition(
         name=_ASSET_TOOLSET,
         description="Assets.",
@@ -160,7 +184,13 @@ def _toolsets(
         tools=(() if texture_import.name == omit else (texture_import,)),
         raw_schema={},
     )
-    return asset_definition, texture_definition
+    import_definition = ToolsetDefinition(
+        name=_IMPORT_TOOLSET,
+        description="SHAR imports.",
+        tools=(() if static_import.name == omit else (static_import,)),
+        raw_schema={},
+    )
+    return asset_definition, texture_definition, import_definition
 
 
 def _compiled_texture() -> CompiledExecutionPlan:
@@ -196,6 +226,39 @@ def _compiled_texture() -> CompiledExecutionPlan:
     return compile_execution_plan(ValidatedPlanBundle(report, (operation,)))
 
 
+def _compiled_static_mesh() -> CompiledExecutionPlan:
+    operation = PlanOperation(
+        plan_id="asset-import-plan",
+        operation_id="operation-0000000000000002",
+        package_identity="package-model",
+        source_identity="source-model",
+        source_format="fbx",
+        target_family="model",
+        source_path="fbx-assets/static/model.fbx",
+        source_revision="d" * 64,
+        destination="/Game/Generated/SHAR/models/static/model.model",
+        target_class="StaticMesh",
+        importer="asset-tools-fbx",
+        import_profile="shar-fbx-static-v1",
+        dependencies=(),
+        readiness="ready",
+        world_owned=False,
+        runtime_bound=True,
+    )
+    report = PlanBundleReport(
+        revision="e" * 64,
+        source_manifest_revision="f" * 64,
+        engine_contract_revision="shar-unreal-porting-contract-v1",
+        target_engine_version="5.8.1",
+        target_platform="editor",
+        semantic_blocker_count=0,
+        operation_count=1,
+        readiness_counts={"ready": 1},
+        plans=(),
+    )
+    return compile_execution_plan(ValidatedPlanBundle(report, (operation,)))
+
+
 def test_accepts_complete_live_import_save_and_readback_surface() -> None:
     compiled = _compiled_texture()
     report = audit_plan_capabilities(compiled, _toolsets())
@@ -207,6 +270,23 @@ def test_accepts_complete_live_import_save_and_readback_surface() -> None:
     assert report.incompatible_tools == ()
     assert required_toolsets(compiled) == (_ASSET_TOOLSET, _TEXTURE_TOOLSET)
     assert "verified-source" not in str(report.to_json())
+
+
+def test_static_mesh_requires_owned_native_import_schema() -> None:
+    compiled = _compiled_static_mesh()
+    report = audit_plan_capabilities(compiled, _toolsets())
+    assert report.complete
+    assert report.native_surface_complete
+    assert report.required_tool_count == 6
+    assert required_toolsets(compiled) == (_IMPORT_TOOLSET, _ASSET_TOOLSET)
+
+    missing_identity = f"{_IMPORT_TOOLSET}.ImportStaticMesh"
+    missing = audit_plan_capabilities(
+        compiled,
+        _toolsets(omit=missing_identity),
+    )
+    assert not missing.complete
+    assert missing.missing_tools == (missing_identity,)
 
 
 def test_reports_missing_and_schema_incompatible_tools() -> None:
