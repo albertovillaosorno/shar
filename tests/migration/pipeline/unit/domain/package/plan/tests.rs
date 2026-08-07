@@ -92,14 +92,53 @@ fn row_with_kind(
         .map_err(|error| error.to_string())
 }
 
+fn row_with_model_and_companion(
+    companion_field: &str,
+) -> Result<PhaseThreePackageRow, String> {
+    let companion_role = companion_field
+        .strip_suffix("_ids")
+        .ok_or_else(|| format!("invalid role field: {companion_field}"))?;
+    let mut json = concat!(
+        "{\"package_id\":\"pkg\",\"package_root\":\"pkg\",",
+        "\"package_category\":\"cars\",",
+        "\"package_subcategory\":\"cars/character-rigs/homer-v\",",
+        "\"unit_count\":2,\"text_key_count\":0,",
+        "\"unit_ids\":[\"model-a\",\"companion-a\"],\"world_ids\":[],",
+        "\"texture_ids\":[],\"material_ids\":[],",
+        "\"model_ids\":[\"model-a\"],\"physics_ids\":[],",
+        "\"animation_ids\":[],\"scene_ids\":[],",
+        "\"locator_ids\":[],\"camera_ids\":[],",
+        "\"light_ids\":[],\"particle_ids\":[],",
+        "\"controller_ids\":[],\"audio_ids\":[],",
+        "\"movie_ids\":[],\"script_ids\":[],",
+        "\"text_ids\":[],\"ui_ids\":[],",
+        "\"metadata_ids\":[],\"error_ids\":[],",
+        "\"source_unit_ids\":[],\"text_key_ids\":[],",
+        "\"members\":[",
+        "{\"id\":\"model-a\",\"role\":\"model\",",
+        "\"path\":\"extracted/model-a.bin\",\"type\":\"test\",",
+        "\"kind\":\"test\",\"source_chunk_kind\":\"test\"},",
+        "{\"id\":\"companion-a\",\"role\":\"COMPANION_ROLE\",",
+        "\"path\":\"extracted/companion-a.bin\",\"type\":\"test\",",
+        "\"kind\":\"test\",\"source_chunk_kind\":\"test\"}],",
+        "\"text_keys\":[]}",
+    )
+    .replace("COMPANION_ROLE", companion_role);
+    let empty_field = format!("\"{companion_field}\":[]");
+    let filled_field = format!("\"{companion_field}\":[\"companion-a\"]");
+    json = json.replace(&empty_field, &filled_field);
+    PhaseThreePackageRow::from_json_line(&json)
+        .map_err(|error| error.to_string())
+}
+
 #[test]
-fn preserves_scene_assembly_roles_in_fbx_plans() -> Result<(), String> {
+fn preserves_scene_assembly_roles_with_fbx_geometry() -> Result<(), String> {
     for role_field in ["scene_ids", "locator_ids", "camera_ids"] {
-        let package = row("cars", "cars/character-rigs/homer-v", role_field)?;
+        let package = row_with_model_and_companion(role_field)?;
         let plan = PhaseThreePackagePlanner::plan(&package);
         let Some(fbx) = plan.fbx else {
             return Err(format!(
-                "{role_field} package should produce an FBX plan"
+                "model plus {role_field} should produce an FBX plan"
             ));
         };
         let retained = [
@@ -116,8 +155,39 @@ fn preserves_scene_assembly_roles_in_fbx_plans() -> Result<(), String> {
         .into_iter()
         .flatten()
         .collect::<Vec<_>>();
-        if retained != ["unit-a".to_owned()] {
+        if retained != ["model-a".to_owned(), "companion-a".to_owned()] {
             return Err(format!("FBX plan dropped {role_field}: {retained:?}"));
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn routes_non_geometry_scene_evidence_to_semantic_conversion()
+-> Result<(), String> {
+    for (category, subcategory, role_field) in [
+        (
+            "ui-resources",
+            "ui-resources/backend/hazards/bomb",
+            "scene_ids",
+        ),
+        ("missions", "missions/level-02/locators", "locator_ids"),
+        ("characters", "characters/homer/animations", "animation_ids"),
+    ] {
+        let package = row(category, subcategory, role_field)?;
+        let plan = PhaseThreePackagePlanner::plan(&package);
+        if plan.family != ConversionFamily::UnrealNative || plan.fbx.is_some() {
+            return Err(format!(
+                "non-geometry {role_field} incorrectly entered FBX planning"
+            ));
+        }
+        let Some(unreal) = plan.unreal else {
+            return Err("semantic conversion plan is missing".to_owned());
+        };
+        if unreal.target_kind != UnrealTargetKind::SemanticSource {
+            return Err(format!(
+                "non-geometry {role_field} should remain semantic source"
+            ));
         }
     }
     Ok(())
