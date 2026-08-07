@@ -28,23 +28,27 @@
 //   - Stale or malformed evidence fails closed.
 //
 
+// cspell:ignore selectmission closemission addstage closestage addobjective
+// cspell:ignore closeobjective addcondition closecondition
 //! Prepare-Unreal adapter unit tests.
 
 use std::collections::BTreeSet;
 use std::fs;
 
+use serde_json::json;
 use shar_sha256::digest_hex;
 
 use super::{
     MANIFEST_FILE, PLAN_INDEX_FILE, PUBLISHED_FILES, SUMMARY_FILE,
     ensure_generated_directory, prepare_io_error, publication_error, read_utf8,
     retain_source_ids, validate_audit, validate_generated_chain,
-    validate_public_identifier, validate_publication_inventory,
-    validate_relative_path, validate_rendered_output,
+    validate_normalized_mission_source, validate_public_identifier,
+    validate_publication_inventory, validate_relative_path,
+    validate_rendered_output,
 };
 use crate::domain::{
-    UNREAL_IMPORT_MANIFEST_SCHEMA, UNREAL_IMPORT_SUMMARY_SCHEMA,
-    UnrealSourceEvidence,
+    MISSION_SCRIPT_SCHEMA, UNREAL_IMPORT_MANIFEST_SCHEMA,
+    UNREAL_IMPORT_SUMMARY_SCHEMA, UnrealSourceEvidence,
 };
 
 fn source(id: &str) -> UnrealSourceEvidence {
@@ -77,6 +81,116 @@ fn excludes_fail_closed_source_evidence_from_import_planning() {
         retained.first().map(|source| source.id.as_str()),
         Some("keep")
     );
+}
+
+fn clean_mission_json(with_finding: bool) -> Result<Vec<u8>, String> {
+    let findings = if with_finding {
+        json!([{
+            "ordinal": 3,
+            "command": "closecondition",
+            "code": "condition-close-without-open-condition"
+        }])
+    } else {
+        json!([])
+    };
+    let finding_count = usize::from(with_finding);
+    serde_json::to_vec(&json!({
+        "schema": MISSION_SCRIPT_SCHEMA,
+        "source_extension": "mfk",
+        "route_class": "mission",
+        "source_bytes": 64,
+        "context_command_count": 2,
+        "context_finding_count": finding_count,
+        "context_findings": findings,
+        "statement_count": 2,
+        "unique_command_count": 2,
+        "load_p3d_reference_count": 0,
+        "mission_flow_command_count": 2,
+        "vehicle_physics_command_count": 0,
+        "semantic_family": "mission-script",
+        "command_counts": {"closemission": 1, "selectmission": 1},
+        "source_statements": [
+            "SelectMission(\"m1\");",
+            "CloseMission();"
+        ],
+        "p3d_references": [],
+        "command_invocations": [
+            {
+                "ordinal": 1,
+                "name": "selectmission",
+                "args_raw": "\"m1\"",
+                "semantic_role": "mission-script",
+                "arguments": ["m1"]
+            },
+            {
+                "ordinal": 2,
+                "name": "closemission",
+                "args_raw": "",
+                "semantic_role": "mission-script",
+                "arguments": []
+            }
+        ]
+    }))
+    .map_err(|error| error.to_string())
+}
+
+#[test]
+fn mission_semantic_gate_accepts_clean_v2_and_bypasses_other_kinds()
+-> Result<(), String> {
+    let clean = clean_mission_json(false)?;
+    validate_normalized_mission_source(
+        "mission-script",
+        MISSION_SCRIPT_SCHEMA,
+        "json",
+        "game-straggler-normalize",
+        &clean,
+    )
+    .map_err(|error| error.to_string())?;
+    validate_normalized_mission_source(
+        "texture",
+        "unrelated-schema",
+        "bin",
+        "test",
+        b"not-json",
+    )
+    .map_err(|error| error.to_string())
+}
+
+#[test]
+fn mission_semantic_gate_rejects_stale_schema_and_context_findings()
+-> Result<(), String> {
+    let clean = clean_mission_json(false)?;
+    let stale = validate_normalized_mission_source(
+        "mission-script",
+        "shar-schoenwald.straggler.mission-script.v1",
+        "json",
+        "game-straggler-normalize",
+        &clean,
+    );
+    let Err(stale) = stale else {
+        return Err("stale normalized mission schema was accepted".to_owned());
+    };
+    if !stale.to_string().contains("schema is stale") {
+        return Err(format!("unexpected stale schema failure: {stale}"));
+    }
+
+    let finding = clean_mission_json(true)?;
+    let finding = validate_normalized_mission_source(
+        "mission-script",
+        MISSION_SCRIPT_SCHEMA,
+        "json",
+        "game-straggler-normalize",
+        &finding,
+    );
+    let Err(finding) = finding else {
+        return Err(
+            "mission context finding reached Unreal planning".to_owned()
+        );
+    };
+    if !finding.to_string().contains("must be resolved") {
+        return Err(format!("unexpected finding failure: {finding}"));
+    }
+    Ok(())
 }
 
 fn clean_audit(manifest: &str, rows: usize) -> String {
