@@ -1,7 +1,7 @@
 # Missions, gameplay, rewards, and saves
 
 - Status: Active
-- Last reviewed: 2026-07-18
+- Last reviewed: 2026-08-06
 
 ## Mission representation
 
@@ -24,6 +24,42 @@ camera intents, audio, rewards, checkpoint policy, and transitions.
 - `/Game/SHAR/Data/Missions/<chapter_id>/<mission_id>/DT_MissionStages_<chapter_id>_<mission_id>` <!-- markdownlint-disable-line MD013 -->
 - `/Game/SHAR/Data/Missions/Templates/ST_Mission_<template_id>`
 - `/Game/SHAR/Data/Rewards/<reward_id>/DA_Reward_<reward_id>`
+
+## Legacy mission-script intake
+
+Source MFK scripts are normalization evidence, not runtime mission data. The
+straggler normalizer emits
+`shar-schoenwald.straggler.mission-script.v3` with canonical command
+invocations plus explicit mission, stage, objective, and condition context
+evidence. Parsing finds the matching call parenthesis outside quoted text, so
+trailing comments never enter `args_raw` or the final positional argument, and
+nested argument groups remain intact. Version 3 also carries reviewed structural
+compatibility adaptations. Each adaptation is bound to one logical source path,
+command ordinal, command identity, and surrounding invocation fingerprint; the
+semantic consumer independently revalidates that fingerprint before accepting
+it. The current corpus has exactly two such adaptations and no unresolved
+context findings after they are applied.
+
+A closed preflight registry then validates every observed `AddObjective` and
+`AddCondition` alias, exact observed arity, and every command that occurs inside
+those scopes. Unknown aliases, cross-scope commands, and unobserved arities fail
+closed. This registry is conversion evidence only: it does not claim that legacy
+parameters have already been compiled into final runtime policies.
+
+The v3 evidence records `context_command_count`,
+`context_adaptation_count`, `context_finding_count`, ordered adaptations, and
+ordered findings. Findings describe source structure without repairing it.
+Semantic intake accepts only exact v3 JSON with a reproducible command
+histogram, strictly increasing ordinals, matching context counts, independently
+verified adaptations, and zero unresolved findings. `prepare-unreal` applies
+that preflight only to normalized `mission-script` sources before they can
+contribute Unreal source evidence.
+
+The current source audit contains two reviewed structural defects: one orphan
+condition close and one missing condition close before stage completion. Both
+are handled only by their exact path-and-command-window adaptation fingerprints;
+any path, command, argument, or ordinal drift restores the finding and blocks
+semantic conversion instead of guessing intent.
 
 ## Mission input format
 
