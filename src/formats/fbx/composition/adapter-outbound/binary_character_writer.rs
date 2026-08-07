@@ -416,6 +416,74 @@ pub fn write_binary_model_fbx_with_policies(
     root_policy: ModelExportRootPolicy,
     path: &Path,
 ) -> Result<CharacterBinaryFbxSummary, CharacterBinaryFbxError> {
+    write_binary_model_fbx_with_storage(
+        asset_name,
+        meshes,
+        materials,
+        &[],
+        CharacterTextureStorage::External,
+        root_policy,
+        path,
+    )
+}
+
+/// Write one static model with texture payloads embedded in `Video.Content`.
+///
+/// # Errors
+///
+/// Returns the same failures as [`write_binary_model_fbx`] plus embedded
+/// texture validation failures.
+pub fn write_binary_model_fbx_embedded(
+    asset_name: &str,
+    meshes: &[MeshAsset],
+    materials: &[MaterialBinding],
+    embedded_textures: &[EmbeddedTexture],
+    path: &Path,
+) -> Result<CharacterBinaryFbxSummary, CharacterBinaryFbxError> {
+    write_binary_model_fbx_embedded_with_policies(
+        asset_name,
+        meshes,
+        materials,
+        embedded_textures,
+        ModelExportRootPolicy::RotateY180,
+        path,
+    )
+}
+
+/// Write one embedded static model with an explicit export-root policy.
+///
+/// # Errors
+///
+/// Returns the same failures as [`write_binary_model_fbx_embedded`].
+pub fn write_binary_model_fbx_embedded_with_policies(
+    asset_name: &str,
+    meshes: &[MeshAsset],
+    materials: &[MaterialBinding],
+    embedded_textures: &[EmbeddedTexture],
+    root_policy: ModelExportRootPolicy,
+    path: &Path,
+) -> Result<CharacterBinaryFbxSummary, CharacterBinaryFbxError> {
+    write_binary_model_fbx_with_storage(
+        asset_name,
+        meshes,
+        materials,
+        embedded_textures,
+        CharacterTextureStorage::Embedded,
+        root_policy,
+        path,
+    )
+}
+
+/// Serialize one static model through the shared texture-storage contract.
+fn write_binary_model_fbx_with_storage(
+    asset_name: &str,
+    meshes: &[MeshAsset],
+    materials: &[MaterialBinding],
+    embedded_textures: &[EmbeddedTexture],
+    texture_storage: CharacterTextureStorage,
+    root_policy: ModelExportRootPolicy,
+    path: &Path,
+) -> Result<CharacterBinaryFbxSummary, CharacterBinaryFbxError> {
     validate_static_model(asset_name, meshes)?;
     let parts = meshes
         .iter()
@@ -433,8 +501,8 @@ pub fn write_binary_model_fbx_with_policies(
     let document = build_character_document(
         &model,
         materials,
-        &[],
-        CharacterTextureStorage::External,
+        embedded_textures,
+        texture_storage,
         &[],
         BinarySceneKind::Static,
         root_policy,

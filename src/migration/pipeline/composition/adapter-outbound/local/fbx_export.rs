@@ -34,12 +34,11 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
 use fbx::adapters::driven::binary_character_writer::{
-    CharacterBinaryFbxSummary, EmbeddedTexture, write_binary_character_fbx,
-    write_binary_character_fbx_embedded,
+    CharacterBinaryFbxSummary, write_binary_character_fbx,
+    write_binary_model_fbx,
 };
-use fbx::adapters::driven::decoded_animation_source::load_animation_clips;
 use fbx::adapters::driven::decoded_component_source::{
-    DecodedComponentError, DecodedComponentSource,
+    DecodedComponentError, DecodedComponentSource, read_indexed_mesh,
 };
 use fbx::adapters::driven::decoded_skin_source::load_character;
 use fbx::adapters::driven::semantic_character_texture::request::{
@@ -50,21 +49,24 @@ use fbx::adapters::driven::semantic_character_texture::{
     SemanticTextureRequest, prepare_semantic_character,
     publish_prepared_semantic_character,
 };
-use fbx::domain::animation::AnimationClip;
 use fbx::domain::character::CharacterAsset;
+use fbx::domain::mesh::MeshAsset;
 use fbx::domain::texture::MaterialBinding;
 use fbx::ports::component_source::ComponentSource as _;
 use schoenwald_filesystem::adapters::driving::local::{
-    file_len as local_file_len, read_bytes as local_read_bytes,
+    create_dir_all as local_create_dir_all, file_len as local_file_len,
+    path_kind as local_path_kind, read_bytes as local_read_bytes,
     write_text as local_write_text,
 };
+use schoenwald_filesystem::domain::PathKind;
 use serde_json::{Value, json};
 use shar_sha256::digest_hex;
 
 use super::fbx_manifest::stable_file_stem;
 use crate::domain::package::{
-    ConversionFamily, PhaseThreePackageIndex, PhaseThreePackageMember,
-    PhaseThreePackagePlanner, PhaseThreePackageRow, PhaseThreePackageSelector,
+    ConversionFamily, FbxTargetKind, PackageRole, PhaseThreePackageIndex,
+    PhaseThreePackageMember, PhaseThreePackagePlanner, PhaseThreePackageRow,
+    PhaseThreePackageSelector,
 };
 use crate::domain::{PipelineError, StageReport, escape_json};
 use crate::ports::FbxExportOptions;
@@ -119,68 +121,150 @@ type SemanticGroupOwnership = (
     BTreeSet<String>,
 );
 
-/// Export one selected model package to a character FBX artifact.
+/// Export one selected canonical model package through atomic publication.
+///
+/// Static and self-contained skeletal sources are built and verified below a
+/// hidden sibling directory before one rename publishes the package. Composite
+/// packages fail before any output path is created.
 ///
 /// # Errors
 ///
-/// Returns an error when the package cannot be resolved, is not a supported
-/// character package, or one component fails validation or serialization.
+/// Returns an error when the package cannot be resolved, requires semantic
+/// splitting, either transaction path already exists, or conversion,
+/// verification, cleanup, or atomic publication fails.
 pub(super) fn export_fbx_package(
     index_path: &Path,
     selector: &PhaseThreePackageSelector,
     output_dir: &Path,
     base_root: &Path,
-    options: FbxExportOptions,
+    _options: FbxExportOptions,
 ) -> Result<StageReport, PipelineError> {
-    let index = PhaseThreePackageIndex::read(index_path)
+    let index = PhaseThreePackageIndex::read_for_unreal(index_path)
         .map_err(|error| PipelineError::new(error.to_string()))?;
     let package = selector
         .resolve(&index)
         .map_err(|error| PipelineError::new(error.to_string()))?;
-    validate_character_package(package)?;
-    let members = classify_members(package)?;
-    let package_dir = output_dir.join(&package.package_id);
-    let texture_dir = package_dir.join("textures");
-    let texture_staging_dir = package_dir.join(".texture-staging");
-    ensure_texture_output_absent(&texture_dir)?;
-    remove_texture_staging_dir(&texture_staging_dir)?;
-    let character = build_character(package, &members, base_root)?;
-    let animation_package = resolve_animation_package(&index, package)?;
-    let animations =
-        build_animation_clips(animation_package, &character.bones, base_root)?;
-    let (materials, mut capability_items) = resolve_materials(
+    let plan = PhaseThreePackagePlanner::plan(package);
+    let target_kind =
+        plan.fbx
+            .as_ref()
+            .map(|fbx| fbx.target_kind)
+            .ok_or_else(|| {
+                PipelineError::new(format!(
+                    "selected package is not an FBX model package: {}",
+                    package.package_id
+                ))
+            })?;
+    if target_kind == FbxTargetKind::SemanticSplit {
+        return Err(PipelineError::new(format!(
+            "package requires semantic splitting before FBX export: {}",
+            package.package_id
+        )));
+    }
+    export_transactional_package(
         &index,
         package,
-        &members,
+        target_kind,
+        output_dir,
         base_root,
-        &texture_staging_dir,
-    )?;
-    capability_items
-        .extend(animation_capability_items(animation_package, &animations));
-    let file_stem = stable_file_stem(&package.subcategory);
-    let fbx_path = package_dir.join(format!("{file_stem}.fbx"));
-    let export_target = CharacterExportTarget {
-        texture_staging_dir: &texture_staging_dir,
-        texture_dir: &texture_dir,
-        fbx_path: &fbx_path,
-        package_id: &package.package_id,
+    )
+}
+
+/// Build one package below owned staging and publish it with one rename.
+fn export_transactional_package(
+    index: &PhaseThreePackageIndex,
+    package: &PhaseThreePackageRow,
+    target_kind: FbxTargetKind,
+    output_dir: &Path,
+    base_root: &Path,
+) -> Result<StageReport, PipelineError> {
+    let destination = output_dir.join(&package.package_id);
+    let reported_package_dir = PathBuf::from(&package.package_id);
+    let staging = single_package_staging_path(output_dir, &package.package_id);
+    ensure_transaction_path_missing(&destination, "FBX package output")?;
+    ensure_transaction_path_missing(&staging, "FBX package staging")?;
+    local_create_dir_all(&staging)
+        .map_err(|error| fbx_io_error("create FBX package staging", &error))?;
+    let result = match target_kind {
+        FbxTargetKind::StaticMesh => export_lossless_static_package(
+            index,
+            package,
+            &staging,
+            &reported_package_dir,
+            base_root,
+        ),
+        FbxTargetKind::SkeletalMesh => export_single_skeletal_package(
+            index,
+            package,
+            &staging,
+            &reported_package_dir,
+            base_root,
+        ),
+        FbxTargetKind::SemanticSplit => Err(PipelineError::new(
+            "semantic split reached the FBX publication transaction",
+        )),
     };
-    let summary = serialize_selected_texture_storage(
-        &character,
-        &materials,
-        &animations,
-        &export_target,
-        options.embed_textures,
-    )?;
-    capability_items.push(texture_storage_capability(options.embed_textures));
-    capability_items.extend(member_capability_items(&members));
-    let report_path = package_dir.join("capability-report.json");
-    write_capability_report(
-        &report_path,
-        &package.package_id,
-        capability_items,
-    )?;
-    stage_report(package, &summary, &fbx_path, &report_path)
+    let report = match result {
+        Ok(report) => report,
+        Err(error) => {
+            return Err(cleanup_after_transaction_failure(&staging, error));
+        },
+    };
+    if let Err(error) = std::fs::rename(&staging, &destination) {
+        let publication_error = fbx_io_error("publish FBX package", &error);
+        return Err(cleanup_after_transaction_failure(
+            &staging,
+            publication_error,
+        ));
+    }
+    Ok(report)
+}
+
+/// Preserve the primary transaction failure while attempting owned cleanup.
+fn cleanup_after_transaction_failure(
+    staging: &Path,
+    primary: PipelineError,
+) -> PipelineError {
+    match cleanup_owned_staging(staging) {
+        Ok(()) => primary,
+        Err(cleanup) => PipelineError::new(format!(
+            "{primary}; FBX package staging cleanup also failed: {cleanup}"
+        )),
+    }
+}
+
+/// Derive one hidden sibling staging path from a canonical package identity.
+fn single_package_staging_path(output_dir: &Path, package_id: &str) -> PathBuf {
+    output_dir.join(format!(".{package_id}.fbx-staging"))
+}
+
+/// Reject every pre-existing transaction path, including special file kinds.
+fn ensure_transaction_path_missing(
+    path: &Path,
+    label: &str,
+) -> Result<(), PipelineError> {
+    match local_path_kind(path)
+        .map_err(|error| fbx_io_error("inspect FBX transaction path", &error))?
+    {
+        PathKind::Missing => Ok(()),
+        kind => Err(PipelineError::new(format!(
+            "{label} already exists as {kind:?}"
+        ))),
+    }
+}
+
+/// Remove only the hidden staging directory owned by the current transaction.
+fn cleanup_owned_staging(staging: &Path) -> Result<(), PipelineError> {
+    match local_path_kind(staging)
+        .map_err(|error| fbx_io_error("inspect FBX package staging", &error))?
+    {
+        PathKind::Missing => Ok(()),
+        PathKind::Directory => std::fs::remove_dir_all(staging)
+            .map_err(|error| fbx_io_error("clean FBX package staging", &error)),
+        kind => Err(PipelineError::new(format!(
+            "FBX package staging changed kind before cleanup: {kind:?}"
+        ))),
+    }
 }
 
 /// Prepare, publish, and verify one catalog character package.
@@ -739,6 +823,281 @@ fn verify_external_binary_fbx(
     Ok(())
 }
 
+/// Export one static package whose complete semantic surface fits FBX geometry.
+fn export_lossless_static_package(
+    index: &PhaseThreePackageIndex,
+    package: &PhaseThreePackageRow,
+    package_dir: &Path,
+    reported_package_dir: &Path,
+    base_root: &Path,
+) -> Result<StageReport, PipelineError> {
+    let texture_dir = package_dir.join("textures");
+    let meshes = load_indexed_static_meshes(package, base_root)?;
+    let mesh_refs = meshes.iter().collect::<Vec<_>>();
+    let materials = resolve_indexed_package_materials(
+        index,
+        package,
+        &mesh_refs,
+        base_root,
+        &texture_dir,
+    )?;
+    let asset_name = stable_file_stem(&package.subcategory);
+    let fbx_path = package_dir.join(format!("{asset_name}.fbx"));
+    let summary =
+        write_binary_model_fbx(&asset_name, &meshes, &materials, &fbx_path)
+            .map_err(|_error| {
+                PipelineError::new(format!(
+                    "static FBX serialization failed for {}",
+                    package.package_id
+                ))
+            })?;
+    let fbx_bytes = local_read_bytes(&fbx_path).map_err(|error| {
+        fbx_io_error("read static FBX for verification", &error)
+    })?;
+    verify_external_binary_fbx(package, &fbx_bytes)?;
+    let report_path = package_dir.join("capability-report.json");
+    write_capability_report(
+        &report_path,
+        &package.package_id,
+        static_member_capability_items(package),
+    )?;
+    stage_report(
+        package,
+        &summary,
+        &fbx_path,
+        &report_path,
+        &reported_package_dir.join(format!("{asset_name}.fbx")),
+    )
+}
+
+/// Load static meshes only from exact physical paths published by the index.
+fn load_indexed_static_meshes(
+    package: &PhaseThreePackageRow,
+    base_root: &Path,
+) -> Result<Vec<MeshAsset>, PipelineError> {
+    package
+        .members()
+        .iter()
+        .filter(|member| member.role == PackageRole::Model)
+        .map(|member| {
+            read_indexed_mesh(&base_root.join(&member.path)).map_err(|_error| {
+                PipelineError::new(format!(
+                    "indexed mesh decode failed for {} member {}",
+                    package.package_id, member.id
+                ))
+            })
+        })
+        .collect()
+}
+
+/// Resolve exact package-index shaders and require exact mesh usage coverage.
+fn resolve_indexed_package_materials(
+    index: &PhaseThreePackageIndex,
+    package: &PhaseThreePackageRow,
+    meshes: &[&MeshAsset],
+    base_root: &Path,
+    texture_staging_dir: &Path,
+) -> Result<Vec<MaterialBinding>, PipelineError> {
+    let package_root = base_root.join(&package.package_root);
+    let source = DecodedComponentSource::new(
+        package_root,
+        texture_staging_dir.to_path_buf(),
+    );
+    let mut declared = BTreeMap::new();
+    for member in package
+        .members()
+        .iter()
+        .filter(|member| member.role == PackageRole::Material)
+    {
+        let shader_path = base_root.join(&member.path);
+        let binding = match source.resolve_indexed_material(&shader_path) {
+            Ok(binding) => binding,
+            Err(DecodedComponentError::MissingTexture {
+                shader,
+                texture,
+                ..
+            }) => {
+                let Some((_owner, texture_member)) =
+                    resolve_shared_texture_member(index, &texture)?
+                else {
+                    return Err(PipelineError::new(format!(
+                        concat!(
+                            "indexed shader member {} ({}) has no unique ",
+                            "package-index PNG for {}"
+                        ),
+                        member.id, shader, texture
+                    )));
+                };
+                source
+                    .resolve_indexed_material_with_external_texture(
+                        &shader_path,
+                        &base_root.join(&texture_member.path),
+                    )
+                    .map_err(|_error| {
+                        PipelineError::new(format!(
+                            concat!(
+                                "indexed shared texture resolution failed for ",
+                                "{} member {}"
+                            ),
+                            package.package_id, member.id
+                        ))
+                    })?
+            },
+            Err(_error) => {
+                return Err(PipelineError::new(format!(
+                    "indexed shader decode failed for {} member {}",
+                    package.package_id, member.id
+                )));
+            },
+        };
+        let key = binding.material_name.to_ascii_lowercase();
+        if declared.insert(key, binding).is_some() {
+            return Err(PipelineError::new(format!(
+                "duplicate authored shader identity in {}",
+                package.package_id
+            )));
+        }
+    }
+    let used = meshes
+        .iter()
+        .flat_map(|mesh| mesh.groups.iter())
+        .map(|group| group.shader.to_ascii_lowercase())
+        .collect::<BTreeSet<_>>();
+    let declared_ids = declared.keys().cloned().collect::<BTreeSet<_>>();
+    if used != declared_ids {
+        return Err(PipelineError::new(format!(
+            "package shader membership does not exactly cover mesh usage for {}",
+            package.package_id
+        )));
+    }
+    Ok(declared.into_values().collect())
+}
+
+/// Report every member in one exact lossless static package.
+fn static_member_capability_items(
+    package: &PhaseThreePackageRow,
+) -> Vec<CapabilityItem> {
+    package
+        .members()
+        .iter()
+        .map(|member| {
+            let (outcome, reason) = match member.role {
+                PackageRole::Model => (
+                    "converted",
+                    "indexed mesh exported with authored topology and surfaces",
+                ),
+                PackageRole::Material => (
+                    "converted",
+                    "indexed shader exported as an FBX material binding",
+                ),
+                PackageRole::Texture
+                    if member.source_chunk_kind == "texture" =>
+                {
+                    (
+                        "converted",
+                        "indexed PNG published as an external FBX texture",
+                    )
+                },
+                PackageRole::Texture | PackageRole::Metadata => (
+                    "preserved-as-metadata",
+                    "source evidence retained outside the interchange payload",
+                ),
+                _ => ("deferred", "unsupported static-package evidence"),
+            };
+            CapabilityItem {
+                id: member.id.clone(),
+                outcome,
+                reason: reason.to_owned(),
+            }
+        })
+        .collect()
+}
+
+/// Export one self-contained skeletal mesh without companion animation banks.
+fn export_single_skeletal_package(
+    index: &PhaseThreePackageIndex,
+    package: &PhaseThreePackageRow,
+    package_dir: &Path,
+    reported_package_dir: &Path,
+    base_root: &Path,
+) -> Result<StageReport, PipelineError> {
+    validate_character_package(package)?;
+    let members = classify_members(package)?;
+    if !members.animations.is_empty() || !members.controllers.is_empty() {
+        return Err(PipelineError::new(format!(
+            "single skeletal package contains runtime animation companions: {}",
+            package.package_id
+        )));
+    }
+    let texture_dir = package_dir.join("textures");
+    let character = build_character(package, &members, base_root)?;
+    let mesh_refs = character
+        .parts
+        .iter()
+        .map(|part| &part.mesh)
+        .collect::<Vec<_>>();
+    let materials = resolve_indexed_package_materials(
+        index,
+        package,
+        &mesh_refs,
+        base_root,
+        &texture_dir,
+    )?;
+    let file_stem = stable_file_stem(&package.subcategory);
+    let fbx_path = package_dir.join(format!("{file_stem}.fbx"));
+    let summary =
+        write_binary_character_fbx(&character, &materials, &[], &fbx_path)
+            .map_err(|_error| {
+                PipelineError::new(format!(
+                    "skeletal FBX serialization failed for {}",
+                    package.package_id
+                ))
+            })?;
+    verify_single_skeletal_summary(package, &character, &summary)?;
+    let fbx_bytes = local_read_bytes(&fbx_path).map_err(|error| {
+        fbx_io_error("read skeletal FBX for verification", &error)
+    })?;
+    verify_external_binary_fbx(package, &fbx_bytes)?;
+    let report_path = package_dir.join("capability-report.json");
+    write_capability_report(
+        &report_path,
+        &package.package_id,
+        member_capability_items(&members),
+    )?;
+    stage_report(
+        package,
+        &summary,
+        &fbx_path,
+        &report_path,
+        &reported_package_dir.join(format!("{file_stem}.fbx")),
+    )
+}
+
+/// Verify one direct skeletal-mesh artifact has no imported animation payload.
+fn verify_single_skeletal_summary(
+    package: &PhaseThreePackageRow,
+    character: &CharacterAsset,
+    summary: &CharacterBinaryFbxSummary,
+) -> Result<(), PipelineError> {
+    let groups = character
+        .parts
+        .iter()
+        .map(|part| part.mesh.groups.len())
+        .sum::<usize>();
+    if summary.bones != character.bones.len()
+        || summary.geometries != groups
+        || summary.clusters == 0
+        || summary.materials == 0
+        || summary.animations != 0
+    {
+        return Err(PipelineError::new(format!(
+            "single skeletal FBX summary is invalid for {}: {summary:?}",
+            package.package_id
+        )));
+    }
+    Ok(())
+}
+
 /// Require one selected package to be a supported character FBX model.
 fn validate_character_package(
     package: &PhaseThreePackageRow,
@@ -760,30 +1119,6 @@ fn validate_character_package(
         )));
     }
     Ok(())
-}
-
-/// Report the selected texture-storage policy explicitly.
-fn texture_storage_capability(embed_textures: bool) -> CapabilityItem {
-    if embed_textures {
-        return CapabilityItem {
-            id: "derived:texture-storage".to_owned(),
-            outcome: "converted",
-            reason: concat!(
-                "legacy compatibility mode stores PNG payloads in ",
-                "Video.Content and does not publish sibling textures",
-            )
-            .to_owned(),
-        };
-    }
-    CapabilityItem {
-        id: "derived:texture-storage".to_owned(),
-        outcome: "converted",
-        reason: concat!(
-            "canonical mode omits Video.Content and references immutable ",
-            "sibling files under textures/",
-        )
-        .to_owned(),
-    }
 }
 
 /// Classify package members into character export families.
@@ -870,9 +1205,9 @@ fn build_character(
         &mesh_path_refs,
         &composite_path_refs,
     )
-    .map_err(|error| {
+    .map_err(|_error| {
         PipelineError::new(format!(
-            "character assembly failed for {}: {error:?}",
+            "character assembly failed for {}",
             package.package_id
         ))
     })
@@ -930,79 +1265,6 @@ fn animation_subcategory_candidates(subcategory: &str) -> Vec<String> {
         candidates.push(GENERAL_CHARACTER_ANIMATION_SUBCATEGORY.to_owned());
     }
     candidates
-}
-
-/// Load every skeletal animation clip from one companion index row.
-fn build_animation_clips(
-    animation_package: Option<&PhaseThreePackageRow>,
-    bones: &[fbx::domain::skeleton::Bone],
-    base_root: &Path,
-) -> Result<Vec<AnimationClip>, PipelineError> {
-    let Some(package) = animation_package else {
-        return Ok(Vec::new());
-    };
-    let paths = package
-        .members()
-        .iter()
-        .filter(|member| {
-            member.kind == "p3d-animation"
-                && member.source_chunk_kind == "animation"
-        })
-        .map(|member| base_root.join(&member.path))
-        .collect::<Vec<_>>();
-    if paths.is_empty() {
-        return Err(PipelineError::new(format!(
-            "animation-set package {} has no skeletal animation \
-                     members",
-            package.package_id
-        )));
-    }
-    let path_refs = paths.iter().map(PathBuf::as_path).collect::<Vec<_>>();
-    load_animation_clips(&path_refs, bones).map_err(|error| {
-        PipelineError::new(format!(
-            "animation-set assembly failed for {}: {error:?}",
-            package.package_id
-        ))
-    })
-}
-
-/// Produce capability evidence for companion skeletal animation conversion.
-fn animation_capability_items(
-    animation_package: Option<&PhaseThreePackageRow>,
-    clips: &[AnimationClip],
-) -> Vec<CapabilityItem> {
-    let Some(package) = animation_package else {
-        return Vec::new();
-    };
-    let mut items = package
-        .members()
-        .iter()
-        .filter(|member| {
-            member.kind == "p3d-animation"
-                && member.source_chunk_kind == "animation"
-        })
-        .map(|member| CapabilityItem {
-            id: member.id.clone(),
-            outcome: "converted",
-            reason: "companion skeletal clip exported as an FBX animation \
-                         stack"
-                .to_owned(),
-        })
-        .collect::<Vec<_>>();
-    for clip in clips {
-        if !clip.ignored_group_ids.is_empty() {
-            items.push(CapabilityItem {
-                id: format!("animation-helper-groups:{}", clip.name),
-                outcome: "preserved-as-metadata",
-                reason: format!(
-                    "{} non-deforming helper groups were not bound to \
-                         skeleton bones",
-                    clip.ignored_group_ids.len()
-                ),
-            });
-        }
-    }
-    items
 }
 
 /// Resolve one shader texture reference to a unique index-published PNG.
@@ -1085,163 +1347,18 @@ fn normalized_texture_png_file_name(
     Ok(format!("{stem}.png"))
 }
 
-/// Immutable output paths and package identity for one character export.
-struct CharacterExportTarget<'path> {
-    /// Private decoded-texture staging directory.
-    texture_staging_dir: &'path Path,
-    /// Published external-texture directory.
-    texture_dir: &'path Path,
-    /// Final binary FBX path.
-    fbx_path: &'path Path,
-    /// Stable package identity used in diagnostics.
-    package_id: &'path str,
-}
-
-/// Dispatch one character export through the selected texture-storage policy.
-fn serialize_selected_texture_storage(
-    character: &CharacterAsset,
-    materials: &[MaterialBinding],
-    animations: &[AnimationClip],
-    target: &CharacterExportTarget<'_>,
-    embed_textures: bool,
-) -> Result<CharacterBinaryFbxSummary, PipelineError> {
-    if embed_textures {
-        return write_embedded_character_fbx(
-            character,
-            materials,
-            animations,
-            target.texture_staging_dir,
-            target.fbx_path,
-            target.package_id,
-        );
-    }
-    write_external_character_fbx(
-        character,
-        materials,
-        animations,
-        target.texture_staging_dir,
-        target.texture_dir,
-        target.fbx_path,
-        target.package_id,
-    )
-}
-
-/// Publish sibling textures and write an external-reference FBX.
-fn write_external_character_fbx(
-    character: &CharacterAsset,
-    materials: &[MaterialBinding],
-    animations: &[AnimationClip],
-    texture_staging_dir: &Path,
-    texture_dir: &Path,
-    fbx_path: &Path,
-    package_id: &str,
-) -> Result<CharacterBinaryFbxSummary, PipelineError> {
-    std::fs::rename(texture_staging_dir, texture_dir).map_err(|error| {
-        PipelineError::new(format!(
-            "failed to publish external texture directory {}: {error}",
-            texture_dir.display()
-        ))
-    })?;
-    let export_result =
-        write_binary_character_fbx(character, materials, animations, fbx_path)
-            .map_err(|error| {
-                let context = "character FBX serialization failed";
-                PipelineError::new(format!(
-                    "{context} for {package_id}: {error:?}"
-                ))
-            });
-    match export_result {
-        Ok(summary) => Ok(summary),
-        Err(error) => {
-            remove_texture_staging_dir(texture_dir)?;
-            Err(error)
-        },
-    }
-}
-
-/// Serialize one self-contained FBX and always remove private texture staging.
-fn write_embedded_character_fbx(
-    character: &CharacterAsset,
-    materials: &[MaterialBinding],
-    animations: &[AnimationClip],
-    texture_staging_dir: &Path,
-    fbx_path: &Path,
-    package_id: &str,
-) -> Result<CharacterBinaryFbxSummary, PipelineError> {
-    let export_result = (|| {
-        let embedded_textures =
-            read_embedded_textures(materials, texture_staging_dir)?;
-        write_binary_character_fbx_embedded(
-            character,
-            materials,
-            &embedded_textures,
-            animations,
-            fbx_path,
-        )
-        .map_err(|error| {
-            let context = "character FBX serialization failed";
-            PipelineError::new(format!("{context} for {package_id}: {error:?}"))
-        })
-    })();
-    let cleanup_result = remove_texture_staging_dir(texture_staging_dir);
-    let summary = export_result?;
-    cleanup_result?;
-    Ok(summary)
-}
-
-/// Read staged PNGs into deterministic binary FBX texture payloads.
-fn read_embedded_textures(
-    materials: &[MaterialBinding],
-    texture_staging_dir: &Path,
-) -> Result<Vec<EmbeddedTexture>, PipelineError> {
-    let file_names: BTreeSet<&str> = materials
-        .iter()
-        .filter_map(|binding| binding.texture_file_name.as_deref())
-        .collect();
-    let mut textures = Vec::with_capacity(file_names.len());
-    for file_name in file_names {
-        let path = texture_staging_dir.join(file_name);
-        let content = local_read_bytes(&path).map_err(|error| {
-            PipelineError::new(format!(
-                "failed to read embedded texture {}: {error}",
-                path.display()
-            ))
-        })?;
-        textures.push(EmbeddedTexture {
-            file_name: file_name.to_owned(),
-            content,
-        });
-    }
-    Ok(textures)
-}
-
-/// Reject one already published external texture directory.
-fn ensure_texture_output_absent(path: &Path) -> Result<(), PipelineError> {
-    if !path.exists() {
-        return Ok(());
-    }
-    Err(PipelineError::new(format!(
-        "external texture output already exists: {}",
-        path.display()
-    )))
-}
-
 /// Remove the private texture staging directory before or after one export.
 fn remove_texture_staging_dir(path: &Path) -> Result<(), PipelineError> {
     if !path.exists() {
         return Ok(());
     }
     if !path.is_dir() {
-        return Err(PipelineError::new(format!(
-            "texture staging path is not a directory: {}",
-            path.display()
-        )));
+        return Err(PipelineError::new(
+            "texture staging path is not a directory",
+        ));
     }
     std::fs::remove_dir_all(path).map_err(|error| {
-        PipelineError::new(format!(
-            "failed to remove texture staging directory {}: {error}",
-            path.display()
-        ))
+        fbx_io_error("remove texture staging directory", &error)
     })
 }
 
@@ -1415,7 +1532,7 @@ fn member_capability_items(
                 "preserved-as-metadata"
             },
             reason: if embeddable {
-                "referenced PNG embedded in binary FBX Video.Content".to_owned()
+                "referenced PNG published as an external FBX texture".to_owned()
             } else {
                 "texture metadata preserved for traceability".to_owned()
             },
@@ -1470,11 +1587,8 @@ fn write_capability_report(
     }
     json.push_str("  ]\n");
     json.push_str("}\n");
-    local_write_text(path, &json, true).map_err(|error| {
-        PipelineError::new(format!(
-            "failed to write capability report: {error}"
-        ))
-    })?;
+    local_write_text(path, &json, true)
+        .map_err(|error| fbx_io_error("write FBX capability report", &error))?;
     Ok(())
 }
 
@@ -1484,6 +1598,7 @@ fn stage_report(
     summary: &CharacterBinaryFbxSummary,
     fbx_path: &Path,
     report_path: &Path,
+    reported_fbx_path: &Path,
 ) -> Result<StageReport, PipelineError> {
     let fbx_bytes = file_len(fbx_path)?;
     let report_bytes = file_len(report_path)?;
@@ -1497,7 +1612,7 @@ fn stage_report(
             "package={} output={} bones={} geometries={} clusters={} \
                  materials={} textures={} animations={}",
             package.package_id,
-            fbx_path.display(),
+            reported_fbx_path.display(),
             summary.bones,
             summary.geometries,
             summary.clusters,
@@ -1511,9 +1626,13 @@ fn stage_report(
 /// Supports the `file_len` operation within this deterministic export
 /// boundary.
 fn file_len(path: &Path) -> Result<u64, PipelineError> {
-    local_file_len(path).map_err(|error| {
-        PipelineError::new(format!("failed to stat export artifact: {error}"))
-    })
+    local_file_len(path)
+        .map_err(|error| fbx_io_error("stat FBX export artifact", &error))
+}
+
+/// Build one public-safe FBX I/O diagnostic without physical path text.
+fn fbx_io_error(action: &str, error: &std::io::Error) -> PipelineError {
+    PipelineError::new(format!("{action} failed ({:?})", error.kind()))
 }
 
 #[cfg(test)]

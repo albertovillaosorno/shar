@@ -41,8 +41,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use fbx::adapters::driven::binary_character_writer::{
-    CharacterBinaryFbxError, CharacterBinaryFbxSummary, ModelExportRootPolicy,
-    write_binary_model_fbx, write_binary_model_fbx_with_policies,
+    CharacterBinaryFbxError, CharacterBinaryFbxSummary, EmbeddedTexture,
+    ModelExportRootPolicy, write_binary_model_fbx,
+    write_binary_model_fbx_embedded, write_binary_model_fbx_with_policies,
 };
 use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 use fbx::domain::texture::MaterialBinding;
@@ -196,6 +197,42 @@ fn static_model_is_deterministic_and_has_no_rig_objects() -> Result<(), String>
     }
     remove_if_present(&first)?;
     remove_if_present(&second)?;
+    Ok(())
+}
+
+#[test]
+fn static_model_embeds_exact_png_payload() -> Result<(), String> {
+    const PNG: &[u8] = b"\x89PNG\r\n\x1a\nembedded-test";
+    let path = output_path("embedded");
+    remove_if_present(&path)?;
+    let mesh = model_mesh()?;
+    let material =
+        MaterialBinding::new("material", Some("texture.png".to_owned()))
+            .map_err(|error| format!("embedded material failed: {error:?}"))?;
+    let texture = EmbeddedTexture {
+        file_name: "texture.png".to_owned(),
+        content: PNG.to_vec(),
+    };
+
+    let summary = write_binary_model_fbx_embedded(
+        "embedded-model",
+        &[mesh],
+        &[material],
+        &[texture],
+        &path,
+    )
+    .map_err(|error| format!("embedded static write failed: {error:?}"))?;
+    if summary.textures != 1 {
+        return Err(format!("unexpected embedded texture count: {summary:?}"));
+    }
+    let bytes = fs::read(&path)
+        .map_err(|error| format!("embedded static read failed: {error}"))?;
+    if !contains_token(&bytes, "Content")
+        || !bytes.windows(PNG.len()).any(|window| window == PNG)
+    {
+        return Err("embedded static FBX lost the PNG payload".to_owned());
+    }
+    remove_if_present(&path)?;
     Ok(())
 }
 

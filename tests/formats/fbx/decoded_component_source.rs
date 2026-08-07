@@ -34,7 +34,7 @@ use std::fs;
 use std::path::PathBuf;
 
 use fbx::adapters::driven::decoded_component_source::{
-    DecodedComponentError, DecodedComponentSource,
+    DecodedComponentError, DecodedComponentSource, read_indexed_mesh,
 };
 use fbx::ports::component_source::ComponentSource;
 use png as _;
@@ -54,6 +54,94 @@ const fn valid_mesh_json() -> &'static str {
         r#""shader":"shader","positions":[[0,0,0],[1,0,0],[0,1,0]],"#,
         r#""indices":[0,1,2]}]}"#,
     )
+}
+
+#[test]
+fn indexed_mesh_preserves_authored_identity() -> Result<(), String> {
+    let root = temp_root("indexed-mesh-path");
+    let mesh_path = root.join("renamed-duplicate_000.json");
+    fs::create_dir_all(&root).map_err(|error| error.to_string())?;
+    let json = valid_mesh_json()
+        .replace("\"name\":\"mesh\"", "\"name\":\"authored-mesh\"");
+    fs::write(&mesh_path, json).map_err(|error| error.to_string())?;
+
+    let result = read_indexed_mesh(&mesh_path)
+        .map_err(|error| format!("indexed mesh failed: {error:?}"));
+    let _cleanup_result = fs::remove_dir_all(&root);
+    let mesh = result?;
+    if mesh.name != "authored-mesh" {
+        return Err(format!(
+            "indexed mesh lost authored identity: {}",
+            mesh.name
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn indexed_material_uses_published_shader_path() -> Result<(), String> {
+    let root = temp_root("indexed-material-path");
+    let shader_path = root.join("material-logical-uuid.json");
+    fs::create_dir_all(&root).map_err(|error| error.to_string())?;
+    fs::write(
+        &shader_path,
+        r#"{"schema":"shader","name":"authoredShader","params":[]}"#,
+    )
+    .map_err(|error| error.to_string())?;
+    let source = DecodedComponentSource::new(&root, root.join("textures"));
+
+    let result = source
+        .resolve_indexed_material(&shader_path)
+        .map_err(|error| format!("indexed material failed: {error:?}"));
+    let _cleanup_result = fs::remove_dir_all(&root);
+    let material = result?;
+    if material.material_name != "authoredShader" {
+        return Err(format!(
+            "indexed material lost authored identity: {}",
+            material.material_name
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn indexed_material_accepts_exact_external_texture() -> Result<(), String> {
+    let root = temp_root("indexed-material-external");
+    let shader_path = root.join("shader-logical-uuid.json");
+    let texture_path = root.join("shared.png");
+    fs::create_dir_all(&root).map_err(|error| error.to_string())?;
+    fs::write(
+        &shader_path,
+        r#"{"schema":"shader","name":"sharedShader","params":[{"kind":"texture","param":"TEX","value":"shared.bmp"}]}"#,
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(&texture_path, b"png-payload")
+        .map_err(|error| error.to_string())?;
+    let output_dir = root.join("staged");
+    let source = DecodedComponentSource::new(&root, &output_dir);
+
+    let result = source
+        .resolve_indexed_material_with_external_texture(
+            &shader_path,
+            &texture_path,
+        )
+        .map_err(|error| {
+            format!("indexed external material failed: {error:?}")
+        });
+    let material = result?;
+    let staged = output_dir.join("shared.png");
+    if material.material_name != "sharedShader"
+        || material.texture_file_name.as_deref() != Some("shared.png")
+        || fs::read(&staged).map_err(|error| error.to_string())?
+            != b"png-payload"
+    {
+        let _cleanup_result = fs::remove_dir_all(&root);
+        return Err(
+            "indexed external material lost exact payload evidence".to_owned()
+        );
+    }
+    let _cleanup_result = fs::remove_dir_all(&root);
+    Ok(())
 }
 
 #[test]
