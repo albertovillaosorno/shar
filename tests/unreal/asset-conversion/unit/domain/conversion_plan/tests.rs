@@ -154,6 +154,28 @@ fn builds_all_plan_families_with_stable_revisions() -> Result<(), String> {
 }
 
 #[test]
+fn semantic_blockers_participate_in_bundle_identity() -> Result<(), String> {
+    let baseline = PlanBundle::build(&context(), Vec::new())?;
+    let blocked =
+        PlanBundle::build_with_semantic_blockers(&context(), Vec::new(), 3)?;
+    if blocked.semantic_blocker_count() != 3 {
+        return Err("semantic blocker count was not preserved".to_owned());
+    }
+    if !blocked
+        .index_json()
+        .contains(r#""semantic_blocker_count":3"#)
+    {
+        return Err("bundle index omitted semantic blockers".to_owned());
+    }
+    if baseline.index_revision() == blocked.index_revision() {
+        return Err(
+            "semantic blockers did not affect bundle identity".to_owned()
+        );
+    }
+    Ok(())
+}
+
+#[test]
 fn pins_every_plan_dependency_to_the_exact_revision() -> Result<(), String> {
     let bundle =
         PlanBundle::build(&context(), vec![json_operation(), wav_operation()])?;
@@ -319,7 +341,8 @@ fn accepts_pending_and_verified_fbx_readiness() -> Result<(), String> {
         OperationReadiness::RequiresConversion,
         OperationReadiness::Ready,
     ] {
-        let bundle = PlanBundle::build(&context(), vec![fbx_operation(readiness)])?;
+        let bundle =
+            PlanBundle::build(&context(), vec![fbx_operation(readiness)])?;
         let import = bundle
             .artifacts()
             .iter()

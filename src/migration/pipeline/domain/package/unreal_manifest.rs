@@ -44,10 +44,10 @@ use super::{
 
 /// Versioned JSONL manifest schema consumed by editor automation.
 pub const UNREAL_IMPORT_MANIFEST_SCHEMA: &str =
-    "shar-schoenwald.unreal-import-manifest.v1";
+    "shar-schoenwald.unreal-import-manifest.v2";
 /// Versioned summary schema emitted beside the JSONL manifest.
 pub const UNREAL_IMPORT_SUMMARY_SCHEMA: &str =
-    "shar-schoenwald.unreal-import-summary.v1";
+    "shar-schoenwald.unreal-import-summary.v2";
 /// Maximum Unreal object path accepted by this staging contract.
 const MAX_UNREAL_OBJECT_PATH_BYTES: usize = 240;
 
@@ -117,6 +117,7 @@ pub(crate) struct UnrealImportSummary {
     pub(crate) direct_imports: usize,
     pub(crate) requires_fbx: usize,
     pub(crate) requires_editor_factory: usize,
+    pub(crate) requires_semantic_conversion: usize,
     pub(crate) metadata_only: usize,
 }
 
@@ -389,6 +390,12 @@ fn add_package_outputs(
             summary.requires_editor_factory =
                 summary.requires_editor_factory.saturating_add(1);
         },
+        ConversionFamily::UnrealNative
+            if disposition == "requires-semantic-conversion" =>
+        {
+            summary.requires_semantic_conversion =
+                summary.requires_semantic_conversion.saturating_add(1);
+        },
         ConversionFamily::UnrealNative => {},
         ConversionFamily::DoNotImport => {
             summary.metadata_only = summary.metadata_only.saturating_add(1);
@@ -508,12 +515,12 @@ fn package_policy(
 }
 
 fn native_policy(target: Option<UnrealTargetKind>) -> PackagePolicy {
-    let target = target.unwrap_or(UnrealTargetKind::DataAsset);
+    let target = target.unwrap_or(UnrealTargetKind::SemanticSource);
     let (target_kind, importer, profile, direct) = match target {
-        UnrealTargetKind::DataAsset => (
-            "DataAsset",
-            "shar-data-asset-factory",
-            "shar-data-asset-v1",
+        UnrealTargetKind::SemanticSource => (
+            "SemanticSource",
+            "semantic-converter",
+            "shar-semantic-source-v1",
             false,
         ),
         UnrealTargetKind::DataTable => (
@@ -528,6 +535,9 @@ fn native_policy(target: Option<UnrealTargetKind>) -> PackagePolicy {
             "shar-string-table-v1",
             false,
         ),
+        UnrealTargetKind::Font => {
+            ("Font", "shar-font-factory", "shar-font-v1", false)
+        },
         UnrealTargetKind::Texture => {
             ("Texture2D", "texture-factory", "shar-texture-v1", true)
         },
@@ -565,6 +575,8 @@ fn native_policy(target: Option<UnrealTargetKind>) -> PackagePolicy {
             "direct-editor-import"
         } else if target == UnrealTargetKind::Metadata {
             "metadata-only"
+        } else if target == UnrealTargetKind::SemanticSource {
+            "requires-semantic-conversion"
         } else {
             "requires-editor-factory"
         },
@@ -575,6 +587,8 @@ fn native_policy(target: Option<UnrealTargetKind>) -> PackagePolicy {
             None
         } else if target == UnrealTargetKind::Metadata {
             Some("package contains traceability metadata only")
+        } else if target == UnrealTargetKind::SemanticSource {
+            Some("normalized source requires a deterministic semantic compiler")
         } else {
             Some("target requires a SHARBridge editor factory")
         },
@@ -684,9 +698,7 @@ fn validate_unreal_object_path(path: &str) -> Result<(), String> {
     };
     validate_unreal_package_path(package)?;
     if object != asset {
-        return Err(
-            "Unreal object name does not match package".to_owned()
-        );
+        return Err("Unreal object name does not match package".to_owned());
     }
     Ok(())
 }

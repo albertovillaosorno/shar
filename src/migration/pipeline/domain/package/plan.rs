@@ -46,12 +46,14 @@ pub enum ConversionFamily {
 /// Unreal-native target kind for non-model packages.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum UnrealTargetKind {
-    /// `DataAsset` target.
-    DataAsset,
+    /// Normalized semantic source awaiting a domain compiler.
+    SemanticSource,
     /// `DataTable` target.
     DataTable,
     /// `StringTable` target.
     StringTable,
+    /// `Font` target.
+    Font,
     /// `Texture2D` or UI texture target.
     Texture,
     /// `UMG` or screen layout target.
@@ -239,16 +241,49 @@ fn unreal_plan(package: &PhaseThreePackageRow) -> PhaseThreePackagePlan {
 /// Selects the stable Unreal target kind from package evidence.
 fn unreal_target_kind(package: &PhaseThreePackageRow) -> UnrealTargetKind {
     match package.category.as_str() {
-        "language" => UnrealTargetKind::StringTable,
+        "language" if !package.text_key_ids.is_empty() => {
+            UnrealTargetKind::StringTable
+        },
+        "language" if !package.ids_for_role(PackageRole::Ui).is_empty() => {
+            UnrealTargetKind::UserInterface
+        },
+        "language" => UnrealTargetKind::SemanticSource,
         "ui-images" | "game-icons" | "cards" => UnrealTargetKind::Texture,
         "ui-screens" | "ui-components" => UnrealTargetKind::UserInterface,
+        "ui-resources" if has_member_kind(package, "p3d-texture-font") => {
+            UnrealTargetKind::Font
+        },
+        "ui-resources"
+            if !package.ids_for_role(PackageRole::Text).is_empty() =>
+        {
+            UnrealTargetKind::StringTable
+        },
+        "cinematics"
+            if !package.ids_for_role(PackageRole::Audio).is_empty() =>
+        {
+            UnrealTargetKind::SoundWave
+        },
+        "characters"
+            if !package.ids_for_role(PackageRole::Texture).is_empty() =>
+        {
+            UnrealTargetKind::Texture
+        },
         "dialog" | "music" | "sound-effects" => UnrealTargetKind::SoundWave,
-        "movies" => UnrealTargetKind::MediaSource,
-        "missions" | "mission-scripts" => UnrealTargetKind::StateTree,
+        "movies" if !package.ids_for_role(PackageRole::Movie).is_empty() => {
+            UnrealTargetKind::MediaSource
+        },
+        "movies" => UnrealTargetKind::Metadata,
+        "missions" => UnrealTargetKind::SemanticSource,
+        "mission-scripts" => UnrealTargetKind::SemanticSource,
         "vehicle-tuning" | "sound-scripts" => UnrealTargetKind::DataTable,
         "extraction-reports" => UnrealTargetKind::Metadata,
-        _ => UnrealTargetKind::DataAsset,
+        _ => UnrealTargetKind::SemanticSource,
     }
+}
+
+/// Returns whether one package contains a physical member of an exact kind.
+fn has_member_kind(package: &PhaseThreePackageRow, kind: &str) -> bool {
+    package.members().iter().any(|member| member.kind == kind)
 }
 
 /// Collects the exact ids consumed by one Unreal-native target.

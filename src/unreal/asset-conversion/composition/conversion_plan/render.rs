@@ -205,21 +205,24 @@ fn validation_json(family: PlanFamily, operation_count: usize) -> String {
 
 pub(super) fn bundle_preimage(
     context: &PlanContext,
+    semantic_blocker_count: usize,
     artifacts: &[PlanArtifact],
 ) -> String {
-    render_bundle(context, "", artifacts, false)
+    render_bundle(context, semantic_blocker_count, "", artifacts, false)
 }
 
 pub(super) fn bundle_json(
     context: &PlanContext,
+    semantic_blocker_count: usize,
     revision: &str,
     artifacts: &[PlanArtifact],
 ) -> String {
-    render_bundle(context, revision, artifacts, true)
+    render_bundle(context, semantic_blocker_count, revision, artifacts, true)
 }
 
 fn render_bundle(
     context: &PlanContext,
+    semantic_blocker_count: usize,
     revision: &str,
     artifacts: &[PlanArtifact],
     trailing_newline: bool,
@@ -246,7 +249,8 @@ fn render_bundle(
             "\"source_manifest_revision\":\"{}\",",
             "\"engine_contract_revision\":\"{}\",",
             "\"target_engine_version\":\"{}\",",
-            "\"target_platform\":\"{}\",\"plans\":{}}}"
+            "\"target_platform\":\"{}\",",
+            "\"semantic_blocker_count\":{},\"plans\":{}}}"
         ),
         UNREAL_PLAN_BUNDLE_SCHEMA,
         revision,
@@ -254,6 +258,7 @@ fn render_bundle(
         escape(&context.engine_contract_revision),
         escape(&context.target_engine_version),
         escape(&context.target_platform),
+        semantic_blocker_count,
         plans,
     );
     if trailing_newline {

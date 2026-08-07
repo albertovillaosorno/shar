@@ -61,6 +61,19 @@ impl PlanBundle {
         context: &PlanContext,
         operations: Vec<ConversionPlan>,
     ) -> Result<Self, String> {
+        Self::build_with_semantic_blockers(context, operations, 0)
+    }
+
+    /// Build a complete plan bundle with unresolved semantic-source evidence.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for invalid evidence, collisions, or dependency drift.
+    pub fn build_with_semantic_blockers(
+        context: &PlanContext,
+        operations: Vec<ConversionPlan>,
+        semantic_blocker_count: usize,
+    ) -> Result<Self, String> {
         context.validate()?;
         let mut validated = operations;
         for operation in &validated {
@@ -99,12 +112,21 @@ impl PlanBundle {
                 operation_count: family_operations.len(),
             });
         }
-        let preimage = render::bundle_preimage(context, &artifacts);
+        let preimage = render::bundle_preimage(
+            context,
+            semantic_blocker_count,
+            &artifacts,
+        );
         let index_revision = digest_hex(preimage.as_bytes());
-        let index_json =
-            render::bundle_json(context, &index_revision, &artifacts);
+        let index_json = render::bundle_json(
+            context,
+            semantic_blocker_count,
+            &index_revision,
+            &artifacts,
+        );
         Ok(Self {
             artifacts,
+            semantic_blocker_count,
             index_revision,
             index_json,
         })
