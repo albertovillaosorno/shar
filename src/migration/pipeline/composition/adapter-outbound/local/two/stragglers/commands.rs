@@ -34,6 +34,8 @@ use std::collections::BTreeMap;
 
 use super::json::{JsonObject, json_string};
 
+mod context;
+
 /// Append summary.
 // Ordered command evidence shares one accumulated summary map.
 pub(super) fn append_summary(json: &mut JsonObject, text: &str, ext: &str) {
@@ -56,14 +58,9 @@ pub(super) fn append_summary(json: &mut JsonObject, text: &str, ext: &str) {
         }
         statements = statements.saturating_add(1);
         source_statements.push(trimmed.to_owned());
-        if let Some((raw_command, args)) = trimmed.split_once('(') {
+        if let Some((raw_command, args_raw)) = parse_call(trimmed) {
             let command = raw_command.trim().to_ascii_lowercase();
             if !command.is_empty() {
-                let args_raw = args
-                    .trim_end_matches(';')
-                    .trim_end_matches(')')
-                    .trim()
-                    .to_owned();
                 let arguments = split_arguments(&args_raw);
                 if command.contains("loadp3d") {
                     load_p3d = load_p3d.saturating_add(1);
@@ -97,6 +94,25 @@ pub(super) fn append_summary(json: &mut JsonObject, text: &str, ext: &str) {
             }
         }
     }
+
+    let context_command_count = context::command_count(&invocations);
+    let context_findings = if ext == "mfk" {
+        context::validate(&invocations)
+    } else {
+        Vec::new()
+    };
+    json.number(
+        "context_command_count",
+        u64::try_from(context_command_count).unwrap_or(u64::MAX),
+    );
+    json.number(
+        "context_finding_count",
+        u64::try_from(context_findings.len()).unwrap_or(u64::MAX),
+    );
+    json.raw_json(
+        "context_findings",
+        &context::findings_json(&context_findings),
+    );
 
     json.number(
         "statement_count",
@@ -138,9 +154,9 @@ pub(super) fn append_summary(json: &mut JsonObject, text: &str, ext: &str) {
 /// Schema for.
 pub(super) fn schema_for(ext: &str) -> &'static str {
     if ext == "con" {
-        "shar-schoenwald.straggler.config-script.v1"
+        "shar-schoenwald.straggler.config-script.v2"
     } else {
-        "shar-schoenwald.straggler.mission-script.v1"
+        "shar-schoenwald.straggler.mission-script.v2"
     }
 }
 
@@ -187,21 +203,81 @@ fn command_invocations_json(invocations: &[CommandInvocation]) -> String {
     out
 }
 
+/// Parse one command call without trailing comments.
+fn parse_call(statement: &str) -> Option<(&str, String)> {
+    let open = statement.find('(')?;
+    let mut in_quotes = false;
+    let mut escaped = false;
+    let mut depth = 0usize;
+    let tail = statement.get(open..)?;
+    for (offset, character) in tail.char_indices() {
+        if escaped {
+            escaped = false;
+            continue;
+        }
+        if character == '\\' && in_quotes {
+            escaped = true;
+            continue;
+        }
+        if character == '"' {
+            in_quotes = !in_quotes;
+            continue;
+        }
+        if in_quotes {
+            continue;
+        }
+        if character == '(' {
+            depth = depth.saturating_add(1);
+            continue;
+        }
+        if character == ')' {
+            depth = depth.checked_sub(1)?;
+            if depth == 0 {
+                let close = open.checked_add(offset)?;
+                let args_start = open.checked_add(1)?;
+                return Some((
+                    statement.get(..open)?.trim(),
+                    statement.get(args_start..close)?.trim().to_owned(),
+                ));
+            }
+        }
+    }
+    None
+}
+
 /// Split arguments.
 fn split_arguments(value: &str) -> Vec<String> {
     let mut args = Vec::new();
     let mut current = String::new();
     let mut in_quotes = false;
+    let mut escaped = false;
+    let mut depth = 0usize;
     for ch in value.chars() {
+        if escaped {
+            current.push(ch);
+            escaped = false;
+            continue;
+        }
+        if ch == '\\' && in_quotes {
+            current.push(ch);
+            escaped = true;
+            continue;
+        }
         if ch == '"' {
             in_quotes = !in_quotes;
             continue;
         }
-        if ch == ',' && !in_quotes {
-            push_arg(&mut args, &mut current);
-        } else {
-            current.push(ch);
+        if !in_quotes {
+            if ch == '(' {
+                depth = depth.saturating_add(1);
+            } else if ch == ')' {
+                depth = depth.saturating_sub(1);
+            } else if ch == ',' && depth == 0 {
+                push_arg(&mut args, &mut current);
+                continue;
+            }
         }
+        current.push(ch);
     }
     push_arg(&mut args, &mut current);
     args
@@ -242,3 +318,8 @@ fn semantic_role(statement: &str, ext: &str) -> &'static str {
         "mission-script"
     }
 }
+
+#[cfg(test)]
+// jig-ignore-next-line: exact syntax is indivisible
+#[path = "../../../../../../../../tests/migration/pipeline/unit/adapter-outbound/local/two/stragglers/commands/tests.rs"]
+mod tests;
