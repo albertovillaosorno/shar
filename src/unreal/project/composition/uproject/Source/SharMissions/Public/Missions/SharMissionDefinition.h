@@ -47,6 +47,48 @@ enum class ESharMissionTerminalOutcome : uint8
 };
 
 USTRUCT(BlueprintType)
+struct SHARMISSIONS_API FSharObjectivePolicyRow
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Objective")
+    FName PolicyId;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Objective")
+    FName ObjectiveKind;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Objective")
+    FName RouteId;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Objective")
+    TArray<FName> TargetIds;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Objective")
+    FName StartTrigger;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Objective")
+    FName CompletionRule;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Objective")
+    FName FailureRule;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Objective")
+    FName RecoveryRule;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Objective")
+    FName NotorietyPolicyId;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Objective")
+    FName CatchUpProfileId;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Objective")
+    FName DropSequenceId;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Objective")
+    FName PresentationProfileId;
+};
+
+USTRUCT(BlueprintType)
 struct SHARMISSIONS_API FSharMissionStageDefinition
 {
     GENERATED_BODY()
@@ -59,6 +101,9 @@ struct SHARMISSIONS_API FSharMissionStageDefinition
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mission")
     FName ObjectiveKind;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mission")
+    FName ObjectivePolicyId;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mission")
     FName SuccessStageId;
@@ -116,6 +161,9 @@ public:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mission")
     TArray<FSharMissionStageDefinition> Stages;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Objective")
+    TArray<FSharObjectivePolicyRow> ObjectivePolicies;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Reward")
     TArray<FSharMissionRewardOperation> RewardOperations;
