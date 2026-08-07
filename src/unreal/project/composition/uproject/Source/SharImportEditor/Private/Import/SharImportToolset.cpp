@@ -28,14 +28,19 @@
 //   - Invalid, ambiguous, or replacement requests fail explicitly.
 //
 #include "Import/SharImportToolset.h"
+// cspell:ignore FBXIT FBXNIM
 
 #include "Import/SharImportValidation.h"
 
 #include "AssetImportTask.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetToolsModule.h"
+#include "Factories/FbxFactory.h"
+#include "Factories/FbxImportUI.h"
+#include "Factories/FbxStaticMeshImportData.h"
 #include "Factories/SoundFactory.h"
 #include "FileMediaSource.h"
+#include "Engine/StaticMesh.h"
 #include "HAL/FileManager.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Misc/Guid.h"
@@ -156,6 +161,38 @@ void DiscardCreatedMediaSource(
 }
 } // namespace
 
+bool ValidateStaticMeshRequest(
+    const FString& SourceFile,
+    const FString& FolderPath,
+    const FString& AssetName,
+    FString& OutError
+)
+{
+    OutError.Reset();
+    if (SourceFile.IsEmpty() || FPaths::IsRelative(SourceFile))
+    {
+        OutError = TEXT("source_file must be an absolute path");
+        return false;
+    }
+    if (
+        !FPaths::GetExtension(SourceFile).Equals(
+            TEXT("fbx"),
+            ESearchCase::IgnoreCase
+        )
+    )
+    {
+        OutError = TEXT("source_file must have an FBX extension");
+        return false;
+    }
+    FString PackagePath;
+    return ValidateGeneratedDestination(
+        FolderPath,
+        AssetName,
+        PackagePath,
+        OutError
+    );
+}
+
 bool ValidateSoundWaveRequest(
     const FString& SourceFile,
     const FString& FolderPath,
@@ -255,6 +292,124 @@ bool BuildFileMediaSourcePathsFromObjectPath(
     return true;
 }
 } // namespace UE::SharImportEditor::Private
+
+TArray<FString> USharImportToolset::ImportStaticMesh(
+    const FString& SourceFile,
+    const FString& FolderPath,
+    const FString& AssetName
+)
+{
+    using namespace UE::SharImportEditor::Private;
+    FString Error;
+    if (!ValidateStaticMeshRequest(
+            SourceFile,
+            FolderPath,
+            AssetName,
+            Error
+        ))
+    {
+        RaiseError(Error);
+        return {};
+    }
+    IFileManager& Files = IFileManager::Get();
+    if (!Files.FileExists(*SourceFile))
+    {
+        RaiseError(TEXT("source_file does not exist"));
+        return {};
+    }
+
+    FString PackagePath;
+    if (!ValidateGeneratedDestination(
+            FolderPath,
+            AssetName,
+            PackagePath,
+            Error
+        ))
+    {
+        RaiseError(Error);
+        return {};
+    }
+    const FString ObjectPath = FString::Printf(
+        TEXT("%s.%s"),
+        *PackagePath,
+        *AssetName
+    );
+    if (
+        FindObject<UObject>(nullptr, *ObjectPath) != nullptr
+        || FindPackage(nullptr, *PackagePath) != nullptr
+        || FPackageName::DoesPackageExist(PackagePath)
+    )
+    {
+        RaiseError(TEXT("destination asset already exists"));
+        return {};
+    }
+
+    TStrongObjectPtr<UAssetImportTask> Task(NewObject<UAssetImportTask>());
+    TStrongObjectPtr<UFbxFactory> Factory(NewObject<UFbxFactory>());
+    UFbxImportUI* ImportUI = Factory->ImportUI;
+    if (ImportUI == nullptr || ImportUI->StaticMeshImportData == nullptr)
+    {
+        RaiseError(TEXT("FBX static import settings are unavailable"));
+        return {};
+    }
+
+    ImportUI->bAutomatedImportShouldDetectType = false;
+    ImportUI->bImportAsSkeletal = false;
+    ImportUI->bImportMesh = true;
+    ImportUI->MeshTypeToImport = FBXIT_StaticMesh;
+    ImportUI->OriginalImportType = FBXIT_StaticMesh;
+    ImportUI->bImportMaterials = false;
+    ImportUI->bImportTextures = false;
+    ImportUI->bImportAnimations = false;
+    ImportUI->bCreatePhysicsAsset = false;
+
+    UFbxStaticMeshImportData* MeshImport = ImportUI->StaticMeshImportData;
+    MeshImport->NormalImportMethod = FBXNIM_ImportNormals;
+    MeshImport->bComputeWeightedNormals = false;
+    MeshImport->bCombineMeshes = true;
+    MeshImport->bImportMeshLODs = false;
+    MeshImport->bRemoveDegenerates = false;
+    MeshImport->bBuildReversedIndexBuffer = false;
+    MeshImport->bBuildNanite = false;
+    MeshImport->bGenerateLightmapUVs = false;
+    MeshImport->bAutoGenerateCollision = false;
+    MeshImport->bTransformVertexToAbsolute = true;
+    MeshImport->bBakePivotInVertex = false;
+    MeshImport->VertexColorImportOption = EVertexColorImportOption::Replace;
+
+    Factory->SetDetectImportTypeOnImport(false);
+    Task->Filename = SourceFile;
+    Task->DestinationPath = FolderPath;
+    Task->DestinationName = AssetName;
+    Task->bAutomated = true;
+    Task->bAsync = false;
+    Task->bReplaceExisting = false;
+    Task->bReplaceExistingSettings = false;
+    Task->bSave = false;
+    Task->Factory = Factory.Get();
+    Task->Options = ImportUI;
+    Factory->SetAssetImportTask(Task.Get());
+
+    FAssetToolsModule::GetModule().Get().ImportAssetTasks({Task.Get()});
+    if (
+        Task->ImportedObjectPaths.Num() != 1
+        || !Task->ImportedObjectPaths[0].Equals(
+            ObjectPath,
+            ESearchCase::CaseSensitive
+        )
+    )
+    {
+        RaiseError(TEXT("FBX static import produced unexpected assets"));
+        return {};
+    }
+    UStaticMesh* StaticMesh = FindObject<UStaticMesh>(nullptr, *ObjectPath);
+    if (StaticMesh == nullptr)
+    {
+        RaiseError(TEXT("FBX static import did not create a StaticMesh"));
+        return {};
+    }
+    return Task->ImportedObjectPaths;
+}
 
 TArray<FString> USharImportToolset::ImportSoundWave(
     const FString& SourceFile,

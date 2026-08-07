@@ -43,6 +43,22 @@ class SHARIMPORTEDITOR_API USharImportToolset : public UToolsetDefinition
 
 public:
     /**
+     * Imports one reviewed FBX as a StaticMesh under /Game/Generated/SHAR.
+     * Authored normals are preserved and auxiliary assets are not generated.
+     * The caller remains responsible for saving and postcondition read-back.
+     * @param SourceFile Absolute verified FBX source path.
+     * @param FolderPath Generated Unreal content folder.
+     * @param AssetName Exact destination asset name.
+     * @return The single StaticMesh object path produced by the import task.
+     */
+    UFUNCTION(meta = (AICallable), Category = "SharImportToolset")
+    static TArray<FString> ImportStaticMesh(
+        const FString& SourceFile,
+        const FString& FolderPath,
+        const FString& AssetName
+    );
+
+    /**
      * Imports one WAV file as a SoundWave under /Game/Generated/SHAR.
      * The caller remains responsible for saving and postcondition read-back.
      * @param SourceFile Absolute verified WAV source path.
