@@ -43,13 +43,12 @@ use super::{
 
 static TRANSACTION_CASE_ID: AtomicUsize = AtomicUsize::new(0);
 
-
 fn transaction_case_root(label: &str) -> Result<PathBuf, String> {
     let ordinal = TRANSACTION_CASE_ID.fetch_add(1, Ordering::Relaxed);
-    let root = repository_root()?
-        .join(".temp")
-        .join("tests")
-        .join(format!("stragglers-{label}-{}-{ordinal}", std::process::id()));
+    let root = repository_root()?.join(".temp").join("tests").join(format!(
+        "stragglers-{label}-{}-{ordinal}",
+        std::process::id()
+    ));
     if root.exists() {
         fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     }
@@ -65,7 +64,8 @@ fn remove_transaction_case(root: &Path) -> Result<(), String> {
 }
 
 #[test]
-fn failed_straggler_normalization_preserves_accepted_root() -> Result<(), String> {
+fn failed_straggler_normalization_preserves_accepted_root() -> Result<(), String>
+{
     let root = transaction_case_root("failure-preserves")?;
     let game = root.join("game-source");
     let extracted = root.join("extracted");
@@ -96,21 +96,24 @@ fn failed_straggler_normalization_preserves_accepted_root() -> Result<(), String
 }
 
 #[test]
-fn straggler_publication_replaces_root_and_removes_backup() -> Result<(), String> {
+fn straggler_publication_replaces_root_and_removes_backup() -> Result<(), String>
+{
     let root = transaction_case_root("publish")?;
     let output = root.join("game");
     let staging = root.join(".game.straggler-staging");
     let backup = root.join(".game.straggler-backup");
     fs::create_dir_all(&output).map_err(|error| error.to_string())?;
     fs::create_dir_all(&staging).map_err(|error| error.to_string())?;
-    fs::write(output.join("old.txt"), b"old").map_err(|error| error.to_string())?;
+    fs::write(output.join("old.txt"), b"old")
+        .map_err(|error| error.to_string())?;
     fs::write(staging.join("new.txt"), b"new")
         .map_err(|error| error.to_string())?;
 
     publish_generated_directory(&staging, &output, &backup)
         .map_err(|error| error.to_string())?;
     if output.join("old.txt").exists()
-        || fs::read(output.join("new.txt")).map_err(|error| error.to_string())?
+        || fs::read(output.join("new.txt"))
+            .map_err(|error| error.to_string())?
             != b"new"
         || staging.exists()
         || backup.exists()
@@ -132,19 +135,25 @@ fn failed_straggler_publication_restores_accepted_root() -> Result<(), String> {
 
     let result = publish_generated_directory(&staging, &output, &backup);
     if result.is_ok() {
-        return Err("missing staging directory unexpectedly published".to_owned());
+        return Err(
+            "missing staging directory unexpectedly published".to_owned()
+        );
     }
-    if fs::read(output.join("accepted.txt")).map_err(|error| error.to_string())?
+    if fs::read(output.join("accepted.txt"))
+        .map_err(|error| error.to_string())?
         != b"accepted"
         || backup.exists()
     {
-        return Err("failed publication did not restore accepted root".to_owned());
+        return Err(
+            "failed publication did not restore accepted root".to_owned()
+        );
     }
     remove_transaction_case(&root)
 }
 
 #[test]
-fn straggler_recovery_restores_backup_before_staging_cleanup() -> Result<(), String> {
+fn straggler_recovery_restores_backup_before_staging_cleanup()
+-> Result<(), String> {
     let root = transaction_case_root("recover")?;
     let output = root.join("game");
     let staging = root.join(".game.straggler-staging");
@@ -158,12 +167,16 @@ fn straggler_recovery_restores_backup_before_staging_cleanup() -> Result<(), Str
 
     recover_generated_transaction(&output, &staging, &backup)
         .map_err(|error| error.to_string())?;
-    if fs::read(output.join("accepted.txt")).map_err(|error| error.to_string())?
+    if fs::read(output.join("accepted.txt"))
+        .map_err(|error| error.to_string())?
         != b"accepted"
         || staging.exists()
         || backup.exists()
     {
-        return Err("straggler transaction recovery did not restore accepted root".to_owned());
+        return Err(
+            "straggler transaction recovery did not restore accepted root"
+                .to_owned(),
+        );
     }
     remove_transaction_case(&root)
 }
@@ -268,10 +281,19 @@ fn repository_mission_corpus_passes_semantic_registries() -> Result<(), String>
     let mut objective_count = 0usize;
     let mut condition_count = 0usize;
     let mut adaptation_count = 0usize;
+    let mut mission_graph_count = 0usize;
+    let mut unscoped_command_count = 0usize;
+    let mut mission_command_count = 0usize;
+    let mut stage_command_count = 0usize;
+    let mut objective_command_count = 0usize;
+    let mut condition_command_count = 0usize;
+    let mut stage_count = 0usize;
+    let mut stage_condition_count = 0usize;
+    let mut objective_condition_count = 0usize;
+    let mut unavailable_objective_count = 0usize;
     let mut empty_placeholder_count = 0usize;
     for source_path in &sources {
-        let bytes =
-            fs::read(source_path).map_err(|error| error.to_string())?;
+        let bytes = fs::read(source_path).map_err(|error| error.to_string())?;
         if bytes.is_empty() {
             empty_placeholder_count = empty_placeholder_count.saturating_add(1);
             continue;
@@ -307,21 +329,80 @@ fn repository_mission_corpus_passes_semantic_registries() -> Result<(), String>
             condition_count.saturating_add(conditions.conditions().len());
         adaptation_count =
             adaptation_count.saturating_add(evidence.adaptations().len());
+        let scopes = crate::domain::compile_mission_scope_graphs(&evidence)
+            .map_err(|error| format!("{}: {error}", relative.display()))?;
+        mission_graph_count =
+            mission_graph_count.saturating_add(scopes.missions().len());
+        unscoped_command_count = unscoped_command_count
+            .saturating_add(scopes.unscoped_commands().len());
+        for mission in scopes.missions() {
+            mission_command_count =
+                mission_command_count.saturating_add(mission.commands().len());
+            stage_count = stage_count.saturating_add(mission.stages().len());
+            for stage in mission.stages() {
+                stage_command_count =
+                    stage_command_count.saturating_add(stage.commands().len());
+                objective_command_count = objective_command_count
+                    .saturating_add(stage.objective().commands().len());
+                if !stage.objective().binding().is_mapped() {
+                    unavailable_objective_count =
+                        unavailable_objective_count.saturating_add(1);
+                }
+                for condition in stage.conditions() {
+                    condition_command_count = condition_command_count
+                        .saturating_add(condition.commands().len());
+                    match condition.scope() {
+                        crate::domain::MissionConditionScope::Stage => {
+                            stage_condition_count =
+                                stage_condition_count.saturating_add(1);
+                        },
+                        crate::domain::MissionConditionScope::Objective => {
+                            objective_condition_count =
+                                objective_condition_count.saturating_add(1);
+                        },
+                    }
+                }
+            }
+        }
     }
     if objective_count != 611
         || condition_count != 408
         || adaptation_count != 2
+        || mission_graph_count != 154
+        || unscoped_command_count != 7705
+        || mission_command_count != 811
+        || stage_command_count != 2454
+        || objective_command_count != 3605
+        || condition_command_count != 375
+        || stage_count != 611
+        || stage_condition_count != 402
+        || objective_condition_count != 6
+        || unavailable_objective_count != 2
         || empty_placeholder_count != 8
     {
         return Err(format!(
             concat!(
                 "mission corpus inventory changed: files={} objectives={} ",
-                "conditions={} adaptations={} empty_placeholders={}"
+                "conditions={} adaptations={} missions={} unscoped_commands={} ",
+                "mission_commands={} stage_commands={} ",
+                "objective_commands={} condition_commands={} stages={} ",
+                "stage_conditions={} objective_conditions={} ",
+                "unavailable_objectives={} empty_placeholders={}"
             ),
             sources.len(),
             objective_count,
             condition_count,
             adaptation_count,
+            mission_graph_count,
+            unscoped_command_count,
+            mission_command_count,
+            stage_command_count,
+            objective_command_count,
+            condition_command_count,
+            stage_count,
+            stage_condition_count,
+            objective_condition_count,
+            unavailable_objective_count,
             empty_placeholder_count,
         ));
     }
