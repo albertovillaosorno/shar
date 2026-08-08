@@ -109,33 +109,110 @@ const ROUND_CONSTANTS: [u32; 64] = [
     0xc671_78f2,
 ];
 
+/// Incremental dependency-free SHA-256 state.
+#[derive(Debug, Clone, Copy)]
+pub struct Sha256 {
+    state: [u32; 8],
+    buffer: [u8; 64],
+    buffer_len: usize,
+    length_bytes: u64,
+}
+
+impl Default for Sha256 {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Sha256 {
+    /// Create one empty SHA-256 state.
+    #[must_use]
+    pub const fn new() -> Self {
+        Self {
+            state: INITIAL,
+            buffer: [0; 64],
+            buffer_len: 0,
+            length_bytes: 0,
+        }
+    }
+
+    /// Append exact bytes to this digest state.
+    pub fn update(&mut self, data: &[u8]) {
+        self.length_bytes = self
+            .length_bytes
+            .saturating_add(u64::try_from(data.len()).unwrap_or(u64::MAX));
+        let mut remaining = data;
+        if self.buffer_len != 0 {
+            let available = 64_usize.saturating_sub(self.buffer_len);
+            let take = available.min(remaining.len());
+            let end = self.buffer_len.saturating_add(take);
+            if let (Some(target), Some(source)) = (
+                self.buffer.get_mut(self.buffer_len..end),
+                remaining.get(..take),
+            ) {
+                target.copy_from_slice(source);
+            }
+            self.buffer_len = end;
+            remaining = remaining.get(take..).unwrap_or_default();
+            if self.buffer_len < 64 {
+                return;
+            }
+            compress(&mut self.state, &self.buffer);
+            self.buffer_len = 0;
+        }
+        let (chunks, tail) = remaining.as_chunks::<64>();
+        for block in chunks {
+            compress(&mut self.state, block);
+        }
+        if let Some(target) = self.buffer.get_mut(..tail.len()) {
+            target.copy_from_slice(tail);
+            self.buffer_len = tail.len();
+        }
+    }
+
+    /// Finalize this state into the standard 32-byte SHA-256 digest.
+    #[must_use]
+    pub fn finalize(mut self) -> [u8; 32] {
+        let bit_length = self.length_bytes.saturating_mul(8);
+        if let Some(marker) = self.buffer.get_mut(self.buffer_len) {
+            *marker = 0x80;
+        }
+        self.buffer_len = self.buffer_len.saturating_add(1);
+        if self.buffer_len > 56 {
+            if let Some(padding) = self.buffer.get_mut(self.buffer_len..) {
+                padding.fill(0);
+            }
+            compress(&mut self.state, &self.buffer);
+            self.buffer.fill(0);
+            self.buffer_len = 0;
+        }
+        if let Some(padding) = self.buffer.get_mut(self.buffer_len..56) {
+            padding.fill(0);
+        }
+        if let Some(length) = self.buffer.get_mut(56..64) {
+            length.copy_from_slice(&bit_length.to_be_bytes());
+        }
+        compress(&mut self.state, &self.buffer);
+        let mut output = [0u8; 32];
+        for (chunk, value) in output.chunks_mut(4).zip(self.state) {
+            chunk.copy_from_slice(&value.to_be_bytes());
+        }
+        output
+    }
+
+    /// Finalize this state as 64 lowercase hexadecimal characters.
+    #[must_use]
+    pub fn finalize_hex(self) -> String {
+        hex(self.finalize())
+    }
+}
+
 /// Hash exact bytes into the standard 32-byte SHA-256 digest.
 #[must_use]
-#[expect(
-    clippy::integer_division_remainder_used,
-    // jig-ignore-next-line: exact syntax is indivisible
-    reason = "SHA-256 padding is defined by the message length modulo one 64-byte block"
-)]
 pub fn digest(data: &[u8]) -> [u8; 32] {
-    let mut state = INITIAL;
-    let bit_length = u64::try_from(data.len())
-        .unwrap_or(u64::MAX)
-        .saturating_mul(8);
-    let mut padded = Vec::with_capacity(data.len().saturating_add(72));
-    padded.extend_from_slice(data);
-    padded.push(0x80u8);
-    while (padded.len() % 64usize) != 56usize {
-        padded.push(0);
-    }
-    padded.extend_from_slice(&bit_length.to_be_bytes());
-    for block in padded.chunks(64) {
-        compress(&mut state, block);
-    }
-    let mut output = [0u8; 32];
-    for (chunk, value) in output.chunks_mut(4).zip(state) {
-        chunk.copy_from_slice(&value.to_be_bytes());
-    }
-    output
+    let mut state = Sha256::new();
+    state.update(data);
+    state.finalize()
 }
 
 /// Render one digest as 64 lowercase hexadecimal characters.

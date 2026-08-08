@@ -33,4 +33,4 @@
 #[path = "../domain/mod.rs"]
 pub mod domain;
 
-pub use domain::{digest, digest_hex, hex};
+pub use domain::{Sha256, digest, digest_hex, hex};
