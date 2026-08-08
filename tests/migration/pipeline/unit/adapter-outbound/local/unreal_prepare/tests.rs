@@ -34,14 +34,18 @@
 
 use std::collections::BTreeSet;
 use std::fs;
+use std::path::PathBuf;
 
 use serde_json::json;
 use shar_sha256::digest_hex;
 
 use super::{
     MANIFEST_FILE, PLAN_INDEX_FILE, PUBLISHED_FILES, SUMMARY_FILE,
-    ensure_generated_directory, prepare_io_error, publication_error, read_utf8,
-    retain_source_ids, validate_audit, validate_generated_chain,
+    SourceEvidenceInput, ensure_generated_directory, open_stable_source,
+    parallel_source_evidence, prepare_io_error, publication_error, read_utf8,
+    retain_source_ids, source_worker_count_for, stream_source_digest,
+    validate_audit, verify_stable_source,
+    validate_generated_chain,
     validate_normalized_mission_source, validate_public_identifier,
     validate_publication_inventory, validate_relative_path,
     validate_rendered_output,
@@ -69,6 +73,160 @@ fn source(id: &str) -> UnrealSourceEvidence {
         unreal_import_relation: "none".to_owned(),
         future_normalization: "none".to_owned(),
     }
+}
+
+
+#[test]
+fn parallel_source_verification_reports_first_manifest_error() -> Result<(), String> {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join(".temp")
+        .join(format!("unreal-source-errors-{}", std::process::id()));
+    if root.exists() {
+        fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    }
+    fs::create_dir_all(&root).map_err(|error| error.to_string())?;
+    let first = root.join("first.bin");
+    fs::write(&first, b"first").map_err(|error| error.to_string())?;
+    let input = |id: &str, path: PathBuf, size: u64| SourceEvidenceInput {
+        id: id.to_owned(),
+        path: format!("extracted/{id}.bin"),
+        resolved: path,
+        expected_size: size,
+        file_extension: "bin".to_owned(),
+        unit_type: "metadata".to_owned(),
+        subtype: "none".to_owned(),
+        kind: "test".to_owned(),
+        function: "test".to_owned(),
+        schema: "none".to_owned(),
+        origin: "test".to_owned(),
+        source_path: "none".to_owned(),
+        source_chunk_kind: "none".to_owned(),
+        unreal_import_relation: "none".to_owned(),
+        future_normalization: "none".to_owned(),
+    };
+    let inputs = vec![
+        input("first", first, 999),
+        input("second", root.join("missing.bin"), 1),
+    ];
+    let result = parallel_source_evidence(&inputs);
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err("parallel verification unexpectedly accepted invalid rows".to_owned());
+    };
+    let rendered = error.to_string();
+    if !rendered.starts_with("source size changed for extracted/first.bin:") {
+        return Err(format!("parallel error priority changed: {rendered}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn stable_source_verification_rejects_path_replacement() -> Result<(), String> {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join(".temp")
+        .join(format!("unreal-source-replacement-{}", std::process::id()));
+    if root.exists() {
+        fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    }
+    fs::create_dir_all(&root).map_err(|error| error.to_string())?;
+    let path = root.join("source.bin");
+    let moved = root.join("opened.bin");
+    fs::write(&path, b"original-source").map_err(|error| error.to_string())?;
+    let (file, identity) = open_stable_source(&path)
+        .map_err(|error| error.to_string())?;
+    fs::rename(&path, &moved).map_err(|error| error.to_string())?;
+    fs::write(&path, b"replacement-src").map_err(|error| error.to_string())?;
+    let result = verify_stable_source(&path, &file, &identity);
+    drop(file);
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err("path replacement preserved a stale source identity".to_owned());
+    };
+    if !error.to_string().contains("identity changed") {
+        return Err(format!("unexpected replacement error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn streamed_source_digest_matches_one_shot_across_io_blocks() -> Result<(), String> {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join(".temp")
+        .join(format!("unreal-stream-hash-{}", std::process::id()));
+    if root.exists() {
+        fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    }
+    fs::create_dir_all(&root).map_err(|error| error.to_string())?;
+    let path = root.join("payload.bin");
+    let payload = vec![0x5a_u8; 1_048_593];
+    fs::write(&path, &payload).map_err(|error| error.to_string())?;
+    let result = stream_source_digest(&path).map_err(|error| error.to_string());
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let (size, digest) = result?;
+    if size != 1_048_593 || digest != digest_hex(&payload) {
+        return Err("streamed source digest changed across I/O blocks".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn source_worker_count_is_bounded_and_never_zero() {
+    assert_eq!(source_worker_count_for(1, 100), 1);
+    assert_eq!(source_worker_count_for(3, 100), 2);
+    assert_eq!(source_worker_count_for(24, 100), 8);
+    assert_eq!(source_worker_count_for(24, 3), 3);
+    assert_eq!(source_worker_count_for(24, 0), 1);
+}
+
+#[test]
+fn parallel_source_verification_preserves_manifest_order() -> Result<(), String> {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join(".temp")
+        .join(format!("unreal-source-order-{}", std::process::id()));
+    if root.exists() {
+        fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    }
+    fs::create_dir_all(&root).map_err(|error| error.to_string())?;
+    let first = root.join("first.bin");
+    let second = root.join("second.bin");
+    fs::write(&first, b"first").map_err(|error| error.to_string())?;
+    fs::write(&second, b"second-source").map_err(|error| error.to_string())?;
+    let input = |id: &str, path: PathBuf, size: u64| SourceEvidenceInput {
+        id: id.to_owned(),
+        path: format!("extracted/{id}.bin"),
+        resolved: path,
+        expected_size: size,
+        file_extension: "bin".to_owned(),
+        unit_type: "metadata".to_owned(),
+        subtype: "none".to_owned(),
+        kind: "test".to_owned(),
+        function: "test".to_owned(),
+        schema: "none".to_owned(),
+        origin: "test".to_owned(),
+        source_path: "none".to_owned(),
+        source_chunk_kind: "none".to_owned(),
+        unreal_import_relation: "none".to_owned(),
+        future_normalization: "none".to_owned(),
+    };
+    let inputs = vec![input("first", first, 5), input("second", second, 13)];
+    let result = parallel_source_evidence(&inputs).map_err(|error| error.to_string());
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let evidence = result?;
+    let ids = evidence
+        .iter()
+        .map(|source| source.id.as_str())
+        .collect::<Vec<_>>();
+    if ids != ["first", "second"] {
+        return Err(format!("parallel source order changed: {ids:?}"));
+    }
+    if evidence.first().is_none_or(|source| source.sha256 != digest_hex(b"first"))
+        || evidence
+            .get(1)
+            .is_none_or(|source| source.sha256 != digest_hex(b"second-source"))
+    {
+        return Err("parallel source hashing changed physical evidence".to_owned());
+    }
+    Ok(())
 }
 
 #[test]

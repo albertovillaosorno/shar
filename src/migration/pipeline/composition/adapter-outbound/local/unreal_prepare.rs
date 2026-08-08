@@ -34,13 +34,22 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
+use std::io::Read as _;
+use std::time::SystemTime;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicUsize, Ordering};
+// cspell:ignore recv
+use std::sync::mpsc;
+use std::thread;
 
+use same_file::Handle;
+use schoenwald_filesystem::PathKind;
 use schoenwald_filesystem::adapters::driving::local::{
-    read_bytes as local_read_bytes, read_utf8 as local_read_utf8,
+    path_kind as local_path_kind, read_bytes as local_read_bytes,
+    read_utf8 as local_read_utf8,
 };
 use serde_json::{Map, Value};
-use shar_sha256::digest_hex;
+use shar_sha256::{Sha256, digest_hex};
 use shar_unreal_conversion::domain::PlanBundle;
 
 use super::unreal_fbx_catalog::{FBX_CATALOG_ROOT, verified_fbx_catalog};
@@ -199,9 +208,7 @@ fn source_evidence(
         .lines()
         .filter(|line| !line.trim().is_empty())
         .count();
-    let mut progress =
-        StageProgress::begin("Unreal source evidence", source_count);
-    let mut evidence = Vec::with_capacity(source_count);
+    let mut inputs = Vec::with_capacity(source_count);
     let mut ids = BTreeSet::new();
     for (line_index, line) in manifest.lines().enumerate() {
         if line.trim().is_empty() {
@@ -211,8 +218,7 @@ fn source_evidence(
             check_cancellation()?;
         }
         let line_number = line_index.saturating_add(1);
-        let row =
-            parse_object(line, &format!("minor-unit line {line_number}"))?;
+        let row = parse_object(line, &format!("minor-unit line {line_number}"))?;
         let id = manifest_string(&row, "id", line_number)?;
         validate_public_identifier(&id, "minor-unit source id")?;
         if !ids.insert(id.clone()) {
@@ -223,60 +229,284 @@ fn source_evidence(
         let path = manifest_string(&row, "path", line_number)?;
         let expected_size = manifest_u64(&row, "size_bytes", line_number)?;
         let resolved = resolve_source_path(config, &path)?;
-        progress.advance(&id);
-        let bytes = local_read_bytes(&resolved)
-            .map_err(path_error("read Unreal source evidence"))?;
-        let actual_size = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
-        if actual_size != expected_size {
-            return Err(PipelineError::new(format!(
-                "source size changed for {path}: manifest={expected_size} \
-                 actual={actual_size}"
-            )));
-        }
-        let file_extension =
-            manifest_string(&row, "file_extension", line_number)?;
-        let kind = manifest_string(&row, "kind", line_number)?;
-        let schema = manifest_string(&row, "schema", line_number)?;
-        let origin = manifest_string(&row, "origin", line_number)?;
-        validate_normalized_mission_source(
-            &kind,
-            &schema,
-            &file_extension,
-            &origin,
-            &bytes,
-        )?;
-        evidence.push(UnrealSourceEvidence {
+        inputs.push(SourceEvidenceInput {
             id,
             path,
-            file_extension,
+            resolved,
+            expected_size,
+            file_extension: manifest_string(&row, "file_extension", line_number)?,
             unit_type: manifest_string(&row, "type", line_number)?,
             subtype: manifest_string(&row, "subtype", line_number)?,
-            kind,
+            kind: manifest_string(&row, "kind", line_number)?,
             function: manifest_string(&row, "function", line_number)?,
-            schema,
-            origin,
+            schema: manifest_string(&row, "schema", line_number)?,
+            origin: manifest_string(&row, "origin", line_number)?,
             source_path: manifest_string(&row, "source_path", line_number)?,
-            source_chunk_kind: manifest_string(
-                &row,
-                "source_chunk_kind",
-                line_number,
-            )?,
-            size_bytes: actual_size,
-            sha256: digest_hex(&bytes),
-            unreal_import_relation: manifest_string(
-                &row,
-                "unreal_import_relation",
-                line_number,
-            )?,
-            future_normalization: manifest_string(
-                &row,
-                "future_normalization",
-                line_number,
-            )?,
+            source_chunk_kind: manifest_string(&row, "source_chunk_kind", line_number)?,
+            unreal_import_relation: manifest_string(&row, "unreal_import_relation", line_number)?,
+            future_normalization: manifest_string(&row, "future_normalization", line_number)?,
         });
+    }
+    parallel_source_evidence(&inputs)
+}
+
+/// One parsed manifest row awaiting physical source verification.
+#[derive(Debug)]
+struct SourceEvidenceInput {
+    id: String,
+    path: String,
+    resolved: PathBuf,
+    expected_size: u64,
+    file_extension: String,
+    unit_type: String,
+    subtype: String,
+    kind: String,
+    function: String,
+    schema: String,
+    origin: String,
+    source_path: String,
+    source_chunk_kind: String,
+    unreal_import_relation: String,
+    future_normalization: String,
+}
+
+/// Verify prepared rows concurrently and restore manifest ordering.
+fn parallel_source_evidence(
+    inputs: &[SourceEvidenceInput],
+) -> PipelineOutcome<Vec<UnrealSourceEvidence>> {
+    if inputs.is_empty() {
+        return Ok(Vec::new());
+    }
+    let next = AtomicUsize::new(0);
+    let (sender, receiver) = mpsc::channel();
+    let workers = source_worker_count(inputs.len());
+    let mut progress = StageProgress::begin("Unreal source evidence", inputs.len());
+    let mut collected = Vec::with_capacity(inputs.len());
+    thread::scope(|scope| {
+        for _worker in 0..workers {
+            let worker_sender = sender.clone();
+            let worker_next = &next;
+            let worker_inputs = inputs;
+            let _handle = scope.spawn(move || loop {
+                let position = worker_next.fetch_add(1, Ordering::Relaxed);
+                let Some(input) = worker_inputs.get(position) else {
+                    break;
+                };
+                let result = read_source_evidence(input);
+                if worker_sender
+                    .send((position, input.id.clone(), result))
+                    .is_err()
+                {
+                    break;
+                }
+            });
+        }
+        drop(sender);
+        while let Ok((position, id, result)) = receiver.recv() {
+            progress.advance(&id);
+            collected.push((position, result));
+        }
+    });
+    if collected.len() != inputs.len() {
+        return Err(PipelineError::new(format!(
+            "Unreal source workers returned {} of {} rows",
+            collected.len(),
+            inputs.len()
+        )));
+    }
+    collected.sort_by_key(|(position, _result)| *position);
+    let mut evidence = Vec::with_capacity(collected.len());
+    for (_position, result) in collected {
+        evidence.push(result?);
     }
     progress.finish();
     Ok(evidence)
+}
+
+/// Read, validate, and hash one physical source row.
+fn read_source_evidence(input: &SourceEvidenceInput) -> PipelineOutcome<UnrealSourceEvidence> {
+    let (actual_size, sha256) = if input.kind == "mission-script" {
+        let bytes = read_stable_source_bytes(&input.resolved)?;
+        let actual_size = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
+        validate_normalized_mission_source(
+            &input.kind,
+            &input.schema,
+            &input.file_extension,
+            &input.origin,
+            &bytes,
+        )?;
+        (actual_size, digest_hex(&bytes))
+    } else {
+        stream_source_digest(&input.resolved)?
+    };
+    if actual_size != input.expected_size {
+        return Err(PipelineError::new(format!(
+            "source size changed for {}: manifest={} actual={actual_size}",
+            input.path, input.expected_size
+        )));
+    }
+    Ok(UnrealSourceEvidence {
+        id: input.id.clone(),
+        path: input.path.clone(),
+        file_extension: input.file_extension.clone(),
+        unit_type: input.unit_type.clone(),
+        subtype: input.subtype.clone(),
+        kind: input.kind.clone(),
+        function: input.function.clone(),
+        schema: input.schema.clone(),
+        origin: input.origin.clone(),
+        source_path: input.source_path.clone(),
+        source_chunk_kind: input.source_chunk_kind.clone(),
+        size_bytes: actual_size,
+        sha256,
+        unreal_import_relation: input.unreal_import_relation.clone(),
+        future_normalization: input.future_normalization.clone(),
+    })
+}
+
+/// Physical identity and mutable metadata captured from one open source.
+struct StableSourceIdentity {
+    handle: Handle,
+    len: u64,
+    modified: Option<SystemTime>,
+}
+
+/// Open one source only after the shared filesystem boundary proves it is a
+/// regular non-linked file, then bind the path to the exact open descriptor.
+fn open_stable_source(
+    path: &Path,
+) -> PipelineOutcome<(fs::File, StableSourceIdentity)> {
+    let kind = local_path_kind(path)
+        .map_err(path_error("inspect Unreal source evidence"))?;
+    if kind != PathKind::File {
+        return Err(PipelineError::new(
+            "Unreal source evidence is not a regular non-linked file",
+        ));
+    }
+    let file = fs::File::open(path)
+        .map_err(path_error("read Unreal source evidence"))?;
+    let descriptor = file
+        .try_clone()
+        .and_then(Handle::from_file)
+        .map_err(path_error("identify open Unreal source evidence"))?;
+    let path_handle = Handle::from_path(path)
+        .map_err(path_error("identify Unreal source evidence path"))?;
+    if descriptor != path_handle {
+        return Err(PipelineError::new(
+            "Unreal source evidence changed while opening",
+        ));
+    }
+    let metadata = file
+        .metadata()
+        .map_err(path_error("inspect open Unreal source evidence"))?;
+    let identity = StableSourceIdentity {
+        handle: descriptor,
+        len: metadata.len(),
+        modified: metadata.modified().ok(),
+    };
+    Ok((file, identity))
+}
+
+/// Require the path, descriptor identity, size, and modification time to remain
+/// stable across one complete source read.
+fn verify_stable_source(
+    path: &Path,
+    file: &fs::File,
+    initial: &StableSourceIdentity,
+) -> PipelineOutcome<()> {
+    let kind = local_path_kind(path)
+        .map_err(path_error("inspect Unreal source evidence after read"))?;
+    if kind != PathKind::File {
+        return Err(PipelineError::new(
+            "Unreal source evidence changed during verification",
+        ));
+    }
+    let final_path = Handle::from_path(path)
+        .map_err(path_error("identify Unreal source evidence after read"))?;
+    if final_path != initial.handle {
+        return Err(PipelineError::new(
+            "Unreal source evidence identity changed during verification",
+        ));
+    }
+    let metadata = file
+        .metadata()
+        .map_err(path_error("inspect open Unreal source evidence after read"))?;
+    if metadata.len() != initial.len || metadata.modified().ok() != initial.modified {
+        return Err(PipelineError::new(
+            "Unreal source evidence metadata changed during verification",
+        ));
+    }
+    Ok(())
+}
+
+/// Read one mission source completely while preserving the same stable-source
+/// identity checks used by streamed source hashing.
+#[expect(
+    clippy::verbose_file_reads,
+    reason = "fs::read would reopen the path and discard the descriptor identity               that must remain stable across verification."
+)]
+fn read_stable_source_bytes(path: &Path) -> PipelineOutcome<Vec<u8>> {
+    let (mut file, identity) = open_stable_source(path)?;
+    let mut bytes = Vec::new();
+    let _read = file
+        .read_to_end(&mut bytes)
+        .map_err(path_error("read Unreal source evidence"))?;
+    verify_stable_source(path, &file, &identity)?;
+    if u64::try_from(bytes.len()).unwrap_or(u64::MAX) != identity.len {
+        return Err(PipelineError::new(
+            "Unreal source evidence size changed during verification",
+        ));
+    }
+    Ok(bytes)
+}
+
+/// Stream one non-mission source into the shared SHA-256 boundary without
+/// retaining the complete payload in memory.
+fn stream_source_digest(path: &Path) -> PipelineOutcome<(u64, String)> {
+    const BUFFER_BYTES: usize = 1024 * 1024;
+    let (mut file, identity) = open_stable_source(path)?;
+    let mut digest = Sha256::new();
+    let mut total = 0_u64;
+    let mut buffer = vec![0_u8; BUFFER_BYTES].into_boxed_slice();
+    loop {
+        let read = file
+            .read(&mut buffer)
+            .map_err(path_error("read Unreal source evidence"))?;
+        if read == 0 {
+            break;
+        }
+        let chunk = buffer.get(..read).ok_or_else(|| {
+            PipelineError::new("Unreal source read exceeded its bounded buffer")
+        })?;
+        digest.update(chunk);
+        total = total
+            .checked_add(u64::try_from(read).unwrap_or(u64::MAX))
+            .ok_or_else(|| PipelineError::new("Unreal source byte count overflowed"))?;
+    }
+    verify_stable_source(path, &file, &identity)?;
+    if total != identity.len {
+        return Err(PipelineError::new(
+            "Unreal source evidence size changed during verification",
+        ));
+    }
+    Ok((total, digest.finalize_hex()))
+}
+
+/// Bound physical source verification workers for this machine.
+fn source_worker_count(source_count: usize) -> usize {
+    let available =
+        thread::available_parallelism().map_or(1, std::num::NonZeroUsize::get);
+    source_worker_count_for(available, source_count)
+}
+
+/// Calculate the bounded worker count from explicit machine capacity.
+fn source_worker_count_for(available: usize, source_count: usize) -> usize {
+    available
+        .saturating_mul(2)
+        .checked_div(3)
+        .unwrap_or(1)
+        .clamp(1, 8)
+        .min(source_count.max(1))
 }
 
 fn validate_normalized_mission_source(

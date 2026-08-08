@@ -119,6 +119,7 @@ dependencies = [
  "rmv",
  "rsd",
  "rtf",
+ "same-file",
  "schoenwald_cli",
  "schoenwald_filesystem",
  "serde",
