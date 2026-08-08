@@ -170,7 +170,7 @@ fn should_publish_component(
     }
     if kind == "texture" {
         return has_ancestor(component, chunks, |ancestor| {
-            ancestor == "srr_chunk_set"
+            matches!(ancestor, "srr_chunk_set" | "texture_font")
         });
     }
     false

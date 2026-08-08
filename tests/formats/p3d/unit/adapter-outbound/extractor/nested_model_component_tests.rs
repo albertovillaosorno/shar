@@ -93,6 +93,16 @@ fn nested_chunk_set_texture_is_published() {
 }
 
 #[test]
+fn nested_texture_font_atlas_is_published() {
+    let chunks = [
+        chunk(0, None, ChunkKind::Root),
+        chunk(1, Some(0), ChunkKind::TextureFont),
+        chunk(2, Some(1), ChunkKind::Texture),
+    ];
+    assert!(should_publish_component(&chunks[2], &chunks));
+}
+
+#[test]
 fn unrelated_nested_texture_is_not_published() {
     let chunks = [
         chunk(0, None, ChunkKind::Root),
