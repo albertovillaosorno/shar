@@ -1,7 +1,7 @@
 # Missions, gameplay, rewards, and saves
 
 - Status: Active
-- Last reviewed: 2026-08-06
+- Last reviewed: 2026-08-08
 
 ## Mission representation
 
@@ -43,8 +43,48 @@ context findings after they are applied.
 A closed preflight registry then validates every observed `AddObjective` and
 `AddCondition` alias, exact observed arity, and every command that occurs inside
 those scopes. Unknown aliases, cross-scope commands, and unobserved argument
-counts fail closed. This registry is conversion evidence only: it does not claim
-that legacy parameters have already been compiled into final runtime policies.
+counts fail closed. Direct mission- and stage-scope commands are also closed by
+an observed scope-and-arity registry. A command observed both outside a selected
+mission and inside one requires an explicit general-scope registration for that
+form; unrelated utility commands remain raw unscoped evidence. Positional values
+remain raw source evidence until a reviewed typed parameter compiler owns them.
+These registries are conversion evidence only: they do not claim that legacy parameters have
+already been compiled into final runtime policies.
+
+Semantic intake independently replays the complete mission, stage, objective,
+and condition stack instead of trusting an empty producer finding list. It also
+recomputes the command histogram, mission-flow and vehicle-physics summaries,
+`loadp3d` reference inventory, and each invocation's semantic role from the
+normalized source statements. Any disagreement between those derived fields and
+the v3 document fails before scope projection.
+
+After those gates pass, a lossless source-scope graph binds reviewed objective
+and condition aliases and their registered modifiers to their exact owning
+stage. It retains uninterpreted `AddStage` arguments plus every direct command at
+unscoped, mission, or stage scope in source order. Each observed stage must own
+exactly one root objective. A modifier visible through both an objective and a
+nested condition is retained only by the most-specific condition scope rather
+than duplicated. The graph still publishes no Unreal asset and assigns no new
+gameplay meaning to positional arguments.
+
+The authoritative source corpus currently projects 154 mission graphs containing
+611 stages and 611 root objectives, with 408 conditions: 402 declared directly
+at stage scope and 6 inside an objective. Two `dummy` objectives remain explicit
+unavailable semantic results. The same corpus freezes 7,705 commands outside a
+selected mission, 811 direct mission commands, 2,454 direct stage commands,
+3,605 reviewed objective commands, and 375 reviewed condition commands. A change
+in those inventories must be reviewed rather than silently accepted as a new
+compiler rule.
+
+Parameter compilation is alias-specific rather than positional across all
+objectives or conditions. Public command documentation describes the general
+`AddObjective` gamble and road-arrow envelope, while reviewed objective-specific
+forms also use later arguments as target identities. The source corpus likewise
+contains both canonical routing tokens and legacy noncanonical spellings.
+Condition aliases have independent versioned schemas and argument shapes. The
+compiler therefore preserves every legacy parameter until the owning alias
+schema validates and resolves it; it does not globally reinterpret the second
+argument or silently normalize unknown tokens.
 
 The v3 evidence records `context_command_count`,
 `context_adaptation_count`, `context_finding_count`, ordered adaptations, and

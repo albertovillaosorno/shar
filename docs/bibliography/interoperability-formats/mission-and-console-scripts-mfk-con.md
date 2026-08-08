@@ -8,12 +8,14 @@ names, marks, or user-supplied content.
 
 - Review status: Evidence recorded.
 - Evidence status: Partially verified — Command, argument, comment, ordering,
-  and non-execution behavior for supported UTF-8 MFK and CON inputs is verified;
-  the formal grammar, command ownership, version history, title extensions, and
-  authoritative documentation remain unresolved.
+  scope, and non-execution behavior for the reviewed repository corpus is
+  independently verified and cross-checked against current community command
+  documentation; the formal grammar, historical command ownership, version
+  history, title extensions, and authoritative first-party documentation remain
+  unresolved.
 - Counsel review: Not performed.
 - Jurisdictional scope: Not determined.
-- As-of date: 2026-07-13.
+- As-of date: 2026-08-08.
 - Distribution posture: Local interoperability research only.
 - Subject class: Proprietary textual command and configuration script family.
 
@@ -31,9 +33,12 @@ publish original script bodies as repository content.
 
 ## Provenance And Version History
 
-Repository evidence supports a related command-language family, but the formal
-grammar, version history, command ownership, title-specific extensions, and
-authoritative documentation remain unresolved.
+Repository evidence supports a related command-language family. Donut Team's DT
+Docs command reference was reviewed as a secondary interoperability cross-check
+for current command scope, syntax, and parameter descriptions. It is not treated
+as an original developer specification, and the formal grammar, version history,
+historical command ownership, title-specific extensions, and authoritative
+first-party documentation remain unresolved.
 
 ## Authorship, Ownership, And Attribution
 
@@ -78,4 +83,8 @@ require separate fact-specific analysis in docs/legal.
   record](radical-entertainment-toolchain-and-formats.md).
 - Historical Radical source notices reviewed locally; source material not
   distributed.
+- Donut Team (n.d.) *The Simpsons: Hit & Run — All Console Script Commands* and
+  linked command pages in DT Docs. Available at:
+  <https://docs.donutteam.com/docs/TheSimpsonsHitAndRun/Scripting/ConsoleCommands/AllCommands>
+  (Accessed: 8 August 2026). Secondary community interoperability reference.
 - SHAR repository (2026) pipeline straggler command decoder and MFK/CON tests.

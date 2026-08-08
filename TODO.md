@@ -114,6 +114,11 @@ Current task list. Project phases and dated progress are recorded in
     - [x] Close the observed objective and condition alias registries plus exact
       objective/condition-scoped command argument counts against the repository
       mission corpus, failing unknown aliases, scopes, or argument-count drift.
+    - [x] Replay normalized mission context and producer-derived summaries, then
+      project a lossless mission/stage/objective/condition source-scope graph
+      with one root objective per stage, closed direct mission/stage command
+      scope-and-arity registries, and explicit general-scope overlap where
+      observed; retain all positional values uninterpreted.
     - [ ] Map every reviewed participant, route, timing, load, checkpoint,
       presentation, reward, transition, and typed objective/condition parameter
       reference.

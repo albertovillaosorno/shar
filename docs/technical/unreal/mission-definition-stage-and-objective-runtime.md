@@ -166,10 +166,21 @@ strictly increasing ordinals, reviewed context-command count, and structural
 findings. Any context finding blocks semantic compilation before Unreal planning;
 unknown gameplay commands remain unmapped rather than becoming runtime APIs.
 Version 3 additionally carries reviewed compatibility adaptations and requires
-independent fingerprint validation for each one. The repository corpus acceptance
-test renders the real normalized JSON for every non-empty mission MFK and passes
-it through structural, objective-alias, objective-scope, condition-alias, and
-condition-scope preflight before semantic compilation is allowed.
+independent fingerprint validation for each one. Semantic intake independently
+replays context nesting and reproduces every producer-derived summary, ordered
+`loadp3d` reference, and semantic role from the normalized statements, so a
+forged clean finding list or stale summary cannot bypass conversion policy.
+
+The repository corpus acceptance test renders the real normalized JSON for every
+mission MFK and passes it through structural, objective-alias, objective-scope,
+condition-alias, condition-scope, and source-scope graph preflight before semantic
+compilation is allowed. The graph retains exact unscoped, mission, and stage
+commands without interpreting positional values; direct mission and stage
+commands must match the closed observed scope-and-arity registry. Every projected
+stage owns exactly one root objective. The current source corpus yields 154
+mission graphs, 611 stages, and 408 conditions, while two reviewed `dummy`
+objectives remain explicit unavailable results rather than fabricated runtime
+policies.
 
 `FSharMissionStageDefinition` additionally binds an `ObjectivePolicyId` to one
 reflected `FSharObjectivePolicyRow`. Definition validation rejects missing or
