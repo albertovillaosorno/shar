@@ -59,6 +59,22 @@ public:
     );
 
     /**
+     * Imports one reviewed FBX as a SkeletalMesh plus a new Skeleton companion.
+     * PhysicsAsset and animation creation are disabled for this transaction.
+     * The caller remains responsible for saving and postcondition read-back.
+     * @param SourceFile Absolute verified FBX source path.
+     * @param FolderPath Generated Unreal content folder.
+     * @param AssetName Exact destination SkeletalMesh asset name.
+     * @return SkeletalMesh then Skeleton object paths owned by the transaction.
+     */
+    UFUNCTION(meta = (AICallable), Category = "SharImportToolset")
+    static TArray<FString> ImportSkeletalMesh(
+        const FString& SourceFile,
+        const FString& FolderPath,
+        const FString& AssetName
+    );
+
+    /**
      * Imports one WAV file as a SoundWave under /Game/Generated/SHAR.
      * The caller remains responsible for saving and postcondition read-back.
      * @param SourceFile Absolute verified WAV source path.
