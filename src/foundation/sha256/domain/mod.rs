@@ -32,4 +32,4 @@
 
 mod sha256;
 
-pub use sha256::{digest, digest_hex, hex};
+pub use sha256::{Sha256, digest, digest_hex, hex};
