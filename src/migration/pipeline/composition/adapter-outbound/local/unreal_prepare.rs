@@ -33,14 +33,13 @@
 //! Local prepare-unreal outbound adapter.
 
 use std::collections::{BTreeMap, BTreeSet};
-use std::fs;
 use std::io::Read as _;
-use std::time::SystemTime;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 // cspell:ignore recv
 use std::sync::mpsc;
-use std::thread;
+use std::time::SystemTime;
+use std::{fs, thread};
 
 use same_file::Handle;
 use schoenwald_filesystem::PathKind;
@@ -59,9 +58,9 @@ use crate::domain::{
     MISSION_SCRIPT_SCHEMA, PhaseThreePackageIndex, PipelineConfig,
     PipelineError, PipelineOutcome, StageReport, UNREAL_IMPORT_MANIFEST_SCHEMA,
     UNREAL_IMPORT_SUMMARY_SCHEMA, UnrealImportManifest, UnrealSourceEvidence,
-    preflight_mission_condition_commands, preflight_mission_conditions,
-    preflight_mission_objective_commands, preflight_mission_objectives,
-    preflight_mission_script,
+    compile_mission_scope_graphs, preflight_mission_condition_commands,
+    preflight_mission_conditions, preflight_mission_objective_commands,
+    preflight_mission_objectives, preflight_mission_script,
 };
 
 /// Canonical generated Unreal staging root.
@@ -218,7 +217,8 @@ fn source_evidence(
             check_cancellation()?;
         }
         let line_number = line_index.saturating_add(1);
-        let row = parse_object(line, &format!("minor-unit line {line_number}"))?;
+        let row =
+            parse_object(line, &format!("minor-unit line {line_number}"))?;
         let id = manifest_string(&row, "id", line_number)?;
         validate_public_identifier(&id, "minor-unit source id")?;
         if !ids.insert(id.clone()) {
@@ -234,7 +234,11 @@ fn source_evidence(
             path,
             resolved,
             expected_size,
-            file_extension: manifest_string(&row, "file_extension", line_number)?,
+            file_extension: manifest_string(
+                &row,
+                "file_extension",
+                line_number,
+            )?,
             unit_type: manifest_string(&row, "type", line_number)?,
             subtype: manifest_string(&row, "subtype", line_number)?,
             kind: manifest_string(&row, "kind", line_number)?,
@@ -242,9 +246,21 @@ fn source_evidence(
             schema: manifest_string(&row, "schema", line_number)?,
             origin: manifest_string(&row, "origin", line_number)?,
             source_path: manifest_string(&row, "source_path", line_number)?,
-            source_chunk_kind: manifest_string(&row, "source_chunk_kind", line_number)?,
-            unreal_import_relation: manifest_string(&row, "unreal_import_relation", line_number)?,
-            future_normalization: manifest_string(&row, "future_normalization", line_number)?,
+            source_chunk_kind: manifest_string(
+                &row,
+                "source_chunk_kind",
+                line_number,
+            )?,
+            unreal_import_relation: manifest_string(
+                &row,
+                "unreal_import_relation",
+                line_number,
+            )?,
+            future_normalization: manifest_string(
+                &row,
+                "future_normalization",
+                line_number,
+            )?,
         });
     }
     parallel_source_evidence(&inputs)
@@ -280,24 +296,27 @@ fn parallel_source_evidence(
     let next = AtomicUsize::new(0);
     let (sender, receiver) = mpsc::channel();
     let workers = source_worker_count(inputs.len());
-    let mut progress = StageProgress::begin("Unreal source evidence", inputs.len());
+    let mut progress =
+        StageProgress::begin("Unreal source evidence", inputs.len());
     let mut collected = Vec::with_capacity(inputs.len());
     thread::scope(|scope| {
         for _worker in 0..workers {
             let worker_sender = sender.clone();
             let worker_next = &next;
             let worker_inputs = inputs;
-            let _handle = scope.spawn(move || loop {
-                let position = worker_next.fetch_add(1, Ordering::Relaxed);
-                let Some(input) = worker_inputs.get(position) else {
-                    break;
-                };
-                let result = read_source_evidence(input);
-                if worker_sender
-                    .send((position, input.id.clone(), result))
-                    .is_err()
-                {
-                    break;
+            let _handle = scope.spawn(move || {
+                loop {
+                    let position = worker_next.fetch_add(1, Ordering::Relaxed);
+                    let Some(input) = worker_inputs.get(position) else {
+                        break;
+                    };
+                    let result = read_source_evidence(input);
+                    if worker_sender
+                        .send((position, input.id.clone(), result))
+                        .is_err()
+                    {
+                        break;
+                    }
                 }
             });
         }
@@ -324,7 +343,9 @@ fn parallel_source_evidence(
 }
 
 /// Read, validate, and hash one physical source row.
-fn read_source_evidence(input: &SourceEvidenceInput) -> PipelineOutcome<UnrealSourceEvidence> {
+fn read_source_evidence(
+    input: &SourceEvidenceInput,
+) -> PipelineOutcome<UnrealSourceEvidence> {
     let (actual_size, sha256) = if input.kind == "mission-script" {
         let bytes = read_stable_source_bytes(&input.resolved)?;
         let actual_size = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
@@ -428,10 +449,12 @@ fn verify_stable_source(
             "Unreal source evidence identity changed during verification",
         ));
     }
-    let metadata = file
-        .metadata()
-        .map_err(path_error("inspect open Unreal source evidence after read"))?;
-    if metadata.len() != initial.len || metadata.modified().ok() != initial.modified {
+    let metadata = file.metadata().map_err(path_error(
+        "inspect open Unreal source evidence after read",
+    ))?;
+    if metadata.len() != initial.len
+        || metadata.modified().ok() != initial.modified
+    {
         return Err(PipelineError::new(
             "Unreal source evidence metadata changed during verification",
         ));
@@ -481,7 +504,9 @@ fn stream_source_digest(path: &Path) -> PipelineOutcome<(u64, String)> {
         digest.update(chunk);
         total = total
             .checked_add(u64::try_from(read).unwrap_or(u64::MAX))
-            .ok_or_else(|| PipelineError::new("Unreal source byte count overflowed"))?;
+            .ok_or_else(|| {
+                PipelineError::new("Unreal source byte count overflowed")
+            })?;
     }
     verify_stable_source(path, &file, &identity)?;
     if total != identity.len {
@@ -554,11 +579,18 @@ fn validate_normalized_mission_source(
             "mission condition preflight failed: {error}"
         ))
     })?);
-    preflight_mission_condition_commands(&evidence)
+    drop(
+        preflight_mission_condition_commands(&evidence).map_err(|error| {
+            PipelineError::new(format!(
+                "mission condition command preflight failed: {error}"
+            ))
+        })?,
+    );
+    compile_mission_scope_graphs(&evidence)
         .map(|_report| ())
         .map_err(|error| {
             PipelineError::new(format!(
-                "mission condition command preflight failed: {error}"
+                "mission scope preflight failed: {error}"
             ))
         })
 }
