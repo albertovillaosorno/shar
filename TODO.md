@@ -39,7 +39,7 @@ Current task list. Project phases and dated progress are recorded in
     missing smoothing groups.
   - [x] Version the FBX catalog verifier for exact external PNG provenance
     without treating sidecars as independently promotable model inputs.
-  - [ ] Publish the complete verified package-level FBX catalog for every
+  - [x] Publish the complete verified package-level FBX catalog for every
     manifest package currently classified `requires-fbx` before promoting any
     of those plans to ready.
 - [ ] Preserve source topology, UVs, materials, textures, pivots, rigs,
@@ -82,9 +82,10 @@ Current task list. Project phases and dated progress are recorded in
   - [ ] Implement and execute the complete serialized package transaction loop
     for every operation family.
 - [ ] Import meshes, skeletons, physics assets, and animations correctly.
-  - [x] Verify a representative skeletal FBX with authored-normal import creates
-    a SkeletalMesh and separate Skeleton without smoothing or zero-normal
-    warnings; keep the route blocked until the companion transaction owns both.
+  - [x] Import package-level skeletal FBX through a companion-aware transaction
+    that owns the SkeletalMesh and new Skeleton together, verifies both classes
+    and dirty state, saves both packages, reads both back, rejects replacement,
+    and rolls both back without orphaning a Skeleton.
 - [ ] Recreate materials only as required to match the original presentation.
 - [ ] Import original textures without repainting, upscaling, or redesigning
   them.
@@ -111,8 +112,8 @@ Current task list. Project phases and dated progress are recorded in
       path-and-command-window adaptations and independently revalidate their
       fingerprints during semantic preflight.
     - [x] Close the observed objective and condition alias registries plus exact
-      objective/condition-scoped command argument counts against the repository mission
-      corpus, failing unknown aliases, scopes, or argument-count drift.
+      objective/condition-scoped command argument counts against the repository
+      mission corpus, failing unknown aliases, scopes, or argument-count drift.
     - [ ] Map every reviewed participant, route, timing, load, checkpoint,
       presentation, reward, transition, and typed objective/condition parameter
       reference.

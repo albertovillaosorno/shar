@@ -1,7 +1,7 @@
 # Native asset planning
 
 - Status: Active
-- Last reviewed: 2026-07-13
+- Last reviewed: 2026-08-07
 
 ## Governing decisions
 
@@ -29,6 +29,23 @@ verification, and provenance. A separate adapter applies the approved plan.
 Planning never inspects mutable editor state to decide taxonomy. A plan contains
 no proprietary payload, performs no engine mutation, and remains stable for
 equivalent validated input.
+
+## Multi-output native imports
+
+A direct import operation owns an explicit ordered output inventory. The first
+output is the primary asset; additional companion outputs declare their exact
+object path, package path, class, expected dirty state after import, and
+dependency-safe rollback order. Preflight requires every declared output to be
+absent before mutation. The importer result must match the ordered inventory
+exactly, every output is independently read back before save, all owned packages
+are saved together, and every package must read back clean afterward.
+
+The Unreal Engine 5.8.1 skeletal FBX route deliberately creates a new Skeleton
+companion named from the SkeletalMesh, disables PhysicsAsset and animation
+creation, and rejects pre-existing primary or companion packages. Reusing an
+existing Skeleton is outside this transaction because import may mutate it and a
+delete-only rollback cannot restore its previous state. Rollback deletes the
+SkeletalMesh before the Skeleton so no companion is orphaned.
 
 ## Failure behavior
 

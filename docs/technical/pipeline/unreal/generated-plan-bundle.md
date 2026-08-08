@@ -36,7 +36,21 @@ The command verifies the successful minor-unit audit, rebuilds the import
 manifest from source evidence, derives every plan revision from canonical
 content, writes into a transaction-specific staging directory, verifies each
 file, and atomically replaces the accepted `unreal-staging/` root only after the
-complete publication succeeds.
+complete publication succeeds. Normalized JSON metadata preserves the exact
+schema revision declared by its physical producer; recognized straggler families
+fail closed when that bounded schema identity is missing, malformed, or belongs
+to a different family.
+
+Physical source reads, byte-count checks, mission semantic preflight, and
+SHA-256 generation may execute concurrently through a bounded worker pool. Each
+worker first requires a regular non-linked source through the shared filesystem
+boundary, binds the pathname to the opened physical file identity, and rejects
+identity, byte-length, or modification-time drift after the read. Mission JSON
+is retained only for its semantic preflight; other source payloads stream through
+the shared incremental SHA-256 boundary instead of being retained wholesale.
+Manifest rows are parsed and validated before worker dispatch, completed results
+are restored to manifest order before planning, and therefore worker scheduling
+cannot alter published ordering or which earlier row owns an error.
 
 `unreal-staging/` is generated, disposable, and ignored by Git. Every
 published plan targets Unreal Engine 5.8.1 exactly; changing the engine patch
@@ -45,10 +59,12 @@ version requires a deliberate contract revision and regenerated evidence.
 ## Generated FBX catalog
 
 Only packages with actual model or world geometry may emit model operations.
-Scene, locator, camera, animation, and physics evidence can accompany that
-geometry in the FBX plan, but none can independently reserve a `StaticMesh`.
-Non-geometry packages remain at their concrete native target or
-`requires-semantic-conversion` boundary instead of producing placeholder FBX.
+Decoded `p3d-mesh` evidence with no primitive groups is metadata rather than
+geometry and cannot reserve an FBX operation. Scene, locator, camera, animation,
+and physics evidence can accompany geometry in the FBX plan, but none can
+independently reserve a mesh asset. Non-geometry packages remain at their
+concrete native target or `requires-semantic-conversion` boundary instead of
+producing placeholder FBX.
 
 Model operations use the ignored `fbx-assets/` root as their only generated FBX
 authority:
@@ -62,6 +78,14 @@ fbx-assets/
         └── textures/
             └── <texture_name>.png
 ```
+
+The `fbx-export-catalog` command selects every current package whose planner
+target is directly importable as `StaticMesh` or `SkeletalMesh`, reuses the
+package FBX writers, hashes every generated FBX and external PNG, verifies the
+complete catalog in staging, publishes the root with one rename, and reads the
+published root back through the same verifier. Any package failure prevents
+publication; a failed post-rename read-back removes the rejected root. Existing
+accepted roots are never silently replaced by this command.
 
 The JSONL header uses schema `shar-schoenwald.fbx-catalog.v2`, record type
 `header`, status `complete`, the exact FBX package count, and the exact declared
@@ -82,9 +106,12 @@ files, noncanonical fields, stale sizes or hashes, non-PNG texture evidence,
 invalid binary headers, and any FBX version other than 7.7. A verified complete
 catalog must correspond exactly to every manifest package whose disposition is
 `requires-fbx`; it promotes those model operations to `ready` and uses only the
-generated FBX digest as each model source revision. Skeletal and composite
-semantic blockers do not claim catalog entries. A partial catalog never produces
-a mixed ready/pending bundle.
+generated FBX digest as each model source revision. A package-level
+`SkeletalMesh` entry reserves both its primary object and the deterministic
+`<AssetName>_Skeleton` companion; the companion is owned by the same import,
+save, read-back, and rollback transaction rather than by a second plan
+operation. Composite or otherwise unresolved semantic splits do not claim
+catalog entries. A partial catalog never produces a mixed ready/pending bundle.
 
 ## Published files
 
@@ -221,7 +248,14 @@ required by the accepted runtime contract. Such a package reserves no Unreal
 object, declares no generic `DataAsset`, and emits no asset-construction
 operation. Mission-script bundles are one example: they must compile into typed
 mission definitions and bindings for the shared mission StateTree contract,
-not one ad hoc StateTree or abstract data asset per source bundle.
+not one ad hoc StateTree or abstract data asset per source bundle. Pure3D sprite
+layouts, Scrooby project headers, TextureFont evidence, and TextBible headers are
+also semantic evidence rather than standalone `Texture2D`, `WidgetBlueprint`,
+`Font`, or `StringTable` factory inputs. TextureFont extraction preserves its
+embedded atlas PNGs plus each fixed 40-byte glyph record as ten raw little-endian
+words; field semantics remain unassigned until an authoritative compiler mapping
+exists. A direct `Texture2D` target requires a physical PNG member owned by the
+package instead of a sprite/layout JSON row.
 
 Only after semantic compilation produces a concrete target can the resulting
 work enter an operation plan and acquire operation readiness.
