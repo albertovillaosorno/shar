@@ -221,6 +221,7 @@ pub fn preflight_mission_script(
         })?;
     validate_identity(&document)?;
     validate_context_evidence(&document)?;
+    validate_context_structure(&document)?;
     validate_source_evidence(&document)?;
     validate_command_evidence(&document)?;
     Ok(MissionScriptEvidence {
@@ -328,6 +329,169 @@ fn validate_context_evidence(
     Ok(())
 }
 
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+struct MissionContextState {
+    mission: bool,
+    stage: bool,
+    objective: bool,
+    condition: bool,
+}
+
+fn validate_context_structure(
+    document: &MissionScriptDocument,
+) -> Result<(), String> {
+    let mut state = MissionContextState::default();
+    for invocation in &document.command_invocations {
+        if closes_condition_before_invocation(document, invocation.ordinal) {
+            state.condition = false;
+        }
+        match invocation.name.as_str() {
+            "selectmission" => {
+                require_context_arity(invocation, 1, 1)?;
+                if state != MissionContextState::default() {
+                    return Err(
+                        "mission context structure disagrees with evidence"
+                            .to_owned(),
+                    );
+                }
+                state.mission = true;
+            },
+            "closemission" => {
+                require_context_arity(invocation, 0, 0)?;
+                if !state.mission
+                    || state.stage
+                    || state.objective
+                    || state.condition
+                {
+                    return Err(
+                        "mission context structure disagrees with evidence"
+                            .to_owned(),
+                    );
+                }
+                state = MissionContextState::default();
+            },
+            "addstage" => {
+                require_context_arity(invocation, 0, 3)?;
+                if !state.mission
+                    || state.stage
+                    || state.objective
+                    || state.condition
+                {
+                    return Err(
+                        "mission context structure disagrees with evidence"
+                            .to_owned(),
+                    );
+                }
+                state.stage = true;
+            },
+            "closestage" => {
+                require_context_arity(invocation, 0, 0)?;
+                if !state.stage || state.objective || state.condition {
+                    return Err(
+                        "mission context structure disagrees with evidence"
+                            .to_owned(),
+                    );
+                }
+                state.stage = false;
+            },
+            "addobjective" => {
+                require_context_arity(invocation, 1, 3)?;
+                if !state.stage || state.objective || state.condition {
+                    return Err(
+                        "mission context structure disagrees with evidence"
+                            .to_owned(),
+                    );
+                }
+                state.objective = true;
+            },
+            "closeobjective" => {
+                require_context_arity(invocation, 0, 0)?;
+                if !state.objective || state.condition {
+                    return Err(
+                        "mission context structure disagrees with evidence"
+                            .to_owned(),
+                    );
+                }
+                state.objective = false;
+            },
+            "addcondition" => {
+                require_context_arity(invocation, 1, 2)?;
+                if !state.stage || state.condition {
+                    return Err(
+                        "mission context structure disagrees with evidence"
+                            .to_owned(),
+                    );
+                }
+                state.condition = true;
+            },
+            "closecondition" => {
+                require_context_arity(invocation, 0, 0)?;
+                if !state.condition
+                    && !ignores_orphan_condition_close(
+                        document,
+                        invocation.ordinal,
+                    )
+                {
+                    return Err(
+                        "mission context structure disagrees with evidence"
+                            .to_owned(),
+                    );
+                }
+                state.condition = false;
+            },
+            _ => {},
+        }
+    }
+    if state != MissionContextState::default() {
+        return Err("mission context structure is unclosed".to_owned());
+    }
+    Ok(())
+}
+
+fn require_context_arity(
+    invocation: &MissionCommandDocument,
+    minimum: usize,
+    maximum: usize,
+) -> Result<(), String> {
+    if (minimum..=maximum).contains(&invocation.arguments.len()) {
+        Ok(())
+    } else {
+        Err("mission context command arity disagrees with evidence".to_owned())
+    }
+}
+
+fn has_context_adaptation(
+    document: &MissionScriptDocument,
+    ordinal: usize,
+    code: &str,
+) -> bool {
+    document.context_adaptations.iter().any(|adaptation| {
+        adaptation.ordinal == ordinal && adaptation.code == code
+    })
+}
+
+fn ignores_orphan_condition_close(
+    document: &MissionScriptDocument,
+    ordinal: usize,
+) -> bool {
+    has_context_adaptation(
+        document,
+        ordinal,
+        "legacy-l2-m6sdi-ignore-orphan-condition-close-v1",
+    )
+}
+
+fn closes_condition_before_invocation(
+    document: &MissionScriptDocument,
+    ordinal: usize,
+) -> bool {
+    has_context_adaptation(
+        document,
+        ordinal,
+        "legacy-l7-m7i-close-keepbarrel-before-stage-complete-v1",
+    )
+}
+
 fn validate_context_adaptation(
     document: &MissionScriptDocument,
     adaptation: &MissionContextAdaptationDocument,
@@ -398,14 +562,55 @@ fn validate_source_evidence(
     }) {
         return Err("mission source statement evidence is malformed".to_owned());
     }
-    if document.load_p3d_reference_count > document.command_invocations.len()
-        || document.mission_flow_command_count
-            > document.command_invocations.len()
+
+    let load_p3d_reference_count = document
+        .command_invocations
+        .iter()
+        .filter(|invocation| invocation.name.contains("loadp3d"))
+        .count();
+    let mission_flow_command_count = document
+        .command_invocations
+        .iter()
+        .filter(|invocation| {
+            invocation.name.contains("stage")
+                || invocation.name.contains("mission")
+                || invocation.name.contains("objective")
+        })
+        .count();
+    let vehicle_physics_command_count = document
+        .command_invocations
+        .iter()
+        .filter(|invocation| {
+            [
+                "mass",
+                "speed",
+                "steer",
+                "grip",
+                "suspension",
+                "gas",
+                "brake",
+            ]
+            .iter()
+            .any(|needle| invocation.name.contains(needle))
+        })
+        .count();
+    if document.load_p3d_reference_count != load_p3d_reference_count
+        || document.mission_flow_command_count != mission_flow_command_count
         || document.vehicle_physics_command_count
-            > document.command_invocations.len()
+            != vehicle_physics_command_count
     {
+        return Err("mission command summary is not reproducible".to_owned());
+    }
+
+    let p3d_references = document
+        .command_invocations
+        .iter()
+        .filter(|invocation| invocation.name.contains("loadp3d"))
+        .flat_map(|invocation| invocation.arguments.iter().cloned())
+        .collect::<Vec<_>>();
+    if document.p3d_references != p3d_references {
         return Err(
-            "mission command summary exceeds invocation evidence".to_owned()
+            "mission P3D reference evidence is not reproducible".to_owned()
         );
     }
     if document.p3d_references.iter().any(|reference| {
@@ -439,6 +644,19 @@ fn validate_command_evidence(
             previous_ordinal,
             document.statement_count,
         )?;
+        let statement_index = invocation
+            .ordinal
+            .checked_sub(1)
+            .ok_or_else(|| "mission command ordinal underflow".to_owned())?;
+        let statement =
+            document.source_statements.get(statement_index).ok_or_else(
+                || "mission command source statement is missing".to_owned(),
+            )?;
+        if invocation.semantic_role != semantic_role_for_statement(statement) {
+            return Err(
+                "mission command semantic role is not reproducible".to_owned()
+            );
+        }
         previous_ordinal = invocation.ordinal;
         let count = observed.entry(invocation.name.clone()).or_default();
         *count = count
@@ -450,7 +668,140 @@ fn validate_command_evidence(
             "mission command histogram does not match invocations".to_owned()
         );
     }
+    validate_invocation_replay(document)?;
     Ok(())
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct ReplayedMissionCommand {
+    ordinal: usize,
+    name: String,
+    args_raw: String,
+    arguments: Vec<String>,
+}
+
+fn validate_invocation_replay(
+    document: &MissionScriptDocument,
+) -> Result<(), String> {
+    let mut replayed = Vec::<ReplayedMissionCommand>::new();
+    for (index, statement) in document.source_statements.iter().enumerate() {
+        let Some((name, args_raw)) = parse_source_call(statement) else {
+            continue;
+        };
+        let ordinal = index.checked_add(1).ok_or_else(|| {
+            "mission source statement ordinal overflow".to_owned()
+        })?;
+        replayed.push(ReplayedMissionCommand {
+            ordinal,
+            name: name.to_ascii_lowercase(),
+            arguments: split_source_arguments(&args_raw),
+            args_raw,
+        });
+    }
+    if replayed.len() != document.command_invocations.len() {
+        return Err("mission command invocation evidence is not reproducible"
+            .to_owned());
+    }
+    for (expected, actual) in replayed.iter().zip(&document.command_invocations)
+    {
+        if expected.ordinal != actual.ordinal
+            || expected.name != actual.name
+            || expected.args_raw != actual.args_raw
+            || expected.arguments != actual.arguments
+        {
+            return Err(
+                "mission command invocation evidence is not reproducible"
+                    .to_owned(),
+            );
+        }
+    }
+    Ok(())
+}
+
+fn parse_source_call(statement: &str) -> Option<(&str, String)> {
+    let open = statement.find('(')?;
+    let mut in_quotes = false;
+    let mut escaped = false;
+    let mut depth = 0usize;
+    let tail = statement.get(open..)?;
+    for (offset, character) in tail.char_indices() {
+        if escaped {
+            escaped = false;
+            continue;
+        }
+        if character == '\\' && in_quotes {
+            escaped = true;
+            continue;
+        }
+        if character == '"' {
+            in_quotes = !in_quotes;
+            continue;
+        }
+        if in_quotes {
+            continue;
+        }
+        if character == '(' {
+            depth = depth.saturating_add(1);
+            continue;
+        }
+        if character == ')' {
+            depth = depth.checked_sub(1)?;
+            if depth == 0 {
+                let close = open.checked_add(offset)?;
+                let args_start = open.checked_add(1)?;
+                return Some((
+                    statement.get(..open)?.trim(),
+                    statement.get(args_start..close)?.trim().to_owned(),
+                ));
+            }
+        }
+    }
+    None
+}
+
+fn split_source_arguments(value: &str) -> Vec<String> {
+    let mut args = Vec::new();
+    let mut current = String::new();
+    let mut in_quotes = false;
+    let mut escaped = false;
+    let mut depth = 0usize;
+    for character in value.chars() {
+        if escaped {
+            current.push(character);
+            escaped = false;
+            continue;
+        }
+        if character == '\\' && in_quotes {
+            current.push(character);
+            escaped = true;
+            continue;
+        }
+        if character == '"' {
+            in_quotes = !in_quotes;
+            continue;
+        }
+        if !in_quotes {
+            if character == '(' {
+                depth = depth.saturating_add(1);
+            } else if character == ')' {
+                depth = depth.saturating_sub(1);
+            } else if character == ',' && depth == 0 {
+                push_source_argument(&mut args, &mut current);
+                continue;
+            }
+        }
+        current.push(character);
+    }
+    push_source_argument(&mut args, &mut current);
+    args
+}
+
+fn push_source_argument(args: &mut Vec<String>, current: &mut String) {
+    let value = current.trim().trim_matches('"').to_owned();
+    if !value.is_empty() {
+        args.push(value);
+    }
+    current.clear();
 }
 
 fn validate_invocation(
@@ -476,6 +827,21 @@ fn validate_invocation(
         return Err("mission command invocation is malformed".to_owned());
     }
     Ok(())
+}
+
+fn semantic_role_for_statement(statement: &str) -> &'static str {
+    let lower = statement.to_ascii_lowercase();
+    if lower.contains("loadp3d") {
+        "asset-load"
+    } else if lower.contains("stage") {
+        "mission-stage"
+    } else if lower.contains("objective") {
+        "mission-objective"
+    } else if lower.contains("reward") {
+        "mission-reward"
+    } else {
+        "mission-script"
+    }
 }
 
 fn has_unsafe_text_control(value: &str) -> bool {

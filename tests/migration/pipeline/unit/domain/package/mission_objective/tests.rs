@@ -99,7 +99,11 @@ fn mission_with_objective(arguments: &[&str]) -> Result<String, String> {
         .iter()
         .map(|value| json!(value))
         .collect::<Vec<_>>();
-    let alias = arguments.first().copied().unwrap_or_default();
+    let objective_raw = arguments
+        .iter()
+        .map(|value| format!("\"{value}\""))
+        .collect::<Vec<_>>()
+        .join(",");
     let mut command_counts = serde_json::Map::new();
     for command in [
         "selectmission",
@@ -124,14 +128,14 @@ fn mission_with_objective(arguments: &[&str]) -> Result<String, String> {
         "statement_count": 6,
         "unique_command_count": 6,
         "load_p3d_reference_count": 0,
-        "mission_flow_command_count": 0,
+        "mission_flow_command_count": 6,
         "vehicle_physics_command_count": 0,
         "semantic_family": "mission-script",
         "command_counts": command_counts,
         "source_statements": [
             "SelectMission(\"m1\");",
             "AddStage(0);",
-            format!("AddObjective(\"{alias}\");"),
+            format!("AddObjective({objective_raw});"),
             "CloseObjective();",
             "CloseStage();",
             "CloseMission();"
@@ -155,15 +159,15 @@ fn mission_with_objective(arguments: &[&str]) -> Result<String, String> {
             {
                 "ordinal": 3,
                 "name": "addobjective",
-                "args_raw": alias,
-                "semantic_role": "mission-stage",
+                "args_raw": objective_raw,
+                "semantic_role": "mission-objective",
                 "arguments": invocation_arguments
             },
             {
                 "ordinal": 4,
                 "name": "closeobjective",
                 "args_raw": "",
-                "semantic_role": "mission-stage",
+                "semantic_role": "mission-objective",
                 "arguments": []
             },
             {
@@ -236,9 +240,10 @@ fn semantic_evidence_rejects_unknown_alias_and_arity_drift()
         vec!["timer", "unexpected"],
         vec!["race", "one", "two", "three"],
     ] {
-        let evidence =
-            preflight_mission_script(&mission_with_objective(&arguments)?)?;
-        if preflight_mission_objectives(&evidence).is_ok() {
+        let source = mission_with_objective(&arguments)?;
+        if let Ok(evidence) = preflight_mission_script(&source)
+            && preflight_mission_objectives(&evidence).is_ok()
+        {
             return Err(format!(
                 "invalid objective call was accepted: {arguments:?}"
             ));
@@ -270,7 +275,8 @@ fn mission_with_objective_modifier(
         .get_mut("source_statements")
         .and_then(serde_json::Value::as_array_mut)
         .ok_or_else(|| "fixture source statements disappeared".to_owned())?;
-    statements.insert(3, json!(format!("{command}();")));
+    let command_raw = command_arguments.join(",");
+    statements.insert(3, json!(format!("{command}({command_raw});")));
     let invocations = value
         .get_mut("command_invocations")
         .and_then(serde_json::Value::as_array_mut)
@@ -287,13 +293,22 @@ fn mission_with_objective_modifier(
         })?;
         *ordinal_value = json!(ordinal.saturating_add(1));
     }
+    let semantic_role = if command.contains("stage") {
+        "mission-stage"
+    } else if command.contains("objective") {
+        "mission-objective"
+    } else if command.contains("reward") {
+        "mission-reward"
+    } else {
+        "mission-script"
+    };
     invocations.insert(
         3,
         json!({
             "ordinal": 4,
             "name": command,
-            "args_raw": command_arguments.join(","),
-            "semantic_role": "mission-stage",
+            "args_raw": command_raw,
+            "semantic_role": semantic_role,
             "arguments": command_arguments
         }),
     );
@@ -302,6 +317,15 @@ fn mission_with_objective_modifier(
         .and_then(serde_json::Value::as_object_mut)
         .ok_or_else(|| "fixture command counts disappeared".to_owned())?;
     drop(counts.insert(command.to_owned(), json!(1)));
+    let mission_flow = value
+        .get_mut("mission_flow_command_count")
+        .ok_or_else(|| "fixture mission-flow count disappeared".to_owned())?;
+    if command.contains("stage")
+        || command.contains("mission")
+        || command.contains("objective")
+    {
+        *mission_flow = json!(7);
+    }
     serde_json::to_string(&value).map_err(|error| error.to_string())
 }
 

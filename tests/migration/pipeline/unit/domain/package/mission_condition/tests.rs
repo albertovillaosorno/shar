@@ -94,8 +94,30 @@ fn mission_with_condition_modifier(
     command: &str,
     command_arguments: &[&str],
 ) -> Result<String, String> {
-    let condition_alias =
-        condition_arguments.first().copied().unwrap_or_default();
+    let condition_raw = condition_arguments
+        .iter()
+        .enumerate()
+        .map(|(index, value)| {
+            if index == 0 {
+                format!("\"{value}\"")
+            } else {
+                (*value).to_owned()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(",");
+    let command_raw = command_arguments.join(",");
+    let command_role = if command.contains("stage") {
+        "mission-stage"
+    } else if command.contains("objective") {
+        "mission-objective"
+    } else if command.contains("reward") {
+        "mission-reward"
+    } else if command.contains("loadp3d") {
+        "asset-load"
+    } else {
+        "mission-script"
+    };
     let mut command_counts = serde_json::Map::new();
     for name in [
         "selectmission",
@@ -128,15 +150,17 @@ fn mission_with_condition_modifier(
         "statement_count": 7,
         "unique_command_count": command_counts.len(),
         "load_p3d_reference_count": 0,
-        "mission_flow_command_count": 0,
+        "mission_flow_command_count": if command.contains("stage")
+            || command.contains("mission")
+            || command.contains("objective") { 5 } else { 4 },
         "vehicle_physics_command_count": 0,
         "semantic_family": "mission-script",
         "command_counts": command_counts,
         "source_statements": [
             "SelectMission(\"m1\");",
             "AddStage(0);",
-            format!("AddCondition(\"{condition_alias}\");"),
-            format!("{command}();"),
+            format!("AddCondition({condition_raw});"),
+            format!("{command}({command_raw});"),
             "CloseCondition();",
             "CloseStage();",
             "CloseMission();"
@@ -145,9 +169,9 @@ fn mission_with_condition_modifier(
         "command_invocations": [
             {"ordinal":1,"name":"selectmission","args_raw":"\"m1\"","semantic_role":"mission-script","arguments":["m1"]},
             {"ordinal":2,"name":"addstage","args_raw":"0","semantic_role":"mission-stage","arguments":["0"]},
-            {"ordinal":3,"name":"addcondition","args_raw":condition_alias,"semantic_role":"mission-stage","arguments":condition_arguments},
-            {"ordinal":4,"name":command,"args_raw":command_arguments.join(","),"semantic_role":"mission-stage","arguments":command_arguments},
-            {"ordinal":5,"name":"closecondition","args_raw":"","semantic_role":"mission-stage","arguments":[]},
+            {"ordinal":3,"name":"addcondition","args_raw":condition_raw,"semantic_role":"mission-script","arguments":condition_arguments},
+            {"ordinal":4,"name":command,"args_raw":command_raw,"semantic_role":command_role,"arguments":command_arguments},
+            {"ordinal":5,"name":"closecondition","args_raw":"","semantic_role":"mission-script","arguments":[]},
             {"ordinal":6,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
             {"ordinal":7,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
         ]
@@ -157,7 +181,7 @@ fn mission_with_condition_modifier(
 
 fn reviewed_keepbarrel_adaptation_document() -> Result<String, String> {
     let mut statements = (1..=116)
-        .map(|ordinal| format!("Statement{ordinal}();"))
+        .map(|ordinal| format!("legacy non-call statement {ordinal}"))
         .collect::<Vec<_>>();
     for (index, value) in [
         (0, "SelectMission(\"m7\");"),
@@ -190,7 +214,7 @@ fn reviewed_keepbarrel_adaptation_document() -> Result<String, String> {
         "statement_count": 116,
         "unique_command_count": 7,
         "load_p3d_reference_count": 0,
-        "mission_flow_command_count": 0,
+        "mission_flow_command_count": 6,
         "vehicle_physics_command_count": 0,
         "semantic_family": "mission-script",
         "command_counts": {
@@ -208,7 +232,7 @@ fn reviewed_keepbarrel_adaptation_document() -> Result<String, String> {
             {"ordinal":1,"name":"selectmission","args_raw":"\"m7\"","semantic_role":"mission-script","arguments":["m7"]},
             {"ordinal":2,"name":"addstage","args_raw":"0","semantic_role":"mission-stage","arguments":["0"]},
             {"ordinal":112,"name":"stagestartmusicevent","args_raw":"\"L7_drama\"","semantic_role":"mission-stage","arguments":["L7_drama"]},
-            {"ordinal":113,"name":"addcondition","args_raw":"\"keepbarrel\",2","semantic_role":"mission-stage","arguments":["keepbarrel","2"]},
+            {"ordinal":113,"name":"addcondition","args_raw":"\"keepbarrel\", 2","semantic_role":"mission-script","arguments":["keepbarrel","2"]},
             {"ordinal":114,"name":"showstagecomplete","args_raw":"","semantic_role":"mission-stage","arguments":[]},
             {"ordinal":115,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
             {"ordinal":116,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
