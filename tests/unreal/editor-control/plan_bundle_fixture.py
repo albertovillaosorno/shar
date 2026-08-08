@@ -120,6 +120,8 @@ def build_plan_bundle(
     texture_source_revision: str | None = None,
     with_static_mesh_operation: bool = False,
     static_mesh_source_revision: str | None = None,
+    with_skeletal_mesh_operation: bool = False,
+    skeletal_mesh_source_revision: str | None = None,
     with_media_operation: bool = False,
     media_source_revision: str | None = None,
     with_construction_operation: bool = False,
@@ -144,6 +146,12 @@ def build_plan_bundle(
         if with_static_mesh_operation and plan_id == "asset-import-plan":
             operations.append(
                 _static_mesh_operation(static_mesh_source_revision or "e" * 64)
+            )
+        if with_skeletal_mesh_operation and plan_id == "asset-import-plan":
+            operations.append(
+                _skeletal_mesh_operation(
+                    skeletal_mesh_source_revision or "f" * 64
+                )
             )
         if with_media_operation and plan_id == "asset-import-plan":
             operations.append(
@@ -211,6 +219,8 @@ def write_plan_bundle(
     texture_source_revision: str | None = None,
     with_static_mesh_operation: bool = False,
     static_mesh_source_revision: str | None = None,
+    with_skeletal_mesh_operation: bool = False,
+    skeletal_mesh_source_revision: str | None = None,
     with_media_operation: bool = False,
     media_source_revision: str | None = None,
     with_construction_operation: bool = False,
@@ -224,6 +234,8 @@ def write_plan_bundle(
         texture_source_revision=texture_source_revision,
         with_static_mesh_operation=with_static_mesh_operation,
         static_mesh_source_revision=static_mesh_source_revision,
+        with_skeletal_mesh_operation=with_skeletal_mesh_operation,
+        skeletal_mesh_source_revision=skeletal_mesh_source_revision,
         with_media_operation=with_media_operation,
         media_source_revision=media_source_revision,
         with_construction_operation=with_construction_operation,
@@ -364,6 +376,48 @@ def _static_mesh_operation(
         ("target_class", "StaticMesh"),
         ("importer", "asset-tools-fbx"),
         ("import_profile", "shar-fbx-static-v1"),
+        ("dependencies", []),
+        ("readiness", "ready"),
+        ("world_owned", False),
+        ("runtime_bound", True),
+    ))
+    preimage = "\n".join(
+        str(fields[field])
+        for field in (
+            "package_identity",
+            "source_identity",
+            "source_format",
+            "target_family",
+            "source_path",
+            "source_revision",
+            "destination",
+            "target_class",
+            "importer",
+            "import_profile",
+        )
+    )
+    fields["operation_id"] = f"operation-{_digest(preimage)[:16]}"
+    return fields
+
+
+def _skeletal_mesh_operation(
+    source_revision: str,
+) -> OrderedDict[str, JsonValue]:
+    fields: OrderedDict[str, JsonValue] = OrderedDict((
+        ("operation_id", ""),
+        ("package_identity", "skeletal-mesh-package"),
+        ("source_identity", "skeletal-mesh-source"),
+        ("source_format", "fbx"),
+        ("target_family", "model"),
+        ("source_path", "fbx-assets/skeletal/model.fbx"),
+        ("source_revision", source_revision),
+        (
+            "destination",
+            "/Game/Generated/SHAR/models/skeletal/model.model",
+        ),
+        ("target_class", "SkeletalMesh"),
+        ("importer", "asset-tools-fbx"),
+        ("import_profile", "shar-fbx-skeletal-v1"),
         ("dependencies", []),
         ("readiness", "ready"),
         ("world_owned", False),

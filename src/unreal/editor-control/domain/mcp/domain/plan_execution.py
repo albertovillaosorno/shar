@@ -52,6 +52,12 @@ _STATIC_MESH_ROUTE = (
     "asset-tools-fbx",
     "shar-fbx-static-v1",
 )
+_SKELETAL_MESH_ROUTE = (
+    "fbx",
+    "SkeletalMesh",
+    "asset-tools-fbx",
+    "shar-fbx-skeletal-v1",
+)
 _AUDIO_ROUTE = (
     "wav",
     "SoundWave",
@@ -65,6 +71,44 @@ _MEDIA_ROUTE = (
     "shar-hap-movie-v1",
 )
 _IMPORT_TOOLSET = "SharImportEditor.SharImportToolset"
+_ROUTE_SURFACE = {
+    _TEXTURE_ROUTE: (
+        "texture-image-v1",
+        "editor_toolset.toolsets.texture.TextureTools",
+        "editor_toolset.toolsets.texture.TextureTools.import_file",
+    ),
+    _AUDIO_ROUTE: (
+        "sound-wave-wav-v1",
+        _IMPORT_TOOLSET,
+        f"{_IMPORT_TOOLSET}.ImportSoundWave",
+    ),
+    _MEDIA_ROUTE: (
+        "file-media-source-hap-v1",
+        _IMPORT_TOOLSET,
+        f"{_IMPORT_TOOLSET}.ImportFileMediaSource",
+    ),
+    _STATIC_MESH_ROUTE: (
+        "static-mesh-fbx-v1",
+        _IMPORT_TOOLSET,
+        f"{_IMPORT_TOOLSET}.ImportStaticMesh",
+    ),
+    _SKELETAL_MESH_ROUTE: (
+        "skeletal-mesh-fbx-v1",
+        _IMPORT_TOOLSET,
+        f"{_IMPORT_TOOLSET}.ImportSkeletalMesh",
+    ),
+}
+
+
+class NativeAssetOutput(NamedTuple):
+    """One created Unreal asset owned by a native import transaction."""
+
+    role: str
+    object_path: str
+    package_path: str
+    target_class: str
+    expected_dirty_after_import: bool
+    rollback_order: int
 
 
 class NativeImportStep(NamedTuple):
@@ -82,6 +126,59 @@ class NativeImportStep(NamedTuple):
     toolset_name: str
     tool_name: str
     external_payload_path: str | None
+    companion_outputs: tuple[NativeAssetOutput, ...] = ()
+
+    @property
+    def primary_output(self) -> NativeAssetOutput:
+        """The operation's primary created asset contract."""
+        return NativeAssetOutput(
+            role="primary",
+            object_path=self.destination,
+            package_path=self.package_path,
+            target_class=self.target_class,
+            expected_dirty_after_import=True,
+            rollback_order=0,
+        )
+
+    @property
+    def outputs(self) -> tuple[NativeAssetOutput, ...]:
+        """Every validated created asset owned by this operation."""
+        outputs = (self.primary_output, *self.companion_outputs)
+        roles = [output.role for output in outputs]
+        object_paths = [output.object_path for output in outputs]
+        package_paths = [output.package_path for output in outputs]
+        rollback_orders = [output.rollback_order for output in outputs]
+        if any(not role for role in roles) or len(set(roles)) != len(roles):
+            fail_protocol("native import output roles are not unique")
+        if len(set(object_paths)) != len(object_paths):
+            fail_protocol("native import output object paths are not unique")
+        if len(set(package_paths)) != len(package_paths):
+            fail_protocol("native import output package paths are not unique")
+        if len(set(rollback_orders)) != len(rollback_orders):
+            fail_protocol("native import rollback order is not unique")
+        for output in outputs:
+            identity = output.object_path.rpartition(".")
+            package_path, separator, object_name = identity
+            if (
+                not separator
+                or package_path != output.package_path
+                or not object_name
+                or not output.target_class
+            ):
+                fail_protocol("native import output identity is not canonical")
+        return outputs
+
+    @property
+    def expected_object_paths(self) -> tuple[str, ...]:
+        """Exact ordered object paths the native tool must report."""
+        return tuple(output.object_path for output in self.outputs)
+
+    @property
+    def rollback_outputs(self) -> tuple[NativeAssetOutput, ...]:
+        """Owned assets in explicit dependency-safe delete order."""
+        return tuple(
+            sorted(self.outputs, key=lambda output: output.rollback_order)
+        )
 
     @property
     def has_external_payload(self) -> bool:
@@ -95,6 +192,7 @@ class NativeImportStep(NamedTuple):
         if self.route_id in {
             "file-media-source-hap-v1",
             "sound-wave-wav-v1",
+            "skeletal-mesh-fbx-v1",
             "static-mesh-fbx-v1",
         }:
             return {
@@ -190,37 +288,22 @@ def _compile_ready_import(operation: PlanOperation) -> NativeImportStep | None:
         operation.import_profile,
     )
     external_payload_path: str | None = None
-    if route == _TEXTURE_ROUTE:
-        route_id = "texture-image-v1"
-        toolset = "editor_toolset.toolsets.texture.TextureTools"
-        tool = f"{toolset}.import_file"
-    elif route == _AUDIO_ROUTE:
-        route_id = "sound-wave-wav-v1"
-        toolset = _IMPORT_TOOLSET
-        tool = f"{toolset}.ImportSoundWave"
-    elif route == _MEDIA_ROUTE:
-        route_id = "file-media-source-hap-v1"
-        toolset = _IMPORT_TOOLSET
-        tool = f"{toolset}.ImportFileMediaSource"
-    elif route == _STATIC_MESH_ROUTE:
-        route_id = "static-mesh-fbx-v1"
-        toolset = _IMPORT_TOOLSET
-        tool = f"{toolset}.ImportStaticMesh"
-    else:
+    surface = _ROUTE_SURFACE.get(route)
+    if surface is None:
         return None
+    route_id, toolset, tool = surface
     package_path, separator, object_name = operation.destination.rpartition(".")
     if not separator:
         fail_protocol("compiled import destination has no object name")
     folder_path, slash, asset_name = package_path.rpartition("/")
     if not slash or object_name != asset_name:
         fail_protocol("compiled import destination is not canonical")
-    if route == _MEDIA_ROUTE:
-        relative_package = package_path.removeprefix("/Game/Generated/SHAR/")
-        if relative_package == package_path or not relative_package:
-            fail_protocol("compiled media destination escaped generated root")
-        external_payload_path = (
-            f"./Movies/Generated/SHAR/{relative_package}.mov"
-        )
+    companion_outputs, external_payload_path = _output_contract(
+        route,
+        package_path,
+        folder_path,
+        asset_name,
+    )
     return NativeImportStep(
         operation_id=operation.operation_id,
         route_id=route_id,
@@ -234,7 +317,38 @@ def _compile_ready_import(operation: PlanOperation) -> NativeImportStep | None:
         toolset_name=toolset,
         tool_name=tool,
         external_payload_path=external_payload_path,
+        companion_outputs=companion_outputs,
     )
+
+
+def _output_contract(
+    route: tuple[str, str, str, str],
+    package_path: str,
+    folder_path: str,
+    asset_name: str,
+) -> tuple[tuple[NativeAssetOutput, ...], str | None]:
+    if route == _SKELETAL_MESH_ROUTE:
+        skeleton_name = f"{asset_name}_Skeleton"
+        skeleton_package = f"{folder_path}/{skeleton_name}"
+        return (
+            (
+                NativeAssetOutput(
+                    role="skeleton",
+                    object_path=f"{skeleton_package}.{skeleton_name}",
+                    package_path=skeleton_package,
+                    target_class="Skeleton",
+                    expected_dirty_after_import=True,
+                    rollback_order=1,
+                ),
+            ),
+            None,
+        )
+    if route == _MEDIA_ROUTE:
+        relative_package = package_path.removeprefix("/Game/Generated/SHAR/")
+        if relative_package == package_path or not relative_package:
+            fail_protocol("compiled media destination escaped generated root")
+        return (), f"./Movies/Generated/SHAR/{relative_package}.mov"
+    return (), None
 
 
 def _route_key(operation: PlanOperation) -> str:

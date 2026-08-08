@@ -251,6 +251,7 @@ def test_cli_plan_apply_completes_one_texture_over_streamable_http(
         "import_file",
         "exists",
         "get_asset_class",
+        "is_dirty",
         "save_assets",
         "is_dirty",
     )
@@ -307,7 +308,75 @@ def test_cli_plan_apply_completes_one_static_mesh_over_streamable_http(
         "ImportStaticMesh",
         "exists",
         "get_asset_class",
+        "is_dirty",
         "save_assets",
+        "is_dirty",
+    )
+    assert "delete" not in native_leaves
+
+
+def test_cli_plan_apply_completes_one_skeletal_mesh_with_companion_over_http(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    source_bytes = b"Kaydara FBX Binary synthetic-skeletal-source"
+    source_revision = hashlib.sha256(source_bytes).hexdigest()
+    plan_root = tmp_path / "unreal-staging" / "plans"
+    _ = write_plan_bundle(
+        plan_root,
+        with_skeletal_mesh_operation=True,
+        skeletal_mesh_source_revision=source_revision,
+    )
+    source = tmp_path / "fbx-assets" / "skeletal" / "model.fbx"
+    source.parent.mkdir(parents=True)
+    source.write_bytes(source_bytes)
+    monkeypatch.chdir(tmp_path)
+
+    with FakeUnrealServer(plan_execution=True) as server:
+        code = main((
+            "--endpoint",
+            server.endpoint,
+            "plan-apply",
+        ))
+
+    captured = capsys.readouterr()
+    assert code == 0, captured.err or captured.out
+    payload = json.loads(captured.out)
+    assert payload["application"]["importedCount"] == 1
+    assert payload["application"]["savedCount"] == 1
+    assert payload["application"]["verifiedCount"] == 1
+    mesh = "/Game/Generated/SHAR/models/skeletal/model"
+    skeleton = f"{mesh}_Skeleton"
+    assert server.assets == {
+        mesh: "SkeletalMesh",
+        skeleton: "Skeleton",
+    }
+    assert server.dirty_assets == frozenset()
+    assert not captured.err
+    assert server.session_closed
+
+    native_leaves = tuple(
+        request["params"]["arguments"].get("tool_name")
+        for request in server.requests
+        if request.get("method") == "tools/call"
+        and isinstance(request.get("params"), dict)
+        and request["params"].get("name") == "call_tool"
+    )
+    assert native_leaves == (
+        "exists",
+        "exists",
+        "exists",
+        "exists",
+        "ImportSkeletalMesh",
+        "exists",
+        "get_asset_class",
+        "is_dirty",
+        "exists",
+        "get_asset_class",
+        "is_dirty",
+        "save_assets",
+        "is_dirty",
         "is_dirty",
     )
     assert "delete" not in native_leaves
@@ -363,6 +432,7 @@ def test_cli_plan_apply_completes_one_sound_wave_over_streamable_http(
         "ImportSoundWave",
         "exists",
         "get_asset_class",
+        "is_dirty",
         "save_assets",
         "is_dirty",
     )
@@ -424,6 +494,7 @@ def test_cli_plan_apply_completes_one_file_media_source_over_http(
         "ImportFileMediaSource",
         "exists",
         "get_asset_class",
+        "is_dirty",
         "GetFileMediaSourcePath",
         "FileMediaSourcePayloadExists",
         "save_assets",

@@ -122,7 +122,9 @@ def test_compiles_exact_texture_and_static_mesh_routes() -> None:
         "source_file": "C:/verified/source.png",
     }
     assert mesh_step.toolset_name == "SharImportEditor.SharImportToolset"
-    assert mesh_step.tool_name == "SharImportEditor.SharImportToolset.ImportStaticMesh"
+    assert mesh_step.tool_name == (
+        "SharImportEditor.SharImportToolset.ImportStaticMesh"
+    )
     assert mesh_step.arguments("C:/verified/source.fbx") == {
         "assetName": "asset_0000000000000002",
         "folderPath": "/Game/Generated/SHAR/test",
@@ -216,3 +218,45 @@ def test_semantic_blockers_prevent_false_complete_empty_bundle() -> None:
     assert compiled.report.semantic_blocker_count == 1
     assert compiled.report.complete is False
     assert compiled.report.to_json()["semanticBlockerCount"] == 1
+
+
+def test_compiles_skeletal_fbx_with_explicit_skeleton_companion() -> None:
+    operation = _operation(
+        operation_id="operation-0000000000000007",
+        source_format="fbx",
+        target_family="model",
+        target_class="SkeletalMesh",
+        importer="asset-tools-fbx",
+        import_profile="shar-fbx-skeletal-v1",
+    )
+    compiled = compile_execution_plan(_bundle(operation))
+    assert compiled.report.complete
+    assert compiled.report.route_counts == {"skeletal-mesh-fbx-v1": 1}
+    step = compiled.imports[0]
+    assert step.tool_name == (
+        "SharImportEditor.SharImportToolset.ImportSkeletalMesh"
+    )
+    assert step.arguments("C:/verified/source.fbx") == {
+        "assetName": "asset_0000000000000007",
+        "folderPath": "/Game/Generated/SHAR/test",
+        "sourceFile": "C:/verified/source.fbx",
+    }
+    assert tuple(output.role for output in step.outputs) == (
+        "primary",
+        "skeleton",
+    )
+    assert tuple(output.target_class for output in step.outputs) == (
+        "SkeletalMesh",
+        "Skeleton",
+    )
+    skeleton_package = (
+        "/Game/Generated/SHAR/test/asset_0000000000000007_Skeleton"
+    )
+    assert step.expected_object_paths == (
+        "/Game/Generated/SHAR/test/asset_0000000000000007.asset_0000000000000007",
+        f"{skeleton_package}.asset_0000000000000007_Skeleton",
+    )
+    rollback_orders = tuple(
+        output.rollback_order for output in step.rollback_outputs
+    )
+    assert rollback_orders == (0, 1)

@@ -260,6 +260,7 @@ impl UnrealImportManifest {
             add_package_outputs(
                 plan.family,
                 policy.disposition,
+                policy.target_kind,
                 &package_name,
                 &package_path,
                 &mut expected_staged_files,
@@ -359,6 +360,7 @@ fn resolve_effective_policy(
 fn add_package_outputs(
     family: ConversionFamily,
     disposition: &str,
+    target_kind: &str,
     package_name: &str,
     package_path: &str,
     staged_files: &mut Vec<String>,
@@ -377,6 +379,21 @@ fn add_package_outputs(
             let object = object_path(package_path, package_name);
             claim_path(object_paths, &object, "Unreal object")?;
             unreal_objects.push(object);
+            match target_kind {
+                "StaticMesh" => {},
+                "SkeletalMesh" => {
+                    let skeleton_name = format!("{package_name}_Skeleton");
+                    let skeleton = object_path(package_path, &skeleton_name);
+                    claim_path(object_paths, &skeleton, "Unreal object")?;
+                    unreal_objects.push(skeleton);
+                },
+                _ => {
+                    return Err(
+                        "requires-fbx package has unsupported target kind"
+                            .to_owned(),
+                    );
+                },
+            }
             summary.requires_fbx = summary.requires_fbx.saturating_add(1);
         },
         ConversionFamily::FbxModel
@@ -535,12 +552,12 @@ const fn fbx_policy(target: FbxTargetKind) -> PackagePolicy {
         },
         FbxTargetKind::SkeletalMesh => PackagePolicy {
             conversion_family: "fbx-model",
-            disposition: "requires-semantic-conversion",
-            target_kind: "SkeletalMeshBundle",
-            importer: "semantic-converter",
-            import_profile: "shar-fbx-skeletal-bundle-v1",
+            disposition: "requires-fbx",
+            target_kind: "SkeletalMesh",
+            importer: "asset-tools-fbx",
+            import_profile: "shar-fbx-skeletal-v1",
             reason: Some(
-                "skeletal FBX import must own its companion Skeleton transaction",
+                "single skeletal-mesh package requires companion-aware FBX import",
             ),
         },
         FbxTargetKind::SemanticSplit => PackagePolicy {

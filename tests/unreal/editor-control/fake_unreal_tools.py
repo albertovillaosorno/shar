@@ -142,40 +142,52 @@ def _plan_native_call(
     import_tools = {
         "ImportFileMediaSource",
         "ImportSoundWave",
+        "ImportSkeletalMesh",
         "ImportStaticMesh",
         "import_file",
     }
     if native_name in import_tools:
         is_shar_import = native_name != "import_file"
-        is_media = native_name == "ImportFileMediaSource"
-        asset_key = "assetName" if is_shar_import else "asset_name"
-        asset_name = str(arguments[asset_key])
+        asset_name = str(
+            arguments["assetName"]
+            if is_shar_import
+            else arguments["asset_name"]
+        )
         folder_path = str(
             arguments["folderPath"]
             if is_shar_import
             else arguments["folder_path"]
         )
         package_path = f"{folder_path}/{asset_name}"
-        target_class = (
-            "FileMediaSource"
-            if is_media
-            else "SoundWave"
-            if native_name == "ImportSoundWave"
-            else "StaticMesh"
-            if native_name == "ImportStaticMesh"
-            else "Texture2D"
-        )
+        target_class = {
+            "ImportFileMediaSource": "FileMediaSource",
+            "ImportSoundWave": "SoundWave",
+            "ImportSkeletalMesh": "SkeletalMesh",
+            "ImportStaticMesh": "StaticMesh",
+            "import_file": "Texture2D",
+        }[str(native_name)]
         assets[package_path] = target_class
         dirty_assets.add(package_path)
         if is_shar_import:
             object_path = f"{package_path}.{asset_name}"
-            if is_media:
+            if native_name == "ImportFileMediaSource":
                 relative_package = package_path.removeprefix(
                     "/Game/Generated/SHAR/"
                 )
                 media_payloads[object_path] = (
                     f"./Movies/Generated/SHAR/{relative_package}.mov"
                 )
+            if native_name == "ImportSkeletalMesh":
+                skeleton_name = f"{asset_name}_Skeleton"
+                skeleton_package = f"{folder_path}/{skeleton_name}"
+                assets[skeleton_package] = "Skeleton"
+                dirty_assets.add(skeleton_package)
+                return {
+                    "returnValue": [
+                        object_path,
+                        f"{skeleton_package}.{skeleton_name}",
+                    ]
+                }
             return {"returnValue": [object_path]}
         return {
             "returnValue": [
@@ -372,6 +384,31 @@ def _import_schema() -> JsonObject:
             {
                 "name": "ImportFileMediaSource",
                 "description": "Import one synthetic FileMediaSource.",
+                "inputSchema": _object_schema(
+                    {
+                        "assetName": text,
+                        "folderPath": text,
+                        "sourceFile": text,
+                    },
+                    "assetName",
+                    "folderPath",
+                    "sourceFile",
+                ),
+                "outputSchema": _object_schema(
+                    {
+                        "returnValue": {
+                            "type": "array",
+                            "items": text,
+                        }
+                    },
+                    "returnValue",
+                ),
+            },
+            {
+                "name": "ImportSkeletalMesh",
+                "description": (
+                    "Import one synthetic SkeletalMesh and Skeleton."
+                ),
                 "inputSchema": _object_schema(
                     {
                         "assetName": text,
