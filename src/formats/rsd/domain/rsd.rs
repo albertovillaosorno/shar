@@ -32,8 +32,20 @@
 
 use super::{RsdError, WavAudio, byte_buffer};
 
-/// Header magic keeps the parser scoped to the supported RSD revision.
-const MAGIC: &[u8; 4] = b"RSD4";
+/// Shared Radical Sound container prefix for supported revisions.
+const MAGIC_PREFIX: &[u8; 3] = b"RSD";
+/// RSD3 stores the PCM payload start explicitly in its header.
+const RSD3_VERSION: u8 = b'3';
+/// RSD4 uses the later fixed-layout container contract.
+const RSD4_VERSION: u8 = b'4';
+/// Byte containing the ASCII container revision after the shared prefix.
+const VERSION_OFFSET: usize = 3;
+/// Byte where the four-character encoding tag begins.
+const ENCODING_TAG_OFFSET: usize = 4;
+/// RSD3 PCM/PCMB stores the payload start after one legacy unknown field.
+const RSD3_DATA_OFFSET_FIELD: usize = 0x18;
+/// RSD3 needs the explicit data-offset field before payload selection.
+const RSD3_MINIMUM_HEADER_SIZE: usize = 0x1c;
 /// Padded RSD4 payloads begin after the full legacy header block.
 const PADDED_DATA_OFFSET: usize = 0x800;
 /// Compact PCM payloads begin after the short RSD4 header block.
@@ -278,10 +290,15 @@ impl RsdAudio {
         if data.len() < MINIMUM_HEADER_SIZE {
             return Err(RsdError::TruncatedHeader);
         }
-        if data.get(..MAGIC.len()) != Some(MAGIC.as_slice()) {
+        if data.get(..MAGIC_PREFIX.len()) != Some(MAGIC_PREFIX.as_slice()) {
             return Err(RsdError::BadMagic);
         }
-        let tag = read_fixed_array::<4>(data, MAGIC.len())?;
+        let version =
+            *data.get(VERSION_OFFSET).ok_or(RsdError::TruncatedHeader)?;
+        if !matches!(version, RSD3_VERSION | RSD4_VERSION) {
+            return Err(RsdError::BadMagic);
+        }
+        let tag = read_fixed_array::<4>(data, ENCODING_TAG_OFFSET)?;
         let encoding = RsdEncoding::from_tag(tag)?;
         let raw_channels = read_u32(data, 8)?;
         let raw_bits_per_sample = read_u32(data, 12)?;
@@ -299,25 +316,10 @@ impl RsdAudio {
             sample_rate,
         };
         header.validate()?;
-        let has_legacy_padding = data
-            .get(COMPACT_DATA_OFFSET..PADDED_DATA_OFFSET)
-            .is_some_and(|padding| {
-                padding.iter().all(|byte| *byte == LEGACY_PADDING_BYTE)
-            });
-        let has_legacy_reserved = has_legacy_reserved_header(data);
-        if has_legacy_padding != has_legacy_reserved {
-            return Err(RsdError::InvalidHeaderPadding);
-        }
-        if encoding != RsdEncoding::PcmLittleEndian && !has_legacy_padding {
-            return Err(RsdError::InvalidHeaderPadding);
-        }
-        let data_offset = match encoding {
-            RsdEncoding::PcmLittleEndian | RsdEncoding::PcmBigEndian
-                if !has_legacy_padding =>
-            {
-                COMPACT_DATA_OFFSET
-            },
-            _ => PADDED_DATA_OFFSET,
+        let data_offset = match version {
+            RSD3_VERSION => rsd3_data_offset(data, tag, encoding)?,
+            RSD4_VERSION => rsd4_data_offset(data, encoding)?,
+            _ => return Err(RsdError::BadMagic),
         };
         let payload_bytes =
             data.get(data_offset..).ok_or(RsdError::TruncatedData)?;
@@ -359,6 +361,57 @@ impl RsdAudio {
             pcm,
         })
     }
+}
+
+/// Select the explicit payload start used by RSD3 PCM containers.
+fn rsd3_data_offset(
+    data: &[u8],
+    tag: [u8; 4],
+    encoding: RsdEncoding,
+) -> Result<usize, RsdError> {
+    if data.len() < RSD3_MINIMUM_HEADER_SIZE {
+        return Err(RsdError::TruncatedHeader);
+    }
+    if !matches!(
+        encoding,
+        RsdEncoding::PcmLittleEndian | RsdEncoding::PcmBigEndian
+    ) {
+        return Err(RsdError::UnsupportedEncoding(tag));
+    }
+    let raw_offset = read_u32(data, RSD3_DATA_OFFSET_FIELD)?;
+    let offset = usize::try_from(raw_offset)
+        .map_err(|_error| RsdError::InvalidDataOffset(raw_offset))?;
+    if offset < RSD3_MINIMUM_HEADER_SIZE || offset > data.len() {
+        return Err(RsdError::InvalidDataOffset(raw_offset));
+    }
+    Ok(offset)
+}
+
+/// Select the compact or padded payload start used by RSD4 containers.
+fn rsd4_data_offset(
+    data: &[u8],
+    encoding: RsdEncoding,
+) -> Result<usize, RsdError> {
+    let has_legacy_padding = data
+        .get(COMPACT_DATA_OFFSET..PADDED_DATA_OFFSET)
+        .is_some_and(|padding| {
+            padding.iter().all(|byte| *byte == LEGACY_PADDING_BYTE)
+        });
+    let has_legacy_reserved = has_legacy_reserved_header(data);
+    if has_legacy_padding != has_legacy_reserved {
+        return Err(RsdError::InvalidHeaderPadding);
+    }
+    if encoding != RsdEncoding::PcmLittleEndian && !has_legacy_padding {
+        return Err(RsdError::InvalidHeaderPadding);
+    }
+    Ok(match encoding {
+        RsdEncoding::PcmLittleEndian | RsdEncoding::PcmBigEndian
+            if !has_legacy_padding =>
+        {
+            COMPACT_DATA_OFFSET
+        },
+        _ => PADDED_DATA_OFFSET,
+    })
 }
 
 /// Reads one fixed array with checked end arithmetic for every header field.
