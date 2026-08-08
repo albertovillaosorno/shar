@@ -35,6 +35,8 @@ pub mod index;
 pub mod mission_condition;
 /// Reviewed mission objective alias preflight.
 pub mod mission_objective;
+/// Lossless reviewed mission scope graph projection.
+pub mod mission_scope;
 /// Normalized mission-script semantic preflight.
 pub mod mission_script;
 /// Package conversion planner.
@@ -64,6 +66,11 @@ pub use mission_objective::{
     MissionObjectiveBinding, MissionObjectiveCommandBinding,
     MissionObjectiveCommandReport, MissionObjectiveReport,
     preflight_mission_objective_commands, preflight_mission_objectives,
+};
+pub use mission_scope::{
+    MissionConditionScope, MissionScopeCommand, MissionScopeCondition,
+    MissionScopeGraph, MissionScopeObjective, MissionScopeReport,
+    MissionScopeStage, compile_mission_scope_graphs,
 };
 pub use mission_script::{
     MISSION_SCRIPT_SCHEMA, MissionCommandInvocation, MissionContextAdaptation,
