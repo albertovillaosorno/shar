@@ -45,7 +45,11 @@ static CASE_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 /// Create one collision-resistant synthetic case root.
 fn case_root(label: &str) -> PathBuf {
-    std::env::temp_dir().join(format!(
+    let mut repository = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    while !repository.join("TODO.md").is_file() {
+        assert!(repository.pop(), "repository root must exist");
+    }
+    repository.join(".temp/tests").join(format!(
         "pipeline-manifest-{label}-{}-{}",
         std::process::id(),
         CASE_COUNTER.fetch_add(1, Ordering::Relaxed,),
@@ -66,6 +70,20 @@ fn write_sample(
     fs::write(path, contents).map_err(|error| error.to_string())
 }
 
+
+fn write_game_manifest_ledger(game_root: &Path) -> Result<(), String> {
+    let manifest = format!(
+        "{}
+{}
+{}
+",
+        game_manifest::kind_taxonomy_jsonl(),
+        r#"{"dir":"","ext":"lmlm","min":0,"kind":"language_mod"}"#,
+        r#"{"dir":"","ext":"png","min":0,"kind":"generated_artifact"}"#,
+    );
+    write_sample(game_root, "manifest.jsonl", manifest.as_bytes())
+}
+
 #[test]
 fn pipeline_report_exclusion_matches_only_the_extracted_root() {
     let root = Path::new("extracted");
@@ -83,6 +101,73 @@ fn pipeline_report_exclusion_matches_only_the_extracted_root() {
     ));
 }
 
+
+#[test]
+fn manifest_rejects_unprepared_game_root_before_straggler_mutation() {
+    assert_eq!(run_unprepared_game_root_case(), Ok(()));
+}
+
+fn run_unprepared_game_root_case() -> Result<(), String> {
+    let case = case_root("unprepared-game-root");
+    let game_root = case.join("game");
+    let extracted_root = case.join("extracted");
+    write_sample(
+        &game_root,
+        "scripts/sample.mfk",
+        b"SelectMission(\"m1\");",
+    )?;
+    write_sample(&extracted_root, "game/accepted.txt", b"accepted")?;
+
+    let error = match write_manifest_minor_units(&game_root, &extracted_root) {
+        Ok(_report) => return Err("unprepared game root must fail".to_owned()),
+        Err(error) => error.to_string(),
+    };
+    let accepted = fs::read(extracted_root.join("game/accepted.txt"))
+        .map_err(|error| error.to_string())?;
+    fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    if !error.contains("prepared game manifest validation") || accepted != b"accepted" {
+        return Err("unprepared root did not fail before mutation".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn manifest_rejects_prepared_root_with_requirement_shortfall() {
+    assert_eq!(run_prepared_root_shortfall_case(), Ok(()));
+}
+
+fn run_prepared_root_shortfall_case() -> Result<(), String> {
+    let case = case_root("prepared-shortfall");
+    let game_root = case.join("game");
+    let extracted_root = case.join("extracted");
+    let manifest = format!(
+        "{}
+{}
+{}
+{}
+",
+        game_manifest::kind_taxonomy_jsonl(),
+        r#"{"dir":"","ext":"lmlm","min":0,"kind":"language_mod"}"#,
+        r#"{"dir":"","ext":"mfk","min":2,"kind":"script"}"#,
+        r#"{"dir":"","ext":"png","min":0,"kind":"generated_artifact"}"#,
+    );
+    write_sample(&game_root, "manifest.jsonl", manifest.as_bytes())?;
+    write_sample(&game_root, "sample.mfk", b"SelectMission(\"m1\");")?;
+    write_sample(&extracted_root, "game/accepted.txt", b"accepted")?;
+
+    let error = match write_manifest_minor_units(&game_root, &extracted_root) {
+        Ok(_report) => return Err("manifest shortfall must fail".to_owned()),
+        Err(error) => error.to_string(),
+    };
+    let accepted = fs::read(extracted_root.join("game/accepted.txt"))
+        .map_err(|error| error.to_string())?;
+    fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    if !error.contains("requirement shortfall") || accepted != b"accepted" {
+        return Err("manifest shortfall did not fail before mutation".to_owned());
+    }
+    Ok(())
+}
+
 #[test]
 fn manifest_is_independent_of_run_report_presence() {
     assert_eq!(run_report_presence_case(), Ok(()));
@@ -94,6 +179,7 @@ fn run_report_presence_case() -> Result<(), String> {
     let game_root = case.join("game");
     let extracted_root = case.join("extracted");
     fs::create_dir_all(&game_root).map_err(|error| error.to_string())?;
+    write_game_manifest_ledger(&game_root)?;
     write_sample(&extracted_root, "art/sample.json", b"{}")?;
 
     let first_report = write_manifest_minor_units(&game_root, &extracted_root)
@@ -139,6 +225,7 @@ fn run_non_asset_installation_file_case() -> Result<(), String> {
     let case = case_root("non-asset-installation-files");
     let game_root = case.join("game");
     let extracted_root = case.join("extracted");
+    write_game_manifest_ledger(&game_root)?;
     write_sample(&game_root, "copy/disc_one.iso", b"disc image")?;
     write_sample(&game_root, "Simpsons.exe", b"executable")?;
     write_sample(&game_root, "binkw32.dll", b"runtime library")?;
@@ -186,6 +273,7 @@ fn run_creation_order_case() -> Result<(), String> {
     let first_root = case.join("first");
     let second_root = case.join("second");
     fs::create_dir_all(&game_root).map_err(|error| error.to_string())?;
+    write_game_manifest_ledger(&game_root)?;
     write_sample(&first_root, "art/z.json", br#"{"value":2}"#)?;
     write_sample(&first_root, "art/a.json", br#"{"value":1}"#)?;
     write_sample(&second_root, "art/a.json", br#"{"value":1}"#)?;

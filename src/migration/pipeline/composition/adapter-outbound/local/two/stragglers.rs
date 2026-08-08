@@ -98,18 +98,43 @@ pub(super) fn normalize_game_stragglers(
     extracted_root: &Path,
 ) -> PipelineOutcome<StageReport> {
     let output_root = extracted_root.join("game");
-    if output_root.exists() {
-        fs::remove_dir_all(&output_root).map_err(io_error(&output_root))?;
-    }
-    local_create_dir_all(&output_root).map_err(io_error(&output_root))?;
+    let staging_root = extracted_root.join(".game.straggler-staging");
+    let backup_root = extracted_root.join(".game.straggler-backup");
+    recover_generated_transaction(
+        &output_root,
+        &staging_root,
+        &backup_root,
+    )?;
+    local_create_dir_all(&staging_root).map_err(io_error(&staging_root))?;
 
+    let result = normalize_game_stragglers_into(
+        game_root,
+        extracted_root,
+        &staging_root,
+    );
+    let report = match result {
+        Ok(report) => report,
+        Err(error) => {
+            let _cleanup = remove_generated_directory(&staging_root);
+            return Err(error);
+        },
+    };
+    publish_generated_directory(&staging_root, &output_root, &backup_root)?;
+    Ok(report)
+}
+
+fn normalize_game_stragglers_into(
+    game_root: &Path,
+    extracted_root: &Path,
+    output_root: &Path,
+) -> PipelineOutcome<StageReport> {
     let mut files = 0usize;
     let mut bytes = 0u64;
     for source in collect_files(game_root)? {
         let ext = extension_of(&source);
         if JSON_EXTENSIONS.contains(&ext.as_str()) {
             let relative = relative_source_path(&source, game_root)?;
-            let output = normalized_json_path(extracted_root, relative);
+            let output = normalized_json_path_at_root(output_root, relative);
             let json = semantic_json_for(&source, relative, &ext)?;
             write_bytes(&output, json.as_bytes())?;
             files = StageReport::checked_file_total(
@@ -124,11 +149,16 @@ pub(super) fn normalize_game_stragglers(
             )?;
         } else if ext == "rsd" {
             let relative = relative_source_path(&source, game_root)?;
-            let output = normalized_wav_path(extracted_root, relative);
+            let output = normalized_wav_path_at_root(output_root, relative);
             let source_bytes =
                 local_read_bytes(&source).map_err(io_error(&source))?;
             let wav = rsd_to_wav(&source_bytes, relative)?;
-            if extracted_duplicate_wav_exists(extracted_root, &output, &wav)? {
+            if extracted_duplicate_wav_exists(
+                extracted_root,
+                output_root,
+                &output,
+                &wav,
+            )? {
                 continue;
             }
             write_bytes(&output, &wav)?;
@@ -149,9 +179,11 @@ pub(super) fn normalize_game_stragglers(
         name: "phase-two-stragglers",
         files,
         bytes,
-        note: "loose game stragglers normalized under extracted/game as \
-                   semantic JSON or WAV"
-            .to_owned(),
+        note: concat!(
+            "loose game stragglers normalized under extracted/game as ",
+            "semantic JSON or WAV"
+        )
+        .to_owned(),
     })
 }
 
@@ -161,7 +193,11 @@ pub(super) fn normalized_json_path(
     extracted_root: &Path,
     relative: &Path,
 ) -> PathBuf {
-    let mut output = extracted_root.join("game").join(relative);
+    normalized_json_path_at_root(&extracted_root.join("game"), relative)
+}
+
+fn normalized_json_path_at_root(output_root: &Path, relative: &Path) -> PathBuf {
+    let mut output = output_root.join(relative);
     let file_name = relative
         .file_name()
         .and_then(|value| value.to_str())
@@ -176,7 +212,11 @@ pub(super) fn normalized_wav_path(
     extracted_root: &Path,
     relative: &Path,
 ) -> PathBuf {
-    let mut output = extracted_root.join("game").join(relative);
+    normalized_wav_path_at_root(&extracted_root.join("game"), relative)
+}
+
+fn normalized_wav_path_at_root(output_root: &Path, relative: &Path) -> PathBuf {
+    let mut output = output_root.join(relative);
     let file_name = relative
         .file_name()
         .and_then(|value| value.to_str())
@@ -315,13 +355,16 @@ fn route_class(relative: &Path, ext: &str) -> &'static str {
 /// Extracted duplicate wav exists.
 fn extracted_duplicate_wav_exists(
     extracted_root: &Path,
+    generated_root: &Path,
     output: &Path,
     wav: &[u8],
 ) -> PipelineOutcome<bool> {
     let digest = Sha256::digest(wav).hex();
+    let accepted_generated_root = extracted_root.join("game");
     for existing in collect_files(extracted_root)? {
         if existing == output
-            || existing.starts_with(extracted_root.join("game"))
+            || existing.starts_with(&accepted_generated_root)
+            || existing.starts_with(generated_root)
         {
             continue;
         }
@@ -343,6 +386,98 @@ fn extracted_duplicate_wav_exists(
         }
     }
     Ok(false)
+}
+
+fn recover_generated_transaction(
+    output_root: &Path,
+    staging_root: &Path,
+    backup_root: &Path,
+) -> PipelineOutcome<()> {
+    let output_exists = real_generated_directory_exists(output_root)?;
+    let backup_exists = real_generated_directory_exists(backup_root)?;
+    if backup_exists {
+        if output_exists {
+            remove_generated_directory(backup_root)?;
+        } else {
+            fs::rename(backup_root, output_root).map_err(|error| {
+                PipelineError::new(format!(
+                    "restore generated straggler backup failed ({:?})",
+                    error.kind()
+                ))
+            })?;
+        }
+    }
+    remove_generated_directory(staging_root)
+}
+
+fn publish_generated_directory(
+    staging_root: &Path,
+    output_root: &Path,
+    backup_root: &Path,
+) -> PipelineOutcome<()> {
+    let had_output = real_generated_directory_exists(output_root)?;
+    if had_output {
+        fs::rename(output_root, backup_root).map_err(|error| {
+            PipelineError::new(format!(
+                "back up generated straggler output failed ({:?})",
+                error.kind()
+            ))
+        })?;
+    }
+    if let Err(error) = fs::rename(staging_root, output_root) {
+        let rollback_error = had_output
+            .then(|| fs::rename(backup_root, output_root).err())
+            .flatten();
+        let message = rollback_error.map_or_else(
+            || format!(
+                "publish generated straggler output failed ({:?})",
+                error.kind()
+            ),
+            |rollback| {
+                format!(
+                    concat!(
+                        "publish generated straggler output failed ({:?}); ",
+                        "rollback failed ({:?})"
+                    ),
+                    error.kind(),
+                    rollback.kind()
+                )
+            },
+        );
+        return Err(PipelineError::new(message));
+    }
+    if had_output {
+        remove_generated_directory(backup_root)?;
+    }
+    Ok(())
+}
+
+fn real_generated_directory_exists(path: &Path) -> PipelineOutcome<bool> {
+    match fs::symlink_metadata(path) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(false),
+        Err(error) => Err(PipelineError::new(format!(
+            "inspect generated straggler transaction failed ({:?})",
+            error.kind()
+        ))),
+        Ok(metadata) if metadata.is_dir() && !metadata.file_type().is_symlink() => {
+            Ok(true)
+        },
+        Ok(_metadata) => Err(PipelineError::new(
+            "generated straggler transaction path is not a real directory",
+        )),
+    }
+}
+
+fn remove_generated_directory(path: &Path) -> PipelineOutcome<()> {
+    if !real_generated_directory_exists(path)? {
+        return Ok(());
+    }
+    fs::remove_dir_all(path).map_err(|error| {
+        PipelineError::new(format!(
+            "remove generated straggler transaction directory failed ({:?})",
+            error.kind()
+        ))
+    })
 }
 
 /// Rsd to wav.
