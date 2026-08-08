@@ -40,7 +40,8 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Component, Path, PathBuf};
 
-use game_manifest::obfuscate_component;
+use game_manifest::adapters::{FilesystemGameTree, FilesystemTextStore};
+use game_manifest::{ValidateManifest, obfuscate_component};
 use schoenwald_filesystem::adapters::driving::local::{
     read_utf8 as local_read_utf8, write_bytes as local_write_bytes,
 };
@@ -87,6 +88,7 @@ pub(in crate::adapters::driven::local) fn write_manifest_minor_units(
             config.game_root.display()
         )));
     }
+    validate_prepared_game_root(&config.game_root)?;
     if !config.extracted_root.is_dir() {
         return Err(PipelineError::new(format!(
             "extracted root must exist before minor-unit manifest \
@@ -121,6 +123,24 @@ pub(in crate::adapters::driven::local) fn write_manifest_minor_units(
             staged.files
         ),
     })
+}
+
+fn validate_prepared_game_root(game_root: &Path) -> PipelineOutcome<()> {
+    let report = ValidateManifest::execute(
+        &FilesystemGameTree,
+        &FilesystemTextStore,
+        game_root,
+    )
+    .map_err(|_error| {
+        PipelineError::new("prepared game manifest validation failed")
+    })?;
+    if !report.shortfalls.is_empty() {
+        return Err(PipelineError::new(format!(
+            "prepared game manifest has {} requirement shortfall(s)",
+            report.shortfalls.len()
+        )));
+    }
+    Ok(())
 }
 
 /// Collects game-first units before applying extracted overlay evidence.

@@ -32,9 +32,141 @@
 // cspell:ignore closeobjective
 //! Tests unit tests.
 
-use std::path::Path;
+use std::fs;
+use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
-use super::decode_straggler_text;
+use super::{
+    decode_straggler_text, normalize_game_stragglers,
+    publish_generated_directory, recover_generated_transaction,
+};
+
+static TRANSACTION_CASE_ID: AtomicUsize = AtomicUsize::new(0);
+
+
+fn transaction_case_root(label: &str) -> Result<PathBuf, String> {
+    let ordinal = TRANSACTION_CASE_ID.fetch_add(1, Ordering::Relaxed);
+    let root = repository_root()?
+        .join(".temp")
+        .join("tests")
+        .join(format!("stragglers-{label}-{}-{ordinal}", std::process::id()));
+    if root.exists() {
+        fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    }
+    fs::create_dir_all(&root).map_err(|error| error.to_string())?;
+    Ok(root)
+}
+
+fn remove_transaction_case(root: &Path) -> Result<(), String> {
+    if root.exists() {
+        fs::remove_dir_all(root).map_err(|error| error.to_string())?;
+    }
+    Ok(())
+}
+
+#[test]
+fn failed_straggler_normalization_preserves_accepted_root() -> Result<(), String> {
+    let root = transaction_case_root("failure-preserves")?;
+    let game = root.join("game-source");
+    let extracted = root.join("extracted");
+    fs::create_dir_all(&game).map_err(|error| error.to_string())?;
+    fs::create_dir_all(extracted.join("game"))
+        .map_err(|error| error.to_string())?;
+    fs::write(game.join("broken.rsd"), b"not-rsd")
+        .map_err(|error| error.to_string())?;
+    fs::write(extracted.join("game/accepted.txt"), b"accepted")
+        .map_err(|error| error.to_string())?;
+
+    let result = normalize_game_stragglers(&game, &extracted);
+    if result.is_ok() {
+        return Err("invalid RSD unexpectedly normalized".to_owned());
+    }
+    if fs::read(extracted.join("game/accepted.txt"))
+        .map_err(|error| error.to_string())?
+        != b"accepted"
+    {
+        return Err("failed normalization changed accepted evidence".to_owned());
+    }
+    if extracted.join(".game.straggler-staging").exists()
+        || extracted.join(".game.straggler-backup").exists()
+    {
+        return Err("failed normalization left transaction residue".to_owned());
+    }
+    remove_transaction_case(&root)
+}
+
+#[test]
+fn straggler_publication_replaces_root_and_removes_backup() -> Result<(), String> {
+    let root = transaction_case_root("publish")?;
+    let output = root.join("game");
+    let staging = root.join(".game.straggler-staging");
+    let backup = root.join(".game.straggler-backup");
+    fs::create_dir_all(&output).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&staging).map_err(|error| error.to_string())?;
+    fs::write(output.join("old.txt"), b"old").map_err(|error| error.to_string())?;
+    fs::write(staging.join("new.txt"), b"new")
+        .map_err(|error| error.to_string())?;
+
+    publish_generated_directory(&staging, &output, &backup)
+        .map_err(|error| error.to_string())?;
+    if output.join("old.txt").exists()
+        || fs::read(output.join("new.txt")).map_err(|error| error.to_string())?
+            != b"new"
+        || staging.exists()
+        || backup.exists()
+    {
+        return Err("straggler publication inventory is not exact".to_owned());
+    }
+    remove_transaction_case(&root)
+}
+
+#[test]
+fn failed_straggler_publication_restores_accepted_root() -> Result<(), String> {
+    let root = transaction_case_root("publish-rollback")?;
+    let output = root.join("game");
+    let staging = root.join(".game.straggler-staging");
+    let backup = root.join(".game.straggler-backup");
+    fs::create_dir_all(&output).map_err(|error| error.to_string())?;
+    fs::write(output.join("accepted.txt"), b"accepted")
+        .map_err(|error| error.to_string())?;
+
+    let result = publish_generated_directory(&staging, &output, &backup);
+    if result.is_ok() {
+        return Err("missing staging directory unexpectedly published".to_owned());
+    }
+    if fs::read(output.join("accepted.txt")).map_err(|error| error.to_string())?
+        != b"accepted"
+        || backup.exists()
+    {
+        return Err("failed publication did not restore accepted root".to_owned());
+    }
+    remove_transaction_case(&root)
+}
+
+#[test]
+fn straggler_recovery_restores_backup_before_staging_cleanup() -> Result<(), String> {
+    let root = transaction_case_root("recover")?;
+    let output = root.join("game");
+    let staging = root.join(".game.straggler-staging");
+    let backup = root.join(".game.straggler-backup");
+    fs::create_dir_all(&backup).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&staging).map_err(|error| error.to_string())?;
+    fs::write(backup.join("accepted.txt"), b"accepted")
+        .map_err(|error| error.to_string())?;
+    fs::write(staging.join("partial.txt"), b"partial")
+        .map_err(|error| error.to_string())?;
+
+    recover_generated_transaction(&output, &staging, &backup)
+        .map_err(|error| error.to_string())?;
+    if fs::read(output.join("accepted.txt")).map_err(|error| error.to_string())?
+        != b"accepted"
+        || staging.exists()
+        || backup.exists()
+    {
+        return Err("straggler transaction recovery did not restore accepted root".to_owned());
+    }
+    remove_transaction_case(&root)
+}
 
 #[test]
 fn decodes_windows_1252_text_stragglers() {
@@ -87,8 +219,8 @@ fn mission_v3_renderer_matches_semantic_preflight() -> Result<(), String> {
     Ok(())
 }
 
-fn repository_root() -> Result<std::path::PathBuf, String> {
-    let mut current = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+fn repository_root() -> Result<PathBuf, String> {
+    let mut current = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     loop {
         if current.join("TODO.md").is_file()
             && current.join("game/scripts/missions").is_dir()
@@ -101,12 +233,12 @@ fn repository_root() -> Result<std::path::PathBuf, String> {
     }
 }
 
-fn mission_sources(root: &Path) -> Result<Vec<std::path::PathBuf>, String> {
+fn mission_sources(root: &Path) -> Result<Vec<PathBuf>, String> {
     let mut pending = vec![root.join("game/scripts/missions")];
     let mut files = Vec::new();
     while let Some(directory) = pending.pop() {
         for entry in
-            std::fs::read_dir(&directory).map_err(|error| error.to_string())?
+            fs::read_dir(&directory).map_err(|error| error.to_string())?
         {
             let path = entry.map_err(|error| error.to_string())?.path();
             if path.is_dir() {
@@ -139,7 +271,7 @@ fn repository_mission_corpus_passes_semantic_registries() -> Result<(), String>
     let mut empty_placeholder_count = 0usize;
     for source_path in &sources {
         let bytes =
-            std::fs::read(source_path).map_err(|error| error.to_string())?;
+            fs::read(source_path).map_err(|error| error.to_string())?;
         if bytes.is_empty() {
             empty_placeholder_count = empty_placeholder_count.saturating_add(1);
             continue;
