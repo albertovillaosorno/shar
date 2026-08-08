@@ -42,6 +42,9 @@ shar_sha256 = { path = "../../foundation/sha256" }
 # shar_unreal_conversion owns deterministic Unreal plan families and
 # canonical plan rendering.
 shar_unreal_conversion = { path = "../../unreal/asset-conversion" }
+# same-file preserves physical source identity while prepare-unreal hashes
+# stable open descriptors.
+same-file = "=1.0.6"
 
 # jig-ignore-next-line: exact value is indivisible
 # serde derives typed deterministic structural-guide manifest and layout records.

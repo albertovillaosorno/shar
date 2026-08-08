@@ -42,6 +42,7 @@ use rcf as _;
 use rmv as _;
 use rsd as _;
 use rtf as _;
+use same_file as _;
 use schoenwald_cli as _;
 use schoenwald_filesystem as _;
 use serde as _;
