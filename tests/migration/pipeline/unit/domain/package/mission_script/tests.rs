@@ -201,7 +201,10 @@ fn rejects_nonempty_source_bytes_with_zero_statements() -> Result<(), String> {
     set_pointer(&mut value, "/command_invocations", json!([]))?;
     set_pointer(&mut value, "/command_counts", json!({}))?;
     set_pointer(&mut value, "/unique_command_count", json!(0))?;
-    let error = rejected_error(&value, "nonempty source with zero statements was accepted")?;
+    let error = rejected_error(
+        &value,
+        "nonempty source with zero statements was accepted",
+    )?;
     if !error.contains("inconsistent") {
         return Err(format!("unexpected source-byte error: {error}"));
     }
@@ -212,7 +215,10 @@ fn rejects_nonempty_source_bytes_with_zero_statements() -> Result<(), String> {
 fn rejects_zero_source_bytes_with_nonempty_statements() -> Result<(), String> {
     let mut value = document();
     set_pointer(&mut value, "/source_bytes", json!(0))?;
-    let error = rejected_error(&value, "contradictory source byte evidence was accepted")?;
+    let error = rejected_error(
+        &value,
+        "contradictory source byte evidence was accepted",
+    )?;
     if !error.contains("inconsistent") {
         return Err(format!("unexpected source-byte error: {error}"));
     }
@@ -261,6 +267,54 @@ fn rejects_inconsistent_context_finding_count() -> Result<(), String> {
     let error = rejected_error(&value, "finding-count drift was accepted")?;
     if !error.contains("finding count") {
         return Err(format!("unexpected finding-count error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_forged_empty_findings_for_invalid_context_order()
+-> Result<(), String> {
+    let mut value = document();
+    set_pointer(
+        &mut value,
+        "/command_invocations/1/name",
+        json!("closestage"),
+    )?;
+    set_pointer(&mut value, "/command_invocations/1/args_raw", json!(""))?;
+    set_pointer(&mut value, "/command_invocations/1/arguments", json!([]))?;
+    set_pointer(&mut value, "/command_invocations/2/name", json!("addstage"))?;
+    set_pointer(&mut value, "/command_invocations/2/args_raw", json!("0"))?;
+    set_pointer(&mut value, "/command_invocations/2/arguments", json!(["0"]))?;
+    let error = rejected_error(
+        &value,
+        "forged empty findings accepted invalid context order",
+    )?;
+    if !error.contains("context structure") {
+        return Err(format!("unexpected context replay error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_forged_empty_findings_for_context_arity_drift() -> Result<(), String>
+{
+    let mut value = document();
+    set_pointer(
+        &mut value,
+        "/command_invocations/1/args_raw",
+        json!("0,1,2,3"),
+    )?;
+    set_pointer(
+        &mut value,
+        "/command_invocations/1/arguments",
+        json!(["0", "1", "2", "3"]),
+    )?;
+    let error = rejected_error(
+        &value,
+        "forged empty findings accepted context arity drift",
+    )?;
+    if !error.contains("context command arity") {
+        return Err(format!("unexpected context arity error: {error}"));
     }
     Ok(())
 }
@@ -317,12 +371,8 @@ fn accepts_horizontal_tabs_preserved_from_legacy_source() -> Result<(), String>
 {
     let mut value = document();
     set_pointer(&mut value, "/source_statements/1", json!("AddStage(\t0 );"))?;
-    set_pointer(&mut value, "/command_invocations/1/args_raw", json!("\t0"))?;
-    set_pointer(
-        &mut value,
-        "/command_invocations/1/arguments/0",
-        json!("0\t"),
-    )?;
+    set_pointer(&mut value, "/command_invocations/1/args_raw", json!("0"))?;
+    set_pointer(&mut value, "/command_invocations/1/arguments/0", json!("0"))?;
     drop(preflight_mission_script(&text(&value)?)?);
     Ok(())
 }
@@ -345,9 +395,16 @@ fn rejects_non_tab_control_characters_in_source_evidence() -> Result<(), String>
 }
 
 fn reviewed_l2_adaptation_document() -> Value {
-    let source_statements = (1..=72)
-        .map(|ordinal| format!("Statement{ordinal}();"))
+    let mut source_statements = (1..=72)
+        .map(|ordinal| format!("legacy non-call statement {ordinal}"))
         .collect::<Vec<_>>();
+    source_statements[0] = "SelectMission(\"m6sd\");".to_owned();
+    source_statements[1] = "AddStage(0);".to_owned();
+    source_statements[67] = "AddStageMusicChange();".to_owned();
+    source_statements[68] = "SetStageMusicAlwaysOn();".to_owned();
+    source_statements[69] = "CloseCondition(); // stage".to_owned();
+    source_statements[70] = "CloseStage();".to_owned();
+    source_statements[71] = "CloseMission();".to_owned();
     json!({
         "schema": MISSION_SCRIPT_SCHEMA,
         "source_extension": "mfk",
@@ -365,7 +422,7 @@ fn reviewed_l2_adaptation_document() -> Value {
         "statement_count": 72,
         "unique_command_count": 7,
         "load_p3d_reference_count": 0,
-        "mission_flow_command_count": 0,
+        "mission_flow_command_count": 6,
         "vehicle_physics_command_count": 0,
         "semantic_family": "mission-script",
         "command_counts": {
@@ -473,12 +530,174 @@ fn rejects_declared_adaptation_when_reviewed_fingerprint_drifts()
             "setstagemusicnotalwayson": 1
         }),
     )?;
+    set_pointer(
+        &mut value,
+        "/source_statements/68",
+        json!("SetStageMusicNotAlwaysOn();"),
+    )?;
     let error = rejected_error(
         &value,
         "drifted reviewed adaptation fingerprint was accepted",
     )?;
     if !error.contains("not reviewed") {
         return Err(format!("unexpected adaptation-drift error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_nonreproducible_mission_flow_summary() -> Result<(), String> {
+    let mut value = document();
+    set_pointer(&mut value, "/mission_flow_command_count", json!(3))?;
+    let error = rejected_error(
+        &value,
+        "nonreproducible mission-flow summary was accepted",
+    )?;
+    if !error.contains("summary is not reproducible") {
+        return Err(format!("unexpected summary replay error: {error}"));
+    }
+    Ok(())
+}
+
+fn load_p3d_document() -> Value {
+    json!({
+        "schema": MISSION_SCRIPT_SCHEMA,
+        "source_extension":"mfk","route_class":"mission","source_bytes":64,
+        "context_command_count":0,"context_adaptation_count":0,
+        "context_adaptations":[],"context_finding_count":0,"context_findings":[],
+        "statement_count":1,"unique_command_count":1,"load_p3d_reference_count":1,
+        "mission_flow_command_count":0,"vehicle_physics_command_count":0,
+        "semantic_family":"mission-script","command_counts":{"loadp3dfile":1},
+        "source_statements":["LoadP3DFile(\"a.p3d\",\"b.p3d\");"],
+        "p3d_references":["a.p3d","b.p3d"],
+        "command_invocations":[{
+            "ordinal":1,"name":"loadp3dfile","args_raw":"\"a.p3d\",\"b.p3d\"",
+            "semantic_role":"asset-load","arguments":["a.p3d","b.p3d"]
+        }]
+    })
+}
+
+#[test]
+fn accepts_exact_replayed_p3d_reference_summary() -> Result<(), String> {
+    let evidence = preflight_mission_script(&text(&load_p3d_document())?)?;
+    if evidence.invocations().len() != 1 {
+        return Err("P3D replay fixture invocation count changed".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_nonreproducible_p3d_reference_list() -> Result<(), String> {
+    let mut value = load_p3d_document();
+    set_pointer(&mut value, "/p3d_references", json!(["b.p3d", "a.p3d"]))?;
+    let error = rejected_error(
+        &value,
+        "reordered P3D reference evidence was accepted",
+    )?;
+    if !error.contains("P3D reference evidence is not reproducible") {
+        return Err(format!("unexpected P3D replay error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_nonreproducible_vehicle_physics_summary() -> Result<(), String> {
+    let mut value = load_p3d_document();
+    set_pointer(&mut value, "/load_p3d_reference_count", json!(0))?;
+    set_pointer(&mut value, "/p3d_references", json!([]))?;
+    set_pointer(&mut value, "/command_counts", json!({"setspeed":1}))?;
+    set_pointer(&mut value, "/command_invocations/0/name", json!("setspeed"))?;
+    set_pointer(&mut value, "/command_invocations/0/args_raw", json!("10"))?;
+    set_pointer(
+        &mut value,
+        "/command_invocations/0/arguments",
+        json!(["10"]),
+    )?;
+    set_pointer(&mut value, "/source_statements/0", json!("SetSpeed(10);"))?;
+    set_pointer(
+        &mut value,
+        "/command_invocations/0/semantic_role",
+        json!("mission-script"),
+    )?;
+    let error = rejected_error(
+        &value,
+        "nonreproducible vehicle-physics summary was accepted",
+    )?;
+    if !error.contains("summary is not reproducible") {
+        return Err(format!("unexpected physics-summary error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_nonreproducible_semantic_role() -> Result<(), String> {
+    let mut value = document();
+    set_pointer(
+        &mut value,
+        "/command_invocations/1/semantic_role",
+        json!("mission-script"),
+    )?;
+    let error =
+        rejected_error(&value, "nonreproducible semantic role was accepted")?;
+    if !error.contains("semantic role is not reproducible") {
+        return Err(format!("unexpected semantic-role error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_invocation_name_that_does_not_replay_from_source()
+-> Result<(), String> {
+    let mut value = load_p3d_document();
+    set_pointer(&mut value, "/command_counts", json!({"loadp3dother": 1}))?;
+    set_pointer(
+        &mut value,
+        "/command_invocations/0/name",
+        json!("loadp3dother"),
+    )?;
+    let error = rejected_error(
+        &value,
+        "invocation name drift from source statement was accepted",
+    )?;
+    if !error.contains("invocation evidence is not reproducible") {
+        return Err(format!("unexpected invocation replay error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_invocation_raw_arguments_that_do_not_replay() -> Result<(), String> {
+    let mut value = load_p3d_document();
+    set_pointer(
+        &mut value,
+        "/command_invocations/0/args_raw",
+        json!(" \"a.p3d\" , \"b.p3d\" "),
+    )?;
+    let error = rejected_error(
+        &value,
+        "raw invocation argument drift from source statement was accepted",
+    )?;
+    if !error.contains("invocation evidence is not reproducible") {
+        return Err(format!("unexpected raw-argument replay error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_missing_invocation_for_parseable_source_statement()
+-> Result<(), String> {
+    let mut value = load_p3d_document();
+    set_pointer(&mut value, "/unique_command_count", json!(0))?;
+    set_pointer(&mut value, "/load_p3d_reference_count", json!(0))?;
+    set_pointer(&mut value, "/command_counts", json!({}))?;
+    set_pointer(&mut value, "/p3d_references", json!([]))?;
+    set_pointer(&mut value, "/command_invocations", json!([]))?;
+    let error = rejected_error(
+        &value,
+        "parseable source statement without invocation was accepted",
+    )?;
+    if !error.contains("invocation evidence is not reproducible") {
+        return Err(format!("unexpected missing-invocation error: {error}"));
     }
     Ok(())
 }
