@@ -93,33 +93,38 @@ def main(argv: Sequence[str] | None = None) -> int:
     raw_arguments = tuple(sys.argv[1:] if argv is None else argv)
     try:
         invocation = parse_invocation(raw_arguments)
-        if is_help_action(invocation.action):
-            _write_stdout(usage_text())
-            return _EXIT_SUCCESS
-        _validate_action_operands(invocation)
-        if invocation.action == "plan-preflight":
-            return _run_plan_preflight(parse_plan_root(invocation.operands))
-        if invocation.action == "plan-execution-preflight":
-            return _run_plan_execution_preflight(
-                parse_plan_root(invocation.operands)
-            )
-        if invocation.action == "plan-capabilities":
-            return _run_plan_capabilities(
-                invocation,
-                parse_plan_root(invocation.operands),
-            )
-        if invocation.action == "plan-apply":
-            return _run_plan_apply(
-                invocation,
-                parse_plan_root(invocation.operands),
-            )
-        return _run(invocation)
+        return _run_invocation(invocation)
     except UsageError as error:
         _write_stderr(f"error: {error}\n\n{usage_text()}")
         return _EXIT_USAGE
     except (UnrealMcpError, OSError, UnicodeError) as error:
         _write_stderr(f"error: {error}\n")
         return _EXIT_FAILURE
+
+
+def _run_invocation(invocation: CliInvocation) -> int:
+    """Dispatch one fully parsed invocation."""
+    if is_help_action(invocation.action):
+        _write_stdout(usage_text())
+        return _EXIT_SUCCESS
+    _validate_action_operands(invocation)
+    if invocation.action == "plan-preflight":
+        return _run_plan_preflight(parse_plan_root(invocation.operands))
+    if invocation.action == "plan-execution-preflight":
+        return _run_plan_execution_preflight(
+            parse_plan_root(invocation.operands)
+        )
+    if invocation.action == "plan-capabilities":
+        return _run_plan_capabilities(
+            invocation,
+            parse_plan_root(invocation.operands),
+        )
+    if invocation.action == "plan-apply":
+        return _run_plan_apply(
+            invocation,
+            parse_plan_root(invocation.operands),
+        )
+    return _run(invocation)
 
 
 def _validate_action_operands(invocation: CliInvocation) -> None:
@@ -160,7 +165,7 @@ def _run_plan_preflight(root: Path) -> int:
 
 def _run_plan_execution_preflight(root: Path) -> int:
     bundle = FilesystemPlanBundleReader(root).read_bundle()
-    sources = FilesystemPlanSourceVerifier(Path("."), root).verify(bundle)
+    sources = FilesystemPlanSourceVerifier(Path(), root).verify(bundle)
     execution = compile_execution_plan(bundle)
     _write_stdout(
         render_json(
@@ -179,7 +184,7 @@ def _run_plan_capabilities(
     root: Path,
 ) -> int:
     bundle = FilesystemPlanBundleReader(root).read_bundle()
-    sources = FilesystemPlanSourceVerifier(Path("."), root).verify(bundle)
+    sources = FilesystemPlanSourceVerifier(Path(), root).verify(bundle)
     execution = compile_execution_plan(bundle)
     transport = StreamableHttpTransport(
         invocation.endpoint,
@@ -208,7 +213,7 @@ def _run_plan_apply(
     root: Path,
 ) -> int:
     bundle = FilesystemPlanBundleReader(root).read_bundle()
-    sources = FilesystemPlanSourceVerifier(Path("."), root).verify(bundle)
+    sources = FilesystemPlanSourceVerifier(Path(), root).verify(bundle)
     execution = compile_execution_plan(bundle)
     if not execution.report.complete:
         _write_stdout(
@@ -400,7 +405,7 @@ def _write_stderr(value: str) -> None:
         )
         try:
             _ = sys.stderr.write(escaped)
-        except OSError, UnicodeError:
+        except (OSError, UnicodeError):
             return
     except OSError:
         return
