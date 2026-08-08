@@ -116,6 +116,26 @@ still requires a clean `extract-game` invocation. The new candidate receives the
 same approved package token, but no stage reads generated files from the old
 accepted tree.
 
+## Direct minor-unit regeneration
+
+`manifest-minor-units` first validates the prepared `game/` root through the
+canonical game-manifest validator, including taxonomy, ledger shape, and every
+minimum-count requirement. A missing, malformed, stale, or short game manifest
+fails before normalized straggler output is touched.
+
+Direct minor-unit regeneration also gives `extracted/game` its own generated
+publication transaction. Loose script and RSD normalization writes to a hidden
+staging sibling while the accepted `extracted/game` remains unchanged. A
+successful run moves the accepted root to a temporary backup, publishes the
+complete staging root, and removes the backup. A failed conversion removes only
+staging; a failed publish restores the accepted backup; startup recovery restores
+an interrupted backup before discarding stale staging. Symbolic links and
+non-directory transaction identities fail closed.
+
+This stage-local transaction is necessary even though complete `extract-game`
+runs already have a whole-root candidate, because operators can invoke
+`manifest-minor-units` independently against an accepted extraction.
+
 ## Failure behavior
 
 Failure before publication removes the candidate and state while leaving the

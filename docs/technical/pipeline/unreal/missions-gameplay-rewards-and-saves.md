@@ -42,18 +42,23 @@ context findings after they are applied.
 
 A closed preflight registry then validates every observed `AddObjective` and
 `AddCondition` alias, exact observed arity, and every command that occurs inside
-those scopes. Unknown aliases, cross-scope commands, and unobserved arities fail
-closed. This registry is conversion evidence only: it does not claim that legacy
-parameters have already been compiled into final runtime policies.
+those scopes. Unknown aliases, cross-scope commands, and unobserved argument
+counts fail closed. This registry is conversion evidence only: it does not claim
+that legacy parameters have already been compiled into final runtime policies.
 
 The v3 evidence records `context_command_count`,
 `context_adaptation_count`, `context_finding_count`, ordered adaptations, and
 ordered findings. Findings describe source structure without repairing it.
 Semantic intake accepts only exact v3 JSON with a reproducible command
 histogram, strictly increasing ordinals, matching context counts, independently
-verified adaptations, and zero unresolved findings. `prepare-unreal` applies
-that preflight only to normalized `mission-script` sources before they can
-contribute Unreal source evidence.
+verified adaptations, and zero unresolved findings. An original zero-byte MFK
+is preserved as an inert v3 source with zero statements, invocations, summaries,
+adaptations, and findings; that exact self-consistent empty state is valid
+source evidence rather than a fabricated mission. Source bytes and statement
+emptiness must agree in both directions: zero bytes with statements or nonzero
+bytes with zero statements is contradictory and fails closed. `prepare-unreal`
+applies the preflight only to normalized `mission-script` sources before they
+can contribute Unreal source evidence.
 
 The current source audit contains two reviewed structural defects: one orphan
 condition close and one missing condition close before stage completion. Both
