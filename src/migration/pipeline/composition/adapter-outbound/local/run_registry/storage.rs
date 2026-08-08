@@ -38,8 +38,8 @@
 
 mod lease;
 
-use std::fs;
-use std::io::ErrorKind;
+use std::fs::{self, File};
+use std::io::{ErrorKind, Write as _};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
@@ -153,7 +153,7 @@ impl RegistryStorage {
                 snapshot.run_id()
             )
         })?;
-        if let Err(error) = fs::write(pending.join(STATE_FILE), bytes) {
+        if let Err(error) = write_synced_file(&pending.join(STATE_FILE), &bytes) {
             drop(fs::remove_dir_all(&pending));
             return Err(format!(
                 "pipeline initial run state write failed: {error}"
@@ -175,19 +175,9 @@ impl RegistryStorage {
         let temporary =
             run_dir.join(format!("state.{}.tmp", std::process::id()));
         let bytes = snapshot.json_bytes()?;
-        fs::write(&temporary, bytes).map_err(|error| {
+        write_synced_file(&temporary, &bytes).map_err(|error| {
             format!("pipeline run state write failed: {error}")
         })?;
-        match fs::remove_file(&state_path) {
-            Ok(()) => {},
-            Err(error) if error.kind() == ErrorKind::NotFound => {},
-            Err(error) => {
-                drop(fs::remove_file(&temporary));
-                return Err(format!(
-                    "pipeline prior run state removal failed: {error}"
-                ));
-            },
-        }
         fs::rename(&temporary, &state_path).map_err(|error| {
             drop(fs::remove_file(&temporary));
             format!("pipeline run state publication failed: {error}")
@@ -247,6 +237,14 @@ impl RegistryStorage {
             "pipeline run state read attempts were exhausted",
         ))
     }
+}
+
+/// Write one complete state file and force its bytes to stable storage before
+/// any namespace publication can expose it as authoritative.
+fn write_synced_file(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
+    let mut file = File::create(path)?;
+    file.write_all(bytes)?;
+    file.sync_all()
 }
 
 /// Reject run identities that could escape the derived registry directory.

@@ -250,6 +250,59 @@ fn progress_snapshot_renders_known_eta_without_wall_clock_sleep()
     Ok(())
 }
 
+
+#[test]
+fn snapshot_replacement_publishes_complete_synced_state() -> Result<(), String> {
+    let _lane = test_lane()?;
+    let fixture = TestRegistry::new("snapshot-replacement")?;
+    let mut snapshot = RunSnapshot::new(
+        String::from("run-snapshot-replacement"),
+        17,
+        String::from("prepare-unreal"),
+        None,
+        RunMode::Concurrent,
+        10_000,
+    );
+    fixture.registry.storage.create_run(&snapshot)?;
+    snapshot.update_progress(
+        "verify-source",
+        Some(25),
+        Some(100),
+        Some("package-25"),
+        20_000,
+    );
+    fixture.registry.storage.write_snapshot(&snapshot)?;
+
+    let run_dir = fixture
+        .registry
+        .storage
+        .root()
+        .join("runs/run-snapshot-replacement");
+    let bytes = fs::read(run_dir.join("state.json"))
+        .map_err(|error| error.to_string())?;
+    let decoded = RunSnapshot::parse(&bytes)?;
+    if decoded != snapshot {
+        return Err(String::from(
+            "published run state did not round-trip exactly",
+        ));
+    }
+    let temporary_prefix = format!("state.{}.", std::process::id());
+    for entry in fs::read_dir(&run_dir).map_err(|error| error.to_string())? {
+        let entry = entry.map_err(|error| error.to_string())?;
+        let name = entry.file_name();
+        if name.to_string_lossy().starts_with(&temporary_prefix) {
+            return Err(String::from(
+                "run state replacement left temporary residue",
+            ));
+        }
+    }
+    fixture
+        .registry
+        .storage
+        .remove_run(snapshot.run_id())?;
+    Ok(())
+}
+
 #[test]
 fn stale_records_and_invalid_run_ids_are_rejected_or_pruned()
 -> Result<(), String> {
