@@ -173,7 +173,9 @@ def _requirements(
     media_step = first_by_route.get("file-media-source-hap-v1")
     if media_step is not None:
         requirements.extend(_media_payload_requirements(media_step))
-    example_path = compiled.imports[0].package_path
+    example_outputs = compiled.imports[0].outputs
+    example_path = example_outputs[0].package_path
+    example_paths = [output.package_path for output in example_outputs]
     requirements.extend((
         NativeToolRequirement(
             _ASSET_TOOLSET,
@@ -191,7 +193,7 @@ def _requirements(
             _ASSET_TOOLSET,
             f"{_ASSET_TOOLSET}.get_asset_class",
             {"asset_path": example_path},
-            {"returnValue": "Texture2D"},
+            {"returnValue": example_outputs[0].target_class},
         ),
         NativeToolRequirement(
             _ASSET_TOOLSET,
@@ -202,7 +204,7 @@ def _requirements(
         NativeToolRequirement(
             _ASSET_TOOLSET,
             f"{_ASSET_TOOLSET}.save_assets",
-            {"asset_paths": [example_path]},
+            {"asset_paths": example_paths},
             {"returnValue": True},
         ),
     ))
@@ -213,15 +215,17 @@ def _import_requirement(step: NativeImportStep) -> NativeToolRequirement:
     extension_by_route = {
         "file-media-source-hap-v1": "mov",
         "sound-wave-wav-v1": "wav",
+        "skeletal-mesh-fbx-v1": "fbx",
         "static-mesh-fbx-v1": "fbx",
         "texture-image-v1": "png",
     }
     extension = extension_by_route[step.route_id]
     output: JsonObject = (
-        {"returnValue": [step.destination]}
+        {"returnValue": list(step.expected_object_paths)}
         if step.route_id in {
             "file-media-source-hap-v1",
             "sound-wave-wav-v1",
+            "skeletal-mesh-fbx-v1",
             "static-mesh-fbx-v1",
         }
         else {"returnValue": []}

@@ -35,6 +35,7 @@ from __future__ import annotations
 # ruff: noqa: EM101, EM102, FBT003, PLR0911, PLR0912, TRY003
 # cspell:ignore FBT
 from pathlib import Path
+from typing import NamedTuple
 
 from mcp.application.plan_application import apply_import_plan
 from mcp.domain.errors import ProtocolError
@@ -45,6 +46,7 @@ from mcp.domain.plan_bundle import PlanOperation
 from mcp.domain.plan_bundle import ValidatedPlanBundle
 from mcp.domain.plan_capabilities import PlanCapabilityReport
 from mcp.domain.plan_execution import CompiledExecutionPlan
+from mcp.domain.plan_execution import NativeAssetOutput
 from mcp.domain.plan_execution import compile_execution_plan
 from mcp.domain.tool_outcome import ToolCallOutcome
 import pytest
@@ -85,21 +87,28 @@ class _TextOutcomeClient:
         )
 
 
+class _SyntheticBehavior(NamedTuple):
+    """Synthetic import fault and companion behavior."""
+
+    wrong_class_on_import: int | None = None
+    raise_after_import: int | None = None
+    companion_mode: str = "none"
+
+
 class _SyntheticClient:
     def __init__(
         self,
         *,
         preexisting: dict[str, str] | None = None,
-        wrong_class_on_import: int | None = None,
-        raise_after_import: int | None = None,
+        behavior: _SyntheticBehavior | None = None,
         preexisting_payloads: dict[str, str] | None = None,
     ) -> None:
         self.assets = dict(preexisting or {})
         self.media_payloads = dict(preexisting_payloads or {})
+        self.dirty_assets: set[str] = set()
         self.calls: list[tuple[str, JsonObject]] = []
         self.import_count = 0
-        self.wrong_class_on_import = wrong_class_on_import
-        self.raise_after_import = raise_after_import
+        self.behavior = behavior or _SyntheticBehavior()
 
     def call_tool(
         self,
@@ -115,7 +124,6 @@ class _SyntheticClient:
         if leaf in {"ImportFileMediaSource", "ImportStaticMesh", "import_file"}:
             self.import_count += 1
             is_native = leaf != "import_file"
-            is_media = leaf == "ImportFileMediaSource"
             asset_name = str(
                 arguments["assetName"] if is_native else arguments["asset_name"]
             )
@@ -127,26 +135,45 @@ class _SyntheticClient:
             package_path = f"{folder_path}/{asset_name}"
             target_class = (
                 "UnexpectedClass"
-                if self.import_count == self.wrong_class_on_import
+                if self.import_count == self.behavior.wrong_class_on_import
                 else "FileMediaSource"
-                if is_media
+                if leaf == "ImportFileMediaSource"
                 else "StaticMesh"
                 if leaf == "ImportStaticMesh"
                 else "Texture2D"
             )
             self.assets[package_path] = target_class
+            self.dirty_assets.add(package_path)
             object_path = f"{package_path}.{asset_name}"
-            if is_media:
+            if leaf == "ImportFileMediaSource":
                 relative_package = package_path.removeprefix(
                     "/Game/Generated/SHAR/"
                 )
                 self.media_payloads[object_path] = (
                     f"./Movies/Generated/SHAR/{relative_package}.mov"
                 )
-            if self.import_count == self.raise_after_import:
+            returned_object_paths = [object_path]
+            if (
+                self.behavior.companion_mode != "none"
+                and leaf == "ImportStaticMesh"
+            ):
+                companion_name = f"{asset_name}_Skeleton"
+                companion_package = f"{folder_path}/{companion_name}"
+                self.assets[companion_package] = (
+                    "UnexpectedClass"
+                    if self.behavior.companion_mode == "wrong-class"
+                    else "Skeleton"
+                )
+                if self.behavior.companion_mode != "clean":
+                    self.dirty_assets.add(companion_package)
+                if self.behavior.companion_mode != "omit-result":
+                    returned_object_paths.append(
+                        f"{companion_package}.{companion_name}"
+                    )
+            if self.import_count == self.behavior.raise_after_import:
                 raise TimeoutError("synthetic lost import response")
             if is_native:
-                return _outcome([object_path])
+                return _outcome(returned_object_paths)
             return _outcome([{"packagePath": package_path}])
         if leaf == "FileMediaSourcePayloadExists":
             return _outcome(str(arguments["assetPath"]) in self.media_payloads)
@@ -163,11 +190,19 @@ class _SyntheticClient:
         if leaf == "get_asset_class":
             return _outcome(self.assets[str(arguments["asset_path"])])
         if leaf == "save_assets":
-            return _outcome(True)
+            paths = arguments["asset_paths"]
+            if not isinstance(paths, list):
+                raise AssertionError("synthetic save paths are not an array")
+            existing = all(str(path) in self.assets for path in paths)
+            if existing:
+                self.dirty_assets.difference_update(str(path) for path in paths)
+            return _outcome(existing)
         if leaf == "is_dirty":
-            return _outcome(False)
+            return _outcome(str(arguments["asset_path"]) in self.dirty_assets)
         if leaf == "delete":
-            self.assets.pop(str(arguments["path"]), None)
+            path = str(arguments["path"])
+            self.assets.pop(path, None)
+            self.dirty_assets.discard(path)
             return _outcome(True)
         raise AssertionError(f"unexpected tool: {tool_name}")
 
@@ -255,6 +290,26 @@ def _compiled(*operations: PlanOperation) -> CompiledExecutionPlan:
     return compile_execution_plan(ValidatedPlanBundle(report, operations))
 
 
+def _with_skeleton_companion(
+    compiled: CompiledExecutionPlan,
+) -> CompiledExecutionPlan:
+    step = compiled.imports[0]
+    companion_name = f"{step.asset_name}_Skeleton"
+    companion_package = f"{step.folder_path}/{companion_name}"
+    companion = NativeAssetOutput(
+        role="skeleton",
+        object_path=f"{companion_package}.{companion_name}",
+        package_path=companion_package,
+        target_class="Skeleton",
+        expected_dirty_after_import=True,
+        rollback_order=1,
+    )
+    return CompiledExecutionPlan(
+        compiled.report,
+        (step._replace(companion_outputs=(companion,)),),
+    )
+
+
 def _capabilities(compiled: CompiledExecutionPlan) -> PlanCapabilityReport:
     return PlanCapabilityReport(
         bundle_revision=compiled.report.bundle_revision,
@@ -307,19 +362,19 @@ def test_applies_complete_plan_with_independent_save_and_readback(
     assert leaves.count("import_file") == 2
     assert leaves.count("save_assets") == 2
     assert leaves.count("get_asset_class") == 2
-    assert leaves.count("is_dirty") == 2
+    assert leaves.count("is_dirty") == 4
     assert "delete" not in leaves
 
 
 @pytest.mark.parametrize(
     ("text", "message"),
-    (
+    [
         ("not-json", "text result is not valid JSON"),
         (
             '{"returnValue":false,"returnValue":true}',
             "duplicate JSON key",
         ),
-    ),
+    ],
 )
 def test_rejects_invalid_text_wrapped_result_before_import(
     tmp_path: Path,
@@ -406,7 +461,7 @@ def test_compensates_asset_created_before_lost_import_response(
     tmp_path: Path,
 ) -> None:
     compiled = _compiled(_operation(1))
-    client = _SyntheticClient(raise_after_import=1)
+    client = _SyntheticClient(behavior=_SyntheticBehavior(raise_after_import=1))
     with pytest.raises(TimeoutError, match="lost import response"):
         apply_import_plan(
             client,
@@ -423,7 +478,9 @@ def test_compensates_all_created_assets_in_reverse_order(
     tmp_path: Path,
 ) -> None:
     compiled = _compiled(_operation(1), _operation(2))
-    client = _SyntheticClient(wrong_class_on_import=2)
+    client = _SyntheticClient(
+        behavior=_SyntheticBehavior(wrong_class_on_import=2)
+    )
     with pytest.raises(ProtocolError, match="unexpected asset class"):
         apply_import_plan(
             client,
@@ -491,7 +548,7 @@ def test_compensates_media_payload_before_asset_after_lost_response(
     tmp_path: Path,
 ) -> None:
     compiled = _compiled(_media_operation(13))
-    client = _SyntheticClient(raise_after_import=1)
+    client = _SyntheticClient(behavior=_SyntheticBehavior(raise_after_import=1))
     with pytest.raises(TimeoutError, match="lost import response"):
         apply_import_plan(
             client,
@@ -505,3 +562,148 @@ def test_compensates_media_payload_before_asset_after_lost_response(
     payload_delete = leaves.index("DeleteFileMediaSourcePayload")
     asset_delete = leaves.index("delete")
     assert payload_delete < asset_delete
+
+
+def test_companion_outputs_are_preflighted_saved_and_read_back_together(
+    tmp_path: Path,
+) -> None:
+    compiled = _with_skeleton_companion(
+        _compiled(_static_mesh_operation(20))
+    )
+    client = _SyntheticClient(
+        behavior=_SyntheticBehavior(companion_mode="normal")
+    )
+    report = apply_import_plan(
+        client,
+        compiled,
+        _capabilities(compiled),
+        _sources(tmp_path, compiled),
+    )
+    step = compiled.imports[0]
+    assert report.imported_count == 1
+    assert client.assets == {
+        step.outputs[0].package_path: "StaticMesh",
+        step.outputs[1].package_path: "Skeleton",
+    }
+    assert client.dirty_assets == set()
+    save_calls = [
+        arguments
+        for name, arguments in client.calls
+        if name.rsplit(".", 1)[-1] == "save_assets"
+    ]
+    assert save_calls == [
+        {"asset_paths": [output.package_path for output in step.outputs]}
+    ]
+    class_reads = [
+        arguments["asset_path"]
+        for name, arguments in client.calls
+        if name.rsplit(".", 1)[-1] == "get_asset_class"
+    ]
+    assert class_reads == [output.package_path for output in step.outputs]
+
+
+def test_rejects_preexisting_companion_before_import(tmp_path: Path) -> None:
+    compiled = _with_skeleton_companion(
+        _compiled(_static_mesh_operation(21))
+    )
+    companion = compiled.imports[0].outputs[1]
+    client = _SyntheticClient(
+        preexisting={companion.package_path: companion.target_class}
+    )
+    with pytest.raises(ProtocolError, match="output already exists"):
+        apply_import_plan(
+            client,
+            compiled,
+            _capabilities(compiled),
+            _sources(tmp_path, compiled),
+        )
+    assert client.import_count == 0
+    assert client.assets == {companion.package_path: companion.target_class}
+
+
+def test_rejects_missing_companion_result_and_rolls_back_all_outputs(
+    tmp_path: Path,
+) -> None:
+    compiled = _with_skeleton_companion(
+        _compiled(_static_mesh_operation(22))
+    )
+    client = _SyntheticClient(
+        behavior=_SyntheticBehavior(companion_mode="omit-result")
+    )
+    with pytest.raises(ProtocolError, match="output inventory does not match"):
+        apply_import_plan(
+            client,
+            compiled,
+            _capabilities(compiled),
+            _sources(tmp_path, compiled),
+        )
+    assert client.assets == {}
+    deletes = [
+        str(arguments["path"])
+        for name, arguments in client.calls
+        if name.rsplit(".", 1)[-1] == "delete"
+    ]
+    assert deletes == [
+        output.package_path for output in compiled.imports[0].rollback_outputs
+    ]
+
+
+def test_lost_companion_import_response_rolls_back_without_orphan(
+    tmp_path: Path,
+) -> None:
+    compiled = _with_skeleton_companion(
+        _compiled(_static_mesh_operation(23))
+    )
+    client = _SyntheticClient(
+        behavior=_SyntheticBehavior(
+            raise_after_import=1,
+            companion_mode="normal",
+        )
+    )
+    with pytest.raises(TimeoutError, match="lost import response"):
+        apply_import_plan(
+            client,
+            compiled,
+            _capabilities(compiled),
+            _sources(tmp_path, compiled),
+        )
+    assert client.assets == {}
+    deletes = [
+        str(arguments["path"])
+        for name, arguments in client.calls
+        if name.rsplit(".", 1)[-1] == "delete"
+    ]
+    assert deletes == [
+        output.package_path for output in compiled.imports[0].rollback_outputs
+    ]
+
+
+def test_companion_class_and_dirty_state_are_read_back_before_save(
+    tmp_path: Path,
+) -> None:
+    compiled = _with_skeleton_companion(
+        _compiled(_static_mesh_operation(24))
+    )
+    wrong_class = _SyntheticClient(
+        behavior=_SyntheticBehavior(companion_mode="wrong-class")
+    )
+    with pytest.raises(ProtocolError, match="unexpected asset class"):
+        apply_import_plan(
+            wrong_class,
+            compiled,
+            _capabilities(compiled),
+            _sources(tmp_path, compiled),
+        )
+    assert wrong_class.assets == {}
+
+    clean_companion = _SyntheticClient(
+        behavior=_SyntheticBehavior(companion_mode="clean")
+    )
+    with pytest.raises(ProtocolError, match="unexpected dirty state"):
+        apply_import_plan(
+            clean_companion,
+            compiled,
+            _capabilities(compiled),
+            _sources(tmp_path, compiled),
+        )
+    assert clean_companion.assets == {}

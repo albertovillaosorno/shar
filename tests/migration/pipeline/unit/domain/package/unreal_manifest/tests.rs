@@ -103,6 +103,87 @@ fn model_index() -> Result<PhaseThreePackageIndex, String> {
         .map_err(|error| error.to_string())
 }
 
+fn skeletal_model_index() -> Result<PhaseThreePackageIndex, String> {
+    let row = concat!(
+        "{\"package_id\":\"pkg\",\"package_root\":\"pkg\",",
+        "\"package_category\":\"characters\",",
+        "\"package_subcategory\":\"characters/test/base-model\",",
+        "\"unit_count\":3,\"text_key_count\":0,",
+        "\"unit_ids\":[\"composite-a\",\"skin-a\",\"skeleton-a\"],",
+        "\"world_ids\":[],\"texture_ids\":[],\"material_ids\":[],",
+        "\"model_ids\":[\"composite-a\",\"skin-a\"],",
+        "\"physics_ids\":[],\"animation_ids\":[\"skeleton-a\"],",
+        "\"scene_ids\":[],\"locator_ids\":[],\"camera_ids\":[],",
+        "\"light_ids\":[],\"particle_ids\":[],\"controller_ids\":[],",
+        "\"audio_ids\":[],\"movie_ids\":[],\"script_ids\":[],",
+        "\"text_ids\":[],\"ui_ids\":[],\"metadata_ids\":[],",
+        "\"error_ids\":[],\"source_unit_ids\":[],\"text_key_ids\":[],",
+        "\"members\":[",
+        "{\"id\":\"composite-a\",\"role\":\"model\",",
+        "\"path\":\"extracted/composite.json\",\"type\":\"model\",",
+        "\"kind\":\"p3d-composite-drawable\",",
+        "\"source_chunk_kind\":\"composite_drawable\"},",
+        "{\"id\":\"skin-a\",\"role\":\"model\",",
+        "\"path\":\"extracted/skin.json\",\"type\":\"model\",",
+        "\"kind\":\"p3d-skin\",\"source_chunk_kind\":\"skin\"},",
+        "{\"id\":\"skeleton-a\",\"role\":\"animation\",",
+        "\"path\":\"extracted/skeleton.json\",",
+        "\"type\":\"animation\",\"kind\":\"p3d-skeleton\",",
+        "\"source_chunk_kind\":\"skeleton\"}],\"text_keys\":[]}",
+    );
+    PhaseThreePackageIndex::from_jsonl(&format!("{row}\n"))
+        .map_err(|error| error.to_string())
+}
+
+fn skeletal_model_evidence() -> Vec<UnrealSourceEvidence> {
+    [
+        (
+            "composite-a",
+            "extracted/composite.json",
+            "model",
+            "composite_drawable",
+            "p3d-composite-drawable",
+        ),
+        ("skin-a", "extracted/skin.json", "model", "skin", "p3d-skin"),
+        (
+            "skeleton-a",
+            "extracted/skeleton.json",
+            "animation",
+            "skeleton",
+            "p3d-skeleton",
+        ),
+    ]
+    .into_iter()
+    .map(|(id, path, unit_type, subtype, kind)| UnrealSourceEvidence {
+        id: id.to_owned(),
+        path: path.to_owned(),
+        file_extension: "json".to_owned(),
+        unit_type: unit_type.to_owned(),
+        subtype: subtype.to_owned(),
+        kind: kind.to_owned(),
+        function: "skeletal model evidence".to_owned(),
+        schema: subtype.to_owned(),
+        origin: "p3d-package".to_owned(),
+        source_path: "extracted/character/model.p3d".to_owned(),
+        source_chunk_kind: subtype.to_owned(),
+        size_bytes: 4,
+        sha256: "9".repeat(64),
+        unreal_import_relation: "import-after-conversion".to_owned(),
+        future_normalization: "model-to-fbx".to_owned(),
+    })
+    .collect()
+}
+
+fn verified_skeletal_fbx() -> UnrealFbxArtifactEvidence {
+    UnrealFbxArtifactEvidence {
+        package_id: "pkg".to_owned(),
+        path: "fbx-assets/packages/pkg/pkg.fbx".to_owned(),
+        size_bytes: 31,
+        sha256: "8".repeat(64),
+        fbx_version: 7700,
+    }
+}
+
 fn model_evidence() -> UnrealSourceEvidence {
     UnrealSourceEvidence {
         id: "model-a".to_owned(),
@@ -350,6 +431,60 @@ fn complete_fbx_catalog_promotes_model_import_to_ready() -> Result<(), String> {
     Ok(())
 }
 
+
+#[test]
+fn complete_fbx_catalog_promotes_skeletal_import_with_companion_reservation()
+-> Result<(), String> {
+    let manifest = UnrealImportManifest::build(
+        &skeletal_model_index()?,
+        skeletal_model_evidence(),
+    )?;
+    let manifest_json = manifest.to_jsonl();
+    for expected in [
+        "\"disposition\":\"requires-fbx\"",
+        "\"target_kind\":\"SkeletalMesh\"",
+        "\"import_profile\":\"shar-fbx-skeletal-v1\"",
+        "/Game/Generated/SHAR/characters/pkg/pkg.pkg",
+        "/Game/Generated/SHAR/characters/pkg/pkg_Skeleton.pkg_Skeleton",
+    ] {
+        if !manifest_json.contains(expected) {
+            return Err(format!("skeletal manifest lost contract: {expected}"));
+        }
+    }
+    let revision = digest_hex(manifest_json.as_bytes());
+    let pending = manifest.plan_bundle(&revision)?;
+    let verified = manifest.plan_bundle_with_complete_fbx_catalog(
+        &revision,
+        &[verified_skeletal_fbx()],
+    )?;
+    let import_json = |bundle: &shar_unreal_conversion::domain::PlanBundle| {
+        bundle
+            .artifacts()
+            .iter()
+            .find(|artifact| artifact.family == PlanFamily::AssetImport)
+            .map(|artifact| artifact.json.clone())
+            .ok_or_else(|| "skeletal import plan is missing".to_owned())
+    };
+    let pending_json = import_json(&pending)?;
+    let verified_json = import_json(&verified)?;
+    if !pending_json.contains(r#""readiness":"requires-conversion""#)
+        || !verified_json.contains(r#""readiness":"ready""#)
+        || !verified_json.contains(r#""target_class":"SkeletalMesh""#)
+        || !verified_json.contains(r#""import_profile":"shar-fbx-skeletal-v1""#)
+        || !verified_json.contains(&format!(
+            r#""source_revision":"{}""#,
+            "8".repeat(64)
+        ))
+    {
+        return Err(
+            "verified skeletal FBX did not promote companion-aware import"
+                .to_owned(),
+        );
+    }
+    Ok(())
+}
+
+
 #[test]
 fn complete_fbx_catalog_rejects_missing_and_unclaimed_packages()
 -> Result<(), String> {
@@ -458,17 +593,17 @@ fn direct_policy_without_compatible_source_requires_factory()
 }
 
 #[test]
-fn skeletal_fbx_policy_requires_companion_aware_transaction()
+fn skeletal_fbx_policy_uses_companion_aware_fbx_transaction()
 -> Result<(), String> {
     let policy =
         super::fbx_policy(crate::domain::package::FbxTargetKind::SkeletalMesh);
-    if policy.disposition != "requires-semantic-conversion"
-        || policy.target_kind != "SkeletalMeshBundle"
-        || policy.importer != "semantic-converter"
-        || policy.import_profile != "shar-fbx-skeletal-bundle-v1"
+    if policy.disposition != "requires-fbx"
+        || policy.target_kind != "SkeletalMesh"
+        || policy.importer != "asset-tools-fbx"
+        || policy.import_profile != "shar-fbx-skeletal-v1"
     {
         return Err(
-            "skeletal FBX bypassed companion-aware conversion".to_owned()
+            "skeletal FBX did not use companion-aware import".to_owned()
         );
     }
     Ok(())
@@ -505,6 +640,7 @@ fn semantic_source_reserves_no_unreal_object() -> Result<(), String> {
     super::add_package_outputs(
         crate::domain::package::ConversionFamily::UnrealNative,
         policy.disposition,
+        policy.target_kind,
         "package",
         "/Game/Generated/SHAR/missions/package",
         &mut staged_files,
@@ -543,6 +679,7 @@ fn factory_policy_keeps_primary_object_with_direct_companion()
     super::add_package_outputs(
         crate::domain::package::ConversionFamily::UnrealNative,
         policy.disposition,
+        policy.target_kind,
         "package",
         package_path,
         &mut staged_files,
@@ -722,6 +859,46 @@ fn collision_diagnostic_does_not_echo_rejected_path() -> Result<(), String> {
         || error != "case-insensitive Unreal object collision"
     {
         return Err(format!("collision diagnostic leaked: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn skeletal_fbx_reserves_primary_and_skeleton_outputs() -> Result<(), String> {
+    use std::collections::BTreeSet;
+
+    let policy =
+        super::fbx_policy(crate::domain::package::FbxTargetKind::SkeletalMesh);
+    let mut staged_files = Vec::new();
+    let mut unreal_objects = Vec::new();
+    let mut staged_paths = BTreeSet::new();
+    let mut object_paths = BTreeSet::new();
+    let mut summary = super::UnrealImportSummary::default();
+    super::add_package_outputs(
+        crate::domain::package::ConversionFamily::FbxModel,
+        policy.disposition,
+        policy.target_kind,
+        "character_package",
+        "/Game/Generated/SHAR/characters/character_package",
+        &mut staged_files,
+        &mut unreal_objects,
+        &mut staged_paths,
+        &mut object_paths,
+        &mut summary,
+    )?;
+    let expected = vec![
+        "/Game/Generated/SHAR/characters/character_package/character_package.character_package".to_owned(),
+        "/Game/Generated/SHAR/characters/character_package/character_package_Skeleton.character_package_Skeleton".to_owned(),
+    ];
+    if unreal_objects != expected {
+        return Err(format!("unexpected skeletal object inventory: {unreal_objects:?}"));
+    }
+    if staged_files
+        != vec!["fbx-assets/packages/character_package/character_package.fbx"]
+        || summary.requires_fbx != 1
+        || summary.requires_semantic_conversion != 0
+    {
+        return Err("skeletal FBX outputs were not reserved atomically".to_owned());
     }
     Ok(())
 }

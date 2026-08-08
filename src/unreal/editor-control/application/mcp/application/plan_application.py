@@ -34,8 +34,8 @@
 
 from __future__ import annotations
 
-import json
 from collections.abc import Mapping
+import json
 from pathlib import Path
 from typing import NamedTuple
 from typing import Protocol
@@ -48,6 +48,7 @@ from mcp.domain.json_types import reject_duplicate_json_object
 from mcp.domain.json_types import require_json_object
 from mcp.domain.plan_capabilities import PlanCapabilityReport
 from mcp.domain.plan_execution import CompiledExecutionPlan
+from mcp.domain.plan_execution import NativeAssetOutput
 from mcp.domain.plan_execution import NativeImportStep
 from mcp.domain.tool_outcome import ToolCallOutcome
 
@@ -127,13 +128,14 @@ def _require_step_absent(
     *,
     changed: bool,
 ) -> None:
-    if _exists(client, step.package_path):
-        message = (
-            "native import destination changed before import"
-            if changed
-            else "native import destination already exists"
-        )
-        fail_protocol(message)
+    for output in step.outputs:
+        if _exists(client, output.package_path):
+            message = (
+                "native import output changed before import"
+                if changed
+                else "native import output already exists"
+            )
+            fail_protocol(message)
     if step.has_external_payload and _payload_exists(client, step):
         message = (
             "native import external payload changed before import"
@@ -170,7 +172,7 @@ def _step_effect_exists(
     client: NativePlanClient,
     step: NativeImportStep,
 ) -> bool:
-    if _exists(client, step.package_path):
+    if any(_exists(client, output.package_path) for output in step.outputs):
         return True
     return step.has_external_payload and _payload_exists(client, step)
 
@@ -180,18 +182,32 @@ def _verify_and_save_import(
     outcome: ToolCallOutcome,
     step: NativeImportStep,
 ) -> None:
-    _require_nonempty_import_result(outcome, step)
-    if not _exists(client, step.package_path):
-        fail_protocol("native import did not publish its destination")
-    actual_class = _asset_class(client, step.package_path)
-    if actual_class != step.target_class:
-        fail_protocol("native import produced an unexpected asset class")
+    _require_exact_import_result(outcome, step)
+    for output in step.outputs:
+        _verify_imported_output(client, output)
     if step.has_external_payload:
         _verify_media_payload(client, step)
-    if not _save(client, step.package_path):
+    package_paths = tuple(output.package_path for output in step.outputs)
+    if not _save(client, package_paths):
         fail_protocol("native import asset save returned false")
-    if _is_dirty(client, step.package_path):
-        fail_protocol("native import asset remained dirty after save")
+    for output in step.outputs:
+        if _is_dirty(client, output.package_path):
+            fail_protocol("native import asset remained dirty after save")
+
+
+def _verify_imported_output(
+    client: NativePlanClient,
+    output: NativeAssetOutput,
+) -> None:
+    """Read back one declared output before saving the transaction."""
+    if not _exists(client, output.package_path):
+        fail_protocol("native import did not publish a declared output")
+    actual_class = _asset_class(client, output.package_path)
+    if actual_class != output.target_class:
+        fail_protocol("native import produced an unexpected asset class")
+    is_dirty = _is_dirty(client, output.package_path)
+    if is_dirty != output.expected_dirty_after_import:
+        fail_protocol("native import produced an unexpected dirty state")
 
 
 def _verify_media_payload(
@@ -248,11 +264,14 @@ def _asset_class(client: NativePlanClient, package_path: str) -> str:
     return value
 
 
-def _save(client: NativePlanClient, package_path: str) -> bool:
+def _save(
+    client: NativePlanClient,
+    package_paths: tuple[str, ...],
+) -> bool:
     outcome = client.call_tool(
         _ASSET_TOOLSET,
         f"{_ASSET_TOOLSET}.save_assets",
-        {"asset_paths": [package_path]},
+        {"asset_paths": list(package_paths)},
     )
     return _return_boolean(outcome, context="asset save result")
 
@@ -293,17 +312,18 @@ def _compensate(
                 _delete_payload(client, step)
             except Exception:  # noqa: BLE001
                 failures += 1
-        try:
-            _delete(client, step.package_path)
-        except Exception:  # noqa: BLE001
-            failures += 1
+        for output in step.rollback_outputs:
+            try:
+                _delete(client, output.package_path)
+            except Exception:  # noqa: BLE001
+                failures += 1
     if failures:
         primary_error.add_note(
             f"native import compensation failed for {failures} created asset(s)"
         )
 
 
-def _require_nonempty_import_result(
+def _require_exact_import_result(
     outcome: ToolCallOutcome,
     step: NativeImportStep,
 ) -> None:
@@ -317,16 +337,28 @@ def _require_nonempty_import_result(
     if step.route_id in {
         "file-media-source-hap-v1",
         "sound-wave-wav-v1",
+        "skeletal-mesh-fbx-v1",
         "static-mesh-fbx-v1",
     }:
-        if step.destination not in value:
-            fail_protocol("native SHAR import omitted its planned destination")
         if any(not isinstance(item, str) or not item for item in value):
             fail_protocol("native SHAR import returned an invalid object path")
+        if tuple(value) != step.expected_object_paths:
+            fail_protocol(
+                "native SHAR import output inventory does not match plan"
+            )
         return
+    package_paths: list[str] = []
     for item in value:
         if not isinstance(item, dict):
             fail_protocol("native import result contains a non-object asset")
+        package_path = item.get("packagePath")
+        if not isinstance(package_path, str) or not package_path:
+            fail_protocol("native import result omitted its package path")
+        package_paths.append(package_path)
+    if tuple(package_paths) != tuple(
+        output.package_path for output in step.outputs
+    ):
+        fail_protocol("native import output inventory does not match plan")
 
 
 def _payload_arguments(step: NativeImportStep) -> JsonObject:
@@ -402,6 +434,9 @@ def _structured_result(
         except DuplicateJsonKeyError as error:
             fail_protocol(str(error), cause=error)
         except (json.JSONDecodeError, UnicodeError) as error:
-            fail_protocol(f"{context}: text result is not valid JSON", cause=error)
+            fail_protocol(
+                f"{context}: text result is not valid JSON",
+                cause=error,
+            )
     normalized = normalize_json(value, context=context)
     return require_json_object(normalized, context=context)
