@@ -169,3 +169,150 @@ fn pascal_component_name_preserves_edge_spaces() -> Result<(), String> {
     }
     Ok(())
 }
+
+fn push_u32(bytes: &mut Vec<u8>, value: u32) {
+    bytes.extend_from_slice(&value.to_le_bytes());
+}
+
+fn push_f32(bytes: &mut Vec<u8>, value: f32) {
+    bytes.extend_from_slice(&value.to_le_bytes());
+}
+
+fn push_pascal(bytes: &mut Vec<u8>, value: &str) -> Result<(), String> {
+    let length = u8::try_from(value.len()).map_err(|error| {
+        format!("fixture string length exceeds u8: {error}")
+    })?;
+    bytes.push(length);
+    bytes.extend_from_slice(value.as_bytes());
+    Ok(())
+}
+
+fn texture_font_fixture(
+    declared_textures: u32,
+    glyph_count: u32,
+) -> Result<Vec<u8>, String> {
+    const TEXTURE_FONT: u32 = 0x0002_2000;
+    const TEXTURE_GLYPH_LIST: u32 = 0x0002_2001;
+    const GLYPH_RECORD_BYTES: u32 = 40;
+
+    let mut header = Vec::new();
+    push_u32(&mut header, 7);
+    push_pascal(&mut header, "fixture-font")?;
+    push_pascal(&mut header, "simple")?;
+    push_f32(&mut header, 16.);
+    push_f32(&mut header, 16.);
+    push_f32(&mut header, 18.);
+    push_f32(&mut header, 14.);
+    push_u32(&mut header, declared_textures);
+
+    let glyph_bytes = glyph_count
+        .checked_mul(GLYPH_RECORD_BYTES)
+        .ok_or_else(|| String::from("fixture glyph byte count overflowed"))?;
+    let glyph_header_size = 16_u32
+        .checked_add(glyph_bytes)
+        .ok_or_else(|| String::from("fixture glyph chunk size overflowed"))?;
+    let font_header_len = 12_usize
+        .checked_add(header.len())
+        .ok_or_else(|| String::from("fixture font header size overflowed"))?;
+    let font_header_size = u32::try_from(font_header_len).map_err(|error| {
+        format!("fixture font header size exceeds u32: {error}")
+    })?;
+    let font_total_size = font_header_size
+        .checked_add(glyph_header_size)
+        .ok_or_else(|| String::from("fixture font total size overflowed"))?;
+
+    let mut bytes = Vec::new();
+    push_u32(&mut bytes, TEXTURE_FONT);
+    push_u32(&mut bytes, font_header_size);
+    push_u32(&mut bytes, font_total_size);
+    bytes.extend_from_slice(&header);
+    push_u32(&mut bytes, TEXTURE_GLYPH_LIST);
+    push_u32(&mut bytes, glyph_header_size);
+    push_u32(&mut bytes, glyph_header_size);
+    push_u32(&mut bytes, glyph_count);
+    for record in 0..glyph_count {
+        for word in 0..10_u32 {
+            let value = record
+                .checked_mul(100)
+                .and_then(|base| base.checked_add(word))
+                .ok_or_else(|| String::from("fixture glyph word overflowed"))?;
+            push_u32(&mut bytes, value);
+        }
+    }
+    Ok(bytes)
+}
+
+fn texture_font_record(source: &[u8]) -> Result<ChunkRecord, String> {
+    let raw_header = read_u32(source, 4)
+        .ok_or_else(|| String::from("fixture font header is missing"))?;
+    let header_size = usize::try_from(raw_header).map_err(|error| {
+        format!("fixture font header exceeds usize: {error}")
+    })?;
+    let payload_size = source
+        .len()
+        .checked_sub(header_size)
+        .ok_or_else(|| String::from("fixture font header exceeds source"))?;
+    Ok(ChunkRecord {
+        ordinal: 1,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: 0x0002_2000,
+        kind: crate::ChunkKind::TextureFont,
+        offset: 0,
+        header_size,
+        total_size: source.len(),
+        payload_offset: header_size,
+        payload_size,
+        child_count: 1,
+    })
+}
+
+#[test]
+fn texture_font_recovery_preserves_lossless_glyph_words() -> Result<(), String>
+{
+    let source = texture_font_fixture(0, 2)?;
+    let component = texture_font_record(&source)?;
+    let recovered = recover_component(&component, &source, 1)
+        .map_err(|error| error.to_string())?;
+    let json = String::from_utf8(recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if !json.contains(r#""glyph_count":2"#)
+        || !json.contains(r#""glyph_record_stride_bytes":40"#)
+        || !json.contains(
+            r#""glyph_records_u32":[[0,1,2,3,4,5,6,7,8,9],[100,101,102,103,104,105,106,107,108,109]]"#,
+        )
+    {
+        return Err(String::from(
+            "texture-font recovery did not preserve exact glyph words",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn texture_font_recovery_rejects_declared_texture_mismatch()
+-> Result<(), String> {
+    let source = texture_font_fixture(1, 1)?;
+    let component = texture_font_record(&source)?;
+    assert!(recover_component(&component, &source, 1).is_err());
+    Ok(())
+}
+
+#[test]
+fn texture_font_recovery_rejects_glyph_stride_mismatch() -> Result<(), String> {
+    let mut source = texture_font_fixture(0, 1)?;
+    let component = texture_font_record(&source)?;
+    let glyph_count_offset = component
+        .header_size
+        .checked_add(12)
+        .ok_or_else(|| String::from("glyph count offset overflowed"))?;
+    let glyph_count_end = glyph_count_offset
+        .checked_add(4)
+        .ok_or_else(|| String::from("glyph count end overflowed"))?;
+    source
+        .get_mut(glyph_count_offset..glyph_count_end)
+        .ok_or_else(|| String::from("glyph count field is missing"))?
+        .copy_from_slice(&2_u32.to_le_bytes());
+    assert!(recover_component(&component, &source, 1).is_err());
+    Ok(())
+}

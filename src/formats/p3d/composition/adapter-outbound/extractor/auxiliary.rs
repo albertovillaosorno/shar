@@ -384,8 +384,12 @@ pub(super) fn recover_texture_font_json(
     let baseline = schema::read_f32(chunk, cursor)?;
     cursor += 4;
     let num_textures = read_u32(chunk, cursor)?;
-    let children =
-        child_chunks_json(chunk, component.header_size, component.total_size);
+    let (children, glyph_count, glyph_records) = texture_font_children_json(
+        chunk,
+        component.header_size,
+        component.total_size,
+        num_textures,
+    )?;
     let kind = component.kind.label();
     let file_name = schema::fallback_name(kind, kind_index, &name);
     let json = format!(
@@ -393,7 +397,8 @@ pub(super) fn recover_texture_font_json(
             r#"{{"schema":"texture_font","version":{},"name":"{}","#,
             r#""shader":"{}","font_size":{},"font_width":{},"#,
             r#""font_height":{},"baseline":{},"num_textures":{},"#,
-            r#""children":[{}]}}"#,
+            r#""glyph_count":{},"glyph_record_stride_bytes":40,"#,
+            r#""glyph_records_u32":[{}],"children":[{}]}}"#,
         ),
         version,
         escape_json(&name),
@@ -403,6 +408,8 @@ pub(super) fn recover_texture_font_json(
         font_height,
         baseline,
         num_textures,
+        glyph_count,
+        glyph_records,
         children
     );
     Some(render::json_component(
@@ -412,6 +419,96 @@ pub(super) fn recover_texture_font_json(
         json,
         "decoded_schema_payload",
     ))
+}
+
+/// Decode the contract-declared texture and glyph-list children of one texture
+/// font. Glyph records remain ten raw little-endian u32 words because the
+/// generated Pure3D schema identifies the fixed-width record type but does not
+/// expose authoritative field names for `tlTextureGlyph`.
+fn texture_font_children_json(
+    chunk: &[u8],
+    mut cursor: usize,
+    end: usize,
+    declared_textures: u32,
+) -> Option<(String, u32, String)> {
+    const TEXTURE: u32 = 0x0001_9000;
+    const TEXTURE_GLYPH_LIST: u32 = 0x0002_2001;
+    let mut children = Vec::new();
+    let mut texture_count = 0_u32;
+    let mut glyph_evidence = None;
+    while cursor < end {
+        let (id, header_size, total_size) = read_chunk_header(chunk, cursor)?;
+        let next = cursor.checked_add(total_size)?;
+        if total_size < header_size || next > end {
+            return None;
+        }
+        children.push(format!(
+            concat!(
+                r#"{{"id_hex":"0x{:08x}","header_size":{},"#,
+                r#""total_size":{},"payload_size":{}}}"#,
+            ),
+            id,
+            header_size,
+            total_size,
+            total_size.checked_sub(header_size)?
+        ));
+        match id {
+            TEXTURE => {
+                texture_count = texture_count.checked_add(1)?;
+            },
+            TEXTURE_GLYPH_LIST if glyph_evidence.is_none() => {
+                glyph_evidence = Some(texture_glyph_records_json(
+                    chunk.get(cursor..next)?,
+                    header_size,
+                    total_size,
+                )?);
+            },
+            _ => return None,
+        }
+        cursor = next;
+    }
+    if cursor != end || texture_count != declared_textures {
+        return None;
+    }
+    let (glyph_count, glyph_records) = glyph_evidence?;
+    Some((children.join(","), glyph_count, glyph_records))
+}
+
+/// Decode one `tlTextureGlyphListChunk` without assigning semantics to the ten
+/// words in each fixed-width record.
+fn texture_glyph_records_json(
+    glyph_chunk: &[u8],
+    header_size: usize,
+    total_size: usize,
+) -> Option<(u32, String)> {
+    const CHUNK_HEADER_BYTES: usize = 12;
+    const GLYPH_COUNT_BYTES: usize = 4;
+    const GLYPH_WORDS: usize = 10;
+    const WORD_BYTES: usize = 4;
+    const GLYPH_RECORD_BYTES: usize = GLYPH_WORDS * WORD_BYTES;
+    if header_size != total_size || total_size != glyph_chunk.len() {
+        return None;
+    }
+    let glyph_count = read_u32(glyph_chunk, CHUNK_HEADER_BYTES)?;
+    let count = usize::try_from(glyph_count).ok()?;
+    let records_bytes = count.checked_mul(GLYPH_RECORD_BYTES)?;
+    let expected = CHUNK_HEADER_BYTES
+        .checked_add(GLYPH_COUNT_BYTES)?
+        .checked_add(records_bytes)?;
+    if expected != total_size {
+        return None;
+    }
+    let mut cursor = CHUNK_HEADER_BYTES.checked_add(GLYPH_COUNT_BYTES)?;
+    let mut records = Vec::with_capacity(count);
+    for _ in 0..count {
+        let mut words = Vec::with_capacity(GLYPH_WORDS);
+        for _ in 0..GLYPH_WORDS {
+            words.push(read_u32(glyph_chunk, cursor)?.to_string());
+            cursor = cursor.checked_add(WORD_BYTES)?;
+        }
+        records.push(format!("[{}]", words.join(",")));
+    }
+    (cursor == total_size).then(|| (glyph_count, records.join(",")))
 }
 
 /// Recover scrooby project json.
