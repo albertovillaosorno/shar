@@ -44,11 +44,10 @@ use super::{
     SourceEvidenceInput, ensure_generated_directory, open_stable_source,
     parallel_source_evidence, prepare_io_error, publication_error, read_utf8,
     retain_source_ids, source_worker_count_for, stream_source_digest,
-    validate_audit, verify_stable_source,
-    validate_generated_chain,
+    validate_audit, validate_generated_chain,
     validate_normalized_mission_source, validate_public_identifier,
     validate_publication_inventory, validate_relative_path,
-    validate_rendered_output,
+    validate_rendered_output, verify_stable_source,
 };
 use crate::domain::{
     MISSION_SCRIPT_SCHEMA, UNREAL_IMPORT_MANIFEST_SCHEMA,
@@ -75,9 +74,9 @@ fn source(id: &str) -> UnrealSourceEvidence {
     }
 }
 
-
 #[test]
-fn parallel_source_verification_reports_first_manifest_error() -> Result<(), String> {
+fn parallel_source_verification_reports_first_manifest_error()
+-> Result<(), String> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join(".temp")
         .join(format!("unreal-source-errors-{}", std::process::id()));
@@ -111,7 +110,8 @@ fn parallel_source_verification_reports_first_manifest_error() -> Result<(), Str
     let result = parallel_source_evidence(&inputs);
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     let Err(error) = result else {
-        return Err("parallel verification unexpectedly accepted invalid rows".to_owned());
+        return Err("parallel verification unexpectedly accepted invalid rows"
+            .to_owned());
     };
     let rendered = error.to_string();
     if !rendered.starts_with("source size changed for extracted/first.bin:") {
@@ -132,15 +132,17 @@ fn stable_source_verification_rejects_path_replacement() -> Result<(), String> {
     let path = root.join("source.bin");
     let moved = root.join("opened.bin");
     fs::write(&path, b"original-source").map_err(|error| error.to_string())?;
-    let (file, identity) = open_stable_source(&path)
-        .map_err(|error| error.to_string())?;
+    let (file, identity) =
+        open_stable_source(&path).map_err(|error| error.to_string())?;
     fs::rename(&path, &moved).map_err(|error| error.to_string())?;
     fs::write(&path, b"replacement-src").map_err(|error| error.to_string())?;
     let result = verify_stable_source(&path, &file, &identity);
     drop(file);
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     let Err(error) = result else {
-        return Err("path replacement preserved a stale source identity".to_owned());
+        return Err(
+            "path replacement preserved a stale source identity".to_owned()
+        );
     };
     if !error.to_string().contains("identity changed") {
         return Err(format!("unexpected replacement error: {error}"));
@@ -149,7 +151,8 @@ fn stable_source_verification_rejects_path_replacement() -> Result<(), String> {
 }
 
 #[test]
-fn streamed_source_digest_matches_one_shot_across_io_blocks() -> Result<(), String> {
+fn streamed_source_digest_matches_one_shot_across_io_blocks()
+-> Result<(), String> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join(".temp")
         .join(format!("unreal-stream-hash-{}", std::process::id()));
@@ -164,7 +167,9 @@ fn streamed_source_digest_matches_one_shot_across_io_blocks() -> Result<(), Stri
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     let (size, digest) = result?;
     if size != 1_048_593 || digest != digest_hex(&payload) {
-        return Err("streamed source digest changed across I/O blocks".to_owned());
+        return Err(
+            "streamed source digest changed across I/O blocks".to_owned()
+        );
     }
     Ok(())
 }
@@ -179,7 +184,8 @@ fn source_worker_count_is_bounded_and_never_zero() {
 }
 
 #[test]
-fn parallel_source_verification_preserves_manifest_order() -> Result<(), String> {
+fn parallel_source_verification_preserves_manifest_order() -> Result<(), String>
+{
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join(".temp")
         .join(format!("unreal-source-order-{}", std::process::id()));
@@ -209,7 +215,8 @@ fn parallel_source_verification_preserves_manifest_order() -> Result<(), String>
         future_normalization: "none".to_owned(),
     };
     let inputs = vec![input("first", first, 5), input("second", second, 13)];
-    let result = parallel_source_evidence(&inputs).map_err(|error| error.to_string());
+    let result =
+        parallel_source_evidence(&inputs).map_err(|error| error.to_string());
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     let evidence = result?;
     let ids = evidence
@@ -219,12 +226,16 @@ fn parallel_source_verification_preserves_manifest_order() -> Result<(), String>
     if ids != ["first", "second"] {
         return Err(format!("parallel source order changed: {ids:?}"));
     }
-    if evidence.first().is_none_or(|source| source.sha256 != digest_hex(b"first"))
+    if evidence
+        .first()
+        .is_none_or(|source| source.sha256 != digest_hex(b"first"))
         || evidence
             .get(1)
             .is_none_or(|source| source.sha256 != digest_hex(b"second-source"))
     {
-        return Err("parallel source hashing changed physical evidence".to_owned());
+        return Err(
+            "parallel source hashing changed physical evidence".to_owned()
+        );
     }
     Ok(())
 }
@@ -256,39 +267,42 @@ fn clean_mission_json(with_finding: bool) -> Result<Vec<u8>, String> {
         "schema": MISSION_SCRIPT_SCHEMA,
         "source_extension": "mfk",
         "route_class": "mission",
-        "source_bytes": 64,
-        "context_command_count": 2,
+        "source_bytes": 96,
+        "context_command_count": 6,
         "context_adaptation_count": 0,
         "context_adaptations": [],
         "context_finding_count": finding_count,
         "context_findings": findings,
-        "statement_count": 2,
-        "unique_command_count": 2,
+        "statement_count": 6,
+        "unique_command_count": 6,
         "load_p3d_reference_count": 0,
-        "mission_flow_command_count": 2,
+        "mission_flow_command_count": 6,
         "vehicle_physics_command_count": 0,
         "semantic_family": "mission-script",
-        "command_counts": {"closemission": 1, "selectmission": 1},
+        "command_counts": {
+            "addobjective": 1,
+            "addstage": 1,
+            "closemission": 1,
+            "closeobjective": 1,
+            "closestage": 1,
+            "selectmission": 1
+        },
         "source_statements": [
             "SelectMission(\"m1\");",
+            "AddStage(0);",
+            "AddObjective(\"goto\");",
+            "CloseObjective();",
+            "CloseStage();",
             "CloseMission();"
         ],
         "p3d_references": [],
         "command_invocations": [
-            {
-                "ordinal": 1,
-                "name": "selectmission",
-                "args_raw": "\"m1\"",
-                "semantic_role": "mission-script",
-                "arguments": ["m1"]
-            },
-            {
-                "ordinal": 2,
-                "name": "closemission",
-                "args_raw": "",
-                "semantic_role": "mission-script",
-                "arguments": []
-            }
+            {"ordinal":1,"name":"selectmission","args_raw":"\"m1\"","semantic_role":"mission-script","arguments":["m1"]},
+            {"ordinal":2,"name":"addstage","args_raw":"0","semantic_role":"mission-stage","arguments":["0"]},
+            {"ordinal":3,"name":"addobjective","args_raw":"\"goto\"","semantic_role":"mission-objective","arguments":["goto"]},
+            {"ordinal":4,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]},
+            {"ordinal":5,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
+            {"ordinal":6,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
         ]
     }))
     .map_err(|error| error.to_string())
@@ -828,6 +842,49 @@ fn rendered_record_type_failure_does_not_echo_rejected_value()
         || !rendered.contains("unsupported record type")
     {
         return Err(format!("record-type diagnostic leaked: {rendered}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn mission_semantic_gate_rejects_stage_without_root_objective()
+-> Result<(), String> {
+    let bytes = serde_json::to_vec(&json!({
+        "schema": MISSION_SCRIPT_SCHEMA,
+        "source_extension":"mfk","route_class":"mission","source_bytes":64,
+        "context_command_count":4,"context_adaptation_count":0,
+        "context_adaptations":[],"context_finding_count":0,"context_findings":[],
+        "statement_count":4,"unique_command_count":4,"load_p3d_reference_count":0,
+        "mission_flow_command_count":4,"vehicle_physics_command_count":0,
+        "semantic_family":"mission-script",
+        "command_counts":{"selectmission":1,"addstage":1,"closestage":1,"closemission":1},
+        "source_statements":[
+            "SelectMission(\"m1\");","AddStage(0);","CloseStage();","CloseMission();"
+        ],"p3d_references":[],
+        "command_invocations":[
+            {"ordinal":1,"name":"selectmission","args_raw":"\"m1\"","semantic_role":"mission-script","arguments":["m1"]},
+            {"ordinal":2,"name":"addstage","args_raw":"0","semantic_role":"mission-stage","arguments":["0"]},
+            {"ordinal":3,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
+            {"ordinal":4,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
+        ]
+    })).map_err(|error| error.to_string())?;
+    let result = validate_normalized_mission_source(
+        "mission-script",
+        MISSION_SCRIPT_SCHEMA,
+        "json",
+        "game-straggler-normalize",
+        &bytes,
+    );
+    let Err(error) = result else {
+        return Err(
+            "mission stage without root objective was accepted".to_owned()
+        );
+    };
+    let rendered = error.to_string();
+    if !rendered.contains("mission scope preflight failed")
+        || !rendered.contains("exactly one root objective")
+    {
+        return Err(format!("unexpected mission scope failure: {rendered}"));
     }
     Ok(())
 }
