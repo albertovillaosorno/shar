@@ -349,28 +349,24 @@ fn unreal_target_kind(package: &PhaseThreePackageRow) -> UnrealTargetKind {
         "language" if !package.text_key_ids.is_empty() => {
             UnrealTargetKind::StringTable
         },
-        "language" if !package.ids_for_role(PackageRole::Ui).is_empty() => {
-            UnrealTargetKind::UserInterface
-        },
         "language" => UnrealTargetKind::SemanticSource,
-        "ui-images" | "game-icons" | "cards" => UnrealTargetKind::Texture,
-        "ui-screens" | "ui-components" => UnrealTargetKind::UserInterface,
-        "ui-resources" if has_member_kind(package, "p3d-texture-font") => {
-            UnrealTargetKind::Font
-        },
-        "ui-resources"
-            if !package.ids_for_role(PackageRole::Text).is_empty() =>
+        "ui-images" | "game-icons" | "cards"
+            if has_direct_texture_payload(package) =>
         {
-            UnrealTargetKind::StringTable
+            UnrealTargetKind::Texture
+        },
+        "ui-images" | "game-icons" | "cards" => {
+            UnrealTargetKind::SemanticSource
+        },
+        "ui-screens" | "ui-components" | "ui-resources" => {
+            UnrealTargetKind::SemanticSource
         },
         "cinematics"
             if !package.ids_for_role(PackageRole::Audio).is_empty() =>
         {
             UnrealTargetKind::SoundWave
         },
-        "characters"
-            if !package.ids_for_role(PackageRole::Texture).is_empty() =>
-        {
+        "characters" if has_direct_texture_payload(package) => {
             UnrealTargetKind::Texture
         },
         "dialog" | "music" | "sound-effects" => UnrealTargetKind::SoundWave,
@@ -380,16 +376,25 @@ fn unreal_target_kind(package: &PhaseThreePackageRow) -> UnrealTargetKind {
         "movies" => UnrealTargetKind::Metadata,
         "missions" => UnrealTargetKind::SemanticSource,
         "mission-scripts" => UnrealTargetKind::SemanticSource,
-        "vehicle-tuning" | "sound-scripts" => UnrealTargetKind::DataTable,
+        "vehicle-tuning" | "sound-scripts" => UnrealTargetKind::SemanticSource,
         "extraction-reports" => UnrealTargetKind::Metadata,
         _ => UnrealTargetKind::SemanticSource,
     }
 }
 
-/// Returns whether one package contains a physical member of an exact kind.
-fn has_member_kind(package: &PhaseThreePackageRow, kind: &str) -> bool {
-    package.members().iter().any(|member| member.kind == kind)
+/// Return whether package evidence contains a physical PNG payload that the
+/// direct Unreal texture importer can consume. Sprite/layout JSON is not image
+/// content and must remain semantic evidence until its source-backed pixels are
+/// linked explicitly.
+fn has_direct_texture_payload(package: &PhaseThreePackageRow) -> bool {
+    package.members().iter().any(|member| {
+        member.role == PackageRole::Texture
+            && std::path::Path::new(&member.path)
+                .extension()
+                .is_some_and(|extension| extension.eq_ignore_ascii_case("png"))
+    })
 }
+
 
 /// Collects the exact ids consumed by one Unreal-native target.
 fn unreal_input_ids(package: &PhaseThreePackageRow) -> Vec<String> {

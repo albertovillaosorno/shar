@@ -193,7 +193,7 @@ pub(super) fn classify_minor_unit(
     } else if matches!(ext.as_str(), "png" | "bmp" | "dds" | "tga") {
         classify_image(&mut meta, &route, &ext);
     } else if ext == "json" || ext == "jsonl" {
-        classify_json_like(&mut meta, &route, &ext, &header_text);
+        classify_json_like(&mut meta, &route, &ext, &header_text)?;
     } else if ext == "tsv" {
         apply_classification(
             &mut meta,
@@ -416,9 +416,9 @@ fn classify_json_like(
     route: &RouteSignature,
     ext: &str,
     text: &str,
-) {
-    if classify_straggler_json(meta, text) {
-        return;
+) -> PipelineOutcome<()> {
+    if classify_straggler_json(meta, text)? {
+        return Ok(());
     }
     if text.contains("p3d.package.v1") || route.leaf == "components.jsonl" {
         apply_classification(
@@ -496,6 +496,7 @@ fn classify_json_like(
             ),
         );
     }
+    Ok(())
 }
 
 /// Immutable metadata classification selected from source evidence.
@@ -592,7 +593,7 @@ fn classify_legacy_extension(
                 "mission-script",
                 "mission gameplay source script",
                 "game-root",
-                "import-as-data-asset",
+                "compose-into-asset",
                 "mission-json-to-statetree",
             ),
         ),
@@ -604,7 +605,7 @@ fn classify_legacy_extension(
                 "vehicle-tuning",
                 "vehicle gameplay tuning source",
                 "game-root",
-                "import-as-data-asset",
+                "compose-into-asset",
                 "vehicle-json-to-data-asset",
             ),
         ),
@@ -616,7 +617,7 @@ fn classify_legacy_extension(
                 "ui-layout",
                 "Scrooby UI source",
                 "game-root",
-                "import-as-data-asset",
+                "compose-into-asset",
                 "ui-json-to-umg",
             ),
         ),
@@ -628,7 +629,7 @@ fn classify_legacy_extension(
                 "choreography-bank",
                 "character choreography source",
                 "game-root",
-                "import-as-data-asset",
+                "compose-into-asset",
                 "choreography-json-to-animation-data",
             ),
         ),
@@ -640,7 +641,7 @@ fn classify_legacy_extension(
                 "localization-table",
                 "TextBible source",
                 "game-root",
-                "import-as-data-asset",
+                "compose-into-asset",
                 "localization-json-to-string-table",
             ),
         ),
@@ -652,7 +653,7 @@ fn classify_legacy_extension(
                 "sound-metadata",
                 "sound type metadata source",
                 "game-root",
-                "import-as-data-asset",
+                "compose-into-asset",
                 "sound-metadata-json-to-data-asset",
             ),
         ),
@@ -911,7 +912,10 @@ fn classify_movie_json(
 }
 
 /// Classify straggler json.
-fn classify_straggler_json(meta: &mut MinorUnitMetadata, text: &str) -> bool {
+fn classify_straggler_json(
+    meta: &mut MinorUnitMetadata,
+    text: &str,
+) -> PipelineOutcome<bool> {
     let cases = [
         (
             "straggler.mission-script",
@@ -993,7 +997,7 @@ fn classify_straggler_json(meta: &mut MinorUnitMetadata, text: &str) -> bool {
             } else if kind == "editor-only-metadata" {
                 "editor-only-metadata"
             } else {
-                "import-as-data-asset"
+                "compose-into-asset"
             };
             apply_classification(
                 meta,
@@ -1007,9 +1011,47 @@ fn classify_straggler_json(meta: &mut MinorUnitMetadata, text: &str) -> bool {
                     future,
                 ),
             );
-            meta.schema = format!("shar-schoenwald.{needle}.v1");
-            return true;
+            meta.schema = straggler_schema(text, needle)?;
+            return Ok(true);
         }
     }
-    false
+    Ok(false)
 }
+
+/// Return the exact canonical schema declared by one recognized straggler JSON
+/// family without requiring the complete document to fit inside the bounded
+/// classification prefix.
+fn straggler_schema(text: &str, family: &str) -> PipelineOutcome<String> {
+    let schema = json_string_field_prefix(text, "schema").ok_or_else(|| {
+        PipelineError::new("normalized straggler JSON omitted schema in bounded header")
+    })?;
+    let prefix = format!("shar-schoenwald.{family}.v");
+    let version = schema.strip_prefix(&prefix).ok_or_else(|| {
+        PipelineError::new("normalized straggler JSON schema disagrees with detected family")
+    })?;
+    if version.is_empty() || !version.bytes().all(|byte| byte.is_ascii_digit()) {
+        return Err(PipelineError::new(
+            "normalized straggler JSON schema has an invalid version",
+        ));
+    }
+    Ok(schema.to_owned())
+}
+
+/// Read one simple top-level JSON string field from bounded canonical prefix
+/// evidence. Escaped field values are rejected because schema identifiers are
+/// required to be plain ASCII tokens.
+fn json_string_field_prefix<'text>(text: &'text str, field: &str) -> Option<&'text str> {
+    let key = format!("\"{field}\"");
+    let start = text.find(&key)?.checked_add(key.len())?;
+    let tail = text.get(start..)?.trim_start();
+    let tail = tail.strip_prefix(':')?.trim_start();
+    let value = tail.strip_prefix('"')?;
+    let end = value.find('"')?;
+    let value = value.get(..end)?;
+    (!value.contains('\\')).then_some(value)
+}
+
+#[cfg(test)]
+// jig-ignore-next-line: exact syntax is indivisible
+#[path = "../../../../../../../../tests/migration/pipeline/unit/adapter-outbound/local/two/units/metadata/tests.rs"]
+mod tests;

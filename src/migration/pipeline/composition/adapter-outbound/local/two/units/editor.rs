@@ -193,7 +193,7 @@ fn component_bucket(segment: &str) -> ComponentBucket {
         "text_bible" => bucket(
             "localization",
             "p3d-text-bible",
-            "import-as-data-asset",
+            "compose-into-asset",
             "p3d-text-bible-to-string-table",
             "Pure3D embedded text bible reconstruction",
         ),
