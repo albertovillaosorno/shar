@@ -13,7 +13,7 @@ names, marks, or user-supplied content.
   encodings, middleware history, and present rights remain unresolved.
 - Counsel review: Not performed.
 - Jurisdictional scope: Not determined.
-- As-of date: 2026-07-13.
+- As-of date: 2026-08-07.
 - Distribution posture: Local interoperability research only.
 - Subject class: Proprietary audio container and codec metadata family.
 
@@ -25,8 +25,11 @@ other variants that SHAR can identify or reject.
 ## Repository Use And Scope
 
 The rsd crate validates supported RSD metadata and emits deterministic PCM
-WAVE output. Unsupported codecs and malformed frame shapes fail closed. The
-repository does not publish source RSD audio.
+WAVE output. The supported legacy RSD3 PCM and PCMB layout reads its declared
+payload start from the versioned header and rejects offsets inside the header or
+beyond the physical file. RSD4 retains its compact or padded payload contract.
+Unsupported codecs and malformed frame shapes fail closed. The repository does
+not publish source RSD audio.
 
 ## Provenance And Version History
 
@@ -77,5 +80,7 @@ require separate fact-specific analysis in docs/legal.
   record](radical-entertainment-toolchain-and-formats.md).
 - Historical Radical source notices reviewed locally; source material not
   distributed.
+- FFmpeg project RSD parser source, reviewed as an independent public
+  interoperability cross-check for versioned RSD payload placement.
 - SHAR repository (2026) rsd, WAVE serialization tests, and pipeline audio
   adapters.

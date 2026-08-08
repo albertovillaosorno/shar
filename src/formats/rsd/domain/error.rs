@@ -64,6 +64,8 @@ pub enum RsdError {
     TruncatedData,
     /// Reserved bytes in a padded RSD header violate the writer contract.
     InvalidHeaderPadding,
+    /// Versioned header declares a payload start outside its container bounds.
+    InvalidDataOffset(u32),
     /// Input root cannot become a safe output folder name.
     InvalidRootName(PathBuf),
     /// Input root exists but is not a directory tree.
@@ -277,11 +279,17 @@ impl RsdError {
                 path,
                 message: source.to_string(),
             },
-            Self::BadMagic => static_display("not an RSD4 audio file"),
+            Self::BadMagic => {
+                static_display("not a supported RSD3/RSD4 audio file")
+            },
             Self::TruncatedHeader => static_display("RSD header is truncated"),
             Self::TruncatedData => static_display("RSD payload is truncated"),
             Self::InvalidHeaderPadding => {
                 static_display("RSD padded header metadata is corrupt")
+            },
+            Self::InvalidDataOffset(value) => ErrorDisplay::UnsignedValue {
+                label: "invalid RSD data offset",
+                value: *value,
             },
             Self::InvalidRootName(path) => ErrorDisplay::LabeledPath {
                 label: "input root has no safe folder name",
