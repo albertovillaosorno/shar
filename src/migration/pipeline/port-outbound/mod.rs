@@ -171,6 +171,18 @@ pub trait PipelineOperations {
         output_dir: &Path,
     ) -> PipelineOutcome<StageReport>;
 
+    /// Exports every current direct package-level FBX into catalog v2.
+    ///
+    /// # Errors
+    ///
+    /// Returns a validated pipeline failure.
+    fn export_complete_fbx_catalog(
+        &self,
+        index_path: &Path,
+        output_dir: &Path,
+        base_root: &Path,
+    ) -> PipelineOutcome<StageReport>;
+
     /// Exports every skinned character package as a verified FBX catalog.
     ///
     /// # Errors
