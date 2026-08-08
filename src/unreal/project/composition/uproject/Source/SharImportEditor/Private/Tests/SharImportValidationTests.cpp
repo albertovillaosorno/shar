@@ -126,6 +126,63 @@ bool FSharImportValidationTest::RunTest(const FString& Parameters)
         )
     );
 
+    UE::SharImportEditor::Private::FSkeletalMeshImportPaths SkeletalPaths;
+    TestTrue(
+        TEXT("Canonical generated skeletal FBX request passes"),
+        UE::SharImportEditor::Private::ValidateSkeletalMeshRequest(
+            TEXT("C:/SHAR/verified.fbx"),
+            TEXT("/Game/Generated/SHAR/models/skeletal"),
+            TEXT("reviewed_character"),
+            SkeletalPaths,
+            Error
+        )
+    );
+    TestEqual(
+        TEXT("Skeletal mesh package identity is deterministic"),
+        SkeletalPaths.MeshPackagePath,
+        FString(TEXT("/Game/Generated/SHAR/models/skeletal/reviewed_character"))
+    );
+    TestEqual(
+        TEXT("Skeleton companion package identity is deterministic"),
+        SkeletalPaths.SkeletonPackagePath,
+        FString(
+            TEXT(
+                "/Game/Generated/SHAR/models/skeletal/"
+                "reviewed_character_Skeleton"
+            )
+        )
+    );
+    TestEqual(
+        TEXT("Skeleton companion object identity is deterministic"),
+        SkeletalPaths.SkeletonObjectPath,
+        FString(
+            TEXT(
+                "/Game/Generated/SHAR/models/skeletal/"
+                "reviewed_character_Skeleton.reviewed_character_Skeleton"
+            )
+        )
+    );
+    TestFalse(
+        TEXT("Relative skeletal source is rejected"),
+        UE::SharImportEditor::Private::ValidateSkeletalMeshRequest(
+            TEXT("verified.fbx"),
+            TEXT("/Game/Generated/SHAR/models/skeletal"),
+            TEXT("reviewed_character"),
+            SkeletalPaths,
+            Error
+        )
+    );
+    TestFalse(
+        TEXT("Non-FBX skeletal source is rejected"),
+        UE::SharImportEditor::Private::ValidateSkeletalMeshRequest(
+            TEXT("C:/SHAR/verified.obj"),
+            TEXT("/Game/Generated/SHAR/models/skeletal"),
+            TEXT("reviewed_character"),
+            SkeletalPaths,
+            Error
+        )
+    );
+
     TestTrue(
         TEXT("Canonical generated WAV request passes"),
         UE::SharImportEditor::Private::ValidateSoundWaveRequest(

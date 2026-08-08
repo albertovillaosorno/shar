@@ -33,19 +33,25 @@
 #include "Import/SharImportValidation.h"
 
 #include "AssetImportTask.h"
+#include "Animation/Skeleton.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetToolsModule.h"
 #include "Factories/FbxFactory.h"
 #include "Factories/FbxImportUI.h"
 #include "Factories/FbxStaticMeshImportData.h"
+#include "Factories/FbxSkeletalMeshImportData.h"
 #include "Factories/SoundFactory.h"
 #include "FileMediaSource.h"
+#include "Engine/SkeletalMesh.h"
 #include "Engine/StaticMesh.h"
 #include "HAL/FileManager.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Misc/Guid.h"
 #include "Misc/PackageName.h"
 #include "Misc/Paths.h"
+#include "ObjectTools.h"
+#include "PhysicsEngine/PhysicsAsset.h"
+// cspell:ignore FBXICT
 #include "UObject/Package.h"
 #include "UObject/StrongObjectPtr.h"
 #include "UObject/UObjectGlobals.h"
@@ -143,6 +149,59 @@ bool BuildFileMediaSourcePaths(
     return true;
 }
 
+bool AssetIdentityExists(
+    const FString& PackagePath,
+    const FString& ObjectPath
+)
+{
+    return FindObject<UObject>(nullptr, *ObjectPath) != nullptr
+        || FindPackage(nullptr, *PackagePath) != nullptr
+        || FPackageName::DoesPackageExist(PackagePath);
+}
+
+void AddImportedSkeletalObject(
+    UObject* Object,
+    TArray<UObject*>& OutObjects
+)
+{
+    if (Object == nullptr)
+    {
+        return;
+    }
+    OutObjects.AddUnique(Object);
+    USkeletalMesh* SkeletalMesh = Cast<USkeletalMesh>(Object);
+    if (SkeletalMesh == nullptr)
+    {
+        return;
+    }
+    OutObjects.AddUnique(SkeletalMesh->GetSkeleton());
+    OutObjects.AddUnique(SkeletalMesh->GetPhysicsAsset());
+}
+
+void DiscardSkeletalImport(
+    const UAssetImportTask* Task,
+    USkeletalMesh* PrimaryMesh
+)
+{
+    TArray<UObject*> Objects;
+    AddImportedSkeletalObject(PrimaryMesh, Objects);
+    if (Task != nullptr)
+    {
+        for (const FString& ImportedPath : Task->ImportedObjectPaths)
+        {
+            AddImportedSkeletalObject(
+                FindObject<UObject>(nullptr, *ImportedPath),
+                Objects
+            );
+        }
+    }
+    Objects.Remove(nullptr);
+    if (!Objects.IsEmpty())
+    {
+        (void)ObjectTools::ForceDeleteObjects(Objects, false);
+    }
+}
+
 void DiscardCreatedMediaSource(
     UFileMediaSource* MediaSource,
     UPackage* Package
@@ -191,6 +250,63 @@ bool ValidateStaticMeshRequest(
         PackagePath,
         OutError
     );
+}
+
+bool ValidateSkeletalMeshRequest(
+    const FString& SourceFile,
+    const FString& FolderPath,
+    const FString& AssetName,
+    FSkeletalMeshImportPaths& OutPaths,
+    FString& OutError
+)
+{
+    OutPaths = {};
+    OutError.Reset();
+    if (SourceFile.IsEmpty() || FPaths::IsRelative(SourceFile))
+    {
+        OutError = TEXT("source_file must be an absolute path");
+        return false;
+    }
+    if (
+        !FPaths::GetExtension(SourceFile).Equals(
+            TEXT("fbx"),
+            ESearchCase::IgnoreCase
+        )
+    )
+    {
+        OutError = TEXT("source_file must have an FBX extension");
+        return false;
+    }
+    if (!ValidateGeneratedDestination(
+            FolderPath,
+            AssetName,
+            OutPaths.MeshPackagePath,
+            OutError
+        ))
+    {
+        return false;
+    }
+    OutPaths.MeshObjectPath = FString::Printf(
+        TEXT("%s.%s"),
+        *OutPaths.MeshPackagePath,
+        *AssetName
+    );
+    const FString SkeletonName = AssetName + TEXT("_Skeleton");
+    if (!ValidateGeneratedDestination(
+            FolderPath,
+            SkeletonName,
+            OutPaths.SkeletonPackagePath,
+            OutError
+        ))
+    {
+        return false;
+    }
+    OutPaths.SkeletonObjectPath = FString::Printf(
+        TEXT("%s.%s"),
+        *OutPaths.SkeletonPackagePath,
+        *SkeletonName
+    );
+    return true;
 }
 
 bool ValidateSoundWaveRequest(
@@ -409,6 +525,130 @@ TArray<FString> USharImportToolset::ImportStaticMesh(
         return {};
     }
     return Task->ImportedObjectPaths;
+}
+
+TArray<FString> USharImportToolset::ImportSkeletalMesh(
+    const FString& SourceFile,
+    const FString& FolderPath,
+    const FString& AssetName
+)
+{
+    using namespace UE::SharImportEditor::Private;
+    FSkeletalMeshImportPaths Paths;
+    FString Error;
+    if (!ValidateSkeletalMeshRequest(
+            SourceFile,
+            FolderPath,
+            AssetName,
+            Paths,
+            Error
+        ))
+    {
+        RaiseError(Error);
+        return {};
+    }
+    if (!IFileManager::Get().FileExists(*SourceFile))
+    {
+        RaiseError(TEXT("source_file does not exist"));
+        return {};
+    }
+    if (
+        AssetIdentityExists(Paths.MeshPackagePath, Paths.MeshObjectPath)
+        || AssetIdentityExists(
+            Paths.SkeletonPackagePath,
+            Paths.SkeletonObjectPath
+        )
+    )
+    {
+        RaiseError(TEXT("skeletal import output already exists"));
+        return {};
+    }
+
+    TStrongObjectPtr<UAssetImportTask> Task(NewObject<UAssetImportTask>());
+    TStrongObjectPtr<UFbxFactory> Factory(NewObject<UFbxFactory>());
+    UFbxImportUI* ImportUI = Factory->ImportUI;
+    if (ImportUI == nullptr || ImportUI->SkeletalMeshImportData == nullptr)
+    {
+        RaiseError(TEXT("FBX skeletal import settings are unavailable"));
+        return {};
+    }
+
+    ImportUI->bAutomatedImportShouldDetectType = false;
+    ImportUI->bOverrideFullName = true;
+    ImportUI->bImportAsSkeletal = true;
+    ImportUI->bImportMesh = true;
+    ImportUI->MeshTypeToImport = FBXIT_SkeletalMesh;
+    ImportUI->OriginalImportType = FBXIT_SkeletalMesh;
+    ImportUI->bImportMaterials = false;
+    ImportUI->bImportTextures = false;
+    ImportUI->bImportAnimations = false;
+    ImportUI->Skeleton = nullptr;
+    ImportUI->bCreatePhysicsAsset = false;
+    ImportUI->PhysicsAsset = nullptr;
+
+    UFbxSkeletalMeshImportData* MeshImport = ImportUI->SkeletalMeshImportData;
+    MeshImport->ImportContentType = FBXICT_All;
+    MeshImport->NormalImportMethod = FBXNIM_ImportNormals;
+    MeshImport->bComputeWeightedNormals = false;
+    MeshImport->bImportMeshLODs = false;
+    MeshImport->bUpdateSkeletonReferencePose = false;
+    MeshImport->bUseT0AsRefPose = false;
+    MeshImport->bPreserveSmoothingGroups = false;
+    MeshImport->bKeepSectionsSeparate = false;
+    MeshImport->bImportMeshesInBoneHierarchy = false;
+    MeshImport->bImportMorphTargets = false;
+    MeshImport->bImportVertexAttributes = false;
+    MeshImport->VertexColorImportOption = EVertexColorImportOption::Replace;
+
+    Factory->SetDetectImportTypeOnImport(false);
+    Task->Filename = SourceFile;
+    Task->DestinationPath = FolderPath;
+    Task->DestinationName = AssetName;
+    Task->bAutomated = true;
+    Task->bAsync = false;
+    Task->bReplaceExisting = false;
+    Task->bReplaceExistingSettings = false;
+    Task->bSave = false;
+    Task->Factory = Factory.Get();
+    Task->Options = ImportUI;
+    Factory->SetAssetImportTask(Task.Get());
+
+    FAssetToolsModule::GetModule().Get().ImportAssetTasks({Task.Get()});
+    USkeletalMesh* SkeletalMesh = FindObject<USkeletalMesh>(
+        nullptr,
+        *Paths.MeshObjectPath
+    );
+    const bool PrimaryResultMatches =
+        Task->ImportedObjectPaths.Num() == 1
+        && Task->ImportedObjectPaths[0].Equals(
+            Paths.MeshObjectPath,
+            ESearchCase::CaseSensitive
+        );
+    if (!PrimaryResultMatches || SkeletalMesh == nullptr)
+    {
+        DiscardSkeletalImport(Task.Get(), SkeletalMesh);
+        RaiseError(TEXT("FBX skeletal import produced unexpected primary assets"));
+        return {};
+    }
+
+    USkeleton* Skeleton = SkeletalMesh->GetSkeleton();
+    if (
+        Skeleton == nullptr
+        || !Skeleton->GetPathName().Equals(
+            Paths.SkeletonObjectPath,
+            ESearchCase::CaseSensitive
+        )
+        || FindObject<USkeleton>(nullptr, *Paths.SkeletonObjectPath) != Skeleton
+        || SkeletalMesh->GetPhysicsAsset() != nullptr
+        || !SkeletalMesh->GetPackage()->IsDirty()
+        || !Skeleton->GetPackage()->IsDirty()
+    )
+    {
+        DiscardSkeletalImport(Task.Get(), SkeletalMesh);
+        RaiseError(TEXT("FBX skeletal import produced unexpected companions"));
+        return {};
+    }
+    return {Paths.MeshObjectPath, Paths.SkeletonObjectPath};
 }
 
 TArray<FString> USharImportToolset::ImportSoundWave(

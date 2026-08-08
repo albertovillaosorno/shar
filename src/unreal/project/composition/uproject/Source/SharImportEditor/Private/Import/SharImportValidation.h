@@ -41,10 +41,26 @@ struct FFileMediaSourcePaths
     FString FullPayloadPath;
 };
 
+struct FSkeletalMeshImportPaths
+{
+    FString MeshPackagePath;
+    FString MeshObjectPath;
+    FString SkeletonPackagePath;
+    FString SkeletonObjectPath;
+};
+
 bool ValidateStaticMeshRequest(
     const FString& SourceFile,
     const FString& FolderPath,
     const FString& AssetName,
+    FString& OutError
+);
+
+bool ValidateSkeletalMeshRequest(
+    const FString& SourceFile,
+    const FString& FolderPath,
+    const FString& AssetName,
+    FSkeletalMeshImportPaths& OutPaths,
     FString& OutError
 );
 
