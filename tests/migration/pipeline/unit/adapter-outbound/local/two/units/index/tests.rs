@@ -34,6 +34,7 @@ use std::collections::BTreeSet;
 
 use super::super::index_render::render_index_jsonl;
 use super::{
+    decoded_mesh_has_no_primitive_groups,
     MinorUnitId, MinorUnitPackage, MinorUnitRole, PackageCategory, PackageId,
     PackageMember, category_from_root, package_root, role_from_fields,
     subcategory_from_root, validate_package_coverage,
@@ -729,6 +730,41 @@ fn manifest_evidence_routes_ui_resources_by_scope_and_role()
         PackageCategory::UiResources,
         "ui-resources/backend/loading/loading0",
     )
+}
+
+#[test]
+fn decoded_mesh_geometry_requires_physical_primitive_groups() -> Result<(), String> {
+    if !decoded_mesh_has_no_primitive_groups(
+        br#"{"schema":"mesh","name":"empty","num_prim_groups":0,"prim_groups":[]}"#,
+    )
+    .map_err(|error| error.to_string())?
+    {
+        return Err("empty decoded mesh was treated as FBX geometry".to_owned());
+    }
+    if decoded_mesh_has_no_primitive_groups(
+        br#"{"schema":"mesh","name":"solid","num_prim_groups":1,"prim_groups":[{}]}"#,
+    )
+    .map_err(|error| error.to_string())?
+    {
+        return Err("physical primitive group was discarded".to_owned());
+    }
+    if !decoded_mesh_has_no_primitive_groups(
+        br#"{"schema" : "mesh", "prim_groups" : [ ]}"#,
+    )
+    .map_err(|error| error.to_string())?
+    {
+        return Err("spaced primitive group header lost empty geometry".to_owned());
+    }
+    for malformed in [
+        br#"{"schema":"not-mesh","prim_groups":[]}"#.as_slice(),
+        br#"{"schema":"mesh"}"#.as_slice(),
+        b"not-json".as_slice(),
+    ] {
+        if decoded_mesh_has_no_primitive_groups(malformed).is_ok() {
+            return Err("malformed decoded mesh evidence did not fail".to_owned());
+        }
+    }
+    Ok(())
 }
 
 #[test]
