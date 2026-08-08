@@ -263,9 +263,10 @@ fn validate_identity(document: &MissionScriptDocument) -> Result<(), String> {
             "normalized mission script routing identity is invalid".to_owned()
         );
     }
-    if document.source_bytes == 0 || document.statement_count == 0 {
+    if (document.source_bytes == 0) != (document.statement_count == 0) {
         return Err(
-            "normalized mission script source evidence is empty".to_owned()
+            "normalized mission script byte and statement evidence is inconsistent"
+                .to_owned(),
         );
     }
     Ok(())

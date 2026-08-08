@@ -161,6 +161,65 @@ fn accepts_exact_clean_v3_evidence() -> Result<(), String> {
 }
 
 #[test]
+fn accepts_exact_empty_inert_mission_source() -> Result<(), String> {
+    let value = json!({
+        "schema": MISSION_SCRIPT_SCHEMA,
+        "source_extension": "mfk",
+        "route_class": "mission",
+        "source_bytes": 0,
+        "context_command_count": 0,
+        "context_adaptation_count": 0,
+        "context_adaptations": [],
+        "context_finding_count": 0,
+        "context_findings": [],
+        "statement_count": 0,
+        "unique_command_count": 0,
+        "load_p3d_reference_count": 0,
+        "mission_flow_command_count": 0,
+        "vehicle_physics_command_count": 0,
+        "semantic_family": "mission-script",
+        "command_counts": {},
+        "source_statements": [],
+        "p3d_references": [],
+        "command_invocations": []
+    });
+    let evidence = preflight_mission_script(&text(&value)?)?;
+    if evidence.source_bytes() != 0
+        || evidence.statement_count() != 0
+        || !evidence.invocations().is_empty()
+    {
+        return Err("empty inert mission evidence changed".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_nonempty_source_bytes_with_zero_statements() -> Result<(), String> {
+    let mut value = document();
+    set_pointer(&mut value, "/statement_count", json!(0))?;
+    set_pointer(&mut value, "/source_statements", json!([]))?;
+    set_pointer(&mut value, "/command_invocations", json!([]))?;
+    set_pointer(&mut value, "/command_counts", json!({}))?;
+    set_pointer(&mut value, "/unique_command_count", json!(0))?;
+    let error = rejected_error(&value, "nonempty source with zero statements was accepted")?;
+    if !error.contains("inconsistent") {
+        return Err(format!("unexpected source-byte error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_zero_source_bytes_with_nonempty_statements() -> Result<(), String> {
+    let mut value = document();
+    set_pointer(&mut value, "/source_bytes", json!(0))?;
+    let error = rejected_error(&value, "contradictory source byte evidence was accepted")?;
+    if !error.contains("inconsistent") {
+        return Err(format!("unexpected source-byte error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
 fn rejects_stale_schema_before_semantic_mapping() -> Result<(), String> {
     let mut value = document();
     set_pointer(
