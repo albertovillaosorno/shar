@@ -31,6 +31,8 @@
 //! Index outbound adapter.
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::fs::File;
+use std::io::Read;
 use std::path::{Path, PathBuf};
 
 use schoenwald_filesystem::adapters::driving::local::{
@@ -363,7 +365,7 @@ pub(super) fn read_minor_unit_packages(
         packages
             .entry(root.clone())
             .or_insert_with(|| MinorUnitPackage::new(root))
-            .push(row.into_member());
+            .push(row.into_member(extracted_root)?);
     }
     let mut output = packages.into_values().collect::<Vec<_>>();
     for package in &mut output {
@@ -451,18 +453,109 @@ impl MinorUnitRow {
 
     /// Supports the `into_member` operation within this deterministic
     /// classification boundary.
-    fn into_member(self) -> PackageMember {
-        let role =
+    fn into_member(self, extracted_root: &Path) -> PipelineOutcome<PackageMember> {
+        let mut role =
             role_from_fields(&self.type_, &self.kind, &self.source_chunk_kind);
-        PackageMember {
+        if role == MinorUnitRole::Model
+            && self.kind == "p3d-mesh"
+            && self.source_chunk_kind == "mesh"
+            && mesh_has_no_primitive_groups(extracted_root, &self.path)?
+        {
+            role = MinorUnitRole::Metadata;
+        }
+        Ok(PackageMember {
             id: self.id,
             role,
             path: self.path,
             type_: self.type_,
             kind: self.kind,
             source_chunk_kind: self.source_chunk_kind,
-        }
+        })
     }
+}
+
+/// Maximum decoded mesh prefix needed to classify physical geometry.
+const MESH_GEOMETRY_PREFIX_BYTES: usize = 512;
+
+/// Return whether one decoded P3D mesh carries no physical primitive groups.
+fn mesh_has_no_primitive_groups(
+    extracted_root: &Path,
+    member_path: &str,
+) -> PipelineOutcome<bool> {
+    let relative = Path::new(member_path);
+    let path = if relative.is_absolute() {
+        relative.to_path_buf()
+    } else {
+        extracted_root
+            .parent()
+            .unwrap_or_else(|| Path::new("."))
+            .join(relative)
+    };
+    let mut file = File::open(&path).map_err(io_error(&path))?;
+    let mut prefix = [0_u8; MESH_GEOMETRY_PREFIX_BYTES];
+    let length = file.read(&mut prefix).map_err(io_error(&path))?;
+    let bounded = prefix.get(..length).ok_or_else(|| {
+        PipelineError::new("decoded mesh header read exceeded its buffer")
+    })?;
+    decoded_mesh_has_no_primitive_groups(bounded)
+}
+
+/// Inspect canonical decoded mesh header evidence without reading full geometry.
+fn decoded_mesh_has_no_primitive_groups(prefix: &[u8]) -> PipelineOutcome<bool> {
+    let schema = json_field_value(prefix, b"schema").ok_or_else(|| {
+        PipelineError::new("decoded P3D mesh omitted geometry schema")
+    })?;
+    if !schema.starts_with(b"\"mesh\"") {
+        return Err(PipelineError::new(
+            "decoded P3D mesh has an unexpected geometry schema",
+        ));
+    }
+    let groups = json_field_value(prefix, b"prim_groups").ok_or_else(|| {
+        PipelineError::new(
+            "decoded P3D mesh primitive groups exceed bounded header evidence",
+        )
+    })?;
+    let Some(groups) = groups.strip_prefix(b"[") else {
+        return Err(PipelineError::new(
+            "decoded P3D mesh primitive groups are not an array",
+        ));
+    };
+    let first = groups
+        .iter()
+        .copied()
+        .find(|byte| !byte.is_ascii_whitespace())
+        .ok_or_else(|| PipelineError::new("decoded P3D mesh array is truncated"))?;
+    match first {
+        b']' => Ok(true),
+        b'{' => Ok(false),
+        _ => Err(PipelineError::new(
+            "decoded P3D mesh primitive-group array is malformed",
+        )),
+    }
+}
+
+fn json_field_value<'prefix>(
+    prefix: &'prefix [u8],
+    field: &[u8],
+) -> Option<&'prefix [u8]> {
+    let field_width = field.len().checked_add(2)?;
+    let field_start = prefix.windows(field_width).position(|window| {
+        window.first() == Some(&b'"')
+            && window.last() == Some(&b'"')
+            && window.get(1..field_width.saturating_sub(1)) == Some(field)
+    })?;
+    let mut cursor = field_start.checked_add(field_width)?;
+    while prefix.get(cursor).is_some_and(u8::is_ascii_whitespace) {
+        cursor = cursor.checked_add(1)?;
+    }
+    if prefix.get(cursor) != Some(&b':') {
+        return None;
+    }
+    cursor = cursor.checked_add(1)?;
+    while prefix.get(cursor).is_some_and(u8::is_ascii_whitespace) {
+        cursor = cursor.checked_add(1)?;
+    }
+    prefix.get(cursor..)
 }
 
 /// Supports the `required_field` operation within this deterministic
