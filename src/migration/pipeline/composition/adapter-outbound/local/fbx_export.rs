@@ -170,6 +170,75 @@ pub(super) fn export_fbx_package(
     )
 }
 
+/// Export one package directly into the complete catalog staging layout.
+///
+/// The caller owns the root transaction. This helper only owns the package
+/// directory it creates and deliberately strips the one-off capability report
+/// so the catalog inventory contains only promotable FBX/PNG artifacts.
+pub(super) fn export_catalog_package(
+    index: &PhaseThreePackageIndex,
+    package: &PhaseThreePackageRow,
+    packages_root: &Path,
+    base_root: &Path,
+) -> Result<(), PipelineError> {
+    let target_kind = PhaseThreePackagePlanner::plan(package)
+        .fbx
+        .as_ref()
+        .map(|fbx| fbx.target_kind)
+        .ok_or_else(|| {
+            PipelineError::new(format!(
+                "catalog package is not an FBX model package: {}",
+                package.package_id
+            ))
+        })?;
+    if target_kind == FbxTargetKind::SemanticSplit {
+        return Err(PipelineError::new(format!(
+            "catalog package still requires semantic splitting: {}",
+            package.package_id
+        )));
+    }
+    let package_name = package.package_id.replace('-', "_");
+    let package_dir = packages_root.join(&package_name);
+    ensure_transaction_path_missing(&package_dir, "FBX catalog package")?;
+    local_create_dir_all(&package_dir).map_err(|error| {
+        fbx_io_error("create FBX catalog package", &error)
+    })?;
+    let reported_package_dir = PathBuf::from("packages").join(&package_name);
+    let result = match target_kind {
+        FbxTargetKind::StaticMesh => export_lossless_static_package(
+            index,
+            package,
+            &package_dir,
+            &reported_package_dir,
+            base_root,
+        ),
+        FbxTargetKind::SkeletalMesh => export_single_skeletal_package(
+            index,
+            package,
+            &package_dir,
+            &reported_package_dir,
+            base_root,
+        ),
+        FbxTargetKind::SemanticSplit => {
+            return Err(PipelineError::new(
+                "catalog package still requires semantic splitting",
+            ));
+        },
+    };
+    let _stage_report = result?;
+    let generated_stem = stable_file_stem(&package.subcategory);
+    let generated_fbx = package_dir.join(format!("{generated_stem}.fbx"));
+    let canonical_fbx = package_dir.join(format!("{package_name}.fbx"));
+    if generated_fbx != canonical_fbx {
+        std::fs::rename(&generated_fbx, &canonical_fbx)
+            .map_err(|error| fbx_io_error("normalize catalog FBX name", &error))?;
+    }
+    let report = package_dir.join("capability-report.json");
+    std::fs::remove_file(&report)
+        .map_err(|error| fbx_io_error("remove catalog diagnostic report", &error))?;
+    Ok(())
+}
+
 /// Build one package below owned staging and publish it with one rename.
 fn export_transactional_package(
     index: &PhaseThreePackageIndex,
