@@ -142,6 +142,43 @@ fn row_with_exact_member(
         .map_err(|error| error.to_string())
 }
 
+fn row_with_texture_path(
+    category: &str,
+    kind: &str,
+    path: &str,
+) -> Result<PhaseThreePackageRow, String> {
+    let json = format!(
+        concat!(
+            "{{\"package_id\":\"pkg\",\"package_root\":\"pkg\",",
+            "\"package_category\":\"{}\",",
+            "\"package_subcategory\":\"{}/sample\",",
+            "\"unit_count\":1,\"text_key_count\":0,",
+            "\"unit_ids\":[\"unit-a\"],\"world_ids\":[],",
+            "\"texture_ids\":[\"unit-a\"],\"material_ids\":[],",
+            "\"model_ids\":[],\"physics_ids\":[],",
+            "\"animation_ids\":[],\"scene_ids\":[],",
+            "\"locator_ids\":[],\"camera_ids\":[],",
+            "\"light_ids\":[],\"particle_ids\":[],",
+            "\"controller_ids\":[],\"audio_ids\":[],",
+            "\"movie_ids\":[],\"script_ids\":[],",
+            "\"text_ids\":[],\"ui_ids\":[],",
+            "\"metadata_ids\":[],\"error_ids\":[],",
+            "\"source_unit_ids\":[],\"text_key_ids\":[],",
+            "\"members\":[{{\"id\":\"unit-a\",",
+            "\"role\":\"texture\",\"path\":\"{}\",",
+            "\"type\":\"image\",\"kind\":\"{}\",",
+            "\"source_chunk_kind\":\"none\"}}],",
+            "\"text_keys\":[]}}"
+        ),
+        category,
+        category,
+        path,
+        kind,
+    );
+    PhaseThreePackageRow::from_json_line(&json)
+        .map_err(|error| error.to_string())
+}
+
 fn single_skeletal_row() -> Result<PhaseThreePackageRow, String> {
     let row = concat!(
         "{\"package_id\":\"pkg\",\"package_root\":\"pkg\",",
@@ -497,14 +534,14 @@ fn routes_derived_language_keys_to_string_tables() -> Result<(), String> {
 }
 
 #[test]
-fn routes_physical_language_layouts_to_user_interface() -> Result<(), String> {
+fn defers_physical_language_layouts_for_semantic_compilation() -> Result<(), String> {
     let package = row("language", "language/ui-text/scene-layouts", "ui_ids")?;
     let plan = PhaseThreePackagePlanner::plan(&package);
     let Some(unreal) = plan.unreal else {
         return Err("language layout should produce an Unreal plan".to_owned());
     };
-    if unreal.target_kind != UnrealTargetKind::UserInterface {
-        return Err("physical language layout should target UI".to_owned());
+    if unreal.target_kind != UnrealTargetKind::SemanticSource {
+        return Err("physical language layout bypassed semantic compilation".to_owned());
     }
     Ok(())
 }
@@ -528,7 +565,7 @@ fn defers_mission_scripts_for_semantic_compilation() -> Result<(), String> {
 }
 
 #[test]
-fn routes_texture_font_resources_to_fonts() -> Result<(), String> {
+fn defers_texture_font_headers_for_semantic_compilation() -> Result<(), String> {
     let package = row_with_kind(
         "ui-resources",
         "ui-resources/fonts/fonts/font0-16",
@@ -539,14 +576,14 @@ fn routes_texture_font_resources_to_fonts() -> Result<(), String> {
     let Some(unreal) = plan.unreal else {
         return Err("font resource should produce an Unreal plan".to_owned());
     };
-    if unreal.target_kind != UnrealTargetKind::Font {
-        return Err("texture-font evidence should target Font".to_owned());
+    if unreal.target_kind != UnrealTargetKind::SemanticSource {
+        return Err("texture-font header bypassed semantic compilation".to_owned());
     }
     Ok(())
 }
 
 #[test]
-fn routes_ui_text_bibles_to_string_tables() -> Result<(), String> {
+fn defers_ui_text_bible_headers_for_semantic_compilation() -> Result<(), String> {
     let package = row_with_kind(
         "ui-resources",
         "ui-resources/language/art-assets/sprite-layouts/txtbible-srr2",
@@ -557,8 +594,43 @@ fn routes_ui_text_bibles_to_string_tables() -> Result<(), String> {
     let Some(unreal) = plan.unreal else {
         return Err("text bible should produce an Unreal plan".to_owned());
     };
-    if unreal.target_kind != UnrealTargetKind::StringTable {
-        return Err("text-bible evidence should target StringTable".to_owned());
+    if unreal.target_kind != UnrealTargetKind::SemanticSource {
+        return Err("text-bible header bypassed semantic compilation".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn defers_ui_layout_bundles_for_semantic_compilation() -> Result<(), String> {
+    let package = row_with_kind(
+        "ui-screens",
+        "ui-screens/layout-index/pages",
+        "ui_ids",
+        "ui-layout",
+    )?;
+    let plan = PhaseThreePackagePlanner::plan(&package);
+    let Some(unreal) = plan.unreal else {
+        return Err("UI layout bundle should produce an Unreal plan".to_owned());
+    };
+    if unreal.target_kind != UnrealTargetKind::SemanticSource {
+        return Err("UI layout bundle bypassed semantic compilation".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn defers_normalized_tuning_for_semantic_compilation() -> Result<(), String> {
+    let package = row(
+        "vehicle-tuning",
+        "vehicle-tuning/level-01/chase",
+        "script_ids",
+    )?;
+    let plan = PhaseThreePackagePlanner::plan(&package);
+    let Some(unreal) = plan.unreal else {
+        return Err("vehicle tuning should produce an Unreal plan".to_owned());
+    };
+    if unreal.target_kind != UnrealTargetKind::SemanticSource {
+        return Err("vehicle tuning bypassed semantic compilation".to_owned());
     }
     Ok(())
 }
@@ -578,8 +650,59 @@ fn routes_cinematic_audio_to_sound_waves() -> Result<(), String> {
 }
 
 #[test]
+fn sprite_layout_json_does_not_fabricate_texture_payload() -> Result<(), String> {
+    let package = row_with_texture_path(
+        "ui-images",
+        "p3d-sprite",
+        "extracted/ui/components/sprite/icon.json",
+    )?;
+    let plan = PhaseThreePackagePlanner::plan(&package);
+    let Some(unreal) = plan.unreal else {
+        return Err("sprite layout should produce an Unreal plan".to_owned());
+    };
+    if unreal.target_kind != UnrealTargetKind::SemanticSource {
+        return Err("sprite JSON fabricated a Texture2D target".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn game_icon_category_without_pixels_remains_semantic() -> Result<(), String> {
+    let package = row("game-icons", "game-icons", "text_ids")?;
+    let plan = PhaseThreePackagePlanner::plan(&package);
+    let Some(unreal) = plan.unreal else {
+        return Err("game metadata should produce an Unreal plan".to_owned());
+    };
+    if unreal.target_kind != UnrealTargetKind::SemanticSource {
+        return Err("game metadata fabricated a Texture2D target".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn physical_ui_png_targets_texture() -> Result<(), String> {
+    let package = row_with_texture_path(
+        "ui-images",
+        "png-image",
+        "game/art/frontend/icon.png",
+    )?;
+    let plan = PhaseThreePackagePlanner::plan(&package);
+    let Some(unreal) = plan.unreal else {
+        return Err("physical PNG should produce an Unreal plan".to_owned());
+    };
+    if unreal.target_kind != UnrealTargetKind::Texture {
+        return Err("physical PNG did not target Texture2D".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
 fn routes_character_texture_companions_to_textures() -> Result<(), String> {
-    let package = row("characters", "characters/rig/common", "texture_ids")?;
+    let package = row_with_texture_path(
+        "characters",
+        "png-image",
+        "extracted/characters/homer.png",
+    )?;
     let plan = PhaseThreePackagePlanner::plan(&package);
     let Some(unreal) = plan.unreal else {
         return Err("character texture package should produce an Unreal plan"
