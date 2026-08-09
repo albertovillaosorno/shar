@@ -125,20 +125,20 @@ Current task list. Project phases and dated progress are recorded in
       - [x] Compile all 611 direct objective and 408 direct condition parameter
         shapes into typed evidence; preserve the one noncanonical `niether`
         route token and undocumented condition values without repairing them.
-      - [x] Compile all 611 stage headers plus 1,832 reviewed timer,
-        checkpoint, message, vehicle, waypoint, HUD, traffic, and transition
-        directives, preserving opaque numeric `AddStage` flags and documented
-        unused compatibility arguments exactly.
-      - [x] Compile 374 reviewed mission-scope initialization directives for
-        restart locators, initial walk/vehicle state, forced-car state,
-        dynamic-load P3D references, and street-race prop load/unload evidence.
-      - [x] Compile 2,873 selected objective-scoped participant, collectible,
-        route, dialogue, timing, fee, animation, bitmap, and FMV references plus
-        all 375 condition-scoped command values without inventing unresolved
-        units, defaults, or legacy extension meanings.
-      - [ ] Resolve the remaining camera, AI tuning, pickup, reward,
-        presentation, stage-transition, and other unmapped command references
-        before asset emission.
+      - [x] Compile all 611 stage headers plus 2,549 typed stage directives,
+        covering all 2,454 direct-stage commands and all 95 objective commands
+        explicitly delegated to stage semantics; preserve opaque numeric
+        `AddStage` flags, raw AI tuning values, and compatibility arguments.
+      - [x] Compile all 811 direct mission-scope commands into typed restart,
+        load, vehicle, camera, presentation, hint, HUD, pedestrian-group, and
+        street-race evidence with no raw mission command fallback.
+      - [x] Assign all 3,605 objective-scoped commands exactly one semantic
+        owner: 3,498 objective directives, 95 stage-delegated directives, and 12
+        structural condition commands; compile all 375 condition-scoped command
+        values without inventing unresolved units, defaults, or legacy meaning.
+      - [ ] Resolve typed source identities and intentionally opaque values to
+        canonical participant, route, camera, reward, presentation, transition,
+        and catalog definitions before asset emission.
     - [ ] Emit lossless `USharMissionDefinition` assets only after the complete
       mission graph passes reference and topology validation.
   - [ ] Compile remaining normalized UI, font, localization, tuning, and other
