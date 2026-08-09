@@ -80,11 +80,28 @@ canonical participant identity together with the exact character package variant
 or the exact physical vehicle package; it preserves `current` as a symbolic
 runtime vehicle and treats the reviewed stage-driver `none` token as absence
 rather than as a character. Missing or ambiguous referenced participants block
-mission intake.
+mission intake. Explicit `LoadP3DFile` commands also bind their first path
+argument to one canonical indexed package while preserving an optional second
+argument as opaque source evidence rather than another P3D reference.
 
-Final `USharMissionDefinition` creation remains blocked until locator/load
-context, route, camera, presentation, reward, transition, bundle, and remaining
-catalog identities resolve and the complete transition/recovery topology passes
+Decoded mission `srr_locator` records now enter a package-scoped catalog keyed by
+the exact embedded source `name`, never by the sanitized JSON filename. For each
+selected init source, cross-source preflight pairs its exact mission-load sibling
+with the longest matching level-load family, keyed by the full source path so
+identical mission ids in different levels stay isolated. The initial context also
+adds every indexed P3D loaded by typed `SetDynaLoadData` or
+`StreetRacePropsLoad` evidence; Dyna paths receive the format's implicit `art/`
+root when needed, while unload evidence is never promoted to an active package.
+Typed locator-bearing initialization, stage, and objective directives resolve
+against that context with exact documented Event or CarStart constraints where
+available. A unique candidate binds to package/member identity; missing candidates
+remain `Missing`, duplicate candidates remain `Ambiguous`, and the documented
+`ActivateVehicle` `NULL` sentinel is not treated as a locator. The preflight also
+rechecks source size and SHA-256 against the already verified Unreal evidence
+before cross-source binding. Final `USharMissionDefinition` creation remains
+blocked until stage/checkpoint Dyna transitions, duplicate-locator precedence,
+route, camera, presentation, reward, transition, bundle, and remaining catalog
+identities resolve and the complete transition/recovery topology passes
 validation.
 
 ## Authority and ownership

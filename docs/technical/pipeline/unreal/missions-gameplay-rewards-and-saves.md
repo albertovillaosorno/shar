@@ -117,29 +117,51 @@ target options, collectible extension tails, dialogue compatibility fields,
 established.
 
 These objective, condition, mission-scope, and stage compilers are mandatory
-semantic gates for `prepare-unreal`. The next gate now resolves every reviewed
-character and vehicle source identity against the already validated phase-three
-package index before a mission source can contribute Unreal evidence. Character
-skeleton source names resolve to one canonical participant while retaining the
-exact base-model, costume, or crowd package subcategory; vehicle source names
-resolve to one exact `cars` package. The runtime `current` vehicle token remains
-symbolic, and the reviewed `AddStageVehicle` driver token `none` emits no false
-character package reference. Missing or ambiguous referenced participant names
-fail closed. The catalog is built once from the package index and shared read-only
-across source-verification workers.
+semantic gates for `prepare-unreal`. The next gates resolve every reviewed
+character and vehicle source identity and every explicit `LoadP3DFile` first
+argument against the already validated phase-three package index before a mission
+source can contribute Unreal evidence. Character skeleton source names resolve to
+one canonical participant while retaining the exact base-model, costume, or
+crowd package subcategory; vehicle source names resolve to one exact `cars`
+package. The runtime `current` vehicle token remains symbolic, and the reviewed
+`AddStageVehicle` driver token `none` emits no false character package reference.
+Missing or ambiguous referenced participant names and unindexed P3D loads fail
+closed. The optional second `LoadP3DFile` argument remains opaque source evidence
+rather than becoming an asset reference; producer and replay summaries now count
+only the first path argument as P3D evidence.
 
-A full `prepare-unreal` run with this participant gate verified all 137,242
-source rows and reproduced the existing plan bundle revision exactly, so
-reference validation does not fabricate imports or construction operations.
-Locator resolution remains separate: locator names are level/load-contextual and
-can occur in more than one package, while legacy camera references can lack a
-currently extracted locator. The decoded locator JSON retains the source `name`,
-but extracted filenames sanitize trailing NUL padding to underscores and the
-source corpus also contains genuinely authored trailing underscores. Therefore
-filename trimming is not a canonical identity rule; the decoded name must be
-preserved or consumed directly before locator binding is enabled. Reward,
-presentation, transition, remaining locator/catalog binding, and final topology
-validation are still pending. No mission asset is emitted yet.
+Mission locator intake and typed command binding are package-backed now. The
+local adapter validates both observed `p3d-locator` member families but adds only
+decoded `srr_locator` records to the mission catalog. It reads the embedded JSON
+`name`, trims only trailing NUL padding, preserves the exact decoded source type,
+and binds the row to its package id and member id. Package-local duplicate names
+fail closed; cross-package duplicates remain an explicit `Ambiguous` result.
+This is required because locator names are level/load-contextual and can occur in
+more than one package, while extracted filenames sanitize trailing NUL padding
+to underscores and the source corpus also contains genuinely authored trailing
+underscores. Filename trimming and global-name lookup are therefore not canonical
+identity rules.
+
+For each source that selects exactly one mission, `prepare-unreal` now pairs the
+exact `<mission-id>i.mfk.json` source with `<mission-id>l.mfk.json` and the
+longest matching sibling `*level.mfk.json` family. The pairing is keyed by full
+source path rather than mission id, so repeated ids such as `m1` cannot leak
+package context across levels. Before this cross-source preflight, the mission
+source is re-read through the stable-source guard and its size and SHA-256 must
+match the already verified Unreal source evidence. Typed initialization, stage,
+and objective locator fields then resolve against the explicit level-load and
+mission-load packages plus indexed P3Ds loaded at mission start by typed
+`SetDynaLoadData` and `StreetRacePropsLoad` evidence. Dyna P3D paths use the
+source format's implicit `art/` root unless that prefix is already explicit, and
+every resulting package root must exist in the phase-three index. Unload evidence
+does not become an active package. Documented Event and CarStart roles receive
+exact type constraints, `ActivateVehicle(..., "NULL", ...)` emits no false
+locator reference, and missing or duplicate candidates remain `Missing` or
+`Ambiguous` instead of acquiring fabricated precedence. Stage/checkpoint Dyna
+transitions still require a separate lifetime model before later-stage package
+context can be refined. Reward, presentation, transition, remaining catalog
+binding, duplicate-locator precedence, and final topology validation are still
+pending. No mission asset is emitted yet.
 
 The v3 evidence records `context_command_count`,
 `context_adaptation_count`, `context_finding_count`, ordered adaptations, and
