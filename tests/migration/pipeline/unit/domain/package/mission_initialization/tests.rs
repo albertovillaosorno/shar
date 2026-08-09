@@ -140,3 +140,25 @@ fn rejects_unreviewed_mission_scope_values() -> Result<(), String> {
     }
     Ok(())
 }
+
+
+#[test]
+fn preserves_legacy_set_dyna_without_final_region_postfix() -> Result<(), String> {
+    let p3d_files = super::reviewed_dynamic_p3d_files(
+        "l7z6.p3d;l7r6.p3d;l7r4.p3d",
+    )?;
+    if p3d_files != ["l7z6.p3d", "l7r6.p3d", "l7r4.p3d"] {
+        return Err("legacy terminal-less Dyna evidence drifted".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn set_dyna_rejects_unload_and_world_sphere_operations() {
+    for source in ["l1z1.p3d:", "l1i00.p3d$", "visibility_a*"] {
+        assert!(
+            super::reviewed_dynamic_p3d_files(source).is_err(),
+            "unreviewed mission-start Dyna operation was accepted: {source}"
+        );
+    }
+}
