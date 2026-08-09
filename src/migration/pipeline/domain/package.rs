@@ -37,6 +37,12 @@ pub mod mission_condition;
 pub mod mission_initialization;
 /// Reviewed mission objective alias preflight.
 pub mod mission_objective;
+/// Canonical explicit mission package-load resolution.
+pub mod mission_load;
+/// Canonical mission locator package-reference resolution.
+pub mod mission_locator;
+/// Typed mission locator-reference binding.
+pub mod mission_locator_reference;
 /// Canonical mission participant package-reference resolution.
 pub mod mission_reference;
 /// Lossless reviewed mission scope graph projection.
@@ -76,6 +82,20 @@ pub use mission_condition::{
 pub use mission_initialization::{
     MissionInitializationBinding, MissionInitializationDirective,
     MissionInitializationReport, preflight_mission_initialization,
+};
+pub use mission_load::{
+    MissionPackageLoadBinding, MissionPackageLoadReport,
+    preflight_mission_package_loads,
+};
+pub use mission_locator::{
+    MissionLocatorCatalog, MissionLocatorCatalogEntry, MissionLocatorResolution,
+    MissionLocatorTypeConstraint, MissionResolvedLocatorReference,
+};
+pub use mission_locator_reference::{
+    MissionLocatorActivePackageReport, MissionLocatorActivePackages,
+    MissionLocatorMissionBindings, MissionLocatorReferenceBinding,
+    MissionLocatorReferenceReport, MissionLocatorRole,
+    preflight_mission_locator_references,
 };
 pub use mission_objective::{
     MissionObjectiveBinding, MissionObjectiveCommandBinding,

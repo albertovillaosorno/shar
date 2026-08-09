@@ -1,0 +1,219 @@
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+
+use serde_json::json;
+
+use super::*;
+use crate::domain::MissionLocatorCatalogEntry;
+
+fn entry(name: &str, package: &str) -> Result<MissionLocatorCatalogEntry, String> {
+    let root = format!("extracted/art/missions/level01/{package}");
+    MissionLocatorCatalogEntry::new(
+        name.to_owned(),
+        CAR_START_LOCATOR_TYPE,
+        "car_start".to_owned(),
+        format!("locator-{package}-{name}"),
+        format!("package-{package}"),
+        root.clone(),
+        format!("{root}/components/srr_locator/{name}.json"),
+    )
+}
+
+fn mission_json() -> Result<String, String> {
+    let value = json!({
+        "schema": "shar-schoenwald.straggler.mission-script.v3",
+        "source_extension": "mfk",
+        "route_class": "mission",
+        "source_bytes": 512,
+        "context_command_count": 6,
+        "context_adaptation_count": 0,
+        "context_adaptations": [],
+        "context_finding_count": 0,
+        "context_findings": [],
+        "statement_count": 10,
+        "unique_command_count": 10,
+        "load_p3d_reference_count": 0,
+        "mission_flow_command_count": 7,
+        "vehicle_physics_command_count": 0,
+        "semantic_family": "mission-script",
+        "command_counts": {
+            "selectmission": 1,
+            "initlevelplayervehicle": 1,
+            "addstage": 1,
+            "addstagevehicle": 1,
+            "addobjective": 1,
+            "addnpc": 1,
+            "setobjtargetvehicle": 1,
+            "closeobjective": 1,
+            "closestage": 1,
+            "closemission": 1
+        },
+        "source_statements": [
+            "SelectMission(\"m1\");",
+            "InitLevelPlayerVehicle(\"cletu_v\",\"start\",\"OTHER\");",
+            "AddStage(\"locked\",\"car\",\"cletu_v\");",
+            r#"AddStageVehicle("cletu_v","carstart","chase","scripts\cars\cletu_v.con","none");"#,
+            "AddObjective(\"getin\",\"cletu_v\");",
+            "AddNPC(\"brn_unf\",\"npc_loc\");",
+            "SetObjTargetVehicle(\"cletu_v\");",
+            "CloseObjective();","CloseStage();","CloseMission();"
+        ],
+        "p3d_references": [],
+        "command_invocations": [
+            {"ordinal":1,"name":"selectmission","args_raw":"\"m1\"","semantic_role":"mission-script","arguments":["m1"]},
+            {"ordinal":2,"name":"initlevelplayervehicle","args_raw":"\"cletu_v\",\"start\",\"OTHER\"","semantic_role":"mission-script","arguments":["cletu_v","start","OTHER"]},
+            {"ordinal":3,"name":"addstage","args_raw":"\"locked\",\"car\",\"cletu_v\"","semantic_role":"mission-stage","arguments":["locked","car","cletu_v"]},
+            {
+                "ordinal":4,"name":"addstagevehicle",
+                "args_raw":r#""cletu_v","carstart","chase","scripts\cars\cletu_v.con","none""#,
+                "semantic_role":"mission-stage",
+                "arguments":["cletu_v","carstart","chase",r"scripts\cars\cletu_v.con","none"]
+            },
+            {"ordinal":5,"name":"addobjective","args_raw":"\"getin\",\"cletu_v\"","semantic_role":"mission-objective","arguments":["getin","cletu_v"]},
+            {"ordinal":6,"name":"addnpc","args_raw":"\"brn_unf\",\"npc_loc\"","semantic_role":"mission-script","arguments":["brn_unf","npc_loc"]},
+            {"ordinal":7,"name":"setobjtargetvehicle","args_raw":"\"cletu_v\"","semantic_role":"mission-script","arguments":["cletu_v"]},
+            {"ordinal":8,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]},
+            {"ordinal":9,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
+            {"ordinal":10,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
+        ]
+    });
+    serde_json::to_string(&value).map_err(|error| error.to_string())
+}
+
+fn reports() -> Result<
+    (
+        MissionScopeReport,
+        MissionInitializationReport,
+        MissionStageSemanticReport,
+        MissionObjectiveSemanticReport,
+    ),
+    String,
+> {
+    let evidence = crate::domain::preflight_mission_script(&mission_json()?)?;
+    let scopes = crate::domain::compile_mission_scope_graphs(&evidence)?;
+    let initialization = crate::domain::preflight_mission_initialization(&scopes)?;
+    let stages = crate::domain::preflight_mission_stage_semantics(&scopes)?;
+    let objectives = crate::domain::preflight_mission_objective_semantics(&scopes)?;
+    Ok((scopes, initialization, stages, objectives))
+}
+
+fn active(roots: &[&str]) -> Result<MissionLocatorActivePackageReport, String> {
+    MissionLocatorActivePackageReport::from_missions(vec![MissionLocatorActivePackages::new(
+        "m1".to_owned(),
+        roots.iter().map(|root| (*root).to_owned()).collect(),
+    )?])
+}
+
+#[test]
+fn resolves_car_start_roles_inside_active_package() -> Result<(), String> {
+    let (scopes, initialization, stages, objectives) = reports()?;
+    let catalog = MissionLocatorCatalog::from_entries(vec![
+        entry("start", "m1")?,
+        entry("carstart", "m1")?,
+        entry("npc_loc", "m1")?,
+    ])?;
+    let active = active(&["extracted/art/missions/level01/m1"])?;
+    let report = preflight_mission_locator_references(
+        &catalog,
+        &active,
+        &scopes,
+        &initialization,
+        &stages,
+        &objectives,
+    )?;
+    let [mission] = report.missions() else {
+        return Err("locator fixture changed mission count".to_owned());
+    };
+    if mission.mission_id() != "m1"
+        || mission.references().len() != 3
+        || !report.has_only_resolved_references()
+    {
+        return Err("locator resolution envelope drifted".to_owned());
+    }
+    let roles = mission
+        .references()
+        .iter()
+        .map(MissionLocatorReferenceBinding::role)
+        .collect::<Vec<_>>();
+    if roles
+        != [
+            MissionLocatorRole::InitializationPlayerVehicle,
+            MissionLocatorRole::StageVehicle,
+            MissionLocatorRole::ObjectiveNpc,
+        ]
+    {
+        return Err(format!("locator roles drifted: {roles:?}"));
+    }
+    if mission.references().iter().any(|binding| {
+        binding.type_constraint() != MissionLocatorTypeConstraint::Exact(CAR_START_LOCATOR_TYPE)
+    }) {
+        return Err("documented CarStart constraints drifted".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn preserves_ambiguous_active_package_candidates() -> Result<(), String> {
+    let (scopes, initialization, stages, objectives) = reports()?;
+    let catalog = MissionLocatorCatalog::from_entries(vec![
+        entry("start", "m1")?,
+        entry("start", "level")?,
+        entry("carstart", "m1")?,
+        entry("npc_loc", "m1")?,
+    ])?;
+    let active = active(&[
+        "extracted/art/missions/level01/m1",
+        "extracted/art/missions/level01/level",
+    ])?;
+    let report = preflight_mission_locator_references(
+        &catalog,
+        &active,
+        &scopes,
+        &initialization,
+        &stages,
+        &objectives,
+    )?;
+    if report.has_only_resolved_references() || report.unresolved_reference_count() != 1 {
+        return Err("ambiguous locator precedence was not preserved".to_owned());
+    }
+    let Some(mission) = report.missions().first() else {
+        return Err("ambiguous locator mission binding is missing".to_owned());
+    };
+    let Some(first) = mission.references().first() else {
+        return Err("ambiguous locator reference binding is missing".to_owned());
+    };
+    if !matches!(first.resolution(), MissionLocatorResolution::Ambiguous(entries) if entries.len() == 2)
+    {
+        return Err("ambiguous locator candidates were not retained".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_missing_active_mission_context() -> Result<(), String> {
+    let (scopes, initialization, stages, objectives) = reports()?;
+    let catalog = MissionLocatorCatalog::from_entries(vec![
+        entry("start", "m1")?,
+        entry("carstart", "m1")?,
+        entry("npc_loc", "m1")?,
+    ])?;
+    let active = MissionLocatorActivePackageReport::from_missions(Vec::new())?;
+    let result = preflight_mission_locator_references(
+        &catalog,
+        &active,
+        &scopes,
+        &initialization,
+        &stages,
+        &objectives,
+    );
+    if !matches!(result, Err(message) if message.contains("context is missing")) {
+        return Err("missing mission locator context did not fail closed".to_owned());
+    }
+    Ok(())
+}

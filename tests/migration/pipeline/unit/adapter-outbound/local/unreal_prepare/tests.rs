@@ -40,18 +40,16 @@ use serde_json::json;
 use shar_sha256::digest_hex;
 
 use super::{
-    MANIFEST_FILE, PLAN_INDEX_FILE, PUBLISHED_FILES, SUMMARY_FILE,
-    SourceEvidenceInput, ensure_generated_directory, open_stable_source,
-    parallel_source_evidence, prepare_io_error, publication_error, read_utf8,
-    retain_source_ids, source_worker_count_for, stream_source_digest,
+    MANIFEST_FILE, PLAN_INDEX_FILE, PUBLISHED_FILES, SUMMARY_FILE, SourceEvidenceInput,
+    ensure_generated_directory, open_stable_source, parallel_source_evidence, prepare_io_error,
+    publication_error, read_utf8, retain_source_ids, source_worker_count_for, stream_source_digest,
     validate_audit, validate_generated_chain, validate_public_identifier,
-    validate_publication_inventory, validate_relative_path,
-    validate_rendered_output, verify_stable_source,
+    validate_publication_inventory, validate_relative_path, validate_rendered_output,
+    verify_stable_source,
 };
 use crate::domain::{
-    MISSION_SCRIPT_SCHEMA, MissionReferenceCatalog, PipelineOutcome,
-    UNREAL_IMPORT_MANIFEST_SCHEMA, UNREAL_IMPORT_SUMMARY_SCHEMA,
-    UnrealSourceEvidence,
+    MISSION_SCRIPT_SCHEMA, MissionReferenceCatalog, PhaseThreePackageIndex, PipelineOutcome,
+    UNREAL_IMPORT_MANIFEST_SCHEMA, UNREAL_IMPORT_SUMMARY_SCHEMA, UnrealSourceEvidence,
 };
 
 fn source(id: &str) -> UnrealSourceEvidence {
@@ -75,8 +73,7 @@ fn source(id: &str) -> UnrealSourceEvidence {
 }
 
 #[test]
-fn parallel_source_verification_reports_first_manifest_error()
--> Result<(), String> {
+fn parallel_source_verification_reports_first_manifest_error() -> Result<(), String> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join(".temp")
         .join(format!("unreal-source-errors-{}", std::process::id()));
@@ -110,11 +107,11 @@ fn parallel_source_verification_reports_first_manifest_error()
     let result = parallel_source_evidence(
         &inputs,
         &MissionReferenceCatalog::empty_for_tests(),
+        &PhaseThreePackageIndex::default(),
     );
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     let Err(error) = result else {
-        return Err("parallel verification unexpectedly accepted invalid rows"
-            .to_owned());
+        return Err("parallel verification unexpectedly accepted invalid rows".to_owned());
     };
     let rendered = error.to_string();
     if !rendered.starts_with("source size changed for extracted/first.bin:") {
@@ -135,17 +132,14 @@ fn stable_source_verification_rejects_path_replacement() -> Result<(), String> {
     let path = root.join("source.bin");
     let moved = root.join("opened.bin");
     fs::write(&path, b"original-source").map_err(|error| error.to_string())?;
-    let (file, identity) =
-        open_stable_source(&path).map_err(|error| error.to_string())?;
+    let (file, identity) = open_stable_source(&path).map_err(|error| error.to_string())?;
     fs::rename(&path, &moved).map_err(|error| error.to_string())?;
     fs::write(&path, b"replacement-src").map_err(|error| error.to_string())?;
     let result = verify_stable_source(&path, &file, &identity);
     drop(file);
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     let Err(error) = result else {
-        return Err(
-            "path replacement preserved a stale source identity".to_owned()
-        );
+        return Err("path replacement preserved a stale source identity".to_owned());
     };
     if !error.to_string().contains("identity changed") {
         return Err(format!("unexpected replacement error: {error}"));
@@ -154,8 +148,7 @@ fn stable_source_verification_rejects_path_replacement() -> Result<(), String> {
 }
 
 #[test]
-fn streamed_source_digest_matches_one_shot_across_io_blocks()
--> Result<(), String> {
+fn streamed_source_digest_matches_one_shot_across_io_blocks() -> Result<(), String> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join(".temp")
         .join(format!("unreal-stream-hash-{}", std::process::id()));
@@ -170,9 +163,7 @@ fn streamed_source_digest_matches_one_shot_across_io_blocks()
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     let (size, digest) = result?;
     if size != 1_048_593 || digest != digest_hex(&payload) {
-        return Err(
-            "streamed source digest changed across I/O blocks".to_owned()
-        );
+        return Err("streamed source digest changed across I/O blocks".to_owned());
     }
     Ok(())
 }
@@ -187,8 +178,7 @@ fn source_worker_count_is_bounded_and_never_zero() {
 }
 
 #[test]
-fn parallel_source_verification_preserves_manifest_order() -> Result<(), String>
-{
+fn parallel_source_verification_preserves_manifest_order() -> Result<(), String> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join(".temp")
         .join(format!("unreal-source-order-{}", std::process::id()));
@@ -221,6 +211,7 @@ fn parallel_source_verification_preserves_manifest_order() -> Result<(), String>
     let result = parallel_source_evidence(
         &inputs,
         &MissionReferenceCatalog::empty_for_tests(),
+        &PhaseThreePackageIndex::default(),
     )
     .map_err(|error| error.to_string());
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
@@ -239,9 +230,7 @@ fn parallel_source_verification_preserves_manifest_order() -> Result<(), String>
             .get(1)
             .is_none_or(|source| source.sha256 != digest_hex(b"second-source"))
     {
-        return Err(
-            "parallel source hashing changed physical evidence".to_owned()
-        );
+        return Err("parallel source hashing changed physical evidence".to_owned());
     }
     Ok(())
 }
@@ -272,6 +261,7 @@ fn validate_test_mission_source(
         origin,
         bytes,
         &MissionReferenceCatalog::empty_for_tests(),
+        &PhaseThreePackageIndex::default(),
     )
 }
 
@@ -332,8 +322,7 @@ fn clean_mission_json(with_finding: bool) -> Result<Vec<u8>, String> {
 }
 
 #[test]
-fn mission_semantic_gate_accepts_clean_v3_and_bypasses_other_kinds()
--> Result<(), String> {
+fn mission_semantic_gate_accepts_clean_v3_and_bypasses_other_kinds() -> Result<(), String> {
     let clean = clean_mission_json(false)?;
     validate_test_mission_source(
         "mission-script",
@@ -343,19 +332,12 @@ fn mission_semantic_gate_accepts_clean_v3_and_bypasses_other_kinds()
         &clean,
     )
     .map_err(|error| error.to_string())?;
-    validate_test_mission_source(
-        "texture",
-        "unrelated-schema",
-        "bin",
-        "test",
-        b"not-json",
-    )
-    .map_err(|error| error.to_string())
+    validate_test_mission_source("texture", "unrelated-schema", "bin", "test", b"not-json")
+        .map_err(|error| error.to_string())
 }
 
 #[test]
-fn mission_semantic_gate_rejects_stale_schema_and_context_findings()
--> Result<(), String> {
+fn mission_semantic_gate_rejects_stale_schema_and_context_findings() -> Result<(), String> {
     let clean = clean_mission_json(false)?;
     let stale = validate_test_mission_source(
         "mission-script",
@@ -380,9 +362,7 @@ fn mission_semantic_gate_rejects_stale_schema_and_context_findings()
         &finding,
     );
     let Err(finding) = finding else {
-        return Err(
-            "mission context finding reached Unreal planning".to_owned()
-        );
+        return Err("mission context finding reached Unreal planning".to_owned());
     };
     if !finding.to_string().contains("must be resolved") {
         return Err(format!("unexpected finding failure: {finding}"));
@@ -427,13 +407,10 @@ fn stage_report_counts_exact_published_files() -> Result<(), String> {
 
 #[test]
 fn accepts_clean_current_audit() -> Result<(), String> {
-    let path = std::env::temp_dir()
-        .join(format!("shar-unreal-audit-{}.json", std::process::id()));
+    let path = std::env::temp_dir().join(format!("shar-unreal-audit-{}.json", std::process::id()));
     let manifest = "one\ntwo\nthree\n";
-    fs::write(&path, clean_audit(manifest, 3))
-        .map_err(|error| error.to_string())?;
-    let result =
-        validate_audit(&path, manifest).map_err(|error| error.to_string());
+    fs::write(&path, clean_audit(manifest, 3)).map_err(|error| error.to_string())?;
+    let result = validate_audit(&path, manifest).map_err(|error| error.to_string());
     fs::remove_file(&path).map_err(|error| error.to_string())?;
     result
 }
@@ -445,8 +422,7 @@ fn rejects_stale_audit_and_escaping_paths() -> Result<(), String> {
         std::process::id()
     ));
     let audited_manifest = "one\ntwo\n";
-    fs::write(&path, clean_audit(audited_manifest, 2))
-        .map_err(|error| error.to_string())?;
+    fs::write(&path, clean_audit(audited_manifest, 2)).map_err(|error| error.to_string())?;
     let stale = validate_audit(&path, "one\ntwo\nthree\n").is_err();
     fs::remove_file(&path).map_err(|error| error.to_string())?;
     if !stale {
@@ -469,15 +445,13 @@ fn rejects_stale_audit_and_escaping_paths() -> Result<(), String> {
 }
 
 #[test]
-fn rejects_same_row_count_with_changed_manifest_content() -> Result<(), String>
-{
+fn rejects_same_row_count_with_changed_manifest_content() -> Result<(), String> {
     let path = std::env::temp_dir().join(format!(
         "shar-unreal-hash-audit-{}.json",
         std::process::id()
     ));
     let audited_manifest = "one\ntwo\n";
-    fs::write(&path, clean_audit(audited_manifest, 2))
-        .map_err(|error| error.to_string())?;
+    fs::write(&path, clean_audit(audited_manifest, 2)).map_err(|error| error.to_string())?;
     let result = validate_audit(&path, "one\nchanged\n");
     fs::remove_file(&path).map_err(|error| error.to_string())?;
     let Err(error) = result else {
@@ -489,10 +463,7 @@ fn rejects_same_row_count_with_changed_manifest_content() -> Result<(), String>
     Ok(())
 }
 
-fn rendered_fixture(
-    package_count: u64,
-    source_package: &str,
-) -> (String, String) {
+fn rendered_fixture(package_count: u64, source_package: &str) -> (String, String) {
     let manifest = format!(
         concat!(
             "{{\"schema\":\"{}\",\"record_type\":\"header\",",
@@ -531,8 +502,7 @@ fn rendered_fixture(
 #[test]
 fn accepts_canonical_rendered_schemas_and_counts() -> Result<(), String> {
     let (manifest, summary) = rendered_fixture(1, "pkg");
-    validate_rendered_output(&manifest, &summary)
-        .map_err(|error| error.to_string())
+    validate_rendered_output(&manifest, &summary).map_err(|error| error.to_string())
 }
 
 #[test]
@@ -562,12 +532,10 @@ fn rejects_rendered_source_for_unknown_package() -> Result<(), String> {
 }
 
 #[test]
-fn prepare_io_diagnostics_hide_paths_and_raw_error_text() -> Result<(), String>
-{
+fn prepare_io_diagnostics_hide_paths_and_raw_error_text() -> Result<(), String> {
     let private_fragment = "private-workstation-unreal-prepare";
     let error = std::io::Error::other(private_fragment);
-    let rendered =
-        prepare_io_error("read Unreal source evidence", &error).to_string();
+    let rendered = prepare_io_error("read Unreal source evidence", &error).to_string();
     if rendered.contains(private_fragment)
         || rendered != "read Unreal source evidence failed (Other)"
     {
@@ -577,8 +545,7 @@ fn prepare_io_diagnostics_hide_paths_and_raw_error_text() -> Result<(), String>
     let missing = std::env::temp_dir()
         .join(private_fragment)
         .join("missing-manifest.jsonl");
-    let Err(read_error) = read_utf8(&missing, "read minor-unit manifest")
-    else {
+    let Err(read_error) = read_utf8(&missing, "read minor-unit manifest") else {
         return Err("missing manifest was accepted".to_owned());
     };
     let read_error = read_error.to_string();
@@ -591,32 +558,22 @@ fn prepare_io_diagnostics_hide_paths_and_raw_error_text() -> Result<(), String>
 }
 
 #[test]
-fn relative_path_diagnostics_do_not_echo_rejected_values() -> Result<(), String>
-{
+fn relative_path_diagnostics_do_not_echo_rejected_values() -> Result<(), String> {
     let private_path = "private-workstation/../escape";
     let Err(error) = validate_relative_path(private_path) else {
         return Err("escaping path was accepted".to_owned());
     };
     let error = error.to_string();
-    if error.contains(private_path)
-        || error != "unsafe minor-unit relative path"
-    {
+    if error.contains(private_path) || error != "unsafe minor-unit relative path" {
         return Err(format!("relative-path diagnostic leaked: {error}"));
     }
     Ok(())
 }
 
 #[test]
-fn publication_failure_reports_failed_rollback_without_raw_text()
--> Result<(), String> {
-    let publish = std::io::Error::new(
-        std::io::ErrorKind::PermissionDenied,
-        "private-publish-path",
-    );
-    let rollback = std::io::Error::new(
-        std::io::ErrorKind::AlreadyExists,
-        "private-backup-path",
-    );
+fn publication_failure_reports_failed_rollback_without_raw_text() -> Result<(), String> {
+    let publish = std::io::Error::new(std::io::ErrorKind::PermissionDenied, "private-publish-path");
+    let rollback = std::io::Error::new(std::io::ErrorKind::AlreadyExists, "private-backup-path");
     let rendered = publication_error(&publish, Some(&rollback)).to_string();
     let expected = concat!(
         "publish Unreal staging root failed (PermissionDenied); ",
@@ -632,10 +589,8 @@ fn publication_failure_reports_failed_rollback_without_raw_text()
 }
 
 #[test]
-fn generated_transaction_chain_rejects_non_directory_ancestors()
--> Result<(), String> {
-    let private_fragment =
-        format!("private-unreal-chain-{}", std::process::id());
+fn generated_transaction_chain_rejects_non_directory_ancestors() -> Result<(), String> {
+    let private_fragment = format!("private-unreal-chain-{}", std::process::id());
     let root = std::env::temp_dir().join(&private_fragment);
     let directory = root.join("directory");
     let file = root.join("not-a-directory");
@@ -644,16 +599,10 @@ fn generated_transaction_chain_rejects_non_directory_ancestors()
     }
     fs::create_dir_all(&directory).map_err(|error| error.to_string())?;
     fs::write(&file, b"not a directory").map_err(|error| error.to_string())?;
-    let result = validate_generated_chain(&[
-        root.as_path(),
-        directory.as_path(),
-        file.as_path(),
-    ]);
+    let result = validate_generated_chain(&[root.as_path(), directory.as_path(), file.as_path()]);
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     let Err(error) = result else {
-        return Err(
-            "non-directory transaction ancestor was accepted".to_owned()
-        );
+        return Err("non-directory transaction ancestor was accepted".to_owned());
     };
     let rendered = error.to_string();
     if rendered.contains(&private_fragment)
@@ -666,8 +615,7 @@ fn generated_transaction_chain_rejects_non_directory_ancestors()
 
 #[test]
 fn generated_directory_creation_stops_at_unsafe_parent() -> Result<(), String> {
-    let private_fragment =
-        format!("private-unreal-create-{}", std::process::id());
+    let private_fragment = format!("private-unreal-create-{}", std::process::id());
     let root = std::env::temp_dir().join(&private_fragment);
     let blocked = root.join("blocked");
     let child = blocked.join("child");
@@ -675,8 +623,7 @@ fn generated_directory_creation_stops_at_unsafe_parent() -> Result<(), String> {
         fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     }
     fs::create_dir_all(&root).map_err(|error| error.to_string())?;
-    fs::write(&blocked, b"not a directory")
-        .map_err(|error| error.to_string())?;
+    fs::write(&blocked, b"not a directory").map_err(|error| error.to_string())?;
     let result = ensure_generated_directory(&blocked, "create generated child");
     let child_exists = child.exists();
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
@@ -697,26 +644,21 @@ fn generated_directory_creation_stops_at_unsafe_parent() -> Result<(), String> {
 fn rejects_rendered_package_with_unknown_disposition() -> Result<(), String> {
     let private_disposition = "C:/private/import-policy";
     let (manifest, summary) = rendered_fixture(1, "pkg");
-    let manifest =
-        manifest.replace("direct-editor-import", private_disposition);
+    let manifest = manifest.replace("direct-editor-import", private_disposition);
     let Err(error) = validate_rendered_output(&manifest, &summary) else {
         return Err("unknown package disposition was accepted".to_owned());
     };
     let rendered = error.to_string();
-    if !rendered.contains("unsupported disposition")
-        || rendered.contains(private_disposition)
-    {
+    if !rendered.contains("unsupported disposition") || rendered.contains(private_disposition) {
         return Err(format!("unexpected disposition failure: {error}"));
     }
     Ok(())
 }
 
 #[test]
-fn rejects_rendered_source_with_non_object_direct_import() -> Result<(), String>
-{
+fn rejects_rendered_source_with_non_object_direct_import() -> Result<(), String> {
     let (manifest, summary) = rendered_fixture(1, "pkg");
-    let manifest = manifest
-        .replace("\"direct_import\":{}", "\"direct_import\":\"invalid\"");
+    let manifest = manifest.replace("\"direct_import\":{}", "\"direct_import\":\"invalid\"");
     let Err(error) = validate_rendered_output(&manifest, &summary) else {
         return Err("non-object direct-import contract was accepted".to_owned());
     };
@@ -738,9 +680,7 @@ fn rejects_noncanonical_rendered_ids_without_echo() -> Result<(), String> {
         return Err("path-shaped rendered package id was accepted".to_owned());
     };
     let rendered = error.to_string();
-    if rendered.contains(private_id)
-        || !rendered.contains("package id is not canonical")
-    {
+    if rendered.contains(private_id) || !rendered.contains("package id is not canonical") {
         return Err(format!("rendered-id diagnostic leaked: {rendered}"));
     }
     Ok(())
@@ -777,8 +717,7 @@ fn publication_inventory_requires_every_declared_file() -> Result<(), String> {
         .iter()
         .map(|path| (*path).to_owned())
         .collect::<BTreeSet<_>>();
-    validate_publication_inventory(&exact)
-        .map_err(|error| error.to_string())?;
+    validate_publication_inventory(&exact).map_err(|error| error.to_string())?;
 
     let mut missing = exact;
     let _removed = missing.remove("plans/package-plan.json");
@@ -798,8 +737,7 @@ fn publication_inventory_rejects_undeclared_files() -> Result<(), String> {
     let Err(error) = validate_publication_inventory(&paths) else {
         return Err("extra publication file was accepted".to_owned());
     };
-    if error.to_string() != "Unreal staging publication inventory is not exact"
-    {
+    if error.to_string() != "Unreal staging publication inventory is not exact" {
         return Err(format!("unexpected inventory failure: {error}"));
     }
     Ok(())
@@ -808,9 +746,7 @@ fn publication_inventory_rejects_undeclared_files() -> Result<(), String> {
 #[test]
 fn public_identifier_guard_rejects_path_shaped_values() -> Result<(), String> {
     let private_id = "C:/private/minor-unit";
-    let Err(error) =
-        validate_public_identifier(private_id, "minor-unit source id")
-    else {
+    let Err(error) = validate_public_identifier(private_id, "minor-unit source id") else {
         return Err("path-shaped minor-unit id was accepted".to_owned());
     };
     let rendered = error.to_string();
@@ -830,8 +766,8 @@ fn audit_schema_failure_does_not_echo_rejected_value() -> Result<(), String> {
         "shar-unreal-schema-audit-{}.json",
         std::process::id()
     ));
-    let audit = clean_audit(manifest, 1)
-        .replace("shar-schoenwald.minor-unit-audit.v2", private_schema);
+    let audit =
+        clean_audit(manifest, 1).replace("shar-schoenwald.minor-unit-audit.v2", private_schema);
     fs::write(&path, audit).map_err(|error| error.to_string())?;
     let result = validate_audit(&path, manifest);
     fs::remove_file(&path).map_err(|error| error.to_string())?;
@@ -839,17 +775,14 @@ fn audit_schema_failure_does_not_echo_rejected_value() -> Result<(), String> {
         return Err("unsupported audit schema was accepted".to_owned());
     };
     let rendered = error.to_string();
-    if rendered.contains(private_schema)
-        || rendered != "minor-unit audit schema is not supported"
-    {
+    if rendered.contains(private_schema) || rendered != "minor-unit audit schema is not supported" {
         return Err(format!("audit-schema diagnostic leaked: {rendered}"));
     }
     Ok(())
 }
 
 #[test]
-fn rendered_record_type_failure_does_not_echo_rejected_value()
--> Result<(), String> {
+fn rendered_record_type_failure_does_not_echo_rejected_value() -> Result<(), String> {
     let private_type = "C:/private/record-type";
     let (manifest, summary) = rendered_fixture(1, "pkg");
     let manifest = manifest.replacen(
@@ -861,17 +794,14 @@ fn rendered_record_type_failure_does_not_echo_rejected_value()
         return Err("unsupported record type was accepted".to_owned());
     };
     let rendered = error.to_string();
-    if rendered.contains(private_type)
-        || !rendered.contains("unsupported record type")
-    {
+    if rendered.contains(private_type) || !rendered.contains("unsupported record type") {
         return Err(format!("record-type diagnostic leaked: {rendered}"));
     }
     Ok(())
 }
 
 #[test]
-fn mission_semantic_gate_rejects_stage_without_root_objective()
--> Result<(), String> {
+fn mission_semantic_gate_rejects_stage_without_root_objective() -> Result<(), String> {
     let bytes = serde_json::to_vec(&json!({
         "schema": MISSION_SCRIPT_SCHEMA,
         "source_extension":"mfk","route_class":"mission","source_bytes":64,
@@ -899,9 +829,7 @@ fn mission_semantic_gate_rejects_stage_without_root_objective()
         &bytes,
     );
     let Err(error) = result else {
-        return Err(
-            "mission stage without root objective was accepted".to_owned()
-        );
+        return Err("mission stage without root objective was accepted".to_owned());
     };
     let rendered = error.to_string();
     if !rendered.contains("mission scope preflight failed")
@@ -913,26 +841,20 @@ fn mission_semantic_gate_rejects_stage_without_root_objective()
 }
 
 #[test]
-fn mission_semantic_gate_rejects_unreviewed_stage_flags() -> Result<(), String>
-{
+fn mission_semantic_gate_rejects_unreviewed_stage_flags() -> Result<(), String> {
     let bytes = clean_mission_json(false)?;
-    let mut value = serde_json::from_slice::<serde_json::Value>(&bytes)
-        .map_err(|error| error.to_string())?;
+    let mut value =
+        serde_json::from_slice::<serde_json::Value>(&bytes).map_err(|error| error.to_string())?;
     *value
         .pointer_mut("/source_statements/1")
-        .ok_or_else(|| "mission fixture statement disappeared".to_owned())? =
-        json!("AddStage(6);");
+        .ok_or_else(|| "mission fixture statement disappeared".to_owned())? = json!("AddStage(6);");
     *value
         .pointer_mut("/command_invocations/1/args_raw")
-        .ok_or_else(|| {
-            "mission fixture raw arguments disappeared".to_owned()
-        })? = json!("6");
+        .ok_or_else(|| "mission fixture raw arguments disappeared".to_owned())? = json!("6");
     *value
         .pointer_mut("/command_invocations/1/arguments")
-        .ok_or_else(|| "mission fixture arguments disappeared".to_owned())? =
-        json!(["6"]);
-    let bytes =
-        serde_json::to_vec(&value).map_err(|error| error.to_string())?;
+        .ok_or_else(|| "mission fixture arguments disappeared".to_owned())? = json!(["6"]);
+    let bytes = serde_json::to_vec(&value).map_err(|error| error.to_string())?;
     let result = validate_test_mission_source(
         "mission-script",
         MISSION_SCRIPT_SCHEMA,
@@ -941,9 +863,7 @@ fn mission_semantic_gate_rejects_unreviewed_stage_flags() -> Result<(), String>
         &bytes,
     );
     let Err(error) = result else {
-        return Err(
-            "unreviewed legacy stage flags reached Unreal planning".to_owned()
-        );
+        return Err("unreviewed legacy stage flags reached Unreal planning".to_owned());
     };
     let rendered = error.to_string();
     if !rendered.contains("mission stage semantic preflight failed")
@@ -990,8 +910,7 @@ fn timer_mission_json(duration: &str) -> Result<Vec<u8>, String> {
 }
 
 #[test]
-fn mission_semantic_gate_rejects_invalid_objective_duration()
--> Result<(), String> {
+fn mission_semantic_gate_rejects_invalid_objective_duration() -> Result<(), String> {
     let bytes = timer_mission_json("0")?;
     let result = validate_test_mission_source(
         "mission-script",
@@ -1001,17 +920,13 @@ fn mission_semantic_gate_rejects_invalid_objective_duration()
         &bytes,
     );
     let Err(error) = result else {
-        return Err(
-            "invalid objective duration reached Unreal planning".to_owned()
-        );
+        return Err("invalid objective duration reached Unreal planning".to_owned());
     };
     let rendered = error.to_string();
     if !rendered.contains("mission objective semantic preflight failed")
         || !rendered.contains("must be positive")
     {
-        return Err(format!(
-            "unexpected objective semantic failure: {rendered}"
-        ));
+        return Err(format!("unexpected objective semantic failure: {rendered}"));
     }
     Ok(())
 }
@@ -1055,8 +970,7 @@ fn condition_time_mission_json(value: &str) -> Result<Vec<u8>, String> {
 }
 
 #[test]
-fn mission_semantic_gate_rejects_invalid_condition_time() -> Result<(), String>
-{
+fn mission_semantic_gate_rejects_invalid_condition_time() -> Result<(), String> {
     let bytes = condition_time_mission_json("0")?;
     let result = validate_test_mission_source(
         "mission-script",
@@ -1072,9 +986,7 @@ fn mission_semantic_gate_rejects_invalid_condition_time() -> Result<(), String>
     if !rendered.contains("mission condition semantic preflight failed")
         || !rendered.contains("must be positive")
     {
-        return Err(format!(
-            "unexpected condition semantic failure: {rendered}"
-        ));
+        return Err(format!("unexpected condition semantic failure: {rendered}"));
     }
     Ok(())
 }
@@ -1113,8 +1025,7 @@ fn mission_root_ped_group_json(value: &str) -> Result<Vec<u8>, String> {
 }
 
 #[test]
-fn mission_semantic_gate_rejects_invalid_root_ped_group() -> Result<(), String>
-{
+fn mission_semantic_gate_rejects_invalid_root_ped_group() -> Result<(), String> {
     let bytes = mission_root_ped_group_json("8")?;
     let result = validate_test_mission_source(
         "mission-script",
@@ -1124,8 +1035,7 @@ fn mission_semantic_gate_rejects_invalid_root_ped_group() -> Result<(), String>
         &bytes,
     );
     let Err(error) = result else {
-        return Err("invalid mission pedestrian group reached Unreal planning"
-            .to_owned());
+        return Err("invalid mission pedestrian group reached Unreal planning".to_owned());
     };
     let rendered = error.to_string();
     if !rendered.contains("mission initialization preflight failed")
@@ -1174,8 +1084,7 @@ fn conversation_camera_mission_json(slot: &str) -> Result<Vec<u8>, String> {
 }
 
 #[test]
-fn mission_semantic_gate_rejects_invalid_conversation_camera()
--> Result<(), String> {
+fn mission_semantic_gate_rejects_invalid_conversation_camera() -> Result<(), String> {
     let bytes = conversation_camera_mission_json("7")?;
     let result = validate_test_mission_source(
         "mission-script",
@@ -1185,8 +1094,7 @@ fn mission_semantic_gate_rejects_invalid_conversation_camera()
         &bytes,
     );
     let Err(error) = result else {
-        return Err("invalid conversation-camera slot reached Unreal planning"
-            .to_owned());
+        return Err("invalid conversation-camera slot reached Unreal planning".to_owned());
     };
     let rendered = error.to_string();
     if !rendered.contains("mission objective semantic preflight failed")
@@ -1234,8 +1142,7 @@ fn stage_race_catchup_mission_json(factor: &str) -> Result<Vec<u8>, String> {
 }
 
 #[test]
-fn mission_semantic_gate_rejects_invalid_stage_race_catchup()
--> Result<(), String> {
+fn mission_semantic_gate_rejects_invalid_stage_race_catchup() -> Result<(), String> {
     let bytes = stage_race_catchup_mission_json("1e0")?;
     let result = validate_test_mission_source(
         "mission-script",
@@ -1245,9 +1152,7 @@ fn mission_semantic_gate_rejects_invalid_stage_race_catchup()
         &bytes,
     );
     let Err(error) = result else {
-        return Err(
-            "invalid stage race catch-up reached Unreal planning".to_owned()
-        );
+        return Err("invalid stage race catch-up reached Unreal planning".to_owned());
     };
     let rendered = error.to_string();
     if !rendered.contains("mission stage semantic preflight failed")
@@ -1291,8 +1196,7 @@ fn participant_mission_json() -> Result<Vec<u8>, String> {
 }
 
 #[test]
-fn mission_semantic_gate_rejects_missing_participant_package()
--> Result<(), String> {
+fn mission_semantic_gate_rejects_missing_participant_package() -> Result<(), String> {
     let bytes = participant_mission_json()?;
     let result = validate_test_mission_source(
         "mission-script",
@@ -1302,9 +1206,7 @@ fn mission_semantic_gate_rejects_missing_participant_package()
         &bytes,
     );
     let Err(error) = result else {
-        return Err(
-            "missing participant package reached Unreal planning".to_owned()
-        );
+        return Err("missing participant package reached Unreal planning".to_owned());
     };
     let rendered = error.to_string();
     if !rendered.contains("mission participant reference preflight failed")

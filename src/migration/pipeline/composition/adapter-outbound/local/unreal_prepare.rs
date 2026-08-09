@@ -44,27 +44,29 @@ use std::{fs, thread};
 use same_file::Handle;
 use schoenwald_filesystem::PathKind;
 use schoenwald_filesystem::adapters::driving::local::{
-    path_kind as local_path_kind, read_bytes as local_read_bytes,
-    read_utf8 as local_read_utf8,
+    path_kind as local_path_kind, read_bytes as local_read_bytes, read_utf8 as local_read_utf8,
 };
 use serde_json::{Map, Value};
 use shar_sha256::{Sha256, digest_hex};
 use shar_unreal_conversion::domain::PlanBundle;
 
+use super::mission_locator_catalog::load_mission_locator_catalog;
+use super::mission_locator_context::{
+    MissionLocatorScriptSnapshot, build_mission_locator_source_contexts,
+};
 use super::unreal_fbx_catalog::{FBX_CATALOG_ROOT, verified_fbx_catalog};
 use crate::adapters::driven::check_cancellation;
 use crate::adapters::driven::local::progress::StageProgress;
 use crate::domain::{
-    MISSION_SCRIPT_SCHEMA, MissionReferenceCatalog, PhaseThreePackageIndex,
-    PipelineConfig, PipelineError, PipelineOutcome, StageReport,
-    UNREAL_IMPORT_MANIFEST_SCHEMA, UNREAL_IMPORT_SUMMARY_SCHEMA,
-    UnrealImportManifest, UnrealSourceEvidence, compile_mission_scope_graphs,
-    preflight_mission_condition_commands,
+    MISSION_SCRIPT_SCHEMA, MissionLocatorCatalog, MissionReferenceCatalog, PhaseThreePackageIndex,
+    PipelineConfig, PipelineError, PipelineOutcome, StageReport, UNREAL_IMPORT_MANIFEST_SCHEMA,
+    UNREAL_IMPORT_SUMMARY_SCHEMA, UnrealImportManifest, UnrealSourceEvidence,
+    compile_mission_scope_graphs, preflight_mission_condition_commands,
     preflight_mission_condition_semantics, preflight_mission_conditions,
-    preflight_mission_initialization, preflight_mission_objective_commands,
-    preflight_mission_objective_semantics, preflight_mission_objectives,
-    preflight_mission_references, preflight_mission_script,
-    preflight_mission_stage_semantics,
+    preflight_mission_initialization, preflight_mission_locator_references,
+    preflight_mission_objective_commands, preflight_mission_objective_semantics,
+    preflight_mission_objectives, preflight_mission_package_loads, preflight_mission_references,
+    preflight_mission_script, preflight_mission_stage_semantics,
 };
 
 /// Canonical generated Unreal staging root.
@@ -93,39 +95,31 @@ const PUBLISHED_FILES: [&str; 9] = [
 const AUDIT_SCHEMA: &str = "shar-schoenwald.minor-unit-audit.v2";
 
 /// Generate and atomically publish Unreal staging evidence.
-pub(super) fn prepare_unreal(
-    config: &PipelineConfig,
-) -> PipelineOutcome<StageReport> {
+pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageReport> {
     let minor_unit_root = config.extracted_root.join("minor-unit");
     let manifest_path = minor_unit_root.join("manifest.jsonl");
     let audit_path = minor_unit_root.join("audit.json");
     let index_path = minor_unit_root.join("index.jsonl");
     let manifest_text = read_utf8(&manifest_path, "read minor-unit manifest")?;
     validate_audit(&audit_path, &manifest_text)?;
-    let index = PhaseThreePackageIndex::read_for_unreal(&index_path).map_err(
-        |error| {
-            PipelineError::new(format!(
-                "Unreal package-index intake failed: {error}"
-            ))
-        },
-    )?;
-    let mission_references = MissionReferenceCatalog::from_package_index(
-        &index,
-    )
-    .map_err(|error| {
-        PipelineError::new(format!(
-            "mission reference catalog intake failed: {error}"
-        ))
+    let index = PhaseThreePackageIndex::read_for_unreal(&index_path).map_err(|error| {
+        PipelineError::new(format!("Unreal package-index intake failed: {error}"))
     })?;
-    let evidence =
-        source_evidence(&manifest_text, config, &mission_references)?;
+    let mission_locators = load_mission_locator_catalog(&index, &config.extracted_root)?;
+    let mission_references =
+        MissionReferenceCatalog::from_package_index(&index).map_err(|error| {
+            PipelineError::new(format!("mission reference catalog intake failed: {error}"))
+        })?;
+    let evidence = source_evidence(
+        &manifest_text,
+        config,
+        &mission_references,
+        &mission_locators,
+        &index,
+    )?;
     let evidence = retain_importable_evidence(&index, evidence);
     let unreal_manifest = UnrealImportManifest::build(&index, evidence)
-        .map_err(|error| {
-            PipelineError::new(format!(
-                "Unreal manifest planning failed: {error}"
-            ))
-        })?;
+        .map_err(|error| PipelineError::new(format!("Unreal manifest planning failed: {error}")))?;
     let manifest_jsonl = unreal_manifest.to_jsonl();
     let summary_json = unreal_manifest.summary_json();
     validate_rendered_output(&manifest_jsonl, &summary_json)?;
@@ -137,26 +131,15 @@ pub(super) fn prepare_unreal(
         .map_or_else(
             || unreal_manifest.plan_bundle(&manifest_revision),
             |catalog| {
-                unreal_manifest.plan_bundle_with_complete_fbx_catalog(
-                    &manifest_revision,
-                    catalog,
-                )
+                unreal_manifest.plan_bundle_with_complete_fbx_catalog(&manifest_revision, catalog)
             },
         )
-        .map_err(|error| {
-            PipelineError::new(format!(
-                "Unreal plan generation failed: {error}"
-            ))
-        })?;
+        .map_err(|error| PipelineError::new(format!("Unreal plan generation failed: {error}")))?;
     publish_staging(&manifest_jsonl, &summary_json, &plan_bundle)?;
     Ok(StageReport {
         name: "prepare-unreal",
         files: PUBLISHED_FILES.len(),
-        bytes: published_byte_count(
-            &manifest_jsonl,
-            &summary_json,
-            &plan_bundle,
-        ),
+        bytes: published_byte_count(&manifest_jsonl, &summary_json, &plan_bundle),
         note: format!(
             concat!(
                 "verified {} sources across {} semantic packages and {} ",
@@ -178,8 +161,7 @@ fn validate_audit(path: &Path, manifest: &str) -> PipelineOutcome<()> {
     let rows = required_u64(&audit, "rows", "minor-unit audit")?;
     let failures = required_u64(&audit, "failures", "minor-unit audit")?;
     let error_rows = required_u64(&audit, "error_rows", "minor-unit audit")?;
-    let audited_sha256 =
-        required_string(&audit, "manifest_sha256", "minor-unit audit")?;
+    let audited_sha256 = required_string(&audit, "manifest_sha256", "minor-unit audit")?;
     if schema != AUDIT_SCHEMA {
         return Err(PipelineError::new(
             "minor-unit audit schema is not supported",
@@ -216,6 +198,8 @@ fn source_evidence(
     manifest: &str,
     config: &PipelineConfig,
     mission_references: &MissionReferenceCatalog,
+    mission_locators: &MissionLocatorCatalog,
+    index: &PhaseThreePackageIndex,
 ) -> PipelineOutcome<Vec<UnrealSourceEvidence>> {
     let source_count = manifest
         .lines()
@@ -231,8 +215,7 @@ fn source_evidence(
             check_cancellation()?;
         }
         let line_number = line_index.saturating_add(1);
-        let row =
-            parse_object(line, &format!("minor-unit line {line_number}"))?;
+        let row = parse_object(line, &format!("minor-unit line {line_number}"))?;
         let id = manifest_string(&row, "id", line_number)?;
         validate_public_identifier(&id, "minor-unit source id")?;
         if !ids.insert(id.clone()) {
@@ -248,11 +231,7 @@ fn source_evidence(
             path,
             resolved,
             expected_size,
-            file_extension: manifest_string(
-                &row,
-                "file_extension",
-                line_number,
-            )?,
+            file_extension: manifest_string(&row, "file_extension", line_number)?,
             unit_type: manifest_string(&row, "type", line_number)?,
             subtype: manifest_string(&row, "subtype", line_number)?,
             kind: manifest_string(&row, "kind", line_number)?,
@@ -260,24 +239,14 @@ fn source_evidence(
             schema: manifest_string(&row, "schema", line_number)?,
             origin: manifest_string(&row, "origin", line_number)?,
             source_path: manifest_string(&row, "source_path", line_number)?,
-            source_chunk_kind: manifest_string(
-                &row,
-                "source_chunk_kind",
-                line_number,
-            )?,
-            unreal_import_relation: manifest_string(
-                &row,
-                "unreal_import_relation",
-                line_number,
-            )?,
-            future_normalization: manifest_string(
-                &row,
-                "future_normalization",
-                line_number,
-            )?,
+            source_chunk_kind: manifest_string(&row, "source_chunk_kind", line_number)?,
+            unreal_import_relation: manifest_string(&row, "unreal_import_relation", line_number)?,
+            future_normalization: manifest_string(&row, "future_normalization", line_number)?,
         });
     }
-    parallel_source_evidence(&inputs, mission_references)
+    let evidence = parallel_source_evidence(&inputs, mission_references, index)?;
+    preflight_cross_source_mission_locators(&inputs, &evidence, mission_locators, index)?;
+    Ok(evidence)
 }
 
 /// One parsed manifest row awaiting physical source verification.
@@ -304,6 +273,7 @@ struct SourceEvidenceInput {
 fn parallel_source_evidence(
     inputs: &[SourceEvidenceInput],
     mission_references: &MissionReferenceCatalog,
+    index: &PhaseThreePackageIndex,
 ) -> PipelineOutcome<Vec<UnrealSourceEvidence>> {
     if inputs.is_empty() {
         return Ok(Vec::new());
@@ -311,8 +281,7 @@ fn parallel_source_evidence(
     let next = AtomicUsize::new(0);
     let (sender, receiver) = mpsc::channel();
     let workers = source_worker_count(inputs.len());
-    let mut progress =
-        StageProgress::begin("Unreal source evidence", inputs.len());
+    let mut progress = StageProgress::begin("Unreal source evidence", inputs.len());
     let mut collected = Vec::with_capacity(inputs.len());
     thread::scope(|scope| {
         for _worker in 0..workers {
@@ -320,6 +289,7 @@ fn parallel_source_evidence(
             let worker_next = &next;
             let worker_inputs = inputs;
             let worker_mission_references = mission_references;
+            let worker_index = index;
             let _handle = scope.spawn(move || {
                 loop {
                     let position = worker_next.fetch_add(1, Ordering::Relaxed);
@@ -327,7 +297,7 @@ fn parallel_source_evidence(
                         break;
                     };
                     let result =
-                        read_source_evidence(input, worker_mission_references);
+                        read_source_evidence(input, worker_mission_references, worker_index);
                     if worker_sender
                         .send((position, input.id.clone(), result))
                         .is_err()
@@ -359,10 +329,131 @@ fn parallel_source_evidence(
     Ok(evidence)
 }
 
+/// Re-bind typed mission locator references across the exact source snapshot
+/// that was already hashed for Unreal import planning.
+fn preflight_cross_source_mission_locators(
+    inputs: &[SourceEvidenceInput],
+    verified: &[UnrealSourceEvidence],
+    mission_locators: &MissionLocatorCatalog,
+    index: &PhaseThreePackageIndex,
+) -> PipelineOutcome<()> {
+    let mut verified_by_id = BTreeMap::new();
+    for source in verified {
+        if verified_by_id.insert(source.id.as_str(), source).is_some() {
+            return Err(PipelineError::new(
+                "mission locator source verification duplicated an id",
+            ));
+        }
+    }
+
+    let mut snapshots = Vec::new();
+    for input in inputs {
+        if input.kind != "mission-script" {
+            continue;
+        }
+        let source = verified_by_id.get(input.id.as_str()).ok_or_else(|| {
+            PipelineError::new("mission locator source is missing from verified evidence")
+        })?;
+        if source.source_path != input.source_path {
+            return Err(PipelineError::new(
+                "mission locator source provenance changed after verification",
+            ));
+        }
+        let bytes = read_stable_source_bytes(&input.resolved)?;
+        let actual_size = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
+        if actual_size != input.expected_size || actual_size != source.size_bytes {
+            return Err(PipelineError::new(format!(
+                "mission locator source size changed after verification for {}",
+                input.path
+            )));
+        }
+        if digest_hex(&bytes) != source.sha256 {
+            return Err(PipelineError::new(format!(
+                "mission locator source digest changed after verification for {}",
+                input.path
+            )));
+        }
+        let text = std::str::from_utf8(&bytes).map_err(|_error| {
+            PipelineError::new("mission locator source is not valid UTF-8 after verification")
+        })?;
+        let evidence = preflight_mission_script(text).map_err(|error| {
+            PipelineError::new(format!(
+                "mission locator source semantic preflight failed: {error}"
+            ))
+        })?;
+        let loads = preflight_mission_package_loads(&evidence, index).map_err(|error| {
+            PipelineError::new(format!(
+                "mission locator source package-load preflight failed: {error}"
+            ))
+        })?;
+        let package_roots = loads
+            .bindings()
+            .iter()
+            .map(|binding| binding.package_root().to_owned())
+            .collect();
+        snapshots.push(MissionLocatorScriptSnapshot::new(
+            input.source_path.clone(),
+            evidence,
+            package_roots,
+        ));
+    }
+
+    let indexed_package_roots = index
+        .packages()
+        .iter()
+        .map(|package| package.package_root.to_ascii_lowercase())
+        .collect::<BTreeSet<_>>();
+    let contexts = build_mission_locator_source_contexts(&snapshots, &indexed_package_roots)
+        .map_err(|error| {
+            PipelineError::new(format!(
+                "mission locator active-package context failed: {error}"
+            ))
+        })?;
+    for snapshot in &snapshots {
+        let Some(active_packages) = contexts.get(snapshot.source_path()) else {
+            continue;
+        };
+        let scopes = compile_mission_scope_graphs(snapshot.evidence()).map_err(|error| {
+            PipelineError::new(format!("mission locator scope preflight failed: {error}"))
+        })?;
+        let initialization = preflight_mission_initialization(&scopes).map_err(|error| {
+            PipelineError::new(format!(
+                "mission locator initialization preflight failed: {error}"
+            ))
+        })?;
+        let stage_semantics = preflight_mission_stage_semantics(&scopes).map_err(|error| {
+            PipelineError::new(format!("mission locator stage preflight failed: {error}"))
+        })?;
+        let objective_semantics =
+            preflight_mission_objective_semantics(&scopes).map_err(|error| {
+                PipelineError::new(format!(
+                    "mission locator objective preflight failed: {error}"
+                ))
+            })?;
+        drop(
+            preflight_mission_locator_references(
+                mission_locators,
+                active_packages,
+                &scopes,
+                &initialization,
+                &stage_semantics,
+                &objective_semantics,
+            )
+            .map_err(|error| {
+                PipelineError::new(format!(
+                    "mission locator reference preflight failed: {error}"
+                ))
+            })?,
+        );
+    }
+    Ok(())
+}
+
 /// Read, validate, and hash one physical source row.
 fn read_source_evidence(
     input: &SourceEvidenceInput,
     mission_references: &MissionReferenceCatalog,
+    index: &PhaseThreePackageIndex,
 ) -> PipelineOutcome<UnrealSourceEvidence> {
     let (actual_size, sha256) = if input.kind == "mission-script" {
         let bytes = read_stable_source_bytes(&input.resolved)?;
@@ -374,6 +465,7 @@ fn read_source_evidence(
             &input.origin,
             &bytes,
             mission_references,
+            index,
         )?;
         (actual_size, digest_hex(&bytes))
     } else {
@@ -413,24 +505,20 @@ struct StableSourceIdentity {
 
 /// Open one source only after the shared filesystem boundary proves it is a
 /// regular non-linked file, then bind the path to the exact open descriptor.
-fn open_stable_source(
-    path: &Path,
-) -> PipelineOutcome<(fs::File, StableSourceIdentity)> {
-    let kind = local_path_kind(path)
-        .map_err(path_error("inspect Unreal source evidence"))?;
+fn open_stable_source(path: &Path) -> PipelineOutcome<(fs::File, StableSourceIdentity)> {
+    let kind = local_path_kind(path).map_err(path_error("inspect Unreal source evidence"))?;
     if kind != PathKind::File {
         return Err(PipelineError::new(
             "Unreal source evidence is not a regular non-linked file",
         ));
     }
-    let file = fs::File::open(path)
-        .map_err(path_error("read Unreal source evidence"))?;
+    let file = fs::File::open(path).map_err(path_error("read Unreal source evidence"))?;
     let descriptor = file
         .try_clone()
         .and_then(Handle::from_file)
         .map_err(path_error("identify open Unreal source evidence"))?;
-    let path_handle = Handle::from_path(path)
-        .map_err(path_error("identify Unreal source evidence path"))?;
+    let path_handle =
+        Handle::from_path(path).map_err(path_error("identify Unreal source evidence path"))?;
     if descriptor != path_handle {
         return Err(PipelineError::new(
             "Unreal source evidence changed while opening",
@@ -454,8 +542,8 @@ fn verify_stable_source(
     file: &fs::File,
     initial: &StableSourceIdentity,
 ) -> PipelineOutcome<()> {
-    let kind = local_path_kind(path)
-        .map_err(path_error("inspect Unreal source evidence after read"))?;
+    let kind =
+        local_path_kind(path).map_err(path_error("inspect Unreal source evidence after read"))?;
     if kind != PathKind::File {
         return Err(PipelineError::new(
             "Unreal source evidence changed during verification",
@@ -468,12 +556,10 @@ fn verify_stable_source(
             "Unreal source evidence identity changed during verification",
         ));
     }
-    let metadata = file.metadata().map_err(path_error(
-        "inspect open Unreal source evidence after read",
-    ))?;
-    if metadata.len() != initial.len
-        || metadata.modified().ok() != initial.modified
-    {
+    let metadata = file
+        .metadata()
+        .map_err(path_error("inspect open Unreal source evidence after read"))?;
+    if metadata.len() != initial.len || metadata.modified().ok() != initial.modified {
         return Err(PipelineError::new(
             "Unreal source evidence metadata changed during verification",
         ));
@@ -517,15 +603,13 @@ fn stream_source_digest(path: &Path) -> PipelineOutcome<(u64, String)> {
         if read == 0 {
             break;
         }
-        let chunk = buffer.get(..read).ok_or_else(|| {
-            PipelineError::new("Unreal source read exceeded its bounded buffer")
-        })?;
+        let chunk = buffer
+            .get(..read)
+            .ok_or_else(|| PipelineError::new("Unreal source read exceeded its bounded buffer"))?;
         digest.update(chunk);
         total = total
             .checked_add(u64::try_from(read).unwrap_or(u64::MAX))
-            .ok_or_else(|| {
-                PipelineError::new("Unreal source byte count overflowed")
-            })?;
+            .ok_or_else(|| PipelineError::new("Unreal source byte count overflowed"))?;
     }
     verify_stable_source(path, &file, &identity)?;
     if total != identity.len {
@@ -538,8 +622,7 @@ fn stream_source_digest(path: &Path) -> PipelineOutcome<(u64, String)> {
 
 /// Bound physical source verification workers for this machine.
 fn source_worker_count(source_count: usize) -> usize {
-    let available =
-        thread::available_parallelism().map_or(1, std::num::NonZeroUsize::get);
+    let available = thread::available_parallelism().map_or(1, std::num::NonZeroUsize::get);
     source_worker_count_for(available, source_count)
 }
 
@@ -560,6 +643,7 @@ fn validate_normalized_mission_source(
     origin: &str,
     bytes: &[u8],
     mission_references: &MissionReferenceCatalog,
+    index: &PhaseThreePackageIndex,
 ) -> PipelineOutcome<()> {
     if kind != "mission-script" {
         return Ok(());
@@ -574,18 +658,18 @@ fn validate_normalized_mission_source(
             "normalized mission source routing identity is invalid",
         ));
     }
-    let text = std::str::from_utf8(bytes).map_err(|_error| {
-        PipelineError::new("normalized mission source is not valid UTF-8")
-    })?;
+    let text = std::str::from_utf8(bytes)
+        .map_err(|_error| PipelineError::new("normalized mission source is not valid UTF-8"))?;
     let evidence = preflight_mission_script(text).map_err(|error| {
-        PipelineError::new(format!(
-            "mission semantic preflight failed: {error}"
-        ))
+        PipelineError::new(format!("mission semantic preflight failed: {error}"))
     })?;
+    drop(
+        preflight_mission_package_loads(&evidence, index).map_err(|error| {
+            PipelineError::new(format!("mission package-load preflight failed: {error}"))
+        })?,
+    );
     drop(preflight_mission_objectives(&evidence).map_err(|error| {
-        PipelineError::new(format!(
-            "mission objective preflight failed: {error}"
-        ))
+        PipelineError::new(format!("mission objective preflight failed: {error}"))
     })?);
     drop(
         preflight_mission_objective_commands(&evidence).map_err(|error| {
@@ -595,9 +679,7 @@ fn validate_normalized_mission_source(
         })?,
     );
     drop(preflight_mission_conditions(&evidence).map_err(|error| {
-        PipelineError::new(format!(
-            "mission condition preflight failed: {error}"
-        ))
+        PipelineError::new(format!("mission condition preflight failed: {error}"))
     })?);
     drop(
         preflight_mission_condition_commands(&evidence).map_err(|error| {
@@ -606,33 +688,24 @@ fn validate_normalized_mission_source(
             ))
         })?,
     );
-    let scopes = compile_mission_scope_graphs(&evidence).map_err(|error| {
-        PipelineError::new(format!("mission scope preflight failed: {error}"))
+    let scopes = compile_mission_scope_graphs(&evidence)
+        .map_err(|error| PipelineError::new(format!("mission scope preflight failed: {error}")))?;
+    let objective_semantics = preflight_mission_objective_semantics(&scopes).map_err(|error| {
+        PipelineError::new(format!(
+            "mission objective semantic preflight failed: {error}"
+        ))
     })?;
-    let objective_semantics = preflight_mission_objective_semantics(&scopes)
-        .map_err(|error| {
-            PipelineError::new(format!(
-                "mission objective semantic preflight failed: {error}"
-            ))
-        })?;
-    let condition_semantics = preflight_mission_condition_semantics(&scopes)
-        .map_err(|error| {
-            PipelineError::new(format!(
-                "mission condition semantic preflight failed: {error}"
-            ))
-        })?;
-    let initialization =
-        preflight_mission_initialization(&scopes).map_err(|error| {
-            PipelineError::new(format!(
-                "mission initialization preflight failed: {error}"
-            ))
-        })?;
-    let stage_semantics =
-        preflight_mission_stage_semantics(&scopes).map_err(|error| {
-            PipelineError::new(format!(
-                "mission stage semantic preflight failed: {error}"
-            ))
-        })?;
+    let condition_semantics = preflight_mission_condition_semantics(&scopes).map_err(|error| {
+        PipelineError::new(format!(
+            "mission condition semantic preflight failed: {error}"
+        ))
+    })?;
+    let initialization = preflight_mission_initialization(&scopes).map_err(|error| {
+        PipelineError::new(format!("mission initialization preflight failed: {error}"))
+    })?;
+    let stage_semantics = preflight_mission_stage_semantics(&scopes).map_err(|error| {
+        PipelineError::new(format!("mission stage semantic preflight failed: {error}"))
+    })?;
     drop(
         preflight_mission_references(
             mission_references,
@@ -672,17 +745,12 @@ fn retain_source_ids(
     evidence
 }
 
-fn resolve_source_path(
-    config: &PipelineConfig,
-    manifest_path: &str,
-) -> PipelineOutcome<PathBuf> {
+fn resolve_source_path(config: &PipelineConfig, manifest_path: &str) -> PipelineOutcome<PathBuf> {
     for root in [&config.game_root, &config.extracted_root] {
         let root_name = root
             .file_name()
             .and_then(|value| value.to_str())
-            .ok_or_else(|| {
-                PipelineError::new("pipeline root has no portable basename")
-            })?;
+            .ok_or_else(|| PipelineError::new("pipeline root has no portable basename"))?;
         let prefix = format!("{root_name}/");
         if let Some(relative) = manifest_path.strip_prefix(&prefix) {
             validate_relative_path(relative)?;
@@ -709,16 +777,13 @@ fn validate_relative_path(path: &str) -> PipelineOutcome<()> {
     Ok(())
 }
 
-fn parse_object(
-    json: &str,
-    label: &str,
-) -> PipelineOutcome<Map<String, Value>> {
-    let value = serde_json::from_str::<Value>(json).map_err(|error| {
-        PipelineError::new(format!("invalid {label} JSON: {error}"))
-    })?;
-    value.as_object().cloned().ok_or_else(|| {
-        PipelineError::new(format!("{label} must be a JSON object"))
-    })
+fn parse_object(json: &str, label: &str) -> PipelineOutcome<Map<String, Value>> {
+    let value = serde_json::from_str::<Value>(json)
+        .map_err(|error| PipelineError::new(format!("invalid {label} JSON: {error}")))?;
+    value
+        .as_object()
+        .cloned()
+        .ok_or_else(|| PipelineError::new(format!("{label} must be a JSON object")))
 }
 
 fn manifest_string(
@@ -729,11 +794,7 @@ fn manifest_string(
     required_string(row, field, &format!("minor-unit line {line_number}"))
 }
 
-fn manifest_u64(
-    row: &Map<String, Value>,
-    field: &str,
-    line_number: usize,
-) -> PipelineOutcome<u64> {
+fn manifest_u64(row: &Map<String, Value>, field: &str, line_number: usize) -> PipelineOutcome<u64> {
     let label = format!("minor-unit line {line_number}");
     let value = required_string(row, field, &label)?;
     value.parse::<u64>().map_err(|error| {
@@ -752,37 +813,22 @@ fn required_string(
         .get(field)
         .and_then(Value::as_str)
         .map(ToOwned::to_owned)
-        .ok_or_else(|| {
-            PipelineError::new(format!(
-                "{label} is missing string field {field}"
-            ))
-        })
+        .ok_or_else(|| PipelineError::new(format!("{label} is missing string field {field}")))
 }
 
-fn required_u64(
-    object: &Map<String, Value>,
-    field: &str,
-    label: &str,
-) -> PipelineOutcome<u64> {
+fn required_u64(object: &Map<String, Value>, field: &str, label: &str) -> PipelineOutcome<u64> {
     object.get(field).and_then(Value::as_u64).ok_or_else(|| {
-        PipelineError::new(format!(
-            "{label} is missing unsigned integer field {field}"
-        ))
+        PipelineError::new(format!("{label} is missing unsigned integer field {field}"))
     })
 }
 
-fn validate_rendered_output(
-    manifest: &str,
-    summary: &str,
-) -> PipelineOutcome<()> {
+fn validate_rendered_output(manifest: &str, summary: &str) -> PipelineOutcome<()> {
     let mut lines = manifest.lines();
     let header_line = lines
         .next()
         .ok_or_else(|| PipelineError::new("Unreal import manifest is empty"))?;
     if header_line.trim().is_empty() {
-        return Err(PipelineError::new(
-            "Unreal import manifest header is blank",
-        ));
+        return Err(PipelineError::new("Unreal import manifest header is blank"));
     }
     let header = parse_object(header_line, "Unreal manifest header")?;
     let summary = parse_object(summary, "Unreal manifest summary")?;
@@ -804,9 +850,7 @@ fn validate_rendered_output(
         }
         let label = format!("Unreal manifest line {line_number}");
         let record = parse_object(line, &label)?;
-        if required_string(&record, "schema", &label)?
-            != UNREAL_IMPORT_MANIFEST_SCHEMA
-        {
+        if required_string(&record, "schema", &label)? != UNREAL_IMPORT_MANIFEST_SCHEMA {
             return Err(PipelineError::new(format!(
                 "{label} has a noncanonical schema"
             )));
@@ -825,7 +869,7 @@ fn validate_rendered_output(
                     &mut expected_sources,
                     &mut actual,
                 )?;
-            },
+            }
             "source" => {
                 saw_source = true;
                 validate_rendered_source(
@@ -836,12 +880,12 @@ fn validate_rendered_output(
                     &mut actual_sources,
                     &mut actual,
                 )?;
-            },
+            }
             _unsupported => {
                 return Err(PipelineError::new(format!(
                     "{label} has an unsupported record type"
                 )));
-            },
+            }
         }
     }
     validate_rendered_source_counts(expected_sources, actual_sources)?;
@@ -869,10 +913,8 @@ fn validate_rendered_schemas(
     header: &Map<String, Value>,
     summary: &Map<String, Value>,
 ) -> PipelineOutcome<()> {
-    if required_string(header, "schema", "Unreal manifest header")?
-        != UNREAL_IMPORT_MANIFEST_SCHEMA
-        || required_string(header, "record_type", "Unreal manifest header")?
-            != "header"
+    if required_string(header, "schema", "Unreal manifest header")? != UNREAL_IMPORT_MANIFEST_SCHEMA
+        || required_string(header, "record_type", "Unreal manifest header")? != "header"
     {
         return Err(PipelineError::new(
             "Unreal import manifest header is not canonical",
@@ -905,10 +947,8 @@ fn declared_rendered_counts(
         ("metadata_only_count", "metadata_only"),
     ];
     for (header_field, summary_field) in fields {
-        let header_value =
-            required_u64(header, header_field, "Unreal manifest header")?;
-        let summary_value =
-            required_u64(summary, summary_field, "Unreal manifest summary")?;
+        let header_value = required_u64(header, header_field, "Unreal manifest header")?;
+        let summary_value = required_u64(summary, summary_field, "Unreal manifest summary")?;
         if header_value != summary_value {
             return Err(PipelineError::new(format!(
                 "Unreal header field {header_field} disagrees with summary \
@@ -919,16 +959,8 @@ fn declared_rendered_counts(
     Ok(RenderedCounts {
         packages: required_u64(header, "package_count", "Unreal header")?,
         sources: required_u64(header, "source_count", "Unreal header")?,
-        direct_imports: required_u64(
-            header,
-            "direct_import_count",
-            "Unreal header",
-        )?,
-        requires_fbx: required_u64(
-            header,
-            "requires_fbx_count",
-            "Unreal header",
-        )?,
+        direct_imports: required_u64(header, "direct_import_count", "Unreal header")?,
+        requires_fbx: required_u64(header, "requires_fbx_count", "Unreal header")?,
         requires_editor_factory: required_u64(
             header,
             "requires_editor_factory_count",
@@ -939,11 +971,7 @@ fn declared_rendered_counts(
             "requires_semantic_conversion_count",
             "Unreal header",
         )?,
-        metadata_only: required_u64(
-            header,
-            "metadata_only_count",
-            "Unreal header",
-        )?,
+        metadata_only: required_u64(header, "metadata_only_count", "Unreal header")?,
     })
 }
 
@@ -970,26 +998,25 @@ fn validate_rendered_package(
     let _ = expected_sources.insert(package_id, source_count);
     counts.packages = counts.packages.saturating_add(1);
     match required_string(record, "disposition", label)?.as_str() {
-        "direct-editor-import" => {},
+        "direct-editor-import" => {}
         "requires-fbx" => {
             counts.requires_fbx = counts.requires_fbx.saturating_add(1);
-        },
+        }
         "requires-editor-factory" => {
-            counts.requires_editor_factory =
-                counts.requires_editor_factory.saturating_add(1);
-        },
+            counts.requires_editor_factory = counts.requires_editor_factory.saturating_add(1);
+        }
         "requires-semantic-conversion" => {
             counts.requires_semantic_conversion =
                 counts.requires_semantic_conversion.saturating_add(1);
-        },
+        }
         "metadata-only" => {
             counts.metadata_only = counts.metadata_only.saturating_add(1);
-        },
+        }
         _unsupported => {
             return Err(PipelineError::new(format!(
                 "{label} has an unsupported disposition"
             )));
-        },
+        }
     }
     Ok(())
 }
@@ -1020,15 +1047,15 @@ fn validate_rendered_source(
     *package_sources = package_sources.saturating_add(1);
     counts.sources = counts.sources.saturating_add(1);
     match record.get("direct_import") {
-        None | Some(Value::Null) => {},
+        None | Some(Value::Null) => {}
         Some(Value::Object(_direct_import)) => {
             counts.direct_imports = counts.direct_imports.saturating_add(1);
-        },
+        }
         Some(_invalid) => {
             return Err(PipelineError::new(format!(
                 "{label} has a non-object direct_import contract"
             )));
-        },
+        }
     }
     Ok(())
 }
@@ -1039,9 +1066,10 @@ fn validate_public_identifier(value: &str, label: &str) -> PipelineOutcome<()> {
         || !bytes.first().is_some_and(u8::is_ascii_alphanumeric)
         || !bytes.last().is_some_and(u8::is_ascii_alphanumeric)
         || bytes.windows(2).any(|pair| pair == b"--")
-        || !bytes.iter().copied().all(|byte| {
-            byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-'
-        })
+        || !bytes
+            .iter()
+            .copied()
+            .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-')
     {
         return Err(PipelineError::new(format!(
             "rendered Unreal {label} is not canonical"
@@ -1072,11 +1100,7 @@ fn validate_rendered_source_counts(
     }
 }
 
-fn published_byte_count(
-    manifest: &str,
-    summary: &str,
-    plans: &PlanBundle,
-) -> u64 {
+fn published_byte_count(manifest: &str, summary: &str, plans: &PlanBundle) -> u64 {
     let plan_bytes = plans
         .artifacts()
         .iter()
@@ -1092,28 +1116,16 @@ fn published_byte_count(
     .unwrap_or(u64::MAX)
 }
 
-fn publish_staging(
-    manifest: &str,
-    summary: &str,
-    plans: &PlanBundle,
-) -> PipelineOutcome<()> {
+fn publish_staging(manifest: &str, summary: &str, plans: &PlanBundle) -> PipelineOutcome<()> {
     let destination = PathBuf::from(UNREAL_STAGING_ROOT);
     let temporary_root = PathBuf::from(".temp");
     let pipeline_root = temporary_root.join("pipeline");
     let transaction_root = pipeline_root.join("unreal-prepare");
-    let staging =
-        transaction_root.join(format!("staging-{}", std::process::id()));
-    let backup =
-        transaction_root.join(format!("backup-{}", std::process::id()));
-    ensure_generated_directory(
-        &temporary_root,
-        "create Unreal temporary root",
-    )?;
+    let staging = transaction_root.join(format!("staging-{}", std::process::id()));
+    let backup = transaction_root.join(format!("backup-{}", std::process::id()));
+    ensure_generated_directory(&temporary_root, "create Unreal temporary root")?;
     ensure_generated_directory(&pipeline_root, "create Unreal pipeline root")?;
-    ensure_generated_directory(
-        &transaction_root,
-        "create Unreal transaction root",
-    )?;
+    ensure_generated_directory(&transaction_root, "create Unreal transaction root")?;
     validate_generated_chain(&[
         temporary_root.as_path(),
         pipeline_root.as_path(),
@@ -1121,11 +1133,9 @@ fn publish_staging(
     ])?;
     remove_generated_directory(&staging)?;
     remove_generated_directory(&backup)?;
-    fs::create_dir_all(&staging)
-        .map_err(path_error("create Unreal staging directory"))?;
+    fs::create_dir_all(&staging).map_err(path_error("create Unreal staging directory"))?;
     let plan_root = staging.join(PLAN_ROOT);
-    fs::create_dir_all(&plan_root)
-        .map_err(path_error("create Unreal plan directory"))?;
+    fs::create_dir_all(&plan_root).map_err(path_error("create Unreal plan directory"))?;
     let mut published_paths = BTreeSet::new();
     for (relative_path, content) in [
         (MANIFEST_FILE, manifest),
@@ -1154,9 +1164,8 @@ fn publish_staging(
     let had_destination = destination.exists();
     if had_destination {
         validate_generated_directory(&destination)?;
-        fs::rename(&destination, &backup).map_err(|error| {
-            prepare_io_error("back up Unreal staging root", &error)
-        })?;
+        fs::rename(&destination, &backup)
+            .map_err(|error| prepare_io_error("back up Unreal staging root", &error))?;
     }
     if let Err(error) = fs::rename(&staging, &destination) {
         let rollback_error = had_destination
@@ -1170,9 +1179,7 @@ fn publish_staging(
     Ok(())
 }
 
-fn validate_publication_inventory(
-    published_paths: &BTreeSet<String>,
-) -> PipelineOutcome<()> {
+fn validate_publication_inventory(published_paths: &BTreeSet<String>) -> PipelineOutcome<()> {
     let expected = PUBLISHED_FILES
         .iter()
         .map(|path| (*path).to_owned())
@@ -1185,25 +1192,15 @@ fn validate_publication_inventory(
     Ok(())
 }
 
-fn write_staged_file(
-    root: &Path,
-    relative_path: &str,
-    content: &str,
-) -> PipelineOutcome<()> {
+fn write_staged_file(root: &Path, relative_path: &str, content: &str) -> PipelineOutcome<()> {
     validate_relative_path(relative_path)?;
     let path = root.join(relative_path);
-    fs::write(&path, content)
-        .map_err(path_error("write Unreal staged file"))?;
+    fs::write(&path, content).map_err(path_error("write Unreal staged file"))?;
     verify_staged_file(&path, relative_path, content.as_bytes())
 }
 
-fn verify_staged_file(
-    path: &Path,
-    public_path: &str,
-    expected: &[u8],
-) -> PipelineOutcome<()> {
-    let actual = local_read_bytes(path)
-        .map_err(path_error("read Unreal staged file"))?;
+fn verify_staged_file(path: &Path, public_path: &str, expected: &[u8]) -> PipelineOutcome<()> {
+    let actual = local_read_bytes(path).map_err(path_error("read Unreal staged file"))?;
     if actual != expected {
         return Err(PipelineError::new(format!(
             "staged output verification failed for {public_path}"
@@ -1217,20 +1214,16 @@ fn remove_generated_directory(path: &Path) -> PipelineOutcome<()> {
         return Ok(());
     }
     validate_generated_directory(path)?;
-    fs::remove_dir_all(path)
-        .map_err(path_error("remove generated Unreal directory"))
+    fs::remove_dir_all(path).map_err(path_error("remove generated Unreal directory"))
 }
 
-fn ensure_generated_directory(
-    path: &Path,
-    create_action: &'static str,
-) -> PipelineOutcome<()> {
+fn ensure_generated_directory(path: &Path, create_action: &'static str) -> PipelineOutcome<()> {
     match fs::symlink_metadata(path) {
         Ok(_metadata) => validate_generated_directory(path),
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
             fs::create_dir_all(path).map_err(path_error(create_action))?;
             validate_generated_directory(path)
-        },
+        }
         Err(error) => Err(prepare_io_error(
             "inspect generated Unreal directory",
             &error,
@@ -1246,8 +1239,8 @@ fn validate_generated_chain(paths: &[&Path]) -> PipelineOutcome<()> {
 }
 
 fn validate_generated_directory(path: &Path) -> PipelineOutcome<()> {
-    let metadata = fs::symlink_metadata(path)
-        .map_err(path_error("inspect generated Unreal directory"))?;
+    let metadata =
+        fs::symlink_metadata(path).map_err(path_error("inspect generated Unreal directory"))?;
     if !metadata.is_dir() || metadata.file_type().is_symlink() {
         return Err(PipelineError::new(
             "generated staging path is not a regular directory",
@@ -1299,9 +1292,7 @@ fn publication_error(
     PipelineError::new(message)
 }
 
-fn path_error(
-    action: &'static str,
-) -> impl FnOnce(std::io::Error) -> PipelineError {
+fn path_error(action: &'static str) -> impl FnOnce(std::io::Error) -> PipelineError {
     move |error| prepare_io_error(action, &error)
 }
 
