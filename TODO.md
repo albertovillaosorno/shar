@@ -157,10 +157,15 @@ Current task list. Project phases and dated progress are recorded in
           locator-type constraints, preserve the `ActivateVehicle` `NULL`
           sentinel, and keep missing or duplicated active names as typed
           outcomes rather than guessing precedence.
+        - [x] Type Dyna Load Data postfix syntax as ordered region load/unload,
+          interior load/unload, and World Sphere enable/disable operations while
+          preserving exact source evidence and the observed terminal-less Level
+          7 mission-start region load as an explicit legacy adaptation.
         - [ ] Model stage/checkpoint Dyna Load Data transitions precisely enough
           to refine locator package lifetime after mission start, then prove or
           reject runtime precedence for duplicated active names such as
-          `bm1_bestside`.
+          `bm1_bestside`; do not import Mod Launcher-only stage commands as base
+          game evidence.
     - [ ] Emit lossless `USharMissionDefinition` assets only after the complete
       mission graph passes reference and topology validation.
   - [ ] Compile remaining normalized UI, font, localization, tuning, and other

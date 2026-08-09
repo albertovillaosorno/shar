@@ -151,9 +151,14 @@ source is re-read through the stable-source guard and its size and SHA-256 must
 match the already verified Unreal source evidence. Typed initialization, stage,
 and objective locator fields then resolve against the explicit level-load and
 mission-load packages plus indexed P3Ds loaded at mission start by typed
-`SetDynaLoadData` and `StreetRacePropsLoad` evidence. Dyna P3D paths use the
-source format's implicit `art/` root unless that prefix is already explicit, and
-every resulting package root must exist in the phase-three index. Unload
+`SetDynaLoadData` and `StreetRacePropsLoad` evidence. A shared Dyna Load Data
+parser now preserves ordered region load/unload, interior load/unload, and World
+Sphere enable/disable postfix operations. Base mission initialization
+remains fail-closed to its observed load-only subset, including the one corpus
+form whose final region P3D omits its terminal postfix. Dyna P3D paths use the
+source
+format's implicit `art/` root unless that prefix is already explicit, and every
+resulting package root must exist in the phase-three index. Unload
 evidence does not become an active package. Documented Event and CarStart roles
 receive exact type constraints, `ActivateVehicle(..., "NULL", ...)` emits no
 false locator reference, and missing or duplicate candidates remain `Missing` or
