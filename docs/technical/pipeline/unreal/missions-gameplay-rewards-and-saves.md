@@ -117,10 +117,29 @@ target options, collectible extension tails, dialogue compatibility fields,
 established.
 
 These objective, condition, mission-scope, and stage compilers are mandatory
-semantic gates for `prepare-unreal`. Command-level semantic ownership is now
-closed for the reviewed mission corpus, but canonical catalog resolution,
-participant/route/camera binding, reward and transition policy construction, and
-final topology validation remain pending. No mission asset is emitted yet.
+semantic gates for `prepare-unreal`. The next gate now resolves every reviewed
+character and vehicle source identity against the already validated phase-three
+package index before a mission source can contribute Unreal evidence. Character
+skeleton source names resolve to one canonical participant while retaining the
+exact base-model, costume, or crowd package subcategory; vehicle source names
+resolve to one exact `cars` package. The runtime `current` vehicle token remains
+symbolic, and the reviewed `AddStageVehicle` driver token `none` emits no false
+character package reference. Missing or ambiguous referenced participant names
+fail closed. The catalog is built once from the package index and shared read-only
+across source-verification workers.
+
+A full `prepare-unreal` run with this participant gate verified all 137,242
+source rows and reproduced the existing plan bundle revision exactly, so
+reference validation does not fabricate imports or construction operations.
+Locator resolution remains separate: locator names are level/load-contextual and
+can occur in more than one package, while legacy camera references can lack a
+currently extracted locator. The decoded locator JSON retains the source `name`,
+but extracted filenames sanitize trailing NUL padding to underscores and the
+source corpus also contains genuinely authored trailing underscores. Therefore
+filename trimming is not a canonical identity rule; the decoded name must be
+preserved or consumed directly before locator binding is enabled. Reward,
+presentation, transition, remaining locator/catalog binding, and final topology
+validation are still pending. No mission asset is emitted yet.
 
 The v3 evidence records `context_command_count`,
 `context_adaptation_count`, `context_finding_count`, ordered adaptations, and

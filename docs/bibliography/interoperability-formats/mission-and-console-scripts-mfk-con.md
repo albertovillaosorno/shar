@@ -45,8 +45,13 @@ commands, stage AI/catch-up commands, `SetHUDIcon`, `SetMaxTraffic`,
 `SetStageMessageIndex`, swap locators, mission camera and multi-controller
 commands, mission reset locators, `SetInitialWalk`, `SetDynaLoadData`,
 `StreetRacePropsLoad`, `StreetRacePropsUnload`, `UsePedGroup`, and mission HUD
-controls. Community mission tutorials and public compatibility implementations
-were additionally reviewed for source shapes such as `SetDestination`,
+controls. `AddNPC`, `AddObjectiveNPCWaypoint`, `AddStageVehicle`, and
+`ActivateVehicle` were also used as secondary cross-checks that character,
+vehicle, and locator arguments are source names rather than generated package
+identifiers; optional or sentinel driver/locator forms remain explicit instead of
+becoming fabricated catalog objects. Community mission tutorials and public
+compatibility implementations were additionally reviewed for source shapes such
+as `SetDestination`,
 `SetDialogueInfo`, `SetCamBestSide`, `SetConversationCam`, AI tuples, and mission
 FMV usage. These secondary descriptions are used only where repository evidence
 independently closes the same command form; undocumented `AddStage` numeric
