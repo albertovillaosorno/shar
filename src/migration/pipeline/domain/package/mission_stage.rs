@@ -190,6 +190,242 @@ pub enum MissionStageDirective {
         /// 5.
         cars: u8,
     },
+    /// Preserve one vehicle AI tuning tuple without assigning gameplay units.
+    VehicleAiTuning {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact source vehicle identity.
+        vehicle_id: String,
+        /// First exact signed integer source value.
+        source_first: i32,
+        /// Second exact signed integer source value.
+        source_second: i32,
+    },
+    /// Preserve one target-catchup tuning tuple without assigning gameplay
+    /// units.
+    TargetCatchupTuning {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact source vehicle identity.
+        vehicle_id: String,
+        /// First exact signed integer source value.
+        source_first: i32,
+        /// Second exact signed integer source value.
+        source_second: i32,
+    },
+    /// Preserve one safe-zone locator and positive integer source value.
+    SafeZone {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact source locator identity.
+        locator_id: String,
+        /// Exact positive integer source value; units remain unresolved.
+        source_value: u32,
+    },
+    /// Preserve an authored stay-in-black transition marker.
+    StayInBlack {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+    },
+    /// Preserve an authored game-over transition marker.
+    GameOver {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+    },
+    /// Preserve an authored level-over transition marker.
+    LevelOver {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+    },
+    /// Preserve an authored stage-complete presentation marker.
+    ShowStageComplete {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+    },
+    /// Preserve an authored hit-and-run disable marker.
+    DisableHitAndRun {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+    },
+    /// Bind a state-prop collectible identity to a locator and source state.
+    CollectibleStateProp {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact source state-prop identity.
+        prop_id: String,
+        /// Exact source locator identity.
+        locator_id: String,
+        /// Exact nonnegative source state value.
+        source_state: u32,
+    },
+    /// Place a stage character with optional on-foot locator and vehicle
+    /// context.
+    StageCharacter {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact source character identity.
+        character_id: String,
+        /// Optional exact character locator identity.
+        character_locator_id: Option<String>,
+        /// Exact source vehicle identity, including the `current` token.
+        vehicle_id: String,
+        /// Exact source vehicle locator identity.
+        vehicle_locator_id: String,
+    },
+    /// Preserve an authored stage music-change marker.
+    StageMusicChange {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+    },
+    /// Preserve one countdown display token and authored duration.
+    CountdownSequenceEntry {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact nonempty source countdown token.
+        token: String,
+        /// Exact positive authored duration in milliseconds.
+        duration_milliseconds: u32,
+    },
+    /// Preserve the reviewed mission-abort boolean source value.
+    MissionAbortAllowed {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact reviewed source boolean.
+        allowed: bool,
+    },
+    /// Preserve the exact legacy `GoToPsScreenWhenDone` marker.
+    GotoPsScreenWhenDone {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+    },
+    /// Preserve an authored no-traffic stage marker.
+    NoTrafficForStage {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+    },
+    /// Place the player car at an exact source locator.
+    PlacePlayerCar {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact source vehicle identity, including the `current` token.
+        vehicle_id: String,
+        /// Exact source car locator identity.
+        locator_id: String,
+    },
+    /// Preserve the exact legacy `PutMFPlayerInCar` marker.
+    PutMfPlayerInCar {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+    },
+    /// Select one character identity to hide for the stage.
+    CharacterToHide {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact source character identity.
+        character_id: String,
+    },
+    /// Select a completion dialogue and optional source character identity.
+    CompletionDialog {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact source dialogue identity.
+        dialogue_id: String,
+        /// Optional exact source character identity.
+        character_id: Option<String>,
+    },
+    /// Preserve the exact nonnegative demo-loop time source value.
+    DemoLoopTime {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact source integer.
+        source_value: u64,
+    },
+    /// Select one documented music state/value pair.
+    MusicState {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact source music-state identity.
+        state_name: String,
+        /// Exact source music-state value identity.
+        state_value: String,
+    },
+    /// Select an exact stage-level P3D presentation bitmap source.
+    StagePresentationBitmap {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact repository-relative `.p3d` source path.
+        p3d_path: String,
+    },
+    /// Preserve the exact positive stage race-entry fee.
+    RaceEntryFee {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact source integer fee.
+        source_value: u32,
+    },
+    /// Preserve one five-field race AI catch-up source tuple.
+    RaceCatchupTuning {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact source vehicle identity.
+        vehicle_id: String,
+        /// Exact first integer source value.
+        source_value: u32,
+        /// Exact three source decimal lexemes in authored order.
+        source_factors: [String; 3],
+    },
+    /// Preserve an authored always-on stage-music marker.
+    StageMusicAlwaysOn {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+    },
+    /// Select the default-car locator used by a source swap sequence.
+    SwapDefaultCarLocator {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact source locator identity.
+        locator_id: String,
+    },
+    /// Select the forced-car locator used by a source swap sequence.
+    SwapForcedCarLocator {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact source locator identity.
+        locator_id: String,
+    },
+    /// Select the player locator used by a source swap sequence.
+    SwapPlayerLocator {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact source locator identity.
+        locator_id: String,
+    },
+    /// Select an exact stage-start music event identity.
+    StageStartMusicEvent {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact source event identity.
+        event_id: String,
+    },
+    /// Start an exact countdown sequence with an optional character identity.
+    StartCountdown {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact source sequence identity.
+        sequence_id: String,
+        /// Optional exact source character identity.
+        character_id: Option<String>,
+    },
+    /// Preserve an authored swap-in-default-car marker.
+    SwapInDefaultCar {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+    },
+    /// Preserve an authored use-elapsed-time marker.
+    UseElapsedTime {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+    },
     /// Type-0 event locator used as a stage waypoint.
     Waypoint {
         /// Source statement ordinal.
@@ -266,29 +502,64 @@ pub fn preflight_mission_stage_semantics(
     Ok(MissionStageSemanticReport { stages })
 }
 
+pub(super) fn objective_command_has_stage_semantics(name: &str) -> bool {
+    matches!(
+        name,
+        "activatevehicle"
+            | "addsafezone"
+            | "addstagecharacter"
+            | "addstagevehicle"
+            | "disablehitandrun"
+            | "setgameover"
+            | "setlevelover"
+            | "setstageaitargetcatchupparams"
+            | "setstagemessageindex"
+            | "setvehicleaiparams"
+            | "stayinblack"
+    )
+}
+
 fn compile_stage(
     stage: &MissionScopeStage,
 ) -> Result<MissionStageSemanticBinding, String> {
     let kind = compile_stage_kind(stage.legacy_parameters())?;
     let mut directives = Vec::<(usize, MissionStageDirective)>::new();
     for command in stage.commands() {
-        if let Some(directive) = compile_stage_directive(
+        let directive = match compile_stage_directive(
             &kind,
             command.source_ordinal(),
             command.name(),
             command.arguments(),
         )? {
-            directives.push((command.source_ordinal(), directive));
-        }
+            Some(directive) => directive,
+            None => compile_direct_stage_only_directive(
+                command.source_ordinal(),
+                command.name(),
+                command.arguments(),
+            )?
+            .ok_or_else(|| {
+                "reviewed direct stage command lacks typed semantics".to_owned()
+            })?,
+        };
+        directives.push((command.source_ordinal(), directive));
     }
     for command in stage.objective().commands() {
-        if let Some(directive) = compile_stage_directive(
+        let directive = compile_stage_directive(
             &kind,
             command.ordinal(),
             command.command(),
             command.arguments(),
-        )? {
+        )?;
+        if objective_command_has_stage_semantics(command.command()) {
+            let directive = directive.ok_or_else(|| {
+                "objective command lost delegated stage semantics".to_owned()
+            })?;
             directives.push((command.ordinal(), directive));
+        } else if directive.is_some() {
+            return Err(format!(
+                "objective command unexpectedly acquired stage semantics: {}",
+                command.command()
+            ));
         }
     }
     directives.sort_by_key(|(ordinal, _directive)| *ordinal);
@@ -301,6 +572,150 @@ fn compile_stage(
             .map(|(_ordinal, directive)| directive)
             .collect(),
     })
+}
+
+fn compile_direct_stage_only_directive(
+    source_ordinal: usize,
+    name: &str,
+    arguments: &[String],
+) -> Result<Option<MissionStageDirective>, String> {
+    let directive = match name {
+        "addcollectiblestateprop" => {
+            Some(compile_collectible_state_prop(source_ordinal, arguments)?)
+        },
+        "addstagemusicchange" => {
+            require_no_arguments(arguments, "stage music-change marker")?;
+            Some(MissionStageDirective::StageMusicChange { source_ordinal })
+        },
+        "addtocountdownsequence" => {
+            Some(compile_countdown_entry(source_ordinal, arguments)?)
+        },
+        "allowmissionabort" => {
+            let [value] = arguments else {
+                return Err(
+                    "stage mission-abort source shape drifted".to_owned()
+                );
+            };
+            if value != "false" {
+                return Err("stage mission-abort source value is not reviewed"
+                    .to_owned());
+            }
+            Some(MissionStageDirective::MissionAbortAllowed {
+                source_ordinal,
+                allowed: false,
+            })
+        },
+        "gotopsscreenwhendone" => {
+            require_no_arguments(
+                arguments,
+                "stage GoToPsScreenWhenDone marker",
+            )?;
+            Some(MissionStageDirective::GotoPsScreenWhenDone { source_ordinal })
+        },
+        "notrafficforstage" => {
+            require_no_arguments(arguments, "stage no-traffic marker")?;
+            Some(MissionStageDirective::NoTrafficForStage { source_ordinal })
+        },
+        "placeplayercar" => {
+            Some(compile_place_player_car(source_ordinal, arguments)?)
+        },
+        "putmfplayerincar" => {
+            require_no_arguments(arguments, "stage PutMFPlayerInCar marker")?;
+            Some(MissionStageDirective::PutMfPlayerInCar { source_ordinal })
+        },
+        "setcharactertohide" => Some(MissionStageDirective::CharacterToHide {
+            source_ordinal,
+            character_id: required_identity(
+                arguments,
+                "stage hidden character",
+            )?,
+        }),
+        "setcompletiondialog" => {
+            Some(compile_completion_dialog(source_ordinal, arguments)?)
+        },
+        "setdemolooptime" => Some(MissionStageDirective::DemoLoopTime {
+            source_ordinal,
+            source_value: required_source_u64(
+                arguments,
+                "stage demo-loop time",
+            )?,
+        }),
+        "setmusicstate" => {
+            Some(compile_music_state(source_ordinal, arguments)?)
+        },
+        "setpresentationbitmap" => {
+            Some(MissionStageDirective::StagePresentationBitmap {
+                source_ordinal,
+                p3d_path: required_p3d_path(
+                    arguments,
+                    "stage presentation bitmap",
+                )?,
+            })
+        },
+        "setraceenteryfee" => Some(MissionStageDirective::RaceEntryFee {
+            source_ordinal,
+            source_value: required_positive_source_u32(
+                arguments,
+                "stage race-entry fee",
+            )?,
+        }),
+        "setstageairacecatchupparams" => {
+            Some(compile_race_catchup(source_ordinal, arguments)?)
+        },
+        "setstagemusicalwayson" => {
+            require_no_arguments(arguments, "stage music-always-on marker")?;
+            Some(MissionStageDirective::StageMusicAlwaysOn { source_ordinal })
+        },
+        "setswapdefaultcarlocator" => {
+            Some(MissionStageDirective::SwapDefaultCarLocator {
+                source_ordinal,
+                locator_id: required_identity(
+                    arguments,
+                    "stage default-car swap locator",
+                )?,
+            })
+        },
+        "setswapforcedcarlocator" => {
+            Some(MissionStageDirective::SwapForcedCarLocator {
+                source_ordinal,
+                locator_id: required_identity(
+                    arguments,
+                    "stage forced-car swap locator",
+                )?,
+            })
+        },
+        "setswapplayerlocator" => {
+            Some(MissionStageDirective::SwapPlayerLocator {
+                source_ordinal,
+                locator_id: required_identity(
+                    arguments,
+                    "stage player swap locator",
+                )?,
+            })
+        },
+        "stagestartmusicevent" => {
+            Some(MissionStageDirective::StageStartMusicEvent {
+                source_ordinal,
+                event_id: required_identity(
+                    arguments,
+                    "stage-start music event",
+                )?,
+            })
+        },
+        "startcountdown" => {
+            Some(compile_start_countdown(source_ordinal, arguments)?)
+        },
+        "swapindefaultcar" => {
+            require_no_arguments(arguments, "stage default-car swap marker")?;
+            Some(MissionStageDirective::SwapInDefaultCar { source_ordinal })
+        },
+        "useelapsedtime" => {
+            require_no_arguments(arguments, "stage elapsed-time marker")?;
+            Some(MissionStageDirective::UseElapsedTime { source_ordinal })
+        },
+        _ => None,
+    };
+    Ok(directive)
 }
 
 fn compile_stage_directive(
@@ -368,6 +783,39 @@ fn compile_stage_directive(
             source_ordinal,
             cars: parse_max_traffic(arguments)?,
         }),
+        "setvehicleaiparams" => {
+            Some(compile_ai_tuning(source_ordinal, arguments, false)?)
+        },
+        "setstageaitargetcatchupparams" => {
+            Some(compile_ai_tuning(source_ordinal, arguments, true)?)
+        },
+        "addsafezone" => Some(compile_safe_zone(source_ordinal, arguments)?),
+        "addstagecharacter" => {
+            Some(compile_stage_character(source_ordinal, arguments)?)
+        },
+        "stayinblack" => {
+            require_no_arguments(arguments, "stage stay-in-black marker")?;
+            Some(MissionStageDirective::StayInBlack { source_ordinal })
+        },
+        "setgameover" => {
+            require_no_arguments(arguments, "stage game-over marker")?;
+            Some(MissionStageDirective::GameOver { source_ordinal })
+        },
+        "setlevelover" => {
+            require_no_arguments(arguments, "stage level-over marker")?;
+            Some(MissionStageDirective::LevelOver { source_ordinal })
+        },
+        "showstagecomplete" => {
+            require_no_arguments(arguments, "stage-complete marker")?;
+            Some(MissionStageDirective::ShowStageComplete { source_ordinal })
+        },
+        "disablehitandrun" => {
+            require_no_arguments(
+                arguments,
+                "stage hit-and-run disable marker",
+            )?;
+            Some(MissionStageDirective::DisableHitAndRun { source_ordinal })
+        },
         "addstagewaypoint" => Some(MissionStageDirective::Waypoint {
             source_ordinal,
             locator_id: required_identity(arguments, "stage waypoint locator")?,
@@ -519,6 +967,324 @@ fn compile_vehicle(
         con_file: con_file.clone(),
         driver_id,
     })
+}
+
+fn compile_collectible_state_prop(
+    source_ordinal: usize,
+    arguments: &[String],
+) -> Result<MissionStageDirective, String> {
+    let [prop, locator, state] = arguments else {
+        return Err("stage collectible-state-prop shape drifted".to_owned());
+    };
+    validate_identity(prop, "stage collectible state prop")?;
+    validate_identity(locator, "stage collectible state-prop locator")?;
+    Ok(MissionStageDirective::CollectibleStateProp {
+        source_ordinal,
+        prop_id: prop.clone(),
+        locator_id: locator.clone(),
+        source_state: parse_source_u32(
+            state,
+            "stage collectible state-prop source state",
+        )?,
+    })
+}
+
+fn compile_countdown_entry(
+    source_ordinal: usize,
+    arguments: &[String],
+) -> Result<MissionStageDirective, String> {
+    let [token, duration] = arguments else {
+        return Err("stage countdown-sequence shape drifted".to_owned());
+    };
+    validate_token(token, "stage countdown-sequence token")?;
+    let duration_milliseconds =
+        parse_source_u32(duration, "stage countdown duration")?;
+    if duration_milliseconds == 0 {
+        return Err("stage countdown duration must be positive".to_owned());
+    }
+    Ok(MissionStageDirective::CountdownSequenceEntry {
+        source_ordinal,
+        token: token.clone(),
+        duration_milliseconds,
+    })
+}
+
+fn compile_place_player_car(
+    source_ordinal: usize,
+    arguments: &[String],
+) -> Result<MissionStageDirective, String> {
+    let [vehicle, locator] = arguments else {
+        return Err("stage player-car placement shape drifted".to_owned());
+    };
+    validate_identity(vehicle, "stage player-car vehicle")?;
+    validate_identity(locator, "stage player-car locator")?;
+    Ok(MissionStageDirective::PlacePlayerCar {
+        source_ordinal,
+        vehicle_id: vehicle.clone(),
+        locator_id: locator.clone(),
+    })
+}
+
+fn compile_completion_dialog(
+    source_ordinal: usize,
+    arguments: &[String],
+) -> Result<MissionStageDirective, String> {
+    let (dialogue, character_id) = match arguments {
+        [dialogue] => (dialogue, None),
+        [dialogue, character] => (dialogue, Some(character.clone())),
+        _ => return Err("stage completion-dialog shape drifted".to_owned()),
+    };
+    validate_identity(dialogue, "stage completion dialogue")?;
+    if let Some(character) = &character_id {
+        validate_identity(character, "stage completion-dialog character")?;
+    }
+    Ok(MissionStageDirective::CompletionDialog {
+        source_ordinal,
+        dialogue_id: dialogue.clone(),
+        character_id,
+    })
+}
+
+fn compile_music_state(
+    source_ordinal: usize,
+    arguments: &[String],
+) -> Result<MissionStageDirective, String> {
+    let [state_name, state_value] = arguments else {
+        return Err("stage music-state shape drifted".to_owned());
+    };
+    validate_identity(state_name, "stage music-state name")?;
+    validate_identity(state_value, "stage music-state value")?;
+    Ok(MissionStageDirective::MusicState {
+        source_ordinal,
+        state_name: state_name.clone(),
+        state_value: state_value.clone(),
+    })
+}
+
+fn compile_race_catchup(
+    source_ordinal: usize,
+    arguments: &[String],
+) -> Result<MissionStageDirective, String> {
+    let [vehicle, value, first, second, third] = arguments else {
+        return Err("stage race catch-up shape drifted".to_owned());
+    };
+    validate_identity(vehicle, "stage race catch-up vehicle")?;
+    let source_value = parse_source_u32(value, "stage race catch-up integer")?;
+    if source_value == 0 {
+        return Err("stage race catch-up integer must be positive".to_owned());
+    }
+    for factor in [first, second, third] {
+        validate_source_decimal(factor, "stage race catch-up decimal")?;
+    }
+    Ok(MissionStageDirective::RaceCatchupTuning {
+        source_ordinal,
+        vehicle_id: vehicle.clone(),
+        source_value,
+        source_factors: [first.clone(), second.clone(), third.clone()],
+    })
+}
+
+fn compile_start_countdown(
+    source_ordinal: usize,
+    arguments: &[String],
+) -> Result<MissionStageDirective, String> {
+    let (sequence, character_id) = match arguments {
+        [sequence] => (sequence, None),
+        [sequence, character] => (sequence, Some(character.clone())),
+        _ => return Err("stage start-countdown shape drifted".to_owned()),
+    };
+    validate_identity(sequence, "stage countdown sequence")?;
+    if let Some(character) = &character_id {
+        validate_identity(character, "stage countdown character")?;
+    }
+    Ok(MissionStageDirective::StartCountdown {
+        source_ordinal,
+        sequence_id: sequence.clone(),
+        character_id,
+    })
+}
+
+fn required_source_u64(
+    arguments: &[String],
+    label: &str,
+) -> Result<u64, String> {
+    let [value] = arguments else {
+        return Err(format!("{label} shape drifted"));
+    };
+    if value.is_empty() || !value.chars().all(|ch| ch.is_ascii_digit()) {
+        return Err(format!("{label} is malformed"));
+    }
+    value
+        .parse::<u64>()
+        .map_err(|_error| format!("{label} is out of range"))
+}
+
+fn required_positive_source_u32(
+    arguments: &[String],
+    label: &str,
+) -> Result<u32, String> {
+    let [value] = arguments else {
+        return Err(format!("{label} shape drifted"));
+    };
+    let parsed = parse_source_u32(value, label)?;
+    if parsed == 0 {
+        Err(format!("{label} must be positive"))
+    } else {
+        Ok(parsed)
+    }
+}
+
+fn required_p3d_path(
+    arguments: &[String],
+    label: &str,
+) -> Result<String, String> {
+    let [value] = arguments else {
+        return Err(format!("{label} shape drifted"));
+    };
+    validate_p3d_path(value, label)?;
+    Ok(value.clone())
+}
+
+fn validate_p3d_path(value: &str, label: &str) -> Result<(), String> {
+    if value.is_empty()
+        || !value.to_ascii_lowercase().ends_with(".p3d")
+        || value.contains("..")
+        || value.starts_with('/')
+        || value.starts_with(char::from(92))
+        || value.chars().any(char::is_control)
+    {
+        Err(format!("{label} P3D path is malformed"))
+    } else {
+        Ok(())
+    }
+}
+
+fn validate_source_decimal(value: &str, label: &str) -> Result<(), String> {
+    let mut pieces = value.split('.');
+    let whole = pieces.next().unwrap_or_default();
+    if whole.is_empty() || !whole.chars().all(|ch| ch.is_ascii_digit()) {
+        return Err(format!("{label} is malformed"));
+    }
+    if let Some(fraction) = pieces.next()
+        && (fraction.is_empty()
+            || !fraction.chars().all(|ch| ch.is_ascii_digit()))
+    {
+        return Err(format!("{label} is malformed"));
+    }
+    if pieces.next().is_some() {
+        return Err(format!("{label} is malformed"));
+    }
+    Ok(())
+}
+
+fn compile_stage_character(
+    source_ordinal: usize,
+    arguments: &[String],
+) -> Result<MissionStageDirective, String> {
+    let (character, character_locator_id, vehicle, vehicle_locator) =
+        match arguments {
+            [character, vehicle, vehicle_locator] => {
+                (character, None, vehicle, vehicle_locator)
+            },
+            [character, character_locator, vehicle, vehicle_locator] => (
+                character,
+                Some(character_locator.clone()),
+                vehicle,
+                vehicle_locator,
+            ),
+            _ => return Err("stage character source shape drifted".to_owned()),
+        };
+    validate_identity(character, "stage character")?;
+    if let Some(locator) = &character_locator_id {
+        validate_identity(locator, "stage character locator")?;
+    }
+    validate_identity(vehicle, "stage character vehicle")?;
+    validate_identity(vehicle_locator, "stage character vehicle locator")?;
+    Ok(MissionStageDirective::StageCharacter {
+        source_ordinal,
+        character_id: character.clone(),
+        character_locator_id,
+        vehicle_id: vehicle.clone(),
+        vehicle_locator_id: vehicle_locator.clone(),
+    })
+}
+
+fn compile_ai_tuning(
+    source_ordinal: usize,
+    arguments: &[String],
+    target_catchup: bool,
+) -> Result<MissionStageDirective, String> {
+    let [vehicle, first, second] = arguments else {
+        return Err("stage AI tuning shape drifted".to_owned());
+    };
+    validate_identity(vehicle, "stage AI tuning vehicle")?;
+    let source_first = parse_source_i32(first, "stage AI first source value")?;
+    let source_second =
+        parse_source_i32(second, "stage AI second source value")?;
+    if target_catchup {
+        Ok(MissionStageDirective::TargetCatchupTuning {
+            source_ordinal,
+            vehicle_id: vehicle.clone(),
+            source_first,
+            source_second,
+        })
+    } else {
+        Ok(MissionStageDirective::VehicleAiTuning {
+            source_ordinal,
+            vehicle_id: vehicle.clone(),
+            source_first,
+            source_second,
+        })
+    }
+}
+
+fn compile_safe_zone(
+    source_ordinal: usize,
+    arguments: &[String],
+) -> Result<MissionStageDirective, String> {
+    let [locator, value] = arguments else {
+        return Err("stage safe-zone shape drifted".to_owned());
+    };
+    validate_identity(locator, "stage safe-zone locator")?;
+    let source_value = parse_source_u32(value, "stage safe-zone source value")?;
+    if source_value == 0 {
+        return Err("stage safe-zone source value must be positive".to_owned());
+    }
+    Ok(MissionStageDirective::SafeZone {
+        source_ordinal,
+        locator_id: locator.clone(),
+        source_value,
+    })
+}
+
+fn parse_source_i32(value: &str, label: &str) -> Result<i32, String> {
+    let body = value.strip_prefix('-').unwrap_or(value);
+    if body.is_empty() || !body.chars().all(|ch| ch.is_ascii_digit()) {
+        return Err(format!("{label} is malformed"));
+    }
+    value
+        .parse::<i32>()
+        .map_err(|_error| format!("{label} is out of range"))
+}
+
+fn parse_source_u32(value: &str, label: &str) -> Result<u32, String> {
+    if value.is_empty() || !value.chars().all(|ch| ch.is_ascii_digit()) {
+        return Err(format!("{label} is malformed"));
+    }
+    value
+        .parse::<u32>()
+        .map_err(|_error| format!("{label} is out of range"))
+}
+
+fn require_no_arguments(
+    arguments: &[String],
+    label: &str,
+) -> Result<(), String> {
+    if arguments.is_empty() {
+        Ok(())
+    } else {
+        Err(format!("{label} unexpectedly carries arguments"))
+    }
 }
 
 fn parse_max_traffic(arguments: &[String]) -> Result<u8, String> {
