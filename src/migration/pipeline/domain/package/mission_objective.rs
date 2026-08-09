@@ -37,6 +37,7 @@ mod modifier;
 mod parameter;
 
 pub use directive::{
+    MissionAmbientAnimationCharacter, MissionConversationCameraToken,
     MissionObjectiveDirective, MissionObjectiveNpcReference,
     MissionObjectiveSemanticBinding, MissionObjectiveSemanticReport,
     preflight_mission_objective_semantics,
