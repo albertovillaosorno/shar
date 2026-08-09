@@ -45,8 +45,13 @@ commands, stage AI/catch-up commands, `SetHUDIcon`, `SetMaxTraffic`,
 `SetStageMessageIndex`, swap locators, mission camera and multi-controller
 commands, mission reset locators, `SetInitialWalk`, `SetDynaLoadData`,
 `StreetRacePropsLoad`, `StreetRacePropsUnload`, `UsePedGroup`, and mission HUD
-controls. `AddNPC`, `AddObjectiveNPCWaypoint`, `AddStageVehicle`, and
-`ActivateVehicle` were also used as secondary cross-checks that character,
+controls. The Dyna Load Data reference was also cross-checked for its documented
+postfix operations: region load/unload, interior load/unload, and World Sphere
+enable/disable. Mod Launcher `AddStageDynaLoadData`, `SetStageDynaLoadData`, and
+checkpoint extensions are not treated as evidence that those commands exist in
+the original game corpus. `AddNPC`, `AddObjectiveNPCWaypoint`,
+`AddStageVehicle`, and `ActivateVehicle` were also used as secondary
+cross-checks that character,
 vehicle, and locator arguments are source names rather than generated package
 identifiers; optional or sentinel driver/locator forms remain explicit instead of
 becoming fabricated catalog objects. Community mission tutorials and public
