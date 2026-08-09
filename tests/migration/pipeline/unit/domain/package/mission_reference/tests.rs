@@ -6,7 +6,27 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
-
+//
+// Boundary-Contract:
+// - Owns:
+//   - Mission participant package-reference resolver unit regressions.
+// - Must-Not:
+//   - Read the game tree, publish Unreal assets, or invent participant aliases.
+// - Allows:
+//   - Synthetic package catalogs and exact mission semantic reports.
+// - Split-When:
+//   - Locator-reference tests gain an independent package boundary.
+// - Merge-When:
+//   - Mission reference resolution loses independent policy.
+// - Summary:
+//   - Mission participant package-reference resolver tests.
+// - Description:
+//   - Proves canonical character and vehicle resolution plus fail-closed drift.
+// - Usage:
+//   - Included only by the mission-reference domain module under cfg(test).
+// - Defaults:
+//   - Missing and ambiguous physical participants fail closed.
+//
 //! Mission participant package-reference resolver tests.
 
 use super::*;
