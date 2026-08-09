@@ -87,6 +87,82 @@ pub enum MissionInitializationDirective {
         /// Exact `.p3d` references extracted from the source data.
         p3d_files: Vec<String>,
     },
+    /// Bind a mission-scope state-prop collectible to one locator and state.
+    CollectibleStateProp {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact source state-prop identity.
+        prop_id: String,
+        /// Exact source locator identity.
+        locator_id: String,
+        /// Exact nonnegative source state value.
+        source_state: u32,
+    },
+    /// Place the player car at an exact mission-scope locator.
+    PlacePlayerCar {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact source vehicle identity, including the `current` token.
+        vehicle_id: String,
+        /// Exact source car locator identity.
+        locator_id: String,
+    },
+    /// Select the exact animated camera identity used by the mission.
+    AnimatedCamera {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact source camera identity.
+        camera_id: String,
+    },
+    /// Select the exact animated-camera multi-controller identity.
+    AnimatedCameraMulticont {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact source multi-controller identity.
+        multicont_id: String,
+    },
+    /// Select the exact mission-start camera identity.
+    MissionStartCamera {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact source camera identity.
+        camera_id: String,
+    },
+    /// Select the exact mission-start multi-controller identity.
+    MissionStartMulticont {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact source multi-controller identity.
+        multicont_id: String,
+    },
+    /// Preserve the reviewed number of valid mission failure hints.
+    ValidFailureHints {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact reviewed source count.
+        count: u8,
+    },
+    /// Select an exact mission-scope P3D presentation bitmap source.
+    PresentationBitmap {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact repository-relative `.p3d` source path.
+        p3d_path: String,
+    },
+    /// Preserve the reviewed mission HUD visibility source value.
+    HudVisibility {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact reviewed source boolean.
+        visible: bool,
+    },
+    /// Select one reviewed pedestrian-group index.
+    PedGroup {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact source group index; current corpus uses 0 through 7.
+        group_index: u8,
+    },
     /// Mission explicitly requires forced-car behavior.
     ForcedCar {
         /// Source statement ordinal.
@@ -152,9 +228,11 @@ pub fn preflight_mission_initialization(
     for mission in scopes.missions() {
         let mut directives = Vec::new();
         for command in mission.commands() {
-            if let Some(directive) = compile_directive(command)? {
-                directives.push(directive);
-            }
+            let directive = compile_directive(command)?.ok_or_else(|| {
+                "reviewed mission-scope command lacks typed semantics"
+                    .to_owned()
+            })?;
+            directives.push(directive);
         }
         missions.push(MissionInitializationBinding {
             mission_id: mission.source_mission_id().to_owned(),
@@ -229,9 +307,178 @@ fn compile_directive(
             })
         },
         "initlevelplayervehicle" => Some(compile_initial_vehicle(command)?),
+        _ => compile_remaining_directive(
+            command.source_ordinal(),
+            command.name(),
+            command.arguments(),
+        )?,
+    };
+    Ok(directive)
+}
+
+fn compile_remaining_directive(
+    source_ordinal: usize,
+    name: &str,
+    arguments: &[String],
+) -> Result<Option<MissionInitializationDirective>, String> {
+    let directive = match name {
+        "addcollectiblestateprop" => {
+            let [prop, locator, state] = arguments else {
+                return Err(
+                    "mission collectible-state-prop shape drifted".to_owned()
+                );
+            };
+            validate_identity(prop, "mission collectible state prop")?;
+            validate_identity(
+                locator,
+                "mission collectible state-prop locator",
+            )?;
+            let source_state = parse_ascii_u32(
+                state,
+                "mission collectible state-prop source state",
+            )?;
+            if source_state != 2 {
+                return Err(
+                    "mission collectible state-prop value is not reviewed"
+                        .to_owned(),
+                );
+            }
+            Some(MissionInitializationDirective::CollectibleStateProp {
+                source_ordinal,
+                prop_id: prop.clone(),
+                locator_id: locator.clone(),
+                source_state,
+            })
+        },
+        "placeplayercar" => {
+            let [vehicle, locator] = arguments else {
+                return Err(
+                    "mission player-car placement shape drifted".to_owned()
+                );
+            };
+            if vehicle != "current" {
+                return Err("mission player-car vehicle token is not reviewed"
+                    .to_owned());
+            }
+            validate_identity(locator, "mission player-car locator")?;
+            Some(MissionInitializationDirective::PlacePlayerCar {
+                source_ordinal,
+                vehicle_id: vehicle.clone(),
+                locator_id: locator.clone(),
+            })
+        },
+        "setanimatedcameraname" => {
+            Some(MissionInitializationDirective::AnimatedCamera {
+                source_ordinal,
+                camera_id: required_identity(
+                    arguments,
+                    "mission animated camera",
+                )?,
+            })
+        },
+        "setanimcammulticontname" => {
+            Some(MissionInitializationDirective::AnimatedCameraMulticont {
+                source_ordinal,
+                multicont_id: required_identity(
+                    arguments,
+                    "mission animated-camera multicont",
+                )?,
+            })
+        },
+        "setmissionstartcameraname" => {
+            Some(MissionInitializationDirective::MissionStartCamera {
+                source_ordinal,
+                camera_id: required_identity(
+                    arguments,
+                    "mission start camera",
+                )?,
+            })
+        },
+        "setmissionstartmulticontname" => {
+            Some(MissionInitializationDirective::MissionStartMulticont {
+                source_ordinal,
+                multicont_id: required_identity(
+                    arguments,
+                    "mission start multicont",
+                )?,
+            })
+        },
+        "setnumvalidfailurehints" => {
+            let count =
+                required_ascii_u8(arguments, "mission failure-hint count")?;
+            if !matches!(count, 2 | 3 | 5) {
+                return Err(
+                    "mission failure-hint count is not reviewed".to_owned()
+                );
+            }
+            Some(MissionInitializationDirective::ValidFailureHints {
+                source_ordinal,
+                count,
+            })
+        },
+        "setpresentationbitmap" => {
+            let [value] = arguments else {
+                return Err(
+                    "mission presentation-bitmap shape drifted".to_owned()
+                );
+            };
+            validate_p3d_path(value)?;
+            Some(MissionInitializationDirective::PresentationBitmap {
+                source_ordinal,
+                p3d_path: value.clone(),
+            })
+        },
+        "showhud" => {
+            let [value] = arguments else {
+                return Err("mission HUD visibility shape drifted".to_owned());
+            };
+            if value != "false" {
+                return Err(
+                    "mission HUD visibility value is not reviewed".to_owned()
+                );
+            }
+            Some(MissionInitializationDirective::HudVisibility {
+                source_ordinal,
+                visible: false,
+            })
+        },
+        "usepedgroup" => {
+            let group_index =
+                required_ascii_u8(arguments, "mission ped group")?;
+            if group_index > 7 {
+                return Err(
+                    "mission ped-group index is not reviewed".to_owned()
+                );
+            }
+            Some(MissionInitializationDirective::PedGroup {
+                source_ordinal,
+                group_index,
+            })
+        },
         _ => None,
     };
     Ok(directive)
+}
+
+fn parse_ascii_u32(value: &str, label: &str) -> Result<u32, String> {
+    if value.is_empty() || !value.chars().all(|ch| ch.is_ascii_digit()) {
+        return Err(format!("{label} is malformed"));
+    }
+    value
+        .parse::<u32>()
+        .map_err(|_error| format!("{label} is out of range"))
+}
+
+fn required_ascii_u8(arguments: &[String], label: &str) -> Result<u8, String> {
+    let [value] = arguments else {
+        return Err(format!("{label} shape drifted"));
+    };
+    if value.is_empty() || !value.chars().all(|ch| ch.is_ascii_digit()) {
+        return Err(format!("{label} is malformed"));
+    }
+    value
+        .parse::<u8>()
+        .map_err(|_error| format!("{label} is out of range"))
 }
 
 fn compile_dynamic_load(
@@ -359,7 +606,7 @@ fn validate_p3d_path(value: &str) -> Result<(), String> {
     if valid {
         Ok(())
     } else {
-        Err("mission dyna-load P3D reference is malformed".to_owned())
+        Err("mission P3D reference is malformed".to_owned())
     }
 }
 
