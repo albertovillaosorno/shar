@@ -66,3 +66,77 @@ fn preserves_street_race_load_and_unload_terminators() -> Result<(), String> {
     );
     Ok(())
 }
+
+#[test]
+fn types_remaining_mission_scope_sources() -> Result<(), String> {
+    let camera = super::compile_remaining_directive(
+        20,
+        "setmissionstartcameraname",
+        &["mission2camShape".to_owned()],
+    )?;
+    if camera
+        != Some(super::MissionInitializationDirective::MissionStartCamera {
+            source_ordinal: 20,
+            camera_id: "mission2camShape".to_owned(),
+        })
+    {
+        return Err("mission-start camera mapping changed".to_owned());
+    }
+    let hints =
+        super::compile_remaining_directive(21, "setnumvalidfailurehints", &[
+            "5".to_owned(),
+        ])?;
+    if hints
+        != Some(super::MissionInitializationDirective::ValidFailureHints {
+            source_ordinal: 21,
+            count: 5,
+        })
+    {
+        return Err("mission failure-hint mapping changed".to_owned());
+    }
+    let group = super::compile_remaining_directive(22, "usepedgroup", &[
+        "7".to_owned()
+    ])?;
+    if group
+        != Some(super::MissionInitializationDirective::PedGroup {
+            source_ordinal: 22,
+            group_index: 7,
+        })
+    {
+        return Err("mission pedestrian-group mapping changed".to_owned());
+    }
+    let bitmap =
+        super::compile_remaining_directive(23, "setpresentationbitmap", &[
+            "art/frontend/dynaload/images/mis01_00.p3d".to_owned(),
+        ])?;
+    if bitmap
+        != Some(super::MissionInitializationDirective::PresentationBitmap {
+            source_ordinal: 23,
+            p3d_path: "art/frontend/dynaload/images/mis01_00.p3d".to_owned(),
+        })
+    {
+        return Err("mission presentation bitmap mapping changed".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_unreviewed_mission_scope_values() -> Result<(), String> {
+    for (name, arguments) in [
+        ("setnumvalidfailurehints", vec!["4"]),
+        ("usepedgroup", vec!["8"]),
+        ("showhud", vec!["true"]),
+        ("placeplayercar", vec!["other", "sr1_carstart"]),
+        ("addcollectiblestateprop", vec!["bombbarrel", "barrel", "3"]),
+        ("setpresentationbitmap", vec!["../escape.p3d"]),
+    ] {
+        let arguments =
+            arguments.into_iter().map(str::to_owned).collect::<Vec<_>>();
+        if super::compile_remaining_directive(24, name, &arguments).is_ok() {
+            return Err(format!(
+                "unreviewed mission-scope value accepted: {name}"
+            ));
+        }
+    }
+    Ok(())
+}
