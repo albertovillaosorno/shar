@@ -606,7 +606,7 @@ fn validate_source_evidence(
         .command_invocations
         .iter()
         .filter(|invocation| invocation.name.contains("loadp3d"))
-        .flat_map(|invocation| invocation.arguments.iter().cloned())
+        .filter_map(|invocation| invocation.arguments.first().cloned())
         .collect::<Vec<_>>();
     if document.p3d_references != p3d_references {
         return Err(

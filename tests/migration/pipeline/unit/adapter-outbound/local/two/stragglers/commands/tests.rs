@@ -344,3 +344,42 @@ fn adaptation_fingerprint_drift_fails_closed() -> Result<(), String> {
     }
     Ok(())
 }
+
+#[test]
+fn p3d_summary_keeps_only_primary_load_reference() -> Result<(), String> {
+    let source =
+        r#"LoadP3DFile("art\l01_fx.p3d", "GMA_LEVEL_OTHER");"#;
+    let mut json = super::super::json::JsonObject::new();
+    super::append_summary(
+        &mut json,
+        source,
+        "mfk",
+        Path::new("scripts/missions/level01/level.mfk"),
+    );
+    let rendered = json.finish();
+    let value = serde_json::from_str::<serde_json::Value>(&rendered)
+        .map_err(|error| error.to_string())?;
+    let references = value
+        .get("p3d_references")
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| "P3D reference summary is missing".to_owned())?;
+    if references != &[serde_json::Value::String(
+        r"art\l01_fx.p3d".to_owned(),
+    )] {
+        return Err(format!("unexpected P3D references: {references:?}"));
+    }
+    let arguments = value
+        .get("command_invocations")
+        .and_then(serde_json::Value::as_array)
+        .and_then(|rows| rows.first())
+        .and_then(|row| row.get("arguments"))
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| "load invocation arguments are missing".to_owned())?;
+    if arguments.len() != 2
+        || arguments.get(1).and_then(serde_json::Value::as_str)
+            != Some("GMA_LEVEL_OTHER")
+    {
+        return Err("optional LoadP3DFile argument was not preserved".to_owned());
+    }
+    Ok(())
+}
