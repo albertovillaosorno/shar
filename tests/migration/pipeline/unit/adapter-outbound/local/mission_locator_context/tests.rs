@@ -1,0 +1,295 @@
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+
+use std::collections::BTreeSet;
+
+use serde_json::json;
+
+use super::*;
+use crate::domain::preflight_mission_script;
+
+fn mission_evidence(mission_id: Option<&str>) -> Result<MissionScriptEvidence, String> {
+    let (invocations, commands, statements, p3d_references, mission_flow_count, context_count) =
+        mission_id.map_or_else(
+            || {
+                (
+                    vec![json!({
+                        "ordinal":1,"name":"loadp3dfile",
+                        "args_raw":"\"art/missions/level01/dummy.p3d\"",
+                        "semantic_role":"asset-load",
+                        "arguments":["art/missions/level01/dummy.p3d"]
+                    })],
+                    json!({"loadp3dfile":1}),
+                    vec!["LoadP3DFile(\"art/missions/level01/dummy.p3d\");".to_owned()],
+                    vec!["art/missions/level01/dummy.p3d".to_owned()],
+                    0,
+                    0,
+                )
+            },
+            |mission_id| {
+                (
+                    vec![
+                        json!({"ordinal":1,"name":"selectmission","args_raw":format!("\"{mission_id}\""),"semantic_role":"mission-script","arguments":[mission_id]}),
+                        json!({"ordinal":2,"name":"addstage","args_raw":"0","semantic_role":"mission-stage","arguments":["0"]}),
+                        json!({"ordinal":3,"name":"addobjective","args_raw":"\"dummy\"","semantic_role":"mission-objective","arguments":["dummy"]}),
+                        json!({"ordinal":4,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]}),
+                        json!({"ordinal":5,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]}),
+                        json!({"ordinal":6,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}),
+                    ],
+                    json!({
+                        "selectmission":1,"addstage":1,"addobjective":1,
+                        "closeobjective":1,"closestage":1,"closemission":1
+                    }),
+                    vec![
+                        format!("SelectMission(\"{mission_id}\");"),
+                        "AddStage(0);".to_owned(),
+                        "AddObjective(\"dummy\");".to_owned(),
+                        "CloseObjective();".to_owned(),
+                        "CloseStage();".to_owned(),
+                        "CloseMission();".to_owned(),
+                    ],
+                    Vec::new(),
+                    6,
+                    6,
+                )
+            },
+        );
+    let count = invocations.len();
+    let value = json!({
+        "schema":"shar-schoenwald.straggler.mission-script.v3",
+        "source_extension":"mfk","route_class":"mission","source_bytes":64,
+        "context_command_count":context_count,"context_adaptation_count":0,
+        "context_adaptations":[],"context_finding_count":0,"context_findings":[],
+        "statement_count":count,"unique_command_count":commands.as_object().map_or(0, serde_json::Map::len),
+        "load_p3d_reference_count":p3d_references.len(),"mission_flow_command_count":mission_flow_count,
+        "vehicle_physics_command_count":0,"semantic_family":"mission-script",
+        "command_counts":commands,"source_statements":statements,
+        "p3d_references":p3d_references,"command_invocations":invocations
+    });
+    preflight_mission_script(&serde_json::to_string(&value).map_err(|error| error.to_string())?)
+}
+
+fn snapshot(
+    path: &str,
+    mission_id: Option<&str>,
+    roots: &[&str],
+) -> Result<MissionLocatorScriptSnapshot, String> {
+    Ok(MissionLocatorScriptSnapshot::new(
+        path.to_owned(),
+        mission_evidence(mission_id)?,
+        roots.iter().map(|root| (*root).to_owned()).collect(),
+    ))
+}
+
+#[test]
+fn chooses_longest_matching_level_load_family() -> Result<(), String> {
+    let available = BTreeSet::from([
+        "extracted/game/scripts/missions/level02/level.mfk.json",
+        "extracted/game/scripts/missions/level02/e3level.mfk.json",
+        "extracted/game/scripts/missions/level02/e3m1l.mfk.json",
+    ]);
+    let (level, load) = locator_context_paths(
+        "extracted/game/scripts/missions/level02/e3m1i.mfk.json",
+        "e3m1",
+        &available,
+    )?;
+    if level != "extracted/game/scripts/missions/level02/e3level.mfk.json"
+        || load != "extracted/game/scripts/missions/level02/e3m1l.mfk.json"
+    {
+        return Err("special mission family did not select e3 level load".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn regular_mission_stays_on_base_level_family() -> Result<(), String> {
+    let available = BTreeSet::from([
+        "extracted/game/scripts/missions/level02/level.mfk.json",
+        "extracted/game/scripts/missions/level02/e3level.mfk.json",
+        "extracted/game/scripts/missions/level02/m1l.mfk.json",
+    ]);
+    let (level, _load) = locator_context_paths(
+        "extracted/game/scripts/missions/level02/m1i.mfk.json",
+        "m1",
+        &available,
+    )?;
+    if level != "extracted/game/scripts/missions/level02/level.mfk.json" {
+        return Err("regular mission escaped base level family".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn combines_level_and_mission_load_packages_per_source() -> Result<(), String> {
+    let snapshots = vec![
+        snapshot(
+            "extracted/game/scripts/missions/level01/level.mfk.json",
+            None,
+            &["extracted/art/missions/level01/level", "extracted/art/l1"],
+        )?,
+        snapshot(
+            "extracted/game/scripts/missions/level01/m1l.mfk.json",
+            None,
+            &["extracted/art/missions/level01/m1", "extracted/art/l1"],
+        )?,
+        snapshot(
+            "extracted/game/scripts/missions/level01/m1i.mfk.json",
+            Some("m1"),
+            &[],
+        )?,
+    ];
+    let contexts = build_mission_locator_source_contexts(&snapshots, &BTreeSet::new())?;
+    if contexts.len() != 1 {
+        return Err("locator context count drifted".to_owned());
+    }
+    let context = contexts
+        .get("extracted/game/scripts/missions/level01/m1i.mfk.json")
+        .ok_or_else(|| "m1 locator context is missing".to_owned())?;
+    let mission = context
+        .mission("m1")
+        .ok_or_else(|| "m1 active package report is missing".to_owned())?;
+    if mission.package_roots()
+        != [
+            "extracted/art/l1".to_owned(),
+            "extracted/art/missions/level01/level".to_owned(),
+            "extracted/art/missions/level01/m1".to_owned(),
+        ]
+    {
+        return Err(format!(
+            "active package roots drifted: {:?}",
+            mission.package_roots()
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_selected_id_that_disagrees_with_init_filename() -> Result<(), String> {
+    let available = BTreeSet::from([
+        "extracted/game/scripts/missions/level01/level.mfk.json",
+        "extracted/game/scripts/missions/level01/m1l.mfk.json",
+    ]);
+    let Err(error) = locator_context_paths(
+        "extracted/game/scripts/missions/level01/m2i.mfk.json",
+        "m1",
+        &available,
+    ) else {
+        return Err("selected mission/source mismatch did not fail closed".to_owned());
+    };
+    if !error.contains("does not match") {
+        return Err(format!("unexpected mismatch diagnostic: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn same_mission_id_in_different_levels_keeps_separate_contexts() -> Result<(), String> {
+    let snapshots = vec![
+        snapshot(
+            "extracted/game/scripts/missions/level01/level.mfk.json",
+            None,
+            &["extracted/art/missions/level01/level"],
+        )?,
+        snapshot(
+            "extracted/game/scripts/missions/level01/m1l.mfk.json",
+            None,
+            &["extracted/art/missions/level01/m1"],
+        )?,
+        snapshot(
+            "extracted/game/scripts/missions/level01/m1i.mfk.json",
+            Some("m1"),
+            &[],
+        )?,
+        snapshot(
+            "extracted/game/scripts/missions/level02/level.mfk.json",
+            None,
+            &["extracted/art/missions/level02/level"],
+        )?,
+        snapshot(
+            "extracted/game/scripts/missions/level02/m1l.mfk.json",
+            None,
+            &["extracted/art/missions/level02/m1"],
+        )?,
+        snapshot(
+            "extracted/game/scripts/missions/level02/m1i.mfk.json",
+            Some("m1"),
+            &[],
+        )?,
+    ];
+    let contexts = build_mission_locator_source_contexts(&snapshots, &BTreeSet::new())?;
+    if contexts.len() != 2 {
+        return Err("repeated mission id collapsed across levels".to_owned());
+    }
+    let level01 = contexts
+        .get("extracted/game/scripts/missions/level01/m1i.mfk.json")
+        .and_then(|report| report.mission("m1"))
+        .ok_or_else(|| "level01 m1 context is missing".to_owned())?;
+    let level02 = contexts
+        .get("extracted/game/scripts/missions/level02/m1i.mfk.json")
+        .and_then(|report| report.mission("m1"))
+        .ok_or_else(|| "level02 m1 context is missing".to_owned())?;
+    if level01
+        .package_roots()
+        .iter()
+        .any(|root| root.contains("level02"))
+        || level02
+            .package_roots()
+            .iter()
+            .any(|root| root.contains("level01"))
+    {
+        return Err("mission package context leaked across levels".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn selected_mission_without_load_sibling_fails_closed() -> Result<(), String> {
+    let snapshots = vec![
+        snapshot(
+            "extracted/game/scripts/missions/level01/level.mfk.json",
+            None,
+            &["extracted/art/missions/level01/level"],
+        )?,
+        snapshot(
+            "extracted/game/scripts/missions/level01/m1i.mfk.json",
+            Some("m1"),
+            &[],
+        )?,
+    ];
+    let Err(error) = build_mission_locator_source_contexts(&snapshots, &BTreeSet::new()) else {
+        return Err("missing mission load sibling did not fail closed".to_owned());
+    };
+    if !error.contains("paired load source is missing") {
+        return Err(format!("unexpected missing-load diagnostic: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn initial_dynamic_p3d_uses_implicit_art_root() -> Result<(), String> {
+    if initial_dynamic_package_root("L1Z7.P3D")? != "extracted/art/l1z7" {
+        return Err("implicit Dyna Load Data art root drifted".to_owned());
+    }
+    if initial_dynamic_package_root(r"art\missions\level01\raceprops\sr1.p3d")?
+        != "extracted/art/missions/level01/raceprops/sr1"
+    {
+        return Err("explicit Dyna Load Data art root drifted".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn initial_dynamic_p3d_rejects_unsafe_paths() -> Result<(), String> {
+    for value in ["../l1z7.p3d", "C:/l1z7.p3d", "/l1z7.p3d", "l1//z7.p3d"] {
+        if initial_dynamic_package_root(value).is_ok() {
+            return Err(format!("unsafe initial Dyna P3D was accepted: {value}"));
+        }
+    }
+    Ok(())
+}

@@ -43,6 +43,8 @@ mod fbx_catalog_publish;
 mod fbx_export;
 mod fbx_manifest;
 mod filesystem;
+mod mission_locator_catalog;
+mod mission_locator_context;
 mod one;
 mod progress;
 mod prop_catalog;
