@@ -37,6 +37,8 @@ pub mod mission_condition;
 pub mod mission_initialization;
 /// Reviewed mission objective alias preflight.
 pub mod mission_objective;
+/// Canonical mission participant package-reference resolution.
+pub mod mission_reference;
 /// Lossless reviewed mission scope graph projection.
 pub mod mission_scope;
 /// Normalized mission-script semantic preflight.
@@ -85,6 +87,13 @@ pub use mission_objective::{
     MissionRoadArrowMode, preflight_mission_objective_commands,
     preflight_mission_objective_parameters,
     preflight_mission_objective_semantics, preflight_mission_objectives,
+};
+pub use mission_reference::{
+    MissionCharacterCatalogReference, MissionParticipantReference,
+    MissionParticipantRole, MissionReferenceCatalog, MissionReferenceReport,
+    MissionResolvedMissionReferences, MissionResolvedParticipantReference,
+    MissionVehicleCatalogReference, MissionVehicleReference,
+    preflight_mission_references,
 };
 pub use mission_scope::{
     MissionConditionScope, MissionScopeCommand, MissionScopeCondition,
