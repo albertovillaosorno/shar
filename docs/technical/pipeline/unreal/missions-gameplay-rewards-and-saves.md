@@ -119,28 +119,28 @@ established.
 These objective, condition, mission-scope, and stage compilers are mandatory
 semantic gates for `prepare-unreal`. The next gates resolve every reviewed
 character and vehicle source identity and every explicit `LoadP3DFile` first
-argument against the already validated phase-three package index before a mission
-source can contribute Unreal evidence. Character skeleton source names resolve to
-one canonical participant while retaining the exact base-model, costume, or
-crowd package subcategory; vehicle source names resolve to one exact `cars`
-package. The runtime `current` vehicle token remains symbolic, and the reviewed
-`AddStageVehicle` driver token `none` emits no false character package reference.
-Missing or ambiguous referenced participant names and unindexed P3D loads fail
-closed. The optional second `LoadP3DFile` argument remains opaque source evidence
-rather than becoming an asset reference; producer and replay summaries now count
-only the first path argument as P3D evidence.
+argument against the already validated phase-three package index before a
+mission source can contribute Unreal evidence. Character skeleton source names
+resolve to one canonical participant while retaining the exact base-model,
+costume, or crowd package subcategory; vehicle source names resolve to one exact
+`cars` package. The runtime `current` vehicle token remains symbolic, and the
+reviewed `AddStageVehicle` driver token `none` emits no false character package
+reference. Missing or ambiguous referenced participant names and unindexed P3D
+loads fail closed. The optional second `LoadP3DFile` argument remains opaque
+source evidence rather than becoming an asset reference; producer and replay
+summaries now count only the first path argument as P3D evidence.
 
 Mission locator intake and typed command binding are package-backed now. The
-local adapter validates both observed `p3d-locator` member families but adds only
-decoded `srr_locator` records to the mission catalog. It reads the embedded JSON
-`name`, trims only trailing NUL padding, preserves the exact decoded source type,
-and binds the row to its package id and member id. Package-local duplicate names
-fail closed; cross-package duplicates remain an explicit `Ambiguous` result.
-This is required because locator names are level/load-contextual and can occur in
-more than one package, while extracted filenames sanitize trailing NUL padding
-to underscores and the source corpus also contains genuinely authored trailing
-underscores. Filename trimming and global-name lookup are therefore not canonical
-identity rules.
+local adapter validates both observed `p3d-locator` member families but adds
+only decoded `srr_locator` records to the mission catalog. It reads the embedded
+JSON `name`, trims only trailing NUL padding, preserves the exact decoded source
+type, and binds the row to its package id and member id. Package-local duplicate
+names fail closed; cross-package duplicates remain an explicit `Ambiguous`
+result. This is required because locator names are level/load-contextual and can
+occur in more than one package, while extracted filenames sanitize trailing NUL
+padding to underscores and the source corpus also contains genuinely authored
+trailing underscores. Filename trimming and global-name lookup are therefore not
+canonical identity rules.
 
 For each source that selects exactly one mission, `prepare-unreal` now pairs the
 exact `<mission-id>i.mfk.json` source with `<mission-id>l.mfk.json` and the
@@ -153,10 +153,10 @@ and objective locator fields then resolve against the explicit level-load and
 mission-load packages plus indexed P3Ds loaded at mission start by typed
 `SetDynaLoadData` and `StreetRacePropsLoad` evidence. Dyna P3D paths use the
 source format's implicit `art/` root unless that prefix is already explicit, and
-every resulting package root must exist in the phase-three index. Unload evidence
-does not become an active package. Documented Event and CarStart roles receive
-exact type constraints, `ActivateVehicle(..., "NULL", ...)` emits no false
-locator reference, and missing or duplicate candidates remain `Missing` or
+every resulting package root must exist in the phase-three index. Unload
+evidence does not become an active package. Documented Event and CarStart roles
+receive exact type constraints, `ActivateVehicle(..., "NULL", ...)` emits no
+false locator reference, and missing or duplicate candidates remain `Missing` or
 `Ambiguous` instead of acquiring fabricated precedence. Stage/checkpoint Dyna
 transitions still require a separate lifetime model before later-stage package
 context can be refined. Reward, presentation, transition, remaining catalog

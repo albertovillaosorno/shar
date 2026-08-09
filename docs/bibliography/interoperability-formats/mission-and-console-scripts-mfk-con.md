@@ -56,12 +56,11 @@ as `SetDestination`,
 FMV usage. These secondary descriptions are used only where repository evidence
 independently closes the same command form; they are not used to invent a
 precedence rule when the same decoded locator name is present in multiple active
-packages. Undocumented `AddStage` numeric values, condition parameters, AI units,
-and compatibility arguments remain opaque. DT Docs is not treated as an original
-developer
-specification, and the formal grammar, version history, historical command
-ownership, title-specific extensions, and authoritative first-party
-documentation remain unresolved.
+packages. Undocumented `AddStage` numeric values, condition parameters, AI
+units, and compatibility arguments remain opaque. DT Docs is not treated as an
+original developer specification, and the formal grammar, version history,
+historical command ownership, title-specific extensions, and authoritative
+first-party documentation remain unresolved.
 
 ## Authorship, Ownership, And Attribution
 
