@@ -143,20 +143,20 @@ Current task list. Project phases and dated progress are recorded in
           the validated phase-three package index, preserving exact character
           variants, symbolic `current` vehicles, and `none` driver sentinels.
         - [x] Bind every explicit `LoadP3DFile` first argument to one canonical
-          phase-three package, preserve the optional second source-group value as
-          opaque evidence, and keep only the first argument in P3D summaries.
+          phase-three package, preserve the optional second source-group value
+          as opaque evidence, and keep only the first argument in P3D summaries.
         - [x] Build a package-scoped mission locator catalog from decoded
           `srr_locator` JSON `name` and type evidence; reject package-local name
           collisions and preserve cross-package duplicates as ambiguity instead
           of applying filename or global-name precedence.
-        - [x] Bind each typed locator reference against the exact selected-source
-          package context formed by the matching mission-load script, its longest
-          matching level-load family, and indexed P3Ds loaded at mission start by
-          `SetDynaLoadData` or `StreetRacePropsLoad`, after re-verifying source
-          size and SHA-256. Apply only documented locator-type constraints,
-          preserve the `ActivateVehicle` `NULL` sentinel, and keep missing or
-          duplicated active names as typed outcomes rather than guessing
-          precedence.
+        - [x] Bind each typed locator reference against the exact
+          selected-source package context formed by the matching mission-load
+          script, its longest matching level-load family, and indexed P3Ds
+          loaded at mission start by `SetDynaLoadData` or `StreetRacePropsLoad`,
+          after re-verifying source size and SHA-256. Apply only documented
+          locator-type constraints, preserve the `ActivateVehicle` `NULL`
+          sentinel, and keep missing or duplicated active names as typed
+          outcomes rather than guessing precedence.
         - [ ] Model stage/checkpoint Dyna Load Data transitions precisely enough
           to refine locator package lifetime after mission start, then prove or
           reject runtime precedence for duplicated active names such as
