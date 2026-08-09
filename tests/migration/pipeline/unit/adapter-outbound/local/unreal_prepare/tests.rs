@@ -1055,3 +1055,182 @@ fn mission_semantic_gate_rejects_invalid_condition_time() -> Result<(), String>
     }
     Ok(())
 }
+
+fn mission_root_ped_group_json(value: &str) -> Result<Vec<u8>, String> {
+    let value_raw = value.to_owned();
+    serde_json::to_vec(&json!({
+        "schema": MISSION_SCRIPT_SCHEMA,
+        "source_extension":"mfk","route_class":"mission","source_bytes":128,
+        "context_command_count":6,"context_adaptation_count":0,
+        "context_adaptations":[],"context_finding_count":0,"context_findings":[],
+        "statement_count":7,"unique_command_count":7,"load_p3d_reference_count":0,
+        "mission_flow_command_count":6,"vehicle_physics_command_count":0,
+        "semantic_family":"mission-script",
+        "command_counts":{
+            "selectmission":1,"usepedgroup":1,"addstage":1,"addobjective":1,
+            "closeobjective":1,"closestage":1,"closemission":1
+        },
+        "source_statements":[
+            "SelectMission(\"m1\");",format!("UsePedGroup({value_raw});"),
+            "AddStage(0);","AddObjective(\"goto\");","CloseObjective();",
+            "CloseStage();","CloseMission();"
+        ],
+        "p3d_references":[],
+        "command_invocations":[
+            {"ordinal":1,"name":"selectmission","args_raw":"\"m1\"","semantic_role":"mission-script","arguments":["m1"]},
+            {"ordinal":2,"name":"usepedgroup","args_raw":value_raw,"semantic_role":"mission-script","arguments":[value]},
+            {"ordinal":3,"name":"addstage","args_raw":"0","semantic_role":"mission-stage","arguments":["0"]},
+            {"ordinal":4,"name":"addobjective","args_raw":"\"goto\"","semantic_role":"mission-objective","arguments":["goto"]},
+            {"ordinal":5,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]},
+            {"ordinal":6,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
+            {"ordinal":7,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
+        ]
+    }))
+    .map_err(|error| error.to_string())
+}
+
+#[test]
+fn mission_semantic_gate_rejects_invalid_root_ped_group() -> Result<(), String>
+{
+    let bytes = mission_root_ped_group_json("8")?;
+    let result = validate_normalized_mission_source(
+        "mission-script",
+        MISSION_SCRIPT_SCHEMA,
+        "json",
+        "game-straggler-normalize",
+        &bytes,
+    );
+    let Err(error) = result else {
+        return Err("invalid mission pedestrian group reached Unreal planning"
+            .to_owned());
+    };
+    let rendered = error.to_string();
+    if !rendered.contains("mission initialization preflight failed")
+        || !rendered.contains("ped-group index is not reviewed")
+    {
+        return Err(format!(
+            "unexpected mission-root semantic failure: {rendered}"
+        ));
+    }
+    Ok(())
+}
+
+fn conversation_camera_mission_json(slot: &str) -> Result<Vec<u8>, String> {
+    let slot_raw = slot.to_owned();
+    serde_json::to_vec(&json!({
+        "schema": MISSION_SCRIPT_SCHEMA,
+        "source_extension":"mfk","route_class":"mission","source_bytes":128,
+        "context_command_count":6,"context_adaptation_count":0,
+        "context_adaptations":[],"context_finding_count":0,"context_findings":[],
+        "statement_count":7,"unique_command_count":7,"load_p3d_reference_count":0,
+        "mission_flow_command_count":6,"vehicle_physics_command_count":0,
+        "semantic_family":"mission-script",
+        "command_counts":{
+            "selectmission":1,"addstage":1,"addobjective":1,
+            "setconversationcam":1,"closeobjective":1,"closestage":1,
+            "closemission":1
+        },
+        "source_statements":[
+            "SelectMission(\"m1\");","AddStage(0);",
+            "AddObjective(\"dialogue\");",
+            format!("SetConversationCam({slot_raw},\"pc_far\");"),
+            "CloseObjective();","CloseStage();","CloseMission();"
+        ],
+        "p3d_references":[],
+        "command_invocations":[
+            {"ordinal":1,"name":"selectmission","args_raw":"\"m1\"","semantic_role":"mission-script","arguments":["m1"]},
+            {"ordinal":2,"name":"addstage","args_raw":"0","semantic_role":"mission-stage","arguments":["0"]},
+            {"ordinal":3,"name":"addobjective","args_raw":"\"dialogue\"","semantic_role":"mission-objective","arguments":["dialogue"]},
+            {"ordinal":4,"name":"setconversationcam","args_raw":format!("{slot_raw},\"pc_far\""),"semantic_role":"mission-script","arguments":[slot,"pc_far"]},
+            {"ordinal":5,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]},
+            {"ordinal":6,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
+            {"ordinal":7,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
+        ]
+    }))
+    .map_err(|error| error.to_string())
+}
+
+#[test]
+fn mission_semantic_gate_rejects_invalid_conversation_camera()
+-> Result<(), String> {
+    let bytes = conversation_camera_mission_json("7")?;
+    let result = validate_normalized_mission_source(
+        "mission-script",
+        MISSION_SCRIPT_SCHEMA,
+        "json",
+        "game-straggler-normalize",
+        &bytes,
+    );
+    let Err(error) = result else {
+        return Err("invalid conversation-camera slot reached Unreal planning"
+            .to_owned());
+    };
+    let rendered = error.to_string();
+    if !rendered.contains("mission objective semantic preflight failed")
+        || !rendered.contains("conversation-camera slot is not reviewed")
+    {
+        return Err(format!(
+            "unexpected conversation-camera failure: {rendered}"
+        ));
+    }
+    Ok(())
+}
+
+fn stage_race_catchup_mission_json(factor: &str) -> Result<Vec<u8>, String> {
+    let factor_raw = factor.to_owned();
+    serde_json::to_vec(&json!({
+        "schema": MISSION_SCRIPT_SCHEMA,
+        "source_extension":"mfk","route_class":"mission","source_bytes":160,
+        "context_command_count":6,"context_adaptation_count":0,
+        "context_adaptations":[],"context_finding_count":0,"context_findings":[],
+        "statement_count":7,"unique_command_count":7,"load_p3d_reference_count":0,
+        "mission_flow_command_count":7,"vehicle_physics_command_count":0,
+        "semantic_family":"mission-script",
+        "command_counts":{
+            "selectmission":1,"addstage":1,"setstageairacecatchupparams":1,
+            "addobjective":1,"closeobjective":1,"closestage":1,"closemission":1
+        },
+        "source_statements":[
+            "SelectMission(\"m1\");","AddStage(0);",
+            format!("SetStageAIRaceCatchupParams(\"car\",80,{factor_raw},1.0,1.0);"),
+            "AddObjective(\"goto\");","CloseObjective();","CloseStage();",
+            "CloseMission();"
+        ],
+        "p3d_references":[],
+        "command_invocations":[
+            {"ordinal":1,"name":"selectmission","args_raw":"\"m1\"","semantic_role":"mission-script","arguments":["m1"]},
+            {"ordinal":2,"name":"addstage","args_raw":"0","semantic_role":"mission-stage","arguments":["0"]},
+            {"ordinal":3,"name":"setstageairacecatchupparams","args_raw":format!("\"car\",80,{factor_raw},1.0,1.0"),"semantic_role":"mission-stage","arguments":["car","80",factor,"1.0","1.0"]},
+            {"ordinal":4,"name":"addobjective","args_raw":"\"goto\"","semantic_role":"mission-objective","arguments":["goto"]},
+            {"ordinal":5,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]},
+            {"ordinal":6,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
+            {"ordinal":7,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
+        ]
+    }))
+    .map_err(|error| error.to_string())
+}
+
+#[test]
+fn mission_semantic_gate_rejects_invalid_stage_race_catchup()
+-> Result<(), String> {
+    let bytes = stage_race_catchup_mission_json("1e0")?;
+    let result = validate_normalized_mission_source(
+        "mission-script",
+        MISSION_SCRIPT_SCHEMA,
+        "json",
+        "game-straggler-normalize",
+        &bytes,
+    );
+    let Err(error) = result else {
+        return Err(
+            "invalid stage race catch-up reached Unreal planning".to_owned()
+        );
+    };
+    let rendered = error.to_string();
+    if !rendered.contains("mission stage semantic preflight failed")
+        || !rendered.contains("race catch-up decimal is malformed")
+    {
+        return Err(format!("unexpected stage catch-up failure: {rendered}"));
+    }
+    Ok(())
+}

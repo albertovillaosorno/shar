@@ -295,6 +295,9 @@ fn repository_mission_corpus_passes_semantic_registries() -> Result<(), String>
     let mut condition_command_count = 0usize;
     let mut stage_count = 0usize;
     let mut typed_stage_count = 0usize;
+    let mut stage_directive_count = 0usize;
+    let mut stage_character_count = 0usize;
+    let mut stage_closed_direct_only_count = 0usize;
     let mut standard_stage_count = 0usize;
     let mut legacy_flag_stage_count = 0usize;
     let mut final_stage_count = 0usize;
@@ -310,6 +313,14 @@ fn repository_mission_corpus_passes_semantic_registries() -> Result<(), String>
     let mut stage_fade_out_legacy_count = 0usize;
     let mut stage_iris_wipe_legacy_count = 0usize;
     let mut stage_max_traffic_count = 0usize;
+    let mut stage_vehicle_ai_count = 0usize;
+    let mut stage_target_catchup_count = 0usize;
+    let mut stage_safe_zone_count = 0usize;
+    let mut stage_stay_in_black_count = 0usize;
+    let mut stage_game_over_count = 0usize;
+    let mut stage_level_over_count = 0usize;
+    let mut stage_show_complete_count = 0usize;
+    let mut stage_disable_hit_and_run_count = 0usize;
     let mut waypoint_directive_count = 0usize;
     let mut initialization_directive_count = 0usize;
     let mut reset_in_car_count = 0usize;
@@ -320,6 +331,7 @@ fn repository_mission_corpus_passes_semantic_registries() -> Result<(), String>
     let mut street_race_props_unload_count = 0usize;
     let mut forced_car_count = 0usize;
     let mut initial_vehicle_count = 0usize;
+    let mut mission_closed_remaining_count = 0usize;
     let mut objective_semantic_count = 0usize;
     let mut objective_directive_count = 0usize;
     let mut objective_npc_count = 0usize;
@@ -331,8 +343,17 @@ fn repository_mission_corpus_passes_semantic_registries() -> Result<(), String>
     let mut objective_talk_target_count = 0usize;
     let mut objective_npc_animation_count = 0usize;
     let mut objective_player_animation_count = 0usize;
+    let mut objective_ambient_randomize_count = 0usize;
+    let mut objective_camera_best_side_count = 0usize;
+    let mut objective_conversation_camera_count = 0usize;
     let mut objective_dialogue_info_count = 0usize;
     let mut objective_dialogue_positions_count = 0usize;
+    let mut objective_distance_count = 0usize;
+    let mut objective_par_time_count = 0usize;
+    let mut objective_pickup_target_count = 0usize;
+    let mut objective_goto_dialog_off_count = 0usize;
+    let mut objective_must_action_trigger_count = 0usize;
+    let mut objective_allow_rock_out_count = 0usize;
     let mut objective_destination_count = 0usize;
     let mut objective_presentation_bitmap_count = 0usize;
     let mut objective_fmv_info_count = 0usize;
@@ -493,6 +514,21 @@ fn repository_mission_corpus_passes_semantic_registries() -> Result<(), String>
                         objective_player_animation_count =
                             objective_player_animation_count.saturating_add(1);
                     },
+                    MissionObjectiveDirective::AmbientAnimationRandomize {
+                        ..
+                    } => {
+                        objective_ambient_randomize_count =
+                            objective_ambient_randomize_count.saturating_add(1);
+                    },
+                    MissionObjectiveDirective::CameraBestSide { .. } => {
+                        objective_camera_best_side_count =
+                            objective_camera_best_side_count.saturating_add(1);
+                    },
+                    MissionObjectiveDirective::ConversationCamera { .. } => {
+                        objective_conversation_camera_count =
+                            objective_conversation_camera_count
+                                .saturating_add(1);
+                    },
                     MissionObjectiveDirective::DialogueInfo { .. } => {
                         objective_dialogue_info_count =
                             objective_dialogue_info_count.saturating_add(1);
@@ -501,6 +537,31 @@ fn repository_mission_corpus_passes_semantic_registries() -> Result<(), String>
                         objective_dialogue_positions_count =
                             objective_dialogue_positions_count
                                 .saturating_add(1);
+                    },
+                    MissionObjectiveDirective::ObjectDistance { .. } => {
+                        objective_distance_count =
+                            objective_distance_count.saturating_add(1);
+                    },
+                    MissionObjectiveDirective::ParTime { .. } => {
+                        objective_par_time_count =
+                            objective_par_time_count.saturating_add(1);
+                    },
+                    MissionObjectiveDirective::PickupTarget { .. } => {
+                        objective_pickup_target_count =
+                            objective_pickup_target_count.saturating_add(1);
+                    },
+                    MissionObjectiveDirective::TurnGotoDialogOff { .. } => {
+                        objective_goto_dialog_off_count =
+                            objective_goto_dialog_off_count.saturating_add(1);
+                    },
+                    MissionObjectiveDirective::MustActionTrigger { .. } => {
+                        objective_must_action_trigger_count =
+                            objective_must_action_trigger_count
+                                .saturating_add(1);
+                    },
+                    MissionObjectiveDirective::AllowRockOut { .. } => {
+                        objective_allow_rock_out_count =
+                            objective_allow_rock_out_count.saturating_add(1);
                     },
                     MissionObjectiveDirective::Destination { .. } => {
                         objective_destination_count =
@@ -624,6 +685,23 @@ fn repository_mission_corpus_passes_semantic_registries() -> Result<(), String>
                         street_race_props_unload_count =
                             street_race_props_unload_count.saturating_add(1);
                     },
+                    MissionInitializationDirective::CollectibleStateProp { .. }
+                    | MissionInitializationDirective::PlacePlayerCar { .. }
+                    | MissionInitializationDirective::AnimatedCamera { .. }
+                    | MissionInitializationDirective::AnimatedCameraMulticont {
+                        ..
+                    }
+                    | MissionInitializationDirective::MissionStartCamera { .. }
+                    | MissionInitializationDirective::MissionStartMulticont {
+                        ..
+                    }
+                    | MissionInitializationDirective::ValidFailureHints { .. }
+                    | MissionInitializationDirective::PresentationBitmap { .. }
+                    | MissionInitializationDirective::HudVisibility { .. }
+                    | MissionInitializationDirective::PedGroup { .. } => {
+                        mission_closed_remaining_count =
+                            mission_closed_remaining_count.saturating_add(1);
+                    },
                     MissionInitializationDirective::ForcedCar { .. } => {
                         forced_car_count = forced_car_count.saturating_add(1);
                     },
@@ -665,6 +743,7 @@ fn repository_mission_corpus_passes_semantic_registries() -> Result<(), String>
                 },
             }
             for directive in stage.directives() {
+                stage_directive_count = stage_directive_count.saturating_add(1);
                 match directive {
                     MissionStageDirective::SetTimeSeconds { .. } => {
                         set_time_directive_count =
@@ -705,6 +784,70 @@ fn repository_mission_corpus_passes_semantic_registries() -> Result<(), String>
                     MissionStageDirective::MaxTrafficCars { .. } => {
                         stage_max_traffic_count =
                             stage_max_traffic_count.saturating_add(1);
+                    },
+                    MissionStageDirective::VehicleAiTuning { .. } => {
+                        stage_vehicle_ai_count =
+                            stage_vehicle_ai_count.saturating_add(1);
+                    },
+                    MissionStageDirective::TargetCatchupTuning { .. } => {
+                        stage_target_catchup_count =
+                            stage_target_catchup_count.saturating_add(1);
+                    },
+                    MissionStageDirective::SafeZone { .. } => {
+                        stage_safe_zone_count =
+                            stage_safe_zone_count.saturating_add(1);
+                    },
+                    MissionStageDirective::StayInBlack { .. } => {
+                        stage_stay_in_black_count =
+                            stage_stay_in_black_count.saturating_add(1);
+                    },
+                    MissionStageDirective::GameOver { .. } => {
+                        stage_game_over_count =
+                            stage_game_over_count.saturating_add(1);
+                    },
+                    MissionStageDirective::LevelOver { .. } => {
+                        stage_level_over_count =
+                            stage_level_over_count.saturating_add(1);
+                    },
+                    MissionStageDirective::ShowStageComplete { .. } => {
+                        stage_show_complete_count =
+                            stage_show_complete_count.saturating_add(1);
+                    },
+                    MissionStageDirective::DisableHitAndRun { .. } => {
+                        stage_disable_hit_and_run_count =
+                            stage_disable_hit_and_run_count.saturating_add(1);
+                    },
+                    MissionStageDirective::StageCharacter { .. } => {
+                        stage_character_count =
+                            stage_character_count.saturating_add(1);
+                    },
+                    MissionStageDirective::CollectibleStateProp { .. }
+                    | MissionStageDirective::StageMusicChange { .. }
+                    | MissionStageDirective::CountdownSequenceEntry { .. }
+                    | MissionStageDirective::MissionAbortAllowed { .. }
+                    | MissionStageDirective::GotoPsScreenWhenDone {
+                        ..
+                    }
+                    | MissionStageDirective::NoTrafficForStage { .. }
+                    | MissionStageDirective::PlacePlayerCar { .. }
+                    | MissionStageDirective::PutMfPlayerInCar { .. }
+                    | MissionStageDirective::CharacterToHide { .. }
+                    | MissionStageDirective::CompletionDialog { .. }
+                    | MissionStageDirective::DemoLoopTime { .. }
+                    | MissionStageDirective::MusicState { .. }
+                    | MissionStageDirective::StagePresentationBitmap { .. }
+                    | MissionStageDirective::RaceEntryFee { .. }
+                    | MissionStageDirective::RaceCatchupTuning { .. }
+                    | MissionStageDirective::StageMusicAlwaysOn { .. }
+                    | MissionStageDirective::SwapDefaultCarLocator { .. }
+                    | MissionStageDirective::SwapForcedCarLocator { .. }
+                    | MissionStageDirective::SwapPlayerLocator { .. }
+                    | MissionStageDirective::StageStartMusicEvent { .. }
+                    | MissionStageDirective::StartCountdown { .. }
+                    | MissionStageDirective::SwapInDefaultCar { .. }
+                    | MissionStageDirective::UseElapsedTime { .. } => {
+                        stage_closed_direct_only_count =
+                            stage_closed_direct_only_count.saturating_add(1);
                     },
                     MissionStageDirective::Waypoint { .. } => {
                         waypoint_directive_count =
@@ -764,6 +907,9 @@ fn repository_mission_corpus_passes_semantic_registries() -> Result<(), String>
         || condition_command_count != 375
         || stage_count != 611
         || typed_stage_count != 611
+        || stage_directive_count != 2549
+        || stage_character_count != 11
+        || stage_closed_direct_only_count != 502
         || standard_stage_count != 601
         || legacy_flag_stage_count != 530
         || final_stage_count != 90
@@ -779,8 +925,16 @@ fn repository_mission_corpus_passes_semantic_registries() -> Result<(), String>
         || stage_fade_out_legacy_count != 14
         || stage_iris_wipe_legacy_count != 6
         || stage_max_traffic_count != 127
+        || stage_vehicle_ai_count != 52
+        || stage_target_catchup_count != 7
+        || stage_safe_zone_count != 4
+        || stage_stay_in_black_count != 5
+        || stage_game_over_count != 1
+        || stage_level_over_count != 3
+        || stage_show_complete_count != 108
+        || stage_disable_hit_and_run_count != 24
         || waypoint_directive_count != 388
-        || initialization_directive_count != 374
+        || initialization_directive_count != 811
         || reset_in_car_count != 79
         || reset_out_car_count != 67
         || initial_walk_count != 6
@@ -789,8 +943,9 @@ fn repository_mission_corpus_passes_semantic_registries() -> Result<(), String>
         || street_race_props_unload_count != 22
         || forced_car_count != 16
         || initial_vehicle_count != 16
+        || mission_closed_remaining_count != 437
         || objective_semantic_count != 611
-        || objective_directive_count != 2873
+        || objective_directive_count != 3498
         || objective_npc_count != 294
         || objective_npc_waypoint_count != 180
         || objective_driver_count != 1
@@ -800,8 +955,17 @@ fn repository_mission_corpus_passes_semantic_registries() -> Result<(), String>
         || objective_talk_target_count != 95
         || objective_npc_animation_count != 355
         || objective_player_animation_count != 357
+        || objective_ambient_randomize_count != 198
+        || objective_camera_best_side_count != 92
+        || objective_conversation_camera_count != 261
         || objective_dialogue_info_count != 128
         || objective_dialogue_positions_count != 98
+        || objective_distance_count != 14
+        || objective_par_time_count != 7
+        || objective_pickup_target_count != 4
+        || objective_goto_dialog_off_count != 40
+        || objective_must_action_trigger_count != 8
+        || objective_allow_rock_out_count != 1
         || objective_destination_count != 187
         || objective_presentation_bitmap_count != 53
         || objective_fmv_info_count != 6
