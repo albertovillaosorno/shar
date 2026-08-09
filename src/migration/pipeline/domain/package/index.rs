@@ -1032,6 +1032,18 @@ impl PhaseThreePackageRow {
         Ok(row)
     }
 
+    /// Return the canonical package category.
+    #[must_use]
+    pub fn category(&self) -> &str {
+        &self.category
+    }
+
+    /// Return the canonical package subcategory.
+    #[must_use]
+    pub fn subcategory(&self) -> &str {
+        &self.subcategory
+    }
+
     /// Return ids belonging to a role bucket.
     #[must_use]
     pub fn ids_for_role(&self, role: PackageRole) -> &[String] {

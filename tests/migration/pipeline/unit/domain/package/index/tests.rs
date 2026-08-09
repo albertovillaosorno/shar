@@ -218,8 +218,10 @@ fn reads_one_package_row() -> Result<(), String> {
     if row.package_id != "pkg-car" {
         return Err("package id should match sample".to_owned());
     }
-    if row.category != "cars" {
-        return Err("category should match sample".to_owned());
+    if row.category() != "cars"
+        || row.subcategory() != "cars/character-rigs/homer-v"
+    {
+        return Err("package taxonomy getters should match sample".to_owned());
     }
     if row.ids_for_role(PackageRole::Model) != ["model-a".to_owned()] {
         return Err("model bucket should expose model id".to_owned());
