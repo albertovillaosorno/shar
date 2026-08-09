@@ -74,10 +74,18 @@ typed across 408 condition bindings. Opaque `AddStage` flags, noncanonical
 extension fields, dialogue compatibility fields, and dynamic-load compatibility
 arguments remain provenance rather than inferred runtime behavior.
 
-Final `USharMissionDefinition` creation remains blocked until typed source
-references resolve to canonical participant, route, camera, presentation, reward,
-transition, bundle, and catalog identities and the complete transition/recovery
-topology passes validation.
+Character and vehicle source references now resolve before Unreal planning
+against the validated phase-three package index. The resolver publishes the
+canonical participant identity together with the exact character package variant
+or the exact physical vehicle package; it preserves `current` as a symbolic
+runtime vehicle and treats the reviewed stage-driver `none` token as absence
+rather than as a character. Missing or ambiguous referenced participants block
+mission intake.
+
+Final `USharMissionDefinition` creation remains blocked until locator/load
+context, route, camera, presentation, reward, transition, bundle, and remaining
+catalog identities resolve and the complete transition/recovery topology passes
+validation.
 
 ## Authority and ownership
 

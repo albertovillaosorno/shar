@@ -139,6 +139,13 @@ Current task list. Project phases and dated progress are recorded in
       - [ ] Resolve typed source identities and intentionally opaque values to
         canonical participant, route, camera, reward, presentation, transition,
         and catalog definitions before asset emission.
+        - [x] Resolve reviewed character and vehicle source identities against
+          the validated phase-three package index, preserving exact character
+          variants, symbolic `current` vehicles, and `none` driver sentinels.
+        - [ ] Resolve locator names from decoded locator `name` evidence with
+          mission/load context rather than sanitized filenames or global
+          basename guessing; NUL padding becomes `_` in extracted filenames,
+          while authored trailing underscores also exist in the corpus.
     - [ ] Emit lossless `USharMissionDefinition` assets only after the complete
       mission graph passes reference and topology validation.
   - [ ] Compile remaining normalized UI, font, localization, tuning, and other
