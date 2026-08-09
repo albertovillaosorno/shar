@@ -68,6 +68,29 @@ impl MissionObjectiveNpcReference {
     }
 }
 
+/// Exact conversation-camera token observed in objective-scoped source.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum MissionConversationCameraToken {
+    /// Exact `pc_far` source token.
+    PlayerFar,
+    /// Exact `pc_near` source token.
+    PlayerNear,
+    /// Exact `npc_far` source token.
+    NpcFar,
+    /// Exact `npc_near` source token.
+    NpcNear,
+}
+
+/// Exact dialogue-animation character selector observed in source comments.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum MissionAmbientAnimationCharacter {
+    /// Source selector `0`, documented by the source corpus as player
+    /// character.
+    Player,
+    /// Source selector `1`, documented by the source corpus as NPC.
+    Npc,
+}
+
 /// One reviewed objective-scoped directive with documented field roles.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum MissionObjectiveDirective {
@@ -139,6 +162,31 @@ pub enum MissionObjectiveDirective {
         /// Exact animation identity defined by the character `.cho` data.
         animation_id: String,
     },
+    /// Preserve the exact dialogue animation randomization selector pair.
+    AmbientAnimationRandomize {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Reviewed source character selector.
+        character: MissionAmbientAnimationCharacter,
+        /// Reviewed source randomization flag.
+        randomized: bool,
+    },
+    /// Select the Type-3 locator used to choose the dialogue camera side.
+    CameraBestSide {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact Type-3 locator identity from source.
+        locator_id: String,
+    },
+    /// Select one indexed conversation-camera token.
+    ConversationCamera {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact source camera slot; current reviewed corpus uses 0 through 6.
+        source_slot: u8,
+        /// Exact reviewed source camera token.
+        camera: MissionConversationCameraToken,
+    },
     /// Bind a dialogue conversation to its two authored participants.
     DialogueInfo {
         /// Source statement ordinal.
@@ -160,6 +208,46 @@ pub enum MissionObjectiveDirective {
         locator_ids: [String; 3],
         /// Optional fourth source flag; current reviewed corpus uses only `1`.
         legacy_flag: Option<String>,
+    },
+    /// Preserve the positive distance value authored for a `losetail`
+    /// objective.
+    ObjectDistance {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact positive integer source value; units remain unresolved.
+        source_value: u32,
+    },
+    /// Preserve the positive par-time value authored for a race objective.
+    ParTime {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact positive integer source value; runtime units remain
+        /// unresolved.
+        source_value: u32,
+    },
+    /// Select the exact pickup target identity for a `pickupitem` objective.
+    PickupTarget {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+        /// Exact source target identity.
+        target_id: String,
+    },
+    /// Preserve an authored `TurnGotoDialogOff` marker without inventing
+    /// policy.
+    TurnGotoDialogOff {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+    },
+    /// Preserve an authored `MustActionTrigger` marker without inventing
+    /// policy.
+    MustActionTrigger {
+        /// Source statement ordinal.
+        source_ordinal: usize,
+    },
+    /// Preserve an authored `AllowRockOut` marker without inventing policy.
+    AllowRockOut {
+        /// Source statement ordinal.
+        source_ordinal: usize,
     },
     /// Select one objective destination and optional presentation marker.
     Destination {
@@ -302,13 +390,21 @@ fn compile_objective(
     let source_alias = objective.binding().source_alias();
     let mut directives = Vec::new();
     for command in objective.commands() {
-        if let Some(directive) = compile_directive(
+        match compile_directive(
             source_alias,
             command.ordinal(),
             command.command(),
             command.arguments(),
         )? {
-            directives.push(directive);
+            Some(directive) => directives.push(directive),
+            None if command_has_external_semantic_owner(command.command()) => {
+            },
+            None => {
+                return Err(
+                    "reviewed objective command lacks typed semantic owner"
+                        .to_owned(),
+                );
+            },
         }
     }
     Ok(MissionObjectiveSemanticBinding {
@@ -399,11 +495,67 @@ fn compile_directive(
                 )?,
             })
         },
+        "ambientanimationrandomize" => Some(
+            compile_ambient_animation_randomize(source_ordinal, arguments)?,
+        ),
+        "setcambestside" => Some(MissionObjectiveDirective::CameraBestSide {
+            source_ordinal,
+            locator_id: required_identity(
+                arguments,
+                "mission dialogue camera best-side locator",
+            )?,
+        }),
+        "setconversationcam" => {
+            Some(compile_conversation_camera(source_ordinal, arguments)?)
+        },
         "setdialogueinfo" => {
             Some(compile_dialogue_info(source_ordinal, arguments)?)
         },
         "setdialoguepositions" => {
             Some(compile_dialogue_positions(source_ordinal, arguments)?)
+        },
+        "setobjdistance" => Some(MissionObjectiveDirective::ObjectDistance {
+            source_ordinal,
+            source_value: required_positive_u32(
+                arguments,
+                "mission objective source distance",
+            )?,
+        }),
+        "setpartime" => Some(MissionObjectiveDirective::ParTime {
+            source_ordinal,
+            source_value: required_positive_u32(
+                arguments,
+                "mission objective par time",
+            )?,
+        }),
+        "setpickuptarget" => Some(MissionObjectiveDirective::PickupTarget {
+            source_ordinal,
+            target_id: required_identity(
+                arguments,
+                "mission objective pickup target",
+            )?,
+        }),
+        "turngotodialogoff" => {
+            require_no_arguments(
+                arguments,
+                "mission TurnGotoDialogOff marker",
+            )?;
+            Some(MissionObjectiveDirective::TurnGotoDialogOff {
+                source_ordinal,
+            })
+        },
+        "mustactiontrigger" => {
+            require_no_arguments(
+                arguments,
+                "mission MustActionTrigger marker",
+            )?;
+            Some(MissionObjectiveDirective::MustActionTrigger {
+                source_ordinal,
+            })
+        },
+        "allowrockout" => {
+            require_no_arguments(arguments, "mission AllowRockOut marker")?;
+            Some(MissionObjectiveDirective::AllowRockOut { source_ordinal })
         },
         "setdestination" => {
             Some(compile_destination(source_ordinal, arguments)?)
@@ -471,6 +623,89 @@ fn compile_directive(
         );
     }
     Ok(directive)
+}
+
+fn compile_ambient_animation_randomize(
+    source_ordinal: usize,
+    arguments: &[String],
+) -> Result<MissionObjectiveDirective, String> {
+    let [character, randomize] = arguments else {
+        return Err(
+            "mission ambient-animation selector shape drifted".to_owned()
+        );
+    };
+    let character = match character.as_str() {
+        "0" => MissionAmbientAnimationCharacter::Player,
+        "1" => MissionAmbientAnimationCharacter::Npc,
+        _ => {
+            return Err(
+                "mission ambient-animation character selector is not reviewed"
+                    .to_owned(),
+            );
+        },
+    };
+    let randomized = match randomize.as_str() {
+        "0" => false,
+        "1" => true,
+        _ => {
+            return Err(
+                "mission ambient-animation randomization flag is not reviewed"
+                    .to_owned(),
+            );
+        },
+    };
+    Ok(MissionObjectiveDirective::AmbientAnimationRandomize {
+        source_ordinal,
+        character,
+        randomized,
+    })
+}
+
+fn compile_conversation_camera(
+    source_ordinal: usize,
+    arguments: &[String],
+) -> Result<MissionObjectiveDirective, String> {
+    let [slot, camera] = arguments else {
+        return Err("mission conversation-camera shape drifted".to_owned());
+    };
+    if slot.is_empty() || !slot.chars().all(|ch| ch.is_ascii_digit()) {
+        return Err("mission conversation-camera slot is malformed".to_owned());
+    }
+    let source_slot = slot.parse::<u8>().map_err(|_error| {
+        "mission conversation-camera slot is malformed".to_owned()
+    })?;
+    if source_slot > 6 {
+        return Err(
+            "mission conversation-camera slot is not reviewed".to_owned()
+        );
+    }
+    let camera = match camera.as_str() {
+        "pc_far" => MissionConversationCameraToken::PlayerFar,
+        "pc_near" => MissionConversationCameraToken::PlayerNear,
+        "npc_far" => MissionConversationCameraToken::NpcFar,
+        "npc_near" => MissionConversationCameraToken::NpcNear,
+        _ => {
+            return Err(
+                "mission conversation-camera token is not reviewed".to_owned()
+            );
+        },
+    };
+    Ok(MissionObjectiveDirective::ConversationCamera {
+        source_ordinal,
+        source_slot,
+        camera,
+    })
+}
+
+fn require_no_arguments(
+    arguments: &[String],
+    label: &str,
+) -> Result<(), String> {
+    if arguments.is_empty() {
+        Ok(())
+    } else {
+        Err(format!("{label} unexpectedly carries arguments"))
+    }
 }
 
 fn compile_dialogue_info(
@@ -816,6 +1051,11 @@ fn parse_u32(value: &str, label: &str) -> Result<u32, String> {
     value
         .parse::<u32>()
         .map_err(|_error| format!("{label} is malformed"))
+}
+
+fn command_has_external_semantic_owner(command: &str) -> bool {
+    super::super::mission_stage::objective_command_has_stage_semantics(command)
+        || matches!(command, "addcondition" | "closecondition")
 }
 
 fn command_is_allowed_for_alias(source_alias: &str, command: &str) -> bool {

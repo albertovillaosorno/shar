@@ -9,7 +9,10 @@
 
 //! Selected objective directive semantic regressions.
 
-use super::{MissionObjectiveDirective, compile_directive};
+use super::{
+    MissionAmbientAnimationCharacter, MissionConversationCameraToken,
+    MissionObjectiveDirective, compile_directive,
+};
 
 fn strings(values: &[&str]) -> Vec<String> {
     values.iter().map(|value| (*value).to_owned()).collect()
@@ -394,5 +397,206 @@ fn types_objective_dialogue_animation_references() -> Result<(), String> {
         )
         .is_err()
     );
+    Ok(())
+}
+
+#[test]
+fn types_camera_animation_controls() -> Result<(), String> {
+    let best_side = compile_directive(
+        "dialogue",
+        30,
+        "setcambestside",
+        &strings(&["m7_bestside"]),
+    )?;
+    if best_side
+        != Some(MissionObjectiveDirective::CameraBestSide {
+            source_ordinal: 30,
+            locator_id: "m7_bestside".to_owned(),
+        })
+    {
+        return Err("camera best-side mapping changed".to_owned());
+    }
+    let camera = compile_directive(
+        "dialogue",
+        31,
+        "setconversationcam",
+        &strings(&["6", "npc_far"]),
+    )?;
+    if camera
+        != Some(MissionObjectiveDirective::ConversationCamera {
+            source_ordinal: 31,
+            source_slot: 6,
+            camera: MissionConversationCameraToken::NpcFar,
+        })
+    {
+        return Err("conversation-camera mapping changed".to_owned());
+    }
+    for (selector, expected) in [
+        ("0", MissionAmbientAnimationCharacter::Player),
+        ("1", MissionAmbientAnimationCharacter::Npc),
+    ] {
+        let actual = compile_directive(
+            "dialogue",
+            32,
+            "ambientanimationrandomize",
+            &strings(&[selector, "0"]),
+        )?;
+        if actual
+            != Some(MissionObjectiveDirective::AmbientAnimationRandomize {
+                source_ordinal: 32,
+                character: expected,
+                randomized: false,
+            })
+        {
+            return Err("ambient-animation selector mapping changed".to_owned());
+        }
+    }
+    let randomized = compile_directive(
+        "dialogue",
+        33,
+        "ambientanimationrandomize",
+        &strings(&["0", "1"]),
+    )?;
+    if randomized
+        != Some(MissionObjectiveDirective::AmbientAnimationRandomize {
+            source_ordinal: 33,
+            character: MissionAmbientAnimationCharacter::Player,
+            randomized: true,
+        })
+    {
+        return Err(
+            "ambient-animation randomization flag mapping changed".to_owned()
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn types_distance_pickup_par_time_and_exact_markers() -> Result<(), String> {
+    let distance = compile_directive(
+        "losetail",
+        34,
+        "setobjdistance",
+        &strings(&["150"]),
+    )?;
+    if distance
+        != Some(MissionObjectiveDirective::ObjectDistance {
+            source_ordinal: 34,
+            source_value: 150,
+        })
+    {
+        return Err("objective source-distance mapping changed".to_owned());
+    }
+    let par_time =
+        compile_directive("race", 35, "setpartime", &strings(&["195"]))?;
+    if par_time
+        != Some(MissionObjectiveDirective::ParTime {
+            source_ordinal: 35,
+            source_value: 195,
+        })
+    {
+        return Err("race par-time mapping changed".to_owned());
+    }
+    let pickup = compile_directive(
+        "pickupitem",
+        36,
+        "setpickuptarget",
+        &strings(&["bombbarrel"]),
+    )?;
+    if pickup
+        != Some(MissionObjectiveDirective::PickupTarget {
+            source_ordinal: 36,
+            target_id: "bombbarrel".to_owned(),
+        })
+    {
+        return Err("pickup target mapping changed".to_owned());
+    }
+    for (command, expected) in [
+        (
+            "turngotodialogoff",
+            MissionObjectiveDirective::TurnGotoDialogOff { source_ordinal: 37 },
+        ),
+        (
+            "mustactiontrigger",
+            MissionObjectiveDirective::MustActionTrigger { source_ordinal: 37 },
+        ),
+        ("allowrockout", MissionObjectiveDirective::AllowRockOut {
+            source_ordinal: 37,
+        }),
+    ] {
+        let actual = compile_directive("goto", 37, command, &[])?;
+        if actual != Some(expected) {
+            return Err(format!("objective marker mapping changed: {command}"));
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_unreviewed_camera_animation_and_source_values() -> Result<(), String>
+{
+    for (alias, command, arguments) in [
+        ("dialogue", "setconversationcam", strings(&["7", "pc_far"])),
+        ("dialogue", "setconversationcam", strings(&["+1", "pc_far"])),
+        (
+            "dialogue",
+            "setconversationcam",
+            strings(&["1", "hero_far"]),
+        ),
+        (
+            "dialogue",
+            "ambientanimationrandomize",
+            strings(&["2", "0"]),
+        ),
+        (
+            "dialogue",
+            "ambientanimationrandomize",
+            strings(&["0", "2"]),
+        ),
+        ("losetail", "setobjdistance", strings(&["0"])),
+        ("race", "setpartime", strings(&["0"])),
+        ("pickupitem", "setpickuptarget", strings(&["../bombbarrel"])),
+        ("talkto", "setconversationcam", strings(&["0", "pc_far"])),
+    ] {
+        if compile_directive(alias, 38, command, &arguments).is_ok() {
+            return Err(format!(
+                "unreviewed objective control accepted: {command}"
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn pins_external_semantic_owners_for_objective_commands() -> Result<(), String>
+{
+    for command in [
+        "activatevehicle",
+        "addsafezone",
+        "addstagecharacter",
+        "addstagevehicle",
+        "disablehitandrun",
+        "setgameover",
+        "setlevelover",
+        "setstageaitargetcatchupparams",
+        "setstagemessageindex",
+        "setvehicleaiparams",
+        "stayinblack",
+        "addcondition",
+        "closecondition",
+    ] {
+        if !super::command_has_external_semantic_owner(command) {
+            return Err(format!(
+                "external semantic owner disappeared: {command}"
+            ));
+        }
+    }
+    for command in ["setdestination", "setcoinfee", "setconversationcam"] {
+        if super::command_has_external_semantic_owner(command) {
+            return Err(format!(
+                "objective-owned command escaped ownership: {command}"
+            ));
+        }
+    }
     Ok(())
 }
