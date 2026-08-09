@@ -32,11 +32,21 @@
 
 use super::mission_script::MissionScriptEvidence;
 
+mod directive;
 mod modifier;
+mod parameter;
 
+pub use directive::{
+    MissionConditionDirective, MissionConditionSemanticBinding,
+    MissionConditionSemanticReport, preflight_mission_condition_semantics,
+};
 pub use modifier::{
     MissionConditionCommandBinding, MissionConditionCommandReport,
     preflight_mission_condition_commands,
+};
+pub use parameter::{
+    MissionConditionParameterBinding, MissionConditionParameterReport,
+    MissionConditionParameters, preflight_mission_condition_parameters,
 };
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

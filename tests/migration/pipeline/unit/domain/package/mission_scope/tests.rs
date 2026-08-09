@@ -33,9 +33,12 @@
 use serde_json::{Value, json};
 
 use super::{MissionConditionScope, compile_mission_scope_graphs};
-use crate::domain::preflight_mission_script;
+use crate::domain::{
+    MissionObjectiveParameters, MissionRoadArrowBinding, MissionRoadArrowMode,
+    preflight_mission_script,
+};
 
-fn base_document(invocations: Value, statement_count: usize) -> Value {
+fn base_document(invocations: &Value, statement_count: usize) -> Value {
     let mut statements = (1..=statement_count)
         .map(|ordinal| format!("Statement{ordinal}();"))
         .collect::<Vec<_>>();
@@ -99,7 +102,7 @@ fn base_document(invocations: Value, statement_count: usize) -> Value {
 
 fn scope_document() -> Value {
     base_document(
-        json!([
+        &json!([
             {"ordinal":1,"name":"selectmission","args_raw":"\"m1\"","semantic_role":"mission-script","arguments":["m1"]},
             {"ordinal":2,"name":"addstage","args_raw":"0,final","semantic_role":"mission-stage","arguments":["0","final"]},
             {"ordinal":3,"name":"addobjective","args_raw":"\"race\"","semantic_role":"mission-objective","arguments":["race"]},
@@ -108,9 +111,9 @@ fn scope_document() -> Value {
             {"ordinal":6,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]},
             {"ordinal":7,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
             {"ordinal":8,"name":"addstage","args_raw":"1","semantic_role":"mission-stage","arguments":["1"]},
-            {"ordinal":9,"name":"addobjective","args_raw":"\"goto\",\"target\"","semantic_role":"mission-objective","arguments":["goto","target"]},
+            {"ordinal":9,"name":"addobjective","args_raw":"\"goto\",\"both\"","semantic_role":"mission-objective","arguments":["goto","both"]},
             {"ordinal":10,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]},
-            {"ordinal":11,"name":"addcondition","args_raw":"\"damage\",\"car\"","semantic_role":"mission-script","arguments":["damage","car"]},
+            {"ordinal":11,"name":"addcondition","args_raw":"\"damage\",\"neither\"","semantic_role":"mission-script","arguments":["damage","neither"]},
             {"ordinal":12,"name":"closecondition","args_raw":"","semantic_role":"mission-script","arguments":[]},
             {"ordinal":13,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
             {"ordinal":14,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
@@ -143,7 +146,9 @@ fn projects_stage_objective_and_condition_ownership() -> Result<(), String> {
         return Err("mission scope envelope changed".to_owned());
     }
 
-    let first = &mission.stages()[0];
+    let [first, second] = mission.stages() else {
+        return Err("scope fixture stage count changed".to_owned());
+    };
     if first.source_ordinal() != 2
         || first.sequence_ordinal() != 0
         || first.legacy_parameters() != ["0", "final"]
@@ -164,12 +169,15 @@ fn projects_stage_objective_and_condition_ownership() -> Result<(), String> {
         return Err("nested condition ownership changed".to_owned());
     }
 
-    let second = &mission.stages()[1];
     let [stage_condition] = second.conditions() else {
         return Err("stage condition count changed".to_owned());
     };
     if second.sequence_ordinal() != 1
         || second.objective().binding().source_alias() != "goto"
+        || second.objective().parameters().parameters()
+            != &MissionObjectiveParameters::RoadArrows(
+                MissionRoadArrowBinding::Effective(MissionRoadArrowMode::Both),
+            )
         || stage_condition.scope() != MissionConditionScope::Stage
         || stage_condition.binding().source_alias() != "damage"
     {
@@ -237,36 +245,51 @@ fn unavailable_objective_remains_structural_but_incomplete()
         "semantic_role": "mission-objective",
         "arguments": ["dummy"]
     });
-    let invocations = value
-        .pointer_mut("/command_invocations")
-        .and_then(Value::as_array_mut)
-        .ok_or_else(|| "invocation fixture disappeared".to_owned())?;
-    invocations[3] = json!({
+    *value
+        .pointer_mut("/command_invocations/3")
+        .ok_or_else(|| "invocation 4 fixture disappeared".to_owned())? = json!({
         "ordinal":4,"name":"closeobjective","args_raw":"",
         "semantic_role":"mission-objective","arguments":[]
     });
-    invocations[4] = json!({
+    *value
+        .pointer_mut("/command_invocations/4")
+        .ok_or_else(|| "invocation 5 fixture disappeared".to_owned())? = json!({
         "ordinal":5,"name":"addcondition","args_raw":"\"timeout\"",
         "semantic_role":"mission-script","arguments":["timeout"]
     });
-    invocations[5] = json!({
+    *value
+        .pointer_mut("/command_invocations/5")
+        .ok_or_else(|| "invocation 6 fixture disappeared".to_owned())? = json!({
         "ordinal":6,"name":"closecondition","args_raw":"",
         "semantic_role":"mission-script","arguments":[]
     });
-    let statements = value
-        .pointer_mut("/source_statements")
-        .and_then(Value::as_array_mut)
-        .ok_or_else(|| "statement fixture disappeared".to_owned())?;
-    statements[2] = json!("AddObjective(\"dummy\");");
-    statements[3] = json!("CloseObjective();");
-    statements[4] = json!("AddCondition(\"timeout\");");
-    statements[5] = json!("CloseCondition();");
+    *value
+        .pointer_mut("/source_statements/2")
+        .ok_or_else(|| "statement 3 fixture disappeared".to_owned())? =
+        json!("AddObjective(\"dummy\");");
+    *value
+        .pointer_mut("/source_statements/3")
+        .ok_or_else(|| "statement 4 fixture disappeared".to_owned())? =
+        json!("CloseObjective();");
+    *value
+        .pointer_mut("/source_statements/4")
+        .ok_or_else(|| "statement 5 fixture disappeared".to_owned())? =
+        json!("AddCondition(\"timeout\");");
+    *value
+        .pointer_mut("/source_statements/5")
+        .ok_or_else(|| "statement 6 fixture disappeared".to_owned())? =
+        json!("CloseCondition();");
     let report = compile_mission_scope_graphs(&preflight(&value)?)?;
     let mission = report
         .missions()
         .first()
         .ok_or_else(|| "mission graph disappeared".to_owned())?;
-    let objective = mission.stages()[0].objective().binding();
+    let objective = mission
+        .stages()
+        .first()
+        .ok_or_else(|| "mission stage disappeared".to_owned())?
+        .objective()
+        .binding();
     if objective.source_alias() != "dummy"
         || objective.canonical_kind().is_some()
         || objective.unavailable_code()
@@ -502,15 +525,29 @@ fn nested_condition_modifier_belongs_to_most_specific_scope()
         ]
     });
     let report = compile_mission_scope_graphs(&preflight(&value)?)?;
-    let objective = report.missions()[0].stages()[0].objective();
-    let condition = &report.missions()[0].stages()[0].conditions()[0];
+    let mission = report
+        .missions()
+        .first()
+        .ok_or_else(|| "mission graph disappeared".to_owned())?;
+    let stage = mission
+        .stages()
+        .first()
+        .ok_or_else(|| "mission stage disappeared".to_owned())?;
+    let objective = stage.objective();
+    let condition = stage
+        .conditions()
+        .first()
+        .ok_or_else(|| "mission condition disappeared".to_owned())?;
     if objective.commands().len() != 2
         || objective
             .commands()
             .iter()
             .any(|command| command.command() == "setcondminhealth")
         || condition.commands().len() != 1
-        || condition.commands()[0].command() != "setcondminhealth"
+        || condition
+            .commands()
+            .first()
+            .is_none_or(|command| command.command() != "setcondminhealth")
     {
         return Err("nested condition modifier ownership changed".to_owned());
     }

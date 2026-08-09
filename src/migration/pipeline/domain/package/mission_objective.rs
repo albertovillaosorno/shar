@@ -32,11 +32,23 @@
 
 use super::mission_script::MissionScriptEvidence;
 
+mod directive;
 mod modifier;
+mod parameter;
 
+pub use directive::{
+    MissionObjectiveDirective, MissionObjectiveNpcReference,
+    MissionObjectiveSemanticBinding, MissionObjectiveSemanticReport,
+    preflight_mission_objective_semantics,
+};
 pub use modifier::{
     MissionObjectiveCommandBinding, MissionObjectiveCommandReport,
     preflight_mission_objective_commands,
+};
+pub use parameter::{
+    MissionObjectiveParameterBinding, MissionObjectiveParameterReport,
+    MissionObjectiveParameters, MissionRoadArrowBinding, MissionRoadArrowMode,
+    preflight_mission_objective_parameters,
 };
 
 const UNAVAILABLE_DUMMY_OBJECTIVE: &str =

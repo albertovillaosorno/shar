@@ -35,11 +35,13 @@ use std::collections::BTreeMap;
 
 use super::mission_condition::{
     MissionConditionBinding, MissionConditionCommandBinding,
-    preflight_mission_condition_commands, preflight_mission_conditions,
+    MissionConditionParameterBinding, preflight_mission_condition_commands,
+    preflight_mission_condition_parameters, preflight_mission_conditions,
 };
 use super::mission_objective::{
     MissionObjectiveBinding, MissionObjectiveCommandBinding,
-    preflight_mission_objective_commands, preflight_mission_objectives,
+    MissionObjectiveParameterBinding, preflight_mission_objective_commands,
+    preflight_mission_objective_parameters, preflight_mission_objectives,
 };
 use super::mission_script::{MissionCommandInvocation, MissionScriptEvidence};
 
@@ -191,6 +193,7 @@ pub enum MissionConditionScope {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MissionScopeCondition {
     binding: MissionConditionBinding,
+    parameters: MissionConditionParameterBinding,
     scope: MissionConditionScope,
     commands: Vec<MissionConditionCommandBinding>,
 }
@@ -200,6 +203,12 @@ impl MissionScopeCondition {
     #[must_use]
     pub const fn binding(&self) -> &MissionConditionBinding {
         &self.binding
+    }
+
+    /// Return typed parameters carried directly by `AddCondition`.
+    #[must_use]
+    pub const fn parameters(&self) -> &MissionConditionParameterBinding {
+        &self.parameters
     }
 
     /// Return the exact source scope where the condition was declared.
@@ -219,6 +228,7 @@ impl MissionScopeCondition {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MissionScopeObjective {
     binding: MissionObjectiveBinding,
+    parameters: MissionObjectiveParameterBinding,
     commands: Vec<MissionObjectiveCommandBinding>,
 }
 
@@ -227,6 +237,12 @@ impl MissionScopeObjective {
     #[must_use]
     pub const fn binding(&self) -> &MissionObjectiveBinding {
         &self.binding
+    }
+
+    /// Return typed parameters carried directly by `AddObjective`.
+    #[must_use]
+    pub const fn parameters(&self) -> &MissionObjectiveParameterBinding {
+        &self.parameters
     }
 
     /// Return reviewed commands owned by this objective.
@@ -388,14 +404,22 @@ pub fn compile_mission_scope_graphs(
     evidence: &MissionScriptEvidence,
 ) -> Result<MissionScopeReport, String> {
     let objectives = preflight_mission_objectives(evidence)?;
+    let objective_parameters =
+        preflight_mission_objective_parameters(evidence)?;
     let objective_commands = preflight_mission_objective_commands(evidence)?;
     let conditions = preflight_mission_conditions(evidence)?;
+    let condition_parameters =
+        preflight_mission_condition_parameters(evidence)?;
     let condition_commands = preflight_mission_condition_commands(evidence)?;
 
     let mut objective_by_ordinal = collect_objectives(objectives.objectives())?;
+    let mut objective_parameter_by_ordinal =
+        collect_objective_parameters(objective_parameters.objectives())?;
     let mut objective_command_by_ordinal =
         collect_objective_commands(objective_commands.commands())?;
     let mut condition_by_ordinal = collect_conditions(conditions.conditions())?;
+    let mut condition_parameter_by_ordinal =
+        collect_condition_parameters(condition_parameters.conditions())?;
     let mut condition_command_by_ordinal =
         collect_condition_commands(condition_commands.commands())?;
 
@@ -525,6 +549,17 @@ pub fn compile_mission_scope_graphs(
                         "mission scope projection lost objective evidence"
                             .to_owned()
                     })?;
+                let parameters = objective_parameter_by_ordinal
+                    .remove(&invocation.ordinal())
+                    .ok_or_else(|| {
+                        "mission scope projection lost objective parameters"
+                            .to_owned()
+                    })?;
+                if parameters.source_alias() != binding.source_alias() {
+                    return Err(
+                        "mission objective parameter owner drifted".to_owned()
+                    );
+                }
                 let stage = active_stage(
                     &mut missions,
                     current_mission,
@@ -538,6 +573,7 @@ pub fn compile_mission_scope_graphs(
                 }
                 stage.objective = Some(MissionScopeObjective {
                     binding,
+                    parameters,
                     commands: Vec::new(),
                 });
                 objective_open = true;
@@ -552,6 +588,17 @@ pub fn compile_mission_scope_graphs(
                         "mission scope projection lost condition evidence"
                             .to_owned()
                     })?;
+                let parameters = condition_parameter_by_ordinal
+                    .remove(&invocation.ordinal())
+                    .ok_or_else(|| {
+                        "mission scope projection lost condition parameters"
+                            .to_owned()
+                    })?;
+                if parameters.source_alias() != binding.source_alias() {
+                    return Err(
+                        "mission condition parameter owner drifted".to_owned()
+                    );
+                }
                 let scope = if objective_open {
                     MissionConditionScope::Objective
                 } else {
@@ -564,6 +611,7 @@ pub fn compile_mission_scope_graphs(
                 )?;
                 stage.conditions.push(MissionScopeCondition {
                     binding,
+                    parameters,
                     scope,
                     commands: Vec::new(),
                 });
@@ -598,8 +646,10 @@ pub fn compile_mission_scope_graphs(
         );
     }
     if !objective_by_ordinal.is_empty()
+        || !objective_parameter_by_ordinal.is_empty()
         || !objective_command_by_ordinal.is_empty()
         || !condition_by_ordinal.is_empty()
+        || !condition_parameter_by_ordinal.is_empty()
         || !condition_command_by_ordinal.is_empty()
     {
         return Err(
@@ -796,6 +846,26 @@ fn collect_objectives(
     bindings: &[MissionObjectiveBinding],
 ) -> Result<BTreeMap<usize, MissionObjectiveBinding>, String> {
     collect_by_ordinal(bindings, MissionObjectiveBinding::ordinal, "objective")
+}
+
+fn collect_objective_parameters(
+    bindings: &[MissionObjectiveParameterBinding],
+) -> Result<BTreeMap<usize, MissionObjectiveParameterBinding>, String> {
+    collect_by_ordinal(
+        bindings,
+        MissionObjectiveParameterBinding::ordinal,
+        "objective parameter",
+    )
+}
+
+fn collect_condition_parameters(
+    bindings: &[MissionConditionParameterBinding],
+) -> Result<BTreeMap<usize, MissionConditionParameterBinding>, String> {
+    collect_by_ordinal(
+        bindings,
+        MissionConditionParameterBinding::ordinal,
+        "condition parameter",
+    )
 }
 
 fn collect_conditions(
