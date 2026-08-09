@@ -577,7 +577,7 @@ fn load_p3d_document() -> Value {
         "mission_flow_command_count":0,"vehicle_physics_command_count":0,
         "semantic_family":"mission-script","command_counts":{"loadp3dfile":1},
         "source_statements":["LoadP3DFile(\"a.p3d\",\"b.p3d\");"],
-        "p3d_references":["a.p3d","b.p3d"],
+        "p3d_references":["a.p3d"],
         "command_invocations":[{
             "ordinal":1,"name":"loadp3dfile","args_raw":"\"a.p3d\",\"b.p3d\"",
             "semantic_role":"asset-load","arguments":["a.p3d","b.p3d"]

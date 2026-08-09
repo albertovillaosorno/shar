@@ -70,7 +70,9 @@ pub(super) fn append_summary(
                 let arguments = split_arguments(&args_raw);
                 if command.contains("loadp3d") {
                     load_p3d = load_p3d.saturating_add(1);
-                    p3d_references.extend(arguments.iter().cloned());
+                    if let Some(reference) = arguments.first() {
+                        p3d_references.push(reference.clone());
+                    }
                 }
                 if command.contains("stage")
                     || command.contains("mission")
