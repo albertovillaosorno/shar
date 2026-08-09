@@ -122,6 +122,23 @@ Current task list. Project phases and dated progress are recorded in
     - [ ] Map every reviewed participant, route, timing, load, checkpoint,
       presentation, reward, transition, and typed objective/condition parameter
       reference.
+      - [x] Compile all 611 direct objective and 408 direct condition parameter
+        shapes into typed evidence; preserve the one noncanonical `niether`
+        route token and undocumented condition values without repairing them.
+      - [x] Compile all 611 stage headers plus 1,832 reviewed timer,
+        checkpoint, message, vehicle, waypoint, HUD, traffic, and transition
+        directives, preserving opaque numeric `AddStage` flags and documented
+        unused compatibility arguments exactly.
+      - [x] Compile 374 reviewed mission-scope initialization directives for
+        restart locators, initial walk/vehicle state, forced-car state,
+        dynamic-load P3D references, and street-race prop load/unload evidence.
+      - [x] Compile 2,873 selected objective-scoped participant, collectible,
+        route, dialogue, timing, fee, animation, bitmap, and FMV references plus
+        all 375 condition-scoped command values without inventing unresolved
+        units, defaults, or legacy extension meanings.
+      - [ ] Resolve the remaining camera, AI tuning, pickup, reward,
+        presentation, stage-transition, and other unmapped command references
+        before asset emission.
     - [ ] Emit lossless `USharMissionDefinition` assets only after the complete
       mission graph passes reference and topology validation.
   - [ ] Compile remaining normalized UI, font, localization, tuning, and other

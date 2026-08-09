@@ -1,7 +1,7 @@
 # Mission definition, stage, and objective runtime
 
 - Status: Active
-- Last reviewed: 2026-07-17
+- Last reviewed: 2026-08-08
 
 ## Governing decisions and specifications
 
@@ -61,6 +61,20 @@ A mission is a validated data graph executed by repository-owned C++
 services through native Unreal facilities. It is not a script file, console
 command sequence, Blueprint graph, actor list, package name,
 or presentation event.
+
+The import pipeline currently stops before asset emission but now compiles
+fail-closed evidence after source-scope projection for direct objective and
+condition parameters, selected objective and condition commands, stage headers
+and directives, and mission restart/load initialization. The repository corpus
+currently produces 2,873 selected typed objective directives, all 375 typed
+condition-scoped commands, 1,832 typed stage directives, and 374 typed mission
+initialization directives. Opaque legacy `AddStage` flags, the noncanonical
+`niether` route token, undocumented condition values, collectible extension
+fields, dialogue compatibility flags, and the unexplained second dynamic-load
+argument remain explicit provenance rather than inferred runtime behavior.
+Final `USharMissionDefinition` creation remains blocked until remaining camera,
+AI tuning, pickup/reward, presentation, transition, and catalog references
+resolve.
 
 ## Authority and ownership
 

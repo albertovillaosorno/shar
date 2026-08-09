@@ -48,8 +48,8 @@ an observed scope-and-arity registry. A command observed both outside a selected
 mission and inside one requires an explicit general-scope registration for that
 form; unrelated utility commands remain raw unscoped evidence. Positional values
 remain raw source evidence until a reviewed typed parameter compiler owns them.
-These registries are conversion evidence only: they do not claim that legacy parameters have
-already been compiled into final runtime policies.
+These registries are conversion evidence only: they do not claim that legacy
+parameters have already been compiled into final runtime policies.
 
 Semantic intake independently replays the complete mission, stage, objective,
 and condition stack instead of trusting an empty producer finding list. It also
@@ -77,14 +77,53 @@ in those inventories must be reviewed rather than silently accepted as a new
 compiler rule.
 
 Parameter compilation is alias-specific rather than positional across all
-objectives or conditions. Public command documentation describes the general
-`AddObjective` gamble and road-arrow envelope, while reviewed objective-specific
-forms also use later arguments as target identities. The source corpus likewise
-contains both canonical routing tokens and legacy noncanonical spellings.
-Condition aliases have independent versioned schemas and argument shapes. The
-compiler therefore preserves every legacy parameter until the owning alias
-schema validates and resolves it; it does not globally reinterpret the second
-argument or silently normalize unknown tokens.
+objectives or conditions. All 611 direct objective parameter shapes and all 408
+direct condition parameter shapes now have closed typed representations.
+`buycar`, `buyskin`, and the reviewed `getin` form publish exact source
+references; race wager and road-arrow tokens are typed independently. The one
+source spelling `niether` is retained as explicitly unrecognized legacy evidence
+rather than repaired to `neither`. The ten `keepbarrel` numeric values and one
+`damage` token are likewise typed as closed legacy shapes without assigning
+undocumented gameplay meaning.
+
+Stage compilation then types all 611 source stage headers. Numeric `AddStage`
+values remain opaque reviewed flags because no authoritative meaning for their
+bits has been established; the explicit final marker and locked vehicle/costume
+forms remain distinct. The compiler now closes 1,832 reviewed stage directives:
+timers and added time, checkpoints, message indices, stage vehicles, vehicle
+activation, waypoints, HUD icons, traffic maxima, fade and iris compatibility
+arguments. It retains documented unused arguments exactly and preserves the
+legacy `AddStageTime(0)` source value together with its reviewed effective
+one-second addition. The current `SetMaxTraffic` corpus is closed to the
+observed documented car-count domain 1 through 5.
+
+Mission-scope initialization compilation covers 374 current directives: restart
+locators, initial walk locators, initial player vehicles, forced-car markers,
+dynamic-load data, and 22 street-race prop load plus 22 unload records.
+Dynamic-load strings publish their exact `.p3d` references while an observed
+second argument remains named only as legacy evidence until its semantics are
+independently established. Street-race prop records retain their exact source
+Dyna Load Data string and independently validate the documented terminal `;`
+load or `:` unload form.
+
+After source-scope projection, selected objective-command compilation now emits
+2,873 typed source directives from the 3,605 reviewed objective-scoped commands.
+It covers NPC placement and waypoints, drivers and vehicle targets, talk targets,
+destinations, collectibles and effects, collectible-to-waypoint bindings,
+durations, race laps, fees, dialogue participants and position locators, ambient
+NPC/player animation identities, presentation bitmap P3D references, and FMV RMV
+references. Authored optionality is preserved: missing talk-target values or
+collectible effects do not become fabricated defaults, legacy collectible tails
+remain opaque, the fourth dialogue-info value remains a closed legacy zero, and
+the optional dialogue-position flag remains the reviewed legacy one. All 375
+condition-scoped commands are also typed across all 408 conditions while health,
+distance, time, and position source values retain only semantics established by
+the reviewed command boundary; no undocumented units are invented.
+
+These objective, condition, initialization, and stage compilers are mandatory
+semantic gates for `prepare-unreal`. Camera bindings, AI tuning, pickup/reward
+references, remaining presentation and transition commands, and final catalog
+resolution are still pending, so no mission asset is emitted yet.
 
 The v3 evidence records `context_command_count`,
 `context_adaptation_count`, `context_finding_count`, ordered adaptations, and
