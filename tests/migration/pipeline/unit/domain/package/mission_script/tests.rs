@@ -398,13 +398,21 @@ fn reviewed_l2_adaptation_document() -> Value {
     let mut source_statements = (1..=72)
         .map(|ordinal| format!("legacy non-call statement {ordinal}"))
         .collect::<Vec<_>>();
-    source_statements[0] = "SelectMission(\"m6sd\");".to_owned();
-    source_statements[1] = "AddStage(0);".to_owned();
-    source_statements[67] = "AddStageMusicChange();".to_owned();
-    source_statements[68] = "SetStageMusicAlwaysOn();".to_owned();
-    source_statements[69] = "CloseCondition(); // stage".to_owned();
-    source_statements[70] = "CloseStage();".to_owned();
-    source_statements[71] = "CloseMission();".to_owned();
+    for (index, statement) in source_statements.iter_mut().enumerate() {
+        let replacement = match index {
+            0 => Some("SelectMission(\"m6sd\");"),
+            1 => Some("AddStage(0);"),
+            67 => Some("AddStageMusicChange();"),
+            68 => Some("SetStageMusicAlwaysOn();"),
+            69 => Some("CloseCondition(); // stage"),
+            70 => Some("CloseStage();"),
+            71 => Some("CloseMission();"),
+            _ => None,
+        };
+        if let Some(replacement) = replacement {
+            replacement.clone_into(statement);
+        }
+    }
     json!({
         "schema": MISSION_SCRIPT_SCHEMA,
         "source_extension": "mfk",
