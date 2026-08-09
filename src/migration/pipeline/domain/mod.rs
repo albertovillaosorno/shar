@@ -46,7 +46,8 @@ pub use optional_mod_preview::{
 };
 pub use output_summary::{DirectorySummary, OutputSummary};
 pub use package::{
-    ConversionFamily, FbxModelPlan, MISSION_SCRIPT_SCHEMA,
+    ConversionFamily, DynaLoadData, DynaLoadOperation, DynaLoadOperationKind,
+    FbxModelPlan, MISSION_SCRIPT_SCHEMA,
     MissionCharacterCatalogReference, MissionCommandInvocation,
     MissionConditionBinding, MissionConditionCommandBinding,
     MissionConditionCommandReport, MissionConditionDirective,
@@ -79,6 +80,7 @@ pub use package::{
     UNREAL_IMPORT_MANIFEST_SCHEMA, UNREAL_IMPORT_SUMMARY_SCHEMA,
     UnrealFbxArtifactEvidence, UnrealImportManifest, UnrealNativePlan,
     UnrealSourceEvidence, UnrealTargetKind, compile_mission_scope_graphs,
+    parse_dyna_load_data,
     preflight_mission_condition_commands,
     preflight_mission_condition_parameters,
     preflight_mission_condition_semantics, preflight_mission_conditions,

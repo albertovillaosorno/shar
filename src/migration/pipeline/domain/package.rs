@@ -31,6 +31,8 @@
 //! Package domain module.
 
 pub mod index;
+/// Typed Dyna Load Data postfix syntax.
+pub mod dyna_load_data;
 /// Reviewed mission condition alias preflight.
 pub mod mission_condition;
 /// Typed mission-scope initialization and restart semantics.
@@ -68,6 +70,9 @@ pub mod unreal_manifest;
 pub use index::{
     PackageMemberRef, PackageRole, PhaseThreePackageIndex,
     PhaseThreePackageMember, PhaseThreePackageRow,
+};
+pub use dyna_load_data::{
+    DynaLoadData, DynaLoadOperation, DynaLoadOperationKind, parse_dyna_load_data,
 };
 pub use mission_condition::{
     MissionConditionBinding, MissionConditionCommandBinding,

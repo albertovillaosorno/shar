@@ -30,7 +30,10 @@
 
 //! Typed mission-scope initialization and restart evidence.
 
-use super::{MissionScopeCommand, MissionScopeReport};
+use super::{
+    DynaLoadOperationKind, MissionScopeCommand, MissionScopeReport,
+    parse_dyna_load_data,
+};
 
 /// One reviewed mission-scope initialization directive.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -493,27 +496,40 @@ fn compile_dynamic_load(
             );
         },
     };
-    if source_data.is_empty() || source_data.chars().any(char::is_control) {
-        return Err("mission dyna-load source data is malformed".to_owned());
-    }
     if let Some(argument) = &legacy_argument {
         validate_identity(argument, "mission dyna-load legacy argument")?;
     }
-    let mut p3d_files = Vec::new();
-    for raw in source_data.split(';').filter(|value| !value.is_empty()) {
-        let value = raw.strip_suffix('@').unwrap_or(raw);
-        validate_p3d_path(value)?;
-        p3d_files.push(value.to_owned());
-    }
-    if p3d_files.is_empty() {
-        return Err("mission dyna-load contains no P3D references".to_owned());
-    }
+    let p3d_files = reviewed_dynamic_p3d_files(source_data)?;
     Ok(MissionInitializationDirective::DynamicLoad {
         source_ordinal: command.source_ordinal(),
         source_data: source_data.clone(),
         p3d_files,
         legacy_argument,
     })
+}
+
+
+fn reviewed_dynamic_p3d_files(source_data: &str) -> Result<Vec<String>, String> {
+    let legacy_completed_source;
+    let typed_source = if source_data.to_ascii_lowercase().ends_with(".p3d") {
+        legacy_completed_source = format!("{source_data};");
+        legacy_completed_source.as_str()
+    } else {
+        source_data
+    };
+    let parsed = parse_dyna_load_data(typed_source)?;
+    if parsed
+        .operations()
+        .iter()
+        .any(|operation| !operation.kind().is_p3d_load())
+    {
+        return Err("mission dyna-load operation is not reviewed".to_owned());
+    }
+    Ok(parsed
+        .operations()
+        .iter()
+        .map(|operation| operation.target().to_owned())
+        .collect())
 }
 
 fn compile_street_race_props(
@@ -524,26 +540,26 @@ fn compile_street_race_props(
     let [source_data] = arguments else {
         return Err(format!("street-race props {label} shape is not reviewed"));
     };
-    let Some(body) = source_data.strip_suffix(terminator) else {
-        return Err(format!(
-            "street-race props {label} Dyna Load Data terminator drifted"
-        ));
+    let expected = match terminator {
+        ';' => DynaLoadOperationKind::RegionLoad,
+        ':' => DynaLoadOperationKind::RegionUnload,
+        _ => return Err("street-race props terminator is not reviewed".to_owned()),
     };
-    if body.is_empty() || body.chars().any(char::is_control) {
+    let parsed = parse_dyna_load_data(source_data)?;
+    if parsed
+        .operations()
+        .iter()
+        .any(|operation| operation.kind() != expected)
+    {
         return Err(format!(
-            "street-race props {label} Dyna Load Data is malformed"
+            "street-race props {label} Dyna Load Data operation drifted"
         ));
     }
-    let mut p3d_files = Vec::new();
-    for raw in body.split(';') {
-        if raw.is_empty() {
-            return Err(format!(
-                "street-race props {label} contains an empty P3D reference"
-            ));
-        }
-        validate_p3d_path(raw)?;
-        p3d_files.push(raw.to_owned());
-    }
+    let p3d_files = parsed
+        .operations()
+        .iter()
+        .map(|operation| operation.target().to_owned())
+        .collect();
     Ok((source_data.clone(), p3d_files))
 }
 
