@@ -62,19 +62,22 @@ services through native Unreal facilities. It is not a script file, console
 command sequence, Blueprint graph, actor list, package name,
 or presentation event.
 
-The import pipeline currently stops before asset emission but now compiles
-fail-closed evidence after source-scope projection for direct objective and
-condition parameters, selected objective and condition commands, stage headers
-and directives, and mission restart/load initialization. The repository corpus
-currently produces 2,873 selected typed objective directives, all 375 typed
-condition-scoped commands, 1,832 typed stage directives, and 374 typed mission
-initialization directives. Opaque legacy `AddStage` flags, the noncanonical
-`niether` route token, undocumented condition values, collectible extension
-fields, dialogue compatibility flags, and the unexplained second dynamic-load
-argument remain explicit provenance rather than inferred runtime behavior.
-Final `USharMissionDefinition` creation remains blocked until remaining camera,
-AI tuning, pickup/reward, presentation, transition, and catalog references
-resolve.
+The import pipeline currently stops before asset emission but now closes
+command-level semantic ownership after source-scope projection. All 811 direct
+mission commands and all 2,454 direct-stage commands must emit typed evidence;
+the stage report contains 2,549 directives after adding the 95 objective commands
+explicitly delegated to stage semantics. Of 3,605 objective-scoped commands,
+3,498 emit objective directives, those same 95 have required stage ownership, and
+12 are structural condition commands. All 375 condition-scoped commands remain
+typed across 408 condition bindings. Opaque `AddStage` flags, noncanonical
+`niether`, undocumented condition values, AI/race source tuples, collectible
+extension fields, dialogue compatibility fields, and dynamic-load compatibility
+arguments remain provenance rather than inferred runtime behavior.
+
+Final `USharMissionDefinition` creation remains blocked until typed source
+references resolve to canonical participant, route, camera, presentation, reward,
+transition, bundle, and catalog identities and the complete transition/recovery
+topology passes validation.
 
 ## Authority and ownership
 

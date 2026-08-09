@@ -89,41 +89,38 @@ undocumented gameplay meaning.
 Stage compilation then types all 611 source stage headers. Numeric `AddStage`
 values remain opaque reviewed flags because no authoritative meaning for their
 bits has been established; the explicit final marker and locked vehicle/costume
-forms remain distinct. The compiler now closes 1,832 reviewed stage directives:
-timers and added time, checkpoints, message indices, stage vehicles, vehicle
-activation, waypoints, HUD icons, traffic maxima, fade and iris compatibility
-arguments. It retains documented unused arguments exactly and preserves the
-legacy `AddStageTime(0)` source value together with its reviewed effective
-one-second addition. The current `SetMaxTraffic` corpus is closed to the
-observed documented car-count domain 1 through 5.
+forms remain distinct. The stage report now emits 2,549 typed directives: every
+one of the 2,454 direct-stage commands plus all 95 objective-scoped commands
+explicitly delegated to stage semantics. This includes timers, checkpoints,
+messages, vehicles, characters, waypoints, countdowns, traffic, AI source tuples,
+safe zones, HUD and presentation controls, music, swap locators, completion
+signals, and transition markers. AI and race catch-up values remain exact source
+integers or decimal lexemes where gameplay units and ordering are unresolved.
 
-Mission-scope initialization compilation covers 374 current directives: restart
-locators, initial walk locators, initial player vehicles, forced-car markers,
-dynamic-load data, and 22 street-race prop load plus 22 unload records.
-Dynamic-load strings publish their exact `.p3d` references while an observed
-second argument remains named only as legacy evidence until its semantics are
-independently established. Street-race prop records retain their exact source
-Dyna Load Data string and independently validate the documented terminal `;`
-load or `:` unload form.
+Mission-scope initialization compilation now covers all 811 direct mission
+commands with no raw fallback. Restart locators, initial walk and vehicle state,
+forced-car state, dynamic-load and street-race P3D references, player-car
+placement, state props, animated/start cameras and multi-controllers, failure
+hint counts, presentation bitmaps, HUD visibility, and pedestrian-group indices
+all pass closed value or reference validators. Dynamic-load compatibility fields
+whose meaning remains unresolved stay explicit legacy evidence.
 
-After source-scope projection, selected objective-command compilation now emits
-2,873 typed source directives from the 3,605 reviewed objective-scoped commands.
-It covers NPC placement and waypoints, drivers and vehicle targets, talk targets,
-destinations, collectibles and effects, collectible-to-waypoint bindings,
-durations, race laps, fees, dialogue participants and position locators, ambient
-NPC/player animation identities, presentation bitmap P3D references, and FMV RMV
-references. Authored optionality is preserved: missing talk-target values or
-collectible effects do not become fabricated defaults, legacy collectible tails
-remain opaque, the fourth dialogue-info value remains a closed legacy zero, and
-the optional dialogue-position flag remains the reviewed legacy one. All 375
-condition-scoped commands are also typed across all 408 conditions while health,
-distance, time, and position source values retain only semantics established by
-the reviewed command boundary; no undocumented units are invented.
+Objective-command ownership is exhaustive across all 3,605 reviewed
+objective-scoped commands. 3,498 emit objective directives directly, 95 are
+required to emit stage directives through one shared delegation registry, and 12
+are the structural `AddCondition`/`CloseCondition` pairs. A registered objective
+command with no owner now fails semantic preflight instead of disappearing. All
+375 condition-scoped commands are likewise typed across all 408 conditions.
+Authored optionality and source spelling are preserved, including missing talk
+target options, collectible extension tails, dialogue compatibility fields,
+`niether`, source AI tuples, and other values whose gameplay meaning is not yet
+established.
 
-These objective, condition, initialization, and stage compilers are mandatory
-semantic gates for `prepare-unreal`. Camera bindings, AI tuning, pickup/reward
-references, remaining presentation and transition commands, and final catalog
-resolution are still pending, so no mission asset is emitted yet.
+These objective, condition, mission-scope, and stage compilers are mandatory
+semantic gates for `prepare-unreal`. Command-level semantic ownership is now
+closed for the reviewed mission corpus, but canonical catalog resolution,
+participant/route/camera binding, reward and transition policy construction, and
+final topology validation remain pending. No mission asset is emitted yet.
 
 The v3 evidence records `context_command_count`,
 `context_adaptation_count`, `context_finding_count`, ordered adaptations, and

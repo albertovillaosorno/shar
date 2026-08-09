@@ -37,17 +37,21 @@ Repository evidence supports a related command-language family. Donut Team's DT
 Docs command reference was reviewed as a secondary interoperability cross-check
 for current command scope, syntax, and parameter descriptions. The reviewed
 cross-checks include `AddObjective`, `AddNPC`, `AddObjectiveNPCWaypoint`,
-`AddCollectible`, `AddAmbientNpcAnimation`, `AddAmbientPcAnimation`,
-`SetDurationTime`, `AddStageVehicle`, `ActivateVehicle`, `AddStageWaypoint`,
-`SetStageTime`, `AddStageTime`, `SetHUDIcon`, `SetMaxTraffic`, `SetFadeOut`,
-`SetIrisWipe`, `RESET_TO_HERE`, `SetStageMessageIndex`, mission reset locators,
-`SetInitialWalk`, `SetDynaLoadData`, `StreetRacePropsLoad`, and
-`StreetRacePropsUnload`. Community mission tutorials were additionally reviewed
-for `SetDestination`, `SetDialogueInfo`, and mission FMV source usage. Public or
-community descriptions are used only where repository evidence independently
-closes the same command form; undocumented `AddStage` numeric values, condition
-parameters, and compatibility arguments remain opaque. DT Docs is not treated
-as an original developer
+`AddCollectible`, ambient dialogue animation commands, conversation-camera
+commands, `SetDurationTime`, `AddStageVehicle`, `ActivateVehicle`,
+`AddStageWaypoint`, `SetStageTime`, `AddStageTime`, countdown and completion
+commands, stage AI/catch-up commands, `SetHUDIcon`, `SetMaxTraffic`,
+`SetMusicState`, `SetFadeOut`, `SetIrisWipe`, `RESET_TO_HERE`,
+`SetStageMessageIndex`, swap locators, mission camera and multi-controller
+commands, mission reset locators, `SetInitialWalk`, `SetDynaLoadData`,
+`StreetRacePropsLoad`, `StreetRacePropsUnload`, `UsePedGroup`, and mission HUD
+controls. Community mission tutorials and public compatibility implementations
+were additionally reviewed for source shapes such as `SetDestination`,
+`SetDialogueInfo`, `SetCamBestSide`, `SetConversationCam`, AI tuples, and mission
+FMV usage. These secondary descriptions are used only where repository evidence
+independently closes the same command form; undocumented `AddStage` numeric
+values, condition parameters, AI units, and compatibility arguments remain
+opaque. DT Docs is not treated as an original developer
 specification, and the formal grammar, version history, historical command
 ownership, title-specific extensions, and authoritative first-party
 documentation remain unresolved.
