@@ -59,8 +59,10 @@ use crate::domain::{
     PipelineError, PipelineOutcome, StageReport, UNREAL_IMPORT_MANIFEST_SCHEMA,
     UNREAL_IMPORT_SUMMARY_SCHEMA, UnrealImportManifest, UnrealSourceEvidence,
     compile_mission_scope_graphs, preflight_mission_condition_commands,
-    preflight_mission_conditions, preflight_mission_objective_commands,
-    preflight_mission_objectives, preflight_mission_script,
+    preflight_mission_condition_semantics, preflight_mission_conditions,
+    preflight_mission_initialization, preflight_mission_objective_commands,
+    preflight_mission_objective_semantics, preflight_mission_objectives,
+    preflight_mission_script, preflight_mission_stage_semantics,
 };
 
 /// Canonical generated Unreal staging root.
@@ -586,13 +588,34 @@ fn validate_normalized_mission_source(
             ))
         })?,
     );
-    compile_mission_scope_graphs(&evidence)
-        .map(|_report| ())
-        .map_err(|error| {
+    let scopes = compile_mission_scope_graphs(&evidence).map_err(|error| {
+        PipelineError::new(format!("mission scope preflight failed: {error}"))
+    })?;
+    drop(
+        preflight_mission_objective_semantics(&scopes).map_err(|error| {
             PipelineError::new(format!(
-                "mission scope preflight failed: {error}"
+                "mission objective semantic preflight failed: {error}"
             ))
-        })
+        })?,
+    );
+    drop(
+        preflight_mission_condition_semantics(&scopes).map_err(|error| {
+            PipelineError::new(format!(
+                "mission condition semantic preflight failed: {error}"
+            ))
+        })?,
+    );
+    drop(preflight_mission_initialization(&scopes).map_err(|error| {
+        PipelineError::new(format!(
+            "mission initialization preflight failed: {error}"
+        ))
+    })?);
+    drop(preflight_mission_stage_semantics(&scopes).map_err(|error| {
+        PipelineError::new(format!(
+            "mission stage semantic preflight failed: {error}"
+        ))
+    })?);
+    Ok(())
 }
 
 fn retain_importable_evidence(

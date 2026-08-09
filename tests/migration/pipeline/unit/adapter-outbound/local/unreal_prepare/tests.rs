@@ -888,3 +888,170 @@ fn mission_semantic_gate_rejects_stage_without_root_objective()
     }
     Ok(())
 }
+
+#[test]
+fn mission_semantic_gate_rejects_unreviewed_stage_flags() -> Result<(), String>
+{
+    let bytes = clean_mission_json(false)?;
+    let mut value = serde_json::from_slice::<serde_json::Value>(&bytes)
+        .map_err(|error| error.to_string())?;
+    *value
+        .pointer_mut("/source_statements/1")
+        .ok_or_else(|| "mission fixture statement disappeared".to_owned())? =
+        json!("AddStage(6);");
+    *value
+        .pointer_mut("/command_invocations/1/args_raw")
+        .ok_or_else(|| {
+            "mission fixture raw arguments disappeared".to_owned()
+        })? = json!("6");
+    *value
+        .pointer_mut("/command_invocations/1/arguments")
+        .ok_or_else(|| "mission fixture arguments disappeared".to_owned())? =
+        json!(["6"]);
+    let bytes =
+        serde_json::to_vec(&value).map_err(|error| error.to_string())?;
+    let result = validate_normalized_mission_source(
+        "mission-script",
+        MISSION_SCRIPT_SCHEMA,
+        "json",
+        "game-straggler-normalize",
+        &bytes,
+    );
+    let Err(error) = result else {
+        return Err(
+            "unreviewed legacy stage flags reached Unreal planning".to_owned()
+        );
+    };
+    let rendered = error.to_string();
+    if !rendered.contains("mission stage semantic preflight failed")
+        || !rendered.contains("stage flags are not reviewed")
+    {
+        return Err(format!("unexpected stage semantic failure: {rendered}"));
+    }
+    Ok(())
+}
+
+fn timer_mission_json(duration: &str) -> Result<Vec<u8>, String> {
+    let duration_raw = duration.to_owned();
+    serde_json::to_vec(&json!({
+        "schema": MISSION_SCRIPT_SCHEMA,
+        "source_extension":"mfk","route_class":"mission","source_bytes":112,
+        "context_command_count":6,"context_adaptation_count":0,
+        "context_adaptations":[],"context_finding_count":0,
+        "context_findings":[],"statement_count":7,"unique_command_count":7,
+        "load_p3d_reference_count":0,"mission_flow_command_count":6,
+        "vehicle_physics_command_count":0,"semantic_family":"mission-script",
+        "command_counts":{
+            "selectmission":1,"addstage":1,"addobjective":1,
+            "setdurationtime":1,"closeobjective":1,"closestage":1,
+            "closemission":1
+        },
+        "source_statements":[
+            "SelectMission(\"m1\");","AddStage(0);",
+            "AddObjective(\"timer\");",
+            format!("SetDurationTime({duration_raw});"),
+            "CloseObjective();","CloseStage();","CloseMission();"
+        ],
+        "p3d_references":[],
+        "command_invocations":[
+            {"ordinal":1,"name":"selectmission","args_raw":"\"m1\"","semantic_role":"mission-script","arguments":["m1"]},
+            {"ordinal":2,"name":"addstage","args_raw":"0","semantic_role":"mission-stage","arguments":["0"]},
+            {"ordinal":3,"name":"addobjective","args_raw":"\"timer\"","semantic_role":"mission-objective","arguments":["timer"]},
+            {"ordinal":4,"name":"setdurationtime","args_raw":duration_raw,"semantic_role":"mission-script","arguments":[duration]},
+            {"ordinal":5,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]},
+            {"ordinal":6,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
+            {"ordinal":7,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
+        ]
+    }))
+    .map_err(|error| error.to_string())
+}
+
+#[test]
+fn mission_semantic_gate_rejects_invalid_objective_duration()
+-> Result<(), String> {
+    let bytes = timer_mission_json("0")?;
+    let result = validate_normalized_mission_source(
+        "mission-script",
+        MISSION_SCRIPT_SCHEMA,
+        "json",
+        "game-straggler-normalize",
+        &bytes,
+    );
+    let Err(error) = result else {
+        return Err(
+            "invalid objective duration reached Unreal planning".to_owned()
+        );
+    };
+    let rendered = error.to_string();
+    if !rendered.contains("mission objective semantic preflight failed")
+        || !rendered.contains("must be positive")
+    {
+        return Err(format!(
+            "unexpected objective semantic failure: {rendered}"
+        ));
+    }
+    Ok(())
+}
+
+fn condition_time_mission_json(value: &str) -> Result<Vec<u8>, String> {
+    let value_raw = value.to_owned();
+    serde_json::to_vec(&json!({
+        "schema": MISSION_SCRIPT_SCHEMA,
+        "source_extension":"mfk","route_class":"mission","source_bytes":144,
+        "context_command_count":8,"context_adaptation_count":0,
+        "context_adaptations":[],"context_finding_count":0,
+        "context_findings":[],"statement_count":9,"unique_command_count":9,
+        "load_p3d_reference_count":0,"mission_flow_command_count":6,
+        "vehicle_physics_command_count":0,"semantic_family":"mission-script",
+        "command_counts":{
+            "selectmission":1,"addstage":1,"addobjective":1,
+            "closeobjective":1,"addcondition":1,"setcondtime":1,
+            "closecondition":1,"closestage":1,"closemission":1
+        },
+        "source_statements":[
+            "SelectMission(\"m1\");","AddStage(0);",
+            "AddObjective(\"dummy\");","CloseObjective();",
+            "AddCondition(\"outofvehicle\");",
+            format!("SetCondTime({value_raw});"),"CloseCondition();",
+            "CloseStage();","CloseMission();"
+        ],
+        "p3d_references":[],
+        "command_invocations":[
+            {"ordinal":1,"name":"selectmission","args_raw":"\"m1\"","semantic_role":"mission-script","arguments":["m1"]},
+            {"ordinal":2,"name":"addstage","args_raw":"0","semantic_role":"mission-stage","arguments":["0"]},
+            {"ordinal":3,"name":"addobjective","args_raw":"\"dummy\"","semantic_role":"mission-objective","arguments":["dummy"]},
+            {"ordinal":4,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]},
+            {"ordinal":5,"name":"addcondition","args_raw":"\"outofvehicle\"","semantic_role":"mission-script","arguments":["outofvehicle"]},
+            {"ordinal":6,"name":"setcondtime","args_raw":value_raw,"semantic_role":"mission-script","arguments":[value]},
+            {"ordinal":7,"name":"closecondition","args_raw":"","semantic_role":"mission-script","arguments":[]},
+            {"ordinal":8,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
+            {"ordinal":9,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
+        ]
+    }))
+    .map_err(|error| error.to_string())
+}
+
+#[test]
+fn mission_semantic_gate_rejects_invalid_condition_time() -> Result<(), String>
+{
+    let bytes = condition_time_mission_json("0")?;
+    let result = validate_normalized_mission_source(
+        "mission-script",
+        MISSION_SCRIPT_SCHEMA,
+        "json",
+        "game-straggler-normalize",
+        &bytes,
+    );
+    let Err(error) = result else {
+        return Err("invalid condition time reached Unreal planning".to_owned());
+    };
+    let rendered = error.to_string();
+    if !rendered.contains("mission condition semantic preflight failed")
+        || !rendered.contains("must be positive")
+    {
+        return Err(format!(
+            "unexpected condition semantic failure: {rendered}"
+        ));
+    }
+    Ok(())
+}
