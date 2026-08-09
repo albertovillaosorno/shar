@@ -33,12 +33,16 @@
 pub mod index;
 /// Reviewed mission condition alias preflight.
 pub mod mission_condition;
+/// Typed mission-scope initialization and restart semantics.
+pub mod mission_initialization;
 /// Reviewed mission objective alias preflight.
 pub mod mission_objective;
 /// Lossless reviewed mission scope graph projection.
 pub mod mission_scope;
 /// Normalized mission-script semantic preflight.
 pub mod mission_script;
+/// Typed reviewed mission stage semantics.
+pub mod mission_stage;
 /// Package conversion planner.
 pub mod plan;
 /// Typed package selectors.
@@ -59,13 +63,28 @@ pub use index::{
 };
 pub use mission_condition::{
     MissionConditionBinding, MissionConditionCommandBinding,
-    MissionConditionCommandReport, MissionConditionReport,
-    preflight_mission_condition_commands, preflight_mission_conditions,
+    MissionConditionCommandReport, MissionConditionDirective,
+    MissionConditionParameterBinding, MissionConditionParameterReport,
+    MissionConditionParameters, MissionConditionReport,
+    MissionConditionSemanticBinding, MissionConditionSemanticReport,
+    preflight_mission_condition_commands,
+    preflight_mission_condition_parameters,
+    preflight_mission_condition_semantics, preflight_mission_conditions,
+};
+pub use mission_initialization::{
+    MissionInitializationBinding, MissionInitializationDirective,
+    MissionInitializationReport, preflight_mission_initialization,
 };
 pub use mission_objective::{
     MissionObjectiveBinding, MissionObjectiveCommandBinding,
-    MissionObjectiveCommandReport, MissionObjectiveReport,
-    preflight_mission_objective_commands, preflight_mission_objectives,
+    MissionObjectiveCommandReport, MissionObjectiveDirective,
+    MissionObjectiveNpcReference, MissionObjectiveParameterBinding,
+    MissionObjectiveParameterReport, MissionObjectiveParameters,
+    MissionObjectiveReport, MissionObjectiveSemanticBinding,
+    MissionObjectiveSemanticReport, MissionRoadArrowBinding,
+    MissionRoadArrowMode, preflight_mission_objective_commands,
+    preflight_mission_objective_parameters,
+    preflight_mission_objective_semantics, preflight_mission_objectives,
 };
 pub use mission_scope::{
     MissionConditionScope, MissionScopeCommand, MissionScopeCondition,
@@ -75,6 +94,11 @@ pub use mission_scope::{
 pub use mission_script::{
     MISSION_SCRIPT_SCHEMA, MissionCommandInvocation, MissionContextAdaptation,
     MissionScriptEvidence, preflight_mission_script,
+};
+pub use mission_stage::{
+    MissionStageDirective, MissionStageKind, MissionStageMessageKind,
+    MissionStageSemanticBinding, MissionStageSemanticReport,
+    MissionStageVehicleReference, preflight_mission_stage_semantics,
 };
 pub use plan::{
     ConversionFamily, FbxModelPlan, FbxTargetKind, PhaseThreePackagePlan,
