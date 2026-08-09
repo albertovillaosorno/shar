@@ -55,14 +55,16 @@ use super::unreal_fbx_catalog::{FBX_CATALOG_ROOT, verified_fbx_catalog};
 use crate::adapters::driven::check_cancellation;
 use crate::adapters::driven::local::progress::StageProgress;
 use crate::domain::{
-    MISSION_SCRIPT_SCHEMA, PhaseThreePackageIndex, PipelineConfig,
-    PipelineError, PipelineOutcome, StageReport, UNREAL_IMPORT_MANIFEST_SCHEMA,
-    UNREAL_IMPORT_SUMMARY_SCHEMA, UnrealImportManifest, UnrealSourceEvidence,
-    compile_mission_scope_graphs, preflight_mission_condition_commands,
+    MISSION_SCRIPT_SCHEMA, MissionReferenceCatalog, PhaseThreePackageIndex,
+    PipelineConfig, PipelineError, PipelineOutcome, StageReport,
+    UNREAL_IMPORT_MANIFEST_SCHEMA, UNREAL_IMPORT_SUMMARY_SCHEMA,
+    UnrealImportManifest, UnrealSourceEvidence, compile_mission_scope_graphs,
+    preflight_mission_condition_commands,
     preflight_mission_condition_semantics, preflight_mission_conditions,
     preflight_mission_initialization, preflight_mission_objective_commands,
     preflight_mission_objective_semantics, preflight_mission_objectives,
-    preflight_mission_script, preflight_mission_stage_semantics,
+    preflight_mission_references, preflight_mission_script,
+    preflight_mission_stage_semantics,
 };
 
 /// Canonical generated Unreal staging root.
@@ -107,7 +109,16 @@ pub(super) fn prepare_unreal(
             ))
         },
     )?;
-    let evidence = source_evidence(&manifest_text, config)?;
+    let mission_references = MissionReferenceCatalog::from_package_index(
+        &index,
+    )
+    .map_err(|error| {
+        PipelineError::new(format!(
+            "mission reference catalog intake failed: {error}"
+        ))
+    })?;
+    let evidence =
+        source_evidence(&manifest_text, config, &mission_references)?;
     let evidence = retain_importable_evidence(&index, evidence);
     let unreal_manifest = UnrealImportManifest::build(&index, evidence)
         .map_err(|error| {
@@ -204,6 +215,7 @@ fn validate_audit(path: &Path, manifest: &str) -> PipelineOutcome<()> {
 fn source_evidence(
     manifest: &str,
     config: &PipelineConfig,
+    mission_references: &MissionReferenceCatalog,
 ) -> PipelineOutcome<Vec<UnrealSourceEvidence>> {
     let source_count = manifest
         .lines()
@@ -265,7 +277,7 @@ fn source_evidence(
             )?,
         });
     }
-    parallel_source_evidence(&inputs)
+    parallel_source_evidence(&inputs, mission_references)
 }
 
 /// One parsed manifest row awaiting physical source verification.
@@ -291,6 +303,7 @@ struct SourceEvidenceInput {
 /// Verify prepared rows concurrently and restore manifest ordering.
 fn parallel_source_evidence(
     inputs: &[SourceEvidenceInput],
+    mission_references: &MissionReferenceCatalog,
 ) -> PipelineOutcome<Vec<UnrealSourceEvidence>> {
     if inputs.is_empty() {
         return Ok(Vec::new());
@@ -306,13 +319,15 @@ fn parallel_source_evidence(
             let worker_sender = sender.clone();
             let worker_next = &next;
             let worker_inputs = inputs;
+            let worker_mission_references = mission_references;
             let _handle = scope.spawn(move || {
                 loop {
                     let position = worker_next.fetch_add(1, Ordering::Relaxed);
                     let Some(input) = worker_inputs.get(position) else {
                         break;
                     };
-                    let result = read_source_evidence(input);
+                    let result =
+                        read_source_evidence(input, worker_mission_references);
                     if worker_sender
                         .send((position, input.id.clone(), result))
                         .is_err()
@@ -347,6 +362,7 @@ fn parallel_source_evidence(
 /// Read, validate, and hash one physical source row.
 fn read_source_evidence(
     input: &SourceEvidenceInput,
+    mission_references: &MissionReferenceCatalog,
 ) -> PipelineOutcome<UnrealSourceEvidence> {
     let (actual_size, sha256) = if input.kind == "mission-script" {
         let bytes = read_stable_source_bytes(&input.resolved)?;
@@ -357,6 +373,7 @@ fn read_source_evidence(
             &input.file_extension,
             &input.origin,
             &bytes,
+            mission_references,
         )?;
         (actual_size, digest_hex(&bytes))
     } else {
@@ -542,6 +559,7 @@ fn validate_normalized_mission_source(
     file_extension: &str,
     origin: &str,
     bytes: &[u8],
+    mission_references: &MissionReferenceCatalog,
 ) -> PipelineOutcome<()> {
     if kind != "mission-script" {
         return Ok(());
@@ -591,30 +609,45 @@ fn validate_normalized_mission_source(
     let scopes = compile_mission_scope_graphs(&evidence).map_err(|error| {
         PipelineError::new(format!("mission scope preflight failed: {error}"))
     })?;
-    drop(
-        preflight_mission_objective_semantics(&scopes).map_err(|error| {
+    let objective_semantics = preflight_mission_objective_semantics(&scopes)
+        .map_err(|error| {
             PipelineError::new(format!(
                 "mission objective semantic preflight failed: {error}"
             ))
-        })?,
-    );
-    drop(
-        preflight_mission_condition_semantics(&scopes).map_err(|error| {
+        })?;
+    let condition_semantics = preflight_mission_condition_semantics(&scopes)
+        .map_err(|error| {
             PipelineError::new(format!(
                 "mission condition semantic preflight failed: {error}"
             ))
+        })?;
+    let initialization =
+        preflight_mission_initialization(&scopes).map_err(|error| {
+            PipelineError::new(format!(
+                "mission initialization preflight failed: {error}"
+            ))
+        })?;
+    let stage_semantics =
+        preflight_mission_stage_semantics(&scopes).map_err(|error| {
+            PipelineError::new(format!(
+                "mission stage semantic preflight failed: {error}"
+            ))
+        })?;
+    drop(
+        preflight_mission_references(
+            mission_references,
+            &scopes,
+            &objective_semantics,
+            &condition_semantics,
+            &initialization,
+            &stage_semantics,
+        )
+        .map_err(|error| {
+            PipelineError::new(format!(
+                "mission participant reference preflight failed: {error}"
+            ))
         })?,
     );
-    drop(preflight_mission_initialization(&scopes).map_err(|error| {
-        PipelineError::new(format!(
-            "mission initialization preflight failed: {error}"
-        ))
-    })?);
-    drop(preflight_mission_stage_semantics(&scopes).map_err(|error| {
-        PipelineError::new(format!(
-            "mission stage semantic preflight failed: {error}"
-        ))
-    })?);
     Ok(())
 }
 

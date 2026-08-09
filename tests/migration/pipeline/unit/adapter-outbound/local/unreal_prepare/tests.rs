@@ -44,14 +44,14 @@ use super::{
     SourceEvidenceInput, ensure_generated_directory, open_stable_source,
     parallel_source_evidence, prepare_io_error, publication_error, read_utf8,
     retain_source_ids, source_worker_count_for, stream_source_digest,
-    validate_audit, validate_generated_chain,
-    validate_normalized_mission_source, validate_public_identifier,
+    validate_audit, validate_generated_chain, validate_public_identifier,
     validate_publication_inventory, validate_relative_path,
     validate_rendered_output, verify_stable_source,
 };
 use crate::domain::{
-    MISSION_SCRIPT_SCHEMA, UNREAL_IMPORT_MANIFEST_SCHEMA,
-    UNREAL_IMPORT_SUMMARY_SCHEMA, UnrealSourceEvidence,
+    MISSION_SCRIPT_SCHEMA, MissionReferenceCatalog, PipelineOutcome,
+    UNREAL_IMPORT_MANIFEST_SCHEMA, UNREAL_IMPORT_SUMMARY_SCHEMA,
+    UnrealSourceEvidence,
 };
 
 fn source(id: &str) -> UnrealSourceEvidence {
@@ -107,7 +107,10 @@ fn parallel_source_verification_reports_first_manifest_error()
         input("first", first, 999),
         input("second", root.join("missing.bin"), 1),
     ];
-    let result = parallel_source_evidence(&inputs);
+    let result = parallel_source_evidence(
+        &inputs,
+        &MissionReferenceCatalog::empty_for_tests(),
+    );
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     let Err(error) = result else {
         return Err("parallel verification unexpectedly accepted invalid rows"
@@ -215,8 +218,11 @@ fn parallel_source_verification_preserves_manifest_order() -> Result<(), String>
         future_normalization: "none".to_owned(),
     };
     let inputs = vec![input("first", first, 5), input("second", second, 13)];
-    let result =
-        parallel_source_evidence(&inputs).map_err(|error| error.to_string());
+    let result = parallel_source_evidence(
+        &inputs,
+        &MissionReferenceCatalog::empty_for_tests(),
+    )
+    .map_err(|error| error.to_string());
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     let evidence = result?;
     let ids = evidence
@@ -250,6 +256,23 @@ fn excludes_fail_closed_source_evidence_from_import_planning() {
         retained.first().map(|source| source.id.as_str()),
         Some("keep")
     );
+}
+
+fn validate_test_mission_source(
+    kind: &str,
+    schema: &str,
+    file_extension: &str,
+    origin: &str,
+    bytes: &[u8],
+) -> PipelineOutcome<()> {
+    super::validate_normalized_mission_source(
+        kind,
+        schema,
+        file_extension,
+        origin,
+        bytes,
+        &MissionReferenceCatalog::empty_for_tests(),
+    )
 }
 
 fn clean_mission_json(with_finding: bool) -> Result<Vec<u8>, String> {
@@ -312,7 +335,7 @@ fn clean_mission_json(with_finding: bool) -> Result<Vec<u8>, String> {
 fn mission_semantic_gate_accepts_clean_v3_and_bypasses_other_kinds()
 -> Result<(), String> {
     let clean = clean_mission_json(false)?;
-    validate_normalized_mission_source(
+    validate_test_mission_source(
         "mission-script",
         MISSION_SCRIPT_SCHEMA,
         "json",
@@ -320,7 +343,7 @@ fn mission_semantic_gate_accepts_clean_v3_and_bypasses_other_kinds()
         &clean,
     )
     .map_err(|error| error.to_string())?;
-    validate_normalized_mission_source(
+    validate_test_mission_source(
         "texture",
         "unrelated-schema",
         "bin",
@@ -334,7 +357,7 @@ fn mission_semantic_gate_accepts_clean_v3_and_bypasses_other_kinds()
 fn mission_semantic_gate_rejects_stale_schema_and_context_findings()
 -> Result<(), String> {
     let clean = clean_mission_json(false)?;
-    let stale = validate_normalized_mission_source(
+    let stale = validate_test_mission_source(
         "mission-script",
         "shar-schoenwald.straggler.mission-script.v2",
         "json",
@@ -349,7 +372,7 @@ fn mission_semantic_gate_rejects_stale_schema_and_context_findings()
     }
 
     let finding = clean_mission_json(true)?;
-    let finding = validate_normalized_mission_source(
+    let finding = validate_test_mission_source(
         "mission-script",
         MISSION_SCRIPT_SCHEMA,
         "json",
@@ -868,7 +891,7 @@ fn mission_semantic_gate_rejects_stage_without_root_objective()
             {"ordinal":4,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
         ]
     })).map_err(|error| error.to_string())?;
-    let result = validate_normalized_mission_source(
+    let result = validate_test_mission_source(
         "mission-script",
         MISSION_SCRIPT_SCHEMA,
         "json",
@@ -910,7 +933,7 @@ fn mission_semantic_gate_rejects_unreviewed_stage_flags() -> Result<(), String>
         json!(["6"]);
     let bytes =
         serde_json::to_vec(&value).map_err(|error| error.to_string())?;
-    let result = validate_normalized_mission_source(
+    let result = validate_test_mission_source(
         "mission-script",
         MISSION_SCRIPT_SCHEMA,
         "json",
@@ -970,7 +993,7 @@ fn timer_mission_json(duration: &str) -> Result<Vec<u8>, String> {
 fn mission_semantic_gate_rejects_invalid_objective_duration()
 -> Result<(), String> {
     let bytes = timer_mission_json("0")?;
-    let result = validate_normalized_mission_source(
+    let result = validate_test_mission_source(
         "mission-script",
         MISSION_SCRIPT_SCHEMA,
         "json",
@@ -1035,7 +1058,7 @@ fn condition_time_mission_json(value: &str) -> Result<Vec<u8>, String> {
 fn mission_semantic_gate_rejects_invalid_condition_time() -> Result<(), String>
 {
     let bytes = condition_time_mission_json("0")?;
-    let result = validate_normalized_mission_source(
+    let result = validate_test_mission_source(
         "mission-script",
         MISSION_SCRIPT_SCHEMA,
         "json",
@@ -1093,7 +1116,7 @@ fn mission_root_ped_group_json(value: &str) -> Result<Vec<u8>, String> {
 fn mission_semantic_gate_rejects_invalid_root_ped_group() -> Result<(), String>
 {
     let bytes = mission_root_ped_group_json("8")?;
-    let result = validate_normalized_mission_source(
+    let result = validate_test_mission_source(
         "mission-script",
         MISSION_SCRIPT_SCHEMA,
         "json",
@@ -1154,7 +1177,7 @@ fn conversation_camera_mission_json(slot: &str) -> Result<Vec<u8>, String> {
 fn mission_semantic_gate_rejects_invalid_conversation_camera()
 -> Result<(), String> {
     let bytes = conversation_camera_mission_json("7")?;
-    let result = validate_normalized_mission_source(
+    let result = validate_test_mission_source(
         "mission-script",
         MISSION_SCRIPT_SCHEMA,
         "json",
@@ -1214,7 +1237,7 @@ fn stage_race_catchup_mission_json(factor: &str) -> Result<Vec<u8>, String> {
 fn mission_semantic_gate_rejects_invalid_stage_race_catchup()
 -> Result<(), String> {
     let bytes = stage_race_catchup_mission_json("1e0")?;
-    let result = validate_normalized_mission_source(
+    let result = validate_test_mission_source(
         "mission-script",
         MISSION_SCRIPT_SCHEMA,
         "json",
@@ -1231,6 +1254,65 @@ fn mission_semantic_gate_rejects_invalid_stage_race_catchup()
         || !rendered.contains("race catch-up decimal is malformed")
     {
         return Err(format!("unexpected stage catch-up failure: {rendered}"));
+    }
+    Ok(())
+}
+
+fn participant_mission_json() -> Result<Vec<u8>, String> {
+    serde_json::to_vec(&json!({
+        "schema": MISSION_SCRIPT_SCHEMA,
+        "source_extension":"mfk","route_class":"mission","source_bytes":128,
+        "context_command_count":6,"context_adaptation_count":0,
+        "context_adaptations":[],"context_finding_count":0,"context_findings":[],
+        "statement_count":7,"unique_command_count":7,"load_p3d_reference_count":0,
+        "mission_flow_command_count":6,"vehicle_physics_command_count":0,
+        "semantic_family":"mission-script",
+        "command_counts":{
+            "selectmission":1,"addstage":1,"addobjective":1,"addnpc":1,
+            "closeobjective":1,"closestage":1,"closemission":1
+        },
+        "source_statements":[
+            "SelectMission(\"m1\");","AddStage(0);",
+            "AddObjective(\"talkto\");","AddNPC(\"bart\",\"npc_loc\");",
+            "CloseObjective();","CloseStage();","CloseMission();"
+        ],
+        "p3d_references":[],
+        "command_invocations":[
+            {"ordinal":1,"name":"selectmission","args_raw":"\"m1\"","semantic_role":"mission-script","arguments":["m1"]},
+            {"ordinal":2,"name":"addstage","args_raw":"0","semantic_role":"mission-stage","arguments":["0"]},
+            {"ordinal":3,"name":"addobjective","args_raw":"\"talkto\"","semantic_role":"mission-objective","arguments":["talkto"]},
+            {"ordinal":4,"name":"addnpc","args_raw":"\"bart\",\"npc_loc\"","semantic_role":"mission-script","arguments":["bart","npc_loc"]},
+            {"ordinal":5,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]},
+            {"ordinal":6,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
+            {"ordinal":7,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
+        ]
+    }))
+    .map_err(|error| error.to_string())
+}
+
+#[test]
+fn mission_semantic_gate_rejects_missing_participant_package()
+-> Result<(), String> {
+    let bytes = participant_mission_json()?;
+    let result = validate_test_mission_source(
+        "mission-script",
+        MISSION_SCRIPT_SCHEMA,
+        "json",
+        "game-straggler-normalize",
+        &bytes,
+    );
+    let Err(error) = result else {
+        return Err(
+            "missing participant package reached Unreal planning".to_owned()
+        );
+    };
+    let rendered = error.to_string();
+    if !rendered.contains("mission participant reference preflight failed")
+        || !rendered.contains("character source identity has no package")
+    {
+        return Err(format!(
+            "unexpected participant reference failure: {rendered}"
+        ));
     }
     Ok(())
 }
