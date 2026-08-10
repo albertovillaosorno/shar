@@ -291,6 +291,11 @@ Current task list. Project phases and dated progress are recorded in
           selected source. Two declarations are mission-scoped and two are
           stage-scoped; preserve exact locator/state/scope evidence without
           inferring state-prop lifetime or pickup mechanics.
+        - [x] Preserve all 64 reviewed `AddMission` registrations across
+          16 base, demo, and E3 load sources in exact authored order. Every
+          declaration has an exact `<id>i` and `<id>l` sibling and the init
+          sibling selects the same mission id; registration order remains
+          distinct from unlock, prerequisite, completion, or progression policy.
         - [ ] Bind stage message indices to canonical localization keys once
           phase-three package evidence publishes text-key mirrors. Package-index
           intake now preserves each structured mirror's id, exact key, source
