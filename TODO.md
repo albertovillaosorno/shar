@@ -143,11 +143,13 @@ Current task list. Project phases and dated progress are recorded in
           the validated phase-three package index, preserving exact character
           variants, symbolic `current` vehicles, and `none` driver sentinels.
         - [x] Bind every explicit `LoadP3DFile` first argument to one canonical
-          phase-three package, preserve the optional second source-group value
-          as opaque evidence, and keep only the first argument in P3D summaries.
+          phase-three package and keep only that path in P3D summaries. Preserve
+          the source loader's optional heap and inventory-section parameters as
+          validated provenance rather than target runtime allocation authority.
           The mission corpus has 966 calls: 950 one-argument calls and 16
-          two-argument calls, all using `GMA_LEVEL_OTHER`; no three-argument
-          source form is observed.
+          two-argument calls, all using `GMA_LEVEL_OTHER`; the source loader
+          supports a third inventory-section argument, but no base mission uses
+          that form.
         - [x] Bind all 61 typed `SetPresentationBitmap` references across
           mission initialization, stage, and objective scopes through one shared
           canonical P3D package catalog. The corpus has 56 unique presentation
