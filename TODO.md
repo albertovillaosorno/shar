@@ -174,14 +174,25 @@ Current task list. Project phases and dated progress are recorded in
           canonical character package and derive only the source-backed `gil`
           vendor versus `simpson` playable-character seller choice. Bind all 26
           `AddPurchaseCarNPCWaypoint` calls to a unique prior storefront NPC.
-          Level-locator resolution, merchandise/price, ownership, save-state,
-          and final reward transaction semantics remain unresolved.
+          Pair all 16 level-setup sources with their exact `<family>i` to
+          `<family>` load sibling and bind the 32 immediate storefront positions
+          plus 26 waypoints against that static package context. Current decoded
+          locator evidence resolves 11 of those 58 immediate references and
+          records the other 47 as `Missing`; absence from decoded evidence is
+          not treated as proof of runtime absence. The 32 deferred car-start
+          locators, merchandise/price, ownership, save-state, and final reward
+          transaction semantics remain unresolved.
         - [x] Type all 118 reviewed ambient and 81 bonus-mission NPC
           declarations, bind each authored model to canonical character-package
           evidence, preserve source-derived runtime names and exact spawn/meta
           tokens, and bind all 472 ambient plus 45 bonus NPC waypoints to one
-          unique prior matching declaration. Level-locator resolution and path
-          navigation semantics remain separate unresolved boundaries.
+          unique prior matching declaration. Bind their 716 immediate generic
+          spawn/waypoint lookups and all 87 exact `CarStart` dialogue-position
+          lookups against the same static level-load context. Across all 861
+          immediate level-setup locator references, current decoded evidence
+          yields 212 resolved, 649 `Missing`, and zero ambiguous outcomes. Keep
+          decoded-evidence gaps explicit and keep path navigation semantics as a
+          separate unresolved boundary.
         - [x] Bind all 194 reviewed mission-start and animated camera or
           multi-controller component references by exact embedded component
           name,

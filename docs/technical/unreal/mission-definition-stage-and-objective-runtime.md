@@ -698,7 +698,11 @@ The reviewed corpus has 32 `AddPurchaseCarReward` commands and 26 associated
 source action, NPC/choreo, level locator identities, positive trigger-radius
 lexeme, and car-start locator; it binds the NPC model to canonical character
 package evidence and requires each waypoint to follow a unique matching
-storefront. It does not create merchandise, price, ownership, or save authority.
+storefront. The 58 immediate position/waypoint references are checked against
+the exact family load sibling; current decoded evidence resolves 11 and records
+47 as `Missing` without claiming runtime absence. The 32 car-start locators stay
+deferred because their runtime lookup occurs after vehicle loading. This intake
+does not create merchandise, price, ownership, or save authority.
 
 `buy_vehicle` and `buy_costume` complete from an accepted permanent purchase
 or ownership transaction for the exact catalog identity.
