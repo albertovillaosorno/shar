@@ -11,9 +11,11 @@
 // - Owns:
 //   - Canonical package binding for explicit mission LoadP3DFile commands.
 // - Must-Not:
-//   - Read files, infer implicit loads, or interpret optional load groups.
+//   - Read files, infer implicit loads, or preserve legacy heaps as target
+//     allocation authority.
 // - Allows:
 //   - Bind exact authored P3D paths to phase-three package identities.
+//   - Preserve validated heap and inventory-section source provenance.
 // - Split-When:
 //   - Active mission package lifetime gains an independent state model.
 // - Merge-When:
@@ -21,8 +23,8 @@
 // - Summary:
 //   - Mission P3D package-load semantic preflight.
 // - Description:
-//   - Converts explicit LoadP3DFile path arguments into canonical package ids
-//     while preserving the optional second source argument as opaque evidence.
+//   - Converts explicit LoadP3DFile paths into canonical package ids while
+//     preserving optional heap and inventory-section source provenance.
 // - Usage:
 //   - Called after normalized mission-script and package-index intake.
 // - Defaults:
@@ -46,7 +48,8 @@ use super::mission_p3d_reference::{
 pub struct MissionPackageLoadBinding {
     ordinal: usize,
     source_reference: String,
-    source_group: Option<String>,
+    source_heap: Option<String>,
+    source_inventory_section: Option<String>,
     package_id: String,
     package_root: String,
 }
@@ -64,10 +67,16 @@ impl MissionPackageLoadBinding {
         &self.source_reference
     }
 
-    /// Return the optional second authored argument without interpretation.
+    /// Return the optional validated source-era heap name.
     #[must_use]
-    pub fn source_group(&self) -> Option<&str> {
-        self.source_group.as_deref()
+    pub fn source_heap(&self) -> Option<&str> {
+        self.source_heap.as_deref()
+    }
+
+    /// Return the optional source-era inventory-section override.
+    #[must_use]
+    pub fn source_inventory_section(&self) -> Option<&str> {
+        self.source_inventory_section.as_deref()
     }
 
     /// Return the canonical phase-three package id.
@@ -116,7 +125,8 @@ pub fn preflight_mission_package_loads(
 /// # Errors
 ///
 /// Returns an error for unsupported command arity, unsafe/non-P3D paths,
-/// malformed optional groups, or paths absent from the canonical catalog.
+/// unknown heap names, malformed section overrides, or paths absent from the
+/// canonical catalog.
 pub fn preflight_mission_package_loads_with_catalog(
     evidence: &MissionScriptEvidence,
     catalog: &MissionP3dReferenceCatalog,
@@ -128,22 +138,27 @@ pub fn preflight_mission_package_loads_with_catalog(
         .filter(|invocation| invocation.name() == "loadp3dfile")
     {
         let arguments = invocation.arguments();
-        if !(1..=2).contains(&arguments.len()) {
-            return Err("LoadP3DFile must have one or two arguments".to_owned());
+        if !(1..=3).contains(&arguments.len()) {
+            return Err("LoadP3DFile must have one to three arguments".to_owned());
         }
         let source_reference = arguments
             .first()
             .cloned()
             .ok_or_else(|| "LoadP3DFile first argument is missing".to_owned())?;
         let package = catalog.resolve(&source_reference)?;
-        let source_group = arguments.get(1).cloned();
-        if let Some(group) = source_group.as_deref() {
-            validate_opaque_group(group)?;
+        let source_heap = arguments.get(1).cloned();
+        if let Some(heap) = source_heap.as_deref() {
+            validate_legacy_heap(heap)?;
+        }
+        let source_inventory_section = arguments.get(2).cloned();
+        if let Some(section) = source_inventory_section.as_deref() {
+            validate_inventory_section(section)?;
         }
         bindings.push(MissionPackageLoadBinding {
             ordinal: invocation.ordinal(),
             source_reference,
-            source_group,
+            source_heap,
+            source_inventory_section,
             package_id: package.package_id().to_owned(),
             package_root: package.package_root().to_owned(),
         });
@@ -151,9 +166,39 @@ pub fn preflight_mission_package_loads_with_catalog(
     Ok(MissionPackageLoadReport { bindings })
 }
 
-fn validate_opaque_group(group: &str) -> Result<(), String> {
-    if group.is_empty() || group != group.trim() || group.chars().any(char::is_control) {
-        return Err("LoadP3DFile optional source group is malformed".to_owned());
+fn validate_legacy_heap(heap: &str) -> Result<(), String> {
+    const KNOWN_HEAPS: [&str; 15] = [
+        "GMA_DEFAULT",
+        "GMA_TEMP",
+        "GMA_GC_VMM",
+        "GMA_PERSISTENT",
+        "GMA_LEVEL",
+        "GMA_LEVEL_MOVIE",
+        "GMA_LEVEL_FE",
+        "GMA_LEVEL_ZONE",
+        "GMA_LEVEL_OTHER",
+        "GMA_LEVEL_HUD",
+        "GMA_LEVEL_MISSION",
+        "GMA_LEVEL_AUDIO",
+        "GMA_DEBUG",
+        "GMA_SPECIAL",
+        "GMA_XBOX_SOUND_MEMORY",
+    ];
+    if KNOWN_HEAPS.contains(&heap) {
+        Ok(())
+    } else {
+        Err("LoadP3DFile optional heap name is not recognized".to_owned())
+    }
+}
+
+fn validate_inventory_section(section: &str) -> Result<(), String> {
+    if section.is_empty()
+        || section != section.trim()
+        || section.chars().any(char::is_control)
+    {
+        return Err(
+            "LoadP3DFile optional inventory section is malformed".to_owned(),
+        );
     }
     Ok(())
 }
