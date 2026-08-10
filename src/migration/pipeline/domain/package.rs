@@ -53,6 +53,8 @@ pub mod mission_p3d_reference;
 pub mod mission_presentation_reference;
 /// Canonical BindReward package-reference resolution.
 pub mod mission_reward_reference;
+/// Source-backed purchase-car storefront setup.
+pub mod mission_purchase_reward;
 /// Canonical mission locator package-reference resolution.
 pub mod mission_locator;
 /// Typed mission locator-reference binding.
@@ -153,6 +155,10 @@ pub use mission_objective::{
     MissionRoadArrowMode, preflight_mission_objective_commands,
     preflight_mission_objective_parameters,
     preflight_mission_objective_semantics, preflight_mission_objectives,
+};
+pub use mission_purchase_reward::{
+    MissionPurchaseRewardBinding, MissionPurchaseRewardReport,
+    MissionPurchaseRewardSeller, preflight_mission_purchase_rewards,
 };
 pub use mission_reference::{
     MissionCharacterCatalogReference, MissionParticipantReference,
