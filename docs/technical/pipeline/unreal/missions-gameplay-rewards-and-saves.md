@@ -60,7 +60,8 @@ the v3 document fails before scope projection.
 
 After those gates pass, a lossless source-scope graph binds reviewed objective
 and condition aliases and their registered modifiers to their exact owning
-stage. It retains uninterpreted `AddStage` arguments plus every direct command at
+stage. It retains uninterpreted `AddStage` arguments plus every direct
+command at
 unscoped, mission, or stage scope in source order. Each observed stage must own
 exactly one root objective. A modifier visible through both an objective and a
 nested condition is retained only by the most-specific condition scope rather
@@ -92,7 +93,8 @@ bits has been established; the explicit final marker and locked vehicle/costume
 forms remain distinct. The stage report now emits 2,549 typed directives: every
 one of the 2,454 direct-stage commands plus all 95 objective-scoped commands
 explicitly delegated to stage semantics. This includes timers, checkpoints,
-messages, vehicles, characters, waypoints, countdowns, traffic, AI source tuples,
+messages, vehicles, characters, waypoints, countdowns, traffic, AI source
+tuples,
 safe zones, HUD and presentation controls, music, swap locators, completion
 signals, and transition markers. AI and race catch-up values remain exact source
 integers or decimal lexemes where gameplay units and ordering are unresolved.
@@ -131,7 +133,8 @@ optional inventory-section override; migration validates and preserves both only
 as source provenance, never as target allocation authority or additional asset
 references. The base mission corpus has 950 one-argument calls and 16
 two-argument calls using `GMA_LEVEL_OTHER`, with no authored third argument.
-Producer and replay summaries count only the first path argument as P3D evidence.
+Producer and replay summaries count only the first path argument as P3D
+evidence.
 
 The same portable P3D path authority now backs typed presentation references.
 All 61 `SetPresentationBitmap` directives across initialization, stage, and
@@ -186,7 +189,8 @@ format's implicit `art/` root unless that prefix is already explicit, and every
 resulting package root must exist in the phase-three index. Unload
 evidence does not become an active package. Post-start base-game evidence now
 also includes decoded type-5 `DynamicZone` locators. Their Dyna strings compile
-to the same ordered package-transition model, and `prepare-unreal` requires every
+to the same ordered package-transition model, and `prepare-unreal` requires
+every
 P3D load effect to bind to an indexed package while treating an absent unload as
 a deterministic remove-if-present effect. The current corpus contains 109 such
 zones, 372 indexed P3D loads, and 728 P3D unloads; 30 unload targets are absent

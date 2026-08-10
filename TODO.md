@@ -211,8 +211,8 @@ Current task list. Project phases and dated progress are recorded in
         - [x] Compile decoded base-game type-5 `DynamicZone` Dyna Load Data into
           ordered package transitions and preflight every authored P3D load
           against the phase-three package index. The 109-zone corpus carries 372
-          indexed P3D loads and 728 P3D unloads; 30 unload targets are absent from
-          the extracted index and therefore remain valid remove-if-present
+          indexed P3D loads and 728 P3D unloads. 30 unload targets are absent
+          from the extracted index and therefore remain valid remove-if-present
           effects rather than false load requirements. No observed base-game
           Dyna string both loads and unloads the same P3D target; the domain
           refuses to invent runtime ordering if such a conflict appears later.
@@ -228,9 +228,10 @@ Current task list. Project phases and dated progress are recorded in
           packages. Camera best-side lookup is deferred until mission reset;
           Pure3D starts in its Default inventory section, searches the current
           section first, then remaining sections in creation order. This load
-          path creates Level before Mission, so duplicated best-side names choose
+          path creates Level before Mission. Duplicated best-side names choose
           the Level candidate instead of an arbitrary package winner.
-        - [x] Establish base-game DynamicZone trigger/retrigger semantics without
+        - [x] Establish base-game DynamicZone trigger/retrigger semantics
+          without
           importing extension-only stage/checkpoint commands as game authority.
         - [ ] Trace runtime lookup for locator roles other than camera best-side
           before applying package precedence to those references.

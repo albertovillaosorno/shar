@@ -35,7 +35,12 @@ use super::*;
 fn catalog() -> MissionReferenceCatalog {
     MissionReferenceCatalog::from_character_entries_for_tests(&[
         ("ralph", "ralph", "character-ralph", "characters/ralph/base-model"),
-        ("cletus", "cletus", "character-cletus", "characters/cletus/base-model"),
+        (
+            "cletus",
+            "cletus",
+            "character-cletus",
+            "characters/cletus/base-model",
+        ),
     ])
 }
 
@@ -122,7 +127,7 @@ fn types_bonus_runtime_name_and_metadata() -> Result<(), String> {
 }
 
 #[test]
-fn rejects_waypoint_without_unique_prior_matching_declaration() -> Result<(), String> {
+fn rejects_waypoint_without_unique_prior_declaration() -> Result<(), String> {
     let mut declarations = Vec::new();
     push_ambient(
         &mut declarations,

@@ -189,7 +189,8 @@ impl MissionPurchaseRewardReport {
 /// # Errors
 ///
 /// Returns an error for role/arity drift, unreviewed action identities,
-/// malformed tokens or trigger radius, or a missing/ambiguous character package.
+/// malformed tokens or trigger radius, or a missing/ambiguous character
+/// package.
 pub fn preflight_mission_purchase_rewards(
     catalog: &MissionReferenceCatalog,
     scopes: &MissionScopeReport,
@@ -354,5 +355,6 @@ fn required_radius(value: &str) -> Result<String, String> {
 }
 
 #[cfg(test)]
+// jig-ignore-next-line: exact Rust test-module path is indivisible.
 #[path = "../../../../../tests/migration/pipeline/unit/domain/package/mission_purchase_reward/tests.rs"]
 mod tests;

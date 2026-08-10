@@ -65,9 +65,11 @@ or presentation event.
 The import pipeline currently stops before asset emission but now closes
 command-level semantic ownership after source-scope projection. All 811 direct
 mission commands and all 2,454 direct-stage commands must emit typed evidence;
-the stage report contains 2,549 directives after adding the 95 objective commands
+the stage report contains 2,549 directives after adding the 95 objective
+commands
 explicitly delegated to stage semantics. Of 3,605 objective-scoped commands,
-3,498 emit objective directives, those same 95 have required stage ownership, and
+3,498 emit objective directives, those same 95 have required stage ownership,
+and
 12 are structural condition commands. All 375 condition-scoped commands remain
 typed across 408 condition bindings. Opaque `AddStage` flags, noncanonical
 `niether`, undocumented condition values, AI/race source tuples, collectible
@@ -120,9 +122,11 @@ documented `ActivateVehicle` `NULL` sentinel is not treated as a locator. The
 preflight also rechecks source size and SHA-256 against the already verified
 Unreal evidence before cross-source binding.
 
-Decoded type-5 `DynamicZone` locators provide the next base-game package-lifetime
+Decoded type-5 `DynamicZone` locators provide the next base-game
+package-lifetime
 surface. Their Dyna Load Data is compiled into ordered package effects and every
-P3D load must bind to the package index; unloads remain remove-if-present. Corpus
+P3D load must bind to the package index; unloads remain remove-if-present.
+Corpus
 preflight covers 109 zones with 372 indexed P3D loads and 728 P3D unloads,
 including 30 unload targets absent from the package index.
 
@@ -252,7 +256,8 @@ Normalized source commands enter the compiler boundary only through
 `shar-schoenwald.straggler.mission-script.v3`. The intake preflight validates
 its exact JSON shape, routing identity, source summary, command histogram,
 strictly increasing ordinals, reviewed context-command count, and structural
-findings. Any context finding blocks semantic compilation before Unreal planning;
+findings. Any context finding blocks semantic compilation before Unreal
+planning;
 unknown gameplay commands remain unmapped rather than becoming runtime APIs.
 Version 3 additionally carries reviewed compatibility adaptations and requires
 independent fingerprint validation for each one. Semantic intake independently
@@ -262,10 +267,12 @@ forged clean finding list or stale summary cannot bypass conversion policy.
 
 The repository corpus acceptance test renders the real normalized JSON for every
 mission MFK and passes it through structural, objective-alias, objective-scope,
-condition-alias, condition-scope, and source-scope graph preflight before semantic
+condition-alias, condition-scope, and source-scope graph preflight before
+semantic
 compilation is allowed. The graph retains exact unscoped, mission, and stage
 commands without interpreting positional values; direct mission and stage
-commands must match the closed observed scope-and-arity registry. Every projected
+commands must match the closed observed scope-and-arity registry. Every
+projected
 stage owns exactly one root objective. The current source corpus yields 154
 mission graphs, 611 stages, and 408 conditions, while two reviewed `dummy`
 objectives remain explicit unavailable results rather than fabricated runtime
