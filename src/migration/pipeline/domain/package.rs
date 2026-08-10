@@ -84,6 +84,8 @@ pub mod mission_stage;
 pub mod mission_topology;
 /// Effective reviewed stage transition and presentation policy.
 pub mod mission_transition;
+/// Canonical vehicle-select registration binding.
+pub mod mission_vehicle_select;
 /// Package conversion planner.
 pub mod plan;
 /// Typed package selectors.
@@ -232,6 +234,10 @@ pub use mission_stage::{
 pub use mission_topology::{
     MissionAuthoredStageTopologyBinding, MissionAuthoredStageTopologyReport,
     preflight_mission_authored_stage_topology,
+};
+pub use mission_vehicle_select::{
+    MissionVehicleSelectBinding, MissionVehicleSelectReport,
+    preflight_mission_vehicle_selects,
 };
 pub use mission_transition::{
     MissionStageTerminalOutcome, MissionStageTransitionPolicy,

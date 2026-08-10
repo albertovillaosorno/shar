@@ -86,6 +86,7 @@ use crate::domain::{
     preflight_mission_reward_references, preflight_mission_script,
     preflight_mission_stage_semantics, preflight_mission_stage_transitions,
     preflight_mission_traffic_groups,
+    preflight_mission_vehicle_selects,
 };
 
 /// Canonical generated Unreal staging root.
@@ -837,6 +838,18 @@ fn validate_normalized_mission_source(
     let evidence = preflight_mission_script(text).map_err(|error| {
         PipelineError::new(format!("mission semantic preflight failed: {error}"))
     })?;
+    drop(
+        preflight_mission_vehicle_selects(
+            &evidence,
+            mission_references,
+            mission_p3d_references,
+        )
+        .map_err(|error| {
+            PipelineError::new(format!(
+                "mission vehicle-select preflight failed: {error}"
+            ))
+        })?,
+    );
     drop(
         preflight_mission_package_loads_with_catalog(
             &evidence,
