@@ -47,6 +47,7 @@ const LOAD_SUFFIX: &str = "l.mfk.json";
 const LEVEL_LOAD_SUFFIX: &str = "level.mfk.json";
 const LEVEL_INIT_SUFFIX: &str = "i.mfk.json";
 const LEVEL_SETUP_COMMANDS: &[&str] = &[
+    "initlevelplayervehicle",
     "addambientcharacter",
     "addambientnpcwaypoint",
     "addbonusmissionnpcwaypoint",
