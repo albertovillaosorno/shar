@@ -243,6 +243,12 @@ before the binding. Those relationships span five stages and preserve exact
 locator identities. The binding does not infer navigation, traversal, movement,
 or checkpoint behavior from the paired locators.
 
+Objective-local NPC walking references are closed similarly. All 180 reviewed
+`AddObjectiveNPCWaypoint` directives across 58 selected sources bind to one
+unique `AddNPC` declaration authored earlier in the same objective. Repeated
+waypoint locators remain repeated source evidence; no pathfinding or traversal
+behavior is synthesized from their order.
+
 `BindReward` binds all 90 reviewed P3D references through the shared canonical
 package catalog while preserving its source policy tokens without assigning
 unlock or economy behavior. The level storefront intake also types all 32
