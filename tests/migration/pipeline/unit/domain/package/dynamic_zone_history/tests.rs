@@ -42,7 +42,6 @@ fn step(
     DynamicZoneTraversalStep::new(
         name.to_owned(),
         source_package_root.to_owned(),
-        1,
         transition,
     )
 }
@@ -106,7 +105,6 @@ fn step_rejects_unsafe_source_identity() -> Result<(), String> {
     let Err(error) = DynamicZoneTraversalStep::new(
         "loader11".to_owned(),
         "../outside".to_owned(),
-        1,
         transition,
     ) else {
         return Err("unsafe source package was accepted".to_owned());
@@ -131,82 +129,5 @@ fn unresolved_transition_order_propagates_with_zone_identity()
 
     assert!(error.contains("loader_conflict"));
     assert!(error.contains("conflicting load/unload effects"));
-    Ok(())
-}
-
-#[test]
-fn first_child_entry_emits_one_traversal() -> Result<(), String> {
-    let parsed = parse_dyna_load_data("l1z1.p3d;")?;
-    let transition = compile_dyna_load_package_transition(&parsed)?;
-    let step = DynamicZoneTraversalStep::new(
-        "loader11".to_owned(),
-        "extracted/art/L1_TERRA".to_owned(),
-        3,
-        transition,
-    )?;
-    let mut state = DynamicZoneTriggerState::new(step);
-
-    let traversal = state
-        .observe_volume(1, true)?
-        .ok_or_else(|| "first child entry did not traverse".to_owned())?;
-    assert_eq!(traversal.locator_name(), "loader11");
-    assert_eq!(traversal.trigger_count(), 3);
-    assert_eq!(state.active_trigger_indices(), &BTreeSet::from([1]));
-    Ok(())
-}
-
-#[test]
-fn overlapping_children_do_not_retrigger_until_final_exit() -> Result<(), String> {
-    let parsed = parse_dyna_load_data("l1z1.p3d;")?;
-    let transition = compile_dyna_load_package_transition(&parsed)?;
-    let step = DynamicZoneTraversalStep::new(
-        "loader11".to_owned(),
-        "extracted/art/L1_TERRA".to_owned(),
-        3,
-        transition,
-    )?;
-    let mut state = DynamicZoneTriggerState::new(step);
-
-    assert!(state.observe_volume(0, true)?.is_some());
-    assert!(state.observe_volume(1, true)?.is_none());
-    assert!(state.observe_volume(0, false)?.is_none());
-    assert!(state.observe_volume(2, true)?.is_none());
-    assert!(state.observe_volume(1, false)?.is_none());
-    assert!(state.observe_volume(2, false)?.is_none());
-    assert!(state.active_trigger_indices().is_empty());
-    assert!(state.observe_volume(0, true)?.is_some());
-    Ok(())
-}
-
-#[test]
-fn impossible_trigger_observations_fail_closed() -> Result<(), String> {
-    let parsed = parse_dyna_load_data("l1z1.p3d;")?;
-    let transition = compile_dyna_load_package_transition(&parsed)?;
-    let step = DynamicZoneTraversalStep::new(
-        "loader11".to_owned(),
-        "extracted/art/L1_TERRA".to_owned(),
-        2,
-        transition,
-    )?;
-    let mut state = DynamicZoneTriggerState::new(step);
-
-    assert!(state.observe_volume(2, true).is_err());
-    assert!(state.observe_volume(0, false).is_err());
-    assert!(state.observe_volume(0, true)?.is_some());
-    assert!(state.observe_volume(0, true).is_err());
-    Ok(())
-}
-
-#[test]
-fn traversal_step_rejects_zero_trigger_count() -> Result<(), String> {
-    let parsed = parse_dyna_load_data("l1z1.p3d;")?;
-    let transition = compile_dyna_load_package_transition(&parsed)?;
-    let result = DynamicZoneTraversalStep::new(
-        "loader11".to_owned(),
-        "extracted/art/L1_TERRA".to_owned(),
-        0,
-        transition,
-    );
-    assert!(result.is_err());
     Ok(())
 }
