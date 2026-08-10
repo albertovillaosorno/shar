@@ -196,14 +196,14 @@ Current task list. Project phases and dated progress are recorded in
           `srr_locator` JSON `name` and type evidence; reject package-local name
           collisions and preserve cross-package duplicates as ambiguity instead
           of applying filename or global-name precedence.
-        - [x] Bind each typed locator reference against the exact
-          selected-source package context formed by the matching mission-load
-          script, its longest matching level-load family, and indexed P3Ds
-          loaded at mission start by `SetDynaLoadData` or `StreetRacePropsLoad`,
-          after re-verifying source size and SHA-256. Apply only documented
-          locator-type constraints, preserve the `ActivateVehicle` `NULL`
-          sentinel, and keep missing or duplicated active names as typed
-          outcomes rather than guessing precedence.
+        - [x] Bind each typed locator reference against the exact selected
+          source package context formed by the matching mission-load script and
+          its longest matching level-load family, plus indexed initial Dyna P3Ds
+          after re-verifying source size and SHA-256. Split script-time
+          visibility from
+          post-Dyna visibility: immediate init/stage lookups see only static
+          Level/Mission loads, while reviewed deferred lookups can see initial
+          Dyna packages. Preserve the `ActivateVehicle` `NULL` sentinel.
         - [x] Type Dyna Load Data postfix syntax as ordered region load/unload,
           interior load/unload, and World Sphere enable/disable operations while
           preserving exact source evidence and the observed terminal-less Level
@@ -233,8 +233,13 @@ Current task list. Project phases and dated progress are recorded in
         - [x] Establish base-game DynamicZone trigger/retrigger semantics
           without
           importing extension-only stage/checkpoint commands as game authority.
-        - [ ] Trace runtime lookup for locator roles other than camera best-side
-          before applying package precedence to those references.
+        - [x] Trace runtime lookup for every currently modeled locator role.
+          Exact-type script-time references use reviewed static load precedence;
+          an audit of 751 such references found 242 unique, 507 missing, and two
+          duplicated CarStart references. Both Level-versus-Mission collisions
+          now resolve to Level. Generic and exact post-Dyna duplicate lookups
+          stay fail-closed because subtype/hash order or Dyna section recreation
+          make their runtime precedence history-dependent.
         - [x] Classify reviewed stage markers without conflating presentation
           with topology: 6 iris and 14 fade requests are visual transitions,
           5 stay-black and 108 stage-complete markers are presentation policy,

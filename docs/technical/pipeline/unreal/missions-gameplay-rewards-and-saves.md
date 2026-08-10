@@ -177,9 +177,12 @@ source path rather than mission id, so repeated ids such as `m1` cannot leak
 package context across levels. Before this cross-source preflight, the mission
 source is re-read through the stable-source guard and its size and SHA-256 must
 match the already verified Unreal source evidence. Typed initialization, stage,
-and objective locator fields then resolve against the explicit level-load and
-mission-load packages plus indexed P3Ds loaded at mission start by typed
-`SetDynaLoadData` and `StreetRacePropsLoad` evidence. A shared Dyna Load Data
+and objective locator fields now use two explicit visibility phases. Locator
+lookups executed while the mission init script is parsed see only the static
+Level and Mission package loads. Reviewed deferred lookups executed during
+mission reset or objective initialization can additionally see indexed initial
+P3Ds from typed `SetDynaLoadData` and `StreetRacePropsLoad` evidence. A shared
+Dyna Load Data
 parser now preserves ordered region load/unload, interior load/unload, and World
 Sphere enable/disable postfix operations. Base mission initialization
 remains fail-closed to its observed load-only subset, including the one corpus
@@ -203,17 +206,19 @@ undoing the prior transition. No player traversal path is inferred from trigger
 geometry.
 
 Documented Event and CarStart roles receive exact type constraints, and
-`ActivateVehicle(..., "NULL", ...)` emits no false locator reference. Generic
-missing or duplicate candidates remain `Missing` or `Ambiguous`. Camera
-best-side is narrower: its locator lookup is deferred until mission reset, when
-Pure3D starts with its Default inventory section selected and searches the
-current section before remaining sections in creation order. This load path
-creates Level before Mission, so reviewed duplicate `bm1_bestside` cases choose
-the Level candidate. The 18 references face 10 Type-3 `CarStart` candidates,
-while none of the 1,100
-DynamicZone P3D effects targets those mission packages, confirming streaming
-does not decide the lookup. Other locator roles remain fail-closed until their
-runtime lookup paths are traced separately.
+`ActivateVehicle(..., "NULL", ...)` emits no false locator reference. Runtime
+lookup has now been traced for every currently modeled locator role. Pure3D
+searches the current inventory section first, then remaining sections in
+creation order. Static mission loading creates Level before Mission; within one
+section, an exact-type duplicate is rejected after the first load. Therefore
+exact-type script-time references use static package order. A corpus audit of
+751 such references found 242 unique candidates, 507 missing candidates, and
+two duplicated CarStart references; both duplicates are Level-versus-Mission
+collisions and now resolve to Level. Generic `Locator` lookups remain ambiguous
+when multiple compatible candidates survive, and exact post-Dyna duplicates
+remain ambiguous because Dyna sections are deleted and recreated over a session.
+Camera best-side retains its independently reviewed Level-before-Mission lookup;
+none of the 1,100 DynamicZone P3D effects targets those mission packages.
 
 Stage completion markers are also separated by authority before final graph
 emission. The reviewed corpus has 6 iris and 14 fade requests, 5 stay-black
