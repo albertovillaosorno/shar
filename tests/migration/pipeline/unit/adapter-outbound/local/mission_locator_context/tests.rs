@@ -156,8 +156,8 @@ fn combines_level_and_mission_load_packages_per_source() -> Result<(), String> {
         .ok_or_else(|| "m1 active package report is missing".to_owned())?;
     if mission.package_roots()
         != [
-            "extracted/art/l1".to_owned(),
             "extracted/art/missions/level01/level".to_owned(),
+            "extracted/art/l1".to_owned(),
             "extracted/art/missions/level01/m1".to_owned(),
         ]
     {
