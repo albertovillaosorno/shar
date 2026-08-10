@@ -228,6 +228,19 @@ pub struct PhaseThreePackageMember {
     pub source_chunk_kind: String,
 }
 
+/// One derived text-key mirror with canonical localization evidence.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PhaseThreeTextKey {
+    /// Derived text-key id.
+    pub id: String,
+    /// Exact localization key published by phase two.
+    pub key: String,
+    /// Physical source unit that produced this derived key.
+    pub source_unit_id: String,
+    /// Exact package subcategory copied into the mirror.
+    pub subcategory: String,
+}
+
 /// Controls whether package-index intake accepts fail-closed evidence rows.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum PackageIntakeMode {
@@ -261,6 +274,8 @@ pub struct PhaseThreePackageRow {
     pub text_key_ids: Vec<String>,
     /// Source units referenced by derived packages.
     pub source_unit_ids: Vec<String>,
+    /// Structured derived text-key mirrors in canonical order.
+    text_keys: Vec<PhaseThreeTextKey>,
     /// Ids grouped by stable role bucket.
     role_ids: BTreeMap<PackageRole, Vec<String>>,
     /// Physical members with published extraction evidence.
@@ -295,6 +310,7 @@ fn parse_package_fields(
         unit_ids: extract_string_array(line, "unit_ids")?,
         text_key_ids: extract_string_array(line, "text_key_ids")?,
         source_unit_ids: extract_string_array(line, "source_unit_ids")?,
+        text_keys: Vec::new(),
         role_ids,
         members: Vec::new(),
     })
@@ -617,7 +633,7 @@ fn validate_text_key_value(key: &str) -> Result<(), PackageIntakeError> {
 /// Decode derived text-key mirrors from one canonical package row.
 fn parse_text_key_mirrors(
     line: &str,
-) -> Result<Vec<(String, String, String)>, PackageIntakeError> {
+) -> Result<Vec<PhaseThreeTextKey>, PackageIntakeError> {
     let bytes = line.as_bytes();
     let mut cursor = value_cursor(line, "text_keys")?;
     cursor = skip_json_ws(line, cursor.saturating_add(1));
@@ -642,7 +658,12 @@ fn parse_text_key_mirrors(
         let subcategory = value_iter.next().ok_or_else(|| {
             PackageIntakeError::new("text-key mirror has no subcategory")
         })?;
-        keys.push((id, source_unit_id, subcategory));
+        keys.push(PhaseThreeTextKey {
+            id,
+            key,
+            source_unit_id,
+            subcategory,
+        });
         cursor = skip_json_ws(line, object_end);
         match bytes.get(cursor) {
             Some(b',') => {
@@ -667,36 +688,37 @@ fn parse_text_key_mirrors(
 fn validate_text_key_mirrors(
     line: &str,
     row: &PhaseThreePackageRow,
-) -> Result<(), PackageIntakeError> {
+) -> Result<Vec<PhaseThreeTextKey>, PackageIntakeError> {
     let keys = parse_text_key_mirrors(line)?;
     if keys.is_empty() {
         if row.text_key_ids.is_empty() {
-            return Ok(());
+            return Ok(keys);
         }
         return Err(PackageIntakeError::new(
             "text_keys mirror is empty for derived text_key_ids",
         ));
     }
-    let key_ids: Vec<_> = keys.iter().map(|(id, _, _)| id.clone()).collect();
+    let key_ids: Vec<_> = keys.iter().map(|key| key.id.clone()).collect();
     if key_ids != row.text_key_ids {
         return Err(PackageIntakeError::new(
             "text_keys mirror ids do not match text_key_ids",
         ));
     }
-    for (_, source_unit_id, subcategory) in keys {
-        if !row.source_unit_ids.contains(&source_unit_id) {
+    for key in &keys {
+        if !row.source_unit_ids.contains(&key.source_unit_id) {
             return Err(PackageIntakeError::new(format!(
                 "text-key mirror source is not declared: \
-                         {source_unit_id}"
+                         {}",
+                key.source_unit_id
             )));
         }
-        if subcategory != row.subcategory {
+        if key.subcategory != row.subcategory {
             return Err(PackageIntakeError::new(
                 "text-key mirror subcategory does not match package",
             ));
         }
     }
-    Ok(())
+    Ok(keys)
 }
 
 /// Verify declared counts against their decoded identifier arrays.
@@ -1026,7 +1048,7 @@ impl PhaseThreePackageRow {
         validate_declared_counts(line, &row)?;
         validate_package_identity(&row, mode)?;
         validate_identifier_arrays(&row)?;
-        validate_text_key_mirrors(line, &row)?;
+        row.text_keys = validate_text_key_mirrors(line, &row)?;
         validate_role_assignments(&row)?;
         validate_package_members(&row, mode)?;
         Ok(row)
@@ -1048,6 +1070,12 @@ impl PhaseThreePackageRow {
     #[must_use]
     pub fn ids_for_role(&self, role: PackageRole) -> &[String] {
         self.role_ids.get(&role).map_or(&[], Vec::as_slice)
+    }
+
+    /// Return derived text-key mirrors with exact localization evidence.
+    #[must_use]
+    pub fn text_keys(&self) -> &[PhaseThreeTextKey] {
+        &self.text_keys
     }
 
     /// Return physical members with their published extraction evidence.
