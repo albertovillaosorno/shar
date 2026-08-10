@@ -39,6 +39,8 @@ pub mod dyna_load_package;
 pub mod dynamic_zone_history;
 /// Reviewed mission condition alias preflight.
 pub mod mission_condition;
+/// Collectible-to-stage-waypoint cross-reference binding.
+pub mod mission_collectible_route;
 /// Typed mission-scope initialization and restart semantics.
 pub mod mission_initialization;
 /// Reviewed mission objective alias preflight.
@@ -107,6 +109,10 @@ pub use dynamic_zone_history::{
     DynamicZoneTraversalHistory, DynamicZoneTraversalStep,
     DynamicZoneTriggerEffect, DynamicZoneTriggerEvent,
     DynamicZoneTriggerOccupancy,
+};
+pub use mission_collectible_route::{
+    MissionCollectibleWaypointBinding, MissionCollectibleWaypointReport,
+    preflight_mission_collectible_waypoints,
 };
 pub use mission_condition::{
     MissionConditionBinding, MissionConditionCommandBinding,

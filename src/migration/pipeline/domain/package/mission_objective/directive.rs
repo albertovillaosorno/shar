@@ -366,6 +366,24 @@ impl MissionObjectiveSemanticReport {
     pub fn objectives(&self) -> &[MissionObjectiveSemanticBinding] {
         &self.objectives
     }
+
+    #[cfg(test)]
+    pub(crate) fn from_route_entries_for_tests(
+        entries: Vec<(usize, String, Vec<MissionObjectiveDirective>)>,
+    ) -> Self {
+        Self {
+            objectives: entries
+                .into_iter()
+                .map(|(source_ordinal, source_alias, directives)| {
+                    MissionObjectiveSemanticBinding {
+                        source_ordinal,
+                        source_alias,
+                        directives,
+                    }
+                })
+                .collect(),
+        }
+    }
 }
 
 /// Compile selected reviewed objective-scoped command semantics.
