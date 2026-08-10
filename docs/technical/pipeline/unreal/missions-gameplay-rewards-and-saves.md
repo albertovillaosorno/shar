@@ -242,11 +242,21 @@ Static level-locator preflight now pairs each of the 16 setup sources with its
 exact `<family>i.mfk.json` to `<family>.mfk.json` load sibling. It binds all 877
 immediate player-vehicle, NPC, storefront, waypoint, and bonus-dialogue locator
 references against those authored package roots. The current decoded locator
-catalog resolves 212 and reports 665 as `Missing`, with zero ambiguous outcomes. A
-`Missing` result records a decoded-evidence gap; it is not promoted to proof
+catalog resolves 212 and reports 665 as `Missing`, with zero ambiguous
+outcomes. A `Missing` result records a decoded-evidence gap; it is not promoted
 that runtime cannot supply the locator. Generic `Locator` references do not gain
 cross-package precedence, while exact `CarStart` dialogue lookups may use the
 authored package order already established for exact-type inventory lookup.
+
+Population declarations are now package-backed as well. Pedestrian preflight
+compiles 116 `CreatePedGroup`/`ClosePedGroup` pairs with 437 `AddPed` members;
+all 78 unique pedestrian model identities resolve uniquely to canonical
+character packages. Traffic preflight compiles 16 group-zero declarations with
+64 `AddTrafficModel` members; all 22 unique traffic models resolve uniquely to
+canonical vehicle packages. Runtime group/model capacity bounds are enforced,
+and the optional traffic big-vehicle integer is preserved exactly. Spawn rates,
+pathing, active pedestrian-group selection, parked-car behavior, and traffic
+zone switching are intentionally not inferred from those declarations.
 
 The purchase car-start locator remains outside this static pass because runtime
 consumes it after the later vehicle-load callback. Merchandise/price, ownership,
