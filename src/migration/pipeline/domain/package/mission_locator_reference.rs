@@ -383,7 +383,10 @@ fn push_locator(
     type_constraint: MissionLocatorTypeConstraint,
 ) -> Result<(), String> {
     let package_roots = package_roots_for_role(active, role);
-    let resolution = if role == MissionLocatorRole::ObjectiveCameraBestSide {
+    let ordered_lookup = role == MissionLocatorRole::ObjectiveCameraBestSide
+        || (matches!(type_constraint, MissionLocatorTypeConstraint::Exact(_))
+            && role_uses_script_visibility(role));
+    let resolution = if ordered_lookup {
         catalog.resolve_in_package_order(
             source_name,
             package_roots,
@@ -751,39 +754,37 @@ fn resolve_objective(
     Ok(())
 }
 
+fn role_uses_script_visibility(role: MissionLocatorRole) -> bool {
+    matches!(
+        role,
+        MissionLocatorRole::InitializationResetVehicle
+            | MissionLocatorRole::InitializationResetPlayer
+            | MissionLocatorRole::InitializationResetOutCarVehicle
+            | MissionLocatorRole::InitializationCollectibleStateProp
+            | MissionLocatorRole::InitializationPlacePlayerCar
+            | MissionLocatorRole::InitializationPlayerVehicle
+            | MissionLocatorRole::StageVehicle
+            | MissionLocatorRole::StageActivateVehicle
+            | MissionLocatorRole::StageSafeZone
+            | MissionLocatorRole::StageCollectibleStateProp
+            | MissionLocatorRole::StageCharacter
+            | MissionLocatorRole::StageCharacterVehicle
+            | MissionLocatorRole::StagePlacePlayerCar
+            | MissionLocatorRole::StageWaypoint
+            | MissionLocatorRole::ObjectiveDialoguePositionFirst
+            | MissionLocatorRole::ObjectiveDialoguePositionSecond
+            | MissionLocatorRole::ObjectiveDialoguePositionThird
+    )
+}
+
 fn package_roots_for_role(
     active: &MissionLocatorActivePackages,
     role: MissionLocatorRole,
 ) -> &[String] {
-    match role {
-        MissionLocatorRole::InitializationWalk
-        | MissionLocatorRole::StageSwapDefaultCar
-        | MissionLocatorRole::StageSwapForcedCar
-        | MissionLocatorRole::StageSwapPlayer
-        | MissionLocatorRole::ObjectiveNpc
-        | MissionLocatorRole::ObjectiveNpcWaypoint
-        | MissionLocatorRole::ObjectiveCameraBestSide
-        | MissionLocatorRole::ObjectiveDestination
-        | MissionLocatorRole::ObjectiveCollectible => active.package_roots(),
-        MissionLocatorRole::InitializationResetVehicle
-        | MissionLocatorRole::InitializationResetPlayer
-        | MissionLocatorRole::InitializationResetOutCarVehicle
-        | MissionLocatorRole::InitializationCollectibleStateProp
-        | MissionLocatorRole::InitializationPlacePlayerCar
-        | MissionLocatorRole::InitializationPlayerVehicle
-        | MissionLocatorRole::StageVehicle
-        | MissionLocatorRole::StageActivateVehicle
-        | MissionLocatorRole::StageSafeZone
-        | MissionLocatorRole::StageCollectibleStateProp
-        | MissionLocatorRole::StageCharacter
-        | MissionLocatorRole::StageCharacterVehicle
-        | MissionLocatorRole::StagePlacePlayerCar
-        | MissionLocatorRole::StageWaypoint
-        | MissionLocatorRole::ObjectiveDialoguePositionFirst
-        | MissionLocatorRole::ObjectiveDialoguePositionSecond
-        | MissionLocatorRole::ObjectiveDialoguePositionThird => {
-            active.script_package_roots()
-        },
+    if role_uses_script_visibility(role) {
+        active.script_package_roots()
+    } else {
+        active.package_roots()
     }
 }
 
