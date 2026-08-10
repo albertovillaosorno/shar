@@ -269,6 +269,14 @@ text-key mirrors, so stage-message integers cannot yet be promoted to canonical
 localization keys. That absence is recorded as missing extraction evidence, not
 as proof that the original game has no matching text.
 
+Level mission registration order is now preserved independently of progression.
+All 64 reviewed `AddMission` declarations across 16 base, demo, and E3 load
+sources retain their authored source ordinal and dense registration position.
+Each declaration is validated against exact `<id>i.mfk.json` and
+`<id>l.mfk.json` siblings, and the init sibling must select the same mission id.
+This establishes source registry order only; it does not create unlock,
+prerequisite, completion, or next-mission edges.
+
 `BindReward` binds all 90 reviewed P3D references through the shared canonical
 package catalog while preserving its source policy tokens without assigning
 unlock or economy behavior. The level storefront intake also types all 32
