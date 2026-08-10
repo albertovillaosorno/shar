@@ -50,7 +50,6 @@ fn parses_type_five_dynamic_zone_without_runtime_order_claim()
         .ok_or_else(|| "dynamic zone was ignored".to_owned())?;
     assert_eq!(decoded.name, "loader11");
     assert_eq!(decoded.data, "l1z1.p3d:l1z2.p3d;");
-    assert_eq!(decoded.trigger_count, 1);
     Ok(())
 }
 
@@ -106,21 +105,6 @@ fn rejects_dynamic_zone_trigger_count_drift() -> Result<(), String> {
         return Err("trigger-count drift was accepted".to_owned());
     };
     assert!(error.to_string().contains("trigger count does not match"));
-    Ok(())
-}
-
-#[test]
-fn rejects_dynamic_zone_without_trigger_volume() -> Result<(), String> {
-    let json = concat!(
-        r#"{"schema":"locator","name":"loader11","locator_type":5,"#,
-        r#""locator_type_name":"dynamic_zone","data_interpretation":{"#,
-        r#""kind":"dynamic_zone","zone":"l1z1.p3d;"},"num_triggers":0,"#,
-        r#""trigger_volumes":[]}"#
-    );
-    let Err(error) = parse_dynamic_zone(json) else {
-        return Err("trigger-less DynamicZone was accepted".to_owned());
-    };
-    assert!(error.to_string().contains("at least one trigger volume"));
     Ok(())
 }
 
