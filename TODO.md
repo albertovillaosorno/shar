@@ -273,6 +273,11 @@ Current task list. Project phases and dated progress are recorded in
           to occur only on the last authored stage. Runtime successor, retry,
           rollback, and recovery edges remain unresolved rather than inferred
           from adjacency.
+        - [x] Resolve all 36 reviewed `BindCollectibleTo` index pairs
+          against the owning stage's `AddCollectible` and `AddStageWaypoint`
+          declarations. Every authored index is in range and refers backward to
+          an existing declaration; preserve the exact index and locator pair
+          without inferring route navigation or collectible movement.
     - [ ] Emit lossless `USharMissionDefinition` assets only after the complete
       mission graph passes reference and topology validation.
   - [ ] Compile remaining normalized UI, font, localization, tuning, and other

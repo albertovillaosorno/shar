@@ -236,6 +236,13 @@ explicit final marker. All four level/game terminal overrides are also authored
 only on the last stage. Adjacency is evidence, not a runtime successor edge, so
 success, retry, rollback, and recovery topology remain pending.
 
+The remaining numeric collectible-route cross-reference is now closed at the
+source boundary. All 36 reviewed `BindCollectibleTo` directives resolve their
+zero-based collectible and stage-waypoint indices to declarations authored
+before the binding. Those relationships span five stages and preserve exact
+locator identities. The binding does not infer navigation, traversal, movement,
+or checkpoint behavior from the paired locators.
+
 `BindReward` binds all 90 reviewed P3D references through the shared canonical
 package catalog while preserving its source policy tokens without assigning
 unlock or economy behavior. The level storefront intake also types all 32
