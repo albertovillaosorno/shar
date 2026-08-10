@@ -114,13 +114,13 @@ path so identical mission ids in different levels stay isolated. The initial
 context also adds every indexed P3D loaded by typed `SetDynaLoadData` or
 `StreetRacePropsLoad` evidence; Dyna paths receive the format's implicit `art/`
 root when needed, while unload evidence is never promoted to an active package.
-Typed locator-bearing initialization, stage, and objective directives resolve
-against that context with exact documented Event or CarStart constraints where
-available. A unique candidate binds to package/member identity; missing
-candidates remain `Missing`, duplicate candidates remain `Ambiguous`, and the
-documented `ActivateVehicle` `NULL` sentinel is not treated as a locator. The
-preflight also rechecks source size and SHA-256 against the already verified
-Unreal evidence before cross-source binding.
+Typed locator-bearing initialization, stage, and objective directives use two
+visibility phases. Script-time lookups see static Level/Mission packages only;
+reviewed deferred lookups may additionally see initial Dyna packages. Exact
+Event and CarStart script-time references follow reviewed static load order,
+while generic and post-Dyna duplicate lookups stay ambiguous. The documented
+`ActivateVehicle` `NULL` sentinel is not treated as a locator. Cross-source
+binding still rechecks source size and SHA-256 against verified Unreal evidence.
 
 Decoded type-5 `DynamicZone` locators provide the next base-game
 package-lifetime
@@ -136,12 +136,15 @@ retrigger it, final exit rearms the locator, and exit itself does not invert the
 transition. A traversal-history model applies resulting exact entry steps in
 observed order while retaining locator and source-package identity.
 
-Streaming remains separate from duplicate-name lookup. Camera best-side resolves
-its stored locator name during mission reset. Pure3D starts with Default
-selected, searches the current section first, then remaining sections in
-creation order; this load path creates Level before Mission, so reviewed
-`bm1_bestside` duplicates select the Level candidate. Other locator roles remain
-fail-closed until their lookup paths are traced independently.
+Streaming remains separate from duplicate-name lookup. Runtime lookup is now
+traced for every modeled locator role. Pure3D starts with Default selected and
+searches remaining sections in creation order; static loading creates Level
+before Mission, and an exact-type collision within one section keeps the first
+loaded object. An audit of 751 exact script-time references found only two
+multi-candidate cases, both CarStart Level-versus-Mission collisions, and both
+therefore select Level. Generic compatible-subtype duplicates and post-Dyna
+exact duplicates remain fail-closed because their ordering is not statically
+stable. Camera best-side retains the same reviewed Level-before-Mission rule.
 
 Typed stage markers now classify source behavior before graph emission. Iris and
 fade are visual completion requests, with iris taking precedence if both are
