@@ -245,6 +245,56 @@ impl MissionLocatorCatalog {
         }
     }
 
+    /// Resolve one exact locator through explicit package lookup precedence.
+    ///
+    /// Unlike [`Self::resolve`], this method treats caller-supplied package
+    /// order as authoritative lookup evidence and returns the first matching
+    /// package. Callers without proven lookup order must use [`Self::resolve`]
+    /// so cross-package duplicates remain ambiguous.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when one package root is malformed.
+    pub fn resolve_in_package_order(
+        &self,
+        source_name: &str,
+        ordered_package_roots: &[String],
+        type_constraint: MissionLocatorTypeConstraint,
+    ) -> Result<MissionLocatorResolution, String> {
+        validate_identity(source_name, "mission locator reference")?;
+        let Some(entries) = self.by_source_name.get(source_name) else {
+            return Ok(MissionLocatorResolution::Missing);
+        };
+        let mut seen = BTreeSet::new();
+        for package_root in ordered_package_roots {
+            let package_root = normalized_package_root(package_root)?;
+            if !seen.insert(package_root.clone()) {
+                continue;
+            }
+            let candidates = entries
+                .iter()
+                .filter(|entry| {
+                    type_constraint.accepts(entry.locator_type)
+                        && normalized_package_root(&entry.package_root)
+                            .is_ok_and(|root| root == package_root)
+                })
+                .cloned()
+                .collect::<Vec<_>>();
+            match candidates.as_slice() {
+                [] => {}
+                [entry] => {
+                    return Ok(MissionLocatorResolution::Resolved(
+                        MissionResolvedLocatorReference {
+                            entry: entry.clone(),
+                        },
+                    ));
+                }
+                _ => return Ok(MissionLocatorResolution::Ambiguous(candidates)),
+            }
+        }
+        Ok(MissionLocatorResolution::Missing)
+    }
+
     /// Return the number of decoded physical locator entries.
     #[must_use]
     pub fn len(&self) -> usize {

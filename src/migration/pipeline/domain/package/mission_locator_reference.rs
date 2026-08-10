@@ -348,11 +348,16 @@ fn push_locator(
     source_name: &str,
     type_constraint: MissionLocatorTypeConstraint,
 ) -> Result<(), String> {
+    let resolution = if role == MissionLocatorRole::ObjectiveCameraBestSide {
+        catalog.resolve_in_package_order(source_name, active, type_constraint)?
+    } else {
+        catalog.resolve(source_name, active, type_constraint)?
+    };
     references.push(MissionLocatorReferenceBinding {
         source_ordinal,
         role,
         source_name: source_name.to_owned(),
-        resolution: catalog.resolve(source_name, active, type_constraint)?,
+        resolution,
         type_constraint,
     });
     Ok(())

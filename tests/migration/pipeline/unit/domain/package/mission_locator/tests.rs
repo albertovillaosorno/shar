@@ -120,6 +120,43 @@ fn preserves_ambiguity_across_active_packages() -> Result<(), String> {
 }
 
 #[test]
+fn explicit_package_order_resolves_first_matching_locator()
+-> Result<(), String> {
+    let source_name = "bm1_bestside";
+    let catalog = MissionLocatorCatalog::from_entries(vec![
+        entry(
+            "extracted-art-missions-level01-bm1",
+            "extracted/art/missions/level01/bm1",
+            source_name,
+            3,
+        )?,
+        entry(
+            "extracted-art-missions-level01-level",
+            "extracted/art/missions/level01/level",
+            source_name,
+            3,
+        )?,
+    ])?;
+    let ordered = vec![
+        "extracted/art/missions/level01/level".to_owned(),
+        "extracted/art/missions/level01/bm1".to_owned(),
+    ];
+    let resolution = catalog.resolve_in_package_order(
+        source_name,
+        &ordered,
+        MissionLocatorTypeConstraint::Exact(3),
+    )?;
+    let MissionLocatorResolution::Resolved(reference) = resolution else {
+        return Err("ordered locator lookup remained unresolved".to_owned());
+    };
+    assert_eq!(
+        reference.entry().package_id(),
+        "extracted-art-missions-level01-level"
+    );
+    Ok(())
+}
+
+#[test]
 fn type_constraint_filters_without_precedence() -> Result<(), String> {
     let source_name = "shared_name";
     let catalog = MissionLocatorCatalog::from_entries(vec![
