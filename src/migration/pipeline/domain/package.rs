@@ -92,6 +92,8 @@ pub use dyna_load_package::{
 };
 pub use dynamic_zone_history::{
     DynamicZoneTraversalHistory, DynamicZoneTraversalStep,
+    DynamicZoneTriggerEffect, DynamicZoneTriggerEvent,
+    DynamicZoneTriggerOccupancy,
 };
 pub use mission_condition::{
     MissionConditionBinding, MissionConditionCommandBinding,
