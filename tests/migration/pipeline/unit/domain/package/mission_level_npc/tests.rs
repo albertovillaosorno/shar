@@ -6,6 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Unit evidence for level NPC declarations and waypoint relationships.
+// - Must-Not:
+//   - Resolve level locators or infer navigation semantics.
+// - Allows:
+//   - Verify canonical character binding and prior-declaration ordering.
+// - Split-When:
+//   - Level locator integration requires physical source fixtures.
+// - Merge-When:
+//   - Level NPC tests move into a complete level mission graph suite.
+// - Summary:
+//   - Level NPC setup unit tests.
+// - Description:
+//   - Proves ambient and bonus NPC setup remains source-backed and ordered.
+// - Usage:
+//   - Compiled with the package-domain unit suite.
+// - Defaults:
+//   - Missing, ambiguous, or reordered NPC declarations fail closed.
+//
+
+//! Unit evidence for source-backed level NPC setup.
 
 use super::*;
 

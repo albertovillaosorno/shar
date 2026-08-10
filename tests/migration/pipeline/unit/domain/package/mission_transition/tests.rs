@@ -28,6 +28,8 @@
 //   - No marker means no terminal or visual override.
 //
 
+//! Unit evidence for source-backed stage transition classification.
+
 use super::*;
 
 fn policy(directives: &[MissionStageDirective]) -> MissionStageTransitionPolicy {
