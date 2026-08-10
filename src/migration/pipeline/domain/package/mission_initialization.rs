@@ -217,6 +217,19 @@ impl MissionInitializationReport {
     pub fn missions(&self) -> &[MissionInitializationBinding] {
         &self.missions
     }
+
+    #[cfg(test)]
+    pub(crate) fn from_directives_for_tests(
+        mission_id: &str,
+        directives: Vec<MissionInitializationDirective>,
+    ) -> Self {
+        Self {
+            missions: vec![MissionInitializationBinding {
+                mission_id: mission_id.to_owned(),
+                directives,
+            }],
+        }
+    }
 }
 
 /// Compile reviewed mission-scope initialization and restart evidence.

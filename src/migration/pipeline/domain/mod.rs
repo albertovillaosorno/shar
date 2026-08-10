@@ -116,6 +116,7 @@ pub use package::{
     preflight_mission_package_loads,
     preflight_mission_package_loads_with_catalog,
     preflight_mission_ped_group_selections, preflight_mission_ped_groups,
+    preflight_mission_pickup_state_props,
     preflight_mission_presentation_references,
     preflight_mission_level_locator_references, preflight_mission_level_npcs,
     preflight_mission_purchase_rewards,

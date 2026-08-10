@@ -62,6 +62,8 @@ pub mod mission_level_npc;
 pub mod mission_level_locator_reference;
 /// Source-backed pedestrian group declarations.
 pub mod mission_ped_group;
+/// Pickup-target state-prop cross-scope binding.
+pub mod mission_pickup_state_prop;
 /// Source-backed traffic model-group declarations.
 pub mod mission_traffic_group;
 /// Source-backed purchase-car storefront setup.
@@ -187,6 +189,10 @@ pub use mission_level_npc::{
 pub use mission_level_locator_reference::{
     MissionLevelLocatorReferenceBinding, MissionLevelLocatorReferenceReport,
     MissionLevelLocatorRole, preflight_mission_level_locator_references,
+};
+pub use mission_pickup_state_prop::{
+    MissionPickupStatePropBinding, MissionPickupStatePropReport,
+    MissionPickupStatePropScope, preflight_mission_pickup_state_props,
 };
 pub use mission_ped_group::{
     MissionPedGroupBinding, MissionPedGroupMemberBinding, MissionPedGroupReport,
