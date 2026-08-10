@@ -84,6 +84,24 @@ mission intake. Explicit `LoadP3DFile` commands also bind their first path
 argument to one canonical indexed package while preserving an optional second
 argument as opaque source evidence rather than another P3D reference.
 
+Typed `SetPresentationBitmap` directives now share that canonical P3D path
+authority instead of carrying an unresolved filesystem-like identity into final
+mission compilation. Across initialization, stage, and objective scopes, all 61
+current references bind to 56 unique `ui-images/mission-briefing` packages with
+zero missing references or normalized-root collisions. The binding proves the
+package source; it does not assign presentation timing or drawable behavior.
+
+Initialization camera components now use source-level provenance instead of
+global-name lookup. The decoded camera catalog reads exact embedded `name`
+values for `camera` and `multi_controller` members and binds them to package and
+member identities. Of 194 reviewed mission-start/animated camera component
+references, 190 are ambiguous under global lookup, but all 194 have one exact
+case-sensitive match when qualified by the source script's `levelNN`; none are
+missing. Four unreferenced level-local component keys retain multiple candidates
+and remain ambiguous if referenced later. No fallback across levels is allowed,
+and the package binding does not assign runtime camera timing, blending, or
+playback behavior.
+
 Decoded mission `srr_locator` records now enter a package-scoped catalog keyed
 by the exact embedded source `name`, never by the sanitized JSON filename. For
 each selected init source, cross-source preflight pairs its exact mission-load
@@ -98,11 +116,31 @@ available. A unique candidate binds to package/member identity; missing
 candidates remain `Missing`, duplicate candidates remain `Ambiguous`, and the
 documented `ActivateVehicle` `NULL` sentinel is not treated as a locator. The
 preflight also rechecks source size and SHA-256 against the already verified
-Unreal evidence before cross-source binding. Final `USharMissionDefinition`
-creation remains blocked until stage/checkpoint Dyna transitions,
-duplicate-locator precedence, route, camera, presentation, reward, transition,
-bundle, and remaining catalog identities resolve and the complete
-transition/recovery topology passes validation.
+Unreal evidence before cross-source binding.
+
+Decoded type-5 `DynamicZone` locators provide the next base-game package-lifetime
+surface. Their Dyna Load Data is compiled into ordered package effects and every
+P3D load must bind to the package index; unloads remain remove-if-present and do
+not require a locally extracted target. Corpus preflight covers 109 zones with
+372 indexed P3D loads and 728 P3D unloads, including 30 unload targets absent
+from the package index. The observed corpus has no P3D target with both load and
+unload effects inside one Dyna string; if such a conflict appears, the package
+projection fails closed until runtime operation ordering is evidenced. This
+proves transition integrity, not which trigger the player has traversed.
+A pure traversal-history model now applies exact caller-supplied DynamicZone
+steps in observed order and retains locator plus source-package identity, but
+`prepare-unreal` has no authoritative runtime trigger-observation stream to feed
+that model yet. The source audit also shows DynamicZone streaming cannot decide
+`bm1_bestside`: 18 references face 10 Type-3 candidates in mission packages,
+and none of the 1,100 DynamicZone P3D effects targets any `missions/...`
+package. Duplicate-name lookup precedence therefore remains a separate runtime
+question. Mod Launcher-only stage/checkpoint Dyna commands are not used as
+base-game evidence.
+
+Final `USharMissionDefinition` creation remains blocked until authoritative
+DynamicZone trigger observation, duplicate-locator precedence, route, camera
+runtime behavior, reward, transition, bundle, and remaining catalog identities
+resolve and the complete transition/recovery topology passes validation.
 
 ## Authority and ownership
 

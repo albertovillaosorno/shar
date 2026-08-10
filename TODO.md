@@ -145,6 +145,22 @@ Current task list. Project phases and dated progress are recorded in
         - [x] Bind every explicit `LoadP3DFile` first argument to one canonical
           phase-three package, preserve the optional second source-group value
           as opaque evidence, and keep only the first argument in P3D summaries.
+        - [x] Bind all 61 typed `SetPresentationBitmap` references across
+          mission initialization, stage, and objective scopes through one shared
+          canonical P3D package catalog. The corpus has 56 unique presentation
+          paths, with zero missing package bindings and zero normalized-root
+          collisions; presentation timing and drawable semantics remain
+          unresolved rather than inferred from the package path.
+        - [x] Bind all 194 reviewed mission-start and animated camera or
+          multi-controller component references by exact embedded component
+          name,
+          component kind, and source-script `levelNN` provenance. Global lookup
+          is ambiguous for 190 references, while level-scoped exact matching is
+          unique for all 194 with zero missing references. Four unreferenced
+          level-local keys have multiple candidates; the catalog preserves those
+          ambiguities so any future reference fails closed instead of choosing a
+          winner. Package/member source identity is preserved without inventing
+          cross-level precedence, blending, timing, or playback semantics.
         - [x] Build a package-scoped mission locator catalog from decoded
           `srr_locator` JSON `name` and type evidence; reject package-local name
           collisions and preserve cross-package duplicates as ambiguity instead
@@ -161,11 +177,29 @@ Current task list. Project phases and dated progress are recorded in
           interior load/unload, and World Sphere enable/disable operations while
           preserving exact source evidence and the observed terminal-less Level
           7 mission-start region load as an explicit legacy adaptation.
-        - [ ] Model stage/checkpoint Dyna Load Data transitions precisely enough
-          to refine locator package lifetime after mission start, then prove or
-          reject runtime precedence for duplicated active names such as
-          `bm1_bestside`; do not import Mod Launcher-only stage commands as base
-          game evidence.
+        - [x] Compile decoded base-game type-5 `DynamicZone` Dyna Load Data into
+          ordered package transitions and preflight every authored P3D load
+          against the phase-three package index. The 109-zone corpus carries 372
+          indexed P3D loads and 728 P3D unloads; 30 unload targets are absent from
+          the extracted index and therefore remain valid remove-if-present
+          effects rather than false load requirements. No observed base-game
+          Dyna string both loads and unloads the same P3D target; the domain
+          refuses to invent runtime ordering if such a conflict appears later.
+        - [x] Model explicitly observed `DynamicZone` traversal history as an
+          ordered package-residency projection. Each step retains exact locator
+          name, source package root, and typed Dyna transition; caller-supplied
+          event order is preserved without inferring trigger entry, retrigger
+          policy, geometry semantics, or duplicate-locator lookup precedence.
+        - [x] Separate streaming lifetime from duplicate-locator precedence for
+          `bm1_bestside`: 18 source references resolve against 10 Type-3
+          `CarStart` candidates under `extracted/art/missions/...`, while all
+          1,100 P3D effects across the 109 decoded `DynamicZone` locators touch
+          zero `missions/...` packages and therefore cannot choose among those
+          candidates.
+        - [ ] Establish authoritative runtime trigger observation/retrigger
+          semantics to feed the traversal-history model, and separately prove
+          or reject duplicate active-name lookup precedence. Do not import Mod
+          Launcher-only stage/checkpoint Dyna commands as base-game evidence.
     - [ ] Emit lossless `USharMissionDefinition` assets only after the complete
       mission graph passes reference and topology validation.
   - [ ] Compile remaining normalized UI, font, localization, tuning, and other
