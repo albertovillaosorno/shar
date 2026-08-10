@@ -150,8 +150,11 @@ Typed stage markers now classify source behavior before graph emission. Iris and
 fade are visual completion requests, with iris taking precedence if both are
 authored. Stay-black and stage-complete are presentation policy, not mission
 results. Level-over requests chapter completion and game-over requests game
-completion. These classifications do not invent ordinary successor, retry,
-rollback, or recovery edges.
+completion. Authored topology now preserves dense stage order and the next
+source neighbor without promoting adjacency to runtime flow. All 90 explicit
+`final` markers and all four explicit level/game terminals occur only on the
+last stage; 64 selected mission sources legitimately omit `final`. Ordinary
+successor, retry, rollback, and recovery edges remain unresolved.
 
 Final `USharMissionDefinition` creation remains blocked until remaining locator
 roles, route, camera runtime behavior, reward, successor/recovery transitions,

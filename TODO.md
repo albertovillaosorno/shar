@@ -264,8 +264,14 @@ Current task list. Project phases and dated progress are recorded in
           with topology: 6 iris and 14 fade requests are visual transitions,
           5 stay-black and 108 stage-complete markers are presentation policy,
           while 3 level-over and 1 game-over markers are terminal overrides.
-          Iris wins the one observed stage that also authors fade. Successor,
-          retry, rollback, and recovery graph topology remains unresolved.
+          Iris wins the one observed stage that also authors fade.
+        - [x] Compile authored order for all 611 stages across 154 selected
+          mission sources. Preserve the next authored neighbor as evidence only,
+          accept the 64 sources with no explicit `final`, and require each of the
+          90 observed `final` markers plus all four explicit terminal overrides
+          to occur only on the last authored stage. Runtime successor, retry,
+          rollback, and recovery edges remain unresolved rather than inferred
+          from adjacency.
     - [ ] Emit lossless `USharMissionDefinition` assets only after the complete
       mission graph passes reference and topology validation.
   - [ ] Compile remaining normalized UI, font, localization, tuning, and other

@@ -226,8 +226,15 @@ markers, 108 stage-complete presentation markers, 3 level-over terminals, and 1
 game-over terminal. Iris is the effective visual transition in the one stage
 that authors both iris and fade. Stay-black and stage-complete remain
 presentation-only; they cannot select a mission successor. Level-over maps to a
-chapter terminal override and game-over to game completion. Successor, retry,
-rollback, and recovery topology still requires a complete graph compiler.
+chapter terminal override and game-over to game completion.
+
+Authored stage topology is now validated independently of runtime flow. Across
+154 selected mission sources, all 611 stages retain dense authored order and an
+optional next authored neighbor. The corpus contains 90 explicit `final`
+markers, all on the last authored stage; 64 sources intentionally carry no
+explicit final marker. All four level/game terminal overrides are also authored
+only on the last stage. Adjacency is evidence, not a runtime successor edge, so
+success, retry, rollback, and recovery topology remain pending.
 
 `BindReward` binds all 90 reviewed P3D references through the shared canonical
 package catalog while preserving its source policy tokens without assigning
