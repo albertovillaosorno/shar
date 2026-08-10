@@ -154,9 +154,10 @@ Current task list. Project phases and dated progress are recorded in
           identities one-to-one to canonical character packages. Compile all 16
           reviewed traffic groups and 64 `AddTrafficModel` members, binding all
           22 unique traffic identities one-to-one to canonical vehicle packages
-          while preserving the optional numeric big-vehicle flag. Population
-          spawn, navigation, active-group switching, and parked-car behavior
-          remain separate runtime boundaries.
+          while preserving the optional numeric big-vehicle flag. Bind all 134
+          reviewed `UsePedGroup` selections to one declared group in the paired
+          level setup source. Population spawn, navigation, group-switch runtime
+          behavior, and parked-car behavior remain separate boundaries.
         - [x] Bind every explicit `LoadP3DFile` first argument to one canonical
           phase-three package and keep only that path in P3D summaries. Preserve
           the source loader's optional heap and inventory-section parameters as
