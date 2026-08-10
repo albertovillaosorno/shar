@@ -36,7 +36,7 @@
 use super::{
     MissionLevelNpcKind, MissionLevelNpcReport, MissionLocatorCatalog,
     MissionLocatorResolution, MissionLocatorTypeConstraint,
-    MissionPurchaseRewardReport,
+    MissionPurchaseRewardReport, MissionScopeReport,
 };
 
 const CAR_START_LOCATOR_TYPE: u32 = 3;
@@ -44,6 +44,8 @@ const CAR_START_LOCATOR_TYPE: u32 = 3;
 /// Source-backed level locator lookup role.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MissionLevelLocatorRole {
+    /// Initial level player-vehicle placement.
+    LevelPlayerVehicle,
     /// Ambient NPC initial position.
     AmbientSpawn,
     /// Bonus/street-race NPC initial position.
@@ -67,7 +69,8 @@ pub enum MissionLevelLocatorRole {
 impl MissionLevelLocatorRole {
     const fn exact_type(self) -> Option<u32> {
         match self {
-            Self::BonusDialoguePlayer
+            Self::LevelPlayerVehicle
+            | Self::BonusDialoguePlayer
             | Self::BonusDialogueNpc
             | Self::BonusDialogueVehicle => Some(CAR_START_LOCATOR_TYPE),
             Self::AmbientSpawn
@@ -140,10 +143,17 @@ impl MissionLevelLocatorReferenceReport {
 pub fn preflight_mission_level_locator_references(
     catalog: &MissionLocatorCatalog,
     ordered_package_roots: &[String],
+    scopes: &MissionScopeReport,
     npcs: &MissionLevelNpcReport,
     purchases: &MissionPurchaseRewardReport,
 ) -> Result<MissionLevelLocatorReferenceReport, String> {
     let mut bindings = Vec::new();
+    push_level_vehicle_references(
+        &mut bindings,
+        catalog,
+        ordered_package_roots,
+        scopes,
+    )?;
     for declaration in npcs.declarations() {
         let role = match declaration.kind() {
             MissionLevelNpcKind::Ambient => {
@@ -227,6 +237,51 @@ pub fn preflight_mission_level_locator_references(
     }
     bindings.sort_by_key(|binding| binding.source_ordinal);
     Ok(MissionLevelLocatorReferenceReport { bindings })
+}
+
+fn push_level_vehicle_references(
+    out: &mut Vec<MissionLevelLocatorReferenceBinding>,
+    catalog: &MissionLocatorCatalog,
+    ordered_package_roots: &[String],
+    scopes: &MissionScopeReport,
+) -> Result<(), String> {
+    for command in scopes.unscoped_commands() {
+        if command.name() != "initlevelplayervehicle" {
+            continue;
+        }
+        if command.semantic_role() != "mission-script" {
+            return Err(
+                "level player vehicle semantic role changed".to_owned(),
+            );
+        }
+        let arguments = command.arguments();
+        if arguments.len() != 3 && arguments.len() != 4 {
+            return Err(
+                "InitLevelPlayerVehicle argument shape changed".to_owned(),
+            );
+        }
+        let locator = source_token(
+            &arguments[1],
+            "level player vehicle locator",
+        )?;
+        push_reference(
+            out,
+            catalog,
+            ordered_package_roots,
+            command.source_ordinal(),
+            MissionLevelLocatorRole::LevelPlayerVehicle,
+            &locator,
+        )?;
+    }
+    Ok(())
+}
+
+fn source_token(value: &str, label: &str) -> Result<String, String> {
+    let token = value.trim();
+    if token.is_empty() || token.chars().any(char::is_control) {
+        return Err(format!("{label} is malformed"));
+    }
+    Ok(token.to_owned())
 }
 
 fn push_reference(

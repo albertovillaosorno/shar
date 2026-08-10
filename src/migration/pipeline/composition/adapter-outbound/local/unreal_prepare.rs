@@ -479,6 +479,7 @@ fn preflight_cross_source_mission_locators(
             preflight_mission_level_locator_references(
                 mission_locators,
                 level_context.package_roots(),
+                &scopes,
                 &npcs,
                 &purchases,
             )
