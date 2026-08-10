@@ -42,6 +42,7 @@ fn step(
     DynamicZoneTraversalStep::new(
         name.to_owned(),
         source_package_root.to_owned(),
+        1,
         transition,
     )
 }
@@ -105,6 +106,7 @@ fn step_rejects_unsafe_source_identity() -> Result<(), String> {
     let Err(error) = DynamicZoneTraversalStep::new(
         "loader11".to_owned(),
         "../outside".to_owned(),
+        1,
         transition,
     ) else {
         return Err("unsafe source package was accepted".to_owned());
@@ -129,5 +131,89 @@ fn unresolved_transition_order_propagates_with_zone_identity()
 
     assert!(error.contains("loader_conflict"));
     assert!(error.contains("conflicting load/unload effects"));
+    Ok(())
+}
+
+#[test]
+fn first_child_entry_fires_one_zone_transition() -> Result<(), String> {
+    let mut occupancy = DynamicZoneTriggerOccupancy::new(3)?;
+    assert_eq!(
+        occupancy.observe(1, DynamicZoneTriggerEvent::Enter)?,
+        DynamicZoneTriggerEffect::ApplyTransition
+    );
+    assert_eq!(occupancy.active_trigger_count(), 1);
+    Ok(())
+}
+
+#[test]
+fn overlapping_child_volumes_do_not_retrigger_entry() -> Result<(), String> {
+    let mut occupancy = DynamicZoneTriggerOccupancy::new(3)?;
+    let _effect = occupancy.observe(0, DynamicZoneTriggerEvent::Enter)?;
+    assert_eq!(
+        occupancy.observe(2, DynamicZoneTriggerEvent::Enter)?,
+        DynamicZoneTriggerEffect::NoTransition
+    );
+    assert_eq!(
+        occupancy.observe(0, DynamicZoneTriggerEvent::Exit)?,
+        DynamicZoneTriggerEffect::NoTransition
+    );
+    assert_eq!(occupancy.active_trigger_count(), 1);
+    Ok(())
+}
+
+#[test]
+fn final_exit_rearms_a_later_zone_entry() -> Result<(), String> {
+    let mut occupancy = DynamicZoneTriggerOccupancy::new(2)?;
+    let _effect = occupancy.observe(0, DynamicZoneTriggerEvent::Enter)?;
+    let _effect = occupancy.observe(1, DynamicZoneTriggerEvent::Enter)?;
+    let _effect = occupancy.observe(0, DynamicZoneTriggerEvent::Exit)?;
+    let _effect = occupancy.observe(1, DynamicZoneTriggerEvent::Exit)?;
+    assert_eq!(occupancy.active_trigger_count(), 0);
+    assert_eq!(
+        occupancy.observe(0, DynamicZoneTriggerEvent::Enter)?,
+        DynamicZoneTriggerEffect::ApplyTransition
+    );
+    Ok(())
+}
+
+#[test]
+fn traversal_step_builds_occupancy_from_decoded_count() -> Result<(), String> {
+    let parsed = parse_dyna_load_data("l1z1.p3d;")?;
+    let transition = compile_dyna_load_package_transition(&parsed)?;
+    let step = DynamicZoneTraversalStep::new(
+        "loader11".to_owned(),
+        "extracted/art/L1_TERRA".to_owned(),
+        3,
+        transition,
+    )?;
+    assert_eq!(step.trigger_volume_count(), 3);
+    assert_eq!(step.occupancy()?.active_trigger_count(), 0);
+    Ok(())
+}
+
+#[test]
+fn impossible_trigger_observations_fail_closed() -> Result<(), String> {
+    let Err(error) = DynamicZoneTriggerOccupancy::new(0) else {
+        return Err("trigger-less occupancy was accepted".to_owned());
+    };
+    assert!(error.contains("at least one volume"));
+
+    let mut occupancy = DynamicZoneTriggerOccupancy::new(2)?;
+    let Err(error) = occupancy.observe(2, DynamicZoneTriggerEvent::Enter) else {
+        return Err("out-of-range trigger ordinal was accepted".to_owned());
+    };
+    assert!(error.contains("out of range"));
+
+    let _effect = occupancy.observe(0, DynamicZoneTriggerEvent::Enter)?;
+    let Err(error) = occupancy.observe(0, DynamicZoneTriggerEvent::Enter) else {
+        return Err("duplicate trigger entry was accepted".to_owned());
+    };
+    assert!(error.contains("repeats an active entry"));
+
+    let _effect = occupancy.observe(0, DynamicZoneTriggerEvent::Exit)?;
+    let Err(error) = occupancy.observe(0, DynamicZoneTriggerEvent::Exit) else {
+        return Err("inactive trigger exit was accepted".to_owned());
+    };
+    assert!(error.contains("exits an inactive volume"));
     Ok(())
 }

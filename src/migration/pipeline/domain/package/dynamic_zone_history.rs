@@ -11,10 +11,11 @@
 // - Owns:
 //   - Ordered projection of explicitly observed DynamicZone traversal events.
 // - Must-Not:
-//   - Infer trigger entry, traversal order, retrigger policy, or locator lookup
-//     precedence from geometry or package names.
+//   - Infer traversal order or locator lookup precedence from geometry or
+//     package names.
 // - Allows:
 //   - Apply exact caller-supplied DynamicZone transitions to active packages.
+//   - Reduce observed child-volume events to conservative entry episodes.
 // - Split-When:
 //   - Trigger observation transport or geometry acquires independent behavior.
 // - Merge-When:
@@ -32,14 +33,117 @@
 
 //! Pure package-residency projection for observed `DynamicZone` history.
 
+use std::collections::BTreeSet;
+
 use super::dyna_load_package::validate_active_package_roots;
 use super::DynaLoadPackageTransition;
+
+/// One observed child trigger-volume boundary crossing.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DynamicZoneTriggerEvent {
+    /// The tracked player entered one child trigger volume.
+    Enter,
+    /// The tracked player exited one child trigger volume.
+    Exit,
+}
+
+/// Package-transition effect of one observed trigger-volume boundary crossing.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DynamicZoneTriggerEffect {
+    /// Aggregate occupancy changed from zero to one active child volume.
+    ApplyTransition,
+    /// Occupancy changed without executing Dyna Load Data.
+    NoTransition,
+}
+
+/// Exact child-volume occupancy for one decoded `DynamicZone` locator.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DynamicZoneTriggerOccupancy {
+    trigger_volume_count: u32,
+    active_trigger_ordinals: BTreeSet<u32>,
+}
+
+impl DynamicZoneTriggerOccupancy {
+    /// Build empty occupancy for one non-empty decoded trigger-volume set.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the locator has no child trigger volumes.
+    pub fn new(trigger_volume_count: u32) -> Result<Self, String> {
+        if trigger_volume_count == 0 {
+            return Err(
+                "DynamicZone trigger occupancy requires at least one volume"
+                    .to_owned(),
+            );
+        }
+        Ok(Self {
+            trigger_volume_count,
+            active_trigger_ordinals: BTreeSet::new(),
+        })
+    }
+
+    /// Return the number of child trigger volumes currently occupied.
+    #[must_use]
+    pub fn active_trigger_count(&self) -> usize {
+        self.active_trigger_ordinals.len()
+    }
+
+    /// Apply one exact observed child-volume boundary crossing.
+    ///
+    /// The first entry in an occupancy episode executes Dyna Load Data.
+    /// Overlapping entries and all exits do not. The final exit rearms the
+    /// locator so a later entry can start another episode.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for an out-of-range ordinal, duplicate entry, or exit
+    /// of a child volume that is not currently active.
+    pub fn observe(
+        &mut self,
+        trigger_ordinal: u32,
+        event: DynamicZoneTriggerEvent,
+    ) -> Result<DynamicZoneTriggerEffect, String> {
+        if trigger_ordinal >= self.trigger_volume_count {
+            return Err(
+                "DynamicZone trigger observation ordinal is out of range"
+                    .to_owned(),
+            );
+        }
+        match event {
+            DynamicZoneTriggerEvent::Enter => {
+                if !self.active_trigger_ordinals.insert(trigger_ordinal) {
+                    return Err(concat!(
+                        "DynamicZone trigger observation repeats an active ",
+                        "entry"
+                    )
+                    .to_owned());
+                }
+                if self.active_trigger_ordinals.len() == 1 {
+                    Ok(DynamicZoneTriggerEffect::ApplyTransition)
+                } else {
+                    Ok(DynamicZoneTriggerEffect::NoTransition)
+                }
+            }
+            DynamicZoneTriggerEvent::Exit => {
+                if !self.active_trigger_ordinals.remove(&trigger_ordinal) {
+                    return Err(concat!(
+                        "DynamicZone trigger observation exits an inactive ",
+                        "volume"
+                    )
+                    .to_owned());
+                }
+                Ok(DynamicZoneTriggerEffect::NoTransition)
+            }
+        }
+    }
+}
 
 /// One exact `DynamicZone` traversal supplied by an external runtime observer.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct DynamicZoneTraversalStep {
     locator_name: String,
     source_package_root: String,
+    trigger_volume_count: u32,
     transition: DynaLoadPackageTransition,
 }
 
@@ -53,13 +157,16 @@ impl DynamicZoneTraversalStep {
     pub fn new(
         locator_name: String,
         source_package_root: String,
+        trigger_volume_count: u32,
         transition: DynaLoadPackageTransition,
     ) -> Result<Self, String> {
         validate_identity(&locator_name)?;
         validate_source_package_root(&source_package_root)?;
+        drop(DynamicZoneTriggerOccupancy::new(trigger_volume_count)?);
         Ok(Self {
             locator_name,
             source_package_root,
+            trigger_volume_count,
             transition,
         })
     }
@@ -74,6 +181,22 @@ impl DynamicZoneTraversalStep {
     #[must_use]
     pub fn source_package_root(&self) -> &str {
         &self.source_package_root
+    }
+
+    /// Return the exact decoded child trigger-volume count.
+    #[must_use]
+    pub const fn trigger_volume_count(&self) -> u32 {
+        self.trigger_volume_count
+    }
+
+    /// Build empty runtime occupancy for this exact decoded trigger set.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error only if the stored count violates construction
+    /// invariants.
+    pub fn occupancy(&self) -> Result<DynamicZoneTriggerOccupancy, String> {
+        DynamicZoneTriggerOccupancy::new(self.trigger_volume_count)
     }
 
     /// Return the typed Dyna package transition executed by this zone.
