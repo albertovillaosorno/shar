@@ -93,26 +93,54 @@ pub enum MissionLocatorRole {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MissionLocatorActivePackages {
     mission_id: String,
+    script_package_roots: Vec<String>,
     package_roots: Vec<String>,
 }
 
 impl MissionLocatorActivePackages {
-    /// Build one deterministic active-package context.
-    ///
-    /// Preserves first-occurrence source order while deduplicating roots
-    /// case-insensitively. This order is evidence only, not lookup precedence.
+    /// Build a context whose supplied roots are already script-visible.
     ///
     /// # Errors
     /// Returns an error when the mission id or a package root is malformed.
-    pub fn new(mission_id: String, mut package_roots: Vec<String>) -> Result<Self, String> {
+    pub fn new(
+        mission_id: String,
+        package_roots: Vec<String>,
+    ) -> Result<Self, String> {
+        Self::new_with_initial_dynamic(mission_id, package_roots, Vec::new())
+    }
+
+    /// Build script visibility plus initial post-script Dyna visibility.
+    ///
+    /// Dyna roots extend runtime visibility but are not treated as visible to
+    /// locator lookups executed while the mission init script is being parsed.
+    /// First-occurrence source order is preserved case-insensitively.
+    ///
+    /// # Errors
+    /// Returns an error when the mission id or a package root is malformed.
+    pub fn new_with_initial_dynamic(
+        mission_id: String,
+        mut script_package_roots: Vec<String>,
+        initial_dynamic_package_roots: Vec<String>,
+    ) -> Result<Self, String> {
         validate_source_identity(&mission_id, "mission locator context id")?;
-        for root in &package_roots {
+        for root in script_package_roots
+            .iter()
+            .chain(&initial_dynamic_package_roots)
+        {
             validate_package_root(root)?;
         }
         let mut seen = std::collections::BTreeSet::new();
-        package_roots.retain(|root| seen.insert(root.to_ascii_lowercase()));
+        script_package_roots
+            .retain(|root| seen.insert(root.to_ascii_lowercase()));
+        let mut package_roots = script_package_roots.clone();
+        package_roots.extend(
+            initial_dynamic_package_roots
+                .into_iter()
+                .filter(|root| seen.insert(root.to_ascii_lowercase())),
+        );
         Ok(Self {
             mission_id,
+            script_package_roots,
             package_roots,
         })
     }
@@ -123,7 +151,13 @@ impl MissionLocatorActivePackages {
         &self.mission_id
     }
 
-    /// Return caller-supplied active package roots in first-occurrence order.
+    /// Return roots visible while the mission init script is being parsed.
+    #[must_use]
+    pub fn script_package_roots(&self) -> &[String] {
+        &self.script_package_roots
+    }
+
+    /// Return roots visible after the reviewed initial Dyna load completes.
     #[must_use]
     pub fn package_roots(&self) -> &[String] {
         &self.package_roots
@@ -297,7 +331,7 @@ pub fn preflight_mission_locator_references(
         let mut references = Vec::new();
         resolve_initialization(
             catalog,
-            active.package_roots(),
+            active,
             initialization,
             &mut references,
         )?;
@@ -310,7 +344,7 @@ pub fn preflight_mission_locator_references(
             }
             resolve_stage(
                 catalog,
-                active.package_roots(),
+                active,
                 stage_semantics,
                 &mut references,
             )?;
@@ -322,7 +356,7 @@ pub fn preflight_mission_locator_references(
             }
             resolve_objective(
                 catalog,
-                active.package_roots(),
+                active,
                 objective_semantics,
                 &mut references,
             )?;
@@ -341,17 +375,22 @@ pub fn preflight_mission_locator_references(
 
 fn push_locator(
     catalog: &MissionLocatorCatalog,
-    active: &[String],
+    active: &MissionLocatorActivePackages,
     references: &mut Vec<MissionLocatorReferenceBinding>,
     source_ordinal: usize,
     role: MissionLocatorRole,
     source_name: &str,
     type_constraint: MissionLocatorTypeConstraint,
 ) -> Result<(), String> {
+    let package_roots = package_roots_for_role(active, role);
     let resolution = if role == MissionLocatorRole::ObjectiveCameraBestSide {
-        catalog.resolve_in_package_order(source_name, active, type_constraint)?
+        catalog.resolve_in_package_order(
+            source_name,
+            package_roots,
+            type_constraint,
+        )?
     } else {
-        catalog.resolve(source_name, active, type_constraint)?
+        catalog.resolve(source_name, package_roots, type_constraint)?
     };
     references.push(MissionLocatorReferenceBinding {
         source_ordinal,
@@ -365,7 +404,7 @@ fn push_locator(
 
 fn resolve_initialization(
     catalog: &MissionLocatorCatalog,
-    active: &[String],
+    active: &MissionLocatorActivePackages,
     binding: &super::MissionInitializationBinding,
     out: &mut Vec<MissionLocatorReferenceBinding>,
 ) -> Result<(), String> {
@@ -466,7 +505,7 @@ fn resolve_initialization(
 
 fn resolve_stage(
     catalog: &MissionLocatorCatalog,
-    active: &[String],
+    active: &MissionLocatorActivePackages,
     stage: &super::MissionStageSemanticBinding,
     out: &mut Vec<MissionLocatorReferenceBinding>,
 ) -> Result<(), String> {
@@ -616,7 +655,7 @@ fn resolve_stage(
 
 fn resolve_objective(
     catalog: &MissionLocatorCatalog,
-    active: &[String],
+    active: &MissionLocatorActivePackages,
     objective: &super::MissionObjectiveSemanticBinding,
     out: &mut Vec<MissionLocatorReferenceBinding>,
 ) -> Result<(), String> {
@@ -710,6 +749,42 @@ fn resolve_objective(
         }
     }
     Ok(())
+}
+
+fn package_roots_for_role(
+    active: &MissionLocatorActivePackages,
+    role: MissionLocatorRole,
+) -> &[String] {
+    match role {
+        MissionLocatorRole::InitializationWalk
+        | MissionLocatorRole::StageSwapDefaultCar
+        | MissionLocatorRole::StageSwapForcedCar
+        | MissionLocatorRole::StageSwapPlayer
+        | MissionLocatorRole::ObjectiveNpc
+        | MissionLocatorRole::ObjectiveNpcWaypoint
+        | MissionLocatorRole::ObjectiveCameraBestSide
+        | MissionLocatorRole::ObjectiveDestination
+        | MissionLocatorRole::ObjectiveCollectible => active.package_roots(),
+        MissionLocatorRole::InitializationResetVehicle
+        | MissionLocatorRole::InitializationResetPlayer
+        | MissionLocatorRole::InitializationResetOutCarVehicle
+        | MissionLocatorRole::InitializationCollectibleStateProp
+        | MissionLocatorRole::InitializationPlacePlayerCar
+        | MissionLocatorRole::InitializationPlayerVehicle
+        | MissionLocatorRole::StageVehicle
+        | MissionLocatorRole::StageActivateVehicle
+        | MissionLocatorRole::StageSafeZone
+        | MissionLocatorRole::StageCollectibleStateProp
+        | MissionLocatorRole::StageCharacter
+        | MissionLocatorRole::StageCharacterVehicle
+        | MissionLocatorRole::StagePlacePlayerCar
+        | MissionLocatorRole::StageWaypoint
+        | MissionLocatorRole::ObjectiveDialoguePositionFirst
+        | MissionLocatorRole::ObjectiveDialoguePositionSecond
+        | MissionLocatorRole::ObjectiveDialoguePositionThird => {
+            active.script_package_roots()
+        },
+    }
 }
 
 fn validate_source_identity(value: &str, label: &str) -> Result<(), String> {
