@@ -202,10 +202,13 @@ fn camera_best_side_uses_verified_package_lookup_order() -> Result<(), String> {
         entry(name, "bm1")?,
         entry(name, "level")?,
     ])?;
-    let active = vec![
-        "extracted/art/missions/level01/level".to_owned(),
-        "extracted/art/missions/level01/bm1".to_owned(),
-    ];
+    let active = MissionLocatorActivePackages::new(
+        "bm1".to_owned(),
+        vec![
+            "extracted/art/missions/level01/level".to_owned(),
+            "extracted/art/missions/level01/bm1".to_owned(),
+        ],
+    )?;
     let mut references = Vec::new();
     push_locator(
         &catalog,
@@ -227,6 +230,58 @@ fn camera_best_side_uses_verified_package_lookup_order() -> Result<(), String> {
         reference.entry().package_root(),
         "extracted/art/missions/level01/level"
     );
+    Ok(())
+}
+
+#[test]
+fn separates_script_and_post_dyna_locator_visibility() -> Result<(), String> {
+    let static_root = "extracted/art/missions/level01/level";
+    let dyna_root = "extracted/art/missions/level01/dyna";
+    let active = MissionLocatorActivePackages::new_with_initial_dynamic(
+        "m1".to_owned(),
+        vec![static_root.to_owned()],
+        vec![dyna_root.to_owned()],
+    )?;
+    if active.script_package_roots() != [static_root.to_owned()]
+        || active.package_roots()
+            != [static_root.to_owned(), dyna_root.to_owned()]
+    {
+        return Err("locator visibility phases drifted".to_owned());
+    }
+
+    let catalog = MissionLocatorCatalog::from_entries(vec![entry("late", "dyna")?])?;
+    let mut references = Vec::new();
+    push_locator(
+        &catalog,
+        &active,
+        &mut references,
+        7,
+        MissionLocatorRole::StageWaypoint,
+        "late",
+        MissionLocatorTypeConstraint::Any,
+    )?;
+    push_locator(
+        &catalog,
+        &active,
+        &mut references,
+        8,
+        MissionLocatorRole::InitializationWalk,
+        "late",
+        MissionLocatorTypeConstraint::Any,
+    )?;
+    if !matches!(
+        references[0].resolution(),
+        MissionLocatorResolution::Missing
+    ) {
+        return Err("script-time locator saw post-script Dyna package".to_owned());
+    }
+    let MissionLocatorResolution::Resolved(reference) = references[1].resolution()
+    else {
+        return Err("post-Dyna locator did not see initial Dyna package".to_owned());
+    };
+    if reference.entry().package_root() != dyna_root {
+        return Err("post-Dyna locator resolved the wrong package".to_owned());
+    }
     Ok(())
 }
 

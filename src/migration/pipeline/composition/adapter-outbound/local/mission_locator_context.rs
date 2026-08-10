@@ -134,8 +134,8 @@ pub(super) fn build_mission_locator_source_contexts(
         let mission_load = by_path
             .get(mission_load_path.as_str())
             .ok_or_else(|| "mission locator mission-load source disappeared".to_owned())?;
-        let mut package_roots = level_load.package_roots.clone();
-        package_roots.extend(mission_load.package_roots.iter().cloned());
+        let mut script_package_roots = level_load.package_roots.clone();
+        script_package_roots.extend(mission_load.package_roots.iter().cloned());
         let initialization = preflight_mission_initialization(&scopes)?;
         let [initialization] = initialization.missions() else {
             return Err("mission locator initialization context drifted".to_owned());
@@ -143,11 +143,15 @@ pub(super) fn build_mission_locator_source_contexts(
         if initialization.mission_id() != mission_id {
             return Err("mission locator initialization identity drifted".to_owned());
         }
-        package_roots.extend(initial_dynamic_package_roots(
+        let initial_dynamic_package_roots = initial_dynamic_package_roots(
             initialization,
             indexed_package_roots,
-        )?);
-        let active = MissionLocatorActivePackages::new(mission_id.to_owned(), package_roots)?;
+        )?;
+        let active = MissionLocatorActivePackages::new_with_initial_dynamic(
+            mission_id.to_owned(),
+            script_package_roots,
+            initial_dynamic_package_roots,
+        )?;
         let report = MissionLocatorActivePackageReport::from_missions(vec![active])?;
         if contexts
             .insert(snapshot.source_path.clone(), report)
