@@ -196,6 +196,41 @@ fn preserves_ambiguous_active_package_candidates() -> Result<(), String> {
 }
 
 #[test]
+fn camera_best_side_uses_verified_package_lookup_order() -> Result<(), String> {
+    let name = "bm1_bestside";
+    let catalog = MissionLocatorCatalog::from_entries(vec![
+        entry(name, "bm1")?,
+        entry(name, "level")?,
+    ])?;
+    let active = vec![
+        "extracted/art/missions/level01/level".to_owned(),
+        "extracted/art/missions/level01/bm1".to_owned(),
+    ];
+    let mut references = Vec::new();
+    push_locator(
+        &catalog,
+        &active,
+        &mut references,
+        17,
+        MissionLocatorRole::ObjectiveCameraBestSide,
+        name,
+        MissionLocatorTypeConstraint::Any,
+    )?;
+    let [binding] = references.as_slice() else {
+        return Err("best-side locator binding count drifted".to_owned());
+    };
+    let MissionLocatorResolution::Resolved(reference) = binding.resolution()
+    else {
+        return Err("best-side locator did not honor package order".to_owned());
+    };
+    assert_eq!(
+        reference.entry().package_root(),
+        "extracted/art/missions/level01/level"
+    );
+    Ok(())
+}
+
+#[test]
 fn rejects_missing_active_mission_context() -> Result<(), String> {
     let (scopes, initialization, stages, objectives) = reports()?;
     let catalog = MissionLocatorCatalog::from_entries(vec![
