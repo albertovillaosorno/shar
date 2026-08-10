@@ -71,7 +71,8 @@ use crate::domain::{
     preflight_mission_level_npcs, preflight_mission_locator_references,
     preflight_mission_objective_commands, preflight_mission_objective_semantics,
     preflight_mission_objectives, preflight_mission_package_loads_with_catalog,
-    preflight_mission_ped_groups, preflight_mission_presentation_references,
+    preflight_mission_ped_group_selections, preflight_mission_ped_groups,
+    preflight_mission_presentation_references,
     preflight_mission_purchase_rewards, preflight_mission_references,
     preflight_mission_reward_references, preflight_mission_script,
     preflight_mission_stage_semantics, preflight_mission_stage_transitions,
@@ -499,7 +500,7 @@ fn preflight_cross_source_mission_locators(
             ))
         })?;
     for snapshot in &snapshots {
-        let Some(active_packages) = contexts.get(snapshot.source_path()) else {
+        let Some(context) = contexts.get(snapshot.source_path()) else {
             continue;
         };
         let scopes = compile_mission_scope_graphs(snapshot.evidence()).map_err(|error| {
@@ -510,6 +511,54 @@ fn preflight_cross_source_mission_locators(
                 "mission locator initialization preflight failed: {error}"
             ))
         })?;
+        let has_ped_group_selection = initialization
+            .missions()
+            .iter()
+            .flat_map(|mission| mission.directives())
+            .any(|directive| matches!(
+                directive,
+                crate::domain::MissionInitializationDirective::PedGroup { .. }
+            ));
+        if has_ped_group_selection {
+            let setup_path = context.level_setup_source_path().ok_or_else(|| {
+                PipelineError::new(
+                    "mission pedestrian-group setup source is missing",
+                )
+            })?;
+            let setup = snapshots
+                .iter()
+                .find(|candidate| candidate.source_path() == setup_path)
+                .ok_or_else(|| {
+                    PipelineError::new(
+                        "mission pedestrian-group setup source disappeared",
+                    )
+                })?;
+            let setup_scopes = compile_mission_scope_graphs(setup.evidence())
+                .map_err(|error| {
+                    PipelineError::new(format!(
+                        "mission pedestrian-group setup scope failed: {error}"
+                    ))
+                })?;
+            let groups = preflight_mission_ped_groups(
+                mission_references,
+                &setup_scopes,
+            )
+            .map_err(|error| {
+                PipelineError::new(format!(
+                    "mission pedestrian-group setup preflight failed: {error}"
+                ))
+            })?;
+            for mission in initialization.missions() {
+                drop(
+                    preflight_mission_ped_group_selections(mission, &groups)
+                        .map_err(|error| {
+                            PipelineError::new(format!(
+                                "mission pedestrian-group selection failed: {error}"
+                            ))
+                        })?,
+                );
+            }
+        }
         drop(
             preflight_mission_camera_references(
                 snapshot.source_path(),
@@ -534,7 +583,7 @@ fn preflight_cross_source_mission_locators(
         drop(
             preflight_mission_locator_references(
                 mission_locators,
-                active_packages,
+                context.active_packages(),
                 &scopes,
                 &initialization,
                 &stage_semantics,

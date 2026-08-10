@@ -411,3 +411,39 @@ fn level_setup_without_family_load_sibling_fails_closed() -> Result<(), String> 
     }
     Ok(())
 }
+
+#[test]
+fn selected_mission_remembers_level_setup_sibling() -> Result<(), String> {
+    let snapshots = vec![
+        snapshot(
+            "extracted/game/scripts/missions/level01/level.mfk.json",
+            None,
+            &["extracted/art/missions/level01/level"],
+        )?,
+        level_setup_snapshot(
+            "extracted/game/scripts/missions/level01/leveli.mfk.json",
+        )?,
+        snapshot(
+            "extracted/game/scripts/missions/level01/m1l.mfk.json",
+            None,
+            &["extracted/art/missions/level01/m1"],
+        )?,
+        snapshot(
+            "extracted/game/scripts/missions/level01/m1i.mfk.json",
+            Some("m1"),
+            &[],
+        )?,
+    ];
+    let contexts = build_mission_locator_source_contexts(
+        &snapshots,
+        &BTreeSet::new(),
+    )?;
+    let context = contexts
+        .get("extracted/game/scripts/missions/level01/m1i.mfk.json")
+        .ok_or_else(|| "m1 context is missing".to_owned())?;
+    assert_eq!(
+        context.level_setup_source_path(),
+        Some("extracted/game/scripts/missions/level01/leveli.mfk.json")
+    );
+    Ok(())
+}
