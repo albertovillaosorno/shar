@@ -32,7 +32,9 @@
 
 use super::*;
 
-fn policy(directives: &[MissionStageDirective]) -> MissionStageTransitionPolicy {
+fn policy(
+    directives: &[MissionStageDirective],
+) -> MissionStageTransitionPolicy {
     classify_stage(7, 2, directives)
 }
 

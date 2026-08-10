@@ -150,8 +150,12 @@ fn classify_stage(
     let mut show_stage_complete = false;
     for directive in directives {
         match directive {
-            MissionStageDirective::IrisWipeLegacyArgument { .. } => has_iris = true,
-            MissionStageDirective::FadeOutLegacyArgument { .. } => has_fade = true,
+            MissionStageDirective::IrisWipeLegacyArgument { .. } => {
+                has_iris = true;
+            },
+            MissionStageDirective::FadeOutLegacyArgument { .. } => {
+                has_fade = true;
+            },
             MissionStageDirective::LevelOver { .. } => has_level_over = true,
             MissionStageDirective::GameOver { .. } => has_game_over = true,
             MissionStageDirective::StayInBlack { .. } => stay_in_black = true,

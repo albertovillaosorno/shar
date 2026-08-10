@@ -79,7 +79,9 @@ impl MissionLevelNpcBinding {
     pub fn runtime_character_id(&self) -> &str { &self.runtime_character_id }
     /// Return canonical character package evidence.
     #[must_use]
-    pub const fn character(&self) -> &MissionCharacterCatalogReference { &self.character }
+    pub const fn character(&self) -> &MissionCharacterCatalogReference {
+        &self.character
+    }
     /// Return the exact choreo identity.
     #[must_use]
     pub fn choreo_id(&self) -> &str { &self.choreo_id }
@@ -88,22 +90,32 @@ impl MissionLevelNpcBinding {
     pub fn locator_id(&self) -> &str { &self.locator_id }
     /// Return the optional exact ambient radius lexeme.
     #[must_use]
-    pub fn ambient_radius_source(&self) -> Option<&str> { self.ambient_radius_source.as_deref() }
+    pub fn ambient_radius_source(&self) -> Option<&str> {
+        self.ambient_radius_source.as_deref()
+    }
     /// Return the bonus mission identity, when applicable.
     #[must_use]
-    pub fn bonus_mission_id(&self) -> Option<&str> { self.bonus_mission_id.as_deref() }
+    pub fn bonus_mission_id(&self) -> Option<&str> {
+        self.bonus_mission_id.as_deref()
+    }
     /// Return the bonus icon identity, when applicable.
     #[must_use]
-    pub fn bonus_icon_id(&self) -> Option<&str> { self.bonus_icon_id.as_deref() }
+    pub fn bonus_icon_id(&self) -> Option<&str> {
+        self.bonus_icon_id.as_deref()
+    }
     /// Return the bonus dialogue identity, when applicable.
     #[must_use]
-    pub fn bonus_dialogue_id(&self) -> Option<&str> { self.bonus_dialogue_id.as_deref() }
+    pub fn bonus_dialogue_id(&self) -> Option<&str> {
+        self.bonus_dialogue_id.as_deref()
+    }
     /// Return the reviewed source race flag, when applicable.
     #[must_use]
     pub const fn bonus_is_race(&self) -> Option<bool> { self.bonus_is_race }
     /// Return the optional alternate bonus icon identity.
     #[must_use]
-    pub fn bonus_alternate_icon_id(&self) -> Option<&str> { self.bonus_alternate_icon_id.as_deref() }
+    pub fn bonus_alternate_icon_id(&self) -> Option<&str> {
+        self.bonus_alternate_icon_id.as_deref()
+    }
 }
 
 /// One waypoint attached to a previously declared level NPC.
@@ -123,7 +135,9 @@ impl MissionLevelNpcWaypointBinding {
     pub const fn source_ordinal(&self) -> usize { self.source_ordinal }
     /// Return the matched declaration source ordinal.
     #[must_use]
-    pub const fn declaration_source_ordinal(&self) -> usize { self.declaration_source_ordinal }
+    pub const fn declaration_source_ordinal(&self) -> usize {
+        self.declaration_source_ordinal
+    }
     /// Return the NPC family.
     #[must_use]
     pub const fn kind(&self) -> MissionLevelNpcKind { self.kind }
@@ -148,10 +162,14 @@ pub struct MissionLevelNpcReport {
 impl MissionLevelNpcReport {
     /// Return declarations in source order.
     #[must_use]
-    pub fn declarations(&self) -> &[MissionLevelNpcBinding] { &self.declarations }
+    pub fn declarations(&self) -> &[MissionLevelNpcBinding] {
+        &self.declarations
+    }
     /// Return waypoints in source order.
     #[must_use]
-    pub fn waypoints(&self) -> &[MissionLevelNpcWaypointBinding] { &self.waypoints }
+    pub fn waypoints(&self) -> &[MissionLevelNpcWaypointBinding] {
+        &self.waypoints
+    }
 }
 
 /// Compile ambient and bonus-mission NPC setup from unscoped level commands.
@@ -253,14 +271,19 @@ fn push_bonus(
     source_ordinal: usize,
     arguments: &[String],
 ) -> Result<(), String> {
-    let (character, choreo, locator, mission, icon, dialogue, is_race, alternate) =
+    let (
+        character, choreo, locator, mission, icon, dialogue, is_race, alternate,
+    ) =
         match arguments {
             [a, b, c, d, e, f, g] => (a, b, c, d, e, f, g, None),
             [a, b, c, d, e, f, g, h] => (a, b, c, d, e, f, g, Some(h)),
             _ => {
                 return Err(
-                    "AddNPCCharacterBonusMission must have seven or eight arguments"
-                        .to_owned(),
+                    concat!(
+                        "AddNPCCharacterBonusMission must have seven or ",
+                        "eight arguments",
+                    )
+                    .to_owned(),
                 );
             },
         };
@@ -351,5 +374,6 @@ fn finite_decimal(value: &str, role: &str) -> Result<String, String> {
 }
 
 #[cfg(test)]
+// jig-ignore-next-line: exact Rust test-module path is indivisible.
 #[path = "../../../../../tests/migration/pipeline/unit/domain/package/mission_level_npc/tests.rs"]
 mod tests;
