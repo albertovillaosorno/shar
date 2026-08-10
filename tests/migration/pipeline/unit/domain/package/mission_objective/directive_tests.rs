@@ -11,7 +11,9 @@
 
 use super::{
     MissionAmbientAnimationCharacter, MissionConversationCameraToken,
-    MissionObjectiveDirective, compile_directive,
+    MissionObjectiveDirective, MissionObjectiveNpcReference,
+    MissionObjectiveSemanticReport, compile_directive,
+    preflight_mission_objective_npc_waypoints,
 };
 
 fn strings(values: &[&str]) -> Vec<String> {
@@ -599,4 +601,57 @@ fn pins_external_semantic_owners_for_objective_commands() -> Result<(), String>
         }
     }
     Ok(())
+}
+
+#[test]
+fn binds_objective_npc_waypoints_to_prior_declaration() -> Result<(), String> {
+    let report = MissionObjectiveSemanticReport::from_route_entries_for_tests(
+        vec![(
+            3,
+            "talkto".to_owned(),
+            vec![
+                MissionObjectiveDirective::Npc(MissionObjectiveNpcReference {
+                    source_ordinal: 4,
+                    npc_id: "marge".to_owned(),
+                    locator_id: "marge_start".to_owned(),
+                    unused_argument: None,
+                }),
+                MissionObjectiveDirective::NpcWaypoint {
+                    source_ordinal: 5,
+                    npc_id: "marge".to_owned(),
+                    locator_id: "marge_walk_1".to_owned(),
+                },
+                MissionObjectiveDirective::NpcWaypoint {
+                    source_ordinal: 6,
+                    npc_id: "marge".to_owned(),
+                    locator_id: "marge_walk_2".to_owned(),
+                },
+            ],
+        )],
+    );
+    let result = preflight_mission_objective_npc_waypoints(&report)?;
+    assert_eq!(result.waypoints().len(), 2);
+    assert_eq!(result.waypoints()[0].declaration_source_ordinal(), 4);
+    assert_eq!(result.waypoints()[0].npc_id(), "marge");
+    assert_eq!(result.waypoints()[0].npc_locator_id(), "marge_start");
+    assert_eq!(result.waypoints()[1].waypoint_locator_id(), "marge_walk_2");
+    Ok(())
+}
+
+#[test]
+fn rejects_objective_waypoint_without_unique_prior_npc() {
+    let report = MissionObjectiveSemanticReport::from_route_entries_for_tests(
+        vec![(
+            3,
+            "talkto".to_owned(),
+            vec![MissionObjectiveDirective::NpcWaypoint {
+                source_ordinal: 5,
+                npc_id: "marge".to_owned(),
+                locator_id: "marge_walk_1".to_owned(),
+            }],
+        )],
+    );
+    let error = preflight_mission_objective_npc_waypoints(&report)
+        .expect_err("orphan objective NPC waypoint must fail");
+    assert!(error.contains("no unique prior declaration"));
 }

@@ -163,11 +163,13 @@ pub use mission_locator_reference::{
 pub use mission_objective::{
     MissionObjectiveBinding, MissionObjectiveCommandBinding,
     MissionObjectiveCommandReport, MissionObjectiveDirective,
-    MissionObjectiveNpcReference, MissionObjectiveParameterBinding,
+    MissionObjectiveNpcReference, MissionObjectiveNpcWaypointBinding,
+    MissionObjectiveNpcWaypointReport, MissionObjectiveParameterBinding,
     MissionObjectiveParameterReport, MissionObjectiveParameters,
     MissionObjectiveReport, MissionObjectiveSemanticBinding,
     MissionObjectiveSemanticReport, MissionRoadArrowBinding,
     MissionRoadArrowMode, preflight_mission_objective_commands,
+    preflight_mission_objective_npc_waypoints,
     preflight_mission_objective_parameters,
     preflight_mission_objective_semantics, preflight_mission_objectives,
 };

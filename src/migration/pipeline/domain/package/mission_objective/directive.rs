@@ -354,6 +354,62 @@ impl MissionObjectiveSemanticBinding {
     }
 }
 
+/// One objective waypoint bound to its prior NPC declaration.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct MissionObjectiveNpcWaypointBinding {
+    source_ordinal: usize,
+    declaration_source_ordinal: usize,
+    npc_id: String,
+    npc_locator_id: String,
+    waypoint_locator_id: String,
+}
+
+impl MissionObjectiveNpcWaypointBinding {
+    /// Return the waypoint source ordinal.
+    #[must_use]
+    pub const fn source_ordinal(&self) -> usize {
+        self.source_ordinal
+    }
+
+    /// Return the matched `AddNPC` source ordinal.
+    #[must_use]
+    pub const fn declaration_source_ordinal(&self) -> usize {
+        self.declaration_source_ordinal
+    }
+
+    /// Return the exact authored NPC identity.
+    #[must_use]
+    pub fn npc_id(&self) -> &str {
+        &self.npc_id
+    }
+
+    /// Return the NPC placement locator identity.
+    #[must_use]
+    pub fn npc_locator_id(&self) -> &str {
+        &self.npc_locator_id
+    }
+
+    /// Return the exact walking waypoint locator identity.
+    #[must_use]
+    pub fn waypoint_locator_id(&self) -> &str {
+        &self.waypoint_locator_id
+    }
+}
+
+/// All objective NPC waypoints resolved to prior declarations.
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub struct MissionObjectiveNpcWaypointReport {
+    waypoints: Vec<MissionObjectiveNpcWaypointBinding>,
+}
+
+impl MissionObjectiveNpcWaypointReport {
+    /// Return waypoint bindings in authored objective order.
+    #[must_use]
+    pub fn waypoints(&self) -> &[MissionObjectiveNpcWaypointBinding] {
+        &self.waypoints
+    }
+}
+
 /// Typed selected objective directives for all projected mission stages.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MissionObjectiveSemanticReport {
@@ -384,6 +440,62 @@ impl MissionObjectiveSemanticReport {
                 .collect(),
         }
     }
+}
+
+/// Bind each objective NPC waypoint to one unique prior `AddNPC`.
+///
+/// # Errors
+///
+/// Fails when a waypoint has no unique prior declaration with the same NPC id.
+pub fn preflight_mission_objective_npc_waypoints(
+    report: &MissionObjectiveSemanticReport,
+) -> Result<MissionObjectiveNpcWaypointReport, String> {
+    let mut waypoints = Vec::new();
+    for objective in report.objectives() {
+        let declarations = objective
+            .directives()
+            .iter()
+            .filter_map(|directive| match directive {
+                MissionObjectiveDirective::Npc(reference) => Some(reference),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        for directive in objective.directives() {
+            let MissionObjectiveDirective::NpcWaypoint {
+                source_ordinal,
+                npc_id,
+                locator_id,
+            } = directive
+            else {
+                continue;
+            };
+            let matching = declarations
+                .iter()
+                .filter(|declaration| {
+                    declaration.npc_id() == npc_id
+                        && declaration.source_ordinal() < *source_ordinal
+                })
+                .copied()
+                .collect::<Vec<_>>();
+            let [declaration] = matching.as_slice() else {
+                return Err(
+                    concat!(
+                        "mission objective NPC waypoint has no unique ",
+                        "prior declaration"
+                    )
+                    .to_owned(),
+                );
+            };
+            waypoints.push(MissionObjectiveNpcWaypointBinding {
+                source_ordinal: *source_ordinal,
+                declaration_source_ordinal: declaration.source_ordinal(),
+                npc_id: npc_id.clone(),
+                npc_locator_id: declaration.locator_id().to_owned(),
+                waypoint_locator_id: locator_id.clone(),
+            });
+        }
+    }
+    Ok(MissionObjectiveNpcWaypointReport { waypoints })
 }
 
 /// Compile selected reviewed objective-scoped command semantics.
