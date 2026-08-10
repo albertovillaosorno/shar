@@ -64,7 +64,9 @@ use crate::domain::{
     MissionP3dReferenceCatalog, MissionReferenceCatalog, PhaseThreePackageIndex,
     PipelineConfig, PipelineError, PipelineOutcome, StageReport, UNREAL_IMPORT_MANIFEST_SCHEMA,
     UNREAL_IMPORT_SUMMARY_SCHEMA, UnrealImportManifest, UnrealSourceEvidence,
-    compile_mission_scope_graphs, preflight_mission_camera_references,
+    compile_mission_scope_graphs,
+    preflight_mission_authored_stage_topology,
+    preflight_mission_camera_references,
     preflight_mission_condition_commands,
     preflight_mission_condition_semantics, preflight_mission_conditions,
     preflight_mission_initialization,
@@ -868,6 +870,14 @@ fn validate_normalized_mission_source(
     let stage_semantics = preflight_mission_stage_semantics(&scopes).map_err(|error| {
         PipelineError::new(format!("mission stage semantic preflight failed: {error}"))
     })?;
+    drop(
+        preflight_mission_authored_stage_topology(&stage_semantics)
+            .map_err(|error| {
+                PipelineError::new(format!(
+                    "mission authored stage topology failed: {error}"
+                ))
+            })?,
+    );
     drop(preflight_mission_stage_transitions(&stage_semantics));
     drop(
         preflight_mission_presentation_references(

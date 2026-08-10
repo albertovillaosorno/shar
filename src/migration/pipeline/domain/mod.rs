@@ -104,6 +104,7 @@ pub use package::{
     UnrealFbxArtifactEvidence, UnrealImportManifest, UnrealNativePlan,
     UnrealSourceEvidence, UnrealTargetKind, compile_mission_scope_graphs,
     compile_dyna_load_package_transition, parse_dyna_load_data,
+    preflight_mission_authored_stage_topology,
     preflight_mission_camera_references,
     preflight_mission_condition_commands,
     preflight_mission_condition_parameters,

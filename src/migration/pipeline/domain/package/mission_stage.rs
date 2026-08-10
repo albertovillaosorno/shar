@@ -482,6 +482,28 @@ impl MissionStageSemanticReport {
     pub fn stages(&self) -> &[MissionStageSemanticBinding] {
         &self.stages
     }
+
+    #[cfg(test)]
+    pub(crate) fn from_topology_entries_for_tests(
+        entries: Vec<(usize, usize, bool, Vec<MissionStageDirective>)>,
+    ) -> Self {
+        Self {
+            stages: entries
+                .into_iter()
+                .map(|(source_ordinal, sequence_ordinal, final_stage, directives)| {
+                    MissionStageSemanticBinding {
+                        source_ordinal,
+                        sequence_ordinal,
+                        kind: MissionStageKind::Standard {
+                            legacy_flags: Some(0),
+                            final_stage,
+                        },
+                        directives,
+                    }
+                })
+                .collect(),
+        }
+    }
 }
 
 /// Compile reviewed stage header and direct-command semantics.
