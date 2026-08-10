@@ -296,6 +296,10 @@ Current task list. Project phases and dated progress are recorded in
           declaration has an exact `<id>i` and `<id>l` sibling and the init
           sibling selects the same mission id; registration order remains
           distinct from unlock, prerequisite, completion, or progression policy.
+        - [x] Bind all 24 reviewed `AddVehicleSelectInfo`
+          registrations through the canonical P3D, vehicle, and character
+          package catalogs. Preserve source identity only; menu availability,
+          ownership, unlock, and runtime selection policy remain unresolved.
         - [ ] Bind stage message indices to canonical localization keys once
           phase-three package evidence publishes text-key mirrors. Package-index
           intake now preserves each structured mirror's id, exact key, source

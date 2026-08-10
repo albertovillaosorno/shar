@@ -277,6 +277,12 @@ Each declaration is validated against exact `<id>i.mfk.json` and
 This establishes source registry order only; it does not create unlock,
 prerequisite, completion, or next-mission edges.
 
+Vehicle-selection registrations are package-backed at the same source boundary.
+All 24 reviewed `AddVehicleSelectInfo` calls resolve their authored P3D path,
+vehicle id, and character id through canonical package catalogs. This validates
+physical source identity only; it does not infer menu visibility, ownership,
+unlock state, or runtime selection behavior.
+
 `BindReward` binds all 90 reviewed P3D references through the shared canonical
 package catalog while preserving its source policy tokens without assigning
 unlock or economy behavior. The level storefront intake also types all 32
