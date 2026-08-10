@@ -68,6 +68,7 @@ use crate::domain::{
     preflight_mission_authored_stage_topology,
     preflight_mission_camera_references,
     preflight_mission_collectible_waypoints,
+    preflight_mission_countdowns,
     preflight_mission_condition_commands,
     preflight_mission_condition_semantics, preflight_mission_conditions,
     preflight_mission_initialization,
@@ -881,6 +882,13 @@ fn validate_normalized_mission_source(
     let stage_semantics = preflight_mission_stage_semantics(&scopes).map_err(|error| {
         PipelineError::new(format!("mission stage semantic preflight failed: {error}"))
     })?;
+    drop(
+        preflight_mission_countdowns(&stage_semantics).map_err(|error| {
+            PipelineError::new(format!(
+                "mission countdown preflight failed: {error}"
+            ))
+        })?,
+    );
     drop(
         preflight_mission_collectible_waypoints(
             &stage_semantics,

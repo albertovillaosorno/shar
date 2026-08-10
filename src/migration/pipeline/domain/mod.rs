@@ -108,6 +108,7 @@ pub use package::{
     preflight_mission_authored_stage_topology,
     preflight_mission_camera_references,
     preflight_mission_collectible_waypoints,
+    preflight_mission_countdowns,
     preflight_mission_condition_commands,
     preflight_mission_condition_parameters,
     preflight_mission_condition_semantics, preflight_mission_conditions,
