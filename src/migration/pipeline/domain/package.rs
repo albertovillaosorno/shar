@@ -35,14 +35,22 @@ pub mod index;
 pub mod dyna_load_data;
 /// Pure Dyna Load Data package transitions.
 pub mod dyna_load_package;
+/// Explicit DynamicZone traversal-history package projection.
+pub mod dynamic_zone_history;
 /// Reviewed mission condition alias preflight.
 pub mod mission_condition;
 /// Typed mission-scope initialization and restart semantics.
 pub mod mission_initialization;
 /// Reviewed mission objective alias preflight.
 pub mod mission_objective;
+/// Level-scoped mission camera component reference resolution.
+pub mod mission_camera_reference;
 /// Canonical explicit mission package-load resolution.
 pub mod mission_load;
+/// Shared authored mission P3D package-reference catalog.
+pub mod mission_p3d_reference;
+/// Canonical mission presentation package-reference resolution.
+pub mod mission_presentation_reference;
 /// Canonical mission locator package-reference resolution.
 pub mod mission_locator;
 /// Typed mission locator-reference binding.
@@ -80,6 +88,10 @@ pub use dyna_load_package::{
     DynaLoadPackageEffect, DynaLoadPackageTransition,
     compile_dyna_load_package_transition,
 };
+pub use dynamic_zone_history::{
+    DynamicZoneTraversalHistory, DynamicZoneTraversalStep,
+    DynamicZoneTriggerState,
+};
 pub use mission_condition::{
     MissionConditionBinding, MissionConditionCommandBinding,
     MissionConditionCommandReport, MissionConditionDirective,
@@ -94,9 +106,23 @@ pub use mission_initialization::{
     MissionInitializationBinding, MissionInitializationDirective,
     MissionInitializationReport, preflight_mission_initialization,
 };
+pub use mission_camera_reference::{
+    MissionCameraCatalog, MissionCameraCatalogEntry,
+    MissionCameraComponentKind, MissionCameraReferenceBinding,
+    MissionCameraReferenceReport, MissionCameraReferenceRole,
+    preflight_mission_camera_references,
+};
 pub use mission_load::{
     MissionPackageLoadBinding, MissionPackageLoadReport,
     preflight_mission_package_loads,
+    preflight_mission_package_loads_with_catalog,
+};
+pub use mission_p3d_reference::{
+    MissionP3dPackageReference, MissionP3dReferenceCatalog,
+};
+pub use mission_presentation_reference::{
+    MissionPresentationPackageReference, MissionPresentationReferenceReport,
+    MissionPresentationRole, preflight_mission_presentation_references,
 };
 pub use mission_locator::{
     MissionLocatorCatalog, MissionLocatorCatalogEntry, MissionLocatorResolution,
