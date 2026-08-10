@@ -99,6 +99,9 @@ pub struct MissionLocatorActivePackages {
 impl MissionLocatorActivePackages {
     /// Build one deterministic active-package context.
     ///
+    /// Preserves first-occurrence source order while deduplicating roots
+    /// case-insensitively. This order is evidence only, not lookup precedence.
+    ///
     /// # Errors
     /// Returns an error when the mission id or a package root is malformed.
     pub fn new(mission_id: String, mut package_roots: Vec<String>) -> Result<Self, String> {
@@ -106,8 +109,8 @@ impl MissionLocatorActivePackages {
         for root in &package_roots {
             validate_package_root(root)?;
         }
-        package_roots.sort_by_key(|value| value.to_ascii_lowercase());
-        package_roots.dedup_by(|left, right| left.eq_ignore_ascii_case(right));
+        let mut seen = std::collections::BTreeSet::new();
+        package_roots.retain(|root| seen.insert(root.to_ascii_lowercase()));
         Ok(Self {
             mission_id,
             package_roots,
@@ -120,7 +123,7 @@ impl MissionLocatorActivePackages {
         &self.mission_id
     }
 
-    /// Return normalized caller-supplied active package roots.
+    /// Return caller-supplied active package roots in first-occurrence order.
     #[must_use]
     pub fn package_roots(&self) -> &[String] {
         &self.package_roots
