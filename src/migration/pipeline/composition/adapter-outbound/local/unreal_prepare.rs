@@ -75,6 +75,7 @@ use crate::domain::{
     preflight_mission_purchase_rewards, preflight_mission_references,
     preflight_mission_reward_references, preflight_mission_script,
     preflight_mission_stage_semantics, preflight_mission_stage_transitions,
+    preflight_mission_traffic_groups,
 };
 
 /// Canonical generated Unreal staging root.
@@ -853,6 +854,14 @@ fn validate_normalized_mission_source(
             .map_err(|error| {
                 PipelineError::new(format!(
                     "mission pedestrian group preflight failed: {error}"
+                ))
+            })?,
+    );
+    drop(
+        preflight_mission_traffic_groups(mission_references, &scopes)
+            .map_err(|error| {
+                PipelineError::new(format!(
+                    "mission traffic group preflight failed: {error}"
                 ))
             })?,
     );
