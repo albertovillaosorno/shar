@@ -557,7 +557,11 @@ fn preflight_cross_source_mission_locators(
                     preflight_mission_ped_group_selections(mission, &groups)
                         .map_err(|error| {
                             PipelineError::new(format!(
-                                "mission pedestrian-group \n                                 selection failed: {error}"
+                                concat!(
+                                    "mission pedestrian-group ",
+                                    "selection failed: {}"
+                                ),
+                                error
                             ))
                         })?,
                 );
