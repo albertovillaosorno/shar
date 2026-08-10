@@ -67,7 +67,8 @@ use crate::domain::{
     compile_mission_scope_graphs, preflight_mission_camera_references,
     preflight_mission_condition_commands,
     preflight_mission_condition_semantics, preflight_mission_conditions,
-    preflight_mission_initialization, preflight_mission_level_locator_references,
+    preflight_mission_initialization,
+    preflight_mission_level_locator_references,
     preflight_mission_level_npcs, preflight_mission_locator_references,
     preflight_mission_objective_commands, preflight_mission_objective_semantics,
     preflight_mission_objectives, preflight_mission_package_loads_with_catalog,
@@ -454,14 +455,17 @@ fn preflight_cross_source_mission_locators(
             ))
         })?;
     for snapshot in &snapshots {
-        let Some(level_context) = level_contexts.get(snapshot.source_path()) else {
+        let Some(level_context) =
+            level_contexts.get(snapshot.source_path())
+        else {
             continue;
         };
-        let scopes = compile_mission_scope_graphs(snapshot.evidence()).map_err(|error| {
-            PipelineError::new(format!(
-                "level locator scope preflight failed: {error}"
-            ))
-        })?;
+        let scopes = compile_mission_scope_graphs(snapshot.evidence())
+            .map_err(|error| {
+                PipelineError::new(format!(
+                    "level locator scope preflight failed: {error}"
+                ))
+            })?;
         let npcs = preflight_mission_level_npcs(mission_references, &scopes)
             .map_err(|error| {
                 PipelineError::new(format!(
@@ -553,7 +557,7 @@ fn preflight_cross_source_mission_locators(
                     preflight_mission_ped_group_selections(mission, &groups)
                         .map_err(|error| {
                             PipelineError::new(format!(
-                                "mission pedestrian-group selection failed: {error}"
+                                "mission pedestrian-group \n                                 selection failed: {error}"
                             ))
                         })?,
                 );
