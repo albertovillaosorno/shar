@@ -307,6 +307,17 @@ impl MissionReferenceCatalog {
     }
 
     #[cfg(test)]
+    pub(crate) fn from_character_and_vehicle_entries_for_tests(
+        characters: &[(&str, &str, &str, &str)],
+        vehicles: &[(&str, &str, &str)],
+    ) -> Self {
+        let mut catalog = Self::from_character_entries_for_tests(characters);
+        let vehicle_catalog = Self::from_vehicle_entries_for_tests(vehicles);
+        catalog.vehicles = vehicle_catalog.vehicles;
+        catalog
+    }
+
+    #[cfg(test)]
     pub(crate) fn from_vehicle_entries_for_tests(
         entries: &[(&str, &str, &str)],
     ) -> Self {
