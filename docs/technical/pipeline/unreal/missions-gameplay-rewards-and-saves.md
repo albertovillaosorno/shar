@@ -239,10 +239,10 @@ versus `simpson` playable-character seller choice. All 26
 `AddPurchaseCarNPCWaypoint` commands bind to a unique prior storefront NPC.
 
 Static level-locator preflight now pairs each of the 16 setup sources with its
-exact `<family>i.mfk.json` to `<family>.mfk.json` load sibling. It binds all 861
-immediate NPC, storefront, waypoint, and bonus-dialogue locator references
-against those authored package roots. The current decoded locator catalog
-resolves 212 and reports 649 as `Missing`, with zero ambiguous outcomes. A
+exact `<family>i.mfk.json` to `<family>.mfk.json` load sibling. It binds all 877
+immediate player-vehicle, NPC, storefront, waypoint, and bonus-dialogue locator
+references against those authored package roots. The current decoded locator
+catalog resolves 212 and reports 665 as `Missing`, with zero ambiguous outcomes. A
 `Missing` result records a decoded-evidence gap; it is not promoted to proof
 that runtime cannot supply the locator. Generic `Locator` references do not gain
 cross-package precedence, while exact `CarStart` dialogue lookups may use the
