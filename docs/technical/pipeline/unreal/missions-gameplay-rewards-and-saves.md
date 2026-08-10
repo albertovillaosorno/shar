@@ -254,8 +254,10 @@ all 78 unique pedestrian model identities resolve uniquely to canonical
 character packages. Traffic preflight compiles 16 group-zero declarations with
 64 `AddTrafficModel` members; all 22 unique traffic models resolve uniquely to
 canonical vehicle packages. Runtime group/model capacity bounds are enforced,
-and the optional traffic big-vehicle integer is preserved exactly. Spawn rates,
-pathing, active pedestrian-group selection, parked-car behavior, and traffic
+and the optional traffic big-vehicle integer is preserved exactly. All 134
+reviewed `UsePedGroup` directives bind to one declared group in the level setup
+source selected by the same level-family context used for mission locators.
+Spawn rates, pathing, runtime group switching, parked-car behavior, and traffic
 zone switching are intentionally not inferred from those declarations.
 
 The purchase car-start locator remains outside this static pass because runtime
