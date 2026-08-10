@@ -282,6 +282,10 @@ Current task list. Project phases and dated progress are recorded in
           across 58 selected sources to one unique prior `AddNPC` declaration
           with the same identity. Preserve exact authored waypoint order and
           repeated locator ids without inferring pathfinding or traversal.
+        - [x] Group all 43 reviewed `StartCountdown` blocks with their
+          175 following `AddToCountdownSequence` entries. Preserve exact
+          sequence/character identities, display tokens, and positive authored
+          durations without assigning token meaning or playback behavior.
     - [ ] Emit lossless `USharMissionDefinition` assets only after the complete
       mission graph passes reference and topology validation.
   - [ ] Compile remaining normalized UI, font, localization, tuning, and other
