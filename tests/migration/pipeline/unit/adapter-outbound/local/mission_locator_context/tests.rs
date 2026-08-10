@@ -314,3 +314,100 @@ fn initial_dynamic_p3d_rejects_unsafe_paths() -> Result<(), String> {
     }
     Ok(())
 }
+
+fn level_setup_evidence() -> Result<MissionScriptEvidence, String> {
+    let value = json!({
+        "schema":"shar-schoenwald.straggler.mission-script.v3",
+        "source_extension":"mfk","route_class":"mission","source_bytes":64,
+        "context_command_count":0,"context_adaptation_count":0,
+        "context_adaptations":[],"context_finding_count":0,
+        "context_findings":[],"statement_count":1,"unique_command_count":1,
+        "load_p3d_reference_count":0,"mission_flow_command_count":0,
+        "vehicle_physics_command_count":0,"semantic_family":"mission-script",
+        "command_counts":{"addambientcharacter":1},
+        "source_statements":["AddAmbientCharacter(\"apu\",\"apu_loc\");"],
+        "p3d_references":[],
+        "command_invocations":[{
+            "ordinal":1,"name":"addambientcharacter",
+            "args_raw":"\"apu\",\"apu_loc\"",
+            "semantic_role":"mission-script",
+            "arguments":["apu","apu_loc"]
+        }]
+    });
+    preflight_mission_script(
+        &serde_json::to_string(&value).map_err(|error| error.to_string())?,
+    )
+}
+
+fn level_setup_snapshot(path: &str) -> Result<MissionLocatorScriptSnapshot, String> {
+    Ok(MissionLocatorScriptSnapshot::new(
+        path.to_owned(),
+        level_setup_evidence()?,
+        Vec::new(),
+    ))
+}
+
+#[test]
+fn pairs_level_setup_with_exact_family_load_sibling() -> Result<(), String> {
+    let snapshots = vec![
+        snapshot(
+            "extracted/game/scripts/missions/level01/level.mfk.json",
+            None,
+            &["extracted/art/missions/level01/level"],
+        )?,
+        level_setup_snapshot(
+            "extracted/game/scripts/missions/level01/leveli.mfk.json",
+        )?,
+        snapshot(
+            "extracted/game/scripts/missions/level01/demo.mfk.json",
+            None,
+            &["extracted/art/missions/level01/demo"],
+        )?,
+        level_setup_snapshot(
+            "extracted/game/scripts/missions/level01/demoi.mfk.json",
+        )?,
+        snapshot(
+            "extracted/game/scripts/missions/level02/e3level.mfk.json",
+            None,
+            &["extracted/art/missions/level02/e3level"],
+        )?,
+        level_setup_snapshot(
+            "extracted/game/scripts/missions/level02/e3leveli.mfk.json",
+        )?,
+    ];
+    let contexts = build_level_locator_source_contexts(&snapshots)?;
+    assert_eq!(contexts.len(), 3);
+    for (init, load, root) in [
+        ("level01/leveli", "level01/level", "level01/level"),
+        ("level01/demoi", "level01/demo", "level01/demo"),
+        ("level02/e3leveli", "level02/e3level", "level02/e3level"),
+    ] {
+        let init = format!("{MISSION_ROOT}{init}.mfk.json");
+        let context = contexts
+            .get(&init)
+            .ok_or_else(|| format!("missing level context for {init}"))?;
+        assert_eq!(
+            context.load_source_path(),
+            format!("{MISSION_ROOT}{load}.mfk.json")
+        );
+        assert_eq!(
+            context.package_roots(),
+            [format!("extracted/art/missions/{root}")]
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn level_setup_without_family_load_sibling_fails_closed() -> Result<(), String> {
+    let snapshots = vec![level_setup_snapshot(
+        "extracted/game/scripts/missions/level01/demoi.mfk.json",
+    )?];
+    let Err(error) = build_level_locator_source_contexts(&snapshots) else {
+        return Err("missing level setup load sibling was accepted".to_owned());
+    };
+    if !error.contains("load sibling is missing") {
+        return Err(format!("unexpected missing-sibling diagnostic: {error}"));
+    }
+    Ok(())
+}
