@@ -11,11 +11,11 @@
 // - Owns:
 //   - Mission P3D package-load semantic unit regressions.
 // - Must-Not:
-//   - Read files or assign behavior to optional load groups.
+//   - Read files or preserve source heaps as target allocation authority.
 // - Allows:
 //   - Synthetic authored P3D paths and package roots.
 // - Split-When:
-//   - Package path and optional-group policies diverge independently.
+//   - Package path and legacy-load provenance policies diverge independently.
 // - Merge-When:
 //   - Mission load binding loses independent semantic policy.
 // - Summary:
@@ -25,7 +25,7 @@
 // - Usage:
 //   - Included only by the mission-load domain module under cfg(test).
 // - Defaults:
-//   - Optional load groups remain opaque strings.
+//   - Optional heap names are validated source provenance only.
 //
 
 use super::*;
@@ -47,11 +47,26 @@ fn rejects_non_p3d_and_traversal_paths() {
 }
 
 #[test]
-fn preserves_valid_optional_group_as_opaque_identity() {
-    assert!(validate_opaque_group("GMA_LEVEL_OTHER").is_ok());
-    assert!(validate_opaque_group(" GMA_LEVEL_OTHER").is_err());
-    assert!(validate_opaque_group("GMA_LEVEL_OTHER_2").is_ok());
-    assert!(validate_opaque_group("GMA\u{0}LEVEL").is_err());
+fn validates_known_legacy_heap_names() {
+    for heap in [
+        "GMA_LEVEL_OTHER",
+        "GMA_LEVEL_MISSION",
+        "GMA_GC_VMM",
+        "GMA_XBOX_SOUND_MEMORY",
+    ] {
+        assert!(validate_legacy_heap(heap).is_ok());
+    }
+    assert!(validate_legacy_heap("GMA_LEVEL_OTHER_2").is_err());
+    assert!(validate_legacy_heap(" GMA_LEVEL_OTHER").is_err());
+}
+
+#[test]
+fn validates_optional_inventory_section_identity() {
+    assert!(validate_inventory_section("MissionOverride").is_ok());
+    assert!(validate_inventory_section("").is_err());
+    assert!(validate_inventory_section(" MissionOverride").is_err());
+    let control = format!("Mission{}Override", char::from(0));
+    assert!(validate_inventory_section(&control).is_err());
 }
 
 #[test]
