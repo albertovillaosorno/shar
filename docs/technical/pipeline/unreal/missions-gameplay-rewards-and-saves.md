@@ -222,9 +222,16 @@ rollback, and recovery topology still requires a complete graph compiler.
 
 `BindReward` binds all 90 reviewed P3D references through the shared canonical
 package catalog while preserving its source policy tokens without assigning
-unlock or economy behavior. Route topology, remaining reward behavior,
-transitions between non-terminal stages, remaining catalog binding, and final
-topology validation remain pending. No mission asset is emitted yet.
+unlock or economy behavior. The level storefront intake also types all 32
+`AddPurchaseCarReward` calls: it preserves action, choreo, position locator,
+trigger radius, and car-start locator, binds each reward NPC to canonical
+character-package evidence, and carries only the source-backed `gil` vendor
+versus `simpson` playable-character seller choice. All 26
+`AddPurchaseCarNPCWaypoint` commands bind to a unique prior storefront NPC.
+Level-locator resolution, merchandise/price, ownership and persistence remain
+separate unresolved boundaries. Route topology, transitions between non-terminal
+stages, remaining catalog binding, and final topology validation remain pending.
+No mission asset is emitted yet.
 
 The v3 evidence records `context_command_count`,
 `context_adaptation_count`, `context_finding_count`, ordered adaptations, and

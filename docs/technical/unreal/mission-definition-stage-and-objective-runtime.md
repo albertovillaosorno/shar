@@ -682,6 +682,14 @@ snapshot. Their failure cannot change the authoritative result.
 
 ## Purchase objectives
 
+Source-level storefront setup is preflighted separately from the target economy.
+The reviewed corpus has 32 `AddPurchaseCarReward` commands and 26 associated
+`AddPurchaseCarNPCWaypoint` commands. Storefront preflight retains the exact
+source action, NPC/choreo, level locator identities, positive trigger-radius
+lexeme, and car-start locator; it binds the NPC model to canonical character
+package evidence and requires each waypoint to follow a unique matching
+storefront. It does not create merchandise, price, ownership, or save authority.
+
 `buy_vehicle` and `buy_costume` complete from an accepted permanent purchase
 or ownership transaction for the exact catalog identity.
 

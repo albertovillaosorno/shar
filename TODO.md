@@ -166,9 +166,16 @@ Current task list. Project phases and dated progress are recorded in
         - [x] Bind all 90 reviewed `BindReward` P3D references through the
           shared canonical package catalog. Preserve the observed five/seven
           argument shapes plus exact reward type, mode, level, optional cost,
-          and vendor tokens as source evidence; do not assign unlock, purchase,
-          seller, or progression behavior. `AddPurchaseCarReward` and final
-          reward transaction semantics remain unresolved.
+          and vendor tokens as source evidence; do not assign unlock or
+          progression behavior from those tokens alone.
+        - [x] Type all 32 reviewed `AddPurchaseCarReward` storefronts from the
+          source loader: preserve exact action, choreo, position locator,
+          trigger-radius lexeme, and car-start locator; bind the reward NPC to a
+          canonical character package and derive only the source-backed `gil`
+          vendor versus `simpson` playable-character seller choice. Bind all 26
+          `AddPurchaseCarNPCWaypoint` calls to a unique prior storefront NPC.
+          Level-locator resolution, merchandise/price, ownership, save-state,
+          and final reward transaction semantics remain unresolved.
         - [x] Bind all 194 reviewed mission-start and animated camera or
           multi-controller component references by exact embedded component
           name,
