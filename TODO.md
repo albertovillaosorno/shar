@@ -278,6 +278,10 @@ Current task list. Project phases and dated progress are recorded in
           declarations. Every authored index is in range and refers backward to
           an existing declaration; preserve the exact index and locator pair
           without inferring route navigation or collectible movement.
+        - [x] Bind all 180 reviewed objective NPC walking waypoints
+          across 58 selected sources to one unique prior `AddNPC` declaration
+          with the same identity. Preserve exact authored waypoint order and
+          repeated locator ids without inferring pathfinding or traversal.
     - [ ] Emit lossless `USharMissionDefinition` assets only after the complete
       mission graph passes reference and topology validation.
   - [ ] Compile remaining normalized UI, font, localization, tuning, and other
