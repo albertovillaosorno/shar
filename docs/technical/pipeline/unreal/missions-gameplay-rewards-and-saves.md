@@ -249,6 +249,12 @@ unique `AddNPC` declaration authored earlier in the same objective. Repeated
 waypoint locators remain repeated source evidence; no pathfinding or traversal
 behavior is synthesized from their order.
 
+Countdown setup is now grouped structurally as well. The corpus has 43 stages
+with one `StartCountdown` each and 175 following `AddToCountdownSequence`
+entries, with three through six entries per block. Sequence and optional
+character identities, display tokens, and positive millisecond durations remain
+exact source evidence; token meaning and runtime playback are not inferred.
+
 `BindReward` binds all 90 reviewed P3D references through the shared canonical
 package catalog while preserving its source policy tokens without assigning
 unlock or economy behavior. The level storefront intake also types all 32
