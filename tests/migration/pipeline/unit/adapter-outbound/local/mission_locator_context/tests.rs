@@ -6,6 +6,27 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Cross-script mission locator context composition unit regressions.
+// - Must-Not:
+//   - Read installed-game files or infer unsupported inventory precedence.
+// - Allows:
+//   - Synthetic mission init/load families and package-root evidence.
+// - Split-When:
+//   - Dynamic package-history fixtures require independent integration tests.
+// - Merge-When:
+//   - Locator context composition no longer has adapter-specific behavior.
+// - Summary:
+//   - Mission locator context adapter tests.
+// - Description:
+//   - Proves exact source pairing, level-family selection, and safe Dyna paths.
+// - Usage:
+//   - Included only by the local mission locator context adapter in tests.
+// - Defaults:
+//   - Missing siblings, cross-level ids, and unsafe paths fail closed.
+//
 
 use std::collections::BTreeSet;
 

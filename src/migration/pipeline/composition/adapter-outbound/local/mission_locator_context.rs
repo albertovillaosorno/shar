@@ -14,8 +14,20 @@
 //   - Read files, resolve locators, or infer runtime package precedence.
 // - Allows:
 //   - Pair selected mission init/load scripts and their level-load family.
+// - Split-When:
+//   - Inventory-section provenance gains an independently reusable model.
+// - Merge-When:
+//   - Prepare-Unreal owns this exact cross-script package context directly.
 // - Summary:
 //   - Mission locator active-package context composition.
+// - Description:
+//   - Preserves level, mission, and initial dynamic package context without
+//     assigning unsupported runtime lookup precedence.
+// - Usage:
+//   - Runs after lossless mission-script and package-load preflight.
+// - Defaults:
+//   - Missing sibling sources, unsafe paths, or ambiguous pairing fail closed.
+//
 
 //! Cross-script active-package context for mission locator resolution.
 
