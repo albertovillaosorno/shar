@@ -203,10 +203,13 @@ Corpus audit also separates that streaming lifetime from duplicate-name lookup:
 18 `bm1_bestside` references face 10 Type-3 `CarStart` candidates under mission
 packages, while none of the 1,100 DynamicZone P3D effects targets a
 `missions/...` package. DynamicZone history therefore cannot establish which
-`bm1_bestside` candidate wins. Authoritative runtime trigger observation and
-duplicate-locator lookup precedence remain pending, along with route, camera,
-reward, transition, remaining catalog binding, and final topology validation.
-No mission asset is emitted yet.
+`bm1_bestside` candidate wins. `BindReward` now binds all 90 reviewed P3D
+references through the shared canonical package catalog while preserving its
+five/seven argument source shapes and reward policy tokens without assigning
+unlock or economy behavior. Authoritative runtime trigger observation and
+duplicate-locator lookup precedence remain pending, along with route, remaining
+reward behavior, transition, remaining catalog binding, and final topology
+validation. No mission asset is emitted yet.
 
 The v3 evidence records `context_command_count`,
 `context_adaptation_count`, `context_finding_count`, ordered adaptations, and
