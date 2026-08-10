@@ -47,7 +47,10 @@ commands, mission reset locators, `SetInitialWalk`, `SetDynaLoadData`,
 `StreetRacePropsLoad`, `StreetRacePropsUnload`, `UsePedGroup`, and mission HUD
 controls. The Dyna Load Data reference was also cross-checked for its documented
 postfix operations: region load/unload, interior load/unload, and World Sphere
-enable/disable. Mod Launcher `AddStageDynaLoadData`, `SetStageDynaLoadData`, and
+enable/disable. The locator reference was additionally cross-checked for
+base-game type-5 `DynamicZone` use of Dyna Load Data; repository corpus evidence,
+not the secondary reference, remains authoritative for package identities and
+counts. Mod Launcher `AddStageDynaLoadData`, `SetStageDynaLoadData`, and
 checkpoint extensions are not treated as evidence that those commands exist in
 the original game corpus. `AddNPC`, `AddObjectiveNPCWaypoint`,
 `AddStageVehicle`, and `ActivateVehicle` were also used as secondary

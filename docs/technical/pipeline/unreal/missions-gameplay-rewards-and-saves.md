@@ -130,6 +130,28 @@ loads fail closed. The optional second `LoadP3DFile` argument remains opaque
 source evidence rather than becoming an asset reference; producer and replay
 summaries now count only the first path argument as P3D evidence.
 
+The same portable P3D path authority now backs typed presentation references.
+All 61 `SetPresentationBitmap` directives across initialization, stage, and
+objective semantics bind to canonical phase-three packages through one shared
+catalog built once per `prepare-unreal` run. The current corpus contains 56
+unique presentation paths, all under the `ui-images/mission-briefing` taxonomy,
+with zero missing bindings or normalized-root collisions. This resolves package
+identity only; presentation timing and drawable selection remain separate
+runtime semantics.
+
+Reviewed initialization camera identities are also package-backed now. Exact
+embedded names from decoded `camera` and `multi_controller` components are
+cataloged with their package/member provenance and source level. Across 194
+`SetMissionStartCameraName`, `SetMissionStartMulticontName`, and animated-camera
+multi-controller references, global name lookup would be ambiguous for 190
+references; qualifying by the exact `levelNN` of the source mission script makes
+all 194 references unique with zero missing candidates. Four unreferenced
+level-local component keys still have multiple candidates; those candidates are
+preserved so a future reference remains explicitly ambiguous. The binding uses
+`(source level, component kind, exact embedded name)` and never falls back to a
+global-name winner. Camera timing, blending, playback, and presentation behavior
+remain separate runtime concerns.
+
 Mission locator intake and typed command binding are package-backed now. The
 local adapter validates both observed `p3d-locator` member families but adds
 only decoded `srr_locator` records to the mission catalog. It reads the embedded
@@ -159,14 +181,32 @@ form whose final region P3D omits its terminal postfix. Dyna P3D paths use the
 source
 format's implicit `art/` root unless that prefix is already explicit, and every
 resulting package root must exist in the phase-three index. Unload
-evidence does not become an active package. Documented Event and CarStart roles
-receive exact type constraints, `ActivateVehicle(..., "NULL", ...)` emits no
-false locator reference, and missing or duplicate candidates remain `Missing` or
-`Ambiguous` instead of acquiring fabricated precedence. Stage/checkpoint Dyna
-transitions still require a separate lifetime model before later-stage package
-context can be refined. Reward, presentation, transition, remaining catalog
-binding, duplicate-locator precedence, and final topology validation are still
-pending. No mission asset is emitted yet.
+evidence does not become an active package. Post-start base-game evidence now
+also includes decoded type-5 `DynamicZone` locators. Their Dyna strings compile
+to the same ordered package-transition model, and `prepare-unreal` requires every
+P3D load effect to bind to an indexed package while treating an absent unload as
+a deterministic remove-if-present effect. The current corpus contains 109 such
+zones, 372 indexed P3D loads, and 728 P3D unloads; 30 unload targets are absent
+from the extracted package index. No observed base-game Dyna string both loads
+and unloads the same P3D target; an order-sensitive conflict remains unresolved
+rather than assuming textual order or grouped unload/load execution. No trigger
+traversal order is inferred from that inventory, and Mod Launcher-only
+stage/checkpoint Dyna commands remain outside base-game authority.
+
+Documented Event and CarStart roles receive exact type constraints,
+`ActivateVehicle(..., "NULL", ...)` emits no false locator reference, and missing
+or duplicate candidates remain `Missing` or `Ambiguous` instead of acquiring
+fabricated precedence. A pure `DynamicZone` traversal-history model can now
+project active packages when an external observer supplies the exact ordered
+zone events; it does not infer entry, retrigger policy, or geometry semantics.
+Corpus audit also separates that streaming lifetime from duplicate-name lookup:
+18 `bm1_bestside` references face 10 Type-3 `CarStart` candidates under mission
+packages, while none of the 1,100 DynamicZone P3D effects targets a
+`missions/...` package. DynamicZone history therefore cannot establish which
+`bm1_bestside` candidate wins. Authoritative runtime trigger observation and
+duplicate-locator lookup precedence remain pending, along with route, camera,
+reward, transition, remaining catalog binding, and final topology validation.
+No mission asset is emitted yet.
 
 The v3 evidence records `context_command_count`,
 `context_adaptation_count`, `context_finding_count`, ordered adaptations, and
