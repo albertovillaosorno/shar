@@ -28,6 +28,8 @@
 //   - Unsupported precedence remains ambiguous.
 //
 
+//! Unit evidence for static level locator reference binding.
+
 use super::*;
 use crate::domain::{
     MissionLocatorCatalogEntry, MissionScopeReport,

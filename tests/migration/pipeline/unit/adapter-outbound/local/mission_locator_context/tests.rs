@@ -28,6 +28,8 @@
 //   - Missing siblings, cross-level ids, and unsafe paths fail closed.
 //
 
+//! Unit evidence for mission locator context composition.
+
 use std::collections::BTreeSet;
 
 use serde_json::json;
