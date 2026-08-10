@@ -53,7 +53,8 @@ use shar_unreal_conversion::domain::PlanBundle;
 use super::mission_camera_catalog::load_mission_camera_catalog;
 use super::mission_locator_catalog::load_mission_locator_catalog;
 use super::mission_locator_context::{
-    MissionLocatorScriptSnapshot, build_mission_locator_source_contexts,
+    MissionLocatorScriptSnapshot, build_level_locator_source_contexts,
+    build_mission_locator_source_contexts,
 };
 use super::unreal_fbx_catalog::{FBX_CATALOG_ROOT, verified_fbx_catalog};
 use crate::adapters::driven::check_cancellation;
@@ -66,8 +67,8 @@ use crate::domain::{
     compile_mission_scope_graphs, preflight_mission_camera_references,
     preflight_mission_condition_commands,
     preflight_mission_condition_semantics, preflight_mission_conditions,
-    preflight_mission_initialization, preflight_mission_level_npcs,
-    preflight_mission_locator_references,
+    preflight_mission_initialization, preflight_mission_level_locator_references,
+    preflight_mission_level_npcs, preflight_mission_locator_references,
     preflight_mission_objective_commands, preflight_mission_objective_semantics,
     preflight_mission_objectives, preflight_mission_package_loads_with_catalog,
     preflight_mission_presentation_references,
@@ -271,6 +272,7 @@ fn source_evidence(
     preflight_cross_source_mission_locators(
         &inputs,
         &evidence,
+        mission_references,
         mission_cameras,
         mission_locators,
         mission_p3d_references,
@@ -367,6 +369,7 @@ fn parallel_source_evidence(
 fn preflight_cross_source_mission_locators(
     inputs: &[SourceEvidenceInput],
     verified: &[UnrealSourceEvidence],
+    mission_references: &MissionReferenceCatalog,
     mission_cameras: &MissionCameraCatalog,
     mission_locators: &MissionLocatorCatalog,
     mission_p3d_references: &MissionP3dReferenceCatalog,
@@ -442,6 +445,51 @@ fn preflight_cross_source_mission_locators(
         .iter()
         .map(|package| package.package_root.to_ascii_lowercase())
         .collect::<BTreeSet<_>>();
+    let level_contexts = build_level_locator_source_contexts(&snapshots)
+        .map_err(|error| {
+            PipelineError::new(format!(
+                "level locator sibling-load context failed: {error}"
+            ))
+        })?;
+    for snapshot in &snapshots {
+        let Some(level_context) = level_contexts.get(snapshot.source_path()) else {
+            continue;
+        };
+        let scopes = compile_mission_scope_graphs(snapshot.evidence()).map_err(|error| {
+            PipelineError::new(format!(
+                "level locator scope preflight failed: {error}"
+            ))
+        })?;
+        let npcs = preflight_mission_level_npcs(mission_references, &scopes)
+            .map_err(|error| {
+                PipelineError::new(format!(
+                    "level locator NPC preflight failed: {error}"
+                ))
+            })?;
+        let purchases = preflight_mission_purchase_rewards(
+            mission_references,
+            &scopes,
+        )
+        .map_err(|error| {
+            PipelineError::new(format!(
+                "level locator storefront preflight failed: {error}"
+            ))
+        })?;
+        drop(
+            preflight_mission_level_locator_references(
+                mission_locators,
+                level_context.package_roots(),
+                &npcs,
+                &purchases,
+            )
+            .map_err(|error| {
+                PipelineError::new(format!(
+                    "level locator reference preflight failed via {}: {error}",
+                    level_context.load_source_path(),
+                ))
+            })?,
+        );
+    }
     let contexts = build_mission_locator_source_contexts(&snapshots, &indexed_package_roots)
         .map_err(|error| {
             PipelineError::new(format!(

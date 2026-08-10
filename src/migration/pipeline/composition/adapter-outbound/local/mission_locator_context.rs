@@ -10,10 +10,12 @@
 // Boundary-Contract:
 // - Owns:
 //   - Cross-script active package context for typed mission locator binding.
+//   - Static sibling-load context for level-init locator binding.
 // - Must-Not:
 //   - Read files, resolve locators, or infer runtime package precedence.
 // - Allows:
 //   - Pair selected mission init/load scripts and their level-load family.
+//   - Pair level-init setup scripts with their exact family load sibling.
 // - Split-When:
 //   - Inventory-section provenance gains an independently reusable model.
 // - Merge-When:
@@ -43,6 +45,16 @@ const MISSION_ROOT: &str = "extracted/game/scripts/missions/";
 const INIT_SUFFIX: &str = "i.mfk.json";
 const LOAD_SUFFIX: &str = "l.mfk.json";
 const LEVEL_LOAD_SUFFIX: &str = "level.mfk.json";
+const LEVEL_INIT_SUFFIX: &str = "i.mfk.json";
+const LEVEL_SETUP_COMMANDS: &[&str] = &[
+    "addambientcharacter",
+    "addambientnpcwaypoint",
+    "addbonusmissionnpcwaypoint",
+    "addnpccharacterbonusmission",
+    "addpurchasecarnpcwaypoint",
+    "addpurchasecarreward",
+    "setbonusmissiondialoguepos",
+];
 
 /// One already-validated mission source plus its explicit P3D package loads.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -94,6 +106,142 @@ impl MissionLocatorSourceContexts {
     pub(super) fn len(&self) -> usize {
         self.by_source_path.len()
     }
+}
+
+/// Static package roots visible while one level-init setup script executes.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct MissionLevelLocatorSourceContext {
+    load_source_path: String,
+    package_roots: Vec<String>,
+}
+
+impl MissionLevelLocatorSourceContext {
+    /// Return the exact paired family load source path.
+    pub(super) fn load_source_path(&self) -> &str {
+        &self.load_source_path
+    }
+
+    /// Return static package roots in authored load order.
+    pub(super) fn package_roots(&self) -> &[String] {
+        &self.package_roots
+    }
+}
+
+/// Static level-locator contexts indexed by exact setup source path.
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub(super) struct MissionLevelLocatorSourceContexts {
+    by_source_path: BTreeMap<String, MissionLevelLocatorSourceContext>,
+}
+
+impl MissionLevelLocatorSourceContexts {
+    /// Return static context for one exact level-init setup source.
+    pub(super) fn get(
+        &self,
+        source_path: &str,
+    ) -> Option<&MissionLevelLocatorSourceContext> {
+        self.by_source_path.get(source_path)
+    }
+
+    /// Return the number of level-init setup sources with static context.
+    #[cfg(test)]
+    pub(super) fn len(&self) -> usize {
+        self.by_source_path.len()
+    }
+}
+
+/// Pair every level-init setup source with its exact family load sibling.
+///
+/// # Errors
+///
+/// Fails when source identities collide, a setup source does not follow the
+/// `<family>i.mfk.json` convention, or its `<family>.mfk.json` sibling is
+/// missing or publishes no P3D package roots.
+pub(super) fn build_level_locator_source_contexts(
+    snapshots: &[MissionLocatorScriptSnapshot],
+) -> Result<MissionLevelLocatorSourceContexts, String> {
+    let mut by_path = BTreeMap::new();
+    for snapshot in snapshots {
+        if by_path
+            .insert(snapshot.source_path.as_str(), snapshot)
+            .is_some()
+        {
+            return Err(
+                "level locator context source path is duplicated".to_owned(),
+            );
+        }
+    }
+    let available = by_path.keys().copied().collect::<BTreeSet<_>>();
+    let mut contexts = BTreeMap::new();
+    for snapshot in snapshots {
+        if !has_level_locator_setup(&snapshot.evidence) {
+            continue;
+        }
+        let load_source_path = level_setup_load_path(
+            &snapshot.source_path,
+            &available,
+        )?;
+        let load = by_path
+            .get(load_source_path.as_str())
+            .ok_or_else(|| {
+                "level locator load sibling disappeared".to_owned()
+            })?;
+        if load.package_roots.is_empty() {
+            return Err(
+                "level locator load sibling has no P3D packages".to_owned(),
+            );
+        }
+        let context = MissionLevelLocatorSourceContext {
+            load_source_path,
+            package_roots: load.package_roots.clone(),
+        };
+        if contexts
+            .insert(snapshot.source_path.clone(), context)
+            .is_some()
+        {
+            return Err("level locator setup source was rebound".to_owned());
+        }
+    }
+    Ok(MissionLevelLocatorSourceContexts {
+        by_source_path: contexts,
+    })
+}
+
+fn has_level_locator_setup(evidence: &MissionScriptEvidence) -> bool {
+    evidence.invocations().iter().any(|invocation| {
+        LEVEL_SETUP_COMMANDS.contains(&invocation.name())
+    })
+}
+
+fn level_setup_load_path(
+    source_path: &str,
+    available: &BTreeSet<&str>,
+) -> Result<String, String> {
+    let relative = source_path
+        .strip_prefix(MISSION_ROOT)
+        .ok_or_else(|| {
+            "level locator setup source is outside mission root".to_owned()
+        })?;
+    let (level_dir, file_name) = relative
+        .split_once('/')
+        .ok_or_else(|| {
+            "level locator setup source has no level directory".to_owned()
+        })?;
+    if level_dir.is_empty() || file_name.contains('/') {
+        return Err("level locator setup source path is malformed".to_owned());
+    }
+    let family = file_name
+        .strip_suffix(LEVEL_INIT_SUFFIX)
+        .ok_or_else(|| {
+            "level locator setup source is not a family init script".to_owned()
+        })?;
+    if family.is_empty() {
+        return Err("level locator setup family is empty".to_owned());
+    }
+    let load_path = format!("{MISSION_ROOT}{level_dir}/{family}.mfk.json");
+    if !available.contains(load_path.as_str()) {
+        return Err("level locator family load sibling is missing".to_owned());
+    }
+    Ok(load_path)
 }
 
 /// Build deterministic active-package context from validated script snapshots.
