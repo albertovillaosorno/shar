@@ -101,6 +101,7 @@ pub use package::{
     MissionVehicleReference, PackageMemberRef, PackageRole,
     PhaseThreePackageIndex, PhaseThreePackageMember, PhaseThreePackagePlan,
     PhaseThreePackagePlanner, PhaseThreePackageRow, PhaseThreePackageSelector,
+    PhaseThreeTextKey,
     UNREAL_IMPORT_MANIFEST_SCHEMA, UNREAL_IMPORT_SUMMARY_SCHEMA,
     UnrealFbxArtifactEvidence, UnrealImportManifest, UnrealNativePlan,
     UnrealSourceEvidence, UnrealTargetKind, compile_mission_scope_graphs,

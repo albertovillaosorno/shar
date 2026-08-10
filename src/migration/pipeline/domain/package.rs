@@ -98,7 +98,7 @@ pub mod unreal_manifest;
 )]
 pub use index::{
     PackageMemberRef, PackageRole, PhaseThreePackageIndex,
-    PhaseThreePackageMember, PhaseThreePackageRow,
+    PhaseThreePackageMember, PhaseThreePackageRow, PhaseThreeTextKey,
 };
 pub use dyna_load_data::{
     DynaLoadData, DynaLoadOperation, DynaLoadOperationKind, parse_dyna_load_data,

@@ -1062,6 +1062,16 @@ fn accepts_canonical_structured_text_key_json() -> Result<(), String> {
     if row.text_key_ids != ["text-a".to_owned()] {
         return Err("canonical text-key mirror changed id intake".to_owned());
     }
+    let [key] = row.text_keys() else {
+        return Err("canonical text-key mirror was not preserved".to_owned());
+    };
+    if key.id != "text-a"
+        || key.key != "HELLO"
+        || key.source_unit_id != "model-a"
+        || key.subcategory != "cars/character-rigs/homer-v"
+    {
+        return Err("canonical text-key mirror evidence drifted".to_owned());
+    }
     Ok(())
 }
 
