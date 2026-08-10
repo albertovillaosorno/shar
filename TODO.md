@@ -188,9 +188,9 @@ Current task list. Project phases and dated progress are recorded in
           tokens, and bind all 472 ambient plus 45 bonus NPC waypoints to one
           unique prior matching declaration. Bind their 716 immediate generic
           spawn/waypoint lookups and all 87 exact `CarStart` dialogue-position
-          lookups against the same static level-load context. Across all 861
+          lookups against the same static level-load context. Across all 877
           immediate level-setup locator references, current decoded evidence
-          yields 212 resolved, 649 `Missing`, and zero ambiguous outcomes. Keep
+          yields 212 resolved, 665 `Missing`, and zero ambiguous outcomes. Keep
           decoded-evidence gaps explicit and keep path navigation semantics as a
           separate unresolved boundary.
         - [x] Bind all 194 reviewed mission-start and animated camera or
