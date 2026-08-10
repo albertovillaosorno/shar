@@ -158,7 +158,8 @@ pub use mission_objective::{
 };
 pub use mission_purchase_reward::{
     MissionPurchaseRewardBinding, MissionPurchaseRewardReport,
-    MissionPurchaseRewardSeller, preflight_mission_purchase_rewards,
+    MissionPurchaseRewardSeller, MissionPurchaseRewardWaypointBinding,
+    preflight_mission_purchase_rewards,
 };
 pub use mission_reference::{
     MissionCharacterCatalogReference, MissionParticipantReference,

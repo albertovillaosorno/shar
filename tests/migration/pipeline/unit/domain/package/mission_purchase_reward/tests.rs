@@ -134,3 +134,75 @@ fn rejects_missing_character_package() {
     ];
     assert!(push_binding(&mut bindings, &catalog(), 3, &arguments).is_err());
 }
+
+#[test]
+fn binds_waypoint_to_prior_reward_npc() -> Result<(), String> {
+    let mut purchases = Vec::new();
+    push_binding(
+        &mut purchases,
+        &catalog(),
+        10,
+        &[
+            "gil".to_owned(),
+            "gil".to_owned(),
+            "npd".to_owned(),
+            "gil_loc".to_owned(),
+            "1.3".to_owned(),
+            "gil_car".to_owned(),
+        ],
+    )?;
+    let mut waypoints = Vec::new();
+    push_waypoint_binding(
+        &mut waypoints,
+        &purchases,
+        11,
+        &["gil".to_owned(), "gil_walk1".to_owned()],
+    )?;
+    let [binding] = waypoints.as_slice() else {
+        return Err("purchase waypoint binding count changed".to_owned());
+    };
+    assert_eq!(binding.source_ordinal(), 11);
+    assert_eq!(binding.purchase_source_ordinal(), 10);
+    assert_eq!(binding.character_id(), "gil");
+    assert_eq!(binding.reward_character_id(), "reward_gil");
+    assert_eq!(binding.waypoint_locator_id(), "gil_walk1");
+    Ok(())
+}
+
+#[test]
+fn rejects_waypoint_without_prior_storefront() -> Result<(), String> {
+    let mut purchases = Vec::new();
+    push_binding(
+        &mut purchases,
+        &catalog(),
+        20,
+        &[
+            "gil".to_owned(),
+            "gil".to_owned(),
+            "npd".to_owned(),
+            "gil_loc".to_owned(),
+            "1.3".to_owned(),
+            "gil_car".to_owned(),
+        ],
+    )?;
+    let mut waypoints = Vec::new();
+    assert!(
+        push_waypoint_binding(
+            &mut waypoints,
+            &purchases,
+            19,
+            &["gil".to_owned(), "gil_walk1".to_owned()],
+        )
+        .is_err()
+    );
+    assert!(
+        push_waypoint_binding(
+            &mut waypoints,
+            &purchases,
+            21,
+            &["barney".to_owned(), "barney_walk1".to_owned()],
+        )
+        .is_err()
+    );
+    Ok(())
+}

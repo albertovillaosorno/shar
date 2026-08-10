@@ -110,17 +110,66 @@ impl MissionPurchaseRewardBinding {
     }
 }
 
+/// One reviewed `AddPurchaseCarNPCWaypoint` binding.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct MissionPurchaseRewardWaypointBinding {
+    source_ordinal: usize,
+    purchase_source_ordinal: usize,
+    character_id: String,
+    reward_character_id: String,
+    waypoint_locator_id: String,
+}
+
+impl MissionPurchaseRewardWaypointBinding {
+    /// Return the waypoint source statement ordinal.
+    #[must_use]
+    pub const fn source_ordinal(&self) -> usize {
+        self.source_ordinal
+    }
+
+    /// Return the preceding storefront source statement ordinal.
+    #[must_use]
+    pub const fn purchase_source_ordinal(&self) -> usize {
+        self.purchase_source_ordinal
+    }
+
+    /// Return the exact authored source character identity.
+    #[must_use]
+    pub fn character_id(&self) -> &str {
+        &self.character_id
+    }
+
+    /// Return the source-derived runtime reward-NPC identity.
+    #[must_use]
+    pub fn reward_character_id(&self) -> &str {
+        &self.reward_character_id
+    }
+
+    /// Return the exact authored level locator identity.
+    #[must_use]
+    pub fn waypoint_locator_id(&self) -> &str {
+        &self.waypoint_locator_id
+    }
+}
+
 /// All reviewed purchase-car storefront bindings for one normalized source.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MissionPurchaseRewardReport {
     bindings: Vec<MissionPurchaseRewardBinding>,
+    waypoints: Vec<MissionPurchaseRewardWaypointBinding>,
 }
 
 impl MissionPurchaseRewardReport {
-    /// Return bindings in source statement order.
+    /// Return storefront bindings in source statement order.
     #[must_use]
     pub fn bindings(&self) -> &[MissionPurchaseRewardBinding] {
         &self.bindings
+    }
+
+    /// Return reward-NPC waypoint bindings in source statement order.
+    #[must_use]
+    pub fn waypoints(&self) -> &[MissionPurchaseRewardWaypointBinding] {
+        &self.waypoints
     }
 }
 
@@ -157,7 +206,28 @@ pub fn preflight_mission_purchase_rewards(
             command.arguments(),
         )?;
     }
-    Ok(MissionPurchaseRewardReport { bindings })
+    let mut waypoints = Vec::new();
+    for command in scopes
+        .unscoped_commands()
+        .iter()
+        .filter(|command| command.name() == "addpurchasecarnpcwaypoint")
+    {
+        if command.semantic_role() != "mission-script" {
+            return Err(
+                "AddPurchaseCarNPCWaypoint semantic role changed".to_owned()
+            );
+        }
+        push_waypoint_binding(
+            &mut waypoints,
+            &bindings,
+            command.source_ordinal(),
+            command.arguments(),
+        )?;
+    }
+    Ok(MissionPurchaseRewardReport {
+        bindings,
+        waypoints,
+    })
 }
 
 fn push_binding(
@@ -201,6 +271,54 @@ fn push_binding(
         car_start_locator_id,
     });
     Ok(())
+}
+
+fn push_waypoint_binding(
+    waypoints: &mut Vec<MissionPurchaseRewardWaypointBinding>,
+    purchases: &[MissionPurchaseRewardBinding],
+    source_ordinal: usize,
+    arguments: &[String],
+) -> Result<(), String> {
+    let [character, waypoint] = arguments else {
+        return Err(
+            "AddPurchaseCarNPCWaypoint must have two arguments".to_owned()
+        );
+    };
+    let character_id = required_waypoint_token(character, "reward character")?;
+    let waypoint_locator_id = required_waypoint_token(waypoint, "locator")?;
+    let matching = purchases
+        .iter()
+        .filter(|purchase| {
+            purchase.source_ordinal() < source_ordinal
+                && purchase.character().source_id() == character_id
+        })
+        .collect::<Vec<_>>();
+    let [purchase] = matching.as_slice() else {
+        return Err(
+            "AddPurchaseCarNPCWaypoint has no unique prior storefront"
+                .to_owned(),
+        );
+    };
+    waypoints.push(MissionPurchaseRewardWaypointBinding {
+        source_ordinal,
+        purchase_source_ordinal: purchase.source_ordinal(),
+        character_id,
+        reward_character_id: purchase.reward_character_id().to_owned(),
+        waypoint_locator_id,
+    });
+    Ok(())
+}
+
+fn required_waypoint_token(value: &str, role: &str) -> Result<String, String> {
+    if value.is_empty()
+        || value != value.trim()
+        || value.chars().any(char::is_control)
+    {
+        return Err(format!(
+            "AddPurchaseCarNPCWaypoint {role} is malformed"
+        ));
+    }
+    Ok(value.to_owned())
 }
 
 fn required_token(value: &str, role: &str) -> Result<String, String> {
