@@ -51,6 +51,8 @@ pub mod mission_load;
 pub mod mission_p3d_reference;
 /// Canonical mission presentation package-reference resolution.
 pub mod mission_presentation_reference;
+/// Canonical BindReward package-reference resolution.
+pub mod mission_reward_reference;
 /// Canonical mission locator package-reference resolution.
 pub mod mission_locator;
 /// Typed mission locator-reference binding.
@@ -122,6 +124,10 @@ pub use mission_p3d_reference::{
 pub use mission_presentation_reference::{
     MissionPresentationPackageReference, MissionPresentationReferenceReport,
     MissionPresentationRole, preflight_mission_presentation_references,
+};
+pub use mission_reward_reference::{
+    MissionRewardPackageReference, MissionRewardReferenceReport,
+    preflight_mission_reward_references,
 };
 pub use mission_locator::{
     MissionLocatorCatalog, MissionLocatorCatalogEntry, MissionLocatorResolution,
