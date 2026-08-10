@@ -9,13 +9,15 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Source-backed ambient and bonus-mission NPC declarations and waypoints.
+//   - Source-backed ambient and bonus-mission NPC declarations, waypoints,
+//     and bonus dialogue locator tuples.
 // - Must-Not:
 //   - Resolve level locators without level inventory context.
 //   - Infer navigation, dialogue, reward, or progression behavior.
 // - Allows:
 //   - Bind authored NPC models to canonical character package evidence.
 //   - Preserve source-derived runtime names and exact level locator identities.
+//   - Type bonus dialogue locator tuples that runtime resolves as `CarStart`.
 // - Split-When:
 //   - Level-locator binding or NPC navigation gains an independent schema.
 // - Merge-When:
@@ -30,7 +32,7 @@
 //   - Malformed, unresolved, reordered, or ambiguous NPC setup fails closed.
 //
 
-//! Source-backed ambient and bonus-mission NPC setup.
+//! Source-backed ambient and bonus-mission NPC and dialogue-locator setup.
 
 use super::{
     MissionCharacterCatalogReference, MissionReferenceCatalog,
@@ -118,6 +120,40 @@ impl MissionLevelNpcBinding {
     }
 }
 
+/// One source-backed bonus-mission dialogue locator tuple.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct MissionBonusDialogueLocatorBinding {
+    source_ordinal: usize,
+    declaration_source_ordinal: usize,
+    mission_id: String,
+    player_locator_id: String,
+    npc_locator_id: String,
+    vehicle_locator_id: String,
+}
+
+impl MissionBonusDialogueLocatorBinding {
+    /// Return the source command ordinal.
+    #[must_use]
+    pub const fn source_ordinal(&self) -> usize { self.source_ordinal }
+    /// Return the matched prior bonus declaration ordinal.
+    #[must_use]
+    pub const fn declaration_source_ordinal(&self) -> usize {
+        self.declaration_source_ordinal
+    }
+    /// Return the exact bonus mission identity.
+    #[must_use]
+    pub fn mission_id(&self) -> &str { &self.mission_id }
+    /// Return the player-side `CarStart` locator identity.
+    #[must_use]
+    pub fn player_locator_id(&self) -> &str { &self.player_locator_id }
+    /// Return the NPC-side `CarStart` locator identity.
+    #[must_use]
+    pub fn npc_locator_id(&self) -> &str { &self.npc_locator_id }
+    /// Return the vehicle `CarStart` locator identity.
+    #[must_use]
+    pub fn vehicle_locator_id(&self) -> &str { &self.vehicle_locator_id }
+}
+
 /// One waypoint attached to a previously declared level NPC.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MissionLevelNpcWaypointBinding {
@@ -157,6 +193,7 @@ impl MissionLevelNpcWaypointBinding {
 pub struct MissionLevelNpcReport {
     declarations: Vec<MissionLevelNpcBinding>,
     waypoints: Vec<MissionLevelNpcWaypointBinding>,
+    dialogue_locators: Vec<MissionBonusDialogueLocatorBinding>,
 }
 
 impl MissionLevelNpcReport {
@@ -170,6 +207,11 @@ impl MissionLevelNpcReport {
     pub fn waypoints(&self) -> &[MissionLevelNpcWaypointBinding] {
         &self.waypoints
     }
+    /// Return bonus dialogue locator tuples in source order.
+    #[must_use]
+    pub fn dialogue_locators(&self) -> &[MissionBonusDialogueLocatorBinding] {
+        &self.dialogue_locators
+    }
 }
 
 /// Compile ambient and bonus-mission NPC setup from unscoped level commands.
@@ -177,7 +219,8 @@ impl MissionLevelNpcReport {
 /// # Errors
 ///
 /// Returns an error for role/shape drift, malformed values, unresolved
-/// character models, or a waypoint without one unique prior matching NPC.
+/// character models, or source references without one unique prior matching
+/// NPC/bonus declaration.
 pub fn preflight_mission_level_npcs(
     catalog: &MissionReferenceCatalog,
     scopes: &MissionScopeReport,
@@ -222,7 +265,66 @@ pub fn preflight_mission_level_npcs(
             command.arguments(),
         )?;
     }
-    Ok(MissionLevelNpcReport { declarations, waypoints })
+    let mut dialogue_locators = Vec::new();
+    for command in scopes.unscoped_commands() {
+        if command.name() != "setbonusmissiondialoguepos" {
+            continue;
+        }
+        if command.semantic_role() != "mission-script" {
+            return Err(
+                "bonus dialogue locator semantic role changed".to_owned(),
+            );
+        }
+        push_bonus_dialogue_locators(
+            &mut dialogue_locators,
+            &declarations,
+            command.source_ordinal(),
+            command.arguments(),
+        )?;
+    }
+
+    Ok(MissionLevelNpcReport {
+        declarations,
+        waypoints,
+        dialogue_locators,
+    })
+}
+
+fn push_bonus_dialogue_locators(
+    out: &mut Vec<MissionBonusDialogueLocatorBinding>,
+    declarations: &[MissionLevelNpcBinding],
+    source_ordinal: usize,
+    arguments: &[String],
+) -> Result<(), String> {
+    let [mission, player, npc, vehicle] = arguments else {
+        return Err(
+            "SetBonusMissionDialoguePos must have four arguments".to_owned(),
+        );
+    };
+    let mission_id = token(mission, "bonus dialogue mission")?;
+    let matching = declarations
+        .iter()
+        .filter(|item| {
+            item.kind() == MissionLevelNpcKind::BonusMission
+                && item.source_ordinal() < source_ordinal
+                && item.bonus_mission_id() == Some(mission_id.as_str())
+        })
+        .collect::<Vec<_>>();
+    let [declaration] = matching.as_slice() else {
+        return Err(
+            "bonus dialogue locators have no unique prior mission declaration"
+                .to_owned(),
+        );
+    };
+    out.push(MissionBonusDialogueLocatorBinding {
+        source_ordinal,
+        declaration_source_ordinal: declaration.source_ordinal(),
+        mission_id,
+        player_locator_id: token(player, "bonus dialogue player locator")?,
+        npc_locator_id: token(npc, "bonus dialogue NPC locator")?,
+        vehicle_locator_id: token(vehicle, "bonus dialogue vehicle locator")?,
+    });
+    Ok(())
 }
 
 fn push_ambient(
