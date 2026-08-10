@@ -490,8 +490,13 @@ impl MissionStageSemanticReport {
         Self {
             stages: entries
                 .into_iter()
-                .map(|(source_ordinal, sequence_ordinal, final_stage, directives)| {
-                    MissionStageSemanticBinding {
+                .map(
+                    |(
+                        source_ordinal,
+                        sequence_ordinal,
+                        final_stage,
+                        directives,
+                    )| MissionStageSemanticBinding {
                         source_ordinal,
                         sequence_ordinal,
                         kind: MissionStageKind::Standard {
@@ -499,8 +504,8 @@ impl MissionStageSemanticReport {
                             final_stage,
                         },
                         directives,
-                    }
-                })
+                    },
+                )
                 .collect(),
         }
     }
