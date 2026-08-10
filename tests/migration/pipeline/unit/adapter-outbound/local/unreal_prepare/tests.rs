@@ -48,7 +48,8 @@ use super::{
     verify_stable_source,
 };
 use crate::domain::{
-    MISSION_SCRIPT_SCHEMA, MissionReferenceCatalog, PhaseThreePackageIndex, PipelineOutcome,
+    MISSION_SCRIPT_SCHEMA, MissionP3dReferenceCatalog, MissionReferenceCatalog,
+    PipelineOutcome,
     UNREAL_IMPORT_MANIFEST_SCHEMA, UNREAL_IMPORT_SUMMARY_SCHEMA, UnrealSourceEvidence,
 };
 
@@ -107,7 +108,7 @@ fn parallel_source_verification_reports_first_manifest_error() -> Result<(), Str
     let result = parallel_source_evidence(
         &inputs,
         &MissionReferenceCatalog::empty_for_tests(),
-        &PhaseThreePackageIndex::default(),
+        &MissionP3dReferenceCatalog::empty_for_tests(),
     );
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     let Err(error) = result else {
@@ -211,7 +212,7 @@ fn parallel_source_verification_preserves_manifest_order() -> Result<(), String>
     let result = parallel_source_evidence(
         &inputs,
         &MissionReferenceCatalog::empty_for_tests(),
-        &PhaseThreePackageIndex::default(),
+        &MissionP3dReferenceCatalog::empty_for_tests(),
     )
     .map_err(|error| error.to_string());
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
@@ -261,7 +262,7 @@ fn validate_test_mission_source(
         origin,
         bytes,
         &MissionReferenceCatalog::empty_for_tests(),
-        &PhaseThreePackageIndex::default(),
+        &MissionP3dReferenceCatalog::empty_for_tests(),
     )
 }
 

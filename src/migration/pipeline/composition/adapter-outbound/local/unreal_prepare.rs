@@ -50,6 +50,7 @@ use serde_json::{Map, Value};
 use shar_sha256::{Sha256, digest_hex};
 use shar_unreal_conversion::domain::PlanBundle;
 
+use super::mission_camera_catalog::load_mission_camera_catalog;
 use super::mission_locator_catalog::load_mission_locator_catalog;
 use super::mission_locator_context::{
     MissionLocatorScriptSnapshot, build_mission_locator_source_contexts,
@@ -58,14 +59,17 @@ use super::unreal_fbx_catalog::{FBX_CATALOG_ROOT, verified_fbx_catalog};
 use crate::adapters::driven::check_cancellation;
 use crate::adapters::driven::local::progress::StageProgress;
 use crate::domain::{
-    MISSION_SCRIPT_SCHEMA, MissionLocatorCatalog, MissionReferenceCatalog, PhaseThreePackageIndex,
+    MISSION_SCRIPT_SCHEMA, MissionCameraCatalog, MissionLocatorCatalog,
+    MissionP3dReferenceCatalog, MissionReferenceCatalog, PhaseThreePackageIndex,
     PipelineConfig, PipelineError, PipelineOutcome, StageReport, UNREAL_IMPORT_MANIFEST_SCHEMA,
     UNREAL_IMPORT_SUMMARY_SCHEMA, UnrealImportManifest, UnrealSourceEvidence,
-    compile_mission_scope_graphs, preflight_mission_condition_commands,
+    compile_mission_scope_graphs, preflight_mission_camera_references,
+    preflight_mission_condition_commands,
     preflight_mission_condition_semantics, preflight_mission_conditions,
     preflight_mission_initialization, preflight_mission_locator_references,
     preflight_mission_objective_commands, preflight_mission_objective_semantics,
-    preflight_mission_objectives, preflight_mission_package_loads, preflight_mission_references,
+    preflight_mission_objectives, preflight_mission_package_loads_with_catalog,
+    preflight_mission_presentation_references, preflight_mission_references,
     preflight_mission_script, preflight_mission_stage_semantics,
 };
 
@@ -105,7 +109,15 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
     let index = PhaseThreePackageIndex::read_for_unreal(&index_path).map_err(|error| {
         PipelineError::new(format!("Unreal package-index intake failed: {error}"))
     })?;
+    let mission_cameras =
+        load_mission_camera_catalog(&index, &config.extracted_root)?;
     let mission_locators = load_mission_locator_catalog(&index, &config.extracted_root)?;
+    let mission_p3d_references =
+        MissionP3dReferenceCatalog::from_package_index(&index).map_err(|error| {
+            PipelineError::new(format!(
+                "mission P3D reference catalog intake failed: {error}"
+            ))
+        })?;
     let mission_references =
         MissionReferenceCatalog::from_package_index(&index).map_err(|error| {
             PipelineError::new(format!("mission reference catalog intake failed: {error}"))
@@ -114,7 +126,9 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         &manifest_text,
         config,
         &mission_references,
+        &mission_cameras,
         &mission_locators,
+        &mission_p3d_references,
         &index,
     )?;
     let evidence = retain_importable_evidence(&index, evidence);
@@ -198,7 +212,9 @@ fn source_evidence(
     manifest: &str,
     config: &PipelineConfig,
     mission_references: &MissionReferenceCatalog,
+    mission_cameras: &MissionCameraCatalog,
     mission_locators: &MissionLocatorCatalog,
+    mission_p3d_references: &MissionP3dReferenceCatalog,
     index: &PhaseThreePackageIndex,
 ) -> PipelineOutcome<Vec<UnrealSourceEvidence>> {
     let source_count = manifest
@@ -244,8 +260,19 @@ fn source_evidence(
             future_normalization: manifest_string(&row, "future_normalization", line_number)?,
         });
     }
-    let evidence = parallel_source_evidence(&inputs, mission_references, index)?;
-    preflight_cross_source_mission_locators(&inputs, &evidence, mission_locators, index)?;
+    let evidence = parallel_source_evidence(
+        &inputs,
+        mission_references,
+        mission_p3d_references,
+    )?;
+    preflight_cross_source_mission_locators(
+        &inputs,
+        &evidence,
+        mission_cameras,
+        mission_locators,
+        mission_p3d_references,
+        index,
+    )?;
     Ok(evidence)
 }
 
@@ -273,7 +300,7 @@ struct SourceEvidenceInput {
 fn parallel_source_evidence(
     inputs: &[SourceEvidenceInput],
     mission_references: &MissionReferenceCatalog,
-    index: &PhaseThreePackageIndex,
+    mission_p3d_references: &MissionP3dReferenceCatalog,
 ) -> PipelineOutcome<Vec<UnrealSourceEvidence>> {
     if inputs.is_empty() {
         return Ok(Vec::new());
@@ -289,15 +316,18 @@ fn parallel_source_evidence(
             let worker_next = &next;
             let worker_inputs = inputs;
             let worker_mission_references = mission_references;
-            let worker_index = index;
+            let worker_mission_p3d_references = mission_p3d_references;
             let _handle = scope.spawn(move || {
                 loop {
                     let position = worker_next.fetch_add(1, Ordering::Relaxed);
                     let Some(input) = worker_inputs.get(position) else {
                         break;
                     };
-                    let result =
-                        read_source_evidence(input, worker_mission_references, worker_index);
+                    let result = read_source_evidence(
+                        input,
+                        worker_mission_references,
+                        worker_mission_p3d_references,
+                    );
                     if worker_sender
                         .send((position, input.id.clone(), result))
                         .is_err()
@@ -334,7 +364,9 @@ fn parallel_source_evidence(
 fn preflight_cross_source_mission_locators(
     inputs: &[SourceEvidenceInput],
     verified: &[UnrealSourceEvidence],
+    mission_cameras: &MissionCameraCatalog,
     mission_locators: &MissionLocatorCatalog,
+    mission_p3d_references: &MissionP3dReferenceCatalog,
     index: &PhaseThreePackageIndex,
 ) -> PipelineOutcome<()> {
     let mut verified_by_id = BTreeMap::new();
@@ -381,7 +413,11 @@ fn preflight_cross_source_mission_locators(
                 "mission locator source semantic preflight failed: {error}"
             ))
         })?;
-        let loads = preflight_mission_package_loads(&evidence, index).map_err(|error| {
+        let loads = preflight_mission_package_loads_with_catalog(
+            &evidence,
+            mission_p3d_references,
+        )
+        .map_err(|error| {
             PipelineError::new(format!(
                 "mission locator source package-load preflight failed: {error}"
             ))
@@ -421,6 +457,18 @@ fn preflight_cross_source_mission_locators(
                 "mission locator initialization preflight failed: {error}"
             ))
         })?;
+        drop(
+            preflight_mission_camera_references(
+                snapshot.source_path(),
+                mission_cameras,
+                &initialization,
+            )
+            .map_err(|error| {
+                PipelineError::new(format!(
+                    "mission camera reference preflight failed: {error}"
+                ))
+            })?,
+        );
         let stage_semantics = preflight_mission_stage_semantics(&scopes).map_err(|error| {
             PipelineError::new(format!("mission locator stage preflight failed: {error}"))
         })?;
@@ -453,7 +501,7 @@ fn preflight_cross_source_mission_locators(
 fn read_source_evidence(
     input: &SourceEvidenceInput,
     mission_references: &MissionReferenceCatalog,
-    index: &PhaseThreePackageIndex,
+    mission_p3d_references: &MissionP3dReferenceCatalog,
 ) -> PipelineOutcome<UnrealSourceEvidence> {
     let (actual_size, sha256) = if input.kind == "mission-script" {
         let bytes = read_stable_source_bytes(&input.resolved)?;
@@ -465,7 +513,7 @@ fn read_source_evidence(
             &input.origin,
             &bytes,
             mission_references,
-            index,
+            mission_p3d_references,
         )?;
         (actual_size, digest_hex(&bytes))
     } else {
@@ -643,7 +691,7 @@ fn validate_normalized_mission_source(
     origin: &str,
     bytes: &[u8],
     mission_references: &MissionReferenceCatalog,
-    index: &PhaseThreePackageIndex,
+    mission_p3d_references: &MissionP3dReferenceCatalog,
 ) -> PipelineOutcome<()> {
     if kind != "mission-script" {
         return Ok(());
@@ -664,7 +712,11 @@ fn validate_normalized_mission_source(
         PipelineError::new(format!("mission semantic preflight failed: {error}"))
     })?;
     drop(
-        preflight_mission_package_loads(&evidence, index).map_err(|error| {
+        preflight_mission_package_loads_with_catalog(
+            &evidence,
+            mission_p3d_references,
+        )
+        .map_err(|error| {
             PipelineError::new(format!("mission package-load preflight failed: {error}"))
         })?,
     );
@@ -706,6 +758,19 @@ fn validate_normalized_mission_source(
     let stage_semantics = preflight_mission_stage_semantics(&scopes).map_err(|error| {
         PipelineError::new(format!("mission stage semantic preflight failed: {error}"))
     })?;
+    drop(
+        preflight_mission_presentation_references(
+            mission_p3d_references,
+            &initialization,
+            &stage_semantics,
+            &objective_semantics,
+        )
+        .map_err(|error| {
+            PipelineError::new(format!(
+                "mission presentation reference preflight failed: {error}"
+            ))
+        })?,
+    );
     drop(
         preflight_mission_references(
             mission_references,
