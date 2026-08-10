@@ -145,12 +145,21 @@ Current task list. Project phases and dated progress are recorded in
         - [x] Bind every explicit `LoadP3DFile` first argument to one canonical
           phase-three package, preserve the optional second source-group value
           as opaque evidence, and keep only the first argument in P3D summaries.
+          The mission corpus has 966 calls: 950 one-argument calls and 16
+          two-argument calls, all using `GMA_LEVEL_OTHER`; no three-argument
+          source form is observed.
         - [x] Bind all 61 typed `SetPresentationBitmap` references across
           mission initialization, stage, and objective scopes through one shared
           canonical P3D package catalog. The corpus has 56 unique presentation
           paths, with zero missing package bindings and zero normalized-root
           collisions; presentation timing and drawable semantics remain
           unresolved rather than inferred from the package path.
+        - [x] Bind all 90 reviewed `BindReward` P3D references through the
+          shared canonical package catalog. Preserve the observed five/seven
+          argument shapes plus exact reward type, mode, level, optional cost,
+          and vendor tokens as source evidence; do not assign unlock, purchase,
+          seller, or progression behavior. `AddPurchaseCarReward` and final
+          reward transaction semantics remain unresolved.
         - [x] Bind all 194 reviewed mission-start and animated camera or
           multi-controller component references by exact embedded component
           name,
