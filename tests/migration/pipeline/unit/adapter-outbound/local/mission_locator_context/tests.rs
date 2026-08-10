@@ -341,7 +341,9 @@ fn level_setup_evidence() -> Result<MissionScriptEvidence, String> {
     )
 }
 
-fn level_setup_snapshot(path: &str) -> Result<MissionLocatorScriptSnapshot, String> {
+fn level_setup_snapshot(
+    path: &str,
+) -> Result<MissionLocatorScriptSnapshot, String> {
     Ok(MissionLocatorScriptSnapshot::new(
         path.to_owned(),
         level_setup_evidence()?,
@@ -401,7 +403,8 @@ fn pairs_level_setup_with_exact_family_load_sibling() -> Result<(), String> {
 }
 
 #[test]
-fn level_setup_without_family_load_sibling_fails_closed() -> Result<(), String> {
+fn level_setup_without_family_load_sibling_fails_closed(
+) -> Result<(), String> {
     let snapshots = vec![level_setup_snapshot(
         "extracted/game/scripts/missions/level01/demoi.mfk.json",
     )?];

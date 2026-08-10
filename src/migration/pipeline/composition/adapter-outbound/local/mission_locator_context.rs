@@ -128,7 +128,10 @@ pub(super) struct MissionLocatorSourceContexts {
 
 impl MissionLocatorSourceContexts {
     /// Return context for one exact selected-mission source.
-    pub(super) fn get(&self, source_path: &str) -> Option<&MissionLocatorSourceContext> {
+    pub(super) fn get(
+        &self,
+        source_path: &str,
+    ) -> Option<&MissionLocatorSourceContext> {
         self.by_source_path.get(source_path)
     }
 
