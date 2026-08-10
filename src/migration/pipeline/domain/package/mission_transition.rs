@@ -33,6 +33,8 @@
 //   - No marker means no terminal override and no visual transition request.
 //
 
+//! Source-backed mission stage transition-policy classification.
+
 use super::{MissionStageDirective, MissionStageSemanticReport};
 
 /// Effective visual transition requested when a stage completes.

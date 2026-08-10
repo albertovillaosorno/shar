@@ -14,9 +14,21 @@
 //   - Assign price, ownership, unlock, or save-game behavior.
 // - Allows:
 //   - Synthetic source-backed storefront setup and character package binding.
+// - Split-When:
+//   - Level locator integration requires physical source fixtures.
+// - Merge-When:
+//   - Purchase setup tests move into a complete reward transaction suite.
 // - Summary:
 //   - AddPurchaseCarReward domain tests.
+// - Description:
+//   - Proves storefront and waypoint setup stays separate from economy policy.
+// - Usage:
+//   - Compiled with the package-domain unit suite.
+// - Defaults:
+//   - Unreviewed seller, radius, character, or ordering fails closed.
 //
+
+//! Unit evidence for source-backed purchase-car storefront setup.
 
 use super::*;
 

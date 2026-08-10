@@ -22,6 +22,12 @@
 //   - Final reward compilation owns this exact storefront setup boundary.
 // - Summary:
 //   - Purchase-car reward storefront preflight.
+// - Description:
+//   - Preserves storefront setup while separating economy and persistence.
+// - Usage:
+//   - Runs after mission scope projection and character catalog creation.
+// - Defaults:
+//   - Unreviewed shape, tokens, or character bindings fail closed.
 //
 
 //! Source-backed `AddPurchaseCarReward` storefront setup.

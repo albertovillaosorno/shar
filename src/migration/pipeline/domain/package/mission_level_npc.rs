@@ -16,8 +16,18 @@
 // - Allows:
 //   - Bind authored NPC models to canonical character package evidence.
 //   - Preserve source-derived runtime names and exact level locator identities.
+// - Split-When:
+//   - Level-locator binding or NPC navigation gains an independent schema.
+// - Merge-When:
+//   - Final level mission compilation owns this exact NPC setup boundary.
 // - Summary:
 //   - Level NPC declaration and waypoint preflight.
+// - Description:
+//   - Preserves source NPC setup and prior-declaration waypoint relationships.
+// - Usage:
+//   - Runs after mission scope projection and character catalog creation.
+// - Defaults:
+//   - Malformed, unresolved, reordered, or ambiguous NPC setup fails closed.
 //
 
 //! Source-backed ambient and bonus-mission NPC setup.
