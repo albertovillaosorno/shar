@@ -159,38 +159,31 @@ fn resolves_car_start_roles_inside_active_package() -> Result<(), String> {
 }
 
 #[test]
-fn preserves_ambiguous_active_package_candidates() -> Result<(), String> {
-    let (scopes, initialization, stages, objectives) = reports()?;
+fn post_dyna_exact_lookup_keeps_history_dependent_ambiguity() -> Result<(), String> {
     let catalog = MissionLocatorCatalog::from_entries(vec![
-        entry("start", "m1")?,
-        entry("start", "level")?,
-        entry("carstart", "m1")?,
-        entry("npc_loc", "m1")?,
+        entry("walk_start", "m1")?,
+        entry("walk_start", "dyna")?,
     ])?;
-    let active = active(&[
-        "extracted/art/missions/level01/m1",
-        "extracted/art/missions/level01/level",
-    ])?;
-    let report = preflight_mission_locator_references(
+    let active = MissionLocatorActivePackages::new_with_initial_dynamic(
+        "m1".to_owned(),
+        vec!["extracted/art/missions/level01/m1".to_owned()],
+        vec!["extracted/art/missions/level01/dyna".to_owned()],
+    )?;
+    let mut references = Vec::new();
+    push_locator(
         &catalog,
         &active,
-        &scopes,
-        &initialization,
-        &stages,
-        &objectives,
+        &mut references,
+        6,
+        MissionLocatorRole::InitializationWalk,
+        "walk_start",
+        MissionLocatorTypeConstraint::Exact(CAR_START_LOCATOR_TYPE),
     )?;
-    if report.has_only_resolved_references() || report.unresolved_reference_count() != 1 {
-        return Err("ambiguous locator precedence was not preserved".to_owned());
-    }
-    let Some(mission) = report.missions().first() else {
-        return Err("ambiguous locator mission binding is missing".to_owned());
-    };
-    let Some(first) = mission.references().first() else {
-        return Err("ambiguous locator reference binding is missing".to_owned());
-    };
-    if !matches!(first.resolution(), MissionLocatorResolution::Ambiguous(entries) if entries.len() == 2)
-    {
-        return Err("ambiguous locator candidates were not retained".to_owned());
+    if !matches!(
+        references[0].resolution(),
+        MissionLocatorResolution::Ambiguous(entries) if entries.len() == 2
+    ) {
+        return Err("post-Dyna exact lookup invented stable precedence".to_owned());
     }
     Ok(())
 }
@@ -230,6 +223,59 @@ fn camera_best_side_uses_verified_package_lookup_order() -> Result<(), String> {
         reference.entry().package_root(),
         "extracted/art/missions/level01/level"
     );
+    Ok(())
+}
+
+#[test]
+fn exact_script_lookup_uses_static_load_precedence() -> Result<(), String> {
+    let catalog = MissionLocatorCatalog::from_entries(vec![
+        entry("shared_start", "level")?,
+        entry("shared_start", "m1")?,
+    ])?;
+    let active = MissionLocatorActivePackages::new(
+        "m1".to_owned(),
+        vec![
+            "extracted/art/missions/level01/level".to_owned(),
+            "extracted/art/missions/level01/m1".to_owned(),
+        ],
+    )?;
+    let mut references = Vec::new();
+    push_locator(
+        &catalog,
+        &active,
+        &mut references,
+        4,
+        MissionLocatorRole::InitializationResetVehicle,
+        "shared_start",
+        MissionLocatorTypeConstraint::Exact(CAR_START_LOCATOR_TYPE),
+    )?;
+    let MissionLocatorResolution::Resolved(reference) =
+        references[0].resolution()
+    else {
+        return Err("exact script locator did not use load precedence".to_owned());
+    };
+    if reference.entry().package_root()
+        != "extracted/art/missions/level01/level"
+    {
+        return Err("exact script locator did not choose first static load".to_owned());
+    }
+
+    references.clear();
+    push_locator(
+        &catalog,
+        &active,
+        &mut references,
+        5,
+        MissionLocatorRole::StageSafeZone,
+        "shared_start",
+        MissionLocatorTypeConstraint::Any,
+    )?;
+    if !matches!(
+        references[0].resolution(),
+        MissionLocatorResolution::Ambiguous(entries) if entries.len() == 2
+    ) {
+        return Err("generic locator lookup invented subtype precedence".to_owned());
+    }
     Ok(())
 }
 
