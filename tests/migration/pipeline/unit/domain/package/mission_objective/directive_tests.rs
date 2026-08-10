@@ -6,6 +6,27 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Unit evidence for selected objective directive semantics.
+// - Must-Not:
+//   - Infer runtime behavior beyond source-backed directive typing.
+// - Allows:
+//   - Verify participant, target, waypoint, and presentation field mapping.
+// - Split-When:
+//   - A directive family requires independent reusable fixtures.
+// - Merge-When:
+//   - Objective directive tests move into one complete mission graph suite.
+// - Summary:
+//   - Selected objective directive semantic regressions.
+// - Description:
+//   - Locks reviewed objective-scoped command mappings and relationships.
+// - Usage:
+//   - Compiled as a child of the objective directive domain module.
+// - Defaults:
+//   - Malformed, unsupported, and unresolved directives fail closed.
+//
 
 //! Selected objective directive semantic regressions.
 
