@@ -176,6 +176,12 @@ Current task list. Project phases and dated progress are recorded in
           `AddPurchaseCarNPCWaypoint` calls to a unique prior storefront NPC.
           Level-locator resolution, merchandise/price, ownership, save-state,
           and final reward transaction semantics remain unresolved.
+        - [x] Type all 118 reviewed ambient and 81 bonus-mission NPC
+          declarations, bind each authored model to canonical character-package
+          evidence, preserve source-derived runtime names and exact spawn/meta
+          tokens, and bind all 472 ambient plus 45 bonus NPC waypoints to one
+          unique prior matching declaration. Level-locator resolution and path
+          navigation semantics remain separate unresolved boundaries.
         - [x] Bind all 194 reviewed mission-start and animated camera or
           multi-controller component references by exact embedded component
           name,

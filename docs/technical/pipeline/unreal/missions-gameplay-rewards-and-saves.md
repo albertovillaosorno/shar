@@ -229,7 +229,11 @@ character-package evidence, and carries only the source-backed `gil` vendor
 versus `simpson` playable-character seller choice. All 26
 `AddPurchaseCarNPCWaypoint` commands bind to a unique prior storefront NPC.
 Level-locator resolution, merchandise/price, ownership and persistence remain
-separate unresolved boundaries. Route topology, transitions between non-terminal
+separate unresolved boundaries. Level NPC intake also types 118 ambient and 81
+bonus-mission declarations, binds their source models to canonical character
+packages, and requires all 472 ambient plus 45 bonus NPC waypoints to follow one
+unique matching declaration. Their exact locator identities are retained without
+inventing path navigation. Route topology, transitions between non-terminal
 stages, remaining catalog binding, and final topology validation remain pending.
 No mission asset is emitted yet.
 
