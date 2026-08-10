@@ -159,8 +159,9 @@ pub use mission_objective::{
     preflight_mission_objective_semantics, preflight_mission_objectives,
 };
 pub use mission_level_npc::{
-    MissionLevelNpcBinding, MissionLevelNpcKind, MissionLevelNpcReport,
-    MissionLevelNpcWaypointBinding, preflight_mission_level_npcs,
+    MissionBonusDialogueLocatorBinding, MissionLevelNpcBinding,
+    MissionLevelNpcKind, MissionLevelNpcReport, MissionLevelNpcWaypointBinding,
+    preflight_mission_level_npcs,
 };
 pub use mission_purchase_reward::{
     MissionPurchaseRewardBinding, MissionPurchaseRewardReport,

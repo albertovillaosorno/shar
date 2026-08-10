@@ -9,11 +9,13 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Unit evidence for level NPC declarations and waypoint relationships.
+//   - Unit evidence for level NPC declarations, waypoints, and bonus dialogue
+//     locator relationships.
 // - Must-Not:
 //   - Resolve level locators or infer navigation semantics.
 // - Allows:
 //   - Verify canonical character binding and prior-declaration ordering.
+//   - Verify typed `CarStart` identities remain source-backed.
 // - Split-When:
 //   - Level locator integration requires physical source fixtures.
 // - Merge-When:
@@ -153,6 +155,87 @@ fn rejects_waypoint_without_unique_prior_declaration() -> Result<(), String> {
             MissionLevelNpcKind::BonusMission,
             11,
             &["ralph".to_owned(), "ralph_walk1".to_owned()],
+        )
+        .is_err()
+    );
+    Ok(())
+}
+
+#[test]
+fn types_bonus_dialogue_locator_tuple() -> Result<(), String> {
+    let mut declarations = Vec::new();
+    push_bonus(
+        &mut declarations,
+        &catalog(),
+        12,
+        &[
+            "cletus".to_owned(),
+            "npd".to_owned(),
+            "bm1_cletus_sd".to_owned(),
+            "bm1".to_owned(),
+            "exclamation".to_owned(),
+            "jug".to_owned(),
+            "1".to_owned(),
+        ],
+    )?;
+    let mut locators = Vec::new();
+    push_bonus_dialogue_locators(
+        &mut locators,
+        &declarations,
+        13,
+        &[
+            "bm1".to_owned(),
+            "bm1_player".to_owned(),
+            "bm1_cletus_sd".to_owned(),
+            "level1_carstart".to_owned(),
+        ],
+    )?;
+    let [binding] = locators.as_slice() else {
+        return Err("bonus dialogue locator count changed".to_owned());
+    };
+    assert_eq!(binding.source_ordinal(), 13);
+    assert_eq!(binding.declaration_source_ordinal(), 12);
+    assert_eq!(binding.mission_id(), "bm1");
+    assert_eq!(binding.player_locator_id(), "bm1_player");
+    assert_eq!(binding.npc_locator_id(), "bm1_cletus_sd");
+    assert_eq!(binding.vehicle_locator_id(), "level1_carstart");
+    Ok(())
+}
+
+#[test]
+fn rejects_bonus_dialogue_without_prior_declaration() -> Result<(), String> {
+    let mut declarations = Vec::new();
+    push_bonus(
+        &mut declarations,
+        &catalog(),
+        20,
+        &[
+            "cletus".to_owned(),
+            "npd".to_owned(),
+            "bm1_cletus_sd".to_owned(),
+            "bm1".to_owned(),
+            "exclamation".to_owned(),
+            "jug".to_owned(),
+            "1".to_owned(),
+        ],
+    )?;
+    let mut locators = Vec::new();
+    let args = [
+        "bm1".to_owned(),
+        "bm1_player".to_owned(),
+        "bm1_cletus_sd".to_owned(),
+        "level1_carstart".to_owned(),
+    ];
+    assert!(
+        push_bonus_dialogue_locators(&mut locators, &declarations, 19, &args)
+            .is_err()
+    );
+    assert!(
+        push_bonus_dialogue_locators(
+            &mut locators,
+            &declarations,
+            21,
+            &args[..3],
         )
         .is_err()
     );
