@@ -56,6 +56,8 @@ pub mod mission_reward_reference;
 /// Source-backed ambient and bonus-mission NPC setup.
 pub mod mission_level_npc;
 pub mod mission_level_locator_reference;
+/// Source-backed pedestrian group declarations.
+pub mod mission_ped_group;
 /// Source-backed purchase-car storefront setup.
 pub mod mission_purchase_reward;
 /// Canonical mission locator package-reference resolution.
@@ -167,6 +169,10 @@ pub use mission_level_npc::{
 pub use mission_level_locator_reference::{
     MissionLevelLocatorReferenceBinding, MissionLevelLocatorReferenceReport,
     MissionLevelLocatorRole, preflight_mission_level_locator_references,
+};
+pub use mission_ped_group::{
+    MissionPedGroupBinding, MissionPedGroupMemberBinding, MissionPedGroupReport,
+    preflight_mission_ped_groups,
 };
 pub use mission_purchase_reward::{
     MissionPurchaseRewardBinding, MissionPurchaseRewardReport,
