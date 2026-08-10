@@ -29,7 +29,7 @@
 //
 
 use super::super::{DynaLoadOperationKind, parse_dyna_load_data};
-use super::compile_dyna_load_package_transition;
+use super::{DynaLoadPackageEffect, compile_dyna_load_package_transition};
 
 #[test]
 fn transition_normalizes_shorthand_and_explicit_art_targets()
@@ -39,12 +39,14 @@ fn transition_normalizes_shorthand_and_explicit_art_targets()
     let effects = transition.effects();
 
     assert_eq!(transition.source(), data.source());
-    assert_eq!(effects.len(), 2);
-    assert_eq!(effects[0].kind(), DynaLoadOperationKind::RegionLoad);
-    assert_eq!(effects[0].source_target(), "L1Z1.P3D");
-    assert_eq!(effects[0].package_root(), Some("extracted/art/l1z1"));
-    assert_eq!(effects[1].kind(), DynaLoadOperationKind::InteriorLoad);
-    assert_eq!(effects[1].package_root(), Some("extracted/art/l1i01"));
+    let [region, interior] = effects else {
+        return Err("expected exactly two package effects".to_owned());
+    };
+    assert_eq!(region.kind(), DynaLoadOperationKind::RegionLoad);
+    assert_eq!(region.source_target(), "L1Z1.P3D");
+    assert_eq!(region.package_root(), Some("extracted/art/l1z1"));
+    assert_eq!(interior.kind(), DynaLoadOperationKind::InteriorLoad);
+    assert_eq!(interior.package_root(), Some("extracted/art/l1i01"));
     Ok(())
 }
 
@@ -55,7 +57,7 @@ fn transition_preserves_authored_effect_order() -> Result<(), String> {
     let kinds = transition
         .effects()
         .iter()
-        .map(|effect| effect.kind())
+        .map(DynaLoadPackageEffect::kind)
         .collect::<Vec<_>>();
 
     assert_eq!(kinds, vec![
@@ -73,10 +75,13 @@ fn world_sphere_effects_preserve_target_without_package_identity()
     let data = parse_dyna_load_data("sphere_a*sphere_b&")?;
     let transition = compile_dyna_load_package_transition(&data)?;
 
-    assert_eq!(transition.effects()[0].source_target(), "sphere_a");
-    assert_eq!(transition.effects()[0].package_root(), None);
-    assert_eq!(transition.effects()[1].source_target(), "sphere_b");
-    assert_eq!(transition.effects()[1].package_root(), None);
+    let [enabled, disabled] = transition.effects() else {
+        return Err("expected exactly two World Sphere effects".to_owned());
+    };
+    assert_eq!(enabled.source_target(), "sphere_a");
+    assert_eq!(enabled.package_root(), None);
+    assert_eq!(disabled.source_target(), "sphere_b");
+    assert_eq!(disabled.package_root(), None);
     Ok(())
 }
 
@@ -117,9 +122,11 @@ fn conflicting_load_and_unload_requires_runtime_order_evidence()
 -> Result<(), String> {
     let data = parse_dyna_load_data("l1z1.p3d;l1z1.p3d:")?;
     let transition = compile_dyna_load_package_transition(&data)?;
-    let error = transition
-        .apply_order_independent_package_roots(&[])
-        .expect_err("conflicting package effects must remain unresolved");
+    let Err(error) =
+        transition.apply_order_independent_package_roots(&[])
+    else {
+        return Err("conflicting package effects were accepted".to_owned());
+    };
     assert!(error.contains("conflicting load/unload effects"));
     Ok(())
 }

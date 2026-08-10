@@ -188,6 +188,15 @@ fn normalize_p3d_target(target: &str) -> Result<String, String> {
     Ok(format!("extracted/art/{relative}"))
 }
 
+pub(super) fn validate_active_package_roots(
+    roots: &[String],
+) -> Result<(), String> {
+    for root in roots {
+        drop(normalize_active_package_root(root)?);
+    }
+    Ok(())
+}
+
 fn normalize_active_package_root(root: &str) -> Result<String, String> {
     if root.is_empty()
         || root != root.trim()
