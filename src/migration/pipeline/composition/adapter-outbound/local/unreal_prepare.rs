@@ -71,7 +71,7 @@ use crate::domain::{
     preflight_mission_objectives, preflight_mission_package_loads_with_catalog,
     preflight_mission_presentation_references, preflight_mission_references,
     preflight_mission_reward_references, preflight_mission_script,
-    preflight_mission_stage_semantics,
+    preflight_mission_stage_semantics, preflight_mission_stage_transitions,
 };
 
 /// Canonical generated Unreal staging root.
@@ -759,6 +759,7 @@ fn validate_normalized_mission_source(
     let stage_semantics = preflight_mission_stage_semantics(&scopes).map_err(|error| {
         PipelineError::new(format!("mission stage semantic preflight failed: {error}"))
     })?;
+    drop(preflight_mission_stage_transitions(&stage_semantics));
     drop(
         preflight_mission_presentation_references(
             mission_p3d_references,

@@ -65,6 +65,8 @@ pub mod mission_scope;
 pub mod mission_script;
 /// Typed reviewed mission stage semantics.
 pub mod mission_stage;
+/// Effective reviewed stage transition and presentation policy.
+pub mod mission_transition;
 /// Package conversion planner.
 pub mod plan;
 /// Typed package selectors.
@@ -172,6 +174,11 @@ pub use mission_stage::{
     MissionStageDirective, MissionStageKind, MissionStageMessageKind,
     MissionStageSemanticBinding, MissionStageSemanticReport,
     MissionStageVehicleReference, preflight_mission_stage_semantics,
+};
+pub use mission_transition::{
+    MissionStageTerminalOutcome, MissionStageTransitionPolicy,
+    MissionStageTransitionReport, MissionStageVisualTransition,
+    preflight_mission_stage_transitions,
 };
 pub use plan::{
     ConversionFamily, FbxModelPlan, FbxTargetKind, PhaseThreePackagePlan,

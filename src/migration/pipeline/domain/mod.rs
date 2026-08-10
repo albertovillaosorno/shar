@@ -84,7 +84,9 @@ pub use package::{
     MissionScopeReport, MissionScopeStage, MissionScriptEvidence,
     MissionStageDirective, MissionStageKind, MissionStageMessageKind,
     MissionStageSemanticBinding, MissionStageSemanticReport,
-    MissionStageVehicleReference, MissionVehicleCatalogReference,
+    MissionStageTerminalOutcome, MissionStageTransitionPolicy,
+    MissionStageTransitionReport, MissionStageVehicleReference,
+    MissionStageVisualTransition, MissionVehicleCatalogReference,
     MissionVehicleReference, PackageMemberRef, PackageRole,
     PhaseThreePackageIndex, PhaseThreePackageMember, PhaseThreePackagePlan,
     PhaseThreePackagePlanner, PhaseThreePackageRow, PhaseThreePackageSelector,
@@ -105,7 +107,7 @@ pub use package::{
     preflight_mission_objective_parameters,
     preflight_mission_objective_semantics, preflight_mission_objectives,
     preflight_mission_references, preflight_mission_script,
-    preflight_mission_stage_semantics,
+    preflight_mission_stage_semantics, preflight_mission_stage_transitions,
 };
 pub use pipeline::{
     PipelineConfig, PipelineError, PipelineOutcome, PipelineReport, StageReport,
