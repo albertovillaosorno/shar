@@ -73,7 +73,9 @@ use crate::domain::{
     preflight_mission_initialization,
     preflight_mission_level_locator_references,
     preflight_mission_level_npcs, preflight_mission_locator_references,
-    preflight_mission_objective_commands, preflight_mission_objective_semantics,
+    preflight_mission_objective_commands,
+    preflight_mission_objective_npc_waypoints,
+    preflight_mission_objective_semantics,
     preflight_mission_objectives, preflight_mission_package_loads_with_catalog,
     preflight_mission_ped_group_selections, preflight_mission_ped_groups,
     preflight_mission_presentation_references,
@@ -860,6 +862,14 @@ fn validate_normalized_mission_source(
             "mission objective semantic preflight failed: {error}"
         ))
     })?;
+    drop(
+        preflight_mission_objective_npc_waypoints(&objective_semantics)
+            .map_err(|error| {
+                PipelineError::new(format!(
+                    "mission objective NPC waypoint preflight failed: {error}"
+                ))
+            })?,
+    );
     let condition_semantics = preflight_mission_condition_semantics(&scopes).map_err(|error| {
         PipelineError::new(format!(
             "mission condition semantic preflight failed: {error}"
