@@ -53,6 +53,8 @@ pub mod mission_p3d_reference;
 pub mod mission_presentation_reference;
 /// Canonical BindReward package-reference resolution.
 pub mod mission_reward_reference;
+/// Source-backed ambient and bonus-mission NPC setup.
+pub mod mission_level_npc;
 /// Source-backed purchase-car storefront setup.
 pub mod mission_purchase_reward;
 /// Canonical mission locator package-reference resolution.
@@ -155,6 +157,10 @@ pub use mission_objective::{
     MissionRoadArrowMode, preflight_mission_objective_commands,
     preflight_mission_objective_parameters,
     preflight_mission_objective_semantics, preflight_mission_objectives,
+};
+pub use mission_level_npc::{
+    MissionLevelNpcBinding, MissionLevelNpcKind, MissionLevelNpcReport,
+    MissionLevelNpcWaypointBinding, preflight_mission_level_npcs,
 };
 pub use mission_purchase_reward::{
     MissionPurchaseRewardBinding, MissionPurchaseRewardReport,
