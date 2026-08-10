@@ -255,6 +255,20 @@ entries, with three through six entries per block. Sequence and optional
 character identities, display tokens, and positive millisecond durations remain
 exact source evidence; token meaning and runtime playback are not inferred.
 
+Pickup-item state-prop references are source-bound across scope boundaries. All
+four reviewed `SetPickupTarget("bombbarrel")` directives resolve to one unique
+prior `AddCollectibleStateProp` declaration in the selected source: two are
+mission-scoped and two are stage-scoped. The binding retains declaration scope,
+source ordinal, locator, and authored state while leaving state-prop lifetime,
+respawn, destruction, and pickup mechanics unresolved.
+
+Package-index intake also retains the exact localization `key` from every
+structured text-key mirror alongside its derived id, source unit, and
+subcategory. The currently generated phase-three package index publishes no
+text-key mirrors, so stage-message integers cannot yet be promoted to canonical
+localization keys. That absence is recorded as missing extraction evidence, not
+as proof that the original game has no matching text.
+
 `BindReward` binds all 90 reviewed P3D references through the shared canonical
 package catalog while preserving its source policy tokens without assigning
 unlock or economy behavior. The level storefront intake also types all 32

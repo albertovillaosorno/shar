@@ -286,6 +286,17 @@ Current task list. Project phases and dated progress are recorded in
           175 following `AddToCountdownSequence` entries. Preserve exact
           sequence/character identities, display tokens, and positive authored
           durations without assigning token meaning or playback behavior.
+        - [x] Bind all four reviewed `SetPickupTarget` identities to one
+          unique prior `AddCollectibleStateProp` declaration across the whole
+          selected source. Two declarations are mission-scoped and two are
+          stage-scoped; preserve exact locator/state/scope evidence without
+          inferring state-prop lifetime or pickup mechanics.
+        - [ ] Bind stage message indices to canonical localization keys once
+          phase-three package evidence publishes text-key mirrors. Package-index
+          intake now preserves each structured mirror's id, exact key, source
+          unit, and subcategory instead of discarding the key after validation;
+          the current generated package index contains zero such mirrors, so
+          message-key resolution remains an explicit extraction-evidence gap.
     - [ ] Emit lossless `USharMissionDefinition` assets only after the complete
       mission graph passes reference and topology validation.
   - [ ] Compile remaining normalized UI, font, localization, tuning, and other
