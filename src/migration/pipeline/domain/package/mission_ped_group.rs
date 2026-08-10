@@ -34,8 +34,8 @@
 use std::collections::BTreeSet;
 
 use super::{
-    MissionCharacterCatalogReference, MissionReferenceCatalog,
-    MissionScopeReport,
+    MissionCharacterCatalogReference, MissionInitializationBinding,
+    MissionInitializationDirective, MissionReferenceCatalog, MissionScopeReport,
 };
 
 const MAX_PED_GROUPS: u8 = 10;
@@ -123,6 +123,83 @@ impl MissionPedGroupReport {
     pub fn groups(&self) -> &[MissionPedGroupBinding] {
         &self.groups
     }
+}
+
+/// One mission-time selection of a declared pedestrian group.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct MissionPedGroupSelectionBinding {
+    source_ordinal: usize,
+    group_index: u8,
+    group_create_source_ordinal: usize,
+}
+
+impl MissionPedGroupSelectionBinding {
+    /// Return the UsePedGroup source ordinal.
+    #[must_use]
+    pub const fn source_ordinal(&self) -> usize {
+        self.source_ordinal
+    }
+
+    /// Return the selected runtime group index.
+    #[must_use]
+    pub const fn group_index(&self) -> u8 {
+        self.group_index
+    }
+
+    /// Return the matched CreatePedGroup source ordinal.
+    #[must_use]
+    pub const fn group_create_source_ordinal(&self) -> usize {
+        self.group_create_source_ordinal
+    }
+}
+
+/// Bind mission UsePedGroup directives to one explicit level group report.
+///
+/// # Errors
+///
+/// Fails when a selected group index has no unique level declaration.
+pub fn preflight_mission_ped_group_selections(
+    initialization: &MissionInitializationBinding,
+    groups: &MissionPedGroupReport,
+) -> Result<Vec<MissionPedGroupSelectionBinding>, String> {
+    let mut selections = Vec::new();
+    for directive in initialization.directives() {
+        let MissionInitializationDirective::PedGroup {
+            source_ordinal,
+            group_index,
+        } = directive
+        else {
+            continue;
+        };
+        selections.push(bind_ped_group_selection(
+            *source_ordinal,
+            *group_index,
+            groups,
+        )?);
+    }
+    Ok(selections)
+}
+
+fn bind_ped_group_selection(
+    source_ordinal: usize,
+    group_index: u8,
+    groups: &MissionPedGroupReport,
+) -> Result<MissionPedGroupSelectionBinding, String> {
+    let matching = groups
+        .groups()
+        .iter()
+        .filter(|group| group.group_index() == group_index)
+        .collect::<Vec<_>>();
+    let [group] = matching.as_slice() else {
+        return Err(
+            "mission ped-group selection is not uniquely defined".to_owned(),
+        );
+    };
+    Ok(MissionPedGroupSelectionBinding {
+        source_ordinal,
+        group_index,
+        group_create_source_ordinal: group.create_source_ordinal(),
+    })
 }
 
 struct OpenPedGroup {

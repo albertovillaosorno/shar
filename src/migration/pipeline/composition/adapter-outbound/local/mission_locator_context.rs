@@ -90,15 +90,45 @@ impl MissionLocatorScriptSnapshot {
     }
 }
 
-/// Active package reports indexed by the exact selected-mission source path.
+/// Cross-source context for one selected mission init source.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct MissionLocatorSourceContext {
+    active_packages: MissionLocatorActivePackageReport,
+    level_setup_source_path: Option<String>,
+}
+
+impl MissionLocatorSourceContext {
+    /// Return one mission's active package evidence.
+    #[cfg(test)]
+    pub(super) fn mission(
+        &self,
+        mission_id: &str,
+    ) -> Option<&MissionLocatorActivePackages> {
+        self.active_packages.mission(mission_id)
+    }
+
+    /// Return all active package evidence for locator binding.
+    pub(super) const fn active_packages(
+        &self,
+    ) -> &MissionLocatorActivePackageReport {
+        &self.active_packages
+    }
+
+    /// Return the paired level setup source when it exists.
+    pub(super) fn level_setup_source_path(&self) -> Option<&str> {
+        self.level_setup_source_path.as_deref()
+    }
+}
+
+/// Mission contexts indexed by exact selected-mission source path.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub(super) struct MissionLocatorSourceContexts {
-    by_source_path: BTreeMap<String, MissionLocatorActivePackageReport>,
+    by_source_path: BTreeMap<String, MissionLocatorSourceContext>,
 }
 
 impl MissionLocatorSourceContexts {
-    /// Return active packages for one exact selected-mission source.
-    pub(super) fn get(&self, source_path: &str) -> Option<&MissionLocatorActivePackageReport> {
+    /// Return context for one exact selected-mission source.
+    pub(super) fn get(&self, source_path: &str) -> Option<&MissionLocatorSourceContext> {
         self.by_source_path.get(source_path)
     }
 
@@ -301,9 +331,18 @@ pub(super) fn build_mission_locator_source_contexts(
             script_package_roots,
             initial_dynamic_package_roots,
         )?;
-        let report = MissionLocatorActivePackageReport::from_missions(vec![active])?;
+        let active_packages =
+            MissionLocatorActivePackageReport::from_missions(vec![active])?;
+        let level_setup_source_path = level_load_path
+            .strip_suffix(".mfk.json")
+            .map(|prefix| format!("{prefix}i.mfk.json"))
+            .filter(|path| available.contains(path.as_str()));
+        let context = MissionLocatorSourceContext {
+            active_packages,
+            level_setup_source_path,
+        };
         if contexts
-            .insert(snapshot.source_path.clone(), report)
+            .insert(snapshot.source_path.clone(), context)
             .is_some()
         {
             return Err("mission locator context source was rebound".to_owned());

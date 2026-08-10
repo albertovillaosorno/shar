@@ -184,3 +184,21 @@ fn rejects_ped_group_limits_and_missing_character() -> Result<(), String> {
     }
     Ok(())
 }
+
+#[test]
+fn binds_ped_group_selection_to_declared_index() -> Result<(), String> {
+    let scopes = scopes(&[
+        ("createpedgroup", &["3"]),
+        ("addped", &["male6", "2"]),
+        ("closepedgroup", &[]),
+    ])?;
+    let groups = preflight_mission_ped_groups(&catalog(), &scopes)?;
+    let selection = bind_ped_group_selection(17, 3, &groups)?;
+    assert_eq!(selection.source_ordinal(), 17);
+    assert_eq!(selection.group_index(), 3);
+    assert_eq!(selection.group_create_source_ordinal(), 1);
+    if bind_ped_group_selection(18, 2, &groups).is_ok() {
+        return Err("undefined ped-group selection was accepted".to_owned());
+    }
+    Ok(())
+}

@@ -174,6 +174,7 @@ pub use mission_level_locator_reference::{
 };
 pub use mission_ped_group::{
     MissionPedGroupBinding, MissionPedGroupMemberBinding, MissionPedGroupReport,
+    MissionPedGroupSelectionBinding, preflight_mission_ped_group_selections,
     preflight_mission_ped_groups,
 };
 pub use mission_purchase_reward::{
