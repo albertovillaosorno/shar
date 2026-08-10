@@ -126,9 +126,12 @@ costume, or crowd package subcategory; vehicle source names resolve to one exact
 `cars` package. The runtime `current` vehicle token remains symbolic, and the
 reviewed `AddStageVehicle` driver token `none` emits no false character package
 reference. Missing or ambiguous referenced participant names and unindexed P3D
-loads fail closed. The optional second `LoadP3DFile` argument remains opaque
-source evidence rather than becoming an asset reference; producer and replay
-summaries now count only the first path argument as P3D evidence.
+loads fail closed. The source loader accepts an optional heap name and an
+optional inventory-section override; migration validates and preserves both only
+as source provenance, never as target allocation authority or additional asset
+references. The base mission corpus has 950 one-argument calls and 16
+two-argument calls using `GMA_LEVEL_OTHER`, with no authored third argument.
+Producer and replay summaries count only the first path argument as P3D evidence.
 
 The same portable P3D path authority now backs typed presentation references.
 All 61 `SetPresentationBitmap` directives across initialization, stage, and

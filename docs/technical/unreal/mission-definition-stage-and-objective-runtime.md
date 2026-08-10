@@ -81,8 +81,10 @@ or the exact physical vehicle package; it preserves `current` as a symbolic
 runtime vehicle and treats the reviewed stage-driver `none` token as absence
 rather than as a character. Missing or ambiguous referenced participants block
 mission intake. Explicit `LoadP3DFile` commands also bind their first path
-argument to one canonical indexed package while preserving an optional second
-argument as opaque source evidence rather than another P3D reference.
+argument to one canonical indexed package. The source loader's optional heap and
+inventory-section parameters are validated and retained only as migration
+provenance; they do not become target allocation policy or additional P3D
+references.
 
 Typed `SetPresentationBitmap` directives now share that canonical P3D path
 authority instead of carrying an unresolved filesystem-like identity into final
