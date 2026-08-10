@@ -28,6 +28,8 @@
 //   - Invalid structure or missing package evidence fails closed.
 //
 
+//! Unit evidence for pedestrian group declarations.
+
 use super::*;
 use crate::domain::{compile_mission_scope_graphs, preflight_mission_script};
 
