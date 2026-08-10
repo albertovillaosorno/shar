@@ -306,6 +306,26 @@ impl MissionReferenceCatalog {
         }
     }
 
+    #[cfg(test)]
+    pub(crate) fn from_vehicle_entries_for_tests(
+        entries: &[(&str, &str, &str)],
+    ) -> Self {
+        let mut vehicles = BTreeMap::new();
+        for (source_id, package_id, package_subcategory) in entries {
+            vehicles
+                .entry(source_id.to_ascii_lowercase())
+                .or_insert_with(Vec::new)
+                .push(VehicleCatalogEntry {
+                    package_id: (*package_id).to_owned(),
+                    package_subcategory: (*package_subcategory).to_owned(),
+                });
+        }
+        Self {
+            characters: BTreeMap::new(),
+            vehicles,
+        }
+    }
+
     /// Build the deterministic mission participant catalog from package index
     /// evidence.
     ///
@@ -356,7 +376,7 @@ impl MissionReferenceCatalog {
         })
     }
 
-    fn resolve_vehicle(
+    pub(crate) fn resolve_vehicle(
         &self,
         source_id: &str,
     ) -> Result<MissionVehicleReference, String> {

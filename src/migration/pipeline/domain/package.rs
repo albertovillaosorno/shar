@@ -58,6 +58,8 @@ pub mod mission_level_npc;
 pub mod mission_level_locator_reference;
 /// Source-backed pedestrian group declarations.
 pub mod mission_ped_group;
+/// Source-backed traffic model-group declarations.
+pub mod mission_traffic_group;
 /// Source-backed purchase-car storefront setup.
 pub mod mission_purchase_reward;
 /// Canonical mission locator package-reference resolution.
@@ -190,6 +192,10 @@ pub use mission_scope::{
     MissionConditionScope, MissionScopeCommand, MissionScopeCondition,
     MissionScopeGraph, MissionScopeObjective, MissionScopeReport,
     MissionScopeStage, compile_mission_scope_graphs,
+};
+pub use mission_traffic_group::{
+    MissionTrafficGroupBinding, MissionTrafficGroupMemberBinding,
+    MissionTrafficGroupReport, preflight_mission_traffic_groups,
 };
 pub use mission_script::{
     MISSION_SCRIPT_SCHEMA, MissionCommandInvocation, MissionContextAdaptation,
