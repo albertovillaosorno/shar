@@ -33,6 +33,8 @@
 pub mod index;
 /// Typed Dyna Load Data postfix syntax.
 pub mod dyna_load_data;
+/// Pure Dyna Load Data package transitions.
+pub mod dyna_load_package;
 /// Reviewed mission condition alias preflight.
 pub mod mission_condition;
 /// Typed mission-scope initialization and restart semantics.
@@ -73,6 +75,10 @@ pub use index::{
 };
 pub use dyna_load_data::{
     DynaLoadData, DynaLoadOperation, DynaLoadOperationKind, parse_dyna_load_data,
+};
+pub use dyna_load_package::{
+    DynaLoadPackageEffect, DynaLoadPackageTransition,
+    compile_dyna_load_package_transition,
 };
 pub use mission_condition::{
     MissionConditionBinding, MissionConditionCommandBinding,
