@@ -56,6 +56,7 @@ use super::mission_locator_context::{
     MissionLocatorScriptSnapshot, build_level_locator_source_contexts,
     build_mission_locator_source_contexts,
 };
+use super::mission_order_context::build_mission_order_source_reports;
 use super::unreal_fbx_catalog::{FBX_CATALOG_ROOT, verified_fbx_catalog};
 use crate::adapters::driven::check_cancellation;
 use crate::adapters::driven::local::progress::StageProgress;
@@ -449,6 +450,14 @@ fn preflight_cross_source_mission_locators(
             package_roots,
         ));
     }
+
+    drop(
+        build_mission_order_source_reports(&snapshots).map_err(|error| {
+            PipelineError::new(format!(
+                "mission authored registration preflight failed: {error}"
+            ))
+        })?,
+    );
 
     let indexed_package_roots = index
         .packages()
