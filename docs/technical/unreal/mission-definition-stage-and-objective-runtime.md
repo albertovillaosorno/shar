@@ -122,27 +122,34 @@ Unreal evidence before cross-source binding.
 
 Decoded type-5 `DynamicZone` locators provide the next base-game package-lifetime
 surface. Their Dyna Load Data is compiled into ordered package effects and every
-P3D load must bind to the package index; unloads remain remove-if-present and do
-not require a locally extracted target. Corpus preflight covers 109 zones with
-372 indexed P3D loads and 728 P3D unloads, including 30 unload targets absent
-from the package index. The observed corpus has no P3D target with both load and
-unload effects inside one Dyna string; if such a conflict appears, the package
-projection fails closed until runtime operation ordering is evidenced. This
-proves transition integrity, not which trigger the player has traversed.
-A pure traversal-history model now applies exact caller-supplied DynamicZone
-steps in observed order and retains locator plus source-package identity, but
-`prepare-unreal` has no authoritative runtime trigger-observation stream to feed
-that model yet. The source audit also shows DynamicZone streaming cannot decide
-`bm1_bestside`: 18 references face 10 Type-3 candidates in mission packages,
-and none of the 1,100 DynamicZone P3D effects targets any `missions/...`
-package. Duplicate-name lookup precedence therefore remains a separate runtime
-question. Mod Launcher-only stage/checkpoint Dyna commands are not used as
-base-game evidence.
+P3D load must bind to the package index; unloads remain remove-if-present. Corpus
+preflight covers 109 zones with 372 indexed P3D loads and 728 P3D unloads,
+including 30 unload targets absent from the package index.
 
-Final `USharMissionDefinition` creation remains blocked until authoritative
-DynamicZone trigger observation, duplicate-locator precedence, route, camera
-runtime behavior, reward, transition, bundle, and remaining catalog identities
-resolve and the complete transition/recovery topology passes validation.
+Aggregate trigger semantics are explicit. The first child-volume entry of an
+occupancy episode executes the Dyna transition, overlapping child volumes do not
+retrigger it, final exit rearms the locator, and exit itself does not invert the
+transition. A traversal-history model applies resulting exact entry steps in
+observed order while retaining locator and source-package identity.
+
+Streaming remains separate from duplicate-name lookup. Camera best-side resolves
+its stored locator name during mission reset. Pure3D starts with Default
+selected, searches the current section first, then remaining sections in
+creation order; this load path creates Level before Mission, so reviewed
+`bm1_bestside` duplicates select the Level candidate. Other locator roles remain
+fail-closed until their lookup paths are traced independently.
+
+Typed stage markers now classify source behavior before graph emission. Iris and
+fade are visual completion requests, with iris taking precedence if both are
+authored. Stay-black and stage-complete are presentation policy, not mission
+results. Level-over requests chapter completion and game-over requests game
+completion. These classifications do not invent ordinary successor, retry,
+rollback, or recovery edges.
+
+Final `USharMissionDefinition` creation remains blocked until remaining locator
+roles, route, camera runtime behavior, reward, successor/recovery transitions,
+bundle, and remaining catalog identities resolve and the complete topology
+passes validation.
 
 ## Authority and ownership
 

@@ -192,27 +192,39 @@ a deterministic remove-if-present effect. The current corpus contains 109 such
 zones, 372 indexed P3D loads, and 728 P3D unloads; 30 unload targets are absent
 from the extracted package index. No observed base-game Dyna string both loads
 and unloads the same P3D target; an order-sensitive conflict remains unresolved
-rather than assuming textual order or grouped unload/load execution. No trigger
-traversal order is inferred from that inventory, and Mod Launcher-only
-stage/checkpoint Dyna commands remain outside base-game authority.
+rather than assuming textual order. Child-trigger occupancy is explicit: the
+first child-volume entry of an episode executes the zone transition, overlapping
+child volumes do not retrigger it, and final exit rearms a later entry without
+undoing the prior transition. No player traversal path is inferred from trigger
+geometry.
 
-Documented Event and CarStart roles receive exact type constraints,
-`ActivateVehicle(..., "NULL", ...)` emits no false locator reference, and missing
-or duplicate candidates remain `Missing` or `Ambiguous` instead of acquiring
-fabricated precedence. A pure `DynamicZone` traversal-history model can now
-project active packages when an external observer supplies the exact ordered
-zone events; it does not infer entry, retrigger policy, or geometry semantics.
-Corpus audit also separates that streaming lifetime from duplicate-name lookup:
-18 `bm1_bestside` references face 10 Type-3 `CarStart` candidates under mission
-packages, while none of the 1,100 DynamicZone P3D effects targets a
-`missions/...` package. DynamicZone history therefore cannot establish which
-`bm1_bestside` candidate wins. `BindReward` now binds all 90 reviewed P3D
-references through the shared canonical package catalog while preserving its
-five/seven argument source shapes and reward policy tokens without assigning
-unlock or economy behavior. Authoritative runtime trigger observation and
-duplicate-locator lookup precedence remain pending, along with route, remaining
-reward behavior, transition, remaining catalog binding, and final topology
-validation. No mission asset is emitted yet.
+Documented Event and CarStart roles receive exact type constraints, and
+`ActivateVehicle(..., "NULL", ...)` emits no false locator reference. Generic
+missing or duplicate candidates remain `Missing` or `Ambiguous`. Camera
+best-side is narrower: its locator lookup is deferred until mission reset, when
+Pure3D starts with its Default inventory section selected and searches the
+current section before remaining sections in creation order. This load path
+creates Level before Mission, so reviewed duplicate `bm1_bestside` cases choose
+the Level candidate. The 18 references face 10 Type-3 `CarStart` candidates,
+while none of the 1,100
+DynamicZone P3D effects targets those mission packages, confirming streaming
+does not decide the lookup. Other locator roles remain fail-closed until their
+runtime lookup paths are traced separately.
+
+Stage completion markers are also separated by authority before final graph
+emission. The reviewed corpus has 6 iris and 14 fade requests, 5 stay-black
+markers, 108 stage-complete presentation markers, 3 level-over terminals, and 1
+game-over terminal. Iris is the effective visual transition in the one stage
+that authors both iris and fade. Stay-black and stage-complete remain
+presentation-only; they cannot select a mission successor. Level-over maps to a
+chapter terminal override and game-over to game completion. Successor, retry,
+rollback, and recovery topology still requires a complete graph compiler.
+
+`BindReward` binds all 90 reviewed P3D references through the shared canonical
+package catalog while preserving its source policy tokens without assigning
+unlock or economy behavior. Route topology, remaining reward behavior,
+transitions between non-terminal stages, remaining catalog binding, and final
+topology validation remain pending. No mission asset is emitted yet.
 
 The v3 evidence records `context_command_count`,
 `context_adaptation_count`, `context_finding_count`, ordered adaptations, and

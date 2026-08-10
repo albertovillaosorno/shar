@@ -52,6 +52,13 @@ Current task list. Project phases and dated progress are recorded in
   UV mirrors, and other corrections not present in source evidence.
 - [ ] Verify representative character, prop, vehicle, interior, and world
   imports.
+- [ ] Audit reported map-wide LOD/geometry overlaps before removing any
+  vertices; permit only deterministic source-backed conversion corrections.
+- [ ] Audit distant-object transforms from source evidence instead of accepting
+  manual editor placement as world-layout authority.
+- [ ] Audit the reported vertical offset in imported vehicle FBX files, record
+  its deterministic cause, and remove or preserve it only from source evidence.
+- [ ] Recheck those conversion audits in-game after deterministic fixes land.
 - [ ] Preserve original audio, cinematics, localization, UI, mission, and tuning
   data in deterministic normalized forms.
   - [x] Keep movie package manifests and decode reports independent of local
@@ -196,21 +203,30 @@ Current task list. Project phases and dated progress are recorded in
           effects rather than false load requirements. No observed base-game
           Dyna string both loads and unloads the same P3D target; the domain
           refuses to invent runtime ordering if such a conflict appears later.
-        - [x] Model explicitly observed `DynamicZone` traversal history as an
-          ordered package-residency projection. Each step retains exact locator
-          name, source package root, and typed Dyna transition; caller-supplied
-          event order is preserved without inferring trigger entry, retrigger
-          policy, geometry semantics, or duplicate-locator lookup precedence.
+        - [x] Model `DynamicZone` traversal as aggregate child-trigger
+          occupancy. The first child-volume entry of an occupancy episode emits
+          the Dyna transition, overlapping child volumes do not retrigger it,
+          final exit rearms the zone, and exit does not invert the transition.
+          Each emitted step retains exact locator and source-package identity;
+          traversal order and geometry remain caller-observed evidence.
         - [x] Separate streaming lifetime from duplicate-locator precedence for
-          `bm1_bestside`: 18 source references resolve against 10 Type-3
-          `CarStart` candidates under `extracted/art/missions/...`, while all
-          1,100 P3D effects across the 109 decoded `DynamicZone` locators touch
-          zero `missions/...` packages and therefore cannot choose among those
-          candidates.
-        - [ ] Establish authoritative runtime trigger observation/retrigger
-          semantics to feed the traversal-history model, and separately prove
-          or reject duplicate active-name lookup precedence. Do not import Mod
-          Launcher-only stage/checkpoint Dyna commands as base-game evidence.
+          `bm1_bestside`: 18 references face 10 Type-3 `CarStart` candidates,
+          while all 1,100 DynamicZone P3D effects touch none of those mission
+          packages. Camera best-side lookup is deferred until mission reset;
+          Pure3D starts in its Default inventory section, searches the current
+          section first, then remaining sections in creation order. This load
+          path creates Level before Mission, so duplicated best-side names choose
+          the Level candidate instead of an arbitrary package winner.
+        - [x] Establish base-game DynamicZone trigger/retrigger semantics without
+          importing extension-only stage/checkpoint commands as game authority.
+        - [ ] Trace runtime lookup for locator roles other than camera best-side
+          before applying package precedence to those references.
+        - [x] Classify reviewed stage markers without conflating presentation
+          with topology: 6 iris and 14 fade requests are visual transitions,
+          5 stay-black and 108 stage-complete markers are presentation policy,
+          while 3 level-over and 1 game-over markers are terminal overrides.
+          Iris wins the one observed stage that also authors fade. Successor,
+          retry, rollback, and recovery graph topology remains unresolved.
     - [ ] Emit lossless `USharMissionDefinition` assets only after the complete
       mission graph passes reference and topology validation.
   - [ ] Compile remaining normalized UI, font, localization, tuning, and other
