@@ -110,7 +110,7 @@ pub fn preflight_mission_vehicle_selects(
                 "AddVehicleSelectInfo must have three arguments".to_owned(),
             );
         };
-        let p3d = p3d_references.resolve(p3d_path)?;
+        let package_reference = p3d_references.resolve(p3d_path)?;
         let vehicle = match references.resolve_vehicle(vehicle_id)? {
             MissionVehicleReference::Catalog(vehicle) => vehicle,
             MissionVehicleReference::Current => {
@@ -122,7 +122,7 @@ pub fn preflight_mission_vehicle_selects(
         let character = references.resolve_character(character_id)?;
         bindings.push(MissionVehicleSelectBinding {
             source_ordinal: invocation.ordinal(),
-            p3d,
+            p3d: package_reference,
             vehicle,
             character,
         });
