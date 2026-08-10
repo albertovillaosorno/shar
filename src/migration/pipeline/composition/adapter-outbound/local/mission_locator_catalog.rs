@@ -36,6 +36,9 @@ use std::path::{Path, PathBuf};
 use schoenwald_filesystem::adapters::driving::local::read_utf8;
 use serde_json::{Map, Value};
 
+use super::dynamic_zone_catalog::{
+    dynamic_zone_package_roots, preflight_dynamic_zone_json,
+};
 use crate::domain::{
     MissionLocatorCatalog, MissionLocatorCatalogEntry, PackageRole,
     PhaseThreePackageIndex, PipelineError, PipelineOutcome,
@@ -46,6 +49,7 @@ pub(super) fn load_mission_locator_catalog(
     index: &PhaseThreePackageIndex,
     extracted_root: &Path,
 ) -> PipelineOutcome<MissionLocatorCatalog> {
+    let indexed_roots = dynamic_zone_package_roots(index)?;
     let mut entries = Vec::new();
     for package in index.packages() {
         for member in package
@@ -67,6 +71,11 @@ pub(super) fn load_mission_locator_catalog(
                     "mission locator catalog read failed: {error}"
                 ))
             })?;
+            drop(preflight_dynamic_zone_json(
+                &text,
+                &package.package_root,
+                &indexed_roots,
+            )?);
             let decoded = parse_decoded_locator(&text)?;
             entries.push(
                 MissionLocatorCatalogEntry::new(
@@ -128,7 +137,7 @@ fn parse_decoded_locator(json: &str) -> PipelineOutcome<DecodedLocatorIdentity> 
     })
 }
 
-fn validate_locator_member(
+pub(super) fn validate_locator_member(
     unit_type: &str,
     kind: &str,
     source_chunk_kind: &str,
@@ -144,7 +153,7 @@ fn validate_locator_member(
     Ok(())
 }
 
-fn resolve_locator_path(
+pub(super) fn resolve_locator_path(
     extracted_root: &Path,
     member_path: &str,
 ) -> PipelineOutcome<PathBuf> {
@@ -178,7 +187,7 @@ fn validate_relative_path(path: &str) -> PipelineOutcome<()> {
     Ok(())
 }
 
-fn required_string(
+pub(super) fn required_string(
     object: &Map<String, Value>,
     field: &str,
 ) -> PipelineOutcome<String> {
@@ -193,7 +202,7 @@ fn required_string(
         })
 }
 
-fn required_u32(
+pub(super) fn required_u32(
     object: &Map<String, Value>,
     field: &str,
 ) -> PipelineOutcome<u32> {

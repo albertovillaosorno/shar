@@ -39,10 +39,12 @@ use crate::domain::{
 use crate::ports::{FbxExportOptions, PipelineOperations};
 
 mod character_catalog;
+mod dynamic_zone_catalog;
 mod fbx_catalog_publish;
 mod fbx_export;
 mod fbx_manifest;
 mod filesystem;
+mod mission_camera_catalog;
 mod mission_locator_catalog;
 mod mission_locator_context;
 mod one;
