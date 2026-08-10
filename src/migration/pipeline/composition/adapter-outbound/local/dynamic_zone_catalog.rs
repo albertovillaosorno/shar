@@ -86,7 +86,6 @@ pub(super) fn preflight_dynamic_zone_json(
     DynamicZoneTraversalStep::new(
         zone.name,
         source_package_root.to_owned(),
-        zone.trigger_count,
         transition,
     )
     .map(Some)
@@ -101,7 +100,6 @@ pub(super) fn preflight_dynamic_zone_json(
 struct DecodedDynamicZone {
     name: String,
     data: String,
-    trigger_count: u32,
 }
 
 fn parse_dynamic_zone(
@@ -172,16 +170,7 @@ fn parse_dynamic_zone(
             "decoded DynamicZone trigger count does not match trigger volumes",
         ));
     }
-    if trigger_count == 0 {
-        return Err(PipelineError::new(
-            "decoded DynamicZone must own at least one trigger volume",
-        ));
-    }
-    Ok(Some(DecodedDynamicZone {
-        name,
-        data,
-        trigger_count,
-    }))
+    Ok(Some(DecodedDynamicZone { name, data }))
 }
 
 fn validate_load_targets(

@@ -49,7 +49,6 @@ pub use package::{
     ConversionFamily, DynaLoadData, DynaLoadOperation, DynaLoadOperationKind,
     DynaLoadPackageEffect, DynaLoadPackageTransition,
     DynamicZoneTraversalHistory, DynamicZoneTraversalStep,
-    DynamicZoneTriggerState,
     FbxModelPlan, MISSION_SCRIPT_SCHEMA,
     MissionCameraCatalog, MissionCameraCatalogEntry,
     MissionCameraComponentKind, MissionCameraReferenceBinding,

@@ -32,8 +32,6 @@
 
 //! Pure package-residency projection for observed `DynamicZone` history.
 
-use std::collections::BTreeSet;
-
 use super::dyna_load_package::validate_active_package_roots;
 use super::DynaLoadPackageTransition;
 
@@ -42,7 +40,6 @@ use super::DynaLoadPackageTransition;
 pub struct DynamicZoneTraversalStep {
     locator_name: String,
     source_package_root: String,
-    trigger_count: u32,
     transition: DynaLoadPackageTransition,
 }
 
@@ -56,20 +53,13 @@ impl DynamicZoneTraversalStep {
     pub fn new(
         locator_name: String,
         source_package_root: String,
-        trigger_count: u32,
         transition: DynaLoadPackageTransition,
     ) -> Result<Self, String> {
         validate_identity(&locator_name)?;
         validate_source_package_root(&source_package_root)?;
-        if trigger_count == 0 {
-            return Err(
-                "DynamicZone traversal trigger count must be positive".to_owned()
-            );
-        }
         Ok(Self {
             locator_name,
             source_package_root,
-            trigger_count,
             transition,
         })
     }
@@ -86,78 +76,10 @@ impl DynamicZoneTraversalStep {
         &self.source_package_root
     }
 
-    /// Return the number of trigger volumes owned by this locator.
-    #[must_use]
-    pub const fn trigger_count(&self) -> u32 {
-        self.trigger_count
-    }
-
     /// Return the typed Dyna package transition executed by this zone.
     #[must_use]
     pub const fn transition(&self) -> &DynaLoadPackageTransition {
         &self.transition
-    }
-}
-
-/// Per-locator trigger-volume state for one observed runtime session.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct DynamicZoneTriggerState {
-    step: DynamicZoneTraversalStep,
-    active_trigger_indices: BTreeSet<u32>,
-}
-
-impl DynamicZoneTriggerState {
-    /// Start observing one zone with no active child volumes.
-    #[must_use]
-    pub const fn new(step: DynamicZoneTraversalStep) -> Self {
-        Self {
-            step,
-            active_trigger_indices: BTreeSet::new(),
-        }
-    }
-
-    /// Observe one child trigger-volume boundary transition.
-    ///
-    /// The first child entry of an episode emits the traversal. Overlapping
-    /// child entries and every exit do not. After the final exit, a later
-    /// entry begins a new episode and emits again.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error for an out-of-range child index, duplicate entry, or
-    /// an exit for a child that is not active.
-    pub fn observe_volume(
-        &mut self,
-        trigger_index: u32,
-        entered: bool,
-    ) -> Result<Option<DynamicZoneTraversalStep>, String> {
-        if trigger_index >= self.step.trigger_count {
-            return Err(
-                "DynamicZone trigger observation index is out of range".to_owned()
-            );
-        }
-        if entered {
-            let was_empty = self.active_trigger_indices.is_empty();
-            if !self.active_trigger_indices.insert(trigger_index) {
-                return Err(
-                    "DynamicZone trigger observation duplicated an entry".to_owned()
-                );
-            }
-            return Ok(was_empty.then(|| self.step.clone()));
-        }
-        if !self.active_trigger_indices.remove(&trigger_index) {
-            return Err(
-                "DynamicZone trigger observation exited an inactive volume"
-                    .to_owned()
-            );
-        }
-        Ok(None)
-    }
-
-    /// Return active child trigger indices in deterministic order.
-    #[must_use]
-    pub fn active_trigger_indices(&self) -> &BTreeSet<u32> {
-        &self.active_trigger_indices
     }
 }
 
