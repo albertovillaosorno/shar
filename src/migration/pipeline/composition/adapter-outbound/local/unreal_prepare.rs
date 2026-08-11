@@ -1047,13 +1047,6 @@ fn validate_normalized_mission_source(
         })?,
     );
     drop(
-        preflight_mission_gag_totals(&scopes).map_err(|error| {
-            PipelineError::new(format!(
-                "mission gag total preflight failed: {error}"
-            ))
-        })?,
-    );
-    drop(
         preflight_mission_purchase_rewards(mission_references, &scopes)
             .map_err(|error| {
                 PipelineError::new(format!(
