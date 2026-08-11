@@ -158,6 +158,10 @@ path so identical mission ids in different levels stay isolated. The initial
 context also adds every indexed P3D loaded by typed `SetDynaLoadData` or
 `StreetRacePropsLoad` evidence; Dyna paths receive the format's implicit `art/`
 root when needed, while unload evidence is never promoted to an active package.
+Of 462 reviewed initial Dyna P3D references, 461 map to decoded package roots.
+One valid source-requested root has no decoded package; that reference remains
+explicit evidence but does not become locator-visible, and no replacement root
+is inferred.
 Typed locator-bearing initialization, stage, and objective directives use two
 visibility phases. Script-time lookups see static Level/Mission packages only;
 reviewed deferred lookups may additionally see initial Dyna packages. Exact
