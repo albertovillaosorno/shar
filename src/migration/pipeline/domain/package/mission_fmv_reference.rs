@@ -40,6 +40,8 @@ use super::{
 /// One authored mission FMV bound to a canonical story-movie package.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MissionFmvReferenceBinding {
+    owner_stage_source_ordinal: usize,
+    owner_stage_sequence_ordinal: usize,
     objective_source_ordinal: usize,
     source_ordinal: usize,
     rmv_path: String,
@@ -52,6 +54,18 @@ pub struct MissionFmvReferenceBinding {
 }
 
 impl MissionFmvReferenceBinding {
+    /// Return source `AddStage` ordinal owning the FMV objective.
+    #[must_use]
+    pub const fn owner_stage_source_ordinal(&self) -> usize {
+        self.owner_stage_source_ordinal
+    }
+
+    /// Return dense authored stage ordinal owning the FMV objective.
+    #[must_use]
+    pub const fn owner_stage_sequence_ordinal(&self) -> usize {
+        self.owner_stage_sequence_ordinal
+    }
+
     /// Return the source `AddObjective` ordinal.
     #[must_use]
     pub const fn objective_source_ordinal(&self) -> usize {
@@ -163,6 +177,10 @@ pub fn preflight_mission_fmv_references(
                 );
             };
             bindings.push(MissionFmvReferenceBinding {
+                owner_stage_source_ordinal:
+                    objective.owner_stage_source_ordinal(),
+                owner_stage_sequence_ordinal:
+                    objective.owner_stage_sequence_ordinal(),
                 objective_source_ordinal: objective.source_ordinal(),
                 source_ordinal: *source_ordinal,
                 rmv_path: rmv_path.clone(),

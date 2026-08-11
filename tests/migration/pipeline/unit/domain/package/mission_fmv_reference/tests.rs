@@ -92,6 +92,8 @@ fn binds_story_movie_and_preserves_opaque_argument() -> Result<(), String> {
     let [binding] = report.bindings() else {
         return Err("mission FMV binding count drifted".to_owned());
     };
+    assert_eq!(binding.owner_stage_source_ordinal(), 19);
+    assert_eq!(binding.owner_stage_sequence_ordinal(), 0);
     assert_eq!(binding.objective_source_ordinal(), 20);
     assert_eq!(binding.source_ordinal(), 21);
     assert_eq!(binding.rmv_path(), "fmv7.rmv");
