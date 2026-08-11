@@ -86,8 +86,9 @@ fn validate_source_id(source_id: &str) -> PipelineOutcome<()> {
         || bytes.len() > 240
         || !bytes.first().is_some_and(u8::is_ascii_alphanumeric)
         || !bytes.last().is_some_and(u8::is_ascii_alphanumeric)
+        || bytes.windows(2).any(|pair| pair == b"--")
         || !bytes.iter().copied().all(|byte| {
-            byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.')
+            byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-'
         })
     {
         return Err(PipelineError::new(
