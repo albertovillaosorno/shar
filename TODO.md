@@ -490,6 +490,57 @@ Current task list. Project phases and dated progress are recorded in
 - [x] Resume safely after interruption without accepting stale partial output.
 - [ ] Report progress, failures, provenance, and final artifacts.
 
+## Imperative product and mod foundation
+
+- [ ] Ship four independent base save slots; add autosave only after faithful
+  port parity is stable.
+- [ ] Support keyboard/mouse and controller input across gameplay and menus.
+- [ ] Keep loading screens optional once streaming can replace them safely.
+- [ ] Ship a default, fully obtainable base achievement set suitable for
+  100%/platinum-style completion, with mod achievements separately namespaced.
+- [ ] Add an optional Discord boundary for display username, Rich Presence,
+  parties/invites, and achievement-facing presentation without making Discord
+  identity authoritative for saves or gameplay.
+- [ ] Expose base C++ extension points for boss encounters, health meters,
+  combat, multiplayer adapters, and future mod-owned gameplay systems without
+  implementing replacement gameplay during the faithful-port phase.
+- [ ] Add a first-class `Mods` route when creating or loading a game.
+- [ ] Classify mods as visual-only, additive/story, gameplay-extension, or
+  native-code, with explicit compatibility and save-impact declarations.
+- [ ] Allow visual-only mods to be reordered, enabled, disabled, or replaced
+  from the main menu without invalidating the active save.
+- [ ] Treat story/additive mods as mutually incompatible by default unless their
+  manifests explicitly declare a compatible composition contract.
+- [ ] Permit nonvisual mods that do not mutate save/progression state, but show
+  an explicit compatibility warning before activation.
+- [ ] Let mods declare deterministic hierarchy, load order, and override
+  priority; unresolved conflicts fail closed.
+- [ ] Keep native C++ mods behind a trust scanner that reports filesystem,
+  process, network, platform, save, and engine-surface access before the user
+  decides whether to load them.
+- [ ] Make mission, model, material, texture, skeleton, coordinate, gameplay,
+  achievement, and UI definitions data-addressable for nonexpert mod authors.
+- [ ] Deduplicate identical generated skeletons, textures, models, and other
+  assets only when deterministic evidence proves equivalence. Never assume all
+  characters or mods share one skeleton or asset layout.
+- [ ] Let generated base characters opt into shared skeleton/material/model
+  assets as an optimization, with simple per-asset/per-mod overrides that can
+  break sharing without changing global contracts.
+- [ ] Keep multiplayer as an extension-ready base capability rather than a fully
+  implemented first-party mode during the port; mods must be able to add
+  replicated modes, lobbies, servers, missions, and progression namespaces.
+- [ ] Package Linux, macOS, Android, Windows x86-64, and any Windows-on-ARM
+  target that current Unreal/toolchain support can validate.
+- [ ] Require at least one canonical `.ico` under `game/` in the game manifest;
+  zero icons is invalid. Unreal staging must consume the generated icon outputs
+  after the current icon producer is moved to its final repository-owned
+  location, expected under `src/unreal/icon`.
+- [ ] Keep DLSS and hardware-ray-tracing/RTX integrations behind optional
+  capability adapters so graphics mods can target them without making
+  proprietary GPU features mandatory for the base port.
+- [ ] Preserve the delivery order: faithful port first, compatibility and
+  quality-of-life improvements second, richer community mod content third.
+
 ## Final verification
 
 - [ ] Complete a start-to-finish playthrough without progression-blocking
