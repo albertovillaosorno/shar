@@ -609,7 +609,15 @@ fn rejects_noncanonical_definition_source_identity() {
         &topology,
     )
     .expect("definition fixture must stay valid");
-    let error = render_definition_core("../script", &report)
-        .expect_err("path-shaped source id must fail");
-    assert!(error.to_string().contains("not canonical"));
+    for source_id in [
+        "../script",
+        "Script-one",
+        "script_one",
+        "script.one",
+        "script--one",
+    ] {
+        let error = render_definition_core(source_id, &report)
+            .expect_err("noncanonical source id must fail");
+        assert!(error.to_string().contains("not canonical"));
+    }
 }
