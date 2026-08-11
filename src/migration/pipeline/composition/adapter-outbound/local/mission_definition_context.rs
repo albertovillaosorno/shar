@@ -488,23 +488,6 @@ fn build_definition_core(
         }
     }
 
-    for stage in stages.stages() {
-        let objective_count = objectives
-            .objectives()
-            .iter()
-            .filter(|objective| {
-                objective.owner_stage_source_ordinal() == stage.source_ordinal()
-                    && objective.owner_stage_sequence_ordinal()
-                        == stage.sequence_ordinal()
-            })
-            .count();
-        if objective_count != 1 {
-            return Err(PipelineError::new(
-                "mission definition core stage has no unique root objective",
-            ));
-        }
-    }
-
     for condition in conditions.conditions() {
         let owner = (
             condition.owner_stage_source_ordinal(),
