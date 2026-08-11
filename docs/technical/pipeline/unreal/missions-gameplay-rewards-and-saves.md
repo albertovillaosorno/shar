@@ -468,6 +468,12 @@ unavailable legacy `dummy` objective and preserve a versioned unavailable code.
 Canonical kind and unavailable identity now survive the semantic-objective
 projection rather than being dropped before final definition compilation.
 
+The condition side now preserves the same level of identity. All 408 reviewed
+conditions across the seven registered aliases carry their versioned schema id
+through semantic projection. Condition outcome policy remains unresolved: schema
+identity does not decide whether an observed violation means failure, retry,
+rollback, recovery, or another declared transition.
+
 ## Participant bindings
 
 Characters, vehicles, props, zones, routes, cameras, dialogue lines, effects,
