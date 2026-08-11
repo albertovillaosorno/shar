@@ -40,8 +40,9 @@ use crate::domain::{
     MissionConditionParameters, MissionConditionScope,
     MissionConditionSemanticReport, MissionObjectiveParameters,
     MissionObjectiveSemanticReport, MissionScopeReport, MissionStageKind,
-    MissionStageSemanticReport, MissionStageTerminalOutcome, PipelineError,
-    PipelineOutcome,
+    MissionStageSemanticReport, MissionStageTerminalOutcome,
+    MissionStageVisualTransition, PipelineError, PipelineOutcome,
+    preflight_mission_stage_transitions,
 };
 
 /// One condition identity retained under its exact owning stage.
@@ -65,6 +66,9 @@ pub(super) struct MissionDefinitionStageCoreBinding {
     checkpoint_source_ordinal: Option<usize>,
     explicit_final: bool,
     terminal: MissionStageTerminalOutcome,
+    visual_transition: MissionStageVisualTransition,
+    stay_in_black: bool,
+    show_stage_complete: bool,
     objective_source_ordinal: usize,
     objective_source_alias: String,
     objective_canonical_kind: Option<&'static str>,
@@ -238,6 +242,23 @@ impl MissionDefinitionStageCoreBinding {
     }
 
     #[cfg(test)]
+    pub(super) const fn visual_transition(
+        &self,
+    ) -> MissionStageVisualTransition {
+        self.visual_transition
+    }
+
+    #[cfg(test)]
+    pub(super) const fn stay_in_black(&self) -> bool {
+        self.stay_in_black
+    }
+
+    #[cfg(test)]
+    pub(super) const fn show_stage_complete(&self) -> bool {
+        self.show_stage_complete
+    }
+
+    #[cfg(test)]
     pub(super) fn objective_source_alias(&self) -> &str {
         &self.objective_source_alias
     }
@@ -353,6 +374,13 @@ fn build_definition_core(
         ));
     }
 
+    let transitions = preflight_mission_stage_transitions(stages);
+    if transitions.stages().len() != stages.stages().len() {
+        return Err(PipelineError::new(
+            "mission definition core transition count drifted",
+        ));
+    }
+
     let stage_keys = stages
         .stages()
         .iter()
@@ -391,6 +419,24 @@ fn build_definition_core(
                 "mission definition core stage has no unique topology row",
             ));
         };
+        let matching_transitions = transitions
+            .stages()
+            .iter()
+            .filter(|item| {
+                item.source_ordinal() == key.0
+                    && item.sequence_ordinal() == key.1
+            })
+            .collect::<Vec<_>>();
+        let [transition] = matching_transitions.as_slice() else {
+            return Err(PipelineError::new(
+                "mission definition core stage has no unique transition row",
+            ));
+        };
+        if transition.terminal() != topology.terminal() {
+            return Err(PipelineError::new(
+                "mission definition core terminal classification drifted",
+            ));
+        }
         let matching_objectives = objectives
             .objectives()
             .iter()
@@ -445,6 +491,9 @@ fn build_definition_core(
             checkpoint_source_ordinal: topology.checkpoint_source_ordinal(),
             explicit_final: topology.explicit_final(),
             terminal: topology.terminal(),
+            visual_transition: transition.visual(),
+            stay_in_black: transition.stay_in_black(),
+            show_stage_complete: transition.show_stage_complete(),
             objective_source_ordinal: objective.source_ordinal(),
             objective_source_alias: objective.source_alias().to_owned(),
             objective_canonical_kind: objective.canonical_kind(),

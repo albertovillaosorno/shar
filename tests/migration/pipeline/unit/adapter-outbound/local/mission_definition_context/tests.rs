@@ -35,7 +35,8 @@ use crate::domain::{
     MissionConditionParameters, MissionConditionSemanticReport,
     MissionObjectiveParameters, MissionObjectiveSemanticReport,
     MissionRoadArrowBinding, MissionRoadArrowMode, MissionStageDirective,
-    MissionStageSemanticReport, preflight_mission_authored_stage_topology,
+    MissionStageSemanticReport, MissionStageVisualTransition,
+    preflight_mission_authored_stage_topology,
 };
 
 fn reports() -> (
@@ -50,11 +51,29 @@ fn reports() -> (
                 2,
                 0,
                 false,
-                vec![MissionStageDirective::ResetCheckpoint {
-                    source_ordinal: 3,
-                }],
+                vec![
+                    MissionStageDirective::ResetCheckpoint {
+                        source_ordinal: 3,
+                    },
+                    MissionStageDirective::IrisWipeLegacyArgument {
+                        source_ordinal: 4,
+                        source_value: "0.1".to_owned(),
+                    },
+                ],
             ),
-            (10, 1, true, Vec::new()),
+            (
+                10,
+                1,
+                true,
+                vec![
+                    MissionStageDirective::StayInBlack {
+                        source_ordinal: 11,
+                    },
+                    MissionStageDirective::ShowStageComplete {
+                        source_ordinal: 12,
+                    },
+                ],
+            ),
         ],
     );
     let objectives = MissionObjectiveSemanticReport::
@@ -62,7 +81,7 @@ fn reports() -> (
             (
                 2,
                 0,
-                4,
+                5,
                 "goto".to_owned(),
                 MissionObjectiveParameters::RoadArrows(
                     MissionRoadArrowBinding::Effective(
@@ -74,7 +93,7 @@ fn reports() -> (
             (
                 10,
                 1,
-                11,
+                13,
                 "dummy".to_owned(),
                 MissionObjectiveParameters::None,
                 Vec::new(),
@@ -85,8 +104,8 @@ fn reports() -> (
             (
                 2,
                 0,
-                Some(4),
-                5,
+                Some(5),
+                6,
                 "timeout".to_owned(),
                 MissionConditionScope::Objective,
                 "legacy-mission-condition.timeout.v1",
@@ -96,7 +115,7 @@ fn reports() -> (
                 10,
                 1,
                 None,
-                12,
+                14,
                 "damage".to_owned(),
                 MissionConditionScope::Stage,
                 "legacy-mission-condition.damage.v1",
@@ -131,6 +150,9 @@ fn joins_source_backed_stage_definition_core() -> Result<(), String> {
     assert_eq!(first.sequence_ordinal(), 0);
     assert_eq!(first.next_authored_sequence_ordinal(), Some(1));
     assert_eq!(first.checkpoint_source_ordinal(), Some(3));
+    assert_eq!(first.visual_transition(), MissionStageVisualTransition::Iris);
+    assert!(!first.stay_in_black());
+    assert!(!first.show_stage_complete());
     assert!(!first.explicit_final());
     assert_eq!(first.terminal(), MissionStageTerminalOutcome::None);
     assert_eq!(first.objective_source_alias(), "goto");
@@ -146,19 +168,22 @@ fn joins_source_backed_stage_definition_core() -> Result<(), String> {
             "definition-core first-stage condition count changed".to_owned()
         );
     };
-    assert_eq!(condition.source_ordinal(), 5);
+    assert_eq!(condition.source_ordinal(), 6);
     assert_eq!(condition.source_alias(), "timeout");
     assert_eq!(
         condition.schema_id(),
         "legacy-mission-condition.timeout.v1"
     );
     assert_eq!(condition.scope(), MissionConditionScope::Objective);
-    assert_eq!(condition.owner_objective_source_ordinal(), Some(4));
+    assert_eq!(condition.owner_objective_source_ordinal(), Some(5));
     assert_eq!(condition.parameters(), &MissionConditionParameters::None);
 
     assert_eq!(second.sequence_ordinal(), 1);
     assert_eq!(second.next_authored_sequence_ordinal(), None);
     assert!(second.explicit_final());
+    assert_eq!(second.visual_transition(), MissionStageVisualTransition::None);
+    assert!(second.stay_in_black());
+    assert!(second.show_stage_complete());
     assert_eq!(second.objective_source_alias(), "dummy");
     assert_eq!(second.objective_canonical_kind(), None);
     assert_eq!(
