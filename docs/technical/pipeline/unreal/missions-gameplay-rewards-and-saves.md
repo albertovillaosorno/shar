@@ -272,6 +272,14 @@ one canonical mirror; missing or multiply-published keys fail preflight. This
 binding establishes localization identity only. Localized payload compilation
 and final Unreal text asset emission remain separate work.
 
+Objective FMV references are package-backed as well. All six reviewed
+`SetFMVInfo` RMV basenames resolve uniquely to the base `movies/story` package
+for `fmv2` through `fmv7`, and each package supplies exactly one converted movie
+member. The optional `stopmusic` compatibility argument on `fmv7` is retained
+verbatim without assigning playback or music semantics. This binding proves
+media identity only; playback, audio routing, completion, and transition policy
+remain runtime concerns.
+
 Level mission registration order is now preserved independently of progression.
 All 64 reviewed `AddMission` declarations across 16 base, demo, and E3 load
 sources retain their authored source ordinal and dense registration position.

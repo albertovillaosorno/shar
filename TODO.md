@@ -317,6 +317,11 @@ Current task list. Project phases and dated progress are recorded in
           `INGAME_MESSAGE_*` keys. All 439 objective and 10 locked-stage uses
           resolve exactly once while preserving key id, source unit, package,
           and subcategory; localized payload asset emission remains separate.
+        - [x] Bind all six reviewed objective `SetFMVInfo` RMV paths to one
+          canonical `movies/story/<id>` package and one converted movie member.
+          Preserve the optional `stopmusic` argument as opaque source evidence;
+          playback, audio routing, music policy, completion, and transitions
+          remain separate runtime semantics.
     - [ ] Emit lossless `USharMissionDefinition` assets only after the complete
       mission graph passes reference and topology validation.
   - [ ] Compile remaining normalized UI, font, localization, tuning, and other
