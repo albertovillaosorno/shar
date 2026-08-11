@@ -80,6 +80,8 @@ pub mod mission_scope;
 pub mod mission_script;
 /// Typed reviewed mission stage semantics.
 pub mod mission_stage;
+/// Canonical localization references for mission stage messages.
+pub mod mission_stage_message_reference;
 /// Authored mission-stage order and final/terminal invariants.
 pub mod mission_topology;
 /// Effective reviewed stage transition and presentation policy.
@@ -230,6 +232,10 @@ pub use mission_stage::{
     MissionStageDirective, MissionStageKind, MissionStageMessageKind,
     MissionStageSemanticBinding, MissionStageSemanticReport,
     MissionStageVehicleReference, preflight_mission_stage_semantics,
+};
+pub use mission_stage_message_reference::{
+    MissionStageMessageReferenceBinding, MissionStageMessageReferenceReport,
+    preflight_mission_stage_message_references,
 };
 pub use mission_topology::{
     MissionAuthoredStageTopologyBinding, MissionAuthoredStageTopologyReport,
