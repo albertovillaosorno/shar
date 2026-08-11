@@ -88,6 +88,8 @@ pub mod mission_stage_message_reference;
 pub mod mission_topology;
 /// Effective reviewed stage transition and presentation policy.
 pub mod mission_transition;
+/// Package-backed opaque vehicle attribute tuple evidence.
+pub mod mission_vehicle_attributes;
 /// Canonical vehicle-select registration binding.
 pub mod mission_vehicle_select;
 /// Package conversion planner.
@@ -246,6 +248,10 @@ pub use mission_stage_message_reference::{
 pub use mission_topology::{
     MissionAuthoredStageTopologyBinding, MissionAuthoredStageTopologyReport,
     preflight_mission_authored_stage_topology,
+};
+pub use mission_vehicle_attributes::{
+    MissionVehicleAttributeBinding, MissionVehicleAttributeReport,
+    preflight_mission_vehicle_attributes,
 };
 pub use mission_vehicle_select::{
     MissionVehicleSelectBinding, MissionVehicleSelectReport,
