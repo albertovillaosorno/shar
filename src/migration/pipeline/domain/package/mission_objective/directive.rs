@@ -469,6 +469,40 @@ impl MissionObjectiveSemanticReport {
             Vec<MissionObjectiveDirective>,
         )>,
     ) -> Self {
+        Self::from_route_entries_with_parameters_for_tests(
+            entries
+                .into_iter()
+                .map(|(
+                    stage_source,
+                    stage_sequence,
+                    source_ordinal,
+                    source_alias,
+                    directives,
+                )| {
+                    (
+                        stage_source,
+                        stage_sequence,
+                        source_ordinal,
+                        source_alias,
+                        MissionObjectiveParameters::None,
+                        directives,
+                    )
+                })
+                .collect(),
+        )
+    }
+
+    #[cfg(test)]
+    pub(crate) fn from_route_entries_with_parameters_for_tests(
+        entries: Vec<(
+            usize,
+            usize,
+            usize,
+            String,
+            MissionObjectiveParameters,
+            Vec<MissionObjectiveDirective>,
+        )>,
+    ) -> Self {
         Self {
             objectives: entries
                 .into_iter()
@@ -477,6 +511,7 @@ impl MissionObjectiveSemanticReport {
                     owner_stage_sequence_ordinal,
                     source_ordinal,
                     source_alias,
+                    parameters,
                     directives,
                 )| {
                     let schema = super::objective_alias_schema(&source_alias);
@@ -489,7 +524,7 @@ impl MissionObjectiveSemanticReport {
                             schema.and_then(|item| item.canonical_kind),
                         unavailable_code:
                             schema.and_then(|item| item.unavailable_code),
-                        parameters: MissionObjectiveParameters::None,
+                        parameters,
                         directives,
                     }
                 })

@@ -32,9 +32,10 @@
 
 use super::*;
 use crate::domain::{
-    MissionConditionSemanticReport, MissionObjectiveSemanticReport,
-    MissionStageDirective, MissionStageSemanticReport,
-    preflight_mission_authored_stage_topology,
+    MissionConditionParameters, MissionConditionSemanticReport,
+    MissionObjectiveParameters, MissionObjectiveSemanticReport,
+    MissionRoadArrowBinding, MissionRoadArrowMode, MissionStageDirective,
+    MissionStageSemanticReport, preflight_mission_authored_stage_topology,
 };
 
 fn reports() -> (
@@ -56,13 +57,31 @@ fn reports() -> (
             (10, 1, true, Vec::new()),
         ],
     );
-    let objectives =
-        MissionObjectiveSemanticReport::from_route_entries_for_tests(vec![
-            (2, 0, 4, "goto".to_owned(), Vec::new()),
-            (10, 1, 11, "dummy".to_owned(), Vec::new()),
+    let objectives = MissionObjectiveSemanticReport::
+        from_route_entries_with_parameters_for_tests(vec![
+            (
+                2,
+                0,
+                4,
+                "goto".to_owned(),
+                MissionObjectiveParameters::RoadArrows(
+                    MissionRoadArrowBinding::Effective(
+                        MissionRoadArrowMode::Both,
+                    ),
+                ),
+                Vec::new(),
+            ),
+            (
+                10,
+                1,
+                11,
+                "dummy".to_owned(),
+                MissionObjectiveParameters::None,
+                Vec::new(),
+            ),
         ]);
-    let conditions =
-        MissionConditionSemanticReport::from_owned_entries_for_tests(vec![
+    let conditions = MissionConditionSemanticReport::
+        from_owned_entries_with_parameters_for_tests(vec![
             (
                 2,
                 0,
@@ -71,6 +90,7 @@ fn reports() -> (
                 "timeout".to_owned(),
                 MissionConditionScope::Objective,
                 "legacy-mission-condition.timeout.v1",
+                MissionConditionParameters::None,
             ),
             (
                 10,
@@ -80,6 +100,10 @@ fn reports() -> (
                 "damage".to_owned(),
                 MissionConditionScope::Stage,
                 "legacy-mission-condition.damage.v1",
+                MissionConditionParameters::DamageLegacyToken {
+                    source_token: "neither".to_owned(),
+                    code: "legacy-damage-condition-neither-parameter-v1",
+                },
             ),
         ]);
     let topology = preflight_mission_authored_stage_topology(&stages)
@@ -111,6 +135,12 @@ fn joins_source_backed_stage_definition_core() -> Result<(), String> {
     assert_eq!(first.terminal(), MissionStageTerminalOutcome::None);
     assert_eq!(first.objective_source_alias(), "goto");
     assert_eq!(first.objective_canonical_kind(), Some("travel"));
+    assert_eq!(
+        first.objective_parameters(),
+        &MissionObjectiveParameters::RoadArrows(
+            MissionRoadArrowBinding::Effective(MissionRoadArrowMode::Both)
+        )
+    );
     let [condition] = first.conditions() else {
         return Err(
             "definition-core first-stage condition count changed".to_owned()
@@ -124,12 +154,29 @@ fn joins_source_backed_stage_definition_core() -> Result<(), String> {
     );
     assert_eq!(condition.scope(), MissionConditionScope::Objective);
     assert_eq!(condition.owner_objective_source_ordinal(), Some(4));
+    assert_eq!(condition.parameters(), &MissionConditionParameters::None);
 
     assert_eq!(second.sequence_ordinal(), 1);
     assert_eq!(second.next_authored_sequence_ordinal(), None);
     assert!(second.explicit_final());
     assert_eq!(second.objective_source_alias(), "dummy");
     assert_eq!(second.objective_canonical_kind(), None);
+    assert_eq!(
+        second.objective_parameters(),
+        &MissionObjectiveParameters::None
+    );
+    let [condition] = second.conditions() else {
+        return Err(
+            "definition-core second-stage condition count changed".to_owned()
+        );
+    };
+    assert_eq!(
+        condition.parameters(),
+        &MissionConditionParameters::DamageLegacyToken {
+            source_token: "neither".to_owned(),
+            code: "legacy-damage-condition-neither-parameter-v1",
+        }
+    );
     Ok(())
 }
 

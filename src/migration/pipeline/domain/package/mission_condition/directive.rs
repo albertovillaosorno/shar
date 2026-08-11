@@ -212,6 +212,46 @@ impl MissionConditionSemanticReport {
             &'static str,
         )>,
     ) -> Self {
+        Self::from_owned_entries_with_parameters_for_tests(
+            entries
+                .into_iter()
+                .map(|(
+                    stage_source,
+                    stage_sequence,
+                    objective_source,
+                    source_ordinal,
+                    source_alias,
+                    scope,
+                    schema_id,
+                )| {
+                    (
+                        stage_source,
+                        stage_sequence,
+                        objective_source,
+                        source_ordinal,
+                        source_alias,
+                        scope,
+                        schema_id,
+                        MissionConditionParameters::None,
+                    )
+                })
+                .collect(),
+        )
+    }
+
+    #[cfg(test)]
+    pub(crate) fn from_owned_entries_with_parameters_for_tests(
+        entries: Vec<(
+            usize,
+            usize,
+            Option<usize>,
+            usize,
+            String,
+            MissionConditionScope,
+            &'static str,
+            MissionConditionParameters,
+        )>,
+    ) -> Self {
         Self {
             conditions: entries
                 .into_iter()
@@ -223,6 +263,7 @@ impl MissionConditionSemanticReport {
                     source_alias,
                     scope,
                     schema_id,
+                    parameters,
                 )| MissionConditionSemanticBinding {
                     owner_stage_source_ordinal,
                     owner_stage_sequence_ordinal,
@@ -231,7 +272,7 @@ impl MissionConditionSemanticReport {
                     source_alias,
                     scope,
                     schema_id,
-                    parameters: MissionConditionParameters::None,
+                    parameters,
                     directives: Vec::new(),
                 })
                 .collect(),
