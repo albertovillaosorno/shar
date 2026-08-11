@@ -1331,6 +1331,21 @@ fn accepts_source_distinct_mission_definition_rows() -> Result<(), String> {
 }
 
 #[test]
+fn rejects_mission_definitions_out_of_verified_source_order() {
+    let rows = vec![
+        mission_definition_row("script-two", "m1"),
+        mission_definition_row("script-one", "m1"),
+    ];
+    let verified = vec![
+        mission_source("script-one"),
+        mission_source("script-two"),
+    ];
+    let error = validate_mission_definition_bundle(&rows, &verified)
+        .expect_err("out-of-order mission definition sources must fail");
+    assert!(error.to_string().contains("verified source order"));
+}
+
+#[test]
 fn rejects_duplicate_mission_definition_source() {
     let row = mission_definition_row("script-one", "m1");
     let rows = vec![row.clone(), row];

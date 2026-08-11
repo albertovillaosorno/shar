@@ -1110,10 +1110,12 @@ fn validate_mission_definition_bundle(
 ) -> PipelineOutcome<String> {
     let verified_mission_sources = verified
         .iter()
-        .filter(|source| source.kind == "mission-script")
-        .map(|source| source.id.as_str())
-        .collect::<BTreeSet<_>>();
+        .enumerate()
+        .filter(|(_index, source)| source.kind == "mission-script")
+        .map(|(index, source)| (source.id.as_str(), index))
+        .collect::<BTreeMap<_, _>>();
     let mut source_ids = BTreeSet::new();
+    let mut previous_source_position = None;
     let mut output = String::new();
     for (index, row) in rows.iter().enumerate() {
         if !row.ends_with(char::from(10)) || row.lines().count() != 1 {
@@ -1143,11 +1145,22 @@ fn validate_mission_definition_bundle(
                 "mission definition bundle duplicates a source id",
             ));
         }
-        if !verified_mission_sources.contains(source_id.as_str()) {
+        let source_position = verified_mission_sources
+            .get(source_id.as_str())
+            .copied()
+            .ok_or_else(|| {
+                PipelineError::new(
+                    "mission definition source is not verified mission evidence",
+                )
+            })?;
+        if previous_source_position
+            .is_some_and(|previous| source_position <= previous)
+        {
             return Err(PipelineError::new(
-                "mission definition source is not verified mission evidence",
+                "mission definition bundle is not in verified source order",
             ));
         }
+        previous_source_position = Some(source_position);
         let mission_id = required_string(&object, "mission_id", &label)?;
         validate_mission_id(&mission_id)?;
         let _stages = object
