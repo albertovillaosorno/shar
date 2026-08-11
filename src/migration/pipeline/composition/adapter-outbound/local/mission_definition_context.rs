@@ -41,7 +41,8 @@ use crate::domain::{
     MissionConditionSemanticReport, MissionObjectiveParameters,
     MissionObjectiveSemanticReport, MissionScopeReport, MissionStageKind,
     MissionStageSemanticReport, MissionStageTerminalOutcome,
-    MissionStageVisualTransition, PipelineError, PipelineOutcome,
+    MissionStageTransitionMarker, MissionStageVisualTransition, PipelineError,
+    PipelineOutcome,
     preflight_mission_stage_transitions,
 };
 
@@ -69,6 +70,7 @@ pub(super) struct MissionDefinitionStageCoreBinding {
     visual_transition: MissionStageVisualTransition,
     stay_in_black: bool,
     show_stage_complete: bool,
+    transition_markers: Vec<MissionStageTransitionMarker>,
     objective_source_ordinal: usize,
     objective_source_alias: String,
     objective_canonical_kind: Option<&'static str>,
@@ -256,6 +258,11 @@ impl MissionDefinitionStageCoreBinding {
     #[cfg(test)]
     pub(super) const fn show_stage_complete(&self) -> bool {
         self.show_stage_complete
+    }
+
+    #[cfg(test)]
+    pub(super) fn transition_markers(&self) -> &[MissionStageTransitionMarker] {
+        &self.transition_markers
     }
 
     #[cfg(test)]
@@ -494,6 +501,7 @@ fn build_definition_core(
             visual_transition: transition.visual(),
             stay_in_black: transition.stay_in_black(),
             show_stage_complete: transition.show_stage_complete(),
+            transition_markers: transition.markers().to_vec(),
             objective_source_ordinal: objective.source_ordinal(),
             objective_source_alias: objective.source_alias().to_owned(),
             objective_canonical_kind: objective.canonical_kind(),

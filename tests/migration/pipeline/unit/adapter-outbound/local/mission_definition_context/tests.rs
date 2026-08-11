@@ -35,7 +35,8 @@ use crate::domain::{
     MissionConditionParameters, MissionConditionSemanticReport,
     MissionObjectiveParameters, MissionObjectiveSemanticReport,
     MissionRoadArrowBinding, MissionRoadArrowMode, MissionStageDirective,
-    MissionStageSemanticReport, MissionStageVisualTransition,
+    MissionStageSemanticReport, MissionStageTransitionMarkerKind,
+    MissionStageVisualTransition,
     preflight_mission_authored_stage_topology,
 };
 
@@ -153,6 +154,15 @@ fn joins_source_backed_stage_definition_core() -> Result<(), String> {
     assert_eq!(first.visual_transition(), MissionStageVisualTransition::Iris);
     assert!(!first.stay_in_black());
     assert!(!first.show_stage_complete());
+    let first_markers = first
+        .transition_markers()
+        .iter()
+        .map(|marker| (marker.source_ordinal(), marker.kind()))
+        .collect::<Vec<_>>();
+    assert_eq!(
+        first_markers,
+        [(4, MissionStageTransitionMarkerKind::IrisWipe)]
+    );
     assert!(!first.explicit_final());
     assert_eq!(first.terminal(), MissionStageTerminalOutcome::None);
     assert_eq!(first.objective_source_alias(), "goto");
@@ -184,6 +194,18 @@ fn joins_source_backed_stage_definition_core() -> Result<(), String> {
     assert_eq!(second.visual_transition(), MissionStageVisualTransition::None);
     assert!(second.stay_in_black());
     assert!(second.show_stage_complete());
+    let second_markers = second
+        .transition_markers()
+        .iter()
+        .map(|marker| (marker.source_ordinal(), marker.kind()))
+        .collect::<Vec<_>>();
+    assert_eq!(
+        second_markers,
+        [
+            (11, MissionStageTransitionMarkerKind::StayInBlack),
+            (12, MissionStageTransitionMarkerKind::ShowStageComplete),
+        ]
+    );
     assert_eq!(second.objective_source_alias(), "dummy");
     assert_eq!(second.objective_canonical_kind(), None);
     assert_eq!(
