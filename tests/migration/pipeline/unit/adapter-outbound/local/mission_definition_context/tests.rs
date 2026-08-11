@@ -320,3 +320,70 @@ fn rejects_objective_condition_with_wrong_root_owner() {
         .to_string()
         .contains("condition owner disagrees"));
 }
+
+#[test]
+fn joins_collectible_waypoint_source_evidence() -> Result<(), String> {
+    let stages = MissionStageSemanticReport::from_topology_entries_for_tests(
+        vec![(
+            2,
+            0,
+            false,
+            vec![MissionStageDirective::Waypoint {
+                source_ordinal: 4,
+                locator_id: "route_a".to_owned(),
+            }],
+        )],
+    );
+    let objectives = MissionObjectiveSemanticReport::
+        from_route_entries_for_tests(vec![(
+            2,
+            0,
+            3,
+            "dump".to_owned(),
+            vec![
+                crate::domain::package::MissionObjectiveDirective::Collectible {
+                    source_ordinal: 5,
+                    locator_id: "cargo_a".to_owned(),
+                    drawable_id: None,
+                    legacy_arguments: Vec::new(),
+                },
+                crate::domain::package::MissionObjectiveDirective::
+                    BindCollectibleToWaypoint {
+                        source_ordinal: 6,
+                        collectible_index: 0,
+                        waypoint_index: 0,
+                    },
+            ],
+        )]);
+    let conditions = MissionConditionSemanticReport::
+        from_owned_entries_for_tests(Vec::new());
+    let topology = preflight_mission_authored_stage_topology(&stages)
+        .expect("topology fixture must stay valid");
+    let report = build_definition_core(
+        "m1",
+        &stages,
+        &objectives,
+        &conditions,
+        &topology,
+    )
+    .map_err(|error| error.to_string())?;
+    let [stage] = report.stages() else {
+        return Err("definition-core stage count changed".to_owned());
+    };
+    let [binding] = stage.collectible_waypoints() else {
+        return Err(
+            "definition-core collectible route count changed".to_owned()
+        );
+    };
+    assert_eq!(binding.stage_source_ordinal(), 2);
+    assert_eq!(binding.stage_sequence_ordinal(), 0);
+    assert_eq!(binding.objective_source_ordinal(), 3);
+    assert_eq!(binding.source_ordinal(), 6);
+    assert_eq!(binding.collectible_index(), 0);
+    assert_eq!(binding.collectible_source_ordinal(), 5);
+    assert_eq!(binding.collectible_locator_id(), "cargo_a");
+    assert_eq!(binding.waypoint_index(), 0);
+    assert_eq!(binding.waypoint_source_ordinal(), 4);
+    assert_eq!(binding.waypoint_locator_id(), "route_a");
+    Ok(())
+}

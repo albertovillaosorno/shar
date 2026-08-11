@@ -36,7 +36,8 @@
 use std::collections::BTreeSet;
 
 use crate::domain::package::{
-    MissionAuthoredStageTopologyReport, MissionCountdownBinding,
+    MissionAuthoredStageTopologyReport, MissionCollectibleWaypointBinding,
+    MissionCountdownBinding,
 };
 use crate::domain::{
     MissionConditionParameters, MissionConditionScope,
@@ -44,8 +45,8 @@ use crate::domain::{
     MissionObjectiveSemanticReport, MissionScopeReport, MissionStageKind,
     MissionStageSemanticReport, MissionStageTerminalOutcome,
     MissionStageTransitionMarker, MissionStageVisualTransition, PipelineError,
-    PipelineOutcome, preflight_mission_countdowns,
-    preflight_mission_stage_transitions,
+    PipelineOutcome, preflight_mission_collectible_waypoints,
+    preflight_mission_countdowns, preflight_mission_stage_transitions,
 };
 
 /// One condition identity retained under its exact owning stage.
@@ -74,6 +75,7 @@ pub(super) struct MissionDefinitionStageCoreBinding {
     show_stage_complete: bool,
     transition_markers: Vec<MissionStageTransitionMarker>,
     countdown: Option<MissionCountdownBinding>,
+    collectible_waypoints: Vec<MissionCollectibleWaypointBinding>,
     objective_source_ordinal: usize,
     objective_source_alias: String,
     objective_canonical_kind: Option<&'static str>,
@@ -144,6 +146,21 @@ impl MissionDefinitionCoreReport {
                 {
                     return Err(PipelineError::new(
                         "mission definition core countdown owner drifted",
+                    ));
+                }
+            }
+            for binding in &stage.collectible_waypoints {
+                if binding.stage_source_ordinal() != stage.stage_source_ordinal
+                    || binding.stage_sequence_ordinal()
+                        != stage.sequence_ordinal
+                    || binding.objective_source_ordinal()
+                        != stage.objective_source_ordinal
+                {
+                    return Err(PipelineError::new(
+                        concat!(
+                            "mission definition core collectible waypoint ",
+                            "owner drifted"
+                        ),
                     ));
                 }
             }
@@ -287,6 +304,13 @@ impl MissionDefinitionStageCoreBinding {
     }
 
     #[cfg(test)]
+    pub(super) fn collectible_waypoints(
+        &self,
+    ) -> &[MissionCollectibleWaypointBinding] {
+        &self.collectible_waypoints
+    }
+
+    #[cfg(test)]
     pub(super) fn objective_source_alias(&self) -> &str {
         &self.objective_source_alias
     }
@@ -425,6 +449,40 @@ fn build_definition_core(
             "mission definition core stage identity is duplicated",
         ));
     }
+    for stage in stages.stages() {
+        let objective_count = objectives
+            .objectives()
+            .iter()
+            .filter(|objective| {
+                objective.owner_stage_source_ordinal() == stage.source_ordinal()
+                    && objective.owner_stage_sequence_ordinal()
+                        == stage.sequence_ordinal()
+            })
+            .count();
+        if objective_count != 1 {
+            return Err(PipelineError::new(
+                "mission definition core stage has no unique root objective",
+            ));
+        }
+    }
+
+    for stage in stages.stages() {
+        let objective_count = objectives
+            .objectives()
+            .iter()
+            .filter(|objective| {
+                objective.owner_stage_source_ordinal() == stage.source_ordinal()
+                    && objective.owner_stage_sequence_ordinal()
+                        == stage.sequence_ordinal()
+            })
+            .count();
+        if objective_count != 1 {
+            return Err(PipelineError::new(
+                "mission definition core stage has no unique root objective",
+            ));
+        }
+    }
+
     for condition in conditions.conditions() {
         let owner = (
             condition.owner_stage_source_ordinal(),
@@ -436,6 +494,18 @@ fn build_definition_core(
             ));
         }
     }
+
+    let collectible_waypoints =
+        preflight_mission_collectible_waypoints(stages, objectives)
+            .map_err(|error| {
+                PipelineError::new(format!(
+                    concat!(
+                        "mission definition core collectible waypoint ",
+                        "preflight failed: {}"
+                    ),
+                    error
+                ))
+            })?;
 
     let mut result = Vec::with_capacity(stages.stages().len());
     for stage in stages.stages() {
@@ -488,6 +558,15 @@ fn build_definition_core(
                 ));
             },
         };
+        let stage_collectible_waypoints = collectible_waypoints
+            .bindings()
+            .iter()
+            .filter(|binding| {
+                binding.stage_source_ordinal() == key.0
+                    && binding.stage_sequence_ordinal() == key.1
+            })
+            .cloned()
+            .collect::<Vec<_>>();
         let matching_objectives = objectives
             .objectives()
             .iter()
@@ -547,6 +626,7 @@ fn build_definition_core(
             show_stage_complete: transition.show_stage_complete(),
             transition_markers: transition.markers().to_vec(),
             countdown,
+            collectible_waypoints: stage_collectible_waypoints,
             objective_source_ordinal: objective.source_ordinal(),
             objective_source_alias: objective.source_alias().to_owned(),
             objective_canonical_kind: objective.canonical_kind(),
