@@ -196,12 +196,40 @@ pub enum MissionParticipantReference {
 /// One participant reference bound to its source field and statement.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MissionResolvedParticipantReference {
+    owner_stage_source_ordinal: Option<usize>,
+    owner_stage_sequence_ordinal: Option<usize>,
+    owner_objective_source_ordinal: Option<usize>,
+    owner_condition_source_ordinal: Option<usize>,
     source_ordinal: usize,
     role: MissionParticipantRole,
     reference: MissionParticipantReference,
 }
 
 impl MissionResolvedParticipantReference {
+    /// Return source `AddStage` owner for stage/objective/condition references.
+    #[must_use]
+    pub const fn owner_stage_source_ordinal(&self) -> Option<usize> {
+        self.owner_stage_source_ordinal
+    }
+
+    /// Return dense stage owner for stage/objective/condition references.
+    #[must_use]
+    pub const fn owner_stage_sequence_ordinal(&self) -> Option<usize> {
+        self.owner_stage_sequence_ordinal
+    }
+
+    /// Return source `AddObjective` owner when one exists.
+    #[must_use]
+    pub const fn owner_objective_source_ordinal(&self) -> Option<usize> {
+        self.owner_objective_source_ordinal
+    }
+
+    /// Return source `AddCondition` owner for condition directive references.
+    #[must_use]
+    pub const fn owner_condition_source_ordinal(&self) -> Option<usize> {
+        self.owner_condition_source_ordinal
+    }
+
     /// Return the source statement ordinal that authored this reference.
     #[must_use]
     pub const fn source_ordinal(&self) -> usize {
@@ -544,6 +572,10 @@ pub fn preflight_mission_references(
                 })?;
             if objective_semantics.source_ordinal()
                 != stage.objective().binding().ordinal()
+                || objective_semantics.owner_stage_source_ordinal()
+                    != stage.source_ordinal()
+                || objective_semantics.owner_stage_sequence_ordinal()
+                    != stage.sequence_ordinal()
             {
                 return Err(
                     "mission reference objective report drifted".to_owned()
@@ -551,6 +583,8 @@ pub fn preflight_mission_references(
             }
             resolve_objective_parameters(
                 catalog,
+                stage.source_ordinal(),
+                stage.sequence_ordinal(),
                 stage.objective().parameters(),
                 &mut participants,
             )?;
@@ -564,6 +598,12 @@ pub fn preflight_mission_references(
                     })?;
                 if condition_semantics.source_ordinal()
                     != condition.binding().ordinal()
+                    || condition_semantics.owner_stage_source_ordinal()
+                        != stage.source_ordinal()
+                    || condition_semantics.owner_stage_sequence_ordinal()
+                        != stage.sequence_ordinal()
+                    || condition_semantics.owner_objective_source_ordinal()
+                        != condition.owner_objective_source_ordinal()
                 {
                     return Err(
                         "mission reference condition report drifted".to_owned()
@@ -606,6 +646,10 @@ fn push_character(
     source_id: &str,
 ) -> Result<(), String> {
     participants.push(MissionResolvedParticipantReference {
+        owner_stage_source_ordinal: None,
+        owner_stage_sequence_ordinal: None,
+        owner_objective_source_ordinal: None,
+        owner_condition_source_ordinal: None,
         source_ordinal,
         role,
         reference: MissionParticipantReference::Character(
@@ -623,6 +667,10 @@ fn push_vehicle(
     source_id: &str,
 ) -> Result<(), String> {
     participants.push(MissionResolvedParticipantReference {
+        owner_stage_source_ordinal: None,
+        owner_stage_sequence_ordinal: None,
+        owner_objective_source_ordinal: None,
+        owner_condition_source_ordinal: None,
         source_ordinal,
         role,
         reference: MissionParticipantReference::Vehicle(
@@ -634,9 +682,12 @@ fn push_vehicle(
 
 fn resolve_objective_parameters(
     catalog: &MissionReferenceCatalog,
+    stage_source_ordinal: usize,
+    stage_sequence_ordinal: usize,
     binding: &super::MissionObjectiveParameterBinding,
     participants: &mut Vec<MissionResolvedParticipantReference>,
 ) -> Result<(), String> {
+    let first_reference = participants.len();
     match binding.parameters() {
         MissionObjectiveParameters::BuyVehicle { vehicle_id } => push_vehicle(
             catalog,
@@ -666,7 +717,14 @@ fn resolve_objective_parameters(
         MissionObjectiveParameters::None
         | MissionObjectiveParameters::RoadArrows(_)
         | MissionObjectiveParameters::Race { .. } => Ok(()),
-    }
+    }?;
+    mark_objective_owner(
+        &mut participants[first_reference..],
+        stage_source_ordinal,
+        stage_sequence_ordinal,
+        binding.ordinal(),
+    );
+    Ok(())
 }
 
 fn resolve_objective(
@@ -674,6 +732,7 @@ fn resolve_objective(
     binding: &super::MissionObjectiveSemanticBinding,
     participants: &mut Vec<MissionResolvedParticipantReference>,
 ) -> Result<(), String> {
+    let first_reference = participants.len();
     for directive in binding.directives() {
         match directive {
             MissionObjectiveDirective::Npc(reference) => push_character(
@@ -778,7 +837,27 @@ fn resolve_objective(
             _ => {},
         }
     }
+    mark_objective_owner(
+        &mut participants[first_reference..],
+        binding.owner_stage_source_ordinal(),
+        binding.owner_stage_sequence_ordinal(),
+        binding.source_ordinal(),
+    );
     Ok(())
+}
+
+fn mark_objective_owner(
+    references: &mut [MissionResolvedParticipantReference],
+    stage_source_ordinal: usize,
+    stage_sequence_ordinal: usize,
+    objective_source_ordinal: usize,
+) {
+    for reference in references {
+        reference.owner_stage_source_ordinal = Some(stage_source_ordinal);
+        reference.owner_stage_sequence_ordinal = Some(stage_sequence_ordinal);
+        reference.owner_objective_source_ordinal =
+            Some(objective_source_ordinal);
+    }
 }
 
 fn resolve_condition(
@@ -786,6 +865,7 @@ fn resolve_condition(
     binding: &super::MissionConditionSemanticBinding,
     participants: &mut Vec<MissionResolvedParticipantReference>,
 ) -> Result<(), String> {
+    let first_reference = participants.len();
     for directive in binding.directives() {
         if let MissionConditionDirective::TargetVehicle {
             source_ordinal,
@@ -800,6 +880,16 @@ fn resolve_condition(
                 vehicle_id,
             )?;
         }
+    }
+    for reference in &mut participants[first_reference..] {
+        reference.owner_stage_source_ordinal =
+            Some(binding.owner_stage_source_ordinal());
+        reference.owner_stage_sequence_ordinal =
+            Some(binding.owner_stage_sequence_ordinal());
+        reference.owner_objective_source_ordinal =
+            binding.owner_objective_source_ordinal();
+        reference.owner_condition_source_ordinal =
+            Some(binding.source_ordinal());
     }
     Ok(())
 }
@@ -844,6 +934,7 @@ fn resolve_stage(
     binding: &super::MissionStageSemanticBinding,
     participants: &mut Vec<MissionResolvedParticipantReference>,
 ) -> Result<(), String> {
+    let first_reference = participants.len();
     match binding.kind() {
         MissionStageKind::LockedVehicle { vehicle_id } => push_vehicle(
             catalog,
@@ -863,6 +954,11 @@ fn resolve_stage(
     }
     for directive in binding.directives() {
         resolve_stage_directive(catalog, directive, participants)?;
+    }
+    for reference in &mut participants[first_reference..] {
+        reference.owner_stage_source_ordinal = Some(binding.source_ordinal());
+        reference.owner_stage_sequence_ordinal =
+            Some(binding.sequence_ordinal());
     }
     Ok(())
 }

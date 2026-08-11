@@ -106,6 +106,29 @@ pub struct MissionConditionSemanticBinding {
 }
 
 impl MissionConditionSemanticBinding {
+    #[cfg(test)]
+    pub(crate) fn from_parts_for_tests(
+        owner_stage_source_ordinal: usize,
+        owner_stage_sequence_ordinal: usize,
+        owner_objective_source_ordinal: Option<usize>,
+        source_ordinal: usize,
+        source_alias: &str,
+        scope: MissionConditionScope,
+        schema_id: &'static str,
+        directives: Vec<MissionConditionDirective>,
+    ) -> Self {
+        Self {
+            owner_stage_source_ordinal,
+            owner_stage_sequence_ordinal,
+            owner_objective_source_ordinal,
+            source_ordinal,
+            source_alias: source_alias.to_owned(),
+            scope,
+            schema_id,
+            directives,
+        }
+    }
+
     /// Return the source `AddStage` ordinal owning this condition.
     #[must_use]
     pub const fn owner_stage_source_ordinal(&self) -> usize {
