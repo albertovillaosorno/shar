@@ -177,6 +177,13 @@ Current task list. Project phases and dated progress are recorded in
           argument shapes plus exact reward type, mode, level, optional cost,
           and vendor tokens as source evidence; do not assign unlock or
           progression behavior from those tokens alone.
+        - [x] Bind all 43 reviewed `SetCarAttributes` vehicle identities to
+          one canonical physical package while preserving the four positional
+          numeric source lexemes exactly. All 42 reward-car ids are covered plus
+          one tuning-only vehicle; do not assign semantic stat names without
+          runtime/source authority. Type the seven `SetTotalGags` rows as exact
+          positive per-level source totals `[15, 11, 11, 15, 6, 11, 15]`
+          without turning them into viewed/completed/save-state progress.
         - [x] Type all 32 reviewed `AddPurchaseCarReward` storefronts from the
           source loader: preserve exact action, choreo, position locator,
           trigger-radius lexeme, and car-start locator; bind the reward NPC to a
