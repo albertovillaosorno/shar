@@ -84,6 +84,7 @@ use crate::domain::{
     preflight_mission_presentation_references,
     preflight_mission_purchase_rewards, preflight_mission_references,
     preflight_mission_reward_references, preflight_mission_script,
+    preflight_mission_stage_message_references,
     preflight_mission_stage_semantics, preflight_mission_stage_transitions,
     preflight_mission_traffic_groups,
     preflight_mission_vehicle_selects,
@@ -596,9 +597,24 @@ fn preflight_cross_source_mission_locators(
                 ))
             })?,
         );
-        let stage_semantics = preflight_mission_stage_semantics(&scopes).map_err(|error| {
-            PipelineError::new(format!("mission locator stage preflight failed: {error}"))
-        })?;
+        let stage_semantics =
+            preflight_mission_stage_semantics(&scopes).map_err(|error| {
+                PipelineError::new(format!(
+                    "mission locator stage preflight failed: {error}"
+                ))
+            })?;
+        drop(
+            preflight_mission_stage_message_references(index, &stage_semantics)
+                .map_err(|error| {
+                    PipelineError::new(format!(
+                        concat!(
+                            "mission stage-message reference ",
+                            "preflight failed: {}"
+                        ),
+                        error
+                    ))
+                })?,
+        );
         let objective_semantics =
             preflight_mission_objective_semantics(&scopes).map_err(|error| {
                 PipelineError::new(format!(

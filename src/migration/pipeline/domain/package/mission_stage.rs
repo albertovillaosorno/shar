@@ -58,7 +58,7 @@ pub enum MissionStageKind {
 /// Text namespace selected by the stage message command.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MissionStageMessageKind {
-    /// `MISSION_OBJECTIVE_000..299` namespace.
+    /// Minimum-width-two `MISSION_OBJECTIVE_00..299` namespace.
     Objective,
     /// `INGAME_MESSAGE_00..19` namespace for locked stages.
     Locked,
@@ -481,6 +481,32 @@ impl MissionStageSemanticReport {
     #[must_use]
     pub fn stages(&self) -> &[MissionStageSemanticBinding] {
         &self.stages
+    }
+
+    #[cfg(test)]
+    pub(crate) fn from_message_entries_for_tests(
+        entries: Vec<(
+            usize,
+            usize,
+            MissionStageKind,
+            Vec<MissionStageDirective>,
+        )>,
+    ) -> Self {
+        Self {
+            stages: entries
+                .into_iter()
+                .map(
+                    |(source_ordinal, sequence_ordinal, kind, directives)| {
+                        MissionStageSemanticBinding {
+                            source_ordinal,
+                            sequence_ordinal,
+                            kind,
+                            directives,
+                        }
+                    },
+                )
+                .collect(),
+        }
     }
 
     #[cfg(test)]
