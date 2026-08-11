@@ -399,7 +399,7 @@ fn resolve_named_asset_window(
     Ok(*binding)
 }
 
-fn source_level(source_path: &str) -> PipelineOutcome<u8> {
+pub(super) fn source_level(source_path: &str) -> PipelineOutcome<u8> {
     let normalized = source_path.replace(char::from(92), "/");
     let matching = normalized
         .split('/')
