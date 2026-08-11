@@ -292,8 +292,18 @@ offers with package identity, level, positive price, and exact vendor token.
 Those offers split evenly into 21 cars and 21 skins, with six per level. The
 only reviewed type/vendor pairs are `car/gil`, `car/simpson`, and
 `skin/interior`. This is merchandise and price evidence, not purchase,
-ownership, unlock, or persistence authority. The level storefront intake also
-types all 32
+ownership, unlock, or persistence authority.
+
+The same global reward source contains 43 `SetCarAttributes` rows. Every vehicle
+identity resolves to one canonical physical vehicle package: all 42 reward cars
+plus one tuning-only vehicle. The four numeric arguments are preserved as exact
+positional lexemes and validated only against the observed finite 0.5-through-5
+range; this pipeline does not name those positions as runtime stats. Seven
+`SetTotalGags` rows likewise preserve one positive source total per level:
+15, 11, 11, 15, 6, 11, and 15. Those totals are catalog evidence, not viewed,
+completed, or saved player progress.
+
+The level storefront intake also types all 32
 `AddPurchaseCarReward` calls: it preserves action, choreo, position locator,
 trigger radius, and car-start locator, binds each reward NPC to canonical
 character-package evidence, and carries only the source-backed `gil` vendor

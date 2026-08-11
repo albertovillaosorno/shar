@@ -722,6 +722,13 @@ positive price, and vendor token: 21 car offers and 21 skin offers, six per
 level. This still creates no ownership, purchase transaction, unlock, or save
 authority.
 
+Vehicle-tuning and gag-total rows from that source are typed without inventing
+runtime semantics. All 43 `SetCarAttributes` vehicle ids resolve uniquely to
+physical vehicle packages, including one vehicle not present in `BindReward`;
+the four numeric positions remain opaque exact lexemes. The seven
+`SetTotalGags` rows preserve one positive source total for each level, but do not
+represent viewed-gag progress, completion, ownership, or save state.
+
 `buy_vehicle` and `buy_costume` complete from an accepted permanent purchase
 or ownership transaction for the exact catalog identity.
 
