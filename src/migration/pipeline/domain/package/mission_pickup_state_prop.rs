@@ -44,6 +44,8 @@ pub enum MissionPickupStatePropScope {
     Mission,
     /// Declaration appears in one dense authored stage.
     Stage {
+        /// Source `AddStage` ordinal owning the declaration.
+        source_ordinal: usize,
         /// Dense authored stage ordinal.
         sequence_ordinal: usize,
     },
@@ -52,6 +54,9 @@ pub enum MissionPickupStatePropScope {
 /// One pickup target resolved to its unique prior state-prop declaration.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MissionPickupStatePropBinding {
+    owner_stage_source_ordinal: usize,
+    owner_stage_sequence_ordinal: usize,
+    owner_objective_source_ordinal: usize,
     target_source_ordinal: usize,
     target_id: String,
     declaration_source_ordinal: usize,
@@ -61,6 +66,24 @@ pub struct MissionPickupStatePropBinding {
 }
 
 impl MissionPickupStatePropBinding {
+    /// Return source `AddStage` ordinal owning the pickup objective.
+    #[must_use]
+    pub const fn owner_stage_source_ordinal(&self) -> usize {
+        self.owner_stage_source_ordinal
+    }
+
+    /// Return dense authored stage ordinal owning the pickup objective.
+    #[must_use]
+    pub const fn owner_stage_sequence_ordinal(&self) -> usize {
+        self.owner_stage_sequence_ordinal
+    }
+
+    /// Return source `AddObjective` ordinal owning the pickup target.
+    #[must_use]
+    pub const fn owner_objective_source_ordinal(&self) -> usize {
+        self.owner_objective_source_ordinal
+    }
+
     /// Return the `SetPickupTarget` source ordinal.
     #[must_use]
     pub const fn target_source_ordinal(&self) -> usize {
@@ -174,6 +197,7 @@ pub fn preflight_mission_pickup_state_props(
                 declarations.push(StatePropDeclaration {
                     source_ordinal: *source_ordinal,
                     scope: MissionPickupStatePropScope::Stage {
+                        source_ordinal: stage.source_ordinal(),
                         sequence_ordinal: stage.sequence_ordinal(),
                     },
                     prop_id,
@@ -194,6 +218,11 @@ pub fn preflight_mission_pickup_state_props(
             else {
                 continue;
             };
+            if *source_ordinal <= objective.source_ordinal() {
+                return Err(
+                    "pickup target precedes its owning objective".to_owned(),
+                );
+            }
             let matching = declarations
                 .iter()
                 .filter(|declaration| {
@@ -209,6 +238,11 @@ pub fn preflight_mission_pickup_state_props(
                 );
             };
             bindings.push(MissionPickupStatePropBinding {
+                owner_stage_source_ordinal:
+                    objective.owner_stage_source_ordinal(),
+                owner_stage_sequence_ordinal:
+                    objective.owner_stage_sequence_ordinal(),
+                owner_objective_source_ordinal: objective.source_ordinal(),
                 target_source_ordinal: *source_ordinal,
                 target_id: target_id.clone(),
                 declaration_source_ordinal: declaration.source_ordinal,
