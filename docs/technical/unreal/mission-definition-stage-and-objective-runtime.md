@@ -200,6 +200,12 @@ source neighbor without promoting adjacency to runtime flow. All 90 explicit
 last stage; 64 selected mission sources legitimately omit `final`. Ordinary
 successor, retry, rollback, and recovery edges remain unresolved.
 
+Checkpoint evidence is retained on that authored topology without defining a
+recovery edge. The reviewed corpus contains 119 `reset_to_here` markers across
+119 stages and 119 sources; every affected stage has exactly one marker authored
+after its `AddStage`. The marker ordinal is preserved so final projection can
+set the checkpoint flag while retry, rollback, and recovery remain unresolved.
+
 Final `USharMissionDefinition` creation remains blocked until remaining locator
 roles, route, camera runtime behavior, reward, successor/recovery transitions,
 bundle, and remaining catalog identities resolve and the complete topology

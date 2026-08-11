@@ -236,6 +236,13 @@ explicit final marker. All four level/game terminal overrides are also authored
 only on the last stage. Adjacency is evidence, not a runtime successor edge, so
 success, retry, rollback, and recovery topology remain pending.
 
+Checkpoint evidence is now part of the same authored topology boundary. The
+reviewed corpus contains 119 `reset_to_here` markers across 119 stages and 119
+sources; every affected stage has exactly one marker authored after its
+`AddStage`. The binding preserves the marker ordinal so final projection can set
+the checkpoint flag without treating checkpoint presence as authority for a
+retry, rollback, or recovery edge.
+
 The remaining numeric collectible-route cross-reference is now closed at the
 source boundary. All 36 reviewed `BindCollectibleTo` directives resolve their
 zero-based collectible and stage-waypoint indices to declarations authored
