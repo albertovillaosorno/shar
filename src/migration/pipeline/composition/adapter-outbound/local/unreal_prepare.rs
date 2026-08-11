@@ -483,11 +483,6 @@ fn preflight_cross_source_mission_locators(
         mission_references,
         &snapshots,
     )?);
-    drop(dialogue_info_context::preflight_mission_dialogue_info(
-        index,
-        mission_references,
-        &snapshots,
-    )?);
 
     let indexed_package_roots = index
         .packages()
