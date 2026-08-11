@@ -1,0 +1,28 @@
+---
+schema: shar.todo.v1
+id: package-and-launch-the-selected-native-desktop-and-android-targets
+status: open
+priority: P4
+lane: packaging
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Package and launch the selected native desktop and Android targets
+
+Package and launch the selected native desktop and Android targets.
+
+## Acceptance criteria
+
+- [ ] Package and launch the selected native desktop and Android targets.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

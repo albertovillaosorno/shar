@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: preserve-original-mission-timing-gameplay-rules-and-progression-unless-a-technical
+status: open
+priority: P3
+lane: runtime
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Preserve original mission timing, gameplay rules, and progression unless a technical…
+
+Preserve original mission timing, gameplay rules, and progression unless a
+technical compatibility fix is required.
+
+## Acceptance criteria
+
+- [ ] Preserve original mission timing, gameplay rules, and progression unless a
+  technical compatibility fix is required.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

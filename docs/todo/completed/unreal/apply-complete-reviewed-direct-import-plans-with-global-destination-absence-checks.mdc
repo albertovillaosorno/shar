@@ -1,0 +1,31 @@
+---
+schema: shar.todo.v1
+id: apply-complete-reviewed-direct-import-plans-with-global-destination-absence-checks
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: apply-conversion-plans-through-tested-native-unreal-mcp-commands
+dependencies: [apply-conversion-plans-through-tested-native-unreal-mcp-commands]
+children: []
+---
+
+# Apply complete reviewed direct-import plans with global destination absence checks,…
+
+Apply complete reviewed direct-import plans with global destination absence
+checks, explicit save, independent read-back, and reverse rollback.
+
+## Acceptance criteria
+
+- [x] Apply complete reviewed direct-import plans with global destination
+  absence checks, explicit save, independent read-back, and reverse
+  rollback.
+
+## Dependencies
+
+Parent task: `apply-conversion-plans-through-tested-native-unreal-mcp-commands`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

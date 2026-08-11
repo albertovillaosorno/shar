@@ -1,0 +1,28 @@
+---
+schema: shar.todo.v1
+id: complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7
+status: open
+priority: P1
+lane: conversion
+active: false
+parent: null
+dependencies: []
+children: [require-actual-model-or-world-geometry-before-a-package-can-reserve-an-fbx-backed, emit-explicit-fbx-polygon-smoothing-metadata-whenever-authored-normals-exist-and-prove, version-the-fbx-catalog-verifier-for-exact-external-png-provenance-without-treating, publish-the-complete-verified-package-level-fbx-catalog-for-every-manifest-package]
+---
+
+# Complete deterministic conversion of original models to binary FBX 7.7
+
+Complete deterministic conversion of original models to binary FBX 7.7.
+
+## Acceptance criteria
+
+- [ ] Complete deterministic conversion of original models to binary FBX 7.7.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

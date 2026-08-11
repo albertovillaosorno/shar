@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: compile-reviewed-texture-soundwave-filemediasource-and-ready-static-mesh-import
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: apply-conversion-plans-through-tested-native-unreal-mcp-commands
+dependencies: [apply-conversion-plans-through-tested-native-unreal-mcp-commands]
+children: []
+---
+
+# Compile reviewed texture, SoundWave, FileMediaSource, and ready static-mesh import…
+
+Compile reviewed texture, SoundWave, FileMediaSource, and ready static-mesh
+import routes while reporting every readiness blocker.
+
+## Acceptance criteria
+
+- [x] Compile reviewed texture, SoundWave, FileMediaSource, and ready
+  static-mesh import routes while reporting every readiness blocker.
+
+## Dependencies
+
+Parent task: `apply-conversion-plans-through-tested-native-unreal-mcp-commands`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

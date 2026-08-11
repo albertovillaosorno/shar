@@ -1,0 +1,29 @@
+---
+schema: shar.todo.v1
+id: verify-representative-character-prop-vehicle-interior-and-world-imports
+status: open
+priority: P1
+lane: conversion
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Verify representative character, prop, vehicle, interior, and world imports
+
+Verify representative character, prop, vehicle, interior, and world imports.
+
+## Acceptance criteria
+
+- [ ] Verify representative character, prop, vehicle, interior, and world
+  imports.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

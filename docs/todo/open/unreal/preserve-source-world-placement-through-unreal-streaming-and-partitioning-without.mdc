@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: preserve-source-world-placement-through-unreal-streaming-and-partitioning-without
+status: open
+priority: P2
+lane: unreal
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Preserve source world placement through Unreal streaming and partitioning without…
+
+Preserve source world placement through Unreal streaming and partitioning
+without changing the playable layout.
+
+## Acceptance criteria
+
+- [ ] Preserve source world placement through Unreal streaming and partitioning
+  without changing the playable layout.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

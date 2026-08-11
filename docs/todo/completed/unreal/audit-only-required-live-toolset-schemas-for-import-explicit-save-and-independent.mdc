@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: audit-only-required-live-toolset-schemas-for-import-explicit-save-and-independent
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: apply-conversion-plans-through-tested-native-unreal-mcp-commands
+dependencies: [apply-conversion-plans-through-tested-native-unreal-mcp-commands]
+children: []
+---
+
+# Audit only required live Toolset schemas for import, explicit save, and independent…
+
+Audit only required live Toolset schemas for import, explicit save, and
+independent asset read-back without invoking mutations.
+
+## Acceptance criteria
+
+- [x] Audit only required live Toolset schemas for import, explicit save, and
+  independent asset read-back without invoking mutations.
+
+## Dependencies
+
+Parent task: `apply-conversion-plans-through-tested-native-unreal-mcp-commands`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

@@ -1,0 +1,38 @@
+---
+schema: shar.todo.v1
+id: model-dynamiczone-traversal-as-aggregate-child-trigger-occupancy
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
+children: []
+---
+
+# Model `DynamicZone` traversal as aggregate child-trigger occupancy
+
+Model `DynamicZone` traversal as aggregate child-trigger occupancy. The first
+child-volume entry of an occupancy episode emits the Dyna transition,
+overlapping child volumes do not retrigger it, final exit rearms the zone, and
+exit does not invert the transition. Each emitted step retains exact locator
+and source-package identity; traversal order and geometry remain
+caller-observed evidence.
+
+## Acceptance criteria
+
+- [x] Model `DynamicZone` traversal as aggregate child-trigger occupancy. The
+  first child-volume entry of an occupancy episode emits the Dyna
+  transition, overlapping child volumes do not retrigger it, final exit
+  rearms the zone, and exit does not invert the transition. Each emitted
+  step retains exact locator and source-package identity; traversal order
+  and geometry remain caller-observed evidence.
+
+## Dependencies
+
+Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

@@ -1,0 +1,32 @@
+---
+schema: shar.todo.v1
+id: route-reviewed-static-fbx-through-the-project-owned-import-toolset-with-authored
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: apply-conversion-plans-through-tested-native-unreal-mcp-commands
+dependencies: [apply-conversion-plans-through-tested-native-unreal-mcp-commands]
+children: []
+---
+
+# Route reviewed static FBX through the project-owned import toolset with authored…
+
+Route reviewed static FBX through the project-owned import toolset with
+authored normals, one combined StaticMesh target, no auxiliary asset import,
+and no replacement or implicit save.
+
+## Acceptance criteria
+
+- [x] Route reviewed static FBX through the project-owned import toolset with
+  authored normals, one combined StaticMesh target, no auxiliary asset
+  import, and no replacement or implicit save.
+
+## Dependencies
+
+Parent task: `apply-conversion-plans-through-tested-native-unreal-mcp-commands`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: reproduce-original-missions-objectives-triggers-dialogue-rewards-collectibles
+status: open
+priority: P3
+lane: runtime
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Reproduce original missions, objectives, triggers, dialogue, rewards, collectibles,…
+
+Reproduce original missions, objectives, triggers, dialogue, rewards,
+collectibles, races, and progression gates.
+
+## Acceptance criteria
+
+- [ ] Reproduce original missions, objectives, triggers, dialogue, rewards,
+  collectibles, races, and progression gates.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

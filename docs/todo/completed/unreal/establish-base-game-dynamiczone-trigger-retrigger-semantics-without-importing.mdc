@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: establish-base-game-dynamiczone-trigger-retrigger-semantics-without-importing
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
+children: []
+---
+
+# Establish base-game DynamicZone trigger/retrigger semantics without importing…
+
+Establish base-game DynamicZone trigger/retrigger semantics without importing
+extension-only stage/checkpoint commands as game authority.
+
+## Acceptance criteria
+
+- [x] Establish base-game DynamicZone trigger/retrigger semantics without
+  importing extension-only stage/checkpoint commands as game authority.
+
+## Dependencies
+
+Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

@@ -1,0 +1,43 @@
+---
+schema: shar.todo.v1
+id: build-preflight-and-saved-check-evidence
+status: open
+priority: P4
+lane: packaging
+active: true
+parent: null
+dependencies: []
+children: []
+---
+
+# Build preflight and saved check evidence
+
+Implement `tools/build/check.py` as the supported preflight: validate the
+lawful game installation and manifest, require `game/Simpsons.exe` directly
+under the repository game root, verify Python 3.14.6, Unreal Engine 5.8.1, and
+host prerequisites, then write `.cache/build/data/check.json` for later build
+steps.
+
+## Acceptance criteria
+
+- [ ] Reject a missing `game/Simpsons.exe` and reject an extra nested game
+  directory such as `game/SomeFolder/Simpsons.exe` as the supported input
+  layout.
+- [ ] Validate the complete game root against the canonical manifest before any
+  extraction or build mutation.
+- [ ] Verify Python 3.14.6, Unreal Engine 5.8.1, and target-relevant host
+  prerequisites with actionable user-facing diagnostics.
+- [ ] Write a versioned `.cache/build/data/check.json` containing normalized
+  paths, versions, manifest identity, and validation results.
+- [ ] Permit manual JSON edits only as an explicitly unsupported override; later
+  steps must still schema-check and revalidate safety-critical paths.
+
+## Dependencies
+
+No explicit task dependency is required beyond the declared repository and
+platform prerequisites.
+
+## Evidence
+
+Add implementation, deterministic validation, and supported-host evidence here
+as the task advances.

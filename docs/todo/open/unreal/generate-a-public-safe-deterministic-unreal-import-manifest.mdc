@@ -1,0 +1,28 @@
+---
+schema: shar.todo.v1
+id: generate-a-public-safe-deterministic-unreal-import-manifest
+status: open
+priority: P2
+lane: unreal
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Generate a public-safe deterministic Unreal import manifest
+
+Generate a public-safe deterministic Unreal import manifest.
+
+## Acceptance criteria
+
+- [ ] Generate a public-safe deterministic Unreal import manifest.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

@@ -1,0 +1,34 @@
+---
+schema: shar.todo.v1
+id: version-normalized-mfk-command-evidence-to-v3-strip-trailing-source-comments-from
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and
+dependencies: [compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and]
+children: []
+---
+
+# Version normalized MFK command evidence to v3, strip trailing source comments from…
+
+Version normalized MFK command evidence to v3, strip trailing source comments
+from arguments, preserve nested calls, and publish deterministic
+mission/stage/objective/condition context findings plus reviewed compatibility
+adaptations.
+
+## Acceptance criteria
+
+- [x] Version normalized MFK command evidence to v3, strip trailing source
+  comments from arguments, preserve nested calls, and publish deterministic
+  mission/stage/objective/condition context findings plus reviewed
+  compatibility adaptations.
+
+## Dependencies
+
+Parent task: `compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

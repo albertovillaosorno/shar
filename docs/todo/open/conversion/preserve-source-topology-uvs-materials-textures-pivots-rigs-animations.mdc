@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: preserve-source-topology-uvs-materials-textures-pivots-rigs-animations
+status: open
+priority: P1
+lane: conversion
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Preserve source topology, UVs, materials, textures, pivots, rigs, animations,…
+
+Preserve source topology, UVs, materials, textures, pivots, rigs, animations,
+placements, and transforms without artistic edits.
+
+## Acceptance criteria
+
+- [ ] Preserve source topology, UVs, materials, textures, pivots, rigs,
+  animations, placements, and transforms without artistic edits.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

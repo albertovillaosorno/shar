@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: reproduce-original-world-streaming-placement-physics-animation-effects-and-platform
+status: open
+priority: P3
+lane: runtime
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Reproduce original world streaming, placement, physics, animation, effects, and platform…
+
+Reproduce original world streaming, placement, physics, animation, effects,
+and platform input behavior.
+
+## Acceptance criteria
+
+- [ ] Reproduce original world streaming, placement, physics, animation,
+  effects, and platform input behavior.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

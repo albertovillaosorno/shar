@@ -1,0 +1,28 @@
+---
+schema: shar.todo.v1
+id: verify-representative-mods-without-changing-the-default-base-game
+status: open
+priority: P5
+lane: verification
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Verify representative mods without changing the default base game
+
+Verify representative mods without changing the default base game.
+
+## Acceptance criteria
+
+- [ ] Verify representative mods without changing the default base game.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

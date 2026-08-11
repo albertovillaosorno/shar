@@ -1,0 +1,28 @@
+---
+schema: shar.todo.v1
+id: detect-duplicate-normalized-output-paths-before-conversion-or-writing
+status: completed
+priority: P4
+lane: mods
+active: false
+parent: define-deterministic-mod-identity-dependencies-priority-compatibility-supersession
+dependencies: [define-deterministic-mod-identity-dependencies-priority-compatibility-supersession]
+children: []
+---
+
+# Detect duplicate normalized output paths before conversion or writing
+
+Detect duplicate normalized output paths before conversion or writing.
+
+## Acceptance criteria
+
+- [x] Detect duplicate normalized output paths before conversion or writing.
+
+## Dependencies
+
+Parent task: `define-deterministic-mod-identity-dependencies-priority-compatibility-supersession`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: ship-four-independent-base-save-slots-add-autosave-only-after-faithful-port-parity-is
+status: open
+priority: P4
+lane: product
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Ship four independent base save slots; add autosave only after faithful port parity is…
+
+Ship four independent base save slots; add autosave only after faithful port
+parity is stable.
+
+## Acceptance criteria
+
+- [ ] Ship four independent base save slots; add autosave only after faithful
+  port parity is stable.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

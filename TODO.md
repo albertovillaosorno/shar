@@ -1,558 +1,799 @@
 # SHAR TODO
 
-Current task list. Project phases and dated progress are recorded in
-[`ROADMAP.md`](ROADMAP.md).
+Only unfinished work appears here. P0 is the highest-priority horizon and P5
+is the final verification and publication horizon. Within each section, active
+work appears first and stable task identity breaks ties; typed lanes and
+dependencies remain execution authority.
 
-## Base-port rules
+Full metadata, acceptance criteria, dependencies, evidence, and planning notes
+remain in typed records under `docs/todo/open/`. Completed records remain under
+`docs/todo/completed/`.
 
-- [ ] Preserve the original missions, mission order, world layout, progression,
-  gameplay structure, models, textures, audio, cinematics, UI, and localization.
-- [ ] Do not manually redesign terrain, missions, models, textures, or world
-  content for the base project.
-- [ ] Limit base-asset changes to deterministic conversion, Unreal
-  compatibility, import correctness, and fixes for defects introduced by the
-  port.
-- [ ] Keep optional creative changes, replacements, and enhancements inside
-  mods.
+**Canonical TODO format:** one `### TODO - ...` title, one synthesis paragraph,
+then one direct Markdown link to the complete typed record. No per-item field
+labels belong here.
 
-## Repository and validation
+## P0 — Authority and repository governance
 
-- [ ] Finish the canonical `src/<domain>/<function>/<kind>/<part>` migration.
-- [ ] Update stale paths in documentation, tests, manifests, and commands.
-- [ ] Remove obsolete files and workspace references.
-- [ ] Adopt Jig as the canonical repository validator.
-- [ ] Keep Jig source-linked from `.dependencies/jig/source`.
-- [ ] Complete the tracked `.jig/` policy, taxonomy, adapters, and projections.
-- [x] Run a clean exhaustive Jig validation.
-- [ ] Document the local Jig installation and decide later whether CI is useful.
+### TODO - Preserve the original missions, mission order, world layout, progression, gameplay…
 
-## Source extraction and conversion
+Preserve the original missions, mission order, world layout, progression,
+gameplay structure, models, textures, audio, cinematics, UI, and localization.
 
-- [ ] Validate a user-supplied lawful source installation.
-- [ ] Preserve original asset identities, package relationships, and ordering.
-- [ ] Complete deterministic conversion of original models to binary FBX 7.7.
-  - [x] Require actual model or world geometry before a package can reserve an
-    FBX-backed `StaticMesh`; keep scene, locator, camera, animation, and physics
-    evidence as companions only when geometry exists.
-  - [x] Emit explicit FBX polygon smoothing metadata whenever authored normals
-    exist, and prove the representative static import no longer warns about
-    missing smoothing groups.
-  - [x] Version the FBX catalog verifier for exact external PNG provenance
-    without treating sidecars as independently promotable model inputs.
-  - [x] Publish the complete verified package-level FBX catalog for every
-    manifest package currently classified `requires-fbx` before promoting any
-    of those plans to ready.
-- [ ] Preserve source topology, UVs, materials, textures, pivots, rigs,
-  animations, placements, and transforms without artistic edits.
-- [ ] Correct only conversion errors where generated output differs from the
-  original source evidence.
-- [ ] Import the original world through source-authored FBX instead of replacing
-  it with an Unreal Landscape.
-- [ ] Reject heuristic map offsets, interior movements, global height raises,
-  UV mirrors, and other corrections not present in source evidence.
-- [ ] Verify representative character, prop, vehicle, interior, and world
-  imports.
-- [ ] Audit reported map-wide LOD/geometry overlaps before removing any
-  vertices; permit only deterministic source-backed conversion corrections.
-- [ ] Audit distant-object transforms from source evidence instead of accepting
-  manual editor placement as world-layout authority.
-- [ ] Audit the reported vertical offset in imported vehicle FBX files, record
-  its deterministic cause, and remove or preserve it only from source evidence.
-- [ ] Recheck those conversion audits in-game after deterministic fixes land.
-- [ ] Preserve original audio, cinematics, localization, UI, mission, and tuning
-  data in deterministic normalized forms.
-  - [x] Keep movie package manifests and decode reports independent of local
-    source, extraction, and transaction paths.
-  - [x] Keep movie-tool diagnostics on logical identities and error classes.
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/governance/preserve-the-original-missions-mission-order-world-layout-progression-gameplay.mdc](docs/todo/open/governance/preserve-the-original-missions-mission-order-world-layout-progression-gameplay.mdc)
 
-## Unreal assets
+### TODO - Do not manually redesign terrain, missions, models, textures, or world content for the…
 
-- [ ] Generate a public-safe deterministic Unreal import manifest.
-- [ ] Apply conversion plans through tested native Unreal MCP commands.
-  - [x] Parse accepted bundles into immutable typed operations without changing
-    their canonical revisions.
-  - [x] Verify applicable source files, roots, links, sizes, and SHA-256 before
-    native execution planning.
-  - [x] Compile reviewed texture, SoundWave, FileMediaSource, and ready
-    static-mesh import routes while reporting every readiness blocker.
-  - [x] Register and test a project-owned PostEngineInit ToolsetRegistry module
-    for synchronous WAV import without replacement or implicit save.
-  - [x] Route reviewed static FBX through the project-owned import toolset with
-    authored normals, one combined StaticMesh target, no auxiliary asset import,
-    and no replacement or implicit save.
-  - [x] Import HAP MOV payloads beneath `Content/Movies`, create native
-    FileMediaSource assets, verify both effects, and compensate them together.
-  - [x] Audit only required live Toolset schemas for import, explicit save, and
-    independent asset read-back without invoking mutations.
-  - [x] Apply complete reviewed direct-import plans with global destination
-    absence checks, explicit save, independent read-back, and reverse rollback.
-  - [ ] Implement and execute the complete serialized package transaction loop
-    for every operation family.
-- [ ] Import meshes, skeletons, physics assets, and animations correctly.
-  - [x] Import package-level skeletal FBX through a companion-aware transaction
-    that owns the SkeletalMesh and new Skeleton together, verifies both classes
-    and dirty state, saves both packages, reads both back, rejects replacement,
-    and rolls both back without orphaning a Skeleton.
-- [ ] Recreate materials only as required to match the original presentation.
-- [ ] Import original textures without repainting, upscaling, or redesigning
-  them.
-- [ ] Convert original camera, mission, vehicle, gameplay, UI, and tuning data
-  into native Unreal assets.
-  - [x] Stop treating unresolved normalized source as a generic `DataAsset` or
-    one bespoke StateTree per source bundle; publish
-    `requires-semantic-conversion` until a deterministic domain compiler emits
-    a concrete target. Plan-bundle v2 now carries the aggregate semantic blocker
-    count in its revision and execution completeness gate.
-  - [ ] Compile normalized mission-script bundles into typed `SharMission`
-    definitions and bindings for the shared mission StateTree contract.
-    - [x] Version normalized MFK command evidence to v3, strip trailing source
-      comments from arguments, preserve nested calls, and publish deterministic
-      mission/stage/objective/condition context findings plus reviewed
-      compatibility adaptations.
-    - [x] Fail semantic intake before Unreal planning on stale mission evidence,
-      inconsistent command summaries, noncanonical ordinals, or unresolved
-      context findings.
-    - [x] Require every reflected mission stage to bind one validated objective
-      policy row with explicit start, completion, failure, recovery, route,
-      target, notoriety, catch-up, drop, and presentation identities.
-    - [x] Resolve the two observed legacy context defects through exact
-      path-and-command-window adaptations and independently revalidate their
-      fingerprints during semantic preflight.
-    - [x] Close the observed objective and condition alias registries plus exact
-      objective/condition-scoped command argument counts against the repository
-      mission corpus, failing unknown aliases, scopes, or argument-count drift.
-    - [x] Replay normalized mission context and producer-derived summaries, then
-      project a lossless mission/stage/objective/condition source-scope graph
-      with one root objective per stage, closed direct mission/stage command
-      scope-and-arity registries, and explicit general-scope overlap where
-      observed; retain all positional values uninterpreted.
-    - [ ] Map every reviewed participant, route, timing, load, checkpoint,
-      presentation, reward, transition, and typed objective/condition parameter
-      reference.
-      - [x] Compile all 611 direct objective and 408 direct condition parameter
-        shapes into typed evidence; preserve the one noncanonical `niether`
-        route token and undocumented condition values without repairing them.
-        Carry those typed parameters through semantic projection and the private
-        definition-core join. The reviewed corpus contains 131 objective
-        invocations and 11 condition invocations with nonempty direct
-        parameters; no retained parameter is promoted to runtime
-        objective/failure policy.
-      - [x] Compile all 611 stage headers plus 2,549 typed stage directives,
-        covering all 2,454 direct-stage commands and all 95 objective commands
-        explicitly delegated to stage semantics; preserve opaque numeric
-        `AddStage` flags, raw AI tuning values, and compatibility arguments.
-      - [x] Compile all 811 direct mission-scope commands into typed restart,
-        load, vehicle, camera, presentation, hint, HUD, pedestrian-group, and
-        street-race evidence with no raw mission command fallback.
-      - [x] Assign all 3,605 objective-scoped commands exactly one semantic
-        owner: 3,498 objective directives, 95 stage-delegated directives, and 12
-        structural condition commands; compile all 375 condition-scoped command
-        values without inventing unresolved units, defaults, or legacy meaning.
-      - [ ] Resolve typed source identities and intentionally opaque values to
-        canonical participant, route, camera, reward, presentation, transition,
-        and catalog definitions before asset emission.
-        - [x] Resolve reviewed character and vehicle source identities against
-          the validated phase-three package index, preserving exact character
-          variants, symbolic `current` vehicles, and `none` driver sentinels.
-        - [x] Compile all 116 reviewed pedestrian groups and their 437
-          `AddPed` members as bounded declarations, binding all 78 unique model
-          identities one-to-one to canonical character packages. Compile all 16
-          reviewed traffic groups and 64 `AddTrafficModel` members, binding all
-          22 unique traffic identities one-to-one to canonical vehicle packages
-          while preserving the optional numeric big-vehicle flag. Bind all 134
-          reviewed `UsePedGroup` selections to one declared group in the paired
-          level setup source. Population spawn, navigation, group-switch runtime
-          behavior, and parked-car behavior remain separate boundaries.
-        - [x] Bind every explicit `LoadP3DFile` first argument to one canonical
-          phase-three package and keep only that path in P3D summaries. Preserve
-          the source loader's optional heap and inventory-section parameters as
-          validated provenance rather than target runtime allocation authority.
-          The mission corpus has 966 calls: 950 one-argument calls and 16
-          two-argument calls, all using `GMA_LEVEL_OTHER`; the source loader
-          supports a third inventory-section argument, but no base mission uses
-          that form.
-        - [x] Bind all 61 typed `SetPresentationBitmap` references across
-          mission initialization, stage, and objective scopes through one shared
-          canonical P3D package catalog. The corpus has 56 unique presentation
-          paths, with zero missing package bindings and zero normalized-root
-          collisions; presentation timing and drawable semantics remain
-          unresolved rather than inferred from the package path.
-        - [x] Bind all 90 reviewed `BindReward` P3D references through the
-          shared canonical package catalog. Preserve the observed five/seven
-          argument shapes plus exact reward type, mode, level, optional cost,
-          and vendor tokens as source evidence; do not assign unlock or
-          progression behavior from those tokens alone.
-        - [x] Bind all 43 reviewed `SetCarAttributes` vehicle identities to
-          one canonical physical package while preserving the four positional
-          numeric source lexemes exactly. All 42 reward-car ids are covered plus
-          one tuning-only vehicle; do not assign semantic stat names without
-          runtime/source authority. Type the seven `SetTotalGags` rows as exact
-          positive per-level source totals `[15, 11, 11, 15, 6, 11, 15]`
-          without turning them into viewed/completed/save-state progress.
-        - [x] Type all 32 reviewed `AddPurchaseCarReward` storefronts from the
-          source loader: preserve exact action, choreo, position locator,
-          trigger-radius lexeme, and car-start locator; bind the reward NPC to a
-          canonical character package and derive only the source-backed `gil`
-          vendor versus `simpson` playable-character seller choice. Bind all 26
-          `AddPurchaseCarNPCWaypoint` calls to a unique prior storefront NPC.
-          Pair all 16 level-setup sources with their exact `<family>i` to
-          `<family>` load sibling and bind the 32 immediate storefront positions
-          plus 26 waypoints against that static package context. Require at
-          least one level-setup-specific command before classifying the source;
-          the 16
-          reviewed mission-init sources whose only overlapping command is
-          `InitLevelPlayerVehicle` stay outside this sibling-load pass. Current
-          decoded
-          locator evidence resolves 11 of those 58 immediate references and
-          records the other 47 as `Missing`; absence from decoded evidence is
-          not treated as proof of runtime absence. Separately, compile all 42
-          reviewed `forsale` `BindReward` rows into package-backed source offer
-          evidence: 21 cars and 21 skins, six offers per level, exact positive
-          price, and only the reviewed `gil`, `simpson`, or `interior` vendor
-          token pairings. The 32 deferred car-start locators, ownership,
-          save-state, and final reward transaction semantics remain unresolved.
-        - [x] Type all 118 reviewed ambient and 81 bonus-mission NPC
-          declarations, bind each authored model to canonical character-package
-          evidence, preserve source-derived runtime names and exact spawn/meta
-          tokens, and bind all 472 ambient plus 45 bonus NPC waypoints to one
-          unique prior matching declaration. Bind their 716 immediate generic
-          spawn/waypoint lookups and all 87 exact `CarStart` dialogue-position
-          lookups against the same static level-load context. Across all 877
-          immediate level-setup locator references, current decoded evidence
-          yields 212 resolved, 665 `Missing`, and zero ambiguous outcomes. Keep
-          decoded-evidence gaps explicit and keep path navigation semantics as a
-          separate unresolved boundary.
-        - [x] Bind all 194 reviewed mission-start and animated camera or
-          multi-controller component references by exact embedded component
-          name,
-          component kind, and source-script `levelNN` provenance. Global lookup
-          is ambiguous for 190 references, while level-scoped exact matching is
-          unique for all 194 with zero missing references. Four unreferenced
-          level-local keys have multiple candidates; the catalog preserves those
-          ambiguities so any future reference fails closed instead of choosing a
-          winner. Package/member source identity is preserved without inventing
-          cross-level precedence, blending, timing, or playback semantics.
-        - [x] Build a package-scoped mission locator catalog from decoded
-          `srr_locator` JSON `name` and type evidence; reject package-local name
-          collisions and preserve cross-package duplicates as ambiguity instead
-          of applying filename or global-name precedence.
-        - [x] Bind each typed locator reference against the exact selected
-          source package context formed by the matching mission-load script and
-          its longest matching level-load family, plus indexed initial Dyna P3Ds
-          after re-verifying source size and SHA-256. Across 462 reviewed
-          initial Dyna P3D references, 461 bind to decoded package roots and one
-          valid
-          source-requested root has no decoded package; retain that root as an
-          explicit evidence gap instead of inventing an alias or aborting
-          locator preflight. Split script-time visibility from post-Dyna
-          visibility:
-          immediate init/stage lookups see only static Level/Mission loads,
-          while reviewed deferred lookups can see decoded initial Dyna packages.
-          Preserve the `ActivateVehicle` `NULL` sentinel.
-          Initialization locator references remain intentionally unowned;
-          stage roles retain exact `AddStage` source/dense ordinals, and
-          objective roles additionally retain the exact `AddObjective` source
-          ordinal. Ownership does not alter `Resolved`, `Missing`, or
-          `Ambiguous` outcomes or infer navigation behavior.
-        - [x] Type Dyna Load Data postfix syntax as ordered region load/unload,
-          interior load/unload, and World Sphere enable/disable operations while
-          preserving exact source evidence and the observed terminal-less Level
-          7 mission-start region load as an explicit legacy adaptation.
-        - [x] Compile decoded base-game type-5 `DynamicZone` Dyna Load Data into
-          ordered package transitions and preflight every authored P3D load
-          against the phase-three package index. The 109-zone corpus carries 372
-          indexed P3D loads and 728 P3D unloads. 30 unload targets are absent
-          from the extracted index and therefore remain valid remove-if-present
-          effects rather than false load requirements. No observed base-game
-          Dyna string both loads and unloads the same P3D target; the domain
-          refuses to invent runtime ordering if such a conflict appears later.
-        - [x] Model `DynamicZone` traversal as aggregate child-trigger
-          occupancy. The first child-volume entry of an occupancy episode emits
-          the Dyna transition, overlapping child volumes do not retrigger it,
-          final exit rearms the zone, and exit does not invert the transition.
-          Each emitted step retains exact locator and source-package identity;
-          traversal order and geometry remain caller-observed evidence.
-        - [x] Separate streaming lifetime from duplicate-locator precedence for
-          `bm1_bestside`: 18 references face 10 Type-3 `CarStart` candidates,
-          while all 1,100 DynamicZone P3D effects touch none of those mission
-          packages. Camera best-side lookup is deferred until mission reset;
-          Pure3D starts in its Default inventory section, searches the current
-          section first, then remaining sections in creation order. This load
-          path creates Level before Mission. Duplicated best-side names choose
-          the Level candidate instead of an arbitrary package winner.
-        - [x] Establish base-game DynamicZone trigger/retrigger semantics
-          without
-          importing extension-only stage/checkpoint commands as game authority.
-        - [x] Trace runtime lookup for every currently modeled locator role.
-          Exact-type script-time references use reviewed static load precedence;
-          an audit of 751 such references found 242 unique, 507 missing, and two
-          duplicated CarStart references. Both Level-versus-Mission collisions
-          now resolve to Level. Generic and exact post-Dyna duplicate lookups
-          stay fail-closed because subtype/hash order or Dyna section recreation
-          make their runtime precedence history-dependent.
-        - [x] Classify reviewed stage markers without conflating presentation
-          with topology: 6 iris and 14 fade requests are visual transitions,
-          5 stay-black and 108 stage-complete markers are presentation policy,
-          while 3 level-over and 1 game-over markers are terminal overrides.
-          Preserve all 137 authored marker occurrences across 127 stages with
-          exact source ordinals and source order; three reviewed stages contain
-          two distinct `ShowStageComplete` occurrences and retain both. Iris
-          wins the one observed stage that also authors fade.
-        - [x] Compile authored order for all 611 stages across 154 selected
-          mission sources. Preserve the next authored neighbor as evidence only,
-          accept the 64 sources with no explicit `final`, and require each
-          of the 90 observed `final` markers plus all four explicit terminal
-          overrides to occur only on the last authored stage. Bind all 119
-          reviewed `reset_to_here` checkpoint markers to their exact stage and
-          source ordinal; every checkpoint stage contains exactly one marker.
-          Runtime successor, retry, rollback, and recovery edges remain
-          unresolved rather than inferred from adjacency or checkpoint presence.
-        - [x] Resolve all 36 reviewed `BindCollectibleTo` index pairs
-          against the owning stage's `AddCollectible` and `AddStageWaypoint`
-          declarations. Every authored index is in range and refers backward to
-          an existing declaration; preserve the exact index and locator pair
-          without inferring route navigation or collectible movement.
-        - [x] Bind all 180 reviewed objective NPC walking waypoints
-          across 58 selected sources to one unique prior `AddNPC` declaration
-          with the same identity. Preserve exact authored waypoint order and
-          repeated locator ids without inferring pathfinding or traversal.
-        - [x] Group all 43 reviewed `StartCountdown` blocks with their
-          175 following `AddToCountdownSequence` entries. Preserve exact
-          sequence/character identities, display tokens, and positive authored
-          durations without assigning token meaning or playback behavior.
-        - [x] Bind all four reviewed `SetPickupTarget` identities to one
-          unique prior `AddCollectibleStateProp` declaration across the whole
-          selected source. Two declarations are mission-scoped and two are
-          stage-scoped; preserve exact locator/state/scope evidence without
-          inferring state-prop lifetime or pickup mechanics.
-        - [x] Preserve all 64 reviewed `AddMission` registrations across
-          16 base, demo, and E3 load sources in exact authored order. Every
-          declaration has an exact `<id>i` and `<id>l` sibling and the init
-          sibling selects the same mission id; registration order remains
-          distinct from unlock, prerequisite, completion, or progression policy.
-        - [x] Bind all 24 reviewed `AddVehicleSelectInfo`
-          registrations through the canonical P3D, vehicle, and character
-          package catalogs. Preserve source identity only; menu availability,
-          ownership, unlock, and runtime selection policy remain unresolved.
-        - [x] Bind all 449 reviewed stage message indices to canonical
-          localization keys through generated phase-three text-key mirrors. The
-          source-text phrase table now derives 52 language packages containing
-          1,632 unique keys, including all 300 `MISSION_OBJECTIVE_*` and 20
-          `INGAME_MESSAGE_*` keys. All 439 objective and 10 locked-stage uses
-          resolve exactly once while preserving key id, source unit, package,
-          and subcategory; localized payload asset emission remains separate.
-          The Unreal manifest accepts these 52 derived language packages with
-          zero physical members only when they retain nonempty text-key ids and
-          source-unit provenance that resolves to physical manifest sources;
-          ordinary source-less packages still fail closed.
-        - [x] Preserve exact ownership for all 61 canonical presentation
-          bitmap package bindings: two mission-scope references remain
-          intentionally unowned, six stage-scope references retain exact owning
-          stage source/dense ordinals, and 53 objective-scope references retain
-          both exact stage and objective source ownership. Presentation timing,
-          drawable behavior, and runtime sequencing remain separate boundaries.
-        - [x] Bind all six reviewed objective `SetFMVInfo` RMV paths to one
-          canonical `movies/story/<id>` package and one converted movie member.
-          Preserve the optional `stopmusic` argument as opaque source evidence;
-          playback, audio routing, music policy, completion, and transitions
-          remain separate runtime semantics.
-        - [x] Bind all nine reviewed `SetMusicState` pairs to the indexed
-          base score-library script for their exact source level. Preserve the
-          compiled metadata member id/path plus the unique named-asset offsets
-          for each `MissionN`/`StageN` source window. Do not decode RADMusic
-          state-machine or playback semantics from symbol adjacency.
-        - [x] Bind all 14 reviewed `StageStartMusicEvent` calls to their exact
-          owning stage while preserving the authored event token. Source-runtime
-          review identifies the separate `mission-drama` delivery channel and
-          required `legacy-case-insensitive-key32` transform. Publish those
-          identities without inventing a numeric key, playback, mix, or
-          transition policy; a validated native key bridge remains separate.
-        - [x] Bind all 38 reviewed `SetCompletionDialog` ids to one
-          canonical same-level mission-conversation group. Preserve every
-          participant audio package in the group: 26 groups contain one package
-          and 12 contain two. Resolve all 16 optional character identities
-          independently; do not reinterpret that character as a speaker or
-          filter audio packages by it. The corpus includes one `convinit` group
-          and 37 `noboxconv` groups, so conversation mode remains authored data.
-        - [x] Bind all 128 reviewed objective `SetDialogueInfo` records to
-          canonical participants and one same-level `convinit` conversation
-          group. All 256 player/NPC source identities resolve uniquely. 107
-          dialogue ids are already unique by level/id; the remaining 21 are the
-          repeated `success` ids for `sr1`/`sr2`/`sr3`, disambiguated only from
-          that authored street-race source identity. Preserve every participant
-          audio package without inferring speaker order or playback behavior.
-        - [x] Preserve semantic ownership through downstream mission bindings
-          instead of reconstructing it from source adjacency: all six FMVs keep
-          stage+objective owners; all nine music-state, 14 stage-start music,
-          and 38 completion-dialog bindings keep exact stage owners; all 128
-          dialogue-info bindings keep
-          stage+objective owners; all 36 collectible-waypoint bindings keep
-          stage+objective owners; all 43 countdown blocks keep exact stage
-          owners; and all four pickup-target bindings keep stage+objective
-          owners while stage-scope state-prop declarations retain their exact
-          `AddStage` owner. Canonical character/vehicle participant references
-          now retain the same stage/objective owner chain and an exact
-          `AddCondition` owner when condition-scoped. These owner joins do not
-          add playback, navigation, state-prop lifecycle, retry, rollback, or
-          recovery semantics.
-        - [x] Join source-backed definition-core rows before final asset
-          emission. Of 344 reviewed mission-script sources, 190 contain no
-          selected mission and must project no stage/objective/condition rows;
-          all 154 selected sources contain exactly one mission. Join all 611
-          stages to one authored-topology row and one root objective through
-          exact owner source/dense ordinals, then attach all 408 conditions
-          through the same owner key. Preserve stage-versus-objective scope,
-          exact root-objective ownership for the 6 objective-scoped conditions,
-          versioned schema id, canonical objective kind or explicit unavailable
-          identity, direct typed parameters, checkpoint/final/terminal evidence,
-          visual transition/stay-black/stage-complete presentation, and the
-          authored next neighbor. The same core now retains all 137 exact
-          transition-marker occurrences, all 43 countdown blocks, all 14
-          stage-start music events, all 36 collectible-to-waypoint bindings,
-          and all 180 resolved objective NPC waypoints under exact
-          stage/objective ownership. The authored neighbor
-          remains evidence only, not a runtime success/failure/retry/recovery
-          edge.
-        - [x] Keep utility mission-script sources valid through downstream
-          cross-reference preflights. Pickup state-prop preflight returns an
-          empty report for zero selected missions only when stage and objective
-          semantic reports are also empty; multiple or drifting mission
-          cardinality still fails closed.
-        - [x] Publish the joined definition core as deterministic versioned
-          staging data before native asset construction. `prepare-unreal` now
-          writes `mission-definitions.jsonl` as the tenth transactional staging
-          artifact: 154 source-keyed schema-v3 rows retain all 611 stages, 408
-          conditions, 137 transition markers, 43 countdown blocks, 14
-          stage-start music events, 36 collectible-waypoint bindings, 180
-          objective NPC waypoints, and four pickup state-prop bindings. Every
-          definition source is one of the 344
-          verified mission-script sources, source ids are unique, and each
-          condition row publishes the reviewed `stage-failure` violation effect.
-          The rows still publish no successor/retry/rollback/recovery edges.
-          This is source-backed semantic staging, not `USharMissionDefinition`
-          or
-          StateTree asset emission.
-    - [ ] Emit lossless `USharMissionDefinition` assets only after the complete
-      mission graph passes reference and topology validation.
-  - [ ] Compile remaining normalized UI, font, localization, tuning, and other
-    structured evidence into concrete Unreal types before enabling their editor
-    factories.
-- [ ] Convert original audio, cinematics, and localization into native Unreal
-  assets.
-- [ ] Preserve source world placement through Unreal streaming and partitioning
-  without changing the playable layout.
-- [ ] Preserve provenance and deterministic Unreal object identities.
-- [ ] Make the complete import repeatable from a clean project.
+Do not manually redesign terrain, missions, models, textures, or world content
+for the base project.
 
-## Faithful runtime
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/governance/do-not-manually-redesign-terrain-missions-models-textures-or-world-content-for-the.mdc](docs/todo/open/governance/do-not-manually-redesign-terrain-missions-models-textures-or-world-content-for-the.mdc)
 
-- [ ] Complete startup, saves, profiles, settings, loading, and progression.
-- [ ] Reproduce original player movement, cameras, interactions, vehicles,
-  traffic, pedestrians, damage, and recovery.
-- [ ] Reproduce original missions, objectives, triggers, dialogue, rewards,
-  collectibles, races, and progression gates.
-- [ ] Reproduce original HUD, menus, navigation, subtitles, audio, cinematics,
-  and localization behavior.
-- [ ] Reproduce original world streaming, placement, physics, animation,
-  effects, and platform input behavior.
-- [ ] Preserve original mission timing, gameplay rules, and progression unless a
-  technical compatibility fix is required.
-- [ ] Bind generated assets through stable contracts instead of direct paths.
-- [ ] Add parity tests for gameplay behavior and state transitions.
+### TODO - Limit base-asset changes to deterministic conversion, Unreal compatibility, import…
 
-## Mods and skills
+Limit base-asset changes to deterministic conversion, Unreal compatibility,
+import correctness, and fixes for defects introduced by the port.
 
-- [ ] Define deterministic mod identity, dependencies, priority, compatibility,
-  supersession, and conflict rules.
-  - [x] Detect duplicate normalized output paths before conversion or writing.
-  - [x] Reject ambiguous outputs and report both exact source entries.
-  - [x] Require clean extraction when the optional package set changes.
-- [ ] Support validated replacement and extension packages for assets and data.
-- [ ] Keep the unmodified faithful port as the default base-game package.
-- [ ] Use one normalized desktop and Android mod import contract.
-- [ ] Keep native-code mods behind an explicit trust boundary.
-- [ ] Validate schemas, paths, integrity, limits, references, and load order.
-- [x] Add preview and dry-run commands that show exactly what a mod changes.
-- [ ] Finish user-facing and AI-agent modding skills.
-- [x] Require approval before replacing content or activating packages.
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/governance/limit-base-asset-changes-to-deterministic-conversion-unreal-compatibility-import.mdc](docs/todo/open/governance/limit-base-asset-changes-to-deterministic-conversion-unreal-compatibility-import.mdc)
 
-## Platforms and packaging
+### TODO - Keep optional creative changes, replacements, and enhancements inside mods
 
-- [ ] Package and launch the selected native desktop and Android targets.
-- [ ] Require packaged-build evidence instead of editor play or emulation.
-- [ ] Keep gameplay, saves, package identities, and mod contracts consistent
-  across supported targets.
-- [ ] Provide graphics and performance settings without changing base content.
-- [ ] Profile CPU, GPU, memory, storage, streaming, shaders, loading, and frame
-  time.
-- [ ] Optimize only from measured evidence without removing original behavior.
-- [ ] Run the complete pipeline in dependency order.
-- [x] Resume safely after interruption without accepting stale partial output.
-- [ ] Report progress, failures, provenance, and final artifacts.
+Keep optional creative changes, replacements, and enhancements inside mods.
 
-## Imperative product and mod foundation
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/governance/keep-optional-creative-changes-replacements-and-enhancements-inside-mods.mdc](docs/todo/open/governance/keep-optional-creative-changes-replacements-and-enhancements-inside-mods.mdc)
 
-- [ ] Ship four independent base save slots; add autosave only after faithful
-  port parity is stable.
-- [ ] Support keyboard/mouse and controller input across gameplay and menus.
-- [ ] Keep loading screens optional once streaming can replace them safely.
-- [ ] Ship a default, fully obtainable base achievement set suitable for
-  100%/platinum-style completion, with mod achievements separately namespaced.
-- [ ] Add an optional Discord boundary for display username, Rich Presence,
-  parties/invites, and achievement-facing presentation without making Discord
-  identity authoritative for saves or gameplay.
-- [ ] Expose base C++ extension points for boss encounters, health meters,
-  combat, multiplayer adapters, and future mod-owned gameplay systems without
-  implementing replacement gameplay during the faithful-port phase.
-- [ ] Add a first-class `Mods` route when creating or loading a game.
-- [ ] Classify mods as visual-only, additive/story, gameplay-extension, or
-  native-code, with explicit compatibility and save-impact declarations.
-- [ ] Allow visual-only mods to be reordered, enabled, disabled, or replaced
-  from the main menu without invalidating the active save.
-- [ ] Treat story/additive mods as mutually incompatible by default unless their
-  manifests explicitly declare a compatible composition contract.
-- [ ] Permit nonvisual mods that do not mutate save/progression state, but show
-  an explicit compatibility warning before activation.
-- [ ] Let mods declare deterministic hierarchy, load order, and override
-  priority; unresolved conflicts fail closed.
-- [ ] Keep native C++ mods behind a trust scanner that reports filesystem,
-  process, network, platform, save, and engine-surface access before the user
-  decides whether to load them.
-- [ ] Make mission, model, material, texture, skeleton, coordinate, gameplay,
-  achievement, and UI definitions data-addressable for nonexpert mod authors.
-- [ ] Deduplicate identical generated skeletons, textures, models, and other
-  assets only when deterministic evidence proves equivalence. Never assume all
-  characters or mods share one skeleton or asset layout.
-- [ ] Let generated base characters opt into shared skeleton/material/model
-  assets as an optimization, with simple per-asset/per-mod overrides that can
-  break sharing without changing global contracts.
-- [ ] Keep multiplayer as an extension-ready base capability rather than a fully
-  implemented first-party mode during the port; mods must be able to add
-  replicated modes, lobbies, servers, missions, and progression namespaces.
-- [ ] Package Linux, macOS, Android, Windows x86-64, and any Windows-on-ARM
-  target that current Unreal/toolchain support can validate.
-- [ ] Produce a local iOS `.ipa` package for sideloading/testing without App
-  Store submission or an Xcode-dependent authoring workflow; document any
-  unavoidable Apple signing or build-host constraints explicitly.
-- [ ] Require at least one canonical `.ico` under `game/` in the game manifest;
-  zero icons is invalid. Unreal staging must consume the generated icon outputs
-  after the current icon producer is moved to its final repository-owned
-  location, expected under `src/unreal/icon`.
-- [ ] Keep DLSS and hardware-ray-tracing/RTX integrations behind optional
-  capability adapters so graphics mods can target them without making
-  proprietary GPU features mandatory for the base port.
-- [ ] Preserve the delivery order: faithful port first, compatibility and
-  quality-of-life improvements second, richer community mod content third.
+### TODO - Finish the canonical `src/<domain>/<function>/<kind>/<part>` migration
 
-## Final verification
+Finish the canonical `src/<domain>/<function>/<kind>/<part>` migration.
 
-- [ ] Complete a start-to-finish playthrough without progression-blocking
-  defects.
-- [ ] Compare missions, vehicles, collectibles, saves, localization, cinematics,
-  world layout, and the ending against the original game.
-- [ ] Verify generated assets preserve the original appearance and placement.
-- [ ] Rebuild from clean input and compare deterministic outputs.
-- [ ] Verify representative mods without changing the default base game.
-- [ ] Verify an AI agent can create and validate a mod using published skills.
-- [ ] Record known compatibility limitations honestly.
-- [ ] Run the canonical global validation without cache.
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/repository/finish-the-canonical-src-domain-function-kind-part-migration.mdc](docs/todo/open/repository/finish-the-canonical-src-domain-function-kind-part-migration.mdc)
+
+### TODO - Update stale paths in documentation, tests, manifests, and commands
+
+Update stale paths in documentation, tests, manifests, and commands.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/repository/update-stale-paths-in-documentation-tests-manifests-and-commands.mdc](docs/todo/open/repository/update-stale-paths-in-documentation-tests-manifests-and-commands.mdc)
+
+### TODO - Remove obsolete files and workspace references
+
+Remove obsolete files and workspace references.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/repository/remove-obsolete-files-and-workspace-references.mdc](docs/todo/open/repository/remove-obsolete-files-and-workspace-references.mdc)
+
+### TODO - Adopt Jig as the canonical repository validator
+
+Adopt Jig as the canonical repository validator.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/repository/adopt-jig-as-the-canonical-repository-validator.mdc](docs/todo/open/repository/adopt-jig-as-the-canonical-repository-validator.mdc)
+
+### TODO - Keep Jig source-linked from `.dependencies/jig/source`
+
+Keep Jig source-linked from `.dependencies/jig/source`.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/repository/keep-jig-source-linked-from-dependencies-jig-source.mdc](docs/todo/open/repository/keep-jig-source-linked-from-dependencies-jig-source.mdc)
+
+### TODO - Complete the tracked `.jig/` policy, taxonomy, adapters, and projections
+
+Complete the tracked `.jig/` policy, taxonomy, adapters, and projections.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/repository/complete-the-tracked-jig-policy-taxonomy-adapters-and-projections.mdc](docs/todo/open/repository/complete-the-tracked-jig-policy-taxonomy-adapters-and-projections.mdc)
+
+### TODO - Document the local Jig installation and decide later whether CI is useful
+
+Document the local Jig installation and decide later whether CI is useful.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/repository/document-the-local-jig-installation-and-decide-later-whether-ci-is-useful.mdc](docs/todo/open/repository/document-the-local-jig-installation-and-decide-later-whether-ci-is-useful.mdc)
+
+## P1 — Source extraction and deterministic conversion
+
+### TODO - Validate a user-supplied lawful source installation
+
+Validate a user-supplied lawful source installation.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/conversion/validate-a-user-supplied-lawful-source-installation.mdc](docs/todo/open/conversion/validate-a-user-supplied-lawful-source-installation.mdc)
+
+### TODO - Preserve original asset identities, package relationships, and ordering
+
+Preserve original asset identities, package relationships, and ordering.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/conversion/preserve-original-asset-identities-package-relationships-and-ordering.mdc](docs/todo/open/conversion/preserve-original-asset-identities-package-relationships-and-ordering.mdc)
+
+### TODO - Complete deterministic conversion of original models to binary FBX 7.7
+
+Complete deterministic conversion of original models to binary FBX 7.7.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/conversion/complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7.mdc](docs/todo/open/conversion/complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7.mdc)
+
+### TODO - Preserve source topology, UVs, materials, textures, pivots, rigs, animations,…
+
+Preserve source topology, UVs, materials, textures, pivots, rigs, animations,
+placements, and transforms without artistic edits.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/conversion/preserve-source-topology-uvs-materials-textures-pivots-rigs-animations.mdc](docs/todo/open/conversion/preserve-source-topology-uvs-materials-textures-pivots-rigs-animations.mdc)
+
+### TODO - Correct only conversion errors where generated output differs from the original source…
+
+Correct only conversion errors where generated output differs from the
+original source evidence.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/conversion/correct-only-conversion-errors-where-generated-output-differs-from-the-original-source.mdc](docs/todo/open/conversion/correct-only-conversion-errors-where-generated-output-differs-from-the-original-source.mdc)
+
+### TODO - Import the original world through source-authored FBX instead of replacing it with an…
+
+Import the original world through source-authored FBX instead of replacing it
+with an Unreal Landscape.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/conversion/import-the-original-world-through-source-authored-fbx-instead-of-replacing-it-with-an.mdc](docs/todo/open/conversion/import-the-original-world-through-source-authored-fbx-instead-of-replacing-it-with-an.mdc)
+
+### TODO - Reject heuristic map offsets, interior movements, global height raises, UV mirrors, and…
+
+Reject heuristic map offsets, interior movements, global height raises, UV
+mirrors, and other corrections not present in source evidence.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/conversion/reject-heuristic-map-offsets-interior-movements-global-height-raises-uv-mirrors-and.mdc](docs/todo/open/conversion/reject-heuristic-map-offsets-interior-movements-global-height-raises-uv-mirrors-and.mdc)
+
+### TODO - Verify representative character, prop, vehicle, interior, and world imports
+
+Verify representative character, prop, vehicle, interior, and world imports.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/conversion/verify-representative-character-prop-vehicle-interior-and-world-imports.mdc](docs/todo/open/conversion/verify-representative-character-prop-vehicle-interior-and-world-imports.mdc)
+
+### TODO - Audit reported map-wide LOD/geometry overlaps before removing any vertices; permit only…
+
+Audit reported map-wide LOD/geometry overlaps before removing any vertices;
+permit only deterministic source-backed conversion corrections.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/conversion/audit-reported-map-wide-lod-geometry-overlaps-before-removing-any-vertices-permit-only.mdc](docs/todo/open/conversion/audit-reported-map-wide-lod-geometry-overlaps-before-removing-any-vertices-permit-only.mdc)
+
+### TODO - Audit distant-object transforms from source evidence instead of accepting manual editor…
+
+Audit distant-object transforms from source evidence instead of accepting
+manual editor placement as world-layout authority.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/conversion/audit-distant-object-transforms-from-source-evidence-instead-of-accepting-manual-editor.mdc](docs/todo/open/conversion/audit-distant-object-transforms-from-source-evidence-instead-of-accepting-manual-editor.mdc)
+
+### TODO - Audit the reported vertical offset in imported vehicle FBX files, record its…
+
+Audit the reported vertical offset in imported vehicle FBX files, record its
+deterministic cause, and remove or preserve it only from source evidence.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/conversion/audit-the-reported-vertical-offset-in-imported-vehicle-fbx-files-record-its.mdc](docs/todo/open/conversion/audit-the-reported-vertical-offset-in-imported-vehicle-fbx-files-record-its.mdc)
+
+### TODO - Recheck those conversion audits in-game after deterministic fixes land
+
+Recheck those conversion audits in-game after deterministic fixes land.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/conversion/recheck-those-conversion-audits-in-game-after-deterministic-fixes-land.mdc](docs/todo/open/conversion/recheck-those-conversion-audits-in-game-after-deterministic-fixes-land.mdc)
+
+### TODO - Preserve original audio, cinematics, localization, UI, mission, and tuning data in…
+
+Preserve original audio, cinematics, localization, UI, mission, and tuning
+data in deterministic normalized forms.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/conversion/preserve-original-audio-cinematics-localization-ui-mission-and-tuning-data-in.mdc](docs/todo/open/conversion/preserve-original-audio-cinematics-localization-ui-mission-and-tuning-data-in.mdc)
+
+## P2 — Unreal asset and mission compilation
+
+### TODO - Generate a public-safe deterministic Unreal import manifest
+
+Generate a public-safe deterministic Unreal import manifest.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/unreal/generate-a-public-safe-deterministic-unreal-import-manifest.mdc](docs/todo/open/unreal/generate-a-public-safe-deterministic-unreal-import-manifest.mdc)
+
+### TODO - Apply conversion plans through tested native Unreal MCP commands
+
+Apply conversion plans through tested native Unreal MCP commands.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/unreal/apply-conversion-plans-through-tested-native-unreal-mcp-commands.mdc](docs/todo/open/unreal/apply-conversion-plans-through-tested-native-unreal-mcp-commands.mdc)
+
+### TODO - Implement and execute the complete serialized package transaction loop for every…
+
+Implement and execute the complete serialized package transaction loop for
+every operation family.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/unreal/implement-and-execute-the-complete-serialized-package-transaction-loop-for-every.mdc](docs/todo/open/unreal/implement-and-execute-the-complete-serialized-package-transaction-loop-for-every.mdc)
+
+### TODO - Import meshes, skeletons, physics assets, and animations correctly
+
+Import meshes, skeletons, physics assets, and animations correctly.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/unreal/import-meshes-skeletons-physics-assets-and-animations-correctly.mdc](docs/todo/open/unreal/import-meshes-skeletons-physics-assets-and-animations-correctly.mdc)
+
+### TODO - Recreate materials only as required to match the original presentation
+
+Recreate materials only as required to match the original presentation.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/unreal/recreate-materials-only-as-required-to-match-the-original-presentation.mdc](docs/todo/open/unreal/recreate-materials-only-as-required-to-match-the-original-presentation.mdc)
+
+### TODO - Import original textures without repainting, upscaling, or redesigning them
+
+Import original textures without repainting, upscaling, or redesigning them.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/unreal/import-original-textures-without-repainting-upscaling-or-redesigning-them.mdc](docs/todo/open/unreal/import-original-textures-without-repainting-upscaling-or-redesigning-them.mdc)
+
+### TODO - Convert original camera, mission, vehicle, gameplay, UI, and tuning data into native…
+
+Convert original camera, mission, vehicle, gameplay, UI, and tuning data into
+native Unreal assets.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/unreal/convert-original-camera-mission-vehicle-gameplay-ui-and-tuning-data-into-native.mdc](docs/todo/open/unreal/convert-original-camera-mission-vehicle-gameplay-ui-and-tuning-data-into-native.mdc)
+
+### TODO - Compile normalized mission-script bundles into typed `SharMission` definitions and…
+
+Compile normalized mission-script bundles into typed `SharMission` definitions
+and bindings for the shared mission StateTree contract.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/unreal/compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and.mdc](docs/todo/open/unreal/compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and.mdc)
+
+### TODO - Map every reviewed participant, route, timing, load, checkpoint, presentation, reward,…
+
+Map every reviewed participant, route, timing, load, checkpoint, presentation,
+reward, transition, and typed objective/condition parameter reference.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/unreal/map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward.mdc](docs/todo/open/unreal/map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward.mdc)
+
+### TODO - Resolve typed source identities and intentionally opaque values to canonical…
+
+Resolve typed source identities and intentionally opaque values to canonical
+participant, route, camera, reward, presentation, transition, and catalog
+definitions before asset emission.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/unreal/resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical.mdc](docs/todo/open/unreal/resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical.mdc)
+
+### TODO - Emit lossless `USharMissionDefinition` assets only after the complete mission graph…
+
+Emit lossless `USharMissionDefinition` assets only after the complete mission
+graph passes reference and topology validation.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/unreal/emit-lossless-usharmissiondefinition-assets-only-after-the-complete-mission-graph.mdc](docs/todo/open/unreal/emit-lossless-usharmissiondefinition-assets-only-after-the-complete-mission-graph.mdc)
+
+### TODO - Compile remaining normalized UI, font, localization, tuning, and other structured…
+
+Compile remaining normalized UI, font, localization, tuning, and other
+structured evidence into concrete Unreal types before enabling their editor
+factories.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/unreal/compile-remaining-normalized-ui-font-localization-tuning-and-other-structured.mdc](docs/todo/open/unreal/compile-remaining-normalized-ui-font-localization-tuning-and-other-structured.mdc)
+
+### TODO - Convert original audio, cinematics, and localization into native Unreal assets
+
+Convert original audio, cinematics, and localization into native Unreal
+assets.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/unreal/convert-original-audio-cinematics-and-localization-into-native-unreal-assets.mdc](docs/todo/open/unreal/convert-original-audio-cinematics-and-localization-into-native-unreal-assets.mdc)
+
+### TODO - Preserve source world placement through Unreal streaming and partitioning without…
+
+Preserve source world placement through Unreal streaming and partitioning
+without changing the playable layout.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/unreal/preserve-source-world-placement-through-unreal-streaming-and-partitioning-without.mdc](docs/todo/open/unreal/preserve-source-world-placement-through-unreal-streaming-and-partitioning-without.mdc)
+
+### TODO - Preserve provenance and deterministic Unreal object identities
+
+Preserve provenance and deterministic Unreal object identities.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/unreal/preserve-provenance-and-deterministic-unreal-object-identities.mdc](docs/todo/open/unreal/preserve-provenance-and-deterministic-unreal-object-identities.mdc)
+
+### TODO - Make the complete import repeatable from a clean project
+
+Make the complete import repeatable from a clean project.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/unreal/make-the-complete-import-repeatable-from-a-clean-project.mdc](docs/todo/open/unreal/make-the-complete-import-repeatable-from-a-clean-project.mdc)
+
+## P3 — Faithful runtime
+
+### TODO - Complete startup, saves, profiles, settings, loading, and progression
+
+Complete startup, saves, profiles, settings, loading, and progression.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/runtime/complete-startup-saves-profiles-settings-loading-and-progression.mdc](docs/todo/open/runtime/complete-startup-saves-profiles-settings-loading-and-progression.mdc)
+
+### TODO - Reproduce original player movement, cameras, interactions, vehicles, traffic,…
+
+Reproduce original player movement, cameras, interactions, vehicles, traffic,
+pedestrians, damage, and recovery.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/runtime/reproduce-original-player-movement-cameras-interactions-vehicles-traffic.mdc](docs/todo/open/runtime/reproduce-original-player-movement-cameras-interactions-vehicles-traffic.mdc)
+
+### TODO - Reproduce original missions, objectives, triggers, dialogue, rewards, collectibles,…
+
+Reproduce original missions, objectives, triggers, dialogue, rewards,
+collectibles, races, and progression gates.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/runtime/reproduce-original-missions-objectives-triggers-dialogue-rewards-collectibles.mdc](docs/todo/open/runtime/reproduce-original-missions-objectives-triggers-dialogue-rewards-collectibles.mdc)
+
+### TODO - Reproduce original HUD, menus, navigation, subtitles, audio, cinematics, and…
+
+Reproduce original HUD, menus, navigation, subtitles, audio, cinematics, and
+localization behavior.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/runtime/reproduce-original-hud-menus-navigation-subtitles-audio-cinematics-and.mdc](docs/todo/open/runtime/reproduce-original-hud-menus-navigation-subtitles-audio-cinematics-and.mdc)
+
+### TODO - Reproduce original world streaming, placement, physics, animation, effects, and platform…
+
+Reproduce original world streaming, placement, physics, animation, effects,
+and platform input behavior.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/runtime/reproduce-original-world-streaming-placement-physics-animation-effects-and-platform.mdc](docs/todo/open/runtime/reproduce-original-world-streaming-placement-physics-animation-effects-and-platform.mdc)
+
+### TODO - Preserve original mission timing, gameplay rules, and progression unless a technical…
+
+Preserve original mission timing, gameplay rules, and progression unless a
+technical compatibility fix is required.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/runtime/preserve-original-mission-timing-gameplay-rules-and-progression-unless-a-technical.mdc](docs/todo/open/runtime/preserve-original-mission-timing-gameplay-rules-and-progression-unless-a-technical.mdc)
+
+### TODO - Bind generated assets through stable contracts instead of direct paths
+
+Bind generated assets through stable contracts instead of direct paths.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/runtime/bind-generated-assets-through-stable-contracts-instead-of-direct-paths.mdc](docs/todo/open/runtime/bind-generated-assets-through-stable-contracts-instead-of-direct-paths.mdc)
+
+### TODO - Add parity tests for gameplay behavior and state transitions
+
+Add parity tests for gameplay behavior and state transitions.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/runtime/add-parity-tests-for-gameplay-behavior-and-state-transitions.mdc](docs/todo/open/runtime/add-parity-tests-for-gameplay-behavior-and-state-transitions.mdc)
+
+## P4 — Build, packaging, mods, and product surface
+
+### TODO - Hermetic build dependency bootstrap
+
+Implement `tools/build/dependencies.py` with CPython 3.14.6 as the declared
+bootstrap and install public project dependencies into repository-owned pinned
+locations without mutating global packages; validate proprietary or platform
+toolchains as explicit external prerequisites instead of silently using
+arbitrary host state.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/packaging/hermetic-build-dependency-bootstrap.mdc](docs/todo/open/packaging/hermetic-build-dependency-bootstrap.mdc)
+
+### TODO - Build preflight and saved check evidence
+
+Implement `tools/build/check.py` as the supported preflight: validate the
+lawful game installation and manifest, require `game/Simpsons.exe` directly
+under the repository game root, verify Python 3.14.6, Unreal Engine 5.8.1, and
+host prerequisites, then write `.cache/build/data/check.json` for later build
+steps.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/packaging/build-preflight-and-saved-check-evidence.mdc](docs/todo/open/packaging/build-preflight-and-saved-check-evidence.mdc)
+
+### TODO - Interactive build architecture selector
+
+Implement `tools/build/arch.py` as a minimal checklist window that lets the
+user select one or more supported build targets and saves the decision to
+`.cache/build/data/arch.json`.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/packaging/interactive-build-architecture-selector.mdc](docs/todo/open/packaging/interactive-build-architecture-selector.mdc)
+
+### TODO - Canonical multi-platform build runner
+
+Implement `tools/build/run.py` to consume saved preflight and architecture
+decisions, revalidate them, build every selected target transactionally, and
+publish only the minimal native deliverable under `dist/<ARCH>/` for each
+successful architecture.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/packaging/canonical-multi-platform-build-runner.mdc](docs/todo/open/packaging/canonical-multi-platform-build-runner.mdc)
+
+### TODO - One-command build orchestration
+
+Implement `tools/build/auto.py` as an optional one-command user flow that runs
+dependency bootstrap, preflight, architecture selection, and build in order
+while persisting each decision JSON so repeated or interrupted runs use
+explicit evidence instead of hidden process state.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/packaging/one-command-build-orchestration.mdc](docs/todo/open/packaging/one-command-build-orchestration.mdc)
+
+### TODO - Canonical generated workspace under .cache
+
+Move regenerable extraction, FBX conversion, Unreal staging, build
+intermediates, logs, and decision data out of the repository root into one
+documented `.cache/` hierarchy; keep `game/` as user-supplied source evidence
+and `dist/` as final copied output instead of introducing an ambiguous
+generated `assets/` root.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/packaging/canonical-generated-workspace-under-cache.mdc](docs/todo/open/packaging/canonical-generated-workspace-under-cache.mdc)
+
+### TODO - Package Linux, macOS, Android, Windows x86-64, and any Windows-on-ARM target that…
+
+Package Linux, macOS, Android, Windows x86-64, and any Windows-on-ARM target
+that current Unreal/toolchain support can validate.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/packaging/package-linux-macos-android-windows-x86-64-and-any-windows-on-arm-target-that.mdc](docs/todo/open/packaging/package-linux-macos-android-windows-x86-64-and-any-windows-on-arm-target-that.mdc)
+
+### TODO - Produce a local iOS `.ipa` package for sideloading/testing without App Store submission…
+
+Produce a local iOS `.ipa` package for sideloading/testing without App Store
+submission or an Xcode-dependent authoring workflow; document any unavoidable
+Apple signing or build-host constraints explicitly.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/packaging/produce-a-local-ios-ipa-package-for-sideloading-testing-without-app-store-submission.mdc](docs/todo/open/packaging/produce-a-local-ios-ipa-package-for-sideloading-testing-without-app-store-submission.mdc)
+
+### TODO - Require at least one canonical `.ico` under `game/` in the game manifest; zero icons is…
+
+Require at least one canonical `.ico` under `game/` in the game manifest; zero
+icons is invalid. Unreal staging must consume the generated icon outputs after
+the current icon producer is moved to its final repository-owned location,
+expected under `src/unreal/icon`.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/packaging/require-at-least-one-canonical-ico-under-game-in-the-game-manifest-zero-icons-is.mdc](docs/todo/open/packaging/require-at-least-one-canonical-ico-under-game-in-the-game-manifest-zero-icons-is.mdc)
+
+### TODO - Define deterministic mod identity, dependencies, priority, compatibility, supersession,…
+
+Define deterministic mod identity, dependencies, priority, compatibility,
+supersession, and conflict rules.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/mods/define-deterministic-mod-identity-dependencies-priority-compatibility-supersession.mdc](docs/todo/open/mods/define-deterministic-mod-identity-dependencies-priority-compatibility-supersession.mdc)
+
+### TODO - Support validated replacement and extension packages for assets and data
+
+Support validated replacement and extension packages for assets and data.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/mods/support-validated-replacement-and-extension-packages-for-assets-and-data.mdc](docs/todo/open/mods/support-validated-replacement-and-extension-packages-for-assets-and-data.mdc)
+
+### TODO - Keep the unmodified faithful port as the default base-game package
+
+Keep the unmodified faithful port as the default base-game package.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/mods/keep-the-unmodified-faithful-port-as-the-default-base-game-package.mdc](docs/todo/open/mods/keep-the-unmodified-faithful-port-as-the-default-base-game-package.mdc)
+
+### TODO - Use one normalized desktop and Android mod import contract
+
+Use one normalized desktop and Android mod import contract.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/mods/use-one-normalized-desktop-and-android-mod-import-contract.mdc](docs/todo/open/mods/use-one-normalized-desktop-and-android-mod-import-contract.mdc)
+
+### TODO - Keep native-code mods behind an explicit trust boundary
+
+Keep native-code mods behind an explicit trust boundary.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/mods/keep-native-code-mods-behind-an-explicit-trust-boundary.mdc](docs/todo/open/mods/keep-native-code-mods-behind-an-explicit-trust-boundary.mdc)
+
+### TODO - Validate schemas, paths, integrity, limits, references, and load order
+
+Validate schemas, paths, integrity, limits, references, and load order.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/mods/validate-schemas-paths-integrity-limits-references-and-load-order.mdc](docs/todo/open/mods/validate-schemas-paths-integrity-limits-references-and-load-order.mdc)
+
+### TODO - Finish user-facing and AI-agent modding skills
+
+Finish user-facing and AI-agent modding skills.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/mods/finish-user-facing-and-ai-agent-modding-skills.mdc](docs/todo/open/mods/finish-user-facing-and-ai-agent-modding-skills.mdc)
+
+### TODO - Package and launch the selected native desktop and Android targets
+
+Package and launch the selected native desktop and Android targets.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/packaging/package-and-launch-the-selected-native-desktop-and-android-targets.mdc](docs/todo/open/packaging/package-and-launch-the-selected-native-desktop-and-android-targets.mdc)
+
+### TODO - Require packaged-build evidence instead of editor play or emulation
+
+Require packaged-build evidence instead of editor play or emulation.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/packaging/require-packaged-build-evidence-instead-of-editor-play-or-emulation.mdc](docs/todo/open/packaging/require-packaged-build-evidence-instead-of-editor-play-or-emulation.mdc)
+
+### TODO - Keep gameplay, saves, package identities, and mod contracts consistent across supported…
+
+Keep gameplay, saves, package identities, and mod contracts consistent across
+supported targets.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/packaging/keep-gameplay-saves-package-identities-and-mod-contracts-consistent-across-supported.mdc](docs/todo/open/packaging/keep-gameplay-saves-package-identities-and-mod-contracts-consistent-across-supported.mdc)
+
+### TODO - Provide graphics and performance settings without changing base content
+
+Provide graphics and performance settings without changing base content.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/packaging/provide-graphics-and-performance-settings-without-changing-base-content.mdc](docs/todo/open/packaging/provide-graphics-and-performance-settings-without-changing-base-content.mdc)
+
+### TODO - Profile CPU, GPU, memory, storage, streaming, shaders, loading, and frame time
+
+Profile CPU, GPU, memory, storage, streaming, shaders, loading, and frame
+time.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/packaging/profile-cpu-gpu-memory-storage-streaming-shaders-loading-and-frame-time.mdc](docs/todo/open/packaging/profile-cpu-gpu-memory-storage-streaming-shaders-loading-and-frame-time.mdc)
+
+### TODO - Optimize only from measured evidence without removing original behavior
+
+Optimize only from measured evidence without removing original behavior.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/packaging/optimize-only-from-measured-evidence-without-removing-original-behavior.mdc](docs/todo/open/packaging/optimize-only-from-measured-evidence-without-removing-original-behavior.mdc)
+
+### TODO - Run the complete pipeline in dependency order
+
+Run the complete pipeline in dependency order.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/packaging/run-the-complete-pipeline-in-dependency-order.mdc](docs/todo/open/packaging/run-the-complete-pipeline-in-dependency-order.mdc)
+
+### TODO - Report progress, failures, provenance, and final artifacts
+
+Report progress, failures, provenance, and final artifacts.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/packaging/report-progress-failures-provenance-and-final-artifacts.mdc](docs/todo/open/packaging/report-progress-failures-provenance-and-final-artifacts.mdc)
+
+### TODO - Ship four independent base save slots; add autosave only after faithful port parity is…
+
+Ship four independent base save slots; add autosave only after faithful port
+parity is stable.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/product/ship-four-independent-base-save-slots-add-autosave-only-after-faithful-port-parity-is.mdc](docs/todo/open/product/ship-four-independent-base-save-slots-add-autosave-only-after-faithful-port-parity-is.mdc)
+
+### TODO - Support keyboard/mouse and controller input across gameplay and menus
+
+Support keyboard/mouse and controller input across gameplay and menus.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/product/support-keyboard-mouse-and-controller-input-across-gameplay-and-menus.mdc](docs/todo/open/product/support-keyboard-mouse-and-controller-input-across-gameplay-and-menus.mdc)
+
+### TODO - Keep loading screens optional once streaming can replace them safely
+
+Keep loading screens optional once streaming can replace them safely.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/product/keep-loading-screens-optional-once-streaming-can-replace-them-safely.mdc](docs/todo/open/product/keep-loading-screens-optional-once-streaming-can-replace-them-safely.mdc)
+
+### TODO - Ship a default, fully obtainable base achievement set suitable for 100%/platinum-style…
+
+Ship a default, fully obtainable base achievement set suitable for
+100%/platinum-style completion, with mod achievements separately namespaced.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/product/ship-a-default-fully-obtainable-base-achievement-set-suitable-for-100-platinum-style.mdc](docs/todo/open/product/ship-a-default-fully-obtainable-base-achievement-set-suitable-for-100-platinum-style.mdc)
+
+### TODO - Add an optional Discord boundary for display username, Rich Presence, parties/invites,…
+
+Add an optional Discord boundary for display username, Rich Presence,
+parties/invites, and achievement-facing presentation without making Discord
+identity authoritative for saves or gameplay.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/product/add-an-optional-discord-boundary-for-display-username-rich-presence-parties-invites.mdc](docs/todo/open/product/add-an-optional-discord-boundary-for-display-username-rich-presence-parties-invites.mdc)
+
+### TODO - Expose base C++ extension points for boss encounters, health meters, combat, multiplayer…
+
+Expose base C++ extension points for boss encounters, health meters, combat,
+multiplayer adapters, and future mod-owned gameplay systems without
+implementing replacement gameplay during the faithful-port phase.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/product/expose-base-c-extension-points-for-boss-encounters-health-meters-combat-multiplayer.mdc](docs/todo/open/product/expose-base-c-extension-points-for-boss-encounters-health-meters-combat-multiplayer.mdc)
+
+### TODO - Add a first-class `Mods` route when creating or loading a game
+
+Add a first-class `Mods` route when creating or loading a game.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/product/add-a-first-class-mods-route-when-creating-or-loading-a-game.mdc](docs/todo/open/product/add-a-first-class-mods-route-when-creating-or-loading-a-game.mdc)
+
+### TODO - Classify mods as visual-only, additive/story, gameplay-extension, or native-code, with…
+
+Classify mods as visual-only, additive/story, gameplay-extension, or
+native-code, with explicit compatibility and save-impact declarations.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/product/classify-mods-as-visual-only-additive-story-gameplay-extension-or-native-code-with.mdc](docs/todo/open/product/classify-mods-as-visual-only-additive-story-gameplay-extension-or-native-code-with.mdc)
+
+### TODO - Allow visual-only mods to be reordered, enabled, disabled, or replaced from the main…
+
+Allow visual-only mods to be reordered, enabled, disabled, or replaced from
+the main menu without invalidating the active save.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/product/allow-visual-only-mods-to-be-reordered-enabled-disabled-or-replaced-from-the-main.mdc](docs/todo/open/product/allow-visual-only-mods-to-be-reordered-enabled-disabled-or-replaced-from-the-main.mdc)
+
+### TODO - Treat story/additive mods as mutually incompatible by default unless their manifests…
+
+Treat story/additive mods as mutually incompatible by default unless their
+manifests explicitly declare a compatible composition contract.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/product/treat-story-additive-mods-as-mutually-incompatible-by-default-unless-their-manifests.mdc](docs/todo/open/product/treat-story-additive-mods-as-mutually-incompatible-by-default-unless-their-manifests.mdc)
+
+### TODO - Permit nonvisual mods that do not mutate save/progression state, but show an explicit…
+
+Permit nonvisual mods that do not mutate save/progression state, but show an
+explicit compatibility warning before activation.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/product/permit-nonvisual-mods-that-do-not-mutate-save-progression-state-but-show-an-explicit.mdc](docs/todo/open/product/permit-nonvisual-mods-that-do-not-mutate-save-progression-state-but-show-an-explicit.mdc)
+
+### TODO - Let mods declare deterministic hierarchy, load order, and override priority; unresolved…
+
+Let mods declare deterministic hierarchy, load order, and override priority;
+unresolved conflicts fail closed.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/product/let-mods-declare-deterministic-hierarchy-load-order-and-override-priority-unresolved.mdc](docs/todo/open/product/let-mods-declare-deterministic-hierarchy-load-order-and-override-priority-unresolved.mdc)
+
+### TODO - Keep native C++ mods behind a trust scanner that reports filesystem, process, network,…
+
+Keep native C++ mods behind a trust scanner that reports filesystem, process,
+network, platform, save, and engine-surface access before the user decides
+whether to load them.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/product/keep-native-c-mods-behind-a-trust-scanner-that-reports-filesystem-process-network.mdc](docs/todo/open/product/keep-native-c-mods-behind-a-trust-scanner-that-reports-filesystem-process-network.mdc)
+
+### TODO - Make mission, model, material, texture, skeleton, coordinate, gameplay, achievement, and…
+
+Make mission, model, material, texture, skeleton, coordinate, gameplay,
+achievement, and UI definitions data-addressable for nonexpert mod authors.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/product/make-mission-model-material-texture-skeleton-coordinate-gameplay-achievement-and.mdc](docs/todo/open/product/make-mission-model-material-texture-skeleton-coordinate-gameplay-achievement-and.mdc)
+
+### TODO - Deduplicate identical generated skeletons, textures, models, and other assets only when…
+
+Deduplicate identical generated skeletons, textures, models, and other assets
+only when deterministic evidence proves equivalence. Never assume all
+characters or mods share one skeleton or asset layout.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/product/deduplicate-identical-generated-skeletons-textures-models-and-other-assets-only-when.mdc](docs/todo/open/product/deduplicate-identical-generated-skeletons-textures-models-and-other-assets-only-when.mdc)
+
+### TODO - Let generated base characters opt into shared skeleton/material/model assets as an…
+
+Let generated base characters opt into shared skeleton/material/model assets
+as an optimization, with simple per-asset/per-mod overrides that can break
+sharing without changing global contracts.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/product/let-generated-base-characters-opt-into-shared-skeleton-material-model-assets-as-an.mdc](docs/todo/open/product/let-generated-base-characters-opt-into-shared-skeleton-material-model-assets-as-an.mdc)
+
+### TODO - Keep multiplayer as an extension-ready base capability rather than a fully implemented…
+
+Keep multiplayer as an extension-ready base capability rather than a fully
+implemented first-party mode during the port; mods must be able to add
+replicated modes, lobbies, servers, missions, and progression namespaces.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/product/keep-multiplayer-as-an-extension-ready-base-capability-rather-than-a-fully-implemented.mdc](docs/todo/open/product/keep-multiplayer-as-an-extension-ready-base-capability-rather-than-a-fully-implemented.mdc)
+
+### TODO - Keep DLSS and hardware-ray-tracing/RTX integrations behind optional capability adapters…
+
+Keep DLSS and hardware-ray-tracing/RTX integrations behind optional capability
+adapters so graphics mods can target them without making proprietary GPU
+features mandatory for the base port.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/product/keep-dlss-and-hardware-ray-tracing-rtx-integrations-behind-optional-capability-adapters.mdc](docs/todo/open/product/keep-dlss-and-hardware-ray-tracing-rtx-integrations-behind-optional-capability-adapters.mdc)
+
+### TODO - Preserve the delivery order: faithful port first, compatibility and quality-of-life…
+
+Preserve the delivery order: faithful port first, compatibility and
+quality-of-life improvements second, richer community mod content third.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/product/preserve-the-delivery-order-faithful-port-first-compatibility-and-quality-of-life.mdc](docs/todo/open/product/preserve-the-delivery-order-faithful-port-first-compatibility-and-quality-of-life.mdc)
+
+## P5 — Final verification and publication
+
+### TODO - Complete a start-to-finish playthrough without progression-blocking defects
+
+Complete a start-to-finish playthrough without progression-blocking defects.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/verification/complete-a-start-to-finish-playthrough-without-progression-blocking-defects.mdc](docs/todo/open/verification/complete-a-start-to-finish-playthrough-without-progression-blocking-defects.mdc)
+
+### TODO - Compare missions, vehicles, collectibles, saves, localization, cinematics, world layout,…
+
+Compare missions, vehicles, collectibles, saves, localization, cinematics,
+world layout, and the ending against the original game.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/verification/compare-missions-vehicles-collectibles-saves-localization-cinematics-world-layout.mdc](docs/todo/open/verification/compare-missions-vehicles-collectibles-saves-localization-cinematics-world-layout.mdc)
+
+### TODO - Verify generated assets preserve the original appearance and placement
+
+Verify generated assets preserve the original appearance and placement.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/verification/verify-generated-assets-preserve-the-original-appearance-and-placement.mdc](docs/todo/open/verification/verify-generated-assets-preserve-the-original-appearance-and-placement.mdc)
+
+### TODO - Rebuild from clean input and compare deterministic outputs
+
+Rebuild from clean input and compare deterministic outputs.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/verification/rebuild-from-clean-input-and-compare-deterministic-outputs.mdc](docs/todo/open/verification/rebuild-from-clean-input-and-compare-deterministic-outputs.mdc)
+
+### TODO - Verify representative mods without changing the default base game
+
+Verify representative mods without changing the default base game.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/verification/verify-representative-mods-without-changing-the-default-base-game.mdc](docs/todo/open/verification/verify-representative-mods-without-changing-the-default-base-game.mdc)
+
+### TODO - Verify an AI agent can create and validate a mod using published skills
+
+Verify an AI agent can create and validate a mod using published skills.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/verification/verify-an-ai-agent-can-create-and-validate-a-mod-using-published-skills.mdc](docs/todo/open/verification/verify-an-ai-agent-can-create-and-validate-a-mod-using-published-skills.mdc)
+
+### TODO - Record known compatibility limitations honestly
+
+Record known compatibility limitations honestly.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/verification/record-known-compatibility-limitations-honestly.mdc](docs/todo/open/verification/record-known-compatibility-limitations-honestly.mdc)
+
+### TODO - Run the canonical global validation without cache
+
+Run the canonical global validation without cache.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/verification/run-the-canonical-global-validation-without-cache.mdc](docs/todo/open/verification/run-the-canonical-global-validation-without-cache.mdc)

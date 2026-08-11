@@ -1,0 +1,34 @@
+---
+schema: shar.todo.v1
+id: group-all-43-reviewed-startcountdown-blocks-with-their-175-following
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
+children: []
+---
+
+# Group all 43 reviewed `StartCountdown` blocks with their 175 following…
+
+Group all 43 reviewed `StartCountdown` blocks with their 175 following
+`AddToCountdownSequence` entries. Preserve exact sequence/character
+identities, display tokens, and positive authored durations without assigning
+token meaning or playback behavior.
+
+## Acceptance criteria
+
+- [x] Group all 43 reviewed `StartCountdown` blocks with their 175 following
+  `AddToCountdownSequence` entries. Preserve exact sequence/character
+  identities, display tokens, and positive authored durations without
+  assigning token meaning or playback behavior.
+
+## Dependencies
+
+Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

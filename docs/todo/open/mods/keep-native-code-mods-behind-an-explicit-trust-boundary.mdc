@@ -1,0 +1,28 @@
+---
+schema: shar.todo.v1
+id: keep-native-code-mods-behind-an-explicit-trust-boundary
+status: open
+priority: P4
+lane: mods
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Keep native-code mods behind an explicit trust boundary
+
+Keep native-code mods behind an explicit trust boundary.
+
+## Acceptance criteria
+
+- [ ] Keep native-code mods behind an explicit trust boundary.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

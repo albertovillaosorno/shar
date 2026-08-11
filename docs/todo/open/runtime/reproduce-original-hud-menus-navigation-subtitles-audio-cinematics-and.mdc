@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: reproduce-original-hud-menus-navigation-subtitles-audio-cinematics-and
+status: open
+priority: P3
+lane: runtime
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Reproduce original HUD, menus, navigation, subtitles, audio, cinematics, and…
+
+Reproduce original HUD, menus, navigation, subtitles, audio, cinematics, and
+localization behavior.
+
+## Acceptance criteria
+
+- [ ] Reproduce original HUD, menus, navigation, subtitles, audio, cinematics,
+  and localization behavior.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

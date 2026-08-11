@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: correct-only-conversion-errors-where-generated-output-differs-from-the-original-source
+status: open
+priority: P1
+lane: conversion
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Correct only conversion errors where generated output differs from the original source…
+
+Correct only conversion errors where generated output differs from the
+original source evidence.
+
+## Acceptance criteria
+
+- [ ] Correct only conversion errors where generated output differs from the
+  original source evidence.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

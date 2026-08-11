@@ -1,0 +1,28 @@
+---
+schema: shar.todo.v1
+id: support-keyboard-mouse-and-controller-input-across-gameplay-and-menus
+status: open
+priority: P4
+lane: product
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Support keyboard/mouse and controller input across gameplay and menus
+
+Support keyboard/mouse and controller input across gameplay and menus.
+
+## Acceptance criteria
+
+- [ ] Support keyboard/mouse and controller input across gameplay and menus.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

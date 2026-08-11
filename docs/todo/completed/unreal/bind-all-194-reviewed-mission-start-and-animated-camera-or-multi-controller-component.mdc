@@ -1,0 +1,44 @@
+---
+schema: shar.todo.v1
+id: bind-all-194-reviewed-mission-start-and-animated-camera-or-multi-controller-component
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
+children: []
+---
+
+# Bind all 194 reviewed mission-start and animated camera or multi-controller component…
+
+Bind all 194 reviewed mission-start and animated camera or multi-controller
+component references by exact embedded component name, component kind, and
+source-script `levelNN` provenance. Global lookup is ambiguous for 190
+references, while level-scoped exact matching is unique for all 194 with zero
+missing references. Four unreferenced level-local keys have multiple
+candidates; the catalog preserves those ambiguities so any future reference
+fails closed instead of choosing a winner. Package/member source identity is
+preserved without inventing cross-level precedence, blending, timing, or
+playback semantics.
+
+## Acceptance criteria
+
+- [x] Bind all 194 reviewed mission-start and animated camera or
+  multi-controller component references by exact embedded component name,
+  component kind, and source-script `levelNN` provenance. Global lookup is
+  ambiguous for 190 references, while level-scoped exact matching is unique
+  for all 194 with zero missing references. Four unreferenced level-local
+  keys have multiple candidates; the catalog preserves those ambiguities so
+  any future reference fails closed instead of choosing a winner.
+  Package/member source identity is preserved without inventing cross-level
+  precedence, blending, timing, or playback semantics.
+
+## Dependencies
+
+Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

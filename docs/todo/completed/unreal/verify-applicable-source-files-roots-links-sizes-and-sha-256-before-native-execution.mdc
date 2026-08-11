@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: verify-applicable-source-files-roots-links-sizes-and-sha-256-before-native-execution
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: apply-conversion-plans-through-tested-native-unreal-mcp-commands
+dependencies: [apply-conversion-plans-through-tested-native-unreal-mcp-commands]
+children: []
+---
+
+# Verify applicable source files, roots, links, sizes, and SHA-256 before native execution…
+
+Verify applicable source files, roots, links, sizes, and SHA-256 before native
+execution planning.
+
+## Acceptance criteria
+
+- [x] Verify applicable source files, roots, links, sizes, and SHA-256 before
+  native execution planning.
+
+## Dependencies
+
+Parent task: `apply-conversion-plans-through-tested-native-unreal-mcp-commands`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

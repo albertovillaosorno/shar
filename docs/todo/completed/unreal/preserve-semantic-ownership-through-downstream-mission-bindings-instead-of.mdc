@@ -1,0 +1,50 @@
+---
+schema: shar.todo.v1
+id: preserve-semantic-ownership-through-downstream-mission-bindings-instead-of
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
+children: []
+---
+
+# Preserve semantic ownership through downstream mission bindings instead of…
+
+Preserve semantic ownership through downstream mission bindings instead of
+reconstructing it from source adjacency: all six FMVs keep stage+objective
+owners; all nine music-state, 14 stage-start music, and 38 completion-dialog
+bindings keep exact stage owners; all 128 dialogue-info bindings keep
+stage+objective owners; all 36 collectible-waypoint bindings keep
+stage+objective owners; all 43 countdown blocks keep exact stage owners; and
+all four pickup-target bindings keep stage+objective owners while stage-scope
+state-prop declarations retain their exact `AddStage` owner. Canonical
+character/vehicle participant references now retain the same stage/objective
+owner chain and an exact `AddCondition` owner when condition-scoped. These
+owner joins do not add playback, navigation, state-prop lifecycle, retry,
+rollback, or recovery semantics.
+
+## Acceptance criteria
+
+- [x] Preserve semantic ownership through downstream mission bindings instead of
+  reconstructing it from source adjacency: all six FMVs keep stage+objective
+  owners; all nine music-state, 14 stage-start music, and 38
+  completion-dialog bindings keep exact stage owners; all 128 dialogue-info
+  bindings keep stage+objective owners; all 36 collectible-waypoint bindings
+  keep stage+objective owners; all 43 countdown blocks keep exact stage
+  owners; and all four pickup-target bindings keep stage+objective owners
+  while stage-scope state-prop declarations retain their exact `AddStage`
+  owner. Canonical character/vehicle participant references now retain the
+  same stage/objective owner chain and an exact `AddCondition` owner when
+  condition-scoped. These owner joins do not add playback, navigation,
+  state-prop lifecycle, retry, rollback, or recovery semantics.
+
+## Dependencies
+
+Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: let-mods-declare-deterministic-hierarchy-load-order-and-override-priority-unresolved
+status: open
+priority: P4
+lane: product
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Let mods declare deterministic hierarchy, load order, and override priority; unresolved…
+
+Let mods declare deterministic hierarchy, load order, and override priority;
+unresolved conflicts fail closed.
+
+## Acceptance criteria
+
+- [ ] Let mods declare deterministic hierarchy, load order, and override
+  priority; unresolved conflicts fail closed.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

@@ -1,0 +1,42 @@
+---
+schema: shar.todo.v1
+id: compile-decoded-base-game-type-5-dynamiczone-dyna-load-data-into-ordered-package
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
+children: []
+---
+
+# Compile decoded base-game type-5 `DynamicZone` Dyna Load Data into ordered package…
+
+Compile decoded base-game type-5 `DynamicZone` Dyna Load Data into ordered
+package transitions and preflight every authored P3D load against the
+phase-three package index. The 109-zone corpus carries 372 indexed P3D loads
+and 728 P3D unloads. 30 unload targets are absent from the extracted index and
+therefore remain valid remove-if-present effects rather than false load
+requirements. No observed base-game Dyna string both loads and unloads the
+same P3D target; the domain refuses to invent runtime ordering if such a
+conflict appears later.
+
+## Acceptance criteria
+
+- [x] Compile decoded base-game type-5 `DynamicZone` Dyna Load Data into ordered
+  package transitions and preflight every authored P3D load against the
+  phase-three package index. The 109-zone corpus carries 372 indexed P3D
+  loads and 728 P3D unloads. 30 unload targets are absent from the extracted
+  index and therefore remain valid remove-if-present effects rather than
+  false load requirements. No observed base-game Dyna string both loads and
+  unloads the same P3D target; the domain refuses to invent runtime ordering
+  if such a conflict appears later.
+
+## Dependencies
+
+Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

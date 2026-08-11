@@ -1,0 +1,36 @@
+---
+schema: shar.todo.v1
+id: bind-all-six-reviewed-objective-setfmvinfo-rmv-paths-to-one-canonical
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
+children: []
+---
+
+# Bind all six reviewed objective `SetFMVInfo` RMV paths to one canonical…
+
+Bind all six reviewed objective `SetFMVInfo` RMV paths to one canonical
+`movies/story/<id>` package and one converted movie member. Preserve the
+optional `stopmusic` argument as opaque source evidence; playback, audio
+routing, music policy, completion, and transitions remain separate runtime
+semantics.
+
+## Acceptance criteria
+
+- [x] Bind all six reviewed objective `SetFMVInfo` RMV paths to one canonical
+  `movies/story/<id>` package and one converted movie member. Preserve the
+  optional `stopmusic` argument as opaque source evidence; playback, audio
+  routing, music policy, completion, and transitions remain separate runtime
+  semantics.
+
+## Dependencies
+
+Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

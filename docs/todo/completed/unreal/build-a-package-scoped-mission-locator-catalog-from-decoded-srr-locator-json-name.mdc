@@ -1,0 +1,34 @@
+---
+schema: shar.todo.v1
+id: build-a-package-scoped-mission-locator-catalog-from-decoded-srr-locator-json-name
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
+children: []
+---
+
+# Build a package-scoped mission locator catalog from decoded `srr_locator` JSON `name`…
+
+Build a package-scoped mission locator catalog from decoded `srr_locator` JSON
+`name` and type evidence; reject package-local name collisions and preserve
+cross-package duplicates as ambiguity instead of applying filename or
+global-name precedence.
+
+## Acceptance criteria
+
+- [x] Build a package-scoped mission locator catalog from decoded `srr_locator`
+  JSON `name` and type evidence; reject package-local name collisions and
+  preserve cross-package duplicates as ambiguity instead of applying
+  filename or global-name precedence.
+
+## Dependencies
+
+Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

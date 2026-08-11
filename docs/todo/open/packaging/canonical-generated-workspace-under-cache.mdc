@@ -1,0 +1,42 @@
+---
+schema: shar.todo.v1
+id: canonical-generated-workspace-under-cache
+status: open
+priority: P4
+lane: packaging
+active: true
+parent: null
+dependencies: []
+children: []
+---
+
+# Canonical generated workspace under .cache
+
+Move regenerable extraction, FBX conversion, Unreal staging, build
+intermediates, logs, and decision data out of the repository root into one
+documented `.cache/` hierarchy; keep `game/` as user-supplied source evidence
+and `dist/` as final copied output instead of introducing an ambiguous
+generated `assets/` root.
+
+## Acceptance criteria
+
+- [ ] Migrate `extracted/`, `fbx-assets/`, `unreal-staging/`, build
+  intermediates, logs, and transient decision files to stable `.cache/`
+  subpaths with compatibility handling for existing local workspaces.
+- [ ] Update commands, manifests, tests, documentation, and validators so
+  root-level legacy generated directories are no longer authoritative.
+- [ ] Keep `game/` outside `.cache/` because it is user-supplied source evidence
+  and keep `dist/` outside `.cache/` because it is the final user
+  deliverable.
+- [ ] Preserve resumability, provenance, deterministic hashes, and transaction
+  recovery while moving paths.
+
+## Dependencies
+
+No explicit task dependency is required beyond the declared repository and
+platform prerequisites.
+
+## Evidence
+
+Add implementation, deterministic validation, and supported-host evidence here
+as the task advances.

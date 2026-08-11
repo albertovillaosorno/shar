@@ -1,0 +1,31 @@
+---
+schema: shar.todo.v1
+id: ship-a-default-fully-obtainable-base-achievement-set-suitable-for-100-platinum-style
+status: open
+priority: P4
+lane: product
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Ship a default, fully obtainable base achievement set suitable for 100%/platinum-style…
+
+Ship a default, fully obtainable base achievement set suitable for
+100%/platinum-style completion, with mod achievements separately namespaced.
+
+## Acceptance criteria
+
+- [ ] Ship a default, fully obtainable base achievement set suitable for
+  100%/platinum-style completion, with mod achievements separately
+  namespaced.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

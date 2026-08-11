@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: keep-movie-package-manifests-and-decode-reports-independent-of-local-source-extraction
+status: completed
+priority: P1
+lane: conversion
+active: false
+parent: preserve-original-audio-cinematics-localization-ui-mission-and-tuning-data-in
+dependencies: [preserve-original-audio-cinematics-localization-ui-mission-and-tuning-data-in]
+children: []
+---
+
+# Keep movie package manifests and decode reports independent of local source, extraction,…
+
+Keep movie package manifests and decode reports independent of local source,
+extraction, and transaction paths.
+
+## Acceptance criteria
+
+- [x] Keep movie package manifests and decode reports independent of local
+  source, extraction, and transaction paths.
+
+## Dependencies
+
+Parent task: `preserve-original-audio-cinematics-localization-ui-mission-and-tuning-data-in`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

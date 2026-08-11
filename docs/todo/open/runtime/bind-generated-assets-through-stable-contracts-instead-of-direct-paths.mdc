@@ -1,0 +1,28 @@
+---
+schema: shar.todo.v1
+id: bind-generated-assets-through-stable-contracts-instead-of-direct-paths
+status: open
+priority: P3
+lane: runtime
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Bind generated assets through stable contracts instead of direct paths
+
+Bind generated assets through stable contracts instead of direct paths.
+
+## Acceptance criteria
+
+- [ ] Bind generated assets through stable contracts instead of direct paths.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

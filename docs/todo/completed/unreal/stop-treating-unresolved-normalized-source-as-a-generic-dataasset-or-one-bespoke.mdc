@@ -1,0 +1,36 @@
+---
+schema: shar.todo.v1
+id: stop-treating-unresolved-normalized-source-as-a-generic-dataasset-or-one-bespoke
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: convert-original-camera-mission-vehicle-gameplay-ui-and-tuning-data-into-native
+dependencies: [convert-original-camera-mission-vehicle-gameplay-ui-and-tuning-data-into-native]
+children: []
+---
+
+# Stop treating unresolved normalized source as a generic `DataAsset` or one bespoke…
+
+Stop treating unresolved normalized source as a generic `DataAsset` or one
+bespoke StateTree per source bundle; publish `requires-semantic-conversion`
+until a deterministic domain compiler emits a concrete target. Plan-bundle v2
+now carries the aggregate semantic blocker count in its revision and execution
+completeness gate.
+
+## Acceptance criteria
+
+- [x] Stop treating unresolved normalized source as a generic `DataAsset` or one
+  bespoke StateTree per source bundle; publish
+  `requires-semantic-conversion` until a deterministic domain compiler emits
+  a concrete target. Plan-bundle v2 now carries the aggregate semantic
+  blocker count in its revision and execution completeness gate.
+
+## Dependencies
+
+Parent task: `convert-original-camera-mission-vehicle-gameplay-ui-and-tuning-data-into-native`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

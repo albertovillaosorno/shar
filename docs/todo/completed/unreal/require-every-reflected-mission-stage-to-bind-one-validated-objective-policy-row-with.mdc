@@ -1,0 +1,32 @@
+---
+schema: shar.todo.v1
+id: require-every-reflected-mission-stage-to-bind-one-validated-objective-policy-row-with
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and
+dependencies: [compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and]
+children: []
+---
+
+# Require every reflected mission stage to bind one validated objective policy row with…
+
+Require every reflected mission stage to bind one validated objective policy
+row with explicit start, completion, failure, recovery, route, target,
+notoriety, catch-up, drop, and presentation identities.
+
+## Acceptance criteria
+
+- [x] Require every reflected mission stage to bind one validated objective
+  policy row with explicit start, completion, failure, recovery, route,
+  target, notoriety, catch-up, drop, and presentation identities.
+
+## Dependencies
+
+Parent task: `compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

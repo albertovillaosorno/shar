@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: version-the-fbx-catalog-verifier-for-exact-external-png-provenance-without-treating
+status: completed
+priority: P1
+lane: conversion
+active: false
+parent: complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7
+dependencies: [complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7]
+children: []
+---
+
+# Version the FBX catalog verifier for exact external PNG provenance without treating…
+
+Version the FBX catalog verifier for exact external PNG provenance without
+treating sidecars as independently promotable model inputs.
+
+## Acceptance criteria
+
+- [x] Version the FBX catalog verifier for exact external PNG provenance without
+  treating sidecars as independently promotable model inputs.
+
+## Dependencies
+
+Parent task: `complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

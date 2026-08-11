@@ -1,0 +1,32 @@
+---
+schema: shar.todo.v1
+id: resolve-reviewed-character-and-vehicle-source-identities-against-the-validated
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
+children: []
+---
+
+# Resolve reviewed character and vehicle source identities against the validated…
+
+Resolve reviewed character and vehicle source identities against the validated
+phase-three package index, preserving exact character variants, symbolic
+`current` vehicles, and `none` driver sentinels.
+
+## Acceptance criteria
+
+- [x] Resolve reviewed character and vehicle source identities against the
+  validated phase-three package index, preserving exact character variants,
+  symbolic `current` vehicles, and `none` driver sentinels.
+
+## Dependencies
+
+Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

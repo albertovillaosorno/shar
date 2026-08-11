@@ -1,0 +1,31 @@
+---
+schema: shar.todo.v1
+id: make-mission-model-material-texture-skeleton-coordinate-gameplay-achievement-and
+status: open
+priority: P4
+lane: product
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Make mission, model, material, texture, skeleton, coordinate, gameplay, achievement, and…
+
+Make mission, model, material, texture, skeleton, coordinate, gameplay,
+achievement, and UI definitions data-addressable for nonexpert mod authors.
+
+## Acceptance criteria
+
+- [ ] Make mission, model, material, texture, skeleton, coordinate, gameplay,
+  achievement, and UI definitions data-addressable for nonexpert mod
+  authors.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

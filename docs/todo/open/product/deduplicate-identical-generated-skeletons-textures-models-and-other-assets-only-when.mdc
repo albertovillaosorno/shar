@@ -1,0 +1,32 @@
+---
+schema: shar.todo.v1
+id: deduplicate-identical-generated-skeletons-textures-models-and-other-assets-only-when
+status: open
+priority: P4
+lane: product
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Deduplicate identical generated skeletons, textures, models, and other assets only when…
+
+Deduplicate identical generated skeletons, textures, models, and other assets
+only when deterministic evidence proves equivalence. Never assume all
+characters or mods share one skeleton or asset layout.
+
+## Acceptance criteria
+
+- [ ] Deduplicate identical generated skeletons, textures, models, and other
+  assets only when deterministic evidence proves equivalence. Never assume
+  all characters or mods share one skeleton or asset layout.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

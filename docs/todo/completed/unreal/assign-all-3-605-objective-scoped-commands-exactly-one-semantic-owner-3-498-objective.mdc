@@ -1,0 +1,34 @@
+---
+schema: shar.todo.v1
+id: assign-all-3-605-objective-scoped-commands-exactly-one-semantic-owner-3-498-objective
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward
+dependencies: [map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward]
+children: []
+---
+
+# Assign all 3,605 objective-scoped commands exactly one semantic owner: 3,498 objective…
+
+Assign all 3,605 objective-scoped commands exactly one semantic owner: 3,498
+objective directives, 95 stage-delegated directives, and 12 structural
+condition commands; compile all 375 condition-scoped command values without
+inventing unresolved units, defaults, or legacy meaning.
+
+## Acceptance criteria
+
+- [x] Assign all 3,605 objective-scoped commands exactly one semantic owner:
+  3,498 objective directives, 95 stage-delegated directives, and 12
+  structural condition commands; compile all 375 condition-scoped command
+  values without inventing unresolved units, defaults, or legacy meaning.
+
+## Dependencies
+
+Parent task: `map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

@@ -1,0 +1,28 @@
+---
+schema: shar.todo.v1
+id: run-a-clean-exhaustive-jig-validation
+status: completed
+priority: P0
+lane: repository
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Run a clean exhaustive Jig validation
+
+Run a clean exhaustive Jig validation.
+
+## Acceptance criteria
+
+- [x] Run a clean exhaustive Jig validation.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

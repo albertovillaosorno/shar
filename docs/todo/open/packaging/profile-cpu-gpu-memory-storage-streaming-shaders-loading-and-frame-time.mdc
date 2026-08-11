@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: profile-cpu-gpu-memory-storage-streaming-shaders-loading-and-frame-time
+status: open
+priority: P4
+lane: packaging
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Profile CPU, GPU, memory, storage, streaming, shaders, loading, and frame time
+
+Profile CPU, GPU, memory, storage, streaming, shaders, loading, and frame
+time.
+
+## Acceptance criteria
+
+- [ ] Profile CPU, GPU, memory, storage, streaming, shaders, loading, and frame
+  time.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

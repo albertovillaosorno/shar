@@ -1,0 +1,40 @@
+---
+schema: shar.todo.v1
+id: bind-all-128-reviewed-objective-setdialogueinfo-records-to-canonical-participants-and
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
+children: []
+---
+
+# Bind all 128 reviewed objective `SetDialogueInfo` records to canonical participants and…
+
+Bind all 128 reviewed objective `SetDialogueInfo` records to canonical
+participants and one same-level `convinit` conversation group. All 256
+player/NPC source identities resolve uniquely. 107 dialogue ids are already
+unique by level/id; the remaining 21 are the repeated `success` ids for
+`sr1`/`sr2`/`sr3`, disambiguated only from that authored street-race source
+identity. Preserve every participant audio package without inferring speaker
+order or playback behavior.
+
+## Acceptance criteria
+
+- [x] Bind all 128 reviewed objective `SetDialogueInfo` records to canonical
+  participants and one same-level `convinit` conversation group. All 256
+  player/NPC source identities resolve uniquely. 107 dialogue ids are
+  already unique by level/id; the remaining 21 are the repeated `success`
+  ids for `sr1`/`sr2`/`sr3`, disambiguated only from that authored
+  street-race source identity. Preserve every participant audio package
+  without inferring speaker order or playback behavior.
+
+## Dependencies
+
+Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: allow-visual-only-mods-to-be-reordered-enabled-disabled-or-replaced-from-the-main
+status: open
+priority: P4
+lane: product
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Allow visual-only mods to be reordered, enabled, disabled, or replaced from the main…
+
+Allow visual-only mods to be reordered, enabled, disabled, or replaced from
+the main menu without invalidating the active save.
+
+## Acceptance criteria
+
+- [ ] Allow visual-only mods to be reordered, enabled, disabled, or replaced
+  from the main menu without invalidating the active save.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

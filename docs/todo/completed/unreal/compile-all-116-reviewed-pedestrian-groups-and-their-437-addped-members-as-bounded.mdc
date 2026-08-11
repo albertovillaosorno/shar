@@ -1,0 +1,44 @@
+---
+schema: shar.todo.v1
+id: compile-all-116-reviewed-pedestrian-groups-and-their-437-addped-members-as-bounded
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
+children: []
+---
+
+# Compile all 116 reviewed pedestrian groups and their 437 `AddPed` members as bounded…
+
+Compile all 116 reviewed pedestrian groups and their 437 `AddPed` members as
+bounded declarations, binding all 78 unique model identities one-to-one to
+canonical character packages. Compile all 16 reviewed traffic groups and 64
+`AddTrafficModel` members, binding all 22 unique traffic identities one-to-one
+to canonical vehicle packages while preserving the optional numeric
+big-vehicle flag. Bind all 134 reviewed `UsePedGroup` selections to one
+declared group in the paired level setup source. Population spawn, navigation,
+group-switch runtime behavior, and parked-car behavior remain separate
+boundaries.
+
+## Acceptance criteria
+
+- [x] Compile all 116 reviewed pedestrian groups and their 437 `AddPed` members
+  as bounded declarations, binding all 78 unique model identities one-to-one
+  to canonical character packages. Compile all 16 reviewed traffic groups
+  and 64 `AddTrafficModel` members, binding all 22 unique traffic identities
+  one-to-one to canonical vehicle packages while preserving the optional
+  numeric big-vehicle flag. Bind all 134 reviewed `UsePedGroup` selections
+  to one declared group in the paired level setup source. Population spawn,
+  navigation, group-switch runtime behavior, and parked-car behavior remain
+  separate boundaries.
+
+## Dependencies
+
+Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

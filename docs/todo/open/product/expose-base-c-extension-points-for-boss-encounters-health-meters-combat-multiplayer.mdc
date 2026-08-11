@@ -1,0 +1,32 @@
+---
+schema: shar.todo.v1
+id: expose-base-c-extension-points-for-boss-encounters-health-meters-combat-multiplayer
+status: open
+priority: P4
+lane: product
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Expose base C++ extension points for boss encounters, health meters, combat, multiplayer…
+
+Expose base C++ extension points for boss encounters, health meters, combat,
+multiplayer adapters, and future mod-owned gameplay systems without
+implementing replacement gameplay during the faithful-port phase.
+
+## Acceptance criteria
+
+- [ ] Expose base C++ extension points for boss encounters, health meters,
+  combat, multiplayer adapters, and future mod-owned gameplay systems
+  without implementing replacement gameplay during the faithful-port phase.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

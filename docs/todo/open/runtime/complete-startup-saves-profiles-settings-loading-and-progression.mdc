@@ -1,0 +1,28 @@
+---
+schema: shar.todo.v1
+id: complete-startup-saves-profiles-settings-loading-and-progression
+status: open
+priority: P3
+lane: runtime
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Complete startup, saves, profiles, settings, loading, and progression
+
+Complete startup, saves, profiles, settings, loading, and progression.
+
+## Acceptance criteria
+
+- [ ] Complete startup, saves, profiles, settings, loading, and progression.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

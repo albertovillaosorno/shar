@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: reject-heuristic-map-offsets-interior-movements-global-height-raises-uv-mirrors-and
+status: open
+priority: P1
+lane: conversion
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Reject heuristic map offsets, interior movements, global height raises, UV mirrors, and…
+
+Reject heuristic map offsets, interior movements, global height raises, UV
+mirrors, and other corrections not present in source evidence.
+
+## Acceptance criteria
+
+- [ ] Reject heuristic map offsets, interior movements, global height raises, UV
+  mirrors, and other corrections not present in source evidence.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

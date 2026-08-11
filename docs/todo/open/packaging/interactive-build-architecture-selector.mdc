@@ -1,0 +1,39 @@
+---
+schema: shar.todo.v1
+id: interactive-build-architecture-selector
+status: open
+priority: P4
+lane: packaging
+active: true
+parent: null
+dependencies: []
+children: []
+---
+
+# Interactive build architecture selector
+
+Implement `tools/build/arch.py` as a minimal checklist window that lets the
+user select one or more supported build targets and saves the decision to
+`.cache/build/data/arch.json`.
+
+## Acceptance criteria
+
+- [ ] Offer Android ARM64, iOS ARM64, Linux ARM64, Linux AMD64, macOS ARM64,
+  Windows ARM64, and Windows AMD64 as the canonical initial target set.
+- [ ] Investigate macOS x86-64 only as an optional compatibility target if
+  current Unreal and toolchain support makes it straightforward; do not
+  block macOS ARM64 on it.
+- [ ] Require at least one selected target, permit selecting every supported
+  target, and expose one minimal Save action.
+- [ ] Write a versioned `.cache/build/data/arch.json`; manual edits are
+  unsupported but must remain schema-validatable by the build runner.
+
+## Dependencies
+
+No explicit task dependency is required beyond the declared repository and
+platform prerequisites.
+
+## Evidence
+
+Add implementation, deterministic validation, and supported-host evidence here
+as the task advances.

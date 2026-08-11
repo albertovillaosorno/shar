@@ -1,0 +1,28 @@
+---
+schema: shar.todo.v1
+id: verify-an-ai-agent-can-create-and-validate-a-mod-using-published-skills
+status: open
+priority: P5
+lane: verification
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Verify an AI agent can create and validate a mod using published skills
+
+Verify an AI agent can create and validate a mod using published skills.
+
+## Acceptance criteria
+
+- [ ] Verify an AI agent can create and validate a mod using published skills.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

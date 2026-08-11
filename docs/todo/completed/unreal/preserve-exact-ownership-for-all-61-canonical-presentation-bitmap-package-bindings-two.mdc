@@ -1,0 +1,38 @@
+---
+schema: shar.todo.v1
+id: preserve-exact-ownership-for-all-61-canonical-presentation-bitmap-package-bindings-two
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
+children: []
+---
+
+# Preserve exact ownership for all 61 canonical presentation bitmap package bindings: two…
+
+Preserve exact ownership for all 61 canonical presentation bitmap package
+bindings: two mission-scope references remain intentionally unowned, six
+stage-scope references retain exact owning stage source/dense ordinals, and 53
+objective-scope references retain both exact stage and objective source
+ownership. Presentation timing, drawable behavior, and runtime sequencing
+remain separate boundaries.
+
+## Acceptance criteria
+
+- [x] Preserve exact ownership for all 61 canonical presentation bitmap package
+  bindings: two mission-scope references remain intentionally unowned, six
+  stage-scope references retain exact owning stage source/dense ordinals,
+  and 53 objective-scope references retain both exact stage and objective
+  source ownership. Presentation timing, drawable behavior, and runtime
+  sequencing remain separate boundaries.
+
+## Dependencies
+
+Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

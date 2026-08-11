@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: emit-lossless-usharmissiondefinition-assets-only-after-the-complete-mission-graph
+status: open
+priority: P2
+lane: unreal
+active: false
+parent: compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and
+dependencies: [compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and]
+children: []
+---
+
+# Emit lossless `USharMissionDefinition` assets only after the complete mission graph…
+
+Emit lossless `USharMissionDefinition` assets only after the complete mission
+graph passes reference and topology validation.
+
+## Acceptance criteria
+
+- [ ] Emit lossless `USharMissionDefinition` assets only after the complete
+  mission graph passes reference and topology validation.
+
+## Dependencies
+
+Parent task: `compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and`.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

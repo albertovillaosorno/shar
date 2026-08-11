@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: reproduce-original-player-movement-cameras-interactions-vehicles-traffic
+status: open
+priority: P3
+lane: runtime
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Reproduce original player movement, cameras, interactions, vehicles, traffic,…
+
+Reproduce original player movement, cameras, interactions, vehicles, traffic,
+pedestrians, damage, and recovery.
+
+## Acceptance criteria
+
+- [ ] Reproduce original player movement, cameras, interactions, vehicles,
+  traffic, pedestrians, damage, and recovery.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

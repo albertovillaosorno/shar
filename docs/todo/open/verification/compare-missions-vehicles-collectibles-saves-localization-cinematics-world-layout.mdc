@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: compare-missions-vehicles-collectibles-saves-localization-cinematics-world-layout
+status: open
+priority: P5
+lane: verification
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Compare missions, vehicles, collectibles, saves, localization, cinematics, world layout,…
+
+Compare missions, vehicles, collectibles, saves, localization, cinematics,
+world layout, and the ending against the original game.
+
+## Acceptance criteria
+
+- [ ] Compare missions, vehicles, collectibles, saves, localization, cinematics,
+  world layout, and the ending against the original game.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

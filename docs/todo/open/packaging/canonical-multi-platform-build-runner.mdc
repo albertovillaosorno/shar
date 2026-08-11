@@ -1,0 +1,42 @@
+---
+schema: shar.todo.v1
+id: canonical-multi-platform-build-runner
+status: open
+priority: P4
+lane: packaging
+active: true
+parent: null
+dependencies: []
+children: []
+---
+
+# Canonical multi-platform build runner
+
+Implement `tools/build/run.py` to consume saved preflight and architecture
+decisions, revalidate them, build every selected target transactionally, and
+publish only the minimal native deliverable under `dist/<ARCH>/` for each
+successful architecture.
+
+## Acceptance criteria
+
+- [ ] Produce Android ARM64 as APK, iOS ARM64 as IPA, and native packaged
+  outputs for selected Linux, macOS, and Windows architectures.
+- [ ] Keep iOS packaging local and sideload-oriented with no App Store
+  submission workflow; document unavoidable Apple SDK, signing, or
+  build-host constraints instead of hiding them.
+- [ ] Use candidate output followed by atomic publication so a failed target
+  never appears as a complete `dist/<ARCH>/` result.
+- [ ] Keep cook, staging, logs, manifests, and tool state under `.cache/`; keep
+  final `dist/` output minimal and platform-native.
+- [ ] Make each published `dist/<ARCH>/` self-contained enough to copy elsewhere
+  before deleting the repository workspace if the user wants.
+
+## Dependencies
+
+No explicit task dependency is required beyond the declared repository and
+platform prerequisites.
+
+## Evidence
+
+Add implementation, deterministic validation, and supported-host evidence here
+as the task advances.

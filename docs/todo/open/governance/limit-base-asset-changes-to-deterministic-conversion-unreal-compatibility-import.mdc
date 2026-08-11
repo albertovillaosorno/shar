@@ -1,0 +1,31 @@
+---
+schema: shar.todo.v1
+id: limit-base-asset-changes-to-deterministic-conversion-unreal-compatibility-import
+status: open
+priority: P0
+lane: governance
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Limit base-asset changes to deterministic conversion, Unreal compatibility, import…
+
+Limit base-asset changes to deterministic conversion, Unreal compatibility,
+import correctness, and fixes for defects introduced by the port.
+
+## Acceptance criteria
+
+- [ ] Limit base-asset changes to deterministic conversion, Unreal
+  compatibility, import correctness, and fixes for defects introduced by the
+  port.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.
