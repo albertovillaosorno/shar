@@ -300,12 +300,13 @@ Current task list. Project phases and dated progress are recorded in
           registrations through the canonical P3D, vehicle, and character
           package catalogs. Preserve source identity only; menu availability,
           ownership, unlock, and runtime selection policy remain unresolved.
-        - [ ] Bind stage message indices to canonical localization keys once
-          phase-three package evidence publishes text-key mirrors. Package-index
-          intake now preserves each structured mirror's id, exact key, source
-          unit, and subcategory instead of discarding the key after validation;
-          the current generated package index contains zero such mirrors, so
-          message-key resolution remains an explicit extraction-evidence gap.
+        - [x] Bind all 449 reviewed stage message indices to canonical
+          localization keys through generated phase-three text-key mirrors. The
+          source-text phrase table now derives 52 language packages containing
+          1,632 unique keys, including all 300 `MISSION_OBJECTIVE_*` and 20
+          `INGAME_MESSAGE_*` keys. All 439 objective and 10 locked-stage uses
+          resolve exactly once while preserving key id, source unit, package,
+          and subcategory; localized payload asset emission remains separate.
     - [ ] Emit lossless `USharMissionDefinition` assets only after the complete
       mission graph passes reference and topology validation.
   - [ ] Compile remaining normalized UI, font, localization, tuning, and other
