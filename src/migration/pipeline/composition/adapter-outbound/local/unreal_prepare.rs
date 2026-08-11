@@ -53,6 +53,7 @@ use shar_unreal_conversion::domain::PlanBundle;
 use super::mission_camera_catalog::load_mission_camera_catalog;
 use super::mission_completion_dialog_context as completion_dialog_context;
 use super::mission_dialogue_info_context as dialogue_info_context;
+use super::mission_definition_context;
 use super::mission_locator_catalog::load_mission_locator_catalog;
 use super::mission_locator_context::{
     MissionLocatorScriptSnapshot, build_level_locator_source_contexts,
@@ -986,13 +987,21 @@ fn validate_normalized_mission_source(
             ))
         })?,
     );
-    drop(
+    let topology =
         preflight_mission_authored_stage_topology(&stage_semantics)
             .map_err(|error| {
                 PipelineError::new(format!(
                     "mission authored stage topology failed: {error}"
                 ))
-            })?,
+            })?;
+    drop(
+        mission_definition_context::preflight_mission_definition_core(
+            &scopes,
+            &stage_semantics,
+            &objective_semantics,
+            &condition_semantics,
+            &topology,
+        )?,
     );
     drop(preflight_mission_stage_transitions(&stage_semantics));
     drop(
