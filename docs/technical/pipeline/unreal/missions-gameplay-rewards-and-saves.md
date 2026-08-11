@@ -480,6 +480,15 @@ carry those owner ordinals plus their authored stage-versus-objective scope.
 Final definition compilation can join these records directly instead of
 reconstructing ownership from source adjacency.
 
+Downstream resolved bindings now retain those same owners rather than flattening
+them away. The six FMVs, nine music-state pairs, 38 completion dialogs, 128
+dialogue-info records, 36 collectible-to-waypoint links, 43 countdown blocks,
+and four pickup targets preserve the exact stage and, where applicable,
+objective owner available at semantic projection time. Stage-scope pickup state
+props also preserve the exact `AddStage` owner. This is provenance only; it does
+not assign playback, navigation, state-prop lifetime, retry, rollback, or
+recovery behavior.
+
 The local Unreal preflight now consumes that ownership directly in a lossless
 mission definition-core join. Across 342 reviewed mission-script sources, 188
 have no selected mission and are required to produce no semantic rows; all 154

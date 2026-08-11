@@ -359,6 +359,15 @@ ownership plus whether the source declared it directly on the stage or while the
 root objective was open. Final compilation therefore does not need source-order
 heuristics to reconstruct stage membership.
 
+Downstream resolved bindings now retain those same owners rather than flattening
+them away. The six FMVs, nine music-state pairs, 38 completion dialogs, 128
+dialogue-info records, 36 collectible-to-waypoint links, 43 countdown blocks,
+and four pickup targets preserve the exact stage and, where applicable,
+objective owner available at semantic projection time. Stage-scope pickup state
+props also preserve the exact `AddStage` owner. This is provenance only; it does
+not assign playback, navigation, state-prop lifetime, retry, rollback, or
+recovery behavior.
+
 A private definition-core preflight now performs that join before Unreal
 planning.
 The reviewed mission-script corpus contains 342 sources: 188 contain no selected

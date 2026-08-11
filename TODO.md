@@ -350,6 +350,17 @@ Current task list. Project phases and dated progress are recorded in
           repeated `success` ids for `sr1`/`sr2`/`sr3`, disambiguated only from
           that authored street-race source identity. Preserve every participant
           audio package without inferring speaker order or playback behavior.
+        - [x] Preserve semantic ownership through downstream mission bindings
+          instead of reconstructing it from source adjacency: all six FMVs keep
+          stage+objective owners; all nine music-state and 38 completion-dialog
+          bindings keep exact stage owners; all 128 dialogue-info bindings keep
+          stage+objective owners; all 36 collectible-waypoint bindings keep
+          stage+objective owners; all 43 countdown blocks keep exact stage
+          owners; and all four pickup-target bindings keep stage+objective owners
+          while stage-scope state-prop declarations retain their exact `AddStage`
+          owner. These owner joins do not add playback, navigation, state-prop
+          lifecycle,
+          retry, rollback, or recovery semantics.
         - [x] Join source-backed definition-core rows before final asset
           emission. Of 342 reviewed mission-script sources, 188 contain no
           selected mission and must therefore project no
