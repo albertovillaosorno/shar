@@ -37,10 +37,11 @@ use std::collections::BTreeSet;
 
 use crate::domain::package::MissionAuthoredStageTopologyReport;
 use crate::domain::{
-    MissionConditionScope,
-    MissionConditionSemanticReport, MissionObjectiveSemanticReport,
-    MissionScopeReport, MissionStageKind, MissionStageSemanticReport,
-    MissionStageTerminalOutcome, PipelineError, PipelineOutcome,
+    MissionConditionParameters, MissionConditionScope,
+    MissionConditionSemanticReport, MissionObjectiveParameters,
+    MissionObjectiveSemanticReport, MissionScopeReport, MissionStageKind,
+    MissionStageSemanticReport, MissionStageTerminalOutcome, PipelineError,
+    PipelineOutcome,
 };
 
 /// One condition identity retained under its exact owning stage.
@@ -51,6 +52,7 @@ pub(super) struct MissionDefinitionConditionCoreBinding {
     schema_id: &'static str,
     scope: MissionConditionScope,
     owner_objective_source_ordinal: Option<usize>,
+    parameters: MissionConditionParameters,
 }
 
 /// One stage's source-backed definition core, without runtime transitions.
@@ -67,6 +69,7 @@ pub(super) struct MissionDefinitionStageCoreBinding {
     objective_source_alias: String,
     objective_canonical_kind: Option<&'static str>,
     objective_unavailable_code: Option<&'static str>,
+    objective_parameters: MissionObjectiveParameters,
     conditions: Vec<MissionDefinitionConditionCoreBinding>,
 }
 
@@ -247,6 +250,13 @@ impl MissionDefinitionStageCoreBinding {
     }
 
     #[cfg(test)]
+    pub(super) const fn objective_parameters(
+        &self,
+    ) -> &MissionObjectiveParameters {
+        &self.objective_parameters
+    }
+
+    #[cfg(test)]
     pub(super) fn conditions(
         &self,
     ) -> &[MissionDefinitionConditionCoreBinding] {
@@ -278,6 +288,11 @@ impl MissionDefinitionConditionCoreBinding {
     #[cfg(test)]
     pub(super) const fn owner_objective_source_ordinal(&self) -> Option<usize> {
         self.owner_objective_source_ordinal
+    }
+
+    #[cfg(test)]
+    pub(super) const fn parameters(&self) -> &MissionConditionParameters {
+        &self.parameters
     }
 }
 
@@ -415,6 +430,7 @@ fn build_definition_core(
                     scope: condition.scope(),
                     owner_objective_source_ordinal:
                         condition.owner_objective_source_ordinal(),
+                    parameters: condition.parameters().clone(),
                 })
             })
             .collect::<PipelineOutcome<Vec<_>>>()?;
@@ -433,6 +449,7 @@ fn build_definition_core(
             objective_source_alias: objective.source_alias().to_owned(),
             objective_canonical_kind: objective.canonical_kind(),
             objective_unavailable_code: objective.unavailable_code(),
+            objective_parameters: objective.parameters().clone(),
             conditions: stage_conditions,
         });
     }
