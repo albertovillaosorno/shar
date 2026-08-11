@@ -280,6 +280,16 @@ verbatim without assigning playback or music semantics. This binding proves
 media identity only; playback, audio routing, completion, and transition policy
 remain runtime concerns.
 
+Mission music-state references now retain canonical compiled-score provenance.
+All nine reviewed `SetMusicState` calls resolve to the indexed score-library
+script for their exact source level, with one unique structural window where the
+`MissionN` symbol is followed by the authored `StageN` value. The binding
+preserves script member identity, path, and both source offsets. It does not
+claim that named-asset adjacency is a decoded RADMusic state machine or choose
+playback, mix, event, or transition behavior. `StageStartMusicEvent` stays
+separate because the reviewed `L*_drama` event tokens are not all published as
+exact symbols by the same compiled metadata evidence.
+
 Level mission registration order is now preserved independently of progression.
 All 64 reviewed `AddMission` declarations across 16 base, demo, and E3 load
 sources retain their authored source ordinal and dense registration position.

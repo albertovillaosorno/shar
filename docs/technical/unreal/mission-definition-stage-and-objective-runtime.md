@@ -92,6 +92,14 @@ package and its single converted movie member. The optional `stopmusic` token is
 preserved as opaque compatibility evidence; the binding does not choose media
 playback, audio routing, mission completion, or stage transitions.
 
+The nine reviewed `SetMusicState` directives now bind to the indexed compiled
+score script for their exact level and preserve the unique source offsets for
+the authored `MissionN` plus `StageN` named-asset window. This is structural
+metadata provenance only: the pipeline does not promote symbol adjacency into a
+decoded RADMusic state machine or infer playback/mix/transition policy. Music
+events remain independent because not every authored `StageStartMusicEvent`
+token has an exact symbol in the same compiled metadata surface.
+
 Character and vehicle source references now resolve before Unreal planning
 against the validated phase-three package index. The resolver publishes the
 canonical participant identity together with the exact character package variant
