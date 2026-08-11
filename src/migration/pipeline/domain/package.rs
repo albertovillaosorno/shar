@@ -274,7 +274,8 @@ pub use mission_vehicle_select::{
     preflight_mission_vehicle_selects,
 };
 pub use mission_transition::{
-    MissionStageTerminalOutcome, MissionStageTransitionPolicy,
+    MissionStageTerminalOutcome, MissionStageTransitionMarker,
+    MissionStageTransitionMarkerKind, MissionStageTransitionPolicy,
     MissionStageTransitionReport, MissionStageVisualTransition,
     preflight_mission_stage_transitions,
 };
