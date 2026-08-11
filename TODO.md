@@ -346,11 +346,12 @@ Current task list. Project phases and dated progress are recorded in
           audio package without inferring speaker order or playback behavior.
         - [x] Join source-backed definition-core rows before final asset
           emission. Of 342 reviewed mission-script sources, 188 contain no
-          selected mission and must therefore project no stage/objective/condition
-          rows; all 154 selected sources contain exactly one mission. Join all 611
-          stages to one authored-topology row and one root objective through exact
-          owner source/dense ordinals, then attach all 408 conditions through the
-          same owner key while preserving stage-versus-objective scope, versioned
+          selected mission and must therefore project no
+          stage/objective/condition rows; all 154 selected sources contain exactly
+          one mission. Join all 611 stages to one authored-topology row and one
+          root objective through exact owner source/dense ordinals, then attach
+          all 408 conditions through the same owner key while preserving
+          stage-versus-objective scope, versioned
           schema id, canonical objective kind or explicit unavailable identity,
           checkpoint marker, final marker, terminal override, and authored next
           neighbor. The authored neighbor remains evidence only, not a runtime
