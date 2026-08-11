@@ -79,6 +79,10 @@ fn reports() -> (
                         token: "3".to_owned(),
                         duration_milliseconds: 1000,
                     },
+                    MissionStageDirective::StageStartMusicEvent {
+                        source_ordinal: 9,
+                        event_id: "L7_drama".to_owned(),
+                    },
                 ],
             ),
             (
@@ -548,7 +552,7 @@ fn renders_definition_core_as_stable_versioned_json() -> Result<(), String> {
         .map_err(|error| error.to_string())?;
     assert_eq!(
         value.get("schema").and_then(serde_json::Value::as_str),
-        Some("shar-schoenwald.mission-definition-core.v2")
+        Some("shar-schoenwald.mission-definition-core.v3")
     );
     assert_eq!(
         value.get("source_id").and_then(serde_json::Value::as_str),
@@ -578,6 +582,29 @@ fn renders_definition_core_as_stable_versioned_json() -> Result<(), String> {
             .get("visual_transition")
             .and_then(serde_json::Value::as_str),
         Some("iris")
+    );
+    let music_events = first_stage
+        .get("stage_start_music_events")
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| "rendered stage music events disappeared".to_owned())?;
+    assert_eq!(music_events.len(), 1);
+    assert_eq!(
+        music_events[0]
+            .get("channel")
+            .and_then(serde_json::Value::as_str),
+        Some("mission-drama")
+    );
+    assert_eq!(
+        music_events[0]
+            .get("key_transform")
+            .and_then(serde_json::Value::as_str),
+        Some("legacy-case-insensitive-key32")
+    );
+    assert_eq!(
+        music_events[0]
+            .get("event_id")
+            .and_then(serde_json::Value::as_str),
+        Some("L7_drama")
     );
     let objective = first_stage
         .get("objective")
