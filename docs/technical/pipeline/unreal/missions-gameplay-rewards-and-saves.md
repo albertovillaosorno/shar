@@ -300,6 +300,16 @@ referenced character is not the recorded speaker. Conversation mode is retained
 as source evidence (37 `noboxconv`, one `convinit`) without inferring line
 order, playback, listener roles, or completion behavior.
 
+Objective dialogue setup now uses the same catalog boundary without conflating
+conversation identity with runtime speech order. All 128 reviewed
+`SetDialogueInfo` records bind both authored character ids uniquely and resolve
+to one same-level `convinit` conversation group. 107 ids are unique directly;
+the remaining 21 are the repeated `success` ids for the three street races in
+each level and are disambiguated only by the authored `sr1`/`sr2`/`sr3` source
+identity. The resulting groups contain every canonical participant audio package
+(25 one-package, 100 two-package, two three-package, and one four-package group)
+without deciding who speaks first, camera behavior, playback, or progression.
+
 Level mission registration order is now preserved independently of progression.
 All 64 reviewed `AddMission` declarations across 16 base, demo, and E3 load
 sources retain their authored source ordinal and dense registration position.
