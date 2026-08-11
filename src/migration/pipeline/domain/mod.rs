@@ -98,6 +98,7 @@ pub use package::{
     MissionStageTerminalOutcome, MissionStageTransitionPolicy,
     MissionStageTransitionReport, MissionStageVehicleReference,
     MissionStageVisualTransition, MissionTrafficGroupBinding,
+    MissionVehicleAttributeBinding, MissionVehicleAttributeReport,
     MissionTrafficGroupMemberBinding, MissionTrafficGroupReport,
     MissionVehicleCatalogReference,
     MissionVehicleReference, PackageMemberRef, PackageRole,
@@ -132,7 +133,7 @@ pub use package::{
     preflight_mission_stage_message_references,
     preflight_mission_stage_semantics, preflight_mission_stage_transitions,
     preflight_mission_traffic_groups,
-    preflight_mission_vehicle_selects,
+    preflight_mission_vehicle_attributes, preflight_mission_vehicle_selects,
 };
 pub use pipeline::{
     PipelineConfig, PipelineError, PipelineOutcome, PipelineReport, StageReport,

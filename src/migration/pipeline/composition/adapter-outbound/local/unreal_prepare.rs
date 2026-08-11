@@ -88,7 +88,7 @@ use crate::domain::{
     preflight_mission_stage_message_references,
     preflight_mission_stage_semantics, preflight_mission_stage_transitions,
     preflight_mission_traffic_groups,
-    preflight_mission_vehicle_selects,
+    preflight_mission_vehicle_attributes, preflight_mission_vehicle_selects,
 };
 
 /// Canonical generated Unreal staging root.
@@ -987,6 +987,14 @@ fn validate_normalized_mission_source(
                 "mission reward offer preflight failed: {error}"
             ))
         })?,
+    );
+    drop(
+        preflight_mission_vehicle_attributes(mission_references, &scopes)
+            .map_err(|error| {
+                PipelineError::new(format!(
+                    "mission vehicle attribute preflight failed: {error}"
+                ))
+            })?,
     );
     drop(
         preflight_mission_purchase_rewards(mission_references, &scopes)
