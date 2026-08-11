@@ -373,6 +373,13 @@ next neighbor. They deliberately contain no runtime success/failure transition
 ids, so final `USharMissionDefinition` emission remains blocked on policy and
 transition authority rather than reconstructing it from adjacency.
 
+Canonical presentation package references now retain their source ownership as
+well. The 61 reviewed presentation bitmaps split into two mission-scope
+references with no stage owner, six stage-scope references with exact stage
+source/dense ordinals, and 53 objective-scope references with both exact stage
+and objective source ownership. The binding remains presentation identity only;
+it does not assign timing, drawable semantics, or runtime sequencing.
+
 ## Conversion command registry
 
 Every recognized source command maps to one registered conversion
