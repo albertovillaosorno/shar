@@ -1168,6 +1168,31 @@ fn required_u64(object: &Map<String, Value>, field: &str, label: &str) -> Pipeli
     })
 }
 
+fn required_string_array(
+    object: &Map<String, Value>,
+    field: &str,
+    label: &str,
+) -> PipelineOutcome<Vec<String>> {
+    let values = object
+        .get(field)
+        .and_then(Value::as_array)
+        .ok_or_else(|| {
+            PipelineError::new(format!(
+                "{label} is missing string-array field {field}"
+            ))
+        })?;
+    values
+        .iter()
+        .map(|value| {
+            value.as_str().map(ToOwned::to_owned).ok_or_else(|| {
+                PipelineError::new(format!(
+                    "{label} has non-string value in field {field}"
+                ))
+            })
+        })
+        .collect()
+}
+
 fn validate_rendered_output(manifest: &str, summary: &str) -> PipelineOutcome<()> {
     let mut lines = manifest.lines();
     let header_line = lines
@@ -1184,6 +1209,7 @@ fn validate_rendered_output(manifest: &str, summary: &str) -> PipelineOutcome<()
     let mut package_ids = BTreeSet::new();
     let mut source_ids = BTreeSet::new();
     let mut expected_sources = BTreeMap::new();
+    let mut derived_source_ids = BTreeMap::<String, Vec<String>>::new();
     let mut actual_sources = BTreeMap::<String, u64>::new();
     let mut actual = RenderedCounts::default();
     let mut saw_source = false;
@@ -1213,6 +1239,7 @@ fn validate_rendered_output(manifest: &str, summary: &str) -> PipelineOutcome<()
                     &label,
                     &mut package_ids,
                     &mut expected_sources,
+                    &mut derived_source_ids,
                     &mut actual,
                 )?;
             }
@@ -1235,6 +1262,7 @@ fn validate_rendered_output(manifest: &str, summary: &str) -> PipelineOutcome<()
         }
     }
     validate_rendered_source_counts(expected_sources, actual_sources)?;
+    validate_rendered_derived_sources(&derived_source_ids, &source_ids)?;
     if actual != declared {
         return Err(PipelineError::new(format!(
             "Unreal manifest counts disagree with its header and summary: \
@@ -1326,6 +1354,7 @@ fn validate_rendered_package(
     label: &str,
     package_ids: &mut BTreeSet<String>,
     expected_sources: &mut BTreeMap<String, u64>,
+    derived_source_ids: &mut BTreeMap<String, Vec<String>>,
     counts: &mut RenderedCounts,
 ) -> PipelineOutcome<()> {
     let package_id = required_string(record, "package_id", label)?;
@@ -1337,9 +1366,36 @@ fn validate_rendered_package(
     }
     let source_count = required_u64(record, "source_count", label)?;
     if source_count == 0 {
-        return Err(PipelineError::new(
-            "Unreal package declares no source records",
-        ));
+        let category = required_string(record, "category", label)?;
+        let disposition = required_string(record, "disposition", label)?;
+        let target_kind = required_string(record, "target_kind", label)?;
+        let source_unit_ids =
+            required_string_array(record, "source_unit_ids", label)?;
+        let text_key_ids =
+            required_string_array(record, "text_key_ids", label)?;
+        if category != "language"
+            || disposition != "requires-editor-factory"
+            || target_kind != "StringTable"
+            || source_unit_ids.is_empty()
+            || text_key_ids.is_empty()
+        {
+            return Err(PipelineError::new(format!(
+                "Unreal package {package_id} declares no source records"
+            )));
+        }
+        let mut seen = BTreeSet::new();
+        for source_id in &source_unit_ids {
+            validate_public_identifier(source_id, "derived source unit id")?;
+            if !seen.insert(source_id.clone()) {
+                return Err(PipelineError::new(format!(
+                    "Unreal package {package_id} duplicates derived source id"
+                )));
+            }
+        }
+        for text_key_id in &text_key_ids {
+            validate_public_identifier(text_key_id, "text key id")?;
+        }
+        drop(derived_source_ids.insert(package_id.clone(), source_unit_ids));
     }
     let _ = expected_sources.insert(package_id, source_count);
     counts.packages = counts.packages.saturating_add(1);
@@ -1444,6 +1500,27 @@ fn validate_rendered_source_counts(
             "Unreal manifest contains sources for undeclared packages",
         ))
     }
+}
+
+fn validate_rendered_derived_sources(
+    derived_source_ids: &BTreeMap<String, Vec<String>>,
+    source_ids: &BTreeSet<String>,
+) -> PipelineOutcome<()> {
+    for (package_id, referenced_ids) in derived_source_ids {
+        if referenced_ids
+            .iter()
+            .any(|source_id| !source_ids.contains(source_id))
+        {
+            return Err(PipelineError::new(format!(
+                concat!(
+                    "Unreal derived package {} has missing source ",
+                    "provenance"
+                ),
+                package_id
+            )));
+        }
+    }
+    Ok(())
 }
 
 fn published_byte_count(manifest: &str, summary: &str, plans: &PlanBundle) -> u64 {

@@ -474,9 +474,11 @@ fn rendered_fixture(package_count: u64, source_package: &str) -> (String, String
             "\"requires_semantic_conversion_count\":0,",
             "\"metadata_only_count\":0}}\n",
             "{{\"schema\":\"{}\",\"record_type\":\"package\",",
-            "\"package_id\":\"pkg\",",
+            "\"package_id\":\"pkg\",\"category\":\"ui-images\",",
             "\"disposition\":\"direct-editor-import\",",
-            "\"source_count\":1}}\n",
+            "\"target_kind\":\"Texture2D\",",
+            "\"source_count\":1,\"source_unit_ids\":[],",
+            "\"text_key_ids\":[]}}\n",
             "{{\"schema\":\"{}\",\"record_type\":\"source\",",
             "\"package_id\":\"{}\",\"id\":\"src\",",
             "\"direct_import\":{{}}}}\n"
@@ -683,6 +685,70 @@ fn rejects_noncanonical_rendered_ids_without_echo() -> Result<(), String> {
     let rendered = error.to_string();
     if rendered.contains(private_id) || !rendered.contains("package id is not canonical") {
         return Err(format!("rendered-id diagnostic leaked: {rendered}"));
+    }
+    Ok(())
+}
+
+fn rendered_derived_fixture(source_unit_id: &str) -> (String, String) {
+    let manifest = format!(
+        concat!(
+            "{{\"schema\":\"{}\",\"record_type\":\"header\",",
+            "\"package_count\":2,\"source_count\":1,",
+            "\"direct_import_count\":1,\"requires_fbx_count\":0,",
+            "\"requires_editor_factory_count\":1,",
+            "\"requires_semantic_conversion_count\":0,",
+            "\"metadata_only_count\":0}}\n",
+            "{{\"schema\":\"{}\",\"record_type\":\"package\",",
+            "\"package_id\":\"derived-text\",",
+            "\"category\":\"language\",",
+            "\"disposition\":\"requires-editor-factory\",",
+            "\"target_kind\":\"StringTable\",\"source_count\":0,",
+            "\"source_unit_ids\":[\"{}\"],",
+            "\"text_key_ids\":[\"text-key-a\"]}}\n",
+            "{{\"schema\":\"{}\",\"record_type\":\"package\",",
+            "\"package_id\":\"physical\",",
+            "\"disposition\":\"direct-editor-import\",",
+            "\"target_kind\":\"Texture2D\",\"source_count\":1,",
+            "\"source_unit_ids\":[],\"text_key_ids\":[]}}\n",
+            "{{\"schema\":\"{}\",\"record_type\":\"source\",",
+            "\"package_id\":\"physical\",\"id\":\"src\",",
+            "\"direct_import\":{{}}}}\n"
+        ),
+        UNREAL_IMPORT_MANIFEST_SCHEMA,
+        UNREAL_IMPORT_MANIFEST_SCHEMA,
+        source_unit_id,
+        UNREAL_IMPORT_MANIFEST_SCHEMA,
+        UNREAL_IMPORT_MANIFEST_SCHEMA,
+    );
+    let summary = format!(
+        concat!(
+            "{{\"schema\":\"{}\",\"packages\":2,",
+            "\"sources\":1,\"direct_imports\":1,",
+            "\"requires_fbx\":0,\"requires_editor_factory\":1,",
+            "\"requires_semantic_conversion\":0,",
+            "\"metadata_only\":0}}\n"
+        ),
+        UNREAL_IMPORT_SUMMARY_SCHEMA,
+    );
+    (manifest, summary)
+}
+
+#[test]
+fn accepts_source_backed_derived_string_table_package() -> Result<(), String> {
+    let (manifest, summary) = rendered_derived_fixture("src");
+    validate_rendered_output(&manifest, &summary)
+        .map_err(|error| error.to_string())
+}
+
+#[test]
+fn rejects_derived_package_with_missing_source_provenance(
+) -> Result<(), String> {
+    let (manifest, summary) = rendered_derived_fixture("missing");
+    let Err(error) = validate_rendered_output(&manifest, &summary) else {
+        return Err("missing derived source provenance was accepted".to_owned());
+    };
+    if !error.to_string().contains("missing source provenance") {
+        return Err(format!("unexpected derived provenance failure: {error}"));
     }
     Ok(())
 }
