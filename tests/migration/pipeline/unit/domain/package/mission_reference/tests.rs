@@ -277,6 +277,27 @@ fn resolves_parameters_directives_and_stage_header_in_source_order()
     if ordinals != [2, 3, 4, 5, 6, 7] {
         return Err(format!("participant source order drifted: {ordinals:?}"));
     }
+    let [initial, locked, stage_vehicle, objective_parameter, npc, target] =
+        mission.participants()
+    else {
+        return Err("participant owner fixture count drifted".to_owned());
+    };
+    assert_eq!(initial.owner_stage_source_ordinal(), None);
+    assert_eq!(initial.owner_stage_sequence_ordinal(), None);
+    assert_eq!(initial.owner_objective_source_ordinal(), None);
+    assert_eq!(initial.owner_condition_source_ordinal(), None);
+    for reference in [locked, stage_vehicle] {
+        assert_eq!(reference.owner_stage_source_ordinal(), Some(3));
+        assert_eq!(reference.owner_stage_sequence_ordinal(), Some(0));
+        assert_eq!(reference.owner_objective_source_ordinal(), None);
+        assert_eq!(reference.owner_condition_source_ordinal(), None);
+    }
+    for reference in [objective_parameter, npc, target] {
+        assert_eq!(reference.owner_stage_source_ordinal(), Some(3));
+        assert_eq!(reference.owner_stage_sequence_ordinal(), Some(0));
+        assert_eq!(reference.owner_objective_source_ordinal(), Some(5));
+        assert_eq!(reference.owner_condition_source_ordinal(), None);
+    }
     let costume = mission
         .participants()
         .iter()
@@ -297,5 +318,38 @@ fn resolves_parameters_directives_and_stage_header_in_source_order()
             "Barney costume lost canonical participant identity".to_owned()
         );
     }
+    Ok(())
+}
+
+#[test]
+fn condition_participant_preserves_full_owner_chain() -> Result<(), String> {
+    let binding =
+        crate::domain::MissionConditionSemanticBinding::from_parts_for_tests(
+        3,
+        0,
+        Some(5),
+        8,
+        "damage",
+        crate::domain::MissionConditionScope::Objective,
+        "legacy-mission-condition.damage.v1",
+        vec![MissionConditionDirective::TargetVehicle {
+            source_ordinal: 9,
+            vehicle_id: "cletu_v".to_owned(),
+        }],
+    );
+    let mut participants = Vec::new();
+    resolve_condition(&catalog(), &binding, &mut participants)?;
+    let [reference] = participants.as_slice() else {
+        return Err("condition participant count drifted".to_owned());
+    };
+    assert_eq!(reference.owner_stage_source_ordinal(), Some(3));
+    assert_eq!(reference.owner_stage_sequence_ordinal(), Some(0));
+    assert_eq!(reference.owner_objective_source_ordinal(), Some(5));
+    assert_eq!(reference.owner_condition_source_ordinal(), Some(8));
+    assert_eq!(reference.source_ordinal(), 9);
+    assert_eq!(
+        reference.role(),
+        MissionParticipantRole::ConditionTargetVehicle
+    );
     Ok(())
 }
