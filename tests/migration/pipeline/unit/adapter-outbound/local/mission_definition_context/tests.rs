@@ -66,6 +66,7 @@ fn reports() -> (
             (
                 2,
                 0,
+                Some(4),
                 5,
                 "timeout".to_owned(),
                 MissionConditionScope::Objective,
@@ -74,6 +75,7 @@ fn reports() -> (
             (
                 10,
                 1,
+                None,
                 12,
                 "damage".to_owned(),
                 MissionConditionScope::Stage,
@@ -156,6 +158,7 @@ fn rejects_condition_with_unknown_stage_owner() {
         MissionConditionSemanticReport::from_owned_entries_for_tests(vec![(
             99,
             0,
+            None,
             100,
             "timeout".to_owned(),
             MissionConditionScope::Stage,
