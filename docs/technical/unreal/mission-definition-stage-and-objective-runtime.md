@@ -100,6 +100,16 @@ decoded RADMusic state machine or infer playback/mix/transition policy. Music
 events remain independent because not every authored `StageStartMusicEvent`
 token has an exact symbol in the same compiled metadata surface.
 
+Completion-dialog identities now resolve through the canonical mission-dialog
+catalog. All 38 reviewed `SetCompletionDialog` ids form exactly one same-level
+conversation group: 26 groups contain one participant audio package and 12
+contain two, with exact audio ids matching physical members. The 16 optional
+character arguments resolve independently through the character catalog and do
+not select or remove participant audio packages; this preserves cases where the
+referenced character is not the recorded speaker. Conversation mode is retained
+as source evidence (37 `noboxconv`, one `convinit`) without inferring line order,
+playback, listener roles, or completion behavior.
+
 Character and vehicle source references now resolve before Unreal planning
 against the validated phase-three package index. The resolver publishes the
 canonical participant identity together with the exact character package variant
