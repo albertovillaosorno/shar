@@ -412,6 +412,17 @@ Current task list. Project phases and dated progress are recorded in
           empty report for zero selected missions only when stage and objective
           semantic reports are also empty; multiple or drifting mission
           cardinality still fails closed.
+        - [x] Publish the joined definition core as deterministic versioned
+          staging data before native asset construction. `prepare-unreal` now
+          writes `mission-definitions.jsonl` as the tenth transactional staging
+          artifact: 154 source-keyed schema-v1 rows retain all 611 stages, 408
+          conditions, 137 transition markers, 43 countdown blocks, 36
+          collectible-waypoint bindings, 180 objective NPC waypoints, and four
+          pickup state-prop bindings. Every definition source is one of the 344
+          verified mission-script sources, source ids are unique, and the rows
+          deliberately publish no success/failure/retry/rollback edges. This is
+          source-backed semantic staging, not `USharMissionDefinition` or
+          StateTree asset emission.
     - [ ] Emit lossless `USharMissionDefinition` assets only after the complete
       mission graph passes reference and topology validation.
   - [ ] Compile remaining normalized UI, font, localization, tuning, and other
