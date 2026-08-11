@@ -1274,6 +1274,17 @@ fn validate_mission_definition_stages(
             objective_source_ordinal,
             &stage_label,
         )?;
+        validate_mission_definition_checkpoint(
+            stage,
+            source_ordinal,
+            &stage_label,
+        )?;
+        validate_mission_definition_countdown(
+            stage,
+            source_ordinal,
+            sequence_ordinal,
+            &stage_label,
+        )?;
         let terminal = required_string(stage, "terminal", &stage_label)?;
         if !matches!(
             terminal.as_str(),
@@ -1456,6 +1467,89 @@ fn validate_mission_definition_conditions(
                 "{condition_label} has unknown violation effect"
             )));
         }
+    }
+    Ok(())
+}
+
+fn validate_mission_definition_checkpoint(
+    stage: &Map<String, Value>,
+    stage_source_ordinal: u64,
+    stage_label: &str,
+) -> PipelineOutcome<()> {
+    let checkpoint = stage.get("checkpoint_source_ordinal").ok_or_else(|| {
+        PipelineError::new(format!(
+            "{stage_label} is missing checkpoint source ordinal"
+        ))
+    })?;
+    if !checkpoint.is_null()
+        && checkpoint.as_u64().is_none_or(|value| value <= stage_source_ordinal)
+    {
+        return Err(PipelineError::new(format!(
+            "{stage_label} checkpoint source ordinal is malformed"
+        )));
+    }
+    Ok(())
+}
+
+fn validate_mission_definition_countdown(
+    stage: &Map<String, Value>,
+    stage_source_ordinal: u64,
+    stage_sequence_ordinal: u64,
+    stage_label: &str,
+) -> PipelineOutcome<()> {
+    let Some(value) = stage.get("countdown") else {
+        return Err(PipelineError::new(format!(
+            "{stage_label} is missing countdown evidence"
+        )));
+    };
+    if value.is_null() {
+        return Ok(());
+    }
+    let countdown = value.as_object().ok_or_else(|| {
+        PipelineError::new(format!("{stage_label} countdown is not an object"))
+    })?;
+    if required_u64(countdown, "stage_source_ordinal", stage_label)?
+        != stage_source_ordinal
+        || required_u64(countdown, "stage_sequence_ordinal", stage_label)?
+            != stage_sequence_ordinal
+    {
+        return Err(PipelineError::new(format!(
+            "{stage_label} countdown owner drifted"
+        )));
+    }
+    let start_source_ordinal =
+        required_u64(countdown, "start_source_ordinal", stage_label)?;
+    if start_source_ordinal <= stage_source_ordinal
+        || required_string(countdown, "sequence_id", stage_label)?.is_empty()
+    {
+        return Err(PipelineError::new(format!(
+            "{stage_label} countdown identity is malformed"
+        )));
+    }
+    let entries = countdown
+        .get("entries")
+        .and_then(Value::as_array)
+        .ok_or_else(|| {
+            PipelineError::new(format!(
+                "{stage_label} countdown is missing entry array"
+            ))
+        })?;
+    let mut previous_source_ordinal = start_source_ordinal;
+    for (index, value) in entries.iter().enumerate() {
+        let entry_label = format!("{stage_label} countdown entry {}", index + 1);
+        let entry = value.as_object().ok_or_else(|| {
+            PipelineError::new(format!("{entry_label} is not an object"))
+        })?;
+        let source_ordinal = required_u64(entry, "source_ordinal", &entry_label)?;
+        if source_ordinal <= previous_source_ordinal
+            || required_string(entry, "token", &entry_label)?.is_empty()
+            || required_u64(entry, "duration_milliseconds", &entry_label)? == 0
+        {
+            return Err(PipelineError::new(format!(
+                "{entry_label} identity or order is malformed"
+            )));
+        }
+        previous_source_ordinal = source_ordinal;
     }
     Ok(())
 }
