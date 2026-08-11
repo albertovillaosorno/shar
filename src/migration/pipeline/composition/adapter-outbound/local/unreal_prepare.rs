@@ -98,14 +98,17 @@ pub(super) const UNREAL_STAGING_ROOT: &str = "unreal-staging";
 const MANIFEST_FILE: &str = "manifest.jsonl";
 /// Canonical import-summary filename.
 const SUMMARY_FILE: &str = "summary.json";
+/// Canonical mission definition-core bundle filename.
+const MISSION_DEFINITIONS_FILE: &str = "mission-definitions.jsonl";
 /// Canonical generated plan directory.
 const PLAN_ROOT: &str = "plans";
 /// Canonical generated plan-bundle index filename.
 const PLAN_INDEX_FILE: &str = "plans/index.json";
 /// Complete set of files published by one prepare-unreal transaction.
-const PUBLISHED_FILES: [&str; 9] = [
+const PUBLISHED_FILES: [&str; 10] = [
     MANIFEST_FILE,
     SUMMARY_FILE,
+    MISSION_DEFINITIONS_FILE,
     PLAN_INDEX_FILE,
     "plans/asset-import-plan.json",
     "plans/asset-construction-plan.json",
@@ -154,7 +157,6 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         &source_report.mission_definitions,
         &source_report.evidence,
     )?;
-    drop(mission_definitions_jsonl);
     let evidence = retain_importable_evidence(&index, source_report.evidence);
     let unreal_manifest = UnrealImportManifest::build(&index, evidence)
         .map_err(|error| PipelineError::new(format!("Unreal manifest planning failed: {error}")))?;
@@ -173,11 +175,21 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             },
         )
         .map_err(|error| PipelineError::new(format!("Unreal plan generation failed: {error}")))?;
-    publish_staging(&manifest_jsonl, &summary_json, &plan_bundle)?;
+    publish_staging(
+        &manifest_jsonl,
+        &summary_json,
+        &mission_definitions_jsonl,
+        &plan_bundle,
+    )?;
     Ok(StageReport {
         name: "prepare-unreal",
         files: PUBLISHED_FILES.len(),
-        bytes: published_byte_count(&manifest_jsonl, &summary_json, &plan_bundle),
+        bytes: published_byte_count(
+            &manifest_jsonl,
+            &summary_json,
+            &mission_definitions_jsonl,
+            &plan_bundle,
+        ),
         note: format!(
             concat!(
                 "verified {} sources across {} semantic packages and {} ",
@@ -1631,7 +1643,12 @@ fn validate_rendered_derived_sources(
     Ok(())
 }
 
-fn published_byte_count(manifest: &str, summary: &str, plans: &PlanBundle) -> u64 {
+fn published_byte_count(
+    manifest: &str,
+    summary: &str,
+    mission_definitions: &str,
+    plans: &PlanBundle,
+) -> u64 {
     let plan_bytes = plans
         .artifacts()
         .iter()
@@ -1642,12 +1659,18 @@ fn published_byte_count(manifest: &str, summary: &str, plans: &PlanBundle) -> u6
         manifest
             .len()
             .saturating_add(summary.len())
+            .saturating_add(mission_definitions.len())
             .saturating_add(plan_bytes),
     )
     .unwrap_or(u64::MAX)
 }
 
-fn publish_staging(manifest: &str, summary: &str, plans: &PlanBundle) -> PipelineOutcome<()> {
+fn publish_staging(
+    manifest: &str,
+    summary: &str,
+    mission_definitions: &str,
+    plans: &PlanBundle,
+) -> PipelineOutcome<()> {
     let destination = PathBuf::from(UNREAL_STAGING_ROOT);
     let temporary_root = PathBuf::from(".temp");
     let pipeline_root = temporary_root.join("pipeline");
@@ -1671,6 +1694,7 @@ fn publish_staging(manifest: &str, summary: &str, plans: &PlanBundle) -> Pipelin
     for (relative_path, content) in [
         (MANIFEST_FILE, manifest),
         (SUMMARY_FILE, summary),
+        (MISSION_DEFINITIONS_FILE, mission_definitions),
         (PLAN_INDEX_FILE, plans.index_json()),
     ] {
         write_staged_file(&staging, relative_path, content)?;

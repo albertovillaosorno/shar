@@ -40,7 +40,8 @@ use serde_json::json;
 use shar_sha256::digest_hex;
 
 use super::{
-    MANIFEST_FILE, PLAN_INDEX_FILE, PUBLISHED_FILES, SUMMARY_FILE, SourceEvidenceInput,
+    MANIFEST_FILE, MISSION_DEFINITIONS_FILE, PLAN_INDEX_FILE,
+    PUBLISHED_FILES, SUMMARY_FILE, SourceEvidenceInput,
     ensure_generated_directory, open_stable_source, parallel_source_evidence, prepare_io_error,
     publication_error, read_utf8, retain_source_ids, source_worker_count_for, stream_source_digest,
     validate_audit, validate_generated_chain,
@@ -415,6 +416,7 @@ fn stage_report_counts_exact_published_files() -> Result<(), String> {
         != [
             MANIFEST_FILE,
             SUMMARY_FILE,
+            MISSION_DEFINITIONS_FILE,
             PLAN_INDEX_FILE,
             "plans/asset-import-plan.json",
             "plans/asset-construction-plan.json",
@@ -426,8 +428,8 @@ fn stage_report_counts_exact_published_files() -> Result<(), String> {
     {
         return Err("prepare-unreal publication inventory drifted".to_owned());
     }
-    if PUBLISHED_FILES.len() != 9 {
-        return Err("prepare-unreal must report exactly nine files".to_owned());
+    if PUBLISHED_FILES.len() != 10 {
+        return Err("prepare-unreal must report exactly ten files".to_owned());
     }
     Ok(())
 }
