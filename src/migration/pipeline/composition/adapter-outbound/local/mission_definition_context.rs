@@ -37,7 +37,7 @@ use std::collections::BTreeSet;
 
 use crate::domain::package::{
     MissionAuthoredStageTopologyReport, MissionCollectibleWaypointBinding,
-    MissionCountdownBinding,
+    MissionCountdownBinding, MissionObjectiveNpcWaypointBinding,
 };
 use crate::domain::{
     MissionConditionParameters, MissionConditionScope,
@@ -46,7 +46,8 @@ use crate::domain::{
     MissionStageSemanticReport, MissionStageTerminalOutcome,
     MissionStageTransitionMarker, MissionStageVisualTransition, PipelineError,
     PipelineOutcome, preflight_mission_collectible_waypoints,
-    preflight_mission_countdowns, preflight_mission_stage_transitions,
+    preflight_mission_countdowns, preflight_mission_objective_npc_waypoints,
+    preflight_mission_stage_transitions,
 };
 
 /// One condition identity retained under its exact owning stage.
@@ -76,6 +77,7 @@ pub(super) struct MissionDefinitionStageCoreBinding {
     transition_markers: Vec<MissionStageTransitionMarker>,
     countdown: Option<MissionCountdownBinding>,
     collectible_waypoints: Vec<MissionCollectibleWaypointBinding>,
+    objective_npc_waypoints: Vec<MissionObjectiveNpcWaypointBinding>,
     objective_source_ordinal: usize,
     objective_source_alias: String,
     objective_canonical_kind: Option<&'static str>,
@@ -161,6 +163,19 @@ impl MissionDefinitionCoreReport {
                             "mission definition core collectible waypoint ",
                             "owner drifted"
                         ),
+                    ));
+                }
+            }
+            for waypoint in &stage.objective_npc_waypoints {
+                if waypoint.owner_stage_source_ordinal()
+                    != stage.stage_source_ordinal
+                    || waypoint.owner_stage_sequence_ordinal()
+                        != stage.sequence_ordinal
+                    || waypoint.objective_source_ordinal()
+                        != stage.objective_source_ordinal
+                {
+                    return Err(PipelineError::new(
+                        "mission definition core NPC waypoint owner drifted",
                     ));
                 }
             }
@@ -308,6 +323,13 @@ impl MissionDefinitionStageCoreBinding {
         &self,
     ) -> &[MissionCollectibleWaypointBinding] {
         &self.collectible_waypoints
+    }
+
+    #[cfg(test)]
+    pub(super) fn objective_npc_waypoints(
+        &self,
+    ) -> &[MissionObjectiveNpcWaypointBinding] {
+        &self.objective_npc_waypoints
     }
 
     #[cfg(test)]
@@ -507,6 +529,14 @@ fn build_definition_core(
                 ))
             })?;
 
+    let objective_npc_waypoints =
+        preflight_mission_objective_npc_waypoints(objectives)
+            .map_err(|error| {
+                PipelineError::new(format!(
+                    "mission definition core NPC waypoint failed: {error}"
+                ))
+            })?;
+
     let mut result = Vec::with_capacity(stages.stages().len());
     for stage in stages.stages() {
         let key = (stage.source_ordinal(), stage.sequence_ordinal());
@@ -564,6 +594,15 @@ fn build_definition_core(
             .filter(|binding| {
                 binding.stage_source_ordinal() == key.0
                     && binding.stage_sequence_ordinal() == key.1
+            })
+            .cloned()
+            .collect::<Vec<_>>();
+        let stage_objective_npc_waypoints = objective_npc_waypoints
+            .waypoints()
+            .iter()
+            .filter(|waypoint| {
+                waypoint.owner_stage_source_ordinal() == key.0
+                    && waypoint.owner_stage_sequence_ordinal() == key.1
             })
             .cloned()
             .collect::<Vec<_>>();
@@ -627,6 +666,7 @@ fn build_definition_core(
             transition_markers: transition.markers().to_vec(),
             countdown,
             collectible_waypoints: stage_collectible_waypoints,
+            objective_npc_waypoints: stage_objective_npc_waypoints,
             objective_source_ordinal: objective.source_ordinal(),
             objective_source_alias: objective.source_alias().to_owned(),
             objective_canonical_kind: objective.canonical_kind(),

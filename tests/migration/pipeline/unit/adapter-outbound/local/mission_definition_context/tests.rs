@@ -164,6 +164,7 @@ fn joins_source_backed_stage_definition_core() -> Result<(), String> {
     assert_eq!(first.visual_transition(), MissionStageVisualTransition::Iris);
     assert!(!first.stay_in_black());
     assert!(!first.show_stage_complete());
+    assert!(first.objective_npc_waypoints().is_empty());
     let first_markers = first
         .transition_markers()
         .iter()
@@ -219,6 +220,7 @@ fn joins_source_backed_stage_definition_core() -> Result<(), String> {
     assert!(second.stay_in_black());
     assert!(second.show_stage_complete());
     assert!(second.countdown().is_none());
+    assert!(second.objective_npc_waypoints().is_empty());
     let second_markers = second
         .transition_markers()
         .iter()
