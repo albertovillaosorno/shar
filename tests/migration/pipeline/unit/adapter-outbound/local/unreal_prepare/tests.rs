@@ -83,11 +83,29 @@ fn mission_source(id: &str) -> UnrealSourceEvidence {
 }
 
 fn mission_definition_row(source_id: &str, mission_id: &str) -> String {
+    mission_definition_row_with_stages(
+        source_id,
+        mission_id,
+        vec![json!({
+            "explicit_final": false,
+            "next_authored_sequence_ordinal": null,
+            "sequence_ordinal": 0,
+            "stage_source_ordinal": 1,
+            "terminal": "none",
+        })],
+    )
+}
+
+fn mission_definition_row_with_stages(
+    source_id: &str,
+    mission_id: &str,
+    stages: Vec<serde_json::Value>,
+) -> String {
     let mut value = serde_json::to_string(&json!({
         "mission_id": mission_id,
         "schema": "shar-schoenwald.mission-definition-core.v3",
         "source_id": source_id,
-        "stages": [],
+        "stages": stages,
     }))
     .expect("definition JSON fixture must serialize");
     value.push(char::from(10));
@@ -1362,4 +1380,108 @@ fn rejects_unverified_mission_definition_source() {
     let error = validate_mission_definition_bundle(&rows, &verified)
         .expect_err("non-mission verified source must fail");
     assert!(error.to_string().contains("not verified mission evidence"));
+}
+
+
+#[test]
+fn rejects_mission_definition_with_sparse_stage_order() {
+    let rows = vec![mission_definition_row_with_stages(
+        "script-one",
+        "m1",
+        vec![json!({
+            "explicit_final": false,
+            "next_authored_sequence_ordinal": null,
+            "sequence_ordinal": 1,
+            "stage_source_ordinal": 1,
+            "terminal": "none",
+        })],
+    )];
+    let error = validate_mission_definition_bundle(
+        &rows,
+        &[mission_source("script-one")],
+    )
+    .expect_err("sparse staged mission topology must fail");
+    assert!(error.to_string().contains("sequence ordinal is not dense"));
+}
+
+#[test]
+fn rejects_mission_definition_with_authored_neighbor_drift() {
+    let rows = vec![mission_definition_row_with_stages(
+        "script-one",
+        "m1",
+        vec![
+            json!({
+                "explicit_final": false,
+                "next_authored_sequence_ordinal": null,
+                "sequence_ordinal": 0,
+                "stage_source_ordinal": 1,
+                "terminal": "none",
+            }),
+            json!({
+                "explicit_final": false,
+                "next_authored_sequence_ordinal": null,
+                "sequence_ordinal": 1,
+                "stage_source_ordinal": 2,
+                "terminal": "none",
+            }),
+        ],
+    )];
+    let error = validate_mission_definition_bundle(
+        &rows,
+        &[mission_source("script-one")],
+    )
+    .expect_err("authored neighbor drift must fail");
+    assert!(error.to_string().contains("authored neighbor drifted"));
+}
+
+#[test]
+fn rejects_mission_definition_with_early_terminal_outcome() {
+    let rows = vec![mission_definition_row_with_stages(
+        "script-one",
+        "m1",
+        vec![
+            json!({
+                "explicit_final": false,
+                "next_authored_sequence_ordinal": 1,
+                "sequence_ordinal": 0,
+                "stage_source_ordinal": 1,
+                "terminal": "chapter-transition",
+            }),
+            json!({
+                "explicit_final": false,
+                "next_authored_sequence_ordinal": null,
+                "sequence_ordinal": 1,
+                "stage_source_ordinal": 2,
+                "terminal": "none",
+            }),
+        ],
+    )];
+    let error = validate_mission_definition_bundle(
+        &rows,
+        &[mission_source("script-one")],
+    )
+    .expect_err("early terminal outcome must fail");
+    assert!(error.to_string().contains("before the final stage"));
+}
+
+#[test]
+fn rejects_mission_definition_with_invented_runtime_edge() {
+    let rows = vec![mission_definition_row_with_stages(
+        "script-one",
+        "m1",
+        vec![json!({
+            "explicit_final": false,
+            "next_authored_sequence_ordinal": null,
+            "sequence_ordinal": 0,
+            "stage_source_ordinal": 1,
+            "successor_sequence_ordinal": 1,
+            "terminal": "none",
+        })],
+    )];
+    let error = validate_mission_definition_bundle(
+        &rows,
+        &[mission_source("script-one")],
+    )
+    .expect_err("invented runtime edge must fail");
+    assert!(error.to_string().contains("invents unresolved runtime field"));
 }

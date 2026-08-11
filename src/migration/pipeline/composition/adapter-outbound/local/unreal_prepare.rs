@@ -1164,7 +1164,7 @@ fn validate_mission_definition_bundle(
         previous_source_position = Some(source_position);
         let mission_id = required_string(&object, "mission_id", &label)?;
         validate_mission_id(&mission_id)?;
-        let _stages = object
+        let stages = object
             .get("stages")
             .and_then(Value::as_array)
             .ok_or_else(|| {
@@ -1172,6 +1172,7 @@ fn validate_mission_definition_bundle(
                     "mission definition row is missing its stage array",
                 )
             })?;
+        validate_mission_definition_stages(stages, &label)?;
         let canonical = serde_json::to_string(&Value::Object(object))
             .map_err(|_error| {
                 PipelineError::new(
@@ -1186,6 +1187,111 @@ fn validate_mission_definition_bundle(
         output.push_str(row);
     }
     Ok(output)
+}
+
+fn validate_mission_definition_stages(
+    stages: &[Value],
+    label: &str,
+) -> PipelineOutcome<()> {
+    if stages.is_empty() {
+        return Err(PipelineError::new(format!(
+            "{label} has no authored stages"
+        )));
+    }
+    let last_index = stages.len() - 1;
+    let mut previous_source_ordinal = None;
+    for (index, value) in stages.iter().enumerate() {
+        let stage_label = format!("{label} stage {}", index + 1);
+        let stage = value.as_object().ok_or_else(|| {
+            PipelineError::new(format!("{stage_label} is not an object"))
+        })?;
+        let sequence_ordinal =
+            required_u64(stage, "sequence_ordinal", &stage_label)?;
+        let expected_sequence = u64::try_from(index).unwrap_or(u64::MAX);
+        if sequence_ordinal != expected_sequence {
+            return Err(PipelineError::new(format!(
+                "{stage_label} sequence ordinal is not dense"
+            )));
+        }
+        let source_ordinal =
+            required_u64(stage, "stage_source_ordinal", &stage_label)?;
+        if previous_source_ordinal
+            .is_some_and(|previous| source_ordinal <= previous)
+        {
+            return Err(PipelineError::new(format!(
+                "{stage_label} source ordinal is not strictly increasing"
+            )));
+        }
+        previous_source_ordinal = Some(source_ordinal);
+
+        let expected_next = (index < last_index)
+            .then(|| u64::try_from(index + 1).unwrap_or(u64::MAX));
+        let actual_next = match stage.get("next_authored_sequence_ordinal") {
+            Some(Value::Null) => None,
+            Some(value) => Some(value.as_u64().ok_or_else(|| {
+                PipelineError::new(format!(
+                    "{stage_label} has invalid authored neighbor"
+                ))
+            })?),
+            None => {
+                return Err(PipelineError::new(format!(
+                    "{stage_label} is missing authored neighbor"
+                )));
+            },
+        };
+        if actual_next != expected_next {
+            return Err(PipelineError::new(format!(
+                "{stage_label} authored neighbor drifted"
+            )));
+        }
+
+        let explicit_final = stage
+            .get("explicit_final")
+            .and_then(Value::as_bool)
+            .ok_or_else(|| {
+                PipelineError::new(format!(
+                    "{stage_label} is missing boolean field explicit_final"
+                ))
+            })?;
+        if explicit_final && index != last_index {
+            return Err(PipelineError::new(format!(
+                "{stage_label} marks a nonterminal authored stage final"
+            )));
+        }
+        let terminal = required_string(stage, "terminal", &stage_label)?;
+        if !matches!(
+            terminal.as_str(),
+            "none" | "chapter-transition" | "game-completion"
+        ) {
+            return Err(PipelineError::new(format!(
+                "{stage_label} has unknown terminal classification"
+            )));
+        }
+        if terminal != "none" && index != last_index {
+            return Err(PipelineError::new(format!(
+                "{stage_label} has terminal outcome before the final stage"
+            )));
+        }
+
+        for field in [
+            "successor_sequence_ordinal",
+            "success_transition_id",
+            "failure_transition_id",
+            "retry_sequence_ordinal",
+            "retry_transition_id",
+            "rollback_sequence_ordinal",
+            "rollback_transition_id",
+            "recovery_sequence_ordinal",
+            "recovery_transition_id",
+        ] {
+            if stage.contains_key(field) {
+                return Err(PipelineError::new(format!(
+                    "{stage_label} invents unresolved runtime field {field}"
+                )));
+            }
+        }
+    }
+    Ok(())
 }
 
 fn validate_mission_id(value: &str) -> PipelineOutcome<()> {
