@@ -91,7 +91,7 @@ use crate::domain::{
     preflight_mission_reward_offers, preflight_mission_reward_references,
     preflight_mission_script,
     preflight_mission_stage_message_references,
-    preflight_mission_stage_semantics, preflight_mission_stage_transitions,
+    preflight_mission_stage_semantics,
     preflight_mission_traffic_groups,
     preflight_mission_vehicle_attributes, preflight_mission_vehicle_selects,
 };
@@ -1003,7 +1003,6 @@ fn validate_normalized_mission_source(
             &topology,
         )?,
     );
-    drop(preflight_mission_stage_transitions(&stage_semantics));
     drop(
         preflight_mission_presentation_references(
             mission_p3d_references,
