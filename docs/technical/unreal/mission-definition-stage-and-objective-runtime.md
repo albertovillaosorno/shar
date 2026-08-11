@@ -103,9 +103,11 @@ The nine reviewed `SetMusicState` directives now bind to the indexed compiled
 score script for their exact level and preserve the unique source offsets for
 the authored `MissionN` plus `StageN` named-asset window. This is structural
 metadata provenance only: the pipeline does not promote symbol adjacency into a
-decoded RADMusic state machine or infer playback/mix/transition policy. Music
-events remain independent because not every authored `StageStartMusicEvent`
-token has an exact symbol in the same compiled metadata surface.
+decoded RADMusic state machine or infer playback/mix/transition policy. Source
+runtime confirms that `StageStartMusicEvent` is independent of that metadata
+lookup: its authored token becomes a case-insensitive legacy key and is emitted
+through the mission-drama event when the stage starts. Native migration still
+needs a repo-owned key/event bridge and must not infer playback or mix policy.
 
 Completion-dialog identities now resolve through the canonical mission-dialog
 catalog. All 38 reviewed `SetCompletionDialog` ids form exactly one same-level
@@ -364,9 +366,9 @@ Condition schema identity now survives the equivalent semantic projection. All
 408 reviewed conditions across seven closed source aliases retain their exact
 versioned `legacy-mission-condition.*.v1` schema id. The 6 objective-scoped
 conditions also retain the exact root `AddObjective` source ordinal; the other
-402 remain explicitly stage-scoped. This is definition identity, not authority
-to map `IsViolated` or a condition directive to stage failure, retry, rollback,
-or recovery.
+402 remain explicitly stage-scoped. Source-runtime review establishes that each
+violated condition places its owning stage in the failure state. It does not
+establish retry, rollback, checkpoint restore, abort, or successor policy.
 
 Semantic ownership is now explicit as well. Every one of the 611 semantic
 objective bindings carries its owning stage source ordinal and dense stage
@@ -414,13 +416,15 @@ remains blocked on policy and transition authority rather than reconstructing it
 from adjacency.
 
 `prepare-unreal` publishes those rows in `mission-definitions.jsonl` as one
-canonical schema-v1 record per selected source. The fresh corpus contains 154
+canonical schema-v2 record per selected source. The fresh corpus contains 154
 unique source-keyed definitions covering all 611 stages, 408 conditions, 137
 transition-marker occurrences, 43 countdown blocks, 36 collectible-waypoint
 bindings, 180 objective NPC waypoints, and four pickup state-prop bindings. All
-154 source ids resolve to verified mission-script evidence, and the four pickup
+154 source ids resolve to verified mission-script evidence. Each condition row
+carries its reviewed `stage-failure` violation effect, and the four pickup
 bindings retain two mission-scope plus two stage-scope declarations. The staging
-bundle contains no synthesized success/failure/retry/rollback edge fields and is
+bundle contains no synthesized successor/retry/rollback/recovery edge fields and
+is
 not itself a `USharMissionDefinition` or StateTree asset.
 
 Canonical presentation package references now retain their source ownership as

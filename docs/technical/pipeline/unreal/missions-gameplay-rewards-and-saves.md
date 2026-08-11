@@ -309,8 +309,11 @@ script for their exact source level, with one unique structural window where the
 preserves script member identity, path, and both source offsets. It does not
 claim that named-asset adjacency is a decoded RADMusic state machine or choose
 playback, mix, event, or transition behavior. `StageStartMusicEvent` stays
-separate because the reviewed `L*_drama` event tokens are not all published as
-exact symbols by the same compiled metadata evidence.
+separate for a different source-backed reason: the runtime converts its authored
+token to a case-insensitive legacy key and emits it through the mission-drama
+event when the stage starts. It is not a direct score-library named-asset lookup.
+The migration still needs a repo-owned key/event bridge before native emission;
+that bridge must not invent playback or mix policy.
 
 Completion-dialog identities now resolve through the canonical mission-dialog
 catalog. All 38 reviewed `SetCompletionDialog` ids form exactly one same-level
@@ -493,9 +496,10 @@ projection rather than being dropped before final definition compilation.
 
 The condition side now preserves the same level of identity. All 408 reviewed
 conditions across the seven registered aliases carry their versioned schema id
-through semantic projection. Condition outcome policy remains unresolved: schema
-identity does not decide whether an observed violation means failure, retry,
-rollback, recovery, or another declared transition.
+through semantic projection. Source-runtime review also establishes one shared
+consumer rule: a violated condition places its owning stage in the failure
+state. That evidence does not select retry, rollback, checkpoint restore, abort,
+or any successor transition.
 
 Stage membership also survives semantic projection. All 611 objective bindings
 carry exact owning stage source/dense ordinals, and all 408 condition bindings
@@ -535,13 +539,15 @@ stage/objective semantic reports are empty.
 
 `prepare-unreal` now serializes that joined core into the versioned
 `mission-definitions.jsonl` staging artifact before native asset construction.
-The fresh corpus emits 154 schema-v1 rows keyed by unique verified
+The fresh corpus emits 154 schema-v2 rows keyed by unique verified
 mission-script source ids. The rows contain all 611 stages, 408 conditions, 137
 transition
 marker occurrences, 43 countdown blocks, 36 collectible-waypoint bindings, 180
-objective NPC waypoints, and four pickup state-prop bindings. The four pickup
-bindings retain their two mission-scope and two stage-scope declarations. The
-bundle contains no synthesized success, failure, retry, or rollback edge fields;
+objective NPC waypoints, and four pickup state-prop bindings. Every condition
+row carries the source-runtime `stage-failure` violation effect, while the four
+pickup bindings retain two mission-scope and two stage-scope declarations. The
+bundle contains no synthesized successor, retry, rollback, or recovery edge
+fields;
 `USharMissionDefinition` construction and StateTree runtime policy remain
 separate work.
 
