@@ -150,6 +150,19 @@ fn resolves_car_start_roles_inside_active_package() -> Result<(), String> {
     {
         return Err(format!("locator roles drifted: {roles:?}"));
     }
+    let [initialization, stage, objective] = mission.references() else {
+        return Err("locator reference ownership count drifted".to_owned());
+    };
+    assert_eq!(initialization.owner_stage_source_ordinal(), None);
+    assert_eq!(initialization.owner_stage_sequence_ordinal(), None);
+    assert_eq!(initialization.owner_objective_source_ordinal(), None);
+    assert_eq!(stage.owner_stage_source_ordinal(), Some(3));
+    assert_eq!(stage.owner_stage_sequence_ordinal(), Some(0));
+    assert_eq!(stage.owner_objective_source_ordinal(), None);
+    assert_eq!(objective.owner_stage_source_ordinal(), Some(3));
+    assert_eq!(objective.owner_stage_sequence_ordinal(), Some(0));
+    assert_eq!(objective.owner_objective_source_ordinal(), Some(5));
+
     if mission.references().iter().any(|binding| {
         binding.type_constraint() != MissionLocatorTypeConstraint::Exact(CAR_START_LOCATOR_TYPE)
     }) {

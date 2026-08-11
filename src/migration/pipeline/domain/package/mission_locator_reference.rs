@@ -200,6 +200,9 @@ impl MissionLocatorActivePackageReport {
 /// One typed source locator reference and its package-context resolution.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MissionLocatorReferenceBinding {
+    owner_stage_source_ordinal: Option<usize>,
+    owner_stage_sequence_ordinal: Option<usize>,
+    owner_objective_source_ordinal: Option<usize>,
     source_ordinal: usize,
     role: MissionLocatorRole,
     source_name: String,
@@ -208,6 +211,24 @@ pub struct MissionLocatorReferenceBinding {
 }
 
 impl MissionLocatorReferenceBinding {
+    /// Return source `AddStage` ordinal for stage/objective locator references.
+    #[must_use]
+    pub const fn owner_stage_source_ordinal(&self) -> Option<usize> {
+        self.owner_stage_source_ordinal
+    }
+
+    /// Return dense stage ordinal for stage/objective locator references.
+    #[must_use]
+    pub const fn owner_stage_sequence_ordinal(&self) -> Option<usize> {
+        self.owner_stage_sequence_ordinal
+    }
+
+    /// Return source `AddObjective` ordinal for objective locator references.
+    #[must_use]
+    pub const fn owner_objective_source_ordinal(&self) -> Option<usize> {
+        self.owner_objective_source_ordinal
+    }
+
     /// Return source statement ordinal.
     #[must_use]
     pub const fn source_ordinal(&self) -> usize {
@@ -351,7 +372,13 @@ pub fn preflight_mission_locator_references(
             let objective_semantics = objectives
                 .next()
                 .ok_or_else(|| "mission locator objective report is incomplete".to_owned())?;
-            if objective_semantics.source_ordinal() != stage.objective().binding().ordinal() {
+            if objective_semantics.source_ordinal()
+                != stage.objective().binding().ordinal()
+                || objective_semantics.owner_stage_source_ordinal()
+                    != stage_semantics.source_ordinal()
+                || objective_semantics.owner_stage_sequence_ordinal()
+                    != stage_semantics.sequence_ordinal()
+            {
                 return Err("mission locator objective report drifted".to_owned());
             }
             resolve_objective(
@@ -396,6 +423,9 @@ fn push_locator(
         catalog.resolve(source_name, package_roots, type_constraint)?
     };
     references.push(MissionLocatorReferenceBinding {
+        owner_stage_source_ordinal: None,
+        owner_stage_sequence_ordinal: None,
+        owner_objective_source_ordinal: None,
         source_ordinal,
         role,
         source_name: source_name.to_owned(),
@@ -512,6 +542,7 @@ fn resolve_stage(
     stage: &super::MissionStageSemanticBinding,
     out: &mut Vec<MissionLocatorReferenceBinding>,
 ) -> Result<(), String> {
+    let first_reference = out.len();
     for directive in stage.directives() {
         match directive {
             MissionStageDirective::Vehicle(vehicle) => push_locator(
@@ -653,6 +684,10 @@ fn resolve_stage(
             _ => {}
         }
     }
+    for binding in &mut out[first_reference..] {
+        binding.owner_stage_source_ordinal = Some(stage.source_ordinal());
+        binding.owner_stage_sequence_ordinal = Some(stage.sequence_ordinal());
+    }
     Ok(())
 }
 
@@ -662,6 +697,7 @@ fn resolve_objective(
     objective: &super::MissionObjectiveSemanticBinding,
     out: &mut Vec<MissionLocatorReferenceBinding>,
 ) -> Result<(), String> {
+    let first_reference = out.len();
     for directive in objective.directives() {
         match directive {
             MissionObjectiveDirective::Npc(npc) => push_locator(
@@ -750,6 +786,14 @@ fn resolve_objective(
             )?,
             _ => {}
         }
+    }
+    for binding in &mut out[first_reference..] {
+        binding.owner_stage_source_ordinal =
+            Some(objective.owner_stage_source_ordinal());
+        binding.owner_stage_sequence_ordinal =
+            Some(objective.owner_stage_sequence_ordinal());
+        binding.owner_objective_source_ordinal =
+            Some(objective.source_ordinal());
     }
     Ok(())
 }
