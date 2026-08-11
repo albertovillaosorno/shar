@@ -28,6 +28,8 @@
 //   - No fallback package identity is invented.
 //
 
+//! Unit evidence for mission presentation package-reference binding.
+
 use super::*;
 
 fn catalog() -> MissionP3dReferenceCatalog {

@@ -14,8 +14,19 @@
 //   - Read files, infer package load precedence, or invent locator types.
 // - Allows:
 //   - Preserve resolved, missing, and ambiguous package-context outcomes.
+// - Split-When:
+//   - Runtime locator lookup gains an independently authoritative model.
+// - Merge-When:
+//   - Final mission definition compilation owns the exact locator provenance.
 // - Summary:
 //   - Typed mission locator-reference binding.
+// - Description:
+//   - Resolves typed mission locators inside source-backed package visibility.
+// - Usage:
+//   - Runs after scope/stage/objective semantics and active-package preflight.
+// - Defaults:
+//   - Missing and ambiguous locator evidence remains explicit.
+//
 
 //! Mission-scoped typed locator-reference binding.
 
