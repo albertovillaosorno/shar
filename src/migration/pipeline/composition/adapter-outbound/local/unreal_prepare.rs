@@ -1285,6 +1285,13 @@ fn validate_mission_definition_stages(
             sequence_ordinal,
             &stage_label,
         )?;
+        validate_mission_definition_objective_bindings(
+            stage,
+            source_ordinal,
+            sequence_ordinal,
+            objective_source_ordinal,
+            &stage_label,
+        )?;
         let terminal = required_string(stage, "terminal", &stage_label)?;
         if !matches!(
             terminal.as_str(),
@@ -1550,6 +1557,236 @@ fn validate_mission_definition_countdown(
             )));
         }
         previous_source_ordinal = source_ordinal;
+    }
+    Ok(())
+}
+
+fn validate_mission_definition_objective_bindings(
+    stage: &Map<String, Value>,
+    stage_source_ordinal: u64,
+    stage_sequence_ordinal: u64,
+    objective_source_ordinal: u64,
+    stage_label: &str,
+) -> PipelineOutcome<()> {
+    validate_mission_definition_collectible_waypoints(
+        stage,
+        stage_source_ordinal,
+        stage_sequence_ordinal,
+        objective_source_ordinal,
+        stage_label,
+    )?;
+    validate_mission_definition_npc_waypoints(
+        stage,
+        stage_source_ordinal,
+        stage_sequence_ordinal,
+        objective_source_ordinal,
+        stage_label,
+    )?;
+    validate_mission_definition_pickup_state_props(
+        stage,
+        stage_source_ordinal,
+        stage_sequence_ordinal,
+        objective_source_ordinal,
+        stage_label,
+    )?;
+    Ok(())
+}
+
+fn validate_mission_definition_binding_owner(
+    binding: &Map<String, Value>,
+    stage_source_ordinal: u64,
+    stage_sequence_ordinal: u64,
+    objective_source_ordinal: u64,
+    label: &str,
+) -> PipelineOutcome<()> {
+    if required_u64(binding, "stage_source_ordinal", label)?
+        != stage_source_ordinal
+        || required_u64(binding, "stage_sequence_ordinal", label)?
+            != stage_sequence_ordinal
+        || required_u64(binding, "objective_source_ordinal", label)?
+            != objective_source_ordinal
+    {
+        return Err(PipelineError::new(format!("{label} owner drifted")));
+    }
+    Ok(())
+}
+
+fn validate_mission_definition_collectible_waypoints(
+    stage: &Map<String, Value>,
+    stage_source_ordinal: u64,
+    stage_sequence_ordinal: u64,
+    objective_source_ordinal: u64,
+    stage_label: &str,
+) -> PipelineOutcome<()> {
+    let bindings = stage
+        .get("collectible_waypoints")
+        .and_then(Value::as_array)
+        .ok_or_else(|| {
+            PipelineError::new(format!(
+                "{stage_label} is missing collectible waypoint array"
+            ))
+        })?;
+    let mut previous_source_ordinal = None;
+    for (index, value) in bindings.iter().enumerate() {
+        let label = format!(
+            "{stage_label} collectible waypoint {}",
+            index + 1
+        );
+        let binding = value.as_object().ok_or_else(|| {
+            PipelineError::new(format!("{label} is not an object"))
+        })?;
+        validate_mission_definition_binding_owner(
+            binding,
+            stage_source_ordinal,
+            stage_sequence_ordinal,
+            objective_source_ordinal,
+            &label,
+        )?;
+        let source_ordinal = required_u64(binding, "source_ordinal", &label)?;
+        let collectible_source_ordinal =
+            required_u64(binding, "collectible_source_ordinal", &label)?;
+        let waypoint_source_ordinal =
+            required_u64(binding, "waypoint_source_ordinal", &label)?;
+        let _ = required_u64(binding, "collectible_index", &label)?;
+        let _ = required_u64(binding, "waypoint_index", &label)?;
+        if source_ordinal <= objective_source_ordinal
+            || collectible_source_ordinal >= source_ordinal
+            || waypoint_source_ordinal >= source_ordinal
+            || previous_source_ordinal
+                .is_some_and(|previous| source_ordinal <= previous)
+            || required_string(binding, "collectible_locator_id", &label)?
+                .is_empty()
+            || required_string(binding, "waypoint_locator_id", &label)?
+                .is_empty()
+        {
+            return Err(PipelineError::new(format!(
+                "{label} relationship is malformed"
+            )));
+        }
+        previous_source_ordinal = Some(source_ordinal);
+    }
+    Ok(())
+}
+
+fn validate_mission_definition_npc_waypoints(
+    stage: &Map<String, Value>,
+    stage_source_ordinal: u64,
+    stage_sequence_ordinal: u64,
+    objective_source_ordinal: u64,
+    stage_label: &str,
+) -> PipelineOutcome<()> {
+    let bindings = stage
+        .get("objective_npc_waypoints")
+        .and_then(Value::as_array)
+        .ok_or_else(|| {
+            PipelineError::new(format!(
+                "{stage_label} is missing NPC waypoint array"
+            ))
+        })?;
+    let mut previous_source_ordinal = None;
+    for (index, value) in bindings.iter().enumerate() {
+        let label = format!("{stage_label} NPC waypoint {}", index + 1);
+        let binding = value.as_object().ok_or_else(|| {
+            PipelineError::new(format!("{label} is not an object"))
+        })?;
+        validate_mission_definition_binding_owner(
+            binding,
+            stage_source_ordinal,
+            stage_sequence_ordinal,
+            objective_source_ordinal,
+            &label,
+        )?;
+        let source_ordinal = required_u64(binding, "source_ordinal", &label)?;
+        let declaration_source_ordinal =
+            required_u64(binding, "declaration_source_ordinal", &label)?;
+        if source_ordinal <= objective_source_ordinal
+            || declaration_source_ordinal >= source_ordinal
+            || previous_source_ordinal
+                .is_some_and(|previous| source_ordinal <= previous)
+            || required_string(binding, "npc_id", &label)?.is_empty()
+            || required_string(binding, "npc_locator_id", &label)?.is_empty()
+            || required_string(binding, "waypoint_locator_id", &label)?.is_empty()
+        {
+            return Err(PipelineError::new(format!(
+                "{label} relationship is malformed"
+            )));
+        }
+        previous_source_ordinal = Some(source_ordinal);
+    }
+    Ok(())
+}
+
+fn validate_mission_definition_pickup_state_props(
+    stage: &Map<String, Value>,
+    stage_source_ordinal: u64,
+    stage_sequence_ordinal: u64,
+    objective_source_ordinal: u64,
+    stage_label: &str,
+) -> PipelineOutcome<()> {
+    let bindings = stage
+        .get("pickup_state_props")
+        .and_then(Value::as_array)
+        .ok_or_else(|| {
+            PipelineError::new(format!(
+                "{stage_label} is missing pickup state-prop array"
+            ))
+        })?;
+    let mut previous_target_source_ordinal = None;
+    for (index, value) in bindings.iter().enumerate() {
+        let label = format!("{stage_label} pickup state prop {}", index + 1);
+        let binding = value.as_object().ok_or_else(|| {
+            PipelineError::new(format!("{label} is not an object"))
+        })?;
+        validate_mission_definition_binding_owner(
+            binding,
+            stage_source_ordinal,
+            stage_sequence_ordinal,
+            objective_source_ordinal,
+            &label,
+        )?;
+        let target_source_ordinal =
+            required_u64(binding, "target_source_ordinal", &label)?;
+        let declaration_source_ordinal =
+            required_u64(binding, "declaration_source_ordinal", &label)?;
+        let _ = required_u64(binding, "source_state", &label)?;
+        if target_source_ordinal <= objective_source_ordinal
+            || declaration_source_ordinal >= target_source_ordinal
+            || previous_target_source_ordinal
+                .is_some_and(|previous| target_source_ordinal <= previous)
+            || required_string(binding, "target_id", &label)?.is_empty()
+            || required_string(binding, "locator_id", &label)?.is_empty()
+        {
+            return Err(PipelineError::new(format!(
+                "{label} relationship is malformed"
+            )));
+        }
+        let scope = binding
+            .get("declaration_scope")
+            .and_then(Value::as_object)
+            .ok_or_else(|| {
+                PipelineError::new(format!(
+                    "{label} is missing declaration scope"
+                ))
+            })?;
+        match required_string(scope, "kind", &label)?.as_str() {
+            "mission" => {},
+            "stage" => {
+                if required_u64(scope, "source_ordinal", &label)?
+                    >= declaration_source_ordinal
+                {
+                    return Err(PipelineError::new(format!(
+                        "{label} declaration scope is malformed"
+                    )));
+                }
+                let _ = required_u64(scope, "sequence_ordinal", &label)?;
+            },
+            _ => {
+                return Err(PipelineError::new(format!(
+                    "{label} has unknown declaration scope"
+                )));
+            },
+        }
+        previous_target_source_ordinal = Some(target_source_ordinal);
     }
     Ok(())
 }
