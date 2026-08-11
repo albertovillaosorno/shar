@@ -43,8 +43,10 @@ use super::{
     MANIFEST_FILE, PLAN_INDEX_FILE, PUBLISHED_FILES, SUMMARY_FILE, SourceEvidenceInput,
     ensure_generated_directory, open_stable_source, parallel_source_evidence, prepare_io_error,
     publication_error, read_utf8, retain_source_ids, source_worker_count_for, stream_source_digest,
-    validate_audit, validate_generated_chain, validate_public_identifier,
-    validate_publication_inventory, validate_relative_path, validate_rendered_output,
+    validate_audit, validate_generated_chain,
+    validate_mission_definition_bundle, validate_public_identifier,
+    validate_publication_inventory, validate_relative_path,
+    validate_rendered_output,
     verify_stable_source,
 };
 use crate::domain::{
@@ -71,6 +73,24 @@ fn source(id: &str) -> UnrealSourceEvidence {
         unreal_import_relation: "none".to_owned(),
         future_normalization: "none".to_owned(),
     }
+}
+
+fn mission_source(id: &str) -> UnrealSourceEvidence {
+    let mut value = source(id);
+    value.kind = "mission-script".to_owned();
+    value
+}
+
+fn mission_definition_row(source_id: &str, mission_id: &str) -> String {
+    let mut value = serde_json::to_string(&json!({
+        "mission_id": mission_id,
+        "schema": "shar-schoenwald.mission-definition-core.v1",
+        "source_id": source_id,
+        "stages": [],
+    }))
+    .expect("definition JSON fixture must serialize");
+    value.push(char::from(10));
+    value
 }
 
 #[test]
@@ -1290,4 +1310,39 @@ fn mission_semantic_gate_rejects_missing_participant_package() -> Result<(), Str
         ));
     }
     Ok(())
+}
+
+#[test]
+fn accepts_source_distinct_mission_definition_rows() -> Result<(), String> {
+    let rows = vec![
+        mission_definition_row("script-one", "m1"),
+        mission_definition_row("script-two", "m1"),
+    ];
+    let verified = vec![
+        mission_source("script-one"),
+        mission_source("script-two"),
+    ];
+    let rendered = validate_mission_definition_bundle(&rows, &verified)
+        .map_err(|error| error.to_string())?;
+    assert_eq!(rendered, rows.concat());
+    Ok(())
+}
+
+#[test]
+fn rejects_duplicate_mission_definition_source() {
+    let row = mission_definition_row("script-one", "m1");
+    let rows = vec![row.clone(), row];
+    let verified = vec![mission_source("script-one")];
+    let error = validate_mission_definition_bundle(&rows, &verified)
+        .expect_err("duplicate mission definition source must fail");
+    assert!(error.to_string().contains("duplicates a source id"));
+}
+
+#[test]
+fn rejects_unverified_mission_definition_source() {
+    let rows = vec![mission_definition_row("script-one", "m1")];
+    let verified = vec![source("script-one")];
+    let error = validate_mission_definition_bundle(&rows, &verified)
+        .expect_err("non-mission verified source must fail");
+    assert!(error.to_string().contains("not verified mission evidence"));
 }

@@ -150,7 +150,11 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         &mission_p3d_references,
         &index,
     )?;
-    drop(source_report.mission_definitions);
+    let mission_definitions_jsonl = validate_mission_definition_bundle(
+        &source_report.mission_definitions,
+        &source_report.evidence,
+    )?;
+    drop(mission_definitions_jsonl);
     let evidence = retain_importable_evidence(&index, source_report.evidence);
     let unreal_manifest = UnrealImportManifest::build(&index, evidence)
         .map_err(|error| PipelineError::new(format!("Unreal manifest planning failed: {error}")))?;
@@ -1084,6 +1088,94 @@ fn validate_normalized_mission_source(
         })?,
     );
     Ok(mission_definition)
+}
+
+fn validate_mission_definition_bundle(
+    rows: &[String],
+    verified: &[UnrealSourceEvidence],
+) -> PipelineOutcome<String> {
+    let verified_mission_sources = verified
+        .iter()
+        .filter(|source| source.kind == "mission-script")
+        .map(|source| source.id.as_str())
+        .collect::<BTreeSet<_>>();
+    let mut source_ids = BTreeSet::new();
+    let mut output = String::new();
+    for (index, row) in rows.iter().enumerate() {
+        if !row.ends_with(char::from(10)) || row.lines().count() != 1 {
+            return Err(PipelineError::new(
+                "mission definition row is not one canonical JSONL record",
+            ));
+        }
+        let label = format!("mission definition row {}", index + 1);
+        let object = parse_object(
+            row.trim_end_matches(char::from(10)),
+            &label,
+        )?;
+        if required_string(&object, "schema", &label)?
+            != mission_definition_context::MISSION_DEFINITION_CORE_SCHEMA
+        {
+            return Err(PipelineError::new(
+                "mission definition row has a noncanonical schema",
+            ));
+        }
+        let source_id = required_string(&object, "source_id", &label)?;
+        validate_public_identifier(
+            &source_id,
+            "mission definition source id",
+        )?;
+        if !source_ids.insert(source_id.clone()) {
+            return Err(PipelineError::new(
+                "mission definition bundle duplicates a source id",
+            ));
+        }
+        if !verified_mission_sources.contains(source_id.as_str()) {
+            return Err(PipelineError::new(
+                "mission definition source is not verified mission evidence",
+            ));
+        }
+        let mission_id = required_string(&object, "mission_id", &label)?;
+        validate_mission_id(&mission_id)?;
+        let _stages = object
+            .get("stages")
+            .and_then(Value::as_array)
+            .ok_or_else(|| {
+                PipelineError::new(
+                    "mission definition row is missing its stage array",
+                )
+            })?;
+        let canonical = serde_json::to_string(&Value::Object(object))
+            .map_err(|_error| {
+                PipelineError::new(
+                    "mission definition canonical serialization failed",
+                )
+            })?;
+        if canonical != row.trim_end_matches(char::from(10)) {
+            return Err(PipelineError::new(
+                "mission definition row is not canonical JSON",
+            ));
+        }
+        output.push_str(row);
+    }
+    Ok(output)
+}
+
+fn validate_mission_id(value: &str) -> PipelineOutcome<()> {
+    let bytes = value.as_bytes();
+    if bytes.is_empty()
+        || !bytes.first().is_some_and(u8::is_ascii_alphanumeric)
+        || !bytes.last().is_some_and(u8::is_ascii_alphanumeric)
+        || !bytes.iter().copied().all(|byte| {
+            byte.is_ascii_lowercase()
+                || byte.is_ascii_digit()
+                || matches!(byte, b'-' | b'_')
+        })
+    {
+        return Err(PipelineError::new(
+            "mission definition mission id is not canonical",
+        ));
+    }
+    Ok(())
 }
 
 fn retain_importable_evidence(
