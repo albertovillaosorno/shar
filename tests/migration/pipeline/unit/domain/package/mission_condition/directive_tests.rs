@@ -46,7 +46,8 @@ fn semantic_binding_preserves_condition_schema_identity() {
     let binding = MissionConditionSemanticBinding {
         owner_stage_source_ordinal: 2,
         owner_stage_sequence_ordinal: 0,
-        source_ordinal: 3,
+        owner_objective_source_ordinal: Some(3),
+        source_ordinal: 4,
         source_alias: "timeout".to_owned(),
         scope: MissionConditionScope::Objective,
         schema_id: "legacy-mission-condition.timeout.v1",
@@ -54,7 +55,8 @@ fn semantic_binding_preserves_condition_schema_identity() {
     };
     assert_eq!(binding.owner_stage_source_ordinal(), 2);
     assert_eq!(binding.owner_stage_sequence_ordinal(), 0);
-    assert_eq!(binding.source_ordinal(), 3);
+    assert_eq!(binding.owner_objective_source_ordinal(), Some(3));
+    assert_eq!(binding.source_ordinal(), 4);
     assert_eq!(binding.source_alias(), "timeout");
     assert_eq!(binding.scope(), MissionConditionScope::Objective);
     assert_eq!(

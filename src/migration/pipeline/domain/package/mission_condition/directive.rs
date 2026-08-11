@@ -97,6 +97,7 @@ pub enum MissionConditionDirective {
 pub struct MissionConditionSemanticBinding {
     owner_stage_source_ordinal: usize,
     owner_stage_sequence_ordinal: usize,
+    owner_objective_source_ordinal: Option<usize>,
     source_ordinal: usize,
     source_alias: String,
     scope: MissionConditionScope,
@@ -115,6 +116,12 @@ impl MissionConditionSemanticBinding {
     #[must_use]
     pub const fn owner_stage_sequence_ordinal(&self) -> usize {
         self.owner_stage_sequence_ordinal
+    }
+
+    /// Return the root `AddObjective` ordinal for objective-scoped conditions.
+    #[must_use]
+    pub const fn owner_objective_source_ordinal(&self) -> Option<usize> {
+        self.owner_objective_source_ordinal
     }
 
     /// Return the source `AddCondition` ordinal.
@@ -166,6 +173,7 @@ impl MissionConditionSemanticReport {
         entries: Vec<(
             usize,
             usize,
+            Option<usize>,
             usize,
             String,
             MissionConditionScope,
@@ -178,6 +186,7 @@ impl MissionConditionSemanticReport {
                 .map(|(
                     owner_stage_source_ordinal,
                     owner_stage_sequence_ordinal,
+                    owner_objective_source_ordinal,
                     source_ordinal,
                     source_alias,
                     scope,
@@ -185,6 +194,7 @@ impl MissionConditionSemanticReport {
                 )| MissionConditionSemanticBinding {
                     owner_stage_source_ordinal,
                     owner_stage_sequence_ordinal,
+                    owner_objective_source_ordinal,
                     source_ordinal,
                     source_alias,
                     scope,
@@ -236,6 +246,8 @@ fn compile_condition(
     Ok(MissionConditionSemanticBinding {
         owner_stage_source_ordinal,
         owner_stage_sequence_ordinal,
+        owner_objective_source_ordinal:
+            condition.owner_objective_source_ordinal(),
         source_ordinal: condition.binding().ordinal(),
         source_alias: source_alias.to_owned(),
         scope: condition.scope(),
