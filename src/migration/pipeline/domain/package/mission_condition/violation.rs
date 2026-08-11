@@ -101,7 +101,8 @@ impl MissionConditionViolationReport {
 ///
 /// # Errors
 ///
-/// Returns an error if condition ownership is duplicated or source order drifts.
+/// Returns an error if condition ownership is duplicated or source order
+/// drifts.
 pub fn preflight_mission_condition_violations(
     conditions: &MissionConditionSemanticReport,
 ) -> Result<MissionConditionViolationReport, String> {
@@ -115,7 +116,9 @@ pub fn preflight_mission_condition_violations(
             condition.source_ordinal(),
         );
         if !seen.insert(key) {
-            return Err("mission condition violation owner is duplicated".to_owned());
+            return Err(
+                "mission condition violation owner is duplicated".to_owned(),
+            );
         }
         if previous_source_ordinal
             .is_some_and(|previous| condition.source_ordinal() <= previous)
@@ -140,5 +143,6 @@ pub fn preflight_mission_condition_violations(
 }
 
 #[cfg(test)]
+// jig-ignore-next-line: cfg test path is indivisible
 #[path = "../../../../../../tests/migration/pipeline/unit/domain/package/mission_condition/violation_tests.rs"]
 mod tests;
