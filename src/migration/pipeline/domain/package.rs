@@ -43,6 +43,8 @@ pub mod mission_condition;
 pub mod mission_countdown;
 /// Collectible-to-stage-waypoint cross-reference binding.
 pub mod mission_collectible_route;
+/// Source-backed per-level gag totals.
+pub mod mission_gag_total;
 /// Typed mission-scope initialization and restart semantics.
 pub mod mission_initialization;
 /// Reviewed mission objective alias preflight.
@@ -139,6 +141,9 @@ pub use mission_condition::{
     preflight_mission_condition_commands,
     preflight_mission_condition_parameters,
     preflight_mission_condition_semantics, preflight_mission_conditions,
+};
+pub use mission_gag_total::{
+    MissionGagTotalBinding, MissionGagTotalReport, preflight_mission_gag_totals,
 };
 pub use mission_initialization::{
     MissionInitializationBinding, MissionInitializationDirective,
