@@ -30,7 +30,9 @@
 
 //! Typed compilation of reviewed condition-scoped commands.
 
-use super::super::{MissionScopeCondition, MissionScopeReport};
+use super::super::{
+    MissionConditionScope, MissionScopeCondition, MissionScopeReport,
+};
 
 const LEGACY_HIT_AND_RUN_NO_OP: &str = "legacy-set-hit-n-run-dummy-command-v1";
 
@@ -93,13 +95,28 @@ pub enum MissionConditionDirective {
 /// Typed condition directives for one projected condition.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MissionConditionSemanticBinding {
+    owner_stage_source_ordinal: usize,
+    owner_stage_sequence_ordinal: usize,
     source_ordinal: usize,
     source_alias: String,
+    scope: MissionConditionScope,
     schema_id: &'static str,
     directives: Vec<MissionConditionDirective>,
 }
 
 impl MissionConditionSemanticBinding {
+    /// Return the source `AddStage` ordinal owning this condition.
+    #[must_use]
+    pub const fn owner_stage_source_ordinal(&self) -> usize {
+        self.owner_stage_source_ordinal
+    }
+
+    /// Return the dense authored stage ordinal owning this condition.
+    #[must_use]
+    pub const fn owner_stage_sequence_ordinal(&self) -> usize {
+        self.owner_stage_sequence_ordinal
+    }
+
     /// Return the source `AddCondition` ordinal.
     #[must_use]
     pub const fn source_ordinal(&self) -> usize {
@@ -110,6 +127,12 @@ impl MissionConditionSemanticBinding {
     #[must_use]
     pub fn source_alias(&self) -> &str {
         &self.source_alias
+    }
+
+    /// Return whether the condition was authored on the stage or objective.
+    #[must_use]
+    pub const fn scope(&self) -> MissionConditionScope {
+        self.scope
     }
 
     /// Return the versioned legacy condition schema identity.
@@ -150,7 +173,11 @@ pub fn preflight_mission_condition_semantics(
     for mission in scopes.missions() {
         for stage in mission.stages() {
             for condition in stage.conditions() {
-                conditions.push(compile_condition(condition)?);
+                conditions.push(compile_condition(
+                    stage.source_ordinal(),
+                    stage.sequence_ordinal(),
+                    condition,
+                )?);
             }
         }
     }
@@ -158,6 +185,8 @@ pub fn preflight_mission_condition_semantics(
 }
 
 fn compile_condition(
+    owner_stage_source_ordinal: usize,
+    owner_stage_sequence_ordinal: usize,
     condition: &MissionScopeCondition,
 ) -> Result<MissionConditionSemanticBinding, String> {
     let source_alias = condition.binding().source_alias();
@@ -171,8 +200,11 @@ fn compile_condition(
         )?);
     }
     Ok(MissionConditionSemanticBinding {
+        owner_stage_source_ordinal,
+        owner_stage_sequence_ordinal,
         source_ordinal: condition.binding().ordinal(),
         source_alias: source_alias.to_owned(),
+        scope: condition.scope(),
         schema_id: condition.binding().schema_id(),
         directives,
     })
