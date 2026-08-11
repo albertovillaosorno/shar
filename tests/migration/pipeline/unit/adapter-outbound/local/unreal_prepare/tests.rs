@@ -107,6 +107,64 @@ fn mission_definition_row(source_id: &str, mission_id: &str) -> String {
     )
 }
 
+fn mission_definition_relationship_stage() -> serde_json::Value {
+    json!({
+        "collectible_waypoints": [{
+            "collectible_index": 0,
+            "collectible_locator_id": "collectible",
+            "collectible_source_ordinal": 3,
+            "objective_source_ordinal": 2,
+            "source_ordinal": 5,
+            "stage_sequence_ordinal": 0,
+            "stage_source_ordinal": 1,
+            "waypoint_index": 0,
+            "waypoint_locator_id": "route",
+            "waypoint_source_ordinal": 4,
+        }],
+        "explicit_final": false,
+        "kind": {
+            "final_stage": false,
+            "kind": "standard",
+            "legacy_flags": 0,
+        },
+        "next_authored_sequence_ordinal": null,
+        "objective": {
+            "canonical_kind": "travel",
+            "source_alias": "goto",
+            "source_ordinal": 2,
+            "unavailable_code": null,
+        },
+        "objective_npc_waypoints": [{
+            "declaration_source_ordinal": 6,
+            "npc_id": "homer",
+            "npc_locator_id": "npc",
+            "objective_source_ordinal": 2,
+            "source_ordinal": 7,
+            "stage_sequence_ordinal": 0,
+            "stage_source_ordinal": 1,
+            "waypoint_locator_id": "walk",
+        }],
+        "pickup_state_props": [{
+            "declaration_scope": {
+                "kind": "stage",
+                "sequence_ordinal": 0,
+                "source_ordinal": 1,
+            },
+            "declaration_source_ordinal": 8,
+            "locator_id": "pickup",
+            "objective_source_ordinal": 2,
+            "source_state": 2,
+            "stage_sequence_ordinal": 0,
+            "stage_source_ordinal": 1,
+            "target_id": "prop",
+            "target_source_ordinal": 9,
+        }],
+        "sequence_ordinal": 0,
+        "stage_source_ordinal": 1,
+        "terminal": "none",
+    })
+}
+
 fn mission_definition_row_with_stages(
     source_id: &str,
     mission_id: &str,
@@ -123,6 +181,15 @@ fn mission_definition_row_with_stages(
             let _ = stage
                 .entry("countdown".to_owned())
                 .or_insert_with(|| json!(null));
+            for field in [
+                "collectible_waypoints",
+                "objective_npc_waypoints",
+                "pickup_state_props",
+            ] {
+                let _ = stage
+                    .entry(field.to_owned())
+                    .or_insert_with(|| json!([]));
+            }
         }
     }
     let mut value = serde_json::to_string(&json!({
@@ -1997,4 +2064,73 @@ fn rejects_mission_definition_countdown_entry_order_drift() {
     )
     .expect_err("countdown entry order drift must fail");
     assert!(error.to_string().contains("identity or order is malformed"));
+}
+
+#[test]
+fn accepts_owned_mission_definition_objective_bindings() -> Result<(), String> {
+    let rows = vec![mission_definition_row_with_stages(
+        "script-one",
+        "m1",
+        vec![mission_definition_relationship_stage()],
+    )];
+    drop(
+        validate_mission_definition_bundle(
+            &rows,
+            &[mission_source("script-one")],
+        )
+        .map_err(|error| error.to_string())?,
+    );
+    Ok(())
+}
+
+#[test]
+fn rejects_mission_definition_collectible_owner_drift() {
+    let mut stage = mission_definition_relationship_stage();
+    stage["collectible_waypoints"][0]["stage_sequence_ordinal"] = json!(1);
+    let rows = vec![mission_definition_row_with_stages(
+        "script-one",
+        "m1",
+        vec![stage],
+    )];
+    let error = validate_mission_definition_bundle(
+        &rows,
+        &[mission_source("script-one")],
+    )
+    .expect_err("collectible owner drift must fail");
+    assert!(error.to_string().contains("collectible waypoint 1 owner drifted"));
+}
+
+#[test]
+fn rejects_mission_definition_npc_declaration_order_drift() {
+    let mut stage = mission_definition_relationship_stage();
+    stage["objective_npc_waypoints"][0]["declaration_source_ordinal"] = json!(8);
+    let rows = vec![mission_definition_row_with_stages(
+        "script-one",
+        "m1",
+        vec![stage],
+    )];
+    let error = validate_mission_definition_bundle(
+        &rows,
+        &[mission_source("script-one")],
+    )
+    .expect_err("NPC declaration order drift must fail");
+    assert!(error.to_string().contains("NPC waypoint 1 relationship is malformed"));
+}
+
+#[test]
+fn rejects_mission_definition_pickup_scope_drift() {
+    let mut stage = mission_definition_relationship_stage();
+    stage["pickup_state_props"][0]["declaration_scope"]["source_ordinal"] =
+        json!(8);
+    let rows = vec![mission_definition_row_with_stages(
+        "script-one",
+        "m1",
+        vec![stage],
+    )];
+    let error = validate_mission_definition_bundle(
+        &rows,
+        &[mission_source("script-one")],
+    )
+    .expect_err("pickup declaration scope drift must fail");
+    assert!(error.to_string().contains("declaration scope is malformed"));
 }
