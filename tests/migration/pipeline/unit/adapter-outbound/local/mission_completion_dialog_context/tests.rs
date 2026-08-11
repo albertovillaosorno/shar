@@ -182,6 +182,8 @@ fn keeps_character_independent_from_audio_packages() -> Result<(), String> {
     };
     let binding = MissionCompletionDialogBinding {
         source_path: "game/scripts/missions/level07/m3i.mfk.json".to_owned(),
+        owner_stage_source_ordinal: 60,
+        owner_stage_sequence_ordinal: 2,
         source_ordinal: 65,
         level: 7,
         dialogue_id: "toxic".to_owned(),
@@ -200,6 +202,8 @@ fn keeps_character_independent_from_audio_packages() -> Result<(), String> {
         binding.source_path(),
         "game/scripts/missions/level07/m3i.mfk.json"
     );
+    assert_eq!(binding.owner_stage_source_ordinal(), 60);
+    assert_eq!(binding.owner_stage_sequence_ordinal(), 2);
     assert_eq!(binding.source_ordinal(), 65);
     assert_eq!(binding.level(), 7);
     assert_eq!(binding.dialogue_id(), "toxic");

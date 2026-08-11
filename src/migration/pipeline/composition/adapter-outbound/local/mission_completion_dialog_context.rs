@@ -55,6 +55,8 @@ pub(super) struct MissionCompletionDialogPackageBinding {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct MissionCompletionDialogBinding {
     source_path: String,
+    owner_stage_source_ordinal: usize,
+    owner_stage_sequence_ordinal: usize,
     source_ordinal: usize,
     level: u8,
     dialogue_id: String,
@@ -81,6 +83,16 @@ impl MissionCompletionDialogBinding {
     #[cfg(test)]
     pub(super) fn source_path(&self) -> &str {
         &self.source_path
+    }
+
+    #[cfg(test)]
+    pub(super) const fn owner_stage_source_ordinal(&self) -> usize {
+        self.owner_stage_source_ordinal
+    }
+
+    #[cfg(test)]
+    pub(super) const fn owner_stage_sequence_ordinal(&self) -> usize {
+        self.owner_stage_sequence_ordinal
     }
 
     #[cfg(test)]
@@ -173,24 +185,37 @@ pub(super) fn preflight_mission_completion_dialogs(
                     "mission completion-dialog stage failed: {error}"
                 ))
             })?;
-        let directives = stages
-            .stages()
-            .iter()
-            .flat_map(|stage| stage.directives())
-            .filter_map(|directive| match directive {
-                MissionStageDirective::CompletionDialog {
+        let mut directives = Vec::new();
+        for stage in stages.stages() {
+            for directive in stage.directives() {
+                if let MissionStageDirective::CompletionDialog {
                     source_ordinal,
                     dialogue_id,
                     character_id,
-                } => Some((*source_ordinal, dialogue_id, character_id)),
-                _ => None,
-            })
-            .collect::<Vec<_>>();
+                } = directive
+                {
+                    directives.push((
+                        stage.source_ordinal(),
+                        stage.sequence_ordinal(),
+                        *source_ordinal,
+                        dialogue_id,
+                        character_id,
+                    ));
+                }
+            }
+        }
         if directives.is_empty() {
             continue;
         }
         let level = source_level(snapshot.source_path())?;
-        for (source_ordinal, dialogue_id, character_id) in directives {
+        for (
+            owner_stage_source_ordinal,
+            owner_stage_sequence_ordinal,
+            source_ordinal,
+            dialogue_id,
+            character_id,
+        ) in directives
+        {
             let character = character_id
                 .as_deref()
                 .map(|id| characters.resolve_character(id))
@@ -204,6 +229,8 @@ pub(super) fn preflight_mission_completion_dialogs(
                 resolve_conversation(index, level, dialogue_id)?;
             bindings.push(MissionCompletionDialogBinding {
                 source_path: snapshot.source_path().to_owned(),
+                owner_stage_source_ordinal,
+                owner_stage_sequence_ordinal,
                 source_ordinal,
                 level,
                 dialogue_id: dialogue_id.to_owned(),

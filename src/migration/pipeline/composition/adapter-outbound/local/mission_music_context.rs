@@ -68,6 +68,8 @@ struct LevelMusicMetadata {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct MissionMusicStateBinding {
     source_path: String,
+    owner_stage_source_ordinal: usize,
+    owner_stage_sequence_ordinal: usize,
     source_ordinal: usize,
     level: u8,
     state_name: String,
@@ -83,6 +85,16 @@ impl MissionMusicStateBinding {
     #[cfg(test)]
     pub(super) fn source_path(&self) -> &str {
         &self.source_path
+    }
+
+    #[cfg(test)]
+    pub(super) const fn owner_stage_source_ordinal(&self) -> usize {
+        self.owner_stage_source_ordinal
+    }
+
+    #[cfg(test)]
+    pub(super) const fn owner_stage_sequence_ordinal(&self) -> usize {
+        self.owner_stage_sequence_ordinal
     }
 
     #[cfg(test)]
@@ -166,19 +178,25 @@ pub(super) fn preflight_mission_music_states(
                     "mission music stage preflight failed: {error}"
                 ))
             })?;
-        let directives = stages
-            .stages()
-            .iter()
-            .flat_map(|stage| stage.directives())
-            .filter_map(|directive| match directive {
-                MissionStageDirective::MusicState {
+        let mut directives = Vec::new();
+        for stage in stages.stages() {
+            for directive in stage.directives() {
+                if let MissionStageDirective::MusicState {
                     source_ordinal,
                     state_name,
                     state_value,
-                } => Some((*source_ordinal, state_name, state_value)),
-                _ => None,
-            })
-            .collect::<Vec<_>>();
+                } = directive
+                {
+                    directives.push((
+                        stage.source_ordinal(),
+                        stage.sequence_ordinal(),
+                        *source_ordinal,
+                        state_name,
+                        state_value,
+                    ));
+                }
+            }
+        }
         if directives.is_empty() {
             continue;
         }
@@ -195,7 +213,14 @@ pub(super) fn preflight_mission_music_states(
         let metadata = cache.get(&level).ok_or_else(|| {
             PipelineError::new("mission music metadata cache lost a level")
         })?;
-        for (source_ordinal, state_name, state_value) in directives {
+        for (
+            owner_stage_source_ordinal,
+            owner_stage_sequence_ordinal,
+            source_ordinal,
+            state_name,
+            state_value,
+        ) in directives
+        {
             let (state_offset, value_offset) = resolve_named_asset_window(
                 &metadata.named_assets,
                 state_name,
@@ -203,6 +228,8 @@ pub(super) fn preflight_mission_music_states(
             )?;
             bindings.push(MissionMusicStateBinding {
                 source_path: snapshot.source_path().to_owned(),
+                owner_stage_source_ordinal,
+                owner_stage_sequence_ordinal,
                 source_ordinal,
                 level,
                 state_name: state_name.to_owned(),

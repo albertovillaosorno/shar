@@ -120,6 +120,8 @@ fn validates_metadata_schema_offsets_and_source_levels() -> Result<(), String> {
 fn binding_accessors_preserve_exact_provenance() {
     let binding = MissionMusicStateBinding {
         source_path: "game/scripts/missions/level02/m2i.mfk.json".to_owned(),
+        owner_stage_source_ordinal: 8,
+        owner_stage_sequence_ordinal: 1,
         source_ordinal: 10,
         level: 2,
         state_name: "Mission2".to_owned(),
@@ -140,6 +142,8 @@ fn binding_accessors_preserve_exact_provenance() {
         binding.source_path(),
         "game/scripts/missions/level02/m2i.mfk.json"
     );
+    assert_eq!(binding.owner_stage_source_ordinal(), 8);
+    assert_eq!(binding.owner_stage_sequence_ordinal(), 1);
     assert_eq!(binding.source_ordinal(), 10);
     assert_eq!(binding.level(), 2);
     assert_eq!(binding.state_name(), "Mission2");
