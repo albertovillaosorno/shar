@@ -47,6 +47,7 @@ mod filesystem;
 mod mission_camera_catalog;
 mod mission_locator_catalog;
 mod mission_locator_context;
+mod mission_music_context;
 mod mission_order_context;
 mod one;
 mod progress;

@@ -56,6 +56,7 @@ use super::mission_locator_context::{
     MissionLocatorScriptSnapshot, build_level_locator_source_contexts,
     build_mission_locator_source_contexts,
 };
+use super::mission_music_context::preflight_mission_music_states;
 use super::mission_order_context::build_mission_order_source_reports;
 use super::unreal_fbx_catalog::{FBX_CATALOG_ROOT, verified_fbx_catalog};
 use crate::adapters::driven::check_cancellation;
@@ -292,6 +293,7 @@ fn source_evidence(
         mission_locators,
         mission_p3d_references,
         index,
+        &config.extracted_root,
     )?;
     Ok(evidence)
 }
@@ -389,6 +391,7 @@ fn preflight_cross_source_mission_locators(
     mission_locators: &MissionLocatorCatalog,
     mission_p3d_references: &MissionP3dReferenceCatalog,
     index: &PhaseThreePackageIndex,
+    extracted_root: &Path,
 ) -> PipelineOutcome<()> {
     let mut verified_by_id = BTreeMap::new();
     for source in verified {
@@ -462,6 +465,11 @@ fn preflight_cross_source_mission_locators(
             ))
         })?,
     );
+    drop(preflight_mission_music_states(
+        index,
+        extracted_root,
+        &snapshots,
+    )?);
 
     let indexed_package_roots = index
         .packages()
