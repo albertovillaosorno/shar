@@ -220,6 +220,12 @@ remain ambiguous because Dyna sections are deleted and recreated over a session.
 Camera best-side retains its independently reviewed Level-before-Mission lookup;
 none of the 1,100 DynamicZone P3D effects targets those mission packages.
 
+Typed mission locator bindings now preserve source ownership alongside those
+lookup outcomes. Initialization roles remain intentionally unowned; stage roles
+carry exact `AddStage` source/dense ordinals; objective roles additionally carry
+the exact `AddObjective` source ordinal. This provenance does not change
+`Resolved`, `Missing`, or `Ambiguous` outcomes and does not infer navigation.
+
 Stage completion markers are also separated by authority before final graph
 emission. The reviewed corpus has 6 iris and 14 fade requests, 5 stay-black
 markers, 108 stage-complete presentation markers, 3 level-over terminals, and 1
