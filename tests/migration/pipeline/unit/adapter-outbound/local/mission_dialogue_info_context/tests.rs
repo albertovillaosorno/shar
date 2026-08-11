@@ -81,6 +81,9 @@ fn preserves_participants_and_identity() -> Result<(), String> {
         .map_err(|error| error.to_string())?;
     let binding = MissionDialogueInfoBinding {
         source_path: "game/scripts/missions/level02/sr2i.mfk.json".to_owned(),
+        owner_stage_source_ordinal: 60,
+        owner_stage_sequence_ordinal: 2,
+        owner_objective_source_ordinal: 65,
         source_ordinal: 67,
         level: 2,
         dialogue_id: "success".to_owned(),
@@ -98,6 +101,9 @@ fn preserves_participants_and_identity() -> Result<(), String> {
         return Err("dialogue-info binding count changed".to_owned());
     };
     assert!(binding.source_path().ends_with("level02/sr2i.mfk.json"));
+    assert_eq!(binding.owner_stage_source_ordinal(), 60);
+    assert_eq!(binding.owner_stage_sequence_ordinal(), 2);
+    assert_eq!(binding.owner_objective_source_ordinal(), 65);
     assert_eq!(binding.source_ordinal(), 67);
     assert_eq!(binding.level(), 2);
     assert_eq!(binding.dialogue_id(), "success");

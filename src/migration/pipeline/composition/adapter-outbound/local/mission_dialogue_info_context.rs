@@ -47,6 +47,9 @@ use crate::domain::{
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct MissionDialogueInfoBinding {
     source_path: String,
+    owner_stage_source_ordinal: usize,
+    owner_stage_sequence_ordinal: usize,
+    owner_objective_source_ordinal: usize,
     source_ordinal: usize,
     level: u8,
     dialogue_id: String,
@@ -75,6 +78,21 @@ impl MissionDialogueInfoBinding {
     #[cfg(test)]
     pub(super) fn source_path(&self) -> &str {
         &self.source_path
+    }
+
+    #[cfg(test)]
+    pub(super) const fn owner_stage_source_ordinal(&self) -> usize {
+        self.owner_stage_source_ordinal
+    }
+
+    #[cfg(test)]
+    pub(super) const fn owner_stage_sequence_ordinal(&self) -> usize {
+        self.owner_stage_sequence_ordinal
+    }
+
+    #[cfg(test)]
+    pub(super) const fn owner_objective_source_ordinal(&self) -> usize {
+        self.owner_objective_source_ordinal
     }
 
     #[cfg(test)]
@@ -148,32 +166,38 @@ pub(super) fn preflight_mission_dialogue_info(
                     "mission dialogue-info objective failed: {error}"
                 ))
             })?;
-        let directives = objectives
-            .objectives()
-            .iter()
-            .flat_map(|objective| objective.directives())
-            .filter_map(|directive| match directive {
-                MissionObjectiveDirective::DialogueInfo {
+        let mut directives = Vec::new();
+        for objective in objectives.objectives() {
+            for directive in objective.directives() {
+                if let MissionObjectiveDirective::DialogueInfo {
                     source_ordinal,
                     player_character_id,
                     npc_character_id,
                     dialogue_id,
                     legacy_zero,
-                } => Some((
-                    *source_ordinal,
-                    player_character_id,
-                    npc_character_id,
-                    dialogue_id,
-                    legacy_zero,
-                )),
-                _ => None,
-            })
-            .collect::<Vec<_>>();
+                } = directive
+                {
+                    directives.push((
+                        objective.owner_stage_source_ordinal(),
+                        objective.owner_stage_sequence_ordinal(),
+                        objective.source_ordinal(),
+                        *source_ordinal,
+                        player_character_id,
+                        npc_character_id,
+                        dialogue_id,
+                        legacy_zero,
+                    ));
+                }
+            }
+        }
         if directives.is_empty() {
             continue;
         }
         let level = source_level(snapshot.source_path())?;
         for (
+            owner_stage_source_ordinal,
+            owner_stage_sequence_ordinal,
+            owner_objective_source_ordinal,
             source_ordinal,
             player_character_id,
             npc_character_id,
@@ -201,6 +225,9 @@ pub(super) fn preflight_mission_dialogue_info(
                 )?;
             bindings.push(MissionDialogueInfoBinding {
                 source_path: snapshot.source_path().to_owned(),
+                owner_stage_source_ordinal,
+                owner_stage_sequence_ordinal,
+                owner_objective_source_ordinal,
                 source_ordinal,
                 level,
                 dialogue_id: dialogue_id.to_owned(),
