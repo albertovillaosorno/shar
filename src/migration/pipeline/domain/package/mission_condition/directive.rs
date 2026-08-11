@@ -33,6 +33,7 @@
 use super::super::{
     MissionConditionScope, MissionScopeCondition, MissionScopeReport,
 };
+use super::MissionConditionParameters;
 
 const LEGACY_HIT_AND_RUN_NO_OP: &str = "legacy-set-hit-n-run-dummy-command-v1";
 
@@ -102,6 +103,7 @@ pub struct MissionConditionSemanticBinding {
     source_alias: String,
     scope: MissionConditionScope,
     schema_id: &'static str,
+    parameters: MissionConditionParameters,
     directives: Vec<MissionConditionDirective>,
 }
 
@@ -125,6 +127,7 @@ impl MissionConditionSemanticBinding {
             source_alias: source_alias.to_owned(),
             scope,
             schema_id,
+            parameters: MissionConditionParameters::None,
             directives,
         }
     }
@@ -169,6 +172,12 @@ impl MissionConditionSemanticBinding {
     #[must_use]
     pub const fn schema_id(&self) -> &'static str {
         self.schema_id
+    }
+
+    /// Return typed parameters carried directly by `AddCondition`.
+    #[must_use]
+    pub const fn parameters(&self) -> &MissionConditionParameters {
+        &self.parameters
     }
 
     /// Return typed condition directives in source order.
@@ -222,6 +231,7 @@ impl MissionConditionSemanticReport {
                     source_alias,
                     scope,
                     schema_id,
+                    parameters: MissionConditionParameters::None,
                     directives: Vec::new(),
                 })
                 .collect(),
@@ -275,6 +285,7 @@ fn compile_condition(
         source_alias: source_alias.to_owned(),
         scope: condition.scope(),
         schema_id: condition.binding().schema_id(),
+        parameters: condition.parameters().parameters().clone(),
         directives,
     })
 }
