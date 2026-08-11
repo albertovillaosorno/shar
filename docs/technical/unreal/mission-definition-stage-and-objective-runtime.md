@@ -85,6 +85,13 @@ messages and 10 locked-stage messages. Each binding retains the exact key,
 derived text-key id, source unit, package, and subcategory without reading the
 localized payload or inferring presentation behavior.
 
+Objective cinematic source paths now resolve through the canonical movie
+catalog rather than remaining bare filenames. The six reviewed `SetFMVInfo`
+references, `fmv2.rmv` through `fmv7.rmv`, each bind to one base story-movie
+package and its single converted movie member. The optional `stopmusic` token is
+preserved as opaque compatibility evidence; the binding does not choose media
+playback, audio routing, mission completion, or stage transitions.
+
 Character and vehicle source references now resolve before Unreal planning
 against the validated phase-three package index. The resolver publishes the
 canonical participant identity together with the exact character package variant
