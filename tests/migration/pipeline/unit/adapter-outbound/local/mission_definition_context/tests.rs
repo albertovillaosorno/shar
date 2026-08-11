@@ -60,6 +60,16 @@ fn reports() -> (
                         source_ordinal: 4,
                         source_value: "0.1".to_owned(),
                     },
+                    MissionStageDirective::StartCountdown {
+                        source_ordinal: 7,
+                        sequence_id: "countdown".to_owned(),
+                        character_id: Some("homer".to_owned()),
+                    },
+                    MissionStageDirective::CountdownSequenceEntry {
+                        source_ordinal: 8,
+                        token: "3".to_owned(),
+                        duration_milliseconds: 1000,
+                    },
                 ],
             ),
             (
@@ -163,6 +173,20 @@ fn joins_source_backed_stage_definition_core() -> Result<(), String> {
         first_markers,
         [(4, MissionStageTransitionMarkerKind::IrisWipe)]
     );
+    let countdown = first
+        .countdown()
+        .ok_or_else(|| "definition-core countdown is missing".to_owned())?;
+    assert_eq!(countdown.stage_source_ordinal(), 2);
+    assert_eq!(countdown.stage_sequence_ordinal(), 0);
+    assert_eq!(countdown.start_source_ordinal(), 7);
+    assert_eq!(countdown.sequence_id(), "countdown");
+    assert_eq!(countdown.character_id(), Some("homer"));
+    let [entry] = countdown.entries() else {
+        return Err("definition-core countdown entry count changed".to_owned());
+    };
+    assert_eq!(entry.source_ordinal(), 8);
+    assert_eq!(entry.token(), "3");
+    assert_eq!(entry.duration_milliseconds(), 1000);
     assert!(!first.explicit_final());
     assert_eq!(first.terminal(), MissionStageTerminalOutcome::None);
     assert_eq!(first.objective_source_alias(), "goto");
@@ -194,6 +218,7 @@ fn joins_source_backed_stage_definition_core() -> Result<(), String> {
     assert_eq!(second.visual_transition(), MissionStageVisualTransition::None);
     assert!(second.stay_in_black());
     assert!(second.show_stage_complete());
+    assert!(second.countdown().is_none());
     let second_markers = second
         .transition_markers()
         .iter()
