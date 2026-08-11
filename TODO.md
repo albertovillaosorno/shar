@@ -531,6 +531,9 @@ Current task list. Project phases and dated progress are recorded in
   replicated modes, lobbies, servers, missions, and progression namespaces.
 - [ ] Package Linux, macOS, Android, Windows x86-64, and any Windows-on-ARM
   target that current Unreal/toolchain support can validate.
+- [ ] Produce a local iOS `.ipa` package for sideloading/testing without App
+  Store submission or an Xcode-dependent authoring workflow; document any
+  unavoidable Apple signing or build-host constraints explicitly.
 - [ ] Require at least one canonical `.ico` under `game/` in the game manifest;
   zero icons is invalid. Unreal staging must consume the generated icon outputs
   after the current icon producer is moved to its final repository-owned
