@@ -331,6 +331,8 @@ pub enum MissionObjectiveDirective {
 pub struct MissionObjectiveSemanticBinding {
     source_ordinal: usize,
     source_alias: String,
+    canonical_kind: Option<&'static str>,
+    unavailable_code: Option<&'static str>,
     directives: Vec<MissionObjectiveDirective>,
 }
 
@@ -345,6 +347,18 @@ impl MissionObjectiveSemanticBinding {
     #[must_use]
     pub fn source_alias(&self) -> &str {
         &self.source_alias
+    }
+
+    /// Return the canonical runtime objective kind when mapping is complete.
+    #[must_use]
+    pub const fn canonical_kind(&self) -> Option<&'static str> {
+        self.canonical_kind
+    }
+
+    /// Return the explicit unavailable identity when no runtime kind exists.
+    #[must_use]
+    pub const fn unavailable_code(&self) -> Option<&'static str> {
+        self.unavailable_code
     }
 
     /// Return selected typed directives in source order.
@@ -431,9 +445,14 @@ impl MissionObjectiveSemanticReport {
             objectives: entries
                 .into_iter()
                 .map(|(source_ordinal, source_alias, directives)| {
+                    let schema = super::objective_alias_schema(&source_alias);
                     MissionObjectiveSemanticBinding {
                         source_ordinal,
                         source_alias,
+                        canonical_kind:
+                            schema.and_then(|item| item.canonical_kind),
+                        unavailable_code:
+                            schema.and_then(|item| item.unavailable_code),
                         directives,
                     }
                 })
@@ -540,6 +559,8 @@ fn compile_objective(
     Ok(MissionObjectiveSemanticBinding {
         source_ordinal: objective.binding().ordinal(),
         source_alias: source_alias.to_owned(),
+        canonical_kind: objective.binding().canonical_kind(),
+        unavailable_code: objective.binding().unavailable_code(),
         directives,
     })
 }

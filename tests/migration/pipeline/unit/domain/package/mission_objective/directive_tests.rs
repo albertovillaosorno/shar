@@ -624,6 +624,36 @@ fn pins_external_semantic_owners_for_objective_commands() -> Result<(), String>
     Ok(())
 }
 
+
+#[test]
+fn semantic_binding_preserves_canonical_kind_and_unavailability() {
+    let mapped = MissionObjectiveSemanticReport::from_route_entries_for_tests(
+        vec![(3, "goto".to_owned(), Vec::new())],
+    );
+    let [mapped] = mapped.objectives() else {
+        panic!("mapped objective fixture changed count");
+    };
+    assert_eq!(mapped.source_alias(), "goto");
+    assert_eq!(mapped.canonical_kind(), Some("travel"));
+    assert_eq!(mapped.unavailable_code(), None);
+
+    let unavailable =
+        MissionObjectiveSemanticReport::from_route_entries_for_tests(vec![(
+            4,
+            "dummy".to_owned(),
+            Vec::new(),
+        )]);
+    let [unavailable] = unavailable.objectives() else {
+        panic!("unavailable objective fixture changed count");
+    };
+    assert_eq!(unavailable.source_alias(), "dummy");
+    assert_eq!(unavailable.canonical_kind(), None);
+    assert_eq!(
+        unavailable.unavailable_code(),
+        Some("legacy-dummy-objective-unavailable-v1")
+    );
+}
+
 #[test]
 fn binds_objective_npc_waypoints_to_prior_declaration() -> Result<(), String> {
     let report = MissionObjectiveSemanticReport::from_route_entries_for_tests(
