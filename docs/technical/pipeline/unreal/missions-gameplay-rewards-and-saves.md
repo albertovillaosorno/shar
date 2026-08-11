@@ -474,6 +474,12 @@ through semantic projection. Condition outcome policy remains unresolved: schema
 identity does not decide whether an observed violation means failure, retry,
 rollback, recovery, or another declared transition.
 
+Stage membership also survives semantic projection. All 611 objective bindings
+carry exact owning stage source/dense ordinals, and all 408 condition bindings
+carry those owner ordinals plus their authored stage-versus-objective scope.
+Final definition compilation can join these records directly instead of
+reconstructing ownership from source adjacency.
+
 ## Participant bindings
 
 Characters, vehicles, props, zones, routes, cameras, dialogue lines, effects,
