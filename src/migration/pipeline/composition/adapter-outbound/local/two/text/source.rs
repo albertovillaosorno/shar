@@ -96,6 +96,13 @@ pub(super) fn parse_source_text_keys(
             "normalized source-text table extension drifted",
         ));
     }
+    if document
+        .source_entries
+        .first()
+        .is_none_or(|row| !row.as_bytes().contains(&9))
+    {
+        return Ok(Vec::new());
+    }
     let [languages, screen, term, data @ ..] =
         document.source_entries.as_slice()
     else {
