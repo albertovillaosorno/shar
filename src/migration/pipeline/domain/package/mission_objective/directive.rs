@@ -393,6 +393,9 @@ impl MissionObjectiveSemanticBinding {
 /// One objective waypoint bound to its prior NPC declaration.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MissionObjectiveNpcWaypointBinding {
+    owner_stage_source_ordinal: usize,
+    owner_stage_sequence_ordinal: usize,
+    objective_source_ordinal: usize,
     source_ordinal: usize,
     declaration_source_ordinal: usize,
     npc_id: String,
@@ -401,6 +404,24 @@ pub struct MissionObjectiveNpcWaypointBinding {
 }
 
 impl MissionObjectiveNpcWaypointBinding {
+    /// Return the source `AddStage` ordinal owning this waypoint.
+    #[must_use]
+    pub const fn owner_stage_source_ordinal(&self) -> usize {
+        self.owner_stage_source_ordinal
+    }
+
+    /// Return the dense authored stage ordinal owning this waypoint.
+    #[must_use]
+    pub const fn owner_stage_sequence_ordinal(&self) -> usize {
+        self.owner_stage_sequence_ordinal
+    }
+
+    /// Return the source `AddObjective` ordinal owning this waypoint.
+    #[must_use]
+    pub const fn objective_source_ordinal(&self) -> usize {
+        self.objective_source_ordinal
+    }
+
     /// Return the waypoint source ordinal.
     #[must_use]
     pub const fn source_ordinal(&self) -> usize {
@@ -578,6 +599,11 @@ pub fn preflight_mission_objective_npc_waypoints(
                 );
             };
             waypoints.push(MissionObjectiveNpcWaypointBinding {
+                owner_stage_source_ordinal:
+                    objective.owner_stage_source_ordinal(),
+                owner_stage_sequence_ordinal:
+                    objective.owner_stage_sequence_ordinal(),
+                objective_source_ordinal: objective.source_ordinal(),
                 source_ordinal: *source_ordinal,
                 declaration_source_ordinal: declaration.source_ordinal(),
                 npc_id: npc_id.clone(),

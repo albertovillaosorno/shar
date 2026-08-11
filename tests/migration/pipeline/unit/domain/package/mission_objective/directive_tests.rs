@@ -688,6 +688,10 @@ fn binds_objective_npc_waypoints_to_prior_declaration() -> Result<(), String> {
     );
     let result = preflight_mission_objective_npc_waypoints(&report)?;
     assert_eq!(result.waypoints().len(), 2);
+    assert_eq!(result.waypoints()[0].owner_stage_source_ordinal(), 2);
+    assert_eq!(result.waypoints()[0].owner_stage_sequence_ordinal(), 0);
+    assert_eq!(result.waypoints()[0].objective_source_ordinal(), 3);
+    assert_eq!(result.waypoints()[0].source_ordinal(), 5);
     assert_eq!(result.waypoints()[0].declaration_source_ordinal(), 4);
     assert_eq!(result.waypoints()[0].npc_id(), "marge");
     assert_eq!(result.waypoints()[0].npc_locator_id(), "marge_start");
