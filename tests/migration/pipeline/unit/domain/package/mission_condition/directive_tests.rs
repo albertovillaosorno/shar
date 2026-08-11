@@ -9,10 +9,30 @@
 
 //! Typed condition directive semantic regressions.
 
-use super::{MissionConditionDirective, compile_directive};
+use super::{
+    MissionConditionDirective, MissionConditionSemanticBinding,
+    compile_directive,
+};
 
 fn strings(values: &[&str]) -> Vec<String> {
     values.iter().map(|value| (*value).to_owned()).collect()
+}
+
+
+#[test]
+fn semantic_binding_preserves_condition_schema_identity() {
+    let binding = MissionConditionSemanticBinding {
+        source_ordinal: 3,
+        source_alias: "timeout".to_owned(),
+        schema_id: "legacy-mission-condition.timeout.v1",
+        directives: Vec::new(),
+    };
+    assert_eq!(binding.source_ordinal(), 3);
+    assert_eq!(binding.source_alias(), "timeout");
+    assert_eq!(
+        binding.schema_id(),
+        "legacy-mission-condition.timeout.v1"
+    );
 }
 
 #[test]
