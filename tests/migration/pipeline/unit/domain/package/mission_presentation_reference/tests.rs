@@ -46,6 +46,8 @@ fn binds_exact_presentation_path_to_package() -> Result<(), String> {
         &catalog(),
         17,
         MissionPresentationRole::Objective,
+        Some((12, 2)),
+        Some(15),
         "art/frontend/dynaload/images/mis01_01.p3d",
     )?;
     let [binding] = bindings.as_slice() else {
@@ -53,6 +55,9 @@ fn binds_exact_presentation_path_to_package() -> Result<(), String> {
     };
     assert_eq!(binding.source_ordinal(), 17);
     assert_eq!(binding.role(), MissionPresentationRole::Objective);
+    assert_eq!(binding.owner_stage_source_ordinal(), Some(12));
+    assert_eq!(binding.owner_stage_sequence_ordinal(), Some(2));
+    assert_eq!(binding.owner_objective_source_ordinal(), Some(15));
     assert_eq!(
         binding.source_reference(),
         "art/frontend/dynaload/images/mis01_01.p3d"
@@ -74,7 +79,27 @@ fn missing_presentation_reference_fails_closed() {
             &catalog(),
             18,
             MissionPresentationRole::Stage,
+            Some((12, 2)),
+            None,
             "art/frontend/dynaload/images/missing.p3d",
+        )
+        .is_err()
+    );
+    assert!(bindings.is_empty());
+}
+
+#[test]
+fn rejects_inconsistent_presentation_ownership() {
+    let mut bindings = Vec::new();
+    assert!(
+        push_binding(
+            &mut bindings,
+            &catalog(),
+            17,
+            MissionPresentationRole::Objective,
+            Some((12, 2)),
+            None,
+            "art/frontend/dynaload/images/mis01_01.p3d",
         )
         .is_err()
     );

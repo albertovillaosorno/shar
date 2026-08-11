@@ -54,6 +54,9 @@ pub enum MissionPresentationRole {
 pub struct MissionPresentationPackageReference {
     source_ordinal: usize,
     role: MissionPresentationRole,
+    owner_stage_source_ordinal: Option<usize>,
+    owner_stage_sequence_ordinal: Option<usize>,
+    owner_objective_source_ordinal: Option<usize>,
     source_reference: String,
     package_id: String,
     package_root: String,
@@ -70,6 +73,24 @@ impl MissionPresentationPackageReference {
     #[must_use]
     pub const fn role(&self) -> MissionPresentationRole {
         self.role
+    }
+
+    /// Return source `AddStage` ordinal when this reference is stage-owned.
+    #[must_use]
+    pub const fn owner_stage_source_ordinal(&self) -> Option<usize> {
+        self.owner_stage_source_ordinal
+    }
+
+    /// Return dense stage ordinal when this reference is stage-owned.
+    #[must_use]
+    pub const fn owner_stage_sequence_ordinal(&self) -> Option<usize> {
+        self.owner_stage_sequence_ordinal
+    }
+
+    /// Return source `AddObjective` ordinal for objective-owned presentation.
+    #[must_use]
+    pub const fn owner_objective_source_ordinal(&self) -> Option<usize> {
+        self.owner_objective_source_ordinal
     }
 
     /// Return the exact authored P3D path.
@@ -130,6 +151,8 @@ pub fn preflight_mission_presentation_references(
                     catalog,
                     *source_ordinal,
                     MissionPresentationRole::Initialization,
+                    None,
+                    None,
                     p3d_path,
                 )?;
             }
@@ -147,6 +170,8 @@ pub fn preflight_mission_presentation_references(
                     catalog,
                     *source_ordinal,
                     MissionPresentationRole::Stage,
+                    Some((stage.source_ordinal(), stage.sequence_ordinal())),
+                    None,
                     p3d_path,
                 )?;
             }
@@ -164,6 +189,11 @@ pub fn preflight_mission_presentation_references(
                     catalog,
                     *source_ordinal,
                     MissionPresentationRole::Objective,
+                    Some((
+                        objective.owner_stage_source_ordinal(),
+                        objective.owner_stage_sequence_ordinal(),
+                    )),
+                    Some(objective.source_ordinal()),
                     p3d_path,
                 )?;
             }
@@ -178,17 +208,53 @@ fn push_binding(
     catalog: &MissionP3dReferenceCatalog,
     source_ordinal: usize,
     role: MissionPresentationRole,
+    owner_stage: Option<(usize, usize)>,
+    owner_objective_source_ordinal: Option<usize>,
     source_reference: &str,
 ) -> Result<(), String> {
+    validate_owner(
+        source_ordinal,
+        role,
+        owner_stage,
+        owner_objective_source_ordinal,
+    )?;
     let reference = catalog.resolve(source_reference)?;
     bindings.push(MissionPresentationPackageReference {
         source_ordinal,
         role,
+        owner_stage_source_ordinal: owner_stage.map(|owner| owner.0),
+        owner_stage_sequence_ordinal: owner_stage.map(|owner| owner.1),
+        owner_objective_source_ordinal,
         source_reference: reference.source_reference().to_owned(),
         package_id: reference.package_id().to_owned(),
         package_root: reference.package_root().to_owned(),
     });
     Ok(())
+}
+
+fn validate_owner(
+    source_ordinal: usize,
+    role: MissionPresentationRole,
+    owner_stage: Option<(usize, usize)>,
+    owner_objective_source_ordinal: Option<usize>,
+) -> Result<(), String> {
+    let valid = match (role, owner_stage, owner_objective_source_ordinal) {
+        (MissionPresentationRole::Initialization, None, None) => true,
+        (MissionPresentationRole::Stage, Some((stage, _)), None) => {
+            source_ordinal > stage
+        },
+        (
+            MissionPresentationRole::Objective,
+            Some((stage, _)),
+            Some(objective),
+        ) => source_ordinal > objective && objective > stage,
+        _ => false,
+    };
+    if valid {
+        Ok(())
+    } else {
+        Err("mission presentation ownership is inconsistent".to_owned())
+    }
 }
 
 #[cfg(test)]
