@@ -1,0 +1,32 @@
+---
+schema: shar.todo.v1
+id: publish-the-complete-verified-package-level-fbx-catalog-for-every-manifest-package
+status: completed
+priority: P1
+lane: conversion
+active: false
+parent: complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7
+dependencies: [complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7]
+children: []
+---
+
+# Publish the complete verified package-level FBX catalog for every manifest package…
+
+Publish the complete verified package-level FBX catalog for every manifest
+package currently classified `requires-fbx` before promoting any of those
+plans to ready.
+
+## Acceptance criteria
+
+- [x] Publish the complete verified package-level FBX catalog for every manifest
+  package currently classified `requires-fbx` before promoting any of those
+  plans to ready.
+
+## Dependencies
+
+Parent task: `complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

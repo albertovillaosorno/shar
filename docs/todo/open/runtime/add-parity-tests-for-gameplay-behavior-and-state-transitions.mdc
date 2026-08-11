@@ -1,0 +1,28 @@
+---
+schema: shar.todo.v1
+id: add-parity-tests-for-gameplay-behavior-and-state-transitions
+status: open
+priority: P3
+lane: runtime
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Add parity tests for gameplay behavior and state transitions
+
+Add parity tests for gameplay behavior and state transitions.
+
+## Acceptance criteria
+
+- [ ] Add parity tests for gameplay behavior and state transitions.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

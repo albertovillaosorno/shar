@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: permit-nonvisual-mods-that-do-not-mutate-save-progression-state-but-show-an-explicit
+status: open
+priority: P4
+lane: product
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Permit nonvisual mods that do not mutate save/progression state, but show an explicit…
+
+Permit nonvisual mods that do not mutate save/progression state, but show an
+explicit compatibility warning before activation.
+
+## Acceptance criteria
+
+- [ ] Permit nonvisual mods that do not mutate save/progression state, but show
+  an explicit compatibility warning before activation.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

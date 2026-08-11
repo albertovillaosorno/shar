@@ -1,0 +1,32 @@
+---
+schema: shar.todo.v1
+id: let-generated-base-characters-opt-into-shared-skeleton-material-model-assets-as-an
+status: open
+priority: P4
+lane: product
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Let generated base characters opt into shared skeleton/material/model assets as an…
+
+Let generated base characters opt into shared skeleton/material/model assets
+as an optimization, with simple per-asset/per-mod overrides that can break
+sharing without changing global contracts.
+
+## Acceptance criteria
+
+- [ ] Let generated base characters opt into shared skeleton/material/model
+  assets as an optimization, with simple per-asset/per-mod overrides that
+  can break sharing without changing global contracts.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

@@ -1,0 +1,32 @@
+---
+schema: shar.todo.v1
+id: emit-explicit-fbx-polygon-smoothing-metadata-whenever-authored-normals-exist-and-prove
+status: completed
+priority: P1
+lane: conversion
+active: false
+parent: complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7
+dependencies: [complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7]
+children: []
+---
+
+# Emit explicit FBX polygon smoothing metadata whenever authored normals exist, and prove…
+
+Emit explicit FBX polygon smoothing metadata whenever authored normals exist,
+and prove the representative static import no longer warns about missing
+smoothing groups.
+
+## Acceptance criteria
+
+- [x] Emit explicit FBX polygon smoothing metadata whenever authored normals
+  exist, and prove the representative static import no longer warns about
+  missing smoothing groups.
+
+## Dependencies
+
+Parent task: `complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

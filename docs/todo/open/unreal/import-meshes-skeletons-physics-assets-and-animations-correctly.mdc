@@ -1,0 +1,28 @@
+---
+schema: shar.todo.v1
+id: import-meshes-skeletons-physics-assets-and-animations-correctly
+status: open
+priority: P2
+lane: unreal
+active: false
+parent: null
+dependencies: []
+children: [import-package-level-skeletal-fbx-through-a-companion-aware-transaction-that-owns-the]
+---
+
+# Import meshes, skeletons, physics assets, and animations correctly
+
+Import meshes, skeletons, physics assets, and animations correctly.
+
+## Acceptance criteria
+
+- [ ] Import meshes, skeletons, physics assets, and animations correctly.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

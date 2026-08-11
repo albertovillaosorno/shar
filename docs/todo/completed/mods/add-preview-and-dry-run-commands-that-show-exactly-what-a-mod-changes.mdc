@@ -1,0 +1,28 @@
+---
+schema: shar.todo.v1
+id: add-preview-and-dry-run-commands-that-show-exactly-what-a-mod-changes
+status: completed
+priority: P4
+lane: mods
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Add preview and dry-run commands that show exactly what a mod changes
+
+Add preview and dry-run commands that show exactly what a mod changes.
+
+## Acceptance criteria
+
+- [x] Add preview and dry-run commands that show exactly what a mod changes.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

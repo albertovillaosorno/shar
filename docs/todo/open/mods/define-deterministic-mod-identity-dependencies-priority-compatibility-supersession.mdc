@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: define-deterministic-mod-identity-dependencies-priority-compatibility-supersession
+status: open
+priority: P4
+lane: mods
+active: false
+parent: null
+dependencies: []
+children: [detect-duplicate-normalized-output-paths-before-conversion-or-writing, reject-ambiguous-outputs-and-report-both-exact-source-entries, require-clean-extraction-when-the-optional-package-set-changes]
+---
+
+# Define deterministic mod identity, dependencies, priority, compatibility, supersession,…
+
+Define deterministic mod identity, dependencies, priority, compatibility,
+supersession, and conflict rules.
+
+## Acceptance criteria
+
+- [ ] Define deterministic mod identity, dependencies, priority, compatibility,
+  supersession, and conflict rules.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

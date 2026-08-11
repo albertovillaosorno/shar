@@ -1,0 +1,31 @@
+---
+schema: shar.todo.v1
+id: audit-the-reported-vertical-offset-in-imported-vehicle-fbx-files-record-its
+status: open
+priority: P1
+lane: conversion
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Audit the reported vertical offset in imported vehicle FBX files, record its…
+
+Audit the reported vertical offset in imported vehicle FBX files, record its
+deterministic cause, and remove or preserve it only from source evidence.
+
+## Acceptance criteria
+
+- [ ] Audit the reported vertical offset in imported vehicle FBX files, record
+  its deterministic cause, and remove or preserve it only from source
+  evidence.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

@@ -1,0 +1,41 @@
+---
+schema: shar.todo.v1
+id: classify-reviewed-stage-markers-without-conflating-presentation-with-topology-6-iris
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
+children: []
+---
+
+# Classify reviewed stage markers without conflating presentation with topology: 6 iris…
+
+Classify reviewed stage markers without conflating presentation with topology:
+6 iris and 14 fade requests are visual transitions, 5 stay-black and 108
+stage-complete markers are presentation policy, while 3 level-over and 1
+game-over markers are terminal overrides. Preserve all 137 authored marker
+occurrences across 127 stages with exact source ordinals and source order;
+three reviewed stages contain two distinct `ShowStageComplete` occurrences and
+retain both. Iris wins the one observed stage that also authors fade.
+
+## Acceptance criteria
+
+- [x] Classify reviewed stage markers without conflating presentation with
+  topology: 6 iris and 14 fade requests are visual transitions, 5 stay-black
+  and 108 stage-complete markers are presentation policy, while 3 level-over
+  and 1 game-over markers are terminal overrides. Preserve all 137 authored
+  marker occurrences across 127 stages with exact source ordinals and source
+  order; three reviewed stages contain two distinct `ShowStageComplete`
+  occurrences and retain both. Iris wins the one observed stage that also
+  authors fade.
+
+## Dependencies
+
+Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

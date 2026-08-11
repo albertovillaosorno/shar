@@ -1,0 +1,34 @@
+---
+schema: shar.todo.v1
+id: bind-all-24-reviewed-addvehicleselectinfo-registrations-through-the-canonical-p3d
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
+children: []
+---
+
+# Bind all 24 reviewed `AddVehicleSelectInfo` registrations through the canonical P3D,…
+
+Bind all 24 reviewed `AddVehicleSelectInfo` registrations through the
+canonical P3D, vehicle, and character package catalogs. Preserve source
+identity only; menu availability, ownership, unlock, and runtime selection
+policy remain unresolved.
+
+## Acceptance criteria
+
+- [x] Bind all 24 reviewed `AddVehicleSelectInfo` registrations through the
+  canonical P3D, vehicle, and character package catalogs. Preserve source
+  identity only; menu availability, ownership, unlock, and runtime selection
+  policy remain unresolved.
+
+## Dependencies
+
+Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

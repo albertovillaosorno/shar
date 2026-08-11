@@ -1,0 +1,28 @@
+---
+schema: shar.todo.v1
+id: require-approval-before-replacing-content-or-activating-packages
+status: completed
+priority: P4
+lane: mods
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Require approval before replacing content or activating packages
+
+Require approval before replacing content or activating packages.
+
+## Acceptance criteria
+
+- [x] Require approval before replacing content or activating packages.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

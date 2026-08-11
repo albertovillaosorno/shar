@@ -1,0 +1,28 @@
+---
+schema: shar.todo.v1
+id: add-a-first-class-mods-route-when-creating-or-loading-a-game
+status: open
+priority: P4
+lane: product
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Add a first-class `Mods` route when creating or loading a game
+
+Add a first-class `Mods` route when creating or loading a game.
+
+## Acceptance criteria
+
+- [ ] Add a first-class `Mods` route when creating or loading a game.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

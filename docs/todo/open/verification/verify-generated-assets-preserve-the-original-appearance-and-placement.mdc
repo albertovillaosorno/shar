@@ -1,0 +1,28 @@
+---
+schema: shar.todo.v1
+id: verify-generated-assets-preserve-the-original-appearance-and-placement
+status: open
+priority: P5
+lane: verification
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Verify generated assets preserve the original appearance and placement
+
+Verify generated assets preserve the original appearance and placement.
+
+## Acceptance criteria
+
+- [ ] Verify generated assets preserve the original appearance and placement.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

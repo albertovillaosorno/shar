@@ -1,0 +1,28 @@
+---
+schema: shar.todo.v1
+id: apply-conversion-plans-through-tested-native-unreal-mcp-commands
+status: open
+priority: P2
+lane: unreal
+active: false
+parent: null
+dependencies: []
+children: [parse-accepted-bundles-into-immutable-typed-operations-without-changing-their-canonical, verify-applicable-source-files-roots-links-sizes-and-sha-256-before-native-execution, compile-reviewed-texture-soundwave-filemediasource-and-ready-static-mesh-import, register-and-test-a-project-owned-postengineinit-toolsetregistry-module-for-synchronous, route-reviewed-static-fbx-through-the-project-owned-import-toolset-with-authored, import-hap-mov-payloads-beneath-content-movies-create-native-filemediasource-assets, audit-only-required-live-toolset-schemas-for-import-explicit-save-and-independent, apply-complete-reviewed-direct-import-plans-with-global-destination-absence-checks, implement-and-execute-the-complete-serialized-package-transaction-loop-for-every]
+---
+
+# Apply conversion plans through tested native Unreal MCP commands
+
+Apply conversion plans through tested native Unreal MCP commands.
+
+## Acceptance criteria
+
+- [ ] Apply conversion plans through tested native Unreal MCP commands.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

@@ -1,0 +1,32 @@
+---
+schema: shar.todo.v1
+id: keep-dlss-and-hardware-ray-tracing-rtx-integrations-behind-optional-capability-adapters
+status: open
+priority: P4
+lane: product
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Keep DLSS and hardware-ray-tracing/RTX integrations behind optional capability adapters…
+
+Keep DLSS and hardware-ray-tracing/RTX integrations behind optional capability
+adapters so graphics mods can target them without making proprietary GPU
+features mandatory for the base port.
+
+## Acceptance criteria
+
+- [ ] Keep DLSS and hardware-ray-tracing/RTX integrations behind optional
+  capability adapters so graphics mods can target them without making
+  proprietary GPU features mandatory for the base port.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

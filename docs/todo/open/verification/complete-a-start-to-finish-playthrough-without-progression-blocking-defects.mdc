@@ -1,0 +1,29 @@
+---
+schema: shar.todo.v1
+id: complete-a-start-to-finish-playthrough-without-progression-blocking-defects
+status: open
+priority: P5
+lane: verification
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Complete a start-to-finish playthrough without progression-blocking defects
+
+Complete a start-to-finish playthrough without progression-blocking defects.
+
+## Acceptance criteria
+
+- [ ] Complete a start-to-finish playthrough without progression-blocking
+  defects.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

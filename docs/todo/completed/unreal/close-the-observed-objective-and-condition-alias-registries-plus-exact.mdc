@@ -1,0 +1,32 @@
+---
+schema: shar.todo.v1
+id: close-the-observed-objective-and-condition-alias-registries-plus-exact
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and
+dependencies: [compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and]
+children: []
+---
+
+# Close the observed objective and condition alias registries plus exact…
+
+Close the observed objective and condition alias registries plus exact
+objective/condition-scoped command argument counts against the repository
+mission corpus, failing unknown aliases, scopes, or argument-count drift.
+
+## Acceptance criteria
+
+- [x] Close the observed objective and condition alias registries plus exact
+  objective/condition-scoped command argument counts against the repository
+  mission corpus, failing unknown aliases, scopes, or argument-count drift.
+
+## Dependencies
+
+Parent task: `compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

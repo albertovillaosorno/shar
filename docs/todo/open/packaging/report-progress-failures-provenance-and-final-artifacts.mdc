@@ -1,0 +1,28 @@
+---
+schema: shar.todo.v1
+id: report-progress-failures-provenance-and-final-artifacts
+status: open
+priority: P4
+lane: packaging
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Report progress, failures, provenance, and final artifacts
+
+Report progress, failures, provenance, and final artifacts.
+
+## Acceptance criteria
+
+- [ ] Report progress, failures, provenance, and final artifacts.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

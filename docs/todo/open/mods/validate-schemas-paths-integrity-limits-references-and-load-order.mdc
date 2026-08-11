@@ -1,0 +1,28 @@
+---
+schema: shar.todo.v1
+id: validate-schemas-paths-integrity-limits-references-and-load-order
+status: open
+priority: P4
+lane: mods
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Validate schemas, paths, integrity, limits, references, and load order
+
+Validate schemas, paths, integrity, limits, references, and load order.
+
+## Acceptance criteria
+
+- [ ] Validate schemas, paths, integrity, limits, references, and load order.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

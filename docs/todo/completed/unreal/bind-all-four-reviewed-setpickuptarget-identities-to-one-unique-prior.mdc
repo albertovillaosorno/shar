@@ -1,0 +1,36 @@
+---
+schema: shar.todo.v1
+id: bind-all-four-reviewed-setpickuptarget-identities-to-one-unique-prior
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
+children: []
+---
+
+# Bind all four reviewed `SetPickupTarget` identities to one unique prior…
+
+Bind all four reviewed `SetPickupTarget` identities to one unique prior
+`AddCollectibleStateProp` declaration across the whole selected source. Two
+declarations are mission-scoped and two are stage-scoped; preserve exact
+locator/state/scope evidence without inferring state-prop lifetime or pickup
+mechanics.
+
+## Acceptance criteria
+
+- [x] Bind all four reviewed `SetPickupTarget` identities to one unique prior
+  `AddCollectibleStateProp` declaration across the whole selected source.
+  Two declarations are mission-scoped and two are stage-scoped; preserve
+  exact locator/state/scope evidence without inferring state-prop lifetime
+  or pickup mechanics.
+
+## Dependencies
+
+Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

@@ -1,0 +1,38 @@
+---
+schema: shar.todo.v1
+id: bind-all-14-reviewed-stagestartmusicevent-calls-to-their-exact-owning-stage-while
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
+children: []
+---
+
+# Bind all 14 reviewed `StageStartMusicEvent` calls to their exact owning stage while…
+
+Bind all 14 reviewed `StageStartMusicEvent` calls to their exact owning stage
+while preserving the authored event token. Source-runtime review identifies
+the separate `mission-drama` delivery channel and required
+`legacy-case-insensitive-key32` transform. Publish those identities without
+inventing a numeric key, playback, mix, or transition policy; a validated
+native key bridge remains separate.
+
+## Acceptance criteria
+
+- [x] Bind all 14 reviewed `StageStartMusicEvent` calls to their exact owning
+  stage while preserving the authored event token. Source-runtime review
+  identifies the separate `mission-drama` delivery channel and required
+  `legacy-case-insensitive-key32` transform. Publish those identities
+  without inventing a numeric key, playback, mix, or transition policy; a
+  validated native key bridge remains separate.
+
+## Dependencies
+
+Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

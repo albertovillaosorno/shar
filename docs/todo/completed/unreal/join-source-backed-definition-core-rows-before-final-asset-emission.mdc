@@ -1,0 +1,57 @@
+---
+schema: shar.todo.v1
+id: join-source-backed-definition-core-rows-before-final-asset-emission
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
+children: []
+---
+
+# Join source-backed definition-core rows before final asset emission
+
+Join source-backed definition-core rows before final asset emission. Of 344
+reviewed mission-script sources, 190 contain no selected mission and must
+project no stage/objective/condition rows; all 154 selected sources contain
+exactly one mission. Join all 611 stages to one authored-topology row and one
+root objective through exact owner source/dense ordinals, then attach all 408
+conditions through the same owner key. Preserve stage-versus-objective scope,
+exact root-objective ownership for the 6 objective-scoped conditions,
+versioned schema id, canonical objective kind or explicit unavailable
+identity, direct typed parameters, checkpoint/final/terminal evidence, visual
+transition/stay-black/stage-complete presentation, and the authored next
+neighbor. The same core now retains all 137 exact transition-marker
+occurrences, all 43 countdown blocks, all 14 stage-start music events, all 36
+collectible-to-waypoint bindings, and all 180 resolved objective NPC waypoints
+under exact stage/objective ownership. The authored neighbor remains evidence
+only, not a runtime success/failure/retry/recovery edge.
+
+## Acceptance criteria
+
+- [x] Join source-backed definition-core rows before final asset emission. Of
+  344 reviewed mission-script sources, 190 contain no selected mission and
+  must project no stage/objective/condition rows; all 154 selected sources
+  contain exactly one mission. Join all 611 stages to one authored-topology
+  row and one root objective through exact owner source/dense ordinals, then
+  attach all 408 conditions through the same owner key. Preserve
+  stage-versus-objective scope, exact root-objective ownership for the 6
+  objective-scoped conditions, versioned schema id, canonical objective kind
+  or explicit unavailable identity, direct typed parameters,
+  checkpoint/final/terminal evidence, visual
+  transition/stay-black/stage-complete presentation, and the authored next
+  neighbor. The same core now retains all 137 exact transition-marker
+  occurrences, all 43 countdown blocks, all 14 stage-start music events, all
+  36 collectible-to-waypoint bindings, and all 180 resolved objective NPC
+  waypoints under exact stage/objective ownership. The authored neighbor
+  remains evidence only, not a runtime success/failure/retry/recovery edge.
+
+## Dependencies
+
+Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

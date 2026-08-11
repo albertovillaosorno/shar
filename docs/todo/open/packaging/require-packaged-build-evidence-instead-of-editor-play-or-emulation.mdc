@@ -1,0 +1,28 @@
+---
+schema: shar.todo.v1
+id: require-packaged-build-evidence-instead-of-editor-play-or-emulation
+status: open
+priority: P4
+lane: packaging
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Require packaged-build evidence instead of editor play or emulation
+
+Require packaged-build evidence instead of editor play or emulation.
+
+## Acceptance criteria
+
+- [ ] Require packaged-build evidence instead of editor play or emulation.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

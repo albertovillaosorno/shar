@@ -1,0 +1,46 @@
+---
+schema: shar.todo.v1
+id: type-all-118-reviewed-ambient-and-81-bonus-mission-npc-declarations-bind-each-authored
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
+children: []
+---
+
+# Type all 118 reviewed ambient and 81 bonus-mission NPC declarations, bind each authored…
+
+Type all 118 reviewed ambient and 81 bonus-mission NPC declarations, bind each
+authored model to canonical character-package evidence, preserve
+source-derived runtime names and exact spawn/meta tokens, and bind all 472
+ambient plus 45 bonus NPC waypoints to one unique prior matching declaration.
+Bind their 716 immediate generic spawn/waypoint lookups and all 87 exact
+`CarStart` dialogue-position lookups against the same static level-load
+context. Across all 877 immediate level-setup locator references, current
+decoded evidence yields 212 resolved, 665 `Missing`, and zero ambiguous
+outcomes. Keep decoded-evidence gaps explicit and keep path navigation
+semantics as a separate unresolved boundary.
+
+## Acceptance criteria
+
+- [x] Type all 118 reviewed ambient and 81 bonus-mission NPC declarations, bind
+  each authored model to canonical character-package evidence, preserve
+  source-derived runtime names and exact spawn/meta tokens, and bind all 472
+  ambient plus 45 bonus NPC waypoints to one unique prior matching
+  declaration. Bind their 716 immediate generic spawn/waypoint lookups and
+  all 87 exact `CarStart` dialogue-position lookups against the same static
+  level-load context. Across all 877 immediate level-setup locator
+  references, current decoded evidence yields 212 resolved, 665 `Missing`,
+  and zero ambiguous outcomes. Keep decoded-evidence gaps explicit and keep
+  path navigation semantics as a separate unresolved boundary.
+
+## Dependencies
+
+Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

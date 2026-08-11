@@ -1,0 +1,40 @@
+---
+schema: shar.todo.v1
+id: produce-a-local-ios-ipa-package-for-sideloading-testing-without-app-store-submission
+status: open
+priority: P4
+lane: packaging
+active: true
+parent: null
+dependencies: [canonical-multi-platform-build-runner]
+children: []
+---
+
+# Local iOS IPA package
+
+Produce a local iOS `.ipa` package for sideloading and testing without App Store
+submission or an Xcode-dependent authoring workflow. Keep every unavoidable
+Apple signing, SDK, entitlement, or build-host constraint explicit.
+
+## Acceptance criteria
+
+- [ ] Offer iOS ARM64 as one selectable target in `tools/build/arch.py`.
+- [ ] Publish the successful native deliverable as an IPA beneath the canonical
+  `dist/` architecture output.
+- [ ] Do not add App Store submission, review, notarization, or installation
+  tutorial steps to the supported SHAR workflow.
+- [ ] Do not require Xcode as an authoring UI; if Unreal or Apple tooling still
+  requires Apple SDK, signing, or a macOS build host, detect and report that
+  requirement instead of pretending the build is host-independent.
+- [ ] Keep signing inputs, temporary provisioning material, cook/staging output,
+  and logs outside the final IPA and under declared local build state.
+
+## Dependencies
+
+Depends on the canonical multi-platform build runner and its validated external
+platform prerequisites.
+
+## Evidence
+
+Add supported-host, signing, packaging, and deterministic output evidence here
+when the target becomes executable.

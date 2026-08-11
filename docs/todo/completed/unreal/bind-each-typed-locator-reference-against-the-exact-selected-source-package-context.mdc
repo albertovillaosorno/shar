@@ -1,0 +1,55 @@
+---
+schema: shar.todo.v1
+id: bind-each-typed-locator-reference-against-the-exact-selected-source-package-context
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
+children: []
+---
+
+# Bind each typed locator reference against the exact selected source package context…
+
+Bind each typed locator reference against the exact selected source package
+context formed by the matching mission-load script and its longest matching
+level-load family, plus indexed initial Dyna P3Ds after re-verifying source
+size and SHA-256. Across 462 reviewed initial Dyna P3D references, 461 bind to
+decoded package roots and one valid source-requested root has no decoded
+package; retain that root as an explicit evidence gap instead of inventing an
+alias or aborting locator preflight. Split script-time visibility from
+post-Dyna visibility: immediate init/stage lookups see only static
+Level/Mission loads, while reviewed deferred lookups can see decoded initial
+Dyna packages. Preserve the `ActivateVehicle` `NULL` sentinel. Initialization
+locator references remain intentionally unowned; stage roles retain exact
+`AddStage` source/dense ordinals, and objective roles additionally retain the
+exact `AddObjective` source ordinal. Ownership does not alter `Resolved`,
+`Missing`, or `Ambiguous` outcomes or infer navigation behavior.
+
+## Acceptance criteria
+
+- [x] Bind each typed locator reference against the exact selected source
+  package context formed by the matching mission-load script and its longest
+  matching level-load family, plus indexed initial Dyna P3Ds after
+  re-verifying source size and SHA-256. Across 462 reviewed initial Dyna P3D
+  references, 461 bind to decoded package roots and one valid
+  source-requested root has no decoded package; retain that root as an
+  explicit evidence gap instead of inventing an alias or aborting locator
+  preflight. Split script-time visibility from post-Dyna visibility:
+  immediate init/stage lookups see only static Level/Mission loads, while
+  reviewed deferred lookups can see decoded initial Dyna packages. Preserve
+  the `ActivateVehicle` `NULL` sentinel. Initialization locator references
+  remain intentionally unowned; stage roles retain exact `AddStage`
+  source/dense ordinals, and objective roles additionally retain the exact
+  `AddObjective` source ordinal. Ownership does not alter `Resolved`,
+  `Missing`, or `Ambiguous` outcomes or infer navigation behavior.
+
+## Dependencies
+
+Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: preserve-the-delivery-order-faithful-port-first-compatibility-and-quality-of-life
+status: open
+priority: P4
+lane: product
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Preserve the delivery order: faithful port first, compatibility and quality-of-life…
+
+Preserve the delivery order: faithful port first, compatibility and
+quality-of-life improvements second, richer community mod content third.
+
+## Acceptance criteria
+
+- [ ] Preserve the delivery order: faithful port first, compatibility and
+  quality-of-life improvements second, richer community mod content third.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

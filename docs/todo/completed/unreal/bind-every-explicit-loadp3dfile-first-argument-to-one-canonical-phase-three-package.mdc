@@ -1,0 +1,40 @@
+---
+schema: shar.todo.v1
+id: bind-every-explicit-loadp3dfile-first-argument-to-one-canonical-phase-three-package
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
+children: []
+---
+
+# Bind every explicit `LoadP3DFile` first argument to one canonical phase-three package…
+
+Bind every explicit `LoadP3DFile` first argument to one canonical phase-three
+package and keep only that path in P3D summaries. Preserve the source loader's
+optional heap and inventory-section parameters as validated provenance rather
+than target runtime allocation authority. The mission corpus has 966 calls:
+950 one-argument calls and 16 two-argument calls, all using `GMA_LEVEL_OTHER`;
+the source loader supports a third inventory-section argument, but no base
+mission uses that form.
+
+## Acceptance criteria
+
+- [x] Bind every explicit `LoadP3DFile` first argument to one canonical
+  phase-three package and keep only that path in P3D summaries. Preserve the
+  source loader's optional heap and inventory-section parameters as
+  validated provenance rather than target runtime allocation authority. The
+  mission corpus has 966 calls: 950 one-argument calls and 16 two-argument
+  calls, all using `GMA_LEVEL_OTHER`; the source loader supports a third
+  inventory-section argument, but no base mission uses that form.
+
+## Dependencies
+
+Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

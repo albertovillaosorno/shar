@@ -1,0 +1,43 @@
+---
+schema: shar.todo.v1
+id: compile-authored-order-for-all-611-stages-across-154-selected-mission-sources
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
+children: []
+---
+
+# Compile authored order for all 611 stages across 154 selected mission sources
+
+Compile authored order for all 611 stages across 154 selected mission sources.
+Preserve the next authored neighbor as evidence only, accept the 64 sources
+with no explicit `final`, and require each of the 90 observed `final` markers
+plus all four explicit terminal overrides to occur only on the last authored
+stage. Bind all 119 reviewed `reset_to_here` checkpoint markers to their exact
+stage and source ordinal; every checkpoint stage contains exactly one marker.
+Runtime successor, retry, rollback, and recovery edges remain unresolved
+rather than inferred from adjacency or checkpoint presence.
+
+## Acceptance criteria
+
+- [x] Compile authored order for all 611 stages across 154 selected mission
+  sources. Preserve the next authored neighbor as evidence only, accept the
+  64 sources with no explicit `final`, and require each of the 90 observed
+  `final` markers plus all four explicit terminal overrides to occur only on
+  the last authored stage. Bind all 119 reviewed `reset_to_here` checkpoint
+  markers to their exact stage and source ordinal; every checkpoint stage
+  contains exactly one marker. Runtime successor, retry, rollback, and
+  recovery edges remain unresolved rather than inferred from adjacency or
+  checkpoint presence.
+
+## Dependencies
+
+Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

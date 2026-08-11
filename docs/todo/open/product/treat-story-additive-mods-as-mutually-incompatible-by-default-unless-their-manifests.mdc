@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: treat-story-additive-mods-as-mutually-incompatible-by-default-unless-their-manifests
+status: open
+priority: P4
+lane: product
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Treat story/additive mods as mutually incompatible by default unless their manifests…
+
+Treat story/additive mods as mutually incompatible by default unless their
+manifests explicitly declare a compatible composition contract.
+
+## Acceptance criteria
+
+- [ ] Treat story/additive mods as mutually incompatible by default unless their
+  manifests explicitly declare a compatible composition contract.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

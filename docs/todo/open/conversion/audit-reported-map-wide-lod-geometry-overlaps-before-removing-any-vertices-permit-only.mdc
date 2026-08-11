@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: audit-reported-map-wide-lod-geometry-overlaps-before-removing-any-vertices-permit-only
+status: open
+priority: P1
+lane: conversion
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Audit reported map-wide LOD/geometry overlaps before removing any vertices; permit only…
+
+Audit reported map-wide LOD/geometry overlaps before removing any vertices;
+permit only deterministic source-backed conversion corrections.
+
+## Acceptance criteria
+
+- [ ] Audit reported map-wide LOD/geometry overlaps before removing any
+  vertices; permit only deterministic source-backed conversion corrections.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

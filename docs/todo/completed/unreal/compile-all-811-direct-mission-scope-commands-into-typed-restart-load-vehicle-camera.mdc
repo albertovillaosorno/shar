@@ -1,0 +1,32 @@
+---
+schema: shar.todo.v1
+id: compile-all-811-direct-mission-scope-commands-into-typed-restart-load-vehicle-camera
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward
+dependencies: [map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward]
+children: []
+---
+
+# Compile all 811 direct mission-scope commands into typed restart, load, vehicle, camera,…
+
+Compile all 811 direct mission-scope commands into typed restart, load,
+vehicle, camera, presentation, hint, HUD, pedestrian-group, and street-race
+evidence with no raw mission command fallback.
+
+## Acceptance criteria
+
+- [x] Compile all 811 direct mission-scope commands into typed restart, load,
+  vehicle, camera, presentation, hint, HUD, pedestrian-group, and
+  street-race evidence with no raw mission command fallback.
+
+## Dependencies
+
+Parent task: `map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

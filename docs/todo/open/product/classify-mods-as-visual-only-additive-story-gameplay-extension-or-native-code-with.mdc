@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: classify-mods-as-visual-only-additive-story-gameplay-extension-or-native-code-with
+status: open
+priority: P4
+lane: product
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Classify mods as visual-only, additive/story, gameplay-extension, or native-code, with…
+
+Classify mods as visual-only, additive/story, gameplay-extension, or
+native-code, with explicit compatibility and save-impact declarations.
+
+## Acceptance criteria
+
+- [ ] Classify mods as visual-only, additive/story, gameplay-extension, or
+  native-code, with explicit compatibility and save-impact declarations.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

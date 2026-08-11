@@ -1,0 +1,31 @@
+---
+schema: shar.todo.v1
+id: preserve-the-original-missions-mission-order-world-layout-progression-gameplay
+status: open
+priority: P0
+lane: governance
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Preserve the original missions, mission order, world layout, progression, gameplay…
+
+Preserve the original missions, mission order, world layout, progression,
+gameplay structure, models, textures, audio, cinematics, UI, and localization.
+
+## Acceptance criteria
+
+- [ ] Preserve the original missions, mission order, world layout, progression,
+  gameplay structure, models, textures, audio, cinematics, UI, and
+  localization.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

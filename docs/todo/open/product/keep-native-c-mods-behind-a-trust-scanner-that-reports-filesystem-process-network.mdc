@@ -1,0 +1,32 @@
+---
+schema: shar.todo.v1
+id: keep-native-c-mods-behind-a-trust-scanner-that-reports-filesystem-process-network
+status: open
+priority: P4
+lane: product
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Keep native C++ mods behind a trust scanner that reports filesystem, process, network,…
+
+Keep native C++ mods behind a trust scanner that reports filesystem, process,
+network, platform, save, and engine-surface access before the user decides
+whether to load them.
+
+## Acceptance criteria
+
+- [ ] Keep native C++ mods behind a trust scanner that reports filesystem,
+  process, network, platform, save, and engine-surface access before the
+  user decides whether to load them.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

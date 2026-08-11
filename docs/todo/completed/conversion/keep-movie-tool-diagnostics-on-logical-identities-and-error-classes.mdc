@@ -1,0 +1,28 @@
+---
+schema: shar.todo.v1
+id: keep-movie-tool-diagnostics-on-logical-identities-and-error-classes
+status: completed
+priority: P1
+lane: conversion
+active: false
+parent: preserve-original-audio-cinematics-localization-ui-mission-and-tuning-data-in
+dependencies: [preserve-original-audio-cinematics-localization-ui-mission-and-tuning-data-in]
+children: []
+---
+
+# Keep movie-tool diagnostics on logical identities and error classes
+
+Keep movie-tool diagnostics on logical identities and error classes.
+
+## Acceptance criteria
+
+- [x] Keep movie-tool diagnostics on logical identities and error classes.
+
+## Dependencies
+
+Parent task: `preserve-original-audio-cinematics-localization-ui-mission-and-tuning-data-in`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

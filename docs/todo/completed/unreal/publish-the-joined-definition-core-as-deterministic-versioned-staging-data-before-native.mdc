@@ -1,0 +1,49 @@
+---
+schema: shar.todo.v1
+id: publish-the-joined-definition-core-as-deterministic-versioned-staging-data-before-native
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
+children: []
+---
+
+# Publish the joined definition core as deterministic versioned staging data before native…
+
+Publish the joined definition core as deterministic versioned staging data
+before native asset construction. `prepare-unreal` now writes
+`mission-definitions.jsonl` as the tenth transactional staging artifact: 154
+source-keyed schema-v3 rows retain all 611 stages, 408 conditions, 137
+transition markers, 43 countdown blocks, 14 stage-start music events, 36
+collectible-waypoint bindings, 180 objective NPC waypoints, and four pickup
+state-prop bindings. Every definition source is one of the 344 verified
+mission-script sources, source ids are unique, and each condition row
+publishes the reviewed `stage-failure` violation effect. The rows still
+publish no successor/retry/rollback/recovery edges. This is source-backed
+semantic staging, not `USharMissionDefinition` or StateTree asset emission.
+
+## Acceptance criteria
+
+- [x] Publish the joined definition core as deterministic versioned staging data
+  before native asset construction. `prepare-unreal` now writes
+  `mission-definitions.jsonl` as the tenth transactional staging artifact:
+  154 source-keyed schema-v3 rows retain all 611 stages, 408 conditions, 137
+  transition markers, 43 countdown blocks, 14 stage-start music events, 36
+  collectible-waypoint bindings, 180 objective NPC waypoints, and four
+  pickup state-prop bindings. Every definition source is one of the 344
+  verified mission-script sources, source ids are unique, and each condition
+  row publishes the reviewed `stage-failure` violation effect. The rows
+  still publish no successor/retry/rollback/recovery edges. This is
+  source-backed semantic staging, not `USharMissionDefinition` or StateTree
+  asset emission.
+
+## Dependencies
+
+Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

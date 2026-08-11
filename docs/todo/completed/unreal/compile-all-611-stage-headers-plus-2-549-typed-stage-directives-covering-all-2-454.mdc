@@ -1,0 +1,34 @@
+---
+schema: shar.todo.v1
+id: compile-all-611-stage-headers-plus-2-549-typed-stage-directives-covering-all-2-454
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward
+dependencies: [map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward]
+children: []
+---
+
+# Compile all 611 stage headers plus 2,549 typed stage directives, covering all 2,454…
+
+Compile all 611 stage headers plus 2,549 typed stage directives, covering all
+2,454 direct-stage commands and all 95 objective commands explicitly delegated
+to stage semantics; preserve opaque numeric `AddStage` flags, raw AI tuning
+values, and compatibility arguments.
+
+## Acceptance criteria
+
+- [x] Compile all 611 stage headers plus 2,549 typed stage directives, covering
+  all 2,454 direct-stage commands and all 95 objective commands explicitly
+  delegated to stage semantics; preserve opaque numeric `AddStage` flags,
+  raw AI tuning values, and compatibility arguments.
+
+## Dependencies
+
+Parent task: `map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

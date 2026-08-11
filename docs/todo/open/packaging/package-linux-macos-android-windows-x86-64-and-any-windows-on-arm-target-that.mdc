@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: package-linux-macos-android-windows-x86-64-and-any-windows-on-arm-target-that
+status: open
+priority: P4
+lane: packaging
+active: true
+parent: null
+dependencies: []
+children: []
+---
+
+# Package Linux, macOS, Android, Windows x86-64, and any Windows-on-ARM target that…
+
+Package Linux, macOS, Android, Windows x86-64, and any Windows-on-ARM target
+that current Unreal/toolchain support can validate.
+
+## Acceptance criteria
+
+- [ ] Package Linux, macOS, Android, Windows x86-64, and any Windows-on-ARM
+  target that current Unreal/toolchain support can validate.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

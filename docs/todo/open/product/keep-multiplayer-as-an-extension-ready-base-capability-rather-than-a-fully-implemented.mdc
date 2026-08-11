@@ -1,0 +1,32 @@
+---
+schema: shar.todo.v1
+id: keep-multiplayer-as-an-extension-ready-base-capability-rather-than-a-fully-implemented
+status: open
+priority: P4
+lane: product
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Keep multiplayer as an extension-ready base capability rather than a fully implemented…
+
+Keep multiplayer as an extension-ready base capability rather than a fully
+implemented first-party mode during the port; mods must be able to add
+replicated modes, lobbies, servers, missions, and progression namespaces.
+
+## Acceptance criteria
+
+- [ ] Keep multiplayer as an extension-ready base capability rather than a fully
+  implemented first-party mode during the port; mods must be able to add
+  replicated modes, lobbies, servers, missions, and progression namespaces.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

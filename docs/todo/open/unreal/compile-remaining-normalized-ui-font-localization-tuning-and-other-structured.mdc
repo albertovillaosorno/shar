@@ -1,0 +1,32 @@
+---
+schema: shar.todo.v1
+id: compile-remaining-normalized-ui-font-localization-tuning-and-other-structured
+status: open
+priority: P2
+lane: unreal
+active: false
+parent: convert-original-camera-mission-vehicle-gameplay-ui-and-tuning-data-into-native
+dependencies: [convert-original-camera-mission-vehicle-gameplay-ui-and-tuning-data-into-native]
+children: []
+---
+
+# Compile remaining normalized UI, font, localization, tuning, and other structured…
+
+Compile remaining normalized UI, font, localization, tuning, and other
+structured evidence into concrete Unreal types before enabling their editor
+factories.
+
+## Acceptance criteria
+
+- [ ] Compile remaining normalized UI, font, localization, tuning, and other
+  structured evidence into concrete Unreal types before enabling their
+  editor factories.
+
+## Dependencies
+
+Parent task: `convert-original-camera-mission-vehicle-gameplay-ui-and-tuning-data-into-native`.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

@@ -1,0 +1,42 @@
+---
+schema: shar.todo.v1
+id: separate-streaming-lifetime-from-duplicate-locator-precedence-for-bm1-bestside-18
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
+children: []
+---
+
+# Separate streaming lifetime from duplicate-locator precedence for `bm1_bestside`: 18…
+
+Separate streaming lifetime from duplicate-locator precedence for
+`bm1_bestside`: 18 references face 10 Type-3 `CarStart` candidates, while all
+1,100 DynamicZone P3D effects touch none of those mission packages. Camera
+best-side lookup is deferred until mission reset; Pure3D starts in its Default
+inventory section, searches the current section first, then remaining sections
+in creation order. This load path creates Level before Mission. Duplicated
+best-side names choose the Level candidate instead of an arbitrary package
+winner.
+
+## Acceptance criteria
+
+- [x] Separate streaming lifetime from duplicate-locator precedence for
+  `bm1_bestside`: 18 references face 10 Type-3 `CarStart` candidates, while
+  all 1,100 DynamicZone P3D effects touch none of those mission packages.
+  Camera best-side lookup is deferred until mission reset; Pure3D starts in
+  its Default inventory section, searches the current section first, then
+  remaining sections in creation order. This load path creates Level before
+  Mission. Duplicated best-side names choose the Level candidate instead of
+  an arbitrary package winner.
+
+## Dependencies
+
+Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

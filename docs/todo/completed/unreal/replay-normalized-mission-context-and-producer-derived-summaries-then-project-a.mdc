@@ -1,0 +1,36 @@
+---
+schema: shar.todo.v1
+id: replay-normalized-mission-context-and-producer-derived-summaries-then-project-a
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and
+dependencies: [compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and]
+children: []
+---
+
+# Replay normalized mission context and producer-derived summaries, then project a…
+
+Replay normalized mission context and producer-derived summaries, then project
+a lossless mission/stage/objective/condition source-scope graph with one root
+objective per stage, closed direct mission/stage command scope-and-arity
+registries, and explicit general-scope overlap where observed; retain all
+positional values uninterpreted.
+
+## Acceptance criteria
+
+- [x] Replay normalized mission context and producer-derived summaries, then
+  project a lossless mission/stage/objective/condition source-scope graph
+  with one root objective per stage, closed direct mission/stage command
+  scope-and-arity registries, and explicit general-scope overlap where
+  observed; retain all positional values uninterpreted.
+
+## Dependencies
+
+Parent task: `compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

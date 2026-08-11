@@ -1,0 +1,32 @@
+---
+schema: shar.todo.v1
+id: fail-semantic-intake-before-unreal-planning-on-stale-mission-evidence-inconsistent
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and
+dependencies: [compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and]
+children: []
+---
+
+# Fail semantic intake before Unreal planning on stale mission evidence, inconsistent…
+
+Fail semantic intake before Unreal planning on stale mission evidence,
+inconsistent command summaries, noncanonical ordinals, or unresolved context
+findings.
+
+## Acceptance criteria
+
+- [x] Fail semantic intake before Unreal planning on stale mission evidence,
+  inconsistent command summaries, noncanonical ordinals, or unresolved
+  context findings.
+
+## Dependencies
+
+Parent task: `compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

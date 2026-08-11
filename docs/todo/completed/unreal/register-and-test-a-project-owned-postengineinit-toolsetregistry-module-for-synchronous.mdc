@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: register-and-test-a-project-owned-postengineinit-toolsetregistry-module-for-synchronous
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: apply-conversion-plans-through-tested-native-unreal-mcp-commands
+dependencies: [apply-conversion-plans-through-tested-native-unreal-mcp-commands]
+children: []
+---
+
+# Register and test a project-owned PostEngineInit ToolsetRegistry module for synchronous…
+
+Register and test a project-owned PostEngineInit ToolsetRegistry module for
+synchronous WAV import without replacement or implicit save.
+
+## Acceptance criteria
+
+- [x] Register and test a project-owned PostEngineInit ToolsetRegistry module
+  for synchronous WAV import without replacement or implicit save.
+
+## Dependencies
+
+Parent task: `apply-conversion-plans-through-tested-native-unreal-mcp-commands`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

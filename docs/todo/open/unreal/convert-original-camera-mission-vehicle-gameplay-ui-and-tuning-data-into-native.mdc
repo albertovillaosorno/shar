@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: convert-original-camera-mission-vehicle-gameplay-ui-and-tuning-data-into-native
+status: open
+priority: P2
+lane: unreal
+active: false
+parent: null
+dependencies: []
+children: [stop-treating-unresolved-normalized-source-as-a-generic-dataasset-or-one-bespoke, compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and, compile-remaining-normalized-ui-font-localization-tuning-and-other-structured]
+---
+
+# Convert original camera, mission, vehicle, gameplay, UI, and tuning data into native…
+
+Convert original camera, mission, vehicle, gameplay, UI, and tuning data into
+native Unreal assets.
+
+## Acceptance criteria
+
+- [ ] Convert original camera, mission, vehicle, gameplay, UI, and tuning data
+  into native Unreal assets.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

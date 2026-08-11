@@ -1,0 +1,30 @@
+---
+schema: shar.todo.v1
+id: keep-gameplay-saves-package-identities-and-mod-contracts-consistent-across-supported
+status: open
+priority: P4
+lane: packaging
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Keep gameplay, saves, package identities, and mod contracts consistent across supported…
+
+Keep gameplay, saves, package identities, and mod contracts consistent across
+supported targets.
+
+## Acceptance criteria
+
+- [ ] Keep gameplay, saves, package identities, and mod contracts consistent
+  across supported targets.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.

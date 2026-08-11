@@ -1,0 +1,40 @@
+---
+schema: shar.todo.v1
+id: trace-runtime-lookup-for-every-currently-modeled-locator-role
+status: completed
+priority: P2
+lane: unreal
+active: false
+parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
+children: []
+---
+
+# Trace runtime lookup for every currently modeled locator role
+
+Trace runtime lookup for every currently modeled locator role. Exact-type
+script-time references use reviewed static load precedence; an audit of 751
+such references found 242 unique, 507 missing, and two duplicated CarStart
+references. Both Level-versus-Mission collisions now resolve to Level. Generic
+and exact post-Dyna duplicate lookups stay fail-closed because subtype/hash
+order or Dyna section recreation make their runtime precedence
+history-dependent.
+
+## Acceptance criteria
+
+- [x] Trace runtime lookup for every currently modeled locator role. Exact-type
+  script-time references use reviewed static load precedence; an audit of
+  751 such references found 242 unique, 507 missing, and two duplicated
+  CarStart references. Both Level-versus-Mission collisions now resolve to
+  Level. Generic and exact post-Dyna duplicate lookups stay fail-closed
+  because subtype/hash order or Dyna section recreation make their runtime
+  precedence history-dependent.
+
+## Dependencies
+
+Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.

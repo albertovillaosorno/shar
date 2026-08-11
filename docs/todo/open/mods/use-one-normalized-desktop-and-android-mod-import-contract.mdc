@@ -1,0 +1,28 @@
+---
+schema: shar.todo.v1
+id: use-one-normalized-desktop-and-android-mod-import-contract
+status: open
+priority: P4
+lane: mods
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Use one normalized desktop and Android mod import contract
+
+Use one normalized desktop and Android mod import contract.
+
+## Acceptance criteria
+
+- [ ] Use one normalized desktop and Android mod import contract.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Open work migrated from the canonical TODO. Add implementation and
+validation evidence here as the task advances.
