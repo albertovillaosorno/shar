@@ -6,6 +6,30 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Unit evidence for typed mission locator package-context resolution.
+// - Must-Not:
+//   - Invent package precedence, locator types, or navigation behavior.
+// - Allows:
+//   - Verify scope ownership and resolved/missing/ambiguous outcomes.
+// - Split-When:
+//   - Runtime locator lookup gains independent authoritative fixtures.
+// - Merge-When:
+//   - Locator-reference domain tests own this exact lookup contract.
+// - Summary:
+//   - Mission locator-reference unit tests.
+// - Description:
+//   - Locks package visibility, type constraints, and owner provenance.
+// - Usage:
+//   - Compiled with the mission locator-reference domain module.
+// - Defaults:
+//   - Missing and ambiguous evidence remains explicit and fail-closed by
+//     caller.
+//
+
+//! Unit evidence for typed mission locator-reference binding.
 
 use serde_json::json;
 

@@ -6,6 +6,29 @@
 //   - false
 // License-File:
 //   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Unit evidence for typed mission condition directives and schema identity.
+// - Must-Not:
+//   - Infer stage failure, retry, rollback, or recovery from condition
+//     identity.
+// - Allows:
+//   - Verify reviewed directive shapes, values, ownership, and schema ids.
+// - Split-When:
+//   - Condition runtime outcome policy gains independent source authority.
+// - Merge-When:
+//   - Condition semantic preflight tests own this exact directive contract.
+// - Summary:
+//   - Mission condition directive unit tests.
+// - Description:
+//   - Locks typed directive and versioned schema evidence without outcome
+//     policy.
+// - Usage:
+//   - Compiled with the mission condition domain unit suite.
+// - Defaults:
+//   - Unreviewed aliases, values, and cross-alias directives fail closed.
+//
 
 //! Typed condition directive semantic regressions.
 
@@ -17,7 +40,6 @@ use super::{
 fn strings(values: &[&str]) -> Vec<String> {
     values.iter().map(|value| (*value).to_owned()).collect()
 }
-
 
 #[test]
 fn semantic_binding_preserves_condition_schema_identity() {
