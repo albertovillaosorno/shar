@@ -76,6 +76,15 @@ typed across 408 condition bindings. Opaque `AddStage` flags, noncanonical
 extension fields, dialogue compatibility fields, and dynamic-load compatibility
 arguments remain provenance rather than inferred runtime behavior.
 
+Stage message indices are now canonical localization references rather than
+bare integers after stage semantic compilation. The generated package index
+publishes 1,632 unique source-text mirrors across 52 derived language packages,
+including the complete 300-key objective namespace and 20-key locked-stage
+namespace. All 449 reviewed message uses resolve exactly once: 439 objective
+messages and 10 locked-stage messages. Each binding retains the exact key,
+derived text-key id, source unit, package, and subcategory without reading the
+localized payload or inferring presentation behavior.
+
 Character and vehicle source references now resolve before Unreal planning
 against the validated phase-three package index. The resolver publishes the
 canonical participant identity together with the exact character package variant

@@ -262,12 +262,15 @@ mission-scoped and two are stage-scoped. The binding retains declaration scope,
 source ordinal, locator, and authored state while leaving state-prop lifetime,
 respawn, destruction, and pickup mechanics unresolved.
 
-Package-index intake also retains the exact localization `key` from every
-structured text-key mirror alongside its derived id, source unit, and
-subcategory. The currently generated phase-three package index publishes no
-text-key mirrors, so stage-message integers cannot yet be promoted to canonical
-localization keys. That absence is recorded as missing extraction evidence, not
-as proof that the original game has no matching text.
+Package-index intake retains the exact localization `key` from every structured
+text-key mirror alongside its derived id, source unit, package, and subcategory.
+The normalized source-text phrase table now derives 52 language packages with
+1,632 unique text keys. That catalog contains all 300 reviewed
+`MISSION_OBJECTIVE_*` keys and all 20 `INGAME_MESSAGE_*` keys. Every one of the
+439 objective-stage and 10 locked-stage message-index uses resolves to exactly
+one canonical mirror; missing or multiply-published keys fail preflight. This
+binding establishes localization identity only. Localized payload compilation
+and final Unreal text asset emission remain separate work.
 
 Level mission registration order is now preserved independently of progression.
 All 64 reviewed `AddMission` declarations across 16 base, demo, and E3 load
