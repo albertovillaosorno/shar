@@ -123,6 +123,7 @@ fn joins_source_backed_stage_definition_core() -> Result<(), String> {
         "legacy-mission-condition.timeout.v1"
     );
     assert_eq!(condition.scope(), MissionConditionScope::Objective);
+    assert_eq!(condition.owner_objective_source_ordinal(), Some(4));
 
     assert_eq!(second.sequence_ordinal(), 1);
     assert_eq!(second.next_authored_sequence_ordinal(), None);
@@ -173,4 +174,30 @@ fn rejects_condition_with_unknown_stage_owner() {
     )
     .expect_err("unknown condition owner must fail");
     assert!(error.to_string().contains("unknown stage owner"));
+}
+
+#[test]
+fn rejects_objective_condition_with_wrong_root_owner() {
+    let (stages, objectives, _conditions, topology) = reports();
+    let conditions =
+        MissionConditionSemanticReport::from_owned_entries_for_tests(vec![(
+            2,
+            0,
+            Some(9),
+            5,
+            "timeout".to_owned(),
+            MissionConditionScope::Objective,
+            "legacy-mission-condition.timeout.v1",
+        )]);
+    let error = build_definition_core(
+        "m1",
+        &stages,
+        &objectives,
+        &conditions,
+        &topology,
+    )
+    .expect_err("wrong condition objective owner must fail");
+    assert!(error
+        .to_string()
+        .contains("condition owner disagrees"));
 }
