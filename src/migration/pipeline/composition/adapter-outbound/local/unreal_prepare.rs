@@ -72,7 +72,6 @@ use crate::domain::{
     compile_mission_scope_graphs,
     preflight_mission_authored_stage_topology,
     preflight_mission_camera_references,
-    preflight_mission_collectible_waypoints,
     preflight_mission_condition_commands,
     preflight_mission_condition_semantics, preflight_mission_conditions,
     preflight_mission_fmv_references, preflight_mission_gag_totals,
@@ -960,17 +959,6 @@ fn validate_normalized_mission_source(
         .map_err(|error| {
             PipelineError::new(format!(
                 "mission pickup state-prop preflight failed: {error}"
-            ))
-        })?,
-    );
-    drop(
-        preflight_mission_collectible_waypoints(
-            &stage_semantics,
-            &objective_semantics,
-        )
-        .map_err(|error| {
-            PipelineError::new(format!(
-                "mission collectible waypoint preflight failed: {error}"
             ))
         })?,
     );
