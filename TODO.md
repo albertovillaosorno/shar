@@ -197,8 +197,9 @@ Current task list. Project phases and dated progress are recorded in
           `AddPurchaseCarNPCWaypoint` calls to a unique prior storefront NPC.
           Pair all 16 level-setup sources with their exact `<family>i` to
           `<family>` load sibling and bind the 32 immediate storefront positions
-          plus 26 waypoints against that static package context. Require at least
-          one level-setup-specific command before classifying the source; the 16
+          plus 26 waypoints against that static package context. Require at
+          least one level-setup-specific command before classifying the source;
+          the 16
           reviewed mission-init sources whose only overlapping command is
           `InitLevelPlayerVehicle` stay outside this sibling-load pass. Current
           decoded
