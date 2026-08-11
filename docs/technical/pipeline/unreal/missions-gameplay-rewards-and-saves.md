@@ -311,7 +311,8 @@ claim that named-asset adjacency is a decoded RADMusic state machine or choose
 playback, mix, event, or transition behavior. `StageStartMusicEvent` stays
 separate for a different source-backed reason: the runtime converts its authored
 token to a case-insensitive legacy key and emits it through the mission-drama
-event when the stage starts. It is not a direct score-library named-asset lookup.
+event when the stage starts. It is not a direct score-library named-asset
+lookup.
 The migration still needs a repo-owned key/event bridge before native emission;
 that bridge must not invent playback or mix policy.
 
