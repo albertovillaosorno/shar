@@ -83,7 +83,6 @@ pub(in crate::adapters::driven::local) fn render_definition_core(
 fn validate_source_id(source_id: &str) -> PipelineOutcome<()> {
     let bytes = source_id.as_bytes();
     if bytes.is_empty()
-        || bytes.len() > 240
         || !bytes.first().is_some_and(u8::is_ascii_alphanumeric)
         || !bytes.last().is_some_and(u8::is_ascii_alphanumeric)
         || bytes.windows(2).any(|pair| pair == b"--")
