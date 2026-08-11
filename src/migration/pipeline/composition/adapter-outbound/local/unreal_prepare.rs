@@ -1258,6 +1258,16 @@ fn validate_mission_definition_stages(
                 "{stage_label} marks a nonterminal authored stage final"
             )));
         }
+        validate_mission_definition_stage_kind(
+            stage,
+            explicit_final,
+            &stage_label,
+        )?;
+        validate_mission_definition_objective(
+            stage,
+            source_ordinal,
+            &stage_label,
+        )?;
         let terminal = required_string(stage, "terminal", &stage_label)?;
         if !matches!(
             terminal.as_str(),
@@ -1292,6 +1302,105 @@ fn validate_mission_definition_stages(
         }
     }
     Ok(())
+}
+
+fn validate_mission_definition_stage_kind(
+    stage: &Map<String, Value>,
+    explicit_final: bool,
+    stage_label: &str,
+) -> PipelineOutcome<()> {
+    let kind = stage
+        .get("kind")
+        .and_then(Value::as_object)
+        .ok_or_else(|| {
+            PipelineError::new(format!(
+                "{stage_label} is missing its stage kind"
+            ))
+        })?;
+    let token = required_string(kind, "kind", stage_label)?;
+    let kind_final = match token.as_str() {
+        "standard" => kind
+            .get("final_stage")
+            .and_then(Value::as_bool)
+            .ok_or_else(|| {
+                PipelineError::new(format!(
+                    "{stage_label} standard kind is missing final_stage"
+                ))
+            })?,
+        "locked-vehicle" | "locked-costume" => false,
+        _ => {
+            return Err(PipelineError::new(format!(
+                "{stage_label} has unknown stage kind"
+            )));
+        },
+    };
+    if kind_final != explicit_final {
+        return Err(PipelineError::new(format!(
+            "{stage_label} final marker disagrees with stage kind"
+        )));
+    }
+    Ok(())
+}
+
+fn validate_mission_definition_objective(
+    stage: &Map<String, Value>,
+    stage_source_ordinal: u64,
+    stage_label: &str,
+) -> PipelineOutcome<()> {
+    let objective = stage
+        .get("objective")
+        .and_then(Value::as_object)
+        .ok_or_else(|| {
+            PipelineError::new(format!(
+                "{stage_label} is missing its objective"
+            ))
+        })?;
+    let objective_source_ordinal =
+        required_u64(objective, "source_ordinal", stage_label)?;
+    let source_alias = required_string(objective, "source_alias", stage_label)?;
+    if objective_source_ordinal <= stage_source_ordinal || source_alias.is_empty() {
+        return Err(PipelineError::new(format!(
+            "{stage_label} objective identity is malformed"
+        )));
+    }
+    let canonical_kind = optional_nonempty_string(
+        objective,
+        "canonical_kind",
+        stage_label,
+    )?;
+    let unavailable_code = optional_nonempty_string(
+        objective,
+        "unavailable_code",
+        stage_label,
+    )?;
+    if canonical_kind.is_some() == unavailable_code.is_some() {
+        return Err(PipelineError::new(format!(
+            "{stage_label} objective mapping is not exclusive"
+        )));
+    }
+    Ok(())
+}
+
+fn optional_nonempty_string<'a>(
+    object: &'a Map<String, Value>,
+    field: &str,
+    label: &str,
+) -> PipelineOutcome<Option<&'a str>> {
+    match object.get(field) {
+        Some(Value::Null) => Ok(None),
+        Some(value) => value
+            .as_str()
+            .filter(|text| !text.is_empty())
+            .map(Some)
+            .ok_or_else(|| {
+                PipelineError::new(format!(
+                    "{label} has invalid optional string field {field}"
+                ))
+            }),
+        None => Err(PipelineError::new(format!(
+            "{label} is missing optional string field {field}"
+        ))),
+    }
 }
 
 fn validate_mission_id(value: &str) -> PipelineOutcome<()> {
