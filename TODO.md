@@ -294,7 +294,10 @@ Current task list. Project phases and dated progress are recorded in
           with topology: 6 iris and 14 fade requests are visual transitions,
           5 stay-black and 108 stage-complete markers are presentation policy,
           while 3 level-over and 1 game-over markers are terminal overrides.
-          Iris wins the one observed stage that also authors fade.
+          Preserve all 137 authored marker occurrences across 127 stages with
+          exact source ordinals and source order; three reviewed stages contain
+          two distinct `ShowStageComplete` occurrences and retain both. Iris wins
+          the one observed stage that also authors fade.
         - [x] Compile authored order for all 611 stages across 154 selected
           mission sources. Preserve the next authored neighbor as evidence only,
           accept the 64 sources with no explicit `final`, and require each

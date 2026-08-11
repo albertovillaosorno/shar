@@ -202,7 +202,10 @@ completion. Authored topology now preserves dense stage order and the next
 source neighbor without promoting adjacency to runtime flow. All 90 explicit
 `final` markers and all four explicit level/game terminals occur only on the
 last stage; 64 selected mission sources legitimately omit `final`. Ordinary
-successor, retry, rollback, and recovery edges remain unresolved.
+successor, retry, rollback, and recovery edges remain unresolved. The typed transition report also retains all 137
+authored marker occurrences across 127 stages with exact source ordinals and
+source order. Three stages author `ShowStageComplete` twice; both occurrences
+survive into definition-core evidence instead of collapsing into one boolean.
 
 Checkpoint evidence is retained on that authored topology without defining a
 recovery edge. The reviewed corpus contains 119 `reset_to_here` markers across
