@@ -110,6 +110,66 @@ fn snapshot(
     ))
 }
 
+fn dynamic_mission_evidence(
+    mission_id: &str,
+    source_data: &str,
+) -> Result<MissionScriptEvidence, String> {
+    let value = json!({
+        "schema":"shar-schoenwald.straggler.mission-script.v3",
+        "source_extension":"mfk","route_class":"mission","source_bytes":64,
+        "context_command_count":6,"context_adaptation_count":0,
+        "context_adaptations":[],"context_finding_count":0,
+        "context_findings":[],"statement_count":7,"unique_command_count":7,
+        "load_p3d_reference_count":0,"mission_flow_command_count":6,
+        "vehicle_physics_command_count":0,"semantic_family":"mission-script",
+        "command_counts":{
+            "selectmission":1,"setdynaloaddata":1,"addstage":1,
+            "addobjective":1,"closeobjective":1,"closestage":1,
+            "closemission":1
+        },
+        "source_statements":[
+            format!("SelectMission(\"{mission_id}\");"),
+            format!("SetDynaLoadData(\"{source_data}\");"),
+            "AddStage(0);","AddObjective(\"dummy\");",
+            "CloseObjective();","CloseStage();","CloseMission();"
+        ],
+        "p3d_references":[],
+        "command_invocations":[
+            {"ordinal":1,"name":"selectmission",
+             "args_raw":format!("\"{mission_id}\""),
+             "semantic_role":"mission-script","arguments":[mission_id]},
+            {"ordinal":2,"name":"setdynaloaddata",
+             "args_raw":format!("\"{source_data}\""),
+             "semantic_role":"mission-script","arguments":[source_data]},
+            {"ordinal":3,"name":"addstage","args_raw":"0",
+             "semantic_role":"mission-stage","arguments":["0"]},
+            {"ordinal":4,"name":"addobjective","args_raw":"\"dummy\"",
+             "semantic_role":"mission-objective","arguments":["dummy"]},
+            {"ordinal":5,"name":"closeobjective","args_raw":"",
+             "semantic_role":"mission-objective","arguments":[]},
+            {"ordinal":6,"name":"closestage","args_raw":"",
+             "semantic_role":"mission-stage","arguments":[]},
+            {"ordinal":7,"name":"closemission","args_raw":"",
+             "semantic_role":"mission-script","arguments":[]}
+        ]
+    });
+    preflight_mission_script(
+        &serde_json::to_string(&value).map_err(|error| error.to_string())?,
+    )
+}
+
+fn dynamic_snapshot(
+    path: &str,
+    mission_id: &str,
+    source_data: &str,
+) -> Result<MissionLocatorScriptSnapshot, String> {
+    Ok(MissionLocatorScriptSnapshot::new(
+        path.to_owned(),
+        dynamic_mission_evidence(mission_id, source_data)?,
+        Vec::new(),
+    ))
+}
+
 #[test]
 fn chooses_longest_matching_level_load_family() -> Result<(), String> {
     let available = BTreeSet::from([
@@ -290,6 +350,53 @@ fn selected_mission_without_load_sibling_fails_closed() -> Result<(), String> {
     };
     if !error.contains("paired load source is missing") {
         return Err(format!("unexpected missing-load diagnostic: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn unindexed_initial_dynamic_package_stays_explicit() -> Result<(), String> {
+    let snapshots = vec![
+        snapshot(
+            "extracted/game/scripts/missions/level01/level.mfk.json",
+            None,
+            &["extracted/art/missions/level01/level"],
+        )?,
+        snapshot(
+            "extracted/game/scripts/missions/level01/m1l.mfk.json",
+            None,
+            &["extracted/art/missions/level01/m1"],
+        )?,
+        dynamic_snapshot(
+            "extracted/game/scripts/missions/level01/m1i.mfk.json",
+            "m1",
+            "l1z7.p3d;l1missing.p3d",
+        )?,
+    ];
+    let indexed = BTreeSet::from(["extracted/art/l1z7".to_owned()]);
+    let contexts = build_mission_locator_source_contexts(&snapshots, &indexed)?;
+    let context = contexts
+        .get("extracted/game/scripts/missions/level01/m1i.mfk.json")
+        .ok_or_else(|| "m1 locator context is missing".to_owned())?;
+    let mission = context
+        .mission("m1")
+        .ok_or_else(|| "m1 active package report is missing".to_owned())?;
+    if mission.package_roots()
+        != [
+            "extracted/art/missions/level01/level".to_owned(),
+            "extracted/art/missions/level01/m1".to_owned(),
+            "extracted/art/l1z7".to_owned(),
+        ]
+    {
+        return Err(format!(
+            "indexed Dyna package visibility drifted: {:?}",
+            mission.package_roots()
+        ));
+    }
+    if context.unindexed_initial_dynamic_package_roots()
+        != ["extracted/art/l1missing".to_owned()]
+    {
+        return Err("unindexed Dyna package evidence was lost".to_owned());
     }
     Ok(())
 }
