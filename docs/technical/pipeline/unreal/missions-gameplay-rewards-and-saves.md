@@ -308,13 +308,13 @@ script for their exact source level, with one unique structural window where the
 `MissionN` symbol is followed by the authored `StageN` value. The binding
 preserves script member identity, path, and both source offsets. It does not
 claim that named-asset adjacency is a decoded RADMusic state machine or choose
-playback, mix, event, or transition behavior. `StageStartMusicEvent` stays
-separate for a different source-backed reason: the runtime converts its authored
-token to a case-insensitive legacy key and emits it through the mission-drama
-event when the stage starts. It is not a direct score-library named-asset
-lookup.
-The migration still needs a repo-owned key/event bridge before native emission;
-that bridge must not invent playback or mix policy.
+playback, mix, event, or transition behavior. The 14 reviewed
+`StageStartMusicEvent` calls now bind independently to their exact owning stage.
+Each binding preserves the authored token plus the source-runtime
+`mission-drama` delivery channel and `legacy-case-insensitive-key32` transform
+identity. It is not a direct score-library named-asset lookup, and no numeric
+legacy key, playback, mix, or transition policy is synthesized. Native emission
+still requires a separately validated key/event bridge.
 
 Completion-dialog identities now resolve through the canonical mission-dialog
 catalog. All 38 reviewed `SetCompletionDialog` ids form exactly one same-level
@@ -540,11 +540,11 @@ stage/objective semantic reports are empty.
 
 `prepare-unreal` now serializes that joined core into the versioned
 `mission-definitions.jsonl` staging artifact before native asset construction.
-The fresh corpus emits 154 schema-v2 rows keyed by unique verified
+The fresh corpus emits 154 schema-v3 rows keyed by unique verified
 mission-script source ids. The rows contain all 611 stages, 408 conditions, 137
-transition
-marker occurrences, 43 countdown blocks, 36 collectible-waypoint bindings, 180
-objective NPC waypoints, and four pickup state-prop bindings. Every condition
+transition-marker occurrences, 43 countdown blocks, 14 stage-start music
+events, 36 collectible-waypoint bindings, 180 objective NPC waypoints, and four
+pickup state-prop bindings. Every condition
 row carries the source-runtime `stage-failure` violation effect, while the four
 pickup bindings retain two mission-scope and two stage-scope declarations. The
 bundle contains no synthesized successor, retry, rollback, or recovery edge

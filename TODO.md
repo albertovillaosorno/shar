@@ -360,13 +360,13 @@ Current task list. Project phases and dated progress are recorded in
           base score-library script for their exact source level. Preserve the
           compiled metadata member id/path plus the unique named-asset offsets
           for each `MissionN`/`StageN` source window. Do not decode RADMusic
-          state-machine or playback semantics from symbol adjacency. The 14
-          `StageStartMusicEvent` calls remain a separate runtime-event binding:
-          source-runtime review shows their authored token is converted to a
-          case-insensitive legacy key and emitted through the mission-drama
-          event at stage start, rather than looked up as a score-library named
-          asset. Preserve that distinction until the key and native event bridge
-          are reproduced without guessing playback or mix policy.
+          state-machine or playback semantics from symbol adjacency.
+        - [x] Bind all 14 reviewed `StageStartMusicEvent` calls to their exact
+          owning stage while preserving the authored event token. Source-runtime
+          review identifies the separate `mission-drama` delivery channel and
+          required `legacy-case-insensitive-key32` transform. Publish those
+          identities without inventing a numeric key, playback, mix, or
+          transition policy; a validated native key bridge remains separate.
         - [x] Bind all 38 reviewed `SetCompletionDialog` ids to one
           canonical same-level mission-conversation group. Preserve every
           participant audio package in the group: 26 groups contain one package
@@ -383,8 +383,9 @@ Current task list. Project phases and dated progress are recorded in
           audio package without inferring speaker order or playback behavior.
         - [x] Preserve semantic ownership through downstream mission bindings
           instead of reconstructing it from source adjacency: all six FMVs keep
-          stage+objective owners; all nine music-state and 38 completion-dialog
-          bindings keep exact stage owners; all 128 dialogue-info bindings keep
+          stage+objective owners; all nine music-state, 14 stage-start music,
+          and 38 completion-dialog bindings keep exact stage owners; all 128
+          dialogue-info bindings keep
           stage+objective owners; all 36 collectible-waypoint bindings keep
           stage+objective owners; all 43 countdown blocks keep exact stage
           owners; and all four pickup-target bindings keep stage+objective
@@ -406,9 +407,10 @@ Current task list. Project phases and dated progress are recorded in
           identity, direct typed parameters, checkpoint/final/terminal evidence,
           visual transition/stay-black/stage-complete presentation, and the
           authored next neighbor. The same core now retains all 137 exact
-          transition-marker occurrences, all 43 countdown blocks, all 36
-          collectible-to-waypoint bindings, and all 180 resolved objective NPC
-          waypoints under exact stage/objective ownership. The authored neighbor
+          transition-marker occurrences, all 43 countdown blocks, all 14
+          stage-start music events, all 36 collectible-to-waypoint bindings,
+          and all 180 resolved objective NPC waypoints under exact
+          stage/objective ownership. The authored neighbor
           remains evidence only, not a runtime success/failure/retry/recovery
           edge.
         - [x] Keep utility mission-script sources valid through downstream
@@ -419,15 +421,16 @@ Current task list. Project phases and dated progress are recorded in
         - [x] Publish the joined definition core as deterministic versioned
           staging data before native asset construction. `prepare-unreal` now
           writes `mission-definitions.jsonl` as the tenth transactional staging
-          artifact: 154 source-keyed schema-v2 rows retain all 611 stages, 408
-          conditions, 137 transition markers, 43 countdown blocks, 36
-          collectible-waypoint bindings, 180 objective NPC waypoints, and four
-          pickup state-prop bindings. Every definition source is one of the 344
+          artifact: 154 source-keyed schema-v3 rows retain all 611 stages, 408
+          conditions, 137 transition markers, 43 countdown blocks, 14
+          stage-start music events, 36 collectible-waypoint bindings, 180
+          objective NPC waypoints, and four pickup state-prop bindings. Every
+          definition source is one of the 344
           verified mission-script sources, source ids are unique, and each
           condition row publishes the reviewed `stage-failure` violation effect.
           The rows still publish no successor/retry/rollback/recovery edges.
-          This is
-          source-backed semantic staging, not `USharMissionDefinition` or
+          This is source-backed semantic staging, not `USharMissionDefinition`
+          or
           StateTree asset emission.
     - [ ] Emit lossless `USharMissionDefinition` assets only after the complete
       mission graph passes reference and topology validation.
