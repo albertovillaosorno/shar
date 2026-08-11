@@ -110,8 +110,15 @@ fn mission_definition_row(source_id: &str, mission_id: &str) -> String {
 fn mission_definition_row_with_stages(
     source_id: &str,
     mission_id: &str,
-    stages: Vec<serde_json::Value>,
+    mut stages: Vec<serde_json::Value>,
 ) -> String {
+    for stage in &mut stages {
+        if let Some(stage) = stage.as_object_mut() {
+            let _ = stage
+                .entry("conditions".to_owned())
+                .or_insert_with(|| json!([]));
+        }
+    }
     let mut value = serde_json::to_string(&json!({
         "mission_id": mission_id,
         "schema": "shar-schoenwald.mission-definition-core.v3",
@@ -1624,4 +1631,186 @@ fn rejects_mission_definition_with_nonexclusive_objective_mapping() {
     )
     .expect_err("nonexclusive objective mapping must fail");
     assert!(error.to_string().contains("objective mapping is not exclusive"));
+}
+
+#[test]
+fn accepts_owned_mission_definition_conditions() -> Result<(), String> {
+    let rows = vec![mission_definition_row_with_stages(
+        "script-one",
+        "m1",
+        vec![json!({
+            "conditions": [
+                {
+                    "owner_objective_source_ordinal": null,
+                    "schema_id": "legacy-mission-condition.timeout.v1",
+                    "scope": "stage",
+                    "source_alias": "timeout",
+                    "source_ordinal": 3,
+                    "violation_effect": "stage-failure",
+                },
+                {
+                    "owner_objective_source_ordinal": 2,
+                    "schema_id": "legacy-mission-condition.damage.v1",
+                    "scope": "objective",
+                    "source_alias": "damage",
+                    "source_ordinal": 4,
+                    "violation_effect": "stage-failure",
+                },
+            ],
+            "explicit_final": false,
+            "kind": {
+                "final_stage": false,
+                "kind": "standard",
+                "legacy_flags": 0,
+            },
+            "next_authored_sequence_ordinal": null,
+            "objective": {
+                "canonical_kind": "travel",
+                "source_alias": "goto",
+                "source_ordinal": 2,
+                "unavailable_code": null,
+            },
+            "sequence_ordinal": 0,
+            "stage_source_ordinal": 1,
+            "terminal": "none",
+        })],
+    )];
+    drop(
+        validate_mission_definition_bundle(
+            &rows,
+            &[mission_source("script-one")],
+        )
+        .map_err(|error| error.to_string())?,
+    );
+    Ok(())
+}
+
+#[test]
+fn rejects_mission_definition_condition_owner_drift() {
+    let rows = vec![mission_definition_row_with_stages(
+        "script-one",
+        "m1",
+        vec![json!({
+            "conditions": [{
+                "owner_objective_source_ordinal": 9,
+                "schema_id": "legacy-mission-condition.timeout.v1",
+                "scope": "objective",
+                "source_alias": "timeout",
+                "source_ordinal": 3,
+                "violation_effect": "stage-failure",
+            }],
+            "explicit_final": false,
+            "kind": {
+                "final_stage": false,
+                "kind": "standard",
+                "legacy_flags": 0,
+            },
+            "next_authored_sequence_ordinal": null,
+            "objective": {
+                "canonical_kind": "travel",
+                "source_alias": "goto",
+                "source_ordinal": 2,
+                "unavailable_code": null,
+            },
+            "sequence_ordinal": 0,
+            "stage_source_ordinal": 1,
+            "terminal": "none",
+        })],
+    )];
+    let error = validate_mission_definition_bundle(
+        &rows,
+        &[mission_source("script-one")],
+    )
+    .expect_err("condition owner drift must fail");
+    assert!(error.to_string().contains("objective owner drifted"));
+}
+
+#[test]
+fn rejects_mission_definition_condition_order_drift() {
+    let rows = vec![mission_definition_row_with_stages(
+        "script-one",
+        "m1",
+        vec![json!({
+            "conditions": [
+                {
+                    "owner_objective_source_ordinal": null,
+                    "schema_id": "legacy-mission-condition.timeout.v1",
+                    "scope": "stage",
+                    "source_alias": "timeout",
+                    "source_ordinal": 4,
+                    "violation_effect": "stage-failure",
+                },
+                {
+                    "owner_objective_source_ordinal": null,
+                    "schema_id": "legacy-mission-condition.damage.v1",
+                    "scope": "stage",
+                    "source_alias": "damage",
+                    "source_ordinal": 3,
+                    "violation_effect": "stage-failure",
+                },
+            ],
+            "explicit_final": false,
+            "kind": {
+                "final_stage": false,
+                "kind": "standard",
+                "legacy_flags": 0,
+            },
+            "next_authored_sequence_ordinal": null,
+            "objective": {
+                "canonical_kind": "travel",
+                "source_alias": "goto",
+                "source_ordinal": 2,
+                "unavailable_code": null,
+            },
+            "sequence_ordinal": 0,
+            "stage_source_ordinal": 1,
+            "terminal": "none",
+        })],
+    )];
+    let error = validate_mission_definition_bundle(
+        &rows,
+        &[mission_source("script-one")],
+    )
+    .expect_err("condition source order drift must fail");
+    assert!(error.to_string().contains("source ordinal is malformed"));
+}
+
+#[test]
+fn rejects_mission_definition_condition_violation_drift() {
+    let rows = vec![mission_definition_row_with_stages(
+        "script-one",
+        "m1",
+        vec![json!({
+            "conditions": [{
+                "owner_objective_source_ordinal": null,
+                "schema_id": "legacy-mission-condition.timeout.v1",
+                "scope": "stage",
+                "source_alias": "timeout",
+                "source_ordinal": 3,
+                "violation_effect": "retry-stage",
+            }],
+            "explicit_final": false,
+            "kind": {
+                "final_stage": false,
+                "kind": "standard",
+                "legacy_flags": 0,
+            },
+            "next_authored_sequence_ordinal": null,
+            "objective": {
+                "canonical_kind": "travel",
+                "source_alias": "goto",
+                "source_ordinal": 2,
+                "unavailable_code": null,
+            },
+            "sequence_ordinal": 0,
+            "stage_source_ordinal": 1,
+            "terminal": "none",
+        })],
+    )];
+    let error = validate_mission_definition_bundle(
+        &rows,
+        &[mission_source("script-one")],
+    )
+    .expect_err("condition violation drift must fail");
+    assert!(error.to_string().contains("unknown violation effect"));
 }

@@ -1263,9 +1263,15 @@ fn validate_mission_definition_stages(
             explicit_final,
             &stage_label,
         )?;
-        validate_mission_definition_objective(
+        let objective_source_ordinal = validate_mission_definition_objective(
             stage,
             source_ordinal,
+            &stage_label,
+        )?;
+        validate_mission_definition_conditions(
+            stage,
+            source_ordinal,
+            objective_source_ordinal,
             &stage_label,
         )?;
         let terminal = required_string(stage, "terminal", &stage_label)?;
@@ -1346,7 +1352,7 @@ fn validate_mission_definition_objective(
     stage: &Map<String, Value>,
     stage_source_ordinal: u64,
     stage_label: &str,
-) -> PipelineOutcome<()> {
+) -> PipelineOutcome<u64> {
     let objective = stage
         .get("objective")
         .and_then(Value::as_object)
@@ -1377,6 +1383,79 @@ fn validate_mission_definition_objective(
         return Err(PipelineError::new(format!(
             "{stage_label} objective mapping is not exclusive"
         )));
+    }
+    Ok(objective_source_ordinal)
+}
+
+fn validate_mission_definition_conditions(
+    stage: &Map<String, Value>,
+    stage_source_ordinal: u64,
+    objective_source_ordinal: u64,
+    stage_label: &str,
+) -> PipelineOutcome<()> {
+    let conditions = stage
+        .get("conditions")
+        .and_then(Value::as_array)
+        .ok_or_else(|| {
+            PipelineError::new(format!(
+                "{stage_label} is missing its condition array"
+            ))
+        })?;
+    let mut previous_source_ordinal = None;
+    for (index, value) in conditions.iter().enumerate() {
+        let condition_label = format!("{stage_label} condition {}", index + 1);
+        let condition = value.as_object().ok_or_else(|| {
+            PipelineError::new(format!("{condition_label} is not an object"))
+        })?;
+        let source_ordinal =
+            required_u64(condition, "source_ordinal", &condition_label)?;
+        if source_ordinal <= stage_source_ordinal
+            || previous_source_ordinal
+                .is_some_and(|previous| source_ordinal <= previous)
+        {
+            return Err(PipelineError::new(format!(
+                "{condition_label} source ordinal is malformed"
+            )));
+        }
+        previous_source_ordinal = Some(source_ordinal);
+        if required_string(condition, "source_alias", &condition_label)?
+            .is_empty()
+            || required_string(condition, "schema_id", &condition_label)?
+                .is_empty()
+        {
+            return Err(PipelineError::new(format!(
+                "{condition_label} identity is malformed"
+            )));
+        }
+        let owner = condition.get("owner_objective_source_ordinal");
+        match required_string(condition, "scope", &condition_label)?.as_str() {
+            "stage" => {
+                if !matches!(owner, Some(Value::Null)) {
+                    return Err(PipelineError::new(format!(
+                        "{condition_label} stage scope owns an objective"
+                    )));
+                }
+            },
+            "objective" => {
+                if owner.and_then(Value::as_u64) != Some(objective_source_ordinal) {
+                    return Err(PipelineError::new(format!(
+                        "{condition_label} objective owner drifted"
+                    )));
+                }
+            },
+            _ => {
+                return Err(PipelineError::new(format!(
+                    "{condition_label} has unknown condition scope"
+                )));
+            },
+        }
+        if required_string(condition, "violation_effect", &condition_label)?
+            != "stage-failure"
+        {
+            return Err(PipelineError::new(format!(
+                "{condition_label} has unknown violation effect"
+            )));
+        }
     }
     Ok(())
 }
