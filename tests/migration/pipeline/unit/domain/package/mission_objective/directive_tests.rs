@@ -628,17 +628,21 @@ fn pins_external_semantic_owners_for_objective_commands() -> Result<(), String>
 #[test]
 fn semantic_binding_preserves_canonical_kind_and_unavailability() {
     let mapped = MissionObjectiveSemanticReport::from_route_entries_for_tests(
-        vec![(3, "goto".to_owned(), Vec::new())],
+        vec![(2, 0, 3, "goto".to_owned(), Vec::new())],
     );
     let [mapped] = mapped.objectives() else {
         panic!("mapped objective fixture changed count");
     };
+    assert_eq!(mapped.owner_stage_source_ordinal(), 2);
+    assert_eq!(mapped.owner_stage_sequence_ordinal(), 0);
     assert_eq!(mapped.source_alias(), "goto");
     assert_eq!(mapped.canonical_kind(), Some("travel"));
     assert_eq!(mapped.unavailable_code(), None);
 
     let unavailable =
         MissionObjectiveSemanticReport::from_route_entries_for_tests(vec![(
+            2,
+            0,
             4,
             "dummy".to_owned(),
             Vec::new(),
@@ -658,6 +662,8 @@ fn semantic_binding_preserves_canonical_kind_and_unavailability() {
 fn binds_objective_npc_waypoints_to_prior_declaration() -> Result<(), String> {
     let report = MissionObjectiveSemanticReport::from_route_entries_for_tests(
         vec![(
+            2,
+            0,
             3,
             "talkto".to_owned(),
             vec![
@@ -693,6 +699,8 @@ fn binds_objective_npc_waypoints_to_prior_declaration() -> Result<(), String> {
 fn rejects_objective_waypoint_without_unique_prior_npc() {
     let report = MissionObjectiveSemanticReport::from_route_entries_for_tests(
         vec![(
+            2,
+            0,
             3,
             "talkto".to_owned(),
             vec![MissionObjectiveDirective::NpcWaypoint {

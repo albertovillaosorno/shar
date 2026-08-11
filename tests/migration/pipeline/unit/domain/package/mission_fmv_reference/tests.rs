@@ -65,6 +65,8 @@ fn objectives(
     legacy: Option<&str>,
 ) -> MissionObjectiveSemanticReport {
     MissionObjectiveSemanticReport::from_route_entries_for_tests(vec![(
+        19,
+        0,
         20,
         "fmv".to_owned(),
         vec![MissionObjectiveDirective::FmvInfo {

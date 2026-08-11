@@ -329,6 +329,8 @@ pub enum MissionObjectiveDirective {
 /// Typed selected directives for one projected objective.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MissionObjectiveSemanticBinding {
+    owner_stage_source_ordinal: usize,
+    owner_stage_sequence_ordinal: usize,
     source_ordinal: usize,
     source_alias: String,
     canonical_kind: Option<&'static str>,
@@ -337,6 +339,18 @@ pub struct MissionObjectiveSemanticBinding {
 }
 
 impl MissionObjectiveSemanticBinding {
+    /// Return the source `AddStage` ordinal owning this objective.
+    #[must_use]
+    pub const fn owner_stage_source_ordinal(&self) -> usize {
+        self.owner_stage_source_ordinal
+    }
+
+    /// Return the dense authored stage ordinal owning this objective.
+    #[must_use]
+    pub const fn owner_stage_sequence_ordinal(&self) -> usize {
+        self.owner_stage_sequence_ordinal
+    }
+
     /// Return the source `AddObjective` ordinal.
     #[must_use]
     pub const fn source_ordinal(&self) -> usize {
@@ -439,14 +453,28 @@ impl MissionObjectiveSemanticReport {
 
     #[cfg(test)]
     pub(crate) fn from_route_entries_for_tests(
-        entries: Vec<(usize, String, Vec<MissionObjectiveDirective>)>,
+        entries: Vec<(
+            usize,
+            usize,
+            usize,
+            String,
+            Vec<MissionObjectiveDirective>,
+        )>,
     ) -> Self {
         Self {
             objectives: entries
                 .into_iter()
-                .map(|(source_ordinal, source_alias, directives)| {
+                .map(|(
+                    owner_stage_source_ordinal,
+                    owner_stage_sequence_ordinal,
+                    source_ordinal,
+                    source_alias,
+                    directives,
+                )| {
                     let schema = super::objective_alias_schema(&source_alias);
                     MissionObjectiveSemanticBinding {
+                        owner_stage_source_ordinal,
+                        owner_stage_sequence_ordinal,
                         source_ordinal,
                         source_alias,
                         canonical_kind:
@@ -527,13 +555,19 @@ pub fn preflight_mission_objective_semantics(
     let mut objectives = Vec::new();
     for mission in scopes.missions() {
         for stage in mission.stages() {
-            objectives.push(compile_objective(stage.objective())?);
+            objectives.push(compile_objective(
+                stage.source_ordinal(),
+                stage.sequence_ordinal(),
+                stage.objective(),
+            )?);
         }
     }
     Ok(MissionObjectiveSemanticReport { objectives })
 }
 
 fn compile_objective(
+    owner_stage_source_ordinal: usize,
+    owner_stage_sequence_ordinal: usize,
     objective: &MissionScopeObjective,
 ) -> Result<MissionObjectiveSemanticBinding, String> {
     let source_alias = objective.binding().source_alias();
@@ -557,6 +591,8 @@ fn compile_objective(
         }
     }
     Ok(MissionObjectiveSemanticBinding {
+        owner_stage_source_ordinal,
+        owner_stage_sequence_ordinal,
         source_ordinal: objective.binding().ordinal(),
         source_alias: source_alias.to_owned(),
         canonical_kind: objective.binding().canonical_kind(),

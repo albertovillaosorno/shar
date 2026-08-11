@@ -52,6 +52,8 @@ fn reports(
     let objectives =
         MissionObjectiveSemanticReport::from_route_entries_for_tests(
         vec![(
+            2,
+            0,
             3,
             "dump".to_owned(),
             vec![

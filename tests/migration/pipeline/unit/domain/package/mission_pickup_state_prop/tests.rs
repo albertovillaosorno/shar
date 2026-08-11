@@ -34,6 +34,8 @@ use super::*;
 
 fn objective(target_ordinal: usize) -> MissionObjectiveSemanticReport {
     MissionObjectiveSemanticReport::from_route_entries_for_tests(vec![(
+        7,
+        0,
         8,
         "pickupitem".to_owned(),
         vec![MissionObjectiveDirective::PickupTarget {
