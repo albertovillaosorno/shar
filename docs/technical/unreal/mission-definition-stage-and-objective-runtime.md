@@ -340,9 +340,16 @@ duplicate policy identities, unsupported objective kinds and start/recovery
 rules, noncanonical references or targets, unknown stage policy references, and
 stage/policy objective-kind disagreement. The migration domain now preserves
 its closed legacy-alias mapping through semantic projection: 609 reviewed
-objectives retain a canonical runtime kind while both reviewed `dummy` objectives
-retain their explicit unavailable identity. This still does not supply objective
+objectives retain a canonical runtime kind while both reviewed `dummy`
+objectives retain their explicit unavailable identity. This still does not supply
+objective
 policy, transition, or recovery semantics required for final asset emission.
+
+Condition schema identity now survives the equivalent semantic projection. All
+408 reviewed conditions across seven closed source aliases retain their exact
+versioned `legacy-mission-condition.*.v1` schema id. This is definition identity,
+not authority to map `IsViolated` or a condition directive to stage failure,
+retry, rollback, or recovery.
 
 ## Conversion command registry
 
