@@ -35,6 +35,7 @@ use super::mission_script::MissionScriptEvidence;
 mod directive;
 mod modifier;
 mod parameter;
+mod violation;
 
 pub use directive::{
     MissionConditionDirective, MissionConditionSemanticBinding,
@@ -47,6 +48,10 @@ pub use modifier::{
 pub use parameter::{
     MissionConditionParameterBinding, MissionConditionParameterReport,
     MissionConditionParameters, preflight_mission_condition_parameters,
+};
+pub use violation::{
+    MissionConditionViolationBinding, MissionConditionViolationEffect,
+    MissionConditionViolationReport, preflight_mission_condition_violations,
 };
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
