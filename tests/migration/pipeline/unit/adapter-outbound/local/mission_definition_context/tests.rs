@@ -31,14 +31,23 @@
 //! Unit evidence for source-backed mission definition-core joins.
 
 use super::*;
+use crate::domain::package::MissionPickupStatePropScope;
 use crate::domain::{
     MissionConditionParameters, MissionConditionSemanticReport,
+    MissionInitializationDirective, MissionInitializationReport,
     MissionObjectiveParameters, MissionObjectiveSemanticReport,
     MissionRoadArrowBinding, MissionRoadArrowMode, MissionStageDirective,
     MissionStageSemanticReport, MissionStageTransitionMarkerKind,
     MissionStageVisualTransition,
     preflight_mission_authored_stage_topology,
 };
+
+fn empty_initialization(mission_id: &str) -> MissionInitializationReport {
+    MissionInitializationReport::from_directives_for_tests(
+        mission_id,
+        Vec::new(),
+    )
+}
 
 fn reports() -> (
     MissionStageSemanticReport,
@@ -146,6 +155,7 @@ fn joins_source_backed_stage_definition_core() -> Result<(), String> {
     let (stages, objectives, conditions, topology) = reports();
     let report = build_definition_core(
         "m1",
+        &empty_initialization("m1"),
         &stages,
         &objectives,
         &conditions,
@@ -165,6 +175,7 @@ fn joins_source_backed_stage_definition_core() -> Result<(), String> {
     assert!(!first.stay_in_black());
     assert!(!first.show_stage_complete());
     assert!(first.objective_npc_waypoints().is_empty());
+    assert!(first.pickup_state_props().is_empty());
     let first_markers = first
         .transition_markers()
         .iter()
@@ -221,6 +232,7 @@ fn joins_source_backed_stage_definition_core() -> Result<(), String> {
     assert!(second.show_stage_complete());
     assert!(second.countdown().is_none());
     assert!(second.objective_npc_waypoints().is_empty());
+    assert!(second.pickup_state_props().is_empty());
     let second_markers = second
         .transition_markers()
         .iter()
@@ -264,6 +276,7 @@ fn rejects_objective_with_wrong_stage_owner() {
         ]);
     let error = build_definition_core(
         "m1",
+        &empty_initialization("m1"),
         &stages,
         &objectives,
         &conditions,
@@ -288,6 +301,7 @@ fn rejects_condition_with_unknown_stage_owner() {
         )]);
     let error = build_definition_core(
         "m1",
+        &empty_initialization("m1"),
         &stages,
         &objectives,
         &conditions,
@@ -312,6 +326,7 @@ fn rejects_objective_condition_with_wrong_root_owner() {
         )]);
     let error = build_definition_core(
         "m1",
+        &empty_initialization("m1"),
         &stages,
         &objectives,
         &conditions,
@@ -363,6 +378,7 @@ fn joins_collectible_waypoint_source_evidence() -> Result<(), String> {
         .expect("topology fixture must stay valid");
     let report = build_definition_core(
         "m1",
+        &empty_initialization("m1"),
         &stages,
         &objectives,
         &conditions,
@@ -387,5 +403,125 @@ fn joins_collectible_waypoint_source_evidence() -> Result<(), String> {
     assert_eq!(binding.waypoint_index(), 0);
     assert_eq!(binding.waypoint_source_ordinal(), 4);
     assert_eq!(binding.waypoint_locator_id(), "route_a");
+    Ok(())
+}
+
+#[test]
+fn joins_pickup_state_prop_source_evidence() -> Result<(), String> {
+    let initialization = empty_initialization("m1");
+    let stages = MissionStageSemanticReport::from_topology_entries_for_tests(
+        vec![(
+            2,
+            0,
+            false,
+            vec![MissionStageDirective::CollectibleStateProp {
+                source_ordinal: 4,
+                prop_id: "bombbarrel".to_owned(),
+                locator_id: "barrel_start".to_owned(),
+                source_state: 2,
+            }],
+        )],
+    );
+    let objectives = MissionObjectiveSemanticReport::
+        from_route_entries_for_tests(vec![(
+            2,
+            0,
+            3,
+            "pickupitem".to_owned(),
+            vec![crate::domain::package::MissionObjectiveDirective::
+                PickupTarget {
+                    source_ordinal: 5,
+                    target_id: "bombbarrel".to_owned(),
+                }],
+        )]);
+    let conditions = MissionConditionSemanticReport::
+        from_owned_entries_for_tests(Vec::new());
+    let topology = preflight_mission_authored_stage_topology(&stages)
+        .expect("topology fixture must stay valid");
+    let report = build_definition_core(
+        "m1",
+        &initialization,
+        &stages,
+        &objectives,
+        &conditions,
+        &topology,
+    )
+    .map_err(|error| error.to_string())?;
+    let [stage] = report.stages() else {
+        return Err("definition-core stage count changed".to_owned());
+    };
+    let [binding] = stage.pickup_state_props() else {
+        return Err("definition-core pickup binding count changed".to_owned());
+    };
+    assert_eq!(binding.owner_stage_source_ordinal(), 2);
+    assert_eq!(binding.owner_stage_sequence_ordinal(), 0);
+    assert_eq!(binding.owner_objective_source_ordinal(), 3);
+    assert_eq!(binding.target_source_ordinal(), 5);
+    assert_eq!(binding.target_id(), "bombbarrel");
+    assert_eq!(binding.declaration_source_ordinal(), 4);
+    assert_eq!(
+        binding.declaration_scope(),
+        MissionPickupStatePropScope::Stage {
+            source_ordinal: 2,
+            sequence_ordinal: 0,
+        }
+    );
+    assert_eq!(binding.locator_id(), "barrel_start");
+    assert_eq!(binding.source_state(), 2);
+    Ok(())
+}
+
+#[test]
+fn joins_mission_scope_pickup_state_prop_source_evidence(
+) -> Result<(), String> {
+    let initialization = MissionInitializationReport::from_directives_for_tests(
+        "m1",
+        vec![MissionInitializationDirective::CollectibleStateProp {
+            source_ordinal: 1,
+            prop_id: "bombbarrel".to_owned(),
+            locator_id: "mission_barrel".to_owned(),
+            source_state: 3,
+        }],
+    );
+    let stages = MissionStageSemanticReport::from_topology_entries_for_tests(
+        vec![(2, 0, false, Vec::new())],
+    );
+    let objectives = MissionObjectiveSemanticReport::
+        from_route_entries_for_tests(vec![(
+            2,
+            0,
+            3,
+            "pickupitem".to_owned(),
+            vec![crate::domain::package::MissionObjectiveDirective::
+                PickupTarget {
+                    source_ordinal: 4,
+                    target_id: "bombbarrel".to_owned(),
+                }],
+        )]);
+    let conditions = MissionConditionSemanticReport::
+        from_owned_entries_for_tests(Vec::new());
+    let topology = preflight_mission_authored_stage_topology(&stages)
+        .expect("topology fixture must stay valid");
+    let report = build_definition_core(
+        "m1",
+        &initialization,
+        &stages,
+        &objectives,
+        &conditions,
+        &topology,
+    )
+    .map_err(|error| error.to_string())?;
+    let [stage] = report.stages() else {
+        return Err("definition-core stage count changed".to_owned());
+    };
+    let [binding] = stage.pickup_state_props() else {
+        return Err("definition-core pickup binding count changed".to_owned());
+    };
+    assert_eq!(
+        binding.declaration_scope(),
+        MissionPickupStatePropScope::Mission
+    );
+    assert_eq!(binding.locator_id(), "mission_barrel");
+    assert_eq!(binding.source_state(), 3);
     Ok(())
 }

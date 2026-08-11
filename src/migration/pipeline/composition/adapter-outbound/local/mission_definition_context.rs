@@ -38,16 +38,18 @@ use std::collections::BTreeSet;
 use crate::domain::package::{
     MissionAuthoredStageTopologyReport, MissionCollectibleWaypointBinding,
     MissionCountdownBinding, MissionObjectiveNpcWaypointBinding,
+    MissionPickupStatePropBinding,
 };
 use crate::domain::{
     MissionConditionParameters, MissionConditionScope,
-    MissionConditionSemanticReport, MissionObjectiveParameters,
-    MissionObjectiveSemanticReport, MissionScopeReport, MissionStageKind,
+    MissionConditionSemanticReport, MissionInitializationReport,
+    MissionObjectiveParameters, MissionObjectiveSemanticReport,
+    MissionScopeReport, MissionStageKind,
     MissionStageSemanticReport, MissionStageTerminalOutcome,
     MissionStageTransitionMarker, MissionStageVisualTransition, PipelineError,
     PipelineOutcome, preflight_mission_collectible_waypoints,
     preflight_mission_countdowns, preflight_mission_objective_npc_waypoints,
-    preflight_mission_stage_transitions,
+    preflight_mission_pickup_state_props, preflight_mission_stage_transitions,
 };
 
 /// One condition identity retained under its exact owning stage.
@@ -78,6 +80,7 @@ pub(super) struct MissionDefinitionStageCoreBinding {
     countdown: Option<MissionCountdownBinding>,
     collectible_waypoints: Vec<MissionCollectibleWaypointBinding>,
     objective_npc_waypoints: Vec<MissionObjectiveNpcWaypointBinding>,
+    pickup_state_props: Vec<MissionPickupStatePropBinding>,
     objective_source_ordinal: usize,
     objective_source_alias: String,
     objective_canonical_kind: Option<&'static str>,
@@ -176,6 +179,19 @@ impl MissionDefinitionCoreReport {
                 {
                     return Err(PipelineError::new(
                         "mission definition core NPC waypoint owner drifted",
+                    ));
+                }
+            }
+            for binding in &stage.pickup_state_props {
+                if binding.owner_stage_source_ordinal()
+                    != stage.stage_source_ordinal
+                    || binding.owner_stage_sequence_ordinal()
+                        != stage.sequence_ordinal
+                    || binding.owner_objective_source_ordinal()
+                        != stage.objective_source_ordinal
+                {
+                    return Err(PipelineError::new(
+                        "mission definition core pickup owner drifted",
                     ));
                 }
             }
@@ -333,6 +349,13 @@ impl MissionDefinitionStageCoreBinding {
     }
 
     #[cfg(test)]
+    pub(super) fn pickup_state_props(
+        &self,
+    ) -> &[MissionPickupStatePropBinding] {
+        &self.pickup_state_props
+    }
+
+    #[cfg(test)]
     pub(super) fn objective_source_alias(&self) -> &str {
         &self.objective_source_alias
     }
@@ -398,6 +421,7 @@ impl MissionDefinitionConditionCoreBinding {
 /// Returns an error when source scope cardinality or semantic ownership drifts.
 pub(super) fn preflight_mission_definition_core(
     scopes: &MissionScopeReport,
+    initialization: &MissionInitializationReport,
     stages: &MissionStageSemanticReport,
     objectives: &MissionObjectiveSemanticReport,
     conditions: &MissionConditionSemanticReport,
@@ -405,7 +429,8 @@ pub(super) fn preflight_mission_definition_core(
 ) -> PipelineOutcome<Option<MissionDefinitionCoreReport>> {
     match scopes.missions() {
         [] => {
-            if !stages.stages().is_empty()
+            if !initialization.missions().is_empty()
+                || !stages.stages().is_empty()
                 || !objectives.objectives().is_empty()
                 || !conditions.conditions().is_empty()
                 || !topology.stages().is_empty()
@@ -421,6 +446,7 @@ pub(super) fn preflight_mission_definition_core(
         },
         [mission] => build_definition_core(
             mission.source_mission_id(),
+            initialization,
             stages,
             objectives,
             conditions,
@@ -435,6 +461,7 @@ pub(super) fn preflight_mission_definition_core(
 
 fn build_definition_core(
     mission_id: &str,
+    initialization: &MissionInitializationReport,
     stages: &MissionStageSemanticReport,
     objectives: &MissionObjectiveSemanticReport,
     conditions: &MissionConditionSemanticReport,
@@ -520,6 +547,17 @@ fn build_definition_core(
                 ))
             })?;
 
+    let pickup_state_props = preflight_mission_pickup_state_props(
+        initialization,
+        stages,
+        objectives,
+    )
+    .map_err(|error| {
+        PipelineError::new(format!(
+            "mission definition core pickup preflight failed: {error}"
+        ))
+    })?;
+
     let mut result = Vec::with_capacity(stages.stages().len());
     for stage in stages.stages() {
         let key = (stage.source_ordinal(), stage.sequence_ordinal());
@@ -589,6 +627,15 @@ fn build_definition_core(
             })
             .cloned()
             .collect::<Vec<_>>();
+        let stage_pickup_state_props = pickup_state_props
+            .bindings()
+            .iter()
+            .filter(|binding| {
+                binding.owner_stage_source_ordinal() == key.0
+                    && binding.owner_stage_sequence_ordinal() == key.1
+            })
+            .cloned()
+            .collect::<Vec<_>>();
         let matching_objectives = objectives
             .objectives()
             .iter()
@@ -650,6 +697,7 @@ fn build_definition_core(
             countdown,
             collectible_waypoints: stage_collectible_waypoints,
             objective_npc_waypoints: stage_objective_npc_waypoints,
+            pickup_state_props: stage_pickup_state_props,
             objective_source_ordinal: objective.source_ordinal(),
             objective_source_alias: objective.source_alias().to_owned(),
             objective_canonical_kind: objective.canonical_kind(),

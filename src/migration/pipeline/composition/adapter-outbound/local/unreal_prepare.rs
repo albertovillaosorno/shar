@@ -82,7 +82,6 @@ use crate::domain::{
     preflight_mission_objective_semantics,
     preflight_mission_objectives, preflight_mission_package_loads_with_catalog,
     preflight_mission_ped_group_selections, preflight_mission_ped_groups,
-    preflight_mission_pickup_state_props,
     preflight_mission_presentation_references,
     preflight_mission_purchase_rewards, preflight_mission_references,
     preflight_mission_reward_offers, preflight_mission_reward_references,
@@ -941,18 +940,6 @@ fn validate_normalized_mission_source(
     let stage_semantics = preflight_mission_stage_semantics(&scopes).map_err(|error| {
         PipelineError::new(format!("mission stage semantic preflight failed: {error}"))
     })?;
-    drop(
-        preflight_mission_pickup_state_props(
-            &initialization,
-            &stage_semantics,
-            &objective_semantics,
-        )
-        .map_err(|error| {
-            PipelineError::new(format!(
-                "mission pickup state-prop preflight failed: {error}"
-            ))
-        })?,
-    );
     let topology =
         preflight_mission_authored_stage_topology(&stage_semantics)
             .map_err(|error| {
@@ -963,6 +950,7 @@ fn validate_normalized_mission_source(
     drop(
         mission_definition_context::preflight_mission_definition_core(
             &scopes,
+            &initialization,
             &stage_semantics,
             &objective_semantics,
             &condition_semantics,
