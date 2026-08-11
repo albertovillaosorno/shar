@@ -181,3 +181,24 @@ fn derives_source_text_keys_into_classified_packages() -> Result<(), String> {
     }
     Ok(())
 }
+
+#[test]
+fn flat_source_text_document_produces_no_derived_keys() -> Result<(), String> {
+    let json = serde_json::json!({
+        "schema": "shar-schoenwald.straggler.text-bible.v1",
+        "source_extension": "txt",
+        "language_channel": "source-text",
+        "entry_count": 2,
+        "source_entries": [
+            "Flat authored text block",
+            "Another authored text block"
+        ]
+    });
+    let keys = super::source::parse_source_text_keys(&json.to_string())
+        .map_err(|error| error.to_string())?;
+    if keys.is_empty() {
+        Ok(())
+    } else {
+        Err("flat source text exposed derived table keys".to_owned())
+    }
+}
