@@ -514,7 +514,10 @@ and four pickup targets preserve the exact stage and, where applicable,
 objective owner available at semantic projection time. Stage-scope pickup state
 props also preserve the exact `AddStage` owner. This is provenance only; it does
 not assign playback, navigation, state-prop lifetime, retry, rollback, or
-recovery behavior.
+recovery behavior. The definition-core join now consumes the 43 countdown
+blocks, 36 collectible-to-waypoint links, and 180 resolved objective NPC
+waypoints directly under those exact owners rather than validating and
+discarding them.
 
 The local Unreal preflight now consumes that ownership directly in a lossless
 mission definition-core join. Across 342 reviewed mission-script sources, 188

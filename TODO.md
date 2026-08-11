@@ -341,6 +341,10 @@ Current task list. Project phases and dated progress are recorded in
           `INGAME_MESSAGE_*` keys. All 439 objective and 10 locked-stage uses
           resolve exactly once while preserving key id, source unit, package,
           and subcategory; localized payload asset emission remains separate.
+          The Unreal manifest accepts these 52 derived language packages with
+          zero physical members only when they retain nonempty text-key ids and
+          source-unit provenance that resolves to physical manifest sources;
+          ordinary source-less packages still fail closed.
         - [x] Preserve exact ownership for all 61 canonical presentation
           bitmap package bindings: two mission-scope references remain
           intentionally unowned, six stage-scope references retain exact owning
@@ -397,8 +401,12 @@ Current task list. Project phases and dated progress are recorded in
           versioned schema id, canonical objective kind or explicit unavailable
           identity, direct typed parameters, checkpoint/final/terminal evidence,
           visual transition/stay-black/stage-complete presentation, and the
-          authored next neighbor. The authored neighbor remains evidence only,
-          not a runtime success/failure/retry/recovery edge.
+          authored next neighbor. The same core now retains all 137 exact
+          transition-marker occurrences, all 43 countdown blocks, all 36
+          collectible-to-waypoint bindings, and all 180 resolved objective NPC
+          waypoints under exact stage/objective ownership. The authored neighbor
+          remains evidence only, not a runtime success/failure/retry/recovery
+          edge.
         - [x] Keep utility mission-script sources valid through downstream
           cross-reference preflights. Pickup state-prop preflight returns an
           empty report for zero selected missions only when stage and objective

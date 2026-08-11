@@ -85,6 +85,12 @@ messages and 10 locked-stage messages. Each binding retains the exact key,
 derived text-key id, source unit, package, and subcategory without reading the
 localized payload or inferring presentation behavior.
 
+Derived language packages are also valid manifest records without physical
+members only when they target StringTables, carry text keys and source-unit
+provenance, and every referenced source unit exists as a physical manifest
+source. This keeps derived localization source-backed without fabricating source
+records.
+
 Objective cinematic source paths now resolve through the canonical movie
 catalog rather than remaining bare filenames. The six reviewed `SetFMVInfo`
 references, `fmv2.rmv` through `fmv7.rmv`, each bind to one base story-movie
@@ -377,7 +383,10 @@ and four pickup targets preserve the exact stage and, where applicable,
 objective owner available at semantic projection time. Stage-scope pickup state
 props also preserve the exact `AddStage` owner. This is provenance only; it does
 not assign playback, navigation, state-prop lifetime, retry, rollback, or
-recovery behavior.
+recovery behavior. The definition-core join now consumes the 43 countdown
+blocks, 36 collectible-to-waypoint links, and 180 resolved objective NPC
+waypoints directly under those exact owners rather than validating and
+discarding them.
 
 Typed locator-reference bindings preserve the same owner chain without changing
 lookup outcomes. Initialization roles stay unowned, stage roles retain exact
