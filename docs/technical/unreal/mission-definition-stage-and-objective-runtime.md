@@ -371,8 +371,8 @@ recovery behavior.
 Typed locator-reference bindings preserve the same owner chain without changing
 lookup outcomes. Initialization roles stay unowned, stage roles retain exact
 stage source/dense ordinals, and objective roles additionally retain the exact
-objective source ordinal. Missing and ambiguous locator evidence remains explicit
-rather than being repaired from ownership.
+objective source ordinal. Missing and ambiguous locator evidence remains
+explicit rather than being repaired from ownership.
 
 A private definition-core preflight now performs that join before Unreal
 planning.
