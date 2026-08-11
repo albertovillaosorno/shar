@@ -85,7 +85,9 @@ references; race wager and road-arrow tokens are typed independently. The one
 source spelling `niether` is retained as explicitly unrecognized legacy evidence
 rather than repaired to `neither`. The ten `keepbarrel` numeric values and one
 `damage` token are likewise typed as closed legacy shapes without assigning
-undocumented gameplay meaning.
+undocumented gameplay meaning. Those parameter enums now survive semantic
+projection and the private definition-core join. The corpus has 131 objective
+invocations and 11 condition invocations with nonempty direct parameters.
 
 Stage compilation then types all 611 source stage headers. Numeric `AddStage`
 values remain opaque reviewed flags because no authoritative meaning for their
@@ -482,7 +484,11 @@ rollback, recovery, or another declared transition.
 
 Stage membership also survives semantic projection. All 611 objective bindings
 carry exact owning stage source/dense ordinals, and all 408 condition bindings
-carry those owner ordinals plus their authored stage-versus-objective scope.
+carry those owner ordinals plus their authored stage-versus-objective scope. The
+six objective-scoped conditions additionally retain the exact root
+`AddObjective` ordinal. Canonical character/vehicle participant references
+retain the same
+stage/objective chain plus an exact `AddCondition` owner when condition-scoped.
 Final definition compilation can join these records directly instead of
 reconstructing ownership from source adjacency.
 
@@ -500,10 +506,14 @@ mission definition-core join. Across 342 reviewed mission-script sources, 188
 have no selected mission and are required to produce no semantic rows; all 154
 selected sources have exactly one mission. Their 611 stages join one-to-one with
 611 root objectives and authored topology, and all 408 conditions join through
-exact owner stage keys. Checkpoints, final/terminal evidence, objective mapping,
-condition schema/scope, and authored-next evidence survive the join. Runtime
-success/failure edges and final `USharMissionDefinition` publication remain
-separate blocked work.
+exact owner stage keys. Checkpoints, final/terminal evidence, objective
+mapping, direct typed parameters, condition schema/scope/root-objective
+ownership, visual transition,
+stay-black, stage-complete presentation, and authored-next evidence survive the
+join. Runtime success/failure edges and final `USharMissionDefinition`
+publication remain separate blocked work. Utility mission-script sources with no
+selected mission are also accepted by pickup state-prop preflight only when
+stage/objective semantic reports are empty.
 
 Canonical presentation package references now retain their source ownership as
 well. The 61 reviewed presentation bitmaps split into two mission-scope
