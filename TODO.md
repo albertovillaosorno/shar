@@ -329,6 +329,13 @@ Current task list. Project phases and dated progress are recorded in
           state-machine or playback semantics from symbol adjacency. The 14
           `StageStartMusicEvent` calls remain separate: reviewed `L*_drama`
           tokens are not published as exact symbols in these level metadata.
+        - [x] Bind all 38 reviewed `SetCompletionDialog` ids to one
+          canonical same-level mission-conversation group. Preserve every
+          participant audio package in the group: 26 groups contain one package
+          and 12 contain two. Resolve all 16 optional character identities
+          independently; do not reinterpret that character as a speaker or
+          filter audio packages by it. The corpus includes one `convinit` group
+          and 37 `noboxconv` groups, so conversation mode remains authored data.
     - [ ] Emit lossless `USharMissionDefinition` assets only after the complete
       mission graph passes reference and topology validation.
   - [ ] Compile remaining normalized UI, font, localization, tuning, and other
