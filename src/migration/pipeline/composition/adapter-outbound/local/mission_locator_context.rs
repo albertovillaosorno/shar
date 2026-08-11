@@ -46,8 +46,7 @@ const INIT_SUFFIX: &str = "i.mfk.json";
 const LOAD_SUFFIX: &str = "l.mfk.json";
 const LEVEL_LOAD_SUFFIX: &str = "level.mfk.json";
 const LEVEL_INIT_SUFFIX: &str = "i.mfk.json";
-const LEVEL_SETUP_COMMANDS: &[&str] = &[
-    "initlevelplayervehicle",
+const LEVEL_SETUP_ANCHOR_COMMANDS: &[&str] = &[
     "addambientcharacter",
     "addambientnpcwaypoint",
     "addbonusmissionnpcwaypoint",
@@ -242,7 +241,7 @@ pub(super) fn build_level_locator_source_contexts(
 
 fn has_level_locator_setup(evidence: &MissionScriptEvidence) -> bool {
     evidence.invocations().iter().any(|invocation| {
-        LEVEL_SETUP_COMMANDS.contains(&invocation.name())
+        LEVEL_SETUP_ANCHOR_COMMANDS.contains(&invocation.name())
     })
 }
 
