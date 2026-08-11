@@ -44,7 +44,7 @@ pub mod mission_countdown;
 /// Collectible-to-stage-waypoint cross-reference binding.
 pub mod mission_collectible_route;
 /// Source-backed per-level gag totals.
-pub(crate) mod mission_gag_total;
+mod mission_gag_total;
 /// Typed mission-scope initialization and restart semantics.
 pub mod mission_initialization;
 /// Reviewed mission objective alias preflight.
@@ -60,7 +60,7 @@ pub mod mission_presentation_reference;
 /// Canonical BindReward package-reference resolution.
 pub mod mission_reward_reference;
 /// Typed source merchandise and price evidence.
-pub(crate) mod mission_reward_offer;
+mod mission_reward_offer;
 /// Source-backed ambient and bonus-mission NPC setup.
 pub mod mission_level_npc;
 pub mod mission_level_locator_reference;
@@ -85,13 +85,13 @@ pub mod mission_script;
 /// Typed reviewed mission stage semantics.
 pub mod mission_stage;
 /// Canonical localization references for mission stage messages.
-pub(crate) mod mission_stage_message_reference;
+mod mission_stage_message_reference;
 /// Authored mission-stage order and final/terminal invariants.
 pub mod mission_topology;
 /// Effective reviewed stage transition and presentation policy.
 pub mod mission_transition;
 /// Package-backed opaque vehicle attribute tuple evidence.
-pub(crate) mod mission_vehicle_attributes;
+mod mission_vehicle_attributes;
 /// Canonical vehicle-select registration binding.
 pub mod mission_vehicle_select;
 /// Package conversion planner.
@@ -164,9 +164,29 @@ pub use mission_presentation_reference::{
     MissionPresentationPackageReference, MissionPresentationReferenceReport,
     MissionPresentationRole, preflight_mission_presentation_references,
 };
-pub use mission_reward_reference::{
-    MissionRewardPackageReference, MissionRewardReferenceReport,
-    preflight_mission_reward_references,
+pub use self::{
+    mission_gag_total::{
+        MissionGagTotalBinding, MissionGagTotalReport,
+        preflight_mission_gag_totals,
+    },
+    mission_reward_offer::{
+        MissionRewardOfferBinding, MissionRewardOfferKind,
+        MissionRewardOfferReport, MissionRewardOfferVendor,
+        preflight_mission_reward_offers,
+    },
+    mission_reward_reference::{
+        MissionRewardPackageReference, MissionRewardReferenceReport,
+        preflight_mission_reward_references,
+    },
+    mission_stage_message_reference::{
+        MissionStageMessageReferenceBinding,
+        MissionStageMessageReferenceReport,
+        preflight_mission_stage_message_references,
+    },
+    mission_vehicle_attributes::{
+        MissionVehicleAttributeBinding, MissionVehicleAttributeReport,
+        preflight_mission_vehicle_attributes,
+    },
 };
 pub use mission_locator::{
     MissionLocatorCatalog, MissionLocatorCatalogEntry, MissionLocatorResolution,
