@@ -287,8 +287,13 @@ physical source identity only; it does not infer menu visibility, ownership,
 unlock state, or runtime selection behavior.
 
 `BindReward` binds all 90 reviewed P3D references through the shared canonical
-package catalog while preserving its source policy tokens without assigning
-unlock or economy behavior. The level storefront intake also types all 32
+package catalog. Its 42 `forsale` rows now compile into deterministic source
+offers with package identity, level, positive price, and exact vendor token.
+Those offers split evenly into 21 cars and 21 skins, with six per level. The
+only reviewed type/vendor pairs are `car/gil`, `car/simpson`, and
+`skin/interior`. This is merchandise and price evidence, not purchase,
+ownership, unlock, or persistence authority. The level storefront intake also
+types all 32
 `AddPurchaseCarReward` calls: it preserves action, choreo, position locator,
 trigger radius, and car-start locator, binds each reward NPC to canonical
 character-package evidence, and carries only the source-backed `gil` vendor
@@ -318,9 +323,10 @@ Spawn rates, pathing, runtime group switching, parked-car behavior, and traffic
 zone switching are intentionally not inferred from those declarations.
 
 The purchase car-start locator remains outside this static pass because runtime
-consumes it after the later vehicle-load callback. Merchandise/price, ownership,
-persistence, path navigation, route topology, transitions between non-terminal
-stages, remaining catalog binding, and final topology validation remain pending.
+consumes it after the later vehicle-load callback. Ownership, persistence,
+purchase transaction behavior, path navigation, route topology, transitions
+between non-terminal stages, remaining catalog binding, and final topology
+validation remain pending.
 No mission asset is emitted yet.
 
 The v3 evidence records `context_command_count`,

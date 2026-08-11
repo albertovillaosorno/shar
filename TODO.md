@@ -188,9 +188,12 @@ Current task list. Project phases and dated progress are recorded in
           plus 26 waypoints against that static package context. Current decoded
           locator evidence resolves 11 of those 58 immediate references and
           records the other 47 as `Missing`; absence from decoded evidence is
-          not treated as proof of runtime absence. The 32 deferred car-start
-          locators, merchandise/price, ownership, save-state, and final reward
-          transaction semantics remain unresolved.
+          not treated as proof of runtime absence. Separately, compile all 42
+          reviewed `forsale` `BindReward` rows into package-backed source offer
+          evidence: 21 cars and 21 skins, six offers per level, exact positive
+          price, and only the reviewed `gil`, `simpson`, or `interior` vendor
+          token pairings. The 32 deferred car-start locators, ownership,
+          save-state, and final reward transaction semantics remain unresolved.
         - [x] Type all 118 reviewed ambient and 81 bonus-mission NPC
           declarations, bind each authored model to canonical character-package
           evidence, preserve source-derived runtime names and exact spawn/meta

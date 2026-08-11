@@ -713,8 +713,14 @@ package evidence and requires each waypoint to follow a unique matching
 storefront. The 58 immediate position/waypoint references are checked against
 the exact family load sibling; current decoded evidence resolves 11 and records
 47 as `Missing` without claiming runtime absence. The 32 car-start locators stay
-deferred because their runtime lookup occurs after vehicle loading. This intake
-does not create merchandise, price, ownership, or save authority.
+deferred because their runtime lookup occurs after vehicle loading.
+
+The global reward source now supplies deterministic merchandise and price
+evidence independently of those storefront locators. All 42 reviewed
+`forsale` bindings resolve to canonical packages and preserve exact level,
+positive price, and vendor token: 21 car offers and 21 skin offers, six per
+level. This still creates no ownership, purchase transaction, unlock, or save
+authority.
 
 `buy_vehicle` and `buy_costume` complete from an accepted permanent purchase
 or ownership transaction for the exact catalog identity.
