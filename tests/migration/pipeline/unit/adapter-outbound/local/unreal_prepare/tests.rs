@@ -117,6 +117,12 @@ fn mission_definition_row_with_stages(
             let _ = stage
                 .entry("conditions".to_owned())
                 .or_insert_with(|| json!([]));
+            let _ = stage
+                .entry("checkpoint_source_ordinal".to_owned())
+                .or_insert_with(|| json!(null));
+            let _ = stage
+                .entry("countdown".to_owned())
+                .or_insert_with(|| json!(null));
         }
     }
     let mut value = serde_json::to_string(&json!({
@@ -1813,4 +1819,182 @@ fn rejects_mission_definition_condition_violation_drift() {
     )
     .expect_err("condition violation drift must fail");
     assert!(error.to_string().contains("unknown violation effect"));
+}
+
+#[test]
+fn accepts_owned_mission_definition_countdown() -> Result<(), String> {
+    let rows = vec![mission_definition_row_with_stages(
+        "script-one",
+        "m1",
+        vec![json!({
+            "checkpoint_source_ordinal": 3,
+            "countdown": {
+                "character_id": "homer",
+                "entries": [
+                    {
+                        "duration_milliseconds": 1000,
+                        "source_ordinal": 5,
+                        "token": "three",
+                    },
+                    {
+                        "duration_milliseconds": 500,
+                        "source_ordinal": 6,
+                        "token": "two",
+                    },
+                ],
+                "sequence_id": "countdown",
+                "stage_sequence_ordinal": 0,
+                "stage_source_ordinal": 1,
+                "start_source_ordinal": 4,
+            },
+            "explicit_final": false,
+            "kind": {
+                "final_stage": false,
+                "kind": "standard",
+                "legacy_flags": 0,
+            },
+            "next_authored_sequence_ordinal": null,
+            "objective": {
+                "canonical_kind": "travel",
+                "source_alias": "goto",
+                "source_ordinal": 2,
+                "unavailable_code": null,
+            },
+            "sequence_ordinal": 0,
+            "stage_source_ordinal": 1,
+            "terminal": "none",
+        })],
+    )];
+    drop(
+        validate_mission_definition_bundle(
+            &rows,
+            &[mission_source("script-one")],
+        )
+        .map_err(|error| error.to_string())?,
+    );
+    Ok(())
+}
+
+#[test]
+fn rejects_mission_definition_checkpoint_before_stage() {
+    let rows = vec![mission_definition_row_with_stages(
+        "script-one",
+        "m1",
+        vec![json!({
+            "checkpoint_source_ordinal": 1,
+            "explicit_final": false,
+            "kind": {
+                "final_stage": false,
+                "kind": "standard",
+                "legacy_flags": 0,
+            },
+            "next_authored_sequence_ordinal": null,
+            "objective": {
+                "canonical_kind": "travel",
+                "source_alias": "goto",
+                "source_ordinal": 2,
+                "unavailable_code": null,
+            },
+            "sequence_ordinal": 0,
+            "stage_source_ordinal": 1,
+            "terminal": "none",
+        })],
+    )];
+    let error = validate_mission_definition_bundle(
+        &rows,
+        &[mission_source("script-one")],
+    )
+    .expect_err("checkpoint at or before its stage must fail");
+    assert!(error.to_string().contains("checkpoint source ordinal is malformed"));
+}
+
+#[test]
+fn rejects_mission_definition_countdown_owner_drift() {
+    let rows = vec![mission_definition_row_with_stages(
+        "script-one",
+        "m1",
+        vec![json!({
+            "countdown": {
+                "character_id": null,
+                "entries": [],
+                "sequence_id": "countdown",
+                "stage_sequence_ordinal": 1,
+                "stage_source_ordinal": 1,
+                "start_source_ordinal": 3,
+            },
+            "explicit_final": false,
+            "kind": {
+                "final_stage": false,
+                "kind": "standard",
+                "legacy_flags": 0,
+            },
+            "next_authored_sequence_ordinal": null,
+            "objective": {
+                "canonical_kind": "travel",
+                "source_alias": "goto",
+                "source_ordinal": 2,
+                "unavailable_code": null,
+            },
+            "sequence_ordinal": 0,
+            "stage_source_ordinal": 1,
+            "terminal": "none",
+        })],
+    )];
+    let error = validate_mission_definition_bundle(
+        &rows,
+        &[mission_source("script-one")],
+    )
+    .expect_err("countdown owner drift must fail");
+    assert!(error.to_string().contains("countdown owner drifted"));
+}
+
+#[test]
+fn rejects_mission_definition_countdown_entry_order_drift() {
+    let rows = vec![mission_definition_row_with_stages(
+        "script-one",
+        "m1",
+        vec![json!({
+            "countdown": {
+                "character_id": null,
+                "entries": [
+                    {
+                        "duration_milliseconds": 1000,
+                        "source_ordinal": 6,
+                        "token": "three",
+                    },
+                    {
+                        "duration_milliseconds": 500,
+                        "source_ordinal": 5,
+                        "token": "two",
+                    },
+                ],
+                "sequence_id": "countdown",
+                "stage_sequence_ordinal": 0,
+                "stage_source_ordinal": 1,
+                "start_source_ordinal": 4,
+            },
+            "explicit_final": false,
+            "kind": {
+                "final_stage": false,
+                "kind": "standard",
+                "legacy_flags": 0,
+            },
+            "next_authored_sequence_ordinal": null,
+            "objective": {
+                "canonical_kind": "travel",
+                "source_alias": "goto",
+                "source_ordinal": 2,
+                "unavailable_code": null,
+            },
+            "sequence_ordinal": 0,
+            "stage_source_ordinal": 1,
+            "terminal": "none",
+        })],
+    )];
+    let error = validate_mission_definition_bundle(
+        &rows,
+        &[mission_source("script-one")],
+    )
+    .expect_err("countdown entry order drift must fail");
+    assert!(error.to_string().contains("identity or order is malformed"));
 }
