@@ -115,6 +115,36 @@ the same saved JSON decisions:
 python tools/build/auto.py
 ```
 
+## Maximum supported local installation
+
+The frozen `game/manifest.jsonl` remains the minimum installation baseline. A
+local workspace may additionally contain every supported official language and
+zero, one, or both optional packages below `game/mods/`:
+
+- `m.lmlm`: *The Simpsons: Hit & Run Remastered*, created by Muckluck; latest
+  tested version 1.0. It replaces only identities that exist in the original
+  installation and skips every additional package member.
+- `j.lmlm`: *The Simpsons: Hit & Run – Versión Latino*, created by Jebano;
+  latest tested version 0.8. It adds only Latin-American voice and cinematic
+  audio and never overwrites original or remaster output.
+
+The package filenames are stable local aliases; release names and versions are
+not hardcoded into extraction behavior. The repository provides compatibility
+support only, does not include download links, and does not claim authorship of
+either mod. See the [optional local mod package
+contract](docs/technical/pipeline/optional-local-mod-packages.md).
+
+## Project documents
+
+- [`TODO.md`](TODO.md) contains the current task list.
+- [`ROADMAP.md`](ROADMAP.md) contains the project phases, dates, and progress.
+- [`AGENTS.md`](AGENTS.md) contains guidance for AI agents.
+- [`docs/adr/index.md`](docs/adr/index.md) contains architecture decisions.
+- [`docs/technical/index.md`](docs/technical/index.md) contains technical specifications.
+- [`docs/legal/index.md`](docs/legal/index.md) contains legal research and
+scope notes.
+- [`skills/`](skills/) contains task guidance and Unreal MCP documentation.
+
 ## Legal
 
 SHAR is an independent interoperability and reimplementation project. It is not
