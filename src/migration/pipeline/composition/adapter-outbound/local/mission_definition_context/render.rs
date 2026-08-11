@@ -48,8 +48,8 @@ use crate::domain::{
     MissionStageVisualTransition, PipelineError, PipelineOutcome,
 };
 
-pub(in crate::adapters::driven::local) const MISSION_DEFINITION_CORE_SCHEMA: &str =
-    "shar-schoenwald.mission-definition-core.v1";
+pub(in crate::adapters::driven::local) const MISSION_DEFINITION_CORE_SCHEMA:
+    &str = "shar-schoenwald.mission-definition-core.v1";
 
 /// Render one selected source definition core as canonical JSON ending in LF.
 ///
