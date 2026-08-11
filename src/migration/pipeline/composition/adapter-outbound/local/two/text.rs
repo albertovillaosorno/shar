@@ -47,7 +47,7 @@ pub(super) mod source;
 
 use classification::classify_text_key;
 pub(super) use drafts::{TextKeyDraft, TextPackageDraft};
-use source::read_custom_text_keys;
+use source::{read_custom_text_keys, read_source_text_keys};
 
 /// Shares the `PipelineOutcome` result shape across this module boundary.
 type PipelineOutcome<T> = Result<T, PipelineError>;
@@ -60,15 +60,20 @@ pub(super) fn derive_text_packages(
     source_path: &str,
     kind: &str,
 ) -> PipelineOutcome<Vec<TextPackageDraft>> {
-    if kind != "localization-override" {
+    if !matches!(kind, "localization-override" | "localization-table") {
         return Ok(Vec::new());
     }
     let Some(relative) = source_path.strip_prefix("extracted/") else {
         return Ok(Vec::new());
     };
     let path = extracted_root.join(relative);
+    let keys = match kind {
+        "localization-override" => read_custom_text_keys(&path)?,
+        "localization-table" => read_source_text_keys(&path)?,
+        _ => Vec::new(),
+    };
     let mut by_subcategory = BTreeMap::<String, Vec<TextKeyDraft>>::new();
-    for key in read_custom_text_keys(&path)? {
+    for key in keys {
         let subcategory = classify_text_key(&key);
         let id = compute_id(
             &format!("{source_unit_id}|{key}|{subcategory}"),
