@@ -50,6 +50,7 @@ pub(super) struct MissionDefinitionConditionCoreBinding {
     source_alias: String,
     schema_id: &'static str,
     scope: MissionConditionScope,
+    owner_objective_source_ordinal: Option<usize>,
 }
 
 /// One stage's source-backed definition core, without runtime transitions.
@@ -155,8 +156,28 @@ impl MissionDefinitionCoreReport {
                     ));
                 }
                 match condition.scope {
-                    MissionConditionScope::Stage
-                    | MissionConditionScope::Objective => {},
+                    MissionConditionScope::Stage => {
+                        if condition.owner_objective_source_ordinal.is_some() {
+                            return Err(PipelineError::new(
+                                concat!(
+                                    "stage condition unexpectedly owns an ",
+                                    "objective"
+                                ),
+                            ));
+                        }
+                    },
+                    MissionConditionScope::Objective => {
+                        if condition.owner_objective_source_ordinal
+                            != Some(stage.objective_source_ordinal)
+                        {
+                            return Err(PipelineError::new(
+                                concat!(
+                                    "objective condition owner disagrees with ",
+                                    "stage root objective"
+                                ),
+                            ));
+                        }
+                    },
                 }
                 previous_condition = Some(condition.source_ordinal);
             }
@@ -252,6 +273,11 @@ impl MissionDefinitionConditionCoreBinding {
     #[cfg(test)]
     pub(super) const fn scope(&self) -> MissionConditionScope {
         self.scope
+    }
+
+    #[cfg(test)]
+    pub(super) const fn owner_objective_source_ordinal(&self) -> Option<usize> {
+        self.owner_objective_source_ordinal
     }
 }
 
@@ -387,6 +413,8 @@ fn build_definition_core(
                     source_alias: condition.source_alias().to_owned(),
                     schema_id: condition.schema_id(),
                     scope: condition.scope(),
+                    owner_objective_source_ordinal:
+                        condition.owner_objective_source_ordinal(),
                 })
             })
             .collect::<PipelineOutcome<Vec<_>>>()?;
