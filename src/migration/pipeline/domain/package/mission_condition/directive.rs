@@ -95,6 +95,7 @@ pub enum MissionConditionDirective {
 pub struct MissionConditionSemanticBinding {
     source_ordinal: usize,
     source_alias: String,
+    schema_id: &'static str,
     directives: Vec<MissionConditionDirective>,
 }
 
@@ -109,6 +110,12 @@ impl MissionConditionSemanticBinding {
     #[must_use]
     pub fn source_alias(&self) -> &str {
         &self.source_alias
+    }
+
+    /// Return the versioned legacy condition schema identity.
+    #[must_use]
+    pub const fn schema_id(&self) -> &'static str {
+        self.schema_id
     }
 
     /// Return typed condition directives in source order.
@@ -166,6 +173,7 @@ fn compile_condition(
     Ok(MissionConditionSemanticBinding {
         source_ordinal: condition.binding().ordinal(),
         source_alias: source_alias.to_owned(),
+        schema_id: condition.binding().schema_id(),
         directives,
     })
 }
