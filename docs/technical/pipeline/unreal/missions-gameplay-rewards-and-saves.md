@@ -376,6 +376,10 @@ outcomes. A `Missing` result records a decoded-evidence gap; it is not promoted
 that runtime cannot supply the locator. Generic `Locator` references do not gain
 cross-package precedence, while exact `CarStart` dialogue lookups may use the
 authored package order already established for exact-type inventory lookup.
+ The reviewed mission-start Dyna corpus contains 462 P3D references; 461
+map to decoded package roots and one valid source-requested root has no decoded
+package. The missing root is retained as an evidence gap and excluded from
+locator visibility without being aliased or interpreted as runtime absence.
 
 Population declarations are now package-backed as well. Pedestrian preflight
 compiles 116 `CreatePedGroup`/`ClosePedGroup` pairs with 437 `AddPed` members;
