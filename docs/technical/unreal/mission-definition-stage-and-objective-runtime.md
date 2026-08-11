@@ -347,17 +347,20 @@ policy, transition, or recovery semantics required for final asset emission.
 
 Condition schema identity now survives the equivalent semantic projection. All
 408 reviewed conditions across seven closed source aliases retain their exact
-versioned `legacy-mission-condition.*.v1` schema id. This is definition
-identity, not authority to map `IsViolated` or a condition directive to stage
-failure,
-retry, rollback, or recovery.
+versioned `legacy-mission-condition.*.v1` schema id. The 6 objective-scoped
+conditions also retain the exact root `AddObjective` source ordinal; the other
+402 remain explicitly stage-scoped. This is definition identity, not authority
+to map `IsViolated` or a condition directive to stage failure, retry, rollback,
+or recovery.
 
 Semantic ownership is now explicit as well. Every one of the 611 semantic
 objective bindings carries its owning stage source ordinal and dense stage
 ordinal. Every one of the 408 semantic condition bindings carries the same stage
 ownership plus whether the source declared it directly on the stage or while the
-root objective was open. Final compilation therefore does not need source-order
-heuristics to reconstruct stage membership.
+root objective was open; the six objective-scoped rows also carry the root
+objective ordinal itself. Canonical character/vehicle participant references
+retain matching stage/objective/condition owner chains. Final compilation
+therefore does not need source-order heuristics to reconstruct membership.
 
 Downstream resolved bindings now retain those same owners rather than flattening
 them away. The six FMVs, nine music-state pairs, 38 completion dialogs, 128
@@ -383,10 +386,14 @@ join all 611 stage rows one-to-one with authored topology and root-objective
 ownership, then attach all 408 conditions through the exact same stage owner
 key.
 The joined rows retain checkpoint/final/terminal evidence, canonical objective
-kind or explicit unavailable identity, condition schema/scope, and the authored
-next neighbor. They deliberately contain no runtime success/failure transition
-ids, so final `USharMissionDefinition` emission remains blocked on policy and
-transition authority rather than reconstructing it from adjacency.
+kind or explicit unavailable identity, typed direct objective/condition
+parameters, condition schema/scope/root-objective ownership, visual transition,
+stay-black, stage-complete presentation, and the authored next neighbor. The
+reviewed corpus contains 131 objective invocations and 11 condition invocations
+with nonempty direct parameters. These rows deliberately contain no runtime
+success/failure transition ids, so final `USharMissionDefinition` emission
+remains blocked on policy and transition authority rather than reconstructing it
+from adjacency.
 
 Canonical presentation package references now retain their source ownership as
 well. The 61 reviewed presentation bitmaps split into two mission-scope

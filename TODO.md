@@ -132,6 +132,11 @@ Current task list. Project phases and dated progress are recorded in
       - [x] Compile all 611 direct objective and 408 direct condition parameter
         shapes into typed evidence; preserve the one noncanonical `niether`
         route token and undocumented condition values without repairing them.
+        Carry those typed parameters through semantic projection and the private
+        definition-core join. The reviewed corpus contains 131 objective
+        invocations and 11 condition invocations with nonempty direct
+        parameters; no retained parameter is promoted to runtime
+        objective/failure policy.
       - [x] Compile all 611 stage headers plus 2,549 typed stage directives,
         covering all 2,454 direct-stage commands and all 95 objective commands
         explicitly delegated to stage semantics; preserve opaque numeric
@@ -363,23 +368,29 @@ Current task list. Project phases and dated progress are recorded in
           stage+objective owners; all 43 countdown blocks keep exact stage
           owners; and all four pickup-target bindings keep stage+objective
           owners while stage-scope state-prop declarations retain their exact
-          `AddStage`
-          owner. These owner joins do not add playback, navigation, state-prop
-          lifecycle,
-          retry, rollback, or recovery semantics.
+          `AddStage` owner. Canonical character/vehicle participant references
+          now retain the same stage/objective owner chain and an exact
+          `AddCondition` owner when condition-scoped. These owner joins do not
+          add playback, navigation, state-prop lifecycle, retry, rollback, or
+          recovery semantics.
         - [x] Join source-backed definition-core rows before final asset
           emission. Of 342 reviewed mission-script sources, 188 contain no
-          selected mission and must therefore project no
-          stage/objective/condition rows; all 154 selected sources contain
-          exactly one mission. Join all 611 stages to one authored-topology row
-          and one
-          root objective through exact owner source/dense ordinals, then attach
-          all 408 conditions through the same owner key while preserving
-          stage-versus-objective scope, versioned
-          schema id, canonical objective kind or explicit unavailable identity,
-          checkpoint marker, final marker, terminal override, and authored next
-          neighbor. The authored neighbor remains evidence only, not a runtime
-          success/failure/retry/recovery edge.
+          selected mission and must project no stage/objective/condition rows;
+          all 154 selected sources contain exactly one mission. Join all 611
+          stages to one authored-topology row and one root objective through
+          exact owner source/dense ordinals, then attach all 408 conditions
+          through the same owner key. Preserve stage-versus-objective scope,
+          exact root-objective ownership for the 6 objective-scoped conditions,
+          versioned schema id, canonical objective kind or explicit unavailable
+          identity, direct typed parameters, checkpoint/final/terminal evidence,
+          visual transition/stay-black/stage-complete presentation, and the
+          authored next neighbor. The authored neighbor remains evidence only,
+          not a runtime success/failure/retry/recovery edge.
+        - [x] Keep utility mission-script sources valid through downstream
+          cross-reference preflights. Pickup state-prop preflight returns an
+          empty report for zero selected missions only when stage and objective
+          semantic reports are also empty; multiple or drifting mission
+          cardinality still fails closed.
     - [ ] Emit lossless `USharMissionDefinition` assets only after the complete
       mission graph passes reference and topology validation.
   - [ ] Compile remaining normalized UI, font, localization, tuning, and other
