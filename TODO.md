@@ -197,7 +197,11 @@ Current task list. Project phases and dated progress are recorded in
           `AddPurchaseCarNPCWaypoint` calls to a unique prior storefront NPC.
           Pair all 16 level-setup sources with their exact `<family>i` to
           `<family>` load sibling and bind the 32 immediate storefront positions
-          plus 26 waypoints against that static package context. Current decoded
+          plus 26 waypoints against that static package context. Require at least
+          one level-setup-specific command before classifying the source; the 16
+          reviewed mission-init sources whose only overlapping command is
+          `InitLevelPlayerVehicle` stay outside this sibling-load pass. Current
+          decoded
           locator evidence resolves 11 of those 58 immediate references and
           records the other 47 as `Missing`; absence from decoded evidence is
           not treated as proof of runtime absence. Separately, compile all 42
