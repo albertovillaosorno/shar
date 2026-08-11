@@ -88,6 +88,8 @@ pub mod mission_script;
 pub mod mission_stage;
 /// Canonical localization references for mission stage messages.
 mod mission_stage_message_reference;
+/// Source-backed stage-start music event runtime routing.
+mod mission_stage_music_event;
 /// Authored mission-stage order and final/terminal invariants.
 pub mod mission_topology;
 /// Effective reviewed stage transition and presentation policy.
@@ -129,6 +131,11 @@ pub use dynamic_zone_history::{
 pub use mission_countdown::{
     MissionCountdownBinding, MissionCountdownEntryBinding,
     MissionCountdownReport, preflight_mission_countdowns,
+};
+pub use mission_stage_music_event::{
+    MissionStageMusicEventBinding, MissionStageMusicEventChannel,
+    MissionStageMusicEventKeyTransform, MissionStageMusicEventReport,
+    preflight_mission_stage_music_events,
 };
 pub use mission_collectible_route::{
     MissionCollectibleWaypointBinding, MissionCollectibleWaypointReport,
