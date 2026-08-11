@@ -36,6 +36,7 @@ use super::{
     MissionConditionDirective, MissionConditionScope,
     MissionConditionSemanticBinding, compile_directive,
 };
+use crate::domain::MissionConditionParameters;
 
 fn strings(values: &[&str]) -> Vec<String> {
     values.iter().map(|value| (*value).to_owned()).collect()
@@ -51,6 +52,7 @@ fn semantic_binding_preserves_condition_schema_identity() {
         source_alias: "timeout".to_owned(),
         scope: MissionConditionScope::Objective,
         schema_id: "legacy-mission-condition.timeout.v1",
+        parameters: MissionConditionParameters::None,
         directives: Vec::new(),
     };
     assert_eq!(binding.owner_stage_source_ordinal(), 2);
@@ -59,6 +61,7 @@ fn semantic_binding_preserves_condition_schema_identity() {
     assert_eq!(binding.source_ordinal(), 4);
     assert_eq!(binding.source_alias(), "timeout");
     assert_eq!(binding.scope(), MissionConditionScope::Objective);
+    assert_eq!(binding.parameters(), &MissionConditionParameters::None);
     assert_eq!(
         binding.schema_id(),
         "legacy-mission-condition.timeout.v1"

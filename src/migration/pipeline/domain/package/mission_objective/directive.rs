@@ -32,6 +32,7 @@
 //! Typed compilation of selected objective-scoped mission directives.
 
 use super::super::{MissionScopeObjective, MissionScopeReport};
+use super::MissionObjectiveParameters;
 
 /// One NPC placed for an objective.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -335,6 +336,7 @@ pub struct MissionObjectiveSemanticBinding {
     source_alias: String,
     canonical_kind: Option<&'static str>,
     unavailable_code: Option<&'static str>,
+    parameters: MissionObjectiveParameters,
     directives: Vec<MissionObjectiveDirective>,
 }
 
@@ -373,6 +375,12 @@ impl MissionObjectiveSemanticBinding {
     #[must_use]
     pub const fn unavailable_code(&self) -> Option<&'static str> {
         self.unavailable_code
+    }
+
+    /// Return typed parameters carried directly by `AddObjective`.
+    #[must_use]
+    pub const fn parameters(&self) -> &MissionObjectiveParameters {
+        &self.parameters
     }
 
     /// Return selected typed directives in source order.
@@ -481,6 +489,7 @@ impl MissionObjectiveSemanticReport {
                             schema.and_then(|item| item.canonical_kind),
                         unavailable_code:
                             schema.and_then(|item| item.unavailable_code),
+                        parameters: MissionObjectiveParameters::None,
                         directives,
                     }
                 })
@@ -597,6 +606,7 @@ fn compile_objective(
         source_alias: source_alias.to_owned(),
         canonical_kind: objective.binding().canonical_kind(),
         unavailable_code: objective.binding().unavailable_code(),
+        parameters: objective.parameters().parameters().clone(),
         directives,
     })
 }
