@@ -234,6 +234,11 @@ Current task list. Project phases and dated progress are recorded in
           post-Dyna visibility: immediate init/stage lookups see only static
           Level/Mission loads, while reviewed deferred lookups can see initial
           Dyna packages. Preserve the `ActivateVehicle` `NULL` sentinel.
+          Initialization locator references remain intentionally unowned;
+          stage roles retain exact `AddStage` source/dense ordinals, and
+          objective roles additionally retain the exact `AddObjective` source
+          ordinal. Ownership does not alter `Resolved`, `Missing`, or
+          `Ambiguous` outcomes or infer navigation behavior.
         - [x] Type Dyna Load Data postfix syntax as ordered region load/unload,
           interior load/unload, and World Sphere enable/disable operations while
           preserving exact source evidence and the observed terminal-less Level
@@ -356,8 +361,9 @@ Current task list. Project phases and dated progress are recorded in
           bindings keep exact stage owners; all 128 dialogue-info bindings keep
           stage+objective owners; all 36 collectible-waypoint bindings keep
           stage+objective owners; all 43 countdown blocks keep exact stage
-          owners; and all four pickup-target bindings keep stage+objective owners
-          while stage-scope state-prop declarations retain their exact `AddStage`
+          owners; and all four pickup-target bindings keep stage+objective
+          owners while stage-scope state-prop declarations retain their exact
+          `AddStage`
           owner. These owner joins do not add playback, navigation, state-prop
           lifecycle,
           retry, rollback, or recovery semantics.

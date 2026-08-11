@@ -368,6 +368,12 @@ props also preserve the exact `AddStage` owner. This is provenance only; it does
 not assign playback, navigation, state-prop lifetime, retry, rollback, or
 recovery behavior.
 
+Typed locator-reference bindings preserve the same owner chain without changing
+lookup outcomes. Initialization roles stay unowned, stage roles retain exact
+stage source/dense ordinals, and objective roles additionally retain the exact
+objective source ordinal. Missing and ambiguous locator evidence remains explicit
+rather than being repaired from ownership.
+
 A private definition-core preflight now performs that join before Unreal
 planning.
 The reviewed mission-script corpus contains 342 sources: 188 contain no selected
