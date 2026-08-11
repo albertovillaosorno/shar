@@ -322,6 +322,13 @@ Current task list. Project phases and dated progress are recorded in
           Preserve the optional `stopmusic` argument as opaque source evidence;
           playback, audio routing, music policy, completion, and transitions
           remain separate runtime semantics.
+        - [x] Bind all nine reviewed `SetMusicState` pairs to the indexed
+          base score-library script for their exact source level. Preserve the
+          compiled metadata member id/path plus the unique named-asset offsets
+          for each `MissionN`/`StageN` source window. Do not decode RADMusic
+          state-machine or playback semantics from symbol adjacency. The 14
+          `StageStartMusicEvent` calls remain separate: reviewed `L*_drama`
+          tokens are not published as exact symbols in these level metadata.
     - [ ] Emit lossless `USharMissionDefinition` assets only after the complete
       mission graph passes reference and topology validation.
   - [ ] Compile remaining normalized UI, font, localization, tuning, and other
