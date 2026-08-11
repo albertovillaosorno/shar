@@ -193,11 +193,13 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         note: format!(
             concat!(
                 "verified {} sources across {} semantic packages and {} ",
-                "generated FBX artifacts; published {} with plan bundle {}"
+                "generated FBX artifacts; published {} mission definitions ",
+                "to {} with plan bundle {}"
             ),
             unreal_manifest.source_count(),
             unreal_manifest.package_count(),
             verified_fbx_count,
+            mission_definitions_jsonl.lines().count(),
             UNREAL_STAGING_ROOT,
             plan_bundle.index_revision(),
         ),
