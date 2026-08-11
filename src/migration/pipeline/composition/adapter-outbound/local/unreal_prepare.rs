@@ -141,7 +141,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         MissionReferenceCatalog::from_package_index(&index).map_err(|error| {
             PipelineError::new(format!("mission reference catalog intake failed: {error}"))
         })?;
-    let evidence = source_evidence(
+    let source_report = source_evidence(
         &manifest_text,
         config,
         &mission_references,
@@ -150,7 +150,8 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         &mission_p3d_references,
         &index,
     )?;
-    let evidence = retain_importable_evidence(&index, evidence);
+    drop(source_report.mission_definitions);
+    let evidence = retain_importable_evidence(&index, source_report.evidence);
     let unreal_manifest = UnrealImportManifest::build(&index, evidence)
         .map_err(|error| PipelineError::new(format!("Unreal manifest planning failed: {error}")))?;
     let manifest_jsonl = unreal_manifest.to_jsonl();
@@ -235,7 +236,7 @@ fn source_evidence(
     mission_locators: &MissionLocatorCatalog,
     mission_p3d_references: &MissionP3dReferenceCatalog,
     index: &PhaseThreePackageIndex,
-) -> PipelineOutcome<Vec<UnrealSourceEvidence>> {
+) -> PipelineOutcome<SourceEvidenceReport> {
     let source_count = manifest
         .lines()
         .filter(|line| !line.trim().is_empty())
@@ -279,14 +280,14 @@ fn source_evidence(
             future_normalization: manifest_string(&row, "future_normalization", line_number)?,
         });
     }
-    let evidence = parallel_source_evidence(
+    let report = parallel_source_evidence(
         &inputs,
         mission_references,
         mission_p3d_references,
     )?;
     preflight_cross_source_mission_locators(
         &inputs,
-        &evidence,
+        &report.evidence,
         mission_references,
         mission_cameras,
         mission_locators,
@@ -294,7 +295,19 @@ fn source_evidence(
         index,
         &config.extracted_root,
     )?;
-    Ok(evidence)
+    Ok(report)
+}
+
+/// Verified source evidence plus selected mission-definition rows.
+struct SourceEvidenceReport {
+    evidence: Vec<UnrealSourceEvidence>,
+    mission_definitions: Vec<String>,
+}
+
+/// One verified physical source and its optional selected mission definition.
+struct VerifiedSourceOutput {
+    evidence: UnrealSourceEvidence,
+    mission_definition: Option<String>,
 }
 
 /// One parsed manifest row awaiting physical source verification.
@@ -322,9 +335,12 @@ fn parallel_source_evidence(
     inputs: &[SourceEvidenceInput],
     mission_references: &MissionReferenceCatalog,
     mission_p3d_references: &MissionP3dReferenceCatalog,
-) -> PipelineOutcome<Vec<UnrealSourceEvidence>> {
+) -> PipelineOutcome<SourceEvidenceReport> {
     if inputs.is_empty() {
-        return Ok(Vec::new());
+        return Ok(SourceEvidenceReport {
+            evidence: Vec::new(),
+            mission_definitions: Vec::new(),
+        });
     }
     let next = AtomicUsize::new(0);
     let (sender, receiver) = mpsc::channel();
@@ -373,11 +389,19 @@ fn parallel_source_evidence(
     }
     collected.sort_by_key(|(position, _result)| *position);
     let mut evidence = Vec::with_capacity(collected.len());
+    let mut mission_definitions = Vec::new();
     for (_position, result) in collected {
-        evidence.push(result?);
+        let output = result?;
+        evidence.push(output.evidence);
+        if let Some(definition) = output.mission_definition {
+            mission_definitions.push(definition);
+        }
     }
     progress.finish();
-    Ok(evidence)
+    Ok(SourceEvidenceReport {
+        evidence,
+        mission_definitions,
+    })
 }
 
 /// Re-bind typed mission locator references across the exact source snapshot
@@ -672,11 +696,12 @@ fn read_source_evidence(
     input: &SourceEvidenceInput,
     mission_references: &MissionReferenceCatalog,
     mission_p3d_references: &MissionP3dReferenceCatalog,
-) -> PipelineOutcome<UnrealSourceEvidence> {
-    let (actual_size, sha256) = if input.kind == "mission-script" {
+) -> PipelineOutcome<VerifiedSourceOutput> {
+    let (actual_size, sha256, mission_definition) =
+        if input.kind == "mission-script" {
         let bytes = read_stable_source_bytes(&input.resolved)?;
         let actual_size = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
-        validate_normalized_mission_source(
+        let mission_definition = validate_normalized_mission_source(
             &input.id,
             &input.kind,
             &input.schema,
@@ -686,9 +711,10 @@ fn read_source_evidence(
             mission_references,
             mission_p3d_references,
         )?;
-        (actual_size, digest_hex(&bytes))
+        (actual_size, digest_hex(&bytes), mission_definition)
     } else {
-        stream_source_digest(&input.resolved)?
+        let (actual_size, sha256) = stream_source_digest(&input.resolved)?;
+        (actual_size, sha256, None)
     };
     if actual_size != input.expected_size {
         return Err(PipelineError::new(format!(
@@ -696,8 +722,9 @@ fn read_source_evidence(
             input.path, input.expected_size
         )));
     }
-    Ok(UnrealSourceEvidence {
-        id: input.id.clone(),
+    Ok(VerifiedSourceOutput {
+        evidence: UnrealSourceEvidence {
+            id: input.id.clone(),
         path: input.path.clone(),
         file_extension: input.file_extension.clone(),
         unit_type: input.unit_type.clone(),
@@ -711,7 +738,9 @@ fn read_source_evidence(
         size_bytes: actual_size,
         sha256,
         unreal_import_relation: input.unreal_import_relation.clone(),
-        future_normalization: input.future_normalization.clone(),
+            future_normalization: input.future_normalization.clone(),
+        },
+        mission_definition,
     })
 }
 
@@ -864,9 +893,9 @@ fn validate_normalized_mission_source(
     bytes: &[u8],
     mission_references: &MissionReferenceCatalog,
     mission_p3d_references: &MissionP3dReferenceCatalog,
-) -> PipelineOutcome<()> {
+) -> PipelineOutcome<Option<String>> {
     if kind != "mission-script" {
-        return Ok(());
+        return Ok(None);
     }
     if schema != MISSION_SCRIPT_SCHEMA {
         return Err(PipelineError::new(
@@ -949,7 +978,7 @@ fn validate_normalized_mission_source(
                     "mission authored stage topology failed: {error}"
                 ))
             })?;
-    if let Some(definition) =
+    let mission_definition =
         mission_definition_context::preflight_mission_definition_core(
             &scopes,
             &initialization,
@@ -958,12 +987,13 @@ fn validate_normalized_mission_source(
             &condition_semantics,
             &topology,
         )?
-    {
-        drop(mission_definition_context::render_definition_core(
-            source_id,
-            &definition,
-        )?);
-    }
+        .map(|definition| {
+            mission_definition_context::render_definition_core(
+                source_id,
+                &definition,
+            )
+        })
+        .transpose()?;
     drop(
         preflight_mission_presentation_references(
             mission_p3d_references,
@@ -1053,7 +1083,7 @@ fn validate_normalized_mission_source(
             ))
         })?,
     );
-    Ok(())
+    Ok(mission_definition)
 }
 
 fn retain_importable_evidence(
