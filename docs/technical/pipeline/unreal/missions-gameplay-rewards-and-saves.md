@@ -480,6 +480,16 @@ carry those owner ordinals plus their authored stage-versus-objective scope.
 Final definition compilation can join these records directly instead of
 reconstructing ownership from source adjacency.
 
+The local Unreal preflight now consumes that ownership directly in a lossless
+mission definition-core join. Across 342 reviewed mission-script sources, 188
+have no selected mission and are required to produce no semantic rows; all 154
+selected sources have exactly one mission. Their 611 stages join one-to-one with
+611 root objectives and authored topology, and all 408 conditions join through
+exact owner stage keys. Checkpoints, final/terminal evidence, objective mapping,
+condition schema/scope, and authored-next evidence survive the join. Runtime
+success/failure edges and final `USharMissionDefinition` publication remain
+separate blocked work.
+
 ## Participant bindings
 
 Characters, vehicles, props, zones, routes, cameras, dialogue lines, effects,

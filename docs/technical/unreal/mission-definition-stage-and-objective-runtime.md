@@ -359,6 +359,18 @@ ownership plus whether the source declared it directly on the stage or while the
 root objective was open. Final compilation therefore does not need source-order
 heuristics to reconstruct stage membership.
 
+A private definition-core preflight now performs that join before Unreal planning.
+The reviewed mission-script corpus contains 342 sources: 188 contain no selected
+mission and are accepted only when their semantic/topology reports are empty;
+the remaining 154 each contain exactly one selected mission. Those 154 sources
+join all 611 stage rows one-to-one with authored topology and root-objective
+ownership, then attach all 408 conditions through the exact same stage owner key.
+The joined rows retain checkpoint/final/terminal evidence, canonical objective
+kind or explicit unavailable identity, condition schema/scope, and the authored
+next neighbor. They deliberately contain no runtime success/failure transition
+ids, so final `USharMissionDefinition` emission remains blocked on policy and
+transition authority rather than reconstructing it from adjacency.
+
 ## Conversion command registry
 
 Every recognized source command maps to one registered conversion
