@@ -256,6 +256,7 @@ fn validate_test_mission_source(
     bytes: &[u8],
 ) -> PipelineOutcome<()> {
     super::validate_normalized_mission_source(
+        "script-test-source",
         kind,
         schema,
         file_extension,

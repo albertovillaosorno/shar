@@ -525,3 +525,91 @@ fn joins_mission_scope_pickup_state_prop_source_evidence(
     assert_eq!(binding.source_state(), 3);
     Ok(())
 }
+
+#[test]
+fn renders_definition_core_as_stable_versioned_json() -> Result<(), String> {
+    let (stages, objectives, conditions, topology) = reports();
+    let report = build_definition_core(
+        "m1",
+        &empty_initialization("m1"),
+        &stages,
+        &objectives,
+        &conditions,
+        &topology,
+    )
+    .map_err(|error| error.to_string())?;
+    let first = render_definition_core("script-test-source", &report)
+        .map_err(|error| error.to_string())?;
+    let second = render_definition_core("script-test-source", &report)
+        .map_err(|error| error.to_string())?;
+    assert_eq!(first, second);
+    assert!(first.ends_with('\n'));
+    let value = serde_json::from_str::<serde_json::Value>(&first)
+        .map_err(|error| error.to_string())?;
+    assert_eq!(
+        value.get("schema").and_then(serde_json::Value::as_str),
+        Some("shar-schoenwald.mission-definition-core.v1")
+    );
+    assert_eq!(
+        value.get("source_id").and_then(serde_json::Value::as_str),
+        Some("script-test-source")
+    );
+    assert_eq!(
+        value.get("mission_id").and_then(serde_json::Value::as_str),
+        Some("m1")
+    );
+    let stages = value
+        .get("stages")
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| "rendered stages disappeared".to_owned())?;
+    assert_eq!(stages.len(), 2);
+    let first_stage = stages
+        .first()
+        .and_then(serde_json::Value::as_object)
+        .ok_or_else(|| "rendered first stage disappeared".to_owned())?;
+    assert_eq!(
+        first_stage
+            .get("next_authored_sequence_ordinal")
+            .and_then(serde_json::Value::as_u64),
+        Some(1)
+    );
+    assert_eq!(
+        first_stage
+            .get("visual_transition")
+            .and_then(serde_json::Value::as_str),
+        Some("iris")
+    );
+    let objective = first_stage
+        .get("objective")
+        .and_then(serde_json::Value::as_object)
+        .ok_or_else(|| "rendered objective disappeared".to_owned())?;
+    assert_eq!(
+        objective
+            .get("canonical_kind")
+            .and_then(serde_json::Value::as_str),
+        Some("travel")
+    );
+    let conditions = first_stage
+        .get("conditions")
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| "rendered conditions disappeared".to_owned())?;
+    assert_eq!(conditions.len(), 1);
+    Ok(())
+}
+
+#[test]
+fn rejects_noncanonical_definition_source_identity() {
+    let (stages, objectives, conditions, topology) = reports();
+    let report = build_definition_core(
+        "m1",
+        &empty_initialization("m1"),
+        &stages,
+        &objectives,
+        &conditions,
+        &topology,
+    )
+    .expect("definition fixture must stay valid");
+    let error = render_definition_core("../script", &report)
+        .expect_err("path-shaped source id must fail");
+    assert!(error.to_string().contains("not canonical"));
+}

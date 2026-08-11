@@ -677,6 +677,7 @@ fn read_source_evidence(
         let bytes = read_stable_source_bytes(&input.resolved)?;
         let actual_size = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
         validate_normalized_mission_source(
+            &input.id,
             &input.kind,
             &input.schema,
             &input.file_extension,
@@ -855,6 +856,7 @@ fn source_worker_count_for(available: usize, source_count: usize) -> usize {
 }
 
 fn validate_normalized_mission_source(
+    source_id: &str,
     kind: &str,
     schema: &str,
     file_extension: &str,
@@ -947,7 +949,7 @@ fn validate_normalized_mission_source(
                     "mission authored stage topology failed: {error}"
                 ))
             })?;
-    drop(
+    if let Some(definition) =
         mission_definition_context::preflight_mission_definition_core(
             &scopes,
             &initialization,
@@ -955,8 +957,13 @@ fn validate_normalized_mission_source(
             &objective_semantics,
             &condition_semantics,
             &topology,
-        )?,
-    );
+        )?
+    {
+        drop(mission_definition_context::render_definition_core(
+            source_id,
+            &definition,
+        )?);
+    }
     drop(
         preflight_mission_presentation_references(
             mission_p3d_references,

@@ -33,6 +33,10 @@
 
 //! Lossless preflight join for source-backed mission definition-core evidence.
 
+mod render;
+
+pub(super) use render::render_definition_core;
+
 use std::collections::BTreeSet;
 
 use crate::domain::package::{
