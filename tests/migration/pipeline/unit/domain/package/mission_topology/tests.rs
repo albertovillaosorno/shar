@@ -43,7 +43,12 @@ fn semantics(
 fn exposes_authored_neighbors_and_last_final_marker() -> Result<(), String> {
     let report = preflight_mission_authored_stage_topology(&semantics(vec![
         (2, 0, false, vec![]),
-        (5, 1, false, vec![]),
+        (
+            5,
+            1,
+            false,
+            vec![MissionStageDirective::ResetCheckpoint { source_ordinal: 6 }],
+        ),
         (8, 2, true, vec![]),
     ]))?;
     let stages = report.stages();
@@ -52,7 +57,9 @@ fn exposes_authored_neighbors_and_last_final_marker() -> Result<(), String> {
     assert_eq!(stages[0].sequence_ordinal(), 0);
     assert_eq!(stages[0].next_authored_sequence_ordinal(), Some(1));
     assert_eq!(stages[1].next_authored_sequence_ordinal(), Some(2));
+    assert_eq!(stages[1].checkpoint_source_ordinal(), Some(6));
     assert_eq!(stages[2].next_authored_sequence_ordinal(), None);
+    assert_eq!(stages[2].checkpoint_source_ordinal(), None);
     assert!(!stages[0].explicit_final());
     assert!(stages[2].explicit_final());
     Ok(())
@@ -67,6 +74,26 @@ fn accepts_sequence_without_explicit_final_marker() -> Result<(), String> {
     assert!(report.stages().iter().all(|stage| !stage.explicit_final()));
     Ok(())
 }
+
+#[test]
+fn rejects_duplicate_checkpoint_markers_inside_one_stage() {
+    let report = preflight_mission_authored_stage_topology(&semantics(vec![(
+        2,
+        0,
+        false,
+        vec![
+            MissionStageDirective::ResetCheckpoint { source_ordinal: 3 },
+            MissionStageDirective::ResetCheckpoint { source_ordinal: 4 },
+        ],
+    )]));
+    assert!(
+        report
+            .expect_err("duplicate checkpoint markers must fail")
+            .contains("more than one checkpoint marker")
+    );
+}
+
+
 
 #[test]
 fn rejects_non_last_explicit_final_marker() {

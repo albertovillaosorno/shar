@@ -43,6 +43,7 @@ pub struct MissionAuthoredStageTopologyBinding {
     source_ordinal: usize,
     sequence_ordinal: usize,
     next_authored_sequence_ordinal: Option<usize>,
+    checkpoint_source_ordinal: Option<usize>,
     explicit_final: bool,
     terminal: MissionStageTerminalOutcome,
 }
@@ -64,6 +65,12 @@ impl MissionAuthoredStageTopologyBinding {
     #[must_use]
     pub const fn next_authored_sequence_ordinal(&self) -> Option<usize> {
         self.next_authored_sequence_ordinal
+    }
+
+    /// Return the exact authored `reset_to_here` marker ordinal, if present.
+    #[must_use]
+    pub const fn checkpoint_source_ordinal(&self) -> Option<usize> {
+        self.checkpoint_source_ordinal
     }
 
     /// Return whether the source explicitly marked this stage `final`.
@@ -137,6 +144,34 @@ pub fn preflight_mission_authored_stage_topology(
         }
         previous_source_ordinal = Some(stage.source_ordinal());
 
+        let checkpoint_ordinals = stage
+            .directives()
+            .iter()
+            .filter_map(|directive| match directive {
+                super::MissionStageDirective::ResetCheckpoint {
+                    source_ordinal,
+                } => Some(*source_ordinal),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        let checkpoint_source_ordinal = match checkpoint_ordinals.as_slice() {
+            [] => None,
+            [source_ordinal] if *source_ordinal > stage.source_ordinal() => {
+                Some(*source_ordinal)
+            },
+            [_] => {
+                return Err(
+                    "mission checkpoint marker precedes its stage".to_owned(),
+                );
+            },
+            _ => {
+                return Err(
+                    "mission stage has more than one checkpoint marker"
+                        .to_owned(),
+                );
+            },
+        };
+
         let explicit_final = matches!(
             stage.kind(),
             MissionStageKind::Standard {
@@ -171,6 +206,7 @@ pub fn preflight_mission_authored_stage_topology(
             sequence_ordinal: index,
             next_authored_sequence_ordinal:
                 (index + 1 < semantics.stages().len()).then_some(index + 1),
+            checkpoint_source_ordinal,
             explicit_final,
             terminal: transition.terminal(),
         });
