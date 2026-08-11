@@ -90,6 +90,9 @@ fn binds_mission_scope_state_prop() -> Result<(), String> {
     let [binding] = report.bindings() else {
         return Err("pickup binding count drifted".to_owned());
     };
+    assert_eq!(binding.owner_stage_source_ordinal(), 7);
+    assert_eq!(binding.owner_stage_sequence_ordinal(), 0);
+    assert_eq!(binding.owner_objective_source_ordinal(), 8);
     assert_eq!(binding.target_source_ordinal(), 61);
     assert_eq!(binding.target_id(), "bombbarrel");
     assert_eq!(binding.declaration_source_ordinal(), 7);
@@ -117,6 +120,7 @@ fn binds_stage_scope_state_prop() -> Result<(), String> {
     assert_eq!(
         binding.declaration_scope(),
         MissionPickupStatePropScope::Stage {
+            source_ordinal: 2,
             sequence_ordinal: 0,
         }
     );
@@ -163,4 +167,17 @@ fn rejects_ambiguous_prior_state_prop() {
     )
     .expect_err("ambiguous pickup state prop must fail");
     assert!(error.contains("no unique prior state-prop declaration"));
+}
+
+#[test]
+fn rejects_target_before_owning_objective() {
+    let initialization =
+        MissionInitializationReport::from_directives_for_tests("m3", vec![]);
+    let error = preflight_mission_pickup_state_props(
+        &initialization,
+        &empty_stages(),
+        &objective(7),
+    )
+    .expect_err("pickup target before objective must fail");
+    assert!(error.contains("precedes its owning objective"));
 }
