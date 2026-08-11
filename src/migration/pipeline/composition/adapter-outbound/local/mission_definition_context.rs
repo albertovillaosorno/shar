@@ -35,7 +35,9 @@
 
 mod render;
 
-pub(super) use render::render_definition_core;
+pub(super) use render::{
+    MISSION_DEFINITION_CORE_SCHEMA, render_definition_core,
+};
 
 use std::collections::BTreeSet;
 
