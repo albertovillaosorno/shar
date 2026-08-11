@@ -40,7 +40,9 @@ use super::{
 /// One resolved `BindCollectibleTo` source relationship.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MissionCollectibleWaypointBinding {
+    stage_source_ordinal: usize,
     stage_sequence_ordinal: usize,
+    objective_source_ordinal: usize,
     source_ordinal: usize,
     collectible_index: u32,
     collectible_source_ordinal: usize,
@@ -51,10 +53,22 @@ pub struct MissionCollectibleWaypointBinding {
 }
 
 impl MissionCollectibleWaypointBinding {
+    /// Return the source `AddStage` ordinal.
+    #[must_use]
+    pub const fn stage_source_ordinal(&self) -> usize {
+        self.stage_source_ordinal
+    }
+
     /// Return the dense owning stage ordinal.
     #[must_use]
     pub const fn stage_sequence_ordinal(&self) -> usize {
         self.stage_sequence_ordinal
+    }
+
+    /// Return the source `AddObjective` ordinal owning the binding.
+    #[must_use]
+    pub const fn objective_source_ordinal(&self) -> usize {
+        self.objective_source_ordinal
     }
 
     /// Return the `BindCollectibleTo` source ordinal.
@@ -134,6 +148,14 @@ pub fn preflight_mission_collectible_waypoints(
         .iter()
         .zip(objectives.objectives())
     {
+        if objective.owner_stage_source_ordinal() != stage.source_ordinal()
+            || objective.owner_stage_sequence_ordinal()
+                != stage.sequence_ordinal()
+        {
+            return Err(
+                "mission collectible route objective owner drifted".to_owned(),
+            );
+        }
         let collectibles = objective
             .directives()
             .iter()
@@ -194,7 +216,9 @@ pub fn preflight_mission_collectible_waypoints(
                 );
             }
             bindings.push(MissionCollectibleWaypointBinding {
+                stage_source_ordinal: stage.source_ordinal(),
                 stage_sequence_ordinal: stage.sequence_ordinal(),
+                objective_source_ordinal: objective.source_ordinal(),
                 source_ordinal: *source_ordinal,
                 collectible_index: *collectible_index,
                 collectible_source_ordinal,

@@ -64,6 +64,7 @@ impl MissionCountdownEntryBinding {
 /// One stage's complete authored countdown block.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MissionCountdownBinding {
+    stage_source_ordinal: usize,
     stage_sequence_ordinal: usize,
     start_source_ordinal: usize,
     sequence_id: String,
@@ -72,6 +73,12 @@ pub struct MissionCountdownBinding {
 }
 
 impl MissionCountdownBinding {
+    /// Return the source `AddStage` ordinal.
+    #[must_use]
+    pub const fn stage_source_ordinal(&self) -> usize {
+        self.stage_source_ordinal
+    }
+
     /// Return the dense owning stage ordinal.
     #[must_use]
     pub const fn stage_sequence_ordinal(&self) -> usize {
@@ -143,6 +150,7 @@ pub fn preflight_mission_countdowns(
                         );
                     }
                     countdown = Some(MissionCountdownBinding {
+                        stage_source_ordinal: stage.source_ordinal(),
                         stage_sequence_ordinal: stage.sequence_ordinal(),
                         start_source_ordinal: *source_ordinal,
                         sequence_id: sequence_id.clone(),
