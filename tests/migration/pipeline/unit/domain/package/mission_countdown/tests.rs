@@ -62,6 +62,7 @@ fn binds_ordered_entries_to_prior_start() -> Result<(), String> {
     let [countdown] = report.countdowns() else {
         return Err("countdown block count drifted".to_owned());
     };
+    assert_eq!(countdown.stage_source_ordinal(), 2);
     assert_eq!(countdown.stage_sequence_ordinal(), 0);
     assert_eq!(countdown.start_source_ordinal(), 4);
     assert_eq!(countdown.sequence_id(), "count");

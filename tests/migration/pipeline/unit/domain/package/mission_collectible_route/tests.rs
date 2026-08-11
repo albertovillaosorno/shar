@@ -81,7 +81,9 @@ fn resolves_collectible_and_waypoint_indices() -> Result<(), String> {
     let [binding] = report.bindings() else {
         return Err("collectible waypoint binding count drifted".to_owned());
     };
+    assert_eq!(binding.stage_source_ordinal(), 2);
     assert_eq!(binding.stage_sequence_ordinal(), 0);
+    assert_eq!(binding.objective_source_ordinal(), 3);
     assert_eq!(binding.source_ordinal(), 6);
     assert_eq!(binding.collectible_index(), 0);
     assert_eq!(binding.collectible_source_ordinal(), 5);
@@ -116,4 +118,20 @@ fn rejects_forward_index_targets() {
     let error = preflight_mission_collectible_waypoints(&stages, &objectives)
         .expect_err("forward waypoint reference must fail");
     assert!(error.contains("later declaration"));
+}
+
+#[test]
+fn rejects_objective_owner_drift() {
+    let (stages, _) = reports(5, 4, 6, 0, 0);
+    let objectives =
+        MissionObjectiveSemanticReport::from_route_entries_for_tests(vec![(
+            9,
+            0,
+            3,
+            "dump".to_owned(),
+            Vec::new(),
+        )]);
+    let error = preflight_mission_collectible_waypoints(&stages, &objectives)
+        .expect_err("objective owner drift must fail");
+    assert!(error.contains("objective owner drifted"));
 }
