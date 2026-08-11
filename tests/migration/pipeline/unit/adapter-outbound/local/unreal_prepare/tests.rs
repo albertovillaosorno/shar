@@ -216,18 +216,22 @@ fn parallel_source_verification_preserves_manifest_order() -> Result<(), String>
     )
     .map_err(|error| error.to_string());
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
-    let evidence = result?;
-    let ids = evidence
+    let report = result?;
+    assert!(report.mission_definitions.is_empty());
+    let ids = report
+        .evidence
         .iter()
         .map(|source| source.id.as_str())
         .collect::<Vec<_>>();
     if ids != ["first", "second"] {
         return Err(format!("parallel source order changed: {ids:?}"));
     }
-    if evidence
+    if report
+        .evidence
         .first()
         .is_none_or(|source| source.sha256 != digest_hex(b"first"))
-        || evidence
+        || report
+            .evidence
             .get(1)
             .is_none_or(|source| source.sha256 != digest_hex(b"second-source"))
     {
@@ -265,6 +269,7 @@ fn validate_test_mission_source(
         &MissionReferenceCatalog::empty_for_tests(),
         &MissionP3dReferenceCatalog::empty_for_tests(),
     )
+    .map(drop)
 }
 
 fn clean_mission_json(with_finding: bool) -> Result<Vec<u8>, String> {
