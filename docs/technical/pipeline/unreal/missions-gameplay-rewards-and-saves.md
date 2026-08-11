@@ -462,6 +462,12 @@ Registered objective kinds include:
 A new objective kind requires a native policy implementation, schema, tests, and
 versioned registration. Free-form script text is rejected.
 
+The reviewed source alias registry currently projects 609 of 611 authored
+objectives to that controlled taxonomy. The remaining two are the explicitly
+unavailable legacy `dummy` objective and preserve a versioned unavailable code.
+Canonical kind and unavailable identity now survive the semantic-objective
+projection rather than being dropped before final definition compilation.
+
 ## Participant bindings
 
 Characters, vehicles, props, zones, routes, cameras, dialogue lines, effects,

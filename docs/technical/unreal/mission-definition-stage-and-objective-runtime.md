@@ -338,8 +338,11 @@ policies.
 reflected `FSharObjectivePolicyRow`. Definition validation rejects missing or
 duplicate policy identities, unsupported objective kinds and start/recovery
 rules, noncanonical references or targets, unknown stage policy references, and
-stage/policy objective-kind disagreement. This is a destination contract for the
-future compiler, not evidence that legacy objective aliases are already mapped.
+stage/policy objective-kind disagreement. The migration domain now preserves
+its closed legacy-alias mapping through semantic projection: 609 reviewed
+objectives retain a canonical runtime kind while both reviewed `dummy` objectives
+retain their explicit unavailable identity. This still does not supply objective
+policy, transition, or recovery semantics required for final asset emission.
 
 ## Conversion command registry
 
