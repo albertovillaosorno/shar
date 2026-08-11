@@ -533,6 +533,18 @@ publication remain separate blocked work. Utility mission-script sources with no
 selected mission are also accepted by pickup state-prop preflight only when
 stage/objective semantic reports are empty.
 
+`prepare-unreal` now serializes that joined core into the versioned
+`mission-definitions.jsonl` staging artifact before native asset construction.
+The fresh corpus emits 154 schema-v1 rows keyed by unique verified
+mission-script source ids. The rows contain all 611 stages, 408 conditions, 137
+transition
+marker occurrences, 43 countdown blocks, 36 collectible-waypoint bindings, 180
+objective NPC waypoints, and four pickup state-prop bindings. The four pickup
+bindings retain their two mission-scope and two stage-scope declarations. The
+bundle contains no synthesized success, failure, retry, or rollback edge fields;
+`USharMissionDefinition` construction and StateTree runtime policy remain
+separate work.
+
 Canonical presentation package references now retain their source ownership as
 well. The 61 reviewed presentation bitmaps split into two mission-scope
 references with no stage owner, six stage-scope references with exact stage

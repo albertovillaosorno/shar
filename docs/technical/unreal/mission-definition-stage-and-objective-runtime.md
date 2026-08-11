@@ -62,8 +62,9 @@ services through native Unreal facilities. It is not a script file, console
 command sequence, Blueprint graph, actor list, package name,
 or presentation event.
 
-The import pipeline currently stops before asset emission but now closes
-command-level semantic ownership after source-scope projection. All 811 direct
+The import pipeline currently stops before native Unreal asset emission but
+now closes command-level semantic ownership after source-scope projection and
+publishes the validated definition core as versioned staging data. All 811
 mission commands and all 2,454 direct-stage commands must emit typed evidence;
 the stage report contains 2,549 directives after adding the 95 objective
 commands
@@ -411,6 +412,16 @@ with nonempty direct parameters. These rows deliberately contain no runtime
 success/failure transition ids, so final `USharMissionDefinition` emission
 remains blocked on policy and transition authority rather than reconstructing it
 from adjacency.
+
+`prepare-unreal` publishes those rows in `mission-definitions.jsonl` as one
+canonical schema-v1 record per selected source. The fresh corpus contains 154
+unique source-keyed definitions covering all 611 stages, 408 conditions, 137
+transition-marker occurrences, 43 countdown blocks, 36 collectible-waypoint
+bindings, 180 objective NPC waypoints, and four pickup state-prop bindings. All
+154 source ids resolve to verified mission-script evidence, and the four pickup
+bindings retain two mission-scope plus two stage-scope declarations. The staging
+bundle contains no synthesized success/failure/retry/rollback edge fields and is
+not itself a `USharMissionDefinition` or StateTree asset.
 
 Canonical presentation package references now retain their source ownership as
 well. The 61 reviewed presentation bitmaps split into two mission-scope
