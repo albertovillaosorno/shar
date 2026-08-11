@@ -85,7 +85,7 @@ fn mission_source(id: &str) -> UnrealSourceEvidence {
 fn mission_definition_row(source_id: &str, mission_id: &str) -> String {
     let mut value = serde_json::to_string(&json!({
         "mission_id": mission_id,
-        "schema": "shar-schoenwald.mission-definition-core.v1",
+        "schema": "shar-schoenwald.mission-definition-core.v2",
         "source_id": source_id,
         "stages": [],
     }))

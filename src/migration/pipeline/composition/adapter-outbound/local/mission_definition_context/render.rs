@@ -37,19 +37,21 @@ use super::{
     MissionDefinitionStageCoreBinding,
 };
 use crate::domain::package::{
-    MissionCollectibleWaypointBinding, MissionCountdownBinding,
-    MissionPickupStatePropBinding, MissionPickupStatePropScope,
+    MissionCollectibleWaypointBinding, MissionConditionViolationEffect,
+    MissionCountdownBinding, MissionPickupStatePropBinding,
+    MissionPickupStatePropScope,
     MissionRoadArrowBinding, MissionRoadArrowMode,
 };
 use crate::domain::{
     MissionConditionParameters, MissionConditionScope,
-    MissionObjectiveParameters, MissionStageKind,
+    MissionObjectiveParameters,
+    MissionStageKind,
     MissionStageTerminalOutcome, MissionStageTransitionMarkerKind,
     MissionStageVisualTransition, PipelineError, PipelineOutcome,
 };
 
 pub(in crate::adapters::driven::local) const MISSION_DEFINITION_CORE_SCHEMA:
-    &str = "shar-schoenwald.mission-definition-core.v1";
+    &str = "shar-schoenwald.mission-definition-core.v2";
 
 /// Render one selected source definition core as canonical JSON ending in LF.
 ///
@@ -239,7 +241,18 @@ fn condition_json(condition: &MissionDefinitionConditionCoreBinding) -> Value {
         "scope": condition_scope_token(condition.scope),
         "source_alias": condition.source_alias,
         "source_ordinal": condition.source_ordinal,
+        "violation_effect": condition_violation_effect_token(
+            condition.violation_effect,
+        ),
     })
+}
+
+const fn condition_violation_effect_token(
+    effect: MissionConditionViolationEffect,
+) -> &'static str {
+    match effect {
+        MissionConditionViolationEffect::StageFailure => "stage-failure",
+    }
 }
 
 fn condition_parameters_json(parameters: &MissionConditionParameters) -> Value {
