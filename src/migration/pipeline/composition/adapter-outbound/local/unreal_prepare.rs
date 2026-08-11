@@ -1149,9 +1149,10 @@ fn validate_mission_definition_bundle(
             .get(source_id.as_str())
             .copied()
             .ok_or_else(|| {
-                PipelineError::new(
-                    "mission definition source is not verified mission evidence",
-                )
+                PipelineError::new(concat!(
+                    "mission definition source is not verified ",
+                    "mission evidence"
+                ))
             })?;
         if previous_source_position
             .is_some_and(|previous| source_position <= previous)
