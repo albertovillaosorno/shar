@@ -155,17 +155,29 @@ pub fn preflight_mission_pickup_state_props(
     stages: &MissionStageSemanticReport,
     objectives: &MissionObjectiveSemanticReport,
 ) -> Result<MissionPickupStatePropReport, String> {
-    let [mission] = initialization.missions() else {
-        return Err(
-            "pickup state-prop preflight requires one selected mission"
-                .to_owned(),
-        );
-    };
     if stages.stages().len() != objectives.objectives().len() {
         return Err(
             "pickup state-prop stage/objective count drifted".to_owned(),
         );
     }
+    let mission = match initialization.missions() {
+        [] if stages.stages().is_empty() => {
+            return Ok(MissionPickupStatePropReport::default());
+        },
+        [] => {
+            return Err(
+                "pickup state-prop semantics have no selected mission"
+                    .to_owned(),
+            );
+        },
+        [mission] => mission,
+        _ => {
+            return Err(
+                "pickup state-prop preflight has multiple selected missions"
+                    .to_owned(),
+            );
+        },
+    };
 
     let mut declarations = Vec::new();
     for directive in mission.directives() {
