@@ -226,6 +226,19 @@ fn resolve_conversation(
     String,
     Vec<MissionCompletionDialogPackageBinding>,
 )> {
+    resolve_conversation_with_hint(index, level, dialogue_id, None)
+}
+
+pub(super) fn resolve_conversation_with_hint(
+    index: &PhaseThreePackageIndex,
+    level: u8,
+    dialogue_id: &str,
+    conversation_hint: Option<&str>,
+) -> PipelineOutcome<(
+    String,
+    String,
+    Vec<MissionCompletionDialogPackageBinding>,
+)> {
     let level_id = format!("level-{level:02}");
     let suffix = format!("-{}/default", dialogue_id.to_ascii_lowercase());
     let mut groups = BTreeSet::<(String, String)>::new();
@@ -244,6 +257,8 @@ fn resolve_conversation(
                 .subcategory()
                 .to_ascii_lowercase()
                 .ends_with(&suffix)
+            || conversation_hint
+                .is_some_and(|hint| !conversation.eq_ignore_ascii_case(hint))
         {
             continue;
         }

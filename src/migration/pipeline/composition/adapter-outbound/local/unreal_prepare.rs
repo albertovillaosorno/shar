@@ -52,6 +52,7 @@ use shar_unreal_conversion::domain::PlanBundle;
 
 use super::mission_camera_catalog::load_mission_camera_catalog;
 use super::mission_completion_dialog_context as completion_dialog_context;
+use super::mission_dialogue_info_context as dialogue_info_context;
 use super::mission_locator_catalog::load_mission_locator_catalog;
 use super::mission_locator_context::{
     MissionLocatorScriptSnapshot, build_level_locator_source_contexts,
@@ -472,6 +473,16 @@ fn preflight_cross_source_mission_locators(
         &snapshots,
     )?);
     drop(completion_dialog_context::preflight_mission_completion_dialogs(
+        index,
+        mission_references,
+        &snapshots,
+    )?);
+    drop(dialogue_info_context::preflight_mission_dialogue_info(
+        index,
+        mission_references,
+        &snapshots,
+    )?);
+    drop(dialogue_info_context::preflight_mission_dialogue_info(
         index,
         mission_references,
         &snapshots,
