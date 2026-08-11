@@ -361,8 +361,12 @@ Current task list. Project phases and dated progress are recorded in
           compiled metadata member id/path plus the unique named-asset offsets
           for each `MissionN`/`StageN` source window. Do not decode RADMusic
           state-machine or playback semantics from symbol adjacency. The 14
-          `StageStartMusicEvent` calls remain separate: reviewed `L*_drama`
-          tokens are not published as exact symbols in these level metadata.
+          `StageStartMusicEvent` calls remain a separate runtime-event binding:
+          source-runtime review shows their authored token is converted to a
+          case-insensitive legacy key and emitted through the mission-drama
+          event at stage start, rather than looked up as a score-library named
+          asset. Preserve that distinction until the key and native event bridge
+          are reproduced without guessing playback or mix policy.
         - [x] Bind all 38 reviewed `SetCompletionDialog` ids to one
           canonical same-level mission-conversation group. Preserve every
           participant audio package in the group: 26 groups contain one package
@@ -415,12 +419,14 @@ Current task list. Project phases and dated progress are recorded in
         - [x] Publish the joined definition core as deterministic versioned
           staging data before native asset construction. `prepare-unreal` now
           writes `mission-definitions.jsonl` as the tenth transactional staging
-          artifact: 154 source-keyed schema-v1 rows retain all 611 stages, 408
+          artifact: 154 source-keyed schema-v2 rows retain all 611 stages, 408
           conditions, 137 transition markers, 43 countdown blocks, 36
           collectible-waypoint bindings, 180 objective NPC waypoints, and four
           pickup state-prop bindings. Every definition source is one of the 344
-          verified mission-script sources, source ids are unique, and the rows
-          deliberately publish no success/failure/retry/rollback edges. This is
+          verified mission-script sources, source ids are unique, and each
+          condition row publishes the reviewed `stage-failure` violation effect.
+          The rows still publish no successor/retry/rollback/recovery edges.
+          This is
           source-backed semantic staging, not `USharMissionDefinition` or
           StateTree asset emission.
     - [ ] Emit lossless `USharMissionDefinition` assets only after the complete
