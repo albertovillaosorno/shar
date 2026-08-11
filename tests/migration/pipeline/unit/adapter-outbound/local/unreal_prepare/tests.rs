@@ -88,7 +88,18 @@ fn mission_definition_row(source_id: &str, mission_id: &str) -> String {
         mission_id,
         vec![json!({
             "explicit_final": false,
+            "kind": {
+                "final_stage": false,
+                "kind": "standard",
+                "legacy_flags": 0,
+            },
             "next_authored_sequence_ordinal": null,
+            "objective": {
+                "canonical_kind": "travel",
+                "source_alias": "goto",
+                "source_ordinal": 2,
+                "unavailable_code": null,
+            },
             "sequence_ordinal": 0,
             "stage_source_ordinal": 1,
             "terminal": "none",
@@ -1382,7 +1393,6 @@ fn rejects_unverified_mission_definition_source() {
     assert!(error.to_string().contains("not verified mission evidence"));
 }
 
-
 #[test]
 fn rejects_mission_definition_with_sparse_stage_order() {
     let rows = vec![mission_definition_row_with_stages(
@@ -1390,7 +1400,18 @@ fn rejects_mission_definition_with_sparse_stage_order() {
         "m1",
         vec![json!({
             "explicit_final": false,
+            "kind": {
+                "final_stage": false,
+                "kind": "standard",
+                "legacy_flags": 0,
+            },
             "next_authored_sequence_ordinal": null,
+            "objective": {
+                "canonical_kind": "travel",
+                "source_alias": "goto",
+                "source_ordinal": 99,
+                "unavailable_code": null,
+            },
             "sequence_ordinal": 1,
             "stage_source_ordinal": 1,
             "terminal": "none",
@@ -1412,14 +1433,36 @@ fn rejects_mission_definition_with_authored_neighbor_drift() {
         vec![
             json!({
                 "explicit_final": false,
+                "kind": {
+                    "final_stage": false,
+                    "kind": "standard",
+                    "legacy_flags": 0,
+                },
                 "next_authored_sequence_ordinal": null,
+                "objective": {
+                    "canonical_kind": "travel",
+                    "source_alias": "goto",
+                    "source_ordinal": 99,
+                    "unavailable_code": null,
+                },
                 "sequence_ordinal": 0,
                 "stage_source_ordinal": 1,
                 "terminal": "none",
             }),
             json!({
                 "explicit_final": false,
+                "kind": {
+                    "final_stage": false,
+                    "kind": "standard",
+                    "legacy_flags": 0,
+                },
                 "next_authored_sequence_ordinal": null,
+                "objective": {
+                    "canonical_kind": "travel",
+                    "source_alias": "goto",
+                    "source_ordinal": 99,
+                    "unavailable_code": null,
+                },
                 "sequence_ordinal": 1,
                 "stage_source_ordinal": 2,
                 "terminal": "none",
@@ -1442,14 +1485,36 @@ fn rejects_mission_definition_with_early_terminal_outcome() {
         vec![
             json!({
                 "explicit_final": false,
+                "kind": {
+                    "final_stage": false,
+                    "kind": "standard",
+                    "legacy_flags": 0,
+                },
                 "next_authored_sequence_ordinal": 1,
+                "objective": {
+                    "canonical_kind": "travel",
+                    "source_alias": "goto",
+                    "source_ordinal": 99,
+                    "unavailable_code": null,
+                },
                 "sequence_ordinal": 0,
                 "stage_source_ordinal": 1,
                 "terminal": "chapter-transition",
             }),
             json!({
                 "explicit_final": false,
+                "kind": {
+                    "final_stage": false,
+                    "kind": "standard",
+                    "legacy_flags": 0,
+                },
                 "next_authored_sequence_ordinal": null,
+                "objective": {
+                    "canonical_kind": "travel",
+                    "source_alias": "goto",
+                    "source_ordinal": 99,
+                    "unavailable_code": null,
+                },
                 "sequence_ordinal": 1,
                 "stage_source_ordinal": 2,
                 "terminal": "none",
@@ -1471,7 +1536,18 @@ fn rejects_mission_definition_with_invented_runtime_edge() {
         "m1",
         vec![json!({
             "explicit_final": false,
+            "kind": {
+                "final_stage": false,
+                "kind": "standard",
+                "legacy_flags": 0,
+            },
             "next_authored_sequence_ordinal": null,
+            "objective": {
+                "canonical_kind": "travel",
+                "source_alias": "goto",
+                "source_ordinal": 99,
+                "unavailable_code": null,
+            },
             "sequence_ordinal": 0,
             "stage_source_ordinal": 1,
             "successor_sequence_ordinal": 1,
@@ -1484,4 +1560,68 @@ fn rejects_mission_definition_with_invented_runtime_edge() {
     )
     .expect_err("invented runtime edge must fail");
     assert!(error.to_string().contains("invents unresolved runtime field"));
+}
+
+#[test]
+fn rejects_mission_definition_with_kind_final_drift() {
+    let rows = vec![mission_definition_row_with_stages(
+        "script-one",
+        "m1",
+        vec![json!({
+            "explicit_final": true,
+            "kind": {
+                "final_stage": false,
+                "kind": "standard",
+                "legacy_flags": 0,
+            },
+            "next_authored_sequence_ordinal": null,
+            "objective": {
+                "canonical_kind": "travel",
+                "source_alias": "goto",
+                "source_ordinal": 2,
+                "unavailable_code": null,
+            },
+            "sequence_ordinal": 0,
+            "stage_source_ordinal": 1,
+            "terminal": "none",
+        })],
+    )];
+    let error = validate_mission_definition_bundle(
+        &rows,
+        &[mission_source("script-one")],
+    )
+    .expect_err("stage kind final drift must fail");
+    assert!(error.to_string().contains("final marker disagrees"));
+}
+
+#[test]
+fn rejects_mission_definition_with_nonexclusive_objective_mapping() {
+    let rows = vec![mission_definition_row_with_stages(
+        "script-one",
+        "m1",
+        vec![json!({
+            "explicit_final": false,
+            "kind": {
+                "final_stage": false,
+                "kind": "standard",
+                "legacy_flags": 0,
+            },
+            "next_authored_sequence_ordinal": null,
+            "objective": {
+                "canonical_kind": "travel",
+                "source_alias": "goto",
+                "source_ordinal": 2,
+                "unavailable_code": "legacy-objective-unavailable",
+            },
+            "sequence_ordinal": 0,
+            "stage_source_ordinal": 1,
+            "terminal": "none",
+        })],
+    )];
+    let error = validate_mission_definition_bundle(
+        &rows,
+        &[mission_source("script-one")],
+    )
+    .expect_err("nonexclusive objective mapping must fail");
+    assert!(error.to_string().contains("objective mapping is not exclusive"));
 }
