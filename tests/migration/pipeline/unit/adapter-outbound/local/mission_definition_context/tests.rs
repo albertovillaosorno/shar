@@ -548,7 +548,7 @@ fn renders_definition_core_as_stable_versioned_json() -> Result<(), String> {
         .map_err(|error| error.to_string())?;
     assert_eq!(
         value.get("schema").and_then(serde_json::Value::as_str),
-        Some("shar-schoenwald.mission-definition-core.v1")
+        Some("shar-schoenwald.mission-definition-core.v2")
     );
     assert_eq!(
         value.get("source_id").and_then(serde_json::Value::as_str),
@@ -594,6 +594,12 @@ fn renders_definition_core_as_stable_versioned_json() -> Result<(), String> {
         .and_then(serde_json::Value::as_array)
         .ok_or_else(|| "rendered conditions disappeared".to_owned())?;
     assert_eq!(conditions.len(), 1);
+    assert_eq!(
+        conditions[0]
+            .get("violation_effect")
+            .and_then(serde_json::Value::as_str),
+        Some("stage-failure")
+    );
     Ok(())
 }
 

@@ -43,8 +43,9 @@ use std::collections::BTreeSet;
 
 use crate::domain::package::{
     MissionAuthoredStageTopologyReport, MissionCollectibleWaypointBinding,
-    MissionCountdownBinding, MissionObjectiveNpcWaypointBinding,
-    MissionPickupStatePropBinding,
+    MissionConditionViolationEffect, MissionCountdownBinding,
+    MissionObjectiveNpcWaypointBinding, MissionPickupStatePropBinding,
+    preflight_mission_condition_violations,
 };
 use crate::domain::{
     MissionConditionParameters, MissionConditionScope,
@@ -54,7 +55,8 @@ use crate::domain::{
     MissionStageSemanticReport, MissionStageTerminalOutcome,
     MissionStageTransitionMarker, MissionStageVisualTransition, PipelineError,
     PipelineOutcome, preflight_mission_collectible_waypoints,
-    preflight_mission_countdowns, preflight_mission_objective_npc_waypoints,
+    preflight_mission_countdowns,
+    preflight_mission_objective_npc_waypoints,
     preflight_mission_pickup_state_props, preflight_mission_stage_transitions,
 };
 
@@ -67,6 +69,7 @@ pub(super) struct MissionDefinitionConditionCoreBinding {
     scope: MissionConditionScope,
     owner_objective_source_ordinal: Option<usize>,
     parameters: MissionConditionParameters,
+    violation_effect: MissionConditionViolationEffect,
 }
 
 /// One stage's source-backed definition core, without runtime transitions.
@@ -533,6 +536,18 @@ fn build_definition_core(
         }
     }
 
+    let condition_violations =
+        preflight_mission_condition_violations(conditions).map_err(|error| {
+            PipelineError::new(format!(
+                "mission condition violation preflight failed: {error}"
+            ))
+        })?;
+    if condition_violations.bindings().len() != conditions.conditions().len() {
+        return Err(PipelineError::new(
+            "mission condition violation binding count drifted",
+        ));
+    }
+
     let collectible_waypoints =
         preflight_mission_collectible_waypoints(stages, objectives)
             .map_err(|error| {
@@ -674,6 +689,28 @@ fn build_definition_core(
                         "mission definition core condition precedes its stage",
                     ));
                 }
+                let matching_violations = condition_violations
+                    .bindings()
+                    .iter()
+                    .filter(|binding| {
+                        binding.owner_stage_source_ordinal()
+                            == condition.owner_stage_source_ordinal()
+                            && binding.owner_stage_sequence_ordinal()
+                                == condition.owner_stage_sequence_ordinal()
+                            && binding.owner_objective_source_ordinal()
+                                == condition.owner_objective_source_ordinal()
+                            && binding.source_ordinal()
+                                == condition.source_ordinal()
+                    })
+                    .collect::<Vec<_>>();
+                let [violation] = matching_violations.as_slice() else {
+                    return Err(PipelineError::new(
+                        concat!(
+                            "mission definition condition has no unique ",
+                            "violation binding"
+                        ),
+                    ));
+                };
                 Ok(MissionDefinitionConditionCoreBinding {
                     source_ordinal: condition.source_ordinal(),
                     source_alias: condition.source_alias().to_owned(),
@@ -682,6 +719,7 @@ fn build_definition_core(
                     owner_objective_source_ordinal:
                         condition.owner_objective_source_ordinal(),
                     parameters: condition.parameters().clone(),
+                    violation_effect: violation.effect(),
                 })
             })
             .collect::<PipelineOutcome<Vec<_>>>()?;
