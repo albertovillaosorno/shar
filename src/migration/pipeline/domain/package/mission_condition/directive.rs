@@ -160,6 +160,40 @@ impl MissionConditionSemanticReport {
     pub fn conditions(&self) -> &[MissionConditionSemanticBinding] {
         &self.conditions
     }
+
+    #[cfg(test)]
+    pub(crate) fn from_owned_entries_for_tests(
+        entries: Vec<(
+            usize,
+            usize,
+            usize,
+            String,
+            MissionConditionScope,
+            &'static str,
+        )>,
+    ) -> Self {
+        Self {
+            conditions: entries
+                .into_iter()
+                .map(|(
+                    owner_stage_source_ordinal,
+                    owner_stage_sequence_ordinal,
+                    source_ordinal,
+                    source_alias,
+                    scope,
+                    schema_id,
+                )| MissionConditionSemanticBinding {
+                    owner_stage_source_ordinal,
+                    owner_stage_sequence_ordinal,
+                    source_ordinal,
+                    source_alias,
+                    scope,
+                    schema_id,
+                    directives: Vec::new(),
+                })
+                .collect(),
+        }
+    }
 }
 
 /// Compile every command in the closed condition-scope registry.
