@@ -279,10 +279,11 @@ Current task list. Project phases and dated progress are recorded in
           mission sources. Preserve the next authored neighbor as evidence only,
           accept the 64 sources with no explicit `final`, and require each
           of the 90 observed `final` markers plus all four explicit terminal
-          overrides
-          to occur only on the last authored stage. Runtime successor, retry,
-          rollback, and recovery edges remain unresolved rather than inferred
-          from adjacency.
+          overrides to occur only on the last authored stage. Bind all 119
+          reviewed `reset_to_here` checkpoint markers to their exact stage and
+          source ordinal; every checkpoint stage contains exactly one marker.
+          Runtime successor, retry, rollback, and recovery edges remain
+          unresolved rather than inferred from adjacency or checkpoint presence.
         - [x] Resolve all 36 reviewed `BindCollectibleTo` index pairs
           against the owning stage's `AddCollectible` and `AddStageWaypoint`
           declarations. Every authored index is in range and refers backward to
