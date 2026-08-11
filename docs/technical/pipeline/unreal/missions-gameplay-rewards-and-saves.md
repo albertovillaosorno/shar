@@ -490,6 +490,13 @@ condition schema/scope, and authored-next evidence survive the join. Runtime
 success/failure edges and final `USharMissionDefinition` publication remain
 separate blocked work.
 
+Canonical presentation package references now retain their source ownership as
+well. The 61 reviewed presentation bitmaps split into two mission-scope
+references with no stage owner, six stage-scope references with exact stage
+source/dense ordinals, and 53 objective-scope references with both exact stage
+and objective source ownership. The binding remains presentation identity only;
+it does not assign timing, drawable semantics, or runtime sequencing.
+
 ## Participant bindings
 
 Characters, vehicles, props, zones, routes, cameras, dialogue lines, effects,

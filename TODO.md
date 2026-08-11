@@ -318,6 +318,12 @@ Current task list. Project phases and dated progress are recorded in
           `INGAME_MESSAGE_*` keys. All 439 objective and 10 locked-stage uses
           resolve exactly once while preserving key id, source unit, package,
           and subcategory; localized payload asset emission remains separate.
+        - [x] Preserve exact ownership for all 61 canonical presentation
+          bitmap package bindings: two mission-scope references remain
+          intentionally unowned, six stage-scope references retain exact owning
+          stage source/dense ordinals, and 53 objective-scope references retain
+          both exact stage and objective source ownership. Presentation timing,
+          drawable behavior, and runtime sequencing remain separate boundaries.
         - [x] Bind all six reviewed objective `SetFMVInfo` RMV paths to one
           canonical `movies/story/<id>` package and one converted movie member.
           Preserve the optional `stopmusic` argument as opaque source evidence;
@@ -347,8 +353,9 @@ Current task list. Project phases and dated progress are recorded in
         - [x] Join source-backed definition-core rows before final asset
           emission. Of 342 reviewed mission-script sources, 188 contain no
           selected mission and must therefore project no
-          stage/objective/condition rows; all 154 selected sources contain exactly
-          one mission. Join all 611 stages to one authored-topology row and one
+          stage/objective/condition rows; all 154 selected sources contain
+          exactly one mission. Join all 611 stages to one authored-topology row
+          and one
           root objective through exact owner source/dense ordinals, then attach
           all 408 conditions through the same owner key while preserving
           stage-versus-objective scope, versioned
