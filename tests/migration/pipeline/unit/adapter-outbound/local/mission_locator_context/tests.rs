@@ -341,6 +341,32 @@ fn level_setup_evidence() -> Result<MissionScriptEvidence, String> {
     )
 }
 
+fn player_vehicle_only_evidence() -> Result<MissionScriptEvidence, String> {
+    let value = json!({
+        "schema":"shar-schoenwald.straggler.mission-script.v3",
+        "source_extension":"mfk","route_class":"mission","source_bytes":64,
+        "context_command_count":0,"context_adaptation_count":0,
+        "context_adaptations":[],"context_finding_count":0,
+        "context_findings":[],"statement_count":1,"unique_command_count":1,
+        "load_p3d_reference_count":0,"mission_flow_command_count":0,
+        "vehicle_physics_command_count":0,"semantic_family":"mission-script",
+        "command_counts":{"initlevelplayervehicle":1},
+        "source_statements":[
+            r#"InitLevelPlayerVehicle("famil_v","start","DEFAULT");"#
+        ],
+        "p3d_references":[],
+        "command_invocations":[{
+            "ordinal":1,"name":"initlevelplayervehicle",
+            "args_raw":r#""famil_v","start","DEFAULT""#,
+            "semantic_role":"mission-script",
+            "arguments":["famil_v","start","DEFAULT"]
+        }]
+    });
+    preflight_mission_script(
+        &serde_json::to_string(&value).map_err(|error| error.to_string())?,
+    )
+}
+
 fn level_setup_snapshot(
     path: &str,
 ) -> Result<MissionLocatorScriptSnapshot, String> {
@@ -450,5 +476,17 @@ fn selected_mission_remembers_level_setup_sibling() -> Result<(), String> {
         context.level_setup_source_path(),
         Some("extracted/game/scripts/missions/level01/leveli.mfk.json")
     );
+    Ok(())
+}
+
+#[test]
+fn player_vehicle_only_source_is_not_level_setup() -> Result<(), String> {
+    let snapshots = vec![MissionLocatorScriptSnapshot::new(
+        "extracted/game/scripts/missions/level01/m6i.mfk.json".to_owned(),
+        player_vehicle_only_evidence()?,
+        Vec::new(),
+    )];
+    let contexts = build_level_locator_source_contexts(&snapshots)?;
+    assert_eq!(contexts.len(), 0);
     Ok(())
 }
