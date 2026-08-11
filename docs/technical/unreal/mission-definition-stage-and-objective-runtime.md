@@ -424,10 +424,12 @@ events, 36 collectible-waypoint bindings, 180 objective NPC waypoints, and four
 pickup state-prop bindings. All
 154 source ids resolve to verified mission-script evidence. Each condition row
 carries its reviewed `stage-failure` violation effect, and the four pickup
-bindings retain two mission-scope plus two stage-scope declarations. The staging
-bundle contains no synthesized successor/retry/rollback/recovery edge fields and
-is
-not itself a `USharMissionDefinition` or StateTree asset.
+bindings retain two mission-scope plus two stage-scope declarations. Before
+publication, the bundle gate independently revalidates dense stage order,
+strictly increasing authored source ordinals, the exact authored next neighbor,
+final/terminal placement, and the absence of unresolved runtime edge fields.
+The staging bundle contains no synthesized successor/retry/rollback/recovery
+edges and is not itself a `USharMissionDefinition` or StateTree asset.
 
 Canonical presentation package references now retain their source ownership as
 well. The 61 reviewed presentation bitmaps split into two mission-scope
