@@ -35,14 +35,16 @@
 
 use std::collections::BTreeSet;
 
-use crate::domain::package::MissionAuthoredStageTopologyReport;
+use crate::domain::package::{
+    MissionAuthoredStageTopologyReport, MissionCountdownBinding,
+};
 use crate::domain::{
     MissionConditionParameters, MissionConditionScope,
     MissionConditionSemanticReport, MissionObjectiveParameters,
     MissionObjectiveSemanticReport, MissionScopeReport, MissionStageKind,
     MissionStageSemanticReport, MissionStageTerminalOutcome,
     MissionStageTransitionMarker, MissionStageVisualTransition, PipelineError,
-    PipelineOutcome,
+    PipelineOutcome, preflight_mission_countdowns,
     preflight_mission_stage_transitions,
 };
 
@@ -71,6 +73,7 @@ pub(super) struct MissionDefinitionStageCoreBinding {
     stay_in_black: bool,
     show_stage_complete: bool,
     transition_markers: Vec<MissionStageTransitionMarker>,
+    countdown: Option<MissionCountdownBinding>,
     objective_source_ordinal: usize,
     objective_source_alias: String,
     objective_canonical_kind: Option<&'static str>,
@@ -130,6 +133,19 @@ impl MissionDefinitionCoreReport {
                 MissionStageTerminalOutcome::None
                 | MissionStageTerminalOutcome::ChapterTransition
                 | MissionStageTerminalOutcome::GameCompletion => {},
+            }
+            if let Some(countdown) = &stage.countdown {
+                if countdown.stage_source_ordinal()
+                    != stage.stage_source_ordinal
+                    || countdown.stage_sequence_ordinal()
+                        != stage.sequence_ordinal
+                    || countdown.start_source_ordinal()
+                        <= stage.stage_source_ordinal
+                {
+                    return Err(PipelineError::new(
+                        "mission definition core countdown owner drifted",
+                    ));
+                }
             }
             if stage.objective_source_ordinal <= stage.stage_source_ordinal
                 || stage.objective_source_alias.is_empty()
@@ -266,6 +282,11 @@ impl MissionDefinitionStageCoreBinding {
     }
 
     #[cfg(test)]
+    pub(super) const fn countdown(&self) -> Option<&MissionCountdownBinding> {
+        self.countdown.as_ref()
+    }
+
+    #[cfg(test)]
     pub(super) fn objective_source_alias(&self) -> &str {
         &self.objective_source_alias
     }
@@ -388,6 +409,12 @@ fn build_definition_core(
         ));
     }
 
+    let countdowns = preflight_mission_countdowns(stages).map_err(|error| {
+        PipelineError::new(format!(
+            "mission definition core countdown preflight failed: {error}"
+        ))
+    })?;
+
     let stage_keys = stages
         .stages()
         .iter()
@@ -444,6 +471,23 @@ fn build_definition_core(
                 "mission definition core terminal classification drifted",
             ));
         }
+        let matching_countdowns = countdowns
+            .countdowns()
+            .iter()
+            .filter(|countdown| {
+                countdown.stage_source_ordinal() == key.0
+                    && countdown.stage_sequence_ordinal() == key.1
+            })
+            .collect::<Vec<_>>();
+        let countdown = match matching_countdowns.as_slice() {
+            [] => None,
+            [countdown] => Some((*countdown).clone()),
+            _ => {
+                return Err(PipelineError::new(
+                    "mission definition core stage has duplicate countdowns",
+                ));
+            },
+        };
         let matching_objectives = objectives
             .objectives()
             .iter()
@@ -502,6 +546,7 @@ fn build_definition_core(
             stay_in_black: transition.stay_in_black(),
             show_stage_complete: transition.show_stage_complete(),
             transition_markers: transition.markers().to_vec(),
+            countdown,
             objective_source_ordinal: objective.source_ordinal(),
             objective_source_alias: objective.source_alias().to_owned(),
             objective_canonical_kind: objective.canonical_kind(),
