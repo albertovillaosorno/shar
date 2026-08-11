@@ -107,8 +107,8 @@ contain two, with exact audio ids matching physical members. The 16 optional
 character arguments resolve independently through the character catalog and do
 not select or remove participant audio packages; this preserves cases where the
 referenced character is not the recorded speaker. Conversation mode is retained
-as source evidence (37 `noboxconv`, one `convinit`) without inferring line order,
-playback, listener roles, or completion behavior.
+as source evidence (37 `noboxconv`, one `convinit`) without inferring line
+order, playback, listener roles, or completion behavior.
 
 Character and vehicle source references now resolve before Unreal planning
 against the validated phase-three package index. The resolver publishes the
