@@ -336,6 +336,13 @@ Current task list. Project phases and dated progress are recorded in
           independently; do not reinterpret that character as a speaker or
           filter audio packages by it. The corpus includes one `convinit` group
           and 37 `noboxconv` groups, so conversation mode remains authored data.
+        - [x] Bind all 128 reviewed objective `SetDialogueInfo` records to
+          canonical participants and one same-level `convinit` conversation
+          group. All 256 player/NPC source identities resolve uniquely. 107
+          dialogue ids are already unique by level/id; the remaining 21 are the
+          repeated `success` ids for `sr1`/`sr2`/`sr3`, disambiguated only from
+          that authored street-race source identity. Preserve every participant
+          audio package without inferring speaker order or playback behavior.
     - [ ] Emit lossless `USharMissionDefinition` assets only after the complete
       mission graph passes reference and topology validation.
   - [ ] Compile remaining normalized UI, font, localization, tuning, and other
