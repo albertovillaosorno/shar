@@ -103,11 +103,12 @@ The nine reviewed `SetMusicState` directives now bind to the indexed compiled
 score script for their exact level and preserve the unique source offsets for
 the authored `MissionN` plus `StageN` named-asset window. This is structural
 metadata provenance only: the pipeline does not promote symbol adjacency into a
-decoded RADMusic state machine or infer playback/mix/transition policy. Source
-runtime confirms that `StageStartMusicEvent` is independent of that metadata
-lookup: its authored token becomes a case-insensitive legacy key and is emitted
-through the mission-drama event when the stage starts. Native migration still
-needs a repo-owned key/event bridge and must not infer playback or mix policy.
+decoded RADMusic state machine or infer playback/mix/transition policy. All 14
+reviewed `StageStartMusicEvent` calls now bind independently to their exact
+owning stage. Each preserves its authored token plus the reviewed
+`mission-drama` delivery channel and `legacy-case-insensitive-key32` transform
+identity. No numeric legacy key is synthesized; native migration still needs a
+separately validated key/event bridge and must not infer playback or mix policy.
 
 Completion-dialog identities now resolve through the canonical mission-dialog
 catalog. All 38 reviewed `SetCompletionDialog` ids form exactly one same-level
@@ -416,10 +417,11 @@ remains blocked on policy and transition authority rather than reconstructing it
 from adjacency.
 
 `prepare-unreal` publishes those rows in `mission-definitions.jsonl` as one
-canonical schema-v2 record per selected source. The fresh corpus contains 154
+canonical schema-v3 record per selected source. The fresh corpus contains 154
 unique source-keyed definitions covering all 611 stages, 408 conditions, 137
-transition-marker occurrences, 43 countdown blocks, 36 collectible-waypoint
-bindings, 180 objective NPC waypoints, and four pickup state-prop bindings. All
+transition-marker occurrences, 43 countdown blocks, 14 stage-start music
+events, 36 collectible-waypoint bindings, 180 objective NPC waypoints, and four
+pickup state-prop bindings. All
 154 source ids resolve to verified mission-script evidence. Each condition row
 carries its reviewed `stage-failure` violation effect, and the four pickup
 bindings retain two mission-scope plus two stage-scope declarations. The staging
