@@ -224,8 +224,9 @@ none of the 1,100 DynamicZone P3D effects targets those mission packages.
 
 Stage transition preflight also retains the exact authored marker stream before
 computing effective policy. The reviewed corpus has 137 marker occurrences
-across 127 stages; three stages author `ShowStageComplete` twice, and both source
-ordinals survive into the mission definition core rather than collapsing to one
+across 127 stages; three stages author `ShowStageComplete` twice, and both
+source ordinals survive into the mission definition core rather than collapsing
+to one
 boolean occurrence. Effective visual and terminal classification is unchanged.
 
 Typed mission locator bindings now preserve source ownership alongside those
