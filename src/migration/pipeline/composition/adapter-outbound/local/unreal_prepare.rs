@@ -72,7 +72,8 @@ use crate::domain::{
     preflight_mission_countdowns,
     preflight_mission_condition_commands,
     preflight_mission_condition_semantics, preflight_mission_conditions,
-    preflight_mission_gag_totals, preflight_mission_initialization,
+    preflight_mission_fmv_references, preflight_mission_gag_totals,
+    preflight_mission_initialization,
     preflight_mission_level_locator_references,
     preflight_mission_level_npcs, preflight_mission_locator_references,
     preflight_mission_objective_commands,
@@ -622,6 +623,14 @@ fn preflight_cross_source_mission_locators(
                     "mission locator objective preflight failed: {error}"
                 ))
             })?;
+        drop(
+            preflight_mission_fmv_references(index, &objective_semantics)
+                .map_err(|error| {
+                    PipelineError::new(format!(
+                        "mission FMV reference preflight failed: {error}"
+                    ))
+                })?,
+        );
         drop(
             preflight_mission_locator_references(
                 mission_locators,

@@ -43,6 +43,8 @@ pub mod mission_condition;
 pub mod mission_countdown;
 /// Collectible-to-stage-waypoint cross-reference binding.
 pub mod mission_collectible_route;
+/// Canonical objective FMV package-reference resolution.
+mod mission_fmv_reference;
 /// Source-backed per-level gag totals.
 mod mission_gag_total;
 /// Typed mission-scope initialization and restart semantics.
@@ -165,6 +167,10 @@ pub use mission_presentation_reference::{
     MissionPresentationRole, preflight_mission_presentation_references,
 };
 pub use self::{
+    mission_fmv_reference::{
+        MissionFmvReferenceBinding, MissionFmvReferenceReport,
+        preflight_mission_fmv_references,
+    },
     mission_gag_total::{
         MissionGagTotalBinding, MissionGagTotalReport,
         preflight_mission_gag_totals,
