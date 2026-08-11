@@ -140,9 +140,11 @@ pub use mission_condition::{
     MissionConditionParameterBinding, MissionConditionParameterReport,
     MissionConditionParameters, MissionConditionReport,
     MissionConditionSemanticBinding, MissionConditionSemanticReport,
-    preflight_mission_condition_commands,
+    MissionConditionViolationBinding, MissionConditionViolationEffect,
+    MissionConditionViolationReport, preflight_mission_condition_commands,
     preflight_mission_condition_parameters,
-    preflight_mission_condition_semantics, preflight_mission_conditions,
+    preflight_mission_condition_semantics,
+    preflight_mission_condition_violations, preflight_mission_conditions,
 };
 pub use mission_initialization::{
     MissionInitializationBinding, MissionInitializationDirective,
