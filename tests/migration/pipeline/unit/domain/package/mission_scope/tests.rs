@@ -162,6 +162,8 @@ fn projects_stage_objective_and_condition_ownership() -> Result<(), String> {
         return Err("nested condition count changed".to_owned());
     };
     if nested.scope() != MissionConditionScope::Objective
+        || nested.owner_objective_source_ordinal()
+            != Some(first.objective().binding().ordinal())
         || nested.binding().source_alias() != "timeout"
         || nested.binding().schema_id() != "legacy-mission-condition.timeout.v1"
         || !nested.commands().is_empty()
@@ -179,6 +181,7 @@ fn projects_stage_objective_and_condition_ownership() -> Result<(), String> {
                 MissionRoadArrowBinding::Effective(MissionRoadArrowMode::Both),
             )
         || stage_condition.scope() != MissionConditionScope::Stage
+        || stage_condition.owner_objective_source_ordinal().is_some()
         || stage_condition.binding().source_alias() != "damage"
     {
         return Err("second stage ownership changed".to_owned());

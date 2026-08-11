@@ -195,6 +195,7 @@ pub struct MissionScopeCondition {
     binding: MissionConditionBinding,
     parameters: MissionConditionParameterBinding,
     scope: MissionConditionScope,
+    owner_objective_source_ordinal: Option<usize>,
     commands: Vec<MissionConditionCommandBinding>,
 }
 
@@ -215,6 +216,12 @@ impl MissionScopeCondition {
     #[must_use]
     pub const fn scope(&self) -> MissionConditionScope {
         self.scope
+    }
+
+    /// Return the root `AddObjective` ordinal for objective-scoped conditions.
+    #[must_use]
+    pub const fn owner_objective_source_ordinal(&self) -> Option<usize> {
+        self.owner_objective_source_ordinal
     }
 
     /// Return reviewed commands owned by this condition.
@@ -609,10 +616,25 @@ pub fn compile_mission_scope_graphs(
                     current_mission,
                     current_stage,
                 )?;
+                let owner_objective_source_ordinal = match scope {
+                    MissionConditionScope::Stage => None,
+                    MissionConditionScope::Objective => Some(
+                        stage
+                            .objective
+                            .as_ref()
+                            .ok_or_else(|| {
+                                "objective-scoped condition lost root objective"
+                                    .to_owned()
+                            })?
+                            .binding()
+                            .ordinal(),
+                    ),
+                };
                 stage.conditions.push(MissionScopeCondition {
                     binding,
                     parameters,
                     scope,
+                    owner_objective_source_ordinal,
                     commands: Vec::new(),
                 });
                 current_condition =
