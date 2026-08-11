@@ -39,8 +39,9 @@ use super::{
 use crate::domain::package::{
     MissionCollectibleWaypointBinding, MissionConditionViolationEffect,
     MissionCountdownBinding, MissionPickupStatePropBinding,
-    MissionPickupStatePropScope,
-    MissionRoadArrowBinding, MissionRoadArrowMode,
+    MissionPickupStatePropScope, MissionRoadArrowBinding, MissionRoadArrowMode,
+    MissionStageMusicEventBinding, MissionStageMusicEventChannel,
+    MissionStageMusicEventKeyTransform,
 };
 use crate::domain::{
     MissionConditionParameters, MissionConditionScope,
@@ -51,7 +52,7 @@ use crate::domain::{
 };
 
 pub(in crate::adapters::driven::local) const MISSION_DEFINITION_CORE_SCHEMA:
-    &str = "shar-schoenwald.mission-definition-core.v2";
+    &str = "shar-schoenwald.mission-definition-core.v3";
 
 /// Render one selected source definition core as canonical JSON ending in LF.
 ///
@@ -131,6 +132,11 @@ fn stage_json(stage: &MissionDefinitionStageCoreBinding) -> Value {
         "sequence_ordinal": stage.sequence_ordinal,
         "show_stage_complete": stage.show_stage_complete,
         "stage_source_ordinal": stage.stage_source_ordinal,
+        "stage_start_music_events": stage
+            .stage_start_music_events
+            .iter()
+            .map(stage_music_event_json)
+            .collect::<Vec<_>>(),
         "stay_in_black": stage.stay_in_black,
         "terminal": terminal_token(stage.terminal),
         "transition_markers": stage
@@ -143,6 +149,35 @@ fn stage_json(stage: &MissionDefinitionStageCoreBinding) -> Value {
             .collect::<Vec<_>>(),
         "visual_transition": visual_transition_token(stage.visual_transition),
     })
+}
+
+fn stage_music_event_json(binding: &MissionStageMusicEventBinding) -> Value {
+    json!({
+        "channel": stage_music_event_channel_token(binding.channel()),
+        "event_id": binding.event_id(),
+        "key_transform": stage_music_event_key_transform_token(
+            binding.key_transform(),
+        ),
+        "source_ordinal": binding.source_ordinal(),
+    })
+}
+
+const fn stage_music_event_channel_token(
+    channel: MissionStageMusicEventChannel,
+) -> &'static str {
+    match channel {
+        MissionStageMusicEventChannel::MissionDrama => "mission-drama",
+    }
+}
+
+const fn stage_music_event_key_transform_token(
+    transform: MissionStageMusicEventKeyTransform,
+) -> &'static str {
+    match transform {
+        MissionStageMusicEventKeyTransform::LegacyCaseInsensitiveKey32 => {
+            "legacy-case-insensitive-key32"
+        },
+    }
 }
 
 fn stage_kind_json(kind: &MissionStageKind) -> Value {

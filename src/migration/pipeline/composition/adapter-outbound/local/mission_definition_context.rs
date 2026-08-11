@@ -45,7 +45,8 @@ use crate::domain::package::{
     MissionAuthoredStageTopologyReport, MissionCollectibleWaypointBinding,
     MissionConditionViolationEffect, MissionCountdownBinding,
     MissionObjectiveNpcWaypointBinding, MissionPickupStatePropBinding,
-    preflight_mission_condition_violations,
+    MissionStageMusicEventBinding, preflight_mission_condition_violations,
+    preflight_mission_stage_music_events,
 };
 use crate::domain::{
     MissionConditionParameters, MissionConditionScope,
@@ -87,6 +88,7 @@ pub(super) struct MissionDefinitionStageCoreBinding {
     show_stage_complete: bool,
     transition_markers: Vec<MissionStageTransitionMarker>,
     countdown: Option<MissionCountdownBinding>,
+    stage_start_music_events: Vec<MissionStageMusicEventBinding>,
     collectible_waypoints: Vec<MissionCollectibleWaypointBinding>,
     objective_npc_waypoints: Vec<MissionObjectiveNpcWaypointBinding>,
     pickup_state_props: Vec<MissionPickupStatePropBinding>,
@@ -160,6 +162,16 @@ impl MissionDefinitionCoreReport {
                 {
                     return Err(PipelineError::new(
                         "mission definition core countdown owner drifted",
+                    ));
+                }
+            }
+            for event in &stage.stage_start_music_events {
+                if event.stage_source_ordinal() != stage.stage_source_ordinal
+                    || event.stage_sequence_ordinal() != stage.sequence_ordinal
+                    || event.source_ordinal() <= stage.stage_source_ordinal
+                {
+                    return Err(PipelineError::new(
+                        "mission definition core music event owner drifted",
                     ));
                 }
             }
@@ -497,6 +509,13 @@ fn build_definition_core(
         ))
     })?;
 
+    let stage_music_events =
+        preflight_mission_stage_music_events(stages).map_err(|error| {
+            PipelineError::new(format!(
+                "mission stage music event preflight failed: {error}"
+            ))
+        })?;
+
     let stage_keys = stages
         .stages()
         .iter()
@@ -630,6 +649,15 @@ fn build_definition_core(
                 ));
             },
         };
+        let stage_start_music_events = stage_music_events
+            .bindings()
+            .iter()
+            .filter(|event| {
+                event.stage_source_ordinal() == key.0
+                    && event.stage_sequence_ordinal() == key.1
+            })
+            .cloned()
+            .collect::<Vec<_>>();
         let stage_collectible_waypoints = collectible_waypoints
             .bindings()
             .iter()
@@ -739,6 +767,7 @@ fn build_definition_core(
             show_stage_complete: transition.show_stage_complete(),
             transition_markers: transition.markers().to_vec(),
             countdown,
+            stage_start_music_events,
             collectible_waypoints: stage_collectible_waypoints,
             objective_npc_waypoints: stage_objective_npc_waypoints,
             pickup_state_props: stage_pickup_state_props,
