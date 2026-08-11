@@ -1,5 +1,5 @@
 [jig]
-schema_version = 18
+schema_version = 20
 
 [documentation]
 path_style = "lower-kebab"
@@ -13,7 +13,7 @@ paths = ["docs/"]
 section_mode = "required"
 sections = []
 
-[graphify]
+[graph]
 authority_roots = [".jig"]
 cache_root = ".cache/jig/graph"
 excluded_roots = []
@@ -602,6 +602,7 @@ adjacent_component_repetition = "deny"
 
 [repository]
 fixture_roots = ["tests/fixtures"]
+host_absolute_path_guard = false
 
 [rigor]
 conflict = "fail"
