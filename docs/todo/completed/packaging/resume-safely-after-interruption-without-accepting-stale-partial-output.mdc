@@ -1,0 +1,28 @@
+---
+schema: shar.todo.v1
+id: resume-safely-after-interruption-without-accepting-stale-partial-output
+status: completed
+priority: P4
+lane: packaging
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Resume safely after interruption without accepting stale partial output
+
+Resume safely after interruption without accepting stale partial output.
+
+## Acceptance criteria
+
+- [x] Resume safely after interruption without accepting stale partial output.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Migrated from a checked canonical TODO item; repository history and
+existing technical records remain the implementation evidence.
