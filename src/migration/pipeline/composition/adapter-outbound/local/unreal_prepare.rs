@@ -72,7 +72,7 @@ use crate::domain::{
     preflight_mission_countdowns,
     preflight_mission_condition_commands,
     preflight_mission_condition_semantics, preflight_mission_conditions,
-    preflight_mission_initialization,
+    preflight_mission_gag_totals, preflight_mission_initialization,
     preflight_mission_level_locator_references,
     preflight_mission_level_npcs, preflight_mission_locator_references,
     preflight_mission_objective_commands,
@@ -995,6 +995,20 @@ fn validate_normalized_mission_source(
                     "mission vehicle attribute preflight failed: {error}"
                 ))
             })?,
+    );
+    drop(
+        preflight_mission_gag_totals(&scopes).map_err(|error| {
+            PipelineError::new(format!(
+                "mission gag total preflight failed: {error}"
+            ))
+        })?,
+    );
+    drop(
+        preflight_mission_gag_totals(&scopes).map_err(|error| {
+            PipelineError::new(format!(
+                "mission gag total preflight failed: {error}"
+            ))
+        })?,
     );
     drop(
         preflight_mission_purchase_rewards(mission_references, &scopes)
