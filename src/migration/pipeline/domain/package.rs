@@ -57,6 +57,8 @@ pub mod mission_p3d_reference;
 pub mod mission_presentation_reference;
 /// Canonical BindReward package-reference resolution.
 pub mod mission_reward_reference;
+/// Typed source merchandise and price evidence.
+pub mod mission_reward_offer;
 /// Source-backed ambient and bonus-mission NPC setup.
 pub mod mission_level_npc;
 pub mod mission_level_locator_reference;
@@ -161,6 +163,10 @@ pub use mission_presentation_reference::{
 pub use mission_reward_reference::{
     MissionRewardPackageReference, MissionRewardReferenceReport,
     preflight_mission_reward_references,
+};
+pub use mission_reward_offer::{
+    MissionRewardOfferBinding, MissionRewardOfferKind, MissionRewardOfferReport,
+    MissionRewardOfferVendor, preflight_mission_reward_offers,
 };
 pub use mission_locator::{
     MissionLocatorCatalog, MissionLocatorCatalogEntry, MissionLocatorResolution,

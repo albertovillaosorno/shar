@@ -122,6 +122,49 @@ impl MissionRewardReferenceReport {
     pub fn bindings(&self) -> &[MissionRewardPackageReference] {
         &self.bindings
     }
+
+    #[cfg(test)]
+    pub(crate) fn from_entries_for_tests(
+        entries: &[(
+            usize,
+            &str,
+            &str,
+            &str,
+            &str,
+            Option<&str>,
+            Option<&str>,
+            &str,
+        )],
+    ) -> Self {
+        Self {
+            bindings: entries
+                .iter()
+                .map(
+                    |(
+                        source_ordinal,
+                        reward_id,
+                        reward_type,
+                        source_mode,
+                        source_level,
+                        source_cost,
+                        source_vendor,
+                        package_id,
+                    )| MissionRewardPackageReference {
+                        source_ordinal: *source_ordinal,
+                        reward_id: (*reward_id).to_owned(),
+                        source_reference: format!("{package_id}.p3d"),
+                        reward_type_token: (*reward_type).to_owned(),
+                        source_mode_token: (*source_mode).to_owned(),
+                        source_level: (*source_level).to_owned(),
+                        source_cost: source_cost.map(str::to_owned),
+                        source_vendor: source_vendor.map(str::to_owned),
+                        package_id: (*package_id).to_owned(),
+                        package_root: format!("{package_id}-root"),
+                    },
+                )
+                .collect(),
+        }
+    }
 }
 
 /// Bind every unscoped source `BindReward` P3D path to a canonical package.
