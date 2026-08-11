@@ -239,13 +239,15 @@ Current task list. Project phases and dated progress are recorded in
         - [x] Bind each typed locator reference against the exact selected
           source package context formed by the matching mission-load script and
           its longest matching level-load family, plus indexed initial Dyna P3Ds
-          after re-verifying source size and SHA-256. Across 462 reviewed initial
-          Dyna P3D references, 461 bind to decoded package roots and one valid
+          after re-verifying source size and SHA-256. Across 462 reviewed
+          initial Dyna P3D references, 461 bind to decoded package roots and one
+          valid
           source-requested root has no decoded package; retain that root as an
-          explicit evidence gap instead of inventing an alias or aborting locator
-          preflight. Split script-time visibility from post-Dyna visibility:
-          immediate init/stage lookups see only static Level/Mission loads, while
-          reviewed deferred lookups can see decoded initial Dyna packages.
+          explicit evidence gap instead of inventing an alias or aborting
+          locator preflight. Split script-time visibility from post-Dyna
+          visibility:
+          immediate init/stage lookups see only static Level/Mission loads,
+          while reviewed deferred lookups can see decoded initial Dyna packages.
           Preserve the `ActivateVehicle` `NULL` sentinel.
           Initialization locator references remain intentionally unowned;
           stage roles retain exact `AddStage` source/dense ordinals, and
