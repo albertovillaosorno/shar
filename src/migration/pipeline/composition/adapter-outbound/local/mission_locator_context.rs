@@ -93,6 +93,7 @@ impl MissionLocatorScriptSnapshot {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct MissionLocatorSourceContext {
     active_packages: MissionLocatorActivePackageReport,
+    unindexed_initial_dynamic_package_roots: Vec<String>,
     level_setup_source_path: Option<String>,
 }
 
@@ -111,6 +112,12 @@ impl MissionLocatorSourceContext {
         &self,
     ) -> &MissionLocatorActivePackageReport {
         &self.active_packages
+    }
+
+    /// Return source-requested initial Dyna roots without decoded packages.
+    #[cfg(test)]
+    pub(super) fn unindexed_initial_dynamic_package_roots(&self) -> &[String] {
+        &self.unindexed_initial_dynamic_package_roots
     }
 
     /// Return the paired level setup source when it exists.
@@ -331,7 +338,7 @@ pub(super) fn build_mission_locator_source_contexts(
         let active = MissionLocatorActivePackages::new_with_initial_dynamic(
             mission_id.to_owned(),
             script_package_roots,
-            initial_dynamic_package_roots,
+            initial_dynamic_package_roots.indexed.clone(),
         )?;
         let active_packages =
             MissionLocatorActivePackageReport::from_missions(vec![active])?;
@@ -341,6 +348,8 @@ pub(super) fn build_mission_locator_source_contexts(
             .filter(|path| available.contains(path.as_str()));
         let context = MissionLocatorSourceContext {
             active_packages,
+            unindexed_initial_dynamic_package_roots:
+                initial_dynamic_package_roots.unindexed,
             level_setup_source_path,
         };
         if contexts
@@ -355,11 +364,17 @@ pub(super) fn build_mission_locator_source_contexts(
     })
 }
 
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+struct InitialDynamicPackageRoots {
+    indexed: Vec<String>,
+    unindexed: Vec<String>,
+}
+
 fn initial_dynamic_package_roots(
     initialization: &MissionInitializationBinding,
     indexed_package_roots: &BTreeSet<String>,
-) -> Result<Vec<String>, String> {
-    let mut roots = Vec::new();
+) -> Result<InitialDynamicPackageRoots, String> {
+    let mut roots = InitialDynamicPackageRoots::default();
     for directive in initialization.directives() {
         let (MissionInitializationDirective::DynamicLoad { p3d_files, .. }
         | MissionInitializationDirective::StreetRacePropsLoad { p3d_files, .. }) = directive
@@ -368,12 +383,11 @@ fn initial_dynamic_package_roots(
         };
         for p3d_file in p3d_files {
             let root = initial_dynamic_package_root(p3d_file)?;
-            if !indexed_package_roots.contains(&root) {
-                return Err(format!(
-                    "mission locator initial dynamic package is not indexed: {root}"
-                ));
+            if indexed_package_roots.contains(&root) {
+                roots.indexed.push(root);
+            } else {
+                roots.unindexed.push(root);
             }
-            roots.push(root);
         }
     }
     Ok(roots)
