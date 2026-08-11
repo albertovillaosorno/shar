@@ -396,7 +396,7 @@ explicit rather than being repaired from ownership.
 
 A private definition-core preflight now performs that join before Unreal
 planning.
-The reviewed mission-script corpus contains 342 sources: 188 contain no selected
+The reviewed mission-script corpus contains 344 sources: 190 contain no selected
 mission and are accepted only when their semantic/topology reports are empty;
 the remaining 154 each contain exactly one selected mission. Those 154 sources
 join all 611 stage rows one-to-one with authored topology and root-objective

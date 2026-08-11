@@ -520,7 +520,7 @@ waypoints directly under those exact owners rather than validating and
 discarding them.
 
 The local Unreal preflight now consumes that ownership directly in a lossless
-mission definition-core join. Across 342 reviewed mission-script sources, 188
+mission definition-core join. Across 344 reviewed mission-script sources, 190
 have no selected mission and are required to produce no semantic rows; all 154
 selected sources have exactly one mission. Their 611 stages join one-to-one with
 611 root objectives and authored topology, and all 408 conditions join through

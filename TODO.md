@@ -391,7 +391,7 @@ Current task list. Project phases and dated progress are recorded in
           add playback, navigation, state-prop lifecycle, retry, rollback, or
           recovery semantics.
         - [x] Join source-backed definition-core rows before final asset
-          emission. Of 342 reviewed mission-script sources, 188 contain no
+          emission. Of 344 reviewed mission-script sources, 190 contain no
           selected mission and must project no stage/objective/condition rows;
           all 154 selected sources contain exactly one mission. Join all 611
           stages to one authored-topology row and one root objective through
