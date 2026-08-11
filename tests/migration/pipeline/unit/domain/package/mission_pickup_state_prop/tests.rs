@@ -181,3 +181,50 @@ fn rejects_target_before_owning_objective() {
     .expect_err("pickup target before objective must fail");
     assert!(error.contains("precedes its owning objective"));
 }
+
+#[test]
+fn utility_source_without_selected_mission_is_empty() -> Result<(), String> {
+    let value = serde_json::json!({
+        "schema": "shar-schoenwald.straggler.mission-script.v3",
+        "source_extension": "mfk",
+        "route_class": "mission",
+        "source_bytes": 32,
+        "context_command_count": 0,
+        "context_adaptation_count": 0,
+        "context_adaptations": [],
+        "context_finding_count": 0,
+        "context_findings": [],
+        "statement_count": 1,
+        "unique_command_count": 1,
+        "load_p3d_reference_count": 0,
+        "mission_flow_command_count": 0,
+        "vehicle_physics_command_count": 0,
+        "semantic_family": "mission-script",
+        "command_counts": {"bindreward": 1},
+        "source_statements": ["BindReward();"],
+        "p3d_references": [],
+        "command_invocations": [{
+            "ordinal": 1,
+            "name": "bindreward",
+            "args_raw": "",
+            "semantic_role": "mission-reward",
+            "arguments": []
+        }]
+    });
+    let text = serde_json::to_string(&value)
+        .map_err(|error| error.to_string())?;
+    let evidence = crate::domain::preflight_mission_script(&text)?;
+    let scopes = crate::domain::compile_mission_scope_graphs(&evidence)?;
+    let initialization =
+        crate::domain::preflight_mission_initialization(&scopes)?;
+    let stages = crate::domain::preflight_mission_stage_semantics(&scopes)?;
+    let objectives =
+        crate::domain::preflight_mission_objective_semantics(&scopes)?;
+    let report = preflight_mission_pickup_state_props(
+        &initialization,
+        &stages,
+        &objectives,
+    )?;
+    assert!(report.bindings().is_empty());
+    Ok(())
+}
