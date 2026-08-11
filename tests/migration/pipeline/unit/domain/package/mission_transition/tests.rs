@@ -47,6 +47,7 @@ fn no_markers_have_no_transition_overrides() {
     assert_eq!(stage.terminal(), MissionStageTerminalOutcome::None);
     assert!(!stage.stay_in_black());
     assert!(!stage.show_stage_complete());
+    assert!(stage.markers().is_empty());
 }
 
 #[test]
@@ -62,6 +63,18 @@ fn iris_wins_when_fade_and_iris_are_both_authored() {
         },
     ]);
     assert_eq!(stage.visual(), MissionStageVisualTransition::Iris);
+    let markers = stage
+        .markers()
+        .iter()
+        .map(|marker| (marker.source_ordinal(), marker.kind()))
+        .collect::<Vec<_>>();
+    assert_eq!(
+        markers,
+        [
+            (8, MissionStageTransitionMarkerKind::FadeOut),
+            (9, MissionStageTransitionMarkerKind::IrisWipe),
+        ]
+    );
 }
 
 #[test]
@@ -81,9 +94,23 @@ fn presentation_flags_do_not_become_terminal_outcomes() {
     let stage = policy(&[
         MissionStageDirective::StayInBlack { source_ordinal: 8 },
         MissionStageDirective::ShowStageComplete { source_ordinal: 9 },
+        MissionStageDirective::ShowStageComplete { source_ordinal: 10 },
     ]);
     assert!(stage.stay_in_black());
     assert!(stage.show_stage_complete());
     assert_eq!(stage.terminal(), MissionStageTerminalOutcome::None);
     assert_eq!(stage.visual(), MissionStageVisualTransition::None);
+    let markers = stage
+        .markers()
+        .iter()
+        .map(|marker| (marker.source_ordinal(), marker.kind()))
+        .collect::<Vec<_>>();
+    assert_eq!(
+        markers,
+        [
+            (8, MissionStageTransitionMarkerKind::StayInBlack),
+            (9, MissionStageTransitionMarkerKind::ShowStageComplete),
+            (10, MissionStageTransitionMarkerKind::ShowStageComplete),
+        ]
+    );
 }

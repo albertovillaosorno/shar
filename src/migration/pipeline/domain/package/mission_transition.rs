@@ -59,8 +59,46 @@ pub enum MissionStageTerminalOutcome {
     GameCompletion,
 }
 
-/// Effective reviewed policy for one typed stage.
+/// Exact source marker kind retained before effective classification.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum MissionStageTransitionMarkerKind {
+    /// Authored iris-wipe completion marker.
+    IrisWipe,
+    /// Authored fade-out completion marker.
+    FadeOut,
+    /// Authored level-over terminal marker.
+    LevelOver,
+    /// Authored game-over terminal marker.
+    GameOver,
+    /// Authored stay-in-black presentation marker.
+    StayInBlack,
+    /// Authored stage-complete presentation marker.
+    ShowStageComplete,
+}
+
+/// One exact authored transition or presentation marker occurrence.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct MissionStageTransitionMarker {
+    source_ordinal: usize,
+    kind: MissionStageTransitionMarkerKind,
+}
+
+impl MissionStageTransitionMarker {
+    /// Return the exact source statement ordinal.
+    #[must_use]
+    pub const fn source_ordinal(&self) -> usize {
+        self.source_ordinal
+    }
+
+    /// Return the typed authored marker kind.
+    #[must_use]
+    pub const fn kind(&self) -> MissionStageTransitionMarkerKind {
+        self.kind
+    }
+}
+
+/// Effective reviewed policy for one typed stage.
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MissionStageTransitionPolicy {
     source_ordinal: usize,
     sequence_ordinal: usize,
@@ -68,6 +106,7 @@ pub struct MissionStageTransitionPolicy {
     terminal: MissionStageTerminalOutcome,
     stay_in_black: bool,
     show_stage_complete: bool,
+    markers: Vec<MissionStageTransitionMarker>,
 }
 
 impl MissionStageTransitionPolicy {
@@ -105,6 +144,12 @@ impl MissionStageTransitionPolicy {
     #[must_use]
     pub const fn show_stage_complete(&self) -> bool {
         self.show_stage_complete
+    }
+
+    /// Return exact authored marker occurrences in source order.
+    #[must_use]
+    pub fn markers(&self) -> &[MissionStageTransitionMarker] {
+        &self.markers
     }
 }
 
@@ -148,19 +193,54 @@ fn classify_stage(
     let mut has_game_over = false;
     let mut stay_in_black = false;
     let mut show_stage_complete = false;
+    let mut markers = Vec::new();
     for directive in directives {
         match directive {
-            MissionStageDirective::IrisWipeLegacyArgument { .. } => {
+            MissionStageDirective::IrisWipeLegacyArgument {
+                source_ordinal, ..
+            } => {
                 has_iris = true;
+                markers.push(MissionStageTransitionMarker {
+                    source_ordinal: *source_ordinal,
+                    kind: MissionStageTransitionMarkerKind::IrisWipe,
+                });
             },
-            MissionStageDirective::FadeOutLegacyArgument { .. } => {
+            MissionStageDirective::FadeOutLegacyArgument {
+                source_ordinal, ..
+            } => {
                 has_fade = true;
+                markers.push(MissionStageTransitionMarker {
+                    source_ordinal: *source_ordinal,
+                    kind: MissionStageTransitionMarkerKind::FadeOut,
+                });
             },
-            MissionStageDirective::LevelOver { .. } => has_level_over = true,
-            MissionStageDirective::GameOver { .. } => has_game_over = true,
-            MissionStageDirective::StayInBlack { .. } => stay_in_black = true,
-            MissionStageDirective::ShowStageComplete { .. } => {
+            MissionStageDirective::LevelOver { source_ordinal } => {
+                has_level_over = true;
+                markers.push(MissionStageTransitionMarker {
+                    source_ordinal: *source_ordinal,
+                    kind: MissionStageTransitionMarkerKind::LevelOver,
+                });
+            },
+            MissionStageDirective::GameOver { source_ordinal } => {
+                has_game_over = true;
+                markers.push(MissionStageTransitionMarker {
+                    source_ordinal: *source_ordinal,
+                    kind: MissionStageTransitionMarkerKind::GameOver,
+                });
+            },
+            MissionStageDirective::StayInBlack { source_ordinal } => {
+                stay_in_black = true;
+                markers.push(MissionStageTransitionMarker {
+                    source_ordinal: *source_ordinal,
+                    kind: MissionStageTransitionMarkerKind::StayInBlack,
+                });
+            },
+            MissionStageDirective::ShowStageComplete { source_ordinal } => {
                 show_stage_complete = true;
+                markers.push(MissionStageTransitionMarker {
+                    source_ordinal: *source_ordinal,
+                    kind: MissionStageTransitionMarkerKind::ShowStageComplete,
+                });
             }
             _ => {}
         }
@@ -186,6 +266,7 @@ fn classify_stage(
         terminal,
         stay_in_black,
         show_stage_complete,
+        markers,
     }
 }
 
