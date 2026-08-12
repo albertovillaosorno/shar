@@ -69,6 +69,22 @@ The operating system releases the lease when the owner exits, including
 abnormal
 process termination.
 
+## Default-path compatibility migration
+
+When a command omits the extraction output argument, the CLI checks for the
+retired root-level `extracted/` default. A clean legacy accepted tree is moved
+to `.cache/pipeline/extracted` together with its persistent
+`.extracted.pipeline-lock`. A legacy tree without a lock receives the same
+empty persistent lock at the canonical parent. Explicit output arguments are
+never rewritten, so an operator can still target a legacy location for
+recovery or inspection.
+
+Migration fails closed before changing either accepted tree when both legacy
+and canonical roots exist, the legacy lock is actively leased, a lock identity
+is malformed, or candidate, backup, or transaction-state sidecars indicate an
+interrupted extraction transaction. Generated trees are never merged and no
+mtime or age heuristic chooses between competing outputs.
+
 ## Startup recovery
 
 Recovery is the first operation after validating the source and output root
