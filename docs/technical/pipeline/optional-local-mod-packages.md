@@ -144,7 +144,9 @@ package-only reapplication compare that stored token before any extraction
 stage begins. The same exact package set may be repeated; a changed or removed
 package set, a malformed manifest, a missing manifest in existing optional
 output, or schema v2 requires a clean `extract-game` run. This prevents stale
-remaster replacements outside `extracted/lmlm` from surviving a package change.
+remaster replacements outside the logical `extracted/lmlm` package root from
+surviving a package change. Physical output lives beneath
+`.cache/pipeline/extracted/lmlm` by default.
 
 The maximum supported local snapshot was transition-validated on 2026-08-05.
 A complete schema-v2 output with 1,531 files was rejected without changing its

@@ -23,12 +23,12 @@ generated `assets/` root.
 - [ ] Migrate `extracted/`, `fbx-assets/`, `unreal-staging/`, build
   intermediates, logs, and transient decision files to stable `.cache/`
   subpaths with compatibility handling for existing local workspaces.
-- [ ] Update commands, manifests, tests, documentation, and validators so
+- [x] Update commands, manifests, tests, documentation, and validators so
   root-level legacy generated directories are no longer authoritative.
 - [x] Keep `game/` outside `.cache/` because it is user-supplied source evidence
   and keep `dist/` outside `.cache/` because it is the final user
   deliverable.
-- [ ] Preserve resumability, provenance, deterministic hashes, and transaction
+- [x] Preserve resumability, provenance, deterministic hashes, and transaction
   recovery while moving paths.
 
 ## Dependencies
@@ -46,8 +46,23 @@ staging candidates, and platform build evidence. Final publication remains
 
 A real Windows AMD64 cook verified `UE-LocalDataCachePath` with Zen data rooted
 under `.cache/build/run/windows-x64/build-hermetic-test/ddc/Zen`; UAT logs were
-also redirected under that build workspace. The migration adapters still own
-physical root-level `extracted/`, `fbx-assets/`, and `unreal-staging/` defaults,
-and Unreal itself still uses project `Saved/`/`Intermediate/` during cook. Those
-surfaces remain open and must be migrated coherently without changing logical
-manifest identities such as `extracted/...`.
+also redirected under that build workspace. Migration adapters now default to
+`.cache/pipeline/extracted`,
+`.cache/pipeline/fbx-assets`, and `.cache/pipeline/unreal-staging`. The accepted
+installation, FBX, and Unreal global ledgers live at `game/manifest/game.jsonl`,
+`game/manifest/fbx.jsonl`, and `game/manifest/unreal.jsonl`; package-local
+transaction manifests remain with their owning package. The former root-level
+generated directories are no longer ignored, so accidental recreation is
+visible instead of becoming an alternate authority.
+
+Portable identities remain unchanged: plans still carry `extracted/...`,
+`fbx-assets/...`, and logical `manifest.jsonl` source tokens while MCP resolves
+them to the cache workspace or `game/manifest/unreal.jsonl`. Moving the real
+Unreal ledger preserved its exact SHA-256
+`505d304f19859d273807233856931916e2625daa079b5a9bc1a9e9f826e0fb1c`, which
+matches every published plan source-manifest revision. Extraction keeps its
+sibling transaction lock under `.cache/pipeline`, FBX publication rolls back
+payload and ledger together, and Unreal publication now rolls back the cache
+root and central ledger together. Automatic compatibility migration for an
+arbitrary pre-existing legacy workspace remains open, so the first acceptance
+criterion is intentionally unchecked.

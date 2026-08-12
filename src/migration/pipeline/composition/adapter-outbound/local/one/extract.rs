@@ -318,8 +318,8 @@ fn guard_paths(
         || output_identity.starts_with(&game_identity)
     {
         return Err(PipelineError::new(concat!(
-            "refusing to write inside game/; use the root extracted/ ",
-            "output directory"
+            "refusing to write inside game/; use a generated output ",
+            "directory outside game/"
         )));
     }
     Ok(output_identity)
@@ -510,8 +510,11 @@ fn extract_rcf(
         name: "rcf",
         files,
         bytes,
-        note: "RCF archives expanded into extracted/<archive-stem>/..."
-            .to_owned(),
+        note: concat!(
+            "RCF archives expanded beneath the selected extraction ",
+            "workspace"
+        )
+        .to_owned(),
     })
 }
 
