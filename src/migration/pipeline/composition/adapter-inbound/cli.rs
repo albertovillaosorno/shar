@@ -49,6 +49,7 @@ use crate::manifest_paths::FBX_MANIFEST_PATH;
 use crate::ports::FbxExportOptions;
 use crate::workspace::{
     EXTRACTED_WORKSPACE_ROOT, FBX_WORKSPACE_ROOT, UNREAL_STAGING_WORKSPACE_ROOT,
+    migrate_legacy_extracted_workspace,
 };
 
 mod options;
@@ -351,6 +352,16 @@ fn reject_extra_positionals(
     )
 }
 
+fn default_extracted_root(
+    argument: Option<&String>,
+) -> Result<PathBuf, PipelineError> {
+    if let Some(path) = argument {
+        return Ok(PathBuf::from(path));
+    }
+    let _migrated = migrate_legacy_extracted_workspace()?;
+    Ok(PathBuf::from(EXTRACTED_WORKSPACE_ROOT))
+}
+
 /// Previews supported optional packages without extraction writes.
 fn run_optional_mod_preview(arguments: &[String]) -> CommandOutcome {
     if let Some(outcome) = reject_extra_positionals(arguments, 2) {
@@ -359,9 +370,13 @@ fn run_optional_mod_preview(arguments: &[String]) -> CommandOutcome {
     let game_root = arguments
         .first()
         .map_or_else(|| PathBuf::from("game"), PathBuf::from);
-    let extracted_root = arguments
-        .get(1)
-        .map_or_else(|| PathBuf::from(EXTRACTED_WORKSPACE_ROOT), PathBuf::from);
+    let extracted_root = match default_extracted_root(arguments.get(1)) {
+        Ok(root) => root,
+        Err(error) => {
+            return CommandOutcome::failure()
+                .stderr_line(format!("optional-mod preview failed: {error}"));
+        },
+    };
     let provider = LocalPipeline;
     let application = PipelineService::new(&provider);
     match application.preview_optional_mods(&game_root, &extracted_root) {
@@ -385,9 +400,13 @@ fn run_pipeline_command(
     let game_root = arguments
         .first()
         .map_or_else(|| PathBuf::from("game"), PathBuf::from);
-    let extracted_root = arguments
-        .get(1)
-        .map_or_else(|| PathBuf::from(EXTRACTED_WORKSPACE_ROOT), PathBuf::from);
+    let extracted_root = match default_extracted_root(arguments.get(1)) {
+        Ok(root) => root,
+        Err(error) => {
+            return CommandOutcome::failure()
+                .stderr_line(format!("pipeline failed: {error}"));
+        },
+    };
     let summary_root = if command == "prepare-unreal" {
         PathBuf::from(UNREAL_STAGING_WORKSPACE_ROOT)
     } else {
