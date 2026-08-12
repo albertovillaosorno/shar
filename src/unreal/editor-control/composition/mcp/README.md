@@ -98,7 +98,8 @@ Generated-plan application is divided into four fail-closed gates:
   payload. Any failure deletes only effects created by that transaction in
   reverse order and verifies their absence.
 
-All four read `unreal-staging/plans/` by default. The execution, capability, and
+All four read `.cache/pipeline/unreal-staging/plans/` by default. The execution,
+capability, and
 application commands return failure while any emitted operation remains
 conversion-blocked, factory-blocked, or lacks a reviewed native route. They
 never report or execute a partial subset as a complete plan. Import-manifest v2

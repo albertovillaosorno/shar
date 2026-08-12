@@ -228,7 +228,7 @@ def parse_plan_root(operands: tuple[str, ...]) -> Path:
 
     """
     if not operands:
-        return Path("unreal-staging/plans")
+        return Path(".cache/pipeline/unreal-staging/plans")
     if len(operands) != _TWO_OPTION_PARTS or operands[0] != "--root":
         _fail_usage("plan-preflight accepts only --root RELATIVE_PATH")
     return _portable_relative_child(operands[1], label="plan root")

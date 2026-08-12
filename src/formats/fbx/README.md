@@ -95,9 +95,10 @@ capability reports, the binary writer, and canonical validation remain
 authoritative.
 
 Phase 4 remains incomplete until one consolidated ignored catalog under
-`fbx-assets/` contains every manifest package currently classified
-`requires-fbx`, not only representative examples. Canonical artifacts live at
-`fbx-assets/packages/<package_name>/<package_name>.fbx`, with deterministic
+`.cache/pipeline/fbx-assets/` contains every manifest package currently
+classified `requires-fbx`, not only representative examples. Canonical physical
+artifacts live at `.cache/pipeline/fbx-assets/packages/<package_name>/` with the
+package FBX named `<package_name>.fbx` and deterministic
 external PNG evidence below each package's `textures/` directory when present.
 The v2 `catalog.jsonl` records exact FBX package identities plus every declared
 artifact path, size, and SHA-256 digest; FBX rows also pin binary version 7.7.
