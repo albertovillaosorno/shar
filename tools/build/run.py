@@ -48,6 +48,8 @@ _CHECK_SCHEMA = "shar.build.check.v1"
 _ARCH_PATH = Path(".cache/build/data/arch.json")
 _CHECK_PATH = Path(".cache/build/data/check.json")
 _WORK_ROOT = Path(".cache/build/run")
+_PROJECT_STATE_ROOT = Path(".cache/build/project-state")
+_PROJECT_STATE_NAMES = ("Binaries", "DerivedDataCache", "Intermediate", "Saved")
 _DIST_ROOT = Path("dist")
 
 
@@ -201,6 +203,165 @@ def _revalidate_check(root: Path, check_path: Path) -> None:
     result = subprocess.run(command, cwd=root, check=False)
     if result.returncode:
         raise RunFailure("saved build preflight did not revalidate")
+
+
+class _ProjectStateAction(NamedTuple):
+    """One reversible project-state migration mutation."""
+
+    link: Path
+    canonical: Path
+    source_was_directory: bool
+    canonical_was_present: bool
+
+
+def _is_directory_link(path: Path) -> bool:
+    """Return whether path is a symbolic directory link or Windows junction."""
+    return path.is_symlink() or os.path.isjunction(path)
+
+
+def _path_present(path: Path) -> bool:
+    """Return whether a filesystem identity exists, including broken links."""
+    return os.path.lexists(path)
+
+
+def _require_real_directory(path: Path, label: str) -> None:
+    """Require one existing directory that is not a link or junction."""
+    if not path.is_dir() or _is_directory_link(path):
+        raise RunFailure(f"{label} must be a real directory: {path}")
+
+
+def _preflight_project_state(project_dir: Path, state_root: Path) -> None:
+    """Reject conflicting or malformed project build-state identities."""
+    for name in _PROJECT_STATE_NAMES:
+        link = project_dir / name
+        canonical = state_root / name
+        link_present = _path_present(link)
+        canonical_present = _path_present(canonical)
+        if canonical_present:
+            _require_real_directory(canonical, f"canonical project {name}")
+        if _is_directory_link(link):
+            if not canonical_present:
+                raise RunFailure(
+                    f"project {name} link has no canonical cache directory"
+                )
+            if link.resolve() != canonical.resolve():
+                raise RunFailure(
+                    f"project {name} link does not target canonical cache"
+                )
+            continue
+        if link_present:
+            _require_real_directory(link, f"legacy project {name}")
+            if canonical_present:
+                raise RunFailure(
+                    f"legacy and canonical project {name} both exist"
+                )
+
+
+def _create_directory_link(link: Path, target: Path) -> None:
+    """Create the host-native directory indirection used by Unreal."""
+    if os.name == "nt":
+        result = subprocess.run(
+            ["cmd.exe", "/d", "/c", "mklink", "/J", str(link), str(target)],
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        if result.returncode:
+            raise RunFailure(f"cannot create project-state junction: {link}")
+        return
+    try:
+        link.symlink_to(target, target_is_directory=True)
+    except OSError as error:
+        raise RunFailure(f"cannot create project-state link: {link}") from error
+
+
+def _remove_directory_link(path: Path) -> None:
+    """Remove one link or junction without deleting its target."""
+    if os.path.isjunction(path):
+        os.rmdir(path)
+    else:
+        path.unlink()
+
+
+def _adopt_project_state_path(
+    project_dir: Path,
+    state_root: Path,
+    name: str,
+) -> _ProjectStateAction | None:
+    """Move or attach one project build-state root to canonical cache."""
+    link = project_dir / name
+    canonical = state_root / name
+    if _is_directory_link(link):
+        return None
+    source_was_directory = _path_present(link)
+    canonical_was_present = _path_present(canonical)
+    if source_was_directory:
+        os.replace(link, canonical)
+    elif not canonical_was_present:
+        canonical.mkdir()
+    try:
+        _create_directory_link(link, canonical.resolve())
+    except (OSError, RunFailure):
+        if source_was_directory:
+            os.replace(canonical, link)
+        elif not canonical_was_present and canonical.exists():
+            canonical.rmdir()
+        raise
+    return _ProjectStateAction(
+        link,
+        canonical,
+        source_was_directory,
+        canonical_was_present,
+    )
+
+
+def _rollback_project_state(actions: list[_ProjectStateAction]) -> None:
+    """Restore project-state identities after a partial migration failure."""
+    failures: list[str] = []
+    for action in reversed(actions):
+        try:
+            if _is_directory_link(action.link):
+                _remove_directory_link(action.link)
+            if action.source_was_directory:
+                os.replace(action.canonical, action.link)
+            elif not action.canonical_was_present:
+                action.canonical.rmdir()
+        except OSError as error:
+            failures.append(f"{action.link.name}:{error.__class__.__name__}")
+    if failures:
+        raise RunFailure(
+            "project-state migration rollback failed: " + ", ".join(failures)
+        )
+
+
+def _prepare_project_state(root: Path, project: Path) -> Path:
+    """Keep Unreal project-generated state physically below repository cache."""
+    project_dir = project.parent
+    state_root = root / _PROJECT_STATE_ROOT
+    state_root.parent.mkdir(parents=True, exist_ok=True)
+    if _path_present(state_root):
+        _require_real_directory(state_root, "project-state cache root")
+    else:
+        state_root.mkdir()
+    _preflight_project_state(project_dir, state_root)
+    actions: list[_ProjectStateAction] = []
+    try:
+        for name in _PROJECT_STATE_NAMES:
+            action = _adopt_project_state_path(project_dir, state_root, name)
+            if action is not None:
+                actions.append(action)
+    except (OSError, RunFailure) as error:
+        try:
+            _rollback_project_state(actions)
+        except RunFailure as rollback:
+            raise RunFailure(f"{error}; {rollback}") from error
+        if isinstance(error, RunFailure):
+            raise
+        error_name = error.__class__.__name__
+        raise RunFailure(
+            f"cannot migrate Unreal project build state: {error_name}"
+        ) from error
+    return state_root
 
 
 def _uat_path(engine_root: Path) -> Path:
@@ -408,6 +569,7 @@ def main() -> int:
             raise RunFailure("check evidence has no unreal object")
         engine_root = Path(str(unreal["root"])).resolve()
         project = Path(str(unreal["project"])).resolve()
+        _prepare_project_state(root, project)
         uat = _uat_path(engine_root)
         for target in targets:
             _build_target(
